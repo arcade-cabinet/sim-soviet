@@ -12,6 +12,7 @@
 import { getSpriteForType } from '@/game/BuildingFootprints';
 import type { Building, GameState } from '@/game/GameState';
 import { Camera2D } from './Camera2D';
+import { FeatureTileRenderer } from './FeatureTileRenderer';
 import {
   depthKey,
   drawDiamond,
@@ -45,6 +46,7 @@ export interface PlacementPreview {
 export class Canvas2DRenderer {
   public camera: Camera2D;
   public particles: ParticleSystem2D;
+  public featureTiles: FeatureTileRenderer;
   private ctx: CanvasRenderingContext2D;
   private animFrameId = 0;
   private season = 'default';
@@ -66,15 +68,17 @@ export class Canvas2DRenderer {
     this.ctx = ctx;
     this.camera = new Camera2D();
     this.particles = new ParticleSystem2D();
+    this.featureTiles = new FeatureTileRenderer();
 
     // Center camera on grid center
     const center = gridToScreen(GRID_SIZE / 2, GRID_SIZE / 2);
     this.camera.centerOn(center.x, center.y);
   }
 
-  /** Set the season for ground color. */
+  /** Set the season for ground color and terrain tile sprites. */
   setSeason(season: string): void {
     this.season = season;
+    this.featureTiles.setSeason(season);
   }
 
   /** Set day progress for day/night overlay. 0 = midnight, 0.5 = noon, 1 = midnight. */
@@ -136,6 +140,9 @@ export class Canvas2DRenderer {
 
     // Layer 1: Grid diamonds
     this.drawGrid();
+
+    // Layer 1.5: Terrain features (forests, mountains, rocks)
+    this.featureTiles.draw(ctx, this.camera);
 
     // Layer 2: Buildings (depth-sorted)
     this.drawBuildings();

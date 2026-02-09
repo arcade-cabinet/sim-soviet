@@ -257,6 +257,9 @@ test.describe('UI Interactions', () => {
       const advisor = advisorPanel(page);
       await expect(advisor).toBeVisible({ timeout: 3000 });
 
+      // Pause simulation so PolitburoSystem events don't replace the advisor message
+      await page.keyboard.press('Space');
+
       // Advisor auto-dismisses after 8 seconds
       await expect(advisor).toBeHidden({ timeout: 12000 });
     });

@@ -15,8 +15,11 @@ import { getResourceEntity, producers } from '@/ecs/archetypes';
  *
  * Iterates all buildings that have a `produces` field. If the
  * building is powered, its output is added to the resource store.
+ *
+ * @param farmModifier  Weather-driven multiplier for food output (0.0–2.0, default 1.0).
+ * @param vodkaModifier Politburo-driven multiplier for vodka output (default 1.0).
  */
-export function productionSystem(): void {
+export function productionSystem(farmModifier = 1.0, vodkaModifier = 1.0): void {
   const store = getResourceEntity();
   if (!store) return;
 
@@ -29,10 +32,10 @@ export function productionSystem(): void {
 
     switch (prod.resource) {
       case 'food':
-        store.resources.food += prod.amount;
+        store.resources.food += prod.amount * farmModifier;
         break;
       case 'vodka':
-        store.resources.vodka += prod.amount;
+        store.resources.vodka += prod.amount * vodkaModifier;
         break;
     }
   }

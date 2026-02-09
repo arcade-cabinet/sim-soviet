@@ -39,7 +39,7 @@ export function setBuildingCollapsedCallback(cb: BuildingCollapsedCallback | und
  * their durability by their decay rate. Buildings that reach 0
  * durability are removed from the world.
  */
-export function decaySystem(): void {
+export function decaySystem(decayMult = 1.0): void {
   // Collect entities to remove (cannot modify during iteration)
   const toRemove: Array<{
     entity: (typeof decayableBuildings.entities)[number];
@@ -51,7 +51,7 @@ export function decaySystem(): void {
   }> = [];
 
   for (const entity of decayableBuildings) {
-    entity.durability.current -= entity.durability.decayRate;
+    entity.durability.current -= entity.durability.decayRate * decayMult;
 
     if (entity.durability.current <= 0) {
       entity.durability.current = 0;
