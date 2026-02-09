@@ -1,73 +1,182 @@
 /**
- * GameWorld — imperative game initialization inside Reactylon's <Scene>.
+ * GameWorld — imperative game initialization for Canvas 2D rendering.
  *
- * Uses useScene()/useCanvas() hooks to get BabylonJS objects,
- * then creates the renderer, gesture manager, and particle system.
- * Returns null (no BabylonJS JSX elements — all imperative).
+ * Creates the Canvas2DRenderer, SpriteLoader, gesture manager, and simulation engine.
+ * Initializes the ECS world (resource store, grid) before simulation starts.
+ * Attaches to a plain HTMLCanvasElement (no BabylonJS/Reactylon).
  */
 import { useEffect, useRef } from 'react';
-import { useCanvas, useScene } from 'reactylon';
+import { AudioManager } from '@/audio/AudioManager';
+import { GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS } from '@/audio/AudioManifest';
+import { initDatabase } from '@/db/provider';
+import { createResourceStore } from '@/ecs/factories';
+import { world } from '@/ecs/world';
+import { Season } from '@/game/Chronology';
+import { GameRng, generateSeedPhrase } from '@/game/SeedSystem';
 import type { SimCallbacks } from '@/game/SimulationEngine';
 import { SimulationEngine } from '@/game/SimulationEngine';
-import { GameRng, generateSeedPhrase } from '@/game/SeedSystem';
-import { GestureManager } from '@/input/GestureManager';
-import { IsometricRenderer } from '@/rendering/IsometricRenderer';
-import { ParticleSystem } from '@/rendering/ParticleSystem';
-import { getGameState, notifyStateChange } from '@/stores/gameStore';
+import { WeatherType } from '@/game/WeatherSystem';
+import { CanvasGestureManager } from '@/input/CanvasGestureManager';
+import { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
+import { SpriteLoader } from '@/rendering/SpriteLoader';
+import {
+  getGameState,
+  isPaused,
+  notifyStateChange,
+  selectTool,
+  setInspected,
+  togglePause,
+} from '@/stores/gameStore';
 
 interface Props {
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
   callbacks: SimCallbacks;
   gameStarted: boolean;
 }
 
-export function GameWorld({ callbacks, gameStarted }: Props) {
-  const scene = useScene();
-  const canvas = useCanvas();
+/** Maps Season enum values to renderer season keys. */
+function mapSeasonToRenderSeason(season: string): string {
+  switch (season) {
+    case Season.WINTER:
+      return 'winter';
+    case Season.RASPUTITSA_SPRING:
+    case Season.RASPUTITSA_AUTUMN:
+      return 'mud';
+    case Season.SHORT_SUMMER:
+    case Season.GOLDEN_WEEK:
+    case Season.STIFLING_HEAT:
+      return 'summer';
+    case Season.EARLY_FROST:
+      return 'winter';
+    default:
+      return 'default';
+  }
+}
 
-  const rendererRef = useRef<IsometricRenderer | null>(null);
-  const gestureRef = useRef<GestureManager | null>(null);
-  const particlesRef = useRef<ParticleSystem | null>(null);
+/** Maps WeatherType to particle system weather type. */
+function mapWeatherToParticleType(weather: string): 'snow' | 'rain' | 'none' {
+  switch (weather) {
+    case WeatherType.SNOW:
+    case WeatherType.BLIZZARD:
+      return 'snow';
+    case WeatherType.RAIN:
+    case WeatherType.MUD_STORM:
+      return 'rain';
+    default:
+      return 'none';
+  }
+}
+
+/** Maps season to a music context key for dynamic soundtrack. */
+function seasonToMusicContext(season: string): keyof typeof MUSIC_CONTEXTS | null {
+  switch (season) {
+    case Season.WINTER:
+    case Season.EARLY_FROST:
+      return 'winter';
+    case Season.RASPUTITSA_SPRING:
+      return 'spring';
+    default:
+      return null;
+  }
+}
+
+export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
+  const rendererRef = useRef<Canvas2DRenderer | null>(null);
+  const gestureRef = useRef<CanvasGestureManager | null>(null);
   const simRef = useRef<SimulationEngine | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<AudioManager | null>(null);
+  const playlistIndexRef = useRef(0);
   const initializedRef = useRef(false);
 
-  // Create renderer and gesture manager once scene is available
+  // Initialize renderer + gestures once canvas is available
   useEffect(() => {
-    if (!scene || !canvas || !(canvas instanceof HTMLCanvasElement)) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
     const gameState = getGameState();
-    const renderer = new IsometricRenderer(scene, gameState);
-    const gestures = new GestureManager(canvas, scene, gameState, renderer);
-    const particles = new ParticleSystem(scene);
+    const spriteLoader = new SpriteLoader();
+
+    const renderer = new Canvas2DRenderer(canvas, gameState, spriteLoader);
+    const gestures = new CanvasGestureManager(canvas, gameState, renderer);
 
     rendererRef.current = renderer;
     gestureRef.current = gestures;
-    particlesRef.current = particles;
 
-    // Start snow immediately (it's always snowing in the Soviet Union)
-    particles.createSnowEffect();
-
-    // Renderer update in the render loop
-    scene.onBeforeRenderObservable.add(() => {
-      renderer.update();
+    // Start render loop immediately (grid draws without sprites),
+    // then restart after sprites are loaded so they appear.
+    renderer.start();
+    spriteLoader.init().then(() => {
+      renderer.start(); // idempotent — cancels previous loop, re-renders with sprites
     });
 
-    return () => {
-      gestures.dispose();
-      particles.dispose();
-    };
-  }, [scene, canvas]);
+    // Handle resize
+    const onResize = () => renderer.resize();
+    window.addEventListener('resize', onResize);
 
-  // Initialize grid + start simulation when game starts
+    return () => {
+      renderer.stop();
+      gestures.dispose();
+      window.removeEventListener('resize', onResize);
+    };
+  }, [canvasRef]);
+
+  // Start simulation when game starts
   useEffect(() => {
     if (!gameStarted || initializedRef.current) return;
     if (!rendererRef.current) return;
 
     initializedRef.current = true;
-    rendererRef.current.initialize();
+    const renderer = rendererRef.current;
+    const gestures = gestureRef.current;
+
+    // Initialize SQLite database for persistence (fire-and-forget — SaveSystem
+    // falls back to localStorage if the DB isn't ready yet)
+    initDatabase().catch(() => {
+      // sql.js Wasm load failure is non-fatal; localStorage fallback handles it
+    });
+
+    // Initialize AudioManager (user gesture from "Start" click satisfies autoplay policy)
+    const audio = new AudioManager();
+    audioRef.current = audio;
+    audio.preloadAssets();
+
+    // Wire gesture SFX callbacks
+    if (gestures) {
+      gestures.onBuild = () => audio.playSFX('build');
+      gestures.onBulldoze = () => audio.playSFX('destroy');
+    }
+
+    // Start background music — play through shuffled GAMEPLAY_PLAYLIST
+    const shuffled = [...GAMEPLAY_PLAYLIST].sort(() => Math.random() - 0.5);
+    playlistIndexRef.current = 0;
+
+    const playNextTrack = () => {
+      const trackId = shuffled[playlistIndexRef.current % shuffled.length]!;
+      audio.playMusic(trackId).then(() => {
+        // When track ends, advance to next (for non-looping tracks)
+        // Most gameplay tracks loop, so this is a fallback
+      });
+      playlistIndexRef.current++;
+    };
+
+    // Slight delay to let preload settle
+    const musicTimeout = setTimeout(playNextTrack, 2000);
+
+    // Initialize ECS world
+    const gameState = getGameState();
+
+    // Create resource store singleton entity with starting resources
+    createResourceStore({
+      money: gameState.money,
+      food: gameState.food,
+      vodka: gameState.vodka,
+      power: gameState.power,
+      powerUsed: gameState.powerUsed,
+      population: gameState.pop,
+    });
 
     // Start simulation engine with seeded RNG
-    const gameState = getGameState();
     const seed = gameState.seed || generateSeedPhrase();
     gameState.seed = seed;
     const rng = new GameRng(seed);
@@ -76,22 +185,72 @@ export function GameWorld({ callbacks, gameStarted }: Props) {
       gameState,
       {
         ...callbacks,
+        onToast: (msg) => {
+          callbacks.onToast(msg);
+          audio.playSFX('notification');
+        },
         onStateChange: () => {
           callbacks.onStateChange();
           notifyStateChange();
         },
+        onSeasonChanged: (season) => {
+          renderer.setSeason(mapSeasonToRenderSeason(season));
+          // Switch music context for dramatic season transitions
+          const musicCtx = seasonToMusicContext(season);
+          if (musicCtx) {
+            const trackId = MUSIC_CONTEXTS[musicCtx];
+            audio.playMusic(trackId);
+          }
+        },
+        onWeatherChanged: (weather) => {
+          renderer.particles.setWeather(mapWeatherToParticleType(weather));
+        },
+        onDayPhaseChanged: (_phase, dayProgress) => {
+          renderer.setDayProgress(dayProgress);
+        },
       },
-      rng,
+      rng
     );
 
     tickRef.current = setInterval(() => {
-      simRef.current?.tick();
+      if (!isPaused()) {
+        simRef.current?.tick();
+      }
     }, 1000);
 
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
+      clearTimeout(musicTimeout);
+      audio.dispose();
+      // Clean up ECS world entities
+      world.clear();
     };
   }, [gameStarted, callbacks]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Ignore when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          togglePause();
+          break;
+        case 'Escape':
+          selectTool('none');
+          setInspected(null);
+          break;
+        case 'KeyB':
+          selectTool('bulldoze');
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   return null;
 }

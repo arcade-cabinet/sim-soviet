@@ -1,4 +1,5 @@
-import { GameState } from './GameState';
+import { getResourceEntity } from '@/ecs/archetypes';
+import type { GameState } from './GameState';
 import type { GameRng } from './SeedSystem';
 
 // ─────────────────────────────────────────────────────────
@@ -7,12 +8,7 @@ import type { GameRng } from './SeedSystem';
 
 export type EventSeverity = 'trivial' | 'minor' | 'major' | 'catastrophic';
 
-export type EventCategory =
-  | 'disaster'
-  | 'political'
-  | 'economic'
-  | 'cultural'
-  | 'absurdist';
+export type EventCategory = 'disaster' | 'political' | 'economic' | 'cultural' | 'absurdist';
 
 export interface ResourceDelta {
   money?: number;
@@ -723,7 +719,7 @@ export class EventSystem {
   constructor(
     private gameState: GameState,
     private onEventCallback: (event: GameEvent) => void,
-    rng?: GameRng,
+    rng?: GameRng
   ) {
     if (rng) _rng = rng;
   }
@@ -766,9 +762,7 @@ export class EventSystem {
 
   /** Get the most recent event */
   public getLastEvent(): GameEvent | null {
-    return this.eventHistory.length > 0
-      ? this.eventHistory[this.eventHistory.length - 1]!
-      : null;
+    return this.eventHistory.length > 0 ? this.eventHistory[this.eventHistory.length - 1]! : null;
   }
 
   // ── private ──────────────────────────────────────────
@@ -801,9 +795,7 @@ export class EventSystem {
     const gs = this.gameState;
 
     const description =
-      typeof template.description === 'function'
-        ? template.description(gs)
-        : template.description;
+      typeof template.description === 'function' ? template.description(gs) : template.description;
 
     const pravdaHeadline =
       typeof template.pravdaHeadline === 'function'
@@ -811,9 +803,7 @@ export class EventSystem {
         : template.pravdaHeadline;
 
     const effects =
-      typeof template.effects === 'function'
-        ? template.effects(gs)
-        : { ...template.effects };
+      typeof template.effects === 'function' ? template.effects(gs) : { ...template.effects };
 
     // Determine type for UI coloring
     const netImpact =
@@ -840,13 +830,26 @@ export class EventSystem {
   }
 
   private applyEffects(event: GameEvent): void {
-    const gs = this.gameState;
     const fx = event.effects;
 
-    if (fx.money) gs.money = Math.max(0, gs.money + fx.money);
-    if (fx.food) gs.food = Math.max(0, gs.food + fx.food);
-    if (fx.vodka) gs.vodka = Math.max(0, gs.vodka + fx.vodka);
-    if (fx.pop) gs.pop = Math.max(0, gs.pop + fx.pop);
-    if (fx.power) gs.power = Math.max(0, gs.power + fx.power);
+    // Apply to the ECS resource store (single source of truth).
+    // syncEcsToGameState() copies these values to GameState each tick.
+    const store = getResourceEntity();
+    if (store) {
+      const r = store.resources;
+      if (fx.money) r.money = Math.max(0, r.money + fx.money);
+      if (fx.food) r.food = Math.max(0, r.food + fx.food);
+      if (fx.vodka) r.vodka = Math.max(0, r.vodka + fx.vodka);
+      if (fx.pop) r.population = Math.max(0, r.population + fx.pop);
+      if (fx.power) r.power = Math.max(0, r.power + fx.power);
+    } else {
+      // Fallback to GameState if ECS not initialized (e.g. in tests)
+      const gs = this.gameState;
+      if (fx.money) gs.money = Math.max(0, gs.money + fx.money);
+      if (fx.food) gs.food = Math.max(0, gs.food + fx.food);
+      if (fx.vodka) gs.vodka = Math.max(0, gs.vodka + fx.vodka);
+      if (fx.pop) gs.pop = Math.max(0, gs.pop + fx.pop);
+      if (fx.power) gs.power = Math.max(0, gs.power + fx.power);
+    }
   }
 }

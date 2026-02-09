@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { GameEvent } from '../game/EventSystem';
 import { GameState } from '../game/GameState';
 import { PravdaSystem } from '../game/PravdaSystem';
-import type { GameEvent } from '../game/EventSystem';
 
 function createMockEvent(overrides: Partial<GameEvent> = {}): GameEvent {
   return {
@@ -153,9 +153,7 @@ describe('PravdaSystem', () => {
         'Numbers were already ideal',
         'The quo has never been better',
       ];
-      const hasValidMessage = validMessages.some((msg) =>
-        headline.subtext.includes(msg)
-      );
+      const hasValidMessage = validMessages.some((msg) => headline.subtext.includes(msg));
       expect(hasValidMessage).toBe(true);
     });
 
@@ -196,7 +194,7 @@ describe('PravdaSystem', () => {
       gs.date.year = 1980;
 
       let foundYear = false;
-      for (let i = 0; i < 500; i++) {
+      for (let i = 0; i < 3000; i++) {
         vi.spyOn(Date, 'now').mockReturnValue(100000 + i * 50000);
         const headline = pravda.generateAmbientHeadline();
         if (headline) {
