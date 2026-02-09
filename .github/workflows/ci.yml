@@ -25,7 +25,6 @@ jobs:
       - name: Setup Node + pnpm
         uses: ./.github/actions/setup-node-pnpm
         with:
-          pnpm-version: "10"
           install-args: "--frozen-lockfile"
 
       - name: Run Biome linter
@@ -77,10 +76,10 @@ jobs:
             echo '```' >> "$GITHUB_STEP_SUMMARY"
             exit "$EXIT_CODE"
           fi
-          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          grep -A 999 "^-\+|" test-output.log >> $GITHUB_STEP_SUMMARY || echo "Coverage table not found" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          grep -A 999 "^-\+|" test-output.log >> "$GITHUB_STEP_SUMMARY" || echo "Coverage table not found" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
           echo "Tests passed successfully"
 
       - name: Upload coverage report
@@ -134,7 +133,6 @@ jobs:
       - name: Setup Node + pnpm
         uses: ./.github/actions/setup-node-pnpm
         with:
-          pnpm-version: "10"
           install-args: "--frozen-lockfile"
 
       - name: Install Playwright browsers
@@ -144,16 +142,16 @@ jobs:
         run: |
           echo "::group::Running E2E tests"
           pnpm test:e2e --project='Desktop Chrome' 2>&1 | tee e2e-output.log
-          EXIT_CODE=${PIPESTATUS[0]}
+          EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
-          if [ $EXIT_CODE -ne 0 ]; then
+          if [ "$EXIT_CODE" -ne 0 ]; then
             echo "::error::E2E tests failed with exit code $EXIT_CODE"
-            echo "### E2E Tests Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Exit code: $EXIT_CODE" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
-            tail -100 e2e-output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit $EXIT_CODE
+            echo "### E2E Tests Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Exit code: $EXIT_CODE" >> "$GITHUB_STEP_SUMMARY"
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+            tail -100 e2e-output.log >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            exit "$EXIT_CODE"
           fi
           echo "E2E tests passed successfully"
 
