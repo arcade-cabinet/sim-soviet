@@ -192,15 +192,17 @@ export class SimulationEngine {
 
     // PolitburoSystem.applyCorruptionDrain() mutates gameState.money directly,
     // but syncEcsToGameState() would overwrite it with the ECS store value.
-    // Capture the delta and apply it to the ECS store so it persists.
+    // Sync money from ECS first so corruption calculates from accurate baseline,
+    // then capture the delta and apply it to the ECS store so it persists.
+    const store = getResourceEntity();
+    if (store) {
+      this.gameState.money = store.resources.money;
+    }
     const moneyBeforePolitburo = this.gameState.money;
     this.politburo.tick();
     const corruptionDelta = this.gameState.money - moneyBeforePolitburo;
-    if (corruptionDelta !== 0) {
-      const store = getResourceEntity();
-      if (store) {
-        store.resources.money = Math.max(0, store.resources.money + corruptionDelta);
-      }
+    if (corruptionDelta !== 0 && store) {
+      store.resources.money = Math.max(0, store.resources.money + corruptionDelta);
     }
 
     this.tickPravda();

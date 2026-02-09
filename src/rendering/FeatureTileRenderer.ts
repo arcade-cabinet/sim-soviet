@@ -53,8 +53,9 @@ export class FeatureTileRenderer {
         this.manifest = data.seasons ?? null;
         this.manifestLoaded = true;
       }
-    } catch {
-      // Silently fail — fallback to center-based positioning
+    } catch (err) {
+      console.warn('Failed to load terrain manifest:', err);
+      // Fallback to center-based positioning
     }
   }
 
