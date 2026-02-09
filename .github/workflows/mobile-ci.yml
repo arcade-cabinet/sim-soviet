@@ -1,0 +1,95 @@
+name: Mobile CI - Android Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/mobile-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/mobile-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  android-build:
+    name: Android Debug Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CI: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
+        with:
+          pnpm-version: "10"
+          install-args: "--frozen-lockfile"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@f2beeb24e141e01a676f977032f5a29d81c9e27e # v5.1.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@7c5672355aaa8fde5f97a91aa9a99616d1ace6bc # v3.2.1
+
+      - name: Setup Capacitor
+        run: |
+          echo "::group::Installing Capacitor CLI"
+          pnpm add -g @capacitor/cli
+          echo "::endgroup::"
+
+      - name: Build web assets
+        run: |
+          echo "::group::Building web assets"
+          pnpm run build
+          echo "::endgroup::"
+
+      - name: Sync Capacitor
+        run: |
+          echo "::group::Syncing Capacitor Android"
+          if [ ! -d "android" ]; then
+            echo "Adding Android platform..."
+            npx cap add android
+          fi
+          npx cap sync android
+          echo "::endgroup::"
+
+      - name: Build Android Debug APK
+        working-directory: android
+        run: |
+          echo "::group::Building Android Debug APK"
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          echo "::endgroup::"
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        with:
+          name: android-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      - name: Output APK info
+        run: |
+          echo "::notice::Debug APK built successfully"
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk || echo "APK not found at expected location"

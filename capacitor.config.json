@@ -1,0 +1,9 @@
+{
+  "appId": "com.arcadecabinet.simsoviet",
+  "appName": "Sim Soviet",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
