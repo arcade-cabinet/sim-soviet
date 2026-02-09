@@ -2,9 +2,11 @@
  * Audio Manager for SimSoviet 2000
  * Handles background music, sound effects, and audio state
  * Integrates with authentic Soviet-era audio from marxists.org
+ * Uses Tone.js for procedural sound effects
  */
 
 import { AUDIO_MANIFEST, getAudioById, getPreloadAssets, type AudioAsset } from './AudioManifest';
+import { ProceduralSounds } from './ProceduralSounds';
 
 export class AudioManager {
   private audioContext: AudioContext | null = null;
@@ -27,7 +29,10 @@ export class AudioManager {
       this.audioContext = new (window.AudioContext ||
         (window as any).webkitAudioContext)();
     }
-    this.initialized = true;
+    if (!this.initialized) {
+      ProceduralSounds.initialize();
+      this.initialized = true;
+    }
   }
 
   public async preloadAssets(): Promise<void> {
@@ -41,6 +46,11 @@ export class AudioManager {
 
   public async loadTrack(asset: AudioAsset): Promise<void> {
     try {
+      // Skip procedural sounds (generated via Tone.js)
+      if (asset.url === 'procedural') {
+        return;
+      }
+
       const audio = new Audio(asset.url);
       audio.volume = this.calculateVolume(asset);
       audio.loop = asset.loop;
@@ -155,10 +165,34 @@ export class AudioManager {
 
   public playSFX(soundId: string): void {
     this.initAudioContext();
+
+    // Check if this is a procedural sound
+    const asset = getAudioById(soundId);
+    if (asset?.url === 'procedural') {
+      if (this.muted) return;
+      
+      // Play procedural sound via Tone.js
+      switch (soundId) {
+        case 'build':
+          ProceduralSounds.playBuildSound();
+          break;
+        case 'destroy':
+          ProceduralSounds.playDestroySound();
+          break;
+        case 'notification':
+          ProceduralSounds.playNotificationSound();
+          break;
+        case 'coin':
+          ProceduralSounds.playCoinSound();
+          break;
+      }
+      return;
+    }
+
+    // Handle regular audio file SFX
     let track = this.tracks.get(soundId);
 
     if (!track) {
-      const asset = getAudioById(soundId);
       if (asset) {
         this.loadTrack(asset).then(() => {
           track = this.tracks.get(soundId);
@@ -253,6 +287,7 @@ export class AudioManager {
     if (this.audioContext) {
       this.audioContext.close();
     }
+    ProceduralSounds.dispose();
   }
 }
 
