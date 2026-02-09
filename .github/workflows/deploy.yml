@@ -31,7 +31,7 @@ jobs:
           install-args: "--frozen-lockfile"
 
       - name: Build project
-        run: pnpm run build
+        run: pnpm run build -- --base /${{ github.event.repository.name }}/
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
