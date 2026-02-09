@@ -29,32 +29,36 @@ jobs:
           install-args: "--frozen-lockfile"
 
       - name: Run Biome linter
-run: |
+        run: |
           echo "::group::Running Biome linter"
           pnpm run lint 2>&1 | tee lint-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
             echo "::error::Linting failed with exit code $EXIT_CODE"
-            echo "### Linting Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Exit code: $EXIT_CODE" >> $GITHUB_STEP_SUMMARY
-            echo '
+            echo "### Linting Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Exit code: $EXIT_CODE" >> "$GITHUB_STEP_SUMMARY"
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+            tail -100 lint-output.log >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            exit "$EXIT_CODE"
+          fi
           echo "Linting passed successfully"
 
       - name: Run TypeScript type checking
         run: |
           echo "::group::Running TypeScript type checking"
           pnpm run typecheck 2>&1 | tee check-output.log
-          EXIT_CODE=${PIPESTATUS[0]}
+          EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
-          if [ $EXIT_CODE -ne 0 ]; then
+          if [ "$EXIT_CODE" -ne 0 ]; then
             echo "::error::Type checking failed with exit code $EXIT_CODE"
-            echo "### Type Checking Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Exit code: $EXIT_CODE" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
-            tail -100 check-output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit $EXIT_CODE
+            echo "### Type Checking Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Exit code: $EXIT_CODE" >> "$GITHUB_STEP_SUMMARY"
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+            tail -100 check-output.log >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            exit "$EXIT_CODE"
           fi
           echo "Type checking completed"
 
@@ -62,16 +66,16 @@ run: |
         run: |
           echo "::group::Running tests"
           pnpm run test 2>&1 | tee test-output.log
-          EXIT_CODE=${PIPESTATUS[0]}
+          EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
-          if [ $EXIT_CODE -ne 0 ]; then
+          if [ "$EXIT_CODE" -ne 0 ]; then
             echo "::error::Tests failed with exit code $EXIT_CODE"
-            echo "### Tests Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Exit code: $EXIT_CODE" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
-            tail -100 test-output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit $EXIT_CODE
+            echo "### Tests Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Exit code: $EXIT_CODE" >> "$GITHUB_STEP_SUMMARY"
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+            tail -100 test-output.log >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            exit "$EXIT_CODE"
           fi
           echo "Tests passed successfully"
 
@@ -79,20 +83,21 @@ run: |
         run: |
           echo "::group::Building project"
           pnpm run build 2>&1 | tee build-output.log
-          EXIT_CODE=${PIPESTATUS[0]}
+          EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
-          if [ $EXIT_CODE -ne 0 ]; then
+          if [ "$EXIT_CODE" -ne 0 ]; then
             echo "::error::Build failed with exit code $EXIT_CODE"
-            echo "### Build Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Exit code: $EXIT_CODE" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
-            tail -100 build-output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit $EXIT_CODE
+            echo "### Build Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Exit code: $EXIT_CODE" >> "$GITHUB_STEP_SUMMARY"
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+            tail -100 build-output.log >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            exit "$EXIT_CODE"
           fi
           echo "Build completed successfully"
 
       - name: Upload build artifacts
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: dist

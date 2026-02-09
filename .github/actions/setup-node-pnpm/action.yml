@@ -39,4 +39,4 @@ runs:
       shell: bash
       env:
         INSTALL_ARGS: ${{ inputs.install-args }}
-      run: pnpm install $INSTALL_ARGS
+      run: pnpm install "$INSTALL_ARGS"
