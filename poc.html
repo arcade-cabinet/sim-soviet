@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimSoviet 2000: The People's Isometric</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        :root {
+            --bg-color: #1a1818;
+            --panel-bg: #2d2a2a;
+            --soviet-red: #8a1c1c;
+            --soviet-gold: #cfaa48;
+            --concrete: #757575;
+            --term-green: #33ff00;
+        }
+
+        body {
+            font-family: 'VT323', monospace;
+            background-color: var(--bg-color);
+            color: #dcdcdc;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* CRT Effects */
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.6) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 998;
+        }
+
+        /* UI Elements */
+        .btn-retro {
+            background: var(--concrete);
+            border-top: 2px solid #999;
+            border-left: 2px solid #999;
+            border-bottom: 2px solid #333;
+            border-right: 2px solid #333;
+            color: #111;
+            font-family: 'VT323', monospace;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        .btn-retro:active, .btn-retro.active {
+            border-top: 2px solid #333;
+            border-left: 2px solid #333;
+            border-bottom: 2px solid #999;
+            border-right: 2px solid #999;
+            transform: translateY(2px);
+            background: #666;
+        }
+        .btn-retro:hover { background: #888; }
+
+        /* Isometric Canvas */
+        #game-container {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
+            background: #151515;
+            cursor: crosshair;
+        }
+
+        /* Advisor Modal (In-Game) */
+        .advisor-modal {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: var(--soviet-red);
+            border: 4px solid #000;
+            padding: 10px;
+            display: none;
+            box-shadow: 10px 10px 0 #000;
+            z-index: 100;
+        }
+        .advisor-face {
+            width: 60px;
+            height: 60px;
+            background: #000;
+            border: 2px solid #cfaa48;
+            float: left;
+            margin-right: 10px;
+            image-rendering: pixelated;
+        }
+        
+        /* Quota Box */
+        .quota-box {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            width: 200px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid var(--soviet-red);
+            color: #fff;
+            padding: 10px;
+            pointer-events: none;
+        }
+
+        /* Intro Modal (Startup) */
+        #intro-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dossier {
+            background: #d3c4a9;
+            color: #1a1a1a;
+            width: 500px;
+            padding: 2rem;
+            border: 1px solid #000;
+            box-shadow: 20px 20px 0 #000;
+            font-family: 'Courier Prime', 'Courier New', monospace;
+            transform: rotate(-1deg);
+        }
+        .stamp {
+            border: 4px solid var(--soviet-red);
+            color: var(--soviet-red);
+            font-weight: bold;
+            text-transform: uppercase;
+            display: inline-block;
+            padding: 5px 10px;
+            transform: rotate(-15deg);
+            opacity: 0.8;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;"> <!-- Disable right click menu for camera drag -->
+
+    <div class="crt-overlay"></div>
+    <div class="scanlines"></div>
+
+    <!-- Intro Modal -->
+    <div id="intro-modal">
+        <div class="dossier">
+            <div class="flex justify-between items-start">
+                <h1 class="text-2xl font-bold mb-4 underline">MINISTRY OF PLANNING</h1>
+                <div class="stamp">TOP SECRET</div>
+            </div>
+            
+            <p class="mb-4"><strong>TO:</strong> Director of Sector 7G</p>
+            <p class="mb-4"><strong>SUBJECT:</strong> IMMEDIATE ASSIGNMENT</p>
+            
+            <p class="mb-4 leading-relaxed">
+                Comrade, you have been "volunteered" to manage this desolate patch of dirt. 
+                Your predecessors failed to meet the potato quota. They are no longer with us.
+            </p>
+            
+            <ul class="list-disc pl-5 mb-6 space-y-2">
+                <li>Build <strong>Housing</strong> for the workers.</li>
+                <li>Build <strong>Coal Plants</strong> or they freeze.</li>
+                <li>Produce <strong>Potatoes</strong> or they starve.</li>
+                <li>Produce <strong>Vodka</strong> or they remember they are sad.</li>
+            </ul>
+
+            <div class="text-center">
+                <button onclick="startGame()" class="bg-[#8a1c1c] text-white px-8 py-3 text-xl font-bold hover:bg-[#a02020] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all">
+                    I SERVE THE SOVIET UNION
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="h-16 bg-[#222] border-b-4 border-[#000] flex items-center justify-between px-4 z-50 shrink-0 select-none">
+        <div class="flex items-center gap-4">
+            <h1 class="text-3xl text-[var(--soviet-red)] font-bold tracking-widest drop-shadow-md">SIM<span class="text-[var(--soviet-gold)]">SOVIET</span> <span class="text-white text-lg">2000</span></h1>
+            <div class="text-sm text-gray-400 border-l border-gray-600 pl-4">
+                MAP: SECTOR 7G<br>
+                WEATHER: BLEAK
+            </div>
+        </div>
+        
+        <div class="flex gap-4">
+            <div class="flex flex-col text-right">
+                <span class="text-gray-400 text-xs">RUBLES</span>
+                <span id="ui-money" class="text-[var(--soviet-gold)] text-2xl leading-none">0</span>
+            </div>
+            <div class="flex flex-col text-right">
+                <span class="text-gray-400 text-xs">POPULATION</span>
+                <span id="ui-pop" class="text-white text-2xl leading-none">0</span>
+            </div>
+            <div class="flex flex-col text-right">
+                <span class="text-gray-400 text-xs">DATE</span>
+                <span id="ui-date" class="text-gray-300 text-2xl leading-none">JAN 1980</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game View -->
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- Quota HUD -->
+        <div class="quota-box">
+            <h3 class="text-[var(--soviet-gold)] border-b border-gray-600 mb-2">5-YEAR PLAN</h3>
+            <div class="text-sm mb-1">GOAL: <span id="quota-target" class="text-white">...</span></div>
+            <div class="text-sm mb-1">TIME LEFT: <span id="quota-time" class="text-red-400">...</span></div>
+            <div class="w-full bg-gray-800 h-2 mt-2 border border-gray-600">
+                <div id="quota-bar" class="h-full bg-[var(--soviet-gold)] w-0"></div>
+            </div>
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-900/90 text-white px-6 py-2 border border-red-500 hidden text-xl shadow-lg pointer-events-none">
+            NOTIFICATION TEXT
+        </div>
+
+        <!-- Advisor -->
+        <div id="advisor" class="advisor-modal">
+            <div class="advisor-face" id="advisor-face-canvas"></div>
+            <div class="text-sm text-white leading-tight">
+                <strong class="text-[var(--soviet-gold)]">COMRADE VANYA:</strong><br>
+                <span id="advisor-text">Welcome, Director. Do not touch anything expensive.</span>
+            </div>
+            <button onclick="document.getElementById('advisor').style.display='none'" class="mt-2 w-full bg-black text-xs text-gray-500 hover:text-white border border-gray-700">DISMISS</button>
+        </div>
+    </div>
+
+    <!-- Bottom Toolbar -->
+    <div class="h-32 bg-[#222] border-t-4 border-[#000] p-2 flex gap-2 overflow-x-auto z-50 shrink-0 select-none">
+        <!-- Tools generated by JS -->
+        <div id="toolbar" class="flex gap-2 h-full"></div>
+    </div>
+
+<script>
+/**
+ * SIMSOVIET 2000 ENGINE
+ * Isometric Projection, Particle Systems, Central Planning Logic
+ */
+
+// --- CONFIGURATION ---
+const TILE_WIDTH = 64;  // Isometric Tile Width
+const TILE_HEIGHT = 32; // Isometric Tile Height
+const GRID_SIZE = 30;   // Map Size (30x30)
+const COLORS = {
+    grass: '#2e2e2e',
+    highlight: 'rgba(255, 255, 255, 0.1)',
+    grid: '#3a3a3a'
+};
+
+const BUILDING_TYPES = {
+    none: { name: 'Inspect', cost: 0, icon: '🔍' },
+    road: { name: 'Road', cost: 10, icon: '🛣️', type: 'infra', desc: 'Muddy path.' },
+    power: { name: 'Coal Plant', cost: 300, icon: '⚡', type: 'utility', power: 100, pollution: 20, desc: 'Creates smog & power.' },
+    housing: { name: 'Tenement', cost: 100, icon: '🏢', type: 'res', cap: 50, powerReq: 5, desc: 'Concrete sleeping box.' },
+    farm: { name: 'Kolkhoz', cost: 150, icon: '🥔', type: 'ind', job: 10, prod: 'food', amt: 20, powerReq: 2, desc: 'Potatoes.' },
+    distillery: { name: 'Vodka Plant', cost: 250, icon: '🍾', type: 'ind', job: 10, prod: 'vodka', amt: 10, powerReq: 5, pollution: 5, desc: 'Essential fluid.' },
+    gulag: { name: 'Gulag', cost: 500, icon: '⛓️', type: 'gov', cap: -20, fear: 15, powerReq: 10, desc: 'Fixes attitude problems.' },
+    bulldoze: { name: 'Purge', cost: 20, icon: '💣', type: 'tool', desc: 'Remove structure.' }
+};
+
+// --- STATE ---
+const Game = {
+    money: 2000,
+    pop: 0,
+    food: 200,
+    vodka: 50,
+    power: 0,
+    powerUsed: 0,
+    date: { year: 1980, month: 1, tick: 0 },
+    grid: [], // 2D array of { type, variant, height }
+    buildings: [],
+    selectedTool: 'none',
+    camera: { x: 0, y: 0 }, // Offset
+    dragging: false,
+    lastMouse: { x:0, y:0 },
+    snow: [],
+    
+    quota: {
+        type: 'food', // food, vodka, money
+        target: 500,
+        current: 0,
+        deadlineYear: 1985
+    }
+};
+
+// --- INITIALIZATION ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d', { alpha: false }); // Optimize
+
+function init() {
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Init Grid
+    for(let y=0; y<GRID_SIZE; y++) {
+        let row = [];
+        for(let x=0; x<GRID_SIZE; x++) {
+            row.push({ 
+                type: null, 
+                z: 0
+            });
+        }
+        Game.grid.push(row);
+    }
+    
+    // Correct Camera Centering
+    // We want the center of the grid (15, 15) to be vertically centered.
+    // Logic: isoToScreen shifts Y by (x+y)*TH/2. At 15,15, that is 30*16 = 480.
+    // If CamY is 0, map is drawn around H/2. But +480 pushes it down.
+    // We need CamY to be around 400 to pull it back up.
+    Game.camera.x = 0;
+    Game.camera.y = 400;
+
+    // Build Toolbar
+    const toolbar = document.getElementById('toolbar');
+    Object.keys(BUILDING_TYPES).forEach(key => {
+        const b = BUILDING_TYPES[key];
+        const btn = document.createElement('button');
+        btn.className = 'btn-retro w-24 flex flex-col items-center justify-center p-2';
+        btn.innerHTML = `<span class="text-2xl mb-1">${b.icon}</span><span class="text-sm font-bold leading-none">${b.name}</span><span class="text-xs text-[var(--soviet-gold)]">${b.cost > 0 ? b.cost+'₽' : ''}</span>`;
+        btn.onclick = () => selectTool(key, btn);
+        toolbar.appendChild(btn);
+    });
+
+    // Inputs
+    canvas.addEventListener('mousedown', onMouseDown);
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('mouseleave', () => Game.dragging = false);
+
+    // Initial Advisor Face
+    drawAdvisorFace();
+
+    // Start Loops
+    requestAnimationFrame(renderLoop);
+    setInterval(simLoop, 1000); // Game logic every second
+    setInterval(weatherLoop, 50); // Snow
+}
+
+function startGame() {
+    document.getElementById('intro-modal').style.display = 'none';
+    showAdvisor("Finally. You are late. Build a Coal Plant first, then Housing. Go.");
+}
+
+function resizeCanvas() {
+    canvas.width = document.getElementById('game-container').offsetWidth;
+    canvas.height = document.getElementById('game-container').offsetHeight;
+}
+
+// --- GAME LOGIC ---
+
+function simLoop() {
+    // 1. Time
+    Game.date.tick++;
+    if(Game.date.tick > 5) {
+        Game.date.tick = 0;
+        Game.date.month++;
+        if(Game.date.month > 12) {
+            Game.date.month = 1;
+            Game.date.year++;
+            checkQuota();
+        }
+    }
+    
+    // 2. Resource Calc
+    let prodFood = 0, prodVodka = 0, prodPower = 0;
+    let reqPower = 0;
+    let pollution = 0;
+    let housingCap = 0;
+
+    // Calculate Power Supply First
+    Game.buildings.forEach(b => {
+        const stats = BUILDING_TYPES[b.type];
+        if(b.type === 'power') prodPower += stats.power;
+    });
+    Game.power = prodPower;
+
+    // Run Buildings
+    Game.buildings.forEach(b => {
+        const stats = BUILDING_TYPES[b.type];
+        
+        // Power Check
+        let hasPower = true;
+        if(stats.powerReq) {
+            reqPower += stats.powerReq;
+            if(reqPower > Game.power) hasPower = false; // Simple greedy power grid
+        }
+        b.powered = hasPower;
+
+        if(hasPower) {
+            if(stats.prod === 'food') prodFood += stats.amt;
+            if(stats.prod === 'vodka') prodVodka += stats.amt;
+            if(stats.pollution) pollution += stats.pollution;
+            if(stats.cap) housingCap += stats.cap;
+            
+            // Gulag Logic
+            if(b.type === 'gulag') {
+                if(Game.pop > 0 && Math.random() < 0.1) {
+                    Game.pop--; // Disappear people
+                    // Fear increases automatically via presence
+                }
+            }
+        }
+    });
+
+    Game.powerUsed = reqPower;
+
+    // 3. Consumption
+    // Food: 1 per 10 people
+    let foodNeed = Math.ceil(Game.pop / 10);
+    if(Game.food >= foodNeed) {
+        Game.food -= foodNeed;
+        Game.food += prodFood; // Add production
+    } else {
+        Game.pop = Math.max(0, Game.pop - 5); // Starvation
+        showToast("STARVATION DETECTED");
+    }
+
+    // Vodka: Keeps people happy
+    Game.vodka += prodVodka;
+    let vodkaDrink = Math.ceil(Game.pop / 20);
+    if(Game.vodka >= vodkaDrink) Game.vodka -= vodkaDrink;
+
+    // 4. Population Growth
+    // Only grow if housing available and food > 0
+    if(Game.pop < housingCap && Game.food > 10) {
+        Game.pop += Math.floor(Math.random() * 3);
+    }
+
+    // 5. Update Quota
+    if(Game.quota.type === 'food') Game.quota.current = Game.food;
+    if(Game.quota.type === 'vodka') Game.quota.current = Game.vodka;
+
+    updateUI();
+}
+
+function checkQuota() {
+    if(Game.date.year >= Game.quota.deadlineYear) {
+        if(Game.quota.current >= Game.quota.target) {
+            showAdvisor("Quota met. Accept this medal made of tin. Now, produce VODKA.");
+            Game.quota.type = 'vodka';
+            Game.quota.target = 500;
+            Game.quota.deadlineYear = Game.date.year + 5;
+            Game.quota.current = 0;
+        } else {
+            showAdvisor("You failed the 5-Year Plan. The KGB is at your door. (GAME OVER - but we let you keep playing in shame)");
+            Game.quota.deadlineYear += 5; // Mercy extension
+        }
+    }
+}
+
+// --- RENDERING (ISOMETRIC) ---
+
+function isoToScreen(x, y, z) {
+    return {
+        x: (x - y) * (TILE_WIDTH / 2) + canvas.width / 2 - Game.camera.x,
+        y: (x + y) * (TILE_HEIGHT / 2) + canvas.height / 2 - Game.camera.y - (z * TILE_HEIGHT)
+    };
+}
+
+function screenToIso(screenX, screenY) {
+    // This is an approximation for picking
+    let adjX = screenX - (canvas.width / 2) + Game.camera.x;
+    let adjY = screenY - (canvas.height / 2) + Game.camera.y;
+    
+    // Invert the iso transform
+    let isoY = (adjY / TILE_HEIGHT) - (adjX / TILE_WIDTH);
+    let isoX = (adjY / TILE_HEIGHT) + (adjX / TILE_WIDTH);
+    
+    return { x: Math.floor(isoX), y: Math.floor(isoY) };
+}
+
+function renderLoop() {
+    // Clear
+    ctx.fillStyle = '#151515';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw Grid (Back to Front)
+    for(let y = 0; y < GRID_SIZE; y++) {
+        for(let x = 0; x < GRID_SIZE; x++) {
+            drawTile(x, y);
+        }
+    }
+
+    // Draw Buildings (Back to Front)
+    // We can just draw them in the tile loop, or sort them. 
+    // Since tile loop is x+y ordered, it handles depth reasonably well for flat tiles.
+    // For tall buildings, we need to ensure we draw "behind" things first.
+    
+    // Draw Snow
+    drawSnow();
+
+    // Draw Cursor Highlight
+    if(hoverPt && hoverPt.x >= 0 && hoverPt.x < GRID_SIZE && hoverPt.y >= 0 && hoverPt.y < GRID_SIZE) {
+        drawHighlight(hoverPt.x, hoverPt.y);
+    }
+
+    requestAnimationFrame(renderLoop);
+}
+
+function drawTile(x, y) {
+    const pos = isoToScreen(x, y, 0);
+    const cell = Game.grid[y][x];
+
+    // Check visibility roughly to improve perf
+    if (pos.x < -100 || pos.x > canvas.width + 100 || pos.y < -100 || pos.y > canvas.height + 100) return;
+
+    // Draw Base Tile
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+    ctx.lineTo(pos.x + TILE_WIDTH / 2, pos.y + TILE_HEIGHT / 2);
+    ctx.lineTo(pos.x, pos.y + TILE_HEIGHT);
+    ctx.lineTo(pos.x - TILE_WIDTH / 2, pos.y + TILE_HEIGHT / 2);
+    ctx.closePath();
+    
+    // Color logic
+    if(cell.type === 'road') ctx.fillStyle = '#444';
+    else if(cell.type) ctx.fillStyle = '#333'; // Foundation
+    else ctx.fillStyle = COLORS.grass;
+    
+    ctx.fill();
+    ctx.strokeStyle = '#222';
+    ctx.stroke();
+
+    // Draw Structure
+    if(cell.type && cell.type !== 'road') {
+        drawBuilding(x, y, cell.type);
+    }
+}
+
+function drawBuilding(x, y, type) {
+    const pos = isoToScreen(x, y, 0);
+    const bInfo = BUILDING_TYPES[type];
+    
+    // Simple 3D Box Extrusion
+    let height = 20;
+    let color = '#757575'; // Concrete default
+    let topColor = '#9e9e9e';
+    let sideColor = '#616161';
+    
+    if(type === 'power') { height = 40; color = '#3e2723'; topColor = '#5d4037'; sideColor='#3e2723'; }
+    if(type === 'gulag') { height = 10; color = '#b71c1c'; topColor = '#e53935'; sideColor='#c62828'; }
+    if(type === 'farm') { height = 5; color = '#33691e'; topColor = '#558b2f'; sideColor='#33691e'; }
+    if(type === 'housing') { height = 50; } // High rise
+
+    // Powered status check (flicker if no power)
+    const buildingRef = Game.buildings.find(b => b.x === x && b.y === y);
+    if(buildingRef && !buildingRef.powered && type !== 'gulag' && type !== 'farm') {
+        color = '#222'; topColor = '#333'; sideColor = '#111';
+    }
+
+    const w = TILE_WIDTH / 2; // Half width visual
+    // Adjust pos for centering
+    const cx = pos.x;
+    const cy = pos.y + TILE_HEIGHT/2;
+
+    // Draw Left Face
+    ctx.fillStyle = sideColor;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx - w, cy - TILE_HEIGHT/4);
+    ctx.lineTo(cx - w, cy - TILE_HEIGHT/4 - height);
+    ctx.lineTo(cx, cy - height);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw Right Face
+    ctx.fillStyle = color; // slightly darker usually
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + w, cy - TILE_HEIGHT/4);
+    ctx.lineTo(cx + w, cy - TILE_HEIGHT/4 - height);
+    ctx.lineTo(cx, cy - height);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw Top Face
+    ctx.fillStyle = topColor;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - height);
+    ctx.lineTo(cx - w, cy - TILE_HEIGHT/4 - height);
+    ctx.lineTo(cx, cy - TILE_HEIGHT/2 - height);
+    ctx.lineTo(cx + w, cy - TILE_HEIGHT/4 - height);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    
+    // Details
+    if(type === 'power') {
+        // Smoke
+        ctx.fillStyle = 'rgba(100,100,100,0.5)';
+        let smokeY = cy - height - 10 - (Date.now() % 1000)/20;
+        ctx.beginPath();
+        ctx.arc(cx, smokeY, 5 + (Date.now()%1000)/100, 0, Math.PI*2);
+        ctx.fill();
+    }
+}
+
+function drawHighlight(x, y) {
+    const pos = isoToScreen(x, y, 0);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+    ctx.lineTo(pos.x + TILE_WIDTH / 2, pos.y + TILE_HEIGHT / 2);
+    ctx.lineTo(pos.x, pos.y + TILE_HEIGHT);
+    ctx.lineTo(pos.x - TILE_WIDTH / 2, pos.y + TILE_HEIGHT / 2);
+    ctx.closePath();
+    ctx.fill();
+}
+
+// --- WEATHER ---
+function weatherLoop() {
+    // Add snow
+    if(Game.snow.length < 100) {
+        Game.snow.push({
+            x: Math.random() * canvas.width,
+            y: -10,
+            vx: Math.random() - 0.5,
+            vy: Math.random() * 2 + 1
+        });
+    }
+    // Update snow
+    Game.snow.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if(p.y > canvas.height) p.y = -10;
+    });
+}
+
+function drawSnow() {
+    ctx.fillStyle = '#fff';
+    Game.snow.forEach(p => {
+        ctx.fillRect(p.x, p.y, 2, 2);
+    });
+}
+
+// --- INPUT & UI ---
+let hoverPt = {x:0, y:0};
+
+function onMouseMove(e) {
+    if(Game.dragging) {
+        Game.camera.x += (Game.lastMouse.x - e.clientX);
+        Game.camera.y += (Game.lastMouse.y - e.clientY);
+        Game.lastMouse.x = e.clientX;
+        Game.lastMouse.y = e.clientY;
+    } else {
+        const rect = canvas.getBoundingClientRect();
+        hoverPt = screenToIso(e.clientX - rect.left, e.clientY - rect.top);
+    }
+}
+
+function onMouseDown(e) {
+    // Right click (2) or no tool selected allows dragging
+    if(e.button === 2 || Game.selectedTool === 'none') {
+        Game.dragging = true;
+        Game.lastMouse = { x: e.clientX, y: e.clientY };
+    } else {
+        handleClick(hoverPt.x, hoverPt.y);
+    }
+}
+
+function onMouseUp() {
+    Game.dragging = false;
+}
+
+function handleClick(x, y) {
+    if(x < 0 || y < 0 || x >= GRID_SIZE || y >= GRID_SIZE) return;
+    
+    const tool = Game.selectedTool;
+    const bInfo = BUILDING_TYPES[tool];
+    const cell = Game.grid[y][x];
+
+    if(tool === 'none') {
+        if(cell.type) showAdvisor(`This is a ${BUILDING_TYPES[cell.type].name}. It looks miserable.`);
+        else showAdvisor("Dirt. It belongs to the people.");
+        return;
+    }
+
+    if(tool === 'bulldoze') {
+        if(cell.type && Game.money >= bInfo.cost) {
+            Game.money -= bInfo.cost;
+            cell.type = null;
+            Game.buildings = Game.buildings.filter(b => !(b.x === x && b.y === y));
+            // Refund? No. The state keeps it.
+        }
+        updateUI();
+        return;
+    }
+
+    // Build
+    if(cell.type) {
+        showToast("OBSTRUCTION");
+        return;
+    }
+    
+    if(Game.money >= bInfo.cost) {
+        Game.money -= bInfo.cost;
+        cell.type = tool;
+        if(tool !== 'road') {
+            Game.buildings.push({ x, y, type: tool, powered: false });
+        }
+        updateUI();
+    } else {
+        showAdvisor("Not enough Rubles. Sell more Vodka.");
+    }
+}
+
+function selectTool(tool, el) {
+    Game.selectedTool = tool;
+    document.querySelectorAll('.btn-retro').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    
+    const info = BUILDING_TYPES[tool];
+    if(info) {
+        showToast(info.name.toUpperCase() + ": " + (info.desc || ""));
+    }
+}
+
+function updateUI() {
+    document.getElementById('ui-money').innerText = Game.money;
+    document.getElementById('ui-pop').innerText = Game.pop;
+    document.getElementById('ui-date').innerText = `${Game.date.year}`;
+    
+    // Quota Bar
+    const qPct = Math.min(100, (Game.quota.current / Game.quota.target) * 100);
+    document.getElementById('quota-bar').style.width = qPct + '%';
+    document.getElementById('quota-target').innerText = `${Game.quota.target} ${Game.quota.type.toUpperCase()}`;
+    document.getElementById('quota-time').innerText = (Game.quota.deadlineYear - Game.date.year) + " YEARS";
+}
+
+function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.innerText = msg;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 2000);
+}
+
+function showAdvisor(msg) {
+    const el = document.getElementById('advisor');
+    document.getElementById('advisor-text').innerText = msg;
+    el.style.display = 'block';
+}
+
+function drawAdvisorFace() {
+    // Generate a procedural pixel face
+    const fc = document.createElement('canvas');
+    fc.width = 60; fc.height = 60;
+    const fctx = fc.getContext('2d');
+    fctx.fillStyle = '#ccaa88'; // Skin
+    fctx.fillRect(10, 10, 40, 50);
+    fctx.fillStyle = '#000'; // Hat
+    fctx.fillRect(5, 5, 50, 15);
+    fctx.fillStyle = '#a00'; // Star
+    fctx.fillRect(25, 8, 10, 10);
+    fctx.fillStyle = '#000'; // Eyes
+    fctx.fillRect(15, 30, 10, 5);
+    fctx.fillRect(35, 30, 10, 5);
+    fctx.fillRect(20, 50, 20, 2); // Mouth (unhappy)
+    
+    document.getElementById('advisor-face-canvas').style.backgroundImage = `url(${fc.toDataURL()})`;
+    document.getElementById('advisor-face-canvas').style.backgroundSize = 'contain';
+}
+
+// Start
+window.onload = init;
+
+</script>
+</body>
+</html>
