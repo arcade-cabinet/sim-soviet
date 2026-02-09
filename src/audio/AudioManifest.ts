@@ -39,7 +39,7 @@ function track(
   return {
     id,
     category: 'music',
-    url: `/audio/music/${url}`,
+    url: `${import.meta.env.BASE_URL}audio/music/${url}`,
     volume: opts?.volume ?? 0.5,
     loop: opts?.loop ?? true,
     preload: opts?.preload ?? false,

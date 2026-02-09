@@ -37,7 +37,8 @@ export class SpriteLoader {
 
   /** Load the manifest and preload all building sprites. */
   async init(): Promise<void> {
-    const resp = await fetch('/sprites/soviet/manifest.json');
+    const base = import.meta.env.BASE_URL;
+    const resp = await fetch(`${base}sprites/soviet/manifest.json`);
     this.manifest = (await resp.json()) as SpriteManifest;
 
     // Preload all sprites in parallel
@@ -82,7 +83,8 @@ export class SpriteLoader {
     const entry = this.manifest.sprites[name];
     if (!entry) throw new Error(`SpriteLoader: unknown sprite "${name}"`);
 
-    const image = await this._loadImage(`/sprites/soviet/${name}.png`);
+    const base = import.meta.env.BASE_URL;
+    const image = await this._loadImage(`${base}sprites/soviet/${name}.png`);
 
     const info: SpriteInfo = {
       image,
