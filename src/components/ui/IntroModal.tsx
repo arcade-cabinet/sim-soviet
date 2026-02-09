@@ -36,9 +36,8 @@ export function IntroModal({ onStart }: IntroModalProps) {
 
         {/* Body */}
         <p className="mb-3 leading-relaxed">
-          Comrade, you have been &ldquo;volunteered&rdquo; to manage this
-          desolate patch of dirt. Your predecessors failed to meet the potato
-          quota. They are no longer with us.
+          Comrade, you have been &ldquo;volunteered&rdquo; to manage this desolate patch of dirt.
+          Your predecessors failed to meet the potato quota. They are no longer with us.
         </p>
 
         {/* Objectives */}

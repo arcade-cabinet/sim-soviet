@@ -11,12 +11,14 @@ Usage (from Blender scripting console or command line):
 
 Or load into Blender's Script Editor and run.
 
-The pipeline:
+Stage 1 of the SimSoviet asset pipeline:
   1. Imports Kenney GLB models
   2. Strips the colormap atlas material
   3. Applies AmbientCG concrete/brick PBR materials (color + normal)
   4. Tints glass/windows to dirty grey-blue
   5. Exports retextured GLBs to public/models/soviet/
+
+Stage 2 (render_sprites.py) takes these GLBs and renders isometric sprites.
 """
 
 import bpy
@@ -291,19 +293,31 @@ def create_soviet_glass_material() -> bpy.types.Material:
 # ---------------------------------------------------------------------------
 
 def clear_scene():
-    """Remove all objects from the scene."""
+    """Remove ALL objects and data blocks from the scene.
+
+    The original version only removed objects with users==0, which left
+    stale mesh data blocks from previous imports leaking into subsequent
+    GLB exports. This version force-removes everything.
+    """
+    # Delete all objects
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
-    # Clean orphan data
-    for block in bpy.data.meshes:
-        if block.users == 0:
-            bpy.data.meshes.remove(block)
-    for block in bpy.data.materials:
-        if block.users == 0:
-            bpy.data.materials.remove(block)
-    for block in bpy.data.images:
-        if block.users == 0:
-            bpy.data.images.remove(block)
+
+    # Force-remove ALL data blocks (not just orphans)
+    # Must snapshot the list first since we're mutating during iteration
+    for block in list(bpy.data.meshes):
+        bpy.data.meshes.remove(block)
+    for block in list(bpy.data.materials):
+        bpy.data.materials.remove(block)
+    for block in list(bpy.data.images):
+        bpy.data.images.remove(block)
+    for block in list(bpy.data.cameras):
+        bpy.data.cameras.remove(block)
+    for block in list(bpy.data.lights):
+        bpy.data.lights.remove(block)
+
+    # Belt and suspenders: purge any remaining orphan data recursively
+    bpy.ops.outliner.orphans_purge(do_recursive=True)
 
 
 def sovietize_model(

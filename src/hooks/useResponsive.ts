@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 export type DeviceClass = 'phone' | 'tablet' | 'desktop';
 
 const BREAKPOINTS = {
-  tablet: 768,  // iPad SE, Pixel Tablet
+  tablet: 768, // iPad SE, Pixel Tablet
   desktop: 1024, // Laptops, desktops
 } as const;
 

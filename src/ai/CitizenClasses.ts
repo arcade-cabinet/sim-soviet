@@ -377,10 +377,10 @@ export function getSeasonalModifier(month: number): number {
  */
 export function getClassDistribution(): ReadonlyArray<readonly [CitizenClass, number]> {
   return [
-    [CitizenClass.WORKER, 0.50],
-    [CitizenClass.FARMER, 0.20],
-    [CitizenClass.ENGINEER, 0.10],
-    [CitizenClass.SOLDIER, 0.10],
+    [CitizenClass.WORKER, 0.5],
+    [CitizenClass.FARMER, 0.2],
+    [CitizenClass.ENGINEER, 0.1],
+    [CitizenClass.SOLDIER, 0.1],
     [CitizenClass.PARTY_OFFICIAL, 0.05],
     [CitizenClass.PRISONER, 0.05],
   ] as const;

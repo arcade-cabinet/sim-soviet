@@ -4,11 +4,21 @@
  * Desktop (>= 768px): title + labeled stats (label above number).
  * Phone  (<  768px): icon + number only, no labels, no title.
  */
-import { useGameSnapshot } from '@/stores/gameStore';
+import { togglePause, useGameSnapshot } from '@/stores/gameStore';
 
 const MONTH_NAMES = [
-  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
 ] as const;
 
 interface StatProps {
@@ -79,6 +89,19 @@ export function TopBar() {
           />
           <Stat icon="📅" label="DATE" value={dateStr} color="#dcdcdc" />
         </div>
+
+        {/* Spacer */}
+        <span className="flex-1" />
+
+        {/* Pause button */}
+        <button
+          type="button"
+          className="btn-retro px-2 py-1 text-sm shrink-0"
+          onClick={togglePause}
+          title={snap.paused ? 'Resume (Space)' : 'Pause (Space)'}
+        >
+          {snap.paused ? '▶' : '⏸'}
+        </button>
       </div>
     </header>
   );

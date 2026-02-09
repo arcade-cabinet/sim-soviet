@@ -9,9 +9,7 @@ export function QuotaHUD() {
   const snap = useGameSnapshot();
   const { quota, date } = snap;
 
-  const progress = quota.target > 0
-    ? Math.min(quota.current / quota.target, 1)
-    : 0;
+  const progress = quota.target > 0 ? Math.min(quota.current / quota.target, 1) : 0;
   const pct = Math.round(progress * 100);
   const yearsLeft = Math.max(quota.deadlineYear - date.year, 0);
 
@@ -46,10 +44,7 @@ export function QuotaHUD() {
         />
       </div>
 
-      <div
-        className="text-[10px] text-right mt-0.5"
-        style={{ color: 'var(--soviet-gold)' }}
-      >
+      <div className="text-[10px] text-right mt-0.5" style={{ color: 'var(--soviet-gold)' }}>
         {pct}%
       </div>
     </div>

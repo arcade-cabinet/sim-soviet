@@ -8,7 +8,7 @@
  * producers are silently skipped.
  */
 
-import { producers, getResourceEntity } from '@/ecs/archetypes';
+import { getResourceEntity, producers } from '@/ecs/archetypes';
 
 /**
  * Runs the production system for one simulation tick.

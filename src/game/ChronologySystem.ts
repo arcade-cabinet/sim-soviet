@@ -10,25 +10,25 @@
  */
 
 import {
-  type GameDate,
-  type SeasonProfile,
-  Season,
-  DayPhase,
-  HOURS_PER_TICK,
-  DAYS_PER_MONTH,
-  MONTHS_PER_YEAR,
-  getSeasonForMonth,
-  getDayPhase,
   createGameDate,
+  DAYS_PER_MONTH,
+  type DayPhase,
+  type GameDate,
+  getDayPhase,
+  getSeasonForMonth,
+  HOURS_PER_TICK,
+  MONTHS_PER_YEAR,
+  type Season,
+  type SeasonProfile,
 } from './Chronology';
+import type { GameRng } from './SeedSystem';
 import {
-  type WeatherState,
-  type WeatherType,
-  rollWeather,
   createWeatherState,
   getWeatherProfile,
+  rollWeather,
+  type WeatherState,
+  type WeatherType,
 } from './WeatherSystem';
-import type { GameRng } from './SeedSystem';
 
 // ─────────────────────────────────────────────────────────
 //  TICK RESULT
@@ -64,7 +64,7 @@ export class ChronologySystem {
 
   constructor(
     private rng: GameRng,
-    startYear = 1980,
+    startYear = 1980
   ) {
     this.date = createGameDate(startYear);
     this.season = getSeasonForMonth(this.date.month);
@@ -102,7 +102,7 @@ export class ChronologySystem {
    * 0 = start of day, 1 = end of day.
    */
   getDayProgress(): number {
-    return (this.tickWithinDay * HOURS_PER_TICK + this.date.hour % HOURS_PER_TICK) / 24;
+    return (this.tickWithinDay * HOURS_PER_TICK + (this.date.hour % HOURS_PER_TICK)) / 24;
   }
 
   // ── Core tick ──────────────────────────────────────────

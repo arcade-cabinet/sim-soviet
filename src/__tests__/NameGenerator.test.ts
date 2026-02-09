@@ -1,17 +1,17 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  NameGenerator,
-  MALE_GIVEN_NAMES,
+  ALL_TITLES,
+  CITY_NAMES,
+  EPITHETS,
   FEMALE_GIVEN_NAMES,
+  MALE_GIVEN_NAMES,
+  NameGenerator,
+  nameGenerator,
   PATRONYMIC_FATHER_NAMES,
   PATRONYMIC_RULES,
-  SURNAMES_MALE,
   SURNAMES_FEMALE,
+  SURNAMES_MALE,
   TITLES,
-  ALL_TITLES,
-  EPITHETS,
-  CITY_NAMES,
-  nameGenerator,
 } from '../ai/NameGenerator';
 
 describe('NameGenerator', () => {
@@ -182,16 +182,12 @@ describe('NameGenerator', () => {
 
     it('formalName is "Surname Given Patronymic" order', () => {
       const leader = gen.generate();
-      expect(leader.formalName).toBe(
-        `${leader.surname} ${leader.givenName} ${leader.patronymic}`
-      );
+      expect(leader.formalName).toBe(`${leader.surname} ${leader.givenName} ${leader.patronymic}`);
     });
 
     it('westernName is "Given Patronymic Surname" order', () => {
       const leader = gen.generate();
-      expect(leader.westernName).toBe(
-        `${leader.givenName} ${leader.patronymic} ${leader.surname}`
-      );
+      expect(leader.westernName).toBe(`${leader.givenName} ${leader.patronymic} ${leader.surname}`);
     });
 
     it('shortName uses initials + surname', () => {
@@ -228,9 +224,7 @@ describe('NameGenerator', () => {
         const leader = gen.generate({ titleCategory: 'security' });
         // The generated title should be one from the security pool
         // (after {CITY} replacement)
-        const securityTitles = TITLES.security.map((t) =>
-          t.replace(/\{CITY\}/g, 'Novosibirsk')
-        );
+        const securityTitles = TITLES.security.map((t) => t.replace(/\{CITY\}/g, 'Novosibirsk'));
         expect(securityTitles).toContain(leader.title);
       }
     });

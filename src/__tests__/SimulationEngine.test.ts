@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getResourceEntity } from '../ecs/archetypes';
+import { createBuilding, createResourceStore } from '../ecs/factories';
+import type { QuotaState } from '../ecs/systems';
+import { world } from '../ecs/world';
 import { GameState } from '../game/GameState';
-import { SimulationEngine } from '../game/SimulationEngine';
 import type { SimCallbacks } from '../game/SimulationEngine';
+import { SimulationEngine } from '../game/SimulationEngine';
 
 /**
  * Creates mock callbacks that satisfy the SimulationEngine constructor.
@@ -21,39 +25,53 @@ describe('SimulationEngine', () => {
   let engine: SimulationEngine;
 
   beforeEach(() => {
+    world.clear();
     gs = new GameState();
     cb = createMockCallbacks();
+    // Create ECS resource store matching GameState defaults
+    createResourceStore({
+      money: gs.money,
+      food: gs.food,
+      vodka: gs.vodka,
+      power: gs.power,
+      powerUsed: gs.powerUsed,
+      population: gs.pop,
+    });
     engine = new SimulationEngine(gs, cb);
   });
 
-  // ── Time advancement ────────────────────────────────────
+  afterEach(() => {
+    world.clear();
+  });
+
+  // ── Time advancement (via ChronologySystem) ────────────────
 
   describe('time advancement', () => {
-    it('increments tick on each call', () => {
+    it('advances hour by HOURS_PER_TICK on each tick', () => {
       engine.tick();
-      expect(gs.date.tick).toBe(1);
+      // ChronologySystem advances by HOURS_PER_TICK (8)
+      // gs.date.tick is mapped to the hour value
+      expect(gs.date.tick).toBe(8);
     });
 
-    it('rolls over from tick 5 to tick 0, incrementing month', () => {
-      gs.date.tick = 5;
-      engine.tick();
-      expect(gs.date.tick).toBe(0);
+    it('rolls month after 30 ticks', () => {
+      // 3 ticks/day × 10 days/month = 30 ticks per month
+      for (let i = 0; i < 30; i++) engine.tick();
       expect(gs.date.month).toBe(2);
     });
 
-    it('rolls over from month 12 to month 1, incrementing year', () => {
-      gs.date.tick = 5;
-      gs.date.month = 12;
-      engine.tick();
-      expect(gs.date.month).toBe(1);
+    it('rolls year after 360 ticks', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+      // 30 ticks/month × 12 months = 360 ticks per year
+      for (let i = 0; i < 360; i++) engine.tick();
       expect(gs.date.year).toBe(1981);
+      expect(gs.date.month).toBe(1);
     });
 
-    it('handles multiple ticks correctly within the same month', () => {
-      for (let i = 0; i < 5; i++) {
-        engine.tick();
-      }
-      expect(gs.date.tick).toBe(5);
+    it('handles multiple ticks within the same month', () => {
+      for (let i = 0; i < 5; i++) engine.tick();
+      // 5 ticks × 8 hours = 40 hours → day 2, hour 16
+      expect(gs.date.tick).toBe(16);
       expect(gs.date.month).toBe(1);
     });
   });
@@ -62,20 +80,20 @@ describe('SimulationEngine', () => {
 
   describe('power calculation', () => {
     it('calculates total power from power plants', () => {
-      gs.addBuilding(0, 0, 'power');
+      createBuilding(0, 0, 'power'); // powerOutput=100
       engine.tick();
       expect(gs.power).toBe(100);
     });
 
     it('accumulates power from multiple plants', () => {
-      gs.addBuilding(0, 0, 'power');
-      gs.addBuilding(1, 1, 'power');
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'power');
       engine.tick();
       expect(gs.power).toBe(200);
     });
 
     it('reports 0 power with no power plants', () => {
-      gs.addBuilding(0, 0, 'housing');
+      createBuilding(0, 0, 'housing');
       engine.tick();
       expect(gs.power).toBe(0);
     });
@@ -85,25 +103,28 @@ describe('SimulationEngine', () => {
 
   describe('food production', () => {
     it('produces food from powered farms', () => {
-      gs.addBuilding(0, 0, 'power');
-      gs.addBuilding(1, 1, 'farm');
-      const initialFood = gs.food;
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'farm');
+      const store = getResourceEntity()!;
+      const initialFood = store.resources.food;
       engine.tick();
       expect(gs.food).toBe(initialFood + 20);
     });
 
     it('does not produce food from unpowered farms', () => {
-      gs.addBuilding(1, 1, 'farm');
-      const initialFood = gs.food;
+      createBuilding(1, 1, 'farm');
+      const store = getResourceEntity()!;
+      const initialFood = store.resources.food;
       engine.tick();
       expect(gs.food).toBe(initialFood);
     });
 
     it('produces food from multiple farms', () => {
-      gs.addBuilding(0, 0, 'power');
-      gs.addBuilding(1, 1, 'farm');
-      gs.addBuilding(2, 2, 'farm');
-      const initialFood = gs.food;
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'farm');
+      createBuilding(2, 2, 'farm');
+      const store = getResourceEntity()!;
+      const initialFood = store.resources.food;
       engine.tick();
       expect(gs.food).toBe(initialFood + 40);
     });
@@ -113,21 +134,21 @@ describe('SimulationEngine', () => {
 
   describe('vodka production', () => {
     it('produces vodka from powered distilleries', () => {
-      gs.addBuilding(0, 0, 'power');
-      gs.addBuilding(1, 1, 'distillery');
-      const initialVodka = gs.vodka;
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'distillery');
+      const store = getResourceEntity()!;
+      const initialVodka = store.resources.vodka;
       engine.tick();
       expect(gs.vodka).toBe(initialVodka + 10);
     });
 
     it('does not produce vodka from unpowered distilleries', () => {
-      // Prevent random events from firing and modifying resources
+      createBuilding(1, 1, 'distillery');
+      const store = getResourceEntity()!;
+      const initialVodka = store.resources.vodka;
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
-      gs.addBuilding(1, 1, 'distillery');
-      const initialVodka = gs.vodka;
       engine.tick();
       expect(gs.vodka).toBe(initialVodka);
-      vi.restoreAllMocks();
     });
   });
 
@@ -135,30 +156,30 @@ describe('SimulationEngine', () => {
 
   describe('power distribution', () => {
     it('tracks total power used by buildings', () => {
-      gs.addBuilding(0, 0, 'power');
-      gs.addBuilding(1, 1, 'housing');
-      gs.addBuilding(2, 2, 'farm');
+      createBuilding(0, 0, 'power'); // powerOutput=100
+      createBuilding(1, 1, 'housing'); // powerReq=5
+      createBuilding(2, 2, 'farm'); // powerReq=2
       engine.tick();
       expect(gs.powerUsed).toBe(7);
     });
 
     it('marks buildings as unpowered when power exceeds supply', () => {
-      gs.addBuilding(1, 1, 'housing');
+      createBuilding(1, 1, 'housing'); // No power plant
       engine.tick();
       const building = gs.buildings.find((b) => b.type === 'housing');
       expect(building!.powered).toBe(false);
     });
 
     it('marks buildings as powered when power is available', () => {
-      gs.addBuilding(0, 0, 'power');
-      gs.addBuilding(1, 1, 'housing');
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'housing');
       engine.tick();
       const housing = gs.buildings.find((b) => b.type === 'housing');
       expect(housing!.powered).toBe(true);
     });
 
     it('power plants themselves are always powered', () => {
-      gs.addBuilding(0, 0, 'power');
+      createBuilding(0, 0, 'power');
       engine.tick();
       const plant = gs.buildings.find((b) => b.type === 'power');
       expect(plant!.powered).toBe(true);
@@ -169,31 +190,36 @@ describe('SimulationEngine', () => {
 
   describe('food consumption', () => {
     it('consumes food based on population (pop/10 rounded up)', () => {
-      gs.pop = 15;
-      gs.food = 100;
+      const store = getResourceEntity()!;
+      store.resources.population = 15;
+      store.resources.food = 100;
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
       engine.tick();
-      expect(gs.food).toBe(98);
+      expect(gs.food).toBe(98); // 100 - ceil(15/10) = 100 - 2
     });
 
     it('consumes 0 food when population is 0', () => {
-      gs.pop = 0;
-      gs.food = 100;
+      const store = getResourceEntity()!;
+      store.resources.population = 0;
+      store.resources.food = 100;
       engine.tick();
       expect(gs.food).toBe(100);
     });
 
     it('causes starvation when food is insufficient', () => {
-      gs.pop = 100;
-      gs.food = 0;
+      const store = getResourceEntity()!;
+      store.resources.population = 100;
+      store.resources.food = 0;
+      store.resources.vodka = 100;
       engine.tick();
       expect(gs.pop).toBeLessThanOrEqual(95);
       expect(cb.onToast).toHaveBeenCalledWith('STARVATION DETECTED');
     });
 
     it('reduces population by 5 during starvation (clamped at 0)', () => {
-      gs.pop = 3;
-      gs.food = 0;
+      const store = getResourceEntity()!;
+      store.resources.population = 3;
+      store.resources.food = 0;
       engine.tick();
       expect(gs.pop).toBe(0);
     });
@@ -203,19 +229,21 @@ describe('SimulationEngine', () => {
 
   describe('vodka consumption', () => {
     it('consumes vodka based on population (pop/20 rounded up)', () => {
-      gs.pop = 20;
-      gs.vodka = 50;
+      const store = getResourceEntity()!;
+      store.resources.population = 20;
+      store.resources.vodka = 50;
+      store.resources.food = 100; // enough to avoid starvation
       engine.tick();
-      expect(gs.vodka).toBe(49);
+      expect(gs.vodka).toBe(49); // 50 - ceil(20/20) = 50 - 1
     });
 
     it('does not reduce population when vodka runs out', () => {
-      gs.pop = 100;
-      gs.food = 1000;
-      gs.vodka = 0;
-      const popBefore = gs.pop;
+      const store = getResourceEntity()!;
+      store.resources.population = 100;
+      store.resources.food = 1000;
+      store.resources.vodka = 0;
       engine.tick();
-      expect(gs.pop).toBe(popBefore);
+      expect(gs.pop).toBe(100);
     });
   });
 
@@ -223,38 +251,45 @@ describe('SimulationEngine', () => {
 
   describe('population growth', () => {
     it('does not grow population without housing', () => {
-      gs.food = 1000;
-      gs.pop = 0;
+      const store = getResourceEntity()!;
+      store.resources.food = 1000;
+      store.resources.population = 0;
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
       engine.tick();
       expect(gs.pop).toBe(0);
     });
 
     it('grows population when housing and food are available', () => {
-      gs.addBuilding(0, 0, 'power');
-      gs.addBuilding(1, 1, 'housing');
-      gs.food = 1000;
-      gs.pop = 5;
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'housing'); // housingCap=50
+      const store = getResourceEntity()!;
+      store.resources.food = 1000;
+      store.resources.population = 5;
       vi.spyOn(Math, 'random').mockReturnValue(0.5);
       engine.tick();
+      // populationSystem: rng undefined, Math.floor(0.5 * 3) = 1
       expect(gs.pop).toBe(6);
     });
 
     it('does not grow population when at housing cap', () => {
-      gs.addBuilding(0, 0, 'power');
-      gs.addBuilding(1, 1, 'housing');
-      gs.food = 1000;
-      gs.pop = 50;
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'housing'); // housingCap=50
+      const store = getResourceEntity()!;
+      store.resources.food = 1000;
+      store.resources.population = 50;
       engine.tick();
       expect(gs.pop).toBe(50);
     });
 
     it('does not grow population when food is low', () => {
-      gs.addBuilding(0, 0, 'power');
-      gs.addBuilding(1, 1, 'housing');
-      gs.food = 5;
-      gs.pop = 1;
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'housing');
+      const store = getResourceEntity()!;
+      store.resources.food = 5;
+      store.resources.population = 1;
       engine.tick();
+      // After consumption: food = 5 - ceil(1/10) = 4
+      // populationSystem: food(4) > 10? No → no growth
       expect(gs.pop).toBeLessThanOrEqual(1);
     });
   });
@@ -263,55 +298,54 @@ describe('SimulationEngine', () => {
 
   describe('quota system', () => {
     it('updates quota.current to match food when quota type is food', () => {
-      gs.quota.type = 'food';
-      gs.food = 350;
+      const store = getResourceEntity()!;
+      store.resources.food = 350;
       engine.tick();
-      expect(gs.quota.current).toBe(gs.food);
+      expect(gs.quota.current).toBe(350);
     });
 
     it('updates quota.current to match vodka when quota type is vodka', () => {
-      gs.quota.type = 'vodka';
-      gs.vodka = 75;
+      // Default quota type is 'food', change to 'vodka'
+      const quota = engine.getQuota() as QuotaState;
+      quota.type = 'vodka';
+      const store = getResourceEntity()!;
+      store.resources.vodka = 75;
       engine.tick();
-      expect(gs.quota.current).toBe(gs.vodka);
+      expect(gs.quota.current).toBe(75);
     });
 
     it('shows success advisor and advances to vodka quota on year rollover when quota is met', () => {
-      gs.date.tick = 5;
-      gs.date.month = 12;
-      gs.date.year = 1985;
-      gs.quota.deadlineYear = 1986;
-      gs.food = 600;
-      gs.quota.type = 'food';
-      gs.quota.target = 500;
-      gs.quota.current = 600;
+      // Start close to the year boundary (year 1984 → 1985 matches deadline)
+      world.clear();
+      const gs2 = new GameState();
+      gs2.date.year = 1984;
+      const cb2 = createMockCallbacks();
+      createResourceStore({ food: 600, vodka: 50, population: 0 });
+      const engine2 = new SimulationEngine(gs2, cb2);
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
-      engine.tick();
 
-      expect(cb.onAdvisor).toHaveBeenCalledWith(
-        expect.stringContaining('Quota met'),
-      );
-      expect(gs.quota.type).toBe('vodka');
-      expect(gs.quota.target).toBe(500);
-      expect(gs.quota.deadlineYear).toBe(1991);
+      // Tick through one full year (360 ticks) to trigger newYear
+      for (let i = 0; i < 360; i++) engine2.tick();
+
+      expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('Quota met'));
+      expect(gs2.quota.type).toBe('vodka');
+      expect(gs2.quota.target).toBe(500);
     });
 
     it('shows game-over advisor when quota is failed', () => {
-      gs.date.tick = 5;
-      gs.date.month = 12;
-      gs.date.year = 1985;
-      gs.quota.deadlineYear = 1985;
-      gs.food = 100;
-      gs.quota.type = 'food';
-      gs.quota.target = 500;
+      world.clear();
+      const gs2 = new GameState();
+      gs2.date.year = 1984;
+      const cb2 = createMockCallbacks();
+      createResourceStore({ food: 100, vodka: 50, population: 0 }); // Below target of 500
+      const engine2 = new SimulationEngine(gs2, cb2);
 
-      engine.tick();
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      expect(cb.onAdvisor).toHaveBeenCalledWith(
-        expect.stringContaining('failed the 5-Year Plan'),
-      );
-      expect(gs.quota.deadlineYear).toBe(1990);
+      for (let i = 0; i < 360; i++) engine2.tick();
+
+      expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed the 5-Year Plan'));
     });
   });
 
@@ -344,6 +378,19 @@ describe('SimulationEngine', () => {
       const pravda = engine.getPravdaSystem();
       expect(pravda).toBeDefined();
       expect(typeof pravda.generateAmbientHeadline).toBe('function');
+    });
+
+    it('exposes the chronology system', () => {
+      const chrono = engine.getChronology();
+      expect(chrono).toBeDefined();
+      expect(typeof chrono.tick).toBe('function');
+    });
+
+    it('exposes the quota state', () => {
+      const quota = engine.getQuota();
+      expect(quota).toBeDefined();
+      expect(quota.type).toBe('food');
+      expect(quota.target).toBe(500);
     });
   });
 });

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { GameState } from '../game/GameState';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { GRID_SIZE } from '../config';
+import { GameState } from '../game/GameState';
 
 describe('GameState', () => {
   let gs: GameState;

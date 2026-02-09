@@ -80,7 +80,8 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
     headline: 'LEADERSHIP TRANSITION',
     description:
       'Comrade Stalin departs for the Great Kolkhoz in the Sky. A brief period of collective leadership follows. Several portraits require updating. Stonemasons report record overtime.',
-    classified: 'Three separate officials each believed they were in charge for the first 48 hours.',
+    classified:
+      'Three separate officials each believed they were in charge for the first 48 hours.',
   },
   {
     year: 1957,
@@ -117,7 +118,8 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
     headline: 'DÉTENTE FORMALIZED',
     description:
       'The Soviet Union graciously allows the West to believe it is negotiating from a position of equality. Treaties are signed. The ink is red.',
-    classified: 'Western negotiators asked why all the pens were red. They were told it is tradition.',
+    classified:
+      'Western negotiators asked why all the pens were red. They were told it is tradition.',
   },
   {
     year: 1975,
@@ -131,7 +133,8 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
     headline: 'MOSCOW OLYMPICS: TOTAL VICTORY',
     description:
       'The Soviet Union wins every event at the Moscow Olympics. Western nations claim they boycotted. This is a novel way to explain losing.',
-    classified: 'One Soviet athlete competed against himself in the 100m dash and still set a record.',
+    classified:
+      'One Soviet athlete competed against himself in the 100m dash and still set a record.',
   },
   {
     year: 1984,
@@ -237,8 +240,7 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
     headline: 'GLOBAL PANDEMIC: SOVIET RESPONSE EXEMPLARY',
     description:
       'A global pandemic occurs. Soviet citizens ordered to stay home. Citizens report no change in daily routine. Social distancing already perfected by decades of mutual suspicion.',
-    classified:
-      'The virus was unable to spread because citizens were already avoiding each other.',
+    classified: 'The virus was unable to spread because citizens were already avoiding each other.',
   },
   {
     year: 2022,
@@ -343,43 +345,43 @@ export const LEADER_PREFIXES = [
 export const IDEOLOGICAL_PREFIXES = [
   'Soviet',
   'Komsomol',
-  'Krasnyi',    // Red
+  'Krasnyi', // Red
   'Bolshev',
   'Proletari',
   'Oktober',
   'Revolyutsion',
-  'Zarya',      // Dawn
-  'Pobeda',     // Victory
-  'Slava',      // Glory
-  'Druzhba',    // Friendship
-  'Mir',        // Peace / World
-  'Trudov',     // Labor
-  'Pervomai',   // May Day
-  'Pravda',     // Truth
-  'Iskra',      // Spark
-  'Zvezdny',    // Star
-  'Rabochiy',   // Worker
+  'Zarya', // Dawn
+  'Pobeda', // Victory
+  'Slava', // Glory
+  'Druzhba', // Friendship
+  'Mir', // Peace / World
+  'Trudov', // Labor
+  'Pervomai', // May Day
+  'Pravda', // Truth
+  'Iskra', // Spark
+  'Zvezdny', // Star
+  'Rabochiy', // Worker
   'Krasnoarmei', // Red Army
-  'Kommunar',   // Communard
+  'Kommunar', // Communard
 ] as const;
 
 /** Geographic / descriptive suffixes */
 export const CITY_SUFFIXES = [
-  '-grad',      // city
-  '-sk',        // place
-  '-opol',      // city (Greek-derived)
-  '-burg',      // city (Germanic)
-  '-ovsk',      // patronymic place
-  '-abad',      // settlement (Central Asian)
-  '-insk',      // place
-  '-orsk',      // place
-  '-ograd',     // city variant
-  '-ovo',       // village-style
-  '-evka',      // small settlement
-  '-nyi',       // adjectival
-  '-noye',      // neuter adjectival
-  '-ingrad',    // expanded city
-  '-omorsk',    // sea-adjacent
+  '-grad', // city
+  '-sk', // place
+  '-opol', // city (Greek-derived)
+  '-burg', // city (Germanic)
+  '-ovsk', // patronymic place
+  '-abad', // settlement (Central Asian)
+  '-insk', // place
+  '-orsk', // place
+  '-ograd', // city variant
+  '-ovo', // village-style
+  '-evka', // small settlement
+  '-nyi', // adjectival
+  '-noye', // neuter adjectival
+  '-ingrad', // expanded city
+  '-omorsk', // sea-adjacent
 ] as const;
 
 /** City name modifiers (appended for bureaucratic specificity) */
@@ -444,7 +446,7 @@ export interface CityRenaming {
 export function renameCityForLeaderChange(
   currentName: string,
   _disgraced: string,
-  newLeader: string,
+  newLeader: string
 ): CityRenaming {
   const suffix = pick(CITY_SUFFIXES);
   const newName = `${newLeader}${suffix}`;
@@ -514,7 +516,7 @@ export const RADIO_ANNOUNCEMENTS: RadioAnnouncement[] = [
     category: 'morning',
   },
   {
-    text: "It is 6:00 AM. You are now awake. If you were already awake, you were awake incorrectly. The correct time to be awake is now.",
+    text: 'It is 6:00 AM. You are now awake. If you were already awake, you were awake incorrectly. The correct time to be awake is now.',
     category: 'morning',
   },
   {
@@ -554,7 +556,7 @@ export const RADIO_ANNOUNCEMENTS: RadioAnnouncement[] = [
     category: 'weather',
   },
   {
-    text: "A mild breeze is expected from the West. Citizens are reminded that nothing good comes from the West, including breezes.",
+    text: 'A mild breeze is expected from the West. Citizens are reminded that nothing good comes from the West, including breezes.',
     category: 'weather',
   },
   {
@@ -616,7 +618,7 @@ export const RADIO_ANNOUNCEMENTS: RadioAnnouncement[] = [
     category: 'music_intro',
   },
   {
-    text: 'This concludes today\'s musical programming. Tomorrow\'s programming will be identical. This is not a lack of variety. It is consistency.',
+    text: "This concludes today's musical programming. Tomorrow's programming will be identical. This is not a lack of variety. It is consistency.",
     category: 'music_intro',
   },
 
@@ -644,7 +646,7 @@ export const RADIO_ANNOUNCEMENTS: RadioAnnouncement[] = [
 
   // ── Evening ───────────────────────────────────────────────
   {
-    text: 'The workday is over. You may now experience leisure. Approved leisure activities include: sitting, standing, and thinking about tomorrow\'s labor.',
+    text: "The workday is over. You may now experience leisure. Approved leisure activities include: sitting, standing, and thinking about tomorrow's labor.",
     category: 'evening',
   },
   {
@@ -684,7 +686,7 @@ export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
     inspection:
       'INSPECTION REPORT: Output nominal. Smoke output: exceeds quota. Worker morale: "present." The boiler room contains one (1) motivational poster and zero (0) safety equipment. The poster reads: "Do Not Die." Compliance rate: variable.',
     decay:
-      'The Coal Plant groans like an old man recounting his achievements. Rust has formed a workers\' council and is negotiating for control of the east wall. Management has not noticed, as management is also rusting.',
+      "The Coal Plant groans like an old man recounting his achievements. Rust has formed a workers' council and is negotiating for control of the east wall. Management has not noticed, as management is also rusting.",
     destruction:
       'The Coal Plant has been decommissioned. Its smoke, orphaned, drifts aimlessly above the city. Citizens report a brief, unsettling glimpse of blue sky before normal grey service resumes.',
   },
@@ -838,7 +840,7 @@ export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
     placement:
       'A Factory springs into operation, producing goods that the city needs, or possibly goods that no one needs but the quota demands. The assembly line hums with purpose. The purpose is unclear, but the humming is consistent.',
     inspection:
-      'INSPECTION REPORT: Output: 400 units. Units of what: classified. Quality: acceptable by standards that were revised 11 minutes ago. The assembly line produces items at a rate of one every 45 seconds. What happens to these items after production is someone else\'s department.',
+      "INSPECTION REPORT: Output: 400 units. Units of what: classified. Quality: acceptable by standards that were revised 11 minutes ago. The assembly line produces items at a rate of one every 45 seconds. What happens to these items after production is someone else's department.",
     decay:
       'The Factory machinery is producing sounds not found in any engineering manual. Workers describe the noise as "the machine screaming." Engineers describe it as "operational feedback." The machine describes nothing. It is a machine. But it is screaming.',
     destruction:
@@ -961,7 +963,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'collapse_no_witness',
     name: 'Nothing To See Here',
     description: 'Have a building collapse with 0 witnesses.',
-    subtext: 'If a building falls and no one is around, did the State fail? No. The State never fails.',
+    subtext:
+      'If a building falls and no one is around, did the State fail? No. The State never fails.',
     hidden: false,
   },
   {
@@ -975,7 +978,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'ten_statues',
     name: 'Cult of Personality',
     description: 'Build 10 Lenin Statues.',
-    subtext: 'From every direction, Lenin watches. He is proud. Probably. His expression has not changed since 1924.',
+    subtext:
+      'From every direction, Lenin watches. He is proud. Probably. His expression has not changed since 1924.',
     hidden: false,
   },
   {
@@ -989,7 +993,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'max_vodka',
     name: 'Spirit of the Revolution',
     description: 'Reach maximum vodka reserves.',
-    subtext: 'The warehouse is full. The workers are full. Nobody is walking straight. Production continues.',
+    subtext:
+      'The warehouse is full. The workers are full. Nobody is walking straight. Production continues.',
     hidden: false,
   },
   {
@@ -1003,7 +1008,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'hundred_pop',
     name: 'Strength in Numbers',
     description: 'Reach 100 population.',
-    subtext: '100 citizens. 100 mouths to feed. 100 potential dissidents. But also: 100 potential informants.',
+    subtext:
+      '100 citizens. 100 mouths to feed. 100 potential dissidents. But also: 100 potential informants.',
     hidden: false,
   },
   {
@@ -1022,7 +1028,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'fifty_events',
-    name: 'What Doesn\'t Kill You Makes You Numb',
+    name: "What Doesn't Kill You Makes You Numb",
     description: 'Survive 50 random events.',
     subtext: 'At this point, you are less a leader and more a professional disaster witness.',
     hidden: false,
@@ -1066,7 +1072,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'night_shift',
     name: 'Darkness Is a Feature',
     description: 'Have 0 power supply with 50+ population.',
-    subtext: 'Citizens learn to navigate by sound and collective memory. Some discover walls the hard way.',
+    subtext:
+      'Citizens learn to navigate by sound and collective memory. Some discover walls the hard way.',
     hidden: false,
   },
   {
@@ -1080,35 +1087,40 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'year_2100',
     name: 'The Eternal State',
     description: 'Reach the year 2100.',
-    subtext: 'You have outlived every prediction. Every critic. Every potato. The State endures. You endure. Is this winning? There is no winning. There is only enduring.',
+    subtext:
+      'You have outlived every prediction. Every critic. Every potato. The State endures. You endure. Is this winning? There is no winning. There is only enduring.',
     hidden: true,
   },
   {
     id: 'no_buildings_high_pop',
     name: 'Nomadic Socialism',
     description: 'Have 50+ population with 0 buildings.',
-    subtext: 'They live in the open. They are free. The freedom is cold and wet but ideologically sound.',
+    subtext:
+      'They live in the open. They are free. The freedom is cold and wet but ideologically sound.',
     hidden: true,
   },
   {
     id: 'bulldoze_everything',
     name: 'Clean Slate',
     description: 'Bulldoze every building in a city with 10+ buildings.',
-    subtext: 'Sometimes progress means starting over. The rubble will make excellent foundations. For more rubble.',
+    subtext:
+      'Sometimes progress means starting over. The rubble will make excellent foundations. For more rubble.',
     hidden: false,
   },
   {
     id: 'three_disasters',
     name: 'Disaster Magnet',
     description: 'Experience 3 disasters in a row.',
-    subtext: 'Statistically improbable. Ideologically inevitable. The State is testing you. You are failing the test.',
+    subtext:
+      'Statistically improbable. Ideologically inevitable. The State is testing you. You are failing the test.',
     hidden: false,
   },
   {
     id: 'propaganda_win',
     name: 'Ministry of Truth Employee of the Month',
     description: 'Have Pravda report 10 positive headlines while all indicators are negative.',
-    subtext: 'The news has never been better. Reality has never been worse. These are different departments.',
+    subtext:
+      'The news has never been better. Reality has never been worse. These are different departments.',
     hidden: false,
   },
   {
@@ -1122,7 +1134,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'play_five_hours',
     name: 'There Is No Escape',
     description: 'Play for five continuous hours.',
-    subtext: 'You understand now. There is no winning. There is no losing. There is only the State. And you, serving it. Forever.',
+    subtext:
+      'You understand now. There is no winning. There is no losing. There is only the State. And you, serving it. Forever.',
     hidden: true,
   },
   {
@@ -1136,28 +1149,32 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'only_gulags',
     name: 'Archipelago',
     description: 'Build a city with only Gulags.',
-    subtext: 'At this point, who is guarding whom? The guards are also inside. Everyone is inside. This is a metaphor. It is also literally true.',
+    subtext:
+      'At this point, who is guarding whom? The guards are also inside. Everyone is inside. This is a metaphor. It is also literally true.',
     hidden: true,
   },
   {
     id: 'perfect_quota',
     name: 'Exactly As Planned',
     description: 'Complete a quota at exactly 100%.',
-    subtext: 'Not 99%. Not 101%. Exactly 100%. The Plan is perfect. You are perfect. Do not get used to this.',
+    subtext:
+      'Not 99%. Not 101%. Exactly 100%. The Plan is perfect. You are perfect. Do not get used to this.',
     hidden: false,
   },
   {
     id: 'survive_purge',
     name: 'Still Here (For Now)',
     description: 'Survive a personnel optimization event.',
-    subtext: 'You remain. Others did not. Do not ask where they went. Where they went is where they were always going.',
+    subtext:
+      'You remain. Others did not. Do not ask where they went. Where they went is where they were always going.',
     hidden: false,
   },
   {
     id: 'reelected',
     name: 'Unanimous Approval',
     description: 'Win a re-election event with 100%+ of the vote.',
-    subtext: 'Democracy in action. The people have spoken. The people were given one option. The people are wise.',
+    subtext:
+      'Democracy in action. The people have spoken. The people were given one option. The people are wise.',
     hidden: false,
   },
 ];

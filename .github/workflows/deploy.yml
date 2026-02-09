@@ -1,7 +1,10 @@
 name: CD - Deploy to GitHub Pages
 
 on:
-  push:
+  # Only deploy after CI passes
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -18,6 +21,8 @@ jobs:
   build:
     name: Build for GitHub Pages
     runs-on: ubuntu-latest
+    # Only deploy if CI succeeded (skip if CI failed or was cancelled)
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

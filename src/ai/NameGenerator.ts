@@ -585,29 +585,27 @@ const SURNAMES_RAW: readonly SurnameEntry[] = [
   { male: 'Snieckus', female: null },
 
   // ── Satirical / compound / rare ──────────────────────
-  { male: 'Zheleznov', female: 'Zheleznova' },       // "iron"
-  { male: 'Stakhanov', female: 'Stakhanova' },       // the famous overachiever
-  { male: 'Betonov', female: 'Betonova' },           // "concrete"
-  { male: 'Tankevich', female: null },               // "tank"
-  { male: 'Traktorov', female: 'Traktorova' },       // "tractor"
+  { male: 'Zheleznov', female: 'Zheleznova' }, // "iron"
+  { male: 'Stakhanov', female: 'Stakhanova' }, // the famous overachiever
+  { male: 'Betonov', female: 'Betonova' }, // "concrete"
+  { male: 'Tankevich', female: null }, // "tank"
+  { male: 'Traktorov', female: 'Traktorova' }, // "tractor"
   { male: 'Kolkhoznikov', female: 'Kolkhoznikova' }, // "collective farmer"
-  { male: 'Propagandov', female: 'Propagandova' },   // "propaganda"
-  { male: 'Planovoi', female: 'Planovaya' },         // "planned"
-  { male: 'Subbotnikov', female: 'Subbotnikova' },   // "Saturday worker"
-  { male: 'Piatiletkin', female: 'Piatiletlkina' },  // "five-year-plan"
-  { male: 'Ocherednov', female: 'Ocherednova' },     // "queue-related"
-  { male: 'Kvotnikov', female: 'Kvotnikova' },       // "quota"
-  { male: 'Sputnikov', female: 'Sputnikova' },       // "satellite"
-  { male: 'Kosmonautov', female: 'Kosmonautova' },   // "cosmonaut"
+  { male: 'Propagandov', female: 'Propagandova' }, // "propaganda"
+  { male: 'Planovoi', female: 'Planovaya' }, // "planned"
+  { male: 'Subbotnikov', female: 'Subbotnikova' }, // "Saturday worker"
+  { male: 'Piatiletkin', female: 'Piatiletlkina' }, // "five-year-plan"
+  { male: 'Ocherednov', female: 'Ocherednova' }, // "queue-related"
+  { male: 'Kvotnikov', female: 'Kvotnikova' }, // "quota"
+  { male: 'Sputnikov', female: 'Sputnikova' }, // "satellite"
+  { male: 'Kosmonautov', female: 'Kosmonautova' }, // "cosmonaut"
 ] as const;
 
 /** Flat array of male surnames for quick access */
 export const SURNAMES_MALE: readonly string[] = SURNAMES_RAW.map((s) => s.male);
 
 /** Flat array of female surnames for quick access */
-export const SURNAMES_FEMALE: readonly string[] = SURNAMES_RAW.map(
-  (s) => s.female ?? s.male
-);
+export const SURNAMES_FEMALE: readonly string[] = SURNAMES_RAW.map((s) => s.female ?? s.male);
 
 /**
  * Get the gendered form of a surname by index.
@@ -662,7 +660,7 @@ export const TITLES: Readonly<Record<TitleCategory, readonly string[]>> = {
     'Chairman of the State Committee for Prices (Goskomtsen)',
     'Chairman of the State Committee for Labor and Social Questions',
     'Chairman of the State Committee for Standards (Gosstandart)',
-    'Chairman of the People\'s Control Committee',
+    "Chairman of the People's Control Committee",
     'Procurator General of the USSR',
     'Chairman of the Supreme Court of the USSR',
   ],
@@ -723,7 +721,7 @@ export const TITLES: Readonly<Record<TitleCategory, readonly string[]>> = {
     'First Secretary of the {CITY} Komsomol',
     'Director of the {CITY} Collective Farm',
     'Director of the {CITY} Tractor Factory',
-    'Director of the {CITY} People\'s Cultural Palace',
+    "Director of the {CITY} People's Cultural Palace",
     'Chief Architect of {CITY}',
     'Head of the {CITY} Trade Union Council',
     'Director of the {CITY} Bread Factory No. 2',
@@ -746,100 +744,100 @@ export const ALL_TITLES: readonly string[] = Object.values(TITLES).flat();
 
 export const EPITHETS: readonly string[] = [
   // ── Historical references ────────────────────────────
-  'The Corn Enthusiast',               // Khrushchev's maize obsession
-  'The Decorated',                     // Brezhnev's medal collection
-  'The Man of Steel',                  // Stalin's chosen name
-  'The Bald Reformer',                // Gorbachev
-  'The Iron Felix',                    // Dzerzhinsky
-  'The Gray Cardinal',                 // Suslov
-  'The Mustache',                      // Stalin again
-  'The Architect of Perestroika',      // Gorbachev
-  'The Mineralny Secretary',           // Gorbachev's anti-alcohol campaign
+  'The Corn Enthusiast', // Khrushchev's maize obsession
+  'The Decorated', // Brezhnev's medal collection
+  'The Man of Steel', // Stalin's chosen name
+  'The Bald Reformer', // Gorbachev
+  'The Iron Felix', // Dzerzhinsky
+  'The Gray Cardinal', // Suslov
+  'The Mustache', // Stalin again
+  'The Architect of Perestroika', // Gorbachev
+  'The Mineralny Secretary', // Gorbachev's anti-alcohol campaign
 
   // ── Personality / appearance ─────────────────────────
-  'The Invisible',                     // never seen in public
-  'The Unmovable',                     // has been in office forever
-  'The Eternal',                       // same as above, more dramatic
-  'The Whisperer',                     // speaks so quietly nobody hears orders
-  'The Loud One',                      // opposite
-  'The Eyebrow',                       // Brezhnev reference
-  'The Enormous',                      // physically large
-  'The Compact',                       // physically small
-  'The Gray',                          // utterly forgettable
-  'The Beige',                         // even more forgettable
-  'The Squinter',                      // always suspicious
-  'The Nodder',                        // agrees with everything
-  'The Fist',                          // aggressive
-  'The Handshake',                     // diplomatic to a fault
+  'The Invisible', // never seen in public
+  'The Unmovable', // has been in office forever
+  'The Eternal', // same as above, more dramatic
+  'The Whisperer', // speaks so quietly nobody hears orders
+  'The Loud One', // opposite
+  'The Eyebrow', // Brezhnev reference
+  'The Enormous', // physically large
+  'The Compact', // physically small
+  'The Gray', // utterly forgettable
+  'The Beige', // even more forgettable
+  'The Squinter', // always suspicious
+  'The Nodder', // agrees with everything
+  'The Fist', // aggressive
+  'The Handshake', // diplomatic to a fault
 
   // ── Bureaucratic / political ─────────────────────────
-  'The Paperwork',                     // only produces forms
-  'The Rubber Stamp',                  // approves everything
-  'The Filing Cabinet',                // knows where everything is buried
-  'The Five-Year Planner',             // obsessed with quotas
-  'The Quota Crusher',                 // always exceeds targets (on paper)
-  'The Report Writer',                 // produces nothing but reports
-  'The Committee Chairman',            // chairs seventeen committees
-  'The Midnight Signer',               // signs decrees at 3am
-  'The Reclassifier',                  // renames problems instead of solving them
-  'The Downsizer',                     // "optimizes" the workforce
-  'Friend of the People',              // ironic
-  'The People\'s Accountant',          // counts everything, produces nothing
-  'The Theoretician',                  // lots of ideas, no implementation
-  'The Pragmatist',                    // no ideas, somehow everything works
-  'The Dialectician',                  // argues with himself and wins
+  'The Paperwork', // only produces forms
+  'The Rubber Stamp', // approves everything
+  'The Filing Cabinet', // knows where everything is buried
+  'The Five-Year Planner', // obsessed with quotas
+  'The Quota Crusher', // always exceeds targets (on paper)
+  'The Report Writer', // produces nothing but reports
+  'The Committee Chairman', // chairs seventeen committees
+  'The Midnight Signer', // signs decrees at 3am
+  'The Reclassifier', // renames problems instead of solving them
+  'The Downsizer', // "optimizes" the workforce
+  'Friend of the People', // ironic
+  "The People's Accountant", // counts everything, produces nothing
+  'The Theoretician', // lots of ideas, no implementation
+  'The Pragmatist', // no ideas, somehow everything works
+  'The Dialectician', // argues with himself and wins
 
   // ── Competence (satirical) ───────────────────────────
-  'The Adequate',                      // highest praise
-  'The Satisfactory',                  // second-highest praise
-  'The Sufficient',                    // slightly below satisfactory
-  'The Present',                       // physically present, mentally elsewhere
-  'The Punctual',                      // always on time, never useful
-  'The Technically Correct',           // worst kind of correct
-  'The Mostly Harmless',               // Douglas Adams in Soviet bureaucracy
-  'The Regrettably Competent',         // competence is suspicious
-  'The Dangerously Effective',         // effectiveness is even more suspicious
-  'Hero of Bureaucratic Labor',        // award for exceptional paperwork
-  'The Optimized',                     // has been "improved" by the system
+  'The Adequate', // highest praise
+  'The Satisfactory', // second-highest praise
+  'The Sufficient', // slightly below satisfactory
+  'The Present', // physically present, mentally elsewhere
+  'The Punctual', // always on time, never useful
+  'The Technically Correct', // worst kind of correct
+  'The Mostly Harmless', // Douglas Adams in Soviet bureaucracy
+  'The Regrettably Competent', // competence is suspicious
+  'The Dangerously Effective', // effectiveness is even more suspicious
+  'Hero of Bureaucratic Labor', // award for exceptional paperwork
+  'The Optimized', // has been "improved" by the system
   'Three-Time Order of Lenin Recipient', // suspiciously decorated
 
   // ── Ideological ──────────────────────────────────────
-  'The True Believer',                 // genuinely believes propaganda
-  'The Correct Thinker',               // thoughts have been verified
-  'The Orthodox Marxist',              // follows the text exactly
-  'The Revisionist Hunter',            // finds ideological deviation everywhere
-  'The Class Warrior',                 // fights class enemies (real or imagined)
-  'The Internationalist',              // solidarity with all, friends with none
-  'The Anti-Cosmopolitan',             // suspicious of anything foreign
-  'The Volunteer',                     // volunteering was mandatory
+  'The True Believer', // genuinely believes propaganda
+  'The Correct Thinker', // thoughts have been verified
+  'The Orthodox Marxist', // follows the text exactly
+  'The Revisionist Hunter', // finds ideological deviation everywhere
+  'The Class Warrior', // fights class enemies (real or imagined)
+  'The Internationalist', // solidarity with all, friends with none
+  'The Anti-Cosmopolitan', // suspicious of anything foreign
+  'The Volunteer', // volunteering was mandatory
 
   // ── Food / resource themed ───────────────────────────
-  'The Potato Counter',                // agriculture minister
-  'The Bread Distributor',             // controls the bread line
-  'The Vodka Commissar',               // oversees essential fluid supplies
-  'The Turnip Whisperer',              // agricultural mysticism
-  'The Calorie Reducer',               // euphemism for famine management
-  'The Ration Philosopher',            // theorizes about optimal hunger
-  'The Beet Baron',                    // sugar beet magnate
-  'The Cabbage Strategist',            // plans the cabbage harvest like a war
+  'The Potato Counter', // agriculture minister
+  'The Bread Distributor', // controls the bread line
+  'The Vodka Commissar', // oversees essential fluid supplies
+  'The Turnip Whisperer', // agricultural mysticism
+  'The Calorie Reducer', // euphemism for famine management
+  'The Ration Philosopher', // theorizes about optimal hunger
+  'The Beet Baron', // sugar beet magnate
+  'The Cabbage Strategist', // plans the cabbage harvest like a war
 
   // ── Infrastructure themed ────────────────────────────
-  'The Concrete Poet',                 // builds exclusively in concrete
-  'The Pipeline Dreamer',              // projects always in progress
-  'The Dam Builder',                   // one dam; took 30 years
-  'Builder of the Future',             // future never arrives
-  'The Rail Enthusiast',               // trains never run on time
-  'The Electrifier',                   // brought power to 3 villages (briefly)
+  'The Concrete Poet', // builds exclusively in concrete
+  'The Pipeline Dreamer', // projects always in progress
+  'The Dam Builder', // one dam; took 30 years
+  'Builder of the Future', // future never arrives
+  'The Rail Enthusiast', // trains never run on time
+  'The Electrifier', // brought power to 3 villages (briefly)
 
   // ── Paranoia / KGB themed ────────────────────────────
-  'The All-Seeing',                    // KGB surveillance chief
-  'The Listener',                      // wiretap specialist
-  'The File Keeper',                   // knows everyone's secrets
-  'The Night Visitor',                 // KGB house call specialist
-  'The Friendly Interrogator',         // oxymoron
-  'The Shadow',                        // follows people professionally
-  'The Memory Editor',                 // rewrites history
-  'The Unperson Maker',                // removes people from photographs
+  'The All-Seeing', // KGB surveillance chief
+  'The Listener', // wiretap specialist
+  'The File Keeper', // knows everyone's secrets
+  'The Night Visitor', // KGB house call specialist
+  'The Friendly Interrogator', // oxymoron
+  'The Shadow', // follows people professionally
+  'The Memory Editor', // rewrites history
+  'The Unperson Maker', // removes people from photographs
 ] as const;
 
 // ─────────────────────────────────────────────────────────
@@ -987,7 +985,8 @@ export class NameGenerator {
     titleCategory?: keyof typeof TITLES;
     epithet?: string;
   }): GeneratedLeader {
-    const gender = options?.gender ?? ((_rng?.random() ?? Math.random()) < 0.85 ? 'male' : 'female');
+    const gender =
+      options?.gender ?? ((_rng?.random() ?? Math.random()) < 0.85 ? 'male' : 'female');
 
     // Pick components, retry on duplicate
     let givenName: string;
@@ -997,8 +996,7 @@ export class NameGenerator {
     let attempts = 0;
 
     do {
-      givenName =
-        gender === 'male' ? pick(MALE_GIVEN_NAMES) : pick(FEMALE_GIVEN_NAMES);
+      givenName = gender === 'male' ? pick(MALE_GIVEN_NAMES) : pick(FEMALE_GIVEN_NAMES);
 
       const fatherName = pick(PATRONYMIC_FATHER_NAMES);
       patronymic = PATRONYMIC_RULES.generate(fatherName, gender);
@@ -1089,7 +1087,11 @@ export class NameGenerator {
       const leader = this.generate({ titleCategory: 'ministry' });
       // Override with the specific ministry title
       const resolvedTitle = title.replace(/\{CITY\}/g, this.cityName);
-      return { ...leader, title: resolvedTitle, introduction: `${resolvedTitle} ${leader.surname}, "${leader.epithet}"` };
+      return {
+        ...leader,
+        title: resolvedTitle,
+        introduction: `${resolvedTitle} ${leader.surname}, "${leader.epithet}"`,
+      };
     });
   }
 

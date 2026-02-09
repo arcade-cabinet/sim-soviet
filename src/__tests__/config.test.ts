@@ -1,11 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import {
-  BUILDING_TYPES,
-  GRID_SIZE,
-  TILE_WIDTH,
-  TILE_HEIGHT,
-  COLORS,
-} from '../config';
+import { describe, expect, it } from 'vitest';
+import { BUILDING_TYPES, COLORS, GRID_SIZE, TILE_HEIGHT, TILE_WIDTH } from '../config';
 
 describe('config', () => {
   // ── Constants ───────────────────────────────────────────
@@ -40,7 +34,16 @@ describe('config', () => {
 
   describe('BUILDING_TYPES structure', () => {
     it('has all expected building keys', () => {
-      const expectedKeys = ['none', 'road', 'power', 'housing', 'farm', 'distillery', 'gulag', 'bulldoze'];
+      const expectedKeys = [
+        'none',
+        'road',
+        'power',
+        'housing',
+        'farm',
+        'distillery',
+        'gulag',
+        'bulldoze',
+      ];
       for (const key of expectedKeys) {
         expect(BUILDING_TYPES).toHaveProperty(key);
       }

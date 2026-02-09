@@ -343,45 +343,15 @@
       "workers-house-b",
       "workers-house-c"
     ],
-    "government": [
-      "government-hq",
-      "ministry-office",
-      "kgb-office"
-    ],
-    "industry": [
-      "factory-office",
-      "warehouse",
-      "bread-factory",
-      "vodka-distillery"
-    ],
-    "services": [
-      "polyclinic",
-      "school",
-      "post-office",
-      "hospital",
-      "fire-station"
-    ],
-    "military": [
-      "guard-post",
-      "barracks",
-      "gulag-admin"
-    ],
-    "culture": [
-      "workers-club",
-      "cultural-palace"
-    ],
-    "power": [
-      "power-station"
-    ],
-    "agriculture": [
-      "collective-farm-hq"
-    ],
-    "propaganda": [
-      "radio-station"
-    ],
-    "transport": [
-      "train-station"
-    ],
+    "government": ["government-hq", "ministry-office", "kgb-office"],
+    "industry": ["factory-office", "warehouse", "bread-factory", "vodka-distillery"],
+    "services": ["polyclinic", "school", "post-office", "hospital", "fire-station"],
+    "military": ["guard-post", "barracks", "gulag-admin"],
+    "culture": ["workers-club", "cultural-palace"],
+    "power": ["power-station"],
+    "agriculture": ["collective-farm-hq"],
+    "propaganda": ["radio-station"],
+    "transport": ["train-station"],
     "modular": [
       "wall-window",
       "wall-window-sill",
@@ -408,12 +378,7 @@
       "roof-antenna",
       "roof-pipe"
     ],
-    "utility": [
-      "concrete-block"
-    ],
-    "environment": [
-      "fence",
-      "fence-low"
-    ]
+    "utility": ["concrete-block"],
+    "environment": ["fence", "fence-low"]
   }
 }

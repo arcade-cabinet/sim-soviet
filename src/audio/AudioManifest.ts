@@ -17,7 +17,14 @@ export interface AudioAsset {
   source?: string;
   license?: string;
   /** Game context hint for dynamic music selection */
-  mood?: 'triumphant' | 'melancholic' | 'industrial' | 'upbeat' | 'intense' | 'pastoral' | 'patriotic';
+  mood?:
+    | 'triumphant'
+    | 'melancholic'
+    | 'industrial'
+    | 'upbeat'
+    | 'intense'
+    | 'pastoral'
+    | 'patriotic';
 }
 
 const PD = { source: 'marxists.org', license: 'Public Domain' } as const;
@@ -27,7 +34,7 @@ function track(
   url: string,
   description: string,
   mood: AudioAsset['mood'],
-  opts?: { volume?: number; loop?: boolean; preload?: boolean },
+  opts?: { volume?: number; loop?: boolean; preload?: boolean }
 ): AudioAsset {
   return {
     id,
@@ -44,19 +51,39 @@ function track(
 
 export const AUDIO_MANIFEST: AudioAsset[] = [
   // ===== ESSENTIAL MUSIC (preloaded or core rotation) =====
-  track('soviet_anthem_1944', 'soviet_anthem_1944.ogg', '1944 Soviet National Anthem', 'triumphant', { volume: 0.6, loop: false, preload: true }),
-  track('internationale', 'internationale.ogg', 'The Internationale', 'patriotic', { volume: 0.5, preload: true }),
+  track(
+    'soviet_anthem_1944',
+    'soviet_anthem_1944.ogg',
+    '1944 Soviet National Anthem',
+    'triumphant',
+    { volume: 0.6, loop: false, preload: true }
+  ),
+  track('internationale', 'internationale.ogg', 'The Internationale', 'patriotic', {
+    volume: 0.5,
+    preload: true,
+  }),
   track('red_army_march', 'red_army_march.ogg', 'Konarmeiskij March', 'intense', { volume: 0.6 }),
-  track('sacred_war', 'sacred_war.ogg', 'Sacred War (Sviashchennaia Vojna)', 'intense', { volume: 0.65 }),
+  track('sacred_war', 'sacred_war.ogg', 'Sacred War (Sviashchennaia Vojna)', 'intense', {
+    volume: 0.65,
+  }),
   track('tachanka', 'tachanka.ogg', 'Tachanka - Folk-military', 'upbeat', { volume: 0.55 }),
   track('varshavjanka', 'varshavjanka.ogg', "Varshavjanka - Warsaw Worker's Song", 'patriotic'),
   track('katyusha', 'katyusha.ogg', 'Katyusha - Iconic wartime song', 'upbeat', { volume: 0.55 }),
-  track('moskva_majskaia', 'moskva_majskaia.ogg', 'Moscow in May - Optimistic', 'upbeat', { volume: 0.5 }),
+  track('moskva_majskaia', 'moskva_majskaia.ogg', 'Moscow in May - Optimistic', 'upbeat', {
+    volume: 0.5,
+  }),
   track('nash_parovoz', 'nash_parovoz.ogg', 'Our Locomotive - Industrial/trains', 'industrial'),
-  track('dubinushka', 'dubinushka.ogg', 'Dubinushka - Workers labor song', 'industrial', { volume: 0.55 }),
+  track('dubinushka', 'dubinushka.ogg', 'Dubinushka - Workers labor song', 'industrial', {
+    volume: 0.55,
+  }),
 
   // ===== EXTENDED: Military/Patriotic =====
-  track('white_army_black_baron', 'white_army_black_baron.ogg', 'White Army, Black Baron', 'patriotic'),
+  track(
+    'white_army_black_baron',
+    'white_army_black_baron.ogg',
+    'White Army, Black Baron',
+    'patriotic'
+  ),
   track('smelo_my_v_boj', 'smelo_my_v_boj.ogg', 'Boldly Into Battle', 'intense'),
   track('marsh_zashchitnikov', 'marsh_zashchitnikov.ogg', 'March of Moscow Defenders', 'intense'),
   track('esli_zavtra_vojna', 'esli_zavtra_vojna.ogg', 'If Tomorrow Brings War', 'intense'),
@@ -66,9 +93,13 @@ export const AUDIO_MANIFEST: AudioAsset[] = [
   track('my_krasnye_soldaty', 'my_krasnye_soldaty.ogg', 'We the Red Soldiers', 'patriotic'),
 
   // ===== EXTENDED: Melancholic/Atmospheric =====
-  track('v_zemlianke', 'v_zemlianke.ogg', 'In the Blindage - Winter hardship', 'melancholic', { volume: 0.45 }),
+  track('v_zemlianke', 'v_zemlianke.ogg', 'In the Blindage - Winter hardship', 'melancholic', {
+    volume: 0.45,
+  }),
   track('dorogi', 'dorogi.ogg', 'Oh, Roads - Desolation', 'melancholic', { volume: 0.45 }),
-  track('sinij_platochek', 'sinij_platochek.ogg', 'Blue Headkerchief - Nostalgia', 'melancholic', { volume: 0.45 }),
+  track('sinij_platochek', 'sinij_platochek.ogg', 'Blue Headkerchief - Nostalgia', 'melancholic', {
+    volume: 0.45,
+  }),
   track('smuglianka', 'smuglianka.ogg', 'Dark Girl - Lighter moments', 'upbeat'),
 
   // ===== EXTENDED: Youth/Culture =====
@@ -88,32 +119,132 @@ export const AUDIO_MANIFEST: AudioAsset[] = [
   track('raskinulos_more', 'raskinulos_more.ogg', 'The Wide Sea', 'pastoral'),
 
   // ===== REPUBLIC ANTHEMS (for SSR mechanics) =====
-  track('soviet_anthem_1977', 'soviet_anthem_1977.ogg', 'Soviet Anthem - 1977 version', 'triumphant', { loop: false }),
-  track('anthem_armenia', 'anthem_armenia.ogg', 'Armenian SSR Anthem', 'triumphant', { loop: false }),
-  track('anthem_azerbaijan', 'anthem_azerbaijan.ogg', 'Azerbaijan SSR Anthem', 'triumphant', { loop: false }),
-  track('anthem_byelorussia', 'anthem_byelorussia.ogg', 'Byelorussian SSR Anthem', 'triumphant', { loop: false }),
-  track('anthem_kazakhstan', 'anthem_kazakhstan.ogg', 'Kazakh SSR Anthem', 'triumphant', { loop: false }),
-  track('anthem_kyrgyzstan', 'anthem_kyrgyzstan.ogg', 'Kyrgyz SSR Anthem', 'triumphant', { loop: false }),
+  track(
+    'soviet_anthem_1977',
+    'soviet_anthem_1977.ogg',
+    'Soviet Anthem - 1977 version',
+    'triumphant',
+    { loop: false }
+  ),
+  track('anthem_armenia', 'anthem_armenia.ogg', 'Armenian SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
+  track('anthem_azerbaijan', 'anthem_azerbaijan.ogg', 'Azerbaijan SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
+  track('anthem_byelorussia', 'anthem_byelorussia.ogg', 'Byelorussian SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
+  track('anthem_kazakhstan', 'anthem_kazakhstan.ogg', 'Kazakh SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
+  track('anthem_kyrgyzstan', 'anthem_kyrgyzstan.ogg', 'Kyrgyz SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
   track('anthem_latvia', 'anthem_latvia.ogg', 'Latvian SSR Anthem', 'triumphant', { loop: false }),
-  track('anthem_lithuania', 'anthem_lithuania.ogg', 'Lithuanian SSR Anthem', 'triumphant', { loop: false }),
-  track('anthem_moldova', 'anthem_moldova.ogg', 'Moldavian SSR Anthem', 'triumphant', { loop: false }),
-  track('anthem_tajikistan', 'anthem_tajikistan.ogg', 'Tajik SSR Anthem', 'triumphant', { loop: false }),
-  track('anthem_turkmenistan', 'anthem_turkmenistan.ogg', 'Turkmen SSR Anthem', 'triumphant', { loop: false }),
-  track('anthem_ukraine', 'anthem_ukraine.ogg', 'Ukrainian SSR Anthem', 'triumphant', { loop: false }),
-  track('anthem_uzbekistan', 'anthem_uzbekistan.ogg', 'Uzbek SSR Anthem', 'triumphant', { loop: false }),
+  track('anthem_lithuania', 'anthem_lithuania.ogg', 'Lithuanian SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
+  track('anthem_moldova', 'anthem_moldova.ogg', 'Moldavian SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
+  track('anthem_tajikistan', 'anthem_tajikistan.ogg', 'Tajik SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
+  track('anthem_turkmenistan', 'anthem_turkmenistan.ogg', 'Turkmen SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
+  track('anthem_ukraine', 'anthem_ukraine.ogg', 'Ukrainian SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
+  track('anthem_uzbekistan', 'anthem_uzbekistan.ogg', 'Uzbek SSR Anthem', 'triumphant', {
+    loop: false,
+  }),
 
   // ===== SOUND EFFECTS (Tone.js procedural) =====
-  { id: 'build', category: 'sfx', url: 'procedural', volume: 0.7, loop: false, preload: true, description: 'Building placement (procedural)' },
-  { id: 'destroy', category: 'sfx', url: 'procedural', volume: 0.8, loop: false, preload: true, description: 'Demolition (procedural)' },
-  { id: 'notification', category: 'sfx', url: 'procedural', volume: 0.6, loop: false, preload: true, description: 'UI notification (procedural)' },
-  { id: 'coin', category: 'sfx', url: 'procedural', volume: 0.5, loop: false, preload: true, description: 'Money received (procedural)' },
-  { id: 'siren', category: 'sfx', url: 'procedural', volume: 0.7, loop: false, preload: true, description: 'KGB/event siren (procedural)' },
-  { id: 'queue_shuffle', category: 'sfx', url: 'procedural', volume: 0.4, loop: false, preload: false, description: 'Bread line shuffling (procedural)' },
+  {
+    id: 'build',
+    category: 'sfx',
+    url: 'procedural',
+    volume: 0.7,
+    loop: false,
+    preload: true,
+    description: 'Building placement (procedural)',
+  },
+  {
+    id: 'destroy',
+    category: 'sfx',
+    url: 'procedural',
+    volume: 0.8,
+    loop: false,
+    preload: true,
+    description: 'Demolition (procedural)',
+  },
+  {
+    id: 'notification',
+    category: 'sfx',
+    url: 'procedural',
+    volume: 0.6,
+    loop: false,
+    preload: true,
+    description: 'UI notification (procedural)',
+  },
+  {
+    id: 'coin',
+    category: 'sfx',
+    url: 'procedural',
+    volume: 0.5,
+    loop: false,
+    preload: true,
+    description: 'Money received (procedural)',
+  },
+  {
+    id: 'siren',
+    category: 'sfx',
+    url: 'procedural',
+    volume: 0.7,
+    loop: false,
+    preload: true,
+    description: 'KGB/event siren (procedural)',
+  },
+  {
+    id: 'queue_shuffle',
+    category: 'sfx',
+    url: 'procedural',
+    volume: 0.4,
+    loop: false,
+    preload: false,
+    description: 'Bread line shuffling (procedural)',
+  },
 
   // ===== AMBIENT (Tone.js procedural) =====
-  { id: 'wind', category: 'ambient', url: 'procedural', volume: 0.3, loop: true, preload: false, description: 'Wind ambience (procedural)' },
-  { id: 'machinery', category: 'ambient', url: 'procedural', volume: 0.3, loop: true, preload: false, description: 'Industrial machinery (procedural)' },
-  { id: 'radio_static', category: 'ambient', url: 'procedural', volume: 0.15, loop: true, preload: false, description: 'Propaganda radio static (procedural)' },
+  {
+    id: 'wind',
+    category: 'ambient',
+    url: 'procedural',
+    volume: 0.3,
+    loop: true,
+    preload: false,
+    description: 'Wind ambience (procedural)',
+  },
+  {
+    id: 'machinery',
+    category: 'ambient',
+    url: 'procedural',
+    volume: 0.3,
+    loop: true,
+    preload: false,
+    description: 'Industrial machinery (procedural)',
+  },
+  {
+    id: 'radio_static',
+    category: 'ambient',
+    url: 'procedural',
+    volume: 0.15,
+    loop: true,
+    preload: false,
+    description: 'Propaganda radio static (procedural)',
+  },
 ];
 
 // Helper to get assets by category
@@ -138,9 +269,16 @@ export function getPreloadAssets(): AudioAsset[] {
 
 // Gameplay rotation — shuffled during play
 export const GAMEPLAY_PLAYLIST = [
-  'internationale', 'varshavjanka', 'red_army_march', 'tachanka',
-  'katyusha', 'moskva_majskaia', 'nash_parovoz', 'dubinushka',
-  'smuglianka', 'glavnoe_rebiata',
+  'internationale',
+  'varshavjanka',
+  'red_army_march',
+  'tachanka',
+  'katyusha',
+  'moskva_majskaia',
+  'nash_parovoz',
+  'dubinushka',
+  'smuglianka',
+  'glavnoe_rebiata',
 ];
 
 // Context-specific music — mapped to game states/events

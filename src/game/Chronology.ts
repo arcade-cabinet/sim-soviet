@@ -234,8 +234,19 @@ export function getDayPhase(hour: number, daylightHours: number): DayPhase {
 // ─────────────────────────────────────────────────────────
 
 const MONTH_NAMES = [
-  '', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+  '',
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
 ] as const;
 
 /** Formats a GameDate for display, e.g. "3 MAR 1980". */

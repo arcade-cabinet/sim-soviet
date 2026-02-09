@@ -36,8 +36,7 @@ export const buildingsLogic = world.with('position', 'building');
  * the powered / unpowered buckets.
  */
 export const poweredBuildings = buildingsLogic.where(
-  (entity): entity is With<Entity, 'position' | 'building'> =>
-    entity.building.powered === true,
+  (entity): entity is With<Entity, 'position' | 'building'> => entity.building.powered === true
 );
 
 /**
@@ -46,8 +45,7 @@ export const poweredBuildings = buildingsLogic.where(
  * Same reindex caveat as `poweredBuildings`.
  */
 export const unpoweredBuildings = buildingsLogic.where(
-  (entity): entity is With<Entity, 'position' | 'building'> =>
-    entity.building.powered === false,
+  (entity): entity is With<Entity, 'position' | 'building'> => entity.building.powered === false
 );
 
 /**
@@ -55,16 +53,14 @@ export const unpoweredBuildings = buildingsLogic.where(
  * These generate food or vodka each simulation tick.
  */
 export const producers = buildingsLogic.where(
-  (entity): entity is With<Entity, 'position' | 'building'> =>
-    entity.building.produces != null,
+  (entity): entity is With<Entity, 'position' | 'building'> => entity.building.produces != null
 );
 
 /**
  * Housing buildings — buildings with positive housing capacity.
  */
 export const housing = buildingsLogic.where(
-  (entity): entity is With<Entity, 'position' | 'building'> =>
-    entity.building.housingCap > 0,
+  (entity): entity is With<Entity, 'position' | 'building'> => entity.building.housingCap > 0
 );
 
 /**
@@ -83,16 +79,14 @@ export const citizens = world.with('position', 'citizen');
  * Citizens that have been assigned to a workplace.
  */
 export const assignedCitizens = citizens.where(
-  (entity): entity is With<Entity, 'position' | 'citizen'> =>
-    entity.citizen.assignment != null,
+  (entity): entity is With<Entity, 'position' | 'citizen'> => entity.citizen.assignment != null
 );
 
 /**
  * Citizens that have been assigned housing.
  */
 export const housedCitizens = citizens.where(
-  (entity): entity is With<Entity, 'position' | 'citizen'> =>
-    entity.citizen.home != null,
+  (entity): entity is With<Entity, 'position' | 'citizen'> => entity.citizen.home != null
 );
 
 // ─── Tile Archetypes ─────────────────────────────────────────────────────────

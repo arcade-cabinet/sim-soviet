@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ALL_EVENT_TEMPLATES, EventSystem, type GameEvent } from '../game/EventSystem';
 import { GameState } from '../game/GameState';
-import { EventSystem, ALL_EVENT_TEMPLATES, type GameEvent } from '../game/EventSystem';
 
 describe('EventSystem', () => {
   let gs: GameState;
