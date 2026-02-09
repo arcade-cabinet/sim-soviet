@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GameRng } from '../game/SeedSystem';
-import { generateTerrain, getTerrainSpriteNames } from '../game/TerrainGenerator';
+import { BORDER_DEPTH, generateTerrain, getTerrainSpriteNames } from '../game/TerrainGenerator';
 
 describe('TerrainGenerator', () => {
   const GRID = 30;
@@ -44,7 +44,6 @@ describe('TerrainGenerator', () => {
 
     it('no features in the interior (beyond border depth)', () => {
       const features = generateTerrain(GRID, new GameRng('interior'));
-      const BORDER_DEPTH = 3;
       for (const f of features) {
         const distFromEdge = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
         expect(distFromEdge).toBeLessThan(BORDER_DEPTH);

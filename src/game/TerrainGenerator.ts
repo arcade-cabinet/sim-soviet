@@ -25,7 +25,7 @@ const TERRAIN_TYPES = [
 ] as const;
 
 /** How many cells deep the border ring extends. */
-const BORDER_DEPTH = 3;
+export const BORDER_DEPTH = 3;
 
 /** Probability of placing a feature on an eligible border cell. */
 const FILL_CHANCE = 0.35;

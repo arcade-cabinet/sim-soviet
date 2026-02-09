@@ -34,6 +34,6 @@ export function populationSystem(rng?: GameRng, growthMult = 1.0): void {
   // Grow population if there is room and food
   if (store.resources.population < housingCap && store.resources.food > 10) {
     const baseGrowth = rng ? rng.int(0, 2) : Math.floor(Math.random() * 3);
-    store.resources.population += Math.round(baseGrowth * growthMult);
+    store.resources.population += Math.round(baseGrowth * Math.max(0, growthMult));
   }
 }

@@ -55,6 +55,7 @@ export class FeatureTileRenderer {
       }
     } catch (err) {
       console.warn('Failed to load terrain manifest:', err);
+      this.manifestLoaded = true; // Prevent repeated fetch attempts
       // Fallback to center-based positioning
     }
   }
