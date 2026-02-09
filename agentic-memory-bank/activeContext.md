@@ -2,64 +2,54 @@
 
 ## Current Branch
 
-`copilot/add-github-actions-setup` — CI/CD setup branch with GitHub Actions workflows + major systems overhaul.
+`copilot/add-github-actions-setup` — PR #1: CI/CD + major systems overhaul + Canvas 2D migration.
 
-## CRITICAL: Architecture Pivot — BabylonJS → Canvas 2D + Sprite Baking
+## Architecture: Canvas 2D + Sprite Baking (COMPLETE)
 
-**Decision made**: The BabylonJS/Reactylon 3D rendering approach is being replaced with a **Canvas 2D** renderer using **pre-baked isometric sprites** from the existing GLB models. This matches the SimCity 2000 aesthetic the project is targeting.
+BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with **pre-baked isometric sprites** from GLB models, matching the SimCity 2000 aesthetic.
 
-**Rationale**: Copilot originally converted the POC (pure Canvas 2D isometric) into a full 3D BabylonJS app, which was:
-- Overly complex for a 2D isometric city-builder
-- Missing the classic SC2000 "pieces on a gameboard" feel
-- Causing layout/rendering bugs (black viewport, wrong camera mode, 3D HUD elements)
+**Rendering pipeline**: `Canvas2DRenderer.ts` → 6 layers (ground, grid, buildings, hover, preview, particles) drawn via `CanvasRenderingContext2D`. Camera pan/zoom via `Camera2D.ts`. Sprites loaded from `app/public/sprites/soviet/manifest.json` (31 building PNGs + 138 hex tiles).
 
-**The new pipeline**:
-1. `scripts/sovietize_kenney.py` — Stage 1: Kenney GLBs → Soviet-retextured GLBs (DONE)
-2. `scripts/render_sprites.py` — Stage 2: Soviet GLBs → Isometric sprite PNGs (WRITTEN, needs Blender run)
-3. New Canvas 2D renderer — replaces BabylonJS/Reactylon (TODO)
-
-**55 GLB models** already exist in `public/models/soviet/` (31 complete buildings + 24 modular pieces).
+**Important**: Vite root is `./app`, so static assets must be in `app/public/` (not project-root `public/`).
 
 ## Current Work Focus
 
-### Asset Pipeline Completion
-- [x] Stage 1: `sovietize_kenney.py` — retexture Kenney models with Soviet concrete
-- [x] Stage 2: `render_sprites.py` — render GLBs as 2:1 dimetric isometric sprites
-- [ ] Run Stage 2 via `blender --background --python scripts/render_sprites.py`
-- [ ] Replace BabylonJS rendering with Canvas 2D using baked sprites
+### PR #1 Finalization
+- [x] Canvas 2D migration complete
+- [x] Sprite rendering verified (building placement + sprites work)
+- [x] CSS layout fix (#root flex chain for canvas height)
+- [x] All 795 unit tests passing
+- [x] CI workflows: Copilot Setup Steps, Quality Checks, Mobile CI — all green
+- [x] CodeRabbit review comments addressed
+- [ ] Wait for final CI run to go green
+- [ ] Merge PR to main
+- [ ] Verify GitHub Pages deployment
 
-### Systems Overhaul (partially complete)
+### Systems Overhaul Status
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 1 | Seeded Randomness (SeedSystem + GameRng) | **COMPLETE** |
-| 2 | Chronology data layer (types, seasons, weather) | **Data layer written, not yet integrated** |
+| 1 | Seeded RNG | **COMPLETE** |
+| 2 | Chronology data layer | Written, not integrated |
 | 3 | Chronology engine integration | Pending |
-| 4 | Chronology rendering (day/night, snow, seasonal) | Pending — will need rethink for Canvas 2D |
-| 5 | sql.js persistence layer | Pending |
-| 6 | Main menu + difficulty system | Pending |
+| 4 | Chronology rendering | Ready (Canvas 2D supports it) |
+| 5 | sql.js persistence | Schema written, not integrated |
+| 6 | Main menu + difficulty | Pending |
+| Canvas 2D | Migration from BabylonJS | **COMPLETE** |
 
 ## Active Decisions
 
-- **Canvas 2D over BabylonJS**: Pre-baked sprites on 2D canvas, matching POC approach
-- **Sprite baking via Blender**: Orthographic camera at 60°X/45°Z (2:1 dimetric), Cycles renderer
-- **Layout vision**: Concrete texture sidebars framing the tilted game view, top HUD bar, bottom info/dialog bar
-- **Dual state**: Both `GameState` and ECS exist; ECS not yet driving SimulationEngine
+- **Canvas 2D over BabylonJS**: Pre-baked sprites on 2D canvas
+- **Sprite baking via Blender**: Orthographic camera at 60X/45Z (2:1 dimetric), Cycles renderer
+- **Dual state**: Both ECS (Miniplex) and GameState exist; ECS not yet driving SimulationEngine
 - **Module-level RNG pattern**: `_rng` set by constructors, avoids param threading
-- **Chronology model**: 1 tick = 1s, 3 ticks/day, 10 days/month (dekada), 360 ticks/year ≈ 6 min
+- **Chronology model**: 1 tick = 1s, 3 ticks/day, 10 days/month (dekada), 360 ticks/year
 
-## Next Steps
+## Key Gotchas
 
-1. **Run sprite pipeline** — `pnpm pipeline:sprites` (requires Blender installed)
-2. **Build Canvas 2D renderer** — Replace BabylonJS with `<canvas>` 2D context, sprite drawing, painter's algorithm
-3. **Integrate chronology** — Wire ChronologySystem into SimulationEngine
-4. **Frame layout** — Concrete texture sidebars, proper HUD bars (like the POC but fancier)
-
-## Important Patterns & Preferences
-
-- Satirical tone in ALL player-facing text
-- Soviet brutalist aesthetic — grays, reds, gold accents, CRT effects
-- Touch-first design — all interactions must work on mobile
-- `notifyStateChange()` must be called after any `GameState` mutation
-- Miniplex predicate archetypes require `world.reindex(entity)` after mutations
-- `_rng` module-level pattern for seeded randomness across all systems
+- `notifyStateChange()` MUST be called after any `GameState` mutation
+- Miniplex predicate archetypes require `world.reindex(entity)` after mutation
+- Vite root is `./app` — static assets go in `app/public/`, NOT `public/`
+- Audio files ~100MB, need `pnpm download:audio` on fresh clone
+- DPR-aware canvas: `canvas.width = w*dpr; ctx.setTransform(dpr,0,0,dpr,0,0)`
+- Sprite anchor: `drawX = screenX - anchorX`, `drawY = screenY + TILE_HEIGHT/2 - anchorY`

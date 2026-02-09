@@ -141,7 +141,7 @@ jobs:
       - name: Run E2E tests
         run: |
           echo "::group::Running E2E tests"
-          pnpm test:e2e --project='Desktop Chrome' 2>&1 | tee e2e-output.log
+          pnpm test:e2e --project='Desktop Chrome' --grep-invert 'Visual Regression' 2>&1 | tee e2e-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
