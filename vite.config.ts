@@ -18,12 +18,6 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src'),
       '@app': resolve(__dirname, './app'),
-      // Reactylon v3.5 imports XR modules from BabylonJS v8 that don't exist in v7.
-      // Stub them until we upgrade or need XR.
-      '@babylonjs/core/XR/motionController/webXROculusHandController.js': resolve(
-        __dirname,
-        'src/stubs/empty.ts',
-      ),
     },
   },
 });
