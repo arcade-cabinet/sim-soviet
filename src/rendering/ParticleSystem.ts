@@ -11,6 +11,12 @@ export class ParticleSystem {
   constructor(private scene: Scene) {}
 
   public createSnowEffect(): void {
+    // Dispose existing snow system before creating a new one
+    if (this.snowSystem) {
+      this.snowSystem.dispose();
+      this.snowSystem = null;
+    }
+
     // Create snow particle system
     this.snowSystem = new BabylonParticleSystem('snow', 1000, this.scene);
 
