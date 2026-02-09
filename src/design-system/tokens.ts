@@ -43,29 +43,29 @@ export const colors = {
 } as const;
 
 export const spacing = {
-  xs: '0.25rem',   // 4px
-  sm: '0.5rem',    // 8px
-  md: '1rem',      // 16px
-  lg: '1.5rem',    // 24px
-  xl: '2rem',      // 32px
-  xxl: '3rem',     // 48px
+  xs: '0.25rem', // 4px
+  sm: '0.5rem', // 8px
+  md: '1rem', // 16px
+  lg: '1.5rem', // 24px
+  xl: '2rem', // 32px
+  xxl: '3rem', // 48px
 } as const;
 
 export const typography = {
   fontFamily: {
     retro: "'VT323', monospace",
     mono: "'Courier New', 'Courier Prime', monospace",
-    system: "system-ui, -apple-system, sans-serif",
+    system: 'system-ui, -apple-system, sans-serif',
   },
   fontSize: {
-    xs: '0.75rem',   // 12px
-    sm: '0.875rem',  // 14px
-    base: '1rem',    // 16px
-    lg: '1.125rem',  // 18px
-    xl: '1.25rem',   // 20px
+    xs: '0.75rem', // 12px
+    sm: '0.875rem', // 14px
+    base: '1rem', // 16px
+    lg: '1.125rem', // 18px
+    xl: '1.25rem', // 20px
     '2xl': '1.5rem', // 24px
     '3xl': '1.875rem', // 30px
-    '4xl': '2.25rem',  // 36px
+    '4xl': '2.25rem', // 36px
   },
   fontWeight: {
     normal: '400',
@@ -81,9 +81,9 @@ export const typography = {
 
 export const borderRadius = {
   none: '0',
-  sm: '0.125rem',  // 2px
-  md: '0.25rem',   // 4px
-  lg: '0.5rem',    // 8px
+  sm: '0.125rem', // 2px
+  md: '0.25rem', // 4px
+  lg: '0.5rem', // 8px
   full: '9999px',
 } as const;
 

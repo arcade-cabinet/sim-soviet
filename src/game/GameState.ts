@@ -24,6 +24,7 @@ export interface SnowParticle {
 }
 
 export class GameState {
+  public seed = '';
   public money = 2000;
   public pop = 0;
   public food = 200;

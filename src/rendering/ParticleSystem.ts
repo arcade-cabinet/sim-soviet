@@ -1,8 +1,8 @@
-import { Scene } from '@babylonjs/core/scene';
-import { ParticleSystem as BabylonParticleSystem } from '@babylonjs/core/Particles/particleSystem';
 import { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import { Color4 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { ParticleSystem as BabylonParticleSystem } from '@babylonjs/core/Particles/particleSystem';
+import type { Scene } from '@babylonjs/core/scene';
 
 export class ParticleSystem {
   private snowSystem: BabylonParticleSystem | null = null;

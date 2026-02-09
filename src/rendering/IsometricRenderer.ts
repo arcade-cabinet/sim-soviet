@@ -1,12 +1,12 @@
-import { Scene } from '@babylonjs/core/scene';
-import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
-import { Mesh } from '@babylonjs/core/Meshes/mesh';
-import anime from 'animejs';
-import { GameState } from '../game/GameState';
-import { TILE_WIDTH, TILE_HEIGHT, GRID_SIZE, COLORS, BUILDING_TYPES } from '../config';
+import type { Mesh } from '@babylonjs/core/Meshes/mesh';
+import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
+import type { Scene } from '@babylonjs/core/scene';
+import { animate } from 'animejs/animation';
+import { BUILDING_TYPES, COLORS, GRID_SIZE, TILE_HEIGHT, TILE_WIDTH } from '../config';
+import type { GameState } from '../game/GameState';
 
 export class IsometricRenderer {
   private highlightMesh: Mesh | null = null;
@@ -68,8 +68,6 @@ export class IsometricRenderer {
   }
 
   private createGrid(): void {
-    const offset = (GRID_SIZE * TILE_WIDTH) / 2;
-
     for (let y = 0; y < GRID_SIZE; y++) {
       for (let x = 0; x < GRID_SIZE; x++) {
         const cell = this.gameState.getCell(x, y);
@@ -92,7 +90,6 @@ export class IsometricRenderer {
   }
 
   public gridToWorld(gridX: number, gridY: number, gridZ: number): Vector3 {
-    const offset = (GRID_SIZE * TILE_WIDTH) / 2;
     const x = (gridX - gridY) * (TILE_WIDTH / 2);
     const z = (gridX + gridY) * (TILE_HEIGHT / 2);
     const y = gridZ * 2;
@@ -176,17 +173,17 @@ export class IsometricRenderer {
 
       const worldPos = this.gridToWorld(gridX, gridY, 0);
       building.position = new Vector3(worldPos.x, height / 2 + 0.1, worldPos.z);
-      building.material = this.materials.get(materialName) ?? this.materials.get('concrete') ?? null;
+      building.material =
+        this.materials.get(materialName) ?? this.materials.get('concrete') ?? null;
 
       // Animate building appearance
       building.scaling = new Vector3(0.1, 0.1, 0.1);
-      anime({
-        targets: building.scaling,
+      animate(building.scaling, {
         x: 1,
         y: 1,
         z: 1,
         duration: 300,
-        easing: 'easeOutBack',
+        ease: 'outBack',
       });
 
       const buildingObj = this.gameState.getBuildingAt(gridX, gridY);
@@ -202,14 +199,13 @@ export class IsometricRenderer {
 
     const building = this.gameState.getBuildingAt(gridX, gridY);
     if (building?.mesh) {
-      anime({
-        targets: building.mesh.scaling,
+      animate(building.mesh.scaling, {
         x: 0,
         y: 0,
         z: 0,
         duration: 200,
-        easing: 'easeInBack',
-        complete: () => {
+        ease: 'inBack',
+        onComplete: () => {
           if (building.mesh) {
             building.mesh.dispose();
           }

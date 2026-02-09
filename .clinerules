@@ -1,0 +1,97 @@
+# Agentic Memory Bank
+
+This project uses an agentic memory bank system adapted from the Cline Memory Bank methodology.
+All AI coding agents (Claude Code, Cline, Cursor, Copilot, etc.) operating in this repository
+MUST follow these rules to maintain persistent project context across sessions.
+
+## Memory Bank Location
+
+All memory bank files live in `agentic-memory-bank/` at the project root.
+
+## Memory Bank Structure
+
+Files build upon each other in a clear hierarchy:
+
+```mermaid
+flowchart TD
+  PB[projectbrief.md] --> PC[productContext.md]
+  PB --> SP[systemPatterns.md]
+  PB --> TC[techContext.md]
+
+  PC --> AC[activeContext.md]
+  SP --> AC
+  TC --> AC
+
+  AC --> P[progress.md]
+```
+
+### Core Files (Required)
+1. `projectbrief.md` — Foundation document defining core requirements, scope, and goals
+2. `productContext.md` — Why the project exists, what problems it solves, UX goals
+3. `systemPatterns.md` — Architecture, design patterns, component relationships, critical paths
+4. `techContext.md` — Technologies, dev setup, constraints, dependencies, tooling
+5. `activeContext.md` — Current work focus, recent changes, next steps, active decisions
+6. `progress.md` — What works, what's left, current status, known issues, decision evolution
+
+### Additional Context
+Create additional files in `agentic-memory-bank/` when they help organize complex topics:
+- Feature specifications
+- Integration details
+- API documentation
+- Testing strategies
+- Deployment procedures
+
+## Session Protocol
+
+### At Session Start (MANDATORY)
+Every agent session MUST begin by reading ALL memory bank files in dependency order:
+1. `projectbrief.md` (foundation)
+2. `productContext.md`, `systemPatterns.md`, `techContext.md` (context layers)
+3. `activeContext.md` (working state)
+4. `progress.md` (status)
+
+This is not optional. The memory bank is the only mechanism for understanding project
+context after a session reset.
+
+### Plan Mode
+When planning work:
+1. Read all memory bank files
+2. Verify files are complete and current
+3. Develop strategy based on documented context
+4. Present approach before executing
+
+### Act Mode
+When executing work:
+1. Check memory bank for current context
+2. Execute the task
+3. Document changes in relevant memory bank files
+4. Update `activeContext.md` and `progress.md`
+
+## When to Update
+
+Memory bank updates MUST occur when:
+1. Discovering new project patterns or architectural insights
+2. After implementing significant changes
+3. When explicitly requested ("update memory bank")
+4. When context needs clarification or correction
+5. At the end of any substantial work session
+
+When triggered by "update memory bank", the agent MUST review EVERY file, even if some
+don't need changes. Focus especially on `activeContext.md` and `progress.md`.
+
+## Update Process
+
+```mermaid
+flowchart TD
+  Start[Update Triggered] --> P1[Review ALL Files]
+  P1 --> P2[Document Current State]
+  P2 --> P3[Clarify Next Steps]
+  P3 --> P4[Record Insights & Patterns]
+  P4 --> Done[Update Complete]
+```
+
+## Critical Rule
+
+After every session reset, any agent begins completely fresh. The memory bank is its only
+link to previous work. It must be maintained with precision and clarity — agent effectiveness
+depends entirely on its accuracy.

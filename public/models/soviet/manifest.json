@@ -1,0 +1,419 @@
+{
+  "version": "1.0.0",
+  "generator": "sovietize_kenney.py",
+  "assets": {
+    "apartment-tower-a": {
+      "file": "models/soviet/apartment-tower-a.glb",
+      "source": "building-sample-tower-a.glb",
+      "role": "housing",
+      "texture": "Concrete022"
+    },
+    "apartment-tower-b": {
+      "file": "models/soviet/apartment-tower-b.glb",
+      "source": "building-sample-tower-b.glb",
+      "role": "housing",
+      "texture": "Concrete022"
+    },
+    "apartment-tower-c": {
+      "file": "models/soviet/apartment-tower-c.glb",
+      "source": "building-sample-tower-c.glb",
+      "role": "housing",
+      "texture": "Concrete015"
+    },
+    "apartment-tower-d": {
+      "file": "models/soviet/apartment-tower-d.glb",
+      "source": "building-sample-tower-d.glb",
+      "role": "housing",
+      "texture": "Concrete022"
+    },
+    "workers-house-a": {
+      "file": "models/soviet/workers-house-a.glb",
+      "source": "building-sample-house-a.glb",
+      "role": "housing",
+      "texture": "Concrete022"
+    },
+    "workers-house-b": {
+      "file": "models/soviet/workers-house-b.glb",
+      "source": "building-sample-house-b.glb",
+      "role": "housing",
+      "texture": "Concrete022"
+    },
+    "workers-house-c": {
+      "file": "models/soviet/workers-house-c.glb",
+      "source": "building-sample-house-c.glb",
+      "role": "housing",
+      "texture": "Concrete015"
+    },
+    "concrete-block": {
+      "file": "models/soviet/concrete-block.glb",
+      "source": "building-block.glb",
+      "role": "utility",
+      "texture": "Concrete028"
+    },
+    "wall-window": {
+      "file": "models/soviet/wall-window.glb",
+      "source": "building-window.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-window-sill": {
+      "file": "models/soviet/wall-window-sill.glb",
+      "source": "building-window-sill.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-window-wide": {
+      "file": "models/soviet/wall-window-wide.glb",
+      "source": "building-window-wide.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-window-wide-sill": {
+      "file": "models/soviet/wall-window-wide-sill.glb",
+      "source": "building-window-wide-sill.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-balcony": {
+      "file": "models/soviet/wall-balcony.glb",
+      "source": "building-window-balcony.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-windows": {
+      "file": "models/soviet/wall-windows.glb",
+      "source": "building-windows.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-windows-sills": {
+      "file": "models/soviet/wall-windows-sills.glb",
+      "source": "building-windows-sills.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-door": {
+      "file": "models/soviet/wall-door.glb",
+      "source": "building-door.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-door-window": {
+      "file": "models/soviet/wall-door-window.glb",
+      "source": "building-door-window.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-corner": {
+      "file": "models/soviet/wall-corner.glb",
+      "source": "building-corner.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-corner-window": {
+      "file": "models/soviet/wall-corner-window.glb",
+      "source": "building-corner-window.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-corner-bottom": {
+      "file": "models/soviet/wall-corner-bottom.glb",
+      "source": "building-corner-bottom.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "wall-corner-top": {
+      "file": "models/soviet/wall-corner-top.glb",
+      "source": "building-corner-top.glb",
+      "role": "modular",
+      "texture": "Concrete022"
+    },
+    "steps-wide": {
+      "file": "models/soviet/steps-wide.glb",
+      "source": "building-steps-wide.glb",
+      "role": "modular",
+      "texture": "Concrete015"
+    },
+    "steps-narrow": {
+      "file": "models/soviet/steps-narrow.glb",
+      "source": "building-steps-narrow.glb",
+      "role": "modular",
+      "texture": "Concrete015"
+    },
+    "roof-flat": {
+      "file": "models/soviet/roof-flat.glb",
+      "source": "roof-flat-center.glb",
+      "role": "modular",
+      "texture": "Concrete028"
+    },
+    "roof-border-corner": {
+      "file": "models/soviet/roof-border-corner.glb",
+      "source": "roof-flat-border-corner.glb",
+      "role": "modular",
+      "texture": "Concrete028"
+    },
+    "roof-border-straight": {
+      "file": "models/soviet/roof-border-straight.glb",
+      "source": "roof-flat-border-straight.glb",
+      "role": "modular",
+      "texture": "Concrete028"
+    },
+    "roof-border-side": {
+      "file": "models/soviet/roof-border-side.glb",
+      "source": "roof-flat-border-side.glb",
+      "role": "modular",
+      "texture": "Concrete028"
+    },
+    "roof-top": {
+      "file": "models/soviet/roof-top.glb",
+      "source": "roof-flat-top.glb",
+      "role": "modular",
+      "texture": "Concrete028"
+    },
+    "roof-vent-a": {
+      "file": "models/soviet/roof-vent-a.glb",
+      "source": "roof-flat-detail-a.glb",
+      "role": "modular",
+      "texture": "Concrete028"
+    },
+    "roof-vent-b": {
+      "file": "models/soviet/roof-vent-b.glb",
+      "source": "roof-flat-detail-b.glb",
+      "role": "modular",
+      "texture": "Concrete028"
+    },
+    "roof-antenna": {
+      "file": "models/soviet/roof-antenna.glb",
+      "source": "roof-flat-detail-c.glb",
+      "role": "modular",
+      "texture": "Concrete028"
+    },
+    "roof-pipe": {
+      "file": "models/soviet/roof-pipe.glb",
+      "source": "roof-flat-detail-d.glb",
+      "role": "modular",
+      "texture": "Concrete028"
+    },
+    "government-hq": {
+      "file": "models/soviet/government-hq.glb",
+      "source": "building-type-a.glb",
+      "role": "government",
+      "texture": "Concrete026"
+    },
+    "ministry-office": {
+      "file": "models/soviet/ministry-office.glb",
+      "source": "building-type-b.glb",
+      "role": "government",
+      "texture": "Concrete026"
+    },
+    "factory-office": {
+      "file": "models/soviet/factory-office.glb",
+      "source": "building-type-c.glb",
+      "role": "industry",
+      "texture": "Concrete024"
+    },
+    "workers-club": {
+      "file": "models/soviet/workers-club.glb",
+      "source": "building-type-d.glb",
+      "role": "culture",
+      "texture": "Concrete015"
+    },
+    "polyclinic": {
+      "file": "models/soviet/polyclinic.glb",
+      "source": "building-type-e.glb",
+      "role": "services",
+      "texture": "Concrete015"
+    },
+    "school": {
+      "file": "models/soviet/school.glb",
+      "source": "building-type-f.glb",
+      "role": "services",
+      "texture": "Concrete015"
+    },
+    "power-station": {
+      "file": "models/soviet/power-station.glb",
+      "source": "building-type-g.glb",
+      "role": "power",
+      "texture": "Concrete024"
+    },
+    "warehouse": {
+      "file": "models/soviet/warehouse.glb",
+      "source": "building-type-h.glb",
+      "role": "industry",
+      "texture": "Concrete024"
+    },
+    "guard-post": {
+      "file": "models/soviet/guard-post.glb",
+      "source": "building-type-i.glb",
+      "role": "military",
+      "texture": "Concrete028"
+    },
+    "barracks": {
+      "file": "models/soviet/barracks.glb",
+      "source": "building-type-j.glb",
+      "role": "military",
+      "texture": "Concrete028"
+    },
+    "collective-farm-hq": {
+      "file": "models/soviet/collective-farm-hq.glb",
+      "source": "building-type-k.glb",
+      "role": "agriculture",
+      "texture": "Concrete028"
+    },
+    "bread-factory": {
+      "file": "models/soviet/bread-factory.glb",
+      "source": "building-type-l.glb",
+      "role": "industry",
+      "texture": "Concrete024"
+    },
+    "radio-station": {
+      "file": "models/soviet/radio-station.glb",
+      "source": "building-type-m.glb",
+      "role": "propaganda",
+      "texture": "Concrete026"
+    },
+    "kgb-office": {
+      "file": "models/soviet/kgb-office.glb",
+      "source": "building-type-n.glb",
+      "role": "government",
+      "texture": "Concrete026"
+    },
+    "post-office": {
+      "file": "models/soviet/post-office.glb",
+      "source": "building-type-o.glb",
+      "role": "services",
+      "texture": "Concrete015"
+    },
+    "hospital": {
+      "file": "models/soviet/hospital.glb",
+      "source": "building-type-p.glb",
+      "role": "services",
+      "texture": "Concrete015"
+    },
+    "train-station": {
+      "file": "models/soviet/train-station.glb",
+      "source": "building-type-q.glb",
+      "role": "transport",
+      "texture": "Concrete024"
+    },
+    "fire-station": {
+      "file": "models/soviet/fire-station.glb",
+      "source": "building-type-r.glb",
+      "role": "services",
+      "texture": "Concrete024"
+    },
+    "vodka-distillery": {
+      "file": "models/soviet/vodka-distillery.glb",
+      "source": "building-type-s.glb",
+      "role": "industry",
+      "texture": "Concrete024"
+    },
+    "cultural-palace": {
+      "file": "models/soviet/cultural-palace.glb",
+      "source": "building-type-t.glb",
+      "role": "culture",
+      "texture": "Concrete026"
+    },
+    "gulag-admin": {
+      "file": "models/soviet/gulag-admin.glb",
+      "source": "building-type-u.glb",
+      "role": "military",
+      "texture": "Concrete028"
+    },
+    "fence": {
+      "file": "models/soviet/fence.glb",
+      "source": "fence.glb",
+      "role": "environment",
+      "texture": "Concrete028"
+    },
+    "fence-low": {
+      "file": "models/soviet/fence-low.glb",
+      "source": "fence-low.glb",
+      "role": "environment",
+      "texture": "Concrete028"
+    }
+  },
+  "roles": {
+    "housing": [
+      "apartment-tower-a",
+      "apartment-tower-b",
+      "apartment-tower-c",
+      "apartment-tower-d",
+      "workers-house-a",
+      "workers-house-b",
+      "workers-house-c"
+    ],
+    "government": [
+      "government-hq",
+      "ministry-office",
+      "kgb-office"
+    ],
+    "industry": [
+      "factory-office",
+      "warehouse",
+      "bread-factory",
+      "vodka-distillery"
+    ],
+    "services": [
+      "polyclinic",
+      "school",
+      "post-office",
+      "hospital",
+      "fire-station"
+    ],
+    "military": [
+      "guard-post",
+      "barracks",
+      "gulag-admin"
+    ],
+    "culture": [
+      "workers-club",
+      "cultural-palace"
+    ],
+    "power": [
+      "power-station"
+    ],
+    "agriculture": [
+      "collective-farm-hq"
+    ],
+    "propaganda": [
+      "radio-station"
+    ],
+    "transport": [
+      "train-station"
+    ],
+    "modular": [
+      "wall-window",
+      "wall-window-sill",
+      "wall-window-wide",
+      "wall-window-wide-sill",
+      "wall-balcony",
+      "wall-windows",
+      "wall-windows-sills",
+      "wall-door",
+      "wall-door-window",
+      "wall-corner",
+      "wall-corner-window",
+      "wall-corner-bottom",
+      "wall-corner-top",
+      "steps-wide",
+      "steps-narrow",
+      "roof-flat",
+      "roof-border-corner",
+      "roof-border-straight",
+      "roof-border-side",
+      "roof-top",
+      "roof-vent-a",
+      "roof-vent-b",
+      "roof-antenna",
+      "roof-pipe"
+    ],
+    "utility": [
+      "concrete-block"
+    ],
+    "environment": [
+      "fence",
+      "fence-low"
+    ]
+  }
+}

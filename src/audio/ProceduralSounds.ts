@@ -9,9 +9,9 @@ export class ProceduralSounds {
   private static initialized = false;
 
   public static async initialize(): Promise<void> {
-    if (!this.initialized) {
+    if (!ProceduralSounds.initialized) {
       await Tone.start();
-      this.initialized = true;
+      ProceduralSounds.initialized = true;
       console.log('Tone.js initialized for procedural audio');
     }
   }
@@ -21,7 +21,6 @@ export class ProceduralSounds {
    */
   public static playBuildSound(): void {
     const synth = new Tone.MetalSynth({
-      frequency: 200,
       envelope: {
         attack: 0.001,
         decay: 0.1,
@@ -163,6 +162,6 @@ export class ProceduralSounds {
   public static dispose(): void {
     Tone.Transport.stop();
     Tone.Transport.cancel();
-    this.initialized = false;
+    ProceduralSounds.initialized = false;
   }
 }

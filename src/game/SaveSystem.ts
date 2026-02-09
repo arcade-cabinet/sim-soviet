@@ -1,4 +1,4 @@
-import { GameState } from './GameState';
+import type { GameState } from './GameState';
 
 const SAVE_KEY = 'simsoviet_save_v1';
 

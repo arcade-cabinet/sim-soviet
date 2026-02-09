@@ -5,7 +5,7 @@
  * Uses Tone.js for procedural sound effects
  */
 
-import { AUDIO_MANIFEST, getAudioById, getPreloadAssets, type AudioAsset } from './AudioManifest';
+import { type AudioAsset, getAudioById, getPreloadAssets } from './AudioManifest';
 import { ProceduralSounds } from './ProceduralSounds';
 
 export class AudioManager {
@@ -26,8 +26,7 @@ export class AudioManager {
 
   private initAudioContext(): void {
     if (!this.audioContext) {
-      this.audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
     if (!this.initialized) {
       ProceduralSounds.initialize();
@@ -170,7 +169,7 @@ export class AudioManager {
     const asset = getAudioById(soundId);
     if (asset?.url === 'procedural') {
       if (this.muted) return;
-      
+
       // Play procedural sound via Tone.js
       switch (soundId) {
         case 'build':
@@ -245,7 +244,9 @@ export class AudioManager {
   public toggleMute(): boolean {
     this.muted = !this.muted;
     if (this.muted) {
-      this.tracks.forEach((track) => (track.volume = 0));
+      this.tracks.forEach((track) => {
+        track.volume = 0;
+      });
     } else {
       this.updateAllVolumes();
     }
@@ -290,4 +291,3 @@ export class AudioManager {
     ProceduralSounds.dispose();
   }
 }
-
