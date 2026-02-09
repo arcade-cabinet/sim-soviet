@@ -3,7 +3,7 @@
  * generate_building_defs.ts — Pipeline script that reads the sprite manifest
  * and game config, then generates a validated JSON building definitions file.
  *
- * Input:  public/sprites/soviet/manifest.json (from render_sprites.py)
+ * Input:  app/public/sprites/soviet/manifest.json (from render_sprites.py)
  * Output: src/data/buildingDefs.generated.json
  *
  * Footprint calculation: ceil(model_size.x) × ceil(model_size.y)
@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
-const MANIFEST_PATH = resolve(ROOT, 'public/sprites/soviet/manifest.json');
+const MANIFEST_PATH = resolve(ROOT, 'app/public/sprites/soviet/manifest.json');
 const OUTPUT_PATH = resolve(ROOT, 'src/data/buildingDefs.generated.json');
 
 // ── Inline Zod import (we can't use path aliases in scripts) ────────────────

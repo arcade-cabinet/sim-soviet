@@ -22,8 +22,8 @@ Usage:
     blender --background --python scripts/render_sprites.py -- --engine eevee
 
 Output:
-    public/sprites/soviet/*.png          Transparent isometric sprite PNGs
-    public/sprites/soviet/manifest.json  Sprite metadata (dimensions, anchor points)
+    app/public/sprites/soviet/*.png          Transparent isometric sprite PNGs
+    app/public/sprites/soviet/manifest.json  Sprite metadata (dimensions, anchor points)
 """
 
 import bpy
@@ -43,7 +43,7 @@ from bpy_extras.object_utils import world_to_camera_view
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 MODEL_DIR = PROJECT_ROOT / "public" / "models" / "soviet"
-SPRITE_DIR = PROJECT_ROOT / "public" / "sprites" / "soviet"
+SPRITE_DIR = PROJECT_ROOT / "app" / "public" / "sprites" / "soviet"
 MANIFEST_PATH = MODEL_DIR / "manifest.json"
 
 # Camera: 2:1 dimetric projection (SimCity 2000 / classic isometric)

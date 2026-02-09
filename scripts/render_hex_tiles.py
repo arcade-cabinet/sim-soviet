@@ -28,10 +28,10 @@ Usage:
     blender --background --python scripts/render_hex_tiles.py -- --engine eevee
 
 Output:
-    public/sprites/soviet/tiles/winter/*.png
-    public/sprites/soviet/tiles/mud/*.png
-    public/sprites/soviet/tiles/summer/*.png
-    public/sprites/soviet/tiles/manifest.json
+    app/public/sprites/soviet/tiles/winter/*.png
+    app/public/sprites/soviet/tiles/mud/*.png
+    app/public/sprites/soviet/tiles/summer/*.png
+    app/public/sprites/soviet/tiles/manifest.json
 """
 
 import bpy
@@ -50,7 +50,7 @@ from bpy_extras.object_utils import world_to_camera_view
 
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-OUTPUT_DIR = PROJECT_ROOT / "public" / "sprites" / "soviet" / "tiles"
+OUTPUT_DIR = PROJECT_ROOT / "app" / "public" / "sprites" / "soviet" / "tiles"
 
 # Kenney Hexagon Kit source
 HEX_KIT_DIR = Path("/Volumes/home/assets/Kenney/3D assets/Hexagon Kit/Models/GLB format")

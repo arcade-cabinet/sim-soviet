@@ -203,7 +203,6 @@ export class CanvasGestureManager {
     const { x: gridX, y: gridY } = cell;
     const tool = this.gameState.selectedTool;
     const gridCell = this.gameState.getCell(gridX, gridY);
-
     if (!gridCell) return;
 
     if (tool === 'none') {
@@ -269,8 +268,8 @@ export class CanvasGestureManager {
   private handleBuildTap(gridX: number, gridY: number, tool: string): void {
     const cost = getBuildingCost(tool);
     const fp = getFootprint(tool);
-
-    if (!this.isFootprintClear(gridX, gridY, fp.w, fp.h)) return;
+    const clear = this.isFootprintClear(gridX, gridY, fp.w, fp.h);
+    if (!clear) return;
 
     if (this.gameState.money >= cost) {
       this.placeBuilding(gridX, gridY, tool, cost, fp);
