@@ -28,12 +28,12 @@ export interface Position {
 }
 
 /**
- * Building component — stores the type key, power state, production info,
+ * Building component — stores the def ID, power state, production info,
  * housing capacity, and environmental stats.
  */
 export interface BuildingComponent {
-  /** Building type key that maps to BUILDING_TYPES in config */
-  type: string;
+  /** Building definition ID (sprite ID key into BUILDING_DEFS) */
+  defId: string;
   /** Whether this building currently receives power */
   powered: boolean;
   /** Power units this building requires to operate */

@@ -59,40 +59,30 @@ describe('SimulationEngine edge cases', () => {
     vi.restoreAllMocks();
   });
 
-  // ── Victory condition ─────────────────────────────────────
+  // ── No victory condition ─────────────────────────────────────
 
-  describe('victory condition: game ends at year 1995', () => {
-    it('triggers victory when reaching year 1995 with quota met', () => {
-      // Start at year 1994 so 1 year of ticking gets us to 1995
+  describe('no victory condition: the Soviet state is eternal', () => {
+    it('game does not end after any number of years with quota met', () => {
       world.clear();
       const gs2 = new GameState();
-      gs2.date.year = 1994;
+      gs2.date.year = 1990;
+      gs2.date.month = 12;
       const cb2 = createMockCallbacks();
       createResourceStore({ food: 9999, vodka: 9999, population: 100 });
       const engine2 = new SimulationEngine(gs2, cb2);
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Need to reach 1995 — tick through 1 year
-      advanceYears(engine2, 1);
+      // Tick through 5 years — game should not end with a victory
+      advanceYears(engine2, 5);
 
-      expect(cb2.onGameOver).toHaveBeenCalledWith(true, expect.stringContaining('survived'));
-      expect(gs2.gameOver).not.toBeNull();
-      expect(gs2.gameOver!.victory).toBe(true);
-    });
-
-    it('game state records victory reason', () => {
-      world.clear();
-      const gs2 = new GameState();
-      gs2.date.year = 1994;
-      const cb2 = createMockCallbacks();
-      createResourceStore({ food: 9999, vodka: 9999, population: 100 });
-      const engine2 = new SimulationEngine(gs2, cb2);
-
-      vi.spyOn(Math, 'random').mockReturnValue(0.99);
-      advanceYears(engine2, 1);
-
-      expect(gs2.gameOver!.reason).toContain('Five-Year Plans');
+      // onGameOver should NOT have been called with victory=true
+      const gameOverCalls = (cb2.onGameOver as ReturnType<typeof vi.fn>).mock.calls as [
+        boolean,
+        string,
+      ][];
+      const victoryCalls = gameOverCalls.filter((call) => call[0] === true);
+      expect(victoryCalls).toHaveLength(0);
     });
   });
 
@@ -102,7 +92,8 @@ describe('SimulationEngine edge cases', () => {
     it('ends game after 3 consecutive quota failures', () => {
       world.clear();
       const gs2 = new GameState();
-      gs2.date.year = 1984; // First deadline at 1985
+      gs2.date.year = 1926;
+      gs2.date.month = 12; // First deadline at 1927
       const cb2 = createMockCallbacks();
       // Not enough food to meet any quota of 500
       createResourceStore({ food: 10, vodka: 10, population: 0 });
@@ -110,17 +101,17 @@ describe('SimulationEngine edge cases', () => {
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Advance through 3 five-year plans: 1985, 1990, 1995
-      // Year 1984 -> 1985 (fail 1)
-      advanceYears(engine2, 1);
+      // Advance through 3 five-year plans: 1927, 1932, 1937
+      // Year 1926 Oct → 1927 Jan (fail 1) — 3 months (90 ticks)
+      for (let i = 0; i < 90; i++) engine2.tick();
 
-      // After first failure, deadline advances to 1990
+      // After first failure, deadline advances to 1932
       expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed the 5-Year Plan'));
 
-      // Year 1985 -> 1990 (fail 2)
+      // Year 1927 -> 1932 (fail 2)
       advanceYears(engine2, 5);
 
-      // Year 1990 -> 1995 (fail 3) — game over
+      // Year 1932 -> 1937 (fail 3) — game over
       advanceYears(engine2, 5);
 
       expect(cb2.onGameOver).toHaveBeenCalledWith(false, expect.stringContaining('Politburo'));
@@ -131,21 +122,20 @@ describe('SimulationEngine edge cases', () => {
     it('resets failure counter when quota is met', () => {
       world.clear();
       const gs2 = new GameState();
-      gs2.date.year = 1984;
+      gs2.date.year = 1926;
       const cb2 = createMockCallbacks();
-      // Enough food initially
+      // Enough food initially (pop=0 means no consumption)
       createResourceStore({ food: 600, vodka: 0, population: 0 });
       const engine2 = new SimulationEngine(gs2, cb2);
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Year 1984 -> 1985: quota met (food >= 500)
-      advanceYears(engine2, 1);
+      // Oct 1926 → Jan 1927 (90 ticks = 3 months): quota met (food >= 500)
+      for (let i = 0; i < 90; i++) engine2.tick();
 
       expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('Quota met'));
 
       // After success, quota switches to vodka, failure counter resets
-      // Next quota is vodka 500, deadline 1990
       const quota = engine2.getQuota() as QuotaState;
       expect(quota.type).toBe('vodka');
     });
@@ -154,22 +144,24 @@ describe('SimulationEngine edge cases', () => {
   // ── Loss condition: population reaches 0 ──────────────────
 
   describe('loss condition: population reaches 0', () => {
-    it('ends game when population hits 0 after 1980 with buildings', () => {
+    it('ends game when population hits 0 after first year with buildings', () => {
       world.clear();
       const gs2 = new GameState();
-      gs2.date.year = 1981;
-      gs2.date.month = 1;
-      gs2.date.tick = 0;
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 0, vodka: 0, population: 3 });
+      createResourceStore({ food: 9999, vodka: 9999, population: 3 });
       const engine2 = new SimulationEngine(gs2, cb2);
-      // Place a building so buildings.length > 0
-      createBuilding(0, 0, 'housing');
+      createBuilding(0, 0, 'apartment-tower-a');
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Tick until population drops to 0 from starvation
-      // Pop=3, no food -> starvation drops by 5, clamped at 0
+      // Advance past TICKS_PER_YEAR (360) ticks so the grace period expires
+      for (let i = 0; i < 361; i++) engine2.tick();
+
+      // Now set food to 0 and let starvation kill everyone
+      const store = getResourceEntity()!;
+      store.resources.food = 0;
+      store.resources.vodka = 0;
+      store.resources.population = 3;
       engine2.tick();
 
       expect(gs2.pop).toBe(0);
@@ -177,21 +169,18 @@ describe('SimulationEngine edge cases', () => {
       expect(gs2.gameOver!.victory).toBe(false);
     });
 
-    it('does not end game at year 1980 even if pop=0 with buildings', () => {
+    it('does not end game during first year even if pop=0 with buildings', () => {
       world.clear();
       const gs2 = new GameState();
-      gs2.date.year = 1980;
-      gs2.date.month = 1;
-      gs2.date.tick = 0;
       const cb2 = createMockCallbacks();
       createResourceStore({ food: 0, vodka: 0, population: 3 });
       const engine2 = new SimulationEngine(gs2, cb2);
-      createBuilding(0, 0, 'housing');
+      createBuilding(0, 0, 'apartment-tower-a');
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
       engine2.tick();
 
-      // Pop drops to 0 but year is 1980, so no game over
+      // Pop drops to 0 but within first year (totalTicks <= TICKS_PER_YEAR), so no game over
       expect(gs2.pop).toBe(0);
       expect(cb2.onGameOver).not.toHaveBeenCalled();
     });
@@ -199,15 +188,15 @@ describe('SimulationEngine edge cases', () => {
     it('does not end game if pop=0 but no buildings', () => {
       world.clear();
       const gs2 = new GameState();
-      gs2.date.year = 1982;
       const cb2 = createMockCallbacks();
       createResourceStore({ food: 0, vodka: 0, population: 0 });
       const engine2 = new SimulationEngine(gs2, cb2);
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
-      engine2.tick();
+      // Advance past first year
+      for (let i = 0; i < 400; i++) engine2.tick();
 
-      // Pop=0 and year>1980 but no buildings => no game over
+      // Pop=0 but no buildings => no game over
       expect(cb2.onGameOver).not.toHaveBeenCalled();
     });
   });
@@ -218,20 +207,28 @@ describe('SimulationEngine edge cases', () => {
     it('tick() is a no-op after game over', () => {
       world.clear();
       const gs2 = new GameState();
-      gs2.date.year = 1981;
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 0, vodka: 0, population: 3 });
+      createResourceStore({ food: 9999, vodka: 9999, population: 3 });
       const engine2 = new SimulationEngine(gs2, cb2);
-      createBuilding(0, 0, 'housing');
+      createBuilding(0, 0, 'apartment-tower-a');
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // First tick: starvation kills pop -> game over
+      // Advance past first year so pop-loss check activates
+      for (let i = 0; i < 361; i++) engine2.tick();
+
+      // Now cause starvation to trigger game over
+      const store = getResourceEntity()!;
+      store.resources.food = 0;
+      store.resources.vodka = 0;
+      store.resources.population = 3;
       engine2.tick();
       expect(gs2.gameOver).not.toBeNull();
 
       const yearAtGameOver = gs2.date.year;
       const popAtGameOver = gs2.pop;
+      const stateChangeCountAtGameOver = (cb2.onStateChange as ReturnType<typeof vi.fn>).mock.calls
+        .length;
 
       // Additional ticks should be ignored
       engine2.tick();
@@ -240,21 +237,27 @@ describe('SimulationEngine edge cases', () => {
 
       expect(gs2.date.year).toBe(yearAtGameOver);
       expect(gs2.pop).toBe(popAtGameOver);
-      // onStateChange should have been called only once (the initial game-ending tick)
-      expect(cb2.onStateChange).toHaveBeenCalledTimes(1);
+      expect(cb2.onStateChange).toHaveBeenCalledTimes(stateChangeCountAtGameOver);
     });
 
     it('tick count does not increase after game ends', () => {
       world.clear();
       const gs2 = new GameState();
-      gs2.date.year = 1981;
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 0, vodka: 0, population: 2 });
+      createResourceStore({ food: 9999, vodka: 9999, population: 2 });
       const engine2 = new SimulationEngine(gs2, cb2);
-      createBuilding(0, 0, 'housing');
+      createBuilding(0, 0, 'apartment-tower-a');
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
 
+      // Advance past first year
+      for (let i = 0; i < 361; i++) engine2.tick();
+
+      // Cause starvation
+      const store = getResourceEntity()!;
+      store.resources.food = 0;
+      store.resources.vodka = 0;
+      store.resources.population = 2;
       engine2.tick(); // Game ends here
       const tickVal = gs2.date.tick;
 
@@ -267,9 +270,9 @@ describe('SimulationEngine edge cases', () => {
 
   describe('ECS world sync after each tick', () => {
     it('GameState.buildings matches ECS buildingsLogic entities', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing');
-      createBuilding(2, 2, 'farm');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a');
+      createBuilding(2, 2, 'collective-farm-hq');
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
       engine.tick();
@@ -338,8 +341,8 @@ describe('SimulationEngine edge cases', () => {
     });
 
     it('food production is bounded by number of powered farms', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm'); // base 20 food/tick, modified by weather + politburo
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq'); // base 20 food/tick, modified by weather + politburo
 
       const store = getResourceEntity()!;
       const initialFood = store.resources.food;
@@ -359,8 +362,8 @@ describe('SimulationEngine edge cases', () => {
     });
 
     it('vodka production is bounded by number of powered distilleries', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'distillery'); // base 10 vodka/tick, modified by politburo
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'vodka-distillery'); // base 10 vodka/tick, modified by politburo
 
       const store = getResourceEntity()!;
       const initialVodka = store.resources.vodka;
@@ -403,8 +406,8 @@ describe('SimulationEngine edge cases', () => {
       const gs2 = new GameState();
       const cb2 = createMockCallbacks();
       createResourceStore({ food: 9999, vodka: 9999, population: 100 });
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'gulag');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'gulag-admin');
 
       // Mock random to always trigger gulag effect (< 0.1)
       vi.spyOn(Math, 'random').mockReturnValue(0.05);
@@ -421,7 +424,7 @@ describe('SimulationEngine edge cases', () => {
       const gs2 = new GameState();
       const cb2 = createMockCallbacks();
       createResourceStore({ food: 9999, vodka: 9999, population: 100 });
-      createBuilding(1, 1, 'gulag'); // No power plant
+      createBuilding(1, 1, 'gulag-admin'); // No power plant
 
       vi.spyOn(Math, 'random').mockReturnValue(0.05);
       const engine2 = new SimulationEngine(gs2, cb2);
@@ -439,10 +442,10 @@ describe('SimulationEngine edge cases', () => {
 
   describe('stability over many ticks', () => {
     it('engine does not throw over 100 ticks', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing');
-      createBuilding(2, 2, 'farm');
-      createBuilding(3, 3, 'distillery');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a');
+      createBuilding(2, 2, 'collective-farm-hq');
+      createBuilding(3, 3, 'vodka-distillery');
 
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
 

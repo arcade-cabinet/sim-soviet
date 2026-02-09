@@ -145,8 +145,7 @@ export function setPaused(paused: boolean): void {
 export interface InspectedBuilding {
   gridX: number;
   gridY: number;
-  type: string;
-  spriteId: string;
+  defId: string;
   powered: boolean;
   cost: number;
   footprintW: number;

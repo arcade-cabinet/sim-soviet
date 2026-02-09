@@ -21,8 +21,8 @@ describe('GameState', () => {
       expect(gs.powerUsed).toBe(0);
     });
 
-    it('starts in January 1980 at tick 0', () => {
-      expect(gs.date).toEqual({ year: 1980, month: 1, tick: 0 });
+    it('starts in October 1922 at tick 0', () => {
+      expect(gs.date).toEqual({ year: 1922, month: 10, tick: 0 });
     });
 
     it('starts with no buildings', () => {
@@ -38,7 +38,7 @@ describe('GameState', () => {
         type: 'food',
         target: 500,
         current: 0,
-        deadlineYear: 1985,
+        deadlineYear: 1927,
       });
     });
 
@@ -114,12 +114,12 @@ describe('GameState', () => {
 
   describe('setCell', () => {
     it('sets cell type at valid coordinates', () => {
-      gs.setCell(3, 4, 'housing');
-      expect(gs.getCell(3, 4)!.type).toBe('housing');
+      gs.setCell(3, 4, 'apartment-tower-a');
+      expect(gs.getCell(3, 4)!.type).toBe('apartment-tower-a');
     });
 
     it('can set cell type to null (clearing)', () => {
-      gs.setCell(3, 4, 'housing');
+      gs.setCell(3, 4, 'apartment-tower-a');
       gs.setCell(3, 4, null);
       expect(gs.getCell(3, 4)!.type).toBeNull();
     });
@@ -138,8 +138,8 @@ describe('GameState', () => {
 
     it('overwrites existing cell type', () => {
       gs.setCell(10, 10, 'road');
-      gs.setCell(10, 10, 'power');
-      expect(gs.getCell(10, 10)!.type).toBe('power');
+      gs.setCell(10, 10, 'power-station');
+      expect(gs.getCell(10, 10)!.type).toBe('power-station');
     });
   });
 
@@ -147,34 +147,34 @@ describe('GameState', () => {
 
   describe('addBuilding', () => {
     it('adds a building and returns it', () => {
-      const building = gs.addBuilding(5, 5, 'housing');
-      expect(building).toEqual({ x: 5, y: 5, type: 'housing', powered: false });
+      const building = gs.addBuilding(5, 5, 'apartment-tower-a');
+      expect(building).toEqual({ x: 5, y: 5, defId: 'apartment-tower-a', powered: false });
     });
 
     it('adds the building to the buildings array', () => {
-      gs.addBuilding(5, 5, 'housing');
+      gs.addBuilding(5, 5, 'apartment-tower-a');
       expect(gs.buildings).toHaveLength(1);
-      expect(gs.buildings[0]!.type).toBe('housing');
+      expect(gs.buildings[0]!.defId).toBe('apartment-tower-a');
     });
 
     it('new buildings start unpowered', () => {
-      const building = gs.addBuilding(5, 5, 'power');
+      const building = gs.addBuilding(5, 5, 'power-station');
       expect(building.powered).toBe(false);
     });
 
     it('allows multiple buildings at different positions', () => {
-      gs.addBuilding(0, 0, 'housing');
-      gs.addBuilding(1, 1, 'farm');
-      gs.addBuilding(2, 2, 'power');
+      gs.addBuilding(0, 0, 'apartment-tower-a');
+      gs.addBuilding(1, 1, 'collective-farm-hq');
+      gs.addBuilding(2, 2, 'power-station');
       expect(gs.buildings).toHaveLength(3);
     });
 
     it('prevents duplicate placement at the same coordinates', () => {
-      gs.addBuilding(5, 5, 'housing');
-      const dup = gs.addBuilding(5, 5, 'farm');
+      gs.addBuilding(5, 5, 'apartment-tower-a');
+      const dup = gs.addBuilding(5, 5, 'collective-farm-hq');
       expect(gs.buildings).toHaveLength(1);
       // Returns the existing building instead of creating a new one
-      expect(dup.type).toBe('housing');
+      expect(dup.defId).toBe('apartment-tower-a');
     });
   });
 
@@ -182,28 +182,28 @@ describe('GameState', () => {
 
   describe('removeBuilding', () => {
     it('removes the building at the specified position', () => {
-      gs.addBuilding(5, 5, 'housing');
+      gs.addBuilding(5, 5, 'apartment-tower-a');
       gs.removeBuilding(5, 5);
       expect(gs.buildings).toHaveLength(0);
     });
 
     it('does not remove buildings at other positions', () => {
-      gs.addBuilding(5, 5, 'housing');
-      gs.addBuilding(6, 6, 'farm');
+      gs.addBuilding(5, 5, 'apartment-tower-a');
+      gs.addBuilding(6, 6, 'collective-farm-hq');
       gs.removeBuilding(5, 5);
       expect(gs.buildings).toHaveLength(1);
-      expect(gs.buildings[0]!.type).toBe('farm');
+      expect(gs.buildings[0]!.defId).toBe('collective-farm-hq');
     });
 
     it('does nothing when no building exists at the position', () => {
-      gs.addBuilding(5, 5, 'housing');
+      gs.addBuilding(5, 5, 'apartment-tower-a');
       gs.removeBuilding(10, 10);
       expect(gs.buildings).toHaveLength(1);
     });
 
     it('removes the building even when addBuilding was called twice at same position', () => {
-      gs.addBuilding(5, 5, 'housing');
-      gs.addBuilding(5, 5, 'farm'); // duplicate is ignored
+      gs.addBuilding(5, 5, 'apartment-tower-a');
+      gs.addBuilding(5, 5, 'collective-farm-hq'); // duplicate is ignored
       gs.removeBuilding(5, 5);
       expect(gs.buildings).toHaveLength(0);
     });
@@ -213,10 +213,10 @@ describe('GameState', () => {
 
   describe('getBuildingAt', () => {
     it('returns the building at the given position', () => {
-      gs.addBuilding(7, 8, 'distillery');
+      gs.addBuilding(7, 8, 'vodka-distillery');
       const found = gs.getBuildingAt(7, 8);
       expect(found).not.toBeNull();
-      expect(found!.type).toBe('distillery');
+      expect(found!.defId).toBe('vodka-distillery');
     });
 
     it('returns null when no building exists at position', () => {
@@ -224,15 +224,15 @@ describe('GameState', () => {
     });
 
     it('returns the existing building when duplicate placement is attempted', () => {
-      gs.addBuilding(3, 3, 'housing');
-      gs.addBuilding(3, 3, 'farm'); // duplicate is ignored, returns existing
+      gs.addBuilding(3, 3, 'apartment-tower-a');
+      gs.addBuilding(3, 3, 'collective-farm-hq'); // duplicate is ignored, returns existing
       const found = gs.getBuildingAt(3, 3);
       expect(found).not.toBeNull();
-      expect(found!.type).toBe('housing');
+      expect(found!.defId).toBe('apartment-tower-a');
     });
 
     it('returns null after building is removed', () => {
-      gs.addBuilding(2, 2, 'power');
+      gs.addBuilding(2, 2, 'power-station');
       gs.removeBuilding(2, 2);
       expect(gs.getBuildingAt(2, 2)).toBeNull();
     });

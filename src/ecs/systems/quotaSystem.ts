@@ -34,7 +34,7 @@ export function createDefaultQuota(): QuotaState {
     type: 'food',
     target: 500,
     current: 0,
-    deadlineYear: 1985,
+    deadlineYear: 1927,
   };
 }
 

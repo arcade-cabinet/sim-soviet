@@ -9,7 +9,7 @@
  *   4. Weather particles (screen-space, added later)
  */
 
-import { getSpriteForType } from '@/game/BuildingFootprints';
+import { getBuildingDef } from '@/data/buildingDefs';
 import type { Building, GameState } from '@/game/GameState';
 import { Camera2D } from './Camera2D';
 import { FeatureTileRenderer } from './FeatureTileRenderer';
@@ -205,9 +205,7 @@ export class Canvas2DRenderer {
 
         // Fill tile
         drawDiamond(ctx, screen.x, screen.y);
-        if (cell?.type === 'road') {
-          ctx.fillStyle = '#444444';
-        } else if (cell?.type) {
+        if (cell?.type) {
           ctx.fillStyle = '#333333';
         } else {
           ctx.fillStyle = '#2e2e2e';
@@ -225,15 +223,9 @@ export class Canvas2DRenderer {
     );
 
     for (const building of sorted) {
-      const spriteName = getSpriteForType(building.type);
-      if (!spriteName) {
-        // Fallback: draw a colored box for types without sprites
-        this.drawFallbackBuilding(building);
-        continue;
-      }
-
-      const sprite = this.spriteLoader.get(spriteName);
+      const sprite = this.spriteLoader.get(building.defId);
       if (!sprite) {
+        // Fallback: draw a colored box for buildings whose sprites aren't loaded
         this.drawFallbackBuilding(building);
         continue;
       }
@@ -266,25 +258,32 @@ export class Canvas2DRenderer {
     }
   }
 
-  /** Fallback colored box for building types without sprites yet. */
+  /** Role → fallback color + height for buildings whose sprites aren't loaded. */
+  private static ROLE_FALLBACK: Record<string, { color: string; height: number }> = {
+    power: { color: '#3e2723', height: 40 },
+    housing: { color: '#757575', height: 50 },
+    agriculture: { color: '#33691e', height: 5 },
+    industry: { color: '#5d4037', height: 30 },
+    military: { color: '#b71c1c', height: 10 },
+    government: { color: '#1a237e', height: 35 },
+    culture: { color: '#4a148c', height: 25 },
+    infrastructure: { color: '#444444', height: 15 },
+    monument: { color: '#bf360c', height: 45 },
+    commerce: { color: '#e65100', height: 20 },
+    education: { color: '#00695c', height: 25 },
+    health: { color: '#c62828', height: 25 },
+  };
+
+  /** Fallback colored box for buildings whose sprites aren't loaded. */
   private drawFallbackBuilding(building: Building): void {
     const { ctx } = this;
     const screen = gridToScreen(building.x, building.y);
 
-    let color = '#757575';
-    let height = 20;
-    if (building.type === 'power') {
-      color = '#3e2723';
-      height = 40;
-    } else if (building.type === 'housing') {
-      height = 50;
-    } else if (building.type === 'farm') {
-      color = '#33691e';
-      height = 5;
-    } else if (building.type === 'gulag') {
-      color = '#b71c1c';
-      height = 10;
-    }
+    const def = getBuildingDef(building.defId);
+    const role = def?.role ?? 'infrastructure';
+    const fallback = Canvas2DRenderer.ROLE_FALLBACK[role] ?? { color: '#757575', height: 20 };
+    const color = fallback.color;
+    const height = fallback.height;
 
     if (!building.powered) {
       ctx.globalAlpha = 0.4;

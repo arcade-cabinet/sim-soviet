@@ -65,7 +65,7 @@ export function decaySystem(decayMult = 1.0): void {
         entity,
         gridX: pos?.gridX ?? -1,
         gridY: pos?.gridY ?? -1,
-        type: entity.building.type,
+        type: entity.building.defId,
         footprintX: fpX,
         footprintY: fpY,
       });

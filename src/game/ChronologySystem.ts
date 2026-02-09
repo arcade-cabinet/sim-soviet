@@ -64,7 +64,7 @@ export class ChronologySystem {
 
   constructor(
     private rng: GameRng,
-    startYear = 1980
+    startYear = 1922
   ) {
     this.date = createGameDate(startYear);
     this.season = getSeasonForMonth(this.date.month);

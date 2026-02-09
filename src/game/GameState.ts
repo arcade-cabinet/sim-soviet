@@ -8,7 +8,7 @@ export interface GridCell {
 export interface Building {
   x: number;
   y: number;
-  type: string;
+  defId: string;
   powered: boolean;
 }
 
@@ -34,7 +34,7 @@ export class GameState {
   public vodka = 50;
   public power = 0;
   public powerUsed = 0;
-  public date = { year: 1980, month: 1, tick: 0 };
+  public date = { year: 1922, month: 10, tick: 0 };
   public grid: GridCell[][] = [];
   public buildings: Building[] = [];
   public selectedTool = 'none';
@@ -43,7 +43,7 @@ export class GameState {
     type: 'food',
     target: 500,
     current: 0,
-    deadlineYear: 1985,
+    deadlineYear: 1927,
   };
   public gameOver: GameOverState | null = null;
   public leaderName: string | undefined = undefined;
@@ -72,13 +72,13 @@ export class GameState {
     }
   }
 
-  public addBuilding(x: number, y: number, type: string): Building {
+  public addBuilding(x: number, y: number, defId: string): Building {
     // Guard against duplicate placement at the same coordinates
     const existing = this.getBuildingAt(x, y);
     if (existing) {
       return existing;
     }
-    const building: Building = { x, y, type, powered: false };
+    const building: Building = { x, y, defId, powered: false };
     this.buildings.push(building);
     return building;
   }

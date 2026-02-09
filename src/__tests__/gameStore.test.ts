@@ -60,8 +60,8 @@ describe('gameStore', () => {
       expect(gs.vodka).toBe(50);
       expect(gs.power).toBe(0);
       expect(gs.powerUsed).toBe(0);
-      expect(gs.date.year).toBe(1980);
-      expect(gs.date.month).toBe(1);
+      expect(gs.date.year).toBe(1922);
+      expect(gs.date.month).toBe(10);
       expect(gs.selectedTool).toBe('none');
       expect(gs.gameOver).toBeNull();
     });
@@ -111,23 +111,23 @@ describe('gameStore', () => {
 
   describe('selectTool', () => {
     it('sets the selected tool on the GameState', () => {
-      selectTool('power');
-      expect(getGameState().selectedTool).toBe('power');
+      selectTool('power-station');
+      expect(getGameState().selectedTool).toBe('power-station');
     });
 
     it('can be set to any string value', () => {
-      selectTool('housing');
-      expect(getGameState().selectedTool).toBe('housing');
+      selectTool('apartment-tower-a');
+      expect(getGameState().selectedTool).toBe('apartment-tower-a');
 
-      selectTool('farm');
-      expect(getGameState().selectedTool).toBe('farm');
+      selectTool('collective-farm-hq');
+      expect(getGameState().selectedTool).toBe('collective-farm-hq');
 
       selectTool('bulldoze');
       expect(getGameState().selectedTool).toBe('bulldoze');
     });
 
     it('can be reset to none', () => {
-      selectTool('power');
+      selectTool('power-station');
       selectTool('none');
       expect(getGameState().selectedTool).toBe('none');
     });
@@ -136,9 +136,9 @@ describe('gameStore', () => {
       // We can't directly add a listener through the public API without
       // useSyncExternalStore, but we can verify the side effect:
       // selectTool mutates GameState.selectedTool and calls notifyStateChange.
-      selectTool('gulag');
+      selectTool('gulag-admin');
       // Verify the tool was set (indirect proof that the function worked)
-      expect(getGameState().selectedTool).toBe('gulag');
+      expect(getGameState().selectedTool).toBe('gulag-admin');
     });
 
     it('handles empty string', () => {
@@ -213,8 +213,7 @@ describe('gameStore', () => {
       const info: InspectedBuilding = {
         gridX: 5,
         gridY: 10,
-        type: 'power',
-        spriteId: 'power-station',
+        defId: 'power-station',
         powered: true,
         cost: 300,
         footprintW: 2,
@@ -230,8 +229,7 @@ describe('gameStore', () => {
       setInspected({
         gridX: 0,
         gridY: 0,
-        type: 'housing',
-        spriteId: 'apartment-tower-a',
+        defId: 'apartment-tower-a',
         powered: false,
         cost: 100,
         footprintW: 1,
@@ -249,8 +247,7 @@ describe('gameStore', () => {
       const info1: InspectedBuilding = {
         gridX: 1,
         gridY: 1,
-        type: 'power',
-        spriteId: 'power-station',
+        defId: 'power-station',
         powered: true,
         cost: 300,
         footprintW: 2,
@@ -261,8 +258,7 @@ describe('gameStore', () => {
       const info2: InspectedBuilding = {
         gridX: 5,
         gridY: 5,
-        type: 'housing',
-        spriteId: 'apartment-tower-a',
+        defId: 'apartment-tower-a',
         powered: false,
         cost: 100,
         footprintW: 1,
@@ -282,8 +278,7 @@ describe('gameStore', () => {
       setInspected({
         gridX: 3,
         gridY: 7,
-        type: 'farm',
-        spriteId: 'collective-farm-hq',
+        defId: 'collective-farm-hq',
         powered: true,
         cost: 150,
         footprintW: 2,
@@ -291,7 +286,7 @@ describe('gameStore', () => {
         name: 'Kolkhoz',
         desc: 'Potatoes.',
       });
-      expect(getInspected()!.type).toBe('farm');
+      expect(getInspected()!.defId).toBe('collective-farm-hq');
     });
   });
 
@@ -304,7 +299,7 @@ describe('gameStore', () => {
 
     it('sets drag state', () => {
       const drag: DragState = {
-        buildingType: 'housing',
+        buildingType: 'apartment-tower-a',
         screenX: 100,
         screenY: 200,
       };
@@ -313,14 +308,14 @@ describe('gameStore', () => {
     });
 
     it('clears drag state with null', () => {
-      setDragState({ buildingType: 'power', screenX: 50, screenY: 50 });
+      setDragState({ buildingType: 'power-station', screenX: 50, screenY: 50 });
       setDragState(null);
       expect(getDragState()).toBeNull();
     });
 
     it('updates drag state position', () => {
-      setDragState({ buildingType: 'farm', screenX: 10, screenY: 20 });
-      setDragState({ buildingType: 'farm', screenX: 300, screenY: 400 });
+      setDragState({ buildingType: 'collective-farm-hq', screenX: 10, screenY: 20 });
+      setDragState({ buildingType: 'collective-farm-hq', screenX: 300, screenY: 400 });
       const state = getDragState();
       expect(state!.screenX).toBe(300);
       expect(state!.screenY).toBe(400);
@@ -343,12 +338,12 @@ describe('gameStore', () => {
       gs.powerUsed = 30;
       gs.date = { year: 1982, month: 7, tick: 16 };
       gs.buildings = [
-        { x: 0, y: 0, type: 'power', powered: true },
-        { x: 1, y: 1, type: 'housing', powered: true },
+        { x: 0, y: 0, defId: 'power-station', powered: true },
+        { x: 1, y: 1, defId: 'apartment-tower-a', powered: true },
       ];
       gs.quota = { type: 'vodka', target: 500, current: 250, deadlineYear: 1985 };
       gs.gameOver = null;
-      gs.selectedTool = 'farm';
+      gs.selectedTool = 'collective-farm-hq';
       setPaused(true);
       notifyStateChange();
 
@@ -362,7 +357,7 @@ describe('gameStore', () => {
       expect(gs.date.year).toBe(1982);
       expect(gs.date.month).toBe(7);
       expect(gs.date.tick).toBe(16);
-      expect(gs.selectedTool).toBe('farm');
+      expect(gs.selectedTool).toBe('collective-farm-hq');
       expect(gs.buildings.length).toBe(2);
       expect(gs.quota.type).toBe('vodka');
       expect(gs.gameOver).toBeNull();
@@ -401,9 +396,9 @@ describe('gameStore', () => {
       // buildingCount should be 0
 
       gs.buildings = [
-        { x: 0, y: 0, type: 'a', powered: false },
-        { x: 1, y: 1, type: 'b', powered: false },
-        { x: 2, y: 2, type: 'c', powered: true },
+        { x: 0, y: 0, defId: 'a', powered: false },
+        { x: 1, y: 1, defId: 'b', powered: false },
+        { x: 2, y: 2, defId: 'c', powered: true },
       ];
       notifyStateChange();
       // buildingCount should now be 3
@@ -446,7 +441,15 @@ describe('gameStore', () => {
     });
 
     it('rapid selectTool calls work correctly', () => {
-      const tools = ['none', 'power', 'housing', 'farm', 'distillery', 'gulag', 'bulldoze'];
+      const tools = [
+        'none',
+        'power-station',
+        'apartment-tower-a',
+        'collective-farm-hq',
+        'vodka-distillery',
+        'gulag-admin',
+        'bulldoze',
+      ];
       for (const tool of tools) {
         selectTool(tool);
         expect(getGameState().selectedTool).toBe(tool);

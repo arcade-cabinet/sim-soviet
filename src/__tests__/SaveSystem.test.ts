@@ -64,7 +64,7 @@ describe('SaveSystem', () => {
     });
 
     it('saves buildings correctly', async () => {
-      gs.addBuilding(5, 10, 'housing');
+      gs.addBuilding(5, 10, 'apartment-tower-a');
       gs.buildings[0]!.powered = true;
 
       await saveSystem.save();
@@ -74,7 +74,7 @@ describe('SaveSystem', () => {
       expect(data.buildings[0]).toEqual({
         x: 5,
         y: 10,
-        type: 'housing',
+        defId: 'apartment-tower-a',
         powered: true,
       });
     });
@@ -160,8 +160,8 @@ describe('SaveSystem', () => {
     });
 
     it('restores buildings', async () => {
-      gs.addBuilding(3, 7, 'farm');
-      gs.addBuilding(8, 2, 'power');
+      gs.addBuilding(3, 7, 'collective-farm-hq');
+      gs.addBuilding(8, 2, 'power-station');
       gs.buildings[1]!.powered = true;
       await saveSystem.save();
 
@@ -170,20 +170,20 @@ describe('SaveSystem', () => {
       await save2.load();
 
       expect(gs2.buildings).toHaveLength(2);
-      expect(gs2.buildings[0]).toEqual({ x: 3, y: 7, type: 'farm', powered: false });
-      expect(gs2.buildings[1]).toEqual({ x: 8, y: 2, type: 'power', powered: true });
+      expect(gs2.buildings[0]).toEqual({ x: 3, y: 7, defId: 'collective-farm-hq', powered: false });
+      expect(gs2.buildings[1]).toEqual({ x: 8, y: 2, defId: 'power-station', powered: true });
     });
 
     it('restores grid cell types from buildings', async () => {
-      gs.addBuilding(5, 5, 'housing');
-      gs.setCell(5, 5, 'housing');
+      gs.addBuilding(5, 5, 'apartment-tower-a');
+      gs.setCell(5, 5, 'apartment-tower-a');
       await saveSystem.save();
 
       const gs2 = new GameState();
       const save2 = new SaveSystem(gs2);
       await save2.load();
 
-      expect(gs2.getCell(5, 5)!.type).toBe('housing');
+      expect(gs2.getCell(5, 5)!.type).toBe('apartment-tower-a');
     });
 
     it('restores quota', async () => {
@@ -220,12 +220,12 @@ describe('SaveSystem', () => {
       gs.powerUsed = 45;
       gs.date = { year: 1992, month: 8, tick: 2 };
       gs.quota = { type: 'food', target: 1000, current: 750, deadlineYear: 1997 };
-      gs.addBuilding(1, 2, 'power');
-      gs.addBuilding(3, 4, 'housing');
-      gs.addBuilding(5, 6, 'farm');
-      gs.setCell(1, 2, 'power');
-      gs.setCell(3, 4, 'housing');
-      gs.setCell(5, 6, 'farm');
+      gs.addBuilding(1, 2, 'power-station');
+      gs.addBuilding(3, 4, 'apartment-tower-a');
+      gs.addBuilding(5, 6, 'collective-farm-hq');
+      gs.setCell(1, 2, 'power-station');
+      gs.setCell(3, 4, 'apartment-tower-a');
+      gs.setCell(5, 6, 'collective-farm-hq');
 
       await saveSystem.save();
 
@@ -243,9 +243,9 @@ describe('SaveSystem', () => {
       expect(gs2.date).toEqual({ year: 1992, month: 8, tick: 2 });
       expect(gs2.quota).toEqual({ type: 'food', target: 1000, current: 750, deadlineYear: 1997 });
       expect(gs2.buildings).toHaveLength(3);
-      expect(gs2.getCell(1, 2)!.type).toBe('power');
-      expect(gs2.getCell(3, 4)!.type).toBe('housing');
-      expect(gs2.getCell(5, 6)!.type).toBe('farm');
+      expect(gs2.getCell(1, 2)!.type).toBe('power-station');
+      expect(gs2.getCell(3, 4)!.type).toBe('apartment-tower-a');
+      expect(gs2.getCell(5, 6)!.type).toBe('collective-farm-hq');
     });
 
     it('loaded state does not share object references with save data', async () => {

@@ -180,30 +180,26 @@ describe('EventSystem', () => {
     it('does not fire events if cooldown has not elapsed', () => {
       // Force random to always trigger (< 0.12)
       vi.spyOn(Math, 'random').mockReturnValue(0.01);
-      vi.spyOn(Date, 'now').mockReturnValue(1000);
 
-      eventSystem.tick();
-      // First tick should fire (lastEventTime starts at 0, now=1000 > 25000 cooldown? No, 1000 < 25000)
-      // Actually lastEventTime is 0 and cooldown is 25000, so 1000 - 0 = 1000 < 25000
-      // So it should NOT fire
+      // lastEventTick starts at 0, cooldown is 25 ticks
+      // totalTicks=10 → 10 - 0 = 10 < 25 → should NOT fire
+      eventSystem.tick(10);
       expect(firedEvents).toHaveLength(0);
     });
 
     it('fires events after cooldown has elapsed', () => {
       vi.spyOn(Math, 'random').mockReturnValue(0.01);
-      // Set time well past cooldown
-      vi.spyOn(Date, 'now').mockReturnValue(30000);
 
-      eventSystem.tick();
+      // totalTicks=30 → 30 - 0 = 30 >= 25 → should fire
+      eventSystem.tick(30);
       expect(firedEvents).toHaveLength(1);
     });
 
     it('respects the 12% probability check', () => {
-      vi.spyOn(Date, 'now').mockReturnValue(30000);
       // random returns 0.5 which is > 0.12, so no event
       vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
-      eventSystem.tick();
+      eventSystem.tick(30);
       expect(firedEvents).toHaveLength(0);
     });
   });

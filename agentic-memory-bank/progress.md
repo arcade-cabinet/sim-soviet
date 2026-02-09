@@ -129,6 +129,7 @@
 - ~~PolitburoSystem corruption drain overwrites by syncEcsToGameState~~ **RESOLVED** (delta synced to ECS)
 - ~~PolitburoSystem event effects not applied to resources~~ **RESOLVED** (wrapper handler applies effects)
 - ~~ChronologySystem exists but not integrated into game loop~~ **RESOLVED** (was already integrated)
+- ~~Simulation interval killed on App re-render~~ **RESOLVED** (callbacksRef pattern in GameWorld.tsx)
 - Audio files ~100MB, not deployed to GitHub Pages
 - EventSystem uses wall-clock `Date.now()` for cooldowns (should switch to tick-based)
 - Visual regression E2E tests skipped on CI (no Linux baselines)

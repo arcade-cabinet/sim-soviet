@@ -20,7 +20,7 @@ import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
 import { createBuilding } from '@/ecs/factories';
 import type { Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
-import { getFootprint, getSpriteForType } from '@/game/BuildingFootprints';
+import { getFootprint } from '@/game/BuildingFootprints';
 import type { GameState } from '@/game/GameState';
 import type { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
 import { getDragState, notifyStateChange, setDragState, setInspected } from '@/stores/gameStore';
@@ -42,23 +42,10 @@ interface PointerStart {
 /** Cost to bulldoze a building. */
 const BULLDOZE_COST = 20;
 
-/**
- * Gets the placement cost for a building type.
- * Checks buildingDefs first, then falls back to legacy hardcoded costs.
- */
-function getBuildingCost(buildingType: string): number {
-  // Try sprite ID directly
-  const def = getBuildingDef(buildingType);
-  if (def) return def.presentation.cost;
-
-  // Try resolving legacy type → sprite ID
-  const spriteId = getSpriteForType(buildingType);
-  if (spriteId) {
-    const spriteDef = getBuildingDef(spriteId);
-    if (spriteDef) return spriteDef.presentation.cost;
-  }
-
-  return 0;
+/** Gets the placement cost for a building def ID. */
+function getBuildingCost(defId: string): number {
+  const def = getBuildingDef(defId);
+  return def?.presentation.cost ?? 0;
 }
 
 export class CanvasGestureManager {
@@ -224,20 +211,19 @@ export class CanvasGestureManager {
       setInspected(null);
       return;
     }
-    const spriteId = getSpriteForType(gridCell.type) || gridCell.type;
-    const def = getBuildingDef(spriteId);
-    const fp = getFootprint(gridCell.type);
+    const defId = gridCell.type;
+    const def = getBuildingDef(defId);
+    const fp = getFootprint(defId);
     const powered = this.findBuildingPowered(gridX, gridY);
     setInspected({
       gridX,
       gridY,
-      type: gridCell.type,
-      spriteId,
+      defId,
       powered,
       cost: def?.presentation.cost ?? 0,
       footprintW: fp.w,
       footprintH: fp.h,
-      name: def?.presentation.name ?? gridCell.type,
+      name: def?.presentation.name ?? defId,
       desc: def?.presentation.desc ?? '',
     });
   }
@@ -398,11 +384,10 @@ export class CanvasGestureManager {
 
     if (cell) {
       const fp = getFootprint(drag.buildingType);
-      const spriteName = getSpriteForType(drag.buildingType);
       this.renderer.placementPreview = {
         gridX: cell.x,
         gridY: cell.y,
-        spriteName,
+        spriteName: drag.buildingType,
         valid: this.isFootprintClear(cell.x, cell.y, fp.w, fp.h),
         footprintW: fp.w,
         footprintH: fp.h,

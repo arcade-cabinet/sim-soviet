@@ -18,38 +18,6 @@ describe('getSpriteForType — direct sprite IDs', () => {
   });
 });
 
-// ── getSpriteForType — legacy type mapping ─────────────────────────────────────
-
-describe('getSpriteForType — legacy type mapping', () => {
-  it('maps "power" to "power-station"', () => {
-    expect(getSpriteForType('power')).toBe('power-station');
-  });
-
-  it('maps "housing" to "apartment-tower-a"', () => {
-    expect(getSpriteForType('housing')).toBe('apartment-tower-a');
-  });
-
-  it('maps "farm" to "collective-farm-hq"', () => {
-    expect(getSpriteForType('farm')).toBe('collective-farm-hq');
-  });
-
-  it('maps "distillery" to "vodka-distillery"', () => {
-    expect(getSpriteForType('distillery')).toBe('vodka-distillery');
-  });
-
-  it('maps "gulag" to "gulag-admin"', () => {
-    expect(getSpriteForType('gulag')).toBe('gulag-admin');
-  });
-
-  it('all legacy sprite IDs exist in BUILDING_DEFS', () => {
-    const legacyTypes = ['power', 'housing', 'farm', 'distillery', 'gulag'];
-    for (const legacyType of legacyTypes) {
-      const spriteId = getSpriteForType(legacyType);
-      expect(BUILDING_DEFS[spriteId]).toBeDefined();
-    }
-  });
-});
-
 // ── getSpriteForType — unknown types ───────────────────────────────────────────
 
 describe('getSpriteForType — unknown types', () => {
@@ -94,36 +62,6 @@ describe('getFootprint — known types', () => {
     const fp = getFootprint('workers-house-c');
     expect(fp.w).toBe(2);
     expect(fp.h).toBe(2);
-  });
-
-  it('returns correct footprint for legacy type "power"', () => {
-    const fp = getFootprint('power');
-    expect(fp.w).toBe(1);
-    expect(fp.h).toBe(1);
-  });
-
-  it('returns correct footprint for legacy type "housing"', () => {
-    const fp = getFootprint('housing');
-    expect(fp.w).toBe(1);
-    expect(fp.h).toBe(1);
-  });
-
-  it('returns correct footprint for legacy type "farm"', () => {
-    const fp = getFootprint('farm');
-    expect(fp.w).toBe(1);
-    expect(fp.h).toBe(1);
-  });
-
-  it('returns correct footprint for legacy type "distillery"', () => {
-    const fp = getFootprint('distillery');
-    expect(fp.w).toBe(1);
-    expect(fp.h).toBe(1);
-  });
-
-  it('returns correct footprint for legacy type "gulag"', () => {
-    const fp = getFootprint('gulag');
-    expect(fp.w).toBe(1);
-    expect(fp.h).toBe(1);
   });
 });
 

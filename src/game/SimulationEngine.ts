@@ -30,6 +30,7 @@ import {
   setBuildingCollapsedCallback,
   setStarvationCallback,
 } from '@/ecs/systems';
+import { TICKS_PER_YEAR } from './Chronology';
 import type { TickResult } from './ChronologySystem';
 import { ChronologySystem } from './ChronologySystem';
 import type { GameEvent } from './EventSystem';
@@ -56,8 +57,6 @@ export interface SimCallbacks {
   onGameOver?: (victory: boolean, reason: string) => void;
 }
 
-/** Victory: survive 3 five-year plans (year 1980 + 15 = 1995). */
-const VICTORY_YEAR = 1995;
 /** Consecutive quota failures that trigger game over. */
 const MAX_QUOTA_FAILURES = 3;
 
@@ -188,7 +187,7 @@ export class SimulationEngine {
     this.processGulagEffect();
 
     // 8-10. Events, Politburo, and Pravda
-    this.eventSystem.tick();
+    this.eventSystem.tick(this.chronology.getDate().totalTicks);
 
     // PolitburoSystem.applyCorruptionDrain() mutates gameState.money directly,
     // but syncEcsToGameState() would overwrite it with the ECS store value.
@@ -199,7 +198,7 @@ export class SimulationEngine {
       this.gameState.money = store.resources.money;
     }
     const moneyBeforePolitburo = this.gameState.money;
-    this.politburo.tick();
+    this.politburo.tick(tickResult);
     const corruptionDelta = this.gameState.money - moneyBeforePolitburo;
     if (corruptionDelta !== 0 && store) {
       store.resources.money = Math.max(0, store.resources.money + corruptionDelta);
@@ -210,10 +209,10 @@ export class SimulationEngine {
     // Sync ECS resource store → GameState for React snapshots
     this.syncEcsToGameState();
 
-    // Check loss: population wiped out (only after year 1 so starting at 0 doesn't auto-lose)
+    // Check loss: population wiped out (only after first year so starting at 0 doesn't auto-lose)
     if (
       this.gameState.pop <= 0 &&
-      this.gameState.date.year > 1980 &&
+      this.chronology.getDate().totalTicks > TICKS_PER_YEAR &&
       this.gameState.buildings.length > 0
     ) {
       this.endGame(false, 'All citizens have perished. The settlement is abandoned.');
@@ -288,7 +287,7 @@ export class SimulationEngine {
       this.gameState.buildings.push({
         x: entity.position.gridX,
         y: entity.position.gridY,
-        type: entity.building.type,
+        defId: entity.building.defId,
         powered: entity.building.powered,
       });
     }
@@ -303,7 +302,7 @@ export class SimulationEngine {
     if (!store || store.resources.population <= 0) return;
 
     for (const entity of buildingsLogic) {
-      if (entity.building.type === 'gulag' || entity.building.type === 'gulag-admin') {
+      if (entity.building.housingCap < 0) {
         if (entity.building.powered && store.resources.population > 0) {
           if ((this.rng?.random() ?? Math.random()) < 0.1) {
             store.resources.population--;
@@ -336,11 +335,6 @@ export class SimulationEngine {
           this.quota.deadlineYear += 5;
         }
       }
-    }
-
-    // Victory: survived to the victory year
-    if (this.gameState.date.year >= VICTORY_YEAR && !this.ended) {
-      this.endGame(true, 'You survived 3 Five-Year Plans! The Soviet Union endures... for now.');
     }
   }
 

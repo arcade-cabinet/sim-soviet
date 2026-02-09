@@ -191,7 +191,7 @@ describe('PravdaSystem', () => {
     });
 
     it('includes year in generated headlines', () => {
-      gs.date.year = 1980;
+      gs.date.year = 1922;
 
       let foundYear = false;
       for (let i = 0; i < 3000; i++) {
@@ -199,7 +199,7 @@ describe('PravdaSystem', () => {
         const headline = pravda.generateAmbientHeadline();
         if (headline) {
           const allText = headline.headline + headline.subtext + headline.reality;
-          if (allText.includes('1980')) {
+          if (allText.includes('1922')) {
             foundYear = true;
             break;
           }
@@ -298,7 +298,7 @@ describe('PravdaSystem', () => {
     it('includes the current year', () => {
       pravda.headlineFromEvent(createMockEvent());
       const page = pravda.formatFrontPage();
-      expect(page).toContain('1980');
+      expect(page).toContain('1922');
     });
 
     it('shows up to 3 headlines with star prefix', () => {

@@ -1,3 +1,4 @@
+import { getBuildingDef } from '@/data/buildingDefs';
 import type { EventCategory, GameEvent } from './EventSystem';
 import type { GameState } from './GameState';
 import type { GameRng } from './SeedSystem';
@@ -1077,7 +1078,7 @@ const contextualGenerators: ContextualGenerator[] = [
 
   // No power but has buildings that need it
   {
-    condition: (gs) => gs.power === 0 && gs.buildings.some((b) => b.type !== 'road'),
+    condition: (gs) => gs.power === 0 && gs.buildings.length > 0,
     weight: 2.5,
     generate: () => ({
       headline: 'NATIONWIDE LIGHTS-OUT EVENT CELEBRATES EARTH HOUR (EXTENDED INDEFINITELY)',
@@ -1091,10 +1092,13 @@ const contextualGenerators: ContextualGenerator[] = [
 
   // Many gulags
   {
-    condition: (gs) => gs.buildings.filter((b) => b.type === 'gulag').length >= 2,
+    condition: (gs) =>
+      gs.buildings.filter((b) => (getBuildingDef(b.defId)?.stats.housingCap ?? 0) < 0).length >= 2,
     weight: 2,
     generate: (gs) => {
-      const gulagCount = gs.buildings.filter((b) => b.type === 'gulag').length;
+      const gulagCount = gs.buildings.filter(
+        (b) => (getBuildingDef(b.defId)?.stats.housingCap ?? 0) < 0
+      ).length;
       return {
         headline: `${gulagCount} ATTITUDE ADJUSTMENT FACILITIES OPERATING AT FULL CAPACITY`,
         subtext: `Graduates report: "I have never been happier." (Statement certified by facility director.)`,
@@ -1111,7 +1115,7 @@ const contextualGenerators: ContextualGenerator[] = [
     generate: (gs) => ({
       headline: `POPULATION BOOM: ${gs.pop} CITIZENS PROVE SOCIALIST PARADISE IS MAGNETS FOR MASSES`,
       subtext: `Immigration office overwhelmed. (It is one man with a stamp. He is very tired.)`,
-      reality: `${gs.pop} citizens. Housing for ${gs.buildings.filter((b) => b.type === 'housing').length * 50}. The math is not discussed.`,
+      reality: `${gs.pop} citizens. Housing for ${gs.buildings.reduce((sum, b) => sum + Math.max(0, getBuildingDef(b.defId)?.stats.housingCap ?? 0), 0)}. The math is not discussed.`,
       category: 'triumph',
     }),
   },

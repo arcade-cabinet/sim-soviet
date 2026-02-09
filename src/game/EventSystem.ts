@@ -710,8 +710,8 @@ export const ALL_EVENT_TEMPLATES: EventTemplate[] = [
 // ─────────────────────────────────────────────────────────
 
 export class EventSystem {
-  private lastEventTime = 0;
-  private eventCooldown = 25000; // 25 seconds between events
+  private lastEventTick = 0;
+  private eventCooldownTicks = 25; // 25 ticks (~8 game-days) between events
   private recentEventIds: string[] = [];
   private maxRecentMemory = 10;
   private eventHistory: GameEvent[] = [];
@@ -724,10 +724,9 @@ export class EventSystem {
     if (rng) _rng = rng;
   }
 
-  /** Called every simulation tick */
-  public tick(): void {
-    const now = Date.now();
-    if (now - this.lastEventTime < this.eventCooldown) return;
+  /** Called every simulation tick with the monotonic tick counter */
+  public tick(totalTicks: number): void {
+    if (totalTicks - this.lastEventTick < this.eventCooldownTicks) return;
 
     // 12% chance per eligible tick
     if ((_rng?.random() ?? Math.random()) < 0.12) {
@@ -740,7 +739,7 @@ export class EventSystem {
           this.recentEventIds.shift();
         }
         this.onEventCallback(event);
-        this.lastEventTime = now;
+        this.lastEventTick = totalTicks;
       }
     }
   }
@@ -756,7 +755,6 @@ export class EventSystem {
     if (this.recentEventIds.length > this.maxRecentMemory) {
       this.recentEventIds.shift();
     }
-    this.lastEventTime = Date.now();
     this.onEventCallback(event);
   }
 

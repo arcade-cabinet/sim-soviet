@@ -1832,26 +1832,26 @@ export class PolitburoSystem {
 
   /**
    * Called every simulation tick by SimulationEngine.
-   * Processes yearly events on month boundaries.
+   * Processes monthly/quarterly/annual events based on TickResult boundaries.
    */
-  public tick(): void {
-    const { month, tick: dateTick } = this.gameState.date;
+  public tick(tickResult: { newMonth: boolean; newYear: boolean }): void {
+    const { month } = this.gameState.date;
 
     // Monthly updates
-    if (dateTick === 0) {
+    if (tickResult.newMonth) {
       this.updateMinisterStats();
       this.checkMinistryEvents();
       this.applyCorruptionDrain();
     }
 
     // Quarterly checks
-    if (dateTick === 0 && (month === 1 || month === 4 || month === 7 || month === 10)) {
+    if (tickResult.newMonth && [1, 4, 7, 10].includes(month)) {
       this.checkTensions();
       this.checkPurges();
     }
 
     // Annual checks
-    if (dateTick === 0 && month === 1) {
+    if (tickResult.newYear) {
       this.ageLeader();
       this.checkCoups();
       this.checkLeaderDeath();

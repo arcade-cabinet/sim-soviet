@@ -1,12 +1,9 @@
 /**
- * BuildingFootprints — Maps game building types to sprite names and grid footprints.
+ * BuildingFootprints — Maps building def IDs to sprite names and grid footprints.
  *
- * Now backed by the generated buildingDefs.generated.json instead of hardcoded data.
+ * Backed by the generated buildingDefs.generated.json (via the Zod-validated data layer).
  * The pipeline script (scripts/generate_building_defs.ts) reads the sprite manifest
  * and calculates footprints from model_size via Math.round().
- *
- * Legacy API preserved: getSpriteForType() and getFootprint() still work with the
- * old 6-type game keys (power, housing, farm, distillery, gulag, road).
  */
 
 import type { Footprint } from '@/data/buildingDefs';
@@ -20,31 +17,15 @@ export interface FootprintDef {
   h: number;
 }
 
-/**
- * Maps legacy game type keys to sprite IDs.
- * Used by getSpriteForType() until the toolbar is expanded to 31 building types.
- */
-const LEGACY_TYPE_TO_SPRITE: Record<string, string> = {
-  power: 'power-station',
-  housing: 'apartment-tower-a',
-  farm: 'collective-farm-hq',
-  distillery: 'vodka-distillery',
-  gulag: 'gulag-admin',
-};
-
-/** Get the sprite name for a building type. Handles both legacy and sprite IDs. */
-export function getSpriteForType(buildingType: string): string {
-  // Direct sprite ID?
-  if (BUILDING_DEFS[buildingType]) return buildingType;
-  // Legacy game type?
-  return LEGACY_TYPE_TO_SPRITE[buildingType] ?? '';
+/** Get the sprite name for a building def ID. The defId IS the sprite ID. */
+export function getSpriteForType(defId: string): string {
+  return BUILDING_DEFS[defId] ? defId : '';
 }
 
-/** Get the footprint for a building type. Defaults to 1×1 if unknown. */
-export function getFootprint(buildingType: string): { w: number; h: number } {
-  const spriteId = getSpriteForType(buildingType);
-  if (!spriteId) return { w: 1, h: 1 };
-  const fp: Footprint = getFootprintFromDefs(spriteId);
+/** Get the footprint for a building def ID. Defaults to 1x1 if unknown. */
+export function getFootprint(defId: string): { w: number; h: number } {
+  if (!defId || !BUILDING_DEFS[defId]) return { w: 1, h: 1 };
+  const fp: Footprint = getFootprintFromDefs(defId);
   return { w: fp.tilesX, h: fp.tilesY };
 }
 

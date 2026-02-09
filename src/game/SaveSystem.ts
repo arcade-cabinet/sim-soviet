@@ -26,7 +26,7 @@ export interface SaveData {
   power: number;
   powerUsed: number;
   date: { year: number; month: number; tick: number };
-  buildings: Array<{ x: number; y: number; type: string; powered: boolean }>;
+  buildings: Array<{ x: number; y: number; defId: string; powered: boolean }>;
   quota: { type: string; target: number; current: number; deadlineYear: number };
 }
 
@@ -194,7 +194,7 @@ export class SaveSystem {
             saveId: save.id,
             gridX: b.x,
             gridY: b.y,
-            type: b.type,
+            type: b.defId,
             powered: b.powered,
           }))
         )
@@ -257,7 +257,7 @@ export class SaveSystem {
       (b: { gridX: number; gridY: number; type: string; powered: boolean }) => ({
         x: b.gridX,
         y: b.gridY,
-        type: b.type,
+        defId: b.type,
         powered: b.powered,
       })
     );
@@ -294,7 +294,7 @@ export class SaveSystem {
       buildings: this.gameState.buildings.map((b) => ({
         x: b.x,
         y: b.y,
-        type: b.type,
+        defId: b.defId,
         powered: b.powered,
       })),
       quota: { ...this.gameState.quota },
@@ -320,7 +320,7 @@ export class SaveSystem {
     this.gameState.buildings = data.buildings.map((b) => ({
       x: b.x,
       y: b.y,
-      type: b.type,
+      defId: b.defId,
       powered: b.powered,
     }));
 
@@ -328,10 +328,10 @@ export class SaveSystem {
     this.gameState.resetGrid();
 
     for (const b of data.buildings) {
-      const fp = getFootprint(b.type);
+      const fp = getFootprint(b.defId);
       for (let dx = 0; dx < fp.w; dx++) {
         for (let dy = 0; dy < fp.h; dy++) {
-          this.gameState.setCell(b.x + dx, b.y + dy, b.type);
+          this.gameState.setCell(b.x + dx, b.y + dy, b.defId);
         }
       }
     }

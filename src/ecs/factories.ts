@@ -19,30 +19,6 @@ import type {
 } from './world';
 import { world } from './world';
 
-// ── Sprite ID lookup ────────────────────────────────────────────────────────
-
-/**
- * Maps legacy game type keys (from config.ts BUILDING_TYPES) to sprite IDs
- * (from the manifest). This bridges the old 6-type system to the new 31-sprite system.
- *
- * When the toolbar is expanded to use sprite IDs directly, this map can be removed.
- */
-const LEGACY_TYPE_TO_SPRITE: Record<string, string> = {
-  power: 'power-station',
-  housing: 'apartment-tower-a',
-  farm: 'collective-farm-hq',
-  distillery: 'vodka-distillery',
-  gulag: 'gulag-admin',
-};
-
-/**
- * Resolve a building type or sprite ID to a sprite ID.
- * Handles both legacy game types ("power") and direct sprite IDs ("power-station").
- */
-function resolveSpriteId(typeOrSpriteId: string): string {
-  return LEGACY_TYPE_TO_SPRITE[typeOrSpriteId] ?? typeOrSpriteId;
-}
-
 // ── Building Factory ────────────────────────────────────────────────────────
 
 /**
@@ -53,16 +29,15 @@ function resolveSpriteId(typeOrSpriteId: string): string {
  *
  * @param gridX - Column index on the grid (0-based)
  * @param gridY - Row index on the grid (0-based)
- * @param type  - Building type key (legacy game type or sprite ID)
+ * @param defId - Building definition ID (sprite ID key into BUILDING_DEFS)
  * @returns The created entity, already added to the world
  */
-export function createBuilding(gridX: number, gridY: number, type: string): Entity {
-  const spriteId = resolveSpriteId(type);
-  const def = getBuildingDef(spriteId);
+export function createBuilding(gridX: number, gridY: number, defId: string): Entity {
+  const def = getBuildingDef(defId);
 
   // Derive building component from generated defs
   const building: BuildingComponent = {
-    type,
+    defId,
     powered: false,
     powerReq: def?.stats.powerReq ?? 0,
     powerOutput: def?.stats.powerOutput ?? 0,
@@ -74,7 +49,7 @@ export function createBuilding(gridX: number, gridY: number, type: string): Enti
 
   // Derive renderable from sprite data
   const renderable: Renderable = {
-    spriteId,
+    spriteId: defId,
     spritePath: def?.sprite.path ?? '',
     footprintX: def?.footprint.tilesX ?? 1,
     footprintY: def?.footprint.tilesY ?? 1,

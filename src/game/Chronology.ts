@@ -41,7 +41,7 @@ export const TICKS_PER_YEAR = TICKS_PER_MONTH * MONTHS_PER_YEAR; // 360
 // ─────────────────────────────────────────────────────────
 
 export interface GameDate {
-  /** Calendar year (starts 1980). */
+  /** Calendar year (starts 1922 — founding of the USSR). */
   year: number;
   /** Calendar month, 1-12. */
   month: number;
@@ -53,11 +53,11 @@ export interface GameDate {
   totalTicks: number;
 }
 
-/** Creates a fresh GameDate for a new game starting year. */
-export function createGameDate(startYear = 1980): GameDate {
+/** Creates a fresh GameDate for a new game starting in October 1922 (founding of the USSR). */
+export function createGameDate(startYear = 1922): GameDate {
   return {
     year: startYear,
-    month: 1,
+    month: 10,
     day: 1,
     hour: 0,
     totalTicks: 0,

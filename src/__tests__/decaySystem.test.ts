@@ -13,7 +13,7 @@ import { world } from '@/ecs/world';
 function createDecayableBuilding(opts: {
   gridX?: number;
   gridY?: number;
-  type?: string;
+  defId?: string;
   durability?: number;
   decayRate?: number;
   powered?: boolean;
@@ -21,7 +21,7 @@ function createDecayableBuilding(opts: {
   const entity: Entity = {
     position: { gridX: opts.gridX ?? 0, gridY: opts.gridY ?? 0 },
     building: {
-      type: opts.type ?? 'housing',
+      defId: opts.defId ?? 'apartment-tower-a',
       powered: opts.powered ?? false,
       powerReq: 5,
       powerOutput: 0,
@@ -103,7 +103,7 @@ describe('decaySystem', () => {
       createDecayableBuilding({
         gridX: 5,
         gridY: 10,
-        type: 'farm',
+        defId: 'collective-farm-hq',
         durability: 1,
         decayRate: 5,
       });
@@ -111,7 +111,7 @@ describe('decaySystem', () => {
       decaySystem();
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(5, 10, 'farm', 1, 1);
+      expect(callback).toHaveBeenCalledWith(5, 10, 'collective-farm-hq', 1, 1);
     });
 
     it('fires collapse callback with correct position from entity', () => {
@@ -121,13 +121,13 @@ describe('decaySystem', () => {
       createDecayableBuilding({
         gridX: 15,
         gridY: 20,
-        type: 'power',
+        defId: 'power-station',
         durability: 0.01,
         decayRate: 1,
       });
 
       decaySystem();
-      expect(callback).toHaveBeenCalledWith(15, 20, 'power', 1, 1);
+      expect(callback).toHaveBeenCalledWith(15, 20, 'power-station', 1, 1);
     });
 
     it('fires collapse callback with -1,-1 when entity has no position', () => {
@@ -137,7 +137,7 @@ describe('decaySystem', () => {
       // Create entity without position component
       const entity: Entity = {
         building: {
-          type: 'mystery',
+          defId: 'mystery',
           powered: false,
           powerReq: 0,
           powerOutput: 0,
@@ -209,14 +209,14 @@ describe('decaySystem', () => {
         decayRate: 5,
         gridX: 0,
         gridY: 0,
-        type: 'farm',
+        defId: 'collective-farm-hq',
       });
       createDecayableBuilding({
         durability: 1,
         decayRate: 5,
         gridX: 3,
         gridY: 3,
-        type: 'power',
+        defId: 'power-station',
       });
 
       decaySystem();
@@ -284,7 +284,7 @@ describe('decaySystem', () => {
       setBuildingCollapsedCallback(callback1);
       setBuildingCollapsedCallback(callback2);
 
-      createDecayableBuilding({ durability: 1, decayRate: 5, type: 'gulag' });
+      createDecayableBuilding({ durability: 1, decayRate: 5, defId: 'gulag-admin' });
       decaySystem();
 
       expect(callback1).not.toHaveBeenCalled();
@@ -297,7 +297,7 @@ describe('decaySystem', () => {
 
       const entity: Entity = {
         building: {
-          type: 'ghost-building',
+          defId: 'ghost-building',
           powered: false,
           powerReq: 0,
           powerOutput: 0,

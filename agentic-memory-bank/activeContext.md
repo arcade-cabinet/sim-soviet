@@ -20,6 +20,7 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 - **PR #1**: Canvas 2D migration, CI/CD setup, systems overhaul, 795 unit tests
 - **PR #2**: Fix deploy workflow (upgrade upload-pages-artifact v3→v4 for SHA pinning)
 - **PR #3**: Fix sprite/audio asset paths with Vite BASE_URL for GitHub Pages deployment
+- **PR #4**: Game Systems Integration — PolitburoSystem, weather modifiers, biome terrain, leader UI, dead config cleanup, simulation interval fix
 
 ### Game Systems Integration (Latest)
 - [x] **PolitburoSystem wired** — ticks in SimulationEngine, events feed advisor + Pravda
@@ -28,7 +29,8 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 - [x] **Biome terrain tiles live** — FeatureTileRenderer with manifest anchors, TerrainGenerator on 3-cell border
 - [x] **Leader UI** — General Secretary name + personality in TopBar via GameSnapshot
 - [x] **Dead config cleaned** — config.ts reduced to GRID_SIZE only
-- [x] **796 tests passing** (30 new: 8 production modifiers, 11 terrain, 11 politburo integration)
+- [x] **798 unit tests + 139 E2E tests passing**
+- [x] **Simulation interval bug fixed** — callbacksRef pattern prevents useEffect cleanup killing the tick interval
 
 ### Verified Working
 - [x] Canvas 2D rendering — sprites, grid, terrain features, particles, ground, depth sorting
@@ -75,3 +77,5 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 - DPR-aware canvas: `canvas.width = w*dpr; ctx.setTransform(dpr,0,0,dpr,0,0)`
 - Sprite anchor: `drawX = screenX - anchorX`, `drawY = screenY + TILE_HEIGHT/2 - anchorY`
 - `src/vite-env.d.ts` provides `import.meta.env` types — don't delete it
+- **callbacksRef pattern**: `GameWorld.tsx` stores `callbacks` in a `useRef` — passing inline callback objects to `useEffect` deps causes the interval to be torn down on every App re-render
+- **ECS money sync before PolitburoSystem**: Must read `store.resources.money` into `gameState.money` before `politburo.tick()`, then capture the delta and apply it back to the ECS store

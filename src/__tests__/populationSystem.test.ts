@@ -31,8 +31,8 @@ describe('populationSystem', () => {
 
   describe('population growth', () => {
     it('grows population when housing and food are available (with rng)', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing'); // housingCap=50
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a'); // housingCap=50
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -46,8 +46,8 @@ describe('populationSystem', () => {
     });
 
     it('grows population when housing and food are available (without rng)', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a');
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -61,8 +61,8 @@ describe('populationSystem', () => {
     });
 
     it('can grow by 0 (rng returns 0)', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a');
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -76,8 +76,8 @@ describe('populationSystem', () => {
     });
 
     it('can grow by 1', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a');
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -95,8 +95,8 @@ describe('populationSystem', () => {
 
   describe('population with insufficient food', () => {
     it('does not grow when food is 10 or below', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a');
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -110,8 +110,8 @@ describe('populationSystem', () => {
     });
 
     it('does not grow when food is 0', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a');
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -125,8 +125,8 @@ describe('populationSystem', () => {
     });
 
     it('grows when food is 11 (just above threshold)', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a');
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -144,8 +144,8 @@ describe('populationSystem', () => {
 
   describe('housing capacity limits', () => {
     it('does not grow when population equals housing cap', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing'); // housingCap=50
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a'); // housingCap=50
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -159,8 +159,8 @@ describe('populationSystem', () => {
     });
 
     it('does not grow when population exceeds housing cap', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing'); // housingCap=50
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a'); // housingCap=50
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -174,9 +174,9 @@ describe('populationSystem', () => {
     });
 
     it('grows with multiple housing buildings stacking capacity', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing'); // 50
-      createBuilding(2, 2, 'housing'); // 50 — total 100
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a'); // 50
+      createBuilding(2, 2, 'apartment-tower-a'); // 50 — total 100
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -205,7 +205,7 @@ describe('populationSystem', () => {
     });
 
     it('does not grow when only power plants exist (no housing)', () => {
-      createBuilding(0, 0, 'power');
+      createBuilding(0, 0, 'power-station');
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -223,7 +223,7 @@ describe('populationSystem', () => {
 
   describe('edge: unpowered housing', () => {
     it('unpowered housing does not count toward capacity', () => {
-      createBuilding(1, 1, 'housing'); // No power plant, so unpowered
+      createBuilding(1, 1, 'apartment-tower-a'); // No power plant, so unpowered
       powerSystem();
 
       const store = getResourceEntity()!;
@@ -251,8 +251,8 @@ describe('populationSystem', () => {
 
   describe('edge: population near housing cap', () => {
     it('can grow population to exactly housing cap', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing'); // housingCap=50
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a'); // housingCap=50
       powerSystem();
 
       const store = getResourceEntity()!;
