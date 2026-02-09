@@ -1,0 +1,74 @@
+/**
+ * GameOverModal — Victory or defeat screen with game stats.
+ *
+ * Mirrors the IntroModal "dossier" aesthetic.
+ * Victory: congratulations + stats summary.
+ * Defeat: KGB notification + shame stats.
+ */
+import { useGameSnapshot } from '@/stores/gameStore';
+
+interface GameOverModalProps {
+  victory: boolean;
+  reason: string;
+  onRestart: () => void;
+}
+
+export function GameOverModal({ victory, reason, onRestart }: GameOverModalProps) {
+  const snap = useGameSnapshot();
+
+  return (
+    <div className="intro-overlay">
+      <div className="dossier">
+        {/* Header */}
+        <h1 className="text-center text-xl font-bold tracking-widest uppercase mb-2">
+          {victory ? 'Order of Lenin' : 'KGB Notice'}
+        </h1>
+        <hr className="border-black mb-3" />
+
+        {/* Stamp */}
+        <div className="text-center mb-4">
+          <span className="stamp">{victory ? 'Approved' : 'Terminated'}</span>
+        </div>
+
+        {/* Result message */}
+        <p className="mb-4 leading-relaxed text-center font-bold">{reason}</p>
+
+        <hr className="border-black/30 mb-3" />
+
+        {/* Stats summary */}
+        <p className="mb-1 font-bold uppercase">Final Report:</p>
+        <ul className="list-none pl-0 mb-4 space-y-1">
+          <li>
+            Year Reached: <strong>{snap.date.year}</strong>
+          </li>
+          <li>
+            Population: <strong>{snap.pop}</strong>
+          </li>
+          <li>
+            Buildings: <strong>{snap.buildingCount}</strong>
+          </li>
+          <li>
+            Treasury: <strong>{snap.money}</strong>
+          </li>
+          <li>
+            Food Stores: <strong>{snap.food}</strong>
+          </li>
+          <li>
+            Vodka Reserves: <strong>{snap.vodka}</strong>
+          </li>
+        </ul>
+
+        <hr className="border-black/30 mb-4" />
+
+        {/* Restart button */}
+        <button
+          type="button"
+          onClick={onRestart}
+          className="w-full bg-soviet-red text-white font-bold py-3 px-4 text-lg uppercase tracking-wider cursor-pointer border-2 border-black transition-transform active:translate-y-0.5 active:brightness-75 hover:brightness-110"
+        >
+          {victory ? 'Serve Again' : 'Try Again, Comrade'}
+        </button>
+      </div>
+    </div>
+  );
+}

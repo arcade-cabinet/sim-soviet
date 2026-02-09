@@ -1,5 +1,5 @@
-import { GameState } from './GameState';
-import type { GameEvent, EventCategory } from './EventSystem';
+import type { EventCategory, GameEvent } from './EventSystem';
+import type { GameState } from './GameState';
 import type { GameRng } from './SeedSystem';
 
 // ─────────────────────────────────────────────────────────
@@ -30,7 +30,15 @@ export interface PravdaHeadline {
   subtext: string;
   /** The grim reality behind the headline */
   reality: string;
-  category: 'triumph' | 'production' | 'culture' | 'weather' | 'editorial' | 'threat' | 'leader' | 'spin';
+  category:
+    | 'triumph'
+    | 'production'
+    | 'culture'
+    | 'weather'
+    | 'editorial'
+    | 'threat'
+    | 'leader'
+    | 'spin';
   timestamp: number;
 }
 
@@ -60,7 +68,7 @@ function fakePercent(): string {
 
 /** Generate an impossibly large production number */
 function bigNumber(): string {
-  const n = randInt(1, 99) * Math.pow(10, randInt(2, 5));
+  const n = randInt(1, 99) * 10 ** randInt(2, 5);
   return n.toLocaleString();
 }
 
@@ -257,7 +265,7 @@ const QUALIFIERS = [
   'THANKS TO WISE LEADERSHIP',
   'IN THE SPIRIT OF LENIN',
   'WITH BOUNDLESS ENTHUSIASM',
-  'UNDER THE PARTY\'S GUIDANCE',
+  "UNDER THE PARTY'S GUIDANCE",
   'IN FULFILLMENT OF SACRED DUTY',
   'WITH SELFLESS DEDICATION',
   'BEYOND ALL EXPECTATIONS',
@@ -412,7 +420,7 @@ const LEADER_ACHIEVEMENTS = [
   'READS 400 PAGES OF POLICY DAILY',
   'BENCH-PRESSES 200 KILOGRAMS',
   'WRITES POETRY BETWEEN MEETINGS',
-  'HAS MEMORIZED EVERY CITIZEN\'S NAME',
+  "HAS MEMORIZED EVERY CITIZEN'S NAME",
   'INVENTED A NEW TYPE OF CONCRETE',
   'PREDICTED THE WEATHER CORRECTLY ONCE',
   'NEGOTIATED FAVORABLE TREATY WITH WINTER',
@@ -439,7 +447,7 @@ const LEADER_QUALITIES = [
 
 const NATURE_CREDITS = [
   'GOOD HARVEST ATTRIBUTED TO WISE AGRICULTURAL POLICY',
-  'MILD WINTER CREDITED TO LEADER\'S NEGOTIATIONS WITH NATURE',
+  "MILD WINTER CREDITED TO LEADER'S NEGOTIATIONS WITH NATURE",
   'SUNRISE OCCURS ON SCHEDULE THANKS TO PARTY PLANNING',
   'FAVORABLE WINDS BLOW IN DIRECTION OF SOCIALISM',
   'RAIN FALLS PRECISELY ON COLLECTIVE FARMS AS DIRECTED',
@@ -556,7 +564,8 @@ const externalThreatGenerators: HeadlineGenerator[] = [
   // Pattern: Western radio interference
   () => ({
     headline: `${pick(WESTERN_COUNTRIES)} RADIO PROPAGANDA JAMMED SUCCESSFULLY FOR ${randInt(100, 999)}TH DAY`,
-    subtext: 'Citizens report: "We cannot hear the lies." (They also cannot hear the weather forecast.)',
+    subtext:
+      'Citizens report: "We cannot hear the lies." (They also cannot hear the weather forecast.)',
     reality: 'The jamming equipment broke. Radio silence achieved by power outage instead.',
     category: 'threat',
   }),
@@ -573,7 +582,8 @@ const externalThreatGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `SOVIET DELEGATION HUMILIATES ${pick(WESTERN_COUNTRIES)} AT ${pick(['UN SUMMIT', 'TRADE TALKS', 'ARMS NEGOTIATION', 'CULTURAL EXCHANGE', 'CHESS TOURNAMENT', 'SCIENTIFIC CONFERENCE'])}`,
     subtext: `Western delegates seen weeping. Soviet delegate seen smiling (approved smile #3).`,
-    reality: 'The Soviet delegation arrived at the wrong building. This was declared a strategic maneuver.',
+    reality:
+      'The Soviet delegation arrived at the wrong building. This was declared a strategic maneuver.',
     category: 'threat',
   }),
 
@@ -619,7 +629,7 @@ const internalTriumphGenerators: HeadlineGenerator[] = [
   // Pattern: Record broken that shouldn't be a record
   () => ({
     headline: `NEW RECORD: ${randInt(47, 999)} CONSECUTIVE DAYS WITHOUT ${pick(['COMPLAINT', 'DEFECTION', 'UNSANCTIONED OPINION', 'UNAUTHORIZED SMILE', 'DEVIATION FROM PLAN', 'INDEPENDENT THOUGHT'])}`,
-    subtext: 'Previous record: ${randInt(2, 10)} days. Improvement methodology: classified.',
+    subtext: `Previous record: ${randInt(2, 10)} days. Improvement methodology: classified.`,
     reality: 'Complaints office relocated to an address that does not exist.',
     category: 'triumph',
   }),
@@ -628,7 +638,8 @@ const internalTriumphGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `${randInt(10, 500)} NEW ${pick(['TENEMENTS', 'FACTORIES', 'SCHOOLS', 'HOSPITALS', 'MONUMENTS', 'CONCRETE STRUCTURES'])} COMPLETED THIS MONTH`,
     subtext: `Each one a masterpiece of Soviet architecture (i.e., rectangular and grey).`,
-    reality: 'One building was completed. It has no plumbing. The plumbing is in a different building that has no walls.',
+    reality:
+      'One building was completed. It has no plumbing. The plumbing is in a different building that has no walls.',
     category: 'production',
   }),
 
@@ -664,10 +675,12 @@ const internalTriumphGenerators: HeadlineGenerator[] = [
     const pct = randInt(97, 103);
     return {
       headline: `ELECTIONS HELD: APPROVED CANDIDATE WINS WITH ${pct}% OF VOTE`,
-      subtext: pct > 100
-        ? `The extra ${pct - 100}% attributed to "revolutionary enthusiasm."`
-        : `The missing ${100 - pct}% under investigation.`,
-      reality: 'Ballot had one name. Instructions said "mark X for yes." There was no option for no.',
+      subtext:
+        pct > 100
+          ? `The extra ${pct - 100}% attributed to "revolutionary enthusiasm."`
+          : `The missing ${100 - pct}% under investigation.`,
+      reality:
+        'Ballot had one name. Instructions said "mark X for yes." There was no option for no.',
       category: 'editorial',
     };
   },
@@ -754,7 +767,8 @@ const culturalVictoryGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `ACADEMY OF SCIENCES ANNOUNCES ${pick(FAKE_DISCOVERIES)}`,
     subtext: `Western scientists: "impossible." Our scientists: "watch us." (They cannot \u2014 it's classified.)`,
-    reality: 'The discovery was a clerical error. The scientist responsible has been promoted to avoid embarrassment.',
+    reality:
+      'The discovery was a clerical error. The scientist responsible has been promoted to avoid embarrassment.',
     category: 'culture',
   }),
 
@@ -762,7 +776,8 @@ const culturalVictoryGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `${pick(['PEOPLES ORCHESTRA', 'STATE BALLET', 'YOUTH CHOIR', 'REVOLUTIONARY THEATER COMPANY', 'PROLETARIAN POETRY CIRCLE'])} ACHIEVES ${pick(['STANDING OVATION', 'RECORD ATTENDANCE', 'CRITICAL ACCLAIM', '11-HOUR PERFORMANCE', 'EMOTIONAL BREAKTHROUGH'])}`,
     subtext: `Audience response: ${pick(['weeping', 'cheering', 'standing', 'sitting very still', 'awake'])} (all approved responses).`,
-    reality: 'The performance was 4 hours of patriotic marching music. The seats were removed to prevent sleeping.',
+    reality:
+      'The performance was 4 hours of patriotic marching music. The seats were removed to prevent sleeping.',
     category: 'culture',
   }),
 
@@ -786,7 +801,8 @@ const culturalVictoryGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `WESTERN ${pick(['ART', 'MUSIC', 'LITERATURE', 'CINEMA', 'DANCE', 'ARCHITECTURE'])} DECLARED "DECADENT AND DYING" BY MINISTRY OF CULTURE`,
     subtext: `In contrast, Soviet ${pick(['concrete sculptures', 'patriotic ballads', 'productivity reports', 'queue management', 'weather endurance'])} flourish.`,
-    reality: 'Ministry of Culture has one employee. He has seen no Western art. He remains confident.',
+    reality:
+      'Ministry of Culture has one employee. He has seen no Western art. He remains confident.',
     category: 'culture',
   }),
 ];
@@ -850,12 +866,14 @@ const resourceSpinGenerators: HeadlineGenerator[] = [
     const pct = gs.quota.target > 0 ? Math.floor((gs.quota.current / gs.quota.target) * 100) : 0;
     return {
       headline: `FIVE-YEAR PLAN ${pct >= 100 ? 'EXCEEDED' : 'ON TRACK'}: ${gs.quota.type.toUpperCase()} AT ${pct}% OF TARGET`,
-      subtext: pct >= 100
-        ? 'Overachievement attributed to party guidance and creative mathematics.'
-        : `Remaining ${100 - pct}% to be completed in a burst of revolutionary energy.`,
-      reality: pct >= 100
-        ? 'Target was quietly reduced last Thursday.'
-        : `At current rate, plan will be completed ${randInt(2, 7)} years late. Calendar will be adjusted.`,
+      subtext:
+        pct >= 100
+          ? 'Overachievement attributed to party guidance and creative mathematics.'
+          : `Remaining ${100 - pct}% to be completed in a burst of revolutionary energy.`,
+      reality:
+        pct >= 100
+          ? 'Target was quietly reduced last Thursday.'
+          : `At current rate, plan will be completed ${randInt(2, 7)} years late. Calendar will be adjusted.`,
       category: 'production',
     };
   },
@@ -881,7 +899,8 @@ const weatherFillerGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `SPRING PREDICTED FOR ${pick(['NEXT MONTH', 'SOMETIME THIS YEAR', 'THE FORESEEABLE FUTURE', 'EVENTUALLY', 'SOON (REDEFINED)'])}`,
     subtext: 'Citizens advised to remain patient. Patience supplies: adequate.',
-    reality: 'Last spring lasted 2 days. A citizen blinked and missed it. He was counseled for inattention.',
+    reality:
+      'Last spring lasted 2 days. A citizen blinked and missed it. He was counseled for inattention.',
     category: 'weather',
   }),
 
@@ -895,7 +914,12 @@ const weatherFillerGenerators: HeadlineGenerator[] = [
   // Absurdist filler
   () => ({
     headline: `EDITORIAL: ${pick(['NOTHING HAPPENED TODAY AND THAT IS GOOD', 'EVERYTHING IS FINE (REPEAT UNTIL TRUE)', 'THE STATE OF THE STATE: STATED', 'WHY YESTERDAY WAS THE BEST YESTERDAY YET', 'IN DEFENSE OF CONCRETE: A MANIFESTO'])}`,
-    subtext: pick(['By the Editor (writing voluntarily, under observation).', 'Opinions expressed are the only opinions.', 'Reader feedback: not accepted.', 'Corrections: there are none. There never are.']),
+    subtext: pick([
+      'By the Editor (writing voluntarily, under observation).',
+      'Opinions expressed are the only opinions.',
+      'Reader feedback: not accepted.',
+      'Corrections: there are none. There never are.',
+    ]),
     reality: pick(GENERIC_REALITIES),
     category: 'editorial',
   }),
@@ -926,8 +950,10 @@ const weatherFillerGenerators: HeadlineGenerator[] = [
       `SEEKING QUALIFIED PLUMBER. QUALIFICATIONS: ALIVE, WILLING`,
       `FOR TRADE: 1 POTATO FOR 3 POEMS ABOUT TRACTORS. SERIOUS OFFERS ONLY`,
     ])}`,
-    subtext: 'All classified ads reviewed and approved by the Ministry of Commerce (dissolved 1976).',
-    reality: 'The classified section is the only honest part of the newspaper. This concerns everyone.',
+    subtext:
+      'All classified ads reviewed and approved by the Ministry of Commerce (dissolved 1976).',
+    reality:
+      'The classified section is the only honest part of the newspaper. This concerns everyone.',
     category: 'editorial',
   }),
 
@@ -935,7 +961,8 @@ const weatherFillerGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `DAILY HOROSCOPE: ALL SIGNS PREDICT ${pick(['INCREASED PRODUCTIVITY', 'FAVORABLE QUOTA FULFILLMENT', 'LOYALTY TO THE STATE', 'CONCRETE', 'ANOTHER DAY', 'THE SAME AS YESTERDAY'])}`,
     subtext: `Astrology is bourgeois superstition. This horoscope is scientific socialist prediction.`,
-    reality: 'Horoscope written by the same person who writes the weather forecast. He is also the janitor.',
+    reality:
+      'Horoscope written by the same person who writes the weather forecast. He is also the janitor.',
     category: 'editorial',
   }),
 
@@ -1017,7 +1044,8 @@ const contextualGenerators: ContextualGenerator[] = [
     weight: 3,
     generate: () => ({
       headline: 'MINIMALIST URBAN DESIGN WINS INTERNATIONAL ACCLAIM',
-      subtext: 'Zero buildings represent a bold architectural statement. "Less is more," says nobody.',
+      subtext:
+        'Zero buildings represent a bold architectural statement. "Less is more," says nobody.',
       reality: 'There are no buildings. The city is a field. The field is also struggling.',
       category: 'spin',
     }),
@@ -1049,22 +1077,24 @@ const contextualGenerators: ContextualGenerator[] = [
 
   // No power but has buildings that need it
   {
-    condition: (gs) => gs.power === 0 && gs.buildings.some(b => b.type !== 'road'),
+    condition: (gs) => gs.power === 0 && gs.buildings.some((b) => b.type !== 'road'),
     weight: 2.5,
     generate: () => ({
       headline: 'NATIONWIDE LIGHTS-OUT EVENT CELEBRATES EARTH HOUR (EXTENDED INDEFINITELY)',
-      subtext: 'Citizens report improved night vision. Some claim to see in the dark. KGB notes this ability.',
-      reality: 'Power grid collapsed. Engineers "working on it" since last month. The engineers may also have collapsed.',
+      subtext:
+        'Citizens report improved night vision. Some claim to see in the dark. KGB notes this ability.',
+      reality:
+        'Power grid collapsed. Engineers "working on it" since last month. The engineers may also have collapsed.',
       category: 'spin',
     }),
   },
 
   // Many gulags
   {
-    condition: (gs) => gs.buildings.filter(b => b.type === 'gulag').length >= 2,
+    condition: (gs) => gs.buildings.filter((b) => b.type === 'gulag').length >= 2,
     weight: 2,
     generate: (gs) => {
-      const gulagCount = gs.buildings.filter(b => b.type === 'gulag').length;
+      const gulagCount = gs.buildings.filter((b) => b.type === 'gulag').length;
       return {
         headline: `${gulagCount} ATTITUDE ADJUSTMENT FACILITIES OPERATING AT FULL CAPACITY`,
         subtext: `Graduates report: "I have never been happier." (Statement certified by facility director.)`,
@@ -1081,7 +1111,7 @@ const contextualGenerators: ContextualGenerator[] = [
     generate: (gs) => ({
       headline: `POPULATION BOOM: ${gs.pop} CITIZENS PROVE SOCIALIST PARADISE IS MAGNETS FOR MASSES`,
       subtext: `Immigration office overwhelmed. (It is one man with a stamp. He is very tired.)`,
-      reality: `${gs.pop} citizens. Housing for ${gs.buildings.filter(b => b.type === 'housing').length * 50}. The math is not discussed.`,
+      reality: `${gs.pop} citizens. Housing for ${gs.buildings.filter((b) => b.type === 'housing').length * 50}. The math is not discussed.`,
       category: 'triumph',
     }),
   },
@@ -1106,7 +1136,8 @@ const contextualGenerators: ContextualGenerator[] = [
 
   // Quota almost due
   {
-    condition: (gs) => gs.quota.deadlineYear - gs.date.year <= 1 && gs.quota.current < gs.quota.target,
+    condition: (gs) =>
+      gs.quota.deadlineYear - gs.date.year <= 1 && gs.quota.current < gs.quota.target,
     weight: 3,
     generate: (gs) => {
       const pct = Math.floor((gs.quota.current / gs.quota.target) * 100);
@@ -1201,39 +1232,27 @@ function spinKey(key: string): string {
   return options ? pick(options) : 'STATE UPDATE:';
 }
 
+/** Format a single effect value with propaganda spin. */
+function spinEffect(
+  value: number | undefined,
+  key: string,
+  lossUnit: string,
+  gainUnit: string
+): string | null {
+  if (!value) return null;
+  if (value < 0) return `${spinKey(`${key}_loss`)} ${Math.abs(value)} ${lossUnit}`;
+  return `${spinKey(`${key}_gain`)} +${value} ${gainUnit}`;
+}
+
 function spinEventEffects(event: GameEvent): string {
-  const parts: string[] = [];
   const fx = event.effects;
-
-  if (fx.money && fx.money < 0) {
-    parts.push(`${spinKey('money_loss')} ${Math.abs(fx.money)} rubles invested in future`);
-  } else if (fx.money && fx.money > 0) {
-    parts.push(`${spinKey('money_gain')} +${fx.money} rubles`);
-  }
-
-  if (fx.food && fx.food < 0) {
-    parts.push(`${spinKey('food_loss')} ${Math.abs(fx.food)} units redistributed`);
-  } else if (fx.food && fx.food > 0) {
-    parts.push(`${spinKey('food_gain')} +${fx.food} units`);
-  }
-
-  if (fx.pop && fx.pop < 0) {
-    parts.push(`${spinKey('pop_loss')} ${Math.abs(fx.pop)} citizens reassigned`);
-  } else if (fx.pop && fx.pop > 0) {
-    parts.push(`${spinKey('pop_gain')} +${fx.pop} new comrades`);
-  }
-
-  if (fx.vodka && fx.vodka < 0) {
-    parts.push(`${spinKey('vodka_loss')} ${Math.abs(fx.vodka)} units consumed for the people`);
-  } else if (fx.vodka && fx.vodka > 0) {
-    parts.push(`${spinKey('vodka_gain')} +${fx.vodka} units`);
-  }
-
-  if (fx.power && fx.power < 0) {
-    parts.push(`${spinKey('power_loss')} ${Math.abs(fx.power)} MW conserved`);
-  } else if (fx.power && fx.power > 0) {
-    parts.push(`${spinKey('power_gain')} +${fx.power} MW unleashed`);
-  }
+  const parts = [
+    spinEffect(fx.money, 'money', 'rubles invested in future', 'rubles'),
+    spinEffect(fx.food, 'food', 'units redistributed', 'units'),
+    spinEffect(fx.pop, 'pop', 'citizens reassigned', 'new comrades'),
+    spinEffect(fx.vodka, 'vodka', 'units consumed for the people', 'units'),
+    spinEffect(fx.power, 'power', 'MW conserved', 'MW unleashed'),
+  ].filter((p): p is string => p !== null);
 
   if (parts.length === 0) {
     return pick([
@@ -1266,7 +1285,7 @@ const ALL_GENERIC_GENERATORS: { generators: HeadlineGenerator[]; weight: number 
 
 function generateHeadline(gs: GameState): GeneratedHeadline {
   // First, check contextual generators (state-reactive)
-  const eligibleContextual = contextualGenerators.filter(cg => cg.condition(gs));
+  const eligibleContextual = contextualGenerators.filter((cg) => cg.condition(gs));
 
   // 40% chance to use a contextual generator if any are eligible
   if (eligibleContextual.length > 0 && coinFlip(0.4)) {
@@ -1390,7 +1409,10 @@ export class PravdaSystem {
   private recentCategories: HeadlineCategory[] = [];
   private maxCategoryMemory = 6;
 
-  constructor(private gameState: GameState, rng?: GameRng) {
+  constructor(
+    private gameState: GameState,
+    rng?: GameRng
+  ) {
     if (rng) _rng = rng;
   }
 
@@ -1425,7 +1447,7 @@ export class PravdaSystem {
     } while (
       attempts < 5 &&
       this.recentCategories.length >= 2 &&
-      this.recentCategories.slice(-2).every(c => c === generated.category)
+      this.recentCategories.slice(-2).every((c) => c === generated.category)
     );
 
     const headline: PravdaHeadline = {

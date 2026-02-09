@@ -12,7 +12,9 @@
  * fields are updated.
  */
 
-import { getResourceEntity, buildingsLogic } from '@/ecs/archetypes';
+import type { With } from 'miniplex';
+import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
+import type { Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
 
 /**
@@ -27,49 +29,59 @@ export function powerSystem(): void {
   const store = getResourceEntity();
   if (!store) return;
 
-  // Phase 1: Calculate total power supply
-  let totalPower = 0;
+  const totalPower = calculateTotalPower();
+  const powerUsed = distributePower(totalPower);
+
+  store.resources.power = totalPower;
+  store.resources.powerUsed = powerUsed;
+}
+
+/** Phase 1: Sum total power output from all power-generating buildings. */
+function calculateTotalPower(): number {
+  let total = 0;
   for (const entity of buildingsLogic) {
     if (entity.building.powerOutput > 0) {
-      totalPower += entity.building.powerOutput;
+      total += entity.building.powerOutput;
     }
   }
+  return total;
+}
 
-  // Phase 2: Distribute power to consumers
+/** Phase 2: Distribute power to consumers; mark powered/unpowered. */
+function distributePower(totalPower: number): number {
   let powerUsed = 0;
   for (const entity of buildingsLogic) {
     const req = entity.building.powerReq;
     if (req > 0) {
-      const newUsed = powerUsed + req;
-      const wasPowered = entity.building.powered;
-      const isPowered = newUsed <= totalPower;
-
-      entity.building.powered = isPowered;
-
-      if (isPowered) {
-        powerUsed = newUsed;
-      }
-
-      // Reindex if powered state changed (for predicate queries)
-      if (wasPowered !== isPowered) {
-        world.reindex(entity);
-      }
-    } else if (entity.building.powerOutput > 0) {
-      // Power plants are always "powered"
-      if (!entity.building.powered) {
-        entity.building.powered = true;
-        world.reindex(entity);
-      }
+      powerUsed = assignConsumerPower(entity, powerUsed, totalPower);
     } else {
-      // No power requirement and no output — always powered (e.g. roads)
-      if (!entity.building.powered) {
-        entity.building.powered = true;
-        world.reindex(entity);
-      }
+      ensureAlwaysPowered(entity);
     }
   }
+  return powerUsed;
+}
 
-  // Phase 3: Update resource store
-  store.resources.power = totalPower;
-  store.resources.powerUsed = powerUsed;
+/** Assign power to a consuming building, reindex if state changes. */
+function assignConsumerPower(
+  entity: With<Entity, 'position' | 'building'>,
+  powerUsed: number,
+  totalPower: number
+): number {
+  const newUsed = powerUsed + entity.building.powerReq;
+  const wasPowered = entity.building.powered;
+  const isPowered = newUsed <= totalPower;
+
+  entity.building.powered = isPowered;
+  if (wasPowered !== isPowered) {
+    world.reindex(entity);
+  }
+  return isPowered ? newUsed : powerUsed;
+}
+
+/** Power plants and zero-requirement buildings are always powered. */
+function ensureAlwaysPowered(entity: With<Entity, 'position' | 'building'>): void {
+  if (!entity.building.powered) {
+    entity.building.powered = true;
+    world.reindex(entity);
+  }
 }

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameState } from '../game/GameState';
-import { SaveSystem, type SaveData } from '../game/SaveSystem';
+import { type SaveData, SaveSystem } from '../game/SaveSystem';
 
 describe('SaveSystem', () => {
   let gs: GameState;
@@ -21,23 +21,23 @@ describe('SaveSystem', () => {
   // ── Save ────────────────────────────────────────────────
 
   describe('save', () => {
-    it('returns true on successful save', () => {
-      expect(saveSystem.save()).toBe(true);
+    it('returns true on successful save', async () => {
+      expect(await saveSystem.save()).toBe(true);
     });
 
-    it('stores data in localStorage under the correct key', () => {
-      saveSystem.save();
+    it('stores data in localStorage under the correct key', async () => {
+      await saveSystem.save();
       const raw = localStorage.getItem('simsoviet_save_v1');
       expect(raw).not.toBeNull();
     });
 
-    it('stores valid JSON', () => {
-      saveSystem.save();
+    it('stores valid JSON', async () => {
+      await saveSystem.save();
       const raw = localStorage.getItem('simsoviet_save_v1')!;
       expect(() => JSON.parse(raw)).not.toThrow();
     });
 
-    it('saves all resource fields', () => {
+    it('saves all resource fields', async () => {
       gs.money = 5000;
       gs.pop = 42;
       gs.food = 300;
@@ -45,7 +45,7 @@ describe('SaveSystem', () => {
       gs.power = 100;
       gs.powerUsed = 25;
 
-      saveSystem.save();
+      await saveSystem.save();
       const data: SaveData = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
 
       expect(data.money).toBe(5000);
@@ -56,19 +56,18 @@ describe('SaveSystem', () => {
       expect(data.powerUsed).toBe(25);
     });
 
-    it('saves date information', () => {
+    it('saves date information', async () => {
       gs.date = { year: 1990, month: 6, tick: 3 };
-      saveSystem.save();
+      await saveSystem.save();
       const data: SaveData = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
       expect(data.date).toEqual({ year: 1990, month: 6, tick: 3 });
     });
 
-    it('saves buildings without mesh references', () => {
+    it('saves buildings correctly', async () => {
       gs.addBuilding(5, 10, 'housing');
       gs.buildings[0]!.powered = true;
-      gs.buildings[0]!.mesh = { some: 'babylonjs-mesh-object' };
 
-      saveSystem.save();
+      await saveSystem.save();
       const data: SaveData = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
 
       expect(data.buildings).toHaveLength(1);
@@ -78,13 +77,11 @@ describe('SaveSystem', () => {
         type: 'housing',
         powered: true,
       });
-      // Mesh should NOT be serialized
-      expect(data.buildings[0]).not.toHaveProperty('mesh');
     });
 
-    it('saves quota information', () => {
+    it('saves quota information', async () => {
       gs.quota = { type: 'vodka', target: 300, current: 150, deadlineYear: 1990 };
-      saveSystem.save();
+      await saveSystem.save();
       const data: SaveData = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
       expect(data.quota).toEqual({
         type: 'vodka',
@@ -94,55 +91,54 @@ describe('SaveSystem', () => {
       });
     });
 
-    it('includes version and timestamp', () => {
+    it('includes version and timestamp', async () => {
       const now = Date.now();
       vi.spyOn(Date, 'now').mockReturnValue(now);
-      saveSystem.save();
+      await saveSystem.save();
       const data: SaveData = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
       expect(data.version).toBe('1.0.0');
       expect(data.timestamp).toBe(now);
     });
-
   });
 
   describe('save error handling', () => {
-    it('returns false when JSON.stringify throws', () => {
+    it('returns false when JSON.stringify throws', async () => {
       // Mock JSON.stringify to simulate a serialization failure
       vi.spyOn(JSON, 'stringify').mockImplementation(() => {
         throw new Error('Serialization failed');
       });
-      expect(saveSystem.save()).toBe(false);
+      expect(await saveSystem.save()).toBe(false);
     });
   });
 
   // ── Load ────────────────────────────────────────────────
 
   describe('load', () => {
-    it('returns false when no save data exists', () => {
-      expect(saveSystem.load()).toBe(false);
+    it('returns false when no save data exists', async () => {
+      expect(await saveSystem.load()).toBe(false);
     });
 
-    it('returns true when save data is loaded successfully', () => {
-      saveSystem.save();
+    it('returns true when save data is loaded successfully', async () => {
+      await saveSystem.save();
       // Create a new GameState to load into
       gs = new GameState();
       saveSystem = new SaveSystem(gs);
-      expect(saveSystem.load()).toBe(true);
+      expect(await saveSystem.load()).toBe(true);
     });
 
-    it('restores all resource values', () => {
+    it('restores all resource values', async () => {
       gs.money = 9999;
       gs.pop = 100;
       gs.food = 500;
       gs.vodka = 200;
       gs.power = 300;
       gs.powerUsed = 50;
-      saveSystem.save();
+      await saveSystem.save();
 
       // Reset and reload
       const gs2 = new GameState();
       const save2 = new SaveSystem(gs2);
-      save2.load();
+      await save2.load();
 
       expect(gs2.money).toBe(9999);
       expect(gs2.pop).toBe(100);
@@ -152,51 +148,51 @@ describe('SaveSystem', () => {
       expect(gs2.powerUsed).toBe(50);
     });
 
-    it('restores date', () => {
+    it('restores date', async () => {
       gs.date = { year: 1995, month: 11, tick: 4 };
-      saveSystem.save();
+      await saveSystem.save();
 
       const gs2 = new GameState();
       const save2 = new SaveSystem(gs2);
-      save2.load();
+      await save2.load();
 
       expect(gs2.date).toEqual({ year: 1995, month: 11, tick: 4 });
     });
 
-    it('restores buildings', () => {
+    it('restores buildings', async () => {
       gs.addBuilding(3, 7, 'farm');
       gs.addBuilding(8, 2, 'power');
       gs.buildings[1]!.powered = true;
-      saveSystem.save();
+      await saveSystem.save();
 
       const gs2 = new GameState();
       const save2 = new SaveSystem(gs2);
-      save2.load();
+      await save2.load();
 
       expect(gs2.buildings).toHaveLength(2);
       expect(gs2.buildings[0]).toEqual({ x: 3, y: 7, type: 'farm', powered: false });
       expect(gs2.buildings[1]).toEqual({ x: 8, y: 2, type: 'power', powered: true });
     });
 
-    it('restores grid cell types from buildings', () => {
+    it('restores grid cell types from buildings', async () => {
       gs.addBuilding(5, 5, 'housing');
       gs.setCell(5, 5, 'housing');
-      saveSystem.save();
+      await saveSystem.save();
 
       const gs2 = new GameState();
       const save2 = new SaveSystem(gs2);
-      save2.load();
+      await save2.load();
 
       expect(gs2.getCell(5, 5)!.type).toBe('housing');
     });
 
-    it('restores quota', () => {
+    it('restores quota', async () => {
       gs.quota = { type: 'vodka', target: 800, current: 400, deadlineYear: 2000 };
-      saveSystem.save();
+      await saveSystem.save();
 
       const gs2 = new GameState();
       const save2 = new SaveSystem(gs2);
-      save2.load();
+      await save2.load();
 
       expect(gs2.quota).toEqual({
         type: 'vodka',
@@ -206,16 +202,16 @@ describe('SaveSystem', () => {
       });
     });
 
-    it('returns false on corrupt JSON', () => {
+    it('returns false on corrupt JSON', async () => {
       localStorage.setItem('simsoviet_save_v1', '{not valid json');
-      expect(saveSystem.load()).toBe(false);
+      expect(await saveSystem.load()).toBe(false);
     });
   });
 
   // ── Save/Load cycle integrity ───────────────────────────
 
   describe('save/load cycle integrity', () => {
-    it('round-trips all game state correctly', () => {
+    it('round-trips all game state correctly', async () => {
       gs.money = 3456;
       gs.pop = 77;
       gs.food = 888;
@@ -231,11 +227,11 @@ describe('SaveSystem', () => {
       gs.setCell(3, 4, 'housing');
       gs.setCell(5, 6, 'farm');
 
-      saveSystem.save();
+      await saveSystem.save();
 
       const gs2 = new GameState();
       const save2 = new SaveSystem(gs2);
-      save2.load();
+      await save2.load();
 
       // Verify all fields
       expect(gs2.money).toBe(3456);
@@ -252,13 +248,13 @@ describe('SaveSystem', () => {
       expect(gs2.getCell(5, 6)!.type).toBe('farm');
     });
 
-    it('loaded state does not share object references with save data', () => {
+    it('loaded state does not share object references with save data', async () => {
       gs.date = { year: 1985, month: 6, tick: 3 };
-      saveSystem.save();
+      await saveSystem.save();
 
       const gs2 = new GameState();
       const save2 = new SaveSystem(gs2);
-      save2.load();
+      await save2.load();
 
       // Modify the loaded state and verify the original is unaffected
       gs2.date.year = 2000;
@@ -269,39 +265,39 @@ describe('SaveSystem', () => {
   // ── hasSave ─────────────────────────────────────────────
 
   describe('hasSave', () => {
-    it('returns false when no save exists', () => {
-      expect(saveSystem.hasSave()).toBe(false);
+    it('returns false when no save exists', async () => {
+      expect(await saveSystem.hasSave()).toBe(false);
     });
 
-    it('returns true after saving', () => {
-      saveSystem.save();
-      expect(saveSystem.hasSave()).toBe(true);
+    it('returns true after saving', async () => {
+      await saveSystem.save();
+      expect(await saveSystem.hasSave()).toBe(true);
     });
   });
 
   // ── deleteSave ──────────────────────────────────────────
 
   describe('deleteSave', () => {
-    it('removes save data from localStorage', () => {
-      saveSystem.save();
-      expect(saveSystem.hasSave()).toBe(true);
-      saveSystem.deleteSave();
-      expect(saveSystem.hasSave()).toBe(false);
+    it('removes save data from localStorage', async () => {
+      await saveSystem.save();
+      expect(await saveSystem.hasSave()).toBe(true);
+      await saveSystem.deleteSave();
+      expect(await saveSystem.hasSave()).toBe(false);
     });
 
-    it('does not throw if no save exists', () => {
-      expect(() => saveSystem.deleteSave()).not.toThrow();
+    it('does not throw if no save exists', async () => {
+      await expect(saveSystem.deleteSave()).resolves.not.toThrow();
     });
   });
 
   // ── autoSave ────────────────────────────────────────────
 
   describe('autoSave', () => {
-    it('sets up a periodic save interval', () => {
+    it('sets up a periodic save interval and returns cleanup', () => {
       vi.useFakeTimers();
       const saveSpy = vi.spyOn(saveSystem, 'save');
 
-      saveSystem.autoSave();
+      const cleanup = saveSystem.startAutoSave();
 
       expect(saveSpy).not.toHaveBeenCalled();
 
@@ -310,6 +306,10 @@ describe('SaveSystem', () => {
 
       vi.advanceTimersByTime(60000);
       expect(saveSpy).toHaveBeenCalledTimes(2);
+
+      cleanup();
+      vi.advanceTimersByTime(60000);
+      expect(saveSpy).toHaveBeenCalledTimes(2); // no more calls after cleanup
 
       vi.useRealTimers();
     });

@@ -3,7 +3,6 @@ import { GRID_SIZE } from '../config';
 export interface GridCell {
   type: string | null;
   z: number;
-  mesh?: any; // BabylonJS Mesh reference
 }
 
 export interface Building {
@@ -11,7 +10,6 @@ export interface Building {
   y: number;
   type: string;
   powered: boolean;
-  mesh?: any; // BabylonJS Mesh reference
 }
 
 export interface SnowParticle {
@@ -21,6 +19,11 @@ export interface SnowParticle {
   vx: number;
   vy: number;
   vz: number;
+}
+
+export interface GameOverState {
+  victory: boolean;
+  reason: string;
 }
 
 export class GameState {
@@ -42,6 +45,7 @@ export class GameState {
     current: 0,
     deadlineYear: 1985,
   };
+  public gameOver: GameOverState | null = null;
 
   constructor() {
     // Initialize grid

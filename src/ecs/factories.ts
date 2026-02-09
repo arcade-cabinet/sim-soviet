@@ -4,11 +4,12 @@
  * Entity factory functions for SimSoviet 2000.
  *
  * Each factory creates a pre-configured entity with the correct components
- * and adds it to the world. Building stats are derived from BUILDING_TYPES
- * in `@/config`.
+ * and adds it to the world. Building stats are sourced from the generated
+ * buildingDefs.generated.json (via the Zod-validated data layer).
  */
 
-import { BUILDING_TYPES, GRID_SIZE } from '@/config';
+import { GRID_SIZE } from '@/config';
+import { getBuildingDef } from '@/data/buildingDefs';
 import type {
   BuildingComponent,
   CitizenComponent,
@@ -18,58 +19,65 @@ import type {
 } from './world';
 import { world } from './world';
 
-// ─── Model path lookup ───────────────────────────────────────────────────────
+// ── Sprite ID lookup ────────────────────────────────────────────────────────
 
 /**
- * Maps building type keys to GLB model paths.
- * Falls back to a generic path if no specific model is configured.
+ * Maps legacy game type keys (from config.ts BUILDING_TYPES) to sprite IDs
+ * (from the manifest). This bridges the old 6-type system to the new 31-sprite system.
+ *
+ * When the toolbar is expanded to use sprite IDs directly, this map can be removed.
  */
-const MODEL_PATHS: Record<string, string> = {
-  power: '/models/soviet/coal_plant.glb',
-  housing: '/models/soviet/apartment_tower.glb',
-  farm: '/models/soviet/kolkhoz.glb',
-  distillery: '/models/soviet/vodka_plant.glb',
-  gulag: '/models/soviet/gulag.glb',
-  road: '/models/soviet/road.glb',
+const LEGACY_TYPE_TO_SPRITE: Record<string, string> = {
+  power: 'power-station',
+  housing: 'apartment-tower-a',
+  farm: 'collective-farm-hq',
+  distillery: 'vodka-distillery',
+  gulag: 'gulag-admin',
 };
 
-// ─── Building Factory ────────────────────────────────────────────────────────
+/**
+ * Resolve a building type or sprite ID to a sprite ID.
+ * Handles both legacy game types ("power") and direct sprite IDs ("power-station").
+ */
+function resolveSpriteId(typeOrSpriteId: string): string {
+  return LEGACY_TYPE_TO_SPRITE[typeOrSpriteId] ?? typeOrSpriteId;
+}
+
+// ── Building Factory ────────────────────────────────────────────────────────
 
 /**
  * Creates a building entity at the given grid position.
  *
- * Reads configuration from `BUILDING_TYPES` to populate the building
- * component with the correct stats (power, production, housing, etc.).
+ * Reads configuration from buildingDefs.generated.json to populate the
+ * building component with correct stats and the renderable with sprite data.
  *
  * @param gridX - Column index on the grid (0-based)
  * @param gridY - Row index on the grid (0-based)
- * @param type  - Building type key (must exist in BUILDING_TYPES)
+ * @param type  - Building type key (legacy game type or sprite ID)
  * @returns The created entity, already added to the world
  */
-export function createBuilding(
-  gridX: number,
-  gridY: number,
-  type: string,
-): Entity {
-  const stats = BUILDING_TYPES[type];
+export function createBuilding(gridX: number, gridY: number, type: string): Entity {
+  const spriteId = resolveSpriteId(type);
+  const def = getBuildingDef(spriteId);
 
-  // Derive building component from config stats
+  // Derive building component from generated defs
   const building: BuildingComponent = {
     type,
     powered: false,
-    powerReq: stats?.powerReq ?? 0,
-    powerOutput: stats?.power ?? 0,
-    produces: deriveProduction(stats),
-    housingCap: stats?.cap ?? 0,
-    pollution: stats?.pollution ?? 0,
-    fear: stats?.fear ?? 0,
+    powerReq: def?.stats.powerReq ?? 0,
+    powerOutput: def?.stats.powerOutput ?? 0,
+    produces: def?.stats.produces,
+    housingCap: def?.stats.housingCap ?? 0,
+    pollution: def?.stats.pollution ?? 0,
+    fear: def?.stats.fear ?? 0,
   };
 
-  // Derive renderable component
+  // Derive renderable from sprite data
   const renderable: Renderable = {
-    meshId: `building_${gridX}_${gridY}`,
-    modelPath: MODEL_PATHS[type],
-    scale: 1,
+    spriteId,
+    spritePath: def?.sprite.path ?? '',
+    footprintX: def?.footprint.tilesX ?? 1,
+    footprintY: def?.footprint.tilesY ?? 1,
     visible: true,
   };
 
@@ -77,30 +85,14 @@ export function createBuilding(
     position: { gridX, gridY },
     building,
     renderable,
-    durability: { current: 100, decayRate: 0.05 },
+    durability: { current: 100, decayRate: def?.stats.decayRate ?? 0.05 },
     isBuilding: true,
   };
 
   return world.add(entity);
 }
 
-/**
- * Derives the production descriptor from BUILDING_TYPES stats.
- * Returns `undefined` if the building does not produce a resource.
- */
-function deriveProduction(
-  stats: (typeof BUILDING_TYPES)[string] | undefined,
-): BuildingComponent['produces'] {
-  if (!stats?.prod || !stats.amt) return undefined;
-
-  const resource = stats.prod;
-  if (resource === 'food' || resource === 'vodka') {
-    return { resource, amount: stats.amt };
-  }
-  return undefined;
-}
-
-// ─── Citizen Factory ─────────────────────────────────────────────────────────
+// ── Citizen Factory ─────────────────────────────────────────────────────────
 
 /**
  * Creates a citizen entity.
@@ -115,7 +107,7 @@ function deriveProduction(
 export function createCitizen(
   citizenClass: CitizenComponent['class'],
   homeX?: number,
-  homeY?: number,
+  homeY?: number
 ): Entity {
   const citizen: CitizenComponent = {
     class: citizenClass,
@@ -136,7 +128,7 @@ export function createCitizen(
   return world.add(entity);
 }
 
-// ─── Tile Factory ────────────────────────────────────────────────────────────
+// ── Tile Factory ────────────────────────────────────────────────────────────
 
 /**
  * Creates a single tile entity.
@@ -149,7 +141,7 @@ export function createCitizen(
 export function createTile(
   gridX: number,
   gridY: number,
-  terrain: TileComponent['terrain'] = 'grass',
+  terrain: TileComponent['terrain'] = 'grass'
 ): Entity {
   const tile: TileComponent = {
     terrain,
@@ -165,7 +157,7 @@ export function createTile(
   return world.add(entity);
 }
 
-// ─── Resource Store Factory ──────────────────────────────────────────────────
+// ── Resource Store Factory ──────────────────────────────────────────────────
 
 /**
  * Creates the singleton resource store entity.
@@ -184,7 +176,7 @@ export function createResourceStore(
     power: number;
     powerUsed: number;
     population: number;
-  }>,
+  }>
 ): Entity {
   // Check for existing store
   const existing = world.with('resources', 'isResourceStore');
@@ -207,7 +199,7 @@ export function createResourceStore(
   return world.add(entity);
 }
 
-// ─── Grid Factory ────────────────────────────────────────────────────────────
+// ── Grid Factory ────────────────────────────────────────────────────────────
 
 /**
  * Initializes the full grid as tile entities.

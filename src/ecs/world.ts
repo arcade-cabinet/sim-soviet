@@ -68,17 +68,20 @@ export interface CitizenComponent {
 }
 
 /**
- * 3D rendering component — stores the BabylonJS mesh reference info.
- * Actual mesh instances live in the scene graph; this component stores
- * enough info for the renderer to look them up.
+ * Sprite rendering component — stores the data needed to draw this entity
+ * on the Canvas 2D isometric renderer.
+ *
+ * Data is sourced from buildingDefs.generated.json (via the pipeline).
  */
 export interface Renderable {
-  /** Unique mesh identifier for BabylonJS scene lookup */
-  meshId: string;
-  /** Path to the GLB model file (e.g. "/models/soviet/coal_plant.glb") */
-  modelPath?: string;
-  /** Uniform scale factor */
-  scale: number;
+  /** Sprite manifest ID (e.g. "apartment-tower-a") — key into SpriteLoader cache */
+  spriteId: string;
+  /** Relative path to the PNG sprite (e.g. "sprites/soviet/apartment-tower-a.png") */
+  spritePath: string;
+  /** Grid footprint width (tiles in X direction) */
+  footprintX: number;
+  /** Grid footprint height (tiles in Y direction) */
+  footprintY: number;
   /** Whether this entity should be rendered */
   visible: boolean;
 }

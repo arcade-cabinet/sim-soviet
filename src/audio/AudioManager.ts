@@ -6,7 +6,7 @@
  */
 
 import { type AudioAsset, getAudioById, getPreloadAssets } from './AudioManifest';
-import { ProceduralSounds } from './ProceduralSounds';
+import * as ProceduralSounds from './ProceduralSounds';
 
 export class AudioManager {
   private audioContext: AudioContext | null = null;
@@ -19,14 +19,14 @@ export class AudioManager {
   private currentMusic: string | null = null;
   private initialized = false;
 
-  constructor() {
-    // Audio context will be initialized on first user interaction
-    // (browsers require user gesture to play audio)
-  }
-
   private initAudioContext(): void {
     if (!this.audioContext) {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const WebkitAudioContext = (window as unknown as { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+      const ContextClass = window.AudioContext || WebkitAudioContext;
+      if (ContextClass) {
+        this.audioContext = new ContextClass();
+      }
     }
     if (!this.initialized) {
       ProceduralSounds.initialize();
@@ -36,11 +36,8 @@ export class AudioManager {
 
   public async preloadAssets(): Promise<void> {
     const preloadList = getPreloadAssets();
-    console.log(`Preloading ${preloadList.length} audio assets...`);
-
     const promises = preloadList.map((asset) => this.loadTrack(asset));
     await Promise.allSettled(promises);
-    console.log('Audio preload complete');
   }
 
   public async loadTrack(asset: AudioAsset): Promise<void> {

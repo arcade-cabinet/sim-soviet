@@ -23,8 +23,8 @@
  * defined as typed constants below for easy balancing.
  */
 
+import type { EventCategory, EventSeverity, GameEvent, ResourceDelta } from './EventSystem';
 import type { GameState } from './GameState';
-import type { GameEvent, ResourceDelta, EventSeverity, EventCategory } from './EventSystem';
 import type { GameRng } from './SeedSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -257,8 +257,10 @@ type ModifierOverride = Partial<MinistryModifiers>;
  * │ Transport    │ forced  │ public   │ reform   │ rail       │ decay       │ bus      │ logistic  │ ley    │
  * └──────────────┴─────────┴──────────┴──────────┴────────────┴─────────────┴──────────┴───────────┴────────┘
  */
-export const PERSONALITY_MINISTRY_MATRIX: Record<Ministry, Record<PersonalityType, ModifierOverride>> = {
-
+export const PERSONALITY_MINISTRY_MATRIX: Record<
+  Ministry,
+  Record<PersonalityType, ModifierOverride>
+> = {
   // ════════════════════════════════════════════════════════════════════════════
   // KGB CHAIRMAN
   // Controls: fear level, purge frequency, surveillance events, disappearances
@@ -910,7 +912,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.AGRICULTURE,
     personalityB: PersonalityType.REFORMER,
     tensionDelta: 30,
-    description: 'KGB Chairman demands arrest of farmers with private gardens. Agriculture Minister refuses.',
+    description:
+      'KGB Chairman demands arrest of farmers with private gardens. Agriculture Minister refuses.',
   },
   {
     ministryA: Ministry.KGB,
@@ -926,7 +929,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.AGRICULTURE,
     personalityB: PersonalityType.IDEALIST,
     tensionDelta: 25,
-    description: 'Heavy Industry requisitions farmland for tank factory. Agriculture weeps into turnip field.',
+    description:
+      'Heavy Industry requisitions farmland for tank factory. Agriculture weeps into turnip field.',
   },
   {
     ministryA: Ministry.DEFENSE,
@@ -934,7 +938,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.HEALTH,
     personalityB: PersonalityType.REFORMER,
     tensionDelta: 20,
-    description: 'Defense Minister wants hospital beds for wounded soldiers. Health Minister wants them for civilians.',
+    description:
+      'Defense Minister wants hospital beds for wounded soldiers. Health Minister wants them for civilians.',
   },
   {
     ministryA: Ministry.GOSPLAN,
@@ -942,7 +947,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.TRANSPORT,
     personalityB: PersonalityType.APPARATCHIK,
     tensionDelta: 15,
-    description: 'Gosplan demands impossible delivery schedules. Transport Ministry loses the memo.',
+    description:
+      'Gosplan demands impossible delivery schedules. Transport Ministry loses the memo.',
   },
   {
     ministryA: Ministry.MVD,
@@ -950,7 +956,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.KGB,
     personalityB: PersonalityType.ZEALOT,
     tensionDelta: 35,
-    description: 'MVD Minister tries to release political prisoners. KGB Chairman adds MVD Minister to watch list.',
+    description:
+      'MVD Minister tries to release political prisoners. KGB Chairman adds MVD Minister to watch list.',
   },
   {
     ministryA: Ministry.EDUCATION,
@@ -958,7 +965,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.CULTURE,
     personalityB: PersonalityType.MYSTIC,
     tensionDelta: 20,
-    description: 'Education Minister removes astrology from curriculum. Culture Minister demands its return as "cultural heritage."',
+    description:
+      'Education Minister removes astrology from curriculum. Culture Minister demands its return as "cultural heritage."',
   },
   {
     ministryA: Ministry.HEALTH,
@@ -966,7 +974,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.AGRICULTURE,
     personalityB: PersonalityType.POPULIST,
     tensionDelta: 15,
-    description: 'Health Minister bans vodka. Agriculture Minister\'s vodka-producing kolkhozes revolt.',
+    description:
+      "Health Minister bans vodka. Agriculture Minister's vodka-producing kolkhozes revolt.",
   },
 
   // ── Natural alliances (negative tension = cooperation bonus) ──
@@ -976,7 +985,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.DEFENSE,
     personalityB: PersonalityType.MILITARIST,
     tensionDelta: -20,
-    description: 'KGB and Defense form iron alliance. Citizens have never been more terrified or "safe."',
+    description:
+      'KGB and Defense form iron alliance. Citizens have never been more terrified or "safe."',
   },
   {
     ministryA: Ministry.AGRICULTURE,
@@ -984,7 +994,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.GOSPLAN,
     personalityB: PersonalityType.REFORMER,
     tensionDelta: -25,
-    description: 'Agriculture and Gosplan reformers unite. Economy briefly improves. Everyone suspicious.',
+    description:
+      'Agriculture and Gosplan reformers unite. Economy briefly improves. Everyone suspicious.',
   },
   {
     ministryA: Ministry.EDUCATION,
@@ -992,7 +1003,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.HEAVY_INDUSTRY,
     personalityB: PersonalityType.TECHNOCRAT,
     tensionDelta: -15,
-    description: 'Education and Industry technocrats collaborate. Factories improve. Workers feel like test subjects.',
+    description:
+      'Education and Industry technocrats collaborate. Factories improve. Workers feel like test subjects.',
   },
   {
     ministryA: Ministry.CULTURE,
@@ -1000,7 +1012,8 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.HEALTH,
     personalityB: PersonalityType.MYSTIC,
     tensionDelta: -10,
-    description: 'Culture and Health ministers open crystal healing centers. Citizens die peacefully, surrounded by quartz.',
+    description:
+      'Culture and Health ministers open crystal healing centers. Citizens die peacefully, surrounded by quartz.',
   },
 ];
 
@@ -1032,7 +1045,7 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     title: 'SURVEILLANCE REPORT',
     description: (m) =>
       `KGB Chairman ${m.name} presents surveillance findings. ${m.personality === PersonalityType.ZEALOT ? 'Everyone is guilty.' : 'Most citizens are merely suspicious.'}`,
-    pravdaHeadline: 'KGB REPORTS: ALL CITIZENS LOYAL (THOSE WHO AREN\'T ARE NO LONGER CITIZENS)',
+    pravdaHeadline: "KGB REPORTS: ALL CITIZENS LOYAL (THOSE WHO AREN'T ARE NO LONGER CITIZENS)",
     severity: 'minor',
     category: 'political',
     effects: { money: -15 },
@@ -1041,7 +1054,8 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     id: 'kgb_spy_discovery',
     ministry: Ministry.KGB,
     title: 'SPY DISCOVERED',
-    description: 'A Western spy found infiltrating the turnip warehouse. Interrogation reveals: he actually just wanted turnips.',
+    description:
+      'A Western spy found infiltrating the turnip warehouse. Interrogation reveals: he actually just wanted turnips.',
     pravdaHeadline: 'HEROIC KGB FOILS WESTERN AGRICULTURAL ESPIONAGE',
     severity: 'minor',
     category: 'political',
@@ -1095,7 +1109,8 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     id: 'agri_weather_disaster',
     ministry: Ministry.AGRICULTURE,
     title: 'WEATHER CATASTROPHE',
-    description: 'Early frost destroys 40% of crops. Minister blames the weather. The weather has been added to the watch list.',
+    description:
+      'Early frost destroys 40% of crops. Minister blames the weather. The weather has been added to the watch list.',
     pravdaHeadline: 'MINOR WEATHER EVENT HAS ZERO IMPACT ON FOOD SUPPLY (DO NOT CHECK)',
     severity: 'major',
     category: 'disaster',
@@ -1121,7 +1136,8 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     id: 'agri_private_garden_boom',
     ministry: Ministry.AGRICULTURE,
     title: 'PRIVATE GARDEN BOOM',
-    description: 'Citizens\' private gardens produce more food than all kolkhozes combined. This fact has been classified.',
+    description:
+      "Citizens' private gardens produce more food than all kolkhozes combined. This fact has been classified.",
     pravdaHeadline: 'KOLKHOZ PRODUCTION AT ALL-TIME HIGH (PRIVATE GARDENS NOT MEASURED)',
     severity: 'minor',
     category: 'economic',
@@ -1141,13 +1157,15 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     severity: 'trivial',
     category: 'cultural',
     effects: { vodka: -3 },
-    condition: (m) => m.personality === PersonalityType.ZEALOT || m.personality === PersonalityType.MILITARIST,
+    condition: (m) =>
+      m.personality === PersonalityType.ZEALOT || m.personality === PersonalityType.MILITARIST,
   },
   {
     id: 'culture_mandatory_celebration',
     ministry: Ministry.CULTURE,
     title: 'MANDATORY CELEBRATION',
-    description: 'Anniversary of the Revolution. Attendance compulsory. Joy compulsory. Second helpings of joy: unavailable.',
+    description:
+      'Anniversary of the Revolution. Attendance compulsory. Joy compulsory. Second helpings of joy: unavailable.',
     pravdaHeadline: 'SPONTANEOUS OUTPOURING OF REVOLUTIONARY FERVOR SWEEPS CITY',
     severity: 'trivial',
     category: 'cultural',
@@ -1183,7 +1201,8 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     id: 'defense_military_exercise',
     ministry: Ministry.DEFENSE,
     title: 'MILITARY EXERCISES',
-    description: 'Annual military exercises. Tanks drive through city center. Several flower beds are casualties. A cat is decorated for bravery.',
+    description:
+      'Annual military exercises. Tanks drive through city center. Several flower beds are casualties. A cat is decorated for bravery.',
     pravdaHeadline: 'AWESTRIKING DISPLAY OF MILITARY MIGHT REASSURES POPULACE',
     severity: 'trivial',
     category: 'political',
@@ -1252,7 +1271,8 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     id: 'gosplan_resource_reallocation',
     ministry: Ministry.GOSPLAN,
     title: 'RESOURCE REALLOCATION',
-    description: 'Gosplan reallocates resources. What was going to agriculture now goes to heavy industry. What was going to heavy industry now goes to defense. What was going to defense is classified.',
+    description:
+      'Gosplan reallocates resources. What was going to agriculture now goes to heavy industry. What was going to heavy industry now goes to defense. What was going to defense is classified.',
     pravdaHeadline: 'OPTIMAL RESOURCE DISTRIBUTION ACHIEVED THROUGH CENTRAL PLANNING',
     severity: 'minor',
     category: 'economic',
@@ -1327,7 +1347,8 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     id: 'transport_infrastructure_collapse',
     ministry: Ministry.TRANSPORT,
     title: 'INFRASTRUCTURE COLLAPSE',
-    description: 'Bridge collapses. Last inspected: 1958. Inspector: "It looked fine from a distance. I did not get closer."',
+    description:
+      'Bridge collapses. Last inspected: 1958. Inspector: "It looked fine from a distance. I did not get closer."',
     pravdaHeadline: 'RIVER CROSSING UNDERGOES SPONTANEOUS RENOVATION',
     severity: 'major',
     category: 'disaster',
@@ -1378,23 +1399,34 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
     loyaltyThreshold: 90,
     meritBased: false,
     purgesKGB: true,
-    transitionDescription: 'The new General Secretary purges the entire cabinet. Loyalty is the only qualification.',
+    transitionDescription:
+      'The new General Secretary purges the entire cabinet. Loyalty is the only qualification.',
   },
   [PersonalityType.IDEALIST]: {
     retentionRate: 0.4,
-    preferredTypes: [PersonalityType.IDEALIST, PersonalityType.REFORMER, PersonalityType.TECHNOCRAT],
+    preferredTypes: [
+      PersonalityType.IDEALIST,
+      PersonalityType.REFORMER,
+      PersonalityType.TECHNOCRAT,
+    ],
     loyaltyThreshold: 30,
     meritBased: false,
     purgesKGB: false,
-    transitionDescription: 'The new leader keeps some old faces for stability, but whispers of change circulate.',
+    transitionDescription:
+      'The new leader keeps some old faces for stability, but whispers of change circulate.',
   },
   [PersonalityType.REFORMER]: {
     retentionRate: 0.6,
-    preferredTypes: [PersonalityType.REFORMER, PersonalityType.TECHNOCRAT, PersonalityType.IDEALIST],
+    preferredTypes: [
+      PersonalityType.REFORMER,
+      PersonalityType.TECHNOCRAT,
+      PersonalityType.IDEALIST,
+    ],
     loyaltyThreshold: 20,
     meritBased: true,
     purgesKGB: false,
-    transitionDescription: 'A cautious transition. Reformers placed in key positions, but the old guard remains for now.',
+    transitionDescription:
+      'A cautious transition. Reformers placed in key positions, but the old guard remains for now.',
   },
   [PersonalityType.TECHNOCRAT]: {
     retentionRate: 0.5,
@@ -1402,7 +1434,8 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
     loyaltyThreshold: 10,
     meritBased: true,
     purgesKGB: false,
-    transitionDescription: 'Cabinet reshuffled based on performance metrics. Incompetent ministers replaced regardless of loyalty.',
+    transitionDescription:
+      'Cabinet reshuffled based on performance metrics. Incompetent ministers replaced regardless of loyalty.',
   },
   [PersonalityType.APPARATCHIK]: {
     retentionRate: 0.8,
@@ -1410,7 +1443,8 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
     loyaltyThreshold: 10,
     meritBased: false,
     purgesKGB: false,
-    transitionDescription: 'Almost nothing changes. Those who waited longest get promoted. The system endures.',
+    transitionDescription:
+      'Almost nothing changes. Those who waited longest get promoted. The system endures.',
   },
   [PersonalityType.POPULIST]: {
     retentionRate: 0.4,
@@ -1418,7 +1452,8 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
     loyaltyThreshold: 30,
     meritBased: false,
     purgesKGB: false,
-    transitionDescription: 'Popular ministers kept. Unpopular ones replaced with people who smile more.',
+    transitionDescription:
+      'Popular ministers kept. Unpopular ones replaced with people who smile more.',
   },
   [PersonalityType.MILITARIST]: {
     retentionRate: 0.3,
@@ -1426,7 +1461,8 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
     loyaltyThreshold: 60,
     meritBased: false,
     purgesKGB: true,
-    transitionDescription: 'Marshal law declared. Most of the old cabinet arrested. Uniforms mandatory for new appointees.',
+    transitionDescription:
+      'Marshal law declared. Most of the old cabinet arrested. Uniforms mandatory for new appointees.',
   },
   [PersonalityType.MYSTIC]: {
     retentionRate: 0.5,
@@ -1434,7 +1470,8 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
     loyaltyThreshold: 20,
     meritBased: false,
     purgesKGB: false,
-    transitionDescription: 'Cabinet members retained or dismissed based on astrological compatibility with the new leader.',
+    transitionDescription:
+      'Cabinet members retained or dismissed based on astrological compatibility with the new leader.',
   },
 };
 
@@ -1463,11 +1500,11 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
 export function calculateCoupChance(
   minister: Minister,
   gs: GeneralSecretary,
-  factionSize: number,
+  factionSize: number
 ): number {
   const base = (minister.ambition * (100 - minister.loyalty)) / 10000;
   const kgbBonus = minister.ministry === Ministry.KGB ? 0.15 : 0;
-  const factionBonus = Math.max(0, (factionSize - 1)) * 0.05;
+  const factionBonus = Math.max(0, factionSize - 1) * 0.05;
   const paranoiaPenalty = gs.paranoia / 200;
 
   return Math.max(0, Math.min(1, base + kgbBonus + factionBonus - paranoiaPenalty));
@@ -1491,10 +1528,7 @@ export function calculateCoupChance(
  * └─────────────────────┴──────────┴──────────┴──────────────────┘
  * (Base rates before competence/corruption/KGB adjustments)
  */
-export function calculatePurgeChance(
-  minister: Minister,
-  gs: GeneralSecretary,
-): number {
+export function calculatePurgeChance(minister: Minister, gs: GeneralSecretary): number {
   const base = (gs.paranoia / 100) * (1 - minister.loyalty / 100);
   const competencePenalty = minister.competence < 30 ? 0.1 : 0;
   const corruptionRisk = minister.corruption / 200;
@@ -1508,19 +1542,70 @@ export function calculatePurgeChance(
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FIRST_NAMES = [
-  'Ivan', 'Dmitri', 'Nikolai', 'Alexei', 'Boris', 'Viktor', 'Yuri',
-  'Sergei', 'Andrei', 'Mikhail', 'Grigory', 'Pavel', 'Fyodor', 'Leonid',
-  'Konstantin', 'Valentin', 'Oleg', 'Arkady', 'Gennadiy', 'Vladislav',
-  'Ruslan', 'Timofei', 'Stepan', 'Zakhar', 'Matvei', 'Pyotr', 'Yegor',
+  'Ivan',
+  'Dmitri',
+  'Nikolai',
+  'Alexei',
+  'Boris',
+  'Viktor',
+  'Yuri',
+  'Sergei',
+  'Andrei',
+  'Mikhail',
+  'Grigory',
+  'Pavel',
+  'Fyodor',
+  'Leonid',
+  'Konstantin',
+  'Valentin',
+  'Oleg',
+  'Arkady',
+  'Gennadiy',
+  'Vladislav',
+  'Ruslan',
+  'Timofei',
+  'Stepan',
+  'Zakhar',
+  'Matvei',
+  'Pyotr',
+  'Yegor',
 ];
 
 const LAST_NAMES = [
-  'Volkov', 'Petrov', 'Ivanov', 'Smirnov', 'Kuznetsov', 'Popov',
-  'Sokolov', 'Lebedev', 'Kozlov', 'Novikov', 'Morozov', 'Pavlov',
-  'Romanov', 'Orlov', 'Medvedev', 'Zhukov', 'Gorbunov', 'Titov',
-  'Belov', 'Karpov', 'Kalinin', 'Suslov', 'Kosygin', 'Brezhnev',
-  'Gromyko', 'Ustinov', 'Kirilenko', 'Chernenko', 'Andropov',
-  'Masherov', 'Shcherbitsky', 'Pelshe', 'Kunaev', 'Rashidov',
+  'Volkov',
+  'Petrov',
+  'Ivanov',
+  'Smirnov',
+  'Kuznetsov',
+  'Popov',
+  'Sokolov',
+  'Lebedev',
+  'Kozlov',
+  'Novikov',
+  'Morozov',
+  'Pavlov',
+  'Romanov',
+  'Orlov',
+  'Medvedev',
+  'Zhukov',
+  'Gorbunov',
+  'Titov',
+  'Belov',
+  'Karpov',
+  'Kalinin',
+  'Suslov',
+  'Kosygin',
+  'Brezhnev',
+  'Gromyko',
+  'Ustinov',
+  'Kirilenko',
+  'Chernenko',
+  'Andropov',
+  'Masherov',
+  'Shcherbitsky',
+  'Pelshe',
+  'Kunaev',
+  'Rashidov',
 ];
 
 /** Module-level RNG reference, set by PolitburoSystem constructor */
@@ -1569,26 +1654,66 @@ function randomPersonality(): PersonalityType {
  * │ MYSTIC      │ 30-60 │ 10-40 │ 30-70   │ 20-50      │
  * └─────────────┴───────┴───────┴─────────┴────────────┘
  */
-const PERSONALITY_STAT_RANGES: Record<PersonalityType, {
-  loyalty: [number, number];
-  competence: [number, number];
-  ambition: [number, number];
-  corruption: [number, number];
-}> = {
-  [PersonalityType.ZEALOT]:      { loyalty: [70, 95], competence: [20, 60], ambition: [50, 90], corruption: [10, 30] },
-  [PersonalityType.IDEALIST]:    { loyalty: [50, 80], competence: [40, 70], ambition: [20, 50], corruption: [5, 20] },
-  [PersonalityType.REFORMER]:    { loyalty: [30, 60], competence: [50, 80], ambition: [40, 70], corruption: [10, 25] },
-  [PersonalityType.TECHNOCRAT]:  { loyalty: [40, 70], competence: [70, 95], ambition: [30, 60], corruption: [10, 30] },
-  [PersonalityType.APPARATCHIK]: { loyalty: [50, 80], competence: [20, 50], ambition: [20, 50], corruption: [30, 70] },
-  [PersonalityType.POPULIST]:    { loyalty: [40, 70], competence: [30, 60], ambition: [50, 80], corruption: [20, 50] },
-  [PersonalityType.MILITARIST]:  { loyalty: [60, 90], competence: [40, 70], ambition: [60, 90], corruption: [15, 40] },
-  [PersonalityType.MYSTIC]:      { loyalty: [30, 60], competence: [10, 40], ambition: [30, 70], corruption: [20, 50] },
+const PERSONALITY_STAT_RANGES: Record<
+  PersonalityType,
+  {
+    loyalty: [number, number];
+    competence: [number, number];
+    ambition: [number, number];
+    corruption: [number, number];
+  }
+> = {
+  [PersonalityType.ZEALOT]: {
+    loyalty: [70, 95],
+    competence: [20, 60],
+    ambition: [50, 90],
+    corruption: [10, 30],
+  },
+  [PersonalityType.IDEALIST]: {
+    loyalty: [50, 80],
+    competence: [40, 70],
+    ambition: [20, 50],
+    corruption: [5, 20],
+  },
+  [PersonalityType.REFORMER]: {
+    loyalty: [30, 60],
+    competence: [50, 80],
+    ambition: [40, 70],
+    corruption: [10, 25],
+  },
+  [PersonalityType.TECHNOCRAT]: {
+    loyalty: [40, 70],
+    competence: [70, 95],
+    ambition: [30, 60],
+    corruption: [10, 30],
+  },
+  [PersonalityType.APPARATCHIK]: {
+    loyalty: [50, 80],
+    competence: [20, 50],
+    ambition: [20, 50],
+    corruption: [30, 70],
+  },
+  [PersonalityType.POPULIST]: {
+    loyalty: [40, 70],
+    competence: [30, 60],
+    ambition: [50, 80],
+    corruption: [20, 50],
+  },
+  [PersonalityType.MILITARIST]: {
+    loyalty: [60, 90],
+    competence: [40, 70],
+    ambition: [60, 90],
+    corruption: [15, 40],
+  },
+  [PersonalityType.MYSTIC]: {
+    loyalty: [30, 60],
+    competence: [10, 40],
+    ambition: [30, 70],
+    corruption: [20, 50],
+  },
 };
 
-export function generateMinister(
-  ministry: Ministry,
-  personality?: PersonalityType,
-): Minister {
+export function generateMinister(ministry: Ministry, personality?: PersonalityType): Minister {
   const p = personality ?? randomPersonality();
   const ranges = PERSONALITY_STAT_RANGES[p];
 
@@ -1610,18 +1735,23 @@ export function generateMinister(
 
 export function generateGeneralSecretary(
   year: number,
-  personality?: PersonalityType,
+  personality?: PersonalityType
 ): GeneralSecretary {
   const p = personality ?? randomPersonality();
   return {
     id: generateId(),
     name: generateName(),
     personality: p,
-    paranoia: p === PersonalityType.ZEALOT ? randInt(60, 90) :
-              p === PersonalityType.MILITARIST ? randInt(50, 80) :
-              p === PersonalityType.APPARATCHIK ? randInt(30, 60) :
-              p === PersonalityType.REFORMER ? randInt(20, 40) :
-              randInt(20, 60),
+    paranoia:
+      p === PersonalityType.ZEALOT
+        ? randInt(60, 90)
+        : p === PersonalityType.MILITARIST
+          ? randInt(50, 80)
+          : p === PersonalityType.APPARATCHIK
+            ? randInt(30, 60)
+            : p === PersonalityType.REFORMER
+              ? randInt(20, 40)
+              : randInt(20, 60),
     health: randInt(60, 95),
     age: randInt(55, 75),
     yearAppointed: year,
@@ -1657,7 +1787,7 @@ export class PolitburoSystem {
   constructor(
     private gameState: GameState,
     private onEvent: (event: GameEvent) => void,
-    rng?: GameRng,
+    rng?: GameRng
   ) {
     if (rng) _rng = rng;
     // Generate initial government
@@ -1741,34 +1871,13 @@ export class PolitburoSystem {
   // ── Private: Modifier Calculation ─────────────────────────────────────
 
   private recalculateModifiers(): void {
-    // Start from defaults
     const mods: MinistryModifiers = { ...DEFAULT_MODIFIERS };
 
-    // Layer each minister's personality-based modifiers
     for (const [ministry, minister] of this.state.ministers) {
       const overrides = PERSONALITY_MINISTRY_MATRIX[ministry]?.[minister.personality];
       if (!overrides) continue;
-
-      // Apply competence scaling: modifiers are less effective at low competence
-      const competenceScale = 0.5 + (minister.competence / 200); // 0.5 at 0 comp, 1.0 at 100
-
-      for (const [key, value] of Object.entries(overrides)) {
-        if (typeof value === 'number') {
-          const currentVal = mods[key as keyof MinistryModifiers];
-          if (typeof currentVal === 'number') {
-            // For multipliers (centered on 1.0), scale the deviation
-            if (key.endsWith('Mult') || key === 'hospitalEffectiveness') {
-              const deviation = (value - 1.0) * competenceScale;
-              (mods as any)[key] = (currentVal as number) + deviation;
-            } else {
-              // For flat values, blend toward the override
-              (mods as any)[key] = (currentVal as number) + (value - (currentVal as number)) * competenceScale;
-            }
-          }
-        } else if (typeof value === 'boolean') {
-          (mods as any)[key] = value;
-        }
-      }
+      const competenceScale = 0.5 + minister.competence / 200;
+      applyMinisterOverrides(mods, overrides, competenceScale);
     }
 
     this.state.activeModifiers = mods;
@@ -1805,11 +1914,23 @@ export class PolitburoSystem {
   private personalityCompatibility(a: PersonalityType, b: PersonalityType): boolean {
     const compatMap: Record<PersonalityType, PersonalityType[]> = {
       [PersonalityType.ZEALOT]: [PersonalityType.ZEALOT, PersonalityType.MILITARIST],
-      [PersonalityType.IDEALIST]: [PersonalityType.IDEALIST, PersonalityType.REFORMER, PersonalityType.POPULIST],
-      [PersonalityType.REFORMER]: [PersonalityType.REFORMER, PersonalityType.TECHNOCRAT, PersonalityType.IDEALIST],
+      [PersonalityType.IDEALIST]: [
+        PersonalityType.IDEALIST,
+        PersonalityType.REFORMER,
+        PersonalityType.POPULIST,
+      ],
+      [PersonalityType.REFORMER]: [
+        PersonalityType.REFORMER,
+        PersonalityType.TECHNOCRAT,
+        PersonalityType.IDEALIST,
+      ],
       [PersonalityType.TECHNOCRAT]: [PersonalityType.TECHNOCRAT, PersonalityType.REFORMER],
       [PersonalityType.APPARATCHIK]: [PersonalityType.APPARATCHIK, PersonalityType.TECHNOCRAT],
-      [PersonalityType.POPULIST]: [PersonalityType.POPULIST, PersonalityType.IDEALIST, PersonalityType.REFORMER],
+      [PersonalityType.POPULIST]: [
+        PersonalityType.POPULIST,
+        PersonalityType.IDEALIST,
+        PersonalityType.REFORMER,
+      ],
       [PersonalityType.MILITARIST]: [PersonalityType.MILITARIST, PersonalityType.ZEALOT],
       [PersonalityType.MYSTIC]: [PersonalityType.MYSTIC, PersonalityType.IDEALIST],
     };
@@ -1880,47 +2001,46 @@ export class PolitburoSystem {
   // ── Private: Ministry Events ──────────────────────────────────────────
 
   private checkMinistryEvents(): void {
-    // 15% chance per month of a ministry event
     if ((_rng?.random() ?? Math.random()) > 0.15) return;
 
-    const eligible = MINISTRY_EVENTS.filter((template) => {
+    const eligible = this.getEligibleMinistryEvents();
+    if (eligible.length === 0) return;
+
+    const selected = weightedSelect(eligible);
+    this.onEvent(this.buildMinistryEvent(selected));
+  }
+
+  /** Filter ministry event templates to those matching the current cabinet. */
+  private getEligibleMinistryEvents(): MinistryEventTemplate[] {
+    return MINISTRY_EVENTS.filter((template) => {
       const minister = this.state.ministers.get(template.ministry);
       if (!minister) return false;
-      if (template.requiredPersonality && minister.personality !== template.requiredPersonality) return false;
+      if (template.requiredPersonality && minister.personality !== template.requiredPersonality)
+        return false;
       if (template.condition && !template.condition(minister, this.gameState)) return false;
       return true;
     });
+  }
 
-    if (eligible.length === 0) return;
-
-    // Weighted selection
-    const totalWeight = eligible.reduce((sum, t) => sum + (t.weight ?? 1), 0);
-    let roll = (_rng?.random() ?? Math.random()) * totalWeight;
-    let selected: MinistryEventTemplate | null = null;
-
-    for (const template of eligible) {
-      roll -= template.weight ?? 1;
-      if (roll <= 0) {
-        selected = template;
-        break;
-      }
-    }
-
-    if (!selected) selected = pick(eligible);
+  /** Build a GameEvent from a selected ministry event template. */
+  private buildMinistryEvent(selected: MinistryEventTemplate): GameEvent {
     const minister = this.state.ministers.get(selected.ministry)!;
+    const description =
+      typeof selected.description === 'function'
+        ? selected.description(minister, this.gameState)
+        : selected.description;
+    const effects =
+      typeof selected.effects === 'function'
+        ? selected.effects(minister, this.gameState)
+        : { ...selected.effects };
+    const netImpact =
+      (effects.money ?? 0) +
+      (effects.food ?? 0) +
+      (effects.vodka ?? 0) +
+      (effects.pop ?? 0) * 10 +
+      (effects.power ?? 0);
 
-    const description = typeof selected.description === 'function'
-      ? selected.description(minister, this.gameState)
-      : selected.description;
-
-    const effects = typeof selected.effects === 'function'
-      ? selected.effects(minister, this.gameState)
-      : { ...selected.effects };
-
-    const netImpact = (effects.money ?? 0) + (effects.food ?? 0) +
-      (effects.vodka ?? 0) + (effects.pop ?? 0) * 10 + (effects.power ?? 0);
-
-    const event: GameEvent = {
+    return {
       id: selected.id,
       title: selected.title,
       description,
@@ -1930,8 +2050,6 @@ export class PolitburoSystem {
       effects,
       type: netImpact > 5 ? 'good' : netImpact < -5 ? 'bad' : 'neutral',
     };
-
-    this.onEvent(event);
   }
 
   // ── Private: Corruption ───────────────────────────────────────────────
@@ -1953,13 +2071,14 @@ export class PolitburoSystem {
 
     for (const [_, minister] of this.state.ministers) {
       const chance = calculatePurgeChance(minister, gs);
-      if ((_rng?.random() ?? Math.random()) < chance / 4) { // Quarterly check = divide by 4
+      if ((_rng?.random() ?? Math.random()) < chance / 4) {
+        // Quarterly check = divide by 4
         purgeTargets.push(minister);
       }
     }
 
     for (const target of purgeTargets) {
-      this.purgeMinister(target, 'General Secretary\'s paranoia');
+      this.purgeMinister(target, "General Secretary's paranoia");
     }
   }
 
@@ -1992,7 +2111,9 @@ export class PolitburoSystem {
 
     // Paranoia increases after purge
     this.state.generalSecretary.paranoia = clamp(
-      this.state.generalSecretary.paranoia + randInt(3, 8), 0, 100
+      this.state.generalSecretary.paranoia + randInt(3, 8),
+      0,
+      100
     );
 
     this.recalculateModifiers();
@@ -2005,7 +2126,7 @@ export class PolitburoSystem {
 
     for (const [_, minister] of this.state.ministers) {
       const factionSize = minister.factionId
-        ? (this.state.factions.find(f => f.id === minister.factionId)?.memberIds.length ?? 1)
+        ? (this.state.factions.find((f) => f.id === minister.factionId)?.memberIds.length ?? 1)
         : 1;
 
       const chance = calculateCoupChance(minister, gs, factionSize);
@@ -2084,11 +2205,12 @@ export class PolitburoSystem {
     oldLeader.causeOfDeath = cause;
     this.state.leaderHistory.push({ ...oldLeader });
 
-    const causeText = cause === 'natural'
-      ? 'after a long illness heroically endured'
-      : cause === 'coup'
-        ? 'due to sudden retirement'
-        : 'under circumstances that are classified';
+    const causeText =
+      cause === 'natural'
+        ? 'after a long illness heroically endured'
+        : cause === 'coup'
+          ? 'due to sudden retirement'
+          : 'under circumstances that are classified';
 
     const newGS = generateGeneralSecretary(this.gameState.date.year);
 
@@ -2118,37 +2240,47 @@ export class PolitburoSystem {
 
     for (const ministry of Object.values(Ministry)) {
       const oldMinister = oldMinisters.get(ministry);
-
-      // KGB Chairman special case: they know too much
-      if (ministry === Ministry.KGB && !strategy.purgesKGB && oldMinister) {
-        oldMinister.survivedTransition = true;
-        oldMinister.loyalty = clamp(oldMinister.loyalty - 10, 0, 100); // Wary of new boss
-        oldMinister.ambition = clamp(oldMinister.ambition + 10, 0, 100);
-        continue;
-      }
-
-      // Check if minister survives
-      if (oldMinister && (_rng?.random() ?? Math.random()) < strategy.retentionRate) {
-        // Merit-based: keep if competent
-        if (strategy.meritBased && oldMinister.competence < 40) {
-          // Replace incompetent minister
-        } else if (oldMinister.loyalty < strategy.loyaltyThreshold) {
-          // Replace disloyal minister
-        } else {
-          oldMinister.survivedTransition = true;
-          oldMinister.loyalty = clamp(oldMinister.loyalty + randInt(-10, 10), 0, 100);
-          continue;
-        }
-      }
-
-      // Appoint new minister
-      const newPersonality = pick(strategy.preferredTypes);
-      const newMinister = generateMinister(ministry, newPersonality);
-      newMinister.loyalty = clamp(newMinister.loyalty + 15, 0, 100); // Loyalty bonus for new appointees
-      this.state.ministers.set(ministry, newMinister);
+      if (this.retainMinister(ministry, oldMinister, strategy)) continue;
+      this.appointNewMinister(ministry, strategy);
     }
 
     this.formFactions();
+  }
+
+  /** Attempt to retain a minister during a leadership transition. Returns true if retained. */
+  private retainMinister(
+    ministry: Ministry,
+    oldMinister: Minister | undefined,
+    strategy: (typeof APPOINTMENT_STRATEGIES)[PersonalityType]
+  ): boolean {
+    if (!oldMinister) return false;
+
+    // KGB Chairman special case: they know too much
+    if (ministry === Ministry.KGB && !strategy.purgesKGB) {
+      oldMinister.survivedTransition = true;
+      oldMinister.loyalty = clamp(oldMinister.loyalty - 10, 0, 100);
+      oldMinister.ambition = clamp(oldMinister.ambition + 10, 0, 100);
+      return true;
+    }
+
+    if ((_rng?.random() ?? Math.random()) >= strategy.retentionRate) return false;
+    if (strategy.meritBased && oldMinister.competence < 40) return false;
+    if (oldMinister.loyalty < strategy.loyaltyThreshold) return false;
+
+    oldMinister.survivedTransition = true;
+    oldMinister.loyalty = clamp(oldMinister.loyalty + randInt(-10, 10), 0, 100);
+    return true;
+  }
+
+  /** Appoint a fresh minister to a ministry post. */
+  private appointNewMinister(
+    ministry: Ministry,
+    strategy: (typeof APPOINTMENT_STRATEGIES)[PersonalityType]
+  ): void {
+    const newPersonality = pick(strategy.preferredTypes);
+    const newMinister = generateMinister(ministry, newPersonality);
+    newMinister.loyalty = clamp(newMinister.loyalty + 15, 0, 100);
+    this.state.ministers.set(ministry, newMinister);
   }
 
   // ── Private: Faction Formation ────────────────────────────────────────
@@ -2169,11 +2301,11 @@ export class PolitburoSystem {
           id: `faction_${personality}_${Date.now()}`,
           name: `${personality.charAt(0).toUpperCase() + personality.slice(1)} Bloc`,
           alignment: personality,
-          memberIds: members.map(m => m.id),
+          memberIds: members.map((m) => m.id),
           influence: members.reduce((sum, m) => sum + m.competence + m.ambition, 0),
           supportsCurrent: this.personalityCompatibility(
             this.state.generalSecretary.personality,
-            personality,
+            personality
           ),
         };
 
@@ -2199,6 +2331,39 @@ export class PolitburoSystem {
 //  UTILITIES
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Weighted random selection from ministry event templates. */
+function weightedSelect(eligible: MinistryEventTemplate[]): MinistryEventTemplate {
+  const totalWeight = eligible.reduce((sum, t) => sum + (t.weight ?? 1), 0);
+  let roll = (_rng?.random() ?? Math.random()) * totalWeight;
+  for (const template of eligible) {
+    roll -= template.weight ?? 1;
+    if (roll <= 0) return template;
+  }
+  return pick(eligible);
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+/** Apply a minister's personality overrides to the active modifiers, scaled by competence. */
+function applyMinisterOverrides(
+  mods: MinistryModifiers,
+  overrides: Record<string, unknown>,
+  competenceScale: number
+): void {
+  const modsRecord = mods as unknown as Record<string, number | boolean>;
+  for (const [key, value] of Object.entries(overrides)) {
+    const modKey = key as keyof MinistryModifiers;
+    if (typeof value === 'number') {
+      const currentVal = mods[modKey];
+      if (typeof currentVal !== 'number') continue;
+      const isMultiplier = key.endsWith('Mult') || key === 'hospitalEffectiveness';
+      modsRecord[modKey] = isMultiplier
+        ? currentVal + (value - 1.0) * competenceScale
+        : currentVal + (value - currentVal) * competenceScale;
+    } else if (typeof value === 'boolean') {
+      modsRecord[modKey] = value;
+    }
+  }
 }

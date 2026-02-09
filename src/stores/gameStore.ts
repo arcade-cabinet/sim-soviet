@@ -5,6 +5,7 @@
  * but React components subscribe to immutable snapshots that refresh on notify().
  */
 import { useSyncExternalStore } from 'react';
+import type { GameOverState } from '@/game/GameState';
 import { GameState } from '@/game/GameState';
 
 // ── Snapshot type (immutable view for React) ──────────────────────────────
@@ -21,6 +22,8 @@ export interface GameSnapshot {
   selectedTool: string;
   quota: { type: string; target: number; current: number; deadlineYear: number };
   buildingCount: number;
+  gameOver: GameOverState | null;
+  paused: boolean;
 }
 
 // ── Singleton state ───────────────────────────────────────────────────────
@@ -42,6 +45,8 @@ function createSnapshot(gs: GameState): GameSnapshot {
     selectedTool: gs.selectedTool,
     quota: { ...gs.quota },
     buildingCount: gs.buildings.length,
+    gameOver: gs.gameOver,
+    paused: _paused,
   };
 }
 
@@ -75,6 +80,100 @@ export function useGameSnapshot(): GameSnapshot {
 export function selectTool(tool: string): void {
   getGameState().selectedTool = tool;
   notifyStateChange();
+}
+
+// ── Drag State (for drag-to-place from toolbar) ─────────────────────────
+
+export interface DragState {
+  buildingType: string;
+  /** Screen position of the dragged ghost. */
+  screenX: number;
+  screenY: number;
+}
+
+let _dragState: DragState | null = null;
+const _dragListeners = new Set<() => void>();
+
+export function getDragState(): DragState | null {
+  return _dragState;
+}
+
+export function setDragState(state: DragState | null): void {
+  _dragState = state;
+  for (const listener of _dragListeners) {
+    listener();
+  }
+}
+
+/** React hook for drag state. */
+export function useDragState(): DragState | null {
+  return useSyncExternalStore(subscribeDrag, getDragState, getDragState);
+}
+
+function subscribeDrag(listener: () => void): () => void {
+  _dragListeners.add(listener);
+  return () => {
+    _dragListeners.delete(listener);
+  };
+}
+
+// ── Pause State ──────────────────────────────────────────────────────────
+
+let _paused = false;
+
+export function isPaused(): boolean {
+  return _paused;
+}
+
+export function togglePause(): boolean {
+  _paused = !_paused;
+  notifyStateChange();
+  return _paused;
+}
+
+export function setPaused(paused: boolean): void {
+  _paused = paused;
+  notifyStateChange();
+}
+
+// ── Inspected Building ──────────────────────────────────────────────────
+
+export interface InspectedBuilding {
+  gridX: number;
+  gridY: number;
+  type: string;
+  spriteId: string;
+  powered: boolean;
+  cost: number;
+  footprintW: number;
+  footprintH: number;
+  name: string;
+  desc: string;
+}
+
+let _inspected: InspectedBuilding | null = null;
+const _inspectListeners = new Set<() => void>();
+
+export function getInspected(): InspectedBuilding | null {
+  return _inspected;
+}
+
+export function setInspected(info: InspectedBuilding | null): void {
+  _inspected = info;
+  for (const listener of _inspectListeners) {
+    listener();
+  }
+}
+
+export function useInspected(): InspectedBuilding | null {
+  return useSyncExternalStore(subscribeInspect, getInspected, getInspected);
+}
+
+function subscribeInspect(listener: () => void): () => void {
+  _inspectListeners.add(listener);
+  return () => {
+    _inspectListeners.delete(listener);
+  };
 }
 
 // ── Internal ──────────────────────────────────────────────────────────────

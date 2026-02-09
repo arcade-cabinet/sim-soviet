@@ -1,6 +1,9 @@
 /* Tailwind v4 — Vite plugin auto-detects, no config file needed */
 @import "tailwindcss";
 
+/* Vite root is ./app — tell Tailwind to also scan src/ for class names */
+@source "../src";
+
 /* ── Soviet Design Tokens ───────────────────────────────────────────────── */
 
 @theme {
@@ -80,16 +83,19 @@ body {
 
 .game-viewport {
   position: relative;
-  flex: 1;
+  flex: 1 1 0%;
+  height: 0; /* Start at 0, let flex-grow fill remaining space — prevents canvas from expanding */
+  min-height: 0;
   overflow: hidden;
   background: #151515;
 }
 
-/* Reactylon's canvas — fill the viewport */
+/* Game canvas — fills the viewport, sized by JS (DPR-aware) */
 .game-viewport canvas,
 #gameCanvas {
-  width: 100% !important;
-  height: 100% !important;
+  position: absolute;
+  top: 0;
+  left: 0;
   display: block;
   touch-action: none;
   outline: none;
