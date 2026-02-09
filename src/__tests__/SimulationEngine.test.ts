@@ -28,6 +28,9 @@ describe('SimulationEngine', () => {
     world.clear();
     gs = new GameState();
     cb = createMockCallbacks();
+    // Prevent EventSystem from firing random events during deterministic tests.
+    // Value >0.12 means the 12% event roll always fails.
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
     // Create ECS resource store matching GameState defaults
     createResourceStore({
       money: gs.money,
