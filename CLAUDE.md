@@ -27,22 +27,20 @@ Run a single test file: `pnpm vitest run src/__tests__/SimulationEngine.test.ts`
 
 ## Tech Stack
 
-- **Rendering**: BabylonJS 8 via Reactylon (React-BabylonJS bridge)
-- **UI**: React 19 + Tailwind CSS 4, overlaid on the BabylonJS canvas
+- **Rendering**: Canvas 2D with pre-baked isometric sprites (Blender pipeline)
+- **UI**: React 19 + Tailwind CSS 4, overlaid on the canvas
 - **State**: Custom `useSyncExternalStore` bridge in `src/stores/gameStore.ts` — mutable `GameState` class with immutable snapshots for React
 - **ECS**: Miniplex 2 with archetypes for buildings, citizens, tiles, resources
 - **Audio**: Tone.js for procedural SFX + HTMLAudioElement for music tracks (OGG/Opus)
-- **AI**: Yuka (behavioral AI library, `src/ai/`)
 - **Build**: Vite 7, TypeScript 5.9, Biome for lint/format
 - **Testing**: Vitest (happy-dom env), Playwright for E2E
-- **Mobile**: Capacitor 8 for Android/iOS
 
 ## Architecture
 
-### Two-layer rendering: BabylonJS + React DOM
+### Two-layer rendering: Canvas 2D + React DOM
 
 The `App.tsx` component hosts both:
-1. **BabylonJS viewport** — rendered via Reactylon's `<Engine>` / `<Scene>` components. The `GameWorld` component (`src/components/GameWorld.tsx`) is a render-null component inside `<Scene>` that imperatively creates the `IsometricRenderer`, `GestureManager`, `ParticleSystem`, and `SimulationEngine`.
+1. **Canvas 2D viewport** — `GameWorld` component (`src/components/GameWorld.tsx`) imperatively creates `Canvas2DRenderer`, `CanvasGestureManager`, `ParticleSystem2D`, and `SimulationEngine`. Sprites are pre-baked isometric PNGs from Blender.
 2. **React DOM overlays** — `TopBar`, `Toolbar`, `QuotaHUD`, `Toast`, `Advisor`, `PravdaTicker`, `IntroModal` sit in DOM elements on top of the canvas.
 
 ### State flow
@@ -74,7 +72,7 @@ Defined in both `tsconfig.json` and `vite.config.ts` (+ `vitest.config.ts`).
 
 ### Vite configuration
 
-The Vite root is `./app` (not project root). Output builds to `../dist`. There's a stub alias for `@babylonjs/core/XR/...` to work around Reactylon v3.5 importing nonexistent BabylonJS XR modules.
+The Vite root is `./app` (not project root). Output builds to `../dist`. Asset URLs must use `import.meta.env.BASE_URL` for GitHub Pages subdirectory deployment.
 
 ## Code Style
 

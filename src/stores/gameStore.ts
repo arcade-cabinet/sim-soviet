@@ -24,6 +24,8 @@ export interface GameSnapshot {
   buildingCount: number;
   gameOver: GameOverState | null;
   paused: boolean;
+  leaderName?: string;
+  leaderPersonality?: string;
 }
 
 // ── Singleton state ───────────────────────────────────────────────────────
@@ -47,6 +49,8 @@ function createSnapshot(gs: GameState): GameSnapshot {
     buildingCount: gs.buildings.length,
     gameOver: gs.gameOver,
     paused: _paused,
+    leaderName: gs.leaderName,
+    leaderPersonality: gs.leaderPersonality,
   };
 }
 

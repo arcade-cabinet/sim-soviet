@@ -19,7 +19,7 @@ import type { GameRng } from '@/game/SeedSystem';
  * 1. Sums housing capacity from all powered housing buildings.
  * 2. If population is below capacity and food is available, grows population.
  */
-export function populationSystem(rng?: GameRng): void {
+export function populationSystem(rng?: GameRng, growthMult = 1.0): void {
   const store = getResourceEntity();
   if (!store) return;
 
@@ -33,6 +33,7 @@ export function populationSystem(rng?: GameRng): void {
 
   // Grow population if there is room and food
   if (store.resources.population < housingCap && store.resources.food > 10) {
-    store.resources.population += rng ? rng.int(0, 2) : Math.floor(Math.random() * 3);
+    const baseGrowth = rng ? rng.int(0, 2) : Math.floor(Math.random() * 3);
+    store.resources.population += Math.round(baseGrowth * Math.max(0, growthMult));
   }
 }

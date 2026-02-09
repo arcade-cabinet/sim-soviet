@@ -88,6 +88,9 @@ export function TopBar() {
             color={snap.powerUsed > snap.power ? '#ff4444' : undefined}
           />
           <Stat icon="📅" label="DATE" value={dateStr} color="#dcdcdc" />
+          {snap.leaderName && (
+            <Stat icon="☭" label="GEN. SEC." value={snap.leaderName} color="#ff6b6b" />
+          )}
         </div>
 
         {/* Spacer */}

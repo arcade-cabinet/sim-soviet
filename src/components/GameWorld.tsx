@@ -15,9 +15,11 @@ import { Season } from '@/game/Chronology';
 import { GameRng, generateSeedPhrase } from '@/game/SeedSystem';
 import type { SimCallbacks } from '@/game/SimulationEngine';
 import { SimulationEngine } from '@/game/SimulationEngine';
+import { generateTerrain, getTerrainSpriteNames } from '@/game/TerrainGenerator';
 import { WeatherType } from '@/game/WeatherSystem';
 import { CanvasGestureManager } from '@/input/CanvasGestureManager';
 import { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
+import { GRID_SIZE } from '@/rendering/GridMath';
 import { SpriteLoader } from '@/rendering/SpriteLoader';
 import {
   getGameState,
@@ -88,6 +90,10 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
   const audioRef = useRef<AudioManager | null>(null);
   const playlistIndexRef = useRef(0);
   const initializedRef = useRef(false);
+  // Store callbacks in a ref so the simulation effect doesn't re-run
+  // (and clean up the interval) when App re-renders with a new callbacks object.
+  const callbacksRef = useRef(callbacks);
+  callbacksRef.current = callbacks;
 
   // Initialize renderer + gestures once canvas is available
   useEffect(() => {
@@ -181,20 +187,31 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
     gameState.seed = seed;
     const rng = new GameRng(seed);
 
+    // Generate and render terrain features on map border
+    const terrainFeatures = generateTerrain(GRID_SIZE, rng);
+    renderer.featureTiles.setFeatures(terrainFeatures);
+    const terrainSpriteNames = getTerrainSpriteNames(terrainFeatures);
+    renderer.featureTiles.preload(terrainSpriteNames).then(() => {
+      renderer.start(); // Re-render now that terrain tiles are loaded
+    });
+
     simRef.current = new SimulationEngine(
       gameState,
       {
-        ...callbacks,
+        ...callbacksRef.current,
         onToast: (msg) => {
-          callbacks.onToast(msg);
+          callbacksRef.current.onToast(msg);
           audio.playSFX('notification');
         },
         onStateChange: () => {
-          callbacks.onStateChange();
+          callbacksRef.current.onStateChange();
           notifyStateChange();
         },
         onSeasonChanged: (season) => {
-          renderer.setSeason(mapSeasonToRenderSeason(season));
+          const renderSeason = mapSeasonToRenderSeason(season);
+          renderer.setSeason(renderSeason);
+          // Reload terrain tiles for the new season
+          renderer.featureTiles.preload(terrainSpriteNames);
           // Switch music context for dramatic season transitions
           const musicCtx = seasonToMusicContext(season);
           if (musicCtx) {
@@ -227,7 +244,8 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
       // Clean up ECS world entities
       world.clear();
     };
-  }, [gameStarted, callbacks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- callbacks stored in callbacksRef
+  }, [gameStarted]);
 
   // Keyboard shortcuts
   useEffect(() => {
