@@ -1,0 +1,497 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { GRID_SIZE } from '@/config';
+import { getBuildingDef } from '@/data/buildingDefs';
+import {
+  createBuilding,
+  createCitizen,
+  createGrid,
+  createResourceStore,
+  createTile,
+} from '@/ecs/factories';
+import { world } from '@/ecs/world';
+
+describe('factories', () => {
+  beforeEach(() => {
+    world.clear();
+  });
+
+  afterEach(() => {
+    world.clear();
+  });
+
+  // ── createBuilding ─────────────────────────────────────────
+
+  describe('createBuilding', () => {
+    it('creates entity with position component', () => {
+      const entity = createBuilding(5, 10, 'power');
+      expect(entity.position).toBeDefined();
+      expect(entity.position!.gridX).toBe(5);
+      expect(entity.position!.gridY).toBe(10);
+    });
+
+    it('creates entity with building component', () => {
+      const entity = createBuilding(0, 0, 'power');
+      expect(entity.building).toBeDefined();
+      expect(entity.building!.type).toBe('power');
+      expect(entity.building!.powered).toBe(false);
+    });
+
+    it('creates entity with renderable component', () => {
+      const entity = createBuilding(0, 0, 'power');
+      expect(entity.renderable).toBeDefined();
+      expect(entity.renderable!.spriteId).toBe('power-station');
+      expect(entity.renderable!.visible).toBe(true);
+    });
+
+    it('creates entity with durability component', () => {
+      const entity = createBuilding(0, 0, 'power');
+      expect(entity.durability).toBeDefined();
+      expect(entity.durability!.current).toBe(100);
+    });
+
+    it('creates entity with isBuilding tag', () => {
+      const entity = createBuilding(0, 0, 'power');
+      expect(entity.isBuilding).toBe(true);
+    });
+
+    it('adds entity to the world', () => {
+      expect(world.entities.length).toBe(0);
+      createBuilding(0, 0, 'power');
+      expect(world.entities.length).toBe(1);
+    });
+
+    it('returns the created entity', () => {
+      const entity = createBuilding(3, 7, 'housing');
+      expect(entity).toBeDefined();
+      expect(entity.position!.gridX).toBe(3);
+    });
+
+    // ── Legacy type resolution ─────────────────────────────
+
+    describe('legacy type resolution', () => {
+      it('resolves "power" to "power-station" sprite', () => {
+        const entity = createBuilding(0, 0, 'power');
+        expect(entity.renderable!.spriteId).toBe('power-station');
+      });
+
+      it('resolves "housing" to "apartment-tower-a" sprite', () => {
+        const entity = createBuilding(0, 0, 'housing');
+        expect(entity.renderable!.spriteId).toBe('apartment-tower-a');
+      });
+
+      it('resolves "farm" to "collective-farm-hq" sprite', () => {
+        const entity = createBuilding(0, 0, 'farm');
+        expect(entity.renderable!.spriteId).toBe('collective-farm-hq');
+      });
+
+      it('resolves "distillery" to "vodka-distillery" sprite', () => {
+        const entity = createBuilding(0, 0, 'distillery');
+        expect(entity.renderable!.spriteId).toBe('vodka-distillery');
+      });
+
+      it('resolves "gulag" to "gulag-admin" sprite', () => {
+        const entity = createBuilding(0, 0, 'gulag');
+        expect(entity.renderable!.spriteId).toBe('gulag-admin');
+      });
+
+      it('passes through direct sprite IDs unchanged', () => {
+        const entity = createBuilding(0, 0, 'power-station');
+        expect(entity.renderable!.spriteId).toBe('power-station');
+      });
+
+      it('passes through unknown types as-is (fallthrough)', () => {
+        const entity = createBuilding(0, 0, 'some-custom-building');
+        expect(entity.renderable!.spriteId).toBe('some-custom-building');
+      });
+    });
+
+    // ── Building stats from defs ───────────────────────────
+
+    describe('building stats from defs', () => {
+      it('power plant has correct powerOutput from defs', () => {
+        const entity = createBuilding(0, 0, 'power');
+        const def = getBuildingDef('power-station');
+        expect(entity.building!.powerOutput).toBe(def!.stats.powerOutput);
+      });
+
+      it('housing has correct housingCap from defs', () => {
+        const entity = createBuilding(0, 0, 'housing');
+        const def = getBuildingDef('apartment-tower-a');
+        expect(entity.building!.housingCap).toBe(def!.stats.housingCap);
+      });
+
+      it('farm has produces field from defs', () => {
+        const entity = createBuilding(0, 0, 'farm');
+        const def = getBuildingDef('collective-farm-hq');
+        expect(entity.building!.produces).toEqual(def!.stats.produces);
+      });
+
+      it('distillery produces vodka', () => {
+        const entity = createBuilding(0, 0, 'distillery');
+        expect(entity.building!.produces).toBeDefined();
+        expect(entity.building!.produces!.resource).toBe('vodka');
+      });
+
+      it('gulag has fear stat from defs', () => {
+        const entity = createBuilding(0, 0, 'gulag');
+        const def = getBuildingDef('gulag-admin');
+        expect(entity.building!.fear).toBe(def!.stats.fear);
+      });
+
+      it('decayRate is sourced from defs', () => {
+        const entity = createBuilding(0, 0, 'power');
+        const def = getBuildingDef('power-station');
+        expect(entity.durability!.decayRate).toBe(def!.stats.decayRate);
+      });
+
+      it('pollution is sourced from defs', () => {
+        const entity = createBuilding(0, 0, 'power');
+        const def = getBuildingDef('power-station');
+        expect(entity.building!.pollution).toBe(def!.stats.pollution);
+      });
+    });
+
+    // ── Footprint from defs ────────────────────────────────
+
+    describe('footprint calculation from defs', () => {
+      it('renderable footprint matches building def footprint', () => {
+        const entity = createBuilding(0, 0, 'power');
+        const def = getBuildingDef('power-station');
+        expect(entity.renderable!.footprintX).toBe(def!.footprint.tilesX);
+        expect(entity.renderable!.footprintY).toBe(def!.footprint.tilesY);
+      });
+
+      it('housing footprint matches defs', () => {
+        const entity = createBuilding(0, 0, 'housing');
+        const def = getBuildingDef('apartment-tower-a');
+        expect(entity.renderable!.footprintX).toBe(def!.footprint.tilesX);
+        expect(entity.renderable!.footprintY).toBe(def!.footprint.tilesY);
+      });
+
+      it('unknown building type defaults to 1x1 footprint', () => {
+        const entity = createBuilding(0, 0, 'unknown-building-xyz');
+        expect(entity.renderable!.footprintX).toBe(1);
+        expect(entity.renderable!.footprintY).toBe(1);
+      });
+    });
+
+    // ── Sprite path from defs ──────────────────────────────
+
+    describe('sprite path from defs', () => {
+      it('renderable spritePath matches building def sprite path', () => {
+        const entity = createBuilding(0, 0, 'power');
+        const def = getBuildingDef('power-station');
+        expect(entity.renderable!.spritePath).toBe(def!.sprite.path);
+      });
+
+      it('unknown building type gets empty sprite path', () => {
+        const entity = createBuilding(0, 0, 'unknown-nope');
+        expect(entity.renderable!.spritePath).toBe('');
+      });
+    });
+
+    // ── Defaults for unknown buildings ─────────────────────
+
+    describe('unknown building type defaults', () => {
+      it('unknown type has 0 powerReq', () => {
+        const entity = createBuilding(0, 0, 'fake-building');
+        expect(entity.building!.powerReq).toBe(0);
+      });
+
+      it('unknown type has 0 powerOutput', () => {
+        const entity = createBuilding(0, 0, 'fake-building');
+        expect(entity.building!.powerOutput).toBe(0);
+      });
+
+      it('unknown type has 0 housingCap', () => {
+        const entity = createBuilding(0, 0, 'fake-building');
+        expect(entity.building!.housingCap).toBe(0);
+      });
+
+      it('unknown type has 0.05 default decayRate', () => {
+        const entity = createBuilding(0, 0, 'fake-building');
+        expect(entity.durability!.decayRate).toBe(0.05);
+      });
+
+      it('unknown type preserves original type string in building.type', () => {
+        const entity = createBuilding(0, 0, 'power');
+        // building.type = the original type passed, NOT the resolved spriteId
+        expect(entity.building!.type).toBe('power');
+      });
+    });
+
+    // ── Multiple buildings ──────────────────────────────────
+
+    describe('multiple buildings', () => {
+      it('creates multiple buildings at different positions', () => {
+        createBuilding(0, 0, 'power');
+        createBuilding(5, 5, 'housing');
+        createBuilding(10, 10, 'farm');
+        expect(world.entities.length).toBe(3);
+      });
+
+      it('each building is independent', () => {
+        const b1 = createBuilding(0, 0, 'power');
+        const b2 = createBuilding(1, 1, 'housing');
+        expect(b1.building!.type).toBe('power');
+        expect(b2.building!.type).toBe('housing');
+        expect(b1).not.toBe(b2);
+      });
+    });
+  });
+
+  // ── createCitizen ──────────────────────────────────────────
+
+  describe('createCitizen', () => {
+    it('creates citizen with correct class', () => {
+      const entity = createCitizen('worker');
+      expect(entity.citizen).toBeDefined();
+      expect(entity.citizen!.class).toBe('worker');
+    });
+
+    it('starts with default happiness and hunger', () => {
+      const entity = createCitizen('worker');
+      expect(entity.citizen!.happiness).toBe(50);
+      expect(entity.citizen!.hunger).toBe(0);
+    });
+
+    it('positions at grid center when no home specified', () => {
+      const entity = createCitizen('worker');
+      const center = Math.floor(GRID_SIZE / 2);
+      expect(entity.position!.gridX).toBe(center);
+      expect(entity.position!.gridY).toBe(center);
+    });
+
+    it('positions at home when specified', () => {
+      const entity = createCitizen('farmer', 3, 7);
+      expect(entity.position!.gridX).toBe(3);
+      expect(entity.position!.gridY).toBe(7);
+    });
+
+    it('sets home when both homeX and homeY provided', () => {
+      const entity = createCitizen('engineer', 5, 10);
+      expect(entity.citizen!.home).toEqual({ gridX: 5, gridY: 10 });
+    });
+
+    it('does not set home when only homeX provided', () => {
+      const entity = createCitizen('worker', 5);
+      expect(entity.citizen!.home).toBeUndefined();
+    });
+
+    it('has isCitizen tag', () => {
+      const entity = createCitizen('worker');
+      expect(entity.isCitizen).toBe(true);
+    });
+
+    it('adds to world', () => {
+      createCitizen('worker');
+      expect(world.entities.length).toBe(1);
+    });
+
+    it('supports all citizen classes', () => {
+      const classes: Array<
+        'worker' | 'party_official' | 'engineer' | 'farmer' | 'soldier' | 'prisoner'
+      > = ['worker', 'party_official', 'engineer', 'farmer', 'soldier', 'prisoner'];
+      for (const cls of classes) {
+        const entity = createCitizen(cls);
+        expect(entity.citizen!.class).toBe(cls);
+      }
+    });
+  });
+
+  // ── createTile ─────────────────────────────────────────────
+
+  describe('createTile', () => {
+    it('creates tile at correct position', () => {
+      const entity = createTile(3, 7);
+      expect(entity.position!.gridX).toBe(3);
+      expect(entity.position!.gridY).toBe(7);
+    });
+
+    it('defaults to grass terrain', () => {
+      const entity = createTile(0, 0);
+      expect(entity.tile!.terrain).toBe('grass');
+    });
+
+    it('accepts custom terrain type', () => {
+      const entity = createTile(0, 0, 'road');
+      expect(entity.tile!.terrain).toBe('road');
+    });
+
+    it('starts with elevation 0', () => {
+      const entity = createTile(0, 0);
+      expect(entity.tile!.elevation).toBe(0);
+    });
+
+    it('has isTile tag', () => {
+      const entity = createTile(0, 0);
+      expect(entity.isTile).toBe(true);
+    });
+
+    it('adds to world', () => {
+      createTile(0, 0);
+      expect(world.entities.length).toBe(1);
+    });
+
+    it('supports water terrain', () => {
+      const entity = createTile(0, 0, 'water');
+      expect(entity.tile!.terrain).toBe('water');
+    });
+
+    it('supports foundation terrain', () => {
+      const entity = createTile(0, 0, 'foundation');
+      expect(entity.tile!.terrain).toBe('foundation');
+    });
+  });
+
+  // ── createResourceStore ────────────────────────────────────
+
+  describe('createResourceStore', () => {
+    it('creates resource store with default values', () => {
+      const entity = createResourceStore();
+      expect(entity.resources).toBeDefined();
+      expect(entity.resources!.money).toBe(2000);
+      expect(entity.resources!.food).toBe(200);
+      expect(entity.resources!.vodka).toBe(50);
+      expect(entity.resources!.power).toBe(0);
+      expect(entity.resources!.powerUsed).toBe(0);
+      expect(entity.resources!.population).toBe(0);
+    });
+
+    it('has isResourceStore tag', () => {
+      const entity = createResourceStore();
+      expect(entity.isResourceStore).toBe(true);
+    });
+
+    it('accepts partial initial overrides', () => {
+      const entity = createResourceStore({ money: 5000, food: 999 });
+      expect(entity.resources!.money).toBe(5000);
+      expect(entity.resources!.food).toBe(999);
+      // Other values still default
+      expect(entity.resources!.vodka).toBe(50);
+    });
+
+    it('accepts full initial overrides', () => {
+      const entity = createResourceStore({
+        money: 100,
+        food: 100,
+        vodka: 100,
+        power: 100,
+        powerUsed: 50,
+        population: 200,
+      });
+      expect(entity.resources!.money).toBe(100);
+      expect(entity.resources!.food).toBe(100);
+      expect(entity.resources!.vodka).toBe(100);
+      expect(entity.resources!.power).toBe(100);
+      expect(entity.resources!.powerUsed).toBe(50);
+      expect(entity.resources!.population).toBe(200);
+    });
+
+    it('is a singleton - second call returns existing entity', () => {
+      const first = createResourceStore({ money: 1000 });
+      const second = createResourceStore({ money: 9999 });
+      expect(first).toBe(second);
+      // Money should be from the FIRST call since second is a no-op
+      expect(second.resources!.money).toBe(1000);
+    });
+
+    it('singleton resets after world.clear', () => {
+      createResourceStore({ money: 1000 });
+      world.clear();
+      const second = createResourceStore({ money: 9999 });
+      // After clearing, a new entity should be created
+      expect(second.resources!.money).toBe(9999);
+    });
+
+    it('adds to world', () => {
+      createResourceStore();
+      expect(world.entities.length).toBe(1);
+    });
+  });
+
+  // ── createGrid ─────────────────────────────────────────────
+
+  describe('createGrid', () => {
+    it('creates GRID_SIZE * GRID_SIZE tiles by default', () => {
+      createGrid();
+      expect(world.entities.length).toBe(GRID_SIZE * GRID_SIZE);
+    });
+
+    it('creates custom size grid', () => {
+      createGrid(5);
+      expect(world.entities.length).toBe(25);
+    });
+
+    it('all tiles are grass', () => {
+      createGrid(3);
+      for (const entity of world.entities) {
+        expect(entity.tile!.terrain).toBe('grass');
+      }
+    });
+
+    it('tiles cover the full grid', () => {
+      const size = 4;
+      createGrid(size);
+
+      const positions = new Set<string>();
+      for (const entity of world.entities) {
+        positions.add(`${entity.position!.gridX},${entity.position!.gridY}`);
+      }
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          expect(positions.has(`${x},${y}`)).toBe(true);
+        }
+      }
+    });
+  });
+
+  // ── Entity properties match input ──────────────────────────
+
+  describe('entity properties match inputs', () => {
+    it('building position exactly matches input coordinates', () => {
+      const coords = [
+        [0, 0],
+        [29, 29],
+        [15, 7],
+        [0, 29],
+      ];
+      for (const [x, y] of coords) {
+        world.clear();
+        const entity = createBuilding(x!, y!, 'housing');
+        expect(entity.position!.gridX).toBe(x);
+        expect(entity.position!.gridY).toBe(y);
+      }
+    });
+
+    it('building type is preserved as-is in building.type', () => {
+      const entity = createBuilding(0, 0, 'farm');
+      // building.type should be the original input, not the resolved spriteId
+      expect(entity.building!.type).toBe('farm');
+    });
+
+    it('all buildings start unpowered', () => {
+      const types = ['power', 'housing', 'farm', 'distillery', 'gulag'];
+      for (const type of types) {
+        world.clear();
+        const entity = createBuilding(0, 0, type);
+        expect(entity.building!.powered).toBe(false);
+      }
+    });
+
+    it('all buildings start at full durability (100)', () => {
+      const types = ['power', 'housing', 'farm', 'distillery', 'gulag'];
+      for (const type of types) {
+        world.clear();
+        const entity = createBuilding(0, 0, type);
+        expect(entity.durability!.current).toBe(100);
+      }
+    });
+
+    it('all buildings are visible by default', () => {
+      const entity = createBuilding(0, 0, 'power');
+      expect(entity.renderable!.visible).toBe(true);
+    });
+  });
+});

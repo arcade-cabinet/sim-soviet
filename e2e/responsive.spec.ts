@@ -1,4 +1,15 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import {
+  advisorPanel,
+  buildingButtons,
+  canvas,
+  introOverlay,
+  quotaHud,
+  startButton,
+  toolbar,
+  topBar,
+  topRowButtons,
+} from './helpers';
 
 const VIEWPORTS = [
   { name: 'iPhone SE (375x667)', width: 375, height: 667 },
@@ -16,10 +27,10 @@ for (const viewport of VIEWPORTS) {
     });
 
     test('intro modal fits within viewport', async ({ page }) => {
-      const introModal = page.locator('#intro-modal');
-      await expect(introModal).toBeVisible();
+      const overlay = introOverlay(page);
+      await expect(overlay).toBeVisible();
 
-      const box = await introModal.boundingBox();
+      const box = await overlay.boundingBox();
       if (box) {
         // Modal should not exceed viewport dimensions
         expect(box.x).toBeGreaterThanOrEqual(0);
@@ -28,23 +39,33 @@ for (const viewport of VIEWPORTS) {
       }
     });
 
-    test('start button is clickable (not obscured)', async ({ page }) => {
-      const startBtn = page.locator('#start-btn');
-      await expect(startBtn).toBeVisible();
+    test('dossier card fits within viewport', async ({ page }) => {
+      const doc = page.locator('.dossier');
+      await expect(doc).toBeVisible();
 
-      // Verify the button is actually clickable (not covered by another element)
-      await expect(startBtn).toBeEnabled();
+      const box = await doc.boundingBox();
+      if (box) {
+        expect(box.width).toBeLessThanOrEqual(viewport.width);
+        // Height should not overflow (max-height: 90dvh with scroll)
+        expect(box.height).toBeLessThanOrEqual(viewport.height);
+      }
+    });
+
+    test('start button is clickable (not obscured)', async ({ page }) => {
+      const btn = startButton(page);
+      await expect(btn).toBeVisible();
+      await expect(btn).toBeEnabled();
     });
 
     test('toolbar is visible and usable after game start', async ({ page }) => {
-      await page.locator('#start-btn').click();
+      await startButton(page).click();
       await page.waitForTimeout(600);
 
-      const toolbar = page.locator('#toolbar');
-      await expect(toolbar).toBeVisible();
+      const nav = toolbar(page);
+      await expect(nav).toBeVisible();
 
       // Toolbar buttons should exist
-      const buttons = toolbar.locator('button');
+      const buttons = topRowButtons(page);
       const count = await buttons.count();
       expect(count).toBeGreaterThan(0);
 
@@ -52,32 +73,36 @@ for (const viewport of VIEWPORTS) {
       await expect(buttons.first()).toBeVisible();
     });
 
-    test('HUD elements are visible after game start', async ({ page }) => {
-      await page.locator('#start-btn').click();
-      await page.waitForTimeout(1500);
+    test('top bar is visible after game start', async ({ page }) => {
+      await startButton(page).click();
+      await page.waitForTimeout(500);
 
-      await expect(page.locator('#ui-money')).toBeVisible();
-      await expect(page.locator('#ui-pop')).toBeVisible();
-      await expect(page.locator('#ui-date')).toBeVisible();
+      const header = topBar(page);
+      await expect(header).toBeVisible();
+
+      // Should contain resource icons
+      await expect(header).toContainText('₽');
+      await expect(header).toContainText('📅');
     });
 
-    test('quota box is visible', async ({ page }) => {
-      const quotaBox = page.locator('.quota-box');
-      await expect(quotaBox).toBeVisible();
+    test('quota HUD is visible', async ({ page }) => {
+      const hud = quotaHud(page);
+      await expect(hud).toBeVisible();
+      await expect(hud).toContainText('5-YEAR PLAN');
     });
 
-    test('canvas fills the game container', async ({ page }) => {
-      await page.locator('#start-btn').click();
+    test('canvas fills the game viewport', async ({ page }) => {
+      await startButton(page).click();
       await page.waitForTimeout(600);
 
-      const canvas = page.locator('#gameCanvas');
-      const canvasBox = await canvas.boundingBox();
+      const canvasEl = canvas(page);
+      const canvasBox = await canvasEl.boundingBox();
 
-      const container = page.locator('#game-container');
-      const containerBox = await container.boundingBox();
+      const viewportEl = page.locator('.game-viewport');
+      const viewportBox = await viewportEl.boundingBox();
 
-      if (canvasBox && containerBox) {
-        // Canvas should approximately fill the container
+      if (canvasBox && viewportBox) {
+        // Canvas should have positive dimensions
         expect(canvasBox.width).toBeGreaterThan(0);
         expect(canvasBox.height).toBeGreaterThan(0);
       }
@@ -91,11 +116,11 @@ for (const viewport of VIEWPORTS) {
     });
 
     test('advisor modal is readable when shown', async ({ page }) => {
-      await page.locator('#start-btn').click();
+      await startButton(page).click();
       await page.waitForTimeout(600);
 
-      const advisor = page.locator('#advisor');
-      await expect(advisor).toBeVisible({ timeout: 2000 });
+      const advisor = advisorPanel(page);
+      await expect(advisor).toBeVisible({ timeout: 3000 });
 
       const advisorBox = await advisor.boundingBox();
       if (advisorBox) {
@@ -105,6 +130,18 @@ for (const viewport of VIEWPORTS) {
         // Width should not exceed viewport
         expect(advisorBox.width).toBeLessThanOrEqual(viewport.width + 1);
       }
+    });
+
+    test('building buttons row is scrollable and contains items', async ({ page }) => {
+      await startButton(page).click();
+      await page.waitForTimeout(600);
+
+      const buttons = buildingButtons(page);
+      const count = await buttons.count();
+      expect(count).toBeGreaterThan(0);
+
+      // First building button should be visible
+      await expect(buttons.first()).toBeVisible();
     });
   });
 }
