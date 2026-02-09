@@ -1,8 +1,8 @@
 {
-  "name": "sim-soviet",
+  "name": "@arcade-cabinet/sim-soviet",
   "private": true,
   "version": "0.1.0",
-  "description": "Sim Soviet - Isometric city builder with Vite + BabylonJS + animejs",
+  "description": "SimSoviet 2000 - Isometric city builder with Vite + BabylonJS + animejs, targeting Capacitor (PWA + Android/iOS)",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,18 +13,23 @@
     "format": "biome format --write .",
     "typecheck": "tsc --noEmit",
     "test": "echo \"No tests yet\" && exit 0",
-    "clean": "rm -rf node_modules dist android/app/build"
+    "clean": "rm -rf node_modules dist android/app/build",
+    "cap:sync": "cap sync",
+    "cap:android": "cap add android && cap sync android",
+    "cap:ios": "cap add ios && cap sync ios",
+    "android:build": "cap sync android && cd android && ./gradlew assembleDebug",
+    "android:run": "cap run android"
   },
   "dependencies": {
     "@babylonjs/core": "^7.41.0",
     "@babylonjs/loaders": "^7.41.0",
+    "@capacitor/core": "^6.2.0",
     "animejs": "^3.2.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.13",
     "@capacitor/android": "^6.2.0",
     "@capacitor/cli": "^6.2.0",
-    "@capacitor/core": "^6.2.0",
     "typescript": "^5.9.3",
     "vite": "^6.0.11"
   },

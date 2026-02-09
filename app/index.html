@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimSoviet 2000: The People's Isometric</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+</head>
+<body oncontextmenu="return false;">
+    <div class="crt-overlay"></div>
+    <div class="scanlines"></div>
+
+    <!-- Intro Modal -->
+    <div id="intro-modal">
+        <div class="dossier">
+            <div class="flex justify-between items-start">
+                <h1 class="text-2xl font-bold mb-4 underline">MINISTRY OF PLANNING</h1>
+                <div class="stamp">TOP SECRET</div>
+            </div>
+            
+            <p class="mb-4"><strong>TO:</strong> Director of Sector 7G</p>
+            <p class="mb-4"><strong>SUBJECT:</strong> IMMEDIATE ASSIGNMENT</p>
+            
+            <p class="mb-4 leading-relaxed">
+                Comrade, you have been "volunteered" to manage this desolate patch of dirt. 
+                Your predecessors failed to meet the potato quota. They are no longer with us.
+            </p>
+            
+            <ul class="list-disc pl-5 mb-6 space-y-2">
+                <li>Build <strong>Housing</strong> for the workers.</li>
+                <li>Build <strong>Coal Plants</strong> or they freeze.</li>
+                <li>Produce <strong>Potatoes</strong> or they starve.</li>
+                <li>Produce <strong>Vodka</strong> or they remember they are sad.</li>
+            </ul>
+
+            <div class="text-center">
+                <button id="start-btn" class="bg-[#8a1c1c] text-white px-8 py-3 text-xl font-bold hover:bg-[#a02020] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all">
+                    I SERVE THE SOVIET UNION
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="h-16 bg-[#222] border-b-4 border-[#000] flex items-center justify-between px-4 z-50 shrink-0 select-none">
+        <div class="flex items-center gap-4">
+            <h1 class="text-3xl text-[var(--soviet-red)] font-bold tracking-widest drop-shadow-md">SIM<span class="text-[var(--soviet-gold)]">SOVIET</span> <span class="text-white text-lg">2000</span></h1>
+            <div class="text-sm text-gray-400 border-l border-gray-600 pl-4">
+                MAP: SECTOR 7G<br>
+                WEATHER: BLEAK
+            </div>
+        </div>
+        
+        <div class="flex gap-4">
+            <div class="flex flex-col text-right">
+                <span class="text-gray-400 text-xs">RUBLES</span>
+                <span id="ui-money" class="text-[var(--soviet-gold)] text-2xl leading-none">0</span>
+            </div>
+            <div class="flex flex-col text-right">
+                <span class="text-gray-400 text-xs">POPULATION</span>
+                <span id="ui-pop" class="text-white text-2xl leading-none">0</span>
+            </div>
+            <div class="flex flex-col text-right">
+                <span class="text-gray-400 text-xs">DATE</span>
+                <span id="ui-date" class="text-gray-300 text-2xl leading-none">JAN 1980</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game View -->
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- Quota HUD -->
+        <div class="quota-box">
+            <h3 class="text-[var(--soviet-gold)] border-b border-gray-600 mb-2">5-YEAR PLAN</h3>
+            <div class="text-sm mb-1">GOAL: <span id="quota-target" class="text-white">...</span></div>
+            <div class="text-sm mb-1">TIME LEFT: <span id="quota-time" class="text-red-400">...</span></div>
+            <div class="w-full bg-gray-800 h-2 mt-2 border border-gray-600">
+                <div id="quota-bar" class="h-full bg-[var(--soviet-gold)] w-0"></div>
+            </div>
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-900/90 text-white px-6 py-2 border border-red-500 hidden text-xl shadow-lg pointer-events-none">
+            NOTIFICATION TEXT
+        </div>
+
+        <!-- Advisor -->
+        <div id="advisor" class="advisor-modal">
+            <div class="advisor-face" id="advisor-face-canvas"></div>
+            <div class="text-sm text-white leading-tight">
+                <strong class="text-[var(--soviet-gold)]">COMRADE VANYA:</strong><br>
+                <span id="advisor-text">Welcome, Director. Do not touch anything expensive.</span>
+            </div>
+            <button id="dismiss-advisor" class="mt-2 w-full bg-black text-xs text-gray-500 hover:text-white border border-gray-700">DISMISS</button>
+        </div>
+    </div>
+
+    <!-- Bottom Toolbar -->
+    <div class="h-32 bg-[#222] border-t-4 border-[#000] p-2 flex gap-2 overflow-x-auto z-50 shrink-0 select-none">
+        <div id="toolbar" class="flex gap-2 h-full"></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
