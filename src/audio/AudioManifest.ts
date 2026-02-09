@@ -247,6 +247,9 @@ export const AUDIO_MANIFEST: AudioAsset[] = [
   },
 ];
 
+/** Compile-time type for all known audio track IDs */
+export type AudioTrackId = (typeof AUDIO_MANIFEST)[number]['id'];
+
 // Helper to get assets by category
 export function getAudioByCategory(category: AudioAsset['category']): AudioAsset[] {
   return AUDIO_MANIFEST.filter((asset) => asset.category === category);
@@ -268,7 +271,7 @@ export function getPreloadAssets(): AudioAsset[] {
 }
 
 // Gameplay rotation — shuffled during play
-export const GAMEPLAY_PLAYLIST = [
+export const GAMEPLAY_PLAYLIST: AudioTrackId[] = [
   'internationale',
   'varshavjanka',
   'red_army_march',
@@ -282,7 +285,7 @@ export const GAMEPLAY_PLAYLIST = [
 ];
 
 // Context-specific music — mapped to game states/events
-export const MUSIC_CONTEXTS = {
+export const MUSIC_CONTEXTS: Record<string, AudioTrackId> = {
   // Core states
   menu: 'soviet_anthem_1944',
   gameplay: 'internationale',
@@ -309,4 +312,4 @@ export const MUSIC_CONTEXTS = {
   winter: 'sinij_platochek',
   spring: 'moskva_majskaia',
   night: 'tam_vdali',
-} as const;
+};

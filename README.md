@@ -24,7 +24,7 @@ purge, and Five-Year Plan.
 
 ### Key Features
 
-- **Isometric city-building** on a 30x30 grid with BabylonJS 3D rendering
+- **Isometric city-building** on a 30x30 grid with Canvas 2D rendering
 - **Procedural leadership system** -- 11 leader archetypes x 8 era doctrines x ministry appointments = unlimited political chaos
 - **Pravda headline generator** -- 145,000+ unique propaganda headlines that spin every disaster into a triumph
 - **40+ Soviet-era music tracks** from public domain sources
@@ -95,8 +95,8 @@ pnpm cap:ios
 
 | Layer | Technology |
 |-------|-----------|
-| **Rendering** | [BabylonJS 8](https://www.babylonjs.com/) -- 3D isometric rendering with procedural meshes |
-| **UI Framework** | [React 19](https://react.dev/) via [Reactylon](https://github.com/nicolo-ribaudo/reactylon) -- React reconciler for BabylonJS |
+| **Rendering** | Canvas 2D -- sprite-based isometric rendering |
+| **UI Framework** | [React 19](https://react.dev/) -- DOM overlays on canvas |
 | **ECS** | [Miniplex 2](https://github.com/hmans/miniplex) -- entity component system for game entities |
 | **AI** | [Yuka 0.7.8](https://mugen87.github.io/yuka/) -- goal-driven AI, state machines, fuzzy logic for leader behavior |
 | **Audio** | [Tone.js 15](https://tonejs.github.io/) -- procedural SFX; 40+ OGG tracks for music |
@@ -113,7 +113,7 @@ pnpm cap:ios
 
 ## Architecture
 
-```
+```text
 sim-soviet/
 ├── app/                          # Vite root
 │   ├── App.tsx                   # Root React component
@@ -144,10 +144,10 @@ sim-soviet/
 │   │   └── SaveSystem.ts         # localStorage save/load
 │   ├── hooks/                    # React hooks
 │   ├── input/                    # Input handling
-│   │   └── GestureManager.ts     # Touch/mouse input for building placement
-│   ├── rendering/                # BabylonJS rendering
-│   │   ├── IsometricRenderer.ts  # Camera, grid, mesh creation
-│   │   └── ParticleSystem.ts     # Snow, smoke effects
+│   │   └── CanvasGestureManager.ts # Touch/mouse input for building placement
+│   ├── rendering/                # Canvas 2D rendering
+│   │   ├── Canvas2DRenderer.ts   # Main renderer orchestrator
+│   │   └── ParticleSystem2D.ts   # Snow, rain effects
 │   ├── stores/                   # Zustand stores
 │   │   └── gameStore.ts          # Game state -> React bridge
 │   └── design-system/            # Design tokens
@@ -166,7 +166,7 @@ sim-soviet/
 - **Parallel architectures**: ECS (Miniplex) and GameState coexist -- ECS is newer, gradually replacing imperative state
 - **Satirical tone**: All user-facing text maintains dark comedy voice
 - **Mobile-first**: Touch controls, responsive layouts, PWA support
-- **Type-safe**: Strict TypeScript, no `any`
+- **Type-safe**: Strict TypeScript, `any` usage warned by linter
 
 ---
 
@@ -290,7 +290,7 @@ Centralized in `src/design-system/tokens.ts`:
 ### Code Style
 
 - **Biome** handles linting and formatting -- `pnpm lint:fix`
-- **TypeScript strict mode** -- no `any`, no implicit returns
+- **TypeScript strict mode** -- avoid `any` (linter warns), no implicit returns
 - **ECS-first** -- game logic in systems, not UI
 - **Satirical tone** -- all user-facing text maintains dark comedy voice
 - **`notifyStateChange()`** -- must be called after any `GameState` mutation

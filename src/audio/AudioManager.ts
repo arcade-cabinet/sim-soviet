@@ -9,7 +9,6 @@ import { type AudioAsset, getAudioById, getPreloadAssets } from './AudioManifest
 import * as ProceduralSounds from './ProceduralSounds';
 
 export class AudioManager {
-  private audioContext: AudioContext | null = null;
   private masterVolume = 0.7;
   private musicVolume = 0.5;
   private sfxVolume = 0.8;
@@ -19,15 +18,7 @@ export class AudioManager {
   private currentMusic: string | null = null;
   private initialized = false;
 
-  private initAudioContext(): void {
-    if (!this.audioContext) {
-      const WebkitAudioContext = (window as unknown as { webkitAudioContext?: typeof AudioContext })
-        .webkitAudioContext;
-      const ContextClass = window.AudioContext || WebkitAudioContext;
-      if (ContextClass) {
-        this.audioContext = new ContextClass();
-      }
-    }
+  private ensureInitialized(): void {
     if (!this.initialized) {
       ProceduralSounds.initialize();
       this.initialized = true;
@@ -83,7 +74,7 @@ export class AudioManager {
   }
 
   public async playMusic(trackId: string, fadeIn = true): Promise<void> {
-    this.initAudioContext();
+    this.ensureInitialized();
 
     // Stop current music if playing
     if (this.currentMusic && this.currentMusic !== trackId) {
@@ -102,10 +93,13 @@ export class AudioManager {
     }
 
     if (track && !this.muted) {
+      const asset = getAudioById(trackId);
       if (fadeIn) {
         track.volume = 0;
         track.play().catch((e) => console.warn('Audio play failed:', e));
-        this.fadeVolume(trackId, this.calculateVolume(getAudioById(trackId)!), 2000);
+        if (asset) {
+          this.fadeVolume(trackId, this.calculateVolume(asset), 2000);
+        }
       } else {
         track.play().catch((e) => console.warn('Audio play failed:', e));
       }
@@ -160,7 +154,7 @@ export class AudioManager {
   }
 
   public playSFX(soundId: string): void {
-    this.initAudioContext();
+    this.ensureInitialized();
 
     // Check if this is a procedural sound
     const asset = getAudioById(soundId);
@@ -205,9 +199,24 @@ export class AudioManager {
   }
 
   public playAmbient(ambientId: string): void {
-    this.initAudioContext();
-    const track = this.tracks.get(ambientId);
-    if (track && !this.muted) {
+    this.ensureInitialized();
+    let track = this.tracks.get(ambientId);
+
+    // Lazy load if not preloaded
+    if (!track) {
+      const asset = getAudioById(ambientId);
+      if (asset) {
+        this.loadTrack(asset).then(() => {
+          track = this.tracks.get(ambientId);
+          if (track && !this.muted) {
+            track.play().catch((e) => console.warn('Ambient play failed:', e));
+          }
+        });
+      }
+      return;
+    }
+
+    if (!this.muted) {
       track.play().catch((e) => console.warn('Ambient play failed:', e));
     }
   }
@@ -232,10 +241,12 @@ export class AudioManager {
 
   public setSFXVolume(volume: number): void {
     this.sfxVolume = Math.max(0, Math.min(1, volume));
+    this.updateCategoryVolumes('sfx');
   }
 
   public setAmbientVolume(volume: number): void {
     this.ambientVolume = Math.max(0, Math.min(1, volume));
+    this.updateCategoryVolumes('ambient');
   }
 
   public toggleMute(): boolean {
@@ -268,6 +279,15 @@ export class AudioManager {
     });
   }
 
+  private updateCategoryVolumes(category: AudioAsset['category']): void {
+    this.tracks.forEach((track, id) => {
+      const asset = getAudioById(id);
+      if (asset?.category === category) {
+        track.volume = this.calculateVolume(asset);
+      }
+    });
+  }
+
   public getCurrentMusic(): string | null {
     return this.currentMusic;
   }
@@ -282,9 +302,6 @@ export class AudioManager {
       track.src = '';
     });
     this.tracks.clear();
-    if (this.audioContext) {
-      this.audioContext.close();
-    }
     ProceduralSounds.dispose();
   }
 }

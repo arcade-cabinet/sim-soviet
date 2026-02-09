@@ -10,6 +10,8 @@ on:
       - '**/*.jsx'
       - 'package.json'
       - 'pnpm-lock.yaml'
+      - 'capacitor.config.*'
+      - 'android/**'
       - '.github/workflows/mobile-ci.yml'
   pull_request:
     branches: [main]
@@ -20,6 +22,8 @@ on:
       - '**/*.jsx'
       - 'package.json'
       - 'pnpm-lock.yaml'
+      - 'capacitor.config.*'
+      - 'android/**'
       - '.github/workflows/mobile-ci.yml'
   workflow_dispatch:
 
@@ -52,12 +56,6 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
 
-      - name: Setup Capacitor
-        run: |
-          echo "::group::Installing Capacitor CLI"
-          pnpm add -g @capacitor/cli
-          echo "::endgroup::"
-
       - name: Build web assets
         run: |
           echo "::group::Building web assets"
@@ -69,9 +67,9 @@ jobs:
           echo "::group::Syncing Capacitor Android"
           if [ ! -d "android" ]; then
             echo "Adding Android platform..."
-            npx cap add android
+            pnpm exec cap add android
           fi
-          npx cap sync android
+          pnpm exec cap sync android
           echo "::endgroup::"
 
       - name: Build Android Debug APK

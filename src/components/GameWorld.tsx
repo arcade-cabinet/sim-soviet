@@ -199,7 +199,9 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
           const musicCtx = seasonToMusicContext(season);
           if (musicCtx) {
             const trackId = MUSIC_CONTEXTS[musicCtx];
-            audio.playMusic(trackId);
+            if (trackId) {
+              audio.playMusic(trackId);
+            }
           }
         },
         onWeatherChanged: (weather) => {

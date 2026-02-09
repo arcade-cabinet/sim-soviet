@@ -37,7 +37,7 @@ sim-soviet/
 ├── src/              # Core game engine (reusable library)
 │   ├── design-system/  # Design tokens
 │   ├── game/           # Game logic
-│   ├── rendering/      # BabylonJS rendering
+│   ├── rendering/      # Canvas 2D rendering
 │   ├── ui/             # UI management
 │   ├── input/          # Input handling
 │   └── audio/          # Audio system
@@ -108,7 +108,7 @@ Then open a Pull Request on GitHub.
 ## 🎨 Code Style
 
 ### TypeScript
-- **Strict mode**: No `any` types
+- **Strict mode**: Avoid `any` types (linter warns)
 - **Explicit returns**: Always type function returns
 - **Interfaces over types**: For object shapes
 - **Named exports**: Avoid default exports
@@ -151,17 +151,24 @@ pnpm format    # Format all files
 
 ## 🧪 Testing
 
-### Current State
-- No test framework yet (planned: Vitest)
-- Manual testing required
-- CI runs type checking and builds
+### Unit Tests
+```bash
+pnpm test              # Run all tests (Vitest)
+pnpm test:watch        # Watch mode
+pnpm test:coverage     # With coverage report
+```
+
+### E2E Tests
+```bash
+pnpm test:e2e          # Full E2E suite (Playwright)
+pnpm test:e2e:mobile   # Mobile-viewport tests only
+```
 
 ### Manual Testing
 1. Run `pnpm dev`
 2. Test in browser (Chrome/Firefox/Safari)
 3. Test on mobile (via Capacitor)
 4. Check console for errors
-5. Verify no TypeScript errors
 
 ## 🎵 Audio Assets
 

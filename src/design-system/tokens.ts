@@ -106,7 +106,7 @@ export const breakpoints = {
 export const zIndex = {
   base: 0,
   dropdown: 10,
-  tooltip: 50,
+  tooltip: 40,
   toolbar: 50,
   modal: 100,
   toast: 200,

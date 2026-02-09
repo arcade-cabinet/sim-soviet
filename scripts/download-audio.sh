@@ -8,6 +8,10 @@
 
 set -euo pipefail
 
+# Ensure we run from repo root regardless of where the script is invoked
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
 AUDIO_DIR="app/public/audio"
 BASE_URL="https://www.marxists.org/history/ussr/sounds/mp3"
 OGG_BITRATE="128k"  # Opus bitrate (128kbps, excellent quality for games)
@@ -202,3 +206,8 @@ echo "============================================"
 echo ""
 echo "All audio is OGG/Opus (no MP3s in the repo)."
 echo "Procedural SFX via Tone.js: build, destroy, notification, coin, wind, machinery"
+
+if [ "$fail_count" -gt 0 ]; then
+  echo -e "${RED}WARNING: ${fail_count} track(s) failed to download.${NC}" >&2
+  exit 1
+fi

@@ -2,15 +2,8 @@
   "appId": "com.arcadecabinet.simsoviet",
   "appName": "SimSoviet 2000",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https",
     "hostname": "simsoviet.app"
-  },
-  "android": {
-    "buildOptions": {
-      "keystorePath": "",
-      "keystoreAlias": ""
-    }
   }
 }
