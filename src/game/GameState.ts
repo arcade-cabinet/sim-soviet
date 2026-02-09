@@ -71,9 +71,27 @@ export class GameState {
   }
 
   public addBuilding(x: number, y: number, type: string): Building {
+    // Guard against duplicate placement at the same coordinates
+    const existing = this.getBuildingAt(x, y);
+    if (existing) {
+      return existing;
+    }
     const building: Building = { x, y, type, powered: false };
     this.buildings.push(building);
     return building;
+  }
+
+  /** Reset all grid cells to empty (used before loading a save). */
+  public resetGrid(): void {
+    for (let y = 0; y < GRID_SIZE; y++) {
+      for (let x = 0; x < GRID_SIZE; x++) {
+        const cell = this.grid[y]?.[x];
+        if (cell) {
+          cell.type = null;
+          cell.z = 0;
+        }
+      }
+    }
   }
 
   public removeBuilding(x: number, y: number): void {

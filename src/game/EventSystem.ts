@@ -752,6 +752,11 @@ export class EventSystem {
     const event = this.resolveTemplate(template);
     this.applyEffects(event);
     this.eventHistory.push(event);
+    this.recentEventIds.push(event.id);
+    if (this.recentEventIds.length > this.maxRecentMemory) {
+      this.recentEventIds.shift();
+    }
+    this.lastEventTime = Date.now();
     this.onEventCallback(event);
   }
 

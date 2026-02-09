@@ -262,6 +262,9 @@ export class SaveSystem {
       })
     );
 
+    // Clear stale grid cells before restoring buildings
+    this.gameState.resetGrid();
+
     // Update grid cells (restore full footprint, not just origin)
     for (const b of savedBuildings) {
       const fp = getFootprint(b.type);
@@ -320,6 +323,9 @@ export class SaveSystem {
       type: b.type,
       powered: b.powered,
     }));
+
+    // Clear stale grid cells before restoring buildings
+    this.gameState.resetGrid();
 
     for (const b of data.buildings) {
       const fp = getFootprint(b.type);

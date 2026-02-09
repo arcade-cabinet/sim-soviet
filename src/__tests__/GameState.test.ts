@@ -169,10 +169,12 @@ describe('GameState', () => {
       expect(gs.buildings).toHaveLength(3);
     });
 
-    it('does not prevent duplicate positions (no validation)', () => {
+    it('prevents duplicate placement at the same coordinates', () => {
       gs.addBuilding(5, 5, 'housing');
-      gs.addBuilding(5, 5, 'farm');
-      expect(gs.buildings).toHaveLength(2);
+      const dup = gs.addBuilding(5, 5, 'farm');
+      expect(gs.buildings).toHaveLength(1);
+      // Returns the existing building instead of creating a new one
+      expect(dup.type).toBe('housing');
     });
   });
 
@@ -199,9 +201,9 @@ describe('GameState', () => {
       expect(gs.buildings).toHaveLength(1);
     });
 
-    it('removes all buildings at the same position (if duplicates exist)', () => {
+    it('removes the building even when addBuilding was called twice at same position', () => {
       gs.addBuilding(5, 5, 'housing');
-      gs.addBuilding(5, 5, 'farm');
+      gs.addBuilding(5, 5, 'farm'); // duplicate is ignored
       gs.removeBuilding(5, 5);
       expect(gs.buildings).toHaveLength(0);
     });
@@ -221,9 +223,9 @@ describe('GameState', () => {
       expect(gs.getBuildingAt(0, 0)).toBeNull();
     });
 
-    it('returns the first building when duplicates exist', () => {
+    it('returns the existing building when duplicate placement is attempted', () => {
       gs.addBuilding(3, 3, 'housing');
-      gs.addBuilding(3, 3, 'farm');
+      gs.addBuilding(3, 3, 'farm'); // duplicate is ignored, returns existing
       const found = gs.getBuildingAt(3, 3);
       expect(found).not.toBeNull();
       expect(found!.type).toBe('housing');
