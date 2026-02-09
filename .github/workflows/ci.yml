@@ -31,20 +31,16 @@ jobs:
           install-args: "--frozen-lockfile"
 
       - name: Run Biome linter
-        run: |
+run: |
           echo "::group::Running Biome linter"
           pnpm run lint 2>&1 | tee lint-output.log
-          EXIT_CODE=${PIPESTATUS[0]}
+          EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
-          if [ $EXIT_CODE -ne 0 ]; then
+          if [ "$EXIT_CODE" -ne 0 ]; then
             echo "::error::Linting failed with exit code $EXIT_CODE"
             echo "### Linting Failed" >> $GITHUB_STEP_SUMMARY
             echo "Exit code: $EXIT_CODE" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
-            tail -100 lint-output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit $EXIT_CODE
-          fi
+            echo '
           echo "Linting passed successfully"
 
       - name: Run TypeScript type checking
