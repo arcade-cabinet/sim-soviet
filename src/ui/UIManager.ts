@@ -48,7 +48,9 @@ export class UIManager {
     // Quota Bar
     const qPct = Math.min(
       100,
-      (this.gameState.quota.current / this.gameState.quota.target) * 100
+      this.gameState.quota.target > 0
+        ? (this.gameState.quota.current / this.gameState.quota.target) * 100
+        : 0
     );
     const quotaBar = document.getElementById('quota-bar');
     if (quotaBar) quotaBar.style.width = qPct + '%';
