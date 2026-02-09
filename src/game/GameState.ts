@@ -46,6 +46,8 @@ export class GameState {
     deadlineYear: 1985,
   };
   public gameOver: GameOverState | null = null;
+  public leaderName: string | undefined = undefined;
+  public leaderPersonality: string | undefined = undefined;
 
   constructor() {
     // Initialize grid

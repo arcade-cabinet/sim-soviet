@@ -35,8 +35,10 @@ import { ChronologySystem } from './ChronologySystem';
 import type { GameEvent } from './EventSystem';
 import { EventSystem } from './EventSystem';
 import type { GameState } from './GameState';
+import { PolitburoSystem } from './PolitburoSystem';
 import { PravdaSystem } from './PravdaSystem';
 import type { GameRng } from './SeedSystem';
+import { getWeatherProfile, type WeatherType } from './WeatherSystem';
 
 /**
  * Callback interface for SimulationEngine → React communication.
@@ -63,6 +65,7 @@ export class SimulationEngine {
   private chronology: ChronologySystem;
   private eventSystem: EventSystem;
   private pravdaSystem: PravdaSystem;
+  private politburo: PolitburoSystem;
   private quota: QuotaState;
   private rng: GameRng | undefined;
   private lastSeason = '';
@@ -89,21 +92,28 @@ export class SimulationEngine {
     );
     this.pravdaSystem = new PravdaSystem(gameState, rng);
 
-    this.eventSystem = new EventSystem(
-      gameState,
-      (event: GameEvent) => {
-        const headline = this.pravdaSystem.headlineFromEvent(event);
-        const severityLabel =
-          event.severity === 'catastrophic'
-            ? '[CATASTROPHIC]'
-            : event.severity === 'major'
-              ? '[MAJOR]'
-              : '';
-        this.callbacks.onAdvisor(`${severityLabel} ${event.title}\n\n${event.description}`);
-        this.callbacks.onPravda(headline.headline);
-      },
-      rng
-    );
+    const eventHandler = (event: GameEvent) => {
+      const headline = this.pravdaSystem.headlineFromEvent(event);
+      const severityLabel =
+        event.severity === 'catastrophic'
+          ? '[CATASTROPHIC]'
+          : event.severity === 'major'
+            ? '[MAJOR]'
+            : '';
+      this.callbacks.onAdvisor(`${severityLabel} ${event.title}\n\n${event.description}`);
+      this.callbacks.onPravda(headline.headline);
+    };
+
+    this.eventSystem = new EventSystem(gameState, eventHandler, rng);
+
+    // PolitburoSystem events carry effects (money, food, pop, etc.) but unlike
+    // EventSystem, they don't apply effects internally. Wrap the handler to
+    // apply resource deltas to the ECS store before dispatching UI notifications.
+    const politburoEventHandler = (event: GameEvent) => {
+      this.applyEventEffects(event);
+      eventHandler(event);
+    };
+    this.politburo = new PolitburoSystem(gameState, politburoEventHandler, rng);
 
     // Wire ECS callbacks to UI
     setStarvationCallback(() => {
@@ -129,6 +139,10 @@ export class SimulationEngine {
 
   public getPravdaSystem(): PravdaSystem {
     return this.pravdaSystem;
+  }
+
+  public getPolitburo(): PolitburoSystem {
+    return this.politburo;
   }
 
   public getChronology(): ChronologySystem {
@@ -157,18 +171,38 @@ export class SimulationEngine {
     }
 
     // 2-7. Run ECS systems
+    // Get weather + politburo modifiers for production
+    const weatherProfile = getWeatherProfile(tickResult.weather as WeatherType);
+    const politburoMods = this.politburo.getModifiers();
+    const farmMod = weatherProfile.farmModifier * politburoMods.foodProductionMult;
+    const vodkaMod = politburoMods.vodkaProductionMult;
+
     powerSystem();
-    productionSystem();
+    productionSystem(farmMod, vodkaMod);
     consumptionSystem();
-    populationSystem(this.rng);
-    decaySystem();
+    populationSystem(this.rng, politburoMods.populationGrowthMult);
+    decaySystem(politburoMods.infrastructureDecayMult);
     quotaSystem(this.quota);
 
     // Gulag effect: powered gulags have a 10% chance of reducing population
     this.processGulagEffect();
 
-    // 8-9. Events and Pravda
+    // 8-10. Events, Politburo, and Pravda
     this.eventSystem.tick();
+
+    // PolitburoSystem.applyCorruptionDrain() mutates gameState.money directly,
+    // but syncEcsToGameState() would overwrite it with the ECS store value.
+    // Capture the delta and apply it to the ECS store so it persists.
+    const moneyBeforePolitburo = this.gameState.money;
+    this.politburo.tick();
+    const corruptionDelta = this.gameState.money - moneyBeforePolitburo;
+    if (corruptionDelta !== 0) {
+      const store = getResourceEntity();
+      if (store) {
+        store.resources.money = Math.max(0, store.resources.money + corruptionDelta);
+      }
+    }
+
     this.tickPravda();
 
     // Sync ECS resource store → GameState for React snapshots
@@ -241,6 +275,11 @@ export class SimulationEngine {
     this.gameState.quota.current = this.quota.current;
     this.gameState.quota.deadlineYear = this.quota.deadlineYear;
 
+    // Sync Politburo leader info
+    const gs = this.politburo.getGeneralSecretary();
+    this.gameState.leaderName = gs.name;
+    this.gameState.leaderPersonality = gs.personality;
+
     // Sync buildings: rebuild GameState.buildings from ECS entities
     this.gameState.buildings = [];
     for (const entity of buildingsLogic) {
@@ -308,6 +347,23 @@ export class SimulationEngine {
     this.ended = true;
     this.gameState.gameOver = { victory, reason };
     this.callbacks.onGameOver?.(victory, reason);
+  }
+
+  /**
+   * Applies a GameEvent's resource effects to the ECS store.
+   * Used for PolitburoSystem events (EventSystem applies its own internally).
+   */
+  private applyEventEffects(event: GameEvent): void {
+    const fx = event.effects;
+    const store = getResourceEntity();
+    if (store) {
+      const r = store.resources;
+      if (fx.money) r.money = Math.max(0, r.money + fx.money);
+      if (fx.food) r.food = Math.max(0, r.food + fx.food);
+      if (fx.vodka) r.vodka = Math.max(0, r.vodka + fx.vodka);
+      if (fx.pop) r.population = Math.max(0, r.population + fx.pop);
+      if (fx.power) r.power = Math.max(0, r.power + fx.power);
+    }
   }
 
   private tickPravda(): void {

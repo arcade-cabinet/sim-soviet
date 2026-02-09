@@ -187,6 +187,88 @@ describe('productionSystem', () => {
     });
   });
 
+  // ── Weather modifier (farmModifier) ─────────────────────
+
+  describe('farmModifier parameter', () => {
+    it('farmModifier=0 yields zero food from farms', () => {
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'farm');
+      powerSystem();
+      productionSystem(0.0);
+      const store = getResourceEntity()!;
+      expect(store.resources.food).toBe(0);
+    });
+
+    it('farmModifier=0.5 halves food production', () => {
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'farm');
+      powerSystem();
+      productionSystem(0.5);
+      const store = getResourceEntity()!;
+      expect(store.resources.food).toBe(10); // 20 * 0.5
+    });
+
+    it('farmModifier=2.0 doubles food production', () => {
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'farm');
+      powerSystem();
+      productionSystem(2.0);
+      const store = getResourceEntity()!;
+      expect(store.resources.food).toBe(40); // 20 * 2.0
+    });
+
+    it('farmModifier does not affect vodka production', () => {
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'distillery');
+      powerSystem();
+      productionSystem(0.0); // zero farmModifier
+      const store = getResourceEntity()!;
+      expect(store.resources.vodka).toBe(10); // unaffected
+    });
+  });
+
+  // ── Vodka modifier (vodkaModifier) ──────────────────────
+
+  describe('vodkaModifier parameter', () => {
+    it('vodkaModifier=0.5 halves vodka production', () => {
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'distillery');
+      powerSystem();
+      productionSystem(1.0, 0.5);
+      const store = getResourceEntity()!;
+      expect(store.resources.vodka).toBe(5); // 10 * 0.5
+    });
+
+    it('vodkaModifier=2.0 doubles vodka production', () => {
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'distillery');
+      powerSystem();
+      productionSystem(1.0, 2.0);
+      const store = getResourceEntity()!;
+      expect(store.resources.vodka).toBe(20); // 10 * 2.0
+    });
+
+    it('vodkaModifier does not affect food production', () => {
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'farm');
+      powerSystem();
+      productionSystem(1.0, 0.0); // zero vodkaModifier
+      const store = getResourceEntity()!;
+      expect(store.resources.food).toBe(20); // unaffected
+    });
+
+    it('both modifiers apply independently', () => {
+      createBuilding(0, 0, 'power');
+      createBuilding(1, 1, 'farm');
+      createBuilding(2, 2, 'distillery');
+      powerSystem();
+      productionSystem(0.5, 1.5);
+      const store = getResourceEntity()!;
+      expect(store.resources.food).toBe(10); // 20 * 0.5
+      expect(store.resources.vodka).toBe(15); // 10 * 1.5
+    });
+  });
+
   // ── Edge: no resource store ───────────────────────────────
 
   describe('edge: no resource store', () => {
