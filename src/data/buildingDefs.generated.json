@@ -1,0 +1,1134 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-02-09T08:03:03.072Z",
+  "buildings": {
+    "apartment-tower-a": {
+      "id": "apartment-tower-a",
+      "role": "housing",
+      "sprite": {
+        "path": "sprites/soviet/apartment-tower-a.png",
+        "width": 126,
+        "height": 236,
+        "anchorX": 59,
+        "anchorY": 207
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.1,
+        "y": 1.25,
+        "z": 2.5
+      },
+      "stats": {
+        "powerReq": 5,
+        "powerOutput": 0,
+        "housingCap": 50,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 0
+      },
+      "presentation": {
+        "name": "Tenement Block",
+        "icon": "🏢",
+        "cost": 100,
+        "desc": "Concrete sleeping box.",
+        "category": "res"
+      }
+    },
+    "apartment-tower-b": {
+      "id": "apartment-tower-b",
+      "role": "housing",
+      "sprite": {
+        "path": "sprites/soviet/apartment-tower-b.png",
+        "width": 126,
+        "height": 193,
+        "anchorX": 59,
+        "anchorY": 164
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.1,
+        "y": 1.25,
+        "z": 1.888
+      },
+      "stats": {
+        "powerReq": 6,
+        "powerOutput": 0,
+        "housingCap": 60,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 0
+      },
+      "presentation": {
+        "name": "Tenement Tower",
+        "icon": "🏢",
+        "cost": 120,
+        "desc": "Taller concrete box.",
+        "category": "res"
+      }
+    },
+    "apartment-tower-c": {
+      "id": "apartment-tower-c",
+      "role": "housing",
+      "sprite": {
+        "path": "sprites/soviet/apartment-tower-c.png",
+        "width": 135,
+        "height": 280,
+        "anchorX": 67,
+        "anchorY": 252
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.1,
+        "y": 1.275,
+        "z": 3.138
+      },
+      "stats": {
+        "powerReq": 8,
+        "powerOutput": 0,
+        "housingCap": 80,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 0
+      },
+      "presentation": {
+        "name": "High-Rise Block",
+        "icon": "🏢",
+        "cost": 180,
+        "desc": "Reaches for socialist skies.",
+        "category": "res"
+      }
+    },
+    "apartment-tower-d": {
+      "id": "apartment-tower-d",
+      "role": "housing",
+      "sprite": {
+        "path": "sprites/soviet/apartment-tower-d.png",
+        "width": 126,
+        "height": 322,
+        "anchorX": 63,
+        "anchorY": 290
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.1,
+        "y": 1.1,
+        "z": 3.763
+      },
+      "stats": {
+        "powerReq": 12,
+        "powerOutput": 0,
+        "housingCap": 120,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 0
+      },
+      "presentation": {
+        "name": "Megablock",
+        "icon": "🏢",
+        "cost": 250,
+        "desc": "A monument to standardization.",
+        "category": "res"
+      }
+    },
+    "barracks": {
+      "id": "barracks",
+      "role": "military",
+      "sprite": {
+        "path": "sprites/soviet/barracks.png",
+        "width": 129,
+        "height": 107,
+        "anchorX": 66,
+        "anchorY": 76
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.37,
+        "y": 0.916,
+        "z": 1.038
+      },
+      "stats": {
+        "powerReq": 4,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 8,
+        "decayRate": 0.05,
+        "jobs": 8
+      },
+      "presentation": {
+        "name": "Barracks",
+        "icon": "🎖️",
+        "cost": 200,
+        "desc": "Soldiers sleep here. Allegedly.",
+        "category": "mil"
+      }
+    },
+    "bread-factory": {
+      "id": "bread-factory",
+      "role": "industry",
+      "sprite": {
+        "path": "sprites/soviet/bread-factory.png",
+        "width": 116,
+        "height": 115,
+        "anchorX": 56,
+        "anchorY": 88
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.034,
+        "y": 1.02,
+        "z": 1.049
+      },
+      "stats": {
+        "powerReq": 5,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 3,
+        "fear": 0,
+        "produces": {
+          "resource": "food",
+          "amount": 15
+        },
+        "decayRate": 0.05,
+        "jobs": 12
+      },
+      "presentation": {
+        "name": "Bread Factory",
+        "icon": "🍞",
+        "cost": 200,
+        "desc": "Where flour becomes propaganda.",
+        "category": "ind"
+      }
+    },
+    "collective-farm-hq": {
+      "id": "collective-farm-hq",
+      "role": "agriculture",
+      "sprite": {
+        "path": "sprites/soviet/collective-farm-hq.png",
+        "width": 108,
+        "height": 133,
+        "anchorX": 55,
+        "anchorY": 105
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 0.921,
+        "y": 1.02,
+        "z": 1.15
+      },
+      "stats": {
+        "powerReq": 2,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "produces": {
+          "resource": "food",
+          "amount": 20
+        },
+        "decayRate": 0.05,
+        "jobs": 10
+      },
+      "presentation": {
+        "name": "Kolkhoz",
+        "icon": "🥔",
+        "cost": 150,
+        "desc": "Potatoes for the motherland.",
+        "category": "ind"
+      }
+    },
+    "concrete-block": {
+      "id": "concrete-block",
+      "role": "utility",
+      "sprite": {
+        "path": "sprites/soviet/concrete-block.png",
+        "width": 136,
+        "height": 120,
+        "anchorX": 68,
+        "anchorY": 85
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1,
+        "y": 1,
+        "z": 0.625
+      },
+      "stats": {
+        "powerReq": 0,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 0
+      },
+      "presentation": {
+        "name": "Concrete Block",
+        "icon": "🧱",
+        "cost": 60,
+        "desc": "The people's building material.",
+        "category": "utility"
+      }
+    },
+    "cultural-palace": {
+      "id": "cultural-palace",
+      "role": "culture",
+      "sprite": {
+        "path": "sprites/soviet/cultural-palace.png",
+        "width": 151,
+        "height": 138,
+        "anchorX": 76,
+        "anchorY": 99
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.314,
+        "y": 1.406,
+        "z": 1.156
+      },
+      "stats": {
+        "powerReq": 6,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 12
+      },
+      "presentation": {
+        "name": "Cultural Palace",
+        "icon": "🎭",
+        "cost": 300,
+        "desc": "Ballet, opera, and propaganda.",
+        "category": "cul"
+      }
+    },
+    "factory-office": {
+      "id": "factory-office",
+      "role": "industry",
+      "sprite": {
+        "path": "sprites/soviet/factory-office.png",
+        "width": 130,
+        "height": 114,
+        "anchorX": 65,
+        "anchorY": 81
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.286,
+        "y": 1.028,
+        "z": 1.034
+      },
+      "stats": {
+        "powerReq": 4,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 2,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 20
+      },
+      "presentation": {
+        "name": "Factory Office",
+        "icon": "🏭",
+        "cost": 180,
+        "desc": "Paperwork division.",
+        "category": "ind"
+      }
+    },
+    "fence": {
+      "id": "fence",
+      "role": "environment",
+      "sprite": {
+        "path": "sprites/soviet/fence.png",
+        "width": 52,
+        "height": 55,
+        "anchorX": 26,
+        "anchorY": 41
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 0.475,
+        "y": 0.075,
+        "z": 0.27
+      },
+      "stats": {
+        "powerReq": 0,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 0
+      },
+      "presentation": {
+        "name": "Fence",
+        "icon": "🚧",
+        "cost": 10,
+        "desc": "Keeps them in. Or out.",
+        "category": "env"
+      }
+    },
+    "fence-low": {
+      "id": "fence-low",
+      "role": "environment",
+      "sprite": {
+        "path": "sprites/soviet/fence-low.png",
+        "width": 150,
+        "height": 90,
+        "anchorX": 75,
+        "anchorY": 55
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.275,
+        "y": 0.837,
+        "z": 0.17
+      },
+      "stats": {
+        "powerReq": 0,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 0
+      },
+      "presentation": {
+        "name": "Low Fence",
+        "icon": "🚧",
+        "cost": 15,
+        "desc": "A suggestion of boundaries.",
+        "category": "env"
+      }
+    },
+    "fire-station": {
+      "id": "fire-station",
+      "role": "services",
+      "sprite": {
+        "path": "sprites/soviet/fire-station.png",
+        "width": 110,
+        "height": 125,
+        "anchorX": 50,
+        "anchorY": 95
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.028,
+        "y": 1.02,
+        "z": 1.141
+      },
+      "stats": {
+        "powerReq": 3,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 10
+      },
+      "presentation": {
+        "name": "Fire Station",
+        "icon": "🚒",
+        "cost": 150,
+        "desc": "Arrives after the fire.",
+        "category": "svc"
+      }
+    },
+    "government-hq": {
+      "id": "government-hq",
+      "role": "government",
+      "sprite": {
+        "path": "sprites/soviet/government-hq.png",
+        "width": 141,
+        "height": 107,
+        "anchorX": 72,
+        "anchorY": 71
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.3,
+        "y": 1.028,
+        "z": 0.834
+      },
+      "stats": {
+        "powerReq": 10,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 5,
+        "decayRate": 0.05,
+        "jobs": 25
+      },
+      "presentation": {
+        "name": "Government HQ",
+        "icon": "🏛️",
+        "cost": 400,
+        "desc": "Where decisions are made slowly.",
+        "category": "gov"
+      }
+    },
+    "guard-post": {
+      "id": "guard-post",
+      "role": "military",
+      "sprite": {
+        "path": "sprites/soviet/guard-post.png",
+        "width": 141,
+        "height": 105,
+        "anchorX": 73,
+        "anchorY": 68
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.286,
+        "y": 1.028,
+        "z": 0.738
+      },
+      "stats": {
+        "powerReq": 2,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 5,
+        "decayRate": 0.05,
+        "jobs": 4
+      },
+      "presentation": {
+        "name": "Guard Post",
+        "icon": "🛡️",
+        "cost": 100,
+        "desc": "Watching the watchers.",
+        "category": "mil"
+      }
+    },
+    "gulag-admin": {
+      "id": "gulag-admin",
+      "role": "military",
+      "sprite": {
+        "path": "sprites/soviet/gulag-admin.png",
+        "width": 134,
+        "height": 121,
+        "anchorX": 63,
+        "anchorY": 85
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.428,
+        "y": 1.087,
+        "z": 1.137
+      },
+      "stats": {
+        "powerReq": 10,
+        "powerOutput": 0,
+        "housingCap": -20,
+        "pollution": 0,
+        "fear": 15,
+        "decayRate": 0.05,
+        "jobs": 5
+      },
+      "presentation": {
+        "name": "Gulag",
+        "icon": "⛓️",
+        "cost": 500,
+        "desc": "Fixes attitude problems.",
+        "category": "gov"
+      }
+    },
+    "hospital": {
+      "id": "hospital",
+      "role": "services",
+      "sprite": {
+        "path": "sprites/soviet/hospital.png",
+        "width": 121,
+        "height": 123,
+        "anchorX": 65,
+        "anchorY": 89
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.24,
+        "y": 0.99,
+        "z": 0.918
+      },
+      "stats": {
+        "powerReq": 8,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 20
+      },
+      "presentation": {
+        "name": "Hospital",
+        "icon": "🏥",
+        "cost": 250,
+        "desc": "Soviet medicine is best medicine.",
+        "category": "svc"
+      }
+    },
+    "kgb-office": {
+      "id": "kgb-office",
+      "role": "government",
+      "sprite": {
+        "path": "sprites/soviet/kgb-office.png",
+        "width": 184,
+        "height": 140,
+        "anchorX": 88,
+        "anchorY": 106
+      },
+      "footprint": {
+        "tilesX": 2,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.784,
+        "y": 1.378,
+        "z": 1.137
+      },
+      "stats": {
+        "powerReq": 8,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 20,
+        "decayRate": 0.05,
+        "jobs": 15
+      },
+      "presentation": {
+        "name": "KGB Office",
+        "icon": "🕵️",
+        "cost": 500,
+        "desc": "They're watching. Always.",
+        "category": "gov"
+      }
+    },
+    "ministry-office": {
+      "id": "ministry-office",
+      "role": "government",
+      "sprite": {
+        "path": "sprites/soviet/ministry-office.png",
+        "width": 163,
+        "height": 124,
+        "anchorX": 78,
+        "anchorY": 84
+      },
+      "footprint": {
+        "tilesX": 2,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.828,
+        "y": 1.14,
+        "z": 1.138
+      },
+      "stats": {
+        "powerReq": 6,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 3,
+        "decayRate": 0.05,
+        "jobs": 30
+      },
+      "presentation": {
+        "name": "Ministry Office",
+        "icon": "📋",
+        "cost": 350,
+        "desc": "Bureaucracy incarnate.",
+        "category": "gov"
+      }
+    },
+    "polyclinic": {
+      "id": "polyclinic",
+      "role": "services",
+      "sprite": {
+        "path": "sprites/soviet/polyclinic.png",
+        "width": 133,
+        "height": 132,
+        "anchorX": 68,
+        "anchorY": 99
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.3,
+        "y": 1.028,
+        "z": 1.137
+      },
+      "stats": {
+        "powerReq": 5,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 12
+      },
+      "presentation": {
+        "name": "Polyclinic",
+        "icon": "💊",
+        "cost": 180,
+        "desc": "Aspirin cures everything.",
+        "category": "svc"
+      }
+    },
+    "post-office": {
+      "id": "post-office",
+      "role": "services",
+      "sprite": {
+        "path": "sprites/soviet/post-office.png",
+        "width": 125,
+        "height": 120,
+        "anchorX": 65,
+        "anchorY": 87
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.27,
+        "y": 1.028,
+        "z": 1.138
+      },
+      "stats": {
+        "powerReq": 2,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 6
+      },
+      "presentation": {
+        "name": "Post Office",
+        "icon": "✉️",
+        "cost": 100,
+        "desc": "Letters arrive. Eventually.",
+        "category": "svc"
+      }
+    },
+    "power-station": {
+      "id": "power-station",
+      "role": "power",
+      "sprite": {
+        "path": "sprites/soviet/power-station.png",
+        "width": 166,
+        "height": 121,
+        "anchorX": 88,
+        "anchorY": 82
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.45,
+        "y": 1.178,
+        "z": 0.768
+      },
+      "stats": {
+        "powerReq": 0,
+        "powerOutput": 100,
+        "housingCap": 0,
+        "pollution": 20,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 15
+      },
+      "presentation": {
+        "name": "Coal Plant",
+        "icon": "⚡",
+        "cost": 300,
+        "desc": "Creates smog & power.",
+        "category": "utility"
+      }
+    },
+    "radio-station": {
+      "id": "radio-station",
+      "role": "propaganda",
+      "sprite": {
+        "path": "sprites/soviet/radio-station.png",
+        "width": 188,
+        "height": 127,
+        "anchorX": 92,
+        "anchorY": 78
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.428,
+        "y": 1.428,
+        "z": 0.737
+      },
+      "stats": {
+        "powerReq": 6,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 3,
+        "decayRate": 0.05,
+        "jobs": 8
+      },
+      "presentation": {
+        "name": "Radio Station",
+        "icon": "📻",
+        "cost": 250,
+        "desc": "Broadcasting the truth. Our truth.",
+        "category": "prop"
+      }
+    },
+    "school": {
+      "id": "school",
+      "role": "services",
+      "sprite": {
+        "path": "sprites/soviet/school.png",
+        "width": 160,
+        "height": 135,
+        "anchorX": 80,
+        "anchorY": 94
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.428,
+        "y": 1.406,
+        "z": 1.137
+      },
+      "stats": {
+        "powerReq": 4,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 15
+      },
+      "presentation": {
+        "name": "School",
+        "icon": "📚",
+        "cost": 200,
+        "desc": "Teaching the party line since 1917.",
+        "category": "svc"
+      }
+    },
+    "train-station": {
+      "id": "train-station",
+      "role": "transport",
+      "sprite": {
+        "path": "sprites/soviet/train-station.png",
+        "width": 122,
+        "height": 101,
+        "anchorX": 59,
+        "anchorY": 69
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.24,
+        "y": 0.886,
+        "z": 0.918
+      },
+      "stats": {
+        "powerReq": 5,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 10
+      },
+      "presentation": {
+        "name": "Train Station",
+        "icon": "🚂",
+        "cost": 300,
+        "desc": "Trains run on Soviet time.",
+        "category": "transport"
+      }
+    },
+    "vodka-distillery": {
+      "id": "vodka-distillery",
+      "role": "industry",
+      "sprite": {
+        "path": "sprites/soviet/vodka-distillery.png",
+        "width": 120,
+        "height": 122,
+        "anchorX": 61,
+        "anchorY": 88
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.406,
+        "y": 1.086,
+        "z": 1.137
+      },
+      "stats": {
+        "powerReq": 5,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 5,
+        "fear": 0,
+        "produces": {
+          "resource": "vodka",
+          "amount": 10
+        },
+        "decayRate": 0.05,
+        "jobs": 10
+      },
+      "presentation": {
+        "name": "Vodka Plant",
+        "icon": "🍾",
+        "cost": 250,
+        "desc": "Essential fluid production.",
+        "category": "ind"
+      }
+    },
+    "warehouse": {
+      "id": "warehouse",
+      "role": "industry",
+      "sprite": {
+        "path": "sprites/soviet/warehouse.png",
+        "width": 140,
+        "height": 115,
+        "anchorX": 70,
+        "anchorY": 80
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.3,
+        "y": 0.916,
+        "z": 0.737
+      },
+      "stats": {
+        "powerReq": 2,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 5
+      },
+      "presentation": {
+        "name": "Warehouse",
+        "icon": "📦",
+        "cost": 120,
+        "desc": "Stores everything but hope.",
+        "category": "ind"
+      }
+    },
+    "workers-club": {
+      "id": "workers-club",
+      "role": "culture",
+      "sprite": {
+        "path": "sprites/soviet/workers-club.png",
+        "width": 152,
+        "height": 132,
+        "anchorX": 79,
+        "anchorY": 94
+      },
+      "footprint": {
+        "tilesX": 2,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.756,
+        "y": 1.028,
+        "z": 1.237
+      },
+      "stats": {
+        "powerReq": 3,
+        "powerOutput": 0,
+        "housingCap": 0,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 8
+      },
+      "presentation": {
+        "name": "Workers' Club",
+        "icon": "🎪",
+        "cost": 150,
+        "desc": "Leisure in moderation.",
+        "category": "cul"
+      }
+    },
+    "workers-house-a": {
+      "id": "workers-house-a",
+      "role": "housing",
+      "sprite": {
+        "path": "sprites/soviet/workers-house-a.png",
+        "width": 188,
+        "height": 163,
+        "anchorX": 94,
+        "anchorY": 115
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 2
+      },
+      "modelSize": {
+        "x": 1.096,
+        "y": 2,
+        "z": 1.144
+      },
+      "stats": {
+        "powerReq": 3,
+        "powerOutput": 0,
+        "housingCap": 30,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 0
+      },
+      "presentation": {
+        "name": "Workers' House",
+        "icon": "🏠",
+        "cost": 80,
+        "desc": "Modest proletarian dwelling.",
+        "category": "res"
+      }
+    },
+    "workers-house-b": {
+      "id": "workers-house-b",
+      "role": "housing",
+      "sprite": {
+        "path": "sprites/soviet/workers-house-b.png",
+        "width": 181,
+        "height": 185,
+        "anchorX": 85,
+        "anchorY": 143
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 2
+      },
+      "modelSize": {
+        "x": 1.091,
+        "y": 2.2,
+        "z": 1.981
+      },
+      "stats": {
+        "powerReq": 4,
+        "powerOutput": 0,
+        "housingCap": 45,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 0
+      },
+      "presentation": {
+        "name": "Workers' Duplex",
+        "icon": "🏠",
+        "cost": 110,
+        "desc": "Double the concrete, double the joy.",
+        "category": "res"
+      }
+    },
+    "workers-house-c": {
+      "id": "workers-house-c",
+      "role": "housing",
+      "sprite": {
+        "path": "sprites/soviet/workers-house-c.png",
+        "width": 209,
+        "height": 199,
+        "anchorX": 113,
+        "anchorY": 143
+      },
+      "footprint": {
+        "tilesX": 2,
+        "tilesY": 2
+      },
+      "modelSize": {
+        "x": 2,
+        "y": 2.2,
+        "z": 1.981
+      },
+      "stats": {
+        "powerReq": 8,
+        "powerOutput": 0,
+        "housingCap": 80,
+        "pollution": 0,
+        "fear": 0,
+        "decayRate": 0.05,
+        "jobs": 0
+      },
+      "presentation": {
+        "name": "Workers' Complex",
+        "icon": "🏘️",
+        "cost": 200,
+        "desc": "A whole courtyard of happiness.",
+        "category": "res"
+      }
+    }
+  }
+}

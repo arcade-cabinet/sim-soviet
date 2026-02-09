@@ -137,3 +137,20 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Android
+android/
+ios/
+.idea/
+*.iml
+*.apk
+*.aab
+
+# Capacitor
+.capacitor/
+
+# Audio assets (downloaded separately)
+app/public/audio/*.mp3
+app/public/audio/*.ogg
+app/public/audio/*.wav
+!app/public/audio/.gitkeep
