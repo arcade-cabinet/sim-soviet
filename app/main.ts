@@ -23,7 +23,11 @@ class Game {
   private simEngine: SimulationEngine;
 
   constructor() {
-    this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+    const canvas = document.getElementById('gameCanvas');
+    if (!canvas || !(canvas instanceof HTMLCanvasElement)) {
+      throw new Error('Canvas element `#gameCanvas` not found');
+    }
+    this.canvas = canvas;
     this.engine = new Engine(this.canvas, true, {
       preserveDrawingBuffer: true,
       stencil: true,
