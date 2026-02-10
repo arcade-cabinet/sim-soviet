@@ -3,7 +3,6 @@ import {
   DAYS_PER_MONTH,
   DayPhase,
   HOURS_PER_TICK,
-  MONTHS_PER_YEAR,
   Season,
   TICKS_PER_DAY,
   TICKS_PER_MONTH,
@@ -18,16 +17,16 @@ describe('ChronologySystem', () => {
 
   beforeEach(() => {
     rng = new GameRng('test-deterministic-seed');
-    chrono = new ChronologySystem(rng, 1980);
+    chrono = new ChronologySystem(rng, 1922);
   });
 
   // ── Initial state ──────────────────────────────────────────
 
   describe('initial state', () => {
-    it('starts at year 1980, month 1, day 1, hour 0', () => {
+    it('starts at year 1922, month 10, day 1, hour 0', () => {
       const date = chrono.getDate();
-      expect(date.year).toBe(1980);
-      expect(date.month).toBe(1);
+      expect(date.year).toBe(1922);
+      expect(date.month).toBe(10);
       expect(date.day).toBe(1);
       expect(date.hour).toBe(0);
     });
@@ -36,9 +35,9 @@ describe('ChronologySystem', () => {
       expect(chrono.getDate().totalTicks).toBe(0);
     });
 
-    it('starts in winter season (month 1)', () => {
+    it('starts in rasputitsa autumn season (month 10)', () => {
       const season = chrono.getSeason();
-      expect(season.season).toBe(Season.WINTER);
+      expect(season.season).toBe(Season.RASPUTITSA_AUTUMN);
     });
 
     it('can start at a custom year', () => {
@@ -62,7 +61,7 @@ describe('ChronologySystem', () => {
 
     it('has a day phase at start', () => {
       const phase = chrono.getDayPhase();
-      // Hour 0 with winter daylight (6 hours): sunrise = 12 - 3 = 9, so hour 0 = night
+      // Hour 0 with rasputitsa autumn daylight (10 hours): sunrise = 12 - 5 = 7, so hour 0 = night
       expect(phase).toBe(DayPhase.NIGHT);
     });
 
@@ -94,7 +93,7 @@ describe('ChronologySystem', () => {
 
     it('returns correct season in TickResult', () => {
       const result = chrono.tick();
-      expect(result.season.season).toBe(Season.WINTER);
+      expect(result.season.season).toBe(Season.RASPUTITSA_AUTUMN);
     });
 
     it('returns a weather type in TickResult', () => {
@@ -170,7 +169,7 @@ describe('ChronologySystem', () => {
         result = chrono.tick();
       }
       expect(result!.newMonth).toBe(true);
-      expect(chrono.getDate().month).toBe(2);
+      expect(chrono.getDate().month).toBe(11); // Oct → Nov
       expect(chrono.getDate().day).toBe(1);
     });
 
@@ -194,38 +193,40 @@ describe('ChronologySystem', () => {
       for (let i = 0; i < TICKS_PER_MONTH * 2; i++) {
         chrono.tick();
       }
-      expect(chrono.getDate().month).toBe(3);
+      expect(chrono.getDate().month).toBe(12); // Oct → Dec
     });
 
     it('updates season when month changes', () => {
-      // Month 1-3 = WINTER, month 4 = RASPUTITSA_SPRING
-      // Advance 3 months (90 ticks) to get to month 4
-      for (let i = 0; i < TICKS_PER_MONTH * 3; i++) {
+      // Starting at month 10 (RASPUTITSA_AUTUMN), advance 1 month → month 11 = WINTER
+      for (let i = 0; i < TICKS_PER_MONTH; i++) {
         chrono.tick();
       }
-      expect(chrono.getDate().month).toBe(4);
-      expect(chrono.getSeason().season).toBe(Season.RASPUTITSA_SPRING);
+      expect(chrono.getDate().month).toBe(11);
+      expect(chrono.getSeason().season).toBe(Season.WINTER);
     });
   });
 
   // ── Year boundary (month 12 → month 1 + year increment) ───
 
   describe('year boundary', () => {
-    it('crosses year boundary after TICKS_PER_YEAR (360) ticks', () => {
+    // Starting at month 10 (October 1922), year boundary is 3 months (90 ticks) away
+    const TICKS_TO_FIRST_YEAR = TICKS_PER_MONTH * 3; // Oct → Jan
+
+    it('crosses year boundary after 3 months (Oct → Jan)', () => {
       let result: TickResult;
-      for (let i = 0; i < TICKS_PER_YEAR; i++) {
+      for (let i = 0; i < TICKS_TO_FIRST_YEAR; i++) {
         result = chrono.tick();
       }
       expect(result!.newYear).toBe(true);
       expect(result!.newMonth).toBe(true);
-      expect(chrono.getDate().year).toBe(1981);
+      expect(chrono.getDate().year).toBe(1923);
       expect(chrono.getDate().month).toBe(1);
       expect(chrono.getDate().day).toBe(1);
     });
 
     it('wraps month from 12 to 1 on year boundary', () => {
-      // Advance 11 months to get to month 12
-      for (let i = 0; i < TICKS_PER_MONTH * 11; i++) {
+      // Advance 2 months to get to month 12 (Oct → Dec)
+      for (let i = 0; i < TICKS_PER_MONTH * 2; i++) {
         chrono.tick();
       }
       expect(chrono.getDate().month).toBe(12);
@@ -235,7 +236,7 @@ describe('ChronologySystem', () => {
         chrono.tick();
       }
       expect(chrono.getDate().month).toBe(1);
-      expect(chrono.getDate().year).toBe(1981);
+      expect(chrono.getDate().year).toBe(1923);
     });
 
     it('newYear is false when not crossing year boundary', () => {
@@ -247,59 +248,73 @@ describe('ChronologySystem', () => {
       expect(result!.newYear).toBe(false);
     });
 
-    it('totalTicks = TICKS_PER_YEAR after one year', () => {
-      for (let i = 0; i < TICKS_PER_YEAR; i++) {
+    it('totalTicks matches after first year boundary', () => {
+      for (let i = 0; i < TICKS_TO_FIRST_YEAR; i++) {
         chrono.tick();
       }
-      expect(chrono.getDate().totalTicks).toBe(TICKS_PER_YEAR);
+      expect(chrono.getDate().totalTicks).toBe(TICKS_TO_FIRST_YEAR);
     });
 
     it('handles multiple year rollovers', () => {
-      for (let i = 0; i < TICKS_PER_YEAR * 3; i++) {
+      // First partial year (3 months) + 2 full years (24 months) = 810 ticks
+      const totalTicks = TICKS_TO_FIRST_YEAR + TICKS_PER_YEAR * 2;
+      for (let i = 0; i < totalTicks; i++) {
         chrono.tick();
       }
-      expect(chrono.getDate().year).toBe(1983);
+      expect(chrono.getDate().year).toBe(1925);
       expect(chrono.getDate().month).toBe(1);
-      expect(chrono.getDate().totalTicks).toBe(TICKS_PER_YEAR * 3);
+      expect(chrono.getDate().totalTicks).toBe(totalTicks);
     });
   });
 
   // ── Season transitions ─────────────────────────────────────
 
   describe('season transitions through all seasons', () => {
-    it('month 1-3 = WINTER', () => {
-      // Already at month 1
+    // Starting at month 10 (RASPUTITSA_AUTUMN)
+    // Months from start offset: +1=Nov, +2=Dec, +3=Jan(1923), etc.
+
+    it('month 10 = RASPUTITSA_AUTUMN (start)', () => {
+      expect(chrono.getSeason().season).toBe(Season.RASPUTITSA_AUTUMN);
+    });
+
+    it('month 11-12 = WINTER', () => {
+      for (let i = 0; i < TICKS_PER_MONTH; i++) chrono.tick();
+      expect(chrono.getDate().month).toBe(11);
       expect(chrono.getSeason().season).toBe(Season.WINTER);
 
-      // Advance to month 2
       for (let i = 0; i < TICKS_PER_MONTH; i++) chrono.tick();
+      expect(chrono.getDate().month).toBe(12);
       expect(chrono.getSeason().season).toBe(Season.WINTER);
+    });
 
-      // Advance to month 3
-      for (let i = 0; i < TICKS_PER_MONTH; i++) chrono.tick();
+    it('month 1-3 (next year) = WINTER', () => {
+      // Advance 3 months (Oct→Jan)
+      for (let i = 0; i < TICKS_PER_MONTH * 3; i++) chrono.tick();
+      expect(chrono.getDate().month).toBe(1);
       expect(chrono.getSeason().season).toBe(Season.WINTER);
     });
 
     it('month 4 = RASPUTITSA_SPRING', () => {
-      for (let i = 0; i < TICKS_PER_MONTH * 3; i++) chrono.tick();
+      // 6 months from Oct → Apr
+      for (let i = 0; i < TICKS_PER_MONTH * 6; i++) chrono.tick();
       expect(chrono.getDate().month).toBe(4);
       expect(chrono.getSeason().season).toBe(Season.RASPUTITSA_SPRING);
     });
 
     it('month 5 = SHORT_SUMMER', () => {
-      for (let i = 0; i < TICKS_PER_MONTH * 4; i++) chrono.tick();
+      for (let i = 0; i < TICKS_PER_MONTH * 7; i++) chrono.tick();
       expect(chrono.getDate().month).toBe(5);
       expect(chrono.getSeason().season).toBe(Season.SHORT_SUMMER);
     });
 
     it('month 6 = GOLDEN_WEEK', () => {
-      for (let i = 0; i < TICKS_PER_MONTH * 5; i++) chrono.tick();
+      for (let i = 0; i < TICKS_PER_MONTH * 8; i++) chrono.tick();
       expect(chrono.getDate().month).toBe(6);
       expect(chrono.getSeason().season).toBe(Season.GOLDEN_WEEK);
     });
 
     it('month 7-8 = STIFLING_HEAT', () => {
-      for (let i = 0; i < TICKS_PER_MONTH * 6; i++) chrono.tick();
+      for (let i = 0; i < TICKS_PER_MONTH * 9; i++) chrono.tick();
       expect(chrono.getDate().month).toBe(7);
       expect(chrono.getSeason().season).toBe(Season.STIFLING_HEAT);
 
@@ -309,82 +324,59 @@ describe('ChronologySystem', () => {
     });
 
     it('month 9 = EARLY_FROST', () => {
-      for (let i = 0; i < TICKS_PER_MONTH * 8; i++) chrono.tick();
+      for (let i = 0; i < TICKS_PER_MONTH * 11; i++) chrono.tick();
       expect(chrono.getDate().month).toBe(9);
       expect(chrono.getSeason().season).toBe(Season.EARLY_FROST);
     });
 
-    it('month 10 = RASPUTITSA_AUTUMN', () => {
-      for (let i = 0; i < TICKS_PER_MONTH * 9; i++) chrono.tick();
+    it('month 10 = RASPUTITSA_AUTUMN (full cycle)', () => {
+      for (let i = 0; i < TICKS_PER_MONTH * 12; i++) chrono.tick();
       expect(chrono.getDate().month).toBe(10);
       expect(chrono.getSeason().season).toBe(Season.RASPUTITSA_AUTUMN);
-    });
-
-    it('month 11-12 = WINTER (wraps back)', () => {
-      for (let i = 0; i < TICKS_PER_MONTH * 10; i++) chrono.tick();
-      expect(chrono.getDate().month).toBe(11);
-      expect(chrono.getSeason().season).toBe(Season.WINTER);
-
-      for (let i = 0; i < TICKS_PER_MONTH; i++) chrono.tick();
-      expect(chrono.getDate().month).toBe(12);
-      expect(chrono.getSeason().season).toBe(Season.WINTER);
-    });
-
-    it('after year wrap, month 1 is WINTER again', () => {
-      for (let i = 0; i < TICKS_PER_YEAR; i++) chrono.tick();
-      expect(chrono.getDate().month).toBe(1);
-      expect(chrono.getDate().year).toBe(1981);
-      expect(chrono.getSeason().season).toBe(Season.WINTER);
     });
   });
 
   // ── Day phase transitions ──────────────────────────────────
 
   describe('day phase transitions', () => {
-    it('hour 0 in winter = NIGHT', () => {
-      // Starting state: hour 0, winter (daylightHours=6)
+    it('hour 0 in rasputitsa autumn = NIGHT', () => {
+      // Starting state: hour 0, rasputitsa autumn (daylightHours=10)
+      // sunrise = 12 - 5 = 7, hour 0 < 7-1=6 → NIGHT
       expect(chrono.getDayPhase()).toBe(DayPhase.NIGHT);
     });
 
-    it('hour 8 in winter = DAWN', () => {
-      // Winter: sunrise = 12 - 6/2 = 9
-      // Dawn = sunrise-1 to sunrise+1 = 8 to 10
+    it('hour 8 in rasputitsa autumn = MIDDAY', () => {
+      // RASPUTITSA_AUTUMN: daylightHours=10, sunrise = 12 - 5 = 7
+      // Dawn = 6 to 8, hour 8 >= sunrise+1 → MIDDAY
       chrono.tick(); // hour = 8
-      expect(chrono.getDayPhase()).toBe(DayPhase.DAWN);
+      expect(chrono.getDayPhase()).toBe(DayPhase.MIDDAY);
     });
 
-    it('hour 16 in winter = NIGHT', () => {
-      // Winter: sunset = 12 + 6/2 = 15
-      // Dusk = sunset-1 to sunset+1 = 14 to 16
-      // hour 16 >= sunset+1 → NIGHT
+    it('hour 16 in rasputitsa autumn = DUSK', () => {
+      // sunset = 12 + 5 = 17
+      // Dusk = sunset-1 to sunset+1 = 16 to 18
       chrono.tick(); // hour = 8
       chrono.tick(); // hour = 16
-      expect(chrono.getDayPhase()).toBe(DayPhase.NIGHT);
+      expect(chrono.getDayPhase()).toBe(DayPhase.DUSK);
     });
 
     it('day phase varies with season daylight hours', () => {
-      // Advance to month 6 (GOLDEN_WEEK, daylightHours=20)
-      for (let i = 0; i < TICKS_PER_MONTH * 5; i++) chrono.tick();
+      // Advance to month 6 (GOLDEN_WEEK, daylightHours=20) — 8 months from Oct
+      for (let i = 0; i < TICKS_PER_MONTH * 8; i++) chrono.tick();
       expect(chrono.getSeason().daylightHours).toBe(20);
 
-      // Hour 0: sunrise = 12 - 10 = 2, so hour 0 < sunrise-1=1 → NIGHT
-      // Actually hour 0 is on day boundary, the last tick put us at hour 0.
-      // We need one more tick to get to hour 8.
-      // After 150 ticks: month=6, day depends on alignment
-      // Let's just check the current phase is one of the valid phases
       const phase = chrono.getDayPhase();
       expect(Object.values(DayPhase)).toContain(phase);
     });
 
     it('summer hour 8 is MIDDAY (more daylight)', () => {
-      // Advance to month 6 (GOLDEN_WEEK, daylightHours=20)
-      // Then tick once to be at hour 8
-      for (let i = 0; i < TICKS_PER_MONTH * 5; i++) chrono.tick();
+      // Advance to month 6 (GOLDEN_WEEK, daylightHours=20) — 8 months from Oct
+      for (let i = 0; i < TICKS_PER_MONTH * 8; i++) chrono.tick();
 
       // We're at day boundary (hour 0), tick to get hour 8
       chrono.tick();
       // sunrise = 12 - 10 = 2, sunset = 12 + 10 = 22
-      // Dawn = 1 to 3, Midday = 3 to 21, Dusk = 21 to 23
+      // Dawn = 1 to 3, Midday = 3 to 21
       // hour 8 is in Midday range
       expect(chrono.getDayPhase()).toBe(DayPhase.MIDDAY);
     });
@@ -412,29 +404,35 @@ describe('ChronologySystem', () => {
       expect(dayCount).toBe(DAYS_PER_MONTH);
     });
 
-    it('counts newMonth correctly over a year', () => {
+    it('counts newMonth correctly over first partial year', () => {
+      // Starting at month 10, first year boundary is 3 months away
+      const ticksToYearEnd = TICKS_PER_MONTH * 3;
       let monthCount = 0;
-      for (let i = 0; i < TICKS_PER_YEAR; i++) {
+      for (let i = 0; i < ticksToYearEnd; i++) {
         const result = chrono.tick();
         if (result.newMonth) monthCount++;
       }
-      expect(monthCount).toBe(MONTHS_PER_YEAR);
+      expect(monthCount).toBe(3); // Oct→Nov, Nov→Dec, Dec→Jan
     });
 
-    it('counts exactly 1 newYear per TICKS_PER_YEAR ticks', () => {
+    it('counts exactly 1 newYear in first 3 months (Oct → Jan)', () => {
+      const ticksToYearEnd = TICKS_PER_MONTH * 3;
       let yearCount = 0;
-      for (let i = 0; i < TICKS_PER_YEAR; i++) {
+      for (let i = 0; i < ticksToYearEnd; i++) {
         const result = chrono.tick();
         if (result.newYear) yearCount++;
       }
       expect(yearCount).toBe(1);
     });
 
-    it('5 years of ticks produce consistent results', () => {
+    it('5 full years of ticks produce consistent results', () => {
+      // Skip to first year boundary, then run 5 full years
+      const ticksToFirstYear = TICKS_PER_MONTH * 3; // Oct→Jan
+      const ticksFor5Years = TICKS_PER_YEAR * 5;
       let yearCount = 0;
       let monthCount = 0;
       let dayCount = 0;
-      const totalTicks = TICKS_PER_YEAR * 5;
+      const totalTicks = ticksToFirstYear + ticksFor5Years;
 
       for (let i = 0; i < totalTicks; i++) {
         const result = chrono.tick();
@@ -443,10 +441,10 @@ describe('ChronologySystem', () => {
         if (result.newDay) dayCount++;
       }
 
-      expect(yearCount).toBe(5);
-      expect(monthCount).toBe(60); // 12 months * 5 years
-      expect(dayCount).toBe(600); // 10 days * 12 months * 5 years
-      expect(chrono.getDate().year).toBe(1985);
+      expect(yearCount).toBe(6); // partial first year + 5 full years
+      expect(monthCount).toBe(63); // 3 + 60
+      expect(dayCount).toBe(630); // 30 + 600
+      expect(chrono.getDate().year).toBe(1928);
       expect(chrono.getDate().totalTicks).toBe(totalTicks);
     });
   });
@@ -509,7 +507,7 @@ describe('ChronologySystem', () => {
 
       const state = chrono.serialize();
       expect(state.date.totalTicks).toBe(15);
-      expect(state.date.year).toBe(1980);
+      expect(state.date.year).toBe(1922);
       expect(state.season).toBeDefined();
       expect(state.weather).toBeDefined();
       expect(typeof state.tickWithinDay).toBe('number');
@@ -535,7 +533,7 @@ describe('ChronologySystem', () => {
     it('serialized date is a copy', () => {
       const state = chrono.serialize();
       state.date.year = 9999;
-      expect(chrono.getDate().year).toBe(1980);
+      expect(chrono.getDate().year).toBe(1922);
     });
 
     it('serialized weather is a copy', () => {

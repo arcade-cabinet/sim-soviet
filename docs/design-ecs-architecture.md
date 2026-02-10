@@ -81,13 +81,14 @@ interface CitizenComponent {
 
 #### Renderable
 
-3D rendering metadata for BabylonJS scene lookup.
+Sprite rendering metadata for Canvas 2D isometric rendering.
 
 ```typescript
 interface Renderable {
-  meshId: string;          // unique mesh identifier
-  modelPath?: string;      // path to GLB model file
-  scale: number;           // uniform scale factor
+  spriteId: string;        // key into sprite manifest
+  spritePath: string;      // path to PNG sprite file
+  footprintX: number;      // grid width in tiles
+  footprintY: number;      // grid depth in tiles
   visible: boolean;        // whether to render
 }
 ```
@@ -271,26 +272,35 @@ world.reindex(entity);  // required for poweredBuildings/unpoweredBuildings to u
 
 ## System Pipeline
 
-6 ECS systems run sequentially each simulation tick. All are exported
-from `systems/index.ts` as a barrel module. Each system is a pure
-function with no internal state (except optional event callbacks).
+13 systems run sequentially each simulation tick. The ECS systems in
+`systems/index.ts` are pure functions. Additional game systems
+(CompulsoryDeliveries, SettlementSystem, EventSystem, PolitburoSystem,
+PravdaSystem, PersonnelFile) are class-based with their own state.
 
 ### Execution Order
 
-```
+```text
 SimulationEngine.tick()
   |
-  1. powerSystem()         -- distribute power to buildings
-  2. productionSystem()    -- generate food and vodka
-  3. consumptionSystem()   -- consume food and vodka, starvation check
-  4. populationSystem()    -- population growth from housing + food
-  5. decaySystem()         -- reduce building durability, collapse check
-  6. quotaSystem(quota)    -- update 5-year plan progress
+  1. ChronologySystem      -- advance date, season, weather
+  2. powerSystem()          -- distribute power to buildings
+  3. productionSystem()     -- generate food and vodka
+  4. CompulsoryDeliveries   -- state extraction of production (doctrine-based)
+  5. consumptionSystem()    -- consume food and vodka, starvation check
+  6. populationSystem()     -- population growth from housing + food
+  7. decaySystem()          -- reduce building durability, collapse check
+  8. quotaSystem(quota)     -- update 5-year plan progress
+  9. gulagEffect()          -- fear/population effects from gulags
+  10. SettlementSystem      -- settlement tier evolution (selo -> gorod)
+  11. EventSystem + PolitburoSystem -- random events, political lifecycle
+  12. PravdaSystem           -- generate satirical Pravda headlines
+  13. PersonnelFile          -- black marks, commendations, arrest check
 ```
 
 The order matters: power must be distributed before production runs (only
-powered buildings produce), and production must run before consumption
-(so newly produced resources are available).
+powered buildings produce), production must run before compulsory deliveries
+and consumption (so newly produced resources are available), and the
+PersonnelFile runs last to check arrest thresholds after all marks are applied.
 
 ### System Details
 
@@ -423,48 +433,51 @@ export type { QuotaState } from './quotaSystem';
 
 ---
 
-## ECS and GameState Relationship
+## ECS as Single Source of Truth
 
-The ECS world and the `GameState` object serve complementary roles:
+The ECS world is the **sole authority** for all game state. The old
+`GameState` class has been deleted. All systems read and write ECS
+directly.
 
-| Concern | ECS World | GameState |
-|---------|-----------|-----------|
-| Buildings | Entity with position + building + renderable | `buildings[]` array (legacy reference) |
-| Resources | Singleton entity with `resources` component | `money`, `food`, `vodka`, `power`, `pop` fields |
-| Citizens | Entity with position + citizen | `pop` count |
-| Grid | 900 tile entities | Grid state for placement validation |
-| Date / Time | Not in ECS | `date.year`, `date.month`, `date.tick` |
-| Political State | Not in ECS | Managed by `PolitburoSystem` |
-| Quotas | Not in ECS | `QuotaState` passed to `quotaSystem()` |
-| Events | Not in ECS | Managed by `EventSystem` |
+| Concern | ECS Location | Access Pattern |
+|---------|-------------|----------------|
+| Buildings | Entity with position + building + renderable | `buildingsLogic.entities` archetype query |
+| Resources | Singleton entity with `resources` component | `getResourceEntity()!.resources.*` |
+| Grid | `GameGrid` class (spatial index) | Occupancy lookups only -- no resource data |
+| Date / Time | `GameMeta` component on meta entity | `getMetaEntity()!.gameMeta.date` |
+| Political State | `GameMeta` component | `getMetaEntity()!.gameMeta.leader` |
+| Quotas | `GameMeta` component | `getMetaEntity()!.gameMeta.quota` |
+| Settlement | `GameMeta` component | `getMetaEntity()!.gameMeta.settlement` |
+| Personnel File | `GameMeta` component | `getMetaEntity()!.gameMeta.personnel` |
 
-The `SimulationEngine` orchestrates both worlds: it ticks the ECS systems
-in order, then ticks `PolitburoSystem` and `EventSystem`, and finally
-synchronizes any shared state (resource counts, population).
+The `SimulationEngine` orchestrates the 13-step tick loop, with all
+systems writing directly to ECS entities. The `gameStore.ts` module
+reads ECS via `createSnapshot()` to bridge to React components through
+`useSyncExternalStore`.
+
+`GameView` is a read-only snapshot built fresh each tick from ECS data,
+used by `EventSystem` and `PravdaSystem` lambda conditions. It provides
+the same field names as the old `GameState` for backward compatibility
+with event template conditions.
 
 ---
 
 ## Data Flow Diagram
 
-```
+```text
          Game Loop
             |
    SimulationEngine.tick()
             |
-   +--------+--------+
-   |                  |
-   v                  v
-ECS Systems       Political Systems
-(pure functions)  (PolitburoSystem, EventSystem, PravdaSystem)
-   |                  |
-   v                  v
-world (entities)   GameState (global state)
-   |                  |
-   +--------+---------+
+   All 13 systems write ECS directly
             |
             v
-    React Components
-    (ECS.Entities, stores)
+   world (entities) -- single source of truth
+            |
+   createSnapshot() in gameStore.ts
+            |
+            v
+   useSyncExternalStore → React Components
 ```
 
 ---

@@ -7,22 +7,39 @@
  *   GameWorld (render-null) imperatively manages renderer, input, simulation.
  *   gameStore bridges mutable GameState with React via useSyncExternalStore.
  */
-import { useCallback, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { AudioAPI, SaveSystemAPI } from '@/components/GameWorld';
 import { GameWorld } from '@/components/GameWorld';
+import { AssignmentLetter } from '@/components/screens/AssignmentLetter';
+import { LandingPage } from '@/components/screens/LandingPage';
+import { type NewGameConfig, NewGameFlow } from '@/components/screens/NewGameFlow';
 import { Advisor } from '@/components/ui/Advisor';
+import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
+import { AnnualReportModal } from '@/components/ui/AnnualReportModal';
+import { BottomStrip } from '@/components/ui/BottomStrip';
 import { BuildingInspector } from '@/components/ui/BuildingInspector';
+import { ConcreteFrame } from '@/components/ui/ConcreteFrame';
+import { DrawerPanel } from '@/components/ui/DrawerPanel';
+import type { PlanDirective } from '@/components/ui/FiveYearPlanModal';
+import { FiveYearPlanModal } from '@/components/ui/FiveYearPlanModal';
 import { GameOverModal } from '@/components/ui/GameOverModal';
-import { IntroModal } from '@/components/ui/IntroModal';
-import { PravdaTicker } from '@/components/ui/PravdaTicker';
-import { QuotaHUD } from '@/components/ui/QuotaHUD';
-import { Toast } from '@/components/ui/Toast';
-import { Toolbar } from '@/components/ui/Toolbar';
-import { TopBar } from '@/components/ui/TopBar';
+import { RadialBuildMenu } from '@/components/ui/RadialBuildMenu';
+import { SettlementUpgradeModal } from '@/components/ui/SettlementUpgradeModal';
+import { SovietHUD } from '@/components/ui/SovietHUD';
+import { SovietToastStack } from '@/components/ui/SovietToastStack';
+import { WorkerInfoPanel } from '@/components/ui/WorkerInfoPanel';
+import { initDatabase } from '@/db/provider';
+import * as dbSchema from '@/db/schema';
+import { getResourceEntity } from '@/ecs/archetypes';
+import { ERA_DEFINITIONS } from '@/game/era';
+import type { SettlementEvent } from '@/game/SettlementSystem';
 import type { SimCallbacks } from '@/game/SimulationEngine';
+import { useGameSnapshot } from '@/stores/gameStore';
+import { addSovietToast } from '@/stores/toastStore';
 
 interface Messages {
   advisor: string | null;
-  toast: string | null;
   pravda: string | null;
 }
 
@@ -32,47 +49,131 @@ interface GameOverInfo {
 }
 
 export function App() {
-  const [gameStarted, setGameStarted] = useState(false);
+  const snap = useGameSnapshot();
+  type Screen = 'landing' | 'newGame' | 'assignment' | 'playing';
+  const [screen, setScreen] = useState<Screen>('landing');
+  const [gameConfig, setGameConfig] = useState<NewGameConfig | null>(null);
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [settlementEvent, setSettlementEvent] = useState<SettlementEvent | null>(null);
+  const [planDirective, setPlanDirective] = useState<PlanDirective | null>(null);
+  const [annualReport, setAnnualReport] = useState<AnnualReportData | null>(null);
   const [messages, setMessages] = useState<Messages>({
     advisor: null,
-    toast: null,
     pravda: null,
   });
+  const [hasSavedGame, setHasSavedGame] = useState(false);
+  const [loadSaveOnStart, setLoadSaveOnStart] = useState<string | null>(null);
+  const [saveApi, setSaveApi] = useState<SaveSystemAPI | null>(null);
+  const [audioApi, setAudioApi] = useState<AudioAPI | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
+
+  // Check for existing saves on mount
+  useEffect(() => {
+    initDatabase()
+      .then((db) => {
+        const rows = db.select().from(dbSchema.saves).all();
+        setHasSavedGame(rows.length > 0);
+      })
+      .catch(() => {
+        // Fall back to localStorage check
+        const hasLocal =
+          localStorage.getItem('simsoviet_save_v2') !== null ||
+          localStorage.getItem('simsoviet_save_v1') !== null;
+        setHasSavedGame(hasLocal);
+      });
+  }, []);
 
   // Callbacks for SimulationEngine → React state
   const simCallbacks: SimCallbacks = {
-    onToast: (msg) => setMessages((p) => ({ ...p, toast: msg })),
+    onToast: (msg, severity) => addSovietToast(severity ?? 'warning', msg),
     onAdvisor: (msg) => setMessages((p) => ({ ...p, advisor: msg })),
     onPravda: (msg) => setMessages((p) => ({ ...p, pravda: msg })),
     onStateChange: () => {
       /* notifyStateChange() called in GameWorld */
     },
     onGameOver: (victory, reason) => setGameOver({ victory, reason }),
+    onSettlementChange: (event) => setSettlementEvent(event),
+    onNewPlan: (plan) => {
+      const res = getResourceEntity();
+      setPlanDirective({
+        ...plan,
+        currentFood: res?.resources.food ?? 0,
+        currentVodka: res?.resources.vodka ?? 0,
+        currentPop: res?.resources.population ?? 0,
+        currentPower: res?.resources.power ?? 0,
+        currentMoney: res?.resources.money ?? 0,
+      });
+    },
+    onAnnualReport: (data, submitFn) => {
+      setAnnualReport(data);
+      submitReportRef.current = submitFn;
+    },
   };
-
-  const handleStart = useCallback(() => {
-    setGameStarted(true);
-    setMessages((p) => ({
-      ...p,
-      advisor: 'Finally. You are late. Build a Coal Plant first, then Housing. Go.',
-    }));
-  }, []);
 
   const handleRestart = useCallback(() => {
     // Full page reload for clean state (ECS world, GameState, audio)
     window.location.reload();
   }, []);
 
+  const handleSaveSystemReady = useCallback((api: SaveSystemAPI) => {
+    setSaveApi(api);
+  }, []);
+
+  const handleAudioReady = useCallback((api: AudioAPI) => {
+    setAudioApi(api);
+  }, []);
+
   return (
-    <div className="game-root">
+    <div
+      className="flex flex-col bg-[#1a1a1a] overflow-hidden"
+      style={{ fontFamily: "'VT323', monospace", height: '100dvh' }}
+    >
       {/* CRT overlay effects */}
       <div className="crt-overlay" />
       <div className="scanlines" />
 
-      {/* Intro modal */}
-      {!gameStarted && <IntroModal onStart={handleStart} />}
+      {/* Brutalist concrete border frame */}
+      <ConcreteFrame />
+
+      {/* Screen flow */}
+      {screen === 'landing' && (
+        <LandingPage
+          onNewGame={() => setScreen('newGame')}
+          onContinue={() => {
+            setLoadSaveOnStart('autosave');
+            setScreen('playing');
+          }}
+          onLoadGame={() => {
+            setLoadSaveOnStart('manual_1');
+            setScreen('playing');
+          }}
+          hasSavedGame={hasSavedGame}
+        />
+      )}
+      {screen === 'newGame' && (
+        <NewGameFlow
+          onStart={(config) => {
+            setGameConfig(config);
+            setScreen('assignment');
+          }}
+          onBack={() => setScreen('landing')}
+        />
+      )}
+      {screen === 'assignment' && gameConfig && (
+        <AssignmentLetter
+          config={gameConfig}
+          era={ERA_DEFINITIONS[gameConfig.startEra]}
+          onAccept={() => {
+            setScreen('playing');
+            setMessages((p) => ({
+              ...p,
+              advisor: 'Finally. You are late. Build a Coal Plant first, then Housing. Go.',
+            }));
+          }}
+        />
+      )}
 
       {/* Game over modal */}
       {gameOver && (
@@ -83,38 +184,96 @@ export function App() {
         />
       )}
 
-      {/* Top stats bar */}
-      <TopBar />
+      {/* Top HUD bar — resources, pause, speed, hamburger */}
+      <SovietHUD onMenuToggle={() => setDrawerOpen(true)} />
 
       {/* Main game viewport */}
-      <div className="game-viewport">
+      <div className="flex-1 relative overflow-hidden min-h-0">
         <canvas
           ref={canvasRef}
           id="gameCanvas"
+          className="absolute inset-0 w-full h-full"
           style={{ display: 'block', touchAction: 'none', outline: 'none' }}
         />
 
         {/* Render-null component that manages game systems */}
-        <GameWorld canvasRef={canvasRef} callbacks={simCallbacks} gameStarted={gameStarted} />
+        <GameWorld
+          canvasRef={canvasRef}
+          callbacks={simCallbacks}
+          gameStarted={screen === 'playing'}
+          gameConfig={gameConfig}
+          loadSaveOnStart={loadSaveOnStart}
+          onSaveSystemReady={handleSaveSystemReady}
+          onAudioReady={handleAudioReady}
+        />
+
+        {/* Pause overlay */}
+        <AnimatePresence>
+          {snap.paused && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none z-10"
+            >
+              <div className="text-[#ff4444] text-2xl font-bold uppercase tracking-[0.3em] border-2 border-[#ff4444] px-6 py-2 bg-black/60">
+                PAUSED
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* DOM overlays on top of canvas */}
         <BuildingInspector />
-        <QuotaHUD />
-        <Toast
-          message={messages.toast}
-          onDismiss={() => setMessages((p) => ({ ...p, toast: null }))}
-        />
+        <WorkerInfoPanel />
+        <SovietToastStack />
         <Advisor
           message={messages.advisor}
           onDismiss={() => setMessages((p) => ({ ...p, advisor: null }))}
         />
       </div>
 
-      {/* Pravda news ticker */}
-      <PravdaTicker message={messages.pravda} />
+      {/* Bottom strip — settlement info + Pravda ticker */}
+      <BottomStrip pravdaMessage={messages.pravda} />
 
-      {/* Bottom toolbar */}
-      <Toolbar />
+      {/* Radial build menu — opens on empty grid cell tap */}
+      <RadialBuildMenu />
+
+      {/* Slide-out drawer */}
+      <DrawerPanel
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        saveApi={saveApi}
+        audioApi={audioApi}
+      />
+
+      {/* Settlement upgrade decree modal */}
+      <AnimatePresence>
+        {settlementEvent && settlementEvent.type === 'upgrade' && (
+          <SettlementUpgradeModal
+            fromTier={settlementEvent.fromTier}
+            toTier={settlementEvent.toTier}
+            onClose={() => setSettlementEvent(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Annual Report (pripiski) modal — shown at quota deadline years */}
+      {annualReport && (
+        <AnnualReportModal
+          data={annualReport}
+          onSubmit={(submission) => {
+            submitReportRef.current?.(submission);
+            submitReportRef.current = null;
+            setAnnualReport(null);
+          }}
+        />
+      )}
+
+      {/* Five-Year Plan directive modal */}
+      {planDirective && (
+        <FiveYearPlanModal directive={planDirective} onAccept={() => setPlanDirective(null)} />
+      )}
     </div>
   );
 }

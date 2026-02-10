@@ -19,8 +19,8 @@ describe('productionSystem', () => {
 
   describe('farm food production', () => {
     it('a powered farm produces 20 food per tick', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;
@@ -28,7 +28,7 @@ describe('productionSystem', () => {
     });
 
     it('an unpowered farm produces 0 food', () => {
-      createBuilding(1, 1, 'farm'); // no power plant
+      createBuilding(1, 1, 'collective-farm-hq'); // no power plant
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;
@@ -36,9 +36,9 @@ describe('productionSystem', () => {
     });
 
     it('two powered farms produce 40 food per tick', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
-      createBuilding(2, 2, 'farm');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
+      createBuilding(2, 2, 'collective-farm-hq');
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;
@@ -46,10 +46,10 @@ describe('productionSystem', () => {
     });
 
     it('three powered farms produce 60 food per tick', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
-      createBuilding(2, 2, 'farm');
-      createBuilding(3, 3, 'farm');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
+      createBuilding(2, 2, 'collective-farm-hq');
+      createBuilding(3, 3, 'collective-farm-hq');
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;
@@ -57,8 +57,8 @@ describe('productionSystem', () => {
     });
 
     it('food accumulates over multiple ticks', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
       productionSystem();
       productionSystem();
@@ -72,8 +72,8 @@ describe('productionSystem', () => {
 
   describe('distillery vodka production', () => {
     it('a powered distillery produces 10 vodka per tick', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'distillery');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;
@@ -81,7 +81,7 @@ describe('productionSystem', () => {
     });
 
     it('an unpowered distillery produces 0 vodka', () => {
-      createBuilding(1, 1, 'distillery');
+      createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;
@@ -89,9 +89,9 @@ describe('productionSystem', () => {
     });
 
     it('two powered distilleries produce 20 vodka per tick', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'distillery');
-      createBuilding(2, 2, 'distillery');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'vodka-distillery');
+      createBuilding(2, 2, 'vodka-distillery');
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;
@@ -99,8 +99,8 @@ describe('productionSystem', () => {
     });
 
     it('vodka accumulates over multiple ticks', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'distillery');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem();
       productionSystem();
@@ -113,8 +113,8 @@ describe('productionSystem', () => {
 
   describe('production requires power', () => {
     it('farm that loses power stops producing', () => {
-      const plant = createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
+      const plant = createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;
@@ -129,8 +129,8 @@ describe('productionSystem', () => {
     });
 
     it('distillery that loses power stops producing', () => {
-      const plant = createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'distillery');
+      const plant = createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;
@@ -143,10 +143,10 @@ describe('productionSystem', () => {
     });
 
     it('partially powered: some producers work, some do not', () => {
-      createBuilding(0, 0, 'power'); // 100 output
+      createBuilding(0, 0, 'power-station'); // 100 output
       // 20 distilleries * 5 powerReq = 100, plus 1 extra = 105 > 100
       for (let i = 0; i < 21; i++) {
-        createBuilding(i + 1, 0, 'distillery');
+        createBuilding(i + 1, 0, 'vodka-distillery');
       }
       powerSystem();
       productionSystem();
@@ -161,9 +161,9 @@ describe('productionSystem', () => {
 
   describe('multiple producers stack correctly', () => {
     it('farms and distilleries both produce in the same tick', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
-      createBuilding(2, 2, 'distillery');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
+      createBuilding(2, 2, 'vodka-distillery');
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;
@@ -176,9 +176,9 @@ describe('productionSystem', () => {
       store.resources.food = 100;
       store.resources.vodka = 50;
 
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
-      createBuilding(2, 2, 'distillery');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
+      createBuilding(2, 2, 'vodka-distillery');
       powerSystem();
       productionSystem();
 
@@ -191,8 +191,8 @@ describe('productionSystem', () => {
 
   describe('farmModifier parameter', () => {
     it('farmModifier=0 yields zero food from farms', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
       productionSystem(0.0);
       const store = getResourceEntity()!;
@@ -200,8 +200,8 @@ describe('productionSystem', () => {
     });
 
     it('farmModifier=0.5 halves food production', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
       productionSystem(0.5);
       const store = getResourceEntity()!;
@@ -209,8 +209,8 @@ describe('productionSystem', () => {
     });
 
     it('farmModifier=2.0 doubles food production', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
       productionSystem(2.0);
       const store = getResourceEntity()!;
@@ -218,8 +218,8 @@ describe('productionSystem', () => {
     });
 
     it('farmModifier does not affect vodka production', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'distillery');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem(0.0); // zero farmModifier
       const store = getResourceEntity()!;
@@ -231,8 +231,8 @@ describe('productionSystem', () => {
 
   describe('vodkaModifier parameter', () => {
     it('vodkaModifier=0.5 halves vodka production', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'distillery');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem(1.0, 0.5);
       const store = getResourceEntity()!;
@@ -240,8 +240,8 @@ describe('productionSystem', () => {
     });
 
     it('vodkaModifier=2.0 doubles vodka production', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'distillery');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem(1.0, 2.0);
       const store = getResourceEntity()!;
@@ -249,8 +249,8 @@ describe('productionSystem', () => {
     });
 
     it('vodkaModifier does not affect food production', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
       productionSystem(1.0, 0.0); // zero vodkaModifier
       const store = getResourceEntity()!;
@@ -258,9 +258,9 @@ describe('productionSystem', () => {
     });
 
     it('both modifiers apply independently', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
-      createBuilding(2, 2, 'distillery');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
+      createBuilding(2, 2, 'vodka-distillery');
       powerSystem();
       productionSystem(0.5, 1.5);
       const store = getResourceEntity()!;
@@ -274,8 +274,8 @@ describe('productionSystem', () => {
   describe('edge: no resource store', () => {
     it('does not throw when resource store is missing', () => {
       world.clear();
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'farm');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
       expect(() => productionSystem()).not.toThrow();
     });
   });
@@ -284,8 +284,8 @@ describe('productionSystem', () => {
 
   describe('non-producer buildings', () => {
     it('housing does not produce any resources', () => {
-      createBuilding(0, 0, 'power');
-      createBuilding(1, 1, 'housing');
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a');
       powerSystem();
       productionSystem();
       const store = getResourceEntity()!;

@@ -1,6 +1,31 @@
 import { describe, expect, it } from 'vitest';
 import { GameRng } from '../game/SeedSystem';
-import { BORDER_DEPTH, generateTerrain, getTerrainSpriteNames } from '../game/TerrainGenerator';
+import {
+  BORDER_DEPTH,
+  generateTerrain,
+  getTerrainSpriteNames,
+  INTERIOR_FRINGE,
+} from '../game/TerrainGenerator';
+
+/** Low-profile terrain that belongs on the border ring. */
+const BORDER_TERRAIN = new Set([
+  'sand-rocks',
+  'sand-desert',
+  'stone-rocks',
+  'dirt-lumber',
+  'water-rocks',
+]);
+
+/** Prominent terrain that belongs in the interior fringe. */
+const INTERIOR_TERRAIN = new Set([
+  'grass-forest',
+  'grass-hill',
+  'stone-hill',
+  'stone-mountain',
+  'stone-rocks',
+  'water-rocks',
+  'water-island',
+]);
 
 describe('TerrainGenerator', () => {
   const GRID = 30;
@@ -24,9 +49,9 @@ describe('TerrainGenerator', () => {
     });
   });
 
-  // ── Border-only placement ────────────────────────────────
+  // ── Zone-based placement ───────────────────────────────
 
-  describe('border placement', () => {
+  describe('zone placement', () => {
     it('generates at least some terrain features', () => {
       const features = generateTerrain(GRID, new GameRng('border-test'));
       expect(features.length).toBeGreaterThan(0);
@@ -42,11 +67,47 @@ describe('TerrainGenerator', () => {
       }
     });
 
-    it('no features in the interior (beyond border depth)', () => {
+    it('no features in the deep interior (beyond border + fringe)', () => {
       const features = generateTerrain(GRID, new GameRng('interior'));
+      const totalDepth = BORDER_DEPTH + INTERIOR_FRINGE;
       for (const f of features) {
         const distFromEdge = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
-        expect(distFromEdge).toBeLessThan(BORDER_DEPTH);
+        expect(distFromEdge).toBeLessThan(totalDepth);
+      }
+    });
+
+    it('border ring (dist < BORDER_DEPTH) uses only low-profile terrain', () => {
+      // Run multiple seeds for coverage
+      for (let s = 0; s < 10; s++) {
+        const features = generateTerrain(GRID, new GameRng(`border-type-${s}`));
+        const borderFeatures = features.filter((f) => {
+          const dist = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
+          return dist < BORDER_DEPTH;
+        });
+        for (const f of borderFeatures) {
+          expect(BORDER_TERRAIN.has(f.spriteName)).toBe(true);
+        }
+      }
+    });
+
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: test verifies terrain generation across multiple seeds and zones
+    it('interior fringe contains prominent terrain types', () => {
+      // Run multiple seeds and collect interior fringe sprite names
+      const fringeNames = new Set<string>();
+      for (let s = 0; s < 20; s++) {
+        const features = generateTerrain(GRID, new GameRng(`fringe-${s}`));
+        for (const f of features) {
+          const dist = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
+          if (dist >= BORDER_DEPTH) {
+            fringeNames.add(f.spriteName);
+          }
+        }
+      }
+      // Should include at least some prominent types
+      expect(fringeNames.has('grass-forest') || fringeNames.has('stone-mountain')).toBe(true);
+      // All fringe terrain must be from the interior palette
+      for (const name of fringeNames) {
+        expect(INTERIOR_TERRAIN.has(name)).toBe(true);
       }
     });
 
@@ -62,6 +123,22 @@ describe('TerrainGenerator', () => {
       }
       // Edge (dist=0) should have more features than dist=2
       expect(edgeCounts[0]).toBeGreaterThan(edgeCounts[2]!);
+    });
+
+    it('interior fringe density decreases inward', () => {
+      const fringeCounts: number[] = Array.from({ length: INTERIOR_FRINGE }, () => 0);
+      for (let s = 0; s < 20; s++) {
+        const features = generateTerrain(GRID, new GameRng(`fringe-density-${s}`));
+        for (const f of features) {
+          const dist = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
+          const fringeIdx = dist - BORDER_DEPTH;
+          if (fringeIdx >= 0 && fringeIdx < INTERIOR_FRINGE) {
+            fringeCounts[fringeIdx]!++;
+          }
+        }
+      }
+      // Closest fringe ring should have more features than the farthest
+      expect(fringeCounts[0]).toBeGreaterThan(fringeCounts[INTERIOR_FRINGE - 1]!);
     });
   });
 
@@ -98,7 +175,7 @@ describe('TerrainGenerator', () => {
   describe('edge cases', () => {
     it('works with a tiny grid (size 6)', () => {
       const features = generateTerrain(6, new GameRng('tiny'));
-      // With a 6x6 grid and border depth 3, the entire grid is border
+      // With a 6x6 grid, the entire grid is within both zones
       expect(features.length).toBeGreaterThan(0);
       for (const f of features) {
         expect(f.gridX).toBeGreaterThanOrEqual(0);

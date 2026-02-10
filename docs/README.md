@@ -56,6 +56,10 @@ For a new contributor, the recommended reading order is:
 8. **Name Generator + World-Building** -- understand the content layer
 9. **Yuka AI Research** -- understand the planned AI integration
 
+## Development Log
+
+Chronological record of major milestones: [docs/devlog/](devlog/README.md)
+
 ---
 
-*Document count: 12 | Last updated: February 2026*
+*Document count: 12 + devlog | Last updated: February 2026*

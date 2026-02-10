@@ -5,6 +5,7 @@ import {
   createBuilding,
   createCitizen,
   createGrid,
+  createMetaStore,
   createResourceStore,
   createTile,
 } from '@/ecs/factories';
@@ -23,129 +24,90 @@ describe('factories', () => {
 
   describe('createBuilding', () => {
     it('creates entity with position component', () => {
-      const entity = createBuilding(5, 10, 'power');
+      const entity = createBuilding(5, 10, 'power-station');
       expect(entity.position).toBeDefined();
       expect(entity.position!.gridX).toBe(5);
       expect(entity.position!.gridY).toBe(10);
     });
 
     it('creates entity with building component', () => {
-      const entity = createBuilding(0, 0, 'power');
+      const entity = createBuilding(0, 0, 'power-station');
       expect(entity.building).toBeDefined();
-      expect(entity.building!.type).toBe('power');
+      expect(entity.building!.defId).toBe('power-station');
       expect(entity.building!.powered).toBe(false);
     });
 
     it('creates entity with renderable component', () => {
-      const entity = createBuilding(0, 0, 'power');
+      const entity = createBuilding(0, 0, 'power-station');
       expect(entity.renderable).toBeDefined();
       expect(entity.renderable!.spriteId).toBe('power-station');
       expect(entity.renderable!.visible).toBe(true);
     });
 
     it('creates entity with durability component', () => {
-      const entity = createBuilding(0, 0, 'power');
+      const entity = createBuilding(0, 0, 'power-station');
       expect(entity.durability).toBeDefined();
       expect(entity.durability!.current).toBe(100);
     });
 
     it('creates entity with isBuilding tag', () => {
-      const entity = createBuilding(0, 0, 'power');
+      const entity = createBuilding(0, 0, 'power-station');
       expect(entity.isBuilding).toBe(true);
     });
 
     it('adds entity to the world', () => {
       expect(world.entities.length).toBe(0);
-      createBuilding(0, 0, 'power');
+      createBuilding(0, 0, 'power-station');
       expect(world.entities.length).toBe(1);
     });
 
     it('returns the created entity', () => {
-      const entity = createBuilding(3, 7, 'housing');
+      const entity = createBuilding(3, 7, 'apartment-tower-a');
       expect(entity).toBeDefined();
       expect(entity.position!.gridX).toBe(3);
-    });
-
-    // ── Legacy type resolution ─────────────────────────────
-
-    describe('legacy type resolution', () => {
-      it('resolves "power" to "power-station" sprite', () => {
-        const entity = createBuilding(0, 0, 'power');
-        expect(entity.renderable!.spriteId).toBe('power-station');
-      });
-
-      it('resolves "housing" to "apartment-tower-a" sprite', () => {
-        const entity = createBuilding(0, 0, 'housing');
-        expect(entity.renderable!.spriteId).toBe('apartment-tower-a');
-      });
-
-      it('resolves "farm" to "collective-farm-hq" sprite', () => {
-        const entity = createBuilding(0, 0, 'farm');
-        expect(entity.renderable!.spriteId).toBe('collective-farm-hq');
-      });
-
-      it('resolves "distillery" to "vodka-distillery" sprite', () => {
-        const entity = createBuilding(0, 0, 'distillery');
-        expect(entity.renderable!.spriteId).toBe('vodka-distillery');
-      });
-
-      it('resolves "gulag" to "gulag-admin" sprite', () => {
-        const entity = createBuilding(0, 0, 'gulag');
-        expect(entity.renderable!.spriteId).toBe('gulag-admin');
-      });
-
-      it('passes through direct sprite IDs unchanged', () => {
-        const entity = createBuilding(0, 0, 'power-station');
-        expect(entity.renderable!.spriteId).toBe('power-station');
-      });
-
-      it('passes through unknown types as-is (fallthrough)', () => {
-        const entity = createBuilding(0, 0, 'some-custom-building');
-        expect(entity.renderable!.spriteId).toBe('some-custom-building');
-      });
     });
 
     // ── Building stats from defs ───────────────────────────
 
     describe('building stats from defs', () => {
       it('power plant has correct powerOutput from defs', () => {
-        const entity = createBuilding(0, 0, 'power');
+        const entity = createBuilding(0, 0, 'power-station');
         const def = getBuildingDef('power-station');
         expect(entity.building!.powerOutput).toBe(def!.stats.powerOutput);
       });
 
       it('housing has correct housingCap from defs', () => {
-        const entity = createBuilding(0, 0, 'housing');
+        const entity = createBuilding(0, 0, 'apartment-tower-a');
         const def = getBuildingDef('apartment-tower-a');
         expect(entity.building!.housingCap).toBe(def!.stats.housingCap);
       });
 
       it('farm has produces field from defs', () => {
-        const entity = createBuilding(0, 0, 'farm');
+        const entity = createBuilding(0, 0, 'collective-farm-hq');
         const def = getBuildingDef('collective-farm-hq');
         expect(entity.building!.produces).toEqual(def!.stats.produces);
       });
 
       it('distillery produces vodka', () => {
-        const entity = createBuilding(0, 0, 'distillery');
+        const entity = createBuilding(0, 0, 'vodka-distillery');
         expect(entity.building!.produces).toBeDefined();
         expect(entity.building!.produces!.resource).toBe('vodka');
       });
 
       it('gulag has fear stat from defs', () => {
-        const entity = createBuilding(0, 0, 'gulag');
+        const entity = createBuilding(0, 0, 'gulag-admin');
         const def = getBuildingDef('gulag-admin');
         expect(entity.building!.fear).toBe(def!.stats.fear);
       });
 
       it('decayRate is sourced from defs', () => {
-        const entity = createBuilding(0, 0, 'power');
+        const entity = createBuilding(0, 0, 'power-station');
         const def = getBuildingDef('power-station');
         expect(entity.durability!.decayRate).toBe(def!.stats.decayRate);
       });
 
       it('pollution is sourced from defs', () => {
-        const entity = createBuilding(0, 0, 'power');
+        const entity = createBuilding(0, 0, 'power-station');
         const def = getBuildingDef('power-station');
         expect(entity.building!.pollution).toBe(def!.stats.pollution);
       });
@@ -155,14 +117,14 @@ describe('factories', () => {
 
     describe('footprint calculation from defs', () => {
       it('renderable footprint matches building def footprint', () => {
-        const entity = createBuilding(0, 0, 'power');
+        const entity = createBuilding(0, 0, 'power-station');
         const def = getBuildingDef('power-station');
         expect(entity.renderable!.footprintX).toBe(def!.footprint.tilesX);
         expect(entity.renderable!.footprintY).toBe(def!.footprint.tilesY);
       });
 
       it('housing footprint matches defs', () => {
-        const entity = createBuilding(0, 0, 'housing');
+        const entity = createBuilding(0, 0, 'apartment-tower-a');
         const def = getBuildingDef('apartment-tower-a');
         expect(entity.renderable!.footprintX).toBe(def!.footprint.tilesX);
         expect(entity.renderable!.footprintY).toBe(def!.footprint.tilesY);
@@ -179,7 +141,7 @@ describe('factories', () => {
 
     describe('sprite path from defs', () => {
       it('renderable spritePath matches building def sprite path', () => {
-        const entity = createBuilding(0, 0, 'power');
+        const entity = createBuilding(0, 0, 'power-station');
         const def = getBuildingDef('power-station');
         expect(entity.renderable!.spritePath).toBe(def!.sprite.path);
       });
@@ -213,10 +175,9 @@ describe('factories', () => {
         expect(entity.durability!.decayRate).toBe(0.05);
       });
 
-      it('unknown type preserves original type string in building.type', () => {
-        const entity = createBuilding(0, 0, 'power');
-        // building.type = the original type passed, NOT the resolved spriteId
-        expect(entity.building!.type).toBe('power');
+      it('stores defId as passed to createBuilding', () => {
+        const entity = createBuilding(0, 0, 'power-station');
+        expect(entity.building!.defId).toBe('power-station');
       });
     });
 
@@ -224,17 +185,17 @@ describe('factories', () => {
 
     describe('multiple buildings', () => {
       it('creates multiple buildings at different positions', () => {
-        createBuilding(0, 0, 'power');
-        createBuilding(5, 5, 'housing');
-        createBuilding(10, 10, 'farm');
+        createBuilding(0, 0, 'power-station');
+        createBuilding(5, 5, 'apartment-tower-a');
+        createBuilding(10, 10, 'collective-farm-hq');
         expect(world.entities.length).toBe(3);
       });
 
       it('each building is independent', () => {
-        const b1 = createBuilding(0, 0, 'power');
-        const b2 = createBuilding(1, 1, 'housing');
-        expect(b1.building!.type).toBe('power');
-        expect(b2.building!.type).toBe('housing');
+        const b1 = createBuilding(0, 0, 'power-station');
+        const b2 = createBuilding(1, 1, 'apartment-tower-a');
+        expect(b1.building!.defId).toBe('power-station');
+        expect(b2.building!.defId).toBe('apartment-tower-a');
         expect(b1).not.toBe(b2);
       });
     });
@@ -447,6 +408,87 @@ describe('factories', () => {
     });
   });
 
+  // ── createMetaStore ───────────────────────────────────────────
+
+  describe('createMetaStore', () => {
+    it('creates meta store with default values', () => {
+      const entity = createMetaStore();
+      expect(entity.gameMeta).toBeDefined();
+      expect(entity.gameMeta!.date).toEqual({ year: 1922, month: 10, tick: 0 });
+      expect(entity.gameMeta!.quota).toEqual({
+        type: 'food',
+        target: 500,
+        current: 0,
+        deadlineYear: 1927,
+      });
+      expect(entity.gameMeta!.selectedTool).toBe('none');
+      expect(entity.gameMeta!.gameOver).toBeNull();
+      expect(entity.gameMeta!.seed).toBe('');
+      expect(entity.gameMeta!.settlementTier).toBe('selo');
+      expect(entity.gameMeta!.blackMarks).toBe(0);
+      expect(entity.gameMeta!.commendations).toBe(0);
+      expect(entity.gameMeta!.threatLevel).toBe('safe');
+    });
+
+    it('has isMetaStore tag', () => {
+      const entity = createMetaStore();
+      expect(entity.isMetaStore).toBe(true);
+    });
+
+    it('accepts partial overrides', () => {
+      const entity = createMetaStore({
+        seed: 'test-seed',
+        date: { year: 1985, month: 6, tick: 0 },
+        settlementTier: 'gorod',
+      });
+      expect(entity.gameMeta!.seed).toBe('test-seed');
+      expect(entity.gameMeta!.date.year).toBe(1985);
+      expect(entity.gameMeta!.settlementTier).toBe('gorod');
+      // Defaults still apply for non-overridden fields
+      expect(entity.gameMeta!.selectedTool).toBe('none');
+      expect(entity.gameMeta!.gameOver).toBeNull();
+    });
+
+    it('accepts full overrides', () => {
+      const entity = createMetaStore({
+        seed: 'full-seed',
+        date: { year: 2000, month: 1, tick: 5 },
+        quota: { type: 'vodka', target: 1000, current: 500, deadlineYear: 2005 },
+        selectedTool: 'power-station',
+        gameOver: { victory: true, reason: 'Test' },
+        leaderName: 'Comrade Test',
+        leaderPersonality: 'ruthless',
+        settlementTier: 'pgt',
+        blackMarks: 3,
+        commendations: 2,
+        threatLevel: 'watched',
+      });
+      expect(entity.gameMeta!.seed).toBe('full-seed');
+      expect(entity.gameMeta!.quota.type).toBe('vodka');
+      expect(entity.gameMeta!.leaderName).toBe('Comrade Test');
+      expect(entity.gameMeta!.blackMarks).toBe(3);
+    });
+
+    it('is a singleton — second call returns existing entity', () => {
+      const first = createMetaStore({ seed: 'first' });
+      const second = createMetaStore({ seed: 'second' });
+      expect(first).toBe(second);
+      expect(second.gameMeta!.seed).toBe('first');
+    });
+
+    it('singleton resets after world.clear', () => {
+      createMetaStore({ seed: 'first' });
+      world.clear();
+      const second = createMetaStore({ seed: 'second' });
+      expect(second.gameMeta!.seed).toBe('second');
+    });
+
+    it('adds to world', () => {
+      createMetaStore();
+      expect(world.entities.length).toBe(1);
+    });
+  });
+
   // ── Entity properties match input ──────────────────────────
 
   describe('entity properties match inputs', () => {
@@ -459,20 +501,25 @@ describe('factories', () => {
       ];
       for (const [x, y] of coords) {
         world.clear();
-        const entity = createBuilding(x!, y!, 'housing');
+        const entity = createBuilding(x!, y!, 'apartment-tower-a');
         expect(entity.position!.gridX).toBe(x);
         expect(entity.position!.gridY).toBe(y);
       }
     });
 
-    it('building type is preserved as-is in building.type', () => {
-      const entity = createBuilding(0, 0, 'farm');
-      // building.type should be the original input, not the resolved spriteId
-      expect(entity.building!.type).toBe('farm');
+    it('building defId matches the input parameter', () => {
+      const entity = createBuilding(0, 0, 'collective-farm-hq');
+      expect(entity.building!.defId).toBe('collective-farm-hq');
     });
 
     it('all buildings start unpowered', () => {
-      const types = ['power', 'housing', 'farm', 'distillery', 'gulag'];
+      const types = [
+        'power-station',
+        'apartment-tower-a',
+        'collective-farm-hq',
+        'vodka-distillery',
+        'gulag-admin',
+      ];
       for (const type of types) {
         world.clear();
         const entity = createBuilding(0, 0, type);
@@ -481,7 +528,13 @@ describe('factories', () => {
     });
 
     it('all buildings start at full durability (100)', () => {
-      const types = ['power', 'housing', 'farm', 'distillery', 'gulag'];
+      const types = [
+        'power-station',
+        'apartment-tower-a',
+        'collective-farm-hq',
+        'vodka-distillery',
+        'gulag-admin',
+      ];
       for (const type of types) {
         world.clear();
         const entity = createBuilding(0, 0, type);
@@ -490,7 +543,7 @@ describe('factories', () => {
     });
 
     it('all buildings are visible by default', () => {
-      const entity = createBuilding(0, 0, 'power');
+      const entity = createBuilding(0, 0, 'power-station');
       expect(entity.renderable!.visible).toBe(true);
     });
   });

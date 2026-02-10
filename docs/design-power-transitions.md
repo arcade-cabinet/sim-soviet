@@ -823,21 +823,21 @@ However, a player who maintains stability for 50+ game-years unlocks the "Eterna
 
 For integration with the existing codebase at `/Users/jbogaty/src/arcade-cabinet/sim-soviet`:
 
-**Phase 1 (MVP)**:
-1. Add `LeaderState` and `PolitburoState` interfaces to `src/game/GameState.ts` alongside the existing `money`, `pop`, `food` fields
-2. Create `src/game/LeadershipSystem.ts` with the probability engine, triggered from `SimulationEngine.tick()` on each month boundary (when `date.month` increments)
-3. Wire transition events through the existing `EventSystem` as a new `EventCategory: 'leadership'`
-4. Pipe announcements through the existing `PravdaSystem.headlineFromEvent()` and `SimCallbacks.onAdvisor()`
+**Phase 1 (MVP)** -- DONE:
+1. Leader and Politburo state live in the `GameMeta` ECS component (`getMetaEntity()!.gameMeta.leader`)
+2. `PolitburoSystem` (2,196 lines) handles the full leadership lifecycle, triggered from `SimulationEngine.tick()`
+3. Leadership events wire through `EventSystem` as political category events
+4. Announcements pipe through `PravdaSystem.headlineFromEvent()` and `SimCallbacks.onAdvisor()`
 
-**Phase 2 (Full Transitions)**:
-1. Implement the state machine (stable -> transition type -> purge -> decree -> de-naming -> stable)
-2. Add post-transition mechanical effects (resource impacts, production modifier changes)
-3. Extend `GameSnapshot` in `src/stores/gameStore.ts` to expose leader/politburo data to React components
-4. Add a leader portrait UI component (similar to `src/components/ui/Advisor.tsx` but for the current leader)
+**Phase 2 (Full Transitions)** -- DONE:
+1. State machine implemented in `PolitburoSystem` with coup/purge/succession mechanics
+2. Post-transition effects applied via `PolicyModifiers` affecting all resource systems
+3. `createSnapshot()` in `gameStore.ts` reads ECS directly for leader/politburo data
+4. Leader info displayed in `SovietHUD` and `DrawerPanel` components
 
 **Phase 3 (Polish)**:
 1. Building renaming system (extends `BuildingComponent` in `src/ecs/world.ts` with a `namedAfter` field)
-2. City renaming (new field in `GameState`)
+2. City renaming (new field in `GameMeta` ECS component)
 3. The Immortal mechanic
 4. Damnatio memoriae visual effects (Pravda headline retroactive editing)
 5. Integration with the existing `src/ai/CitizenClasses.ts` -- Party Officials become more/less influential based on faction alignment with the current leader

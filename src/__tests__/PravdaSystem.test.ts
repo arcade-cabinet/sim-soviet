@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GameEvent } from '../game/EventSystem';
-import { GameState } from '../game/GameState';
-import { PravdaSystem } from '../game/PravdaSystem';
+import { getMetaEntity, getResourceEntity } from '../ecs/archetypes';
+import { createMetaStore, createResourceStore } from '../ecs/factories';
+import { world } from '../ecs/world';
+import type { GameEvent } from '../game/events';
+import { PravdaSystem } from '../game/pravda';
 
 function createMockEvent(overrides: Partial<GameEvent> = {}): GameEvent {
   return {
@@ -18,15 +20,17 @@ function createMockEvent(overrides: Partial<GameEvent> = {}): GameEvent {
 }
 
 describe('PravdaSystem', () => {
-  let gs: GameState;
   let pravda: PravdaSystem;
 
   beforeEach(() => {
-    gs = new GameState();
-    pravda = new PravdaSystem(gs);
+    world.clear();
+    createResourceStore();
+    createMetaStore();
+    pravda = new PravdaSystem();
   });
 
   afterEach(() => {
+    world.clear();
     vi.restoreAllMocks();
   });
 
@@ -168,30 +172,30 @@ describe('PravdaSystem', () => {
 
   describe('template variable substitution in ambient headlines', () => {
     it('includes game state values in generated headlines', () => {
-      gs.pop = 42;
-      gs.food = 999;
-      gs.vodka = 25;
+      getResourceEntity()!.resources.population = 42;
+      getResourceEntity()!.resources.food = 999;
+      getResourceEntity()!.resources.vodka = 25;
 
       // Generate many headlines and check that game state values appear
       // The procedural system interpolates values directly, so population,
       // food, vodka, etc. should appear in some generated headlines.
-      let foundGameStateRef = false;
+      let foundEcsRef = false;
       for (let i = 0; i < 500; i++) {
         vi.spyOn(Date, 'now').mockReturnValue(100000 + i * 50000);
         const headline = pravda.generateAmbientHeadline();
         if (headline) {
           const allText = headline.headline + headline.subtext + headline.reality;
           if (allText.includes('42') || allText.includes('999') || allText.includes('25')) {
-            foundGameStateRef = true;
+            foundEcsRef = true;
             break;
           }
         }
       }
-      expect(foundGameStateRef).toBe(true);
+      expect(foundEcsRef).toBe(true);
     });
 
     it('includes year in generated headlines', () => {
-      gs.date.year = 1980;
+      getMetaEntity()!.gameMeta.date.year = 1922;
 
       let foundYear = false;
       for (let i = 0; i < 3000; i++) {
@@ -199,7 +203,7 @@ describe('PravdaSystem', () => {
         const headline = pravda.generateAmbientHeadline();
         if (headline) {
           const allText = headline.headline + headline.subtext + headline.reality;
-          if (allText.includes('1980')) {
+          if (allText.includes('1922')) {
             foundYear = true;
             break;
           }
@@ -286,6 +290,93 @@ describe('PravdaSystem', () => {
     });
   });
 
+  // ── Serialization ─────────────────────────────────────
+
+  describe('serialize / deserialize', () => {
+    it('round-trips headline history', () => {
+      pravda.headlineFromEvent(createMockEvent({ id: 'a', pravdaHeadline: 'HEADLINE A' }));
+      pravda.headlineFromEvent(createMockEvent({ id: 'b', pravdaHeadline: 'HEADLINE B' }));
+
+      const data = pravda.serialize();
+      expect(data.headlineHistory).toHaveLength(2);
+
+      const restored = PravdaSystem.deserialize(data);
+      const recent = restored.getRecentHeadlines(10);
+      expect(recent).toHaveLength(2);
+      expect(recent[0]!.headline).toBe('HEADLINE A');
+      expect(recent[1]!.headline).toBe('HEADLINE B');
+    });
+
+    it('preserves lastHeadlineTime and cooldown state', () => {
+      vi.spyOn(Date, 'now').mockReturnValue(100000);
+      pravda.generateAmbientHeadline();
+
+      const data = pravda.serialize();
+      expect(data.lastHeadlineTime).toBe(100000);
+      expect(data.headlineCooldown).toBe(45000);
+
+      const restored = PravdaSystem.deserialize(data);
+
+      // Restored system should still be in cooldown at the same time
+      vi.spyOn(Date, 'now').mockReturnValue(130000); // 30s later, still in cooldown
+      const result = restored.generateAmbientHeadline();
+      expect(result).toBeNull();
+    });
+
+    it('preserves recent category memory', () => {
+      // Generate several headlines to build up category memory
+      pravda.headlineFromEvent(createMockEvent({ category: 'political' })); // → editorial
+      pravda.headlineFromEvent(createMockEvent({ category: 'disaster' })); // → triumph
+      pravda.headlineFromEvent(createMockEvent({ category: 'economic' })); // → production
+
+      const data = pravda.serialize();
+      expect(data.recentCategories.length).toBeGreaterThan(0);
+
+      const restored = PravdaSystem.deserialize(data);
+      const restoredData = restored.serialize();
+      expect(restoredData.recentCategories).toEqual(data.recentCategories);
+    });
+
+    it('serialized data is JSON-safe', () => {
+      pravda.headlineFromEvent(createMockEvent());
+      const data = pravda.serialize();
+      const json = JSON.stringify(data);
+      const parsed = JSON.parse(json);
+      expect(parsed.headlineHistory).toHaveLength(1);
+      expect(typeof parsed.lastHeadlineTime).toBe('number');
+    });
+
+    it('deserialized system can generate new headlines', () => {
+      vi.spyOn(Date, 'now').mockReturnValue(100000);
+      pravda.generateAmbientHeadline();
+      const data = pravda.serialize();
+
+      const restored = PravdaSystem.deserialize(data);
+      // After cooldown, should be able to generate
+      vi.spyOn(Date, 'now').mockReturnValue(200000);
+      const headline = restored.generateAmbientHeadline();
+      expect(headline).not.toBeNull();
+    });
+
+    it('handles empty state', () => {
+      const data = pravda.serialize();
+      expect(data.headlineHistory).toHaveLength(0);
+      expect(data.recentCategories).toHaveLength(0);
+
+      const restored = PravdaSystem.deserialize(data);
+      expect(restored.getRecentHeadlines(10)).toHaveLength(0);
+    });
+
+    it('deserialized system formatFrontPage reflects restored history', () => {
+      pravda.headlineFromEvent(createMockEvent({ pravdaHeadline: 'RESTORED HEADLINE' }));
+      const data = pravda.serialize();
+
+      const restored = PravdaSystem.deserialize(data);
+      const page = restored.formatFrontPage();
+      expect(page).toContain('RESTORED HEADLINE');
+    });
+  });
+
   // ── formatFrontPage ─────────────────────────────────────
 
   describe('formatFrontPage', () => {
@@ -298,7 +389,7 @@ describe('PravdaSystem', () => {
     it('includes the current year', () => {
       pravda.headlineFromEvent(createMockEvent());
       const page = pravda.formatFrontPage();
-      expect(page).toContain('1980');
+      expect(page).toContain('1922');
     });
 
     it('shows up to 3 headlines with star prefix', () => {

@@ -114,3 +114,18 @@ export const resourceStore = world.with('resources', 'isResourceStore');
 export function getResourceEntity(): With<Entity, 'resources' | 'isResourceStore'> | undefined {
   return resourceStore.entities[0];
 }
+
+// ─── Meta Store Singleton ───────────────────────────────────────────────────
+
+/**
+ * The game metadata singleton entity (date, quota, leader, settlement, etc.).
+ * Should contain exactly one entity at all times after init.
+ */
+export const metaStore = world.with('gameMeta', 'isMetaStore');
+
+/**
+ * Retrieves the singleton meta entity, or `undefined` if none exists.
+ */
+export function getMetaEntity(): With<Entity, 'gameMeta' | 'isMetaStore'> | undefined {
+  return metaStore.entities[0];
+}

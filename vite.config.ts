@@ -10,9 +10,16 @@ export default defineConfig({
   build: {
     outDir: '../dist',
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'app/index.html'),
+        prototypes: resolve(__dirname, 'app/prototypes.html'),
+      },
+    },
   },
   server: {
     port: 3000,
+    host: '0.0.0.0',
   },
   resolve: {
     alias: {

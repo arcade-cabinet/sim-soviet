@@ -12,7 +12,7 @@ import {
   SURNAMES_FEMALE,
   SURNAMES_MALE,
   TITLES,
-} from '../ai/NameGenerator';
+} from '../ai/names';
 
 describe('NameGenerator', () => {
   let gen: NameGenerator;

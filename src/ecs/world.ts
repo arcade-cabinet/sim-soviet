@@ -28,12 +28,12 @@ export interface Position {
 }
 
 /**
- * Building component — stores the type key, power state, production info,
+ * Building component — stores the def ID, power state, production info,
  * housing capacity, and environmental stats.
  */
 export interface BuildingComponent {
-  /** Building type key that maps to BUILDING_TYPES in config */
-  type: string;
+  /** Building definition ID (sprite ID key into BUILDING_DEFS) */
+  defId: string;
   /** Whether this building currently receives power */
   powered: boolean;
   /** Power units this building requires to operate */
@@ -91,7 +91,7 @@ export interface Renderable {
  * All global economic values live here.
  */
 export interface Resources {
-  /** Rubles */
+  /** Rubles (SECONDARY — only for consumer economy, black market, bribes) */
   money: number;
   /** Food units */
   food: number;
@@ -103,6 +103,27 @@ export interface Resources {
   powerUsed: number;
   /** Total citizen count (derived but cached for quick access) */
   population: number;
+
+  // ── Planned Economy Resources ──
+
+  /** Trudodni — labor units accumulated this period */
+  trudodni: number;
+  /** Blat — connections resource (0-100) */
+  blat: number;
+  /** Timber — construction/fuel material */
+  timber: number;
+  /** Steel — industrial construction material */
+  steel: number;
+  /** Cement — construction material */
+  cement: number;
+  /** Prefab panels — late-era rapid construction material */
+  prefab: number;
+  /** Seed fund — reserved grain for next season (0-1 ratio) */
+  seedFund: number;
+  /** Emergency reserve — buffer against disasters */
+  emergencyReserve: number;
+  /** Storage capacity — total food storage across all buildings */
+  storageCapacity: number;
 }
 
 /**
@@ -113,6 +134,26 @@ export interface TileComponent {
   terrain: 'grass' | 'road' | 'foundation' | 'water';
   /** Elevation offset for visual rendering */
   elevation: number;
+}
+
+/**
+ * Game metadata — non-resource state stored on a singleton ECS entity.
+ * Replaces the old GameState fields for date, quota, leader, settlement, etc.
+ */
+export interface GameMeta {
+  seed: string;
+  date: { year: number; month: number; tick: number };
+  quota: { type: string; target: number; current: number; deadlineYear: number };
+  selectedTool: string;
+  gameOver: { victory: boolean; reason: string } | null;
+  leaderName?: string;
+  leaderPersonality?: string;
+  settlementTier: 'selo' | 'posyolok' | 'pgt' | 'gorod';
+  blackMarks: number;
+  commendations: number;
+  threatLevel: string;
+  /** Current historical era ID (synced from EraSystem each tick) */
+  currentEra: string;
 }
 
 /**
@@ -150,6 +191,8 @@ export interface Entity {
   tile?: TileComponent;
   /** Structural health */
   durability?: Durability;
+  /** Game metadata singleton (date, quota, leader, settlement, etc.) */
+  gameMeta?: GameMeta;
 
   // ── Tag components ──
   /** Tag: entity is a building */
@@ -160,6 +203,8 @@ export interface Entity {
   isTile?: true;
   /** Tag: entity is the resource store singleton */
   isResourceStore?: true;
+  /** Tag: entity is the game metadata singleton */
+  isMetaStore?: true;
 }
 
 // ─── World Instance ──────────────────────────────────────────────────────────

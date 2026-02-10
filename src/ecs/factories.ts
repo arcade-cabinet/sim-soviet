@@ -14,34 +14,11 @@ import type {
   BuildingComponent,
   CitizenComponent,
   Entity,
+  GameMeta,
   Renderable,
   TileComponent,
 } from './world';
 import { world } from './world';
-
-// ── Sprite ID lookup ────────────────────────────────────────────────────────
-
-/**
- * Maps legacy game type keys (from config.ts BUILDING_TYPES) to sprite IDs
- * (from the manifest). This bridges the old 6-type system to the new 31-sprite system.
- *
- * When the toolbar is expanded to use sprite IDs directly, this map can be removed.
- */
-const LEGACY_TYPE_TO_SPRITE: Record<string, string> = {
-  power: 'power-station',
-  housing: 'apartment-tower-a',
-  farm: 'collective-farm-hq',
-  distillery: 'vodka-distillery',
-  gulag: 'gulag-admin',
-};
-
-/**
- * Resolve a building type or sprite ID to a sprite ID.
- * Handles both legacy game types ("power") and direct sprite IDs ("power-station").
- */
-function resolveSpriteId(typeOrSpriteId: string): string {
-  return LEGACY_TYPE_TO_SPRITE[typeOrSpriteId] ?? typeOrSpriteId;
-}
 
 // ── Building Factory ────────────────────────────────────────────────────────
 
@@ -53,16 +30,15 @@ function resolveSpriteId(typeOrSpriteId: string): string {
  *
  * @param gridX - Column index on the grid (0-based)
  * @param gridY - Row index on the grid (0-based)
- * @param type  - Building type key (legacy game type or sprite ID)
+ * @param defId - Building definition ID (sprite ID key into BUILDING_DEFS)
  * @returns The created entity, already added to the world
  */
-export function createBuilding(gridX: number, gridY: number, type: string): Entity {
-  const spriteId = resolveSpriteId(type);
-  const def = getBuildingDef(spriteId);
+export function createBuilding(gridX: number, gridY: number, defId: string): Entity {
+  const def = getBuildingDef(defId);
 
   // Derive building component from generated defs
   const building: BuildingComponent = {
-    type,
+    defId,
     powered: false,
     powerReq: def?.stats.powerReq ?? 0,
     powerOutput: def?.stats.powerOutput ?? 0,
@@ -74,7 +50,7 @@ export function createBuilding(gridX: number, gridY: number, type: string): Enti
 
   // Derive renderable from sprite data
   const renderable: Renderable = {
-    spriteId,
+    spriteId: defId,
     spritePath: def?.sprite.path ?? '',
     footprintX: def?.footprint.tilesX ?? 1,
     footprintY: def?.footprint.tilesY ?? 1,
@@ -168,6 +144,7 @@ export function createTile(
  * @param initialValues - Optional partial override of starting resources
  * @returns The resource store entity
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: resource store has many fields with individual defaults
 export function createResourceStore(
   initialValues?: Partial<{
     money: number;
@@ -176,6 +153,15 @@ export function createResourceStore(
     power: number;
     powerUsed: number;
     population: number;
+    trudodni: number;
+    blat: number;
+    timber: number;
+    steel: number;
+    cement: number;
+    prefab: number;
+    seedFund: number;
+    emergencyReserve: number;
+    storageCapacity: number;
   }>
 ): Entity {
   // Check for existing store
@@ -192,6 +178,15 @@ export function createResourceStore(
       power: initialValues?.power ?? 0,
       powerUsed: initialValues?.powerUsed ?? 0,
       population: initialValues?.population ?? 0,
+      trudodni: initialValues?.trudodni ?? 0,
+      blat: initialValues?.blat ?? 10,
+      timber: initialValues?.timber ?? 100,
+      steel: initialValues?.steel ?? 0,
+      cement: initialValues?.cement ?? 0,
+      prefab: initialValues?.prefab ?? 0,
+      seedFund: initialValues?.seedFund ?? 1.0,
+      emergencyReserve: initialValues?.emergencyReserve ?? 0,
+      storageCapacity: initialValues?.storageCapacity ?? 200,
     },
     isResourceStore: true,
   };
@@ -216,4 +211,47 @@ export function createGrid(size: number = GRID_SIZE): void {
       createTile(x, y, 'grass');
     }
   }
+}
+
+// ── Meta Store Factory ────────────────────────────────────────────────────
+
+/**
+ * Creates the singleton game metadata entity.
+ *
+ * If a meta store already exists in the world, this is a no-op and
+ * returns the existing entity.
+ *
+ * @param initialValues - Optional partial override of starting metadata
+ * @returns The meta store entity
+ */
+export function createMetaStore(initialValues?: Partial<GameMeta>): Entity {
+  const existing = world.with('gameMeta', 'isMetaStore');
+  if (existing.entities.length > 0) {
+    return existing.entities[0]!;
+  }
+
+  const entity: Entity = {
+    gameMeta: {
+      seed: initialValues?.seed ?? '',
+      date: initialValues?.date ?? { year: 1922, month: 10, tick: 0 },
+      quota: initialValues?.quota ?? {
+        type: 'food',
+        target: 500,
+        current: 0,
+        deadlineYear: 1927,
+      },
+      selectedTool: initialValues?.selectedTool ?? 'none',
+      gameOver: initialValues?.gameOver ?? null,
+      leaderName: initialValues?.leaderName,
+      leaderPersonality: initialValues?.leaderPersonality,
+      settlementTier: initialValues?.settlementTier ?? 'selo',
+      blackMarks: initialValues?.blackMarks ?? 0,
+      commendations: initialValues?.commendations ?? 0,
+      threatLevel: initialValues?.threatLevel ?? 'safe',
+      currentEra: initialValues?.currentEra ?? 'war_communism',
+    },
+    isMetaStore: true,
+  };
+
+  return world.add(entity);
 }

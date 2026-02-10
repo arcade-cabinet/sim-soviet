@@ -34,15 +34,15 @@ export function setStarvationCallback(cb: StarvationCallback | undefined): void 
  * - Vodka consumption: 1 unit per 20 citizens (rounded up).
  *   If insufficient vodka, citizens are merely unhappy (no death).
  */
-export function consumptionSystem(): void {
+export function consumptionSystem(consumptionMult = 1): void {
   const store = getResourceEntity();
   if (!store) return;
 
   const pop = store.resources.population;
   if (pop <= 0) return;
 
-  // Food consumption
-  const foodNeed = Math.ceil(pop / 10);
+  // Food consumption (scaled by era/difficulty multiplier)
+  const foodNeed = Math.ceil((pop / 10) * consumptionMult);
   if (store.resources.food >= foodNeed) {
     store.resources.food -= foodNeed;
   } else {
@@ -51,8 +51,8 @@ export function consumptionSystem(): void {
     _onStarvation?.();
   }
 
-  // Vodka consumption
-  const vodkaDrink = Math.ceil(pop / 20);
+  // Vodka consumption (scaled by era/difficulty multiplier)
+  const vodkaDrink = Math.ceil((pop / 20) * consumptionMult);
   if (store.resources.vodka >= vodkaDrink) {
     store.resources.vodka -= vodkaDrink;
   }

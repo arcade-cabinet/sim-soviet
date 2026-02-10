@@ -77,7 +77,7 @@ interface Politburo {
 
 ## Data Flow
 
-```
+```text
 Game Tick
 → leadershipSystem (succession checks, approval/paranoia updates)
 → policyModifierSystem (compose Leader × Doctrine × Ministries → PolicyModifiers)
@@ -91,7 +91,7 @@ Game Tick
 
 ## Directory Structure
 
-```
+```text
 src/
 ├── political/                     [NEW]
 │   ├── LeaderArchetypes.ts       — archetype registry with base modifiers
@@ -113,7 +113,7 @@ src/
 │   ├── SimulationEngine.ts       [MODIFY] call political systems in tick()
 │   └── EventSystem.ts            [MODIFY] apply weight modifiers
 └── stores/
-    └── gameStore.ts              [MODIFY] extend snapshot with political state
+    └── gameStore.ts              [DONE] snapshot reads ECS political state directly
 ```
 
 ## Phased Implementation

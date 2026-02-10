@@ -33,8 +33,8 @@ describe('quotaSystem', () => {
       expect(quota.current).toBe(0);
     });
 
-    it('starts with deadline year 1985', () => {
-      expect(quota.deadlineYear).toBe(1985);
+    it('starts with deadline year 1927', () => {
+      expect(quota.deadlineYear).toBe(1927);
     });
   });
 
@@ -127,7 +127,7 @@ describe('quotaSystem', () => {
       const store = getResourceEntity()!;
       store.resources.food = 600;
       quotaSystem(quota);
-      expect(quota.deadlineYear).toBe(1985); // Unchanged
+      expect(quota.deadlineYear).toBe(1927); // Unchanged
     });
 
     it('does not change type', () => {

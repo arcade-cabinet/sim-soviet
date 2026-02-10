@@ -51,6 +51,17 @@ const RoleSchema = z.enum([
   'environment',
 ]);
 
+const EraIdSchema = z.enum([
+  'war_communism',
+  'first_plans',
+  'great_patriotic',
+  'reconstruction',
+  'thaw',
+  'stagnation',
+  'perestroika',
+  'eternal_soviet',
+]);
+
 const BuildingDefSchema = z.object({
   id: z.string(),
   role: RoleSchema,
@@ -88,6 +99,7 @@ const BuildingDefSchema = z.object({
     desc: z.string(),
     category: z.string(),
   }),
+  eraAvailable: EraIdSchema,
 });
 
 const BuildingDefsFileSchema = z.object({
@@ -445,6 +457,60 @@ const GAME_CONFIG: Record<string, GameConfig> = {
   },
 };
 
+// ── Building → Era mapping (mirrors EraSystem.ts unlockedBuildings) ──────────
+// Each building is assigned to the era where it first becomes available.
+
+type EraId = z.infer<typeof EraIdSchema>;
+
+const BUILDING_ERA_MAP: Record<string, EraId> = {
+  // war_communism (1922-1928)
+  'workers-house-a': 'war_communism',
+  'workers-house-b': 'war_communism',
+  'collective-farm-hq': 'war_communism',
+  'power-station': 'war_communism',
+  'guard-post': 'war_communism',
+  fence: 'war_communism',
+  'fence-low': 'war_communism',
+  'concrete-block': 'war_communism',
+
+  // first_plans (1928-1941)
+  'workers-house-c': 'first_plans',
+  'bread-factory': 'first_plans',
+  warehouse: 'first_plans',
+  'factory-office': 'first_plans',
+  school: 'first_plans',
+  barracks: 'first_plans',
+
+  // great_patriotic (1941-1945)
+  'gulag-admin': 'great_patriotic',
+
+  // reconstruction (1945-1953)
+  'apartment-tower-a': 'reconstruction',
+  hospital: 'reconstruction',
+  'government-hq': 'reconstruction',
+  'ministry-office': 'reconstruction',
+  'train-station': 'reconstruction',
+
+  // thaw (1953-1964)
+  'apartment-tower-b': 'thaw',
+  polyclinic: 'thaw',
+  'workers-club': 'thaw',
+  'post-office': 'thaw',
+  'cultural-palace': 'thaw',
+
+  // stagnation (1964-1985)
+  'apartment-tower-c': 'stagnation',
+  'kgb-office': 'stagnation',
+  'radio-station': 'stagnation',
+  'vodka-distillery': 'stagnation',
+  'fire-station': 'stagnation',
+
+  // perestroika (1985-1991): no new buildings
+
+  // eternal_soviet (1991+)
+  'apartment-tower-d': 'eternal_soviet',
+};
+
 // ── Pipeline ────────────────────────────────────────────────────────────────
 
 /** Build a single building definition from manifest sprite + game config. */
@@ -485,6 +551,7 @@ function buildDef(
       desc: config?.desc ?? '',
       category: config?.category ?? 'misc',
     },
+    eraAvailable: (BUILDING_ERA_MAP[id] ?? 'war_communism') as EraId,
   };
 }
 

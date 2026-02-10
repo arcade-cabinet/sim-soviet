@@ -8,13 +8,11 @@
 | Package Manager | pnpm | >= 10.0.0 |
 | Language | TypeScript | 5.9 |
 | Build | Vite | 7.3 |
-| 3D Engine | BabylonJS | 8.50 |
-| React Bridge | Reactylon | 3.5 |
+| Rendering | Canvas 2D | (native) |
 | UI Framework | React | 19.2 |
 | CSS | Tailwind CSS | 4.1 |
 | ECS | Miniplex | 2.0 |
 | Audio | Tone.js | 15.1 |
-| AI (stubbed) | Yuka | 0.7 |
 | Seeded RNG | seedrandom | 3.0.5 |
 | Lint/Format | Biome | 2.3 |
 | Unit Tests | Vitest | 4.0 (happy-dom) |
@@ -58,7 +56,7 @@ Configured in: `tsconfig.json`, `vite.config.ts`, `vitest.config.ts`
 
 - **Root is `./app`**, not project root. The `index.html` entry lives in `app/`.
 - **Build outputs to `../dist`** (relative to root).
-- **XR stub**: Reactylon v3.5 imports `@babylonjs/core/XR/motionController/webXROculusHandController.js` which doesn't exist in BabylonJS 8. A stub alias in `vite.config.ts` resolves this to `src/stubs/empty.ts`.
+- **Vite root**: `./app` directory, not project root. Output builds to `../dist`.
 
 ## TypeScript Configuration
 
@@ -106,16 +104,15 @@ Merges to `main` auto-deploy to GitHub Pages. Vite builds with `--base /<repo-na
 
 ## Key Dependencies & Their Roles
 
-- **Reactylon**: React reconciler for BabylonJS — provides `<Engine>`, `<Scene>`, `useScene()`, `useCanvas()`
 - **Miniplex / miniplex-react**: ECS world with React bindings (`ECS.Entity`, `ECS.Entities`)
 - **Tone.js**: Web Audio synthesizer for procedural SFX (build, destroy, notification sounds)
-- **Yuka**: Behavioral AI library (imported but not yet deeply integrated)
 - **seedrandom**: Deterministic PRNG for reproducible game worlds (wrapped by `GameRng` in `SeedSystem.ts`)
-- **animejs**: Animation library (in dependencies, usage is minimal)
+- **framer-motion**: Animation library for UI transitions
+- **@headlessui/react**: Accessible UI primitives (dialog, menu)
 
 ## Constraints
 
 - Audio files are `.ogg` (Opus codec) — downloaded via `scripts/download-audio.sh`, not committed to git (tracked via `.gitattributes` with LFS or downloaded on setup)
 - Browser autoplay policy requires user gesture before audio playback
-- BabylonJS scene.pick() needs canvas-relative coordinates (offsetX/Y, not clientX/Y)
+- Asset URLs must use `import.meta.env.BASE_URL` prefix (GitHub Pages serves from `/sim-soviet/`)
 - Capacitor requires `dist/` output to sync to native platforms

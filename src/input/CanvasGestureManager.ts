@@ -16,14 +16,26 @@
 
 import type { With } from 'miniplex';
 import { getBuildingDef } from '@/data/buildingDefs';
-import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
+import { buildingsLogic, citizens, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import { createBuilding } from '@/ecs/factories';
 import type { Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
-import { getFootprint, getSpriteForType } from '@/game/BuildingFootprints';
-import type { GameState } from '@/game/GameState';
+import { getFootprint } from '@/game/BuildingFootprints';
+import type { GameGrid } from '@/game/GameGrid';
 import type { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
-import { getDragState, notifyStateChange, setDragState, setInspected } from '@/stores/gameStore';
+import {
+  closeRadialMenu,
+  getAssignmentMode,
+  getDragState,
+  type InspectedWorker,
+  notifyStateChange,
+  openRadialMenu,
+  setAssignmentMode,
+  setDragState,
+  setInspected,
+  setInspectedWorker,
+  setPlacementCallback,
+} from '@/stores/gameStore';
 
 type GestureState = 'idle' | 'pending' | 'panning' | 'dragging_from_toolbar';
 
@@ -42,23 +54,10 @@ interface PointerStart {
 /** Cost to bulldoze a building. */
 const BULLDOZE_COST = 20;
 
-/**
- * Gets the placement cost for a building type.
- * Checks buildingDefs first, then falls back to legacy hardcoded costs.
- */
-function getBuildingCost(buildingType: string): number {
-  // Try sprite ID directly
-  const def = getBuildingDef(buildingType);
-  if (def) return def.presentation.cost;
-
-  // Try resolving legacy type → sprite ID
-  const spriteId = getSpriteForType(buildingType);
-  if (spriteId) {
-    const spriteDef = getBuildingDef(spriteId);
-    if (spriteDef) return spriteDef.presentation.cost;
-  }
-
-  return 0;
+/** Gets the placement cost for a building def ID. */
+function getBuildingCost(defId: string): number {
+  const def = getBuildingDef(defId);
+  return def?.presentation.cost ?? 0;
 }
 
 export class CanvasGestureManager {
@@ -71,13 +70,52 @@ export class CanvasGestureManager {
   public onBuild: ((type: string) => void) | null = null;
   /** Optional audio hook — called after a building is successfully bulldozed. */
   public onBulldoze: (() => void) | null = null;
+  /** Optional hook — called when a building is tapped (for minigame trigger routing). */
+  public onBuildingTap: ((defId: string) => void) | null = null;
+  /** Optional hook — called when a worker is tapped. */
+  public onWorkerTap: ((info: InspectedWorker) => void) | null = null;
+  /** Optional hook — called to assign a worker to a building. Returns true on success. */
+  public onWorkerAssign:
+    | ((workerName: string, buildingGridX: number, buildingGridY: number) => boolean)
+    | null = null;
+  /** Provider for extended worker stats (set by GameWorld after SimulationEngine init). */
+  public workerStatsProvider:
+    | ((
+        entity: Entity
+      ) => { name: string; loyalty: number; skill: number; vodkaDependency: number } | null)
+    | null = null;
 
   constructor(
     private canvas: HTMLCanvasElement,
-    private gameState: GameState,
+    private grid: GameGrid,
     private renderer: Canvas2DRenderer
   ) {
     this.setupEvents();
+    setPlacementCallback(this.tryPlaceBuilding);
+  }
+
+  /**
+   * Public placement API — called by RadialBuildMenu via gameStore.requestPlacement().
+   * Returns true if building was successfully placed.
+   */
+  private tryPlaceBuilding = (gridX: number, gridY: number, defId: string): boolean => {
+    const cost = getBuildingCost(defId);
+    const fp = getFootprint(defId);
+    if (!this.isFootprintClear(gridX, gridY, fp.w, fp.h)) return false;
+    const store = getResourceEntity();
+    if (!store || store.resources.money < cost) return false;
+
+    this.placeBuilding(gridX, gridY, defId, cost, fp);
+    notifyStateChange();
+    return true;
+  };
+
+  /** Calculate the largest NxN square of clear cells starting at (gridX, gridY). */
+  private getAvailableSpace(gridX: number, gridY: number): number {
+    for (let size = 3; size >= 1; size--) {
+      if (this.isFootprintClear(gridX, gridY, size, size)) return size;
+    }
+    return 0;
   }
 
   private setupEvents(): void {
@@ -197,16 +235,38 @@ export class CanvasGestureManager {
   // ── Game Actions ──────────────────────────────────────────────────────
 
   private handleTap(screenX: number, screenY: number): void {
+    // Close radial menu on any tap (it re-opens if needed in handleInspect)
+    closeRadialMenu();
+
     const cell = this.renderer.screenToGridCell(screenX, screenY);
     if (!cell) return;
 
     const { x: gridX, y: gridY } = cell;
-    const tool = this.gameState.selectedTool;
-    const gridCell = this.gameState.getCell(gridX, gridY);
+
+    // ── Assignment mode: tapping a building completes worker assignment ──
+    const assignMode = getAssignmentMode();
+    if (assignMode) {
+      const gridCell = this.grid.getCell(gridX, gridY);
+      if (gridCell?.type) {
+        // Tap on a building → assign the worker
+        const success = this.onWorkerAssign?.(assignMode.workerName, gridX, gridY) ?? false;
+        if (success) {
+          setAssignmentMode(null);
+          notifyStateChange();
+        }
+      } else {
+        // Tap on empty ground → cancel assignment mode
+        setAssignmentMode(null);
+      }
+      return;
+    }
+
+    const tool = getMetaEntity()?.gameMeta.selectedTool ?? 'none';
+    const gridCell = this.grid.getCell(gridX, gridY);
     if (!gridCell) return;
 
     if (tool === 'none') {
-      this.handleInspect(gridX, gridY, gridCell);
+      this.handleInspect(gridX, gridY, gridCell, screenX, screenY);
       return;
     }
 
@@ -218,28 +278,98 @@ export class CanvasGestureManager {
     this.handleBuildTap(gridX, gridY, tool);
   }
 
-  /** Inspect -- show building info panel on tap. */
-  private handleInspect(gridX: number, gridY: number, gridCell: { type: string | null }): void {
+  /** Inspect -- show building info panel on tap, or open radial menu on empty cell. */
+  private handleInspect(
+    gridX: number,
+    gridY: number,
+    gridCell: { type: string | null },
+    screenX: number,
+    screenY: number
+  ): void {
     if (!gridCell.type) {
+      // Empty cell: check for citizens at this position first
+      const workerInfo = this.findCitizenAtCell(gridX, gridY);
+      if (workerInfo) {
+        setInspectedWorker(workerInfo);
+        this.onWorkerTap?.(workerInfo);
+        return;
+      }
+      // No citizen → open radial build menu at tap position
       setInspected(null);
+      setInspectedWorker(null);
+      const space = this.getAvailableSpace(gridX, gridY);
+      if (space > 0) {
+        // Convert canvas-relative coords to viewport coords for the overlay
+        const rect = this.canvas.getBoundingClientRect();
+        openRadialMenu({
+          screenX: rect.left + screenX,
+          screenY: rect.top + screenY,
+          gridX,
+          gridY,
+          availableSpace: space,
+        });
+      }
       return;
     }
-    const spriteId = getSpriteForType(gridCell.type) || gridCell.type;
-    const def = getBuildingDef(spriteId);
-    const fp = getFootprint(gridCell.type);
+    const defId = gridCell.type;
+    // Notify minigame system about building tap
+    this.onBuildingTap?.(defId);
+    const def = getBuildingDef(defId);
+    const fp = getFootprint(defId);
     const powered = this.findBuildingPowered(gridX, gridY);
     setInspected({
       gridX,
       gridY,
-      type: gridCell.type,
-      spriteId,
+      defId,
       powered,
       cost: def?.presentation.cost ?? 0,
       footprintW: fp.w,
       footprintH: fp.h,
-      name: def?.presentation.name ?? gridCell.type,
+      name: def?.presentation.name ?? defId,
       desc: def?.presentation.desc ?? '',
     });
+
+    // Also check for citizens assigned to this building
+    const workerInfo = this.findCitizenForBuilding(defId);
+    if (workerInfo) {
+      setInspectedWorker(workerInfo);
+      this.onWorkerTap?.(workerInfo);
+    }
+  }
+
+  /** Find a citizen entity positioned at the given grid cell. */
+  private findCitizenAtCell(gridX: number, gridY: number): InspectedWorker | null {
+    for (const entity of citizens) {
+      if (entity.position.gridX === gridX && entity.position.gridY === gridY) {
+        return this.buildWorkerInfo(entity);
+      }
+    }
+    return null;
+  }
+
+  /** Find a citizen entity assigned to a building with the given defId. */
+  private findCitizenForBuilding(defId: string): InspectedWorker | null {
+    for (const entity of citizens) {
+      if (entity.citizen.assignment === defId) {
+        return this.buildWorkerInfo(entity);
+      }
+    }
+    return null;
+  }
+
+  /** Build an InspectedWorker from a citizen entity. */
+  private buildWorkerInfo(entity: Entity): InspectedWorker | null {
+    if (!entity.citizen) return null;
+    const extStats = this.workerStatsProvider?.(entity);
+    return {
+      name: extStats?.name ?? 'Unknown Worker',
+      class: entity.citizen.class,
+      morale: entity.citizen.happiness,
+      loyalty: extStats?.loyalty ?? 50,
+      skill: extStats?.skill ?? 25,
+      vodkaDependency: extStats?.vodkaDependency ?? 0,
+      assignedBuildingDefId: entity.citizen.assignment ?? null,
+    };
   }
 
   /** Find whether the building entity covering (gridX, gridY) is powered. */
@@ -258,7 +388,7 @@ export class CanvasGestureManager {
 
   /** Handle bulldoze tool tap. */
   private handleBulldozeTap(gridX: number, gridY: number, gridCell: { type: string | null }): void {
-    if (gridCell.type && this.gameState.money >= BULLDOZE_COST) {
+    if (gridCell.type && (getResourceEntity()?.resources.money ?? 0) >= BULLDOZE_COST) {
       this.bulldozeAt(gridX, gridY);
       notifyStateChange();
     }
@@ -271,7 +401,7 @@ export class CanvasGestureManager {
     const clear = this.isFootprintClear(gridX, gridY, fp.w, fp.h);
     if (!clear) return;
 
-    if (this.gameState.money >= cost) {
+    if ((getResourceEntity()?.resources.money ?? 0) >= cost) {
       this.placeBuilding(gridX, gridY, tool, cost, fp);
       notifyStateChange();
     }
@@ -281,7 +411,7 @@ export class CanvasGestureManager {
   private isFootprintClear(gridX: number, gridY: number, w: number, h: number): boolean {
     for (let dx = 0; dx < w; dx++) {
       for (let dy = 0; dy < h; dy++) {
-        const c = this.gameState.getCell(gridX + dx, gridY + dy);
+        const c = this.grid.getCell(gridX + dx, gridY + dy);
         if (!c || c.type != null) return false;
       }
     }
@@ -289,7 +419,7 @@ export class CanvasGestureManager {
   }
 
   /**
-   * Places a building via ECS and syncs to GameState grid.
+   * Places a building via ECS and syncs to grid.
    */
   private placeBuilding(
     gridX: number,
@@ -303,20 +433,16 @@ export class CanvasGestureManager {
     if (store) {
       store.resources.money -= cost;
     }
-    this.gameState.money -= cost;
 
     // Mark ALL footprint cells as occupied
     for (let dx = 0; dx < fp.w; dx++) {
       for (let dy = 0; dy < fp.h; dy++) {
-        this.gameState.setCell(gridX + dx, gridY + dy, tool);
+        this.grid.setCell(gridX + dx, gridY + dy, tool);
       }
     }
 
     // Create ECS entity
     createBuilding(gridX, gridY, tool);
-
-    // Also add to GameState.buildings for renderer compatibility
-    this.gameState.addBuilding(gridX, gridY, tool);
 
     this.onBuild?.(tool);
   }
@@ -331,12 +457,10 @@ export class CanvasGestureManager {
     if (store) {
       store.resources.money -= BULLDOZE_COST;
     }
-    this.gameState.money -= BULLDOZE_COST;
 
     const found = this.findBuildingEntityAt(gridX, gridY);
     this.removeBuildingFromGrid(found, gridX, gridY);
 
-    this.gameState.removeBuilding(found?.originX ?? gridX, found?.originY ?? gridY);
     this.onBulldoze?.();
   }
 
@@ -372,12 +496,12 @@ export class CanvasGestureManager {
       const fpY = found.entity.renderable?.footprintY ?? 1;
       for (let dx = 0; dx < fpX; dx++) {
         for (let dy = 0; dy < fpY; dy++) {
-          this.gameState.setCell(found.originX + dx, found.originY + dy, null);
+          this.grid.setCell(found.originX + dx, found.originY + dy, null);
         }
       }
       world.remove(found.entity);
     } else {
-      this.gameState.setCell(gridX, gridY, null);
+      this.grid.setCell(gridX, gridY, null);
     }
   }
 
@@ -398,11 +522,10 @@ export class CanvasGestureManager {
 
     if (cell) {
       const fp = getFootprint(drag.buildingType);
-      const spriteName = getSpriteForType(drag.buildingType);
       this.renderer.placementPreview = {
         gridX: cell.x,
         gridY: cell.y,
-        spriteName,
+        spriteName: drag.buildingType,
         valid: this.isFootprintClear(cell.x, cell.y, fp.w, fp.h),
         footprintW: fp.w,
         footprintH: fp.h,
@@ -421,7 +544,7 @@ export class CanvasGestureManager {
     if (preview?.valid) {
       const cost = getBuildingCost(drag.buildingType);
       const fp = getFootprint(drag.buildingType);
-      if (this.gameState.money >= cost) {
+      if ((getResourceEntity()?.resources.money ?? 0) >= cost) {
         this.placeBuilding(preview.gridX, preview.gridY, drag.buildingType, cost, fp);
         notifyStateChange();
         // Note: onBuild is already called inside placeBuilding
@@ -460,5 +583,6 @@ export class CanvasGestureManager {
     this.canvas.removeEventListener('wheel', this.onWheel);
     window.removeEventListener('pointermove', this.onGlobalPointerMove);
     window.removeEventListener('pointerup', this.onGlobalPointerUp);
+    setPlacementCallback(null);
   }
 }

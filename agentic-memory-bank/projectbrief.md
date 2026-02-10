@@ -41,7 +41,7 @@ The game is a darkly humorous take on centrally-planned economies — every syst
 
 ### Out of Scope (Currently)
 - Multiplayer
-- 3D model loading (currently uses procedural BabylonJS meshes)
+- 3D model loading (uses pre-baked isometric sprites from Blender)
 - Full citizen AI simulation (Yuka integration is stubbed)
 - Republic/SSR expansion mechanics (anthems are loaded but unused)
 

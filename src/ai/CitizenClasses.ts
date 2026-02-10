@@ -131,7 +131,7 @@ const WORKER_PROFILE: CitizenBehaviorProfile = {
   thirstRate: 1.3,
 
   productionEfficiency: 1.0,
-  allowedWorkplaces: ['farm', 'distillery', 'power'],
+  allowedWorkplaces: ['agriculture', 'industry', 'power'],
   actuallyWorks: true,
 
   loyaltyBaseline: 0.5,
@@ -203,7 +203,7 @@ const ENGINEER_PROFILE: CitizenBehaviorProfile = {
   thirstRate: 1.0,
 
   productionEfficiency: 1.5,
-  allowedWorkplaces: ['power'],
+  allowedWorkplaces: ['power', 'industry'],
   actuallyWorks: true,
 
   loyaltyBaseline: 0.6,
@@ -239,7 +239,7 @@ const FARMER_PROFILE: CitizenBehaviorProfile = {
   thirstRate: 1.2,
 
   productionEfficiency: 1.3,
-  allowedWorkplaces: ['farm'],
+  allowedWorkplaces: ['agriculture'],
   actuallyWorks: true,
 
   loyaltyBaseline: 0.45,
@@ -275,7 +275,7 @@ const SOLDIER_PROFILE: CitizenBehaviorProfile = {
   thirstRate: 0.8,
 
   productionEfficiency: 0,
-  allowedWorkplaces: ['gulag'],
+  allowedWorkplaces: ['military'],
   actuallyWorks: false,
 
   loyaltyBaseline: 0.85,
@@ -311,7 +311,7 @@ const PRISONER_PROFILE: CitizenBehaviorProfile = {
   thirstRate: 0.5,
 
   productionEfficiency: 0.5,
-  allowedWorkplaces: ['gulag'],
+  allowedWorkplaces: ['military'],
   actuallyWorks: true,
 
   loyaltyBaseline: 0.05,
@@ -386,7 +386,7 @@ export function getClassDistribution(): ReadonlyArray<readonly [CitizenClass, nu
   ] as const;
 }
 
-import type { GameRng } from '../game/SeedSystem';
+import type { GameRng } from '@/game/SeedSystem';
 
 /**
  * Selects a random citizen class based on the weighted distribution.

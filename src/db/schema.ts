@@ -12,6 +12,8 @@ export const saves = sqliteTable('saves', {
   name: text('name').notNull().default('autosave'),
   timestamp: integer('timestamp').notNull(),
   version: text('version').notNull().default('1.0.0'),
+  /** JSON blob of full extended game state (subsystems, all resources, config). */
+  gameState: text('game_state'),
 });
 
 /** Resource snapshot — one row per save. */
