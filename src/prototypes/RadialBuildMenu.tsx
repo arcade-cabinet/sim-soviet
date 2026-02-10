@@ -423,13 +423,12 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ x, y, availableSpace, onSelect,
           top: y - CENTER,
           width: CENTER * 2,
           height: CENTER * 2,
-          pointerEvents: 'none',
         }}
       >
         <svg
           viewBox={`0 0 ${CENTER * 2} ${CENTER * 2}`}
           className="w-full h-full"
-          style={{ pointerEvents: 'none' }}
+          style={{ pointerEvents: 'auto' }}
         >
           {/* Center dot */}
           <circle cx={CENTER} cy={CENTER} r={8} fill="#cfaa48" opacity={0.6} />

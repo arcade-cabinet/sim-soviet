@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, AlertTriangle, ArrowRight, Radio, X } from 'lucide-react';
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 // Types
@@ -83,7 +83,6 @@ const ToastItem = ({
 }: {
   toast: Toast;
   onDismiss: (id: string) => void;
-  index: number;
 }) => {
   const config = severityConfig[toast.severity];
   const Icon = config.icon;
@@ -188,6 +187,14 @@ export const SovietToastStack = ({
   position = 'top-right',
 }: ToastStackProps) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  // Clean up all timers on unmount
+  useEffect(() => {
+    return () => {
+      for (const timer of timersRef.current.values()) clearTimeout(timer);
+    };
+  }, []);
 
   const addToast = useCallback(
     (toast: Omit<Toast, 'id'>) => {
@@ -196,14 +203,21 @@ export const SovietToastStack = ({
 
       setToasts((prev) => [newToast, ...prev].slice(0, maxToasts));
 
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
+        timersRef.current.delete(id);
       }, duration);
+      timersRef.current.set(id, timer);
     },
     [maxToasts, duration]
   );
 
   const dismissToast = useCallback((id: string) => {
+    const timer = timersRef.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      timersRef.current.delete(id);
+    }
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
@@ -230,9 +244,9 @@ export const SovietToastStack = ({
       )}
     >
       <AnimatePresence mode="popLayout">
-        {toasts.map((toast, index) => (
+        {toasts.map((toast) => (
           <div key={toast.id} className="pointer-events-auto">
-            <ToastItem toast={toast} onDismiss={dismissToast} index={index} />
+            <ToastItem toast={toast} onDismiss={dismissToast} />
           </div>
         ))}
       </AnimatePresence>
