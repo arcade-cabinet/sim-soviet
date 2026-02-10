@@ -337,7 +337,7 @@ const WorkforceRow: React.FC<{
   value: number;
   total: number;
 }> = ({ label, value, total }) => {
-  const pct = Math.round((value / total) * 100);
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
     <div className="flex items-center gap-2">
       <span className="text-[#888] text-[10px] w-14">{label}</span>

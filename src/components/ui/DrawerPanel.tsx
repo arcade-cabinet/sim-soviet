@@ -155,7 +155,7 @@ export function DrawerPanel({ isOpen, onClose }: DrawerPanelProps) {
                       message={`${snap.blackMarks} black mark${snap.blackMarks !== 1 ? 's' : ''} in personnel file`}
                     />
                   )}
-                  {quotaPct < 30 && yearsLeft <= 1 && (
+                  {snap.quota.target > 0 && quotaPct < 30 && yearsLeft <= 1 && (
                     <AlertItem
                       severity="warning"
                       message="Quota deadline approaching — behind schedule"

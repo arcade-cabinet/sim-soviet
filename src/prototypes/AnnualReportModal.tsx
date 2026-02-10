@@ -33,6 +33,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({ onClose 
 
   const calculateRisk = (actual: number, reported: number): number => {
     if (reported === actual) return 0;
+    if (actual === 0) return 100;
     const deviation = Math.abs(reported - actual) / actual;
     return Math.round(deviation * 100);
   };
@@ -97,6 +98,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({ onClose 
                     <button
                       onClick={handleClose}
                       className="absolute top-4 right-4 text-[#8b4513] hover:text-[#654321] transition-colors"
+                      aria-label="Close report"
                     >
                       <X size={24} />
                     </button>

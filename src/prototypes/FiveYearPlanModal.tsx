@@ -38,6 +38,7 @@ const QUOTA_DATA: QuotaRow[] = [
 const DOCUMENT_FONT = { fontFamily: 'Courier New, monospace' } as const;
 
 function increasePercent(current: number, target: number): number {
+  if (current <= 0) return target > 0 ? 999 : 0;
   return Math.round(((target - current) / current) * 100);
 }
 
