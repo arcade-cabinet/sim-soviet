@@ -404,7 +404,7 @@ export class SimulationEngine {
     const metrics: SettlementMetrics = {
       population,
       buildings: buildingList,
-      totalWorkers: totalCapacity || population,
+      totalWorkers: population,
       nonAgriculturalWorkers:
         totalCapacity > 0 ? Math.round((nonAgriCapacity / totalCapacity) * population) : 0,
     };

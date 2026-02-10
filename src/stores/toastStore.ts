@@ -47,9 +47,9 @@ export function addSovietToast(severity: ToastSeverity, message: string): void {
 
 /** Manually dismiss a toast by ID. */
 export function dismissSovietToast(id: string): void {
-  const before = _toasts;
+  const len = _toasts.length;
   _toasts = _toasts.filter((t) => t.id !== id);
-  if (_toasts !== before) notify();
+  if (_toasts.length !== len) notify();
 }
 
 /** React hook — subscribe to the current toast list. */

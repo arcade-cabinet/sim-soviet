@@ -26,6 +26,7 @@ import { SovietHUD } from '@/components/ui/SovietHUD';
 import { SovietToastStack } from '@/components/ui/SovietToastStack';
 import type { SettlementEvent } from '@/game/SettlementSystem';
 import type { SimCallbacks } from '@/game/SimulationEngine';
+import { getResourceEntity } from '@/ecs/archetypes';
 import { useGameSnapshot } from '@/stores/gameStore';
 import { addSovietToast } from '@/stores/toastStore';
 
@@ -64,15 +65,17 @@ export function App() {
     },
     onGameOver: (victory, reason) => setGameOver({ victory, reason }),
     onSettlementChange: (event) => setSettlementEvent(event),
-    onNewPlan: (plan) =>
+    onNewPlan: (plan) => {
+      const res = getResourceEntity();
       setPlanDirective({
         ...plan,
-        currentFood: snap.food,
-        currentVodka: snap.vodka,
-        currentPop: snap.pop,
-        currentPower: snap.power,
-        currentMoney: snap.money,
-      }),
+        currentFood: res?.resources.food ?? 0,
+        currentVodka: res?.resources.vodka ?? 0,
+        currentPop: res?.resources.population ?? 0,
+        currentPower: res?.resources.power ?? 0,
+        currentMoney: res?.resources.money ?? 0,
+      });
+    },
     onAnnualReport: (data, submitFn) => {
       setAnnualReport(data);
       submitReportRef.current = submitFn;

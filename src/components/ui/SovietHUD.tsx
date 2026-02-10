@@ -39,7 +39,7 @@ interface SovietHUDProps {
 export function SovietHUD({ onMenuToggle }: SovietHUDProps) {
   const snap = useGameSnapshot();
 
-  const month = MONTH_NAMES[snap.date.month % 12] ?? '???';
+  const month = MONTH_NAMES[(snap.date.month - 1) % 12] ?? '???';
   const dateStr = `${month} ${snap.date.year}`;
   const tierLabel = TIER_LABELS[snap.settlementTier] ?? 'Selo';
   const powerStr = `${snap.powerUsed}/${snap.power}`;
