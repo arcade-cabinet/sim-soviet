@@ -58,6 +58,41 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 | Dead config | Removed legacy BabylonJS constants | **COMPLETE** |
 | Leader UI | Gen. Sec. name in TopBar | **COMPLETE** |
 
+## UI Prototype Gallery (ALL APPROVED)
+
+**Branch**: `feat/wire-all-game-systems`
+**Viewer**: `http://localhost:3000/prototypes.html` (multi-page Vite build)
+
+| Prototype | File | Theme | Status |
+|-----------|------|-------|--------|
+| Annual Report (Pripiski) | `src/prototypes/AnnualReportModal.tsx` | Parchment | APPROVED |
+| Notification Toasts | `src/prototypes/SovietToastStack.tsx` | Concrete | APPROVED |
+| Game HUD + Drawer | `src/prototypes/SovietGameHUD.tsx` | Concrete | APPROVED |
+| Radial Build Menu | `src/prototypes/RadialBuildMenu.tsx` | Concrete | APPROVED |
+| 5-Year Plan Directive | `src/prototypes/FiveYearPlanModal.tsx` | Parchment | APPROVED |
+| Settlement Upgrade | `src/prototypes/SettlementUpgradeModal.tsx` | Hybrid | APPROVED |
+
+### Design System: Dual-Theme Tokens
+**File**: `src/design/tokens.ts`
+- **Concrete** (dark): `#1a1a1a` → `#2a2a2a` → `#3a3535` surfaces, VT323 font
+- **Parchment** (light): `#f4e8d0` → `#e8dcc0` → `#d4c4a0` surfaces, Courier New font
+- **Shared accents**: red `#8b0000`, gold `#cfaa48`
+- Exports: `concrete`, `parchment`, `accent`, `severity`, `SOVIET_FONT`, `DOCUMENT_FONT`
+
+### UI Process
+- User generates initial variants via 21st.dev Magic Components
+- Claude integrates, adapts to project patterns, and builds subsequent prototypes from the extracted design system
+- Review on phone via `--host 0.0.0.0`
+
+### Key UI Decisions
+- **Radial pie menu** for building placement (not toolbar) — tap grid → category ring → building ring
+- **Hamburger drawer** (top-right) instead of fixed side panels — maximizes viewport
+- **Grid scales to viewport** — no cement borders, zoom locked to fill screen
+- **100dvh** for mobile viewport (not `h-screen`) to account for browser chrome
+
+### Dependencies Added
+`@headlessui/react`, `lucide-react`, `@radix-ui/react-slider`, `clsx`, `tailwind-merge`, `framer-motion`
+
 ## Active Decisions
 
 - **Canvas 2D over BabylonJS**: Pre-baked sprites on 2D canvas (808 KB JS, 237 KB gzip — PolitburoSystem adds ~500KB)

@@ -22,6 +22,7 @@ import { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
 import { GRID_SIZE } from '@/rendering/GridMath';
 import { SpriteLoader } from '@/rendering/SpriteLoader';
 import {
+  getGameSpeed,
   getGameState,
   isPaused,
   notifyStateChange,
@@ -233,7 +234,10 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
 
     tickRef.current = setInterval(() => {
       if (!isPaused()) {
-        simRef.current?.tick();
+        const speed = getGameSpeed();
+        for (let i = 0; i < speed; i++) {
+          simRef.current?.tick();
+        }
       }
     }, 1000);
 

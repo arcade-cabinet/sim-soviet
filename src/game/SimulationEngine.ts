@@ -6,17 +6,22 @@
  * resource store back to GameState for React snapshot consumption.
  *
  * Systems executed per tick (in order):
- *   1. ChronologySystem — advance time, season, weather, day/night
- *   2. powerSystem      — distribute power across buildings
- *   3. productionSystem — produce food/vodka from powered producers
- *   4. consumptionSystem — citizens consume food and vodka
- *   5. populationSystem — population growth from housing + food
- *   6. decaySystem       — buildings degrade over time
- *   7. quotaSystem       — track 5-year plan progress
- *   8. EventSystem       — random satirical events
- *   9. PravdaSystem      — generate propaganda headlines
+ *   1. ChronologySystem       — advance time, season, weather, day/night
+ *   2. powerSystem             — distribute power across buildings
+ *   3. productionSystem        — produce food/vodka from powered producers
+ *   4. CompulsoryDeliveries    — state extraction of new production
+ *   5. consumptionSystem       — citizens consume food and vodka
+ *   6. populationSystem        — population growth from housing + food
+ *   7. decaySystem             — buildings degrade over time
+ *   8. quotaSystem             — track 5-year plan progress
+ *   9. SettlementSystem        — evaluate tier upgrades/downgrades
+ *  10. EventSystem             — random satirical events
+ *  11. PolitburoSystem         — corruption drain, politburo events
+ *  12. PravdaSystem            — generate propaganda headlines
+ *  13. PersonnelFile           — black mark decay, arrest check
  */
 
+import { getBuildingDef } from '@/data/buildingDefs';
 import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import {
@@ -33,12 +38,16 @@ import {
 import { TICKS_PER_YEAR } from './Chronology';
 import type { TickResult } from './ChronologySystem';
 import { ChronologySystem } from './ChronologySystem';
+import { CompulsoryDeliveries } from './CompulsoryDeliveries';
 import type { GameEvent } from './EventSystem';
 import { EventSystem } from './EventSystem';
 import type { GameState } from './GameState';
+import { PersonnelFile } from './PersonnelFile';
 import { PolitburoSystem } from './PolitburoSystem';
 import { PravdaSystem } from './PravdaSystem';
 import type { GameRng } from './SeedSystem';
+import type { SettlementMetrics } from './SettlementSystem';
+import { SettlementSystem } from './SettlementSystem';
 import { getWeatherProfile, type WeatherType } from './WeatherSystem';
 
 /**
@@ -65,6 +74,9 @@ export class SimulationEngine {
   private eventSystem: EventSystem;
   private pravdaSystem: PravdaSystem;
   private politburo: PolitburoSystem;
+  private personnelFile: PersonnelFile;
+  private deliveries: CompulsoryDeliveries;
+  private settlement: SettlementSystem;
   private quota: QuotaState;
   private rng: GameRng | undefined;
   private lastSeason = '';
@@ -114,6 +126,16 @@ export class SimulationEngine {
     };
     this.politburo = new PolitburoSystem(gameState, politburoEventHandler, rng);
 
+    // Personnel File — tracks black marks and commendations (game-over mechanic)
+    this.personnelFile = new PersonnelFile();
+
+    // Compulsory Deliveries — state takes cut of production
+    this.deliveries = new CompulsoryDeliveries();
+    if (rng) this.deliveries.setRng(rng);
+
+    // Settlement Evolution — selo → posyolok → pgt → gorod
+    this.settlement = new SettlementSystem(gameState.settlementTier);
+
     // Wire ECS callbacks to UI
     setStarvationCallback(() => {
       this.callbacks.onToast('STARVATION DETECTED');
@@ -148,6 +170,18 @@ export class SimulationEngine {
     return this.chronology;
   }
 
+  public getPersonnelFile(): PersonnelFile {
+    return this.personnelFile;
+  }
+
+  public getDeliveries(): CompulsoryDeliveries {
+    return this.deliveries;
+  }
+
+  public getSettlement(): SettlementSystem {
+    return this.settlement;
+  }
+
   public getQuota(): Readonly<QuotaState> {
     return this.quota;
   }
@@ -177,7 +211,25 @@ export class SimulationEngine {
     const vodkaMod = politburoMods.vodkaProductionMult;
 
     powerSystem();
+
+    // Capture pre-production resource levels for CompulsoryDeliveries delta
+    const storeRef = getResourceEntity();
+    const foodBefore = storeRef?.resources.food ?? 0;
+    const vodkaBefore = storeRef?.resources.vodka ?? 0;
+
     productionSystem(farmMod, vodkaMod);
+
+    // Apply CompulsoryDeliveries — state extraction of new production
+    if (storeRef) {
+      const newFood = storeRef.resources.food - foodBefore;
+      const newVodka = storeRef.resources.vodka - vodkaBefore;
+      if (newFood > 0 || newVodka > 0) {
+        const result = this.deliveries.applyDeliveries(newFood, newVodka, 0);
+        storeRef.resources.food = Math.max(0, storeRef.resources.food - result.foodTaken);
+        storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - result.vodkaTaken);
+      }
+    }
+
     consumptionSystem();
     populationSystem(this.rng, politburoMods.populationGrowthMult);
     decaySystem(politburoMods.infrastructureDecayMult);
@@ -185,6 +237,9 @@ export class SimulationEngine {
 
     // Gulag effect: powered gulags have a 10% chance of reducing population
     this.processGulagEffect();
+
+    // Settlement Evolution — evaluate tier changes
+    this.tickSettlement();
 
     // 8-10. Events, Politburo, and Pravda
     this.eventSystem.tick(this.chronology.getDate().totalTicks);
@@ -205,6 +260,16 @@ export class SimulationEngine {
     }
 
     this.tickPravda();
+
+    // Personnel file — tick for mark decay + check arrest
+    const totalTicks = this.chronology.getDate().totalTicks;
+    this.personnelFile.tick(totalTicks);
+    if (this.personnelFile.isArrested()) {
+      this.endGame(
+        false,
+        'Your personnel file has been reviewed. You have been declared an Enemy of the People. No further correspondence is expected.'
+      );
+    }
 
     // Sync ECS resource store → GameState for React snapshots
     this.syncEcsToGameState();
@@ -281,6 +346,14 @@ export class SimulationEngine {
     this.gameState.leaderName = gs.name;
     this.gameState.leaderPersonality = gs.personality;
 
+    // Sync personnel file to GameState
+    this.gameState.blackMarks = this.personnelFile.getBlackMarks();
+    this.gameState.commendations = this.personnelFile.getCommendations();
+    this.gameState.threatLevel = this.personnelFile.getThreatLevel();
+
+    // Sync settlement tier
+    this.gameState.settlementTier = this.settlement.getCurrentTier();
+
     // Sync buildings: rebuild GameState.buildings from ECS entities
     this.gameState.buildings = [];
     for (const entity of buildingsLogic) {
@@ -312,29 +385,101 @@ export class SimulationEngine {
     }
   }
 
-  private checkQuota(): void {
-    if (this.gameState.date.year >= this.quota.deadlineYear) {
-      if (this.quota.current >= this.quota.target) {
-        this.consecutiveQuotaFailures = 0;
-        this.callbacks.onAdvisor('Quota met. Accept this medal made of tin. Now, produce VODKA.');
-        this.quota.type = 'vodka';
-        this.quota.target = 500;
-        this.quota.deadlineYear = this.gameState.date.year + 5;
-        this.quota.current = 0;
-      } else {
-        this.consecutiveQuotaFailures++;
-        if (this.consecutiveQuotaFailures >= MAX_QUOTA_FAILURES) {
-          this.endGame(
-            false,
-            `You failed ${MAX_QUOTA_FAILURES} consecutive 5-Year Plans. The Politburo has dissolved your position.`
-          );
-        } else {
-          this.callbacks.onAdvisor(
-            `You failed the 5-Year Plan (${this.consecutiveQuotaFailures}/${MAX_QUOTA_FAILURES} failures). The KGB is watching.`
-          );
-          this.quota.deadlineYear += 5;
-        }
+  /**
+   * Evaluates settlement tier from ECS building data + population.
+   * Fires advisor/toast callbacks on tier changes.
+   */
+  private tickSettlement(): void {
+    const store = getResourceEntity();
+    const population = store?.resources.population ?? 0;
+
+    // Build metrics from ECS entities
+    const buildingList: SettlementMetrics['buildings'] = [];
+    let totalCapacity = 0;
+    let nonAgriCapacity = 0;
+
+    for (const entity of buildingsLogic) {
+      const def = getBuildingDef(entity.building.defId);
+      const role = def?.role ?? 'unknown';
+      buildingList.push({ defId: entity.building.defId, role });
+
+      // Approximate workforce composition from housing capacity
+      const cap = Math.max(0, entity.building.housingCap);
+      totalCapacity += cap;
+      if (role !== 'agriculture') {
+        nonAgriCapacity += cap;
       }
+    }
+
+    const metrics: SettlementMetrics = {
+      population,
+      buildings: buildingList,
+      totalWorkers: totalCapacity || population,
+      nonAgriculturalWorkers:
+        totalCapacity > 0 ? Math.round((nonAgriCapacity / totalCapacity) * population) : 0,
+    };
+
+    const event = this.settlement.tick(metrics);
+    if (event) {
+      this.callbacks.onAdvisor(`${event.title}\n\n${event.description}`);
+      this.callbacks.onToast(
+        event.type === 'upgrade'
+          ? `UPGRADED: ${event.toTier.toUpperCase()}`
+          : `DOWNGRADED: ${event.toTier.toUpperCase()}`
+      );
+    }
+  }
+
+  private checkQuota(): void {
+    if (this.gameState.date.year < this.quota.deadlineYear) return;
+
+    if (this.quota.current >= this.quota.target) {
+      this.handleQuotaMet();
+    } else {
+      this.handleQuotaMissed();
+    }
+  }
+
+  private handleQuotaMet(): void {
+    const totalTicks = this.chronology.getDate().totalTicks;
+    this.consecutiveQuotaFailures = 0;
+
+    if (this.quota.current > this.quota.target * 1.1) {
+      this.personnelFile.addCommendation('quota_exceeded', totalTicks);
+      this.callbacks.onToast('+1 COMMENDATION: Quota exceeded');
+    }
+
+    this.callbacks.onAdvisor('Quota met. Accept this medal made of tin. Now, produce VODKA.');
+    this.quota.type = 'vodka';
+    this.quota.target = 500;
+    this.quota.deadlineYear = this.gameState.date.year + 5;
+    this.quota.current = 0;
+  }
+
+  private handleQuotaMissed(): void {
+    const totalTicks = this.chronology.getDate().totalTicks;
+    this.consecutiveQuotaFailures++;
+    const missPercent = 1 - this.quota.current / this.quota.target;
+
+    // Black marks based on how badly the quota was missed
+    if (missPercent > 0.6) {
+      this.personnelFile.addMark('quota_missed_catastrophic', totalTicks);
+    } else if (missPercent > 0.3) {
+      this.personnelFile.addMark('quota_missed_major', totalTicks);
+    } else if (missPercent > 0.1) {
+      this.personnelFile.addMark('quota_missed_minor', totalTicks);
+    }
+
+    if (this.consecutiveQuotaFailures >= MAX_QUOTA_FAILURES) {
+      this.endGame(
+        false,
+        `You failed ${MAX_QUOTA_FAILURES} consecutive 5-Year Plans. The Politburo has dissolved your position.`
+      );
+    } else {
+      this.callbacks.onAdvisor(
+        `You failed the 5-Year Plan (${this.consecutiveQuotaFailures}/${MAX_QUOTA_FAILURES} failures). The KGB is watching.`
+      );
+      this.quota.deadlineYear += 5;
     }
   }
 

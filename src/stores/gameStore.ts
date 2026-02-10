@@ -24,8 +24,13 @@ export interface GameSnapshot {
   buildingCount: number;
   gameOver: GameOverState | null;
   paused: boolean;
+  gameSpeed: 1 | 2 | 3;
   leaderName?: string;
   leaderPersonality?: string;
+  settlementTier: 'selo' | 'posyolok' | 'pgt' | 'gorod';
+  blackMarks: number;
+  commendations: number;
+  threatLevel: string;
 }
 
 // ── Singleton state ───────────────────────────────────────────────────────
@@ -49,8 +54,13 @@ function createSnapshot(gs: GameState): GameSnapshot {
     buildingCount: gs.buildings.length,
     gameOver: gs.gameOver,
     paused: _paused,
+    gameSpeed: _gameSpeed,
     leaderName: gs.leaderName,
     leaderPersonality: gs.leaderPersonality,
+    settlementTier: gs.settlementTier,
+    blackMarks: gs.blackMarks,
+    commendations: gs.commendations,
+    threatLevel: gs.threatLevel,
   };
 }
 
@@ -121,9 +131,10 @@ function subscribeDrag(listener: () => void): () => void {
   };
 }
 
-// ── Pause State ──────────────────────────────────────────────────────────
+// ── Pause & Speed State ──────────────────────────────────────────────────
 
 let _paused = false;
+let _gameSpeed: 1 | 2 | 3 = 1;
 
 export function isPaused(): boolean {
   return _paused;
@@ -138,6 +149,23 @@ export function togglePause(): boolean {
 export function setPaused(paused: boolean): void {
   _paused = paused;
   notifyStateChange();
+}
+
+export type GameSpeed = 1 | 2 | 3;
+
+export function getGameSpeed(): GameSpeed {
+  return _gameSpeed;
+}
+
+export function setGameSpeed(speed: GameSpeed): void {
+  _gameSpeed = speed;
+  notifyStateChange();
+}
+
+export function cycleGameSpeed(): GameSpeed {
+  _gameSpeed = (_gameSpeed === 3 ? 1 : _gameSpeed + 1) as GameSpeed;
+  notifyStateChange();
+  return _gameSpeed;
 }
 
 // ── Inspected Building ──────────────────────────────────────────────────
