@@ -2,7 +2,7 @@
 
 ## Current State
 
-**Branch**: `main` — all PRs merged, deployed to GitHub Pages.
+**Branch**: `feat/wire-all-game-systems` — active development, all 6 approved UI prototypes now wired.
 
 **Live site**: https://arcade-cabinet.github.io/sim-soviet/
 
@@ -33,6 +33,19 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 - [x] **Pause overlay** — animated "PAUSED" indicator on viewport
 - [x] **scrollbar-hide** CSS utility for mobile resource overflow
 - [x] **App layout** — switched from `.game-root` CSS to Tailwind flex column with `100dvh`
+- [x] **Radial Build Menu** — replaced Toolbar with SVG pie menu; tap empty cell → category ring → building ring → auto-place
+- [x] **Import alias cleanup** — `../game/SeedSystem` → `@/game/SeedSystem` in CitizenClasses, NameGenerator, WorldBuilding
+- [x] **Gulag predicate refactor** — extracted `isGulag()` helper in PravdaSystem
+- [x] **Biome lint count** — reduced from 64 to 33 errors via import ordering fixes
+- [x] **Bundle size** — reduced from 808 KB to 634 KB (183 KB gzip) by removing Toolbar
+- [x] **SovietToastStack** — replaced old Toast component with severity-based toasts (warning/critical/evacuation)
+- [x] **SettlementUpgradeModal** — parchment decree modal for tier transitions (selo→gorod)
+- [x] **FiveYearPlanModal** — quota directive modal on quota transitions with production table
+- [x] **Event severity mapping** — catastrophic→evacuation, major→critical, minor→Pravda only
+- [x] **AnnualReportModal (pripiski)** — report falsification mechanic at quota deadline years
+- [x] **Dead code cleanup** — removed old Toast.tsx and .toast CSS
+- [x] **920 unit tests passing** (up from 911)
+- [x] **Legacy type→defId migration** — COMPLETE, LEGACY_TYPE_TO_SPRITE fully removed
 
 ### PRs Merged
 - **PR #1**: Canvas 2D migration, CI/CD setup, systems overhaul, 795 unit tests

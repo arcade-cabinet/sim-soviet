@@ -81,7 +81,7 @@
 
 ### Infrastructure
 - [x] Vite 7 + TypeScript 5.9 strict mode + Biome
-- [x] **911 unit tests** passing (Vitest + happy-dom)
+- [x] **920 unit tests** passing (Vitest + happy-dom)
 - [x] **139 E2E tests** passing (Playwright — Desktop Chrome, iPhone SE, Pixel 8a, iPad)
 - [x] GitHub Actions CI (Quality Checks + E2E Tests + Mobile CI + CodeQL + CodeRabbit + SonarCloud)
 - [x] GitHub Pages auto-deploy on merge to main
@@ -113,7 +113,7 @@
 - [x] Wire PolitburoSystem into SimulationEngine.tick() — **DONE**
 - [x] Multi-cell building placement — **DONE** (drag-to-place with footprints)
 - [x] Victory/loss conditions — **DONE** (quota failures + population wipe + year 1995 + arrest)
-- [ ] Wire approved UI prototypes into game (HUD, radial menu, toasts)
+- [x] Wire approved UI prototypes into game — ALL 6 wired (HUD, radial menu, toasts, settlement upgrade, 5-year plan, annual report)
 - [ ] Save/load UI
 - [ ] Resolve ECS vs GameState duality (plan says remove dead ECS)
 
