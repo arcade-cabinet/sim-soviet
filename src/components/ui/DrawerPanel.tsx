@@ -17,6 +17,7 @@ import {
   Upload,
   Users,
   Volume2,
+  VolumeX,
   X,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -56,6 +57,7 @@ export function DrawerPanel({ isOpen, onClose, saveApi, audioApi }: DrawerPanelP
   const tierRussian = TIER_RUSSIAN[snap.settlementTier] ?? 'село';
   const [musicVol, setMusicVol] = useState(() => audioApi?.getMusicVolume() ?? 0.5);
   const [ambientVol, setAmbientVol] = useState(() => audioApi?.getAmbientVolume() ?? 0.4);
+  const [isMuted, setIsMuted] = useState(() => audioApi?.isMuted() ?? true);
 
   // Quota info
   const quotaProgress =
@@ -203,8 +205,24 @@ export function DrawerPanel({ isOpen, onClose, saveApi, audioApi }: DrawerPanelP
               </DrawerSection>
 
               {/* Audio Controls */}
-              <DrawerSection icon={Volume2} title="AUDIO CONTROLS">
+              <DrawerSection icon={isMuted ? VolumeX : Volume2} title="AUDIO CONTROLS">
                 <div className="space-y-3">
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-center gap-2 border px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                    style={{
+                      borderColor: isMuted ? '#8b0000' : '#444',
+                      background: isMuted ? 'rgba(139,0,0,0.3)' : 'rgba(26,26,26,0.8)',
+                      color: isMuted ? '#ff4444' : '#aaa',
+                    }}
+                    onClick={() => {
+                      const nowMuted = audioApi?.toggleMute() ?? !isMuted;
+                      setIsMuted(nowMuted);
+                    }}
+                  >
+                    {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                    {isMuted ? 'UNMUTE AUDIO' : 'MUTE AUDIO'}
+                  </button>
                   <VolumeSlider
                     label="MUSIC"
                     value={musicVol}
