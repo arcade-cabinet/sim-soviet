@@ -23,7 +23,15 @@ import { world } from '@/ecs/world';
 import { getFootprint } from '@/game/BuildingFootprints';
 import type { GameState } from '@/game/GameState';
 import type { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
-import { getDragState, notifyStateChange, setDragState, setInspected } from '@/stores/gameStore';
+import {
+  closeRadialMenu,
+  getDragState,
+  notifyStateChange,
+  openRadialMenu,
+  setDragState,
+  setInspected,
+  setPlacementCallback,
+} from '@/stores/gameStore';
 
 type GestureState = 'idle' | 'pending' | 'panning' | 'dragging_from_toolbar';
 
@@ -65,6 +73,30 @@ export class CanvasGestureManager {
     private renderer: Canvas2DRenderer
   ) {
     this.setupEvents();
+    setPlacementCallback(this.tryPlaceBuilding);
+  }
+
+  /**
+   * Public placement API — called by RadialBuildMenu via gameStore.requestPlacement().
+   * Returns true if building was successfully placed.
+   */
+  private tryPlaceBuilding = (gridX: number, gridY: number, defId: string): boolean => {
+    const cost = getBuildingCost(defId);
+    const fp = getFootprint(defId);
+    if (!this.isFootprintClear(gridX, gridY, fp.w, fp.h)) return false;
+    if (this.gameState.money < cost) return false;
+
+    this.placeBuilding(gridX, gridY, defId, cost, fp);
+    notifyStateChange();
+    return true;
+  };
+
+  /** Calculate the largest NxN square of clear cells starting at (gridX, gridY). */
+  private getAvailableSpace(gridX: number, gridY: number): number {
+    for (let size = 3; size >= 1; size--) {
+      if (this.isFootprintClear(gridX, gridY, size, size)) return size;
+    }
+    return 0;
   }
 
   private setupEvents(): void {
@@ -184,6 +216,9 @@ export class CanvasGestureManager {
   // ── Game Actions ──────────────────────────────────────────────────────
 
   private handleTap(screenX: number, screenY: number): void {
+    // Close radial menu on any tap (it re-opens if needed in handleInspect)
+    closeRadialMenu();
+
     const cell = this.renderer.screenToGridCell(screenX, screenY);
     if (!cell) return;
 
@@ -193,7 +228,7 @@ export class CanvasGestureManager {
     if (!gridCell) return;
 
     if (tool === 'none') {
-      this.handleInspect(gridX, gridY, gridCell);
+      this.handleInspect(gridX, gridY, gridCell, screenX, screenY);
       return;
     }
 
@@ -205,10 +240,29 @@ export class CanvasGestureManager {
     this.handleBuildTap(gridX, gridY, tool);
   }
 
-  /** Inspect -- show building info panel on tap. */
-  private handleInspect(gridX: number, gridY: number, gridCell: { type: string | null }): void {
+  /** Inspect -- show building info panel on tap, or open radial menu on empty cell. */
+  private handleInspect(
+    gridX: number,
+    gridY: number,
+    gridCell: { type: string | null },
+    screenX: number,
+    screenY: number
+  ): void {
     if (!gridCell.type) {
+      // Empty cell → open radial build menu at tap position
       setInspected(null);
+      const space = this.getAvailableSpace(gridX, gridY);
+      if (space > 0) {
+        // Convert canvas-relative coords to viewport coords for the overlay
+        const rect = this.canvas.getBoundingClientRect();
+        openRadialMenu({
+          screenX: rect.left + screenX,
+          screenY: rect.top + screenY,
+          gridX,
+          gridY,
+          availableSpace: space,
+        });
+      }
       return;
     }
     const defId = gridCell.type;
@@ -445,5 +499,6 @@ export class CanvasGestureManager {
     this.canvas.removeEventListener('wheel', this.onWheel);
     window.removeEventListener('pointermove', this.onGlobalPointerMove);
     window.removeEventListener('pointerup', this.onGlobalPointerUp);
+    setPlacementCallback(null);
   }
 }

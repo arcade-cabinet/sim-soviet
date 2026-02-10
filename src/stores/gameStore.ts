@@ -207,6 +207,67 @@ function subscribeInspect(listener: () => void): () => void {
   };
 }
 
+// ── Radial Build Menu ────────────────────────────────────────────────────
+
+export interface RadialMenuState {
+  /** Screen position of the tap that opened the menu. */
+  screenX: number;
+  screenY: number;
+  /** Grid cell the menu targets. */
+  gridX: number;
+  gridY: number;
+  /** Largest NxN footprint that fits at this cell. */
+  availableSpace: number;
+}
+
+let _radialMenu: RadialMenuState | null = null;
+const _radialListeners = new Set<() => void>();
+
+export function getRadialMenu(): RadialMenuState | null {
+  return _radialMenu;
+}
+
+export function openRadialMenu(state: RadialMenuState): void {
+  _radialMenu = state;
+  for (const listener of _radialListeners) {
+    listener();
+  }
+}
+
+export function closeRadialMenu(): void {
+  _radialMenu = null;
+  for (const listener of _radialListeners) {
+    listener();
+  }
+}
+
+export function useRadialMenu(): RadialMenuState | null {
+  return useSyncExternalStore(subscribeRadial, getRadialMenu, getRadialMenu);
+}
+
+function subscribeRadial(listener: () => void): () => void {
+  _radialListeners.add(listener);
+  return () => {
+    _radialListeners.delete(listener);
+  };
+}
+
+// ── Placement Callback (bridges React → imperative CanvasGestureManager) ─
+
+type PlacementCallback = (gridX: number, gridY: number, defId: string) => boolean;
+
+let _placementCallback: PlacementCallback | null = null;
+
+/** Called by CanvasGestureManager to register its placement method. */
+export function setPlacementCallback(cb: PlacementCallback | null): void {
+  _placementCallback = cb;
+}
+
+/** Called by RadialBuildMenu to place a building at a grid position. */
+export function requestPlacement(gridX: number, gridY: number, defId: string): boolean {
+  return _placementCallback?.(gridX, gridY, defId) ?? false;
+}
+
 // ── Internal ──────────────────────────────────────────────────────────────
 
 function subscribe(listener: () => void): () => void {

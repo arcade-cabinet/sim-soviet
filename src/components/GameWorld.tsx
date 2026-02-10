@@ -22,6 +22,7 @@ import { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
 import { GRID_SIZE } from '@/rendering/GridMath';
 import { SpriteLoader } from '@/rendering/SpriteLoader';
 import {
+  closeRadialMenu,
   getGameSpeed,
   getGameState,
   isPaused,
@@ -265,6 +266,7 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
         case 'Escape':
           selectTool('none');
           setInspected(null);
+          closeRadialMenu();
           break;
         case 'KeyB':
           selectTool('bulldoze');

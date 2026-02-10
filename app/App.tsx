@@ -16,9 +16,9 @@ import { BuildingInspector } from '@/components/ui/BuildingInspector';
 import { DrawerPanel } from '@/components/ui/DrawerPanel';
 import { GameOverModal } from '@/components/ui/GameOverModal';
 import { IntroModal } from '@/components/ui/IntroModal';
+import { RadialBuildMenu } from '@/components/ui/RadialBuildMenu';
 import { SovietHUD } from '@/components/ui/SovietHUD';
 import { Toast } from '@/components/ui/Toast';
-import { Toolbar } from '@/components/ui/Toolbar';
 import type { SimCallbacks } from '@/game/SimulationEngine';
 import { useGameSnapshot } from '@/stores/gameStore';
 
@@ -135,8 +135,8 @@ export function App() {
       {/* Bottom strip — settlement info + Pravda ticker */}
       <BottomStrip pravdaMessage={messages.pravda} />
 
-      {/* Bottom toolbar (kept until radial build menu is wired) */}
-      <Toolbar />
+      {/* Radial build menu — opens on empty grid cell tap */}
+      <RadialBuildMenu />
 
       {/* Slide-out drawer */}
       <DrawerPanel isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
