@@ -58,11 +58,11 @@ export function SovietHUD({ onMenuToggle }: SovietHUDProps) {
 
         {/* Resources — scrollable on mobile */}
         <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 mx-1 scrollbar-hide">
-          <ResourceChip icon="₽" value={snap.money} label="Rubles" />
-          <ResourceChip icon="👤" value={snap.pop} label="Population" />
-          <ResourceChip icon="🥔" value={snap.food} label="Food" />
+          <ResourceChip icon="👷" value={snap.pop} label="Workers" />
+          <ResourceChip icon="🌾" value={snap.food} label="Food" />
           <ResourceChip icon="🍾" value={snap.vodka} label="Vodka" />
           <ResourceChip icon="⚡" value={powerStr} label="Power" alert={powerCritical} />
+          <ResourceChip icon="🤝" value={snap.blat} label="Blat" />
         </div>
 
         {/* Controls: Pause + Speed + Hamburger */}

@@ -3,7 +3,9 @@ import { buildingsLogic, getMetaEntity, getResourceEntity } from '../ecs/archety
 import { createBuilding, createMetaStore, createResourceStore } from '../ecs/factories';
 import { world } from '../ecs/world';
 import { GameGrid } from '../game/GameGrid';
-import { type SaveData, SaveSystem } from '../game/SaveSystem';
+import { type ExtendedSaveData, SaveSystem } from '../game/SaveSystem';
+
+const LS_KEY = 'simsoviet_save_v2';
 
 describe('SaveSystem', () => {
   let grid: GameGrid;
@@ -34,13 +36,13 @@ describe('SaveSystem', () => {
 
     it('stores data in localStorage under the correct key', async () => {
       await saveSystem.save();
-      const raw = localStorage.getItem('simsoviet_save_v1');
+      const raw = localStorage.getItem(LS_KEY);
       expect(raw).not.toBeNull();
     });
 
     it('stores valid JSON', async () => {
       await saveSystem.save();
-      const raw = localStorage.getItem('simsoviet_save_v1')!;
+      const raw = localStorage.getItem(LS_KEY)!;
       expect(() => JSON.parse(raw)).not.toThrow();
     });
 
@@ -53,21 +55,21 @@ describe('SaveSystem', () => {
       getResourceEntity()!.resources.powerUsed = 25;
 
       await saveSystem.save();
-      const data: SaveData = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
+      const data: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
 
-      expect(data.money).toBe(5000);
-      expect(data.pop).toBe(42);
-      expect(data.food).toBe(300);
-      expect(data.vodka).toBe(75);
-      expect(data.power).toBe(100);
-      expect(data.powerUsed).toBe(25);
+      expect(data.resources.money).toBe(5000);
+      expect(data.resources.population).toBe(42);
+      expect(data.resources.food).toBe(300);
+      expect(data.resources.vodka).toBe(75);
+      expect(data.resources.power).toBe(100);
+      expect(data.resources.powerUsed).toBe(25);
     });
 
     it('saves date information', async () => {
       getMetaEntity()!.gameMeta.date = { year: 1990, month: 6, tick: 3 };
       await saveSystem.save();
-      const data: SaveData = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
-      expect(data.date).toEqual({ year: 1990, month: 6, tick: 3 });
+      const data: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
+      expect(data.gameMeta.date).toEqual({ year: 1990, month: 6, tick: 3 });
     });
 
     it('saves buildings correctly', async () => {
@@ -75,15 +77,13 @@ describe('SaveSystem', () => {
       buildingsLogic.entities[0]!.building.powered = true;
 
       await saveSystem.save();
-      const data: SaveData = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
+      const data: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
 
       expect(data.buildings).toHaveLength(1);
-      expect(data.buildings[0]).toEqual({
-        x: 5,
-        y: 10,
-        defId: 'apartment-tower-a',
-        powered: true,
-      });
+      expect(data.buildings[0]!.x).toBe(5);
+      expect(data.buildings[0]!.y).toBe(10);
+      expect(data.buildings[0]!.defId).toBe('apartment-tower-a');
+      expect(data.buildings[0]!.powered).toBe(true);
     });
 
     it('saves quota information', async () => {
@@ -94,8 +94,8 @@ describe('SaveSystem', () => {
         deadlineYear: 1990,
       };
       await saveSystem.save();
-      const data: SaveData = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
-      expect(data.quota).toEqual({
+      const data: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
+      expect(data.gameMeta.quota).toEqual({
         type: 'vodka',
         target: 300,
         current: 150,
@@ -107,8 +107,8 @@ describe('SaveSystem', () => {
       const now = Date.now();
       vi.spyOn(Date, 'now').mockReturnValue(now);
       await saveSystem.save();
-      const data: SaveData = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
-      expect(data.version).toBe('1.0.0');
+      const data: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
+      expect(data.version).toBe('2.0.0');
       expect(data.timestamp).toBe(now);
     });
   });
@@ -245,7 +245,7 @@ describe('SaveSystem', () => {
     });
 
     it('returns false on corrupt JSON', async () => {
-      localStorage.setItem('simsoviet_save_v1', '{not valid json');
+      localStorage.setItem(LS_KEY, '{not valid json');
       expect(await saveSystem.load()).toBe(false);
     });
   });
@@ -318,8 +318,8 @@ describe('SaveSystem', () => {
       getMetaEntity()!.gameMeta.date.year = 2000;
       // The original date was saved as { year: 1985 } — it lives in localStorage,
       // so re-reading should still produce the original value
-      const raw = JSON.parse(localStorage.getItem('simsoviet_save_v1')!);
-      expect(raw.date.year).toBe(1985);
+      const raw: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
+      expect(raw.gameMeta.date.year).toBe(1985);
     });
   });
 

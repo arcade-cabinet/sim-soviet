@@ -61,6 +61,13 @@ export function getBuildingsByRole(role: Role): string[] {
     .map(([id]) => id);
 }
 
+/** Get all building IDs available in a specific era. */
+export function getBuildingsByEra(eraId: string): string[] {
+  return Object.entries(data.buildings)
+    .filter(([, def]) => def.eraAvailable === eraId)
+    .map(([id]) => id);
+}
+
 /** Schema version of the loaded data. */
 export const DEFS_VERSION = data.version;
 

@@ -5,6 +5,7 @@ import {
   createBuilding,
   createCitizen,
   createGrid,
+  createMetaStore,
   createResourceStore,
   createTile,
 } from '@/ecs/factories';
@@ -404,6 +405,87 @@ describe('factories', () => {
           expect(positions.has(`${x},${y}`)).toBe(true);
         }
       }
+    });
+  });
+
+  // ── createMetaStore ───────────────────────────────────────────
+
+  describe('createMetaStore', () => {
+    it('creates meta store with default values', () => {
+      const entity = createMetaStore();
+      expect(entity.gameMeta).toBeDefined();
+      expect(entity.gameMeta!.date).toEqual({ year: 1922, month: 10, tick: 0 });
+      expect(entity.gameMeta!.quota).toEqual({
+        type: 'food',
+        target: 500,
+        current: 0,
+        deadlineYear: 1927,
+      });
+      expect(entity.gameMeta!.selectedTool).toBe('none');
+      expect(entity.gameMeta!.gameOver).toBeNull();
+      expect(entity.gameMeta!.seed).toBe('');
+      expect(entity.gameMeta!.settlementTier).toBe('selo');
+      expect(entity.gameMeta!.blackMarks).toBe(0);
+      expect(entity.gameMeta!.commendations).toBe(0);
+      expect(entity.gameMeta!.threatLevel).toBe('safe');
+    });
+
+    it('has isMetaStore tag', () => {
+      const entity = createMetaStore();
+      expect(entity.isMetaStore).toBe(true);
+    });
+
+    it('accepts partial overrides', () => {
+      const entity = createMetaStore({
+        seed: 'test-seed',
+        date: { year: 1985, month: 6, tick: 0 },
+        settlementTier: 'gorod',
+      });
+      expect(entity.gameMeta!.seed).toBe('test-seed');
+      expect(entity.gameMeta!.date.year).toBe(1985);
+      expect(entity.gameMeta!.settlementTier).toBe('gorod');
+      // Defaults still apply for non-overridden fields
+      expect(entity.gameMeta!.selectedTool).toBe('none');
+      expect(entity.gameMeta!.gameOver).toBeNull();
+    });
+
+    it('accepts full overrides', () => {
+      const entity = createMetaStore({
+        seed: 'full-seed',
+        date: { year: 2000, month: 1, tick: 5 },
+        quota: { type: 'vodka', target: 1000, current: 500, deadlineYear: 2005 },
+        selectedTool: 'power-station',
+        gameOver: { victory: true, reason: 'Test' },
+        leaderName: 'Comrade Test',
+        leaderPersonality: 'ruthless',
+        settlementTier: 'pgt',
+        blackMarks: 3,
+        commendations: 2,
+        threatLevel: 'watched',
+      });
+      expect(entity.gameMeta!.seed).toBe('full-seed');
+      expect(entity.gameMeta!.quota.type).toBe('vodka');
+      expect(entity.gameMeta!.leaderName).toBe('Comrade Test');
+      expect(entity.gameMeta!.blackMarks).toBe(3);
+    });
+
+    it('is a singleton — second call returns existing entity', () => {
+      const first = createMetaStore({ seed: 'first' });
+      const second = createMetaStore({ seed: 'second' });
+      expect(first).toBe(second);
+      expect(second.gameMeta!.seed).toBe('first');
+    });
+
+    it('singleton resets after world.clear', () => {
+      createMetaStore({ seed: 'first' });
+      world.clear();
+      const second = createMetaStore({ seed: 'second' });
+      expect(second.gameMeta!.seed).toBe('second');
+    });
+
+    it('adds to world', () => {
+      createMetaStore();
+      expect(world.entities.length).toBe(1);
     });
   });
 

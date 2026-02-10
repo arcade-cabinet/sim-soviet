@@ -21,9 +21,29 @@ export class Camera2D {
   public minZoom = 0.3;
   public maxZoom = 3;
 
+  /** World-space pan bounds (default: unconstrained). */
+  private boundsMinX = -Infinity;
+  private boundsMinY = -Infinity;
+  private boundsMaxX = Infinity;
+  private boundsMaxY = Infinity;
+
   /** Viewport dimensions (updated on resize). */
   public viewportWidth = 0;
   public viewportHeight = 0;
+
+  /** Set world-space bounds for camera panning. */
+  setBounds(minX: number, minY: number, maxX: number, maxY: number): void {
+    this.boundsMinX = minX;
+    this.boundsMinY = minY;
+    this.boundsMaxX = maxX;
+    this.boundsMaxY = maxY;
+  }
+
+  /** Clamp camera position to bounds. */
+  private clamp(): void {
+    this.x = Math.max(this.boundsMinX, Math.min(this.boundsMaxX, this.x));
+    this.y = Math.max(this.boundsMinY, Math.min(this.boundsMaxY, this.y));
+  }
 
   /** Update viewport size — call on resize. */
   resize(width: number, height: number): void {
@@ -51,6 +71,7 @@ export class Camera2D {
   pan(deltaScreenX: number, deltaScreenY: number): void {
     this.x -= deltaScreenX / this.zoom;
     this.y -= deltaScreenY / this.zoom;
+    this.clamp();
   }
 
   /** Zoom toward/away from a screen-space point (e.g. pinch center or cursor). */
@@ -67,12 +88,30 @@ export class Camera2D {
     // Adjust camera so the world point stays under the cursor
     this.x += worldBefore.x - worldAfter.x;
     this.y += worldBefore.y - worldAfter.y;
+    this.clamp();
   }
 
   /** Center the camera on a grid position (using grid→screen math externally). */
   centerOn(worldX: number, worldY: number): void {
     this.x = worldX;
     this.y = worldY;
+    this.clamp();
+  }
+
+  /**
+   * Auto-zoom to fill the viewport with the given world-space rectangle.
+   * Uses Math.max of the X/Y scale ratios so the rectangle covers the
+   * entire viewport with no black bars (some overflow on one axis is expected).
+   */
+  fitToWorld(worldWidth: number, worldHeight: number): void {
+    if (this.viewportWidth === 0 || this.viewportHeight === 0) return;
+    if (worldWidth === 0 || worldHeight === 0) return;
+
+    const zoomX = this.viewportWidth / worldWidth;
+    const zoomY = this.viewportHeight / worldHeight;
+    this.zoom = Math.max(zoomX, zoomY);
+    // Clamp to zoom constraints
+    this.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoom));
   }
 
   /**

@@ -13,6 +13,8 @@ import { getBuildingDef } from '@/data/buildingDefs';
 import { buildingsLogic } from '@/ecs/archetypes';
 import type { GameGrid } from '@/game/GameGrid';
 import type { Building } from '@/game/GameView';
+import type { MapSystem } from '@/game/map';
+import type { PoliticalEntityStats, PoliticalRole } from '@/game/political';
 import { Camera2D } from './Camera2D';
 import { FeatureTileRenderer } from './FeatureTileRenderer';
 import {
@@ -25,16 +27,9 @@ import {
   TILE_HEIGHT,
   TILE_WIDTH,
 } from './GridMath';
+import { GroundTileRenderer } from './GroundTileRenderer';
 import { ParticleSystem2D } from './ParticleSystem2D';
 import type { SpriteInfo, SpriteLoader } from './SpriteLoader';
-
-/** Seasonal ground colors. */
-const GROUND_COLORS: Record<string, string> = {
-  winter: '#c8c8c8',
-  mud: '#5a4a3a',
-  summer: '#3a5a2a',
-  default: '#2e2e2e',
-};
 
 export interface PlacementPreview {
   gridX: number;
@@ -49,9 +44,9 @@ export class Canvas2DRenderer {
   public camera: Camera2D;
   public particles: ParticleSystem2D;
   public featureTiles: FeatureTileRenderer;
+  public groundTiles: GroundTileRenderer;
   private ctx: CanvasRenderingContext2D;
   private animFrameId = 0;
-  private season = 'default';
   private dayProgress = 0.5; // 0=midnight, 0.5=noon, 1=midnight
 
   /** Currently hovered grid cell (for highlight). */
@@ -59,6 +54,9 @@ export class Canvas2DRenderer {
 
   /** Placement preview (drag-to-place ghost). */
   public placementPreview: PlacementPreview | null = null;
+
+  /** Political entities to render as overlay icons. */
+  private politicalEntities: PoliticalEntityStats[] = [];
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -71,21 +69,37 @@ export class Canvas2DRenderer {
     this.camera = new Camera2D();
     this.particles = new ParticleSystem2D();
     this.featureTiles = new FeatureTileRenderer();
+    this.groundTiles = new GroundTileRenderer();
 
     // Center camera on grid center
     const center = gridToScreen(GRID_SIZE / 2, GRID_SIZE / 2);
     this.camera.centerOn(center.x, center.y);
   }
 
-  /** Set the season for ground color and terrain tile sprites. */
+  /** Set the season for terrain tile sprites. */
   setSeason(season: string): void {
-    this.season = season;
     this.featureTiles.setSeason(season);
+    this.groundTiles.setSeason(season);
+  }
+
+  /** Attach a MapSystem for terrain-aware ground rendering. */
+  setMapSystem(map: MapSystem): void {
+    this.groundTiles.setMapSystem(map);
+  }
+
+  /** Preload ground tile sprites (delegates to GroundTileRenderer). */
+  async preloadGroundTiles(): Promise<void> {
+    return this.groundTiles.preloadTiles();
   }
 
   /** Set day progress for day/night overlay. 0 = midnight, 0.5 = noon, 1 = midnight. */
   setDayProgress(progress: number): void {
     this.dayProgress = progress;
+  }
+
+  /** Update the list of political entities to render as overlay icons. */
+  setPoliticalEntities(entities: PoliticalEntityStats[]): void {
+    this.politicalEntities = entities;
   }
 
   /** Start the render loop. Idempotent — cancels any existing loop first. */
@@ -124,6 +138,26 @@ export class Canvas2DRenderer {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.camera.resize(width, height);
     this.particles.resize(width, height);
+
+    // Auto-zoom so the grid fills the viewport (no black bars)
+    this.fitCameraToGrid();
+  }
+
+  /**
+   * Auto-zoom the camera so the 30x30 isometric grid fills the viewport.
+   * Computes the grid diamond's world-space bounding box and delegates
+   * to Camera2D.fitToWorld() which picks the larger of X/Y zoom ratios.
+   */
+  fitCameraToGrid(): void {
+    const top = gridToScreen(0, 0);
+    const right = gridToScreen(GRID_SIZE, 0);
+    const bottom = gridToScreen(GRID_SIZE, GRID_SIZE);
+    const left = gridToScreen(0, GRID_SIZE);
+
+    const worldWidth = right.x - left.x;
+    const worldHeight = bottom.y - top.y;
+
+    this.camera.fitToWorld(worldWidth, worldHeight);
   }
 
   /** Main render frame. */
@@ -133,12 +167,15 @@ export class Canvas2DRenderer {
     const { ctx } = this;
     const { viewportWidth: vw, viewportHeight: vh } = this.camera;
 
-    // Layer 0: Ground fill
-    ctx.fillStyle = GROUND_COLORS[this.season] ?? GROUND_COLORS.default!;
+    // Layer 0: Ground fill (void behind terrain tiles)
+    ctx.fillStyle = '#1a1a1a';
     ctx.fillRect(0, 0, vw, vh);
 
     // Apply camera transform for world-space drawing
     this.camera.applyTransform(ctx);
+
+    // Layer 0.5: Terrain-colored ground tiles (if MapSystem attached)
+    this.groundTiles.draw(ctx, this.camera);
 
     // Layer 1: Grid diamonds
     this.drawGrid();
@@ -148,6 +185,9 @@ export class Canvas2DRenderer {
 
     // Layer 2: Buildings (depth-sorted)
     this.drawBuildings();
+
+    // Layer 2.5: Political entity indicators
+    this.drawPoliticalEntities();
 
     // Layer 3: Hover highlight
     if (this.hoverCell && isInBounds(this.hoverCell.x, this.hoverCell.y)) {
@@ -334,6 +374,74 @@ export class Canvas2DRenderer {
     ctx.fill();
 
     ctx.globalAlpha = 1;
+  }
+
+  /** Role → indicator color for political entity overlays. */
+  private static ROLE_COLORS: Record<PoliticalRole, string> = {
+    politruk: '#c62828',
+    kgb_agent: '#1a237e',
+    military_officer: '#2e7d32',
+    conscription_officer: '#e65100',
+  };
+
+  /** Role → single-letter glyph for the indicator badge. */
+  private static ROLE_GLYPHS: Record<PoliticalRole, string> = {
+    politruk: 'P',
+    kgb_agent: 'K',
+    military_officer: 'M',
+    conscription_officer: 'C',
+  };
+
+  /** Draw small colored indicators at grid positions where political entities are stationed. */
+  private drawPoliticalEntities(): void {
+    if (this.politicalEntities.length === 0) return;
+
+    const { ctx } = this;
+    const BADGE_RADIUS = 8;
+
+    for (const entity of this.politicalEntities) {
+      const { gridX, gridY } = entity.stationedAt;
+      if (!isInBounds(gridX, gridY)) continue;
+
+      const screen = gridToScreen(gridX, gridY);
+
+      // Frustum cull
+      const camScreen = this.camera.worldToScreen(screen.x, screen.y);
+      if (
+        camScreen.x < -TILE_WIDTH ||
+        camScreen.x > this.camera.viewportWidth + TILE_WIDTH ||
+        camScreen.y < -TILE_HEIGHT * 3 ||
+        camScreen.y > this.camera.viewportHeight + TILE_HEIGHT
+      ) {
+        continue;
+      }
+
+      // Position badge above the tile center, offset by TILE_HEIGHT so it floats above buildings
+      const cx = screen.x;
+      const cy = screen.y - TILE_HEIGHT * 0.8;
+
+      const color = Canvas2DRenderer.ROLE_COLORS[entity.role] ?? '#757575';
+      const glyph = Canvas2DRenderer.ROLE_GLYPHS[entity.role] ?? '?';
+
+      // Outer circle (dark border)
+      ctx.beginPath();
+      ctx.arc(cx, cy, BADGE_RADIUS + 1, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fill();
+
+      // Inner filled circle
+      ctx.beginPath();
+      ctx.arc(cx, cy, BADGE_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Letter glyph
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${BADGE_RADIUS}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(glyph, cx, cy);
+    }
   }
 
   private drawHighlight(gridX: number, gridY: number): void {

@@ -1,43 +1,9 @@
 /**
- * @fileoverview Procedural Russian Name Generator for SimSoviet 2000.
- *
- * Generates endless unique leader names for the Politburo, KGB, ministries,
- * and various Soviet bureaucratic organs. Names follow authentic Russian
- * naming conventions: Given Name + Patronymic + Surname.
- *
- * ## Russian Naming Conventions
- *
- * Every Russian has three name components:
- *
- * 1. **Given name** (imia): the personal first name.
- *
- * 2. **Patronymic** (otchestvo): derived from the father's given name.
- *    - Male: father's name + "-ovich" / "-evich"
- *      - After hard consonants or vowels: -ovich (Ivan -> Ivanovich)
- *      - After soft consonants, -j, or sibilants: -evich (Sergei -> Sergeevich)
- *      - Special cases: Ilya -> Ilyich, Lev -> Lvovich, Pavel -> Pavlovich
- *    - Female: father's name + "-ovna" / "-evna"
- *      - After hard consonants or vowels: -ovna (Ivan -> Ivanovna)
- *      - After soft consonants, -j, or sibilants: -evna (Sergei -> Sergeevna)
- *      - Special cases: Ilya -> Ilyinichna, Lev -> Lvovna, Pavel -> Pavlovna
- *
- * 3. **Surname** (familiia): the family name.
- *    - Most Russian surnames have gender forms:
- *      Male: Ivanov, Female: Ivanova (-a suffix)
- *    - Georgian surnames (-shvili, -dze, -ia) do not change by gender.
- *    - Ukrainian surnames (-enko, -chuk) do not change by gender.
- *    - Central Asian surnames typically do not change by gender.
- *
- * ## Combinatorial Capacity
- *
- * With 80 male given names, 40 female given names, 80 patronymic fathers,
- * and 200+ surnames, this system can produce:
- * - Male:   80 x 80 x 200 = 1,280,000 unique combinations
- * - Female: 40 x 80 x 200 =   640,000 unique combinations
- * - With titles: multiply by ~50 positions
- * - With epithets: multiply by ~80 epithets
- * - Total unique named leaders: effectively unlimited
+ * @fileoverview Name data pools: given names, patronymic fathers, surnames,
+ * city names, epithets, and titles for procedural Soviet name generation.
  */
+
+import type { PatronymicEntry, SurnameEntry, TitleCategory } from './types';
 
 // ─────────────────────────────────────────────────────────
 //  MALE GIVEN NAMES (imia)
@@ -186,35 +152,13 @@ export const FEMALE_GIVEN_NAMES: readonly string[] = [
 
 // ─────────────────────────────────────────────────────────
 //  PATRONYMIC SYSTEM
-//
-//  Patronymics are formed from the father's given name.
-//  We use a lookup of father names -> patronymic stems.
-//  Special irregular forms are handled explicitly; regular
-//  forms follow the -ovich/-evich (male) and -ovna/-evna
-//  (female) pattern.
 // ─────────────────────────────────────────────────────────
-
-/**
- * Maps a father's given name to the patronymic stem.
- * The stem has male/female suffixes appended at generation time.
- *
- * If a name is not in this map, we fall back to algorithmic rules:
- * - Names ending in a consonant: name + "ovich" / "ovna"
- * - Names ending in "i" or "ei": drop trailing vowel(s) + "evich" / "evna"
- * - Names ending in "a": drop "a" + "ovich" / "ovna"
- */
-interface PatronymicEntry {
-  /** Stem for male patronymic (add nothing -- it's the full form) */
-  male: string;
-  /** Stem for female patronymic (add nothing -- it's the full form) */
-  female: string;
-}
 
 /**
  * Irregular / notable patronymic forms that don't follow simple rules.
  * These are keyed by the father's given name.
  */
-const IRREGULAR_PATRONYMICS: Readonly<Record<string, PatronymicEntry>> = {
+export const IRREGULAR_PATRONYMICS: Readonly<Record<string, PatronymicEntry>> = {
   Ilya: { male: 'Ilyich', female: 'Ilyinichna' },
   Lev: { male: 'Lvovich', female: 'Lvovna' },
   Pavel: { male: 'Pavlovich', female: 'Pavlovna' },
@@ -335,78 +279,10 @@ export const PATRONYMIC_FATHER_NAMES: readonly string[] = [
 ] as const;
 
 // ─────────────────────────────────────────────────────────
-//  PATRONYMIC GENERATION RULES
-// ─────────────────────────────────────────────────────────
-
-export const PATRONYMIC_RULES = {
-  /**
-   * Generate a patronymic from a father's given name.
-   *
-   * @param fatherName - The father's given name (e.g. "Ivan", "Sergei").
-   * @param gender - 'male' or 'female' for the person receiving the patronymic.
-   * @returns The patronymic string (e.g. "Ivanovich", "Sergeevna").
-   */
-  generate(fatherName: string, gender: 'male' | 'female'): string {
-    // Check irregular forms first
-    const irregular = IRREGULAR_PATRONYMICS[fatherName];
-    if (irregular) {
-      return irregular[gender];
-    }
-
-    // Algorithmic fallback
-    const name = fatherName;
-    const lastChar = name.slice(-1).toLowerCase();
-    const lastTwo = name.slice(-2).toLowerCase();
-
-    // Names ending in soft-sign-like "i" or "ii"
-    if (lastTwo === 'ii' || lastTwo === 'iy') {
-      const stem = name.slice(0, -2);
-      return gender === 'male' ? `${stem}ievich` : `${stem}ievna`;
-    }
-
-    if (lastChar === 'i') {
-      const stem = name.slice(0, -1);
-      return gender === 'male' ? `${stem}ievich` : `${stem}ievna`;
-    }
-
-    // Names ending in "a" (Ilya handled in irregulars)
-    if (lastChar === 'a') {
-      const stem = name.slice(0, -1);
-      return gender === 'male' ? `${stem}ovich` : `${stem}ovna`;
-    }
-
-    // Names ending in "ei" (Sergei, Aleksei handled in irregulars, but fallback)
-    if (lastTwo === 'ei') {
-      const stem = name.slice(0, -2);
-      return gender === 'male' ? `${stem}eevich` : `${stem}eevna`;
-    }
-
-    // Default: consonant ending
-    return gender === 'male' ? `${name}ovich` : `${name}ovna`;
-  },
-} as const;
-
-// ─────────────────────────────────────────────────────────
 //  SURNAMES (familiia)
-//
-//  200+ surnames spanning Russian, Ukrainian, Belarusian,
-//  Georgian, Armenian, Central Asian, and Baltic origins.
-//  Includes famous/infamous Soviet-era names for satire.
 // ─────────────────────────────────────────────────────────
 
-/**
- * Surname entry. Some surnames change form by gender (most Russian -ov/-ev/-in
- * surnames add -a for female), while others (Georgian, Ukrainian -enko, etc.)
- * remain the same.
- */
-interface SurnameEntry {
-  /** Male form of the surname */
-  male: string;
-  /** Female form (null = same as male) */
-  female: string | null;
-}
-
-const SURNAMES_RAW: readonly SurnameEntry[] = [
+export const SURNAMES_RAW: readonly SurnameEntry[] = [
   // ── Common Russian (-ov / -ev / -in / -yn) ──────────
   { male: 'Ivanov', female: 'Ivanova' },
   { male: 'Petrov', female: 'Petrova' },
@@ -623,13 +499,7 @@ export function getSurname(index: number, gender: 'male' | 'female'): string {
 
 // ─────────────────────────────────────────────────────────
 //  TITLES AND POSITIONS
-//
-//  Soviet bureaucratic titles and positions. Organized by
-//  institution for use in leader assignment. The {CITY}
-//  placeholder is replaced at generation time.
 // ─────────────────────────────────────────────────────────
-
-export type TitleCategory = 'party' | 'state' | 'security' | 'military' | 'ministry' | 'local';
 
 export const TITLES: Readonly<Record<TitleCategory, readonly string[]>> = {
   party: [
@@ -736,10 +606,6 @@ export const ALL_TITLES: readonly string[] = Object.values(TITLES).flat();
 
 // ─────────────────────────────────────────────────────────
 //  EPITHETS / NICKNAMES
-//
-//  Satirical epithets in the tradition of Soviet leaders'
-//  informal monikers. Some reference real historical figures;
-//  others are pure game satire.
 // ─────────────────────────────────────────────────────────
 
 export const EPITHETS: readonly string[] = [
@@ -886,233 +752,3 @@ export const CITY_NAMES: readonly string[] = [
   'Vorkuta',
   'Norilsk',
 ] as const;
-
-// ─────────────────────────────────────────────────────────
-//  GENERATED NAME TYPE
-// ─────────────────────────────────────────────────────────
-
-/** A fully generated Soviet leader identity. */
-export interface GeneratedLeader {
-  /** Given name (imia) */
-  givenName: string;
-  /** Patronymic (otchestvo) */
-  patronymic: string;
-  /** Surname (familiia) */
-  surname: string;
-  /** Gender of the leader */
-  gender: 'male' | 'female';
-  /** Full formal name: "Surname Given Patronymic" (Russian order) */
-  formalName: string;
-  /** Western order: "Given Patronymic Surname" */
-  westernName: string;
-  /** Short form: "G.P. Surname" (initials + surname) */
-  shortName: string;
-  /** Official title/position */
-  title: string;
-  /** Satirical epithet/nickname */
-  epithet: string;
-  /** Full introduction: "Title Surname, 'The Epithet'" */
-  introduction: string;
-}
-
-// ─────────────────────────────────────────────────────────
-//  HELPERS
-// ─────────────────────────────────────────────────────────
-
-import type { GameRng } from '@/game/SeedSystem';
-
-/** Module-level RNG reference, set by NameGenerator constructor */
-let _rng: GameRng | null = null;
-
-function pick<T>(arr: readonly T[]): T {
-  return _rng ? _rng.pick(arr) : arr[Math.floor(Math.random() * arr.length)]!;
-}
-
-function pickIndex(length: number): number {
-  return _rng ? _rng.pickIndex(length) : Math.floor(Math.random() * length);
-}
-
-// ─────────────────────────────────────────────────────────
-//  NAME GENERATOR CLASS
-// ─────────────────────────────────────────────────────────
-
-/**
- * Procedural Russian name generator for Soviet leader identities.
- *
- * Tracks previously generated names to avoid exact duplicates within
- * a session. The combinatorial space (~1.9 million unique male names,
- * ~640k female) makes collisions extremely rare.
- *
- * @example
- * ```ts
- * const gen = new NameGenerator();
- * const leader = gen.generate();
- * console.log(leader.introduction);
- * // "Minister of Heavy Industry Volkov, 'The Concrete Poet'"
- *
- * const kgbChief = gen.generate({ gender: 'male', titleCategory: 'security' });
- * console.log(kgbChief.formalName);
- * // "Morozov Ivan Petrovich"
- * ```
- */
-export class NameGenerator {
-  private generatedKeys = new Set<string>();
-  private cityName: string;
-
-  constructor(cityName?: string, rng?: GameRng) {
-    if (rng) _rng = rng;
-    this.cityName = cityName ?? pick(CITY_NAMES);
-  }
-
-  /**
-   * Set the city name used in title placeholders.
-   */
-  public setCityName(name: string): void {
-    this.cityName = name;
-  }
-
-  /**
-   * Generate a unique Soviet leader identity.
-   *
-   * @param options - Optional constraints on generation.
-   * @param options.gender - Force 'male' or 'female'. Default: 85% male, 15% female.
-   * @param options.titleCategory - Restrict title to a specific category key from TITLES.
-   * @param options.epithet - Force a specific epithet. Default: random.
-   * @returns A complete GeneratedLeader identity.
-   */
-  public generate(options?: {
-    gender?: 'male' | 'female';
-    titleCategory?: keyof typeof TITLES;
-    epithet?: string;
-  }): GeneratedLeader {
-    const gender =
-      options?.gender ?? ((_rng?.random() ?? Math.random()) < 0.85 ? 'male' : 'female');
-
-    // Pick components, retry on duplicate
-    let givenName: string;
-    let patronymic: string;
-    let surname: string;
-    let key: string;
-    let attempts = 0;
-
-    do {
-      givenName = gender === 'male' ? pick(MALE_GIVEN_NAMES) : pick(FEMALE_GIVEN_NAMES);
-
-      const fatherName = pick(PATRONYMIC_FATHER_NAMES);
-      patronymic = PATRONYMIC_RULES.generate(fatherName, gender);
-
-      const surnameIndex = pickIndex(SURNAMES_RAW.length);
-      surname = getSurname(surnameIndex, gender);
-
-      key = `${givenName}|${patronymic}|${surname}`;
-      attempts++;
-    } while (this.generatedKeys.has(key) && attempts < 100);
-
-    this.generatedKeys.add(key);
-
-    // Title
-    let titlePool: readonly string[];
-    if (options?.titleCategory) {
-      titlePool = TITLES[options.titleCategory];
-    } else {
-      titlePool = ALL_TITLES;
-    }
-    const rawTitle = pick(titlePool);
-    const title = rawTitle.replace(/\{CITY\}/g, this.cityName);
-
-    // Epithet
-    const epithet = options?.epithet ?? pick(EPITHETS);
-
-    // Format names
-    const formalName = `${surname} ${givenName} ${patronymic}`;
-    const westernName = `${givenName} ${patronymic} ${surname}`;
-    const shortName = `${givenName[0]}.${patronymic[0]}. ${surname}`;
-    const introduction = `${title} ${surname}, "${epithet}"`;
-
-    return {
-      givenName,
-      patronymic,
-      surname,
-      gender,
-      formalName,
-      westernName,
-      shortName,
-      title,
-      epithet,
-      introduction,
-    };
-  }
-
-  /**
-   * Generate a batch of unique leaders.
-   *
-   * @param count - Number of leaders to generate.
-   * @param options - Optional constraints applied to all.
-   * @returns Array of GeneratedLeader identities.
-   */
-  public generateBatch(
-    count: number,
-    options?: {
-      gender?: 'male' | 'female';
-      titleCategory?: keyof typeof TITLES;
-    }
-  ): GeneratedLeader[] {
-    const leaders: GeneratedLeader[] = [];
-    for (let i = 0; i < count; i++) {
-      leaders.push(this.generate(options));
-    }
-    return leaders;
-  }
-
-  /**
-   * Generate a complete Politburo -- one leader per category.
-   *
-   * @returns A record mapping category name to a generated leader.
-   */
-  public generatePolitburo(): Record<string, GeneratedLeader> {
-    const politburo: Record<string, GeneratedLeader> = {};
-    for (const category of Object.keys(TITLES)) {
-      politburo[category] = this.generate({ titleCategory: category as keyof typeof TITLES });
-    }
-    return politburo;
-  }
-
-  /**
-   * Generate a full government cabinet with one leader per ministry title.
-   *
-   * @returns Array of leaders, one for each ministry title.
-   */
-  public generateCabinet(): GeneratedLeader[] {
-    return TITLES.ministry.map((title) => {
-      const leader = this.generate({ titleCategory: 'ministry' });
-      // Override with the specific ministry title
-      const resolvedTitle = title.replace(/\{CITY\}/g, this.cityName);
-      return {
-        ...leader,
-        title: resolvedTitle,
-        introduction: `${resolvedTitle} ${leader.surname}, "${leader.epithet}"`,
-      };
-    });
-  }
-
-  /**
-   * Reset the duplicate tracker. Useful between game sessions.
-   */
-  public reset(): void {
-    this.generatedKeys.clear();
-  }
-
-  /**
-   * Get the number of unique names generated so far in this session.
-   */
-  public get generatedCount(): number {
-    return this.generatedKeys.size;
-  }
-}
-
-// ─────────────────────────────────────────────────────────
-//  CONVENIENCE EXPORT: default singleton instance
-// ─────────────────────────────────────────────────────────
-
-/** Pre-instantiated generator for quick use. */
-export const nameGenerator = new NameGenerator();

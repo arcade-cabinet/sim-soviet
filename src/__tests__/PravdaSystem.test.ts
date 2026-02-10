@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getMetaEntity, getResourceEntity } from '../ecs/archetypes';
 import { createMetaStore, createResourceStore } from '../ecs/factories';
 import { world } from '../ecs/world';
-import type { GameEvent } from '../game/EventSystem';
-import { PravdaSystem } from '../game/PravdaSystem';
+import type { GameEvent } from '../game/events';
+import { PravdaSystem } from '../game/pravda';
 
 function createMockEvent(overrides: Partial<GameEvent> = {}): GameEvent {
   return {
@@ -287,6 +287,93 @@ describe('PravdaSystem', () => {
 
       const recent = pravda.getRecentHeadlines(10);
       expect(recent).toHaveLength(2);
+    });
+  });
+
+  // ── Serialization ─────────────────────────────────────
+
+  describe('serialize / deserialize', () => {
+    it('round-trips headline history', () => {
+      pravda.headlineFromEvent(createMockEvent({ id: 'a', pravdaHeadline: 'HEADLINE A' }));
+      pravda.headlineFromEvent(createMockEvent({ id: 'b', pravdaHeadline: 'HEADLINE B' }));
+
+      const data = pravda.serialize();
+      expect(data.headlineHistory).toHaveLength(2);
+
+      const restored = PravdaSystem.deserialize(data);
+      const recent = restored.getRecentHeadlines(10);
+      expect(recent).toHaveLength(2);
+      expect(recent[0]!.headline).toBe('HEADLINE A');
+      expect(recent[1]!.headline).toBe('HEADLINE B');
+    });
+
+    it('preserves lastHeadlineTime and cooldown state', () => {
+      vi.spyOn(Date, 'now').mockReturnValue(100000);
+      pravda.generateAmbientHeadline();
+
+      const data = pravda.serialize();
+      expect(data.lastHeadlineTime).toBe(100000);
+      expect(data.headlineCooldown).toBe(45000);
+
+      const restored = PravdaSystem.deserialize(data);
+
+      // Restored system should still be in cooldown at the same time
+      vi.spyOn(Date, 'now').mockReturnValue(130000); // 30s later, still in cooldown
+      const result = restored.generateAmbientHeadline();
+      expect(result).toBeNull();
+    });
+
+    it('preserves recent category memory', () => {
+      // Generate several headlines to build up category memory
+      pravda.headlineFromEvent(createMockEvent({ category: 'political' })); // → editorial
+      pravda.headlineFromEvent(createMockEvent({ category: 'disaster' })); // → triumph
+      pravda.headlineFromEvent(createMockEvent({ category: 'economic' })); // → production
+
+      const data = pravda.serialize();
+      expect(data.recentCategories.length).toBeGreaterThan(0);
+
+      const restored = PravdaSystem.deserialize(data);
+      const restoredData = restored.serialize();
+      expect(restoredData.recentCategories).toEqual(data.recentCategories);
+    });
+
+    it('serialized data is JSON-safe', () => {
+      pravda.headlineFromEvent(createMockEvent());
+      const data = pravda.serialize();
+      const json = JSON.stringify(data);
+      const parsed = JSON.parse(json);
+      expect(parsed.headlineHistory).toHaveLength(1);
+      expect(typeof parsed.lastHeadlineTime).toBe('number');
+    });
+
+    it('deserialized system can generate new headlines', () => {
+      vi.spyOn(Date, 'now').mockReturnValue(100000);
+      pravda.generateAmbientHeadline();
+      const data = pravda.serialize();
+
+      const restored = PravdaSystem.deserialize(data);
+      // After cooldown, should be able to generate
+      vi.spyOn(Date, 'now').mockReturnValue(200000);
+      const headline = restored.generateAmbientHeadline();
+      expect(headline).not.toBeNull();
+    });
+
+    it('handles empty state', () => {
+      const data = pravda.serialize();
+      expect(data.headlineHistory).toHaveLength(0);
+      expect(data.recentCategories).toHaveLength(0);
+
+      const restored = PravdaSystem.deserialize(data);
+      expect(restored.getRecentHeadlines(10)).toHaveLength(0);
+    });
+
+    it('deserialized system formatFrontPage reflects restored history', () => {
+      pravda.headlineFromEvent(createMockEvent({ pravdaHeadline: 'RESTORED HEADLINE' }));
+      const data = pravda.serialize();
+
+      const restored = PravdaSystem.deserialize(data);
+      const page = restored.formatFrontPage();
+      expect(page).toContain('RESTORED HEADLINE');
     });
   });
 

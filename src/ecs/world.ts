@@ -91,7 +91,7 @@ export interface Renderable {
  * All global economic values live here.
  */
 export interface Resources {
-  /** Rubles */
+  /** Rubles (SECONDARY — only for consumer economy, black market, bribes) */
   money: number;
   /** Food units */
   food: number;
@@ -103,6 +103,27 @@ export interface Resources {
   powerUsed: number;
   /** Total citizen count (derived but cached for quick access) */
   population: number;
+
+  // ── Planned Economy Resources ──
+
+  /** Trudodni — labor units accumulated this period */
+  trudodni: number;
+  /** Blat — connections resource (0-100) */
+  blat: number;
+  /** Timber — construction/fuel material */
+  timber: number;
+  /** Steel — industrial construction material */
+  steel: number;
+  /** Cement — construction material */
+  cement: number;
+  /** Prefab panels — late-era rapid construction material */
+  prefab: number;
+  /** Seed fund — reserved grain for next season (0-1 ratio) */
+  seedFund: number;
+  /** Emergency reserve — buffer against disasters */
+  emergencyReserve: number;
+  /** Storage capacity — total food storage across all buildings */
+  storageCapacity: number;
 }
 
 /**
@@ -131,6 +152,8 @@ export interface GameMeta {
   blackMarks: number;
   commendations: number;
   threatLevel: string;
+  /** Current historical era ID (synced from EraSystem each tick) */
+  currentEra: string;
 }
 
 /**

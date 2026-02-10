@@ -3,15 +3,32 @@
  *
  * Adapted from the approved prototype (src/prototypes/SovietGameHUD.tsx).
  * Wired to real game data via useGameSnapshot().
+ * Includes save/load/export/import controls.
  */
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, BarChart3, Building2, Map, Users, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  Building2,
+  Download,
+  HardDrive,
+  Map as MapIcon,
+  Save,
+  Upload,
+  Users,
+  X,
+} from 'lucide-react';
+import { useRef } from 'react';
+import type { SaveSystemAPI } from '@/components/GameWorld';
+import { exportDatabaseFile, importDatabaseFile } from '@/db/provider';
 import { cn } from '@/lib/utils';
-import { useGameSnapshot } from '@/stores/gameStore';
+import { notifyStateChange, useGameSnapshot } from '@/stores/gameStore';
+import { addSovietToast } from '@/stores/toastStore';
 
 interface DrawerPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  saveApi?: SaveSystemAPI | null;
 }
 
 const TIER_RUSSIAN: Record<string, string> = {
@@ -30,8 +47,9 @@ const THREAT_LABELS: Record<string, { label: string; color: string }> = {
   arrested: { label: 'ARRESTED', color: 'text-red-600' },
 };
 
-export function DrawerPanel({ isOpen, onClose }: DrawerPanelProps) {
+export function DrawerPanel({ isOpen, onClose, saveApi }: DrawerPanelProps) {
   const snap = useGameSnapshot();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const threatInfo = THREAT_LABELS[snap.threatLevel] ?? THREAT_LABELS.safe!;
   const tierRussian = TIER_RUSSIAN[snap.settlementTier] ?? 'село';
 
@@ -40,6 +58,77 @@ export function DrawerPanel({ isOpen, onClose }: DrawerPanelProps) {
     snap.quota.target > 0 ? Math.min(snap.quota.current / snap.quota.target, 1) : 0;
   const quotaPct = Math.round(quotaProgress * 100);
   const yearsLeft = Math.max(snap.quota.deadlineYear - snap.date.year, 0);
+
+  // ── Save/Load Handlers ────────────────────────────────────────
+
+  const handleSave = async () => {
+    if (!saveApi) return;
+    const ok = await saveApi.save('manual_1');
+    if (ok) {
+      addSovietToast('warning', 'Game saved to state archives');
+    } else {
+      addSovietToast('critical', 'Save failed — archival error');
+    }
+  };
+
+  const handleLoad = async () => {
+    if (!saveApi) return;
+    const ok = await saveApi.load('manual_1');
+    if (ok) {
+      notifyStateChange();
+      addSovietToast('warning', 'Game loaded from state archives');
+      onClose();
+    } else {
+      addSovietToast('critical', 'No saved game found in archives');
+    }
+  };
+
+  const handleExport = () => {
+    const data = exportDatabaseFile();
+    if (!data) {
+      addSovietToast('critical', 'Export failed — database not initialized');
+      return;
+    }
+    const blob = new Blob([data.buffer as ArrayBuffer], { type: 'application/x-sqlite3' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `simsoviet-save-${new Date().toISOString().slice(0, 10)}.db`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addSovietToast('warning', 'Database exported — guard with your life');
+  };
+
+  const handleImport = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const data = new Uint8Array(buffer);
+      await importDatabaseFile(data);
+      addSovietToast('warning', 'Database imported — reloading state');
+      // Reload the autosave from the imported database
+      if (saveApi) {
+        const loaded = await saveApi.load('autosave');
+        if (loaded) {
+          notifyStateChange();
+          onClose();
+        }
+      }
+    } catch (error) {
+      console.error('Import failed:', error);
+      addSovietToast('critical', 'Import failed — file is corrupted');
+    }
+    // Reset file input so re-selecting the same file triggers onChange
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -86,8 +175,31 @@ export function DrawerPanel({ isOpen, onClose }: DrawerPanelProps) {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* Save / Load Controls */}
+              <DrawerSection icon={HardDrive} title="STATE ARCHIVES">
+                <div className="grid grid-cols-2 gap-2">
+                  <DrawerButton icon={Save} label="SAVE" onClick={handleSave} disabled={!saveApi} />
+                  <DrawerButton
+                    icon={Upload}
+                    label="LOAD"
+                    onClick={handleLoad}
+                    disabled={!saveApi}
+                  />
+                  <DrawerButton icon={Download} label="EXPORT .DB" onClick={handleExport} />
+                  <DrawerButton icon={Upload} label="IMPORT .DB" onClick={handleImport} />
+                </div>
+                {/* Hidden file input for import */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".db,.sqlite,.sqlite3"
+                  className="hidden"
+                  onChange={handleFileSelected}
+                />
+              </DrawerSection>
+
               {/* Minimap placeholder */}
-              <DrawerSection icon={Map} title="TACTICAL MAP">
+              <DrawerSection icon={MapIcon} title="TACTICAL MAP">
                 <div className="w-full aspect-square bg-[#1a1a1a] border-2 border-[#8b0000] relative">
                   <div className="absolute inset-1 bg-gradient-to-br from-[#4a3a2a] to-[#2a1a0a]" />
                   <div className="absolute inset-0 flex items-center justify-center text-[#ff4444] text-xs font-bold">
@@ -239,6 +351,37 @@ function DrawerSection({
       </div>
       {children}
     </div>
+  );
+}
+
+function DrawerButton({
+  icon: Icon,
+  label,
+  onClick,
+  disabled = false,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'flex items-center justify-center gap-1.5 py-2 px-2',
+        'bg-[#1a1a1a] border border-[#444] text-[10px] font-bold uppercase tracking-wider',
+        'transition-colors cursor-pointer',
+        disabled
+          ? 'opacity-40 cursor-not-allowed'
+          : 'hover:border-[#8b0000] hover:text-[#cfaa48] text-[#888]'
+      )}
+    >
+      <Icon className="w-3 h-3" />
+      <span>{label}</span>
+    </button>
   );
 }
 

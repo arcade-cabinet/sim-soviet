@@ -397,6 +397,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ x, y, availableSpace, onSelect,
   const buildingAngle = buildings.length > 0 ? 360 / buildings.length : 0;
 
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: game UI overlay, pointer-only interaction by design
+    // biome-ignore lint/a11y/noStaticElementInteractions: game UI overlay
     <div
       className="fixed inset-0 z-50"
       onClick={(e) => {
@@ -429,11 +431,14 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ x, y, availableSpace, onSelect,
           viewBox={`0 0 ${CENTER * 2} ${CENTER * 2}`}
           className="w-full h-full"
           style={{ pointerEvents: 'auto' }}
+          role="img"
+          aria-label="Radial build menu"
         >
           {/* Center dot */}
           <circle cx={CENTER} cy={CENTER} r={8} fill="#cfaa48" opacity={0.6} />
 
           {/* Category ring */}
+          {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: radial wedge rendering with selection + enable state */}
           {activeCats.map((cat, i) => {
             const startA = i * catAngle + gap / 2;
             const endA = (i + 1) * catAngle - gap / 2;
@@ -446,6 +451,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ x, y, availableSpace, onSelect,
             );
 
             return (
+              // biome-ignore lint/a11y/noStaticElementInteractions: SVG group in game radial menu
               <g
                 key={cat.id}
                 style={{ pointerEvents: 'all', cursor: 'pointer' }}
@@ -506,6 +512,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ x, y, availableSpace, onSelect,
                   opacity={0.5}
                 />
 
+                {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: building wedge rendering with footprint/enabled checks */}
                 {buildings.map((bld, i) => {
                   const startA = i * buildingAngle + gap / 2;
                   const endA = (i + 1) * buildingAngle - gap / 2;
@@ -521,6 +528,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ x, y, availableSpace, onSelect,
                   const canBuild = bld.enabled && fits;
 
                   return (
+                    // biome-ignore lint/a11y/noStaticElementInteractions: SVG group in game radial menu
                     <g
                       key={bld.id}
                       style={{
@@ -648,6 +656,7 @@ export const RadialBuildMenuDemo: React.FC = () => {
           <span className="text-[#888] text-[10px]">Available space:</span>
           {([1, 2, 3] as const).map((s) => (
             <button
+              type="button"
               key={s}
               onClick={() => setSpaceSize(s)}
               className={cn(
@@ -677,8 +686,9 @@ export const RadialBuildMenuDemo: React.FC = () => {
         />
 
         {/* Grid lines */}
-        <svg className="absolute inset-0 w-full h-full opacity-20">
+        <svg className="absolute inset-0 w-full h-full opacity-20" aria-hidden="true">
           {Array.from({ length: 20 }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static decorative grid lines
             <React.Fragment key={i}>
               <line
                 x1={`${50 - i * 5}%`}

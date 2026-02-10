@@ -4,7 +4,7 @@ import {
   BarChart3,
   Building2,
   Clock,
-  Map,
+  Map as MapIcon,
   Menu,
   Pause,
   Play,
@@ -64,9 +64,9 @@ const SovietHUD: React.FC<SovietHUDProps> = ({
 
         {/* Resources — scrollable on mobile */}
         <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 mx-1 scrollbar-hide">
-          {resources.map((resource, idx) => (
+          {resources.map((resource) => (
             <div
-              key={idx}
+              key={resource.label}
               className="flex items-center gap-0.5 bg-[#1a1a1a] border border-[#444] px-1.5 py-0.5 flex-shrink-0"
               title={resource.label}
             >
@@ -81,6 +81,7 @@ const SovietHUD: React.FC<SovietHUDProps> = ({
         {/* Pause + Speed + Hamburger */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <button
+            type="button"
             onClick={onPauseToggle}
             className={cn(
               'flex items-center justify-center w-7 h-7 border transition-all',
@@ -100,6 +101,7 @@ const SovietHUD: React.FC<SovietHUDProps> = ({
           <div className="flex items-center gap-0.5 bg-[#1a1a1a] border border-[#444] p-0.5">
             {([1, 2, 3] as const).map((speed) => (
               <button
+                type="button"
                 key={speed}
                 onClick={() => onSpeedChange?.(speed)}
                 className={cn(
@@ -117,6 +119,7 @@ const SovietHUD: React.FC<SovietHUDProps> = ({
 
           {/* Hamburger */}
           <button
+            type="button"
             onClick={onMenuToggle}
             className="flex items-center justify-center w-8 h-8 bg-[#1a1a1a] border border-[#8b0000] hover:bg-[#333] transition-colors flex-shrink-0"
             aria-label="Open menu"
@@ -182,7 +185,13 @@ const DrawerPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpe
             <div className="flex items-center justify-between px-4 py-3 border-b-2 border-[#8b0000] bg-[#1a1a1a]">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-[#8b0000] flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="text-[#cfaa48] w-4 h-4">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="text-[#cfaa48] w-4 h-4"
+                    role="img"
+                    aria-label="Star"
+                  >
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                 </div>
@@ -191,6 +200,7 @@ const DrawerPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpe
                 </span>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className="w-8 h-8 flex items-center justify-center bg-[#2a2a2a] border border-[#444] hover:border-[#8b0000] transition-colors"
                 aria-label="Close menu"
@@ -202,7 +212,7 @@ const DrawerPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpe
             {/* Drawer content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {/* Minimap */}
-              <DrawerSection icon={Map} title="TACTICAL MAP">
+              <DrawerSection icon={MapIcon} title="TACTICAL MAP">
                 <div className="w-full aspect-square bg-[#1a1a1a] border-2 border-[#8b0000] relative">
                   <div className="absolute inset-1 bg-gradient-to-br from-[#4a3a2a] to-[#2a1a0a]" />
                   <div className="absolute inset-0 flex items-center justify-center text-[#ff4444] text-xs font-bold">
@@ -402,8 +412,9 @@ export const SovietGameHUDDemo: React.FC = () => {
         />
 
         {/* Fake isometric grid — more visible */}
-        <svg className="absolute inset-0 w-full h-full opacity-20">
+        <svg className="absolute inset-0 w-full h-full opacity-20" aria-hidden="true">
           {Array.from({ length: 20 }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static decorative grid lines
             <React.Fragment key={i}>
               <line
                 x1={`${50 - i * 5}%`}

@@ -90,6 +90,13 @@ export async function initDatabase(): Promise<SQLJsDatabase<typeof schema>> {
     )
   `);
 
+  // Migration: add game_state column to saves table (idempotent).
+  try {
+    _sqlDb.run(`ALTER TABLE saves ADD COLUMN game_state TEXT`);
+  } catch {
+    // Column already exists — safe to ignore.
+  }
+
   return _db;
 }
 
@@ -164,4 +171,33 @@ export function closeDatabase(): void {
     _sqlDb = null;
   }
   _db = null;
+}
+
+/** Export the entire SQLite database as a Uint8Array (for .db file download). */
+export function exportDatabaseFile(): Uint8Array | null {
+  if (!_sqlDb) return null;
+  return new Uint8Array(_sqlDb.export());
+}
+
+/**
+ * Import a SQLite database from a Uint8Array (uploaded .db file).
+ * Replaces the current in-memory database and persists to IndexedDB.
+ */
+export async function importDatabaseFile(data: Uint8Array): Promise<SQLJsDatabase<typeof schema>> {
+  const SQL = await initSqlJs({
+    locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
+  });
+
+  // Close existing database
+  if (_sqlDb) {
+    _sqlDb.close();
+  }
+
+  _sqlDb = new SQL.Database(data);
+  _db = drizzle(_sqlDb, { schema });
+
+  // Persist immediately
+  await persistToIndexedDB();
+
+  return _db;
 }

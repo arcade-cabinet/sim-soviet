@@ -77,13 +77,7 @@ const DirectionalArrow = ({ direction }: { direction: 'up' | 'down' | 'left' | '
 };
 
 // Individual toast
-const ToastItem = ({
-  toast,
-  onDismiss,
-}: {
-  toast: Toast;
-  onDismiss: (id: string) => void;
-}) => {
+const ToastItem = ({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) => {
   const config = severityConfig[toast.severity];
   const Icon = config.icon;
 
@@ -125,7 +119,13 @@ const ToastItem = ({
       >
         <div className="flex items-center gap-1.5">
           <div className="w-4 h-4 relative flex-shrink-0">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="text-white">
+            <svg
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="text-white"
+              role="img"
+              aria-label="Star"
+            >
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </div>
@@ -151,6 +151,7 @@ const ToastItem = ({
             {toast.message}
           </p>
           <button
+            type="button"
             onClick={() => onDismiss(toast.id)}
             className={cn(
               'flex-shrink-0 p-0.5 hover:bg-black/10 rounded transition-colors -mt-0.5',
@@ -223,9 +224,11 @@ export const SovietToastStack = ({
 
   // Expose for demo
   useEffect(() => {
-    (window as any).addSovietToast = addToast;
+    // biome-ignore lint/suspicious/noExplicitAny: attaching demo helper to window for prototype testing
+    (window as unknown as Record<string, any>).addSovietToast = addToast;
     return () => {
-      delete (window as any).addSovietToast;
+      // biome-ignore lint/suspicious/noExplicitAny: cleanup demo helper from window
+      delete (window as unknown as Record<string, any>).addSovietToast;
     };
   }, [addToast]);
 
@@ -262,8 +265,10 @@ export const SovietToastDemo: React.FC = () => {
     showArrow?: boolean,
     arrowDirection?: 'up' | 'down' | 'left' | 'right'
   ) => {
-    if ((window as any).addSovietToast) {
-      (window as any).addSovietToast({
+    // biome-ignore lint/suspicious/noExplicitAny: accessing demo helper on window for prototype testing
+    const win = window as unknown as Record<string, any>;
+    if (win.addSovietToast) {
+      win.addSovietToast({
         severity,
         message,
         showArrow,
@@ -280,7 +285,13 @@ export const SovietToastDemo: React.FC = () => {
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <div className="w-14 h-14 bg-red-700 rounded-full flex items-center justify-center shadow-xl">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="text-yellow-400 w-8 h-8">
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="text-yellow-400 w-8 h-8"
+                role="img"
+                aria-label="Star"
+              >
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             </div>
@@ -305,6 +316,7 @@ export const SovietToastDemo: React.FC = () => {
           </div>
 
           <button
+            type="button"
             onClick={() =>
               addToast(
                 'warning',
@@ -319,6 +331,7 @@ export const SovietToastDemo: React.FC = () => {
           </button>
 
           <button
+            type="button"
             onClick={() =>
               addToast(
                 'critical',
@@ -333,6 +346,7 @@ export const SovietToastDemo: React.FC = () => {
           </button>
 
           <button
+            type="button"
             onClick={() =>
               addToast(
                 'evacuation',
@@ -348,6 +362,7 @@ export const SovietToastDemo: React.FC = () => {
 
           <div className="pt-3 border-t-2 border-[#444]">
             <button
+              type="button"
               onClick={() => {
                 addToast('warning', 'Politruk scheduled ideology session — Building #3');
                 setTimeout(

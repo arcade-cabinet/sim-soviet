@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-02-09T08:03:03.072Z",
+  "generatedAt": "2026-02-10T06:23:34.531Z",
   "buildings": {
     "apartment-tower-a": {
       "id": "apartment-tower-a",
@@ -36,7 +36,8 @@
         "cost": 100,
         "desc": "Concrete sleeping box.",
         "category": "res"
-      }
+      },
+      "eraAvailable": "reconstruction"
     },
     "apartment-tower-b": {
       "id": "apartment-tower-b",
@@ -72,7 +73,8 @@
         "cost": 120,
         "desc": "Taller concrete box.",
         "category": "res"
-      }
+      },
+      "eraAvailable": "thaw"
     },
     "apartment-tower-c": {
       "id": "apartment-tower-c",
@@ -108,7 +110,8 @@
         "cost": 180,
         "desc": "Reaches for socialist skies.",
         "category": "res"
-      }
+      },
+      "eraAvailable": "stagnation"
     },
     "apartment-tower-d": {
       "id": "apartment-tower-d",
@@ -144,7 +147,8 @@
         "cost": 250,
         "desc": "A monument to standardization.",
         "category": "res"
-      }
+      },
+      "eraAvailable": "eternal_soviet"
     },
     "barracks": {
       "id": "barracks",
@@ -180,7 +184,8 @@
         "cost": 200,
         "desc": "Soldiers sleep here. Allegedly.",
         "category": "mil"
-      }
+      },
+      "eraAvailable": "first_plans"
     },
     "bread-factory": {
       "id": "bread-factory",
@@ -220,7 +225,8 @@
         "cost": 200,
         "desc": "Where flour becomes propaganda.",
         "category": "ind"
-      }
+      },
+      "eraAvailable": "first_plans"
     },
     "collective-farm-hq": {
       "id": "collective-farm-hq",
@@ -260,7 +266,8 @@
         "cost": 150,
         "desc": "Potatoes for the motherland.",
         "category": "ind"
-      }
+      },
+      "eraAvailable": "war_communism"
     },
     "concrete-block": {
       "id": "concrete-block",
@@ -296,7 +303,8 @@
         "cost": 60,
         "desc": "The people's building material.",
         "category": "utility"
-      }
+      },
+      "eraAvailable": "war_communism"
     },
     "cultural-palace": {
       "id": "cultural-palace",
@@ -332,7 +340,8 @@
         "cost": 300,
         "desc": "Ballet, opera, and propaganda.",
         "category": "cul"
-      }
+      },
+      "eraAvailable": "thaw"
     },
     "factory-office": {
       "id": "factory-office",
@@ -368,7 +377,8 @@
         "cost": 180,
         "desc": "Paperwork division.",
         "category": "ind"
-      }
+      },
+      "eraAvailable": "first_plans"
     },
     "fence": {
       "id": "fence",
@@ -404,7 +414,8 @@
         "cost": 10,
         "desc": "Keeps them in. Or out.",
         "category": "env"
-      }
+      },
+      "eraAvailable": "war_communism"
     },
     "fence-low": {
       "id": "fence-low",
@@ -440,7 +451,8 @@
         "cost": 15,
         "desc": "A suggestion of boundaries.",
         "category": "env"
-      }
+      },
+      "eraAvailable": "war_communism"
     },
     "fire-station": {
       "id": "fire-station",
@@ -476,7 +488,8 @@
         "cost": 150,
         "desc": "Arrives after the fire.",
         "category": "svc"
-      }
+      },
+      "eraAvailable": "stagnation"
     },
     "government-hq": {
       "id": "government-hq",
@@ -512,7 +525,8 @@
         "cost": 400,
         "desc": "Where decisions are made slowly.",
         "category": "gov"
-      }
+      },
+      "eraAvailable": "reconstruction"
     },
     "guard-post": {
       "id": "guard-post",
@@ -548,7 +562,8 @@
         "cost": 100,
         "desc": "Watching the watchers.",
         "category": "mil"
-      }
+      },
+      "eraAvailable": "war_communism"
     },
     "gulag-admin": {
       "id": "gulag-admin",
@@ -584,7 +599,8 @@
         "cost": 500,
         "desc": "Fixes attitude problems.",
         "category": "gov"
-      }
+      },
+      "eraAvailable": "great_patriotic"
     },
     "hospital": {
       "id": "hospital",
@@ -620,7 +636,8 @@
         "cost": 250,
         "desc": "Soviet medicine is best medicine.",
         "category": "svc"
-      }
+      },
+      "eraAvailable": "reconstruction"
     },
     "kgb-office": {
       "id": "kgb-office",
@@ -656,7 +673,8 @@
         "cost": 500,
         "desc": "They're watching. Always.",
         "category": "gov"
-      }
+      },
+      "eraAvailable": "stagnation"
     },
     "ministry-office": {
       "id": "ministry-office",
@@ -692,7 +710,8 @@
         "cost": 350,
         "desc": "Bureaucracy incarnate.",
         "category": "gov"
-      }
+      },
+      "eraAvailable": "reconstruction"
     },
     "polyclinic": {
       "id": "polyclinic",
@@ -728,7 +747,8 @@
         "cost": 180,
         "desc": "Aspirin cures everything.",
         "category": "svc"
-      }
+      },
+      "eraAvailable": "thaw"
     },
     "post-office": {
       "id": "post-office",
@@ -764,7 +784,8 @@
         "cost": 100,
         "desc": "Letters arrive. Eventually.",
         "category": "svc"
-      }
+      },
+      "eraAvailable": "thaw"
     },
     "power-station": {
       "id": "power-station",
@@ -800,7 +821,8 @@
         "cost": 300,
         "desc": "Creates smog & power.",
         "category": "utility"
-      }
+      },
+      "eraAvailable": "war_communism"
     },
     "radio-station": {
       "id": "radio-station",
@@ -836,7 +858,8 @@
         "cost": 250,
         "desc": "Broadcasting the truth. Our truth.",
         "category": "prop"
-      }
+      },
+      "eraAvailable": "stagnation"
     },
     "school": {
       "id": "school",
@@ -872,7 +895,8 @@
         "cost": 200,
         "desc": "Teaching the party line since 1917.",
         "category": "svc"
-      }
+      },
+      "eraAvailable": "first_plans"
     },
     "train-station": {
       "id": "train-station",
@@ -908,7 +932,8 @@
         "cost": 300,
         "desc": "Trains run on Soviet time.",
         "category": "transport"
-      }
+      },
+      "eraAvailable": "reconstruction"
     },
     "vodka-distillery": {
       "id": "vodka-distillery",
@@ -948,7 +973,8 @@
         "cost": 250,
         "desc": "Essential fluid production.",
         "category": "ind"
-      }
+      },
+      "eraAvailable": "stagnation"
     },
     "warehouse": {
       "id": "warehouse",
@@ -984,7 +1010,8 @@
         "cost": 120,
         "desc": "Stores everything but hope.",
         "category": "ind"
-      }
+      },
+      "eraAvailable": "first_plans"
     },
     "workers-club": {
       "id": "workers-club",
@@ -1020,7 +1047,8 @@
         "cost": 150,
         "desc": "Leisure in moderation.",
         "category": "cul"
-      }
+      },
+      "eraAvailable": "thaw"
     },
     "workers-house-a": {
       "id": "workers-house-a",
@@ -1056,7 +1084,8 @@
         "cost": 80,
         "desc": "Modest proletarian dwelling.",
         "category": "res"
-      }
+      },
+      "eraAvailable": "war_communism"
     },
     "workers-house-b": {
       "id": "workers-house-b",
@@ -1092,7 +1121,8 @@
         "cost": 110,
         "desc": "Double the concrete, double the joy.",
         "category": "res"
-      }
+      },
+      "eraAvailable": "war_communism"
     },
     "workers-house-c": {
       "id": "workers-house-c",
@@ -1128,7 +1158,8 @@
         "cost": 200,
         "desc": "A whole courtyard of happiness.",
         "category": "res"
-      }
+      },
+      "eraAvailable": "first_plans"
     }
   }
 }

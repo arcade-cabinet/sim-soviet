@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getResourceEntity } from '../ecs/archetypes';
 import { createMetaStore, createResourceStore } from '../ecs/factories';
 import { world } from '../ecs/world';
-import { ALL_EVENT_TEMPLATES, EventSystem, type GameEvent } from '../game/EventSystem';
+import { ALL_EVENT_TEMPLATES, EventSystem, type GameEvent } from '../game/events';
 import { createGameView } from '../game/GameView';
 
 describe('EventSystem', () => {

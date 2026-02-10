@@ -159,6 +159,7 @@ const UnlockList: React.FC<{ items: string[] }> = ({ items }) => (
     <ul className="space-y-1.5 sm:space-y-2">
       {items.map((item, idx) => (
         <motion.li
+          // biome-ignore lint/suspicious/noArrayIndexKey: static unlock items list, no reordering
           key={idx}
           className="flex items-start gap-2"
           initial={{ opacity: 0, x: -8 }}
@@ -265,6 +266,7 @@ export const SettlementUpgradeModal: React.FC<SettlementUpgradeProps> = ({
             >
               {/* Close button */}
               <button
+                type="button"
                 onClick={handleClose}
                 className={cn(
                   'absolute top-3 right-3 z-10',

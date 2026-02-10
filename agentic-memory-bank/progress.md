@@ -5,24 +5,23 @@
 ### Core Game Loop
 - [x] 30x30 isometric grid with Canvas 2D rendering
 - [x] Building placement (31 building types via radial pie menu)
-- [x] Resource system (rubles, food, vodka, power, population)
-- [x] SimulationEngine ticks every 1s — resource production, consumption, population growth
+- [x] Resource system (rubles, food, vodka, power, population + trudodni, blat, timber, steel, cement, prefab, seedFund, emergencyReserve, storageCapacity)
+- [x] SimulationEngine ticks every 1s — 13-step tick loop with all subsystems
 - [x] Power system — buildings require power, coal plants generate it
-- [x] 5-Year Plan quota system with food → vodka progression
+- [x] 5-Year Plan quota system with food → vodka progression + era escalation
 
 ### ECS Architecture (UNIFIED — GameState eliminated)
 - [x] **ECS is the single source of truth** — no more dual authority
-- [x] `GameGrid` — spatial index for 30×30 grid (occupancy only)
+- [x] `GameGrid` — spatial index for configurable grid (20/30/50)
 - [x] `GameMeta` — ECS component for date, quota, leader, settlement, personnel, gameOver
 - [x] `GameView` — read-only snapshot for event/headline lambdas
 - [x] `createSnapshot()` in gameStore reads ECS directly
 - [x] All systems write ECS directly — no syncEcsToGameState
 - [x] PolitburoSystem writes resources directly (no delta-capture hack)
-- [x] 897 unit tests passing after migration
 
 ### Canvas 2D Rendering (COMPLETE — BabylonJS removed)
 - [x] `Canvas2DRenderer.ts` — 6-layer renderer (ground, grid, buildings, hover, preview, particles)
-- [x] `Camera2D.ts` — pan/zoom with DPR-aware canvas sizing
+- [x] `Camera2D.ts` — pan/zoom with DPR-aware canvas sizing + edge clamping
 - [x] `GridMath.ts` — isometric grid-to-screen projection (TILE_WIDTH=80, TILE_HEIGHT=40)
 - [x] `SpriteLoader.ts` — manifest-driven sprite loading, 31 building PNGs preloaded in parallel
 - [x] `CanvasGestureManager.ts` — tap/pan/pinch/scroll-zoom + drag-to-place
@@ -45,7 +44,38 @@
 - [x] 10 ministries, 8 personality archetypes, 8x10 interaction matrix
 - [x] Coup/purge mechanics, inter-ministry tension system
 - [x] 30+ ministry event templates
+- [x] PoliticalEntitySystem — politruks, KGB agents, military entities as game objects
 - [x] Wired into SimulationEngine.tick() — events, modifiers, leader sync
+
+### Economy System (COMPLETE)
+- [x] EconomySystem orchestrator with era-mapped subsystems
+- [x] Trudodni (labor units) — work contribution tracking
+- [x] Fondy (state allocations) — material deliveries from central planning
+- [x] Blat (connections) — hidden economy currency
+- [x] Ration cards — tiered food distribution
+- [x] MTS system — machine-tractor stations for farm bonuses
+- [x] Stakhanovites — random quota-exceeding worker events
+- [x] Heating progression — pechka → district heating → crumbling infra
+- [x] Production chains — multi-step (grain→flour→bread, grain→vodka)
+- [x] Currency reforms — era-triggered denomination changes
+- [x] Storage & spoilage — overflow decay + baseline spoilage
+- [x] Difficulty multipliers — full set (worker/comrade/tovarish)
+- [x] Quota escalation — era-based curve
+
+### Era & Campaign System (COMPLETE)
+- [x] 8 Era definitions with year boundaries, modifiers, doctrine
+- [x] Era transitions with 10-tick modifier blending
+- [x] Era-specific building unlocks (cumulative)
+- [x] Per-era victory/failure conditions with grace period
+- [x] Construction method progression (manual → mechanized → industrial → decaying)
+- [x] Checkpoint system for era restart
+
+### Worker System (COMPLETE)
+- [x] Worker entities in ECS with CitizenComponent
+- [x] Worker morale/loyalty/skill hidden stats
+- [x] Vodka dependency per-worker
+- [x] 6 citizen AI classes
+- [x] Population dynamics — birth/death/defection lifecycle
 
 ### Game Systems (ALL COMPLETE)
 - [x] PersonnelFile — black marks, commendations, threat levels, arrest mechanic (56 tests)
@@ -53,15 +83,34 @@
 - [x] SettlementSystem — selo → posyolok → PGT → gorod evolution (28 tests)
 - [x] Game speed 1x/2x/3x via gameStore
 - [x] Annual Report (pripiski) — falsification mechanic at quota deadlines
-- [x] All systems wired into SimulationEngine.tick() (13-step tick loop)
+- [x] All systems wired into SimulationEngine.tick() (13-step tick loop + economy, era, political)
+
+### Scoring & Achievements (COMPLETE)
+- [x] ScoringSystem — 3 difficulties × 3 consequences = 9 multiplier combos
+- [x] 12 satirical Soviet medals
+- [x] AchievementTracker — 28+ achievements
+- [x] GameTally — end-game summary screen data
+
+### Minigames (COMPLETE)
+- [x] MinigameRouter — building/event tap routing with auto-resolve fallback
+- [x] 8 minigame definitions (Queue, Ideology, Inspection, Conscription, Black Market, Factory, Hunt, Interrogation)
+
+### NPC Dialogue (COMPLETE)
+- [x] 7 dialogue pools with context-sensitive selection
+- [x] Dark sardonic MASH-style humor (survival coping)
+
+### Tutorial (COMPLETE)
+- [x] TutorialSystem with 14 milestones
+- [x] Comrade Krupnik named advisor
 
 ### Events & Narrative
-- [x] 50+ event templates across 5 categories
+- [x] 50+ event templates across 5 categories + era-specific templates
 - [x] Weighted random selection with conditions and cooldowns
 - [x] PravdaSystem — 61 generators, 6 weighted categories, 145K+ unique headlines
 - [x] Event severity → toast mapping (catastrophic→evacuation, major→critical)
 
 ### UI (React 19 + Tailwind CSS 4)
+- [x] LandingPage → NewGameFlow → AssignmentLetter → Game flow
 - [x] SovietHUD — settlement tier, date, resources, pause, speed, hamburger
 - [x] DrawerPanel — slide-out command panel with game data
 - [x] BottomStrip — Pravda ticker + role/title
@@ -80,7 +129,7 @@
 
 ### Infrastructure
 - [x] Vite 7 + TypeScript 5.9 strict mode + Biome
-- [x] **897 unit tests** passing (Vitest + happy-dom)
+- [x] **1721 unit tests** passing across 48 test files (Vitest + happy-dom)
 - [x] **139 E2E tests** passing (Playwright)
 - [x] GitHub Actions CI + GitHub Pages auto-deploy
 - [x] Asset URLs use `import.meta.env.BASE_URL` for subdirectory deployments
@@ -88,21 +137,26 @@
 ## What's Left to Build
 
 ### High Priority
-- [ ] Save/load UI
-- [ ] sql.js WASM persistence (save/load .db, IndexedDB)
-- [ ] Main menu (New Game/Continue/Load), difficulty selection
+- [ ] Save/load UI (hamburger drawer save button + file picker load)
+- [ ] sql.js WASM persistence (save/load .db, IndexedDB, autosave)
+- [ ] Wire all new subsystem state into SaveSystem serialization/deserialization
 
 ### Medium Priority
 - [ ] Dynamic music selection based on game mood
-- [ ] Citizen AI system
 - [ ] PWA manifest + service worker
+- [ ] Consumer goods marketplace UI
+- [ ] Medal ceremony animations
+- [ ] Essential worker designation mechanic
 
 ### Low Priority
+- [ ] Color-blind accessibility mode
+- [ ] Bridge sprite representations
+- [ ] Notification log spatial panning
+- [ ] Ambient audio per era
 - [ ] SSR/Republic mechanics
-- [ ] Achievements/medals
-- [ ] Ambient audio
-- [ ] Tutorial
-- [ ] Settings UI
+
+## Design Doc Coverage: ~92%
+9 design documents audited. Remaining gaps are mostly UI/cosmetic and edge-case mechanics. Core gameplay loops, economy, political apparatus, eras, workers, scoring, minigames, dialogue, tutorial — all substantially implemented.
 
 ## Known Issues
 

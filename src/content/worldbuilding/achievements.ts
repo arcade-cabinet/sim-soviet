@@ -1,0 +1,243 @@
+import { pick } from './_rng';
+import type { Achievement } from './types';
+
+export const ACHIEVEMENTS: Achievement[] = [
+  {
+    id: 'first_building',
+    name: 'Hero of Soviet Labor (Third Class)',
+    description: 'Build your first building.',
+    subtext: 'First class requires surviving until the second building.',
+    hidden: false,
+  },
+  {
+    id: 'late_quota',
+    name: 'Five-Year Plan (Twelve-Year Completion)',
+    description: 'Complete a quota late.',
+    subtext: 'The deadline was a suggestion. All deadlines are suggestions.',
+    hidden: false,
+  },
+  {
+    id: 'collapse_no_witness',
+    name: 'Nothing To See Here',
+    description: 'Have a building collapse with 0 witnesses.',
+    subtext:
+      'If a building falls and no one is around, did the State fail? No. The State never fails.',
+    hidden: false,
+  },
+  {
+    id: 'full_grid',
+    name: 'Concrete Jungle',
+    description: 'Fill every grid tile with a building.',
+    subtext: 'Nature has been defeated. The birds have nowhere to land. This is progress.',
+    hidden: false,
+  },
+  {
+    id: 'ten_statues',
+    name: 'Cult of Personality',
+    description: 'Build 10 Lenin Statues.',
+    subtext:
+      'From every direction, Lenin watches. He is proud. Probably. His expression has not changed since 1924.',
+    hidden: false,
+  },
+  {
+    id: 'no_food',
+    name: 'Intermittent Fasting Pioneer',
+    description: 'Reach 0 food supply.',
+    subtext: 'The diet was not voluntary, but the results are undeniable.',
+    hidden: false,
+  },
+  {
+    id: 'max_vodka',
+    name: 'Spirit of the Revolution',
+    description: 'Reach maximum vodka reserves.',
+    subtext:
+      'The warehouse is full. The workers are full. Nobody is walking straight. Production continues.',
+    hidden: false,
+  },
+  {
+    id: 'first_gulag',
+    name: 'Attitude Adjustment Center',
+    description: 'Build your first Gulag.',
+    subtext: 'It is for their own good. Their good has been defined by committee.',
+    hidden: false,
+  },
+  {
+    id: 'hundred_pop',
+    name: 'Strength in Numbers',
+    description: 'Reach 100 population.',
+    subtext:
+      '100 citizens. 100 mouths to feed. 100 potential dissidents. But also: 100 potential informants.',
+    hidden: false,
+  },
+  {
+    id: 'zero_pop',
+    name: 'Urban Planning Complete',
+    description: 'Reach 0 population.',
+    subtext: 'The city is perfect. No one is here to disagree.',
+    hidden: true,
+  },
+  {
+    id: 'ten_events',
+    name: 'It Builds Character',
+    description: 'Survive 10 random events.',
+    subtext: '"Survive" is doing a lot of heavy lifting in this sentence.',
+    hidden: false,
+  },
+  {
+    id: 'fifty_events',
+    name: "What Doesn't Kill You Makes You Numb",
+    description: 'Survive 50 random events.',
+    subtext: 'At this point, you are less a leader and more a professional disaster witness.',
+    hidden: false,
+  },
+  {
+    id: 'bankruptcy',
+    name: 'Socialist Arithmetic',
+    description: 'Reach 0 rubles.',
+    subtext: 'Money is a capitalist construct anyway. You are free from it now. Feel the freedom.',
+    hidden: false,
+  },
+  {
+    id: 'rich',
+    name: 'Suspicious Prosperity',
+    description: 'Accumulate 10,000 rubles.',
+    subtext: 'The KGB has questions. The accountant has disappeared. These facts are unrelated.',
+    hidden: false,
+  },
+  {
+    id: 'first_rename',
+    name: 'Toponymic Flexibility',
+    description: 'Rename your city for the first time.',
+    subtext: 'The new name is better. The old name was always temporary. Memory is flexible.',
+    hidden: false,
+  },
+  {
+    id: 'five_renames',
+    name: 'Identity Crisis',
+    description: 'Rename your city 5 times.',
+    subtext: 'Citizens have stopped learning the name. They just call it "here."',
+    hidden: false,
+  },
+  {
+    id: 'all_buildings',
+    name: 'Full Socialist Toolkit',
+    description: 'Build one of every building type.',
+    subtext: 'You now have everything a Soviet city needs: concrete, smoke, fear, and a statue.',
+    hidden: false,
+  },
+  {
+    id: 'night_shift',
+    name: 'Darkness Is a Feature',
+    description: 'Have 0 power supply with 50+ population.',
+    subtext:
+      'Citizens learn to navigate by sound and collective memory. Some discover walls the hard way.',
+    hidden: false,
+  },
+  {
+    id: 'year_2000',
+    name: 'Millennium Bug Immune',
+    description: 'Reach the year 2000.',
+    subtext: 'The computers were already broken. Y2K changed nothing.',
+    hidden: false,
+  },
+  {
+    id: 'year_2100',
+    name: 'The Eternal State',
+    description: 'Reach the year 2100.',
+    subtext:
+      'You have outlived every prediction. Every critic. Every potato. The State endures. You endure. Is this winning? There is no winning. There is only enduring.',
+    hidden: true,
+  },
+  {
+    id: 'no_buildings_high_pop',
+    name: 'Nomadic Socialism',
+    description: 'Have 50+ population with 0 buildings.',
+    subtext:
+      'They live in the open. They are free. The freedom is cold and wet but ideologically sound.',
+    hidden: true,
+  },
+  {
+    id: 'bulldoze_everything',
+    name: 'Clean Slate',
+    description: 'Bulldoze every building in a city with 10+ buildings.',
+    subtext:
+      'Sometimes progress means starting over. The rubble will make excellent foundations. For more rubble.',
+    hidden: false,
+  },
+  {
+    id: 'three_disasters',
+    name: 'Disaster Magnet',
+    description: 'Experience 3 disasters in a row.',
+    subtext:
+      'Statistically improbable. Ideologically inevitable. The State is testing you. You are failing the test.',
+    hidden: false,
+  },
+  {
+    id: 'propaganda_win',
+    name: 'Ministry of Truth Employee of the Month',
+    description: 'Have Pravda report 10 positive headlines while all indicators are negative.',
+    subtext:
+      'The news has never been better. Reality has never been worse. These are different departments.',
+    hidden: false,
+  },
+  {
+    id: 'play_one_hour',
+    name: 'Dedicated Servant of the State',
+    description: 'Play for one continuous hour.',
+    subtext: 'You could have stopped. You did not. Is this dedication or is this a trap? Both.',
+    hidden: false,
+  },
+  {
+    id: 'play_five_hours',
+    name: 'There Is No Escape',
+    description: 'Play for five continuous hours.',
+    subtext:
+      'You understand now. There is no winning. There is no losing. There is only the State. And you, serving it. Forever.',
+    hidden: true,
+  },
+  {
+    id: 'vodka_economy',
+    name: 'Liquid Currency',
+    description: 'Have more vodka than rubles.',
+    subtext: 'In practice, the vodka IS the currency. The ruble is just a receipt.',
+    hidden: false,
+  },
+  {
+    id: 'only_gulags',
+    name: 'Archipelago',
+    description: 'Build a city with only Gulags.',
+    subtext:
+      'At this point, who is guarding whom? The guards are also inside. Everyone is inside. This is a metaphor. It is also literally true.',
+    hidden: true,
+  },
+  {
+    id: 'perfect_quota',
+    name: 'Exactly As Planned',
+    description: 'Complete a quota at exactly 100%.',
+    subtext:
+      'Not 99%. Not 101%. Exactly 100%. The Plan is perfect. You are perfect. Do not get used to this.',
+    hidden: false,
+  },
+  {
+    id: 'survive_purge',
+    name: 'Still Here (For Now)',
+    description: 'Survive a personnel optimization event.',
+    subtext:
+      'You remain. Others did not. Do not ask where they went. Where they went is where they were always going.',
+    hidden: false,
+  },
+  {
+    id: 'reelected',
+    name: 'Unanimous Approval',
+    description: 'Win a re-election event with 100%+ of the vote.',
+    subtext:
+      'Democracy in action. The people have spoken. The people were given one option. The people are wise.',
+    hidden: false,
+  },
+];
+
+/** Returns a random achievement that hasn't been unlocked yet. */
+export function getLockedAchievement(unlockedIds: Set<string>): Achievement | null {
+  const locked = ACHIEVEMENTS.filter((a) => !unlockedIds.has(a.id) && !a.hidden);
+  return locked.length > 0 ? pick(locked) : null;
+}

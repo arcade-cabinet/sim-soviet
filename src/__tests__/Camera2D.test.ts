@@ -509,3 +509,59 @@ describe('Camera2D edge cases', () => {
     expect(w.y).toBeCloseTo(wp.y, 10);
   });
 });
+
+// ── Bounds clamping ───────────────────────────────────────────────────────────
+
+describe('Camera2D bounds clamping', () => {
+  it('clamps pan to bounds', () => {
+    const cam = new Camera2D();
+    cam.setBounds(-100, -100, 100, 100);
+    cam.resize(400, 300);
+    cam.centerOn(0, 0);
+
+    // Pan far to the right (negative deltaX moves camera right)
+    cam.pan(-50000, 0);
+    expect(cam.x).toBeLessThanOrEqual(100);
+
+    // Pan far to the left
+    cam.pan(50000, 0);
+    expect(cam.x).toBeGreaterThanOrEqual(-100);
+  });
+
+  it('clamps zoomAt to bounds', () => {
+    const cam = new Camera2D();
+    cam.setBounds(-100, -100, 100, 100);
+    cam.resize(400, 300);
+    cam.centerOn(0, 0);
+
+    // Zoom way out then check bounds
+    cam.zoomAt(200, 150, 0.1); // zoom out a lot
+    expect(cam.x).toBeGreaterThanOrEqual(-100);
+    expect(cam.x).toBeLessThanOrEqual(100);
+    expect(cam.y).toBeGreaterThanOrEqual(-100);
+    expect(cam.y).toBeLessThanOrEqual(100);
+  });
+
+  it('allows free pan when no bounds set', () => {
+    const cam = new Camera2D();
+    cam.resize(400, 300);
+    cam.centerOn(0, 0);
+
+    cam.pan(-999999, 0);
+    // Should be very large positive (panning left moves camera.x right in world)
+    expect(Math.abs(cam.x)).toBeGreaterThan(1000);
+  });
+
+  it('clamps centerOn to bounds', () => {
+    const cam = new Camera2D();
+    cam.setBounds(-100, -100, 100, 100);
+
+    cam.centerOn(500, 500);
+    expect(cam.x).toBe(100);
+    expect(cam.y).toBe(100);
+
+    cam.centerOn(-500, -500);
+    expect(cam.x).toBe(-100);
+    expect(cam.y).toBe(-100);
+  });
+});

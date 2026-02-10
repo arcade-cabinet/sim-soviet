@@ -66,6 +66,8 @@ export class CanvasGestureManager {
   public onBuild: ((type: string) => void) | null = null;
   /** Optional audio hook — called after a building is successfully bulldozed. */
   public onBulldoze: (() => void) | null = null;
+  /** Optional hook — called when a building is tapped (for minigame trigger routing). */
+  public onBuildingTap: ((defId: string) => void) | null = null;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -267,6 +269,8 @@ export class CanvasGestureManager {
       return;
     }
     const defId = gridCell.type;
+    // Notify minigame system about building tap
+    this.onBuildingTap?.(defId);
     const def = getBuildingDef(defId);
     const fp = getFootprint(defId);
     const powered = this.findBuildingPowered(gridX, gridY);

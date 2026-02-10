@@ -69,7 +69,12 @@ const CARDS: ProtoCard[] = [
 function FullScreenProto({ children, onBack }: { children: React.ReactNode; onBack: () => void }) {
   return (
     <div>
-      <button onClick={onBack} className={BACK_BUTTON} style={{ fontFamily: "'VT323', monospace" }}>
+      <button
+        type="button"
+        onClick={onBack}
+        className={BACK_BUTTON}
+        style={{ fontFamily: "'VT323', monospace" }}
+      >
         &larr; BACK TO GALLERY
       </button>
       {children}
@@ -115,6 +120,7 @@ function PrototypeViewer() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {CARDS.map((card) => (
           <button
+            type="button"
             key={card.id}
             onClick={() => setActive(card.id)}
             className="bg-[#2d2a2a] border-2 border-[#8a1c1c] p-4 text-left hover:bg-[#3a3535] transition-colors min-h-[100px]"

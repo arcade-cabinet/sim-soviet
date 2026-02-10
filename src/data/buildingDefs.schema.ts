@@ -59,6 +59,27 @@ export const ProductionSchema = z.object({
 });
 
 /**
+ * Construction cost — labor + materials required to build.
+ * Rubles are NOT used for construction (planned economy).
+ */
+export const ConstructionCostSchema = z.object({
+  /** Labor units (trudodni) required */
+  labor: z.number().nonnegative(),
+  /** Timber units required */
+  timber: z.number().nonnegative(),
+  /** Steel units required */
+  steel: z.number().nonnegative(),
+  /** Cement units required */
+  cement: z.number().nonnegative(),
+  /** Prefab panel units required (late eras) */
+  prefab: z.number().nonnegative(),
+  /** Base construction ticks at full staffing */
+  baseTicks: z.number().int().positive(),
+  /** Optimal number of workers for construction */
+  staffCap: z.number().int().positive(),
+});
+
+/**
  * Default stats for the Miniplex BuildingComponent.
  * These are the starting values when a building entity is created.
  */
@@ -79,7 +100,27 @@ export const BuildingStatsSchema = z.object({
   decayRate: z.number(),
   /** Worker slots */
   jobs: z.number(),
+  /** Construction cost in labor + materials (optional for backward compat) */
+  constructionCost: ConstructionCostSchema.optional(),
+  /** Optimal staff count for production (overstaffing has diminishing returns) */
+  staffCap: z.number().int().positive().optional(),
+  /** Base output rate per worker per tick (for production formula) */
+  baseRate: z.number().positive().optional(),
 });
+
+// ── Era classification ───────────────────────────────────────────────────────
+
+/** Historical era in which this building first becomes available. */
+export const EraIdSchema = z.enum([
+  'war_communism',
+  'first_plans',
+  'great_patriotic',
+  'reconstruction',
+  'thaw',
+  'stagnation',
+  'perestroika',
+  'eternal_soviet',
+]);
 
 // ── Role classification ──────────────────────────────────────────────────────
 
@@ -136,6 +177,8 @@ export const BuildingDefSchema = z.object({
   stats: BuildingStatsSchema,
   /** UI presentation data */
   presentation: PresentationSchema,
+  /** Era when this building first becomes available */
+  eraAvailable: EraIdSchema,
 });
 
 // ── Top-level generated file schema ──────────────────────────────────────────
@@ -156,6 +199,7 @@ export type SpriteData = z.infer<typeof SpriteDataSchema>;
 export type Footprint = z.infer<typeof FootprintSchema>;
 export type ModelSize = z.infer<typeof ModelSizeSchema>;
 export type Production = z.infer<typeof ProductionSchema>;
+export type ConstructionCost = z.infer<typeof ConstructionCostSchema>;
 export type BuildingStats = z.infer<typeof BuildingStatsSchema>;
 export type Role = z.infer<typeof RoleSchema>;
 export type Presentation = z.infer<typeof PresentationSchema>;

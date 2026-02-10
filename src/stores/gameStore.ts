@@ -31,6 +31,18 @@ export interface GameSnapshot {
   blackMarks: number;
   commendations: number;
   threatLevel: string;
+  currentEra: string;
+
+  // ── Planned Economy Resources ──
+  trudodni: number;
+  blat: number;
+  timber: number;
+  steel: number;
+  cement: number;
+  prefab: number;
+  seedFund: number;
+  emergencyReserve: number;
+  storageCapacity: number;
 }
 
 // ── Singleton state ───────────────────────────────────────────────────────
@@ -38,6 +50,7 @@ export interface GameSnapshot {
 const _listeners = new Set<() => void>();
 let _snapshot: GameSnapshot | null = null;
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: snapshot aggregates many ECS fields with fallback defaults
 function createSnapshot(): GameSnapshot {
   const res = getResourceEntity();
   const meta = getMetaEntity();
@@ -66,6 +79,18 @@ function createSnapshot(): GameSnapshot {
     blackMarks: m?.blackMarks ?? 0,
     commendations: m?.commendations ?? 0,
     threatLevel: m?.threatLevel ?? 'safe',
+    currentEra: m?.currentEra ?? 'war_communism',
+
+    // Planned economy resources
+    trudodni: res?.resources.trudodni ?? 0,
+    blat: res?.resources.blat ?? 10,
+    timber: res?.resources.timber ?? 0,
+    steel: res?.resources.steel ?? 0,
+    cement: res?.resources.cement ?? 0,
+    prefab: res?.resources.prefab ?? 0,
+    seedFund: res?.resources.seedFund ?? 1.0,
+    emergencyReserve: res?.resources.emergencyReserve ?? 0,
+    storageCapacity: res?.resources.storageCapacity ?? 200,
   };
 }
 

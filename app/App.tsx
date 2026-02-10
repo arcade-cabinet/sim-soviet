@@ -8,25 +8,32 @@
  *   gameStore bridges mutable GameState with React via useSyncExternalStore.
  */
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { SaveSystemAPI } from '@/components/GameWorld';
 import { GameWorld } from '@/components/GameWorld';
+import { AssignmentLetter } from '@/components/screens/AssignmentLetter';
+import { LandingPage } from '@/components/screens/LandingPage';
+import { type NewGameConfig, NewGameFlow } from '@/components/screens/NewGameFlow';
 import { Advisor } from '@/components/ui/Advisor';
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
 import { AnnualReportModal } from '@/components/ui/AnnualReportModal';
 import { BottomStrip } from '@/components/ui/BottomStrip';
 import { BuildingInspector } from '@/components/ui/BuildingInspector';
+import { ConcreteFrame } from '@/components/ui/ConcreteFrame';
 import { DrawerPanel } from '@/components/ui/DrawerPanel';
 import type { PlanDirective } from '@/components/ui/FiveYearPlanModal';
 import { FiveYearPlanModal } from '@/components/ui/FiveYearPlanModal';
 import { GameOverModal } from '@/components/ui/GameOverModal';
-import { IntroModal } from '@/components/ui/IntroModal';
 import { RadialBuildMenu } from '@/components/ui/RadialBuildMenu';
 import { SettlementUpgradeModal } from '@/components/ui/SettlementUpgradeModal';
 import { SovietHUD } from '@/components/ui/SovietHUD';
 import { SovietToastStack } from '@/components/ui/SovietToastStack';
+import { initDatabase } from '@/db/provider';
+import * as dbSchema from '@/db/schema';
+import { getResourceEntity } from '@/ecs/archetypes';
+import { ERA_DEFINITIONS } from '@/game/era';
 import type { SettlementEvent } from '@/game/SettlementSystem';
 import type { SimCallbacks } from '@/game/SimulationEngine';
-import { getResourceEntity } from '@/ecs/archetypes';
 import { useGameSnapshot } from '@/stores/gameStore';
 import { addSovietToast } from '@/stores/toastStore';
 
@@ -42,7 +49,9 @@ interface GameOverInfo {
 
 export function App() {
   const snap = useGameSnapshot();
-  const [gameStarted, setGameStarted] = useState(false);
+  type Screen = 'landing' | 'newGame' | 'assignment' | 'playing';
+  const [screen, setScreen] = useState<Screen>('landing');
+  const [gameConfig, setGameConfig] = useState<NewGameConfig | null>(null);
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settlementEvent, setSettlementEvent] = useState<SettlementEvent | null>(null);
@@ -52,8 +61,27 @@ export function App() {
     advisor: null,
     pravda: null,
   });
+  const [hasSavedGame, setHasSavedGame] = useState(false);
+  const [loadSaveOnStart, setLoadSaveOnStart] = useState<string | null>(null);
+  const [saveApi, setSaveApi] = useState<SaveSystemAPI | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
+
+  // Check for existing saves on mount
+  useEffect(() => {
+    initDatabase()
+      .then((db) => {
+        const rows = db.select().from(dbSchema.saves).all();
+        setHasSavedGame(rows.length > 0);
+      })
+      .catch(() => {
+        // Fall back to localStorage check
+        const hasLocal =
+          localStorage.getItem('simsoviet_save_v2') !== null ||
+          localStorage.getItem('simsoviet_save_v1') !== null;
+        setHasSavedGame(hasLocal);
+      });
+  }, []);
 
   // Callbacks for SimulationEngine → React state
   const simCallbacks: SimCallbacks = {
@@ -82,17 +110,13 @@ export function App() {
     },
   };
 
-  const handleStart = useCallback(() => {
-    setGameStarted(true);
-    setMessages((p) => ({
-      ...p,
-      advisor: 'Finally. You are late. Build a Coal Plant first, then Housing. Go.',
-    }));
-  }, []);
-
   const handleRestart = useCallback(() => {
     // Full page reload for clean state (ECS world, GameState, audio)
     window.location.reload();
+  }, []);
+
+  const handleSaveSystemReady = useCallback((api: SaveSystemAPI) => {
+    setSaveApi(api);
   }, []);
 
   return (
@@ -104,8 +128,46 @@ export function App() {
       <div className="crt-overlay" />
       <div className="scanlines" />
 
-      {/* Intro modal */}
-      {!gameStarted && <IntroModal onStart={handleStart} />}
+      {/* Brutalist concrete border frame */}
+      <ConcreteFrame />
+
+      {/* Screen flow */}
+      {screen === 'landing' && (
+        <LandingPage
+          onNewGame={() => setScreen('newGame')}
+          onContinue={() => {
+            setLoadSaveOnStart('autosave');
+            setScreen('playing');
+          }}
+          onLoadGame={() => {
+            setLoadSaveOnStart('manual_1');
+            setScreen('playing');
+          }}
+          hasSavedGame={hasSavedGame}
+        />
+      )}
+      {screen === 'newGame' && (
+        <NewGameFlow
+          onStart={(config) => {
+            setGameConfig(config);
+            setScreen('assignment');
+          }}
+          onBack={() => setScreen('landing')}
+        />
+      )}
+      {screen === 'assignment' && gameConfig && (
+        <AssignmentLetter
+          config={gameConfig}
+          era={ERA_DEFINITIONS[gameConfig.startEra]}
+          onAccept={() => {
+            setScreen('playing');
+            setMessages((p) => ({
+              ...p,
+              advisor: 'Finally. You are late. Build a Coal Plant first, then Housing. Go.',
+            }));
+          }}
+        />
+      )}
 
       {/* Game over modal */}
       {gameOver && (
@@ -124,11 +186,19 @@ export function App() {
         <canvas
           ref={canvasRef}
           id="gameCanvas"
+          className="absolute inset-0 w-full h-full"
           style={{ display: 'block', touchAction: 'none', outline: 'none' }}
         />
 
         {/* Render-null component that manages game systems */}
-        <GameWorld canvasRef={canvasRef} callbacks={simCallbacks} gameStarted={gameStarted} />
+        <GameWorld
+          canvasRef={canvasRef}
+          callbacks={simCallbacks}
+          gameStarted={screen === 'playing'}
+          gameConfig={gameConfig}
+          loadSaveOnStart={loadSaveOnStart}
+          onSaveSystemReady={handleSaveSystemReady}
+        />
 
         {/* Pause overlay */}
         <AnimatePresence>
@@ -162,7 +232,7 @@ export function App() {
       <RadialBuildMenu />
 
       {/* Slide-out drawer */}
-      <DrawerPanel isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <DrawerPanel isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} saveApi={saveApi} />
 
       {/* Settlement upgrade decree modal */}
       <AnimatePresence>

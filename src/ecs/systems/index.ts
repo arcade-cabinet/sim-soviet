@@ -14,3 +14,4 @@ export { powerSystem } from './powerSystem';
 export { productionSystem } from './productionSystem';
 export type { QuotaState } from './quotaSystem';
 export { createDefaultQuota, quotaSystem } from './quotaSystem';
+export { calculateStorageCapacity, storageSystem } from './storageSystem';

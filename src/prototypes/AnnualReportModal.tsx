@@ -96,6 +96,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({ onClose 
 
                   <div className="relative p-4 sm:p-8">
                     <button
+                      type="button"
                       onClick={handleClose}
                       className="absolute top-4 right-4 text-[#8b4513] hover:text-[#654321] transition-colors"
                       aria-label="Close report"
@@ -286,6 +287,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({ onClose 
                     {/* Submit buttons */}
                     <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-6 pt-4 sm:pt-6 border-t-4 border-[#8b4513]">
                       <button
+                        type="button"
                         onClick={() => handleSubmit(true)}
                         disabled={!isHonestReport()}
                         className={`px-6 sm:px-8 py-3 font-bold rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 min-h-[44px] ${
@@ -299,6 +301,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({ onClose 
                         <div className="text-xs mt-1">(Safe - No Risk)</div>
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleSubmit(false)}
                         disabled={isHonestReport()}
                         className={`px-6 sm:px-8 py-3 font-bold rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 min-h-[44px] ${

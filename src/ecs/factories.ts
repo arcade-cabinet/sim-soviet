@@ -144,6 +144,7 @@ export function createTile(
  * @param initialValues - Optional partial override of starting resources
  * @returns The resource store entity
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: resource store has many fields with individual defaults
 export function createResourceStore(
   initialValues?: Partial<{
     money: number;
@@ -152,6 +153,15 @@ export function createResourceStore(
     power: number;
     powerUsed: number;
     population: number;
+    trudodni: number;
+    blat: number;
+    timber: number;
+    steel: number;
+    cement: number;
+    prefab: number;
+    seedFund: number;
+    emergencyReserve: number;
+    storageCapacity: number;
   }>
 ): Entity {
   // Check for existing store
@@ -168,6 +178,15 @@ export function createResourceStore(
       power: initialValues?.power ?? 0,
       powerUsed: initialValues?.powerUsed ?? 0,
       population: initialValues?.population ?? 0,
+      trudodni: initialValues?.trudodni ?? 0,
+      blat: initialValues?.blat ?? 10,
+      timber: initialValues?.timber ?? 100,
+      steel: initialValues?.steel ?? 0,
+      cement: initialValues?.cement ?? 0,
+      prefab: initialValues?.prefab ?? 0,
+      seedFund: initialValues?.seedFund ?? 1.0,
+      emergencyReserve: initialValues?.emergencyReserve ?? 0,
+      storageCapacity: initialValues?.storageCapacity ?? 200,
     },
     isResourceStore: true,
   };
@@ -229,6 +248,7 @@ export function createMetaStore(initialValues?: Partial<GameMeta>): Entity {
       blackMarks: initialValues?.blackMarks ?? 0,
       commendations: initialValues?.commendations ?? 0,
       threatLevel: initialValues?.threatLevel ?? 'safe',
+      currentEra: initialValues?.currentEra ?? 'war_communism',
     },
     isMetaStore: true,
   };
