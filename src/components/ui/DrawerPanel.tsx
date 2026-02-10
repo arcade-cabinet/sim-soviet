@@ -156,7 +156,10 @@ export function DrawerPanel({ isOpen, onClose }: DrawerPanelProps) {
                     />
                   )}
                   {quotaPct < 30 && yearsLeft <= 1 && (
-                    <AlertItem severity="warning" message="Quota deadline approaching — behind schedule" />
+                    <AlertItem
+                      severity="warning"
+                      message="Quota deadline approaching — behind schedule"
+                    />
                   )}
                   {snap.food >= 200 && snap.powerUsed <= snap.power && snap.blackMarks === 0 && (
                     <AlertItem severity="info" message="No current alerts" />
@@ -278,15 +281,7 @@ function AlertItem({
   );
 }
 
-function PersonnelRow({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
+function PersonnelRow({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-[#888] text-[10px]">{label}</span>

@@ -1,7 +1,7 @@
+import { AnimatePresence, motion } from 'framer-motion';
+import { Award, ChevronRight, Star, X } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Star, ChevronRight, Award, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ─── Types ───────────────────────────────────────────────
@@ -87,10 +87,7 @@ const COMMENDATIONS: Record<Exclude<SettlementTier, 'selo'>, string> = {
 // ─── Sub-components ──────────────────────────────────────
 
 const GoldStar: React.FC<{ className?: string }> = ({ className }) => (
-  <Star
-    className={cn('text-[#cfaa48] fill-[#cfaa48]', className)}
-    size={16}
-  />
+  <Star className={cn('text-[#cfaa48] fill-[#cfaa48]', className)} size={16} />
 );
 
 const TierTransition: React.FC<{
@@ -105,9 +102,7 @@ const TierTransition: React.FC<{
   >
     {/* Old tier */}
     <div className="text-center">
-      <div className="text-3xl sm:text-5xl mb-1 opacity-60">
-        {fromTier.icon}
-      </div>
+      <div className="text-3xl sm:text-5xl mb-1 opacity-60">{fromTier.icon}</div>
       <div
         className="text-[#654321] text-[10px] sm:text-xs uppercase tracking-wider"
         style={{ fontFamily: "'Courier New', monospace" }}
@@ -256,7 +251,7 @@ export const SettlementUpgradeModal: React.FC<SettlementUpgradeProps> = ({
                 'bg-[#1a1a1a] border-2 border-[#8b0000]',
                 'shadow-[0_0_40px_rgba(139,0,0,0.4)]',
                 'min-h-screen sm:min-h-0 sm:rounded-sm',
-                'flex flex-col',
+                'flex flex-col'
               )}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -275,7 +270,7 @@ export const SettlementUpgradeModal: React.FC<SettlementUpgradeProps> = ({
                   'absolute top-3 right-3 z-10',
                   'w-8 h-8 flex items-center justify-center',
                   'bg-[#2a2a2a] border border-[#444] hover:border-[#8b0000]',
-                  'transition-colors',
+                  'transition-colors'
                 )}
                 aria-label="Close decree"
               >
@@ -323,8 +318,7 @@ export const SettlementUpgradeModal: React.FC<SettlementUpgradeProps> = ({
                       >
                         By order of the Presidium of the Supreme Soviet,
                         <br />
-                        the {from.label} of{' '}
-                        <span className="font-bold">{settlementName}</span> is
+                        the {from.label} of <span className="font-bold">{settlementName}</span> is
                         hereby
                         <br />
                         reclassified as a
@@ -342,7 +336,7 @@ export const SettlementUpgradeModal: React.FC<SettlementUpgradeProps> = ({
                         className={cn(
                           'text-2xl sm:text-4xl font-bold uppercase tracking-wider',
                           'text-transparent bg-clip-text',
-                          'bg-gradient-to-b from-[#cfaa48] via-[#e8c860] to-[#a08030]',
+                          'bg-gradient-to-b from-[#cfaa48] via-[#e8c860] to-[#a08030]'
                         )}
                         style={{ fontFamily: "'Courier New', monospace" }}
                       >
@@ -415,9 +409,7 @@ export const SettlementUpgradeModal: React.FC<SettlementUpgradeProps> = ({
                         style={{ fontFamily: "'Courier New', monospace" }}
                       >
                         You have been awarded:{' '}
-                        <span className="font-bold text-[#8b4513]">
-                          {commendation}
-                        </span>
+                        <span className="font-bold text-[#8b4513]">{commendation}</span>
                       </p>
                     </motion.div>
                   </div>
@@ -438,7 +430,7 @@ export const SettlementUpgradeModal: React.FC<SettlementUpgradeProps> = ({
                     'border-2 border-[#660000]',
                     'shadow-[0_4px_0_0_#440000] hover:shadow-[0_2px_0_0_#440000]',
                     'hover:translate-y-[2px]',
-                    'transition-all cursor-pointer',
+                    'transition-all cursor-pointer'
                   )}
                   style={{ fontFamily: "'VT323', monospace" }}
                   initial={{ opacity: 0 }}

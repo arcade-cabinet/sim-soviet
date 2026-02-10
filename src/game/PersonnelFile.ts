@@ -42,13 +42,7 @@ export interface FileEntry {
   description: string;
 }
 
-export type ThreatLevel =
-  | 'safe'
-  | 'watched'
-  | 'warned'
-  | 'investigated'
-  | 'reviewed'
-  | 'arrested';
+export type ThreatLevel = 'safe' | 'watched' | 'warned' | 'investigated' | 'reviewed' | 'arrested';
 
 export interface PersonnelFileSaveData {
   difficulty: Difficulty;
@@ -152,11 +146,7 @@ export class PersonnelFile {
   }
 
   /** Add commendation. */
-  addCommendation(
-    source: CommendationSource,
-    tick: number,
-    description?: string,
-  ): void {
+  addCommendation(source: CommendationSource, tick: number, description?: string): void {
     const amount = COMMENDATION_AMOUNTS[source];
     this.commendations += amount;
 

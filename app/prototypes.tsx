@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
 import { AnnualReportModal } from '@/prototypes/AnnualReportModal';
-import { SovietToastDemo } from '@/prototypes/SovietToastStack';
-import { SovietGameHUDDemo } from '@/prototypes/SovietGameHUD';
-import { RadialBuildMenuDemo } from '@/prototypes/RadialBuildMenu';
 import { FiveYearPlanModal } from '@/prototypes/FiveYearPlanModal';
+import { RadialBuildMenuDemo } from '@/prototypes/RadialBuildMenu';
 import { SettlementUpgradeModal } from '@/prototypes/SettlementUpgradeModal';
+import { SovietGameHUDDemo } from '@/prototypes/SovietGameHUD';
+import { SovietToastDemo } from '@/prototypes/SovietToastStack';
 
 type PrototypeName =
   | 'annual-report'
@@ -49,7 +49,7 @@ const CARDS: ProtoCard[] = [
   {
     id: 'toolbar',
     title: 'Radial Build Menu',
-    desc: 'Tap grid to open pie menu. Inner ring: categories. Outer ring: buildings. Greyed out if it won\'t fit.',
+    desc: "Tap grid to open pie menu. Inner ring: categories. Outer ring: buildings. Greyed out if it won't fit.",
     status: 'approved',
   },
   {
@@ -66,20 +66,10 @@ const CARDS: ProtoCard[] = [
   },
 ];
 
-function FullScreenProto({
-  children,
-  onBack,
-}: {
-  children: React.ReactNode;
-  onBack: () => void;
-}) {
+function FullScreenProto({ children, onBack }: { children: React.ReactNode; onBack: () => void }) {
   return (
     <div>
-      <button
-        onClick={onBack}
-        className={BACK_BUTTON}
-        style={{ fontFamily: "'VT323', monospace" }}
-      >
+      <button onClick={onBack} className={BACK_BUTTON} style={{ fontFamily: "'VT323', monospace" }}>
         &larr; BACK TO GALLERY
       </button>
       {children}
@@ -117,12 +107,9 @@ function PrototypeViewer() {
       className="min-h-screen bg-[#1a1818] text-[#dcdcdc] p-4"
       style={{ fontFamily: "'VT323', monospace" }}
     >
-      <h1 className="text-3xl text-[#cfaa48] mb-2">
-        ☭ SIMSOVET 2000 — UI PROTOTYPES
-      </h1>
+      <h1 className="text-3xl text-[#cfaa48] mb-2">☭ SIMSOVET 2000 — UI PROTOTYPES</h1>
       <p className="text-sm text-[#888] mb-8">
-        Click a prototype to view it. Resize browser to test mobile
-        responsiveness.
+        Click a prototype to view it. Resize browser to test mobile responsiveness.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -137,24 +124,16 @@ function PrototypeViewer() {
             <div
               className={`text-xs mt-2 ${card.status === 'approved' ? 'text-green-500' : 'text-[#8a1c1c]'}`}
             >
-              {card.status === 'approved'
-                ? 'Status: APPROVED \u2713'
-                : 'Status: Ready for review'}
+              {card.status === 'approved' ? 'Status: APPROVED \u2713' : 'Status: Ready for review'}
             </div>
           </button>
         ))}
       </div>
 
       {/* Modal prototypes render as overlays */}
-      {active === 'annual-report' && (
-        <AnnualReportModal onClose={back} />
-      )}
-      {active === 'five-year-plan' && (
-        <FiveYearPlanModal onClose={back} />
-      )}
-      {active === 'settlement-upgrade' && (
-        <SettlementUpgradeModal onClose={back} />
-      )}
+      {active === 'annual-report' && <AnnualReportModal onClose={back} />}
+      {active === 'five-year-plan' && <FiveYearPlanModal onClose={back} />}
+      {active === 'settlement-upgrade' && <SettlementUpgradeModal onClose={back} />}
     </div>
   );
 }
@@ -163,5 +142,5 @@ const root = createRoot(document.getElementById('root')!);
 root.render(
   <React.StrictMode>
     <PrototypeViewer />
-  </React.StrictMode>,
+  </React.StrictMode>
 );

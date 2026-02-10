@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useCallback, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 // ─── Data ────────────────────────────────────────────────
@@ -26,13 +26,62 @@ const CATEGORIES: Category[] = [
     label: 'Housing',
     icon: '\u{1F3E0}',
     buildings: [
-      { id: 'workers-house-a', icon: '\u{1F3E0}', name: "Workers' House", cost: 80, footprint: [1, 1], enabled: true },
-      { id: 'workers-house-b', icon: '\u{1F3E0}', name: "Workers' Duplex", cost: 110, footprint: [1, 1], enabled: true },
-      { id: 'apartment-tower-a', icon: '\u{1F3E2}', name: 'Tenement Block', cost: 100, footprint: [1, 1], enabled: true },
-      { id: 'apartment-tower-b', icon: '\u{1F3E2}', name: 'Tenement Tower', cost: 120, footprint: [1, 1], enabled: true },
-      { id: 'apartment-tower-c', icon: '\u{1F3E2}', name: 'High-Rise', cost: 180, footprint: [2, 2], enabled: false },
-      { id: 'apartment-tower-d', icon: '\u{1F3E2}', name: 'Megablock', cost: 250, footprint: [2, 2], enabled: false },
-      { id: 'workers-house-c', icon: '\u{1F3D8}\u{FE0F}', name: "Workers' Complex", cost: 200, footprint: [2, 1], enabled: true },
+      {
+        id: 'workers-house-a',
+        icon: '\u{1F3E0}',
+        name: "Workers' House",
+        cost: 80,
+        footprint: [1, 1],
+        enabled: true,
+      },
+      {
+        id: 'workers-house-b',
+        icon: '\u{1F3E0}',
+        name: "Workers' Duplex",
+        cost: 110,
+        footprint: [1, 1],
+        enabled: true,
+      },
+      {
+        id: 'apartment-tower-a',
+        icon: '\u{1F3E2}',
+        name: 'Tenement Block',
+        cost: 100,
+        footprint: [1, 1],
+        enabled: true,
+      },
+      {
+        id: 'apartment-tower-b',
+        icon: '\u{1F3E2}',
+        name: 'Tenement Tower',
+        cost: 120,
+        footprint: [1, 1],
+        enabled: true,
+      },
+      {
+        id: 'apartment-tower-c',
+        icon: '\u{1F3E2}',
+        name: 'High-Rise',
+        cost: 180,
+        footprint: [2, 2],
+        enabled: false,
+      },
+      {
+        id: 'apartment-tower-d',
+        icon: '\u{1F3E2}',
+        name: 'Megablock',
+        cost: 250,
+        footprint: [2, 2],
+        enabled: false,
+      },
+      {
+        id: 'workers-house-c',
+        icon: '\u{1F3D8}\u{FE0F}',
+        name: "Workers' Complex",
+        cost: 200,
+        footprint: [2, 1],
+        enabled: true,
+      },
     ],
   },
   {
@@ -40,11 +89,46 @@ const CATEGORIES: Category[] = [
     label: 'Industry',
     icon: '\u{1F3ED}',
     buildings: [
-      { id: 'collective-farm-hq', icon: '\u{1F954}', name: 'Kolkhoz', cost: 150, footprint: [2, 2], enabled: false },
-      { id: 'bread-factory', icon: '\u{1F35E}', name: 'Bread Factory', cost: 200, footprint: [2, 1], enabled: true },
-      { id: 'factory-office', icon: '\u{1F3ED}', name: 'Factory Office', cost: 180, footprint: [1, 1], enabled: true },
-      { id: 'vodka-distillery', icon: '\u{1F37E}', name: 'Vodka Plant', cost: 250, footprint: [2, 2], enabled: false },
-      { id: 'warehouse', icon: '\u{1F4E6}', name: 'Warehouse', cost: 120, footprint: [1, 1], enabled: true },
+      {
+        id: 'collective-farm-hq',
+        icon: '\u{1F954}',
+        name: 'Kolkhoz',
+        cost: 150,
+        footprint: [2, 2],
+        enabled: false,
+      },
+      {
+        id: 'bread-factory',
+        icon: '\u{1F35E}',
+        name: 'Bread Factory',
+        cost: 200,
+        footprint: [2, 1],
+        enabled: true,
+      },
+      {
+        id: 'factory-office',
+        icon: '\u{1F3ED}',
+        name: 'Factory Office',
+        cost: 180,
+        footprint: [1, 1],
+        enabled: true,
+      },
+      {
+        id: 'vodka-distillery',
+        icon: '\u{1F37E}',
+        name: 'Vodka Plant',
+        cost: 250,
+        footprint: [2, 2],
+        enabled: false,
+      },
+      {
+        id: 'warehouse',
+        icon: '\u{1F4E6}',
+        name: 'Warehouse',
+        cost: 120,
+        footprint: [1, 1],
+        enabled: true,
+      },
     ],
   },
   {
@@ -52,8 +136,22 @@ const CATEGORIES: Category[] = [
     label: 'Military',
     icon: '\u{1F396}\u{FE0F}',
     buildings: [
-      { id: 'barracks', icon: '\u{1F396}\u{FE0F}', name: 'Barracks', cost: 200, footprint: [2, 1], enabled: true },
-      { id: 'guard-post', icon: '\u{1F6E1}\u{FE0F}', name: 'Guard Post', cost: 100, footprint: [1, 1], enabled: true },
+      {
+        id: 'barracks',
+        icon: '\u{1F396}\u{FE0F}',
+        name: 'Barracks',
+        cost: 200,
+        footprint: [2, 1],
+        enabled: true,
+      },
+      {
+        id: 'guard-post',
+        icon: '\u{1F6E1}\u{FE0F}',
+        name: 'Guard Post',
+        cost: 100,
+        footprint: [1, 1],
+        enabled: true,
+      },
     ],
   },
   {
@@ -61,8 +159,22 @@ const CATEGORIES: Category[] = [
     label: 'Utility',
     icon: '\u{1F527}',
     buildings: [
-      { id: 'power-station', icon: '\u{26A1}', name: 'Coal Plant', cost: 300, footprint: [2, 2], enabled: false },
-      { id: 'concrete-block', icon: '\u{1F9F1}', name: 'Concrete Block', cost: 60, footprint: [1, 1], enabled: true },
+      {
+        id: 'power-station',
+        icon: '\u{26A1}',
+        name: 'Coal Plant',
+        cost: 300,
+        footprint: [2, 2],
+        enabled: false,
+      },
+      {
+        id: 'concrete-block',
+        icon: '\u{1F9F1}',
+        name: 'Concrete Block',
+        cost: 60,
+        footprint: [1, 1],
+        enabled: true,
+      },
     ],
   },
   {
@@ -70,11 +182,46 @@ const CATEGORIES: Category[] = [
     label: 'Services',
     icon: '\u{1F3E5}',
     buildings: [
-      { id: 'hospital', icon: '\u{1F3E5}', name: 'Hospital', cost: 250, footprint: [2, 1], enabled: true },
-      { id: 'polyclinic', icon: '\u{1F48A}', name: 'Polyclinic', cost: 180, footprint: [1, 1], enabled: true },
-      { id: 'school', icon: '\u{1F4DA}', name: 'School', cost: 200, footprint: [1, 1], enabled: true },
-      { id: 'fire-station', icon: '\u{1F692}', name: 'Fire Station', cost: 150, footprint: [1, 1], enabled: true },
-      { id: 'post-office', icon: '\u{2709}\u{FE0F}', name: 'Post Office', cost: 100, footprint: [1, 1], enabled: true },
+      {
+        id: 'hospital',
+        icon: '\u{1F3E5}',
+        name: 'Hospital',
+        cost: 250,
+        footprint: [2, 1],
+        enabled: true,
+      },
+      {
+        id: 'polyclinic',
+        icon: '\u{1F48A}',
+        name: 'Polyclinic',
+        cost: 180,
+        footprint: [1, 1],
+        enabled: true,
+      },
+      {
+        id: 'school',
+        icon: '\u{1F4DA}',
+        name: 'School',
+        cost: 200,
+        footprint: [1, 1],
+        enabled: true,
+      },
+      {
+        id: 'fire-station',
+        icon: '\u{1F692}',
+        name: 'Fire Station',
+        cost: 150,
+        footprint: [1, 1],
+        enabled: true,
+      },
+      {
+        id: 'post-office',
+        icon: '\u{2709}\u{FE0F}',
+        name: 'Post Office',
+        cost: 100,
+        footprint: [1, 1],
+        enabled: true,
+      },
     ],
   },
   {
@@ -82,10 +229,38 @@ const CATEGORIES: Category[] = [
     label: 'Government',
     icon: '\u{1F3DB}\u{FE0F}',
     buildings: [
-      { id: 'government-hq', icon: '\u{1F3DB}\u{FE0F}', name: 'Government HQ', cost: 400, footprint: [2, 2], enabled: false },
-      { id: 'gulag-admin', icon: '\u{26D3}\u{FE0F}', name: 'Gulag', cost: 500, footprint: [2, 2], enabled: false },
-      { id: 'kgb-office', icon: '\u{1F575}\u{FE0F}', name: 'KGB Office', cost: 500, footprint: [1, 1], enabled: true },
-      { id: 'ministry-office', icon: '\u{1F4CB}', name: 'Ministry Office', cost: 350, footprint: [1, 1], enabled: true },
+      {
+        id: 'government-hq',
+        icon: '\u{1F3DB}\u{FE0F}',
+        name: 'Government HQ',
+        cost: 400,
+        footprint: [2, 2],
+        enabled: false,
+      },
+      {
+        id: 'gulag-admin',
+        icon: '\u{26D3}\u{FE0F}',
+        name: 'Gulag',
+        cost: 500,
+        footprint: [2, 2],
+        enabled: false,
+      },
+      {
+        id: 'kgb-office',
+        icon: '\u{1F575}\u{FE0F}',
+        name: 'KGB Office',
+        cost: 500,
+        footprint: [1, 1],
+        enabled: true,
+      },
+      {
+        id: 'ministry-office',
+        icon: '\u{1F4CB}',
+        name: 'Ministry Office',
+        cost: 350,
+        footprint: [1, 1],
+        enabled: true,
+      },
     ],
   },
   {
@@ -93,8 +268,22 @@ const CATEGORIES: Category[] = [
     label: 'Culture',
     icon: '\u{1F3AD}',
     buildings: [
-      { id: 'cultural-palace', icon: '\u{1F3AD}', name: 'Cultural Palace', cost: 300, footprint: [2, 1], enabled: true },
-      { id: 'workers-club', icon: '\u{1F3AA}', name: "Workers' Club", cost: 150, footprint: [1, 1], enabled: true },
+      {
+        id: 'cultural-palace',
+        icon: '\u{1F3AD}',
+        name: 'Cultural Palace',
+        cost: 300,
+        footprint: [2, 1],
+        enabled: true,
+      },
+      {
+        id: 'workers-club',
+        icon: '\u{1F3AA}',
+        name: "Workers' Club",
+        cost: 150,
+        footprint: [1, 1],
+        enabled: true,
+      },
     ],
   },
   {
@@ -102,7 +291,14 @@ const CATEGORIES: Category[] = [
     label: 'Propaganda',
     icon: '\u{1F4FB}',
     buildings: [
-      { id: 'radio-station', icon: '\u{1F4FB}', name: 'Radio Station', cost: 250, footprint: [1, 1], enabled: true },
+      {
+        id: 'radio-station',
+        icon: '\u{1F4FB}',
+        name: 'Radio Station',
+        cost: 250,
+        footprint: [1, 1],
+        enabled: true,
+      },
     ],
   },
   {
@@ -111,7 +307,14 @@ const CATEGORIES: Category[] = [
     icon: '\u{1F6A7}',
     buildings: [
       { id: 'fence', icon: '\u{1F6A7}', name: 'Fence', cost: 10, footprint: [1, 1], enabled: true },
-      { id: 'fence-low', icon: '\u{1F6A7}', name: 'Low Fence', cost: 15, footprint: [1, 1], enabled: true },
+      {
+        id: 'fence-low',
+        icon: '\u{1F6A7}',
+        name: 'Low Fence',
+        cost: 15,
+        footprint: [1, 1],
+        enabled: true,
+      },
     ],
   },
   {
@@ -119,7 +322,14 @@ const CATEGORIES: Category[] = [
     label: 'Transport',
     icon: '\u{1F682}',
     buildings: [
-      { id: 'train-station', icon: '\u{1F682}', name: 'Train Station', cost: 300, footprint: [2, 2], enabled: false },
+      {
+        id: 'train-station',
+        icon: '\u{1F682}',
+        name: 'Train Station',
+        cost: 300,
+        footprint: [2, 2],
+        enabled: false,
+      },
     ],
   },
 ];
@@ -130,7 +340,7 @@ function polarToXY(
   cx: number,
   cy: number,
   radius: number,
-  angleDeg: number,
+  angleDeg: number
 ): { x: number; y: number } {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
   return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
@@ -142,7 +352,7 @@ function describeWedge(
   innerR: number,
   outerR: number,
   startAngle: number,
-  endAngle: number,
+  endAngle: number
 ): string {
   const outerStart = polarToXY(cx, cy, outerR, startAngle);
   const outerEnd = polarToXY(cx, cy, outerR, endAngle);
@@ -175,18 +385,10 @@ const BUILDING_INNER_R = 120;
 const BUILDING_OUTER_R = 185;
 const CENTER = 200; // SVG viewBox center
 
-const RadialMenu: React.FC<RadialMenuProps> = ({
-  x,
-  y,
-  availableSpace,
-  onSelect,
-  onClose,
-}) => {
+const RadialMenu: React.FC<RadialMenuProps> = ({ x, y, availableSpace, onSelect, onClose }) => {
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
 
-  const activeCats = CATEGORIES.filter((c) =>
-    c.buildings.some((b) => b.enabled),
-  );
+  const activeCats = CATEGORIES.filter((c) => c.buildings.some((b) => b.enabled));
   const catAngle = 360 / activeCats.length;
   const gap = 2; // degrees gap between wedges
 
@@ -230,31 +432,18 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
           style={{ pointerEvents: 'none' }}
         >
           {/* Center dot */}
-          <circle
-            cx={CENTER}
-            cy={CENTER}
-            r={8}
-            fill="#cfaa48"
-            opacity={0.6}
-          />
+          <circle cx={CENTER} cy={CENTER} r={8} fill="#cfaa48" opacity={0.6} />
 
           {/* Category ring */}
           {activeCats.map((cat, i) => {
             const startA = i * catAngle + gap / 2;
             const endA = (i + 1) * catAngle - gap / 2;
             const midA = (startA + endA) / 2;
-            const labelPos = polarToXY(
-              CENTER,
-              CENTER,
-              (INNER_R + OUTER_R) / 2,
-              midA,
-            );
+            const labelPos = polarToXY(CENTER, CENTER, (INNER_R + OUTER_R) / 2, midA);
             const isSelected = selectedCat === cat.id;
             const hasEnabled = cat.buildings.some(
               (b) =>
-                b.enabled &&
-                b.footprint[0] <= availableSpace &&
-                b.footprint[1] <= availableSpace,
+                b.enabled && b.footprint[0] <= availableSpace && b.footprint[1] <= availableSpace
             );
 
             return (
@@ -267,21 +456,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                 }}
               >
                 <path
-                  d={describeWedge(
-                    CENTER,
-                    CENTER,
-                    INNER_R,
-                    OUTER_R,
-                    startA,
-                    endA,
-                  )}
-                  fill={
-                    isSelected
-                      ? '#8b0000'
-                      : hasEnabled
-                        ? '#2a2a2a'
-                        : '#1a1a1a'
-                  }
+                  d={describeWedge(CENTER, CENTER, INNER_R, OUTER_R, startA, endA)}
+                  fill={isSelected ? '#8b0000' : hasEnabled ? '#2a2a2a' : '#1a1a1a'}
                   stroke={isSelected ? '#ff4444' : '#444'}
                   strokeWidth={isSelected ? 2 : 1}
                   opacity={hasEnabled ? 1 : 0.4}
@@ -318,11 +494,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
           {/* Building ring (appears when category selected) */}
           <AnimatePresence>
             {selectedCat && buildings.length > 0 && (
-              <motion.g
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
+              <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 {/* Connecting arc */}
                 <circle
                   cx={CENTER}
@@ -343,11 +515,10 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                     CENTER,
                     CENTER,
                     (BUILDING_INNER_R + BUILDING_OUTER_R) / 2,
-                    midA,
+                    midA
                   );
                   const fits =
-                    bld.footprint[0] <= availableSpace &&
-                    bld.footprint[1] <= availableSpace;
+                    bld.footprint[0] <= availableSpace && bld.footprint[1] <= availableSpace;
                   const canBuild = bld.enabled && fits;
 
                   return (
@@ -372,7 +543,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                           BUILDING_INNER_R,
                           BUILDING_OUTER_R,
                           startA,
-                          endA,
+                          endA
                         )}
                         fill={canBuild ? '#2a2a2a' : '#1a1a1a'}
                         stroke={canBuild ? '#666' : '#333'}
@@ -400,9 +571,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                         fill={canBuild ? '#ccc' : '#555'}
                         fontFamily="'VT323', monospace"
                       >
-                        {bld.name.length > 14
-                          ? `${bld.name.slice(0, 12)}..`
-                          : bld.name}
+                        {bld.name.length > 14 ? `${bld.name.slice(0, 12)}..` : bld.name}
                       </text>
                       {/* Cost */}
                       <text
@@ -438,8 +607,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
           fontFamily: "'VT323', monospace",
         }}
       >
-        Grid [{Math.floor(Math.random() * 12)},{Math.floor(Math.random() * 12)}
-        ] &bull; {availableSpace}x{availableSpace} free
+        Grid [{Math.floor(Math.random() * 12)},{Math.floor(Math.random() * 12)}] &bull;{' '}
+        {availableSpace}x{availableSpace} free
       </motion.div>
     </div>
   );
@@ -462,7 +631,7 @@ export const RadialBuildMenuDemo: React.FC = () => {
       if (menu) return;
       setMenu({ x: e.clientX, y: e.clientY, space: spaceSize });
     },
-    [menu, spaceSize],
+    [menu, spaceSize]
   );
 
   return (
@@ -473,12 +642,8 @@ export const RadialBuildMenuDemo: React.FC = () => {
       {/* Top bar */}
       <div className="bg-[#2a2a2a] border-b-2 border-[#8b0000] px-3 py-2 flex items-center justify-between">
         <div>
-          <div className="text-[#cfaa48] text-sm font-bold">
-            RADIAL BUILD MENU
-          </div>
-          <div className="text-[#888] text-[10px]">
-            Tap anywhere on the grid to open
-          </div>
+          <div className="text-[#cfaa48] text-sm font-bold">RADIAL BUILD MENU</div>
+          <div className="text-[#888] text-[10px]">Tap anywhere on the grid to open</div>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[#888] text-[10px]">Available space:</span>
@@ -490,7 +655,7 @@ export const RadialBuildMenuDemo: React.FC = () => {
                 'px-2 py-0.5 text-[10px] font-bold border transition-all',
                 spaceSize === s
                   ? 'bg-[#8b0000] border-[#ff4444] text-white'
-                  : 'bg-[#1a1a1a] border-[#444] text-[#888] hover:text-[#ccc]',
+                  : 'bg-[#1a1a1a] border-[#444] text-[#888] hover:text-[#ccc]'
               )}
             >
               {s}x{s}
@@ -500,10 +665,7 @@ export const RadialBuildMenuDemo: React.FC = () => {
       </div>
 
       {/* Grid area */}
-      <div
-        className="flex-1 relative overflow-hidden cursor-crosshair"
-        onPointerDown={handleTap}
-      >
+      <div className="flex-1 relative overflow-hidden cursor-crosshair" onPointerDown={handleTap}>
         {/* Ground */}
         <div
           className="absolute inset-0 bg-[#5a4a3a]"
@@ -552,9 +714,7 @@ export const RadialBuildMenuDemo: React.FC = () => {
               >
                 <div className="text-[#cfaa48] text-lg">PLACED</div>
                 <div className="text-white text-sm">{lastPlaced}</div>
-                <div className="text-[#888] text-[10px] mt-2">
-                  Tap grid to place another
-                </div>
+                <div className="text-[#888] text-[10px] mt-2">Tap grid to place another</div>
               </motion.div>
             ) : (
               <motion.div
@@ -564,12 +724,8 @@ export const RadialBuildMenuDemo: React.FC = () => {
                 exit={{ opacity: 0 }}
                 className="text-center"
               >
-                <div className="text-5xl mb-2 opacity-40">
-                  {'\u{1F3D7}\u{FE0F}'}
-                </div>
-                <div className="text-[#cfaa48] text-base">
-                  TAP GRID TO BUILD
-                </div>
+                <div className="text-5xl mb-2 opacity-40">{'\u{1F3D7}\u{FE0F}'}</div>
+                <div className="text-[#cfaa48] text-base">TAP GRID TO BUILD</div>
                 <div className="text-[#888] text-xs mt-1">
                   Categories ring → Buildings ring → Place
                 </div>

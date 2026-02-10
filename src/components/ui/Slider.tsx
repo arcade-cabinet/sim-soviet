@@ -1,5 +1,5 @@
-import * as React from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
+import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 function Slider({
@@ -11,13 +11,8 @@ function Slider({
   ...props
 }: React.ComponentProps<typeof SliderPrimitive.Root>) {
   const _values = React.useMemo(
-    () =>
-      Array.isArray(value)
-        ? value
-        : Array.isArray(defaultValue)
-          ? defaultValue
-          : [min, max],
-    [value, defaultValue, min, max],
+    () => (Array.isArray(value) ? value : Array.isArray(defaultValue) ? defaultValue : [min, max]),
+    [value, defaultValue, min, max]
   );
 
   return (
@@ -29,7 +24,7 @@ function Slider({
       max={max}
       className={cn(
         'relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50',
-        className,
+        className
       )}
       {...props}
     >
@@ -37,10 +32,7 @@ function Slider({
         data-slot="slider-track"
         className="bg-[#444] relative grow overflow-hidden rounded-full h-1.5 w-full"
       >
-        <SliderPrimitive.Range
-          data-slot="slider-range"
-          className="bg-[#8b0000] absolute h-full"
-        />
+        <SliderPrimitive.Range data-slot="slider-range" className="bg-[#8b0000] absolute h-full" />
       </SliderPrimitive.Track>
       {Array.from({ length: _values.length }, (_, index) => (
         <SliderPrimitive.Thumb

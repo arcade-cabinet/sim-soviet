@@ -6,7 +6,7 @@
  *
  * Layout: [Settlement/Date] [Resources...] [Pause] [Speed] [Hamburger]
  */
-import { Pause, Play, Menu } from 'lucide-react';
+import { Menu, Pause, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { setGameSpeed, togglePause, useGameSnapshot } from '@/stores/gameStore';
 
@@ -27,7 +27,7 @@ const MONTH_NAMES = [
 
 const TIER_LABELS: Record<string, string> = {
   selo: 'Selo',
-  posyolok: 'Workers\' Settlement',
+  posyolok: "Workers' Settlement",
   pgt: 'Urban-Type Settlement',
   gorod: 'City',
 };
@@ -62,12 +62,7 @@ export function SovietHUD({ onMenuToggle }: SovietHUDProps) {
           <ResourceChip icon="👤" value={snap.pop} label="Population" />
           <ResourceChip icon="🥔" value={snap.food} label="Food" />
           <ResourceChip icon="🍾" value={snap.vodka} label="Vodka" />
-          <ResourceChip
-            icon="⚡"
-            value={powerStr}
-            label="Power"
-            alert={powerCritical}
-          />
+          <ResourceChip icon="⚡" value={powerStr} label="Power" alert={powerCritical} />
         </div>
 
         {/* Controls: Pause + Speed + Hamburger */}
@@ -152,10 +147,7 @@ function ResourceChip({
     >
       <span className="text-xs">{icon}</span>
       <span
-        className={cn(
-          'text-[10px] font-bold font-mono',
-          alert ? 'text-[#ff4444]' : 'text-[#fff]'
-        )}
+        className={cn('text-[10px] font-bold font-mono', alert ? 'text-[#ff4444]' : 'text-[#fff]')}
       >
         {formatted}
       </span>

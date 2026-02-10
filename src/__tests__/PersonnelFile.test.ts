@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  PersonnelFile,
-  type CommendationSource,
-  type MarkSource,
-} from '../game/PersonnelFile';
+import { type CommendationSource, type MarkSource, PersonnelFile } from '../game/PersonnelFile';
 
 describe('PersonnelFile', () => {
   // ── Initial state ─────────────────────────────────────
@@ -47,9 +43,7 @@ describe('PersonnelFile', () => {
     it('uses default description when none provided', () => {
       const file = new PersonnelFile();
       file.addMark('lying_to_kgb', 100);
-      expect(file.getHistory()[0]!.description).toBe(
-        'Caught providing false information to KGB',
-      );
+      expect(file.getHistory()[0]!.description).toBe('Caught providing false information to KGB');
     });
 
     it('returns the current threat level', () => {
@@ -130,9 +124,7 @@ describe('PersonnelFile', () => {
     it('uses default description when none provided', () => {
       const file = new PersonnelFile();
       file.addCommendation('stakhanovite_celebrated', 10);
-      expect(file.getHistory()[0]!.description).toBe(
-        'Stakhanovite worker celebrated',
-      );
+      expect(file.getHistory()[0]!.description).toBe('Stakhanovite worker celebrated');
     });
   });
 

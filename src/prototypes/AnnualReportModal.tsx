@@ -1,6 +1,7 @@
-import React, { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { X } from 'lucide-react';
+import type React from 'react';
+import { Fragment, useState } from 'react';
 import { Slider } from '@/components/ui/Slider';
 
 interface ReportRow {
@@ -16,9 +17,7 @@ interface ReportSelection {
   population: number;
 }
 
-export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
-  onClose,
-}) => {
+export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [selections, setSelections] = useState<ReportSelection>({
     grain: 8500,
@@ -47,8 +46,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
 
   const isHonestReport = () => {
     return reportData.every(
-      (row) =>
-        selections[row.category as keyof ReportSelection] === row.actual,
+      (row) => selections[row.category as keyof ReportSelection] === row.actual
     );
   };
 
@@ -107,26 +105,24 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                     <div className="text-center mb-6 sm:mb-8 border-b-4 border-[#8b4513] pb-4 sm:pb-6">
                       <div className="flex justify-center items-center gap-4 mb-4">
                         <div className="w-14 h-14 sm:w-16 sm:h-16 bg-red-600 rounded-full flex items-center justify-center">
-                          <div className="text-yellow-400 text-2xl sm:text-3xl font-bold">
-                            ☭
-                          </div>
+                          <div className="text-yellow-400 text-2xl sm:text-3xl font-bold">☭</div>
                         </div>
                       </div>
                       <h1
                         className="text-xl sm:text-3xl font-bold text-[#8b4513] mb-2"
-                        style={{ fontFamily: "Courier New, monospace" }}
+                        style={{ fontFamily: 'Courier New, monospace' }}
                       >
                         ГОСУДАРСТВЕННЫЙ ОТЧЕТ
                       </h1>
                       <p
                         className="text-sm sm:text-lg text-[#654321]"
-                        style={{ fontFamily: "Courier New, monospace" }}
+                        style={{ fontFamily: 'Courier New, monospace' }}
                       >
                         ANNUAL PRODUCTION REPORT - 1952
                       </p>
                       <p
                         className="text-xs sm:text-sm text-[#654321] mt-2"
-                        style={{ fontFamily: "Courier New, monospace" }}
+                        style={{ fontFamily: 'Courier New, monospace' }}
                       >
                         Form No. 7-B/52 &bull; Classification: RESTRICTED
                       </p>
@@ -139,7 +135,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                         <div className="hidden sm:block overflow-x-auto">
                           <table
                             className="w-full border-2 border-[#8b4513]"
-                            style={{ fontFamily: "Courier New, monospace" }}
+                            style={{ fontFamily: 'Courier New, monospace' }}
                           >
                             <thead>
                               <tr className="bg-[#d4c4a0] border-b-2 border-[#8b4513]">
@@ -160,23 +156,16 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                             <tbody>
                               {reportData.map((row, idx) => {
                                 const currentValue =
-                                  selections[
-                                    row.category as keyof ReportSelection
-                                  ];
+                                  selections[row.category as keyof ReportSelection];
                                 const minValue = Math.round(row.actual * 0.5);
                                 const maxValue = Math.round(row.actual * 1.5);
-                                const risk = calculateRisk(
-                                  row.actual,
-                                  currentValue,
-                                );
+                                const risk = calculateRisk(row.actual, currentValue);
 
                                 return (
                                   <tr
                                     key={row.category}
                                     className={`border-b-2 border-[#8b4513] ${
-                                      idx % 2 === 0
-                                        ? 'bg-[#f4e8d0]'
-                                        : 'bg-[#e8dcc0]'
+                                      idx % 2 === 0 ? 'bg-[#f4e8d0]' : 'bg-[#e8dcc0]'
                                     }`}
                                   >
                                     <td className="px-4 py-4 text-[#654321] font-bold uppercase border-r-2 border-[#8b4513]">
@@ -192,8 +181,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                                       <div className="flex flex-col gap-3">
                                         <div className="flex justify-between items-center">
                                           <span className="text-lg font-bold text-[#654321]">
-                                            {currentValue.toLocaleString()}{' '}
-                                            {row.unit}
+                                            {currentValue.toLocaleString()} {row.unit}
                                           </span>
                                           <span
                                             className={`text-sm font-bold px-2 py-1 rounded ${
@@ -210,10 +198,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                                         <Slider
                                           value={[currentValue]}
                                           onValueChange={(value) =>
-                                            handleSliderChange(
-                                              row.category,
-                                              value,
-                                            )
+                                            handleSliderChange(row.category, value)
                                           }
                                           min={minValue}
                                           max={maxValue}
@@ -221,16 +206,11 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                                           className="w-full"
                                         />
                                         <div className="flex justify-between text-xs text-[#654321]">
-                                          <span>
-                                            {minValue.toLocaleString()}
-                                          </span>
+                                          <span>{minValue.toLocaleString()}</span>
                                           <span className="font-bold">
-                                            Actual:{' '}
-                                            {row.actual.toLocaleString()}
+                                            Actual: {row.actual.toLocaleString()}
                                           </span>
-                                          <span>
-                                            {maxValue.toLocaleString()}
-                                          </span>
+                                          <span>{maxValue.toLocaleString()}</span>
                                         </div>
                                       </div>
                                     </td>
@@ -244,16 +224,10 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                         {/* Mobile: card layout */}
                         <div className="sm:hidden space-y-4">
                           {reportData.map((row) => {
-                            const currentValue =
-                              selections[
-                                row.category as keyof ReportSelection
-                              ];
+                            const currentValue = selections[row.category as keyof ReportSelection];
                             const minValue = Math.round(row.actual * 0.5);
                             const maxValue = Math.round(row.actual * 1.5);
-                            const risk = calculateRisk(
-                              row.actual,
-                              currentValue,
-                            );
+                            const risk = calculateRisk(row.actual, currentValue);
 
                             return (
                               <div
@@ -280,9 +254,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                                   </span>
                                 </div>
                                 <div className="flex justify-between text-xs text-[#654321] mb-2">
-                                  <span>
-                                    Actual: {row.actual.toLocaleString()}
-                                  </span>
+                                  <span>Actual: {row.actual.toLocaleString()}</span>
                                   <span className="font-bold">
                                     Quota: {row.quota.toLocaleString()}
                                   </span>
@@ -292,9 +264,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                                 </div>
                                 <Slider
                                   value={[currentValue]}
-                                  onValueChange={(value) =>
-                                    handleSliderChange(row.category, value)
-                                  }
+                                  onValueChange={(value) => handleSliderChange(row.category, value)}
                                   min={minValue}
                                   max={maxValue}
                                   step={100}
@@ -337,9 +307,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                         style={{ fontFamily: 'Courier New, monospace' }}
                       >
                         SUBMIT MODIFIED REPORT
-                        <div className="text-xs mt-1">
-                          (Risky - Consequences Possible)
-                        </div>
+                        <div className="text-xs mt-1">(Risky - Consequences Possible)</div>
                       </button>
                     </div>
 
@@ -362,8 +330,7 @@ export const AnnualReportModal: React.FC<{ onClose?: () => void }> = ({
                     >
                       <p>WARNING: False reporting may result in consequences.</p>
                       <p className="mt-1">
-                        All reports are subject to verification by the State
-                        Committee.
+                        All reports are subject to verification by the State Committee.
                       </p>
                     </div>
                   </div>

@@ -1,12 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  AlertTriangle,
-  AlertCircle,
-  Radio,
-  ArrowRight,
-  X,
-} from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertCircle, AlertTriangle, ArrowRight, Radio, X } from 'lucide-react';
+import type React from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 // Types
@@ -65,11 +60,7 @@ const severityConfig: Record<
 };
 
 // Arrow component
-const DirectionalArrow = ({
-  direction,
-}: {
-  direction: 'up' | 'down' | 'left' | 'right';
-}) => {
+const DirectionalArrow = ({ direction }: { direction: 'up' | 'down' | 'left' | 'right' }) => {
   const rotations = {
     right: 'rotate-0',
     down: 'rotate-90',
@@ -79,10 +70,7 @@ const DirectionalArrow = ({
 
   return (
     <ArrowRight
-      className={cn(
-        'w-4 h-4 text-white drop-shadow-md',
-        rotations[direction],
-      )}
+      className={cn('w-4 h-4 text-white drop-shadow-md', rotations[direction])}
       strokeWidth={2.5}
     />
   );
@@ -118,11 +106,10 @@ const ToastItem = ({
       }}
       className={cn(
         'relative w-full sm:w-80 shadow-2xl overflow-hidden border-2',
-        config.borderColor,
+        config.borderColor
       )}
       style={{
-        boxShadow:
-          '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
       }}
     >
       {/* Paper texture */}
@@ -135,18 +122,11 @@ const ToastItem = ({
 
       {/* Banner header */}
       <div
-        className={cn(
-          'relative px-3 py-1.5 flex items-center justify-between',
-          config.bannerColor,
-        )}
+        className={cn('relative px-3 py-1.5 flex items-center justify-between', config.bannerColor)}
       >
         <div className="flex items-center gap-1.5">
           <div className="w-4 h-4 relative flex-shrink-0">
-            <svg
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="text-white"
-            >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="text-white">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </div>
@@ -166,9 +146,7 @@ const ToastItem = ({
           <p
             className={cn(
               'flex-1 min-w-0 text-xs font-bold leading-snug',
-              config.iconColor === 'text-yellow-800'
-                ? 'text-yellow-900'
-                : config.iconColor,
+              config.iconColor === 'text-yellow-800' ? 'text-yellow-900' : config.iconColor
             )}
           >
             {toast.message}
@@ -177,7 +155,7 @@ const ToastItem = ({
             onClick={() => onDismiss(toast.id)}
             className={cn(
               'flex-shrink-0 p-0.5 hover:bg-black/10 rounded transition-colors -mt-0.5',
-              config.iconColor,
+              config.iconColor
             )}
             aria-label="Dismiss notification"
           >
@@ -190,12 +168,10 @@ const ToastItem = ({
           <div
             className={cn(
               'w-10 h-10 rounded-full border-2 flex items-center justify-center',
-              config.borderColor,
+              config.borderColor
             )}
           >
-            <span className={cn('text-[7px] font-black', config.iconColor)}>
-              СССР
-            </span>
+            <span className={cn('text-[7px] font-black', config.iconColor)}>СССР</span>
           </div>
         </div>
       </div>
@@ -224,7 +200,7 @@ export const SovietToastStack = ({
         setToasts((prev) => prev.filter((t) => t.id !== id));
       }, duration);
     },
-    [maxToasts, duration],
+    [maxToasts, duration]
   );
 
   const dismissToast = useCallback((id: string) => {
@@ -250,7 +226,7 @@ export const SovietToastStack = ({
     <div
       className={cn(
         'fixed z-50 flex flex-col gap-2 pointer-events-none px-3 sm:px-0',
-        positionClasses[position],
+        positionClasses[position]
       )}
     >
       <AnimatePresence mode="popLayout">
@@ -270,7 +246,7 @@ export const SovietToastDemo: React.FC = () => {
     severity: ToastSeverity,
     message: string,
     showArrow?: boolean,
-    arrowDirection?: 'up' | 'down' | 'left' | 'right',
+    arrowDirection?: 'up' | 'down' | 'left' | 'right'
   ) => {
     if ((window as any).addSovietToast) {
       (window as any).addSovietToast({
@@ -290,11 +266,7 @@ export const SovietToastDemo: React.FC = () => {
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <div className="w-14 h-14 bg-red-700 rounded-full flex items-center justify-center shadow-xl">
-              <svg
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="text-yellow-400 w-8 h-8"
-              >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="text-yellow-400 w-8 h-8">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             </div>
@@ -324,7 +296,7 @@ export const SovietToastDemo: React.FC = () => {
                 'warning',
                 'Orgnabor: 5 workers requested for industrial project in Sverdlovsk',
                 true,
-                'right',
+                'right'
               )
             }
             className="w-full bg-yellow-900/30 hover:bg-yellow-900/50 text-yellow-200 font-bold text-sm py-3 px-4 border-l-4 border-yellow-700 transition-colors text-left min-h-[44px]"
@@ -338,7 +310,7 @@ export const SovietToastDemo: React.FC = () => {
                 'critical',
                 'KGB Agent has arrived at your collective — investigation in progress',
                 true,
-                'down',
+                'down'
               )
             }
             className="w-full bg-red-900/30 hover:bg-red-900/50 text-red-200 font-bold text-sm py-3 px-4 border-l-4 border-red-700 transition-colors text-left min-h-[44px]"
@@ -352,7 +324,7 @@ export const SovietToastDemo: React.FC = () => {
                 'evacuation',
                 'DECREE: Conscription order — 15% of workers to be drafted immediately',
                 true,
-                'up',
+                'up'
               )
             }
             className="w-full bg-red-950/40 hover:bg-red-950/60 text-red-100 font-black text-sm py-3 px-4 border-l-4 border-red-950 transition-colors text-left min-h-[44px]"
@@ -363,19 +335,11 @@ export const SovietToastDemo: React.FC = () => {
           <div className="pt-3 border-t-2 border-[#444]">
             <button
               onClick={() => {
-                addToast(
-                  'warning',
-                  'Politruk scheduled ideology session — Building #3',
-                );
+                addToast('warning', 'Politruk scheduled ideology session — Building #3');
                 setTimeout(
                   () =>
-                    addToast(
-                      'critical',
-                      'Worker Ivan Petrov flagged for disloyalty',
-                      true,
-                      'left',
-                    ),
-                  500,
+                    addToast('critical', 'Worker Ivan Petrov flagged for disloyalty', true, 'left'),
+                  500
                 );
                 setTimeout(
                   () =>
@@ -383,9 +347,9 @@ export const SovietToastDemo: React.FC = () => {
                       'evacuation',
                       'PURGE WAVE: 3 workers disappeared overnight',
                       true,
-                      'right',
+                      'right'
                     ),
-                  1000,
+                  1000
                 );
               }}
               className="w-full bg-[#8a1c1c] hover:bg-[#a02020] text-white font-black text-sm py-3 px-4 border-2 border-[#cc3333] transition-colors uppercase tracking-wider min-h-[44px]"

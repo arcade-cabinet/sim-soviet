@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
+  AlertTriangle,
+  BarChart3,
+  Building2,
+  Clock,
+  Map,
+  Menu,
   Pause,
   Play,
-  Menu,
-  X,
-  Map,
-  BarChart3,
-  AlertTriangle,
-  Clock,
   Users,
-  Building2,
+  X,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 // ─── Types ───────────────────────────────────────────────
@@ -59,9 +59,7 @@ const SovietHUD: React.FC<SovietHUDProps> = ({
           <div className="text-[#ff4444] text-[10px] font-bold uppercase tracking-wider truncate">
             {era}
           </div>
-          <div className="text-[#888] text-[9px] font-mono truncate">
-            {date}
-          </div>
+          <div className="text-[#888] text-[9px] font-mono truncate">{date}</div>
         </div>
 
         {/* Resources — scrollable on mobile */}
@@ -88,7 +86,7 @@ const SovietHUD: React.FC<SovietHUDProps> = ({
               'flex items-center justify-center w-7 h-7 border transition-all',
               isPaused
                 ? 'bg-[#8b0000] border-[#ff4444] hover:bg-[#a00000]'
-                : 'bg-[#1a1a1a] border-[#444] hover:border-[#666]',
+                : 'bg-[#1a1a1a] border-[#444] hover:border-[#666]'
             )}
             aria-label={isPaused ? 'Resume' : 'Pause'}
           >
@@ -108,7 +106,7 @@ const SovietHUD: React.FC<SovietHUDProps> = ({
                   'px-1.5 py-0.5 text-[10px] font-bold font-mono transition-all',
                   gameSpeed === speed
                     ? 'bg-[#8b0000] text-white'
-                    : 'bg-transparent text-[#888] hover:text-[#ccc]',
+                    : 'bg-transparent text-[#888] hover:text-[#ccc]'
                 )}
                 aria-label={`Speed ${speed}x`}
               >
@@ -141,20 +139,14 @@ const BottomPanel: React.FC = () => {
         <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
           <span className="text-base">👷</span>
           <div className="flex flex-col min-w-0">
-            <span className="text-white text-[11px] font-bold truncate">
-              Worker Brigade #47
-            </span>
-            <span className="text-[#888] text-[9px] truncate">
-              Idle &bull; Morale 67%
-            </span>
+            <span className="text-white text-[11px] font-bold truncate">Worker Brigade #47</span>
+            <span className="text-[#888] text-[9px] truncate">Idle &bull; Morale 67%</span>
           </div>
         </div>
 
         {/* Notification ticker */}
         <div className="flex items-center flex-1 min-w-0 pl-2">
-          <span className="text-[#ccc] text-[11px] truncate">
-            ⚠️ Food shortage in Sector 7
-          </span>
+          <span className="text-[#ccc] text-[11px] truncate">⚠️ Food shortage in Sector 7</span>
         </div>
       </div>
     </div>
@@ -163,10 +155,7 @@ const BottomPanel: React.FC = () => {
 
 // ─── Slide-out Drawer ────────────────────────────────────
 
-const DrawerPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
-  isOpen,
-  onClose,
-}) => {
+const DrawerPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -193,11 +182,7 @@ const DrawerPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
             <div className="flex items-center justify-between px-4 py-3 border-b-2 border-[#8b0000] bg-[#1a1a1a]">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-[#8b0000] flex items-center justify-center">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="text-[#cfaa48] w-4 h-4"
-                  >
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="text-[#cfaa48] w-4 h-4">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                 </div>
@@ -241,18 +226,9 @@ const DrawerPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
               {/* Alerts */}
               <DrawerSection icon={AlertTriangle} title="ALERTS">
                 <div className="space-y-2">
-                  <AlertItem
-                    severity="critical"
-                    message="Food reserves below 30%"
-                  />
-                  <AlertItem
-                    severity="warning"
-                    message="Power grid at 89% capacity"
-                  />
-                  <AlertItem
-                    severity="info"
-                    message="Quota review in 2 months"
-                  />
+                  <AlertItem severity="critical" message="Food reserves below 30%" />
+                  <AlertItem severity="warning" message="Power grid at 89% capacity" />
+                  <AlertItem severity="info" message="Quota review in 2 months" />
                 </div>
               </DrawerSection>
 
@@ -324,9 +300,7 @@ const StatCard: React.FC<{
   <div className="bg-[#1a1a1a] border border-[#444] px-2 py-1.5 text-center">
     <div className="text-sm mb-0.5">{icon}</div>
     <div className="text-white text-xs font-bold font-mono">{value}</div>
-    <div className="text-[#888] text-[8px] uppercase tracking-wider">
-      {label}
-    </div>
+    <div className="text-[#888] text-[8px] uppercase tracking-wider">{label}</div>
   </div>
 );
 
@@ -340,31 +314,20 @@ const AlertItem: React.FC<{
     info: 'border-[#888] text-[#888]',
   };
   return (
-    <div
-      className={cn(
-        'bg-[#1a1a1a] border-l-2 px-2 py-1.5 text-[10px]',
-        colors[severity],
-      )}
-    >
+    <div className={cn('bg-[#1a1a1a] border-l-2 px-2 py-1.5 text-[10px]', colors[severity])}>
       {message}
     </div>
   );
 };
 
-const QueueItem: React.FC<{ name: string; progress: number }> = ({
-  name,
-  progress,
-}) => (
+const QueueItem: React.FC<{ name: string; progress: number }> = ({ name, progress }) => (
   <div className="bg-[#1a1a1a] border border-[#444] px-2 py-1.5">
     <div className="flex items-center justify-between mb-1">
       <span className="text-white text-[10px] font-bold truncate">{name}</span>
       <span className="text-[#888] text-[9px] font-mono">{progress}%</span>
     </div>
     <div className="w-full h-1 bg-[#333]">
-      <div
-        className="h-full bg-[#8b0000] transition-all"
-        style={{ width: `${progress}%` }}
-      />
+      <div className="h-full bg-[#8b0000] transition-all" style={{ width: `${progress}%` }} />
     </div>
   </div>
 );
@@ -379,30 +342,20 @@ const WorkforceRow: React.FC<{
     <div className="flex items-center gap-2">
       <span className="text-[#888] text-[10px] w-14">{label}</span>
       <div className="flex-1 h-1.5 bg-[#333]">
-        <div
-          className="h-full bg-[#8b0000]"
-          style={{ width: `${pct}%` }}
-        />
+        <div className="h-full bg-[#8b0000]" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-white text-[9px] font-mono w-8 text-right">
-        {value}
-      </span>
+      <span className="text-white text-[9px] font-mono w-8 text-right">{value}</span>
     </div>
   );
 };
 
-const TrendCard: React.FC<{ label: string; trend: number }> = ({
-  label,
-  trend,
-}) => (
+const TrendCard: React.FC<{ label: string; trend: number }> = ({ label, trend }) => (
   <div className="bg-[#1a1a1a] border border-[#444] px-2 py-1.5 text-center">
-    <div className="text-[#888] text-[8px] uppercase tracking-wider mb-0.5">
-      {label}
-    </div>
+    <div className="text-[#888] text-[8px] uppercase tracking-wider mb-0.5">{label}</div>
     <div
       className={cn(
         'text-xs font-bold font-mono',
-        trend > 0 ? 'text-green-500' : trend < 0 ? 'text-[#ff4444]' : 'text-[#888]',
+        trend > 0 ? 'text-green-500' : trend < 0 ? 'text-[#ff4444]' : 'text-[#888]'
       )}
     >
       {trend > 0 ? '+' : ''}
@@ -479,9 +432,7 @@ export const SovietGameHUDDemo: React.FC = () => {
             <div className="text-[#cfaa48] text-base uppercase tracking-widest">
               Canvas 2D Viewport
             </div>
-            <div className="text-[#888] text-xs mt-1">
-              Tap ☰ to open Command Panel
-            </div>
+            <div className="text-[#888] text-xs mt-1">Tap ☰ to open Command Panel</div>
           </div>
           {/* Fake building scatter */}
           <div className="flex gap-6 opacity-60">
@@ -521,10 +472,7 @@ export const SovietGameHUDDemo: React.FC = () => {
       <BottomPanel />
 
       {/* Slide-out Drawer */}
-      <DrawerPanel
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      />
+      <DrawerPanel isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </div>
   );
 };

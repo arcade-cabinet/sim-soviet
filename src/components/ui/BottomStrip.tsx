@@ -43,9 +43,7 @@ export function BottomStrip({ pravdaMessage }: BottomStripProps) {
               &#9733; PRAVDA: {pravdaMessage}
             </span>
           ) : (
-            <span className="text-[#666] text-[11px] italic">
-              No news is good news, Comrade.
-            </span>
+            <span className="text-[#666] text-[11px] italic">No news is good news, Comrade.</span>
           )}
         </div>
       </div>

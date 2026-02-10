@@ -51,7 +51,8 @@ export class GameState {
   public settlementTier: 'selo' | 'posyolok' | 'pgt' | 'gorod' = 'selo';
   public blackMarks = 0;
   public commendations = 0;
-  public threatLevel: 'safe' | 'watched' | 'warned' | 'investigated' | 'reviewed' | 'arrested' = 'safe';
+  public threatLevel: 'safe' | 'watched' | 'warned' | 'investigated' | 'reviewed' | 'arrested' =
+    'safe';
 
   constructor() {
     // Initialize grid
