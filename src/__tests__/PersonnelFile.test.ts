@@ -68,6 +68,7 @@ describe('PersonnelFile', () => {
       stakhanovite_fraud: 1,
       blat_noticed: 1,
       suppressing_news: 1,
+      report_falsified: 2,
     };
 
     for (const [source, expected] of Object.entries(expectedAmounts)) {

@@ -21,6 +21,7 @@
  *  13. PersonnelFile           — black mark decay, arrest check
  */
 
+import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
@@ -71,6 +72,11 @@ export interface SimCallbacks {
     startYear: number;
     endYear: number;
   }) => void;
+  /** Fired at quota deadline years. Player submits report via the closure. */
+  onAnnualReport?: (
+    data: AnnualReportData,
+    submitReport: (submission: ReportSubmission) => void
+  ) => void;
 }
 
 /** Consecutive quota failures that trigger game over. */
@@ -90,6 +96,7 @@ export class SimulationEngine {
   private lastWeather = '';
   private lastDayPhase = '';
   private consecutiveQuotaFailures = 0;
+  private pendingReport = false;
   private ended = false;
 
   constructor(
@@ -442,12 +449,102 @@ export class SimulationEngine {
 
   private checkQuota(): void {
     if (this.gameState.date.year < this.quota.deadlineYear) return;
+    if (this.pendingReport) return;
 
-    if (this.quota.current >= this.quota.target) {
-      this.handleQuotaMet();
+    // If onAnnualReport callback is registered, defer evaluation to the player
+    if (this.callbacks.onAnnualReport) {
+      this.pendingReport = true;
+
+      const data: AnnualReportData = {
+        year: this.gameState.date.year,
+        quotaType: this.quota.type as 'food' | 'vodka',
+        quotaTarget: this.quota.target,
+        quotaCurrent: this.quota.current,
+        actualFood: this.gameState.food,
+        actualVodka: this.gameState.vodka,
+        actualPop: this.gameState.pop,
+      };
+
+      this.callbacks.onAnnualReport(data, (submission: ReportSubmission) => {
+        this.processReport(submission);
+        this.pendingReport = false;
+      });
     } else {
-      this.handleQuotaMissed();
+      // No report UI — evaluate directly (backward compatible)
+      if (this.quota.current >= this.quota.target) {
+        this.handleQuotaMet();
+      } else {
+        this.handleQuotaMissed();
+      }
     }
+  }
+
+  /**
+   * Processes an annual report submission (honest or falsified).
+   * Honest: standard quota evaluation.
+   * Falsified: risk-based investigation — if caught, extra black marks + honest eval;
+   * if not caught, reported values determine quota outcome.
+   */
+  private processReport(submission: ReportSubmission): void {
+    const quotaActual = this.quota.current;
+    const isHonest =
+      submission.reportedQuota === quotaActual &&
+      submission.reportedSecondary ===
+        (this.quota.type === 'food' ? this.gameState.vodka : this.gameState.food) &&
+      submission.reportedPop === this.gameState.pop;
+
+    if (isHonest) {
+      if (this.quota.current >= this.quota.target) {
+        this.handleQuotaMet();
+      } else {
+        this.handleQuotaMissed();
+      }
+      return;
+    }
+
+    // Falsified report — calculate aggregate risk
+    const quotaRisk = this.falsificationRisk(quotaActual, submission.reportedQuota);
+    const secActual = this.quota.type === 'food' ? this.gameState.vodka : this.gameState.food;
+    const secRisk = this.falsificationRisk(secActual, submission.reportedSecondary);
+    const popRisk = this.falsificationRisk(this.gameState.pop, submission.reportedPop);
+    const maxRisk = Math.max(quotaRisk, secRisk, popRisk);
+
+    // Investigation probability scales with risk (capped at 80%)
+    const investigationProb = Math.min(0.8, maxRisk / 100);
+    const roll = this.rng?.random() ?? Math.random();
+
+    if (roll < investigationProb) {
+      // CAUGHT — investigation detected falsification
+      const totalTicks = this.chronology.getDate().totalTicks;
+      this.personnelFile.addMark('report_falsified', totalTicks);
+      this.callbacks.onToast('FALSIFICATION DETECTED — Investigation ordered', 'evacuation');
+      this.callbacks.onAdvisor(
+        'Comrade, the State Committee has detected discrepancies in your report. ' +
+          'A black mark has been added to your personnel file.'
+      );
+
+      // Evaluate with ACTUAL values
+      if (this.quota.current >= this.quota.target) {
+        this.handleQuotaMet();
+      } else {
+        this.handleQuotaMissed();
+      }
+    } else {
+      // Got away with it — evaluate with REPORTED quota value
+      this.callbacks.onToast('Report accepted by Gosplan', 'warning');
+
+      if (submission.reportedQuota >= this.quota.target) {
+        this.handleQuotaMet();
+      } else {
+        this.handleQuotaMissed();
+      }
+    }
+  }
+
+  private falsificationRisk(actual: number, reported: number): number {
+    if (actual === 0 && reported === 0) return 0;
+    if (actual === 0) return 100;
+    return Math.round((Math.abs(reported - actual) / actual) * 100);
   }
 
   private handleQuotaMet(): void {

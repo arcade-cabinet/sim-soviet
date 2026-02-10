@@ -11,6 +11,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useRef, useState } from 'react';
 import { GameWorld } from '@/components/GameWorld';
 import { Advisor } from '@/components/ui/Advisor';
+import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
+import { AnnualReportModal } from '@/components/ui/AnnualReportModal';
 import { BottomStrip } from '@/components/ui/BottomStrip';
 import { BuildingInspector } from '@/components/ui/BuildingInspector';
 import { DrawerPanel } from '@/components/ui/DrawerPanel';
@@ -44,11 +46,13 @@ export function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settlementEvent, setSettlementEvent] = useState<SettlementEvent | null>(null);
   const [planDirective, setPlanDirective] = useState<PlanDirective | null>(null);
+  const [annualReport, setAnnualReport] = useState<AnnualReportData | null>(null);
   const [messages, setMessages] = useState<Messages>({
     advisor: null,
     pravda: null,
   });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
 
   // Callbacks for SimulationEngine → React state
   const simCallbacks: SimCallbacks = {
@@ -69,6 +73,10 @@ export function App() {
         currentPower: snap.power,
         currentMoney: snap.money,
       }),
+    onAnnualReport: (data, submitFn) => {
+      setAnnualReport(data);
+      submitReportRef.current = submitFn;
+    },
   };
 
   const handleStart = useCallback(() => {
@@ -163,6 +171,18 @@ export function App() {
           />
         )}
       </AnimatePresence>
+
+      {/* Annual Report (pripiski) modal — shown at quota deadline years */}
+      {annualReport && (
+        <AnnualReportModal
+          data={annualReport}
+          onSubmit={(submission) => {
+            submitReportRef.current?.(submission);
+            submitReportRef.current = null;
+            setAnnualReport(null);
+          }}
+        />
+      )}
 
       {/* Five-Year Plan directive modal */}
       {planDirective && (
