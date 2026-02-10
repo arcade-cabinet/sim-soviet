@@ -33,6 +33,15 @@ interface GameOverInfo {
   reason: string;
 }
 
+/**
+ * Renders the main game application UI and manages top-level state and simulation callbacks.
+ *
+ * Manages game lifecycle (start, restart, game over), UI messages (advisor, toast, pravda),
+ * drawer visibility, and a canvas-backed GameWorld instance; composes HUD, modals, overlays,
+ * and controls that sit on top of the renderer.
+ *
+ * @returns The root JSX element containing the canvas, HUD, modals, overlays, and controls.
+ */
 export function App() {
   const snap = useGameSnapshot();
   const [gameStarted, setGameStarted] = useState(false);

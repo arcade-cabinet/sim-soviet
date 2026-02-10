@@ -53,7 +53,12 @@ export interface GameDate {
   totalTicks: number;
 }
 
-/** Creates a fresh GameDate for a new game starting in October 1922 (founding of the USSR). */
+/**
+ * Create a fresh GameDate initialized to the start of a new game (October 1 of the given year).
+ *
+ * @param startYear - Calendar year to initialize the date to; defaults to 1922 (founding of the USSR)
+ * @returns The initial GameDate with month = 10, day = 1, hour = 0, and totalTicks = 0
+ */
 export function createGameDate(startYear = 1922): GameDate {
   return {
     year: startYear,

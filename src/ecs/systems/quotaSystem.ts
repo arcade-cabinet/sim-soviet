@@ -27,7 +27,9 @@ export interface QuotaState {
 }
 
 /**
- * Default initial quota state.
+ * Creates a default QuotaState for tracking a 5-year plan quota.
+ *
+ * @returns A QuotaState with `type` = 'food', `target` = 500, `current` = 0, and `deadlineYear` = 1927.
  */
 export function createDefaultQuota(): QuotaState {
   return {

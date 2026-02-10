@@ -124,7 +124,15 @@ const CATEGORIES: Category[] = [
   },
 ];
 
-// ─── Geometry helpers ────────────────────────────────────
+/**
+ * Convert polar coordinates to Cartesian coordinates around a center point.
+ *
+ * @param cx - X coordinate of the center point
+ * @param cy - Y coordinate of the center point
+ * @param radius - Distance from the center
+ * @param angleDeg - Angle in degrees where 0° points upward and increases clockwise
+ * @returns An object with `x` and `y` Cartesian coordinates corresponding to the given polar coordinates
+ */
 
 function polarToXY(
   cx: number,
@@ -136,6 +144,17 @@ function polarToXY(
   return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
 }
 
+/**
+ * Builds an SVG path string for an annular wedge (ring segment) between two radii.
+ *
+ * @param cx - X coordinate of the ring center
+ * @param cy - Y coordinate of the ring center
+ * @param innerR - Inner radius of the ring
+ * @param outerR - Outer radius of the ring
+ * @param startAngle - Start angle of the wedge in degrees (0 at 12 o'clock, increasing clockwise)
+ * @param endAngle - End angle of the wedge in degrees (0 at 12 o'clock, increasing clockwise)
+ * @returns An SVG path `d` string describing the wedge from `startAngle` to `endAngle` between `innerR` and `outerR`
+ */
 function describeWedge(
   cx: number,
   cy: number,

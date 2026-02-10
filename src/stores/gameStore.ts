@@ -39,6 +39,12 @@ let _gameState: GameState | null = null;
 const _listeners = new Set<() => void>();
 let _snapshot: GameSnapshot | null = null;
 
+/**
+ * Create an immutable view of the mutable game state for React consumers.
+ *
+ * @param gs - The current mutable GameState to snapshot
+ * @returns A GameSnapshot containing selected game fields. The `date` and `quota` objects are shallow-copied; `paused` and `gameSpeed` reflect the module's internal pause/speed state rather than values from `gs`.
+ */
 function createSnapshot(gs: GameState): GameSnapshot {
   return {
     seed: gs.seed,
@@ -124,6 +130,12 @@ export function useDragState(): DragState | null {
   return useSyncExternalStore(subscribeDrag, getDragState, getDragState);
 }
 
+/**
+ * Register a listener to be notified when the drag state changes.
+ *
+ * @param listener - Callback invoked when the drag state updates
+ * @returns A function that, when called, unregisters the provided listener
+ */
 function subscribeDrag(listener: () => void): () => void {
   _dragListeners.add(listener);
   return () => {
@@ -136,6 +148,11 @@ function subscribeDrag(listener: () => void): () => void {
 let _paused = false;
 let _gameSpeed: 1 | 2 | 3 = 1;
 
+/**
+ * Indicates whether the game is currently paused.
+ *
+ * @returns `true` if the game is paused, `false` otherwise.
+ */
 export function isPaused(): boolean {
   return _paused;
 }
@@ -146,6 +163,11 @@ export function togglePause(): boolean {
   return _paused;
 }
 
+/**
+ * Set whether the game is paused and notify subscribers of the change.
+ *
+ * @param paused - `true` to pause the game, `false` to resume it
+ */
 export function setPaused(paused: boolean): void {
   _paused = paused;
   notifyStateChange();
@@ -153,15 +175,30 @@ export function setPaused(paused: boolean): void {
 
 export type GameSpeed = 1 | 2 | 3;
 
+/**
+ * Get the current game speed setting.
+ *
+ * @returns The current game speed value: 1, 2, or 3
+ */
 export function getGameSpeed(): GameSpeed {
   return _gameSpeed;
 }
 
+/**
+ * Set the global game speed.
+ *
+ * @param speed - New game speed; one of `1`, `2`, or `3`. Subscribers will be notified of the change.
+ */
 export function setGameSpeed(speed: GameSpeed): void {
   _gameSpeed = speed;
   notifyStateChange();
 }
 
+/**
+ * Advance the game's speed to the next setting in the sequence 1 → 2 → 3 → 1 and notify subscribers of the change.
+ *
+ * @returns The new game speed: `1`, `2`, or `3`.
+ */
 export function cycleGameSpeed(): GameSpeed {
   _gameSpeed = (_gameSpeed === 3 ? 1 : _gameSpeed + 1) as GameSpeed;
   notifyStateChange();

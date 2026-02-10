@@ -17,6 +17,12 @@ interface BottomStripProps {
   pravdaMessage: string | null;
 }
 
+/**
+ * Renders a compact bottom status bar showing the current settlement title, basic stats, and a Pravda ticker.
+ *
+ * @param pravdaMessage - Message to display in the Pravda ticker; if `null` or empty a default "no news" text is shown
+ * @returns The BottomStrip JSX element containing the title, buildings/citizens summary, and the ticker
+ */
 export function BottomStrip({ pravdaMessage }: BottomStripProps) {
   const snap = useGameSnapshot();
   const title = TIER_TITLES[snap.settlementTier] ?? 'Chairman';

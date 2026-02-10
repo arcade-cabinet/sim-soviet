@@ -17,12 +17,22 @@ export interface FootprintDef {
   h: number;
 }
 
-/** Get the sprite name for a building def ID. The defId IS the sprite ID. */
+/**
+ * Resolve the sprite name for a building definition ID.
+ *
+ * @param defId - The building definition ID to resolve
+ * @returns The sprite name matching `defId` if present in BUILDING_DEFS, otherwise an empty string
+ */
 export function getSpriteForType(defId: string): string {
   return BUILDING_DEFS[defId] ? defId : '';
 }
 
-/** Get the footprint for a building def ID. Defaults to 1x1 if unknown. */
+/**
+ * Retrieve the grid footprint for a building definition ID.
+ *
+ * @param defId - The building definition ID to look up
+ * @returns The footprint as `{ w, h }` where `w` and `h` are the width and height in grid cells; returns `{ w: 1, h: 1 }` if `defId` is falsy or unknown
+ */
 export function getFootprint(defId: string): { w: number; h: number } {
   if (!defId || !BUILDING_DEFS[defId]) return { w: 1, h: 1 };
   const fp: Footprint = getFootprintFromDefs(defId);

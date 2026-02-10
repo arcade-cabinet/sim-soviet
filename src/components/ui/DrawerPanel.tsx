@@ -30,6 +30,13 @@ const THREAT_LABELS: Record<string, { label: string; color: string }> = {
   arrested: { label: 'ARRESTED', color: 'text-red-600' },
 };
 
+/**
+ * Render a right-edge sliding command panel that displays live game snapshot data (threat level, settlement stats, quota progress, alerts, personnel, and leader) and provides a close control.
+ *
+ * @param isOpen - Whether the drawer is visible.
+ * @param onClose - Callback invoked to request closing the drawer (e.g., from backdrop or close button).
+ * @returns The rendered DrawerPanel React element.
+ */
 export function DrawerPanel({ isOpen, onClose }: DrawerPanelProps) {
   const snap = useGameSnapshot();
   const threatInfo = THREAT_LABELS[snap.threatLevel] ?? THREAT_LABELS.safe!;
@@ -215,7 +222,13 @@ export function DrawerPanel({ isOpen, onClose }: DrawerPanelProps) {
   );
 }
 
-// ── Sub-components ────────────────────────────────────────
+/**
+ * Renders a titled section header with an icon and its child content.
+ *
+ * @param icon - React component used as the section icon; receives an optional `className`.
+ * @param title - Uppercased section label displayed next to the icon.
+ * @param children - Content to render beneath the section header.
+ */
 
 function DrawerSection({
   icon: Icon,
@@ -239,6 +252,13 @@ function DrawerSection({
   );
 }
 
+/**
+ * Render a compact stat card with an icon, a prominent monospaced value, and a small label.
+ *
+ * @param icon - Icon element or JSX content displayed above the value
+ * @param valueClass - Optional CSS class(es) applied to the value element for custom styling
+ * @returns A JSX element representing the stat card
+ */
 function StatCard({
   label,
   value,
@@ -259,6 +279,13 @@ function StatCard({
   );
 }
 
+/**
+ * Render a compact alert block with a left accent and color keyed to the alert severity.
+ *
+ * @param severity - One of `'critical'`, `'warning'`, or `'info'`; selects the left border and text color.
+ * @param message - The alert text to display inside the block.
+ * @returns The alert element styled for the given severity.
+ */
 function AlertItem({
   severity,
   message,
@@ -278,6 +305,14 @@ function AlertItem({
   );
 }
 
+/**
+ * Render a two-column personnel row showing a label on the left and a numeric value on the right.
+ *
+ * @param label - Text label displayed on the left column
+ * @param value - Numeric value displayed on the right column
+ * @param color - CSS class(es) applied to the value for color/styling (e.g., Tailwind text color classes)
+ * @returns The rendered row element
+ */
 function PersonnelRow({
   label,
   value,

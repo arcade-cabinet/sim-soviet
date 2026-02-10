@@ -36,6 +36,12 @@ interface SovietHUDProps {
   onMenuToggle: () => void;
 }
 
+/**
+ * Top HUD bar showing settlement tier, formatted date, resource chips (money, population, food, vodka, power) and controls for pause, game speed, and the main menu.
+ *
+ * @param onMenuToggle - Callback invoked when the menu (hamburger) button is clicked
+ * @returns The HUD element rendering settlement information, a horizontally scrollable resource row (with a visual alert when power usage exceeds capacity), and control buttons for pause/resume, speed selection, and opening the menu
+ */
 export function SovietHUD({ onMenuToggle }: SovietHUDProps) {
   const snap = useGameSnapshot();
 
@@ -127,7 +133,15 @@ export function SovietHUD({ onMenuToggle }: SovietHUDProps) {
   );
 }
 
-// ── Resource Chip ─────────────────────────────────────────
+/**
+ * Renders a compact resource chip showing an icon and a formatted value with optional alert styling.
+ *
+ * @param icon - Short text or glyph displayed as the chip's icon
+ * @param value - Numeric or string value shown in the chip; numbers are rounded and locale-formatted
+ * @param label - Accessible label used as the chip's title/tooltip
+ * @param alert - When true, applies alert (red) styling to the border and text
+ * @returns The JSX element for a single resource chip
+ */
 
 function ResourceChip({
   icon,

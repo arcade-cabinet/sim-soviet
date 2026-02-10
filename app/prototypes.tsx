@@ -66,6 +66,13 @@ const CARDS: ProtoCard[] = [
   },
 ];
 
+/**
+ * Render a full-screen prototype layout with a fixed back button and supplied content.
+ *
+ * @param children - Content to display inside the full-screen layout
+ * @param onBack - Callback invoked when the back button is clicked
+ * @returns A React element containing a back button and the provided `children`
+ */
 function FullScreenProto({
   children,
   onBack,
@@ -87,6 +94,12 @@ function FullScreenProto({
   );
 }
 
+/**
+ * Displays a gallery of prototype cards and conditionally renders the selected prototype
+ * either as a full-screen demo or as a modal overlay.
+ *
+ * @returns A React element containing the gallery view or the currently active prototype view
+ */
 function PrototypeViewer() {
   const [active, setActive] = useState<PrototypeName>(null);
   const back = () => setActive(null);

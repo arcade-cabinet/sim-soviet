@@ -83,6 +83,15 @@ function seasonToMusicContext(season: string): keyof typeof MUSIC_CONTEXTS | nul
   }
 }
 
+/**
+ * Initializes and manages the imperative game world using the provided canvas:
+ * sets up rendering, input gestures, audio, persistence, terrain, RNG, and the simulation loop.
+ *
+ * This component performs side effects (starts/stops renderer and simulation, wires audio and
+ * gesture callbacks, preloads assets, and manages lifecycle cleanup) and does not render any UI.
+ *
+ * @returns null — the component renders nothing; it only initializes and tears down game systems.
+ */
 export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
   const rendererRef = useRef<Canvas2DRenderer | null>(null);
   const gestureRef = useRef<CanvasGestureManager | null>(null);
