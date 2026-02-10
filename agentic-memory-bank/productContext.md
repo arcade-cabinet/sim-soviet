@@ -2,12 +2,12 @@
 
 ## Why This Project Exists
 
-SimSoviet 2000 is part of the `arcade-cabinet` collection — a set of retro-styled games. This entry is a Soviet-themed city builder that uses dark humor and absurdist satire to create a unique gameplay experience. It exists as both a playable game and a technical showcase for combining BabylonJS 3D rendering with React UI overlays via Reactylon.
+SimSoviet 2000 is part of the `arcade-cabinet` collection — a set of retro-styled games. This entry is a Soviet-themed city builder that uses dark humor and absurdist satire to create a unique gameplay experience. It exists as both a playable game and a technical showcase for combining Canvas 2D sprite-based isometric rendering with React UI overlays.
 
 ## Problems It Solves
 
 1. **Entertainment**: A comedic city-builder that doesn't take itself seriously
-2. **Technical exploration**: Demonstrates the BabylonJS + React integration pattern using Reactylon, ECS architecture with Miniplex, and cross-platform deployment with Capacitor
+2. **Technical exploration**: Demonstrates Canvas 2D isometric rendering with React DOM overlays, ECS architecture with Miniplex as sole source of truth, and cross-platform deployment with Capacitor
 3. **Arcade cabinet portfolio**: Adds a strategy/builder game to the collection
 
 ## How It Should Work
