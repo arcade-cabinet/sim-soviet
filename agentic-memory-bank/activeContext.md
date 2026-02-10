@@ -16,30 +16,36 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 
 ## Recently Completed
 
+### Current Session (feat/wire-all-game-systems branch)
+- [x] **PersonnelFile system** — black marks from quota failures, commendations from exceeding, arrest game-over at 7+ marks, mark decay over time (56 tests)
+- [x] **CompulsoryDeliveries system** — state extraction of food/vodka production by doctrine (revolutionary→eternal), stagnation corruption 5-15% (48 tests)
+- [x] **SettlementSystem** — selo→posyolok→PGT→gorod evolution with hysteresis (30 ticks up, 60 ticks down), building role requirements, non-agricultural workforce % (28 tests)
+- [x] **Game speed** — 1x/2x/3x support via gameStore, GameWorld ticks multiple times per interval
+- [x] **All 3 systems wired into SimulationEngine** — 13-step tick loop with CompulsoryDeliveries intercepting production, settlement evaluating tier, personnel tracking arrest
+- [x] **GameState/GameSnapshot extended** — settlementTier, blackMarks, commendations, threatLevel
+- [x] **Design docs committed** — 10 docs under docs/design/
+- [x] **UI prototypes committed** — 6 approved prototypes + design tokens
+- [x] **911 unit tests passing** (up from 779)
+- [x] **checkQuota refactored** — split into handleQuotaMet/handleQuotaMissed to fix Biome cognitive complexity
+- [x] **SovietHUD** — replaced TopBar with approved prototype design (settlement tier, date, resources, pause, speed, hamburger)
+- [x] **DrawerPanel** — slide-out command panel with real game data (minimap placeholder, settlement stats, 5-year plan, alerts, personnel file, leader)
+- [x] **BottomStrip** — replaced PravdaTicker with combined role/title + inline Pravda ticker
+- [x] **Pause overlay** — animated "PAUSED" indicator on viewport
+- [x] **scrollbar-hide** CSS utility for mobile resource overflow
+- [x] **App layout** — switched from `.game-root` CSS to Tailwind flex column with `100dvh`
+
 ### PRs Merged
 - **PR #1**: Canvas 2D migration, CI/CD setup, systems overhaul, 795 unit tests
 - **PR #2**: Fix deploy workflow (upgrade upload-pages-artifact v3→v4 for SHA pinning)
 - **PR #3**: Fix sprite/audio asset paths with Vite BASE_URL for GitHub Pages deployment
-- **PR #4**: Game Systems Integration — PolitburoSystem, weather modifiers, biome terrain, leader UI, dead config cleanup, simulation interval fix
-
-### Game Systems Integration (Latest)
-- [x] **PolitburoSystem wired** — ticks in SimulationEngine, events feed advisor + Pravda
-- [x] **Weather modifiers applied** — farmModifier (0–2x) + politburo foodProductionMult stack on food production
-- [x] **Vodka modifiers applied** — politburo vodkaProductionMult on vodka production
-- [x] **Biome terrain tiles live** — FeatureTileRenderer with manifest anchors, TerrainGenerator on 3-cell border
-- [x] **Leader UI** — General Secretary name + personality in TopBar via GameSnapshot
-- [x] **Dead config cleaned** — config.ts reduced to GRID_SIZE only
-- [x] **798 unit tests + 139 E2E tests passing**
-- [x] **Simulation interval bug fixed** — callbacksRef pattern prevents useEffect cleanup killing the tick interval
+- **PR #4**: Game Systems Integration — PolitburoSystem, weather modifiers, biome terrain, leader UI
 
 ### Verified Working
 - [x] Canvas 2D rendering — sprites, grid, terrain features, particles, ground, depth sorting
 - [x] Building placement — all 31 types via categorized toolbar
 - [x] Political system — named leaders, ministers, coups, purges, events
 - [x] Weather affects gameplay — blizzards kill farms, miraculous sun doubles output
-- [x] Terrain features on map borders with seasonal sprite swaps
-- [x] 796 unit tests passing
-- [x] Production build succeeds (808 KB JS, 237 KB gzip)
+- [x] Production build succeeds (624 KB main JS, 180 KB gzip)
 
 ### Systems Overhaul Status
 

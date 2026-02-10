@@ -81,7 +81,7 @@
 
 ### Infrastructure
 - [x] Vite 7 + TypeScript 5.9 strict mode + Biome
-- [x] **798 unit tests** passing (Vitest + happy-dom)
+- [x] **911 unit tests** passing (Vitest + happy-dom)
 - [x] **139 E2E tests** passing (Playwright — Desktop Chrome, iPhone SE, Pixel 8a, iPad)
 - [x] GitHub Actions CI (Quality Checks + E2E Tests + Mobile CI + CodeQL + CodeRabbit + SonarCloud)
 - [x] GitHub Pages auto-deploy on merge to main
@@ -101,10 +101,19 @@
 - [ ] **Phase 5**: sql.js WASM persistence (save/load .db, IndexedDB continue)
 - [ ] **Phase 6**: Main menu (New Game/Continue/Load), difficulty selection
 
+### Game Systems (New)
+- [x] PersonnelFile — black marks, commendations, threat levels, arrest mechanic (56 tests)
+- [x] CompulsoryDeliveries — doctrine-based state extraction of production (48 tests)
+- [x] SettlementSystem — selo → posyolok → PGT → gorod evolution (28 tests)
+- [x] Game speed 1x/2x/3x via gameStore
+- [x] All three systems wired into SimulationEngine.tick()
+- [x] GameState + GameSnapshot extended with tier, marks, commendations, threatLevel
+
 ### High Priority
 - [x] Wire PolitburoSystem into SimulationEngine.tick() — **DONE**
 - [x] Multi-cell building placement — **DONE** (drag-to-place with footprints)
-- [x] Victory/loss conditions — **DONE** (quota failures + population wipe + year 1995)
+- [x] Victory/loss conditions — **DONE** (quota failures + population wipe + year 1995 + arrest)
+- [ ] Wire approved UI prototypes into game (HUD, radial menu, toasts)
 - [ ] Save/load UI
 - [ ] Resolve ECS vs GameState duality (plan says remove dead ECS)
 
