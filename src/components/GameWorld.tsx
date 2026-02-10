@@ -10,6 +10,7 @@ import { AudioManager } from '@/audio/AudioManager';
 import { GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS } from '@/audio/AudioManifest';
 import type { NewGameConfig } from '@/components/screens/NewGameFlow';
 import { initDatabase } from '@/db/provider';
+import { citizens } from '@/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { Season } from '@/game/Chronology';
@@ -22,6 +23,7 @@ import { SimulationEngine } from '@/game/SimulationEngine';
 import { generateTerrain, getTerrainSpriteNames } from '@/game/TerrainGenerator';
 import { WeatherType } from '@/game/WeatherSystem';
 import { CanvasGestureManager } from '@/input/CanvasGestureManager';
+import type { CitizenRenderData } from '@/rendering/Canvas2DRenderer';
 import { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
 import { GRID_SIZE, gridToScreen } from '@/rendering/GridMath';
 import { SpriteLoader } from '@/rendering/SpriteLoader';
@@ -31,7 +33,9 @@ import {
   isPaused,
   notifyStateChange,
   selectTool,
+  setAssignmentMode,
   setInspected,
+  setInspectedWorker,
   togglePause,
 } from '@/stores/gameStore';
 
@@ -40,6 +44,16 @@ export interface SaveSystemAPI {
   save: (name?: string) => Promise<boolean>;
   load: (name?: string) => Promise<boolean>;
   hasSave: (name?: string) => Promise<boolean>;
+}
+
+/** API exposed from GameWorld to parent for audio volume controls. */
+export interface AudioAPI {
+  getMusicVolume: () => number;
+  getAmbientVolume: () => number;
+  setMusicVolume: (v: number) => void;
+  setAmbientVolume: (v: number) => void;
+  isMuted: () => boolean;
+  toggleMute: () => boolean;
 }
 
 interface Props {
@@ -51,6 +65,8 @@ interface Props {
   loadSaveOnStart?: string | null;
   /** Called when the SaveSystem is ready for manual save/load operations. */
   onSaveSystemReady?: (api: SaveSystemAPI) => void;
+  /** Called when the AudioManager is ready for volume controls. */
+  onAudioReady?: (api: AudioAPI) => void;
 }
 
 /** Maps Season enum values to renderer season keys. */
@@ -106,6 +122,7 @@ export function GameWorld({
   gameConfig,
   loadSaveOnStart,
   onSaveSystemReady,
+  onAudioReady,
 }: Props) {
   const rendererRef = useRef<Canvas2DRenderer | null>(null);
   const gestureRef = useRef<CanvasGestureManager | null>(null);
@@ -122,6 +139,8 @@ export function GameWorld({
   callbacksRef.current = callbacks;
   const onSaveSystemReadyRef = useRef(onSaveSystemReady);
   onSaveSystemReadyRef.current = onSaveSystemReady;
+  const onAudioReadyRef = useRef(onAudioReady);
+  onAudioReadyRef.current = onAudioReady;
   const loadSaveOnStartRef = useRef(loadSaveOnStart);
   loadSaveOnStartRef.current = loadSaveOnStart;
 
@@ -293,6 +312,8 @@ export function GameWorld({
           renderer.featureTiles.preload(terrainSpriteNames);
           // Reload ground tile sprites (different season = different sprites)
           renderer.preloadGroundTiles();
+          // Update ambient sounds for season (wind in winter, etc.)
+          audio.setSeason(season);
           // Switch music context for dramatic season transitions
           const musicCtx = seasonToMusicContext(season);
           if (musicCtx) {
@@ -308,6 +329,10 @@ export function GameWorld({
         onDayPhaseChanged: (_phase, dayProgress) => {
           renderer.setDayProgress(dayProgress);
         },
+        onEraChanged: (era) => {
+          callbacksRef.current.onEraChanged?.(era);
+          audio.setEra(era.id);
+        },
       },
       rng
     );
@@ -315,6 +340,35 @@ export function GameWorld({
     // Wire building tap → minigame trigger routing
     if (gestures) {
       gestures.onBuildingTap = (defId) => simRef.current?.checkBuildingTapMinigame(defId);
+
+      // Wire worker stats provider so tapped workers show full stats
+      gestures.workerStatsProvider = (entity) => {
+        const ws = simRef.current?.getWorkerSystem();
+        if (!ws) return null;
+        const statsMap = ws.getStatsMap();
+        const stats = statsMap.get(entity);
+        if (!stats) return null;
+        return {
+          name: stats.name,
+          loyalty: stats.loyalty,
+          skill: stats.skill,
+          vodkaDependency: stats.vodkaDependency,
+        };
+      };
+
+      // Wire worker assignment callback for assignment mode
+      gestures.onWorkerAssign = (workerName, buildingGridX, buildingGridY) => {
+        const ws = simRef.current?.getWorkerSystem();
+        if (!ws) return false;
+        // Find the citizen entity matching the worker name
+        for (const entity of citizens) {
+          const stats = ws.getStatsMap().get(entity);
+          if (stats?.name === workerName) {
+            return ws.assignWorker(entity, buildingGridX, buildingGridY);
+          }
+        }
+        return false;
+      };
     }
 
     // Wire SaveSystem to engine for subsystem serialization
@@ -325,6 +379,16 @@ export function GameWorld({
       save: (name) => saveSystem.save(name),
       load: (name) => saveSystem.load(name),
       hasSave: (name) => saveSystem.hasSave(name),
+    });
+
+    // Expose audio volume API to parent component
+    onAudioReadyRef.current?.({
+      getMusicVolume: () => audio.getMusicVolume(),
+      getAmbientVolume: () => audio.getAmbientVolume(),
+      setMusicVolume: (v) => audio.setMusicVolume(v),
+      setAmbientVolume: (v) => audio.setAmbientVolume(v),
+      isMuted: () => audio.isMuted(),
+      toggleMute: () => audio.toggleMute(),
     });
 
     // Load save on start if requested (Continue / Load Game from landing page).
@@ -352,6 +416,14 @@ export function GameWorld({
         // Sync political entity positions to renderer for overlay indicators
         const polEntities = simRef.current?.getPoliticalEntities().getVisibleEntities();
         renderer.setPoliticalEntities(polEntities ?? []);
+
+        // Sync citizen positions to renderer for worker dot indicators
+        const citizenRenderData: CitizenRenderData[] = citizens.entities.map((e) => ({
+          gridX: e.position.gridX,
+          gridY: e.position.gridY,
+          citizenClass: e.citizen.class,
+        }));
+        renderer.setCitizenData(citizenRenderData);
       }
     }, 1000);
 
@@ -380,6 +452,8 @@ export function GameWorld({
         case 'Escape':
           selectTool('none');
           setInspected(null);
+          setInspectedWorker(null);
+          setAssignmentMode(null);
           closeRadialMenu();
           break;
         case 'KeyB':

@@ -12,7 +12,10 @@ import {
   closeRadialMenu,
   cycleGameSpeed,
   getGameSpeed,
+  getInspected,
+  getInspectedWorker,
   getRadialMenu,
+  type InspectedWorker,
   notifyStateChange,
   openRadialMenu,
   type RadialMenuState,
@@ -21,6 +24,7 @@ import {
   setDragState,
   setGameSpeed,
   setInspected,
+  setInspectedWorker,
   setPaused,
   setPlacementCallback,
 } from '@/stores/gameStore';
@@ -32,11 +36,22 @@ function resetStoreState(): void {
   setPaused(false);
   selectTool('none');
   setInspected(null);
+  setInspectedWorker(null);
   setDragState(null);
   setGameSpeed(1);
   closeRadialMenu();
   setPlacementCallback(null);
 }
+
+const MOCK_WORKER: InspectedWorker = {
+  name: 'Comrade Ivanov',
+  class: 'worker',
+  morale: 65,
+  loyalty: 70,
+  skill: 40,
+  vodkaDependency: 20,
+  assignedBuildingDefId: null,
+};
 
 describe('gameStore — extended', () => {
   beforeEach(() => {
@@ -176,6 +191,38 @@ describe('gameStore — extended', () => {
     });
   });
 
+  // ── Worker Inspection ────────────────────────────────────────
+
+  describe('setInspectedWorker / getInspectedWorker', () => {
+    it('starts as null', () => {
+      expect(getInspectedWorker()).toBeNull();
+    });
+
+    it('sets and clears inspected worker', () => {
+      setInspectedWorker(MOCK_WORKER);
+      expect(getInspectedWorker()).toBe(MOCK_WORKER);
+      setInspectedWorker(null);
+      expect(getInspectedWorker()).toBeNull();
+    });
+
+    it('clears inspected building when worker is set', () => {
+      setInspected({
+        gridX: 1,
+        gridY: 1,
+        defId: 'farm',
+        powered: true,
+        cost: 100,
+        footprintW: 1,
+        footprintH: 1,
+        name: 'Farm',
+        desc: 'A farm',
+      });
+      expect(getInspected()).not.toBeNull();
+      setInspectedWorker(MOCK_WORKER);
+      expect(getInspected()).toBeNull();
+    });
+  });
+
   // ── Snapshot from empty ECS ────────────────────────────────
 
   describe('snapshot defaults when ECS is empty', () => {
@@ -209,6 +256,81 @@ describe('gameStore — extended', () => {
       meta.gameMeta.threatLevel = 'watched';
       notifyStateChange();
       expect(meta.gameMeta.threatLevel).toBe('watched');
+    });
+  });
+
+  // ── Inspected Worker ────────────────────────────────────────
+
+  describe('setInspectedWorker / getInspectedWorker', () => {
+    it('starts as null', () => {
+      expect(getInspectedWorker()).toBeNull();
+    });
+
+    it('round-trips worker data', () => {
+      setInspectedWorker(MOCK_WORKER);
+      const result = getInspectedWorker();
+      expect(result).toBe(MOCK_WORKER);
+      expect(result!.name).toBe('Comrade Ivanov');
+      expect(result!.class).toBe('worker');
+      expect(result!.morale).toBe(65);
+      expect(result!.loyalty).toBe(70);
+      expect(result!.skill).toBe(40);
+      expect(result!.vodkaDependency).toBe(20);
+      expect(result!.assignedBuildingDefId).toBeNull();
+    });
+
+    it('clears with null', () => {
+      setInspectedWorker(MOCK_WORKER);
+      expect(getInspectedWorker()).not.toBeNull();
+      setInspectedWorker(null);
+      expect(getInspectedWorker()).toBeNull();
+    });
+
+    it('clears inspected building when setting inspected worker', () => {
+      setInspected({
+        gridX: 5,
+        gridY: 5,
+        defId: 'power-station',
+        powered: true,
+        cost: 100,
+        footprintW: 2,
+        footprintH: 2,
+        name: 'Coal Plant',
+        desc: 'Generates power',
+      });
+      expect(getInspected()).not.toBeNull();
+
+      setInspectedWorker(MOCK_WORKER);
+      expect(getInspectedWorker()).not.toBeNull();
+      expect(getInspected()).toBeNull();
+    });
+
+    it('clears inspected worker when setting inspected building', () => {
+      setInspectedWorker(MOCK_WORKER);
+      expect(getInspectedWorker()).not.toBeNull();
+
+      setInspected({
+        gridX: 5,
+        gridY: 5,
+        defId: 'power-station',
+        powered: true,
+        cost: 100,
+        footprintW: 2,
+        footprintH: 2,
+        name: 'Coal Plant',
+        desc: 'Generates power',
+      });
+      expect(getInspected()).not.toBeNull();
+      expect(getInspectedWorker()).toBeNull();
+    });
+
+    it('stores assigned building defId', () => {
+      const assigned: InspectedWorker = {
+        ...MOCK_WORKER,
+        assignedBuildingDefId: 'collective-farm-hq',
+      };
+      setInspectedWorker(assigned);
+      expect(getInspectedWorker()!.assignedBuildingDefId).toBe('collective-farm-hq');
     });
   });
 });

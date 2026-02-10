@@ -76,6 +76,10 @@
 - [x] Vodka dependency per-worker
 - [x] 6 citizen AI classes
 - [x] Population dynamics — birth/death/defection lifecycle
+- [x] Worker sprites — Canvas2D citizen layer with class-colored dots
+- [x] Worker tap interaction — WorkerInfoPanel with stat bars
+- [x] Worker assignment flow — tap-to-assign with ESC cancel
+- [x] WorkerSystem wired into SimulationEngine tick loop
 
 ### Game Systems (ALL COMPLETE)
 - [x] PersonnelFile — black marks, commendations, threat levels, arrest mechanic (56 tests)
@@ -121,15 +125,18 @@
 - [x] AnnualReportModal — pripiski falsification mechanic
 - [x] CRT overlay + scanline effects
 
-### Audio
+### Audio (COMPLETE)
 - [x] AudioManager with music, SFX, ambient categories
 - [x] 40+ Soviet-era music tracks (OGG/Opus)
 - [x] Procedural SFX via Tone.js
+- [x] Era-specific music switching via AudioManager.setEra()
+- [x] Season-based ambient sounds (winter wind, spring rain)
+- [x] Volume controls wired into DrawerPanel
 - [ ] Audio files not included in deploy (need `pnpm download:audio`)
 
 ### Infrastructure
 - [x] Vite 7 + TypeScript 5.9 strict mode + Biome
-- [x] **1721 unit tests** passing across 48 test files (Vitest + happy-dom)
+- [x] **1812 unit tests** passing across 53 test files (Vitest + happy-dom)
 - [x] **139 E2E tests** passing (Playwright)
 - [x] GitHub Actions CI + GitHub Pages auto-deploy
 - [x] Asset URLs use `import.meta.env.BASE_URL` for subdirectory deployments
@@ -137,12 +144,11 @@
 ## What's Left to Build
 
 ### High Priority
-- [ ] Save/load UI (hamburger drawer save button + file picker load)
-- [ ] sql.js WASM persistence (save/load .db, IndexedDB, autosave)
-- [ ] Wire all new subsystem state into SaveSystem serialization/deserialization
+- [ ] sql.js WASM persistence (save/load .db, IndexedDB, autosave) — UI wired, backend pending
+- [x] ~~Wire all new subsystem state into SaveSystem serialization/deserialization~~ — DONE (all 11 subsystems serialize/deserialize, backward-compatible)
+- [x] ~~Save/load UI~~ — DONE (DrawerPanel has save/load/export/import buttons)
 
 ### Medium Priority
-- [ ] Dynamic music selection based on game mood
 - [ ] PWA manifest + service worker
 - [ ] Consumer goods marketplace UI
 - [ ] Medal ceremony animations
@@ -152,16 +158,15 @@
 - [ ] Color-blind accessibility mode
 - [ ] Bridge sprite representations
 - [ ] Notification log spatial panning
-- [ ] Ambient audio per era
 - [ ] SSR/Republic mechanics
 
-## Design Doc Coverage: ~92%
-9 design documents audited. Remaining gaps are mostly UI/cosmetic and edge-case mechanics. Core gameplay loops, economy, political apparatus, eras, workers, scoring, minigames, dialogue, tutorial — all substantially implemented.
+## Design Doc Coverage: ~95%
+9 design documents with completion metadata frontmatter. All core gameplay systems implemented. Remaining gaps are cosmetic/edge-case UI features.
 
 ## Known Issues
 
 - Audio files ~100MB, not deployed to GitHub Pages
-- EventSystem uses wall-clock `Date.now()` for cooldowns (should switch to tick-based)
 - Visual regression E2E tests skipped on CI (no Linux baselines)
 - `noNonNullAssertion` is off — `!` assertions may hide bugs
-- 33 pre-existing Biome lint warnings (prototype `any` types, button types, complexity)
+- ~~33 pre-existing Biome lint warnings~~ — FIXED (0 lint errors)
+- ~~EventSystem uses wall-clock `Date.now()` for cooldowns~~ — FIXED (already tick-based)

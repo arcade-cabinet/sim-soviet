@@ -5,18 +5,61 @@
  * Uses Tone.js for procedural sound effects
  */
 
-import { type AudioAsset, getAudioById, getPreloadAssets } from './AudioManifest';
+import { type AudioAsset, ERA_MUSIC, getAudioById, getPreloadAssets } from './AudioManifest';
 import * as ProceduralSounds from './ProceduralSounds';
+
+const STORAGE_KEY_MUSIC_VOL = 'simsoviet_music_volume';
+const STORAGE_KEY_AMBIENT_VOL = 'simsoviet_ambient_volume';
+const STORAGE_KEY_MUTED = 'simsoviet_muted';
+
+function loadStoredNumber(key: string, fallback: number): number {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw !== null) {
+      const n = Number.parseFloat(raw);
+      if (Number.isFinite(n)) return Math.max(0, Math.min(1, n));
+    }
+  } catch {
+    /* localStorage unavailable */
+  }
+  return fallback;
+}
+
+function loadStoredBool(key: string, fallback: boolean): boolean {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw !== null) return raw === 'true';
+  } catch {
+    /* localStorage unavailable */
+  }
+  return fallback;
+}
+
+function storeValue(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* localStorage unavailable */
+  }
+}
 
 export class AudioManager {
   private masterVolume = 0.7;
-  private musicVolume = 0.5;
+  private musicVolume: number;
   private sfxVolume = 0.8;
-  private ambientVolume = 0.4;
-  private muted = false;
+  private ambientVolume: number;
+  private muted: boolean;
   private tracks: Map<string, HTMLAudioElement> = new Map();
   private currentMusic: string | null = null;
+  private currentEra: string = '';
+  private currentSeason: string = '';
   private initialized = false;
+
+  constructor() {
+    this.musicVolume = loadStoredNumber(STORAGE_KEY_MUSIC_VOL, 0.5);
+    this.ambientVolume = loadStoredNumber(STORAGE_KEY_AMBIENT_VOL, 0.4);
+    this.muted = loadStoredBool(STORAGE_KEY_MUTED, false);
+  }
 
   private ensureInitialized(): void {
     if (!this.initialized) {
@@ -237,6 +280,7 @@ export class AudioManager {
   public setMusicVolume(volume: number): void {
     this.musicVolume = Math.max(0, Math.min(1, volume));
     this.updateMusicVolumes();
+    storeValue(STORAGE_KEY_MUSIC_VOL, String(this.musicVolume));
   }
 
   public setSFXVolume(volume: number): void {
@@ -247,6 +291,7 @@ export class AudioManager {
   public setAmbientVolume(volume: number): void {
     this.ambientVolume = Math.max(0, Math.min(1, volume));
     this.updateCategoryVolumes('ambient');
+    storeValue(STORAGE_KEY_AMBIENT_VOL, String(this.ambientVolume));
   }
 
   public toggleMute(): boolean {
@@ -258,6 +303,7 @@ export class AudioManager {
     } else {
       this.updateAllVolumes();
     }
+    storeValue(STORAGE_KEY_MUTED, String(this.muted));
     return this.muted;
   }
 
@@ -288,8 +334,64 @@ export class AudioManager {
     });
   }
 
+  /**
+   * Switch music to a random track from the era's curated pool.
+   * Crossfades from current track (1s fade out, then new track fades in).
+   */
+  public setEra(eraId: string): void {
+    if (eraId === this.currentEra) return;
+    this.currentEra = eraId;
+
+    const pool = ERA_MUSIC[eraId];
+    if (!pool || pool.length === 0) return;
+
+    // Pick a random track from the era pool, avoiding the current one
+    let trackId = pool[Math.floor(Math.random() * pool.length)]!;
+    if (pool.length > 1 && trackId === this.currentMusic) {
+      trackId = pool[(pool.indexOf(trackId) + 1) % pool.length]!;
+    }
+
+    this.playMusic(trackId);
+  }
+
+  /**
+   * Adjust ambient sound state based on the current season.
+   * Winter/frost plays wind ambient; summer-like seasons stop wind.
+   */
+  public setSeason(season: string): void {
+    if (season === this.currentSeason) return;
+    this.currentSeason = season;
+
+    // Winter-like seasons get wind ambience
+    if (season === 'winter' || season === 'early_frost') {
+      this.playAmbient('wind');
+    } else {
+      this.stopAmbient('wind');
+    }
+  }
+
   public getCurrentMusic(): string | null {
     return this.currentMusic;
+  }
+
+  public getCurrentEra(): string {
+    return this.currentEra;
+  }
+
+  public getCurrentSeason(): string {
+    return this.currentSeason;
+  }
+
+  public getMusicVolume(): number {
+    return this.musicVolume;
+  }
+
+  public getAmbientVolume(): number {
+    return this.ambientVolume;
+  }
+
+  public isMuted(): boolean {
+    return this.muted;
   }
 
   public isInitialized(): boolean {

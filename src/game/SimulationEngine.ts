@@ -68,6 +68,7 @@ import type { GameRng } from './SeedSystem';
 import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from './SettlementSystem';
 import { SettlementSystem } from './SettlementSystem';
 import { getWeatherProfile, type WeatherType } from './WeatherSystem';
+import { WorkerSystem } from './workers/WorkerSystem';
 
 /**
  * Callback interface for SimulationEngine → React communication.
@@ -160,6 +161,7 @@ export class SimulationEngine {
   private politicalEntities: PoliticalEntitySystem;
   private minigameRouter: MinigameRouter;
   private scoring: ScoringSystem;
+  private workerSystem: WorkerSystem;
   private quota: QuotaState;
   private rng: GameRng | undefined;
   private lastSeason = '';
@@ -248,6 +250,9 @@ export class SimulationEngine {
     // Minigame Router — trigger/resolve/auto-resolve minigames
     this.minigameRouter = new MinigameRouter(rng);
 
+    // Worker System — manages citizen entities, morale, assignment, vodka
+    this.workerSystem = new WorkerSystem(rng);
+
     // Scoring System — accumulates score at era boundaries
     this.scoring = new ScoringSystem(difficulty ?? 'comrade', consequence ?? 'permadeath');
 
@@ -306,6 +311,11 @@ export class SimulationEngine {
 
   public getPoliticalEntities(): PoliticalEntitySystem {
     return this.politicalEntities;
+  }
+
+  /** Get the WorkerSystem for worker info and assignment. */
+  public getWorkerSystem(): WorkerSystem {
+    return this.workerSystem;
   }
 
   public getMinigameRouter(): MinigameRouter {
@@ -535,6 +545,14 @@ export class SimulationEngine {
 
     consumptionSystem(eraMods.consumptionMult);
     populationSystem(this.rng, politburoMods.populationGrowthMult * eraMods.populationGrowthMult);
+
+    // Worker System — sync citizen entities to match population, then tick worker stats
+    const pop = getResourceEntity()?.resources.population ?? 0;
+    this.workerSystem.syncPopulation(pop);
+    const vodkaAvail = getResourceEntity()?.resources.vodka ?? 0;
+    const foodAvail = getResourceEntity()?.resources.food ?? 0;
+    this.workerSystem.tick(vodkaAvail, foodAvail);
+
     decaySystem(politburoMods.infrastructureDecayMult * eraMods.decayMult);
     quotaSystem(this.quota);
 

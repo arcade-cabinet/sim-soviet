@@ -8,16 +8,16 @@ Each file covers a single design domain. Together they form the complete game de
 
 | File | Domain | Status |
 |------|--------|--------|
-| [overview.md](overview.md) | Game identity, core fantasy, core loop | Draft |
-| [economy.md](economy.md) | Planned economy, fondy, trudodni, compulsory deliveries, rubles, ration cards, blat, Stakhanovites | Draft |
-| [workers.md](workers.md) | Worker roles, lifecycle, morale, loyalty, assignment, scaling | Draft |
-| [political.md](political.md) | Politruks, KGB, military, the predsedatel's file, black marks | Draft |
+| [overview.md](overview.md) | Game identity, core fantasy, core loop | **Complete** |
+| [economy.md](economy.md) | Planned economy, fondy, trudodni, compulsory deliveries, rubles, ration cards, blat, Stakhanovites | **Complete** |
+| [workers.md](workers.md) | Worker roles, lifecycle, morale, loyalty, assignment, scaling | **Complete** |
+| [political.md](political.md) | Politruks, KGB, military, the predsedatel's file, black marks | **Complete** |
 | [buildings.md](buildings.md) | Construction flow, unlock progression, categories by era | Pending |
-| [eras.md](eras.md) | 8 era campaigns, transitions, doctrine integration, victory/failure | Draft |
-| [map-terrain.md](map-terrain.md) | Procedural generation, camera, concrete framing, terrain types | Draft |
-| [ui-ux.md](ui-ux.md) | Mobile-first brutalist design, panels, gestures, notifications | Draft |
-| [minigames.md](minigames.md) | Building/tile-triggered minigames | Draft |
-| [scoring.md](scoring.md) | Civ-style scoring, difficulty, permadeath, consequences | Draft |
+| [eras.md](eras.md) | 8 era campaigns, transitions, doctrine integration, victory/failure | **Complete** |
+| [map-terrain.md](map-terrain.md) | Procedural generation, camera, concrete framing, terrain types | **Complete** |
+| [ui-ux.md](ui-ux.md) | Mobile-first brutalist design, panels, gestures, notifications | **Complete** |
+| [minigames.md](minigames.md) | Building/tile-triggered minigames | **Complete** |
+| [scoring.md](scoring.md) | Civ-style scoring, difficulty, permadeath, consequences | **Complete** |
 | [audio.md](audio.md) | Music, SFX, era-specific audio | Pending |
 
 ### Existing Reference Docs (in parent `docs/`)

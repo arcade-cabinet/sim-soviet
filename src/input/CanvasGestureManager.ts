@@ -16,7 +16,7 @@
 
 import type { With } from 'miniplex';
 import { getBuildingDef } from '@/data/buildingDefs';
-import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
+import { buildingsLogic, citizens, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import { createBuilding } from '@/ecs/factories';
 import type { Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
@@ -25,11 +25,15 @@ import type { GameGrid } from '@/game/GameGrid';
 import type { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
 import {
   closeRadialMenu,
+  getAssignmentMode,
   getDragState,
+  type InspectedWorker,
   notifyStateChange,
   openRadialMenu,
+  setAssignmentMode,
   setDragState,
   setInspected,
+  setInspectedWorker,
   setPlacementCallback,
 } from '@/stores/gameStore';
 
@@ -68,6 +72,18 @@ export class CanvasGestureManager {
   public onBulldoze: (() => void) | null = null;
   /** Optional hook — called when a building is tapped (for minigame trigger routing). */
   public onBuildingTap: ((defId: string) => void) | null = null;
+  /** Optional hook — called when a worker is tapped. */
+  public onWorkerTap: ((info: InspectedWorker) => void) | null = null;
+  /** Optional hook — called to assign a worker to a building. Returns true on success. */
+  public onWorkerAssign:
+    | ((workerName: string, buildingGridX: number, buildingGridY: number) => boolean)
+    | null = null;
+  /** Provider for extended worker stats (set by GameWorld after SimulationEngine init). */
+  public workerStatsProvider:
+    | ((
+        entity: Entity
+      ) => { name: string; loyalty: number; skill: number; vodkaDependency: number } | null)
+    | null = null;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -226,6 +242,25 @@ export class CanvasGestureManager {
     if (!cell) return;
 
     const { x: gridX, y: gridY } = cell;
+
+    // ── Assignment mode: tapping a building completes worker assignment ──
+    const assignMode = getAssignmentMode();
+    if (assignMode) {
+      const gridCell = this.grid.getCell(gridX, gridY);
+      if (gridCell?.type) {
+        // Tap on a building → assign the worker
+        const success = this.onWorkerAssign?.(assignMode.workerName, gridX, gridY) ?? false;
+        if (success) {
+          setAssignmentMode(null);
+          notifyStateChange();
+        }
+      } else {
+        // Tap on empty ground → cancel assignment mode
+        setAssignmentMode(null);
+      }
+      return;
+    }
+
     const tool = getMetaEntity()?.gameMeta.selectedTool ?? 'none';
     const gridCell = this.grid.getCell(gridX, gridY);
     if (!gridCell) return;
@@ -252,8 +287,16 @@ export class CanvasGestureManager {
     screenY: number
   ): void {
     if (!gridCell.type) {
-      // Empty cell → open radial build menu at tap position
+      // Empty cell: check for citizens at this position first
+      const workerInfo = this.findCitizenAtCell(gridX, gridY);
+      if (workerInfo) {
+        setInspectedWorker(workerInfo);
+        this.onWorkerTap?.(workerInfo);
+        return;
+      }
+      // No citizen → open radial build menu at tap position
       setInspected(null);
+      setInspectedWorker(null);
       const space = this.getAvailableSpace(gridX, gridY);
       if (space > 0) {
         // Convert canvas-relative coords to viewport coords for the overlay
@@ -285,6 +328,48 @@ export class CanvasGestureManager {
       name: def?.presentation.name ?? defId,
       desc: def?.presentation.desc ?? '',
     });
+
+    // Also check for citizens assigned to this building
+    const workerInfo = this.findCitizenForBuilding(defId);
+    if (workerInfo) {
+      setInspectedWorker(workerInfo);
+      this.onWorkerTap?.(workerInfo);
+    }
+  }
+
+  /** Find a citizen entity positioned at the given grid cell. */
+  private findCitizenAtCell(gridX: number, gridY: number): InspectedWorker | null {
+    for (const entity of citizens) {
+      if (entity.position.gridX === gridX && entity.position.gridY === gridY) {
+        return this.buildWorkerInfo(entity);
+      }
+    }
+    return null;
+  }
+
+  /** Find a citizen entity assigned to a building with the given defId. */
+  private findCitizenForBuilding(defId: string): InspectedWorker | null {
+    for (const entity of citizens) {
+      if (entity.citizen.assignment === defId) {
+        return this.buildWorkerInfo(entity);
+      }
+    }
+    return null;
+  }
+
+  /** Build an InspectedWorker from a citizen entity. */
+  private buildWorkerInfo(entity: Entity): InspectedWorker | null {
+    if (!entity.citizen) return null;
+    const extStats = this.workerStatsProvider?.(entity);
+    return {
+      name: extStats?.name ?? 'Unknown Worker',
+      class: entity.citizen.class,
+      morale: entity.citizen.happiness,
+      loyalty: extStats?.loyalty ?? 50,
+      skill: extStats?.skill ?? 25,
+      vodkaDependency: extStats?.vodkaDependency ?? 0,
+      assignedBuildingDefId: entity.citizen.assignment ?? null,
+    };
   }
 
   /** Find whether the building entity covering (gridX, gridY) is powered. */

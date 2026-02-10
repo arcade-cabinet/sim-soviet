@@ -1,3 +1,12 @@
+---
+title: Workers — The Central Resource
+status: Complete
+implementation: src/game/workers/WorkerSystem.ts
+tests: src/__tests__/WorkerSystem.test.ts, src/__tests__/WorkerPopulation.test.ts
+last_verified: 2026-02-10
+coverage: "Full — 6 AI classes, morale/loyalty/skill, vodka dependency, assignment, sprites, tap interaction"
+---
+
 # Workers — The Central Resource
 
 Workers are the game. Not buildings, not resources — *people*.

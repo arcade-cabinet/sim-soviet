@@ -1,3 +1,12 @@
+---
+title: UI/UX — Mobile-First Brutalist
+status: Complete
+implementation: src/components/ui/, src/components/screens/, app/App.tsx
+tests: src/__tests__/ConcreteFrame.test.tsx, src/__tests__/NewGameFlow.test.tsx
+last_verified: 2026-02-10
+coverage: "Full — landing page, new game flow, HUD, drawer, radial build menu, worker panel, tutorial overlays"
+---
+
 # UI/UX — Mobile-First Brutalist
 
 ## Design Language

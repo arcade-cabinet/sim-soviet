@@ -9,7 +9,7 @@
  */
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { SaveSystemAPI } from '@/components/GameWorld';
+import type { AudioAPI, SaveSystemAPI } from '@/components/GameWorld';
 import { GameWorld } from '@/components/GameWorld';
 import { AssignmentLetter } from '@/components/screens/AssignmentLetter';
 import { LandingPage } from '@/components/screens/LandingPage';
@@ -28,6 +28,7 @@ import { RadialBuildMenu } from '@/components/ui/RadialBuildMenu';
 import { SettlementUpgradeModal } from '@/components/ui/SettlementUpgradeModal';
 import { SovietHUD } from '@/components/ui/SovietHUD';
 import { SovietToastStack } from '@/components/ui/SovietToastStack';
+import { WorkerInfoPanel } from '@/components/ui/WorkerInfoPanel';
 import { initDatabase } from '@/db/provider';
 import * as dbSchema from '@/db/schema';
 import { getResourceEntity } from '@/ecs/archetypes';
@@ -64,6 +65,7 @@ export function App() {
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [loadSaveOnStart, setLoadSaveOnStart] = useState<string | null>(null);
   const [saveApi, setSaveApi] = useState<SaveSystemAPI | null>(null);
+  const [audioApi, setAudioApi] = useState<AudioAPI | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
 
@@ -117,6 +119,10 @@ export function App() {
 
   const handleSaveSystemReady = useCallback((api: SaveSystemAPI) => {
     setSaveApi(api);
+  }, []);
+
+  const handleAudioReady = useCallback((api: AudioAPI) => {
+    setAudioApi(api);
   }, []);
 
   return (
@@ -198,6 +204,7 @@ export function App() {
           gameConfig={gameConfig}
           loadSaveOnStart={loadSaveOnStart}
           onSaveSystemReady={handleSaveSystemReady}
+          onAudioReady={handleAudioReady}
         />
 
         {/* Pause overlay */}
@@ -218,6 +225,7 @@ export function App() {
 
         {/* DOM overlays on top of canvas */}
         <BuildingInspector />
+        <WorkerInfoPanel />
         <SovietToastStack />
         <Advisor
           message={messages.advisor}
@@ -232,7 +240,12 @@ export function App() {
       <RadialBuildMenu />
 
       {/* Slide-out drawer */}
-      <DrawerPanel isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} saveApi={saveApi} />
+      <DrawerPanel
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        saveApi={saveApi}
+        audioApi={audioApi}
+      />
 
       {/* Settlement upgrade decree modal */}
       <AnimatePresence>

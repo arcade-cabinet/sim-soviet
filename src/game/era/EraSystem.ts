@@ -14,6 +14,7 @@
 import type { Doctrine } from '../CompulsoryDeliveries';
 import type { SettlementTier } from '../SettlementSystem';
 import { ALL_BUILDING_IDS, ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from './definitions';
+import { getBuildingTierRequirement, tierMeetsRequirement } from './tiers';
 import type {
   ConstructionMethod,
   EraCheckpoint,
@@ -102,10 +103,12 @@ export class EraSystem {
    * Get all buildings available in the current era (cumulative).
    * Buildings unlocked in earlier eras remain available.
    *
-   * The `tier` parameter is reserved for future settlement-tier gating
-   * but currently does not restrict the list.
+   * When `tier` is provided, only buildings whose settlement tier
+   * requirement is met by the given tier are included.
+   * When `tier` is omitted, all era-unlocked buildings are returned
+   * (backward compatible).
    */
-  getAvailableBuildings(_tier?: SettlementTier): string[] {
+  getAvailableBuildings(tier?: SettlementTier): string[] {
     const currentIdx = eraIndexForYear(this.currentYear);
     const available: string[] = [];
 
@@ -115,7 +118,11 @@ export class EraSystem {
       available.push(...def.unlockedBuildings);
     }
 
-    return available;
+    if (tier == null) return available;
+
+    return available.filter((defId) =>
+      tierMeetsRequirement(tier, getBuildingTierRequirement(defId))
+    );
   }
 
   /**

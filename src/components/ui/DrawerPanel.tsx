@@ -16,10 +16,11 @@ import {
   Save,
   Upload,
   Users,
+  Volume2,
   X,
 } from 'lucide-react';
-import { useRef } from 'react';
-import type { SaveSystemAPI } from '@/components/GameWorld';
+import { useRef, useState } from 'react';
+import type { AudioAPI, SaveSystemAPI } from '@/components/GameWorld';
 import { exportDatabaseFile, importDatabaseFile } from '@/db/provider';
 import { cn } from '@/lib/utils';
 import { notifyStateChange, useGameSnapshot } from '@/stores/gameStore';
@@ -29,6 +30,7 @@ interface DrawerPanelProps {
   isOpen: boolean;
   onClose: () => void;
   saveApi?: SaveSystemAPI | null;
+  audioApi?: AudioAPI | null;
 }
 
 const TIER_RUSSIAN: Record<string, string> = {
@@ -47,11 +49,13 @@ const THREAT_LABELS: Record<string, { label: string; color: string }> = {
   arrested: { label: 'ARRESTED', color: 'text-red-600' },
 };
 
-export function DrawerPanel({ isOpen, onClose, saveApi }: DrawerPanelProps) {
+export function DrawerPanel({ isOpen, onClose, saveApi, audioApi }: DrawerPanelProps) {
   const snap = useGameSnapshot();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const threatInfo = THREAT_LABELS[snap.threatLevel] ?? THREAT_LABELS.safe!;
   const tierRussian = TIER_RUSSIAN[snap.settlementTier] ?? 'село';
+  const [musicVol, setMusicVol] = useState(() => audioApi?.getMusicVolume() ?? 0.5);
+  const [ambientVol, setAmbientVol] = useState(() => audioApi?.getAmbientVolume() ?? 0.4);
 
   // Quota info
   const quotaProgress =
@@ -196,6 +200,28 @@ export function DrawerPanel({ isOpen, onClose, saveApi }: DrawerPanelProps) {
                   className="hidden"
                   onChange={handleFileSelected}
                 />
+              </DrawerSection>
+
+              {/* Audio Controls */}
+              <DrawerSection icon={Volume2} title="AUDIO CONTROLS">
+                <div className="space-y-3">
+                  <VolumeSlider
+                    label="MUSIC"
+                    value={musicVol}
+                    onChange={(v) => {
+                      setMusicVol(v);
+                      audioApi?.setMusicVolume(v);
+                    }}
+                  />
+                  <VolumeSlider
+                    label="AMBIENT"
+                    value={ambientVol}
+                    onChange={(v) => {
+                      setAmbientVol(v);
+                      audioApi?.setAmbientVolume(v);
+                    }}
+                  />
+                </div>
               </DrawerSection>
 
               {/* Minimap placeholder */}
@@ -429,6 +455,34 @@ function PersonnelRow({ label, value, color }: { label: string; value: number; c
     <div className="flex items-center justify-between">
       <span className="text-[#888] text-[10px]">{label}</span>
       <span className={cn('text-xs font-bold font-mono', color)}>{value}</span>
+    </div>
+  );
+}
+
+function VolumeSlider({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const pct = Math.round(value * 100);
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[#888] text-[10px] uppercase tracking-wider">{label}</span>
+        <span className="text-[#cfaa48] text-[10px] font-mono">{pct}%</span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={pct}
+        onChange={(e) => onChange(Number(e.target.value) / 100)}
+        className="w-full h-1.5 bg-[#333] appearance-none cursor-pointer accent-[#8b0000]"
+      />
     </div>
   );
 }

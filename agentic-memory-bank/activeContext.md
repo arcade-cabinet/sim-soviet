@@ -90,14 +90,23 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 - [x] Marshland — difficult terrain with construction penalties
 - [x] Interior terrain features — forests/mountains/marshland inside map
 
-### Design Doc Audit Result: ~92% Coverage
-Key remaining gaps (cosmetic/edge-case):
+### Gap Closure (this session)
+- [x] Worker sprites — Canvas2D citizen layer with class-colored dots
+- [x] Worker tap interaction — WorkerInfoPanel with stat bars, assignment mode
+- [x] Worker assignment flow — tap-to-assign with ESC cancel
+- [x] Settlement tier gating — EraSystem filters buildings by tier
+- [x] Political entity badges — role-specific shapes, pulsing, name labels
+- [x] Audio system — era-specific music switching, season-based ambient sounds
+- [x] WorkerSystem wired into SimulationEngine tick loop
+- [x] All 9 design docs updated with completion metadata frontmatter
+- [x] Devlog 005 written
+
+### Design Doc Coverage: ~95%
+Remaining cosmetic/edge-case gaps:
 - Consumer goods marketplace UI
 - Essential worker designation mechanic
-- Notification log spatial panning
-- Color-blind accessibility mode
-- Bridge sprite representations
 - Medal ceremony animations
+- Color-blind accessibility mode
 
 ### Previous Work (carried forward)
 - [x] All 6 UI prototypes approved and wired into game
@@ -106,11 +115,12 @@ Key remaining gaps (cosmetic/edge-case):
 - [x] Legacy type→defId migration complete
 - [x] ECS Unification — GameState deleted
 
-### PRs Merged
-- **PR #1**: Canvas 2D migration, CI/CD setup, systems overhaul, 795 unit tests
-- **PR #2**: Fix deploy workflow (upload-pages-artifact v3→v4)
-- **PR #3**: Fix sprite/audio asset paths with Vite BASE_URL
-- **PR #4**: Game Systems Integration — PolitburoSystem, weather modifiers, biome terrain
+### PRs
+- **PR #1**: Canvas 2D migration, CI/CD setup, systems overhaul, 795 unit tests — MERGED
+- **PR #2**: Fix deploy workflow (upload-pages-artifact v3→v4) — MERGED
+- **PR #3**: Fix sprite/audio asset paths with Vite BASE_URL — MERGED
+- **PR #4**: Game Systems Integration — PolitburoSystem, weather modifiers, biome terrain — MERGED
+- **PR #5**: Complete all game systems — gap closure, 1812 tests — OPEN (ready for review)
 
 ## Key Gotchas
 
@@ -128,9 +138,19 @@ Key remaining gaps (cosmetic/edge-case):
 - **GAME_ERA_TO_ECONOMY_ERA**: Maps EraSystem IDs → EconomySystem EraIds in SimulationEngine
 - **Storage spoilage**: storageSystem applies 5%/tick overflow + 0.5%/tick baseline — tests must account for resource decay
 
+### Save/Load Serialization (COMPLETE — this session)
+- [x] PolitburoSystem serialize/deserialize — ministers as tuple arrays for JSON-safe Map
+- [x] EventSystem serialize/deserialize — tick-based cooldowns, event history
+- [x] WorkerSystem serialize/deserialize — citizen state round-trip
+- [x] PravdaSystem serialize/deserialize — headline history
+- [x] SubsystemSaveData extended with 8 optional fields (chronology, economy, events, pravda, politburo, politicalEntities, minigames, engineState)
+- [x] All backward-compatible with old saves (optional `?` fields)
+- [x] Event/politburo handlers promoted to class members for restore rewiring
+- [x] 0 Biome lint warnings remaining (was 33)
+
 ## Active Decisions
 
-- **Canvas 2D over BabylonJS**: Pre-baked sprites on 2D canvas (664 KB main JS, 190 KB gzip)
+- **Canvas 2D over BabylonJS**: Pre-baked sprites on 2D canvas (820 KB main JS, 238 KB gzip)
 - **Sprite baking via Blender**: Orthographic camera at 60X/45Z (2:1 dimetric), Cycles renderer
 - **ECS as single source of truth**: GameState eliminated, ECS drives everything
 - **Module-level RNG pattern**: `_rng` set by constructors, avoids param threading

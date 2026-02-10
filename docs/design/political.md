@@ -1,3 +1,12 @@
+---
+title: Political Apparatus — What You're Surviving
+status: Complete
+implementation: src/game/political/PoliticalEntitySystem.ts, src/game/politburo/PolitburoSystem.ts
+tests: src/__tests__/PoliticalEntitySystem.test.ts
+last_verified: 2026-02-10
+coverage: "Full — politruks, KGB, military entities, personnel file, black marks, badge rendering"
+---
+
 # Political Apparatus — What You're Surviving
 
 The three forces you cannot control, only endure. Plus: your personnel file — the game's central tension mechanic.

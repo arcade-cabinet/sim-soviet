@@ -1,3 +1,12 @@
+---
+title: Era-Based Campaigns
+status: Complete
+implementation: src/game/era/EraSystem.ts
+tests: src/__tests__/EraSystem.test.ts
+last_verified: 2026-02-10
+coverage: "Full — 8 eras, transitions, building gates, victory/failure conditions, doctrine integration"
+---
+
 # Era-Based Campaigns
 
 Structure like Civilization — progress through eras, accumulate score, carry your collective forward.

@@ -1,3 +1,12 @@
+---
+title: Scoring, Difficulty & Permadeath
+status: Complete
+implementation: src/game/ScoringSystem.ts, src/game/AchievementTracker.ts
+tests: src/__tests__/ScoringSystem.test.ts, src/__tests__/AchievementTracker.test.ts, src/__tests__/GameTally.test.ts
+last_verified: 2026-02-10
+coverage: "Full — 3 difficulties, 3 consequences, 12 medals, 28+ achievements, game tally"
+---
+
 # Scoring, Difficulty & Permadeath
 
 ## Structure: Civilization-Style

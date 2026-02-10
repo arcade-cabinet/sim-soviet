@@ -1,3 +1,12 @@
+---
+title: Minigames — Building & Tile Triggered
+status: Complete
+implementation: src/game/minigames/MinigameRouter.ts
+tests: src/__tests__/MinigameRouter.test.ts
+last_verified: 2026-02-10
+coverage: "Full — 8 minigames, trigger routing, auto-resolve fallback"
+---
+
 # Minigames — Building & Tile Triggered
 
 Minigames are triggered by tapping specific buildings or terrain features. They pause the simulation, spawn a modal, and run for 30-90 seconds.

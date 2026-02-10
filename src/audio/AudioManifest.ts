@@ -284,6 +284,64 @@ export const GAMEPLAY_PLAYLIST: AudioTrackId[] = [
   'glavnoe_rebiata',
 ];
 
+// Era-specific track pools — each era draws from a curated set of tracks.
+// Tracks are chosen to match the historical/thematic mood of the era.
+export const ERA_MUSIC: Record<string, AudioTrackId[]> = {
+  war_communism: [
+    'internationale',
+    'varshavjanka',
+    'smelo_my_v_boj',
+    'white_army_black_baron',
+    'smelo_tovarishchi',
+    'rabochaia_marseleza',
+    'vy_zhertvoiu',
+  ],
+  first_plans: [
+    'nash_parovoz',
+    'dubinushka',
+    'tachanka',
+    'red_army_march',
+    'my_krasnye_soldaty',
+    'krasnoe_znamia',
+  ],
+  great_patriotic: [
+    'sacred_war',
+    'katyusha',
+    'v_zemlianke',
+    'sinij_platochek',
+    'smuglianka',
+    'marsh_zashchitnikov',
+    'esli_zavtra_vojna',
+    'dorogi',
+  ],
+  reconstruction: [
+    'moskva_majskaia',
+    'nesokrushimaia',
+    'orlionok',
+    'po_dolinam',
+    'pesnia_o_shchorse',
+    'slavnoe_more',
+  ],
+  thaw: [
+    'glavnoe_rebiata',
+    'moskva_majskaia',
+    'smuglianka',
+    'pod_zvezdami',
+    'pa_moriam',
+    'raskinulos_more',
+  ],
+  stagnation: ['i_vnov_boj', 'soviet_anthem_1977', 'nesokrushimaia', 'tam_vdali', 'dubinushka'],
+  perestroika: ['dorogi', 'v_zemlianke', 'sinij_platochek', 'tam_vdali', 'vy_zhertvoiu'],
+  eternal_soviet: [
+    'soviet_anthem_1944',
+    'internationale',
+    'sacred_war',
+    'katyusha',
+    'nesokrushimaia',
+    'red_army_march',
+  ],
+};
+
 // Context-specific music — mapped to game states/events
 export const MUSIC_CONTEXTS: Record<string, AudioTrackId> = {
   // Core states

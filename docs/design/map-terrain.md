@@ -1,3 +1,12 @@
+---
+title: Map & Terrain
+status: Complete
+implementation: src/game/map/, src/game/TerrainGenerator.ts, src/rendering/GroundTileRenderer.ts
+tests: src/__tests__/MapSystem.test.ts, src/__tests__/TerrainGenerator.test.ts, src/__tests__/GroundTileRenderer.test.ts
+last_verified: 2026-02-10
+coverage: "Full — 3 map sizes, rivers, marshland, mountains, forests, biome rendering, terrain gameplay effects"
+---
+
 # Map & Terrain
 
 ## Map Generation

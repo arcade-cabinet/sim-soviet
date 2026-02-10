@@ -40,6 +40,23 @@ export interface PlacementPreview {
   footprintH: number;
 }
 
+/** Data needed to render a single citizen on the map. */
+export interface CitizenRenderData {
+  gridX: number;
+  gridY: number;
+  citizenClass: string;
+}
+
+/** Citizen class → fill color for the indicator dot. */
+const CITIZEN_CLASS_COLORS: Record<string, string> = {
+  worker: '#8D6E63',
+  party_official: '#C62828',
+  engineer: '#1565C0',
+  farmer: '#2E7D32',
+  soldier: '#4E342E',
+  prisoner: '#616161',
+};
+
 export class Canvas2DRenderer {
   public camera: Camera2D;
   public particles: ParticleSystem2D;
@@ -57,6 +74,9 @@ export class Canvas2DRenderer {
 
   /** Political entities to render as overlay icons. */
   private politicalEntities: PoliticalEntityStats[] = [];
+
+  /** Citizen entities to render as small dots near buildings. */
+  private citizenData: CitizenRenderData[] = [];
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -100,6 +120,11 @@ export class Canvas2DRenderer {
   /** Update the list of political entities to render as overlay icons. */
   setPoliticalEntities(entities: PoliticalEntityStats[]): void {
     this.politicalEntities = entities;
+  }
+
+  /** Update the list of citizens to render as small indicator dots. */
+  setCitizenData(data: CitizenRenderData[]): void {
+    this.citizenData = data;
   }
 
   /** Start the render loop. Idempotent — cancels any existing loop first. */
@@ -185,6 +210,9 @@ export class Canvas2DRenderer {
 
     // Layer 2: Buildings (depth-sorted)
     this.drawBuildings();
+
+    // Layer 2.3: Citizen indicator dots
+    this.drawCitizens();
 
     // Layer 2.5: Political entity indicators
     this.drawPoliticalEntities();
@@ -376,31 +404,27 @@ export class Canvas2DRenderer {
     ctx.globalAlpha = 1;
   }
 
-  /** Role → indicator color for political entity overlays. */
-  private static ROLE_COLORS: Record<PoliticalRole, string> = {
-    politruk: '#c62828',
-    kgb_agent: '#1a237e',
-    military_officer: '#2e7d32',
-    conscription_officer: '#e65100',
-  };
-
-  /** Role → single-letter glyph for the indicator badge. */
-  private static ROLE_GLYPHS: Record<PoliticalRole, string> = {
-    politruk: 'P',
-    kgb_agent: 'K',
-    military_officer: 'M',
-    conscription_officer: 'C',
-  };
-
-  /** Draw small colored indicators at grid positions where political entities are stationed. */
-  private drawPoliticalEntities(): void {
-    if (this.politicalEntities.length === 0) return;
+  /** Draw small colored dots at grid positions where citizens are located. */
+  private drawCitizens(): void {
+    if (this.citizenData.length === 0) return;
 
     const { ctx } = this;
-    const BADGE_RADIUS = 8;
+    const DOT_RADIUS = 4;
 
-    for (const entity of this.politicalEntities) {
-      const { gridX, gridY } = entity.stationedAt;
+    // Group citizens by grid cell to apply deterministic jitter
+    const cellGroups = new Map<string, CitizenRenderData[]>();
+    for (const c of this.citizenData) {
+      const key = `${c.gridX},${c.gridY}`;
+      let group = cellGroups.get(key);
+      if (!group) {
+        group = [];
+        cellGroups.set(key, group);
+      }
+      group.push(c);
+    }
+
+    for (const [, group] of cellGroups) {
+      const { gridX, gridY } = group[0]!;
       if (!isInBounds(gridX, gridY)) continue;
 
       const screen = gridToScreen(gridX, gridY);
@@ -410,37 +434,254 @@ export class Canvas2DRenderer {
       if (
         camScreen.x < -TILE_WIDTH ||
         camScreen.x > this.camera.viewportWidth + TILE_WIDTH ||
-        camScreen.y < -TILE_HEIGHT * 3 ||
+        camScreen.y < -TILE_HEIGHT * 2 ||
         camScreen.y > this.camera.viewportHeight + TILE_HEIGHT
       ) {
         continue;
       }
 
-      // Position badge above the tile center, offset by TILE_HEIGHT so it floats above buildings
-      const cx = screen.x;
-      const cy = screen.y - TILE_HEIGHT * 0.8;
+      // Base position: near bottom of tile
+      const baseCx = screen.x;
+      const baseCy = screen.y + TILE_HEIGHT / 4;
 
-      const color = Canvas2DRenderer.ROLE_COLORS[entity.role] ?? '#757575';
-      const glyph = Canvas2DRenderer.ROLE_GLYPHS[entity.role] ?? '?';
+      for (let i = 0; i < group.length; i++) {
+        const citizen = group[i]!;
+        // Deterministic jitter: spread citizens in a row, wrapping after 5 per row
+        const col = i % 5;
+        const row = Math.floor(i / 5);
+        const offsetX = (col - 2) * (DOT_RADIUS * 2.5);
+        const offsetY = row * (DOT_RADIUS * 2.5);
 
-      // Outer circle (dark border)
+        const cx = baseCx + offsetX;
+        const cy = baseCy + offsetY;
+
+        const color = CITIZEN_CLASS_COLORS[citizen.citizenClass] ?? '#757575';
+
+        // Dark border
+        ctx.beginPath();
+        ctx.arc(cx, cy, DOT_RADIUS + 1, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fill();
+
+        // Colored fill
+        ctx.beginPath();
+        ctx.arc(cx, cy, DOT_RADIUS, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+    }
+  }
+
+  /** Role → indicator color for political entity overlays. */
+  private static ROLE_COLORS: Record<PoliticalRole, string> = {
+    politruk: '#c62828',
+    kgb_agent: '#1a237e',
+    military_officer: '#2e7d32',
+    conscription_officer: '#e65100',
+  };
+
+  /** Badge radius for political entity icons. */
+  private static BADGE_RADIUS = 12;
+
+  /** Role → icon shape type. */
+  private static ROLE_ICON: Record<PoliticalRole, 'star' | 'shield' | 'chevron' | 'warning'> = {
+    politruk: 'star',
+    kgb_agent: 'shield',
+    military_officer: 'chevron',
+    conscription_officer: 'warning',
+  };
+
+  /** Draw a 5-pointed star path centered at (cx, cy) with outer radius r. */
+  private drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
+    const inner = r * 0.4;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const radius = i % 2 === 0 ? r : inner;
+      const angle = -Math.PI / 2 + (Math.PI / 5) * i;
+      const px = cx + Math.cos(angle) * radius;
+      const py = cy + Math.sin(angle) * radius;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+  }
+
+  /** Draw a shield (rounded downward-pointing shape) centered at (cx, cy) with size r. */
+  private drawShield(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
+    ctx.beginPath();
+    ctx.moveTo(cx - r, cy - r * 0.7);
+    ctx.lineTo(cx + r, cy - r * 0.7);
+    ctx.lineTo(cx + r, cy);
+    ctx.lineTo(cx, cy + r);
+    ctx.lineTo(cx - r, cy);
+    ctx.closePath();
+  }
+
+  /** Draw an upward chevron (arrow-up) centered at (cx, cy) with size r. */
+  private drawChevron(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
+    const hw = r * 0.8;
+    const thick = r * 0.35;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r);
+    ctx.lineTo(cx + hw, cy);
+    ctx.lineTo(cx + hw - thick, cy);
+    ctx.lineTo(cx, cy - r + thick * 1.5);
+    ctx.lineTo(cx - hw + thick, cy);
+    ctx.lineTo(cx - hw, cy);
+    ctx.closePath();
+  }
+
+  /** Draw an exclamation mark inside a triangle centered at (cx, cy) with size r. */
+  private drawWarning(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
+    // Triangle fill (caller already set fillStyle to role color)
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r);
+    ctx.lineTo(cx + r, cy + r * 0.7);
+    ctx.lineTo(cx - r, cy + r * 0.7);
+    ctx.closePath();
+    ctx.fill();
+    // Exclamation mark in dark color
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.fillRect(cx - r * 0.12, cy - r * 0.5, r * 0.24, r * 0.6);
+    ctx.beginPath();
+    ctx.arc(cx, cy + r * 0.35, r * 0.14, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /** Draw the role-specific icon inside a badge circle. */
+  private drawRoleIcon(
+    ctx: CanvasRenderingContext2D,
+    iconType: string,
+    cx: number,
+    cy: number,
+    iconR: number
+  ): void {
+    ctx.fillStyle = '#ffffff';
+    if (iconType === 'warning') {
+      this.drawWarning(ctx, cx, cy, iconR);
+      return;
+    }
+    if (iconType === 'star') this.drawStar(ctx, cx, cy, iconR);
+    else if (iconType === 'shield') this.drawShield(ctx, cx, cy, iconR);
+    else if (iconType === 'chevron') this.drawChevron(ctx, cx, cy, iconR);
+    ctx.fill();
+  }
+
+  /** Draw a single political entity badge at (cx, cy) with connecting line and optional label. */
+  private drawPoliticalBadge(
+    entity: PoliticalEntityStats,
+    cx: number,
+    cy: number,
+    tileCenterX: number,
+    tileCenterY: number,
+    pulseAlpha: number,
+    zoom: number
+  ): void {
+    const { ctx } = this;
+    const R = Canvas2DRenderer.BADGE_RADIUS;
+    const color = Canvas2DRenderer.ROLE_COLORS[entity.role] ?? '#757575';
+    const iconType = Canvas2DRenderer.ROLE_ICON[entity.role] ?? 'star';
+
+    // Connecting line from badge down to tile center
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + R);
+    ctx.lineTo(tileCenterX, tileCenterY);
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Influence radius glow (only when zoomed in close)
+    if (zoom > 1.2) {
       ctx.beginPath();
-      ctx.arc(cx, cy, BADGE_RADIUS + 1, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fill();
-
-      // Inner filled circle
-      ctx.beginPath();
-      ctx.arc(cx, cy, BADGE_RADIUS, 0, Math.PI * 2);
+      ctx.arc(tileCenterX, tileCenterY, TILE_WIDTH * 1.5, 0, Math.PI * 2);
       ctx.fillStyle = color;
+      ctx.globalAlpha = 0.05;
       ctx.fill();
+      ctx.globalAlpha = 1;
+    }
 
-      // Letter glyph
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${BADGE_RADIUS}px sans-serif`;
+    // Apply pulse animation
+    ctx.globalAlpha = pulseAlpha;
+
+    // Outer circle (dark border)
+    ctx.beginPath();
+    ctx.arc(cx, cy, R + 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fill();
+
+    // Inner filled circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Role-specific icon
+    this.drawRoleIcon(ctx, iconType, cx, cy, R * 0.55);
+
+    ctx.globalAlpha = 1;
+
+    // Name label below badge (only when zoomed in enough)
+    if (zoom > 0.8) {
+      ctx.font = '9px sans-serif';
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(glyph, cx, cy);
+      ctx.textBaseline = 'top';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.lineWidth = 2.5;
+      ctx.strokeText(entity.name, cx, cy + R + 3);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(entity.name, cx, cy + R + 3);
+    }
+  }
+
+  /** Group political entities by grid cell key. */
+  private groupEntitiesByCell(): Map<string, PoliticalEntityStats[]> {
+    const cellGroups = new Map<string, PoliticalEntityStats[]>();
+    for (const entity of this.politicalEntities) {
+      const key = `${entity.stationedAt.gridX},${entity.stationedAt.gridY}`;
+      const group = cellGroups.get(key);
+      if (group) group.push(entity);
+      else cellGroups.set(key, [entity]);
+    }
+    return cellGroups;
+  }
+
+  /** Draw political entity badges with role-specific icons, labels, and connecting lines. */
+  private drawPoliticalEntities(): void {
+    if (this.politicalEntities.length === 0) return;
+
+    const zoom = this.camera.zoom;
+    const pulseAlpha = 0.85 + 0.15 * Math.sin(Date.now() / 800);
+    const cellGroups = this.groupEntitiesByCell();
+
+    for (const group of cellGroups.values()) {
+      const { gridX, gridY } = group[0]!.stationedAt;
+      if (!isInBounds(gridX, gridY)) continue;
+
+      const screen = gridToScreen(gridX, gridY);
+
+      // Frustum cull
+      const camScreen = this.camera.worldToScreen(screen.x, screen.y);
+      if (
+        camScreen.x < -TILE_WIDTH * 2 ||
+        camScreen.x > this.camera.viewportWidth + TILE_WIDTH * 2 ||
+        camScreen.y < -TILE_HEIGHT * 4 ||
+        camScreen.y > this.camera.viewportHeight + TILE_HEIGHT
+      ) {
+        continue;
+      }
+
+      const tileCenterX = screen.x;
+      const tileCenterY = screen.y + TILE_HEIGHT / 2;
+
+      for (let i = 0; i < group.length; i++) {
+        const entity = group[i]!;
+        const offsetX = group.length > 1 ? (i - (group.length - 1) / 2) * 20 : 0;
+        const cx = screen.x + offsetX;
+        const cy = screen.y - TILE_HEIGHT * 0.8;
+        this.drawPoliticalBadge(entity, cx, cy, tileCenterX, tileCenterY, pulseAlpha, zoom);
+      }
     }
   }
 

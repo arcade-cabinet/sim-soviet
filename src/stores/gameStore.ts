@@ -213,6 +213,13 @@ export function getInspected(): InspectedBuilding | null {
 
 export function setInspected(info: InspectedBuilding | null): void {
   _inspected = info;
+  // Clear worker inspection when selecting a building
+  if (info && _inspectedWorker) {
+    _inspectedWorker = null;
+    for (const listener of _inspectWorkerListeners) {
+      listener();
+    }
+  }
   for (const listener of _inspectListeners) {
     listener();
   }
@@ -226,6 +233,89 @@ function subscribeInspect(listener: () => void): () => void {
   _inspectListeners.add(listener);
   return () => {
     _inspectListeners.delete(listener);
+  };
+}
+
+// ── Inspected Worker ──────────────────────────────────────────────────
+
+export interface InspectedWorker {
+  name: string;
+  class: 'worker' | 'party_official' | 'engineer' | 'farmer' | 'soldier' | 'prisoner';
+  morale: number;
+  loyalty: number;
+  skill: number;
+  vodkaDependency: number;
+  assignedBuildingDefId: string | null;
+}
+
+let _inspectedWorker: InspectedWorker | null = null;
+const _inspectWorkerListeners = new Set<() => void>();
+
+export function getInspectedWorker(): InspectedWorker | null {
+  return _inspectedWorker;
+}
+
+export function setInspectedWorker(info: InspectedWorker | null): void {
+  _inspectedWorker = info;
+  // Clear building inspection when selecting a worker (and vice versa)
+  if (info) {
+    _inspected = null;
+    for (const listener of _inspectListeners) {
+      listener();
+    }
+  }
+  for (const listener of _inspectWorkerListeners) {
+    listener();
+  }
+}
+
+export function useInspectedWorker(): InspectedWorker | null {
+  return useSyncExternalStore(subscribeInspectWorker, getInspectedWorker, getInspectedWorker);
+}
+
+function subscribeInspectWorker(listener: () => void): () => void {
+  _inspectWorkerListeners.add(listener);
+  return () => {
+    _inspectWorkerListeners.delete(listener);
+  };
+}
+
+// ── Worker Assignment Mode ───────────────────────────────────────────────
+
+export interface AssignmentMode {
+  /** Name of the worker being assigned (used to find the entity). */
+  workerName: string;
+  /** Class of the worker (for visual feedback). */
+  workerClass: InspectedWorker['class'];
+}
+
+let _assignmentMode: AssignmentMode | null = null;
+const _assignmentListeners = new Set<() => void>();
+
+export function getAssignmentMode(): AssignmentMode | null {
+  return _assignmentMode;
+}
+
+export function setAssignmentMode(mode: AssignmentMode | null): void {
+  _assignmentMode = mode;
+  // Clear inspected panels when entering assignment mode
+  if (mode) {
+    _inspectedWorker = null;
+    _inspected = null;
+    for (const listener of _inspectListeners) listener();
+    for (const listener of _inspectWorkerListeners) listener();
+  }
+  for (const listener of _assignmentListeners) listener();
+}
+
+export function useAssignmentMode(): AssignmentMode | null {
+  return useSyncExternalStore(subscribeAssignment, getAssignmentMode, getAssignmentMode);
+}
+
+function subscribeAssignment(listener: () => void): () => void {
+  _assignmentListeners.add(listener);
+  return () => {
+    _assignmentListeners.delete(listener);
   };
 }
 

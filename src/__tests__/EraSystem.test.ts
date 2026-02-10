@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { ERA_DEFINITIONS, ERA_ORDER, type EraId, type EraModifiers, EraSystem } from '@/game/era';
+import {
+  BUILDING_TIER_REQUIREMENTS,
+  ERA_DEFINITIONS,
+  ERA_ORDER,
+  type EraId,
+  type EraModifiers,
+  EraSystem,
+  getBuildingTierRequirement,
+  SETTLEMENT_TIER_ORDER,
+  tierMeetsRequirement,
+} from '@/game/era';
+import { ALL_BUILDING_IDS } from '@/game/era/definitions';
 import { ERA_SPECIFIC_EVENTS } from '@/game/events/templates/era_specific';
 
 // ─────────────────────────────────────────────────────────
@@ -346,6 +357,120 @@ describe('EraSystem.getAvailableBuildings', () => {
     expect(sys.getBuildingUnlockEra('vodka-distillery')?.id).toBe('stagnation');
     expect(sys.getBuildingUnlockEra('apartment-tower-d')?.id).toBe('eternal_soviet');
     expect(sys.getBuildingUnlockEra('nonexistent')).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+//  Settlement Tier Gating
+// ─────────────────────────────────────────────────────────
+
+describe('Settlement tier gating', () => {
+  it('getAvailableBuildings without tier returns all era-unlocked (backward compat)', () => {
+    const sys = new EraSystem(2000);
+    const all = sys.getAvailableBuildings();
+    expect(all).toHaveLength(31);
+  });
+
+  it('getAvailableBuildings with selo returns only selo-tier buildings', () => {
+    const sys = new EraSystem(2000); // all eras unlocked
+    const seloBuildings = sys.getAvailableBuildings('selo');
+
+    // selo-tier buildings are those NOT listed in BUILDING_TIER_REQUIREMENTS
+    for (const defId of seloBuildings) {
+      expect(getBuildingTierRequirement(defId)).toBe('selo');
+    }
+
+    // Should not contain any posyolok/pgt/gorod buildings
+    expect(seloBuildings).not.toContain('bread-factory');
+    expect(seloBuildings).not.toContain('hospital');
+    expect(seloBuildings).not.toContain('kgb-office');
+
+    // Should contain selo basics
+    expect(seloBuildings).toContain('workers-house-a');
+    expect(seloBuildings).toContain('collective-farm-hq');
+    expect(seloBuildings).toContain('power-station');
+  });
+
+  it('getAvailableBuildings with posyolok includes selo + posyolok buildings', () => {
+    const sys = new EraSystem(2000);
+    const buildings = sys.getAvailableBuildings('posyolok');
+
+    // Should contain selo basics
+    expect(buildings).toContain('workers-house-a');
+    expect(buildings).toContain('power-station');
+
+    // Should contain posyolok buildings
+    expect(buildings).toContain('bread-factory');
+    expect(buildings).toContain('school');
+    expect(buildings).toContain('warehouse');
+
+    // Should NOT contain pgt/gorod buildings
+    expect(buildings).not.toContain('hospital');
+    expect(buildings).not.toContain('kgb-office');
+  });
+
+  it('getAvailableBuildings with gorod returns all buildings', () => {
+    const sys = new EraSystem(2000);
+    const all = sys.getAvailableBuildings();
+    const gorod = sys.getAvailableBuildings('gorod');
+    expect(gorod).toHaveLength(all.length);
+  });
+
+  it('tier gating still respects era gating', () => {
+    // war_communism era (1922) only has 8 buildings
+    const sys = new EraSystem(1922);
+    const gorod = sys.getAvailableBuildings('gorod');
+
+    // Even with gorod tier, can only see war_communism buildings
+    expect(gorod).toHaveLength(8);
+    expect(gorod).toContain('workers-house-a');
+    expect(gorod).not.toContain('bread-factory'); // first_plans era
+  });
+
+  it('SETTLEMENT_TIER_ORDER has correct progression', () => {
+    expect(SETTLEMENT_TIER_ORDER).toEqual(['selo', 'posyolok', 'pgt', 'gorod']);
+  });
+
+  it('getBuildingTierRequirement returns selo for unlisted buildings', () => {
+    expect(getBuildingTierRequirement('workers-house-a')).toBe('selo');
+    expect(getBuildingTierRequirement('nonexistent')).toBe('selo');
+  });
+
+  it('getBuildingTierRequirement returns correct tiers for listed buildings', () => {
+    expect(getBuildingTierRequirement('bread-factory')).toBe('posyolok');
+    expect(getBuildingTierRequirement('hospital')).toBe('pgt');
+    expect(getBuildingTierRequirement('kgb-office')).toBe('gorod');
+  });
+
+  it('tierMeetsRequirement is correct', () => {
+    expect(tierMeetsRequirement('selo', 'selo')).toBe(true);
+    expect(tierMeetsRequirement('selo', 'posyolok')).toBe(false);
+    expect(tierMeetsRequirement('posyolok', 'selo')).toBe(true);
+    expect(tierMeetsRequirement('posyolok', 'posyolok')).toBe(true);
+    expect(tierMeetsRequirement('posyolok', 'pgt')).toBe(false);
+    expect(tierMeetsRequirement('gorod', 'selo')).toBe(true);
+    expect(tierMeetsRequirement('gorod', 'gorod')).toBe(true);
+  });
+
+  it('every building in BUILDING_TIER_REQUIREMENTS exists in ALL_BUILDING_IDS', () => {
+    const allIds = new Set(ALL_BUILDING_IDS);
+    for (const defId of Object.keys(BUILDING_TIER_REQUIREMENTS)) {
+      expect(allIds.has(defId)).toBe(true);
+    }
+  });
+
+  it('pgt tier includes all posyolok buildings plus pgt buildings', () => {
+    const sys = new EraSystem(2000);
+    const posyolokBuildings = sys.getAvailableBuildings('posyolok');
+    const pgtBuildings = sys.getAvailableBuildings('pgt');
+
+    // pgt should be a superset of posyolok
+    for (const defId of posyolokBuildings) {
+      expect(pgtBuildings).toContain(defId);
+    }
+
+    // pgt should have more buildings than posyolok
+    expect(pgtBuildings.length).toBeGreaterThan(posyolokBuildings.length);
   });
 });
 
