@@ -7,6 +7,7 @@
  *   GameWorld (render-null) imperatively manages renderer, input, simulation.
  *   gameStore bridges mutable GameState with React via useSyncExternalStore.
  */
+import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useRef, useState } from 'react';
 import { GameWorld } from '@/components/GameWorld';
 import { Advisor } from '@/components/ui/Advisor';
@@ -19,6 +20,7 @@ import { SovietHUD } from '@/components/ui/SovietHUD';
 import { Toast } from '@/components/ui/Toast';
 import { Toolbar } from '@/components/ui/Toolbar';
 import type { SimCallbacks } from '@/game/SimulationEngine';
+import { useGameSnapshot } from '@/stores/gameStore';
 
 interface Messages {
   advisor: string | null;
@@ -32,6 +34,7 @@ interface GameOverInfo {
 }
 
 export function App() {
+  const snap = useGameSnapshot();
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -100,6 +103,22 @@ export function App() {
 
         {/* Render-null component that manages game systems */}
         <GameWorld canvasRef={canvasRef} callbacks={simCallbacks} gameStarted={gameStarted} />
+
+        {/* Pause overlay */}
+        <AnimatePresence>
+          {snap.paused && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none z-10"
+            >
+              <div className="text-[#ff4444] text-2xl font-bold uppercase tracking-[0.3em] border-2 border-[#ff4444] px-6 py-2 bg-black/60">
+                PAUSED
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* DOM overlays on top of canvas */}
         <BuildingInspector />
