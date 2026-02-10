@@ -14,6 +14,8 @@ import { Advisor } from '@/components/ui/Advisor';
 import { BottomStrip } from '@/components/ui/BottomStrip';
 import { BuildingInspector } from '@/components/ui/BuildingInspector';
 import { DrawerPanel } from '@/components/ui/DrawerPanel';
+import type { PlanDirective } from '@/components/ui/FiveYearPlanModal';
+import { FiveYearPlanModal } from '@/components/ui/FiveYearPlanModal';
 import { GameOverModal } from '@/components/ui/GameOverModal';
 import { IntroModal } from '@/components/ui/IntroModal';
 import { RadialBuildMenu } from '@/components/ui/RadialBuildMenu';
@@ -41,6 +43,7 @@ export function App() {
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settlementEvent, setSettlementEvent] = useState<SettlementEvent | null>(null);
+  const [planDirective, setPlanDirective] = useState<PlanDirective | null>(null);
   const [messages, setMessages] = useState<Messages>({
     advisor: null,
     pravda: null,
@@ -57,6 +60,15 @@ export function App() {
     },
     onGameOver: (victory, reason) => setGameOver({ victory, reason }),
     onSettlementChange: (event) => setSettlementEvent(event),
+    onNewPlan: (plan) =>
+      setPlanDirective({
+        ...plan,
+        currentFood: snap.food,
+        currentVodka: snap.vodka,
+        currentPop: snap.pop,
+        currentPower: snap.power,
+        currentMoney: snap.money,
+      }),
   };
 
   const handleStart = useCallback(() => {
@@ -151,6 +163,11 @@ export function App() {
           />
         )}
       </AnimatePresence>
+
+      {/* Five-Year Plan directive modal */}
+      {planDirective && (
+        <FiveYearPlanModal directive={planDirective} onAccept={() => setPlanDirective(null)} />
+      )}
     </div>
   );
 }

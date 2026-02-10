@@ -65,6 +65,12 @@ export interface SimCallbacks {
   onBuildingCollapsed?: (gridX: number, gridY: number, type: string) => void;
   onGameOver?: (victory: boolean, reason: string) => void;
   onSettlementChange?: (event: SettlementEvent) => void;
+  onNewPlan?: (plan: {
+    quotaType: 'food' | 'vodka';
+    quotaTarget: number;
+    startYear: number;
+    endYear: number;
+  }) => void;
 }
 
 /** Consecutive quota failures that trigger game over. */
@@ -458,6 +464,14 @@ export class SimulationEngine {
     this.quota.target = 500;
     this.quota.deadlineYear = this.gameState.date.year + 5;
     this.quota.current = 0;
+
+    // Show the new plan directive modal
+    this.callbacks.onNewPlan?.({
+      quotaType: this.quota.type,
+      quotaTarget: this.quota.target,
+      startYear: this.gameState.date.year,
+      endYear: this.quota.deadlineYear,
+    });
   }
 
   private handleQuotaMissed(): void {
