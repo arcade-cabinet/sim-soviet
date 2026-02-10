@@ -321,13 +321,13 @@ interface MinistryEventTemplate {
   id: string;
   ministry: Ministry;
   title: string;
-  description: string | ((minister: Minister, gs: GameState) => string);
+  description: string | ((minister: Minister, gs: GameView) => string);
   pravdaHeadline: string;
   severity: EventSeverity;            // 'trivial' | 'minor' | 'major' | 'catastrophic'
   category: EventCategory;            // 'political' | 'economic' | 'disaster' | 'cultural'
-  effects: ResourceDelta | ((minister: Minister, gs: GameState) => ResourceDelta);
+  effects: ResourceDelta | ((minister: Minister, gs: GameView) => ResourceDelta);
   requiredPersonality?: PersonalityType;
-  condition?: (minister: Minister, gs: GameState) => boolean;
+  condition?: (minister: Minister, gs: GameView) => boolean;
   weight?: number;                    // default 1.0
 }
 ```
@@ -571,14 +571,14 @@ Political events evaluate on time boundaries:
 
 ## Public API
 
-The `PolitburoSystem` class is the sole public interface. It is instantiated
-with a `GameState` reference and an event callback, and ticked by
-`SimulationEngine`.
+The `PolitburoSystem` class is the sole public interface. It reads ECS
+directly (resources via `getResourceEntity()`, metadata via
+`getMetaEntity()`) and is ticked by `SimulationEngine`.
 
 ### Constructor
 
 ```typescript
-constructor(gameState: GameState, onEvent: (event: GameEvent) => void)
+constructor(onEvent: (event: GameEvent) => void)
 ```
 
 On construction:

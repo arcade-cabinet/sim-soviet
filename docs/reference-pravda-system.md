@@ -151,7 +151,7 @@ declarations of Western cultural inferiority.
 
 ### Resource Spin (7 generators, weight 1.0)
 
-Generators that directly read `GameState` resource values and spin them
+Generators that directly read ECS resource values (via `GameView`) and spin them
 into propaganda. These always interpolate live game data.
 
 | # | Resource | Headline Source |
@@ -361,13 +361,14 @@ Additionally, ambient headlines enforce a **45-second cooldown**
 
 ## Public API
 
-The `PravdaSystem` class is the sole public interface. It is instantiated
-with a `GameState` reference and called by `SimulationEngine` and `EventSystem`.
+The `PravdaSystem` class is the sole public interface. It receives a
+`GameView` (read-only ECS snapshot) each tick and is called by
+`SimulationEngine` and `EventSystem`.
 
 ### Constructor
 
 ```typescript
-constructor(gameState: GameState)
+constructor(rng?: GameRng)
 ```
 
 ### `headlineFromEvent(event: GameEvent): PravdaHeadline`

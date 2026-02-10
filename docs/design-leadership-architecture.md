@@ -113,7 +113,7 @@ src/
 │   ├── SimulationEngine.ts       [MODIFY] call political systems in tick()
 │   └── EventSystem.ts            [MODIFY] apply weight modifiers
 └── stores/
-    └── gameStore.ts              [MODIFY] extend snapshot with political state
+    └── gameStore.ts              [DONE] snapshot reads ECS political state directly
 ```
 
 ## Phased Implementation
