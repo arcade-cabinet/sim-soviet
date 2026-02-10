@@ -77,7 +77,7 @@ interface Politburo {
 
 ## Data Flow
 
-```
+```text
 Game Tick
 → leadershipSystem (succession checks, approval/paranoia updates)
 → policyModifierSystem (compose Leader × Doctrine × Ministries → PolicyModifiers)
@@ -91,7 +91,7 @@ Game Tick
 
 ## Directory Structure
 
-```
+```text
 src/
 ├── political/                     [NEW]
 │   ├── LeaderArchetypes.ts       — archetype registry with base modifiers

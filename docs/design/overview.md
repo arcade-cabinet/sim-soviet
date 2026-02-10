@@ -42,7 +42,7 @@ Your settlement naturally progresses from a tiny rural kolkhoz to an industrial 
 
 Status upgrades happen **automatically** when all thresholds are met for 30 consecutive ticks (1 in-game month). The upgrade is announced with a ceremonial event:
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │     DECREE OF THE SUPREME SOVIET        │
 │                                         │
@@ -105,7 +105,7 @@ The settlement's appearance evolves naturally with construction:
 
 ## Core Loop
 
-```
+```text
 ┌──────────────────────────────────────────────────────┐
 │                                                      │
 │   ASSIGN WORKERS ──→ PRODUCE OUTPUT                  │

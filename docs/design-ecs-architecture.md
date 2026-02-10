@@ -279,7 +279,7 @@ PravdaSystem, PersonnelFile) are class-based with their own state.
 
 ### Execution Order
 
-```
+```text
 SimulationEngine.tick()
   |
   1. ChronologySystem      -- advance date, season, weather
@@ -464,7 +464,7 @@ with event template conditions.
 
 ## Data Flow Diagram
 
-```
+```text
          Game Loop
             |
    SimulationEngine.tick()
