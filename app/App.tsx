@@ -10,14 +10,14 @@
 import { useCallback, useRef, useState } from 'react';
 import { GameWorld } from '@/components/GameWorld';
 import { Advisor } from '@/components/ui/Advisor';
+import { BottomStrip } from '@/components/ui/BottomStrip';
 import { BuildingInspector } from '@/components/ui/BuildingInspector';
+import { DrawerPanel } from '@/components/ui/DrawerPanel';
 import { GameOverModal } from '@/components/ui/GameOverModal';
 import { IntroModal } from '@/components/ui/IntroModal';
-import { PravdaTicker } from '@/components/ui/PravdaTicker';
-import { QuotaHUD } from '@/components/ui/QuotaHUD';
+import { SovietHUD } from '@/components/ui/SovietHUD';
 import { Toast } from '@/components/ui/Toast';
 import { Toolbar } from '@/components/ui/Toolbar';
-import { TopBar } from '@/components/ui/TopBar';
 import type { SimCallbacks } from '@/game/SimulationEngine';
 
 interface Messages {
@@ -34,6 +34,7 @@ interface GameOverInfo {
 export function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [messages, setMessages] = useState<Messages>({
     advisor: null,
     toast: null,
@@ -66,7 +67,10 @@ export function App() {
   }, []);
 
   return (
-    <div className="game-root">
+    <div
+      className="flex flex-col bg-[#1a1a1a] overflow-hidden"
+      style={{ fontFamily: "'VT323', monospace", height: '100dvh' }}
+    >
       {/* CRT overlay effects */}
       <div className="crt-overlay" />
       <div className="scanlines" />
@@ -83,11 +87,11 @@ export function App() {
         />
       )}
 
-      {/* Top stats bar */}
-      <TopBar />
+      {/* Top HUD bar — resources, pause, speed, hamburger */}
+      <SovietHUD onMenuToggle={() => setDrawerOpen(true)} />
 
       {/* Main game viewport */}
-      <div className="game-viewport">
+      <div className="flex-1 relative overflow-hidden min-h-0">
         <canvas
           ref={canvasRef}
           id="gameCanvas"
@@ -99,7 +103,6 @@ export function App() {
 
         {/* DOM overlays on top of canvas */}
         <BuildingInspector />
-        <QuotaHUD />
         <Toast
           message={messages.toast}
           onDismiss={() => setMessages((p) => ({ ...p, toast: null }))}
@@ -110,11 +113,14 @@ export function App() {
         />
       </div>
 
-      {/* Pravda news ticker */}
-      <PravdaTicker message={messages.pravda} />
+      {/* Bottom strip — settlement info + Pravda ticker */}
+      <BottomStrip pravdaMessage={messages.pravda} />
 
-      {/* Bottom toolbar */}
+      {/* Bottom toolbar (kept until radial build menu is wired) */}
       <Toolbar />
+
+      {/* Slide-out drawer */}
+      <DrawerPanel isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </div>
   );
 }
