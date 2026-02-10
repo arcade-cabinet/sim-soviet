@@ -1,6 +1,6 @@
 import { getBuildingDef } from '@/data/buildingDefs';
 import type { EventCategory, GameEvent } from './EventSystem';
-import type { GameState } from './GameState';
+import type { Building, GameState } from './GameState';
 import type { GameRng } from './SeedSystem';
 
 // ─────────────────────────────────────────────────────────
@@ -57,6 +57,9 @@ function pick<T>(arr: readonly T[]): T {
 function randInt(min: number, max: number): number {
   return _rng ? _rng.int(min, max) : Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+/** A building is a "gulag" if it has negative housing capacity (drains population). */
+const isGulag = (b: Building): boolean => (getBuildingDef(b.defId)?.stats.housingCap ?? 0) < 0;
 
 function coinFlip(probability = 0.5): boolean {
   return _rng ? _rng.coinFlip(probability) : Math.random() < probability;
@@ -1092,13 +1095,10 @@ const contextualGenerators: ContextualGenerator[] = [
 
   // Many gulags
   {
-    condition: (gs) =>
-      gs.buildings.filter((b) => (getBuildingDef(b.defId)?.stats.housingCap ?? 0) < 0).length >= 2,
+    condition: (gs) => gs.buildings.filter(isGulag).length >= 2,
     weight: 2,
     generate: (gs) => {
-      const gulagCount = gs.buildings.filter(
-        (b) => (getBuildingDef(b.defId)?.stats.housingCap ?? 0) < 0
-      ).length;
+      const gulagCount = gs.buildings.filter(isGulag).length;
       return {
         headline: `${gulagCount} ATTITUDE ADJUSTMENT FACILITIES OPERATING AT FULL CAPACITY`,
         subtext: `Graduates report: "I have never been happier." (Statement certified by facility director.)`,

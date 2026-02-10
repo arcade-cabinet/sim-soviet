@@ -386,7 +386,7 @@ export function getClassDistribution(): ReadonlyArray<readonly [CitizenClass, nu
   ] as const;
 }
 
-import type { GameRng } from '../game/SeedSystem';
+import type { GameRng } from '@/game/SeedSystem';
 
 /**
  * Selects a random citizen class based on the weighted distribution.

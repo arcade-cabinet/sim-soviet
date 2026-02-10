@@ -1183,7 +1183,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 //  HELPER: pick random element from array
 // =====================================================================
 
-import type { GameRng } from '../game/SeedSystem';
+import type { GameRng } from '@/game/SeedSystem';
 
 /** Module-level RNG reference, set by `setWorldBuildingRng()` */
 let _rng: GameRng | null = null;

@@ -919,7 +919,7 @@ export interface GeneratedLeader {
 //  HELPERS
 // ─────────────────────────────────────────────────────────
 
-import type { GameRng } from '../game/SeedSystem';
+import type { GameRng } from '@/game/SeedSystem';
 
 /** Module-level RNG reference, set by NameGenerator constructor */
 let _rng: GameRng | null = null;
