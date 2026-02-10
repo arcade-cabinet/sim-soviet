@@ -3,7 +3,7 @@
  *
  * The Miniplex ECS world is the source of truth for game simulation.
  * This engine calls ECS systems in order each tick, then syncs the
- * resource store back to GameState for React snapshot consumption.
+ * ECS is the single source of truth. React snapshots read ECS directly.
  *
  * Systems executed per tick (in order):
  *   1. ChronologySystem       — advance time, season, weather, day/night
@@ -23,7 +23,7 @@
 
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
 import { getBuildingDef } from '@/data/buildingDefs';
-import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
+import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import {
   consumptionSystem,
@@ -42,7 +42,7 @@ import { ChronologySystem } from './ChronologySystem';
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
 import type { GameEvent } from './EventSystem';
 import { EventSystem } from './EventSystem';
-import type { GameState } from './GameState';
+import type { GameGrid } from './GameGrid';
 import { PersonnelFile } from './PersonnelFile';
 import { PolitburoSystem } from './PolitburoSystem';
 import { PravdaSystem } from './PravdaSystem';
@@ -100,12 +100,14 @@ export class SimulationEngine {
   private ended = false;
 
   constructor(
-    private gameState: GameState,
+    private grid: GameGrid,
     private callbacks: SimCallbacks,
     rng?: GameRng
   ) {
     this.rng = rng;
     this.quota = createDefaultQuota();
+    const meta = getMetaEntity();
+    const startYear = meta?.gameMeta.date.year ?? 1922;
     this.chronology = new ChronologySystem(
       rng ??
         ({
@@ -113,9 +115,9 @@ export class SimulationEngine {
           int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
           pick: <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!,
         } as GameRng),
-      gameState.date.year
+      startYear
     );
-    this.pravdaSystem = new PravdaSystem(gameState, rng);
+    this.pravdaSystem = new PravdaSystem(rng);
 
     const eventHandler = (event: GameEvent) => {
       const headline = this.pravdaSystem.headlineFromEvent(event);
@@ -130,7 +132,7 @@ export class SimulationEngine {
       }
     };
 
-    this.eventSystem = new EventSystem(gameState, eventHandler, rng);
+    this.eventSystem = new EventSystem(eventHandler, rng);
 
     // PolitburoSystem events carry effects (money, food, pop, etc.) but unlike
     // EventSystem, they don't apply effects internally. Wrap the handler to
@@ -139,7 +141,7 @@ export class SimulationEngine {
       this.applyEventEffects(event);
       eventHandler(event);
     };
-    this.politburo = new PolitburoSystem(gameState, politburoEventHandler, rng);
+    this.politburo = new PolitburoSystem(politburoEventHandler, rng, startYear);
 
     // Personnel File — tracks black marks and commendations (game-over mechanic)
     this.personnelFile = new PersonnelFile();
@@ -149,7 +151,7 @@ export class SimulationEngine {
     if (rng) this.deliveries.setRng(rng);
 
     // Settlement Evolution — selo → posyolok → pgt → gorod
-    this.settlement = new SettlementSystem(gameState.settlementTier);
+    this.settlement = new SettlementSystem(meta?.gameMeta.settlementTier ?? 'selo');
 
     // Wire ECS callbacks to UI
     setStarvationCallback(() => {
@@ -158,13 +160,12 @@ export class SimulationEngine {
 
     setBuildingCollapsedCallback((gridX, gridY, type, footprintX, footprintY) => {
       this.callbacks.onToast(`Building collapsed at (${gridX}, ${gridY}): ${type}`, 'critical');
-      // Clear ALL footprint grid cells and remove from GameState
+      // Clear ALL footprint grid cells
       for (let dx = 0; dx < footprintX; dx++) {
         for (let dy = 0; dy < footprintY; dy++) {
-          this.gameState.setCell(gridX + dx, gridY + dy, null);
+          this.grid.setCell(gridX + dx, gridY + dy, null);
         }
       }
-      this.gameState.removeBuilding(gridX, gridY);
       this.callbacks.onBuildingCollapsed?.(gridX, gridY, type);
     });
   }
@@ -203,14 +204,14 @@ export class SimulationEngine {
 
   /**
    * Main simulation tick — runs all ECS systems in order,
-   * then syncs state back to GameState for React.
+   * then syncs system state to ECS gameMeta for React.
    */
   public tick(): void {
     if (this.ended) return;
 
     // 1. Advance time via ChronologySystem
     const tickResult = this.chronology.tick();
-    this.syncChronologyToGameState(tickResult);
+    this.syncChronologyToMeta(tickResult);
     this.emitChronologyChanges(tickResult);
 
     // Check quota on year boundary
@@ -259,20 +260,8 @@ export class SimulationEngine {
     // 8-10. Events, Politburo, and Pravda
     this.eventSystem.tick(this.chronology.getDate().totalTicks);
 
-    // PolitburoSystem.applyCorruptionDrain() mutates gameState.money directly,
-    // but syncEcsToGameState() would overwrite it with the ECS store value.
-    // Sync money from ECS first so corruption calculates from accurate baseline,
-    // then capture the delta and apply it to the ECS store so it persists.
-    const store = getResourceEntity();
-    if (store) {
-      this.gameState.money = store.resources.money;
-    }
-    const moneyBeforePolitburo = this.gameState.money;
+    // PolitburoSystem now writes ECS directly — no delta-capture hack needed
     this.politburo.tick(tickResult);
-    const corruptionDelta = this.gameState.money - moneyBeforePolitburo;
-    if (corruptionDelta !== 0 && store) {
-      store.resources.money = Math.max(0, store.resources.money + corruptionDelta);
-    }
 
     this.tickPravda();
 
@@ -286,14 +275,15 @@ export class SimulationEngine {
       );
     }
 
-    // Sync ECS resource store → GameState for React snapshots
-    this.syncEcsToGameState();
+    // Sync non-resource state to gameMeta for React snapshots
+    this.syncSystemsToMeta();
 
     // Check loss: population wiped out (only after first year so starting at 0 doesn't auto-lose)
+    const store = getResourceEntity();
     if (
-      this.gameState.pop <= 0 &&
+      (store?.resources.population ?? 0) <= 0 &&
       this.chronology.getDate().totalTicks > TICKS_PER_YEAR &&
-      this.gameState.buildings.length > 0
+      buildingsLogic.entities.length > 0
     ) {
       this.endGame(false, 'All citizens have perished. The settlement is abandoned.');
     }
@@ -303,13 +293,16 @@ export class SimulationEngine {
   }
 
   /**
-   * Syncs the chronology tick result to GameState's date fields.
+   * Syncs the chronology tick result to gameMeta date fields.
    */
-  private syncChronologyToGameState(_tick: TickResult): void {
+  private syncChronologyToMeta(_tick: TickResult): void {
     const date = this.chronology.getDate();
-    this.gameState.date.year = date.year;
-    this.gameState.date.month = date.month;
-    this.gameState.date.tick = date.hour; // map hour to the old tick field
+    const meta = getMetaEntity();
+    if (meta) {
+      meta.gameMeta.date.year = date.year;
+      meta.gameMeta.date.month = date.month;
+      meta.gameMeta.date.tick = date.hour; // map hour to the old tick field
+    }
   }
 
   /**
@@ -336,49 +329,31 @@ export class SimulationEngine {
   }
 
   /**
-   * Syncs the ECS resource store singleton back to mutable GameState,
-   * so React components (via useSyncExternalStore) get updated values.
+   * Syncs non-resource system state to gameMeta for React snapshots.
+   * Resources are already in ECS and read directly by createSnapshot().
    */
-  private syncEcsToGameState(): void {
-    const store = getResourceEntity();
-    if (!store) return;
+  private syncSystemsToMeta(): void {
+    const meta = getMetaEntity();
+    if (!meta) return;
 
-    this.gameState.money = store.resources.money;
-    this.gameState.food = store.resources.food;
-    this.gameState.vodka = store.resources.vodka;
-    this.gameState.power = store.resources.power;
-    this.gameState.powerUsed = store.resources.powerUsed;
-    this.gameState.pop = store.resources.population;
-
-    // Sync quota to GameState
-    this.gameState.quota.type = this.quota.type;
-    this.gameState.quota.target = this.quota.target;
-    this.gameState.quota.current = this.quota.current;
-    this.gameState.quota.deadlineYear = this.quota.deadlineYear;
+    // Sync quota
+    meta.gameMeta.quota.type = this.quota.type;
+    meta.gameMeta.quota.target = this.quota.target;
+    meta.gameMeta.quota.current = this.quota.current;
+    meta.gameMeta.quota.deadlineYear = this.quota.deadlineYear;
 
     // Sync Politburo leader info
     const gs = this.politburo.getGeneralSecretary();
-    this.gameState.leaderName = gs.name;
-    this.gameState.leaderPersonality = gs.personality;
+    meta.gameMeta.leaderName = gs.name;
+    meta.gameMeta.leaderPersonality = gs.personality;
 
-    // Sync personnel file to GameState
-    this.gameState.blackMarks = this.personnelFile.getBlackMarks();
-    this.gameState.commendations = this.personnelFile.getCommendations();
-    this.gameState.threatLevel = this.personnelFile.getThreatLevel();
+    // Sync personnel file
+    meta.gameMeta.blackMarks = this.personnelFile.getBlackMarks();
+    meta.gameMeta.commendations = this.personnelFile.getCommendations();
+    meta.gameMeta.threatLevel = this.personnelFile.getThreatLevel();
 
     // Sync settlement tier
-    this.gameState.settlementTier = this.settlement.getCurrentTier();
-
-    // Sync buildings: rebuild GameState.buildings from ECS entities
-    this.gameState.buildings = [];
-    for (const entity of buildingsLogic) {
-      this.gameState.buildings.push({
-        x: entity.position.gridX,
-        y: entity.position.gridY,
-        defId: entity.building.defId,
-        powered: entity.building.powered,
-      });
-    }
+    meta.gameMeta.settlementTier = this.settlement.getCurrentTier();
   }
 
   /**
@@ -448,7 +423,10 @@ export class SimulationEngine {
   }
 
   private checkQuota(): void {
-    if (this.gameState.date.year < this.quota.deadlineYear) return;
+    const meta = getMetaEntity();
+    const res = getResourceEntity();
+    const currentYear = meta?.gameMeta.date.year ?? 1922;
+    if (currentYear < this.quota.deadlineYear) return;
     if (this.pendingReport) return;
 
     // If onAnnualReport callback is registered, defer evaluation to the player
@@ -456,13 +434,13 @@ export class SimulationEngine {
       this.pendingReport = true;
 
       const data: AnnualReportData = {
-        year: this.gameState.date.year,
+        year: currentYear,
         quotaType: this.quota.type as 'food' | 'vodka',
         quotaTarget: this.quota.target,
         quotaCurrent: this.quota.current,
-        actualFood: this.gameState.food,
-        actualVodka: this.gameState.vodka,
-        actualPop: this.gameState.pop,
+        actualFood: res?.resources.food ?? 0,
+        actualVodka: res?.resources.vodka ?? 0,
+        actualPop: res?.resources.population ?? 0,
       };
 
       this.callbacks.onAnnualReport(data, (submission: ReportSubmission) => {
@@ -487,11 +465,12 @@ export class SimulationEngine {
    */
   private processReport(submission: ReportSubmission): void {
     const quotaActual = this.quota.current;
+    const res = getResourceEntity();
     const isHonest =
       submission.reportedQuota === quotaActual &&
       submission.reportedSecondary ===
-        (this.quota.type === 'food' ? this.gameState.vodka : this.gameState.food) &&
-      submission.reportedPop === this.gameState.pop;
+        (this.quota.type === 'food' ? (res?.resources.vodka ?? 0) : (res?.resources.food ?? 0)) &&
+      submission.reportedPop === (res?.resources.population ?? 0);
 
     if (isHonest) {
       if (this.quota.current >= this.quota.target) {
@@ -504,9 +483,10 @@ export class SimulationEngine {
 
     // Falsified report — calculate aggregate risk
     const quotaRisk = this.falsificationRisk(quotaActual, submission.reportedQuota);
-    const secActual = this.quota.type === 'food' ? this.gameState.vodka : this.gameState.food;
+    const secActual =
+      this.quota.type === 'food' ? (res?.resources.vodka ?? 0) : (res?.resources.food ?? 0);
     const secRisk = this.falsificationRisk(secActual, submission.reportedSecondary);
-    const popRisk = this.falsificationRisk(this.gameState.pop, submission.reportedPop);
+    const popRisk = this.falsificationRisk(res?.resources.population ?? 0, submission.reportedPop);
     const maxRisk = Math.max(quotaRisk, secRisk, popRisk);
 
     // Investigation probability scales with risk (capped at 80%)
@@ -559,14 +539,15 @@ export class SimulationEngine {
     this.callbacks.onAdvisor('Quota met. Accept this medal made of tin. Now, produce VODKA.');
     this.quota.type = 'vodka';
     this.quota.target = 500;
-    this.quota.deadlineYear = this.gameState.date.year + 5;
+    const metaYear = getMetaEntity()?.gameMeta.date.year ?? 1922;
+    this.quota.deadlineYear = metaYear + 5;
     this.quota.current = 0;
 
     // Show the new plan directive modal
     this.callbacks.onNewPlan?.({
       quotaType: this.quota.type,
       quotaTarget: this.quota.target,
-      startYear: this.gameState.date.year,
+      startYear: metaYear,
       endYear: this.quota.deadlineYear,
     });
   }
@@ -601,7 +582,10 @@ export class SimulationEngine {
   private endGame(victory: boolean, reason: string): void {
     if (this.ended) return;
     this.ended = true;
-    this.gameState.gameOver = { victory, reason };
+    const meta = getMetaEntity();
+    if (meta) {
+      meta.gameMeta.gameOver = { victory, reason };
+    }
     this.callbacks.onGameOver?.(victory, reason);
   }
 

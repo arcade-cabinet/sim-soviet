@@ -14,6 +14,7 @@ import type {
   BuildingComponent,
   CitizenComponent,
   Entity,
+  GameMeta,
   Renderable,
   TileComponent,
 } from './world';
@@ -191,4 +192,46 @@ export function createGrid(size: number = GRID_SIZE): void {
       createTile(x, y, 'grass');
     }
   }
+}
+
+// ── Meta Store Factory ────────────────────────────────────────────────────
+
+/**
+ * Creates the singleton game metadata entity.
+ *
+ * If a meta store already exists in the world, this is a no-op and
+ * returns the existing entity.
+ *
+ * @param initialValues - Optional partial override of starting metadata
+ * @returns The meta store entity
+ */
+export function createMetaStore(initialValues?: Partial<GameMeta>): Entity {
+  const existing = world.with('gameMeta', 'isMetaStore');
+  if (existing.entities.length > 0) {
+    return existing.entities[0]!;
+  }
+
+  const entity: Entity = {
+    gameMeta: {
+      seed: initialValues?.seed ?? '',
+      date: initialValues?.date ?? { year: 1922, month: 10, tick: 0 },
+      quota: initialValues?.quota ?? {
+        type: 'food',
+        target: 500,
+        current: 0,
+        deadlineYear: 1927,
+      },
+      selectedTool: initialValues?.selectedTool ?? 'none',
+      gameOver: initialValues?.gameOver ?? null,
+      leaderName: initialValues?.leaderName,
+      leaderPersonality: initialValues?.leaderPersonality,
+      settlementTier: initialValues?.settlementTier ?? 'selo',
+      blackMarks: initialValues?.blackMarks ?? 0,
+      commendations: initialValues?.commendations ?? 0,
+      threatLevel: initialValues?.threatLevel ?? 'safe',
+    },
+    isMetaStore: true,
+  };
+
+  return world.add(entity);
 }

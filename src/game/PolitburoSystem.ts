@@ -13,7 +13,7 @@
  * ARCHITECTURE
  * ------------
  * - PolitburoSystem is ticked by SimulationEngine alongside EventSystem
- * - Each ministry applies modifiers to GameState resources via MinistryEffect
+ * - Each ministry applies modifiers to GameView resources via MinistryEffect
  * - Inter-ministry tensions generate events fed back through EventSystem
  * - The system hooks into leader succession (GeneralSecretary lifecycle)
  *
@@ -23,8 +23,10 @@
  * defined as typed constants below for easy balancing.
  */
 
+import { getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import type { EventCategory, EventSeverity, GameEvent, ResourceDelta } from './EventSystem';
-import type { GameState } from './GameState';
+import type { GameView } from './GameView';
+import { createGameView } from './GameView';
 import type { GameRng } from './SeedSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1025,15 +1027,15 @@ export interface MinistryEventTemplate {
   id: string;
   ministry: Ministry;
   title: string;
-  description: string | ((minister: Minister, gs: GameState) => string);
+  description: string | ((minister: Minister, gs: GameView) => string);
   pravdaHeadline: string;
   severity: EventSeverity;
   category: EventCategory;
-  effects: ResourceDelta | ((minister: Minister, gs: GameState) => ResourceDelta);
+  effects: ResourceDelta | ((minister: Minister, gs: GameView) => ResourceDelta);
   /** Only fires when this personality holds the ministry */
   requiredPersonality?: PersonalityType;
   /** General condition check */
-  condition?: (minister: Minister, gs: GameState) => boolean;
+  condition?: (minister: Minister, gs: GameView) => boolean;
   weight?: number;
 }
 
@@ -1785,13 +1787,13 @@ export class PolitburoSystem {
   private state: PolitburoState;
 
   constructor(
-    private gameState: GameState,
     private onEvent: (event: GameEvent) => void,
-    rng?: GameRng
+    rng?: GameRng,
+    initialYear?: number
   ) {
     if (rng) _rng = rng;
     // Generate initial government
-    const gs = generateGeneralSecretary(gameState.date.year);
+    const gs = generateGeneralSecretary(initialYear ?? getMetaEntity()?.gameMeta.date.year ?? 1922);
     const ministers = new Map<Ministry, Minister>();
 
     for (const ministry of Object.values(Ministry)) {
@@ -1835,7 +1837,7 @@ export class PolitburoSystem {
    * Processes monthly/quarterly/annual events based on TickResult boundaries.
    */
   public tick(tickResult: { newMonth: boolean; newYear: boolean }): void {
-    const { month } = this.gameState.date;
+    const { month } = getMetaEntity()!.gameMeta.date;
 
     // Monthly updates
     if (tickResult.newMonth) {
@@ -2017,7 +2019,7 @@ export class PolitburoSystem {
       if (!minister) return false;
       if (template.requiredPersonality && minister.personality !== template.requiredPersonality)
         return false;
-      if (template.condition && !template.condition(minister, this.gameState)) return false;
+      if (template.condition && !template.condition(minister, createGameView())) return false;
       return true;
     });
   }
@@ -2025,13 +2027,14 @@ export class PolitburoSystem {
   /** Build a GameEvent from a selected ministry event template. */
   private buildMinistryEvent(selected: MinistryEventTemplate): GameEvent {
     const minister = this.state.ministers.get(selected.ministry)!;
+    const view = createGameView();
     const description =
       typeof selected.description === 'function'
-        ? selected.description(minister, this.gameState)
+        ? selected.description(minister, view)
         : selected.description;
     const effects =
       typeof selected.effects === 'function'
-        ? selected.effects(minister, this.gameState)
+        ? selected.effects(minister, view)
         : { ...selected.effects };
     const netImpact =
       (effects.money ?? 0) +
@@ -2060,7 +2063,10 @@ export class PolitburoSystem {
       totalDrain += Math.floor(minister.corruption / 10); // 0-10 rubles per minister per month
     }
     totalDrain += Math.floor(this.state.activeModifiers.corruptionDrain);
-    this.gameState.money = Math.max(0, this.gameState.money - totalDrain);
+    const store = getResourceEntity();
+    if (store) {
+      store.resources.money = Math.max(0, store.resources.money - totalDrain);
+    }
   }
 
   // ── Private: Purge Checks ────────────────────────────────────────────
@@ -2085,7 +2091,7 @@ export class PolitburoSystem {
   private purgeMinister(minister: Minister, reason: string): void {
     this.state.purgeHistory.push({
       minister: { ...minister },
-      year: this.gameState.date.year,
+      year: getMetaEntity()?.gameMeta.date.year ?? 1922,
       reason,
     });
 
@@ -2164,7 +2170,7 @@ export class PolitburoSystem {
       paranoia: randInt(50, 90), // Coup leaders are paranoid
       health: randInt(50, 80),
       age: randInt(50, 70),
-      yearAppointed: this.gameState.date.year,
+      yearAppointed: getMetaEntity()?.gameMeta.date.year ?? 1922,
       alive: true,
     };
 
@@ -2212,7 +2218,7 @@ export class PolitburoSystem {
           ? 'due to sudden retirement'
           : 'under circumstances that are classified';
 
-    const newGS = generateGeneralSecretary(this.gameState.date.year);
+    const newGS = generateGeneralSecretary(getMetaEntity()?.gameMeta.date.year ?? 1922);
 
     const event: GameEvent = {
       id: `succession_${oldLeader.id}`,

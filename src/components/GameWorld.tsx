@@ -2,16 +2,17 @@
  * GameWorld — imperative game initialization for Canvas 2D rendering.
  *
  * Creates the Canvas2DRenderer, SpriteLoader, gesture manager, and simulation engine.
- * Initializes the ECS world (resource store, grid) before simulation starts.
- * Attaches to a plain HTMLCanvasElement (no BabylonJS/Reactylon).
+ * Initializes the ECS world (resource store, meta store, grid) before simulation starts.
+ * Attaches to a plain HTMLCanvasElement.
  */
 import { useEffect, useRef } from 'react';
 import { AudioManager } from '@/audio/AudioManager';
 import { GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS } from '@/audio/AudioManifest';
 import { initDatabase } from '@/db/provider';
-import { createResourceStore } from '@/ecs/factories';
+import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { Season } from '@/game/Chronology';
+import { GameGrid } from '@/game/GameGrid';
 import { GameRng, generateSeedPhrase } from '@/game/SeedSystem';
 import type { SimCallbacks } from '@/game/SimulationEngine';
 import { SimulationEngine } from '@/game/SimulationEngine';
@@ -24,7 +25,6 @@ import { SpriteLoader } from '@/rendering/SpriteLoader';
 import {
   closeRadialMenu,
   getGameSpeed,
-  getGameState,
   isPaused,
   notifyStateChange,
   selectTool,
@@ -92,6 +92,7 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
   const audioRef = useRef<AudioManager | null>(null);
   const playlistIndexRef = useRef(0);
   const initializedRef = useRef(false);
+  const gridRef = useRef<GameGrid | null>(null);
   // Store callbacks in a ref so the simulation effect doesn't re-run
   // (and clean up the interval) when App re-renders with a new callbacks object.
   const callbacksRef = useRef(callbacks);
@@ -102,11 +103,12 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const gameState = getGameState();
+    const grid = new GameGrid();
+    gridRef.current = grid;
     const spriteLoader = new SpriteLoader();
 
-    const renderer = new Canvas2DRenderer(canvas, gameState, spriteLoader);
-    const gestures = new CanvasGestureManager(canvas, gameState, renderer);
+    const renderer = new Canvas2DRenderer(canvas, grid, spriteLoader);
+    const gestures = new CanvasGestureManager(canvas, grid, renderer);
 
     rendererRef.current = renderer;
     gestureRef.current = gestures;
@@ -132,11 +134,12 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
   // Start simulation when game starts
   useEffect(() => {
     if (!gameStarted || initializedRef.current) return;
-    if (!rendererRef.current) return;
+    if (!rendererRef.current || !gridRef.current) return;
 
     initializedRef.current = true;
     const renderer = rendererRef.current;
     const gestures = gestureRef.current;
+    const grid = gridRef.current;
 
     // Initialize SQLite database for persistence (fire-and-forget — SaveSystem
     // falls back to localStorage if the DB isn't ready yet)
@@ -171,22 +174,12 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
     // Slight delay to let preload settle
     const musicTimeout = setTimeout(playNextTrack, 2000);
 
-    // Initialize ECS world
-    const gameState = getGameState();
-
-    // Create resource store singleton entity with starting resources
-    createResourceStore({
-      money: gameState.money,
-      food: gameState.food,
-      vodka: gameState.vodka,
-      power: gameState.power,
-      powerUsed: gameState.powerUsed,
-      population: gameState.pop,
-    });
+    // Initialize ECS world — resource store + meta store
+    createResourceStore();
+    const seed = generateSeedPhrase();
+    createMetaStore({ seed });
 
     // Start simulation engine with seeded RNG
-    const seed = gameState.seed || generateSeedPhrase();
-    gameState.seed = seed;
     const rng = new GameRng(seed);
 
     // Generate and render terrain features on map border
@@ -198,7 +191,7 @@ export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
     });
 
     simRef.current = new SimulationEngine(
-      gameState,
+      grid,
       {
         ...callbacksRef.current,
         onToast: (msg) => {

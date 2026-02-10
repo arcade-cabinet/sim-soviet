@@ -1,6 +1,8 @@
 import { getBuildingDef } from '@/data/buildingDefs';
+import { getMetaEntity } from '@/ecs/archetypes';
 import type { EventCategory, GameEvent } from './EventSystem';
-import type { Building, GameState } from './GameState';
+import type { Building, GameView } from './GameView';
+import { createGameView } from './GameView';
 import type { GameRng } from './SeedSystem';
 
 // ─────────────────────────────────────────────────────────
@@ -509,7 +511,7 @@ interface GeneratedHeadline {
   category: HeadlineCategory;
 }
 
-type HeadlineGenerator = (gs: GameState) => GeneratedHeadline;
+type HeadlineGenerator = (gs: GameView) => GeneratedHeadline;
 
 // ── EXTERNAL THREAT generators (never real, always propaganda) ──
 
@@ -988,7 +990,7 @@ const weatherFillerGenerators: HeadlineGenerator[] = [
 // ─────────────────────────────────────────────────────────
 
 interface ContextualGenerator {
-  condition: (gs: GameState) => boolean;
+  condition: (gs: GameView) => boolean;
   weight: number;
   generate: HeadlineGenerator;
 }
@@ -1287,7 +1289,7 @@ const ALL_GENERIC_GENERATORS: { generators: HeadlineGenerator[]; weight: number 
   { generators: weatherFillerGenerators, weight: 1.5 },
 ];
 
-function generateHeadline(gs: GameState): GeneratedHeadline {
+function generateHeadline(gs: GameView): GeneratedHeadline {
   // First, check contextual generators (state-reactive)
   const eligibleContextual = contextualGenerators.filter((cg) => cg.condition(gs));
 
@@ -1328,7 +1330,7 @@ function generateHeadline(gs: GameState): GeneratedHeadline {
 //  system can also generate a FRESH spin on any event.
 // ─────────────────────────────────────────────────────────
 
-function generateEventReactiveHeadline(event: GameEvent, gs: GameState): GeneratedHeadline {
+function generateEventReactiveHeadline(event: GameEvent, gs: GameView): GeneratedHeadline {
   // For bad events, sometimes generate an external threat headline
   // to distract from internal problems (the classic Pravda move)
   if (event.type === 'bad' && coinFlip(0.35)) {
@@ -1413,10 +1415,7 @@ export class PravdaSystem {
   private recentCategories: HeadlineCategory[] = [];
   private maxCategoryMemory = 6;
 
-  constructor(
-    private gameState: GameState,
-    rng?: GameRng
-  ) {
+  constructor(rng?: GameRng) {
     if (rng) _rng = rng;
   }
 
@@ -1425,7 +1424,7 @@ export class PravdaSystem {
    * May reframe the event entirely (e.g., catastrophe -> external threat distraction).
    */
   public headlineFromEvent(event: GameEvent): PravdaHeadline {
-    const generated = generateEventReactiveHeadline(event, this.gameState);
+    const generated = generateEventReactiveHeadline(event, createGameView());
     const headline: PravdaHeadline = {
       ...generated,
       timestamp: Date.now(),
@@ -1446,7 +1445,7 @@ export class PravdaSystem {
     let generated: GeneratedHeadline;
     let attempts = 0;
     do {
-      generated = generateHeadline(this.gameState);
+      generated = generateHeadline(createGameView());
       attempts++;
     } while (
       attempts < 5 &&
@@ -1475,7 +1474,7 @@ export class PravdaSystem {
     if (latest.length === 0) return 'PRAVDA: NO NEWS IS GOOD NEWS. ALL NEWS IS GOOD NEWS.';
 
     const lines = latest.map((h) => `\u2605 ${h.headline}`);
-    return `PRAVDA | ${this.gameState.date.year}\n${lines.join('\n')}`;
+    return `PRAVDA | ${getMetaEntity()?.gameMeta.date.year ?? 1922}\n${lines.join('\n')}`;
   }
 
   // ── private ──────────────────────────────────────────

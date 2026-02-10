@@ -1,5 +1,6 @@
 import { getResourceEntity } from '@/ecs/archetypes';
-import type { GameState } from './GameState';
+import type { GameView } from './GameView';
+import { createGameView } from './GameView';
 import type { GameRng } from './SeedSystem';
 
 // ─────────────────────────────────────────────────────────
@@ -34,13 +35,13 @@ export interface GameEvent {
 interface EventTemplate {
   id: string;
   title: string;
-  description: string | ((gs: GameState) => string);
-  pravdaHeadline: string | ((gs: GameState) => string);
+  description: string | ((gs: GameView) => string);
+  pravdaHeadline: string | ((gs: GameView) => string);
   category: EventCategory;
   severity: EventSeverity;
-  effects: ResourceDelta | ((gs: GameState) => ResourceDelta);
+  effects: ResourceDelta | ((gs: GameView) => ResourceDelta);
   /** Only fires when predicate is true */
-  condition?: (gs: GameState) => boolean;
+  condition?: (gs: GameView) => boolean;
   /** Weight for random selection (default 1) */
   weight?: number;
 }
@@ -717,7 +718,6 @@ export class EventSystem {
   private eventHistory: GameEvent[] = [];
 
   constructor(
-    private gameState: GameState,
     private onEventCallback: (event: GameEvent) => void,
     rng?: GameRng
   ) {
@@ -771,10 +771,11 @@ export class EventSystem {
   // ── private ──────────────────────────────────────────
 
   private generateEvent(): GameEvent | null {
+    const view = createGameView();
     // Filter to eligible events (condition met, not recently fired)
     const eligible = ALL_EVENT_TEMPLATES.filter((t) => {
       if (this.recentEventIds.includes(t.id)) return false;
-      if (t.condition && !t.condition(this.gameState)) return false;
+      if (t.condition && !t.condition(view)) return false;
       return true;
     });
 
@@ -795,7 +796,7 @@ export class EventSystem {
   }
 
   private resolveTemplate(template: EventTemplate): GameEvent {
-    const gs = this.gameState;
+    const gs = createGameView();
 
     const description =
       typeof template.description === 'function' ? template.description(gs) : template.description;
@@ -834,25 +835,14 @@ export class EventSystem {
 
   private applyEffects(event: GameEvent): void {
     const fx = event.effects;
-
-    // Apply to the ECS resource store (single source of truth).
-    // syncEcsToGameState() copies these values to GameState each tick.
     const store = getResourceEntity();
-    if (store) {
-      const r = store.resources;
-      if (fx.money) r.money = Math.max(0, r.money + fx.money);
-      if (fx.food) r.food = Math.max(0, r.food + fx.food);
-      if (fx.vodka) r.vodka = Math.max(0, r.vodka + fx.vodka);
-      if (fx.pop) r.population = Math.max(0, r.population + fx.pop);
-      if (fx.power) r.power = Math.max(0, r.power + fx.power);
-    } else {
-      // Fallback to GameState if ECS not initialized (e.g. in tests)
-      const gs = this.gameState;
-      if (fx.money) gs.money = Math.max(0, gs.money + fx.money);
-      if (fx.food) gs.food = Math.max(0, gs.food + fx.food);
-      if (fx.vodka) gs.vodka = Math.max(0, gs.vodka + fx.vodka);
-      if (fx.pop) gs.pop = Math.max(0, gs.pop + fx.pop);
-      if (fx.power) gs.power = Math.max(0, gs.power + fx.power);
-    }
+    if (!store) return;
+
+    const r = store.resources;
+    if (fx.money) r.money = Math.max(0, r.money + fx.money);
+    if (fx.food) r.food = Math.max(0, r.food + fx.food);
+    if (fx.vodka) r.vodka = Math.max(0, r.vodka + fx.vodka);
+    if (fx.pop) r.population = Math.max(0, r.population + fx.pop);
+    if (fx.power) r.power = Math.max(0, r.power + fx.power);
   }
 }

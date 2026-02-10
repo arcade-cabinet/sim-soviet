@@ -116,6 +116,24 @@ export interface TileComponent {
 }
 
 /**
+ * Game metadata — non-resource state stored on a singleton ECS entity.
+ * Replaces the old GameState fields for date, quota, leader, settlement, etc.
+ */
+export interface GameMeta {
+  seed: string;
+  date: { year: number; month: number; tick: number };
+  quota: { type: string; target: number; current: number; deadlineYear: number };
+  selectedTool: string;
+  gameOver: { victory: boolean; reason: string } | null;
+  leaderName?: string;
+  leaderPersonality?: string;
+  settlementTier: 'selo' | 'posyolok' | 'pgt' | 'gorod';
+  blackMarks: number;
+  commendations: number;
+  threatLevel: string;
+}
+
+/**
  * Health / decay component for buildings.
  * Buildings degrade over time and can eventually collapse.
  */
@@ -150,6 +168,8 @@ export interface Entity {
   tile?: TileComponent;
   /** Structural health */
   durability?: Durability;
+  /** Game metadata singleton (date, quota, leader, settlement, etc.) */
+  gameMeta?: GameMeta;
 
   // ── Tag components ──
   /** Tag: entity is a building */
@@ -160,6 +180,8 @@ export interface Entity {
   isTile?: true;
   /** Tag: entity is the resource store singleton */
   isResourceStore?: true;
+  /** Tag: entity is the game metadata singleton */
+  isMetaStore?: true;
 }
 
 // ─── World Instance ──────────────────────────────────────────────────────────

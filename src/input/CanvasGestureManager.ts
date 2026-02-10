@@ -16,12 +16,12 @@
 
 import type { With } from 'miniplex';
 import { getBuildingDef } from '@/data/buildingDefs';
-import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
+import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import { createBuilding } from '@/ecs/factories';
 import type { Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import { getFootprint } from '@/game/BuildingFootprints';
-import type { GameState } from '@/game/GameState';
+import type { GameGrid } from '@/game/GameGrid';
 import type { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
 import {
   closeRadialMenu,
@@ -69,7 +69,7 @@ export class CanvasGestureManager {
 
   constructor(
     private canvas: HTMLCanvasElement,
-    private gameState: GameState,
+    private grid: GameGrid,
     private renderer: Canvas2DRenderer
   ) {
     this.setupEvents();
@@ -84,7 +84,8 @@ export class CanvasGestureManager {
     const cost = getBuildingCost(defId);
     const fp = getFootprint(defId);
     if (!this.isFootprintClear(gridX, gridY, fp.w, fp.h)) return false;
-    if (this.gameState.money < cost) return false;
+    const store = getResourceEntity();
+    if (!store || store.resources.money < cost) return false;
 
     this.placeBuilding(gridX, gridY, defId, cost, fp);
     notifyStateChange();
@@ -223,8 +224,8 @@ export class CanvasGestureManager {
     if (!cell) return;
 
     const { x: gridX, y: gridY } = cell;
-    const tool = this.gameState.selectedTool;
-    const gridCell = this.gameState.getCell(gridX, gridY);
+    const tool = getMetaEntity()?.gameMeta.selectedTool ?? 'none';
+    const gridCell = this.grid.getCell(gridX, gridY);
     if (!gridCell) return;
 
     if (tool === 'none') {
@@ -298,7 +299,7 @@ export class CanvasGestureManager {
 
   /** Handle bulldoze tool tap. */
   private handleBulldozeTap(gridX: number, gridY: number, gridCell: { type: string | null }): void {
-    if (gridCell.type && this.gameState.money >= BULLDOZE_COST) {
+    if (gridCell.type && (getResourceEntity()?.resources.money ?? 0) >= BULLDOZE_COST) {
       this.bulldozeAt(gridX, gridY);
       notifyStateChange();
     }
@@ -311,7 +312,7 @@ export class CanvasGestureManager {
     const clear = this.isFootprintClear(gridX, gridY, fp.w, fp.h);
     if (!clear) return;
 
-    if (this.gameState.money >= cost) {
+    if ((getResourceEntity()?.resources.money ?? 0) >= cost) {
       this.placeBuilding(gridX, gridY, tool, cost, fp);
       notifyStateChange();
     }
@@ -321,7 +322,7 @@ export class CanvasGestureManager {
   private isFootprintClear(gridX: number, gridY: number, w: number, h: number): boolean {
     for (let dx = 0; dx < w; dx++) {
       for (let dy = 0; dy < h; dy++) {
-        const c = this.gameState.getCell(gridX + dx, gridY + dy);
+        const c = this.grid.getCell(gridX + dx, gridY + dy);
         if (!c || c.type != null) return false;
       }
     }
@@ -329,7 +330,7 @@ export class CanvasGestureManager {
   }
 
   /**
-   * Places a building via ECS and syncs to GameState grid.
+   * Places a building via ECS and syncs to grid.
    */
   private placeBuilding(
     gridX: number,
@@ -343,20 +344,16 @@ export class CanvasGestureManager {
     if (store) {
       store.resources.money -= cost;
     }
-    this.gameState.money -= cost;
 
     // Mark ALL footprint cells as occupied
     for (let dx = 0; dx < fp.w; dx++) {
       for (let dy = 0; dy < fp.h; dy++) {
-        this.gameState.setCell(gridX + dx, gridY + dy, tool);
+        this.grid.setCell(gridX + dx, gridY + dy, tool);
       }
     }
 
     // Create ECS entity
     createBuilding(gridX, gridY, tool);
-
-    // Also add to GameState.buildings for renderer compatibility
-    this.gameState.addBuilding(gridX, gridY, tool);
 
     this.onBuild?.(tool);
   }
@@ -371,12 +368,10 @@ export class CanvasGestureManager {
     if (store) {
       store.resources.money -= BULLDOZE_COST;
     }
-    this.gameState.money -= BULLDOZE_COST;
 
     const found = this.findBuildingEntityAt(gridX, gridY);
     this.removeBuildingFromGrid(found, gridX, gridY);
 
-    this.gameState.removeBuilding(found?.originX ?? gridX, found?.originY ?? gridY);
     this.onBulldoze?.();
   }
 
@@ -412,12 +407,12 @@ export class CanvasGestureManager {
       const fpY = found.entity.renderable?.footprintY ?? 1;
       for (let dx = 0; dx < fpX; dx++) {
         for (let dy = 0; dy < fpY; dy++) {
-          this.gameState.setCell(found.originX + dx, found.originY + dy, null);
+          this.grid.setCell(found.originX + dx, found.originY + dy, null);
         }
       }
       world.remove(found.entity);
     } else {
-      this.gameState.setCell(gridX, gridY, null);
+      this.grid.setCell(gridX, gridY, null);
     }
   }
 
@@ -460,7 +455,7 @@ export class CanvasGestureManager {
     if (preview?.valid) {
       const cost = getBuildingCost(drag.buildingType);
       const fp = getFootprint(drag.buildingType);
-      if (this.gameState.money >= cost) {
+      if ((getResourceEntity()?.resources.money ?? 0) >= cost) {
         this.placeBuilding(preview.gridX, preview.gridY, drag.buildingType, cost, fp);
         notifyStateChange();
         // Note: onBuild is already called inside placeBuilding

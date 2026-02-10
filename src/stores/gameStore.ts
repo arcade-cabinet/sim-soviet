@@ -1,12 +1,12 @@
 /**
- * Game State Store — bridges mutable GameState with React via useSyncExternalStore.
+ * Game State Store — bridges ECS with React via useSyncExternalStore.
  *
- * GameState stays mutable (SimulationEngine/InputManager mutate it directly),
- * but React components subscribe to immutable snapshots that refresh on notify().
+ * ECS is the single source of truth. React components subscribe to immutable
+ * snapshots that refresh when notifyStateChange() is called.
  */
 import { useSyncExternalStore } from 'react';
-import type { GameOverState } from '@/game/GameState';
-import { GameState } from '@/game/GameState';
+import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
+import type { GameMeta } from '@/ecs/world';
 
 // ── Snapshot type (immutable view for React) ──────────────────────────────
 
@@ -22,7 +22,7 @@ export interface GameSnapshot {
   selectedTool: string;
   quota: { type: string; target: number; current: number; deadlineYear: number };
   buildingCount: number;
-  gameOver: GameOverState | null;
+  gameOver: GameMeta['gameOver'];
   paused: boolean;
   gameSpeed: 1 | 2 | 3;
   leaderName?: string;
@@ -35,51 +35,45 @@ export interface GameSnapshot {
 
 // ── Singleton state ───────────────────────────────────────────────────────
 
-let _gameState: GameState | null = null;
 const _listeners = new Set<() => void>();
 let _snapshot: GameSnapshot | null = null;
 
-function createSnapshot(gs: GameState): GameSnapshot {
+function createSnapshot(): GameSnapshot {
+  const res = getResourceEntity();
+  const meta = getMetaEntity();
+  const m = meta?.gameMeta;
+
   return {
-    seed: gs.seed,
-    money: gs.money,
-    pop: gs.pop,
-    food: gs.food,
-    vodka: gs.vodka,
-    power: gs.power,
-    powerUsed: gs.powerUsed,
-    date: { ...gs.date },
-    selectedTool: gs.selectedTool,
-    quota: { ...gs.quota },
-    buildingCount: gs.buildings.length,
-    gameOver: gs.gameOver,
+    seed: m?.seed ?? '',
+    money: res?.resources.money ?? 0,
+    pop: res?.resources.population ?? 0,
+    food: res?.resources.food ?? 0,
+    vodka: res?.resources.vodka ?? 0,
+    power: res?.resources.power ?? 0,
+    powerUsed: res?.resources.powerUsed ?? 0,
+    date: m?.date ? { ...m.date } : { year: 1922, month: 10, tick: 0 },
+    selectedTool: m?.selectedTool ?? 'none',
+    quota: m?.quota
+      ? { ...m.quota }
+      : { type: 'food', target: 500, current: 0, deadlineYear: 1927 },
+    buildingCount: buildingsLogic.entities.length,
+    gameOver: m?.gameOver ?? null,
     paused: _paused,
     gameSpeed: _gameSpeed,
-    leaderName: gs.leaderName,
-    leaderPersonality: gs.leaderPersonality,
-    settlementTier: gs.settlementTier,
-    blackMarks: gs.blackMarks,
-    commendations: gs.commendations,
-    threatLevel: gs.threatLevel,
+    leaderName: m?.leaderName,
+    leaderPersonality: m?.leaderPersonality,
+    settlementTier: m?.settlementTier ?? 'selo',
+    blackMarks: m?.blackMarks ?? 0,
+    commendations: m?.commendations ?? 0,
+    threatLevel: m?.threatLevel ?? 'safe',
   };
 }
 
 // ── Public API ────────────────────────────────────────────────────────────
 
-/** Get or create the singleton GameState instance. */
-export function getGameState(): GameState {
-  if (!_gameState) {
-    _gameState = new GameState();
-    _snapshot = createSnapshot(_gameState);
-  }
-  return _gameState;
-}
-
-/** Call after any mutation to GameState to trigger React re-renders. */
+/** Call after any ECS mutation to trigger React re-renders. */
 export function notifyStateChange(): void {
-  if (_gameState) {
-    _snapshot = createSnapshot(_gameState);
-  }
+  _snapshot = createSnapshot();
   for (const listener of _listeners) {
     listener();
   }
@@ -92,7 +86,10 @@ export function useGameSnapshot(): GameSnapshot {
 
 /** Set selected building tool and notify React. */
 export function selectTool(tool: string): void {
-  getGameState().selectedTool = tool;
+  const meta = getMetaEntity();
+  if (meta) {
+    meta.gameMeta.selectedTool = tool;
+  }
   notifyStateChange();
 }
 
@@ -279,7 +276,7 @@ function subscribe(listener: () => void): () => void {
 
 function getSnapshot(): GameSnapshot {
   if (!_snapshot) {
-    _snapshot = createSnapshot(getGameState());
+    _snapshot = createSnapshot();
   }
   return _snapshot;
 }

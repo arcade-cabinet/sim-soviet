@@ -1,7 +1,7 @@
 /**
  * SaveSystem — game persistence via Drizzle ORM + sql.js (SQLite).
  *
- * Saves/loads game state to an in-memory SQLite database that is
+ * Saves/loads game state from ECS to an in-memory SQLite database that is
  * persisted to IndexedDB between sessions.
  *
  * Falls back to localStorage if the database isn't initialized
@@ -11,8 +11,11 @@ import { eq } from 'drizzle-orm';
 import type { SQLJsDatabase } from 'drizzle-orm/sql-js';
 import { getDatabase, persistToIndexedDB } from '@/db/provider';
 import * as dbSchema from '@/db/schema';
+import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
+import { createBuilding } from '@/ecs/factories';
+import { world } from '@/ecs/world';
 import { getFootprint } from '@/game/BuildingFootprints';
-import type { GameState } from './GameState';
+import type { GameGrid } from './GameGrid';
 
 const LOCALSTORAGE_KEY = 'simsoviet_save_v1';
 
@@ -33,7 +36,7 @@ export interface SaveData {
 export class SaveSystem {
   private autoSaveTimer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private gameState: GameState) {}
+  constructor(private grid: GameGrid) {}
 
   /**
    * Save the current game state.
@@ -133,6 +136,10 @@ export class SaveSystem {
   }
 
   private saveToDb(db: SQLJsDatabase<typeof dbSchema>, name: string): boolean {
+    const res = getResourceEntity();
+    const meta = getMetaEntity();
+    if (!res || !meta) return false;
+
     // Upsert: delete old save with same name, insert new one
     const existing = db.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).get();
     if (existing) {
@@ -158,44 +165,45 @@ export class SaveSystem {
     db.insert(dbSchema.resources)
       .values({
         saveId: save.id,
-        money: this.gameState.money,
-        food: this.gameState.food,
-        vodka: this.gameState.vodka,
-        power: this.gameState.power,
-        powerUsed: this.gameState.powerUsed,
-        population: this.gameState.pop,
+        money: res.resources.money,
+        food: res.resources.food,
+        vodka: res.resources.vodka,
+        power: res.resources.power,
+        powerUsed: res.resources.powerUsed,
+        population: res.resources.population,
       })
       .run();
 
     db.insert(dbSchema.chronology)
       .values({
         saveId: save.id,
-        year: this.gameState.date.year,
-        month: this.gameState.date.month,
-        tick: this.gameState.date.tick,
+        year: meta.gameMeta.date.year,
+        month: meta.gameMeta.date.month,
+        tick: meta.gameMeta.date.tick,
       })
       .run();
 
     db.insert(dbSchema.quotas)
       .values({
         saveId: save.id,
-        type: this.gameState.quota.type,
-        target: this.gameState.quota.target,
-        current: this.gameState.quota.current,
-        deadlineYear: this.gameState.quota.deadlineYear,
+        type: meta.gameMeta.quota.type,
+        target: meta.gameMeta.quota.target,
+        current: meta.gameMeta.quota.current,
+        deadlineYear: meta.gameMeta.quota.deadlineYear,
       })
       .run();
 
-    // Insert buildings in batch
-    if (this.gameState.buildings.length > 0) {
+    // Insert buildings from ECS
+    const ecsBuildings = buildingsLogic.entities;
+    if (ecsBuildings.length > 0) {
       db.insert(dbSchema.buildings)
         .values(
-          this.gameState.buildings.map((b) => ({
+          ecsBuildings.map((e) => ({
             saveId: save.id,
-            gridX: b.x,
-            gridY: b.y,
-            type: b.defId,
-            powered: b.powered,
+            gridX: e.position.gridX,
+            gridY: e.position.gridY,
+            type: e.building.defId,
+            powered: e.building.powered,
           }))
         )
         .run();
@@ -211,18 +219,22 @@ export class SaveSystem {
     const save = db.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).get();
     if (!save) return false;
 
-    const res = db
+    const res = getResourceEntity();
+    const meta = getMetaEntity();
+    if (!res || !meta) return false;
+
+    const dbRes = db
       .select()
       .from(dbSchema.resources)
       .where(eq(dbSchema.resources.saveId, save.id))
       .get();
-    if (res) {
-      this.gameState.money = res.money;
-      this.gameState.food = res.food;
-      this.gameState.vodka = res.vodka;
-      this.gameState.power = res.power;
-      this.gameState.powerUsed = res.powerUsed;
-      this.gameState.pop = res.population;
+    if (dbRes) {
+      res.resources.money = dbRes.money;
+      res.resources.food = dbRes.food;
+      res.resources.vodka = dbRes.vodka;
+      res.resources.power = dbRes.power;
+      res.resources.powerUsed = dbRes.powerUsed;
+      res.resources.population = dbRes.population;
     }
 
     const chrono = db
@@ -231,7 +243,7 @@ export class SaveSystem {
       .where(eq(dbSchema.chronology.saveId, save.id))
       .get();
     if (chrono) {
-      this.gameState.date = { year: chrono.year, month: chrono.month, tick: chrono.tick };
+      meta.gameMeta.date = { year: chrono.year, month: chrono.month, tick: chrono.tick };
     }
 
     const quota = db
@@ -240,7 +252,7 @@ export class SaveSystem {
       .where(eq(dbSchema.quotas.saveId, save.id))
       .get();
     if (quota) {
-      this.gameState.quota = {
+      meta.gameMeta.quota = {
         type: quota.type,
         target: quota.target,
         current: quota.current,
@@ -248,29 +260,26 @@ export class SaveSystem {
       };
     }
 
+    // Clear existing ECS buildings
+    for (const entity of [...buildingsLogic.entities]) {
+      world.remove(entity);
+    }
+
+    // Clear grid and restore from save
+    this.grid.resetGrid();
+
     const savedBuildings = db
       .select()
       .from(dbSchema.buildings)
       .where(eq(dbSchema.buildings.saveId, save.id))
       .all();
-    this.gameState.buildings = savedBuildings.map(
-      (b: { gridX: number; gridY: number; type: string; powered: boolean }) => ({
-        x: b.gridX,
-        y: b.gridY,
-        defId: b.type,
-        powered: b.powered,
-      })
-    );
 
-    // Clear stale grid cells before restoring buildings
-    this.gameState.resetGrid();
-
-    // Update grid cells (restore full footprint, not just origin)
     for (const b of savedBuildings) {
+      createBuilding(b.gridX, b.gridY, b.type);
       const fp = getFootprint(b.type);
       for (let dx = 0; dx < fp.w; dx++) {
         for (let dy = 0; dy < fp.h; dy++) {
-          this.gameState.setCell(b.gridX + dx, b.gridY + dy, b.type);
+          this.grid.setCell(b.gridX + dx, b.gridY + dy, b.type);
         }
       }
     }
@@ -281,23 +290,28 @@ export class SaveSystem {
   // ── localStorage fallback ──────────────────────────────────────────────
 
   private saveToLocalStorage(): boolean {
+    const res = getResourceEntity();
+    const meta = getMetaEntity();
+    if (!res || !meta) return false;
+
+    const ecsBuildings = buildingsLogic.entities;
     const saveData: SaveData = {
       version: '1.0.0',
       timestamp: Date.now(),
-      money: this.gameState.money,
-      pop: this.gameState.pop,
-      food: this.gameState.food,
-      vodka: this.gameState.vodka,
-      power: this.gameState.power,
-      powerUsed: this.gameState.powerUsed,
-      date: { ...this.gameState.date },
-      buildings: this.gameState.buildings.map((b) => ({
-        x: b.x,
-        y: b.y,
-        defId: b.defId,
-        powered: b.powered,
+      money: res.resources.money,
+      pop: res.resources.population,
+      food: res.resources.food,
+      vodka: res.resources.vodka,
+      power: res.resources.power,
+      powerUsed: res.resources.powerUsed,
+      date: { ...meta.gameMeta.date },
+      buildings: ecsBuildings.map((e) => ({
+        x: e.position.gridX,
+        y: e.position.gridY,
+        defId: e.building.defId,
+        powered: e.building.powered,
       })),
-      quota: { ...this.gameState.quota },
+      quota: { ...meta.gameMeta.quota },
     };
     localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(saveData));
     return true;
@@ -308,30 +322,33 @@ export class SaveSystem {
     if (!savedData) return false;
 
     const data: SaveData = JSON.parse(savedData);
-    this.gameState.money = data.money;
-    this.gameState.pop = data.pop;
-    this.gameState.food = data.food;
-    this.gameState.vodka = data.vodka;
-    this.gameState.power = data.power;
-    this.gameState.powerUsed = data.powerUsed;
-    this.gameState.date = { ...data.date };
-    this.gameState.quota = { ...data.quota };
+    const res = getResourceEntity();
+    const meta = getMetaEntity();
+    if (!res || !meta) return false;
 
-    this.gameState.buildings = data.buildings.map((b) => ({
-      x: b.x,
-      y: b.y,
-      defId: b.defId,
-      powered: b.powered,
-    }));
+    res.resources.money = data.money;
+    res.resources.population = data.pop;
+    res.resources.food = data.food;
+    res.resources.vodka = data.vodka;
+    res.resources.power = data.power;
+    res.resources.powerUsed = data.powerUsed;
+    meta.gameMeta.date = { ...data.date };
+    meta.gameMeta.quota = { ...data.quota };
 
-    // Clear stale grid cells before restoring buildings
-    this.gameState.resetGrid();
+    // Clear existing ECS buildings
+    for (const entity of [...buildingsLogic.entities]) {
+      world.remove(entity);
+    }
+
+    // Clear grid and restore from save
+    this.grid.resetGrid();
 
     for (const b of data.buildings) {
+      createBuilding(b.x, b.y, b.defId);
       const fp = getFootprint(b.defId);
       for (let dx = 0; dx < fp.w; dx++) {
         for (let dy = 0; dy < fp.h; dy++) {
-          this.gameState.setCell(b.x + dx, b.y + dy, b.defId);
+          this.grid.setCell(b.x + dx, b.y + dy, b.defId);
         }
       }
     }

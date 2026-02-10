@@ -1,21 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getResourceEntity } from '../ecs/archetypes';
+import { createMetaStore, createResourceStore } from '../ecs/factories';
+import { world } from '../ecs/world';
 import { ALL_EVENT_TEMPLATES, EventSystem, type GameEvent } from '../game/EventSystem';
-import { GameState } from '../game/GameState';
+import { createGameView } from '../game/GameView';
 
 describe('EventSystem', () => {
-  let gs: GameState;
   let firedEvents: GameEvent[];
   let eventSystem: EventSystem;
 
   beforeEach(() => {
-    gs = new GameState();
+    world.clear();
+    createResourceStore();
+    createMetaStore();
     firedEvents = [];
-    eventSystem = new EventSystem(gs, (event) => {
+    eventSystem = new EventSystem((event) => {
       firedEvents.push(event);
     });
   });
 
   afterEach(() => {
+    world.clear();
     vi.restoreAllMocks();
   });
 
@@ -54,41 +59,41 @@ describe('EventSystem', () => {
 
   describe('effect application', () => {
     it('reduces food on negative food effect', () => {
-      gs.food = 100;
+      getResourceEntity()!.resources.food = 100;
       eventSystem.triggerEvent('earthquake_bread'); // effects: { food: -15 }
-      expect(gs.food).toBe(85);
+      expect(getResourceEntity()!.resources.food).toBe(85);
     });
 
     it('reduces money on negative money effect', () => {
-      gs.money = 500;
+      getResourceEntity()!.resources.money = 500;
       eventSystem.triggerEvent('cultural_palace_fire'); // effects: { money: -50 }
-      expect(gs.money).toBe(450);
+      expect(getResourceEntity()!.resources.money).toBe(450);
     });
 
     it('clamps resources to minimum of 0', () => {
-      gs.food = 5;
+      getResourceEntity()!.resources.food = 5;
       eventSystem.triggerEvent('earthquake_bread'); // effects: { food: -15 }
-      expect(gs.food).toBe(0);
+      expect(getResourceEntity()!.resources.food).toBe(0);
     });
 
     it('applies positive effects (e.g., money gain)', () => {
-      gs.money = 100;
+      getResourceEntity()!.resources.money = 100;
       eventSystem.triggerEvent('hero_award'); // effects: { money: 100 }
-      expect(gs.money).toBe(200);
+      expect(getResourceEntity()!.resources.money).toBe(200);
     });
 
     it('applies population effects', () => {
-      gs.pop = 20;
+      getResourceEntity()!.resources.population = 20;
       eventSystem.triggerEvent('chemical_leak'); // effects: { pop: -2 }, cond: pop > 10
-      expect(gs.pop).toBe(18);
+      expect(getResourceEntity()!.resources.population).toBe(18);
     });
 
     it('applies multiple resource effects simultaneously', () => {
-      gs.food = 100;
-      gs.vodka = 50;
+      getResourceEntity()!.resources.food = 100;
+      getResourceEntity()!.resources.vodka = 50;
       eventSystem.triggerEvent('blizzard_burial'); // effects: { food: -10, vodka: -5 }
-      expect(gs.food).toBe(90);
-      expect(gs.vodka).toBe(45);
+      expect(getResourceEntity()!.resources.food).toBe(90);
+      expect(getResourceEntity()!.resources.vodka).toBe(45);
     });
   });
 
@@ -96,7 +101,7 @@ describe('EventSystem', () => {
 
   describe('dynamic content resolution', () => {
     it('resolves function-based descriptions with game state', () => {
-      gs.pop = 42;
+      getResourceEntity()!.resources.population = 42;
       eventSystem.triggerEvent('rat_invasion');
       const event = firedEvents[0]!;
       expect(event.description).toContain('42 citizens');
@@ -104,13 +109,13 @@ describe('EventSystem', () => {
     });
 
     it('resolves function-based effects', () => {
-      gs.money = 1000;
+      getResourceEntity()!.resources.money = 1000;
       eventSystem.triggerEvent('currency_reform'); // effects: (gs) => ({ money: -Math.floor(gs.money * 0.15) })
-      expect(gs.money).toBe(850); // 1000 - 150
+      expect(getResourceEntity()!.resources.money).toBe(850); // 1000 - 150
     });
 
     it('resolves function-based pravdaHeadline', () => {
-      gs.food = 200;
+      getResourceEntity()!.resources.food = 200;
       eventSystem.triggerEvent('agricultural_record');
       const event = firedEvents[0]!;
       // Math.max(3, Math.floor(200 / 50)) = 4
@@ -122,36 +127,36 @@ describe('EventSystem', () => {
 
   describe('condition predicates', () => {
     it('fires events whose conditions are met', () => {
-      gs.pop = 20;
+      getResourceEntity()!.resources.population = 20;
       eventSystem.triggerEvent('chemical_leak'); // condition: gs.pop > 10
       expect(firedEvents).toHaveLength(1);
     });
 
     it('power_station_explosion requires power > 0', () => {
-      gs.power = 0;
+      getResourceEntity()!.resources.power = 0;
       // triggerEvent bypasses condition check (it's a force trigger)
       // but the template has condition: (gs) => gs.power > 0
       // Let's verify the template condition directly
       const template = ALL_EVENT_TEMPLATES.find((t) => t.id === 'power_station_explosion');
-      expect(template!.condition!(gs)).toBe(false);
-      gs.power = 50;
-      expect(template!.condition!(gs)).toBe(true);
+      expect(template!.condition!(createGameView())).toBe(false);
+      getResourceEntity()!.resources.power = 50;
+      expect(template!.condition!(createGameView())).toBe(true);
     });
 
     it('defection_attempt requires pop > 10', () => {
       const template = ALL_EVENT_TEMPLATES.find((t) => t.id === 'defection_attempt');
-      gs.pop = 5;
-      expect(template!.condition!(gs)).toBe(false);
-      gs.pop = 15;
-      expect(template!.condition!(gs)).toBe(true);
+      getResourceEntity()!.resources.population = 5;
+      expect(template!.condition!(createGameView())).toBe(false);
+      getResourceEntity()!.resources.population = 15;
+      expect(template!.condition!(createGameView())).toBe(true);
     });
 
     it('vodka_surplus requires vodka > 20', () => {
       const template = ALL_EVENT_TEMPLATES.find((t) => t.id === 'vodka_surplus');
-      gs.vodka = 10;
-      expect(template!.condition!(gs)).toBe(false);
-      gs.vodka = 30;
-      expect(template!.condition!(gs)).toBe(true);
+      getResourceEntity()!.resources.vodka = 10;
+      expect(template!.condition!(createGameView())).toBe(false);
+      getResourceEntity()!.resources.vodka = 30;
+      expect(template!.condition!(createGameView())).toBe(true);
     });
   });
 

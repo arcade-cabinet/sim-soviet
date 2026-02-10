@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getResourceEntity } from '../ecs/archetypes';
-import { createResourceStore } from '../ecs/factories';
+import { getMetaEntity, getResourceEntity } from '../ecs/archetypes';
+import { createMetaStore, createResourceStore } from '../ecs/factories';
 import { world } from '../ecs/world';
-import { GameState } from '../game/GameState';
+import { GameGrid } from '../game/GameGrid';
 import { GameRng } from '../game/SeedSystem';
 import type { SimCallbacks } from '../game/SimulationEngine';
 import { SimulationEngine } from '../game/SimulationEngine';
@@ -17,25 +17,19 @@ function createMockCallbacks(): SimCallbacks {
 }
 
 describe('PolitburoSystem integration', () => {
-  let gs: GameState;
+  let grid: GameGrid;
   let cb: SimCallbacks;
   let engine: SimulationEngine;
   let rng: GameRng;
 
   beforeEach(() => {
     world.clear();
-    gs = new GameState();
+    grid = new GameGrid();
     cb = createMockCallbacks();
     rng = new GameRng('politburo-test');
-    createResourceStore({
-      money: gs.money,
-      food: gs.food,
-      vodka: gs.vodka,
-      power: gs.power,
-      powerUsed: gs.powerUsed,
-      population: gs.pop,
-    });
-    engine = new SimulationEngine(gs, cb, rng);
+    createResourceStore();
+    createMetaStore();
+    engine = new SimulationEngine(grid, cb, rng);
   });
 
   afterEach(() => {
@@ -69,26 +63,26 @@ describe('PolitburoSystem integration', () => {
     });
   });
 
-  // ── Leader info syncs to GameState ───────────────────────
+  // ── Leader info syncs to meta entity ───────────────────────
 
   describe('leader sync', () => {
-    it('syncs leader name to GameState after tick', () => {
+    it('syncs leader name to meta entity after tick', () => {
       engine.tick();
-      expect(gs.leaderName).toBeTruthy();
-      expect(typeof gs.leaderName).toBe('string');
+      expect(getMetaEntity()!.gameMeta.leaderName).toBeTruthy();
+      expect(typeof getMetaEntity()!.gameMeta.leaderName).toBe('string');
     });
 
-    it('syncs leader personality to GameState after tick', () => {
+    it('syncs leader personality to meta entity after tick', () => {
       engine.tick();
-      expect(gs.leaderPersonality).toBeTruthy();
-      expect(typeof gs.leaderPersonality).toBe('string');
+      expect(getMetaEntity()!.gameMeta.leaderPersonality).toBeTruthy();
+      expect(typeof getMetaEntity()!.gameMeta.leaderPersonality).toBe('string');
     });
 
     it('leader name matches the politburo general secretary', () => {
       engine.tick();
       const leader = engine.getPolitburo().getGeneralSecretary();
-      expect(gs.leaderName).toBe(leader.name);
-      expect(gs.leaderPersonality).toBe(leader.personality);
+      expect(getMetaEntity()!.gameMeta.leaderName).toBe(leader.name);
+      expect(getMetaEntity()!.gameMeta.leaderPersonality).toBe(leader.personality);
     });
   });
 
@@ -96,18 +90,12 @@ describe('PolitburoSystem integration', () => {
 
   describe('deterministic with seed', () => {
     it('same seed produces same General Secretary name', () => {
-      const gs2 = new GameState();
       const cb2 = createMockCallbacks();
       world.clear();
-      createResourceStore({
-        money: gs2.money,
-        food: gs2.food,
-        vodka: gs2.vodka,
-        power: gs2.power,
-        powerUsed: gs2.powerUsed,
-        population: gs2.pop,
-      });
-      const engine2 = new SimulationEngine(gs2, cb2, new GameRng('politburo-test'));
+      createResourceStore();
+      createMetaStore();
+      const grid2 = new GameGrid();
+      const engine2 = new SimulationEngine(grid2, cb2, new GameRng('politburo-test'));
 
       const name1 = engine.getPolitburo().getGeneralSecretary().name;
       const name2 = engine2.getPolitburo().getGeneralSecretary().name;
@@ -119,12 +107,12 @@ describe('PolitburoSystem integration', () => {
 
   describe('corruption effects', () => {
     it('money decreases over time due to corruption drain', () => {
-      const initialMoney = gs.money;
+      const initialMoney = getResourceEntity()!.resources.money;
       // Tick enough times for monthly corruption to apply (tick=0 on month boundary)
       // First tick starts at tick=0, month=1, so corruption fires immediately
       engine.tick();
       // Corruption drain should reduce money (or stay same if drain is 0)
-      expect(gs.money).toBeLessThanOrEqual(initialMoney);
+      expect(getResourceEntity()!.resources.money).toBeLessThanOrEqual(initialMoney);
     });
 
     it('corruption drain persists to ECS store (not overwritten by sync)', () => {
@@ -178,8 +166,8 @@ describe('PolitburoSystem integration', () => {
       expect(advisorCallCount).toBeGreaterThan(0);
 
       // Game state should still be valid (effects applied without crashing)
-      expect(gs.money).toBeGreaterThanOrEqual(0);
-      expect(gs.pop).toBeGreaterThanOrEqual(0);
+      expect(getResourceEntity()!.resources.money).toBeGreaterThanOrEqual(0);
+      expect(getResourceEntity()!.resources.population).toBeGreaterThanOrEqual(0);
     });
   });
 

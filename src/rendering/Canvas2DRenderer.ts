@@ -10,7 +10,9 @@
  */
 
 import { getBuildingDef } from '@/data/buildingDefs';
-import type { Building, GameState } from '@/game/GameState';
+import { buildingsLogic } from '@/ecs/archetypes';
+import type { GameGrid } from '@/game/GameGrid';
+import type { Building } from '@/game/GameView';
 import { Camera2D } from './Camera2D';
 import { FeatureTileRenderer } from './FeatureTileRenderer';
 import {
@@ -60,7 +62,7 @@ export class Canvas2DRenderer {
 
   constructor(
     private canvas: HTMLCanvasElement,
-    private gameState: GameState,
+    private grid: GameGrid,
     private spriteLoader: SpriteLoader
   ) {
     const ctx = canvas.getContext('2d', { alpha: false });
@@ -201,7 +203,7 @@ export class Canvas2DRenderer {
           continue;
         }
 
-        const cell = this.gameState.getCell(x, y);
+        const cell = this.grid.getCell(x, y);
 
         // Fill tile
         drawDiamond(ctx, screen.x, screen.y);
@@ -217,10 +219,17 @@ export class Canvas2DRenderer {
   }
 
   private drawBuildings(): void {
-    // Sort buildings by depth (back-to-front)
-    const sorted = [...this.gameState.buildings].sort(
-      (a, b) => depthKey(a.x, a.y) - depthKey(b.x, b.y)
-    );
+    // Build array from ECS entities and sort by depth (back-to-front)
+    const buildings: Building[] = [];
+    for (const entity of buildingsLogic) {
+      buildings.push({
+        x: entity.position.gridX,
+        y: entity.position.gridY,
+        defId: entity.building.defId,
+        powered: entity.building.powered,
+      });
+    }
+    const sorted = buildings.sort((a, b) => depthKey(a.x, a.y) - depthKey(b.x, b.y));
 
     for (const building of sorted) {
       const sprite = this.spriteLoader.get(building.defId);

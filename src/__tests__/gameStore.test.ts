@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { GameState } from '@/game/GameState';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
+import { createMetaStore, createResourceStore } from '@/ecs/factories';
+import { world } from '@/ecs/world';
 import {
   type DragState,
   getDragState,
-  getGameState,
   getInspected,
   type InspectedBuilding,
   isPaused,
@@ -16,20 +17,17 @@ import {
 } from '@/stores/gameStore';
 
 /**
- * Helper: resets the singleton module state by re-importing.
- *
- * Because gameStore.ts holds module-level singletons (_gameState, _paused, etc.)
- * we need to be aware that state carries between tests within a module import.
- * We reset what we can via the public API.
+ * Helper: resets the singleton module state by clearing the ECS world
+ * and re-creating the singleton stores, then resetting module-level state
+ * via the public API.
  */
 function resetStoreState(): void {
-  // Reset pause
+  world.clear();
+  createResourceStore();
+  createMetaStore();
   setPaused(false);
-  // Reset tool
   selectTool('none');
-  // Reset inspected
   setInspected(null);
-  // Reset drag
   setDragState(null);
 }
 
@@ -38,112 +36,118 @@ describe('gameStore', () => {
     resetStoreState();
   });
 
-  // ── getGameState ───────────────────────────────────────────
+  afterEach(() => {
+    world.clear();
+  });
 
-  describe('getGameState', () => {
-    it('returns a GameState instance', () => {
-      const gs = getGameState();
-      expect(gs).toBeInstanceOf(GameState);
+  // ── ECS integration ──────────────────────────────────────────
+
+  describe('ECS integration', () => {
+    it('has default starting values in ECS stores', () => {
+      const store = getResourceEntity()!;
+      const meta = getMetaEntity()!;
+      expect(store.resources.money).toBe(2000);
+      expect(store.resources.population).toBe(0);
+      expect(store.resources.food).toBe(200);
+      expect(store.resources.vodka).toBe(50);
+      expect(store.resources.power).toBe(0);
+      expect(store.resources.powerUsed).toBe(0);
+      expect(meta.gameMeta.date.year).toBe(1922);
+      expect(meta.gameMeta.date.month).toBe(10);
+      expect(meta.gameMeta.selectedTool).toBe('none');
+      expect(meta.gameMeta.gameOver).toBeNull();
     });
 
-    it('returns the same singleton on repeated calls', () => {
-      const gs1 = getGameState();
-      const gs2 = getGameState();
-      expect(gs1).toBe(gs2);
-    });
-
-    it('has default starting values', () => {
-      const gs = getGameState();
-      expect(gs.money).toBe(2000);
-      expect(gs.pop).toBe(0);
-      expect(gs.food).toBe(200);
-      expect(gs.vodka).toBe(50);
-      expect(gs.power).toBe(0);
-      expect(gs.powerUsed).toBe(0);
-      expect(gs.date.year).toBe(1922);
-      expect(gs.date.month).toBe(10);
-      expect(gs.selectedTool).toBe('none');
-      expect(gs.gameOver).toBeNull();
+    it('resource entity and meta entity are present after init', () => {
+      expect(getResourceEntity()).toBeDefined();
+      expect(getMetaEntity()).toBeDefined();
     });
   });
 
   // ── notifyStateChange ──────────────────────────────────────
 
   describe('notifyStateChange', () => {
-    it('does not throw when called before getGameState', () => {
-      // _gameState might already be set from previous tests since it is
-      // a module-level singleton. Either way, notifyStateChange should not throw.
+    it('does not throw when called', () => {
       expect(() => notifyStateChange()).not.toThrow();
     });
 
     it('calls all registered listeners', () => {
       // We indirectly test listeners via the subscribe function.
       // notifyStateChange iterates _listeners — we can verify by
-      // mutating GameState and checking snapshot reflects the change.
-      const gs = getGameState();
-      gs.money = 9999;
+      // mutating ECS values and checking snapshot reflects the change.
+      const store = getResourceEntity()!;
+      store.resources.money = 9999;
       notifyStateChange();
 
-      // After notify, the snapshot (accessible via getGameState + manual snapshot creation)
-      // should reflect the new value. We'll test the snapshot shape below.
+      // After notify, the snapshot should reflect the new value.
+      // We verify the ECS entity retained the mutation.
+      expect(store.resources.money).toBe(9999);
     });
 
-    it('creates a new snapshot reflecting current GameState values', () => {
-      const gs = getGameState();
-      gs.money = 42;
-      gs.pop = 100;
-      gs.food = 999;
-      gs.vodka = 77;
-      gs.power = 200;
-      gs.powerUsed = 50;
-      gs.date.year = 1985;
-      gs.date.month = 6;
-      gs.date.tick = 16;
+    it('creates a new snapshot reflecting current ECS values', () => {
+      const store = getResourceEntity()!;
+      const meta = getMetaEntity()!;
+      store.resources.money = 42;
+      store.resources.population = 100;
+      store.resources.food = 999;
+      store.resources.vodka = 77;
+      store.resources.power = 200;
+      store.resources.powerUsed = 50;
+      meta.gameMeta.date.year = 1985;
+      meta.gameMeta.date.month = 6;
+      meta.gameMeta.date.tick = 16;
       notifyStateChange();
 
-      // We can't directly access _snapshot, but we can verify through
-      // a listener pattern. Let's use a spy via subscribe mechanism.
-      // Instead, let's test through selectTool which calls notifyStateChange.
+      // Verify ECS entities have the correct values (snapshot mirrors these)
+      expect(store.resources.money).toBe(42);
+      expect(store.resources.population).toBe(100);
+      expect(store.resources.food).toBe(999);
+      expect(store.resources.vodka).toBe(77);
+      expect(store.resources.power).toBe(200);
+      expect(store.resources.powerUsed).toBe(50);
+      expect(meta.gameMeta.date.year).toBe(1985);
+      expect(meta.gameMeta.date.month).toBe(6);
+      expect(meta.gameMeta.date.tick).toBe(16);
     });
   });
 
   // ── selectTool / getSelectedTool ───────────────────────────
 
   describe('selectTool', () => {
-    it('sets the selected tool on the GameState', () => {
+    it('sets the selected tool on the meta entity', () => {
       selectTool('power-station');
-      expect(getGameState().selectedTool).toBe('power-station');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('power-station');
     });
 
     it('can be set to any string value', () => {
       selectTool('apartment-tower-a');
-      expect(getGameState().selectedTool).toBe('apartment-tower-a');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('apartment-tower-a');
 
       selectTool('collective-farm-hq');
-      expect(getGameState().selectedTool).toBe('collective-farm-hq');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('collective-farm-hq');
 
       selectTool('bulldoze');
-      expect(getGameState().selectedTool).toBe('bulldoze');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('bulldoze');
     });
 
     it('can be reset to none', () => {
       selectTool('power-station');
       selectTool('none');
-      expect(getGameState().selectedTool).toBe('none');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('none');
     });
 
     it('calls notifyStateChange (triggers listeners)', () => {
       // We can't directly add a listener through the public API without
       // useSyncExternalStore, but we can verify the side effect:
-      // selectTool mutates GameState.selectedTool and calls notifyStateChange.
+      // selectTool mutates gameMeta.selectedTool and calls notifyStateChange.
       selectTool('gulag-admin');
       // Verify the tool was set (indirect proof that the function worked)
-      expect(getGameState().selectedTool).toBe('gulag-admin');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('gulag-admin');
     });
 
     it('handles empty string', () => {
       selectTool('');
-      expect(getGameState().selectedTool).toBe('');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('');
     });
   });
 
@@ -325,54 +329,47 @@ describe('gameStore', () => {
   // ── Snapshot shape ─────────────────────────────────────────
 
   describe('snapshot shape', () => {
-    it('snapshot has all expected fields after getGameState + notifyStateChange', () => {
-      // We verify the snapshot shape indirectly by examining what
-      // createSnapshot produces. Since the snapshot is internal,
-      // we check via the GameState values and the interface definition.
-      const gs = getGameState();
-      gs.money = 1234;
-      gs.pop = 56;
-      gs.food = 789;
-      gs.vodka = 12;
-      gs.power = 100;
-      gs.powerUsed = 30;
-      gs.date = { year: 1982, month: 7, tick: 16 };
-      gs.buildings = [
-        { x: 0, y: 0, defId: 'power-station', powered: true },
-        { x: 1, y: 1, defId: 'apartment-tower-a', powered: true },
-      ];
-      gs.quota = { type: 'vodka', target: 500, current: 250, deadlineYear: 1985 };
-      gs.gameOver = null;
-      gs.selectedTool = 'collective-farm-hq';
+    it('snapshot has all expected fields after ECS mutation + notifyStateChange', () => {
+      const store = getResourceEntity()!;
+      const meta = getMetaEntity()!;
+      store.resources.money = 1234;
+      store.resources.population = 56;
+      store.resources.food = 789;
+      store.resources.vodka = 12;
+      store.resources.power = 100;
+      store.resources.powerUsed = 30;
+      meta.gameMeta.date = { year: 1982, month: 7, tick: 16 };
+      meta.gameMeta.quota = { type: 'vodka', target: 500, current: 250, deadlineYear: 1985 };
+      meta.gameMeta.gameOver = null;
+      meta.gameMeta.selectedTool = 'collective-farm-hq';
       setPaused(true);
       notifyStateChange();
 
-      // Verify GameState has the correct values (snapshot mirrors these)
-      expect(gs.money).toBe(1234);
-      expect(gs.pop).toBe(56);
-      expect(gs.food).toBe(789);
-      expect(gs.vodka).toBe(12);
-      expect(gs.power).toBe(100);
-      expect(gs.powerUsed).toBe(30);
-      expect(gs.date.year).toBe(1982);
-      expect(gs.date.month).toBe(7);
-      expect(gs.date.tick).toBe(16);
-      expect(gs.selectedTool).toBe('collective-farm-hq');
-      expect(gs.buildings.length).toBe(2);
-      expect(gs.quota.type).toBe('vodka');
-      expect(gs.gameOver).toBeNull();
+      // Verify ECS entities have the correct values (snapshot mirrors these)
+      expect(store.resources.money).toBe(1234);
+      expect(store.resources.population).toBe(56);
+      expect(store.resources.food).toBe(789);
+      expect(store.resources.vodka).toBe(12);
+      expect(store.resources.power).toBe(100);
+      expect(store.resources.powerUsed).toBe(30);
+      expect(meta.gameMeta.date.year).toBe(1982);
+      expect(meta.gameMeta.date.month).toBe(7);
+      expect(meta.gameMeta.date.tick).toBe(16);
+      expect(meta.gameMeta.selectedTool).toBe('collective-farm-hq');
+      expect(meta.gameMeta.quota.type).toBe('vodka');
+      expect(meta.gameMeta.gameOver).toBeNull();
       expect(isPaused()).toBe(true);
     });
 
     it('snapshot date is a shallow copy (not the same reference)', () => {
-      // createSnapshot does { ...gs.date } — verify immutability
-      const gs = getGameState();
-      gs.date.year = 1990;
+      // createSnapshot does { ...m.date } — verify immutability
+      const meta = getMetaEntity()!;
+      meta.gameMeta.date.year = 1990;
       notifyStateChange();
 
-      // Mutating gs.date after notify should not change the snapshot
-      const dateBefore = { ...gs.date };
-      gs.date.year = 2000;
+      // Mutating meta.gameMeta.date after notify should not change the snapshot
+      const dateBefore = { ...meta.gameMeta.date };
+      meta.gameMeta.date.year = 2000;
       // The snapshot was created with year=1990, the mutation to 2000
       // should not affect it. (We can't access _snapshot directly,
       // but this validates the pattern works correctly.)
@@ -380,40 +377,24 @@ describe('gameStore', () => {
     });
 
     it('snapshot quota is a shallow copy', () => {
-      const gs = getGameState();
-      gs.quota = { type: 'food', target: 500, current: 100, deadlineYear: 1985 };
+      const meta = getMetaEntity()!;
+      meta.gameMeta.quota = { type: 'food', target: 500, current: 100, deadlineYear: 1985 };
       notifyStateChange();
 
-      const quotaBefore = { ...gs.quota };
-      gs.quota.current = 999;
+      const quotaBefore = { ...meta.gameMeta.quota };
+      meta.gameMeta.quota.current = 999;
       expect(quotaBefore.current).toBe(100);
     });
 
-    it('snapshot includes buildingCount from buildings array length', () => {
-      const gs = getGameState();
-      gs.buildings = [];
-      notifyStateChange();
-      // buildingCount should be 0
-
-      gs.buildings = [
-        { x: 0, y: 0, defId: 'a', powered: false },
-        { x: 1, y: 1, defId: 'b', powered: false },
-        { x: 2, y: 2, defId: 'c', powered: true },
-      ];
-      notifyStateChange();
-      // buildingCount should now be 3
-      expect(gs.buildings.length).toBe(3);
-    });
-
     it('snapshot reflects gameOver state', () => {
-      const gs = getGameState();
-      gs.gameOver = { victory: false, reason: 'Quota not met' };
+      const meta = getMetaEntity()!;
+      meta.gameMeta.gameOver = { victory: false, reason: 'Quota not met' };
       notifyStateChange();
-      expect(gs.gameOver).toEqual({ victory: false, reason: 'Quota not met' });
+      expect(meta.gameMeta.gameOver).toEqual({ victory: false, reason: 'Quota not met' });
 
-      gs.gameOver = { victory: true, reason: 'You survived!' };
+      meta.gameMeta.gameOver = { victory: true, reason: 'You survived!' };
       notifyStateChange();
-      expect(gs.gameOver!.victory).toBe(true);
+      expect(meta.gameMeta.gameOver!.victory).toBe(true);
     });
 
     it('snapshot paused field reflects _paused state', () => {
@@ -424,11 +405,11 @@ describe('gameStore', () => {
       expect(isPaused()).toBe(true);
     });
 
-    it('snapshot includes seed from GameState', () => {
-      const gs = getGameState();
-      gs.seed = 'glorious-eternal-tractor';
+    it('snapshot includes seed from meta entity', () => {
+      const meta = getMetaEntity()!;
+      meta.gameMeta.seed = 'glorious-eternal-tractor';
       notifyStateChange();
-      expect(gs.seed).toBe('glorious-eternal-tractor');
+      expect(meta.gameMeta.seed).toBe('glorious-eternal-tractor');
     });
   });
 
@@ -452,7 +433,7 @@ describe('gameStore', () => {
       ];
       for (const tool of tools) {
         selectTool(tool);
-        expect(getGameState().selectedTool).toBe(tool);
+        expect(getMetaEntity()!.gameMeta.selectedTool).toBe(tool);
       }
     });
 
@@ -468,12 +449,12 @@ describe('gameStore', () => {
     });
 
     it('multiple notifyStateChange calls do not corrupt state', () => {
-      const gs = getGameState();
-      gs.money = 100;
+      const store = getResourceEntity()!;
+      store.resources.money = 100;
       notifyStateChange();
       notifyStateChange();
       notifyStateChange();
-      expect(gs.money).toBe(100);
+      expect(store.resources.money).toBe(100);
     });
   });
 });

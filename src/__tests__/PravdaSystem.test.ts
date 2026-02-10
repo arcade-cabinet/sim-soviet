@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getMetaEntity, getResourceEntity } from '../ecs/archetypes';
+import { createMetaStore, createResourceStore } from '../ecs/factories';
+import { world } from '../ecs/world';
 import type { GameEvent } from '../game/EventSystem';
-import { GameState } from '../game/GameState';
 import { PravdaSystem } from '../game/PravdaSystem';
 
 function createMockEvent(overrides: Partial<GameEvent> = {}): GameEvent {
@@ -18,15 +20,17 @@ function createMockEvent(overrides: Partial<GameEvent> = {}): GameEvent {
 }
 
 describe('PravdaSystem', () => {
-  let gs: GameState;
   let pravda: PravdaSystem;
 
   beforeEach(() => {
-    gs = new GameState();
-    pravda = new PravdaSystem(gs);
+    world.clear();
+    createResourceStore();
+    createMetaStore();
+    pravda = new PravdaSystem();
   });
 
   afterEach(() => {
+    world.clear();
     vi.restoreAllMocks();
   });
 
@@ -168,30 +172,30 @@ describe('PravdaSystem', () => {
 
   describe('template variable substitution in ambient headlines', () => {
     it('includes game state values in generated headlines', () => {
-      gs.pop = 42;
-      gs.food = 999;
-      gs.vodka = 25;
+      getResourceEntity()!.resources.population = 42;
+      getResourceEntity()!.resources.food = 999;
+      getResourceEntity()!.resources.vodka = 25;
 
       // Generate many headlines and check that game state values appear
       // The procedural system interpolates values directly, so population,
       // food, vodka, etc. should appear in some generated headlines.
-      let foundGameStateRef = false;
+      let foundEcsRef = false;
       for (let i = 0; i < 500; i++) {
         vi.spyOn(Date, 'now').mockReturnValue(100000 + i * 50000);
         const headline = pravda.generateAmbientHeadline();
         if (headline) {
           const allText = headline.headline + headline.subtext + headline.reality;
           if (allText.includes('42') || allText.includes('999') || allText.includes('25')) {
-            foundGameStateRef = true;
+            foundEcsRef = true;
             break;
           }
         }
       }
-      expect(foundGameStateRef).toBe(true);
+      expect(foundEcsRef).toBe(true);
     });
 
     it('includes year in generated headlines', () => {
-      gs.date.year = 1922;
+      getMetaEntity()!.gameMeta.date.year = 1922;
 
       let foundYear = false;
       for (let i = 0; i < 3000; i++) {
