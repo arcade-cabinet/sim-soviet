@@ -272,21 +272,3 @@ body {
 }
 
 /* ── Toast ──────────────────────────────────────────────────────────────── */
-
-.toast {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(139,28,28,0.92);
-  color: #fff;
-  padding: 6px 16px;
-  border: 1px solid #ff4444;
-  font-size: 1rem;
-  z-index: 150;
-  pointer-events: none;
-  white-space: nowrap;
-  max-width: 90%;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
