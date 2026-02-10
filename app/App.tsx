@@ -17,14 +17,16 @@ import { DrawerPanel } from '@/components/ui/DrawerPanel';
 import { GameOverModal } from '@/components/ui/GameOverModal';
 import { IntroModal } from '@/components/ui/IntroModal';
 import { RadialBuildMenu } from '@/components/ui/RadialBuildMenu';
+import { SettlementUpgradeModal } from '@/components/ui/SettlementUpgradeModal';
 import { SovietHUD } from '@/components/ui/SovietHUD';
-import { Toast } from '@/components/ui/Toast';
+import { SovietToastStack } from '@/components/ui/SovietToastStack';
+import type { SettlementEvent } from '@/game/SettlementSystem';
 import type { SimCallbacks } from '@/game/SimulationEngine';
 import { useGameSnapshot } from '@/stores/gameStore';
+import { addSovietToast } from '@/stores/toastStore';
 
 interface Messages {
   advisor: string | null;
-  toast: string | null;
   pravda: string | null;
 }
 
@@ -38,22 +40,23 @@ export function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [settlementEvent, setSettlementEvent] = useState<SettlementEvent | null>(null);
   const [messages, setMessages] = useState<Messages>({
     advisor: null,
-    toast: null,
     pravda: null,
   });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Callbacks for SimulationEngine → React state
   const simCallbacks: SimCallbacks = {
-    onToast: (msg) => setMessages((p) => ({ ...p, toast: msg })),
+    onToast: (msg, severity) => addSovietToast(severity ?? 'warning', msg),
     onAdvisor: (msg) => setMessages((p) => ({ ...p, advisor: msg })),
     onPravda: (msg) => setMessages((p) => ({ ...p, pravda: msg })),
     onStateChange: () => {
       /* notifyStateChange() called in GameWorld */
     },
     onGameOver: (victory, reason) => setGameOver({ victory, reason }),
+    onSettlementChange: (event) => setSettlementEvent(event),
   };
 
   const handleStart = useCallback(() => {
@@ -122,10 +125,7 @@ export function App() {
 
         {/* DOM overlays on top of canvas */}
         <BuildingInspector />
-        <Toast
-          message={messages.toast}
-          onDismiss={() => setMessages((p) => ({ ...p, toast: null }))}
-        />
+        <SovietToastStack />
         <Advisor
           message={messages.advisor}
           onDismiss={() => setMessages((p) => ({ ...p, advisor: null }))}
@@ -140,6 +140,17 @@ export function App() {
 
       {/* Slide-out drawer */}
       <DrawerPanel isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+      {/* Settlement upgrade decree modal */}
+      <AnimatePresence>
+        {settlementEvent && settlementEvent.type === 'upgrade' && (
+          <SettlementUpgradeModal
+            fromTier={settlementEvent.fromTier}
+            toTier={settlementEvent.toTier}
+            onClose={() => setSettlementEvent(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

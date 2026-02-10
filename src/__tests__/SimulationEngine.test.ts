@@ -223,7 +223,7 @@ describe('SimulationEngine', () => {
       store.resources.vodka = 100;
       engine.tick();
       expect(gs.pop).toBeLessThanOrEqual(95);
-      expect(cb.onToast).toHaveBeenCalledWith('STARVATION DETECTED');
+      expect(cb.onToast).toHaveBeenCalledWith('STARVATION DETECTED', 'critical');
     });
 
     it('reduces population by 5 during starvation (clamped at 0)', () => {

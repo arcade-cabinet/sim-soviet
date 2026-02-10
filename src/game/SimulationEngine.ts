@@ -46,7 +46,7 @@ import { PersonnelFile } from './PersonnelFile';
 import { PolitburoSystem } from './PolitburoSystem';
 import { PravdaSystem } from './PravdaSystem';
 import type { GameRng } from './SeedSystem';
-import type { SettlementMetrics } from './SettlementSystem';
+import type { SettlementEvent, SettlementMetrics } from './SettlementSystem';
 import { SettlementSystem } from './SettlementSystem';
 import { getWeatherProfile, type WeatherType } from './WeatherSystem';
 
@@ -55,7 +55,7 @@ import { getWeatherProfile, type WeatherType } from './WeatherSystem';
  * Extended with season/weather/dayPhase change notifications.
  */
 export interface SimCallbacks {
-  onToast: (msg: string) => void;
+  onToast: (msg: string, severity?: 'warning' | 'critical' | 'evacuation') => void;
   onAdvisor: (msg: string) => void;
   onPravda: (msg: string) => void;
   onStateChange: () => void;
@@ -64,6 +64,7 @@ export interface SimCallbacks {
   onDayPhaseChanged?: (phase: string, dayProgress: number) => void;
   onBuildingCollapsed?: (gridX: number, gridY: number, type: string) => void;
   onGameOver?: (victory: boolean, reason: string) => void;
+  onSettlementChange?: (event: SettlementEvent) => void;
 }
 
 /** Consecutive quota failures that trigger game over. */
@@ -138,11 +139,11 @@ export class SimulationEngine {
 
     // Wire ECS callbacks to UI
     setStarvationCallback(() => {
-      this.callbacks.onToast('STARVATION DETECTED');
+      this.callbacks.onToast('STARVATION DETECTED', 'critical');
     });
 
     setBuildingCollapsedCallback((gridX, gridY, type, footprintX, footprintY) => {
-      this.callbacks.onToast(`Building collapsed at (${gridX}, ${gridY}): ${type}`);
+      this.callbacks.onToast(`Building collapsed at (${gridX}, ${gridY}): ${type}`, 'critical');
       // Clear ALL footprint grid cells and remove from GameState
       for (let dx = 0; dx < footprintX; dx++) {
         for (let dy = 0; dy < footprintY; dy++) {
@@ -421,12 +422,14 @@ export class SimulationEngine {
 
     const event = this.settlement.tick(metrics);
     if (event) {
-      this.callbacks.onAdvisor(`${event.title}\n\n${event.description}`);
-      this.callbacks.onToast(
-        event.type === 'upgrade'
-          ? `UPGRADED: ${event.toTier.toUpperCase()}`
-          : `DOWNGRADED: ${event.toTier.toUpperCase()}`
-      );
+      if (event.type === 'upgrade') {
+        // Fire the modal callback for upgrades
+        this.callbacks.onSettlementChange?.(event);
+      } else {
+        // Downgrades get a critical toast + advisor
+        this.callbacks.onAdvisor(`${event.title}\n\n${event.description}`);
+        this.callbacks.onToast(`DOWNGRADED: ${event.toTier.toUpperCase()}`, 'critical');
+      }
     }
   }
 
@@ -446,7 +449,7 @@ export class SimulationEngine {
 
     if (this.quota.current > this.quota.target * 1.1) {
       this.personnelFile.addCommendation('quota_exceeded', totalTicks);
-      this.callbacks.onToast('+1 COMMENDATION: Quota exceeded');
+      this.callbacks.onToast('+1 COMMENDATION: Quota exceeded', 'warning');
     }
 
     this.callbacks.onAdvisor('Quota met. Accept this medal made of tin. Now, produce VODKA.');
