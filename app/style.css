@@ -24,6 +24,16 @@
   --term-green: #33ff00;
 }
 
+/* ── Utility: Hide scrollbar but keep scrollability ────────────────────── */
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── Base Reset ─────────────────────────────────────────────────────────── */
 
 body {
