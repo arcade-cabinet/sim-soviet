@@ -58,7 +58,7 @@ describe('AudioManager', () => {
       const am = new AudioManager();
       expect(am.getMusicVolume()).toBe(0.5);
       expect(am.getAmbientVolume()).toBe(0.4);
-      expect(am.isMuted()).toBe(false);
+      expect(am.isMuted()).toBe(true); // defaults to muted
     });
   });
 
@@ -95,17 +95,25 @@ describe('AudioManager', () => {
   });
 
   describe('toggleMute', () => {
+    it('defaults to muted (true)', () => {
+      const am = new AudioManager();
+      expect(am.isMuted()).toBe(true);
+    });
+
     it('toggles and returns new state', () => {
       const am = new AudioManager();
-      expect(am.toggleMute()).toBe(true);
-      expect(am.isMuted()).toBe(true);
+      // Default is muted=true, first toggle unmutes
       expect(am.toggleMute()).toBe(false);
       expect(am.isMuted()).toBe(false);
+      expect(am.toggleMute()).toBe(true);
+      expect(am.isMuted()).toBe(true);
     });
 
     it('persists muted state to localStorage', () => {
       const am = new AudioManager();
-      am.toggleMute();
+      am.toggleMute(); // muted=true -> false
+      expect(localStorage.getItem('simsoviet_muted')).toBe('false');
+      am.toggleMute(); // false -> true
       expect(localStorage.getItem('simsoviet_muted')).toBe('true');
     });
   });

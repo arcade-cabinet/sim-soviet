@@ -58,7 +58,7 @@ export class AudioManager {
   constructor() {
     this.musicVolume = loadStoredNumber(STORAGE_KEY_MUSIC_VOL, 0.5);
     this.ambientVolume = loadStoredNumber(STORAGE_KEY_AMBIENT_VOL, 0.4);
-    this.muted = loadStoredBool(STORAGE_KEY_MUTED, false);
+    this.muted = loadStoredBool(STORAGE_KEY_MUTED, true);
   }
 
   private ensureInitialized(): void {
