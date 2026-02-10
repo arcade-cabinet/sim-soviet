@@ -17,6 +17,12 @@ interface BottomStripProps {
   pravdaMessage: string | null;
 }
 
+/**
+ * Renders a compact bottom bar showing settlement title, building and population summary, and a Pravda ticker.
+ *
+ * @param pravdaMessage - Message to display in the Pravda ticker; when `null` or `undefined`, a muted fallback message is shown.
+ * @returns A JSX element containing the bottom strip with role/title, counts, and the Pravda message.
+ */
 export function BottomStrip({ pravdaMessage }: BottomStripProps) {
   const snap = useGameSnapshot();
   const title = TIER_TITLES[snap.settlementTier] ?? 'Chairman';

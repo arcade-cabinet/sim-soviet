@@ -39,6 +39,12 @@ let _gameState: GameState | null = null;
 const _listeners = new Set<() => void>();
 let _snapshot: GameSnapshot | null = null;
 
+/**
+ * Creates an immutable view of the current game state for React subscribers.
+ *
+ * @param gs - The mutable GameState to snapshot
+ * @returns A GameSnapshot representing the current state; `date` and `quota` are shallow-copied, and `buildingCount` is derived from the number of buildings in `gs`
+ */
 function createSnapshot(gs: GameState): GameSnapshot {
   return {
     seed: gs.seed,
@@ -124,6 +130,12 @@ export function useDragState(): DragState | null {
   return useSyncExternalStore(subscribeDrag, getDragState, getDragState);
 }
 
+/**
+ * Subscribe to drag-state changes.
+ *
+ * @param listener - Callback invoked whenever the drag state is updated
+ * @returns A function that unsubscribes the listener when called
+ */
 function subscribeDrag(listener: () => void): () => void {
   _dragListeners.add(listener);
   return () => {
@@ -136,6 +148,11 @@ function subscribeDrag(listener: () => void): () => void {
 let _paused = false;
 let _gameSpeed: 1 | 2 | 3 = 1;
 
+/**
+ * Report whether the game is currently paused.
+ *
+ * @returns `true` if the game is paused, `false` otherwise.
+ */
 export function isPaused(): boolean {
   return _paused;
 }
@@ -146,6 +163,11 @@ export function togglePause(): boolean {
   return _paused;
 }
 
+/**
+ * Set the global paused state for the game.
+ *
+ * @param paused - `true` to pause the game, `false` to resume it
+ */
 export function setPaused(paused: boolean): void {
   _paused = paused;
   notifyStateChange();
@@ -153,15 +175,32 @@ export function setPaused(paused: boolean): void {
 
 export type GameSpeed = 1 | 2 | 3;
 
+/**
+ * Returns the current game speed setting.
+ *
+ * @returns The current game speed (1, 2, or 3)
+ */
 export function getGameSpeed(): GameSpeed {
   return _gameSpeed;
 }
 
+/**
+ * Set the game's speed.
+ *
+ * @param speed - New game speed (1, 2, or 3); updates the global speed and notifies subscribers of the change
+ */
 export function setGameSpeed(speed: GameSpeed): void {
   _gameSpeed = speed;
   notifyStateChange();
 }
 
+/**
+ * Cycle the game speed to the next setting (1 → 2 → 3 → 1).
+ *
+ * Updates the internal game speed, notifies listeners of the change, and returns the new speed.
+ *
+ * @returns The new game speed: `1`, `2`, or `3`.
+ */
 export function cycleGameSpeed(): GameSpeed {
   _gameSpeed = (_gameSpeed === 3 ? 1 : _gameSpeed + 1) as GameSpeed;
   notifyStateChange();
@@ -200,6 +239,12 @@ export function useInspected(): InspectedBuilding | null {
   return useSyncExternalStore(subscribeInspect, getInspected, getInspected);
 }
 
+/**
+ * Registers a callback to be invoked when the inspected-building state changes.
+ *
+ * @param listener - A zero-argument callback that will be called on inspected state updates
+ * @returns A function that unsubscribes the listener; calling it removes the listener and has no effect if already removed
+ */
 function subscribeInspect(listener: () => void): () => void {
   _inspectListeners.add(listener);
   return () => {
@@ -223,10 +268,20 @@ export interface RadialMenuState {
 let _radialMenu: RadialMenuState | null = null;
 const _radialListeners = new Set<() => void>();
 
+/**
+ * Retrieve the current radial build menu state used by UI components.
+ *
+ * @returns The active RadialMenuState if the radial menu is open, or `null` if it is closed.
+ */
 export function getRadialMenu(): RadialMenuState | null {
   return _radialMenu;
 }
 
+/**
+ * Opens the radial build menu with the provided state and notifies all subscribers.
+ *
+ * @param state - The radial menu state (screen position, target grid coordinates, and available space) to set as active
+ */
 export function openRadialMenu(state: RadialMenuState): void {
   _radialMenu = state;
   for (const listener of _radialListeners) {
@@ -234,6 +289,11 @@ export function openRadialMenu(state: RadialMenuState): void {
   }
 }
 
+/**
+ * Closes the currently open radial build menu and notifies subscribers.
+ *
+ * All registered radial menu listeners are invoked so observers can update their state.
+ */
 export function closeRadialMenu(): void {
   _radialMenu = null;
   for (const listener of _radialListeners) {
@@ -241,10 +301,21 @@ export function closeRadialMenu(): void {
   }
 }
 
+/**
+ * React hook that subscribes to updates of the radial build menu state.
+ *
+ * @returns The current radial menu state, or `null` when the radial menu is closed.
+ */
 export function useRadialMenu(): RadialMenuState | null {
   return useSyncExternalStore(subscribeRadial, getRadialMenu, getRadialMenu);
 }
 
+/**
+ * Subscribe to radial menu state changes.
+ *
+ * @param listener - Callback invoked whenever the radial menu state is updated
+ * @returns A function that unsubscribes the provided listener
+ */
 function subscribeRadial(listener: () => void): () => void {
   _radialListeners.add(listener);
   return () => {
@@ -258,17 +329,33 @@ type PlacementCallback = (gridX: number, gridY: number, defId: string) => boolea
 
 let _placementCallback: PlacementCallback | null = null;
 
-/** Called by CanvasGestureManager to register its placement method. */
+/**
+ * Register or clear the callback used to attempt placing a building on the grid.
+ *
+ * @param cb - The placement callback to register, or `null` to clear the current callback
+ */
 export function setPlacementCallback(cb: PlacementCallback | null): void {
   _placementCallback = cb;
 }
 
-/** Called by RadialBuildMenu to place a building at a grid position. */
+/**
+ * Attempt to place a building of the specified definition at the given grid coordinates.
+ *
+ * @param gridX - Target tile X coordinate on the grid
+ * @param gridY - Target tile Y coordinate on the grid
+ * @param defId - Identifier of the building definition to place
+ * @returns `true` if the placement was accepted, `false` otherwise
+ */
 export function requestPlacement(gridX: number, gridY: number, defId: string): boolean {
   return _placementCallback?.(gridX, gridY, defId) ?? false;
 }
 
-// ── Internal ──────────────────────────────────────────────────────────────
+/**
+ * Subscribe to game state change notifications.
+ *
+ * @param listener - Callback invoked whenever the game state changes
+ * @returns A function that unsubscribes the provided listener
+ */
 
 function subscribe(listener: () => void): () => void {
   _listeners.add(listener);

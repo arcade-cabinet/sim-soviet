@@ -54,6 +54,13 @@ function pick<T>(arr: readonly T[]): T {
   return _rng ? _rng.pick(arr) : arr[Math.floor(Math.random() * arr.length)]!;
 }
 
+/**
+ * Produce a uniformly distributed integer between min and max, inclusive.
+ *
+ * @param min - Lower bound of the range (inclusive)
+ * @param max - Upper bound of the range (inclusive)
+ * @returns An integer in the closed interval [min, max]
+ */
 function randInt(min: number, max: number): number {
   return _rng ? _rng.int(min, max) : Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -61,6 +68,12 @@ function randInt(min: number, max: number): number {
 /** A building is a "gulag" if it has negative housing capacity (drains population). */
 const isGulag = (b: Building): boolean => (getBuildingDef(b.defId)?.stats.housingCap ?? 0) < 0;
 
+/**
+ * Determine whether a Bernoulli trial succeeds for the given probability.
+ *
+ * @param probability - Success probability in the range 0 to 1 (default 0.5)
+ * @returns `true` with probability `probability`, `false` otherwise.
+ */
 function coinFlip(probability = 0.5): boolean {
   return _rng ? _rng.coinFlip(probability) : Math.random() < probability;
 }

@@ -84,6 +84,15 @@ function seasonToMusicContext(season: string): keyof typeof MUSIC_CONTEXTS | nul
   }
 }
 
+/**
+ * Sets up and manages the game's renderer, input handlers, audio, terrain, ECS resources, and simulation lifecycle using the provided canvas.
+ *
+ * Initializes Canvas2DRenderer and CanvasGestureManager when a canvas becomes available; when gameStarted transitions true it initializes persistence, audio, RNG/terrain, the SimulationEngine, and a tick loop, and cleans them up on unmount. Also registers global keyboard shortcuts.
+ *
+ * @param canvasRef - Ref to the HTMLCanvasElement used for rendering
+ * @param callbacks - Simulation callbacks (forwarded to SimulationEngine; some are augmented with audio, toasts, and state notifications)
+ * @param gameStarted - When true, performs one-time game initialization and starts the simulation
+ */
 export function GameWorld({ canvasRef, callbacks, gameStarted }: Props) {
   const rendererRef = useRef<Canvas2DRenderer | null>(null);
   const gestureRef = useRef<CanvasGestureManager | null>(null);

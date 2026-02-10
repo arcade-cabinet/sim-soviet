@@ -66,6 +66,13 @@ const CARDS: ProtoCard[] = [
   },
 ];
 
+/**
+ * Render a full-screen wrapper that displays a fixed "back to gallery" button and the provided children.
+ *
+ * @param children - The content to display inside the full-screen wrapper.
+ * @param onBack - Callback invoked when the back button is clicked.
+ * @returns A React element containing the back button and the `children` content.
+ */
 function FullScreenProto({ children, onBack }: { children: React.ReactNode; onBack: () => void }) {
   return (
     <div>
@@ -77,6 +84,15 @@ function FullScreenProto({ children, onBack }: { children: React.ReactNode; onBa
   );
 }
 
+/**
+ * Renders the prototype gallery and switches to full-screen or modal prototype views.
+ *
+ * The component displays a grid of prototype cards; clicking a card opens either a full-screen demo
+ * (notifications, game HUD, toolbar) or a modal overlay (annual report, five-year plan, settlement upgrade).
+ * Includes an internal back action that returns from a prototype view to the gallery.
+ *
+ * @returns The UI tree for the prototype gallery or the currently active prototype view.
+ */
 function PrototypeViewer() {
   const [active, setActive] = useState<PrototypeName>(null);
   const back = () => setActive(null);

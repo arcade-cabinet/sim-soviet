@@ -2,6 +2,17 @@ import * as SliderPrimitive from '@radix-ui/react-slider';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
+/**
+ * UI slider component that supports single-value and range usage and renders one thumb per provided value.
+ *
+ * Supports controlled (`value`) and uncontrolled (`defaultValue`) usage; when a value is an array the component renders one thumb per array entry to represent a range/multi-thumb slider.
+ *
+ * @param value - Controlled value (number or number[]). When an array, each entry maps to a thumb.
+ * @param defaultValue - Uncontrolled initial value (number or number[]). When an array, each entry maps to a thumb.
+ * @param min - Minimum allowed value for the slider (default 0).
+ * @param max - Maximum allowed value for the slider (default 100).
+ * @returns The rendered slider element.
+ */
 function Slider({
   className,
   defaultValue,

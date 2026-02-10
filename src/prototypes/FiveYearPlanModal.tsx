@@ -37,16 +37,37 @@ const QUOTA_DATA: QuotaRow[] = [
 
 const DOCUMENT_FONT = { fontFamily: 'Courier New, monospace' } as const;
 
+/**
+ * Compute the percentage increase required to reach a target from a current value.
+ *
+ * @param current - The baseline (current) numeric value.
+ * @param target - The desired target numeric value.
+ * @returns The required percentage change from `current` to `target`, rounded to the nearest integer (positive for an increase, negative for a decrease).
+ *
+ * Note: if `current` is 0 the result may be `Infinity`, `-Infinity`, or `NaN` depending on `target`.
+ */
 function increasePercent(current: number, target: number): number {
   return Math.round(((target - current) / current) * 100);
 }
 
+/**
+ * Selects an appropriate Tailwind text color class for a percentage value.
+ *
+ * @param pct - The percentage to evaluate (e.g., increase needed to meet a target)
+ * @returns The Tailwind text color class: `text-green-700` for `pct < 50`, `text-yellow-700` for `50 <= pct <= 100`, and `text-red-700` for `pct > 100`
+ */
 function increaseColor(pct: number): string {
   if (pct < 50) return 'text-green-700';
   if (pct <= 100) return 'text-yellow-700';
   return 'text-red-700';
 }
 
+/**
+ * Chooses a Tailwind background color class for a percentage increase badge.
+ *
+ * @param pct - Percentage increase to evaluate
+ * @returns `bg-green-100` when `pct` < 50, `bg-yellow-100` when `pct` is between 50 and 100 inclusive, `bg-red-100` when `pct` > 100
+ */
 function increaseBadgeBg(pct: number): string {
   if (pct < 50) return 'bg-green-100';
   if (pct <= 100) return 'bg-yellow-100';

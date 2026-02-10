@@ -33,6 +33,13 @@ interface GameOverInfo {
   reason: string;
 }
 
+/**
+ * Root React component for the SimSoviet 2000 application that composes the canvas-based isometric renderer, game world manager, and UI overlays.
+ *
+ * Renders the main game viewport (canvas and GameWorld), top HUD, bottom strip, modals (intro and game over), pause overlay, message overlays (toast, advisor, inspector), radial build menu, and a slide-out drawer while bridging simulation events into React state.
+ *
+ * @returns The root JSX element for the application containing the game canvas, UI overlays, and control panels.
+ */
 export function App() {
   const snap = useGameSnapshot();
   const [gameStarted, setGameStarted] = useState(false);

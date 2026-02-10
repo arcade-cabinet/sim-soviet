@@ -50,7 +50,12 @@ interface PointerStart {
 /** Cost to bulldoze a building. */
 const BULLDOZE_COST = 20;
 
-/** Gets the placement cost for a building def ID. */
+/**
+ * Retrieve the placement cost defined for a building definition ID.
+ *
+ * @param defId - The building definition identifier.
+ * @returns The building's placement cost, or 0 if the definition or cost is unavailable.
+ */
 function getBuildingCost(defId: string): number {
   const def = getBuildingDef(defId);
   return def?.presentation.cost ?? 0;

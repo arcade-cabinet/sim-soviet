@@ -52,11 +52,28 @@ const BUILDING_INNER_R = 120;
 const BUILDING_OUTER_R = 185;
 const CENTER = 200;
 
+/**
+ * Convert polar coordinates to Cartesian coordinates relative to a center point.
+ *
+ * @param cx - X coordinate of the center point
+ * @param cy - Y coordinate of the center point
+ * @param radius - Distance from the center
+ * @param angleDeg - Angle in degrees where 0° is upward (12 o'clock) and values increase clockwise
+ * @returns An object with `x` and `y` Cartesian coordinates
+ */
 function polarToXY(cx: number, cy: number, radius: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
   return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
 }
 
+/**
+ * Build an SVG path string describing a donut-shaped wedge (ring segment) centered at the given point.
+ *
+ * The wedge spans the angular interval from `startAngle` to `endAngle` (measured in degrees) and occupies the area between `innerR` and `outerR` radii from the center `(cx, cy)`.
+ *
+ * @param startAngle - Start angle of the wedge, in degrees.
+ * @param endAngle - End angle of the wedge, in degrees.
+ * @returns The `d` attribute string for an SVG <path> that draws the wedge (outer arc, line to inner arc, inner arc, and close).
 function describeWedge(
   cx: number,
   cy: number,
@@ -80,7 +97,13 @@ function describeWedge(
   ].join(' ');
 }
 
-/** Check if any building in a category fits the available space. */
+/**
+ * Determines whether the category contains at least one building whose footprint fits within the given available tile space.
+ *
+ * @param cat - Category definition to check
+ * @param availableSpace - Maximum available tiles along each axis; a building fits if both its `tilesX` and `tilesY` are less than or equal to this value
+ * @returns `true` if any building in the category fits, `false` otherwise
+ */
 function categoryHasFittingBuilding(cat: CategoryDef, availableSpace: number): boolean {
   const ids = cat.roles.flatMap((r) => getBuildingsByRole(r));
   return ids.some((id) => {
@@ -89,7 +112,18 @@ function categoryHasFittingBuilding(cat: CategoryDef, availableSpace: number): b
   });
 }
 
-// ── Category Wedge ───────────────────────────────────────────────────────
+/**
+ * Renders an interactive SVG wedge representing a single building category in the inner ring of the radial build menu.
+ *
+ * @param cat - Category definition containing id, label, icon, and associated roles
+ * @param index - Zero-based position of this wedge among active categories
+ * @param catAngle - Angular span (in degrees) allocated to each category wedge
+ * @param gap - Angular gap (in degrees) subtracted from each wedge to separate neighbors
+ * @param isSelected - Whether this category is currently selected (affects visual styling)
+ * @param hasEnabled - Whether the category contains at least one building that can fit the available space
+ * @param onToggle - Callback invoked when the wedge is activated via click or keyboard (Enter/Space)
+ * @returns An SVG <g> element containing the wedge path, icon, and label that acts as an accessible button
+ */
 
 function CategoryWedge({
   cat,
@@ -165,7 +199,22 @@ function CategoryWedge({
   );
 }
 
-// ── Building Wedge ───────────────────────────────────────────────────────
+/**
+ * Render an interactive SVG wedge for a single building option in the outer ring.
+ *
+ * Displays the building's icon, truncated name, and either its cost or a "WON'T FIT" message,
+ * and enables selection when the building fits the available space and the player can afford it.
+ *
+ * @param id - Unique identifier of the building definition
+ * @param def - Building definition used to obtain presentation (icon, name, cost) and footprint
+ * @param index - Zero-based position index of this wedge within the building ring
+ * @param buildingAngle - Angular size (degrees) allocated to each building wedge
+ * @param gap - Angular gap (degrees) applied between adjacent wedges
+ * @param availableSpace - Number of tiles available in the target placement area (used to test fit)
+ * @param money - Current player money used to determine affordability
+ * @param onSelect - Callback invoked with `defId` when the building is selected (only called if selectable)
+ * @returns An SVG <g> element containing the wedge path, labels, and interaction handlers for this building
+ */
 
 function BuildingWedge({
   id,
@@ -264,7 +313,13 @@ function BuildingWedge({
   );
 }
 
-// ── Main Component ───────────────────────────────────────────────────────
+/**
+ * Render the SVG radial build menu anchored at the tapped grid cell, letting the user pick a category and then a specific building to place.
+ *
+ * The menu shows an inner category ring and, when a category with fit-able buildings is selected, an outer building ring. Selecting a building requests placement at the target grid cell and closes the menu; clicking the backdrop or choosing a different category closes the menu without placing.
+ *
+ * @returns A React element containing the radial build menu positioned at the tap location, or `null` when no menu is active.
+ */
 
 export function RadialBuildMenu() {
   const menu = useRadialMenu();

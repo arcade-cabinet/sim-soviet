@@ -369,11 +369,9 @@ export function getSeasonalModifier(month: number): number {
 }
 
 /**
- * Returns the initial class distribution for spawning citizens.
- * The distribution is weighted: most citizens are workers, with smaller
- * numbers of specialists.
+ * Provides the initial weighted distribution used when spawning citizens.
  *
- * @returns An array of [CitizenClass, weight] tuples summing to 1.0.
+ * @returns An array of `[CitizenClass, weight]` tuples where `weight` is the selection weight for that class; weights sum to 1.0.
  */
 export function getClassDistribution(): ReadonlyArray<readonly [CitizenClass, number]> {
   return [

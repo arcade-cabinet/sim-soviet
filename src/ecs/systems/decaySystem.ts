@@ -33,11 +33,11 @@ export function setBuildingCollapsedCallback(cb: BuildingCollapsedCallback | und
 }
 
 /**
- * Runs the decay system for one simulation tick.
+ * Advances building durability by one simulation tick and removes collapsed buildings.
  *
- * Iterates all buildings with a durability component and reduces
- * their durability by their decay rate. Buildings that reach 0
- * durability are removed from the world.
+ * Reduces each decayable building's durability by its decayRate multiplied by `decayMult`. When a building's durability reaches zero it is removed from the world and, if registered, the building-collapsed callback is invoked with the building's grid coordinates, building type, and footprint dimensions.
+ *
+ * @param decayMult - Multiplier applied to each building's `decayRate` for this tick (default: `1.0`)
  */
 export function decaySystem(decayMult = 1.0): void {
   // Collect entities to remove (cannot modify during iteration)

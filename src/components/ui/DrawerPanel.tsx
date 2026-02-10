@@ -30,6 +30,13 @@ const THREAT_LABELS: Record<string, { label: string; color: string }> = {
   arrested: { label: 'ARRESTED', color: 'text-red-600' },
 };
 
+/**
+ * Render a slide-out command panel that displays current game state, alerts, and personnel info.
+ *
+ * @param isOpen - Whether the drawer is visible.
+ * @param onClose - Callback invoked when the user requests the panel to close (backdrop or close button).
+ * @returns A React element for the command drawer panel populated from the game snapshot.
+ */
 export function DrawerPanel({ isOpen, onClose }: DrawerPanelProps) {
   const snap = useGameSnapshot();
   const threatInfo = THREAT_LABELS[snap.threatLevel] ?? THREAT_LABELS.safe!;
@@ -218,7 +225,14 @@ export function DrawerPanel({ isOpen, onClose }: DrawerPanelProps) {
   );
 }
 
-// ── Sub-components ────────────────────────────────────────
+/**
+ * Renders a drawer section with a small iconized header and its content.
+ *
+ * @param icon - Icon component to display left of the title; receives an optional `className` prop for sizing/color.
+ * @param title - Section title text displayed in a compact, uppercase header.
+ * @param children - Content rendered below the header.
+ * @returns The section element containing the header (icon + title) and the provided children.
+ */
 
 function DrawerSection({
   icon: Icon,
@@ -242,6 +256,15 @@ function DrawerSection({
   );
 }
 
+/**
+ * Renders a compact statistic card with an icon, a prominent value, and a small label.
+ *
+ * @param label - Short uppercase label displayed below the value (e.g., "BUILDINGS")
+ * @param value - Prominent value text shown in monospace (e.g., "12")
+ * @param icon - Small icon or emoji displayed above the value
+ * @param valueClass - Optional additional class names applied to the value for custom styling
+ * @returns A JSX element representing the styled stat card
+ */
 function StatCard({
   label,
   value,
@@ -262,6 +285,15 @@ function StatCard({
   );
 }
 
+/**
+ * Render a single-line alert row styled according to severity.
+ *
+ * Renders a compact, left-bordered alert bar with color and border determined by `severity`.
+ *
+ * @param severity - The alert level; 'critical' = high-severity (red), 'warning' = medium (amber), 'info' = neutral (gray)
+ * @param message - Text to display inside the alert row
+ * @returns A JSX element representing the styled alert row
+ */
 function AlertItem({
   severity,
   message,
@@ -281,6 +313,14 @@ function AlertItem({
   );
 }
 
+/**
+ * Renders a two-column row with a label on the left and a numeric value on the right.
+ *
+ * @param label - Text label displayed on the left side
+ * @param value - Numeric value displayed on the right side
+ * @param color - CSS class(es) applied to the value for color/styling
+ * @returns A JSX element containing the labeled row with the value styled using `color`
+ */
 function PersonnelRow({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex items-center justify-between">
