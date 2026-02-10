@@ -106,14 +106,15 @@ export class SimulationEngine {
 
     const eventHandler = (event: GameEvent) => {
       const headline = this.pravdaSystem.headlineFromEvent(event);
-      const severityLabel =
-        event.severity === 'catastrophic'
-          ? '[CATASTROPHIC]'
-          : event.severity === 'major'
-            ? '[MAJOR]'
-            : '';
-      this.callbacks.onAdvisor(`${severityLabel} ${event.title}\n\n${event.description}`);
+      this.callbacks.onAdvisor(`${event.title}\n\n${event.description}`);
       this.callbacks.onPravda(headline.headline);
+
+      // Fire severity-appropriate toast for significant events
+      if (event.severity === 'catastrophic') {
+        this.callbacks.onToast(event.title, 'evacuation');
+      } else if (event.severity === 'major') {
+        this.callbacks.onToast(event.title, 'critical');
+      }
     };
 
     this.eventSystem = new EventSystem(gameState, eventHandler, rng);
