@@ -155,6 +155,7 @@ describe('SimulationEngine', () => {
     it('does not produce vodka from unpowered distilleries', () => {
       createBuilding(1, 1, 'vodka-distillery');
       const store = getResourceEntity()!;
+      store.resources.population = 0; // Isolate from consumption
       const initialVodka = store.resources.vodka;
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
       engine.tick();
@@ -328,6 +329,7 @@ describe('SimulationEngine', () => {
       quota.type = 'vodka';
       const store = getResourceEntity()!;
       store.resources.vodka = 75;
+      store.resources.population = 0; // Isolate from consumption
       engine.tick();
       expect(getMetaEntity()!.gameMeta.quota.current).toBe(75);
     });

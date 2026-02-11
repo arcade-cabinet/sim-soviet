@@ -5,7 +5,7 @@
  * gates, modifiers, and campaign flavor text.
  */
 
-export { ERA_DEFINITIONS, ERA_ORDER } from './definitions';
+export { ERA_DEFINITIONS, ERA_ORDER, getAvailableBuildingsForYear } from './definitions';
 export { EraSystem } from './EraSystem';
 export {
   BUILDING_TIER_REQUIREMENTS,

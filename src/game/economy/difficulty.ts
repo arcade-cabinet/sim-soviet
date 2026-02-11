@@ -60,11 +60,11 @@ export const DIFFICULTY_MULTIPLIERS: Record<DifficultyLevel, DifficultyMultiplie
 
 const BASE_STARTING: Record<string, number> = {
   money: 2000,
-  food: 200,
+  food: 600,
   vodka: 50,
   power: 0,
   powerUsed: 0,
-  population: 0,
+  population: 12,
   timber: 30,
   steel: 10,
   paperwork: 5,

@@ -138,6 +138,26 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# macOS
+.DS_Store
+
+# Vite dev cache
+.vite/
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Playtest screenshots (temporary)
+playtest-*.png
+prototype-*.png
+
+# POC experiments
+poc/
+
 # Android
 android/
 ios/

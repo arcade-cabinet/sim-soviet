@@ -2,7 +2,7 @@
 title: Era-Based Campaigns
 status: Complete
 implementation: src/game/era/EraSystem.ts
-tests: src/__tests__/EraSystem.test.ts
+tests: src/__tests__/EraSystem.test.ts, src/__tests__/era-integration.test.ts
 last_verified: 2026-02-10
 coverage: "Full — 8 eras, transitions, building gates, victory/failure conditions, doctrine integration"
 ---
@@ -17,7 +17,7 @@ Structure like Civilization — progress through eras, accumulate score, carry y
 
 | # | Era | Years | Settlement Status | Core Mechanic | Victory Condition |
 |---|-----|-------|-------------------|---------------|-------------------|
-| 1 | **Revolution** | 1917-1922 | Selo (12 peasants) | Land redistribution, survival basics | Survive Civil War chaos, establish collective |
+| 1 | **Revolution** | 1917-1922 | Selo (~55 people, 10 dvory) | Land redistribution, survival basics | Survive Civil War chaos, establish collective |
 | 2 | **Collectivization** | 1922-1932 | Selo → Posyolok | Forced grain quotas, kulak purges | Meet first Five-Year Plan |
 | 3 | **Industrialization** | 1932-1941 | Posyolok | Factory conversion, gulag labor | Transform to industrial center |
 | 4 | **Great Patriotic War** | 1941-1945 | Posyolok → PGT | Conscription, factory conversion, rationing | Survive with >50% population |
@@ -85,7 +85,7 @@ See `../design-era-doctrines.md` for full doctrine definitions.
 ## Era-Specific Mechanics
 
 ### Era 1: Revolution (1917-1922)
-- **Start**: 12 peasants, no buildings, undeveloped land
+- **Start**: ~55 people in 10 dvory (households), no buildings, undeveloped land
 - **Resources**: Timber only. No steel, no power.
 - **Buildings available**: Kolkhoz HQ, wooden barracks, watchtower, well, granary
 - **Threats**: Civil War chaos (random events: bandits, requisition squads, White Army raids)

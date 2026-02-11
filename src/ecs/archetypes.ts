@@ -49,18 +49,50 @@ export const unpoweredBuildings = buildingsLogic.where(
 );
 
 /**
- * Producer buildings — buildings that have a `produces` field.
- * These generate food or vodka each simulation tick.
+ * Returns true if a building entity is operational (not under construction).
+ * Buildings without a constructionPhase field are treated as operational.
  */
-export const producers = buildingsLogic.where(
-  (entity): entity is With<Entity, 'position' | 'building'> => entity.building.produces != null
+function isBuildingOperational(entity: With<Entity, 'position' | 'building'>): boolean {
+  const phase = entity.building.constructionPhase;
+  return phase == null || phase === 'complete';
+}
+
+/**
+ * Operational buildings — buildings that have completed construction.
+ * Buildings without constructionPhase are treated as operational (backward compat).
+ *
+ * Reindex caveat applies: `world.reindex(entity)` after changing constructionPhase.
+ */
+export const operationalBuildings = buildingsLogic.where(
+  (entity): entity is With<Entity, 'position' | 'building'> => isBuildingOperational(entity)
 );
 
 /**
- * Housing buildings — buildings with positive housing capacity.
+ * Buildings currently under construction (foundation or building phase).
+ *
+ * Reindex caveat applies: `world.reindex(entity)` after changing constructionPhase.
+ */
+export const underConstruction = buildingsLogic.where(
+  (entity): entity is With<Entity, 'position' | 'building'> => !isBuildingOperational(entity)
+);
+
+/**
+ * Producer buildings — operational buildings that have a `produces` field.
+ * These generate food or vodka each simulation tick.
+ * Buildings under construction do NOT produce.
+ */
+export const producers = buildingsLogic.where(
+  (entity): entity is With<Entity, 'position' | 'building'> =>
+    isBuildingOperational(entity) && entity.building.produces != null
+);
+
+/**
+ * Housing buildings — operational buildings with positive housing capacity.
+ * Buildings under construction do NOT provide housing.
  */
 export const housing = buildingsLogic.where(
-  (entity): entity is With<Entity, 'position' | 'building'> => entity.building.housingCap > 0
+  (entity): entity is With<Entity, 'position' | 'building'> =>
+    isBuildingOperational(entity) && entity.building.housingCap > 0
 );
 
 /**
@@ -88,6 +120,35 @@ export const assignedCitizens = citizens.where(
 export const housedCitizens = citizens.where(
   (entity): entity is With<Entity, 'position' | 'citizen'> => entity.citizen.home != null
 );
+
+/**
+ * Male citizens — for conscription targeting, gender-aware dialogue.
+ * Reindex caveat: `world.reindex(entity)` after changing citizen.gender.
+ */
+export const maleCitizens = citizens.where(
+  (entity): entity is With<Entity, 'position' | 'citizen'> => entity.citizen.gender === 'male'
+);
+
+/**
+ * Female citizens — for birth eligibility checks, gender-aware dialogue.
+ * Reindex caveat: `world.reindex(entity)` after changing citizen.gender.
+ */
+export const femaleCitizens = citizens.where(
+  (entity): entity is With<Entity, 'position' | 'citizen'> => entity.citizen.gender === 'female'
+);
+
+/**
+ * Citizens with a pre-computed render slot — the renderer reads these directly.
+ * All properly-created citizens should have a renderSlot.
+ */
+export const renderableCitizens = world.with('position', 'citizen', 'renderSlot');
+
+// ─── Dvor (Household) Archetypes ─────────────────────────────────────────────
+
+/**
+ * All dvor (household) entities.
+ */
+export const dvory = world.with('dvor', 'isDvor');
 
 // ─── Tile Archetypes ─────────────────────────────────────────────────────────
 

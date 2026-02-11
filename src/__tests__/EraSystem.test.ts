@@ -158,7 +158,7 @@ describe('ERA modifiers', () => {
 // ─────────────────────────────────────────────────────────
 
 describe('Building availability', () => {
-  it('all 31 buildings are assigned to exactly one era', () => {
+  it('all 35 buildings are assigned to exactly one era', () => {
     const allUnlocked: string[] = [];
     for (const eraId of ERA_ORDER) {
       allUnlocked.push(...ERA_DEFINITIONS[eraId].unlockedBuildings);
@@ -168,8 +168,8 @@ describe('Building availability', () => {
     const unique = new Set(allUnlocked);
     expect(unique.size).toBe(allUnlocked.length);
 
-    // All 31 covered
-    expect(allUnlocked).toHaveLength(31);
+    // All 35 covered
+    expect(allUnlocked).toHaveLength(35);
   });
 
   it('war_communism unlocks basic infrastructure', () => {
@@ -307,10 +307,10 @@ describe('Era transitions', () => {
 // ─────────────────────────────────────────────────────────
 
 describe('EraSystem.getAvailableBuildings', () => {
-  it('war_communism has only its 8 buildings', () => {
+  it('war_communism has only its 9 buildings', () => {
     const sys = new EraSystem(1922);
     const available = sys.getAvailableBuildings();
-    expect(available).toHaveLength(8);
+    expect(available).toHaveLength(9);
     expect(available).toContain('workers-house-a');
     expect(available).toContain('power-station');
   });
@@ -318,23 +318,23 @@ describe('EraSystem.getAvailableBuildings', () => {
   it('first_plans accumulates war_communism + its own', () => {
     const sys = new EraSystem(1930);
     const available = sys.getAvailableBuildings();
-    // 8 (war_communism) + 6 (first_plans) = 14
-    expect(available).toHaveLength(14);
+    // 9 (war_communism) + 8 (first_plans) = 17
+    expect(available).toHaveLength(17);
     expect(available).toContain('workers-house-a'); // from war_communism
     expect(available).toContain('bread-factory'); // from first_plans
   });
 
-  it('eternal_soviet has all 31 buildings', () => {
+  it('eternal_soviet has all 35 buildings', () => {
     const sys = new EraSystem(2000);
     const available = sys.getAvailableBuildings();
-    expect(available).toHaveLength(31);
+    expect(available).toHaveLength(35);
   });
 
   it('getLockedBuildings returns complement', () => {
     const sys = new EraSystem(1922);
     const available = sys.getAvailableBuildings();
     const locked = sys.getLockedBuildings();
-    expect(available.length + locked.length).toBe(31);
+    expect(available.length + locked.length).toBe(35);
 
     // No overlap
     const lockedSet = new Set(locked);
@@ -368,7 +368,7 @@ describe('Settlement tier gating', () => {
   it('getAvailableBuildings without tier returns all era-unlocked (backward compat)', () => {
     const sys = new EraSystem(2000);
     const all = sys.getAvailableBuildings();
-    expect(all).toHaveLength(31);
+    expect(all).toHaveLength(35);
   });
 
   it('getAvailableBuildings with selo returns only selo-tier buildings', () => {
@@ -417,12 +417,12 @@ describe('Settlement tier gating', () => {
   });
 
   it('tier gating still respects era gating', () => {
-    // war_communism era (1922) only has 8 buildings
+    // war_communism era (1922) only has 9 buildings
     const sys = new EraSystem(1922);
     const gorod = sys.getAvailableBuildings('gorod');
 
     // Even with gorod tier, can only see war_communism buildings
-    expect(gorod).toHaveLength(8);
+    expect(gorod).toHaveLength(9);
     expect(gorod).toContain('workers-house-a');
     expect(gorod).not.toContain('bread-factory'); // first_plans era
   });
@@ -524,6 +524,8 @@ describe('Era conditions', () => {
       commendations: 0,
       threatLevel: 'safe',
       currentEra: 'war_communism',
+      roadQuality: 'none',
+      roadCondition: 100,
       ...overrides,
     }) satisfies import('@/ecs/world').GameMeta;
 

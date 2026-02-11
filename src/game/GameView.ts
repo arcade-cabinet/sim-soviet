@@ -13,6 +13,8 @@ export interface Building {
   y: number;
   defId: string;
   powered: boolean;
+  constructionPhase?: 'foundation' | 'building' | 'complete';
+  constructionProgress?: number;
 }
 
 export interface GameView {
