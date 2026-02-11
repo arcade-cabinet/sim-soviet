@@ -5,6 +5,8 @@
  * 8 historical eras of the Soviet campaign.
  */
 
+import type { SettlementTier } from '../SettlementSystem';
+import { getBuildingTierRequirement, tierMeetsRequirement } from './tiers';
 import type { EraDefinition, EraId } from './types';
 
 // ─── ERA ORDER ──────────────────────────────────────────────────────────────
@@ -445,4 +447,24 @@ export function eraIndexForYear(year: number): number {
     if (year >= def.startYear) return i;
   }
   return 0;
+}
+
+/**
+ * Pure utility: returns all building defIds available for a given year and
+ * optional settlement tier. Used by the RadialBuildMenu to filter options
+ * without needing an EraSystem instance.
+ */
+export function getAvailableBuildingsForYear(year: number, tier?: SettlementTier): string[] {
+  const currentIdx = eraIndexForYear(year);
+  const available: string[] = [];
+
+  for (let i = 0; i <= currentIdx; i++) {
+    const eraId = ERA_ORDER[i]!;
+    const def = ERA_DEFINITIONS[eraId];
+    available.push(...def.unlockedBuildings);
+  }
+
+  if (tier == null) return available;
+
+  return available.filter((defId) => tierMeetsRequirement(tier, getBuildingTierRequirement(defId)));
 }

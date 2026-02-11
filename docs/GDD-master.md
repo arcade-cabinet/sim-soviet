@@ -53,31 +53,41 @@ Workers being disrupted (arrested for disloyalty, etc.) earns you a mark — but
 ## 3. Core Loop
 
 ```
-┌─────────────────────────────────────────────────┐
-│                                                 │
-│   ASSIGN WORKERS ──→ PRODUCE RESOURCES          │
-│        ↑                    │                   │
-│        │                    ↓                   │
-│   SURVIVE THREATS ←── MEET QUOTAS               │
-│        │                    │                   │
-│        │                    ↓                   │
-│        └───── POLICY CHANGES (from above) ──────┘
-│                                                 │
-└─────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│                                                       │
+│   STATE DEMANDS ──→ COLLECTIVE SELF-ORGANIZES         │
+│        ↑                    │                         │
+│        │                    ↓                         │
+│   SURVIVE APPARATUS ←── YOU NAVIGATE THE MIDDLE       │
+│        │                    │                         │
+│        │                    ↓                         │
+│        └──── INTERVENE ONLY WHEN YOU MUST ────────────┘
+│                                                       │
+└───────────────────────────────────────────────────────┘
 ```
 
 ### Moment-to-Moment Gameplay
 
-1. **Tap a worker (or group)** → worker/group highlights
-2. **Tap a building or zone** → workers assigned to that task
-3. **Watch production tick** → resources accumulate toward quota
-4. **Respond to events** → political officers arrive, military drafts workers, KGB takes someone
-5. **Manage the impossible** → too few workers for too many demands, constantly triaging
+1. **Watch the settlement breathe** → workers auto-assign to jobs, paths form between buildings, production ticks
+2. **Respond to state demands** → Moscow mandates 2 factories. The collective calculates what's needed. You choose WHERE to place them.
+3. **Navigate political survival** → commissar visits, KGB asks questions, military demands conscripts. Your answers determine your file.
+4. **Make survival decisions** → divert workers to foraging when food runs low, allow black market trade, decide who to sacrifice
+5. **Override when desperate** → force specific workers into specific tasks when the autonomous system isn't doing what you need. This costs political capital.
+
+### The Player Does:
+- **Choose WHERE to place mandated buildings** (the only direct spatial control)
+- **Set collective priorities** when demands conflict (food vs quotas vs construction)
+- **Navigate political conversations** with commissars, KGB, military
+- **Make moral choices** — who to sacrifice, how much corruption to allow, when to lie
+- **Override the collective** in emergencies (force assignment, divert resources)
+- **Tap buildings to inspect and manage** — drill into any building to see who's inside, what it produces, and intervene
 
 ### The Player Does NOT:
+- Individually assign each worker to each building (the collective self-organizes)
 - Choose which buildings to unlock (policy from above dictates this)
+- Draw roads (paths form automatically from worker movement)
 - Fight anyone directly
-- Have free-market trading
+- Have free-market trading (except the black market, at great risk)
 - Control the political officers, KGB, or military — only endure them
 
 ---
@@ -90,7 +100,7 @@ Each era is a self-contained campaign with distinct mechanics, buildings, threat
 
 | # | Era | Years | Starting Condition | Core Mechanic | Victory Condition |
 |---|-----|-------|--------------------|---------------|-------------------|
-| 1 | **Revolution** | 1917–1922 | Kolkhoz, 12 peasants | Land redistribution, survival basics | Survive Civil War chaos, establish the collective |
+| 1 | **Revolution** | 1917–1922 | Kolkhoz, ~55 people in 10 dvory | Land redistribution, survival basics | Survive Civil War chaos, establish the collective |
 | 2 | **Collectivization** | 1922–1932 | Small collective | Forced grain quotas, kulak purges | Meet first Five-Year Plan without total famine |
 | 3 | **Industrialization** | 1932–1941 | Growing town | Factory conversion, gulag labor | Transform agrarian collective into industrial center |
 | 4 | **Great Patriotic War** | 1941–1945 | Industrial town | Conscription, factory conversion, rationing | Survive with >50% population, keep production going |
@@ -234,9 +244,9 @@ Workers are the game. Not buildings, not resources — *people*.
 
 ### Worker Roles & Colors
 
-| Role | Color | Function | Controllable? |
-|------|-------|----------|---------------|
-| **Peasant / Proletarian** | Brown | Farming, construction, factory work | YES — player assigns |
+| Role | Color | Function | Player Control |
+|------|-------|----------|----------------|
+| **Peasant / Proletarian** | Brown | Farming, construction, factory work | Collective self-assigns. Player can override priorities or force-assign in emergencies. |
 | **Politruk / Zampolit** | Red | Ideology sessions, loyalty checks | NO — assigned from above |
 | **KGB / FSB Agent** | Black | Surveillance, disappearances | NO — arrives on its own |
 | **Military** | Green | Garrison, conscription, riot control | NO — drafted from your workers |
@@ -244,10 +254,11 @@ Workers are the game. Not buildings, not resources — *people*.
 ### Worker Lifecycle
 
 1. **Spawn**: Workers arrive based on population growth, housing capacity, and era events
-2. **Assignment**: Player taps worker → taps building/zone. Workers walk to assignment (visible on map)
-3. **Production**: Workers at assigned tasks produce resources each tick
+2. **Self-Assignment**: Workers autonomously evaluate the behavioral governor priority stack and assign themselves to available work. The collective self-organizes around state demands, survival needs, and trudodni minimums.
+3. **Production**: Workers at their self-assigned tasks produce resources each tick
 4. **Threats**: Politruks flag disloyal workers. KGB takes flagged workers. Military drafts arbitrary percentages
 5. **Death/Removal**: Starvation, old age, purge, conscription, gulag, "accident"
+6. **Player Override**: The player can force-reassign workers or adjust collective priorities — but this is an intervention, not the default.
 
 ### Procedural Worker Generation
 
@@ -258,18 +269,22 @@ Each worker is a tiny procedurally-generated sprite:
 - **Animation**: Idle, walking (4-direction), working (task-specific)
 - **Name**: Generated from existing NameGenerator (1.1M+ male, 567K female combinations)
 
-### Worker Assignment (Mobile Controls)
+### Collective Self-Organization
 
-**Tap-to-Assign flow**:
-1. Tap a worker or drag-select a group → selection highlight appears
-2. Available assignment zones glow (buildings needing workers, construction sites, farm plots)
-3. Tap a glowing zone → workers path-find and walk there
-4. Long-press a zone → shows worker count, production rate, quota contribution
+Workers are **autonomous by default**. They self-assign based on a 5-level behavioral governor priority stack:
 
-**Quick-assign shortcuts**:
-- Double-tap a building → auto-assign nearest idle workers
-- Swipe worker toward building → quick drag-assign
-- Tap "Auto-assign" button → AI distributes workers by priority (quota first)
+1. **Don't die** — forage, gather firewood, find shelter
+2. **Meet state demands** — construction mandates, quota shortfalls, compulsory deliveries
+3. **Fulfill trudodni minimum** — self-assign to available building job slots
+4. **Improve the collective** — repair buildings, build non-mandated structures, train skills
+5. **Private life** — tend garden plots, domestic work, rest
+
+The player **adjusts collective priorities**, not individual assignments:
+- "All hands to the harvest" → bumps food production to Priority 1
+- "Ignore the factory mandate" → drops construction to Priority 4 (risk: black mark)
+- "Allow black market this month" → enables hidden economy boost (risk: KGB investigation)
+
+**Emergency override**: Through the building interior (tap building → radial inspect → Workers), the player can force-reassign. This costs political capital — the collective notices when the chairman meddles.
 
 ### Worker Morale & Loyalty
 
@@ -506,13 +521,13 @@ Existing system — satirical headlines scroll across the bottom. Moved above th
 
 | Gesture | Action |
 |---------|--------|
-| **Tap worker** | Select worker (shows assignment options) |
-| **Tap building** | Show building info / assign selected workers |
+| **Tap empty tile** | Radial BUILD menu (category ring → building ring → place) |
+| **Tap building** | Radial INSPECT menu (Info / Workers / Production / Occupants / Demolish) |
+| **Tap housing** | Radial HOUSEHOLD menu (Men / Women / Children / Elders → individuals → dossier) |
+| **Tap worker dot** | Citizen Dossier modal (personnel file, household, stats, commissar notes) |
 | **Drag on map** | Pan camera |
 | **Pinch** | Zoom in/out (clamped to map bounds) |
-| **Double-tap building** | Auto-assign nearest idle workers |
-| **Long-press worker** | Show worker details (name, morale, loyalty, skill) |
-| **Swipe up on bottom panel** | Expand to full worker management view |
+| **Long-press building** | Quick info tooltip (production rate, worker count, efficiency) |
 
 ---
 
@@ -684,16 +699,16 @@ Minigames spawn from **tapping specific buildings or tiles**:
 
 | System | Current | New |
 |--------|---------|-----|
-| **Core loop** | Building placement sim | Worker assignment sim |
-| **Central resource** | Buildings | Workers (entities with role, morale, loyalty, skill) |
-| **Input** | Tap toolbar → drag building | Tap worker → tap target |
+| **Core loop** | Building placement sim | Autonomous collective survival sim |
+| **Central resource** | Buildings | Workers (entities with role, morale, loyalty, skill) — self-organizing |
+| **Input** | Tap toolbar → drag building | Tap empty tile → build; Tap building → inspect; Tap housing → households |
 | **Map** | 30×30 flat grid, edges visible | Variable-size seeded terrain, edges masked |
 | **Camera** | Unlimited pan/zoom | Clamped to map bounds, concrete frame |
 | **Buildings** | All 31 available immediately | Unlock via era/doctrine/policy |
-| **UI** | React overlay toolbar | Mobile-first brutalist panels |
+| **UI** | React overlay toolbar | Mobile-first brutalist panels, universal radial context menu |
 | **Progression** | Single continuous game | Era-based campaigns |
 | **Political system** | PolitburoSystem runs passively | Active threats (politruks, KGB, military) |
-| **ECS** | Exists but doesn't drive sim | Should become the primary authority |
+| **ECS** | Exists but doesn't drive sim | Single source of truth — all systems read/write ECS directly |
 
 ### What Stays
 
@@ -710,8 +725,8 @@ Minigames spawn from **tapping specific buildings or tiles**:
 
 ```text
 Phase A: Map & Camera overhaul (concrete frame, zoom clamping, procedural terrain)
-Phase B: Worker system (entities, roles, assignment, pathfinding, sprites)
-Phase C: UI/UX redesign (mobile-first panels, tap-to-assign controls)
+Phase B: Worker system (entities, roles, autonomous self-organization, pathfinding, sprites)
+Phase C: UI/UX redesign (mobile-first panels, universal radial context menu, building interiors)
 Phase D: Era campaign structure (progression, unlock triggers, victory/failure)
 Phase E: Political apparatus (active politruks, KGB, military as game entities)
 Phase F: Minigames (event-triggered interactive sequences)

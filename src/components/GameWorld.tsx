@@ -11,7 +11,7 @@ import { GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS } from '@/audio/AudioManifest';
 import type { NewGameConfig } from '@/components/screens/NewGameFlow';
 import { initDatabase } from '@/db/provider';
 import { citizens } from '@/ecs/archetypes';
-import { createMetaStore, createResourceStore } from '@/ecs/factories';
+import { createMetaStore, createResourceStore, createStartingSettlement } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { Season } from '@/game/Chronology';
 import { GameGrid } from '@/game/GameGrid';
@@ -46,6 +46,12 @@ export interface SaveSystemAPI {
   hasSave: (name?: string) => Promise<boolean>;
 }
 
+/** API exposed from GameWorld to parent for worker system controls. */
+export interface WorkerAPI {
+  setCollectiveFocus: (focus: 'food' | 'construction' | 'production' | 'balanced') => void;
+  getCollectiveFocus: () => 'food' | 'construction' | 'production' | 'balanced';
+}
+
 /** API exposed from GameWorld to parent for audio volume controls. */
 export interface AudioAPI {
   getMusicVolume: () => number;
@@ -67,6 +73,8 @@ interface Props {
   onSaveSystemReady?: (api: SaveSystemAPI) => void;
   /** Called when the AudioManager is ready for volume controls. */
   onAudioReady?: (api: AudioAPI) => void;
+  /** Called when the WorkerSystem is ready for collective focus controls. */
+  onWorkerApiReady?: (api: WorkerAPI) => void;
 }
 
 /** Maps Season enum values to renderer season keys. */
@@ -123,6 +131,7 @@ export function GameWorld({
   loadSaveOnStart,
   onSaveSystemReady,
   onAudioReady,
+  onWorkerApiReady,
 }: Props) {
   const rendererRef = useRef<Canvas2DRenderer | null>(null);
   const gestureRef = useRef<CanvasGestureManager | null>(null);
@@ -141,6 +150,8 @@ export function GameWorld({
   onSaveSystemReadyRef.current = onSaveSystemReady;
   const onAudioReadyRef = useRef(onAudioReady);
   onAudioReadyRef.current = onAudioReady;
+  const onWorkerApiReadyRef = useRef(onWorkerApiReady);
+  onWorkerApiReadyRef.current = onWorkerApiReady;
   const loadSaveOnStartRef = useRef(loadSaveOnStart);
   loadSaveOnStartRef.current = loadSaveOnStart;
 
@@ -256,10 +267,11 @@ export function GameWorld({
     // Slight delay to let preload settle
     const musicTimeout = setTimeout(playNextTrack, 2000);
 
-    // Initialize ECS world — resource store + meta store
+    // Initialize ECS world — resource store + meta store + starting households
     createResourceStore();
     const seed = gameConfig?.seed ?? generateSeedPhrase();
     createMetaStore({ seed });
+    createStartingSettlement(gameConfig?.difficulty ?? 'comrade');
 
     // Start simulation engine with seeded RNG
     const rng = new GameRng(seed);
@@ -274,6 +286,7 @@ export function GameWorld({
       mountainDensity: 0.05,
     });
     mapSystem.generate();
+    grid.setMapSystem(mapSystem);
     renderer.setMapSystem(mapSystem);
 
     // Preload ground tile sprites for the offscreen cache
@@ -356,6 +369,9 @@ export function GameWorld({
         };
       };
 
+      // Wire building placement → mandate tracking
+      gestures.onBuildingPlaced = (defId) => simRef.current?.recordBuildingForMandates(defId);
+
       // Wire worker assignment callback for assignment mode
       gestures.onWorkerAssign = (workerName, buildingGridX, buildingGridY) => {
         const ws = simRef.current?.getWorkerSystem();
@@ -391,6 +407,13 @@ export function GameWorld({
       toggleMute: () => audio.toggleMute(),
     });
 
+    // Expose worker system API to parent component
+    onWorkerApiReadyRef.current?.({
+      setCollectiveFocus: (focus) => simRef.current?.getWorkerSystem().setCollectiveFocus(focus),
+      getCollectiveFocus: () =>
+        simRef.current?.getWorkerSystem().getCollectiveFocus() ?? 'balanced',
+    });
+
     // Load save on start if requested (Continue / Load Game from landing page).
     // Wait for DB to be ready first, then load and notify React.
     const loadOnStartName = loadSaveOnStartRef.current;
@@ -418,10 +441,15 @@ export function GameWorld({
         renderer.setPoliticalEntities(polEntities ?? []);
 
         // Sync citizen positions to renderer for worker dot indicators
+        // Uses pre-computed renderSlot when available (iteration 10+ entities)
         const citizenRenderData: CitizenRenderData[] = citizens.entities.map((e) => ({
           gridX: e.position.gridX,
           gridY: e.position.gridY,
           citizenClass: e.citizen.class,
+          dotColor: (e as { renderSlot?: { dotColor: string } }).renderSlot?.dotColor,
+          gender: e.citizen.gender,
+          ageCategory: (e as { renderSlot?: { ageCategory: string } }).renderSlot
+            ?.ageCategory as CitizenRenderData['ageCategory'],
         }));
         renderer.setCitizenData(citizenRenderData);
       }

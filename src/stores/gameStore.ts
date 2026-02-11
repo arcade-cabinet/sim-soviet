@@ -5,7 +5,13 @@
  * snapshots that refresh when notifyStateChange() is called.
  */
 import { useSyncExternalStore } from 'react';
-import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
+import {
+  buildingsLogic,
+  citizens,
+  dvory,
+  getMetaEntity,
+  getResourceEntity,
+} from '@/ecs/archetypes';
 import type { GameMeta } from '@/ecs/world';
 
 // ── Snapshot type (immutable view for React) ──────────────────────────────
@@ -33,6 +39,13 @@ export interface GameSnapshot {
   threatLevel: string;
   currentEra: string;
 
+  // ── Population Breakdown ──
+  dvorCount: number;
+  avgMorale: number;
+  avgLoyalty: number;
+  assignedWorkers: number;
+  idleWorkers: number;
+
   // ── Planned Economy Resources ──
   trudodni: number;
   blat: number;
@@ -56,10 +69,26 @@ function createSnapshot(): GameSnapshot {
   const meta = getMetaEntity();
   const m = meta?.gameMeta;
 
+  // Compute population breakdown from ECS
+  const citizenList = citizens.entities;
+  const totalCitizens = citizenList.length;
+  let moraleSum = 0;
+  let assigned = 0;
+  for (const c of citizenList) {
+    moraleSum += c.citizen.happiness;
+    if (c.citizen.assignment) assigned++;
+  }
+  // Average dvor loyalty from household entities
+  const dvorList = dvory.entities;
+  let loyaltySum = 0;
+  for (const d of dvorList) {
+    loyaltySum += d.dvor.loyaltyToCollective;
+  }
+
   return {
     seed: m?.seed ?? '',
     money: res?.resources.money ?? 0,
-    pop: res?.resources.population ?? 0,
+    pop: totalCitizens,
     food: res?.resources.food ?? 0,
     vodka: res?.resources.vodka ?? 0,
     power: res?.resources.power ?? 0,
@@ -80,6 +109,13 @@ function createSnapshot(): GameSnapshot {
     commendations: m?.commendations ?? 0,
     threatLevel: m?.threatLevel ?? 'safe',
     currentEra: m?.currentEra ?? 'war_communism',
+
+    // Population breakdown
+    dvorCount: dvory.entities.length,
+    avgMorale: totalCitizens > 0 ? Math.round(moraleSum / totalCitizens) : 0,
+    avgLoyalty: dvorList.length > 0 ? Math.round(loyaltySum / dvorList.length) : 0,
+    assignedWorkers: assigned,
+    idleWorkers: totalCitizens - assigned,
 
     // Planned economy resources
     trudodni: res?.resources.trudodni ?? 0,

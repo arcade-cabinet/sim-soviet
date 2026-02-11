@@ -8,6 +8,7 @@
  * Systems executed per tick (in order):
  *   1. ChronologySystem       — advance time, season, weather, day/night
  *   2. powerSystem             — distribute power across buildings
+ *   2b. constructionSystem     — advance building construction progress
  *   3. productionSystem        — produce food/vodka from powered producers
  *   4. CompulsoryDeliveries    — state extraction of new production
  *   5. consumptionSystem       — citizens consume food and vodka
@@ -26,9 +27,11 @@ import { getBuildingDef } from '@/data/buildingDefs';
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import {
+  constructionSystem,
   consumptionSystem,
   createDefaultQuota,
   decaySystem,
+  demographicTick,
   populationSystem,
   powerSystem,
   productionSystem,
@@ -37,6 +40,8 @@ import {
   setStarvationCallback,
   storageSystem,
 } from '@/ecs/systems';
+import type { AchievementTrackerSaveData } from './AchievementTracker';
+import { AchievementTracker } from './AchievementTracker';
 import { TICKS_PER_YEAR } from './Chronology';
 import type { ChronologyState, TickResult } from './ChronologySystem';
 import { ChronologySystem } from './ChronologySystem';
@@ -48,6 +53,7 @@ import { ERA_DEFINITIONS, EraSystem } from './era';
 import type { EventSystemSaveData, GameEvent } from './events';
 import { EventSystem } from './events';
 import type { GameGrid } from './GameGrid';
+import { createGameTally, type TallyData } from './GameTally';
 import { MinigameRouter } from './minigames/MinigameRouter';
 import type {
   ActiveMinigame,
@@ -56,6 +62,8 @@ import type {
 } from './minigames/MinigameTypes';
 import type { PersonnelFileSaveData } from './PersonnelFile';
 import { PersonnelFile } from './PersonnelFile';
+import type { MandateWithFulfillment, PlanMandateState } from './PlanMandates';
+import { createMandatesForEra, createPlanMandateState, recordBuildingPlaced } from './PlanMandates';
 import type { PolitburoSaveData } from './politburo';
 import { PolitburoSystem } from './politburo';
 import type { PoliticalEntitySaveData } from './political';
@@ -67,6 +75,8 @@ import { eraIdToIndex, ScoringSystem } from './ScoringSystem';
 import type { GameRng } from './SeedSystem';
 import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from './SettlementSystem';
 import { SettlementSystem } from './SettlementSystem';
+import type { TutorialMilestone, TutorialSaveData } from './TutorialSystem';
+import { TutorialSystem } from './TutorialSystem';
 import { getWeatherProfile, type WeatherType } from './WeatherSystem';
 import { WorkerSystem } from './workers/WorkerSystem';
 
@@ -90,6 +100,7 @@ export interface SimCallbacks {
     quotaTarget: number;
     startYear: number;
     endYear: number;
+    mandates?: MandateWithFulfillment[];
   }) => void;
   /** Fired when the game transitions to a new historical era. */
   onEraChanged?: (era: EraDefinition) => void;
@@ -100,6 +111,12 @@ export interface SimCallbacks {
   ) => void;
   /** Fired when a minigame triggers. UI should present choices to the player. */
   onMinigame?: (active: ActiveMinigame) => void;
+  /** Fired when a tutorial milestone triggers (Krupnik guidance). */
+  onTutorialMilestone?: (milestone: TutorialMilestone) => void;
+  /** Fired when an achievement unlocks. */
+  onAchievement?: (name: string, description: string) => void;
+  /** Fired on game over with complete tally data for the summary screen. */
+  onGameTally?: (tally: TallyData) => void;
 }
 
 /**
@@ -122,6 +139,9 @@ export interface SubsystemSaveData {
   politburo?: PolitburoSaveData;
   politicalEntities?: PoliticalEntitySaveData;
   minigames?: MinigameRouterSaveData;
+  tutorial?: TutorialSaveData;
+  achievements?: AchievementTrackerSaveData;
+  mandates?: PlanMandateState;
   /** Engine-level state */
   engineState?: {
     lastSeason: string;
@@ -162,6 +182,10 @@ export class SimulationEngine {
   private minigameRouter: MinigameRouter;
   private scoring: ScoringSystem;
   private workerSystem: WorkerSystem;
+  private tutorial: TutorialSystem;
+  private achievements: AchievementTracker;
+  private mandateState: PlanMandateState | null = null;
+  private difficulty: DifficultyLevel;
   private quota: QuotaState;
   private rng: GameRng | undefined;
   private lastSeason = '';
@@ -183,6 +207,7 @@ export class SimulationEngine {
     consequence?: ConsequenceLevel
   ) {
     this.rng = rng;
+    this.difficulty = difficulty ?? 'comrade';
     this.quota = createDefaultQuota();
     const meta = getMetaEntity();
     const startYear = meta?.gameMeta.date.year ?? 1922;
@@ -256,6 +281,17 @@ export class SimulationEngine {
     // Scoring System — accumulates score at era boundaries
     this.scoring = new ScoringSystem(difficulty ?? 'comrade', consequence ?? 'permadeath');
 
+    // Tutorial System — Era 1 progressive disclosure via Comrade Krupnik
+    this.tutorial = new TutorialSystem();
+
+    // Achievement Tracker — 28 achievements driven by game stats
+    this.achievements = new AchievementTracker();
+
+    // Plan Mandates — building construction mandates per era
+    const initialEraId = this.eraSystem.getCurrentEraId();
+    const initialMandates = createMandatesForEra(initialEraId, this.difficulty);
+    this.mandateState = createPlanMandateState(initialMandates);
+
     // Wire ECS callbacks to UI
     setStarvationCallback(() => {
       this.callbacks.onToast('STARVATION DETECTED', 'critical');
@@ -326,8 +362,28 @@ export class SimulationEngine {
     return this.scoring;
   }
 
+  public getTutorial(): TutorialSystem {
+    return this.tutorial;
+  }
+
+  public getAchievements(): AchievementTracker {
+    return this.achievements;
+  }
+
   public getQuota(): Readonly<QuotaState> {
     return this.quota;
+  }
+
+  /** Record that a building was placed — updates mandate fulfillment tracking. */
+  public recordBuildingForMandates(defId: string): void {
+    if (this.mandateState) {
+      this.mandateState = recordBuildingPlaced(this.mandateState, defId);
+    }
+  }
+
+  /** Get the current mandate state (for UI display). */
+  public getMandateState(): PlanMandateState | null {
+    return this.mandateState;
   }
 
   /**
@@ -355,6 +411,9 @@ export class SimulationEngine {
       politburo: this.politburo.serialize(),
       politicalEntities: this.politicalEntities.serialize(),
       minigames: this.minigameRouter.serialize(),
+      tutorial: this.tutorial.serialize(),
+      achievements: this.achievements.serialize(),
+      mandates: this.mandateState ?? undefined,
       engineState: {
         lastSeason: this.lastSeason,
         lastWeather: this.lastWeather,
@@ -439,6 +498,18 @@ export class SimulationEngine {
       this.minigameRouter = MinigameRouter.deserialize(data.minigames, this.rng);
     }
 
+    if (data.tutorial) {
+      this.tutorial = TutorialSystem.deserialize(data.tutorial);
+    }
+
+    if (data.achievements) {
+      this.achievements = AchievementTracker.deserialize(data.achievements);
+    }
+
+    if (data.mandates) {
+      this.mandateState = data.mandates;
+    }
+
     if (data.engineState) {
       this.lastSeason = data.engineState.lastSeason;
       this.lastWeather = data.engineState.lastWeather;
@@ -518,6 +589,10 @@ export class SimulationEngine {
     const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult;
 
     powerSystem();
+    constructionSystem(
+      this.eraSystem.getConstructionTimeMult(),
+      weatherProfile.constructionTimeMult
+    );
 
     // Capture pre-production resource levels for CompulsoryDeliveries delta
     const storeRef = getResourceEntity();
@@ -552,6 +627,23 @@ export class SimulationEngine {
     const vodkaAvail = getResourceEntity()?.resources.vodka ?? 0;
     const foodAvail = getResourceEntity()?.resources.food ?? 0;
     this.workerSystem.tick(vodkaAvail, foodAvail);
+
+    // Demographic System — births, deaths, aging for dvor households
+    const normalizedFood = storeRef
+      ? Math.min(1, storeRef.resources.food / Math.max(1, storeRef.resources.population * 2))
+      : 0.5;
+    const demoResult = demographicTick(
+      this.rng ?? null,
+      this.chronology.getDate().totalTicks,
+      normalizedFood
+    );
+    // Sync dvor population changes to the resource store
+    if (storeRef && (demoResult.births > 0 || demoResult.deaths > 0)) {
+      storeRef.resources.population = Math.max(
+        0,
+        storeRef.resources.population + demoResult.births - demoResult.deaths
+      );
+    }
 
     decaySystem(politburoMods.infrastructureDecayMult * eraMods.decayMult);
     quotaSystem(this.quota);
@@ -607,6 +699,12 @@ export class SimulationEngine {
         'Your personnel file has been reviewed. You have been declared an Enemy of the People. No further correspondence is expected.'
       );
     }
+
+    // Tutorial System — check milestones for progressive disclosure (Era 1)
+    this.tickTutorial();
+
+    // Achievement Tracker — update stats and check unlock conditions
+    this.tickAchievements();
 
     // Sync non-resource state to gameMeta for React snapshots
     this.syncSystemsToMeta();
@@ -955,6 +1053,10 @@ export class SimulationEngine {
       const economyEra = GAME_ERA_TO_ECONOMY_ERA[newEra.id] ?? 'revolution';
       this.economySystem.setEra(economyEra);
 
+      // Generate new building mandates for the new era
+      const newMandates = createMandatesForEra(newEra.id, this.difficulty);
+      this.mandateState = createPlanMandateState(newMandates);
+
       // Reset personnel file marks to 2 (design: fresh-ish start per era)
       this.personnelFile.resetForNewEra();
 
@@ -1146,6 +1248,7 @@ export class SimulationEngine {
       quotaTarget: this.quota.target,
       startYear: metaYear,
       endYear: this.quota.deadlineYear,
+      mandates: this.mandateState?.mandates,
     });
   }
 
@@ -1255,6 +1358,60 @@ export class SimulationEngine {
     }
   }
 
+  /**
+   * Tick the tutorial system — check milestone conditions each cycle.
+   * When a milestone triggers, fire advisor callback with Krupnik dialogue.
+   */
+  private tickTutorial(): void {
+    if (!this.tutorial.isActive()) return;
+
+    const meta = getMetaEntity();
+    const res = getResourceEntity();
+    if (!meta || !res) return;
+
+    const totalTicks = this.chronology.getDate().totalTicks;
+    const milestone = this.tutorial.tick(
+      totalTicks,
+      meta.gameMeta,
+      res.resources,
+      buildingsLogic.entities.length
+    );
+
+    if (milestone) {
+      // Fire advisor callback with Krupnik's dialogue
+      this.callbacks.onAdvisor(milestone.dialogue);
+      this.callbacks.onTutorialMilestone?.(milestone);
+
+      // If milestone pauses simulation, the UI layer handles that via the callback
+    }
+  }
+
+  /**
+   * Tick the achievement tracker — update running stats and check conditions.
+   * Achievement checks run every 10 ticks (not every tick) to limit overhead.
+   */
+  private tickAchievements(): void {
+    const totalTicks = this.chronology.getDate().totalTicks;
+    if (totalTicks % 10 !== 0) return;
+
+    const res = getResourceEntity();
+    const date = this.chronology.getDate();
+    const population = res?.resources.population ?? 0;
+
+    const newUnlocks = this.achievements.tick(
+      res?.resources ?? null,
+      buildingsLogic.entities.length,
+      population,
+      date.year,
+      10 / 30 // ~0.33 seconds per 10 ticks at 30 ticks/second
+    );
+
+    for (const ach of newUnlocks) {
+      this.callbacks.onToast(`ACHIEVEMENT: ${ach.name}`, 'warning');
+      this.callbacks.onAchievement?.(ach.name, ach.description);
+    }
+  }
+
   private endGame(victory: boolean, reason: string): void {
     if (this.ended) return;
     this.ended = true;
@@ -1263,6 +1420,28 @@ export class SimulationEngine {
       meta.gameMeta.gameOver = { victory, reason };
     }
     this.callbacks.onGameOver?.(victory, reason);
+
+    // Generate and emit the end-game tally
+    if (this.callbacks.onGameTally) {
+      const res = getResourceEntity();
+      const date = this.chronology.getDate();
+      const tally = createGameTally(this.scoring, this.achievements, {
+        victory,
+        reason,
+        currentYear: date.year,
+        startYear: 1922,
+        population: res?.resources.population ?? 0,
+        buildingCount: buildingsLogic.entities.length,
+        money: res?.resources.money ?? 0,
+        food: res?.resources.food ?? 0,
+        vodka: res?.resources.vodka ?? 0,
+        blackMarks: this.personnelFile.getBlackMarks(),
+        commendations: this.personnelFile.getCommendations(),
+        settlementTier: this.settlement.getCurrentTier(),
+        quotaFailures: this.consecutiveQuotaFailures,
+      });
+      this.callbacks.onGameTally(tally);
+    }
   }
 
   /**

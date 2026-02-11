@@ -14,6 +14,7 @@ import {
   HardDrive,
   Map as MapIcon,
   Save,
+  Target,
   Upload,
   Users,
   Volume2,
@@ -21,7 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
-import type { AudioAPI, SaveSystemAPI } from '@/components/GameWorld';
+import type { AudioAPI, SaveSystemAPI, WorkerAPI } from '@/components/GameWorld';
 import { exportDatabaseFile, importDatabaseFile } from '@/db/provider';
 import { cn } from '@/lib/utils';
 import { notifyStateChange, useGameSnapshot } from '@/stores/gameStore';
@@ -32,6 +33,7 @@ interface DrawerPanelProps {
   onClose: () => void;
   saveApi?: SaveSystemAPI | null;
   audioApi?: AudioAPI | null;
+  workerApi?: WorkerAPI | null;
 }
 
 const TIER_RUSSIAN: Record<string, string> = {
@@ -50,7 +52,7 @@ const THREAT_LABELS: Record<string, { label: string; color: string }> = {
   arrested: { label: 'ARRESTED', color: 'text-red-600' },
 };
 
-export function DrawerPanel({ isOpen, onClose, saveApi, audioApi }: DrawerPanelProps) {
+export function DrawerPanel({ isOpen, onClose, saveApi, audioApi, workerApi }: DrawerPanelProps) {
   const snap = useGameSnapshot();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const threatInfo = THREAT_LABELS[snap.threatLevel] ?? THREAT_LABELS.safe!;
@@ -58,6 +60,9 @@ export function DrawerPanel({ isOpen, onClose, saveApi, audioApi }: DrawerPanelP
   const [musicVol, setMusicVol] = useState(() => audioApi?.getMusicVolume() ?? 0.5);
   const [ambientVol, setAmbientVol] = useState(() => audioApi?.getAmbientVolume() ?? 0.4);
   const [isMuted, setIsMuted] = useState(() => audioApi?.isMuted() ?? true);
+  const [collectiveFocus, setCollectiveFocus] = useState<
+    'food' | 'construction' | 'production' | 'balanced'
+  >(() => workerApi?.getCollectiveFocus() ?? 'balanced');
 
   // Quota info
   const quotaProgress =
@@ -267,6 +272,40 @@ export function DrawerPanel({ isOpen, onClose, saveApi, audioApi }: DrawerPanelP
                 </div>
               </DrawerSection>
 
+              {/* Population Registry */}
+              <DrawerSection icon={Users} title="POPULATION REGISTRY">
+                <div className="grid grid-cols-2 gap-2">
+                  <StatCard label="Dvory" value={String(snap.dvorCount)} icon="🏠" />
+                  <StatCard label="Citizens" value={snap.pop.toLocaleString()} icon="👤" />
+                  <StatCard
+                    label="Morale"
+                    value={`${snap.avgMorale}%`}
+                    icon="😐"
+                    valueClass={
+                      snap.avgMorale < 30
+                        ? 'text-[#ff4444]'
+                        : snap.avgMorale < 60
+                          ? 'text-[#ffaa00]'
+                          : 'text-green-500'
+                    }
+                  />
+                  <StatCard
+                    label="Loyalty"
+                    value={`${snap.avgLoyalty}%`}
+                    icon="⭐"
+                    valueClass={
+                      snap.avgLoyalty < 30
+                        ? 'text-[#ff4444]'
+                        : snap.avgLoyalty < 60
+                          ? 'text-[#ffaa00]'
+                          : 'text-green-500'
+                    }
+                  />
+                  <StatCard label="Assigned" value={String(snap.assignedWorkers)} icon="🔨" />
+                  <StatCard label="Idle" value={String(snap.idleWorkers)} icon="💤" />
+                </div>
+              </DrawerSection>
+
               {/* 5-Year Plan */}
               <DrawerSection icon={BarChart3} title="5-YEAR PLAN">
                 <div className="bg-[#1a1a1a] border border-[#444] px-2 py-2">
@@ -291,6 +330,40 @@ export function DrawerPanel({ isOpen, onClose, saveApi, audioApi }: DrawerPanelP
                     />
                   </div>
                 </div>
+              </DrawerSection>
+
+              {/* Collective Focus */}
+              <DrawerSection icon={Target} title="COLLECTIVE FOCUS">
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(
+                    [
+                      { id: 'balanced', label: 'BALANCED' },
+                      { id: 'food', label: 'FOOD' },
+                      { id: 'construction', label: 'BUILD' },
+                      { id: 'production', label: 'PRODUCE' },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        setCollectiveFocus(opt.id);
+                        workerApi?.setCollectiveFocus(opt.id);
+                      }}
+                      className={cn(
+                        'py-1.5 px-2 text-[10px] font-bold uppercase tracking-wider border transition-colors cursor-pointer',
+                        collectiveFocus === opt.id
+                          ? 'border-[#8b0000] bg-[#8b0000]/30 text-[#cfaa48]'
+                          : 'border-[#444] bg-[#1a1a1a] text-[#888] hover:border-[#8b0000]'
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[#666] text-[8px] mt-1.5">
+                  Shifts worker auto-assignment priorities
+                </p>
               </DrawerSection>
 
               {/* Alerts */}

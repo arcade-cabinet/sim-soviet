@@ -17,7 +17,7 @@
 import type { With } from 'miniplex';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { buildingsLogic, citizens, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
-import { createBuilding } from '@/ecs/factories';
+import { placeNewBuilding } from '@/ecs/factories';
 import type { Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import { getFootprint } from '@/game/BuildingFootprints';
@@ -78,6 +78,8 @@ export class CanvasGestureManager {
   public onWorkerAssign:
     | ((workerName: string, buildingGridX: number, buildingGridY: number) => boolean)
     | null = null;
+  /** Optional hook — called after a building is successfully placed (for mandate tracking). */
+  public onBuildingPlaced: ((defId: string) => void) | null = null;
   /** Provider for extended worker stats (set by GameWorld after SimulationEngine init). */
   public workerStatsProvider:
     | ((
@@ -407,12 +409,16 @@ export class CanvasGestureManager {
     }
   }
 
-  /** Check whether ALL footprint cells are clear. */
+  /** Check whether ALL footprint cells are clear and terrain is passable. */
   private isFootprintClear(gridX: number, gridY: number, w: number, h: number): boolean {
     for (let dx = 0; dx < w; dx++) {
       for (let dy = 0; dy < h; dy++) {
-        const c = this.grid.getCell(gridX + dx, gridY + dy);
+        const cx = gridX + dx;
+        const cy = gridY + dy;
+        const c = this.grid.getCell(cx, cy);
         if (!c || c.type != null) return false;
+        // Also check terrain passability (mountains, rivers block placement)
+        if (!this.grid.isPassable(cx, cy)) return false;
       }
     }
     return true;
@@ -441,10 +447,11 @@ export class CanvasGestureManager {
       }
     }
 
-    // Create ECS entity
-    createBuilding(gridX, gridY, tool);
+    // Create ECS entity in construction phase
+    placeNewBuilding(gridX, gridY, tool);
 
     this.onBuild?.(tool);
+    this.onBuildingPlaced?.(tool);
   }
 
   /**

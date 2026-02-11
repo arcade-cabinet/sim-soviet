@@ -4,6 +4,12 @@
 
 import type { CitizenComponent } from '@/ecs/world';
 
+/** How this worker received their current assignment. */
+export type AssignmentSource =
+  | 'auto' // behavioral governor auto-assigned
+  | 'player' // player manually assigned via UI
+  | 'forced'; // state mandate (conscription, forced labor) — cannot be overridden
+
 /** Extended worker stats beyond the base CitizenComponent. */
 export interface WorkerStats {
   /** Morale (0-100): affects production efficiency */
@@ -20,6 +26,8 @@ export interface WorkerStats {
   name: string;
   /** Ticks this worker has been assigned to current building */
   assignmentDuration: number;
+  /** How this worker got their current assignment */
+  assignmentSource: AssignmentSource;
 }
 
 /** Result returned by each tick of the worker system. */

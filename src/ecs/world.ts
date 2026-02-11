@@ -31,6 +31,9 @@ export interface Position {
  * Building component — stores the def ID, power state, production info,
  * housing capacity, and environmental stats.
  */
+/** Construction phase for buildings being built. */
+export type ConstructionPhase = 'foundation' | 'building' | 'complete';
+
 export interface BuildingComponent {
   /** Building definition ID (sprite ID key into BUILDING_DEFS) */
   defId: string;
@@ -48,6 +51,12 @@ export interface BuildingComponent {
   pollution: number;
   /** Fear output (e.g. gulags) */
   fear: number;
+  /** Construction phase — undefined or 'complete' means operational */
+  constructionPhase?: ConstructionPhase;
+  /** Construction progress 0.0–1.0 (derived from constructionTicks / baseTicks) */
+  constructionProgress?: number;
+  /** Integer ticks elapsed during construction (avoids floating-point accumulation) */
+  constructionTicks?: number;
 }
 
 /**
@@ -65,6 +74,72 @@ export interface CitizenComponent {
   assignment?: string;
   /** Grid position of the housing this citizen is assigned to */
   home?: { gridX: number; gridY: number };
+  /** Dvor (household) this citizen belongs to */
+  dvorId?: string;
+  /** Gender */
+  gender?: 'male' | 'female';
+  /** Age in years */
+  age?: number;
+  /** Demographic role within the household */
+  memberRole?: MemberRole;
+}
+
+// ── Dvor (Household) System ──────────────────────────────────────────────────
+
+/** Demographic role within a dvor. */
+export type MemberRole = 'head' | 'spouse' | 'worker' | 'elder' | 'adolescent' | 'child' | 'infant';
+
+/**
+ * Individual family member within a dvor.
+ * Authoritative demographic data — CitizenComponent entities are rendering proxies.
+ */
+export interface DvorMember {
+  /** Unique member ID */
+  id: string;
+  /** Full name */
+  name: string;
+  /** Gender */
+  gender: 'male' | 'female';
+  /** Age in years */
+  age: number;
+  /** Role within the household */
+  role: MemberRole;
+  /** Labor capacity 0.0–1.0 (age/health dependent) */
+  laborCapacity: number;
+  /** Trudodni earned this year */
+  trudodniEarned: number;
+  /** Health 0–100 */
+  health: number;
+  /** Ticks remaining in pregnancy (women only) */
+  pregnant?: number;
+}
+
+/**
+ * Dvor (household) component — the fundamental administrative unit.
+ * Contains all family members as embedded sub-entities.
+ */
+export interface DvorComponent {
+  /** Unique household ID */
+  id: string;
+  /** Family members */
+  members: DvorMember[];
+  /** Member ID of head of household */
+  headOfHousehold: string;
+  /** Private plot size in hectares (era-dependent) */
+  privatePlotSize: number;
+  /** Private livestock counts */
+  privateLivestock: {
+    cow: number;
+    pig: number;
+    sheep: number;
+    poultry: number;
+  };
+  /** Tick when this dvor joined the collective */
+  joinedTick: number;
+  /** Loyalty to the collective (0–100) */
+  loyaltyToCollective: number;
+  /** Surname for this household */
+  surname: string;
 }
 
 /**
@@ -167,6 +242,34 @@ export interface Durability {
   decayRate: number;
 }
 
+// ─── Citizen Render Slot ─────────────────────────────────────────────────────
+
+/** Age bracket for visual differentiation (sprite variant / dot size). */
+export type AgeCategory = 'child' | 'adolescent' | 'adult' | 'elder';
+
+/**
+ * Pre-computed rendering instructions for citizen entities.
+ *
+ * Canvas2D reads these directly — no runtime lookups or branching needed.
+ * Future sprite systems use `gender × ageCategory × citizenClass` to select
+ * the correct sprite variant.
+ *
+ * The `dialoguePool` field tells the dialogue system which NPC pool to draw
+ * from when the citizen is tapped — driven by ECS archetypes, not ad-hoc checks.
+ */
+export interface CitizenRenderSlot {
+  /** Gender — determines sprite variant (male/female model) */
+  gender: 'male' | 'female';
+  /** Age bracket — determines sprite size/posture */
+  ageCategory: AgeCategory;
+  /** Citizen class key — determines color palette */
+  citizenClass: string;
+  /** Pre-computed dot color for Canvas2D indicator rendering */
+  dotColor: string;
+  /** Dialogue pool key for tap interaction */
+  dialoguePool: 'worker' | 'party_official' | 'military' | 'ambient';
+}
+
 // ─── Entity ──────────────────────────────────────────────────────────────────
 
 /**
@@ -183,6 +286,8 @@ export interface Entity {
   building?: BuildingComponent;
   /** Citizen data */
   citizen?: CitizenComponent;
+  /** Dvor (household) data */
+  dvor?: DvorComponent;
   /** 3D render info */
   renderable?: Renderable;
   /** Global resource stockpile (singleton) */
@@ -193,6 +298,8 @@ export interface Entity {
   durability?: Durability;
   /** Game metadata singleton (date, quota, leader, settlement, etc.) */
   gameMeta?: GameMeta;
+  /** Pre-computed rendering instructions for citizen entities */
+  renderSlot?: CitizenRenderSlot;
 
   // ── Tag components ──
   /** Tag: entity is a building */
@@ -201,6 +308,8 @@ export interface Entity {
   isCitizen?: true;
   /** Tag: entity is a tile */
   isTile?: true;
+  /** Tag: entity is a dvor (household) */
+  isDvor?: true;
   /** Tag: entity is the resource store singleton */
   isResourceStore?: true;
   /** Tag: entity is the game metadata singleton */

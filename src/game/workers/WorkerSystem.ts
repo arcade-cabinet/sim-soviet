@@ -6,7 +6,7 @@
  * skill, vodka dependency, and class-specific production bonuses.
  */
 
-import { citizens } from '@/ecs/archetypes';
+import { citizens, getResourceEntity } from '@/ecs/archetypes';
 import { createCitizen } from '@/ecs/factories';
 import type { CitizenComponent, Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
@@ -25,6 +25,8 @@ import {
   resolveStatus,
 } from './classes';
 import { CLASS_ORDER, CLASS_WEIGHTS } from './constants';
+import type { CollectiveFocus } from './governor';
+import { runGovernor } from './governor';
 import type { TickContext, WorkerDisplayInfo, WorkerStats, WorkerTickResult } from './types';
 
 /** Serialized per-worker stats keyed by a stable identifier. */
@@ -43,9 +45,20 @@ export interface WorkerSystemSaveData {
 export class WorkerSystem {
   private stats: Map<Entity, WorkerStats> = new Map();
   private rng: GameRng | null;
+  private collectiveFocus: CollectiveFocus = 'balanced';
 
   constructor(rng?: GameRng) {
     this.rng = rng ?? null;
+  }
+
+  /** Set the collective focus — shifts behavioral governor priorities. */
+  setCollectiveFocus(focus: CollectiveFocus): void {
+    this.collectiveFocus = focus;
+  }
+
+  /** Get the current collective focus. */
+  getCollectiveFocus(): CollectiveFocus {
+    return this.collectiveFocus;
   }
 
   /** Get the stats map (read-only, for testing). */
@@ -98,6 +111,7 @@ export class WorkerSystem {
       ticksSinceVodka: 0,
       name,
       assignmentDuration: 0,
+      assignmentSource: 'auto',
     };
 
     this.stats.set(entity, stats);
@@ -119,7 +133,12 @@ export class WorkerSystem {
    * Sets the citizen's assignment field to the building defId.
    * Returns false if no building found at that position.
    */
-  assignWorker(worker: Entity, buildingGridX: number, buildingGridY: number): boolean {
+  assignWorker(
+    worker: Entity,
+    buildingGridX: number,
+    buildingGridY: number,
+    source: 'player' | 'forced' | 'auto' = 'player'
+  ): boolean {
     if (!worker.citizen) return false;
 
     const buildingsQuery = world.with('position', 'building');
@@ -138,6 +157,7 @@ export class WorkerSystem {
     const stats = this.stats.get(worker);
     if (stats) {
       stats.assignmentDuration = 0;
+      stats.assignmentSource = source;
     }
 
     return true;
@@ -213,6 +233,22 @@ export class WorkerSystem {
     for (const { entity, name, cls } of toRemove) {
       defections.push({ name, class: cls });
       this.removeWorker(entity, cls === 'prisoner' ? 'escape' : 'defection');
+    }
+
+    // Behavioral Governor — auto-assign idle/reassignable workers
+    const store = getResourceEntity();
+    if (store) {
+      for (const entity of [...citizens]) {
+        const stats = this.stats.get(entity);
+        if (!stats) continue;
+        const recommendation = runGovernor(entity, stats, store.resources, this.collectiveFocus);
+        if (recommendation) {
+          entity.citizen.assignment = recommendation.buildingDefId;
+          stats.assignmentSource = 'auto';
+          stats.assignmentDuration = 0;
+          world.reindex(entity);
+        }
+      }
     }
 
     const classEfficiency = emptyClassRecord();

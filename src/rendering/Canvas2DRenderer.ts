@@ -45,9 +45,15 @@ export interface CitizenRenderData {
   gridX: number;
   gridY: number;
   citizenClass: string;
+  /** Pre-computed dot color from CitizenRenderSlot (falls back to class lookup). */
+  dotColor?: string;
+  /** Gender for future sprite variant selection. */
+  gender?: 'male' | 'female';
+  /** Age category for future sprite size/posture selection. */
+  ageCategory?: 'child' | 'adolescent' | 'adult' | 'elder';
 }
 
-/** Citizen class → fill color for the indicator dot. */
+/** Citizen class → fill color for the indicator dot (fallback when no renderSlot). */
 const CITIZEN_CLASS_COLORS: Record<string, string> = {
   worker: '#8D6E63',
   party_official: '#C62828',
@@ -295,6 +301,8 @@ export class Canvas2DRenderer {
         y: entity.position.gridY,
         defId: entity.building.defId,
         powered: entity.building.powered,
+        constructionPhase: entity.building.constructionPhase as Building['constructionPhase'],
+        constructionProgress: entity.building.constructionProgress,
       });
     }
     const sorted = buildings.sort((a, b) => depthKey(a.x, a.y) - depthKey(b.x, b.y));
@@ -304,11 +312,36 @@ export class Canvas2DRenderer {
       if (!sprite) {
         // Fallback: draw a colored box for buildings whose sprites aren't loaded
         this.drawFallbackBuilding(building);
-        continue;
+      } else {
+        this.drawSprite(building.x, building.y, sprite, building.powered);
       }
 
-      this.drawSprite(building.x, building.y, sprite, building.powered);
+      // Draw construction progress bar overlay for non-complete buildings
+      if (building.constructionPhase && building.constructionPhase !== 'complete') {
+        this.drawConstructionProgress(building);
+      }
     }
+  }
+
+  /** Draw a construction progress bar at the base of a building. */
+  private drawConstructionProgress(building: Building): void {
+    const { ctx } = this;
+    const screen = gridToScreen(building.x, building.y);
+
+    const barWidth = TILE_WIDTH * 0.7;
+    const barHeight = 4;
+    const barX = screen.x - barWidth / 2;
+    const barY = screen.y + TILE_HEIGHT / 2 + 2;
+
+    const progress = building.constructionProgress ?? 0;
+
+    // Background (dark grey)
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+
+    // Fill (amber for foundation, red for building phase)
+    ctx.fillStyle = building.constructionPhase === 'foundation' ? '#FF8F00' : '#C62828';
+    ctx.fillRect(barX, barY, barWidth * progress, barHeight);
   }
 
   /** Draw a building sprite at the given grid position, using anchor-point alignment. */
@@ -455,7 +488,7 @@ export class Canvas2DRenderer {
         const cx = baseCx + offsetX;
         const cy = baseCy + offsetY;
 
-        const color = CITIZEN_CLASS_COLORS[citizen.citizenClass] ?? '#757575';
+        const color = citizen.dotColor ?? CITIZEN_CLASS_COLORS[citizen.citizenClass] ?? '#757575';
 
         // Dark border
         ctx.beginPath();

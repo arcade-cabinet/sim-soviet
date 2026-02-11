@@ -32,6 +32,10 @@ export interface WeatherProfile {
   readonly label: string;
   /** Farm output multiplier (stacks with season). */
   readonly farmModifier: number;
+  /** Construction time multiplier (>1 slows, <1 speeds up). */
+  readonly constructionTimeMult: number;
+  /** Worker movement/speed multiplier (<1 slows workers). */
+  readonly workerSpeedMult: number;
   /** Additive snow particle rate modifier. */
   readonly snowRateModifier: number;
   /** Whether rain particles should be emitted. */
@@ -51,6 +55,8 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
     type: WeatherType.CLEAR,
     label: 'Clear',
     farmModifier: 1.0,
+    constructionTimeMult: 1.0,
+    workerSpeedMult: 1.0,
     snowRateModifier: 0,
     hasRain: false,
     eventFrequencyModifier: 1.0,
@@ -62,6 +68,8 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
     type: WeatherType.OVERCAST,
     label: 'Overcast',
     farmModifier: 0.9,
+    constructionTimeMult: 1.0,
+    workerSpeedMult: 1.0,
     snowRateModifier: 0,
     hasRain: false,
     eventFrequencyModifier: 1.0,
@@ -73,6 +81,8 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
     type: WeatherType.SNOW,
     label: 'Snow',
     farmModifier: 0.0,
+    constructionTimeMult: 1.1,
+    workerSpeedMult: 0.9,
     snowRateModifier: 50,
     hasRain: false,
     eventFrequencyModifier: 0.8,
@@ -84,6 +94,8 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
     type: WeatherType.BLIZZARD,
     label: 'Blizzard',
     farmModifier: 0.0,
+    constructionTimeMult: 1.25,
+    workerSpeedMult: 0.7,
     snowRateModifier: 200,
     hasRain: false,
     eventFrequencyModifier: 1.5,
@@ -95,6 +107,8 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
     type: WeatherType.RAIN,
     label: 'Rain',
     farmModifier: 1.2,
+    constructionTimeMult: 1.1,
+    workerSpeedMult: 0.95,
     snowRateModifier: 0,
     hasRain: true,
     eventFrequencyModifier: 0.9,
@@ -106,6 +120,8 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
     type: WeatherType.MUD_STORM,
     label: 'Mud Storm',
     farmModifier: 0.0,
+    constructionTimeMult: 1.5,
+    workerSpeedMult: 0.8,
     snowRateModifier: 0,
     hasRain: true,
     eventFrequencyModifier: 1.3,
@@ -117,6 +133,8 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
     type: WeatherType.HEATWAVE,
     label: 'Heatwave',
     farmModifier: 0.5,
+    constructionTimeMult: 1.1,
+    workerSpeedMult: 0.85,
     snowRateModifier: 0,
     hasRain: false,
     eventFrequencyModifier: 1.2,
@@ -128,6 +146,8 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
     type: WeatherType.MIRACULOUS_SUN,
     label: 'Miraculous Sun',
     farmModifier: 2.0,
+    constructionTimeMult: 0.9,
+    workerSpeedMult: 1.1,
     snowRateModifier: 0,
     hasRain: false,
     eventFrequencyModifier: 0.5,
@@ -139,6 +159,8 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
     type: WeatherType.FOG,
     label: 'Fog',
     farmModifier: 0.7,
+    constructionTimeMult: 1.05,
+    workerSpeedMult: 0.9,
     snowRateModifier: 0,
     hasRain: false,
     eventFrequencyModifier: 1.1,

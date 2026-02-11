@@ -9,7 +9,7 @@
  */
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AudioAPI, SaveSystemAPI } from '@/components/GameWorld';
+import type { AudioAPI, SaveSystemAPI, WorkerAPI } from '@/components/GameWorld';
 import { GameWorld } from '@/components/GameWorld';
 import { AssignmentLetter } from '@/components/screens/AssignmentLetter';
 import { LandingPage } from '@/components/screens/LandingPage';
@@ -21,9 +21,12 @@ import { BottomStrip } from '@/components/ui/BottomStrip';
 import { BuildingInspector } from '@/components/ui/BuildingInspector';
 import { ConcreteFrame } from '@/components/ui/ConcreteFrame';
 import { DrawerPanel } from '@/components/ui/DrawerPanel';
+import { EraTransitionModal } from '@/components/ui/EraTransitionModal';
 import type { PlanDirective } from '@/components/ui/FiveYearPlanModal';
 import { FiveYearPlanModal } from '@/components/ui/FiveYearPlanModal';
 import { GameOverModal } from '@/components/ui/GameOverModal';
+import { GameTallyScreen } from '@/components/ui/GameTallyScreen';
+import { MinigameModal } from '@/components/ui/MinigameModal';
 import { RadialBuildMenu } from '@/components/ui/RadialBuildMenu';
 import { SettlementUpgradeModal } from '@/components/ui/SettlementUpgradeModal';
 import { SovietHUD } from '@/components/ui/SovietHUD';
@@ -32,7 +35,10 @@ import { WorkerInfoPanel } from '@/components/ui/WorkerInfoPanel';
 import { initDatabase } from '@/db/provider';
 import * as dbSchema from '@/db/schema';
 import { getResourceEntity } from '@/ecs/archetypes';
+import type { EraDefinition } from '@/game/era';
 import { ERA_DEFINITIONS } from '@/game/era';
+import type { TallyData } from '@/game/GameTally';
+import type { ActiveMinigame } from '@/game/minigames/MinigameTypes';
 import type { SettlementEvent } from '@/game/SettlementSystem';
 import type { SimCallbacks } from '@/game/SimulationEngine';
 import { useGameSnapshot } from '@/stores/gameStore';
@@ -58,6 +64,9 @@ export function App() {
   const [settlementEvent, setSettlementEvent] = useState<SettlementEvent | null>(null);
   const [planDirective, setPlanDirective] = useState<PlanDirective | null>(null);
   const [annualReport, setAnnualReport] = useState<AnnualReportData | null>(null);
+  const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
+  const [activeMinigame, setActiveMinigame] = useState<ActiveMinigame | null>(null);
+  const [gameTally, setGameTally] = useState<TallyData | null>(null);
   const [messages, setMessages] = useState<Messages>({
     advisor: null,
     pravda: null,
@@ -66,6 +75,7 @@ export function App() {
   const [loadSaveOnStart, setLoadSaveOnStart] = useState<string | null>(null);
   const [saveApi, setSaveApi] = useState<SaveSystemAPI | null>(null);
   const [audioApi, setAudioApi] = useState<AudioAPI | null>(null);
+  const [workerApi, setWorkerApi] = useState<WorkerAPI | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
 
@@ -104,12 +114,24 @@ export function App() {
         currentPop: res?.resources.population ?? 0,
         currentPower: res?.resources.power ?? 0,
         currentMoney: res?.resources.money ?? 0,
+        mandates: plan.mandates,
       });
     },
     onAnnualReport: (data, submitFn) => {
       setAnnualReport(data);
       submitReportRef.current = submitFn;
     },
+    onEraChanged: (era) => setEraTransition(era),
+    onMinigame: (active) => setActiveMinigame(active),
+    onTutorialMilestone: (_milestone) => {
+      // Tutorial milestones already fire onAdvisor with Krupnik dialogue
+      // in SimulationEngine.tickTutorial(). This callback is available
+      // for future use (e.g. pausing simulation on milestone).
+    },
+    onAchievement: (name, description) => {
+      addSovietToast('warning', `ACHIEVEMENT: ${name} -- ${description}`);
+    },
+    onGameTally: (tally) => setGameTally(tally),
   };
 
   const handleRestart = useCallback(() => {
@@ -123,6 +145,10 @@ export function App() {
 
   const handleAudioReady = useCallback((api: AudioAPI) => {
     setAudioApi(api);
+  }, []);
+
+  const handleWorkerApiReady = useCallback((api: WorkerAPI) => {
+    setWorkerApi(api);
   }, []);
 
   return (
@@ -205,6 +231,7 @@ export function App() {
           loadSaveOnStart={loadSaveOnStart}
           onSaveSystemReady={handleSaveSystemReady}
           onAudioReady={handleAudioReady}
+          onWorkerApiReady={handleWorkerApiReady}
         />
 
         {/* Pause overlay */}
@@ -245,6 +272,7 @@ export function App() {
         onClose={() => setDrawerOpen(false)}
         saveApi={saveApi}
         audioApi={audioApi}
+        workerApi={workerApi}
       />
 
       {/* Settlement upgrade decree modal */}
@@ -274,6 +302,33 @@ export function App() {
       {planDirective && (
         <FiveYearPlanModal directive={planDirective} onAccept={() => setPlanDirective(null)} />
       )}
+
+      {/* Era transition briefing modal */}
+      <AnimatePresence>
+        {eraTransition && (
+          <EraTransitionModal era={eraTransition} onClose={() => setEraTransition(null)} />
+        )}
+      </AnimatePresence>
+
+      {/* Minigame choice modal */}
+      <AnimatePresence>
+        {activeMinigame && !activeMinigame.resolved && (
+          <MinigameModal
+            minigame={activeMinigame}
+            onChoice={() => {
+              // Choice resolution routed through SimulationEngine.resolveMinigameChoice()
+              // via GameWorld — auto-resolve handles timeout if not explicitly resolved.
+              setActiveMinigame(null);
+            }}
+            onClose={() => setActiveMinigame(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* End-game tally summary screen */}
+      <AnimatePresence>
+        {gameTally && <GameTallyScreen tally={gameTally} onClose={() => setGameTally(null)} />}
+      </AnimatePresence>
     </div>
   );
 }
