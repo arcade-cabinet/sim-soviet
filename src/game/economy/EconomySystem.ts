@@ -265,13 +265,16 @@ export class EconomySystem {
   /**
    * Spend blat to improve fondy reliability or unlock benefits.
    *
+   * Each blat transaction carries KGB detection risk: 2% per point spent
+   * above a threshold of 5. High blat spending = corruption investigation.
+   *
    * @param amount  Amount to spend
    * @param purpose Description of what the blat is being used for
-   * @returns true if the player had enough blat, false otherwise
+   * @returns Object with `success` (had enough blat) and `kgbDetected` (corruption caught)
    */
-  spendBlat(amount: number, purpose: string): boolean {
+  spendBlat(amount: number, purpose: string): { success: boolean; kgbDetected: boolean } {
     if (this.blat.connections < amount) {
-      return false;
+      return { success: false, kgbDetected: false };
     }
     this.blat.connections -= amount;
     this.blat.totalSpent += amount;
@@ -281,7 +284,20 @@ export class EconomySystem {
       this.fondy.reliability = Math.min(1.0, this.fondy.reliability + 0.05);
     }
 
-    return true;
+    // KGB detection risk: 2% per point above threshold of 5
+    // High blat + high visibility = corruption investigation
+    const kgbThreshold = 5;
+    let kgbDetected = false;
+    if (amount > kgbThreshold) {
+      const excessPoints = amount - kgbThreshold;
+      const detectionChance = excessPoints * 0.02;
+      const rand = this.rng ? this.rng.random() : Math.random();
+      if (rand < detectionChance) {
+        kgbDetected = true;
+      }
+    }
+
+    return { success: true, kgbDetected };
   }
 
   // ── Rations ───────────────────────────────────────────────────

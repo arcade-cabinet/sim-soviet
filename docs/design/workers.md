@@ -4,7 +4,8 @@ status: Complete
 implementation: src/game/workers/WorkerSystem.ts
 tests: src/__tests__/WorkerSystem.test.ts, src/__tests__/WorkerPopulation.test.ts
 last_verified: 2026-02-10
-coverage: "Full — 6 AI classes, morale/loyalty/skill, vodka dependency, assignment, sprites, tap interaction"
+coverage: "Full — 6 AI classes, morale/loyalty/skill, vodka dependency, autonomous collective, sprites, tap interaction"
+depends_on: [overview.md, demographics.md, economy.md]
 ---
 
 # Workers — The Central Resource
@@ -15,24 +16,37 @@ Workers are the game. Not buildings, not resources — *people*.
 
 ## Worker Roles & Colors
 
-| Role | Color | Function | Controllable? |
-|------|-------|----------|---------------|
-| **Peasant / Proletarian** | Brown | Farming, construction, factory work | YES — player assigns |
+| Role | Color | Function | Player Control |
+|------|-------|----------|----------------|
+| **Peasant / Proletarian** | Brown | Farming, construction, factory work | Collective self-assigns. Player can override priorities or force-assign in emergencies. |
 | **Politruk / Zampolit** | Red | Ideology sessions, loyalty checks | NO — assigned from above |
 | **KGB / FSB Agent** | Black | Surveillance, disappearances | NO — arrives on its own |
 | **Military** | Green | Garrison, conscription, riot control | NO — drafted from your workers |
 
-Brown workers are YOUR resource. The other three are the apparatus — they consume your food and housing but serve the state, not you.
+Brown workers are YOUR resource — but they organize themselves. The other three are the apparatus — they consume your food and housing but serve the state, not you. You don't command anyone. You're a middle manager.
+
+---
+
+## Design Principle: The Collective, Not the Individual
+
+> **Focusing on one individual worker is a fatal gameplay flaw.**
+
+The Soviet system eliminates individual economic agent complexity. There is no profit motive. There is no individualism unless a worker becomes discontented. Workers fulfill their role in the collective or face consequences. This means the player manages the *system* — priorities, political survival, resource allocation — not individual people.
+
+The player leverages black market, bribery, and quota manipulation (pripiski) more than they will ever have an effective population. To make the game about tapping individual workers would be to miss the entire point. You are the predsedatel. You set the weather. The collective organizes itself.
+
+See also: overview.md § Autonomous Collective System
 
 ---
 
 ## Worker Lifecycle
 
 1. **Spawn**: Workers arrive based on population growth, housing capacity, and era events
-2. **Assignment**: Player taps worker → taps building/zone. Workers walk to assignment (visible on map)
-3. **Production**: Workers at assigned tasks generate trudodni and output each tick
+2. **Self-Assignment**: Workers autonomously evaluate the behavioral governor priority stack and assign themselves to available work (see overview.md § Worker Decision Priorities). The collective self-organizes around state demands, survival needs, and trudodni minimums.
+3. **Production**: Workers at their self-assigned tasks generate trudodni and output each tick
 4. **Threats**: Politruks flag disloyal workers. KGB takes flagged workers. Military drafts arbitrary percentages.
 5. **Death/Removal**: Starvation, old age, purge, conscription, gulag, workplace "accident"
+6. **Player Override**: The player can force-reassign workers or adjust collective priorities — but this is an intervention, not the default. The collective notices when the chairman meddles.
 
 ### Population Dynamics: Drain-and-Replace
 
@@ -146,41 +160,53 @@ Each worker has stats that affect gameplay. Some are visible (via long-press), s
 
 ---
 
-## Worker Assignment — Mobile Controls
+## Collective Self-Organization
 
-### Tap-to-Assign Flow
+Workers are **autonomous by default**. They self-assign based on the behavioral governor priority stack (see overview.md § Worker Decision Priorities). The player does not tap individual workers to assign them — the collective organizes itself around state demands, survival needs, and trudodni minimums.
 
-1. **Tap a worker** or **drag-select a group** → selection highlight appears
-2. **Available assignment zones glow** — buildings needing workers, construction sites, farm plots
-3. **Tap a glowing zone** → workers path-find and walk there
-4. **Long-press a zone** → shows worker count, production rate, trudodni contribution
+### How Workers Choose Tasks
 
-### Quick-Assign Shortcuts
+Each tick, idle workers evaluate what to do:
 
-- **Double-tap a building** → auto-assign nearest idle workers to fill it
-- **Swipe worker toward building** → quick drag-assign
-- **Tap "Auto-assign" button** → AI distributes workers by priority (quota first, then food, then power)
+1. **Survival** (don't die) — forage, gather firewood, find shelter
+2. **State demands** (avoid black marks) — construction mandates, quota shortfalls, compulsory deliveries
+3. **Trudodni minimum** (earn their keep) — self-assign to available building job slots
+4. **Collective improvement** — repair buildings, build non-mandated structures, train skills
+5. **Private life** — tend garden plots, domestic work, rest
+
+Workers choose the highest unfulfilled priority and walk to the appropriate building. The most-traveled routes become visible dirt paths (see overview.md § Auto-Pathfinding & Roads).
+
+### Player Override — The Chairman's Intervention
+
+The player **adjusts collective priorities**, not individual assignments:
+
+- **"All hands to the harvest"** → bumps food production to Priority 1
+- **"Ignore the factory mandate for now"** → drops construction to Priority 4 (risk: black mark)
+- **"Allow black market this month"** → enables hidden economy boost (risk: KGB investigation)
+
+For emergencies, the player can force-reassign through the **building interior** (tap building → radial inspect menu → Workers → adjust allocation). This is a deliberate override, not the normal flow. The collective notices when the chairman meddles — forced assignments cost political capital.
 
 ### Scaling at Population Growth
 
-At 12 workers (Era 1), individual tap-to-assign is intimate and meaningful. At 200+ workers (Era 5+), it's impossible. The system scales:
+The interface adapts to population size, but the core principle remains: **the collective self-organizes, the player monitors and intervenes**.
 
 | Population | Interface |
 |------------|-----------|
-| **1-30** | Individual workers visible and tappable. Each is a character. |
-| **30-100** | Workers cluster near buildings. Tap building → "+/- workers" slider. Individual tap still works. |
-| **100-300** | Workers become dots at medium zoom. Buildings show worker count badges. Tap building for management. |
-| **300+** | Strategic view. Buildings show occupancy bars. Bottom panel has allocation sliders per sector. Individual workers only visible at close zoom. |
+| **1-55** (selo) | Individual workers visible as colored dots. Tap to see dossier. Buildings show who's working there. |
+| **55-150** (posyolok) | Workers cluster near buildings. Tap building → worker list + allocation. Worker dots still visible at zoom. |
+| **150-400** (PGT) | Buildings show worker count badges and production rates. Population browser for finding individuals. |
+| **400+** (gorod) | Strategic overlay. Buildings show occupancy/efficiency bars. District-level allocation. Individual workers visible only at close zoom. |
 
-### Auto-Assign Priority
+### What the Player Manages (vs. What the Collective Handles)
 
-The "Auto" button distributes idle workers using this priority:
-1. Construction mandates (if behind schedule)
-2. Food production (prevent starvation)
-3. Power production (keep factories running)
-4. Industrial output (meet quotas)
-5. Services (hospital, school — morale/skill)
-6. Remaining idle (held in reserve)
+| The Collective Handles | The Player Manages |
+|----------------------|-------------------|
+| Worker-to-building assignment | Collective priority ordering |
+| Walking paths and scheduling | WHERE to place mandated buildings |
+| Task switching when priorities change | WHEN to accept/delay construction mandates |
+| Skill-based job selection | Political conversations (commissar, KGB, military) |
+| Housing self-assignment | Moral choices (who to sacrifice, how much corruption) |
+| Private plot tending (when allowed) | Emergency overrides (force-assign in crisis) |
 
 ---
 
@@ -216,7 +242,7 @@ Workers need housing. Without it, morale drops and growth stops.
 - **Housing capacity**: Sum of all housing buildings' `housingCap` values
 - **Occupancy**: Workers auto-assign to nearest available housing (not player-managed)
 - **Homeless workers**: If `population > housingCap`, excess workers are "homeless" → -5 morale/tick
-- **Era 1 exception**: First 12 peasants have improvised shelter (no housing penalty for first 2 in-game years)
+- **Era 1 exception**: Starting population has improvised shelter (no housing penalty for first 2 in-game years)
 - **Housing quality**: Workers' Houses (30 cap) < Tenement Block (50) < High-Rise (80) < Megablock (120). Higher quality = +1 morale bonus.
 
 ### Housing as Control

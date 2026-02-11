@@ -6,6 +6,7 @@
  */
 
 import { type AudioAsset, ERA_MUSIC, getAudioById, getPreloadAssets } from './AudioManifest';
+import type { ProceduralAmbient } from './ProceduralSounds';
 import * as ProceduralSounds from './ProceduralSounds';
 
 const STORAGE_KEY_MUSIC_VOL = 'simsoviet_music_volume';
@@ -50,6 +51,7 @@ export class AudioManager {
   private ambientVolume: number;
   private muted: boolean;
   private tracks: Map<string, HTMLAudioElement> = new Map();
+  private proceduralAmbients: Map<string, ProceduralAmbient> = new Map();
   private currentMusic: string | null = null;
   private currentEra: string = '';
   private currentSeason: string = '';
@@ -218,6 +220,24 @@ export class AudioManager {
         case 'coin':
           ProceduralSounds.playCoinSound();
           break;
+        case 'siren':
+          ProceduralSounds.playSirenSound();
+          break;
+        case 'queue_shuffle':
+          ProceduralSounds.playQueueShuffleSound();
+          break;
+        case 'collapse':
+          ProceduralSounds.playCollapseSound();
+          break;
+        case 'paper_shuffle':
+          ProceduralSounds.playPaperShuffleSound();
+          break;
+        case 'fanfare':
+          ProceduralSounds.playFanfareSound();
+          break;
+        case 'warning':
+          ProceduralSounds.playWarningSound();
+          break;
       }
       return;
     }
@@ -243,19 +263,51 @@ export class AudioManager {
 
   public playAmbient(ambientId: string): void {
     this.ensureInitialized();
+
+    const asset = getAudioById(ambientId);
+    if (!asset) return;
+
+    // Handle procedural ambients (wind, machinery, radio_static)
+    if (asset.url === 'procedural') {
+      if (this.muted) return;
+
+      // Stop existing procedural ambient of same ID first
+      const existing = this.proceduralAmbients.get(ambientId);
+      if (existing) {
+        existing.stop();
+        this.proceduralAmbients.delete(ambientId);
+      }
+
+      let handle: ProceduralAmbient | null = null;
+      switch (ambientId) {
+        case 'wind':
+          handle = ProceduralSounds.createWindAmbient();
+          break;
+        case 'machinery':
+          handle = ProceduralSounds.createMachineryAmbient();
+          break;
+        case 'radio_static':
+          handle = ProceduralSounds.createRadioStaticAmbient();
+          break;
+      }
+
+      if (handle) {
+        this.proceduralAmbients.set(ambientId, handle);
+      }
+      return;
+    }
+
+    // Handle regular audio file ambients
     let track = this.tracks.get(ambientId);
 
     // Lazy load if not preloaded
     if (!track) {
-      const asset = getAudioById(ambientId);
-      if (asset) {
-        this.loadTrack(asset).then(() => {
-          track = this.tracks.get(ambientId);
-          if (track && !this.muted) {
-            track.play().catch((e) => console.warn('Ambient play failed:', e));
-          }
-        });
-      }
+      this.loadTrack(asset).then(() => {
+        track = this.tracks.get(ambientId);
+        if (track && !this.muted) {
+          track.play().catch((e) => console.warn('Ambient play failed:', e));
+        }
+      });
       return;
     }
 
@@ -265,6 +317,15 @@ export class AudioManager {
   }
 
   public stopAmbient(ambientId: string): void {
+    // Check procedural ambients first
+    const procedural = this.proceduralAmbients.get(ambientId);
+    if (procedural) {
+      procedural.stop();
+      this.proceduralAmbients.delete(ambientId);
+      return;
+    }
+
+    // Fall through to HTMLAudioElement
     const track = this.tracks.get(ambientId);
     if (track) {
       track.pause();
@@ -297,6 +358,12 @@ export class AudioManager {
   public toggleMute(): boolean {
     this.muted = !this.muted;
     if (this.muted) {
+      // Stop all procedural ambients when muting
+      this.proceduralAmbients.forEach((a) => {
+        a.stop();
+      });
+      this.proceduralAmbients.clear();
+
       this.tracks.forEach((track) => {
         track.volume = 0;
       });
@@ -399,6 +466,12 @@ export class AudioManager {
   }
 
   public dispose(): void {
+    // Clean up procedural ambients
+    this.proceduralAmbients.forEach((a) => {
+      a.stop();
+    });
+    this.proceduralAmbients.clear();
+
     this.tracks.forEach((track) => {
       track.pause();
       track.src = '';

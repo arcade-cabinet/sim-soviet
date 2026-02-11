@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { GameGrid } from '@/game/GameGrid';
 import {
   DEFAULT_MAP_OPTIONS,
   MAP_SIZES,
@@ -473,6 +474,195 @@ describe('MapSystem', () => {
       for (const { x, y } of mountains) {
         expect(map.getCell(x, y)!.elevation).toBeGreaterThan(0);
       }
+    });
+  });
+
+  // ── Iteration 12: Terrain passability + interior features ────────────
+
+  describe('forest TerrainFeatures', () => {
+    it('forest cells generate forest feature IDs from known list', () => {
+      const map = makeMap({ seed: 'forest-features-iter12', forestDensity: 0.3 });
+      const forests = map.getCellsOfType('forest');
+      expect(forests.length).toBeGreaterThan(0);
+
+      const knownForestFeatures = ['pine-tree', 'birch-tree', 'spruce-tree', 'fallen-log'];
+      for (const { x, y } of forests) {
+        const cell = map.getCell(x, y)!;
+        expect(cell.features.length).toBeGreaterThan(0);
+        for (const f of cell.features) {
+          expect(knownForestFeatures).toContain(f);
+        }
+      }
+    });
+  });
+
+  describe('mountain cells block building placement', () => {
+    it('mountain cells are not buildable', () => {
+      const map = makeMap({ seed: 'mountain-block-iter12', mountainDensity: 0.08 });
+      const mountains = map.getCellsOfType('mountain');
+      expect(mountains.length).toBeGreaterThan(0);
+
+      for (const { x, y } of mountains) {
+        expect(map.isBuildable(x, y)).toBe(false);
+      }
+    });
+
+    it('mountain cells have Infinity movement cost', () => {
+      const map = makeMap({ seed: 'mountain-cost-iter12', mountainDensity: 0.08 });
+      const mountains = map.getCellsOfType('mountain');
+      expect(mountains.length).toBeGreaterThan(0);
+
+      for (const { x, y } of mountains) {
+        expect(map.getMovementCost(x, y)).toBe(Infinity);
+      }
+    });
+  });
+
+  describe('river cells block building placement', () => {
+    it('river cells are not buildable', () => {
+      const map = makeMap({ seed: 'river-block-iter12', riverCount: 1 });
+      const rivers = map.getCellsOfType('river');
+      expect(rivers.length).toBeGreaterThan(0);
+
+      for (const { x, y } of rivers) {
+        expect(map.isBuildable(x, y)).toBe(false);
+      }
+    });
+
+    it('river cells have Infinity movement cost', () => {
+      const map = makeMap({ seed: 'river-cost-iter12', riverCount: 1 });
+      const rivers = map.getCellsOfType('river');
+      expect(rivers.length).toBeGreaterThan(0);
+
+      for (const { x, y } of rivers) {
+        expect(map.getMovementCost(x, y)).toBe(Infinity);
+      }
+    });
+  });
+
+  describe('combined features: border + interior co-exist', () => {
+    it('map has both mountain and forest features simultaneously', () => {
+      const map = makeMap({
+        seed: 'combined-iter12',
+        mountainDensity: 0.08,
+        forestDensity: 0.2,
+        riverCount: 1,
+      });
+
+      const mountains = map.getCellsOfType('mountain');
+      const forests = map.getCellsOfType('forest');
+      const rivers = map.getCellsOfType('river');
+
+      expect(mountains.length).toBeGreaterThan(0);
+      expect(forests.length).toBeGreaterThan(0);
+      expect(rivers.length).toBeGreaterThan(0);
+
+      // Mountain features are from known list
+      const knownMountainFeatures = ['rock-outcrop', 'boulder', 'cliff-face', 'snow-peak'];
+      for (const { x, y } of mountains) {
+        const cell = map.getCell(x, y)!;
+        expect(cell.features.length).toBeGreaterThan(0);
+        for (const f of cell.features) {
+          expect(knownMountainFeatures).toContain(f);
+        }
+      }
+
+      // Forest features are from known list
+      const knownForestFeatures = ['pine-tree', 'birch-tree', 'spruce-tree', 'fallen-log'];
+      for (const { x, y } of forests) {
+        const cell = map.getCell(x, y)!;
+        expect(cell.features.length).toBeGreaterThan(0);
+        for (const f of cell.features) {
+          expect(knownForestFeatures).toContain(f);
+        }
+      }
+    });
+
+    it('buildable grass cells remain buildable among impassable terrain', () => {
+      const map = makeMap({
+        seed: 'passable-mix-iter12',
+        mountainDensity: 0.08,
+        forestDensity: 0.2,
+        riverCount: 1,
+      });
+
+      const center = Math.floor(map.getSize() / 2);
+      // Center 5x5 is always grass
+      expect(map.isBuildable(center, center)).toBe(true);
+      expect(map.getCell(center, center)!.type).toBe('grass');
+
+      // Impassable cells should exist elsewhere
+      const mountains = map.getCellsOfType('mountain');
+      const rivers = map.getCellsOfType('river');
+      const totalImpassable = mountains.length + rivers.length;
+      expect(totalImpassable).toBeGreaterThan(0);
+    });
+  });
+
+  describe('GameGrid terrain passability integration', () => {
+    it('GameGrid.isPassable returns false for mountain cells when MapSystem is set', () => {
+      const map = makeMap({
+        seed: 'grid-passable-iter12',
+        mountainDensity: 0.08,
+        riverCount: 0,
+        forestDensity: 0,
+        marshDensity: 0,
+      });
+      const grid = new GameGrid(map.getSize());
+      grid.setMapSystem(map);
+
+      const mountains = map.getCellsOfType('mountain');
+      expect(mountains.length).toBeGreaterThan(0);
+
+      for (const { x, y } of mountains) {
+        expect(grid.isPassable(x, y)).toBe(false);
+      }
+    });
+
+    it('GameGrid.isPassable returns false for river cells when MapSystem is set', () => {
+      const map = makeMap({
+        seed: 'grid-river-iter12',
+        riverCount: 1,
+        mountainDensity: 0,
+        forestDensity: 0,
+        marshDensity: 0,
+      });
+      const grid = new GameGrid(map.getSize());
+      grid.setMapSystem(map);
+
+      const rivers = map.getCellsOfType('river');
+      expect(rivers.length).toBeGreaterThan(0);
+
+      for (const { x, y } of rivers) {
+        expect(grid.isPassable(x, y)).toBe(false);
+      }
+    });
+
+    it('GameGrid.isPassable returns true for grass cells', () => {
+      const map = makeMap({
+        seed: 'grid-grass-iter12',
+        riverCount: 0,
+        mountainDensity: 0,
+        forestDensity: 0,
+        marshDensity: 0,
+      });
+      const grid = new GameGrid(map.getSize());
+      grid.setMapSystem(map);
+
+      const center = Math.floor(map.getSize() / 2);
+      expect(grid.isPassable(center, center)).toBe(true);
+    });
+
+    it('GameGrid.isPassable returns true when no MapSystem is set', () => {
+      const grid = new GameGrid();
+      // Without a MapSystem, all cells are passable (backwards compatible)
+      expect(grid.isPassable(5, 5)).toBe(true);
+    });
+
+    it('GameGrid.isPassable returns false for out-of-bounds', () => {
+      const grid = new GameGrid();
+      expect(grid.isPassable(-1, 0)).toBe(false);
+      expect(grid.isPassable(0, -1)).toBe(false);
     });
   });
 });

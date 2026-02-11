@@ -312,11 +312,11 @@ describe('factories', () => {
       const entity = createResourceStore();
       expect(entity.resources).toBeDefined();
       expect(entity.resources!.money).toBe(2000);
-      expect(entity.resources!.food).toBe(200);
+      expect(entity.resources!.food).toBe(600);
       expect(entity.resources!.vodka).toBe(50);
       expect(entity.resources!.power).toBe(0);
       expect(entity.resources!.powerUsed).toBe(0);
-      expect(entity.resources!.population).toBe(0);
+      expect(entity.resources!.population).toBe(12);
     });
 
     it('has isResourceStore tag', () => {

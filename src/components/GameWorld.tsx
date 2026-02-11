@@ -10,8 +10,8 @@ import { AudioManager } from '@/audio/AudioManager';
 import { GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS } from '@/audio/AudioManifest';
 import type { NewGameConfig } from '@/components/screens/NewGameFlow';
 import { initDatabase } from '@/db/provider';
-import { citizens } from '@/ecs/archetypes';
-import { createMetaStore, createResourceStore } from '@/ecs/factories';
+import { citizens, producers } from '@/ecs/archetypes';
+import { createMetaStore, createResourceStore, createStartingSettlement } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { Season } from '@/game/Chronology';
 import { GameGrid } from '@/game/GameGrid';
@@ -25,9 +25,11 @@ import { WeatherType } from '@/game/WeatherSystem';
 import { CanvasGestureManager } from '@/input/CanvasGestureManager';
 import type { CitizenRenderData } from '@/rendering/Canvas2DRenderer';
 import { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
+import { CharacterSpriteLoader } from '@/rendering/CharacterSpriteLoader';
 import { GRID_SIZE, gridToScreen } from '@/rendering/GridMath';
 import { SpriteLoader } from '@/rendering/SpriteLoader';
 import {
+  addNotification,
   closeRadialMenu,
   getGameSpeed,
   isPaused,
@@ -46,7 +48,13 @@ export interface SaveSystemAPI {
   hasSave: (name?: string) => Promise<boolean>;
 }
 
-/** API exposed from GameWorld to parent for audio volume controls. */
+/** API exposed from GameWorld to parent for worker system controls. */
+export interface WorkerAPI {
+  setCollectiveFocus: (focus: 'food' | 'construction' | 'production' | 'balanced') => void;
+  getCollectiveFocus: () => 'food' | 'construction' | 'production' | 'balanced';
+}
+
+/** API exposed from GameWorld to parent for audio volume controls + radio UI. */
 export interface AudioAPI {
   getMusicVolume: () => number;
   getAmbientVolume: () => number;
@@ -54,6 +62,8 @@ export interface AudioAPI {
   setAmbientVolume: (v: number) => void;
   isMuted: () => boolean;
   toggleMute: () => boolean;
+  getCurrentMusic: () => string | null;
+  playMusic: (trackId: string) => void;
 }
 
 interface Props {
@@ -67,6 +77,8 @@ interface Props {
   onSaveSystemReady?: (api: SaveSystemAPI) => void;
   /** Called when the AudioManager is ready for volume controls. */
   onAudioReady?: (api: AudioAPI) => void;
+  /** Called when the WorkerSystem is ready for collective focus controls. */
+  onWorkerApiReady?: (api: WorkerAPI) => void;
 }
 
 /** Maps Season enum values to renderer season keys. */
@@ -123,6 +135,7 @@ export function GameWorld({
   loadSaveOnStart,
   onSaveSystemReady,
   onAudioReady,
+  onWorkerApiReady,
 }: Props) {
   const rendererRef = useRef<Canvas2DRenderer | null>(null);
   const gestureRef = useRef<CanvasGestureManager | null>(null);
@@ -141,6 +154,8 @@ export function GameWorld({
   onSaveSystemReadyRef.current = onSaveSystemReady;
   const onAudioReadyRef = useRef(onAudioReady);
   onAudioReadyRef.current = onAudioReady;
+  const onWorkerApiReadyRef = useRef(onWorkerApiReady);
+  onWorkerApiReadyRef.current = onWorkerApiReady;
   const loadSaveOnStartRef = useRef(loadSaveOnStart);
   loadSaveOnStartRef.current = loadSaveOnStart;
 
@@ -178,6 +193,12 @@ export function GameWorld({
     renderer.start();
     spriteLoader.init().then(() => {
       renderer.start(); // idempotent — cancels previous loop, re-renders with sprites
+    });
+
+    // Load character sprite sheets in parallel (citizens render as dots until ready)
+    const characterSprites = new CharacterSpriteLoader();
+    characterSprites.init().then(() => {
+      renderer.setCharacterSprites(characterSprites);
     });
 
     // Handle resize — use ResizeObserver for reliable fold/unfold + orientation detection.
@@ -256,10 +277,11 @@ export function GameWorld({
     // Slight delay to let preload settle
     const musicTimeout = setTimeout(playNextTrack, 2000);
 
-    // Initialize ECS world — resource store + meta store
+    // Initialize ECS world — resource store + meta store + starting households
     createResourceStore();
     const seed = gameConfig?.seed ?? generateSeedPhrase();
     createMetaStore({ seed });
+    createStartingSettlement(gameConfig?.difficulty ?? 'comrade');
 
     // Start simulation engine with seeded RNG
     const rng = new GameRng(seed);
@@ -274,6 +296,7 @@ export function GameWorld({
       mountainDensity: 0.05,
     });
     mapSystem.generate();
+    grid.setMapSystem(mapSystem);
     renderer.setMapSystem(mapSystem);
 
     // Preload ground tile sprites for the offscreen cache
@@ -297,9 +320,18 @@ export function GameWorld({
       grid,
       {
         ...callbacksRef.current,
-        onToast: (msg) => {
-          callbacksRef.current.onToast(msg);
-          audio.playSFX('notification');
+        onToast: (msg, severity) => {
+          callbacksRef.current.onToast(msg, severity);
+          audio.playSFX(
+            severity === 'critical' || severity === 'evacuation' ? 'siren' : 'notification'
+          );
+          // Play bread line shuffle on starvation/shortage messages
+          if (msg.includes('STARVATION')) {
+            audio.playSFX('queue_shuffle');
+          }
+          // Persist to notification log
+          const totalTicks = simRef.current?.getChronology().getDate().totalTicks ?? 0;
+          addNotification(msg, severity ?? 'warning', totalTicks);
         },
         onStateChange: () => {
           callbacksRef.current.onStateChange();
@@ -333,6 +365,37 @@ export function GameWorld({
           callbacksRef.current.onEraChanged?.(era);
           audio.setEra(era.id);
         },
+        onBuildingCollapsed: (gridX, gridY, type) => {
+          callbacksRef.current.onBuildingCollapsed?.(gridX, gridY, type);
+          audio.playSFX('collapse');
+        },
+        onGameOver: (victory, reason) => {
+          callbacksRef.current.onGameOver?.(victory, reason);
+          audio.playMusic(victory ? 'soviet_anthem_1944' : 'sacred_war', false);
+        },
+        onSettlementChange: (event) => {
+          callbacksRef.current.onSettlementChange?.(event);
+          audio.playSFX(event.type === 'upgrade' ? 'fanfare' : 'warning');
+        },
+        onAnnualReport: (data, submitFn) => {
+          callbacksRef.current.onAnnualReport?.(data, submitFn);
+          audio.playSFX('paper_shuffle');
+        },
+        onMinigame: (active, resolveChoice) => {
+          callbacksRef.current.onMinigame?.(active, resolveChoice);
+          audio.playSFX('warning');
+        },
+        onAchievement: (name, description) => {
+          callbacksRef.current.onAchievement?.(name, description);
+          audio.playSFX('fanfare');
+        },
+        onPravda: (msg) => {
+          callbacksRef.current.onPravda(msg);
+          // Start faint radio static during propaganda broadcasts
+          audio.playAmbient('radio_static');
+          // Auto-stop after 8s — one Pravda headline's screen time
+          setTimeout(() => audio.stopAmbient('radio_static'), 8000);
+        },
       },
       rng
     );
@@ -355,6 +418,9 @@ export function GameWorld({
           vodkaDependency: stats.vodkaDependency,
         };
       };
+
+      // Wire building placement → mandate tracking
+      gestures.onBuildingPlaced = (defId) => simRef.current?.recordBuildingForMandates(defId);
 
       // Wire worker assignment callback for assignment mode
       gestures.onWorkerAssign = (workerName, buildingGridX, buildingGridY) => {
@@ -381,7 +447,7 @@ export function GameWorld({
       hasSave: (name) => saveSystem.hasSave(name),
     });
 
-    // Expose audio volume API to parent component
+    // Expose audio volume + radio API to parent component
     onAudioReadyRef.current?.({
       getMusicVolume: () => audio.getMusicVolume(),
       getAmbientVolume: () => audio.getAmbientVolume(),
@@ -389,6 +455,17 @@ export function GameWorld({
       setAmbientVolume: (v) => audio.setAmbientVolume(v),
       isMuted: () => audio.isMuted(),
       toggleMute: () => audio.toggleMute(),
+      getCurrentMusic: () => audio.getCurrentMusic(),
+      playMusic: (trackId) => {
+        audio.playMusic(trackId);
+      },
+    });
+
+    // Expose worker system API to parent component
+    onWorkerApiReadyRef.current?.({
+      setCollectiveFocus: (focus) => simRef.current?.getWorkerSystem().setCollectiveFocus(focus),
+      getCollectiveFocus: () =>
+        simRef.current?.getWorkerSystem().getCollectiveFocus() ?? 'balanced',
     });
 
     // Load save on start if requested (Continue / Load Game from landing page).
@@ -418,12 +495,23 @@ export function GameWorld({
         renderer.setPoliticalEntities(polEntities ?? []);
 
         // Sync citizen positions to renderer for worker dot indicators
+        // Uses pre-computed renderSlot when available (iteration 10+ entities)
         const citizenRenderData: CitizenRenderData[] = citizens.entities.map((e) => ({
           gridX: e.position.gridX,
           gridY: e.position.gridY,
           citizenClass: e.citizen.class,
+          dotColor: e.renderSlot?.dotColor,
+          gender: e.citizen.gender,
+          ageCategory: e.renderSlot?.ageCategory,
         }));
         renderer.setCitizenData(citizenRenderData);
+
+        // Toggle machinery ambient based on active production buildings
+        if (producers.entities.length > 0) {
+          audio.playAmbient('machinery');
+        } else {
+          audio.stopAmbient('machinery');
+        }
       }
     }, 1000);
 
@@ -436,7 +524,7 @@ export function GameWorld({
       world.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- callbacks stored in callbacksRef
-  }, [gameStarted, gameConfig?.mapSize, gameConfig?.seed]);
+  }, [gameStarted, gameConfig?.mapSize, gameConfig?.seed, gameConfig?.difficulty]);
 
   // Keyboard shortcuts
   useEffect(() => {

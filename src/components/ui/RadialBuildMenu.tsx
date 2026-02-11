@@ -13,6 +13,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import type { BuildingDef, Role } from '@/data/buildingDefs';
 import { BUILDING_DEFS, getBuildingsByRole } from '@/data/buildingDefs';
+import { getAvailableBuildingsForYear } from '@/game/era';
+import type { SettlementTier } from '@/game/SettlementSystem';
 import {
   closeRadialMenu,
   requestPlacement,
@@ -80,10 +82,15 @@ function describeWedge(
   ].join(' ');
 }
 
-/** Check if any building in a category fits the available space. */
-function categoryHasFittingBuilding(cat: CategoryDef, availableSpace: number): boolean {
+/** Check if any building in a category fits the available space and is era-unlocked. */
+function categoryHasFittingBuilding(
+  cat: CategoryDef,
+  availableSpace: number,
+  eraAvailable: Set<string>
+): boolean {
   const ids = cat.roles.flatMap((r) => getBuildingsByRole(r));
   return ids.some((id) => {
+    if (!eraAvailable.has(id)) return false;
     const def = BUILDING_DEFS[id];
     return def && def.footprint.tilesX <= availableSpace && def.footprint.tilesY <= availableSpace;
   });
@@ -98,6 +105,7 @@ function CategoryWedge({
   gap,
   isSelected,
   hasEnabled,
+  submenuOpen,
   onToggle,
 }: {
   cat: CategoryDef;
@@ -106,6 +114,7 @@ function CategoryWedge({
   gap: number;
   isSelected: boolean;
   hasEnabled: boolean;
+  submenuOpen: boolean;
   onToggle: () => void;
 }) {
   const startA = index * catAngle + gap / 2;
@@ -118,7 +127,7 @@ function CategoryWedge({
     <g
       role="button"
       tabIndex={0}
-      style={{ pointerEvents: 'all', cursor: 'pointer' }}
+      style={{ pointerEvents: submenuOpen && !isSelected ? 'none' : 'all', cursor: 'pointer' }}
       onClick={(e) => {
         e.stopPropagation();
         onToggle();
@@ -275,15 +284,22 @@ export function RadialBuildMenu() {
 
   const { screenX, screenY, gridX, gridY, availableSpace } = menu;
 
+  // Filter buildings by era + settlement tier
+  const eraAvailable = new Set(
+    getAvailableBuildingsForYear(snap.date.year, snap.settlementTier as SettlementTier)
+  );
+
   const activeCats = CATEGORIES.filter((c) =>
-    c.roles.some((role) => getBuildingsByRole(role).length > 0)
+    c.roles.some((role) => getBuildingsByRole(role).some((id) => eraAvailable.has(id)))
   );
   const catAngle = 360 / activeCats.length;
   const gap = 2;
 
   const selectedCategory = activeCats.find((c) => c.id === selectedCat);
   const buildingIds = selectedCategory
-    ? selectedCategory.roles.flatMap((role) => getBuildingsByRole(role))
+    ? selectedCategory.roles
+        .flatMap((role) => getBuildingsByRole(role))
+        .filter((id) => eraAvailable.has(id))
     : [];
   buildingIds.sort((a, b) => {
     const defA = BUILDING_DEFS[a];
@@ -338,7 +354,14 @@ export function RadialBuildMenu() {
           style={{ pointerEvents: 'auto' }}
         >
           <title>Build Menu</title>
-          <circle cx={CENTER} cy={CENTER} r={8} fill="#cfaa48" opacity={0.6} />
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            r={8}
+            fill="#cfaa48"
+            opacity={0.6}
+            style={{ pointerEvents: 'none' }}
+          />
 
           {activeCats.map((cat, i) => (
             <CategoryWedge
@@ -348,7 +371,8 @@ export function RadialBuildMenu() {
               catAngle={catAngle}
               gap={gap}
               isSelected={selectedCat === cat.id}
-              hasEnabled={categoryHasFittingBuilding(cat, availableSpace)}
+              hasEnabled={categoryHasFittingBuilding(cat, availableSpace, eraAvailable)}
+              submenuOpen={selectedCat !== null}
               onToggle={() => setSelectedCat(selectedCat === cat.id ? null : cat.id)}
             />
           ))}

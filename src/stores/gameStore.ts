@@ -5,7 +5,13 @@
  * snapshots that refresh when notifyStateChange() is called.
  */
 import { useSyncExternalStore } from 'react';
-import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
+import {
+  buildingsLogic,
+  citizens,
+  dvory,
+  getMetaEntity,
+  getResourceEntity,
+} from '@/ecs/archetypes';
 import type { GameMeta } from '@/ecs/world';
 
 // ── Snapshot type (immutable view for React) ──────────────────────────────
@@ -32,6 +38,15 @@ export interface GameSnapshot {
   commendations: number;
   threatLevel: string;
   currentEra: string;
+  roadQuality: string;
+  roadCondition: number;
+
+  // ── Population Breakdown ──
+  dvorCount: number;
+  avgMorale: number;
+  avgLoyalty: number;
+  assignedWorkers: number;
+  idleWorkers: number;
 
   // ── Planned Economy Resources ──
   trudodni: number;
@@ -56,10 +71,26 @@ function createSnapshot(): GameSnapshot {
   const meta = getMetaEntity();
   const m = meta?.gameMeta;
 
+  // Compute population breakdown from ECS
+  const citizenList = citizens.entities;
+  const totalCitizens = citizenList.length;
+  let moraleSum = 0;
+  let assigned = 0;
+  for (const c of citizenList) {
+    moraleSum += c.citizen.happiness;
+    if (c.citizen.assignment) assigned++;
+  }
+  // Average dvor loyalty from household entities
+  const dvorList = dvory.entities;
+  let loyaltySum = 0;
+  for (const d of dvorList) {
+    loyaltySum += d.dvor.loyaltyToCollective;
+  }
+
   return {
     seed: m?.seed ?? '',
     money: res?.resources.money ?? 0,
-    pop: res?.resources.population ?? 0,
+    pop: totalCitizens,
     food: res?.resources.food ?? 0,
     vodka: res?.resources.vodka ?? 0,
     power: res?.resources.power ?? 0,
@@ -80,6 +111,15 @@ function createSnapshot(): GameSnapshot {
     commendations: m?.commendations ?? 0,
     threatLevel: m?.threatLevel ?? 'safe',
     currentEra: m?.currentEra ?? 'war_communism',
+    roadQuality: m?.roadQuality ?? 'none',
+    roadCondition: m?.roadCondition ?? 100,
+
+    // Population breakdown
+    dvorCount: dvory.entities.length,
+    avgMorale: totalCitizens > 0 ? Math.round(moraleSum / totalCitizens) : 0,
+    avgLoyalty: dvorList.length > 0 ? Math.round(loyaltySum / dvorList.length) : 0,
+    assignedWorkers: assigned,
+    idleWorkers: totalCitizens - assigned,
 
     // Planned economy resources
     trudodni: res?.resources.trudodni ?? 0,
@@ -319,6 +359,144 @@ function subscribeAssignment(listener: () => void): () => void {
   };
 }
 
+// ── Color-Blind Mode ─────────────────────────────────────────────────────
+
+let _colorBlindMode = false;
+const _colorBlindListeners = new Set<() => void>();
+
+export function isColorBlindMode(): boolean {
+  return _colorBlindMode;
+}
+
+export function setColorBlindMode(enabled: boolean): void {
+  _colorBlindMode = enabled;
+  for (const listener of _colorBlindListeners) {
+    listener();
+  }
+}
+
+export function useColorBlindMode(): boolean {
+  return useSyncExternalStore(subscribeColorBlind, isColorBlindMode, isColorBlindMode);
+}
+
+function subscribeColorBlind(listener: () => void): () => void {
+  _colorBlindListeners.add(listener);
+  return () => {
+    _colorBlindListeners.delete(listener);
+  };
+}
+
+// ── Notification Log ─────────────────────────────────────────────────────
+
+export interface NotificationEntry {
+  id: number;
+  message: string;
+  severity: 'warning' | 'critical' | 'evacuation';
+  timestamp: number;
+  gridX?: number;
+  gridY?: number;
+}
+
+const MAX_NOTIFICATIONS = 50;
+let _notificationId = 0;
+let _notifications: NotificationEntry[] = [];
+const _notificationListeners = new Set<() => void>();
+
+function notifyNotificationListeners(): void {
+  for (const listener of _notificationListeners) {
+    listener();
+  }
+}
+
+export function addNotification(
+  message: string,
+  severity: 'warning' | 'critical' | 'evacuation',
+  timestamp: number,
+  gridX?: number,
+  gridY?: number
+): void {
+  _notificationId++;
+  const entry: NotificationEntry = {
+    id: _notificationId,
+    message,
+    severity,
+    timestamp,
+    gridX,
+    gridY,
+  };
+  _notifications = [entry, ..._notifications].slice(0, MAX_NOTIFICATIONS);
+  notifyNotificationListeners();
+}
+
+export function getNotifications(): NotificationEntry[] {
+  return _notifications;
+}
+
+export function useNotifications(): NotificationEntry[] {
+  return useSyncExternalStore(subscribeNotifications, getNotifications, getNotifications);
+}
+
+function subscribeNotifications(listener: () => void): () => void {
+  _notificationListeners.add(listener);
+  return () => {
+    _notificationListeners.delete(listener);
+  };
+}
+
+// ── Citizen Dossier Modal ─────────────────────────────────────────────────
+
+export interface CitizenDossierData {
+  citizen: {
+    name: string;
+    class: string;
+    happiness: number;
+    hunger: number;
+    assignment?: string;
+    gender?: 'male' | 'female';
+    age?: number;
+    memberRole?: string;
+    dvorId?: string;
+  };
+  household?: {
+    surname: string;
+    members: Array<{ name: string; age: number; role: string; gender: string }>;
+    headOfHousehold: string;
+    loyaltyToCollective: number;
+  };
+}
+
+let _selectedCitizen: CitizenDossierData | null = null;
+const _citizenDossierListeners = new Set<() => void>();
+
+export function getSelectedCitizen(): CitizenDossierData | null {
+  return _selectedCitizen;
+}
+
+export function openCitizenDossier(data: CitizenDossierData): void {
+  _selectedCitizen = data;
+  for (const listener of _citizenDossierListeners) {
+    listener();
+  }
+}
+
+export function closeCitizenDossier(): void {
+  _selectedCitizen = null;
+  for (const listener of _citizenDossierListeners) {
+    listener();
+  }
+}
+
+export function useCitizenDossier(): CitizenDossierData | null {
+  return useSyncExternalStore(subscribeCitizenDossier, getSelectedCitizen, getSelectedCitizen);
+}
+
+function subscribeCitizenDossier(listener: () => void): () => void {
+  _citizenDossierListeners.add(listener);
+  return () => {
+    _citizenDossierListeners.delete(listener);
+  };
+}
+
 // ── Radial Build Menu ────────────────────────────────────────────────────
 
 export interface RadialMenuState {
@@ -361,6 +539,75 @@ function subscribeRadial(listener: () => void): () => void {
   _radialListeners.add(listener);
   return () => {
     _radialListeners.delete(listener);
+  };
+}
+
+// ── Radial Inspect Menu ───────────────────────────────────────────────────
+
+export type InspectBuildingType =
+  | 'production'
+  | 'housing'
+  | 'storage'
+  | 'government'
+  | 'military'
+  | 'construction'
+  | 'general';
+
+export interface InspectMenuOccupant {
+  name: string;
+  age: number;
+  role: string;
+  gender: string;
+}
+
+export interface InspectMenuState {
+  /** Screen position of the tap that opened the menu. */
+  screenX: number;
+  screenY: number;
+  /** Grid cell the menu targets. */
+  gridX: number;
+  gridY: number;
+  /** Building definition ID. */
+  buildingDefId: string;
+  /** Categorized building type for ring selection. */
+  buildingType: InspectBuildingType;
+  /** Number of workers currently assigned. */
+  workerCount: number;
+  /** Max housing capacity (housing buildings only). */
+  housingCap?: number;
+  /** Current occupants (housing buildings only). */
+  occupants?: InspectMenuOccupant[];
+}
+
+let _inspectMenu: InspectMenuState | null = null;
+const _inspectMenuListeners = new Set<() => void>();
+
+export function getInspectMenu(): InspectMenuState | null {
+  return _inspectMenu;
+}
+
+export function openInspectMenu(state: InspectMenuState): void {
+  _inspectMenu = state;
+  for (const listener of _inspectMenuListeners) {
+    listener();
+  }
+}
+
+export function closeInspectMenu(): void {
+  _inspectMenu = null;
+  for (const listener of _inspectMenuListeners) {
+    listener();
+  }
+}
+
+export function useInspectMenu(): InspectMenuState | null {
+  return useSyncExternalStore(subscribeInspectMenu, getInspectMenu, getInspectMenu);
+}
+
+function subscribeInspectMenu(listener: () => void): () => void {
+  _inspectMenuListeners.add(listener);
+  return () => {
+    _inspectMenuListeners.delete(listener);
   };
 }
 

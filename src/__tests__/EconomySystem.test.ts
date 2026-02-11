@@ -642,16 +642,16 @@ describe('EconomySystem — Blat', () => {
     expect(sys.getBlat().connections).toBe(100);
   });
 
-  it('spendBlat returns false if insufficient', () => {
+  it('spendBlat returns success=false if insufficient', () => {
     const sys = new EconomySystem();
-    expect(sys.spendBlat(50, 'too_much')).toBe(false);
+    expect(sys.spendBlat(50, 'too_much').success).toBe(false);
     expect(sys.getBlat().connections).toBe(10); // Unchanged
   });
 
-  it('spendBlat deducts and returns true if sufficient', () => {
+  it('spendBlat deducts and returns success=true if sufficient', () => {
     const sys = new EconomySystem();
     sys.grantBlat(30);
-    expect(sys.spendBlat(20, 'test')).toBe(true);
+    expect(sys.spendBlat(20, 'test').success).toBe(true);
     expect(sys.getBlat().connections).toBe(20); // 10 + 30 - 20
     expect(sys.getBlat().totalSpent).toBe(20);
   });

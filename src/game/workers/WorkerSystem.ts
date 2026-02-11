@@ -6,7 +6,7 @@
  * skill, vodka dependency, and class-specific production bonuses.
  */
 
-import { citizens } from '@/ecs/archetypes';
+import { citizens, getResourceEntity } from '@/ecs/archetypes';
 import { createCitizen } from '@/ecs/factories';
 import type { CitizenComponent, Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
@@ -25,6 +25,8 @@ import {
   resolveStatus,
 } from './classes';
 import { CLASS_ORDER, CLASS_WEIGHTS } from './constants';
+import type { CollectiveFocus } from './governor';
+import { runGovernor } from './governor';
 import type { TickContext, WorkerDisplayInfo, WorkerStats, WorkerTickResult } from './types';
 
 /** Serialized per-worker stats keyed by a stable identifier. */
@@ -40,12 +42,27 @@ export interface WorkerSystemSaveData {
   workers: WorkerStatEntry[];
 }
 
+/** Governor runs every N ticks to avoid per-tick array copy overhead. */
+const GOVERNOR_INTERVAL = 10;
+
 export class WorkerSystem {
   private stats: Map<Entity, WorkerStats> = new Map();
   private rng: GameRng | null;
+  private collectiveFocus: CollectiveFocus = 'balanced';
+  private tickCounter = 0;
 
   constructor(rng?: GameRng) {
     this.rng = rng ?? null;
+  }
+
+  /** Set the collective focus — shifts behavioral governor priorities. */
+  setCollectiveFocus(focus: CollectiveFocus): void {
+    this.collectiveFocus = focus;
+  }
+
+  /** Get the current collective focus. */
+  getCollectiveFocus(): CollectiveFocus {
+    return this.collectiveFocus;
   }
 
   /** Get the stats map (read-only, for testing). */
@@ -98,6 +115,7 @@ export class WorkerSystem {
       ticksSinceVodka: 0,
       name,
       assignmentDuration: 0,
+      assignmentSource: 'auto',
     };
 
     this.stats.set(entity, stats);
@@ -119,7 +137,12 @@ export class WorkerSystem {
    * Sets the citizen's assignment field to the building defId.
    * Returns false if no building found at that position.
    */
-  assignWorker(worker: Entity, buildingGridX: number, buildingGridY: number): boolean {
+  assignWorker(
+    worker: Entity,
+    buildingGridX: number,
+    buildingGridY: number,
+    source: 'player' | 'forced' | 'auto' = 'player'
+  ): boolean {
     if (!worker.citizen) return false;
 
     const buildingsQuery = world.with('position', 'building');
@@ -138,6 +161,7 @@ export class WorkerSystem {
     const stats = this.stats.get(worker);
     if (stats) {
       stats.assignmentDuration = 0;
+      stats.assignmentSource = source;
     }
 
     return true;
@@ -182,38 +206,9 @@ export class WorkerSystem {
       if (c.citizen.class === 'party_official') ctx.partyOfficialCount++;
     }
 
-    const classEffSum = emptyClassRecord();
-    const classCount = emptyClassRecord();
-
-    const allCitizens = [...citizens];
-    const toRemove: Array<{ entity: Entity; name: string; cls: CitizenComponent['class'] }> = [];
-
-    for (const entity of allCitizens) {
-      const stats = this.stats.get(entity);
-      if (!stats) continue;
-
-      const cls = entity.citizen.class;
-      const assignment = entity.citizen.assignment;
-
-      processVodka(stats, cls, ctx);
-      processFood(entity.citizen, stats, ctx);
-      applyMorale(entity.citizen, stats, ctx.partyOfficialCount);
-
-      if (checkDefection(cls, stats, ctx.rng)) {
-        toRemove.push({ entity, name: stats.name, cls });
-        continue;
-      }
-
-      const efficiency = processProductionAndGrowth(stats, assignment, cls, ctx.rng, stakhanovites);
-      classEffSum[cls] += efficiency;
-      classCount[cls]++;
-    }
-
-    const defections: WorkerTickResult['defections'] = [];
-    for (const { entity, name, cls } of toRemove) {
-      defections.push({ name, class: cls });
-      this.removeWorker(entity, cls === 'prisoner' ? 'escape' : 'defection');
-    }
+    const { classEffSum, classCount, toRemove } = this.processCitizens(ctx, stakhanovites);
+    const defections = this.processDefections(toRemove);
+    this.runGovernorTick();
 
     const classEfficiency = emptyClassRecord();
     for (const cls of CLASS_ORDER) {
@@ -227,6 +222,67 @@ export class WorkerSystem {
       stakhanovites,
       classEfficiency,
     };
+  }
+
+  /** Process all citizens: vodka, food, morale, defection, production. */
+  private processCitizens(ctx: TickContext, stakhanovites: WorkerTickResult['stakhanovites']) {
+    const classEffSum = emptyClassRecord();
+    const classCount = emptyClassRecord();
+    const toRemove: Array<{ entity: Entity; name: string; cls: CitizenComponent['class'] }> = [];
+
+    for (const entity of [...citizens]) {
+      const stats = this.stats.get(entity);
+      if (!stats) continue;
+
+      const cls = entity.citizen.class;
+      processVodka(stats, cls, ctx);
+      processFood(entity.citizen, stats, ctx);
+      applyMorale(entity.citizen, stats, ctx.partyOfficialCount);
+
+      if (checkDefection(cls, stats, ctx.rng)) {
+        toRemove.push({ entity, name: stats.name, cls });
+        continue;
+      }
+
+      const efficiency = processProductionAndGrowth(
+        stats,
+        entity.citizen.assignment,
+        cls,
+        ctx.rng,
+        stakhanovites
+      );
+      classEffSum[cls] += efficiency;
+      classCount[cls]++;
+    }
+    return { classEffSum, classCount, toRemove };
+  }
+
+  /** Remove defecting/escaping citizens and return defection records. */
+  private processDefections(
+    toRemove: Array<{ entity: Entity; name: string; cls: CitizenComponent['class'] }>
+  ): WorkerTickResult['defections'] {
+    return toRemove.map(({ entity, name, cls }) => {
+      this.removeWorker(entity, cls === 'prisoner' ? 'escape' : 'defection');
+      return { name, class: cls };
+    });
+  }
+
+  /** Run behavioral governor on throttled interval. */
+  private runGovernorTick(): void {
+    this.tickCounter++;
+    if (this.tickCounter % GOVERNOR_INTERVAL !== 0) return;
+    const store = getResourceEntity();
+    if (!store) return;
+    for (const entity of [...citizens]) {
+      const stats = this.stats.get(entity);
+      if (!stats) continue;
+      const recommendation = runGovernor(entity, stats, store.resources, this.collectiveFocus);
+      if (!recommendation) continue;
+      entity.citizen.assignment = recommendation.buildingDefId;
+      stats.assignmentSource = 'auto';
+      stats.assignmentDuration = 0;
+      world.reindex(entity);
+    }
   }
 
   // ── Serialization ────────────────────────────────────

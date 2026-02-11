@@ -47,8 +47,8 @@ describe('gameStore', () => {
       const store = getResourceEntity()!;
       const meta = getMetaEntity()!;
       expect(store.resources.money).toBe(2000);
-      expect(store.resources.population).toBe(0);
-      expect(store.resources.food).toBe(200);
+      expect(store.resources.population).toBe(12);
+      expect(store.resources.food).toBe(600);
       expect(store.resources.vodka).toBe(50);
       expect(store.resources.power).toBe(0);
       expect(store.resources.powerUsed).toBe(0);

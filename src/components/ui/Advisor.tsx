@@ -1,5 +1,5 @@
 /**
- * Advisor -- "Comrade Vanya" in-game advisor panel.
+ * Advisor -- "Comrade Krupnik" in-game advisor panel.
  *
  * Renders a small card (bottom-right on desktop, bottom sheet on mobile)
  * with a pixel-art face drawn on a canvas, the advisor's name, a message,
@@ -13,7 +13,7 @@ interface AdvisorProps {
 }
 
 /**
- * Draw a 60x60 pixel-art face for Comrade Vanya:
+ * Draw a 60x60 pixel-art face for Comrade Krupnik:
  * skin-colored rectangle, black ushanka hat with a red star,
  * dot eyes, and a line mouth.
  */
@@ -95,7 +95,7 @@ export function Advisor({ message, onDismiss }: AdvisorProps) {
             className="text-sm font-bold uppercase tracking-wider mb-1"
             style={{ color: 'var(--soviet-gold)' }}
           >
-            Comrade Vanya:
+            Comrade Krupnik:
           </p>
 
           {/* Message */}

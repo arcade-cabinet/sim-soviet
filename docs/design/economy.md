@@ -2,7 +2,7 @@
 title: Economy — The Planned Economy System
 status: Complete
 implementation: src/game/economy/EconomySystem.ts
-tests: src/__tests__/EconomySystem.test.ts
+tests: src/__tests__/EconomySystem.test.ts, src/__tests__/economy-integration.test.ts
 last_verified: 2026-02-10
 coverage: "Full — trudodni, fondy, blat, rations, MTS, stakhanovites, heating, currency reforms"
 ---

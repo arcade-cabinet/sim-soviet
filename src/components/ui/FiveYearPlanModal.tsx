@@ -10,6 +10,7 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Hammer, Star } from 'lucide-react';
 import { Fragment } from 'react';
+import type { MandateWithFulfillment } from '@/game/PlanMandates';
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,8 @@ export interface PlanDirective {
   currentPop: number;
   currentPower: number;
   currentMoney: number;
+  /** Building mandates for the current era (if PlanMandates is active). */
+  mandates?: MandateWithFulfillment[];
 }
 
 interface FiveYearPlanModalProps {
@@ -250,6 +253,49 @@ export function FiveYearPlanModal({ directive, onAccept }: FiveYearPlanModalProp
                         );
                       })}
                     </div>
+
+                    {/* Building Mandates */}
+                    {directive.mandates && directive.mandates.length > 0 && (
+                      <>
+                        <h2
+                          className="text-sm sm:text-base font-bold text-[#8b4513] mb-3 uppercase tracking-wider"
+                          style={DOCUMENT_FONT}
+                        >
+                          Building Mandates
+                        </h2>
+                        <div className="mb-6 sm:mb-8 space-y-2">
+                          {directive.mandates.map((m) => {
+                            const done = m.fulfilled >= m.required;
+                            return (
+                              <div
+                                key={m.defId}
+                                className={`border-2 p-2 sm:p-3 ${
+                                  done
+                                    ? 'border-green-700 bg-green-50/60'
+                                    : 'border-[#8b4513] bg-[#e8dcc0]'
+                                }`}
+                                style={DOCUMENT_FONT}
+                              >
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-[#654321] text-sm">
+                                    {m.label}
+                                  </span>
+                                  <span
+                                    className={`text-xs font-bold px-2 py-0.5 rounded ${
+                                      done
+                                        ? 'text-green-700 bg-green-100'
+                                        : 'text-[#654321] bg-[#d4c8a8]'
+                                    }`}
+                                  >
+                                    {m.fulfilled}/{m.required}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
 
                     {/* Consequences */}
                     <div

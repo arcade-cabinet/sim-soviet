@@ -18,7 +18,8 @@ export type MinigameId =
   | 'black_market'
   | 'factory_emergency'
   | 'the_hunt'
-  | 'interrogation';
+  | 'interrogation'
+  | 'mining_expedition';
 
 // ─────────────────────────────────────────────────────────
 //  OUTCOME

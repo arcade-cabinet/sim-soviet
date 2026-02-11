@@ -216,6 +216,42 @@ export const AUDIO_MANIFEST: AudioAsset[] = [
     preload: false,
     description: 'Bread line shuffling (procedural)',
   },
+  {
+    id: 'collapse',
+    category: 'sfx',
+    url: 'procedural',
+    volume: 0.8,
+    loop: false,
+    preload: true,
+    description: 'Building collapse rumble (procedural)',
+  },
+  {
+    id: 'paper_shuffle',
+    category: 'sfx',
+    url: 'procedural',
+    volume: 0.4,
+    loop: false,
+    preload: false,
+    description: 'Bureaucratic paperwork (procedural)',
+  },
+  {
+    id: 'fanfare',
+    category: 'sfx',
+    url: 'procedural',
+    volume: 0.6,
+    loop: false,
+    preload: false,
+    description: 'Achievement/victory fanfare (procedural)',
+  },
+  {
+    id: 'warning',
+    category: 'sfx',
+    url: 'procedural',
+    volume: 0.6,
+    loop: false,
+    preload: false,
+    description: 'Quick warning beeps (procedural)',
+  },
 
   // ===== AMBIENT (Tone.js procedural) =====
   {

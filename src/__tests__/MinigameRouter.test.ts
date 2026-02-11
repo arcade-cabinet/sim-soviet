@@ -17,6 +17,7 @@ const ALL_IDS: MinigameId[] = [
   'factory_emergency',
   'the_hunt',
   'interrogation',
+  'mining_expedition',
 ];
 
 /** Compute a rough "goodness score" for an outcome (positive = good). */
@@ -39,13 +40,13 @@ function outcomeScore(o: MinigameOutcome): number {
 // ─────────────────────────────────────────────────────────
 
 describe('MinigameDefinitions', () => {
-  it('has exactly 8 minigame definitions', () => {
-    expect(MINIGAME_DEFINITIONS).toHaveLength(8);
+  it('has exactly 9 minigame definitions', () => {
+    expect(MINIGAME_DEFINITIONS).toHaveLength(9);
   });
 
   it('all IDs are unique', () => {
     const ids = MINIGAME_DEFINITIONS.map((d) => d.id);
-    expect(new Set(ids).size).toBe(8);
+    expect(new Set(ids).size).toBe(9);
   });
 
   it('covers all expected MinigameId values', () => {
@@ -178,6 +179,25 @@ describe('MinigameRouter', () => {
       });
       expect(def).not.toBeNull();
       expect(def!.id).toBe('the_hunt');
+    });
+
+    it('mining_expedition triggers on mountain building tap', () => {
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: 'mountain',
+        totalTicks: 100,
+        population: 10,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('mining_expedition');
+    });
+
+    it('mining_expedition auto-resolve returns expected announcement', () => {
+      const def = getMinigameDefinition('mining_expedition')!;
+      expect(def).toBeDefined();
+      router.startMinigame(def, 100);
+      const outcome = router.autoResolve();
+      expect(outcome.resources?.money).toBe(-2);
+      expect(outcome.announcement).toContain('Nobody ventured into the mountains');
     });
 
     it('matches event trigger for ideology_session', () => {

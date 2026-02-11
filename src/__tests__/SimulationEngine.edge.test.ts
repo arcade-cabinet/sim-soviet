@@ -312,9 +312,13 @@ describe('SimulationEngine edge cases', () => {
       vi.spyOn(Math, 'random').mockReturnValue(0.99);
       engine.tick();
 
-      // Food should be close to initial (storageSystem applies ~0.5%/tick spoilage).
+      // Food should be close to initial (storageSystem applies overflow + baseline spoilage).
       // Snow/blizzard → farmModifier=0.0 is valid, so production might be 0.
-      const spoilageMargin = initialFood * 0.01; // generous spoilage margin
+      // Overflow spoilage: 5%/tick on food above storageCapacity (200)
+      // Baseline: 0.5%/tick on all food, plus seasonal multiplier
+      const capacity = store.resources.storageCapacity;
+      const overflow = Math.max(0, initialFood - capacity);
+      const spoilageMargin = overflow * 0.05 * 2 + initialFood * 0.005 * 2 + 1; // generous: 2x seasonal
       if (store.resources.population === 0) {
         expect(getResourceEntity()!.resources.food).toBeGreaterThanOrEqual(
           initialFood - spoilageMargin

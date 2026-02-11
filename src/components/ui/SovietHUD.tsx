@@ -6,9 +6,9 @@
  *
  * Layout: [Settlement/Date] [Resources...] [Pause] [Speed] [Hamburger]
  */
-import { Menu, Pause, Play } from 'lucide-react';
+import { Bell, Menu, Pause, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { setGameSpeed, togglePause, useGameSnapshot } from '@/stores/gameStore';
+import { setGameSpeed, togglePause, useGameSnapshot, useNotifications } from '@/stores/gameStore';
 
 const MONTH_NAMES = [
   'January',
@@ -34,10 +34,12 @@ const TIER_LABELS: Record<string, string> = {
 
 interface SovietHUDProps {
   onMenuToggle: () => void;
+  onNotificationLogToggle?: () => void;
 }
 
-export function SovietHUD({ onMenuToggle }: SovietHUDProps) {
+export function SovietHUD({ onMenuToggle, onNotificationLogToggle }: SovietHUDProps) {
   const snap = useGameSnapshot();
+  const notifications = useNotifications();
 
   const month = MONTH_NAMES[(snap.date.month - 1) % 12] ?? '???';
   const dateStr = `${month} ${snap.date.year}`;
@@ -106,6 +108,22 @@ export function SovietHUD({ onMenuToggle }: SovietHUDProps) {
               </button>
             ))}
           </div>
+
+          {/* Notification bell */}
+          <button
+            type="button"
+            onClick={onNotificationLogToggle}
+            className="relative flex items-center justify-center w-7 h-7 bg-[#1a1a1a] border border-[#444] hover:border-[#666] transition-colors"
+            aria-label="Open dispatch log"
+            title="Dispatch Log"
+          >
+            <Bell className="w-3.5 h-3.5 text-[#ccc]" />
+            {notifications.length > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-[#8b0000] text-white text-[8px] font-bold rounded-full flex items-center justify-center px-0.5">
+                {notifications.length > 99 ? '99+' : notifications.length}
+              </span>
+            )}
+          </button>
 
           {/* Hamburger menu */}
           <button
