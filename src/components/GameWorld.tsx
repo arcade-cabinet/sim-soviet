@@ -10,7 +10,7 @@ import { AudioManager } from '@/audio/AudioManager';
 import { GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS } from '@/audio/AudioManifest';
 import type { NewGameConfig } from '@/components/screens/NewGameFlow';
 import { initDatabase } from '@/db/provider';
-import { citizens } from '@/ecs/archetypes';
+import { citizens, producers } from '@/ecs/archetypes';
 import { createMetaStore, createResourceStore, createStartingSettlement } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { Season } from '@/game/Chronology';
@@ -25,9 +25,11 @@ import { WeatherType } from '@/game/WeatherSystem';
 import { CanvasGestureManager } from '@/input/CanvasGestureManager';
 import type { CitizenRenderData } from '@/rendering/Canvas2DRenderer';
 import { Canvas2DRenderer } from '@/rendering/Canvas2DRenderer';
+import { CharacterSpriteLoader } from '@/rendering/CharacterSpriteLoader';
 import { GRID_SIZE, gridToScreen } from '@/rendering/GridMath';
 import { SpriteLoader } from '@/rendering/SpriteLoader';
 import {
+  addNotification,
   closeRadialMenu,
   getGameSpeed,
   isPaused,
@@ -52,7 +54,7 @@ export interface WorkerAPI {
   getCollectiveFocus: () => 'food' | 'construction' | 'production' | 'balanced';
 }
 
-/** API exposed from GameWorld to parent for audio volume controls. */
+/** API exposed from GameWorld to parent for audio volume controls + radio UI. */
 export interface AudioAPI {
   getMusicVolume: () => number;
   getAmbientVolume: () => number;
@@ -60,6 +62,8 @@ export interface AudioAPI {
   setAmbientVolume: (v: number) => void;
   isMuted: () => boolean;
   toggleMute: () => boolean;
+  getCurrentMusic: () => string | null;
+  playMusic: (trackId: string) => void;
 }
 
 interface Props {
@@ -191,6 +195,12 @@ export function GameWorld({
       renderer.start(); // idempotent — cancels previous loop, re-renders with sprites
     });
 
+    // Load character sprite sheets in parallel (citizens render as dots until ready)
+    const characterSprites = new CharacterSpriteLoader();
+    characterSprites.init().then(() => {
+      renderer.setCharacterSprites(characterSprites);
+    });
+
     // Handle resize — use ResizeObserver for reliable fold/unfold + orientation detection.
     // window.resize alone misses foldable phone transitions and some orientation changes.
     const onResize = () => renderer.resize();
@@ -310,9 +320,18 @@ export function GameWorld({
       grid,
       {
         ...callbacksRef.current,
-        onToast: (msg) => {
-          callbacksRef.current.onToast(msg);
-          audio.playSFX('notification');
+        onToast: (msg, severity) => {
+          callbacksRef.current.onToast(msg, severity);
+          audio.playSFX(
+            severity === 'critical' || severity === 'evacuation' ? 'siren' : 'notification'
+          );
+          // Play bread line shuffle on starvation/shortage messages
+          if (msg.includes('STARVATION')) {
+            audio.playSFX('queue_shuffle');
+          }
+          // Persist to notification log
+          const totalTicks = simRef.current?.getChronology().getDate().totalTicks ?? 0;
+          addNotification(msg, severity ?? 'warning', totalTicks);
         },
         onStateChange: () => {
           callbacksRef.current.onStateChange();
@@ -345,6 +364,37 @@ export function GameWorld({
         onEraChanged: (era) => {
           callbacksRef.current.onEraChanged?.(era);
           audio.setEra(era.id);
+        },
+        onBuildingCollapsed: (gridX, gridY, type) => {
+          callbacksRef.current.onBuildingCollapsed?.(gridX, gridY, type);
+          audio.playSFX('collapse');
+        },
+        onGameOver: (victory, reason) => {
+          callbacksRef.current.onGameOver?.(victory, reason);
+          audio.playMusic(victory ? 'soviet_anthem_1944' : 'sacred_war', false);
+        },
+        onSettlementChange: (event) => {
+          callbacksRef.current.onSettlementChange?.(event);
+          audio.playSFX(event.type === 'upgrade' ? 'fanfare' : 'warning');
+        },
+        onAnnualReport: (data, submitFn) => {
+          callbacksRef.current.onAnnualReport?.(data, submitFn);
+          audio.playSFX('paper_shuffle');
+        },
+        onMinigame: (active, resolveChoice) => {
+          callbacksRef.current.onMinigame?.(active, resolveChoice);
+          audio.playSFX('warning');
+        },
+        onAchievement: (name, description) => {
+          callbacksRef.current.onAchievement?.(name, description);
+          audio.playSFX('fanfare');
+        },
+        onPravda: (msg) => {
+          callbacksRef.current.onPravda(msg);
+          // Start faint radio static during propaganda broadcasts
+          audio.playAmbient('radio_static');
+          // Auto-stop after 8s — one Pravda headline's screen time
+          setTimeout(() => audio.stopAmbient('radio_static'), 8000);
         },
       },
       rng
@@ -397,7 +447,7 @@ export function GameWorld({
       hasSave: (name) => saveSystem.hasSave(name),
     });
 
-    // Expose audio volume API to parent component
+    // Expose audio volume + radio API to parent component
     onAudioReadyRef.current?.({
       getMusicVolume: () => audio.getMusicVolume(),
       getAmbientVolume: () => audio.getAmbientVolume(),
@@ -405,6 +455,10 @@ export function GameWorld({
       setAmbientVolume: (v) => audio.setAmbientVolume(v),
       isMuted: () => audio.isMuted(),
       toggleMute: () => audio.toggleMute(),
+      getCurrentMusic: () => audio.getCurrentMusic(),
+      playMusic: (trackId) => {
+        audio.playMusic(trackId);
+      },
     });
 
     // Expose worker system API to parent component
@@ -451,6 +505,13 @@ export function GameWorld({
           ageCategory: e.renderSlot?.ageCategory,
         }));
         renderer.setCitizenData(citizenRenderData);
+
+        // Toggle machinery ambient based on active production buildings
+        if (producers.entities.length > 0) {
+          audio.playAmbient('machinery');
+        } else {
+          audio.stopAmbient('machinery');
+        }
       }
     }, 1000);
 

@@ -21,33 +21,26 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 
 **Important**: Vite root is `./app`, so static assets must be in `app/public/` (not project-root `public/`). Asset URLs must use `import.meta.env.BASE_URL` prefix (not hardcoded `/`) to work on GitHub Pages subdirectory deployment.
 
-## Recently Completed: Playtest Fix Session (TDD)
+## Recently Completed: Monolith Decomposition + Biome Compliance
 
-### Game-Breaking Bug Fixes
-- [x] **Population display fix**: `gameStore.ts:85` now uses `totalCitizens` (ECS count) instead of `resources.population` (was hardcoded 12)
-- [x] **Starting food rebalance**: 200 → 600 base food (enough for ~55 citizens to survive ~2 months without production)
-- [x] **Resource store defaults aligned**: food=600, timber=30, steel=10 match `BASE_STARTING` in difficulty.ts
+### 6 Monolithic Files Decomposed
+- [x] **factories.ts** (785→29 lines): split into `src/ecs/factories/` — `buildingFactories.ts`, `citizenFactories.ts`, `settlementFactories.ts`, `storeFactories.ts`, `demographics.ts` + barrel `index.ts`
+- [x] **App.tsx** (341→245 lines): extracted `app/hooks/useSimCallbacks.ts` (103 lines) + `app/components/GameModals.tsx` (137 lines)
+- [x] **SimulationEngine.ts** (~600 lines removed): extracted `src/game/engine/` — `serializeEngine.ts`, `achievementTick.ts`, `annualReportTick.ts`, `minigameTick.ts`
+- [x] **DrawerPanel.tsx**: 10+ section sub-components (`DrawerHeader`, `ArchivesSection`, `AudioSection`, `SettlementSection`, `PopulationRegistrySection`, `QuotaSection`, `CollectiveFocusSection`, `AlertsSection`, `PersonnelFileSection`) + `buildAlerts()` pure function + `thresholdColor()` utility
+- [x] **constructionSystem.ts**: extracted `advanceBuilding()`, `resolveCosts()`, `hasSufficientMaterials()`, `deductMaterials()`, `perTickCost()`
+- [x] **WorkerSystem.ts**: extracted `processCitizens()`, `processDefections()`, `runGovernorTick()` private methods from monolithic `tick()`
 
-### 5 Missing UI Callbacks Wired in App.tsx
-- [x] `onEraChanged` → `EraTransitionModal` (Soviet-aesthetic briefing modal)
-- [x] `onMinigame` → `MinigameModal` (presents minigame choices to player)
-- [x] `onTutorialMilestone` → feeds to Advisor (Krupnik) via existing onAdvisor path
-- [x] `onAchievement` → `addSovietToast()` (uses existing toast system)
-- [x] `onGameTally` → `GameTallyScreen` (end-game summary with stats)
+### Biome 100% Clean
+- [x] All cognitive complexity violations resolved (max 15 threshold)
+- [x] Template literal rules fixed (`settlementFactories.ts`)
+- [x] Array index key warnings fixed (`DrawerPanel.tsx`)
+- [x] **308 files checked, 0 errors, 0 warnings**
 
-### New UI Components
-- [x] `EraTransitionModal.tsx` — era change briefing with modifiers display
-- [x] `MinigameModal.tsx` — minigame choice presentation
-- [x] `GameTallyScreen.tsx` — end-game summary screen with medals
-
-### New Test Coverage (+102 tests)
-- [x] `demographics-balance.test.ts` — settlement creation, pop display, food sufficiency
-- [x] `RadialBuildMenu.test.tsx` — pointer-events behavior, category/building wedge rendering
-- [x] `constructionSystem.test.ts` — full lifecycle (foundation → building → complete)
-- [x] `economy-integration.test.ts` — compulsory deliveries, trudodni, fondy, difficulty scaling
-- [x] `era-integration.test.ts` — era transitions, building gating, victory/failure conditions
-- [x] `political-integration.test.ts` — entity spawning, personnel file, KGB risk scaling
-- [x] Extended: `SimulationEngine.wiring.test.ts`, `gameStore.test.ts`
+### Previous Session: Playtest TDD Fixes + Code Review
+- [x] Population display, food balance, resource defaults, 5 UI callbacks
+- [x] Governor dead code, array mutation, unsafe casts, type safety
+- [x] +102 integration tests across 7 new test files
 
 ### All Previously Complete Systems (verified working)
 - [x] Material deduction during construction (constructionSystem.ts perTickCost/hasSufficientMaterials)
@@ -117,6 +110,7 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 - **PR #1–#4**: All MERGED (Canvas 2D, deploy fix, asset paths, game systems)
 - **PR #5**: Complete all game systems — 1812 tests — MERGED
 - **PR #8**: Audio mute toggle — MERGED
+- **PR #9**: Playtest TDD fixes + decomposition — branch `fix/playtest-tdd-demographics-callbacks` — OPEN
 
 ## Active Decisions
 

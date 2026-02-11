@@ -35,6 +35,8 @@ import type { GameRng } from '../SeedSystem';
 import type { SettlementSystem } from '../SettlementSystem';
 import { SettlementSystem as SettlementSystemClass } from '../SettlementSystem';
 import type { SubsystemSaveData } from '../SimulationEngine';
+import type { TransportSystem } from '../TransportSystem';
+import { TransportSystem as TransportSystemClass } from '../TransportSystem';
 import type { TutorialSystem } from '../TutorialSystem';
 import { TutorialSystem as TutorialSystemClass } from '../TutorialSystem';
 
@@ -67,6 +69,7 @@ export interface SerializableEngine {
   tutorial: TutorialSystem;
   achievements: AchievementTracker;
   mandateState: PlanMandateState | null;
+  transport: TransportSystem;
   quota: QuotaState;
   consecutiveQuotaFailures: number;
   lastSeason: string;
@@ -109,6 +112,7 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
     tutorial: engine.tutorial.serialize(),
     achievements: engine.achievements.serialize(),
     mandates: engine.mandateState ?? undefined,
+    transport: engine.transport.serialize(),
     engineState: {
       lastSeason: engine.lastSeason,
       lastWeather: engine.lastWeather,
@@ -207,6 +211,11 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
 
   if (data.mandates) {
     engine.mandateState = data.mandates;
+  }
+
+  if (data.transport) {
+    engine.transport = TransportSystemClass.deserialize(data.transport);
+    if (engine.rng) engine.transport.setRng(engine.rng);
   }
 
   if (data.engineState) {

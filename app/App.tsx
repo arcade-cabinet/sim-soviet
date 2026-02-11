@@ -9,6 +9,7 @@
  */
 
 import { GameModals } from '@app/components/GameModals';
+import { NotificationLog } from '@app/components/NotificationLog';
 import type { GameOverInfo, Messages } from '@app/hooks/useSimCallbacks';
 import { useSimCallbacks } from '@app/hooks/useSimCallbacks';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -22,10 +23,12 @@ import { Advisor } from '@/components/ui/Advisor';
 import type { AnnualReportData } from '@/components/ui/AnnualReportModal';
 import { BottomStrip } from '@/components/ui/BottomStrip';
 import { BuildingInspector } from '@/components/ui/BuildingInspector';
+import { CitizenDossierModal } from '@/components/ui/CitizenDossierModal';
 import { ConcreteFrame } from '@/components/ui/ConcreteFrame';
 import { DrawerPanel } from '@/components/ui/DrawerPanel';
 import type { PlanDirective } from '@/components/ui/FiveYearPlanModal';
 import { RadialBuildMenu } from '@/components/ui/RadialBuildMenu';
+import { RadialInspectMenu } from '@/components/ui/RadialInspectMenu';
 import { SovietHUD } from '@/components/ui/SovietHUD';
 import { SovietToastStack } from '@/components/ui/SovietToastStack';
 import { WorkerInfoPanel } from '@/components/ui/WorkerInfoPanel';
@@ -36,10 +39,11 @@ import { ERA_DEFINITIONS } from '@/game/era';
 import type { TallyData } from '@/game/GameTally';
 import type { ActiveMinigame } from '@/game/minigames/MinigameTypes';
 import type { SettlementEvent } from '@/game/SettlementSystem';
-import { useGameSnapshot } from '@/stores/gameStore';
+import { useCitizenDossier, useGameSnapshot } from '@/stores/gameStore';
 
 export function App() {
   const snap = useGameSnapshot();
+  const citizenDossier = useCitizenDossier();
   type Screen = 'landing' | 'newGame' | 'assignment' | 'playing';
   const [screen, setScreen] = useState<Screen>('landing');
   const [gameConfig, setGameConfig] = useState<NewGameConfig | null>(null);
@@ -55,6 +59,7 @@ export function App() {
     advisor: null,
     pravda: null,
   });
+  const [notificationLogOpen, setNotificationLogOpen] = useState(false);
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [loadSaveOnStart, setLoadSaveOnStart] = useState<string | null>(null);
   const [saveApi, setSaveApi] = useState<SaveSystemAPI | null>(null);
@@ -177,8 +182,17 @@ export function App() {
         setGameTally={setGameTally}
       />
 
+      {/* Citizen dossier modal — opened when a citizen is tapped */}
+      {citizenDossier && <CitizenDossierModal data={citizenDossier} />}
+
+      {/* Notification dispatch log */}
+      <NotificationLog isOpen={notificationLogOpen} onClose={() => setNotificationLogOpen(false)} />
+
       {/* Top HUD bar — resources, pause, speed, hamburger */}
-      <SovietHUD onMenuToggle={() => setDrawerOpen(true)} />
+      <SovietHUD
+        onMenuToggle={() => setDrawerOpen(true)}
+        onNotificationLogToggle={() => setNotificationLogOpen((o) => !o)}
+      />
 
       {/* Main game viewport */}
       <div className="flex-1 relative overflow-hidden min-h-0">
@@ -232,6 +246,9 @@ export function App() {
 
       {/* Radial build menu — opens on empty grid cell tap */}
       <RadialBuildMenu />
+
+      {/* Radial inspect menu — opens on existing building tap */}
+      <RadialInspectMenu />
 
       {/* Slide-out drawer */}
       <DrawerPanel

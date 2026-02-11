@@ -77,12 +77,20 @@ function deductMaterials(
 }
 
 /** Resolve material costs for a building, falling back to defaults. */
-function resolveCosts(defId: string, eraTimeMult: number, weatherTimeMult: number) {
+function resolveCosts(
+  defId: string,
+  eraTimeMult: number,
+  weatherTimeMult: number,
+  seasonMult: number
+) {
   const def = getBuildingDef(defId);
   const defCost = def?.stats.constructionCost;
   const baseTicks = defCost?.baseTicks ?? DEFAULT_BASE_TICKS;
   return {
-    effectiveBaseTicks: Math.max(1, Math.ceil(baseTicks * eraTimeMult * weatherTimeMult)),
+    effectiveBaseTicks: Math.max(
+      1,
+      Math.ceil(baseTicks * eraTimeMult * weatherTimeMult * seasonMult)
+    ),
     materialCost: {
       timber: defCost?.timber ?? DEFAULT_MATERIAL_COST.timber,
       steel: defCost?.steel ?? DEFAULT_MATERIAL_COST.steel,
@@ -97,7 +105,8 @@ function advanceBuilding(
   entity: Entity,
   res: MaterialSet | undefined,
   eraTimeMult: number,
-  weatherTimeMult: number
+  weatherTimeMult: number,
+  seasonMult: number
 ): void {
   const building = entity.building;
   if (!building) return;
@@ -107,7 +116,8 @@ function advanceBuilding(
   const { effectiveBaseTicks, materialCost } = resolveCosts(
     building.defId,
     eraTimeMult,
-    weatherTimeMult
+    weatherTimeMult,
+    seasonMult
   );
 
   if (res && !hasSufficientMaterials(res, materialCost, effectiveBaseTicks)) return;
@@ -131,11 +141,16 @@ function advanceBuilding(
  *
  * @param eraTimeMult - Era-specific construction time multiplier (default 1.0).
  * @param weatherTimeMult - Weather-specific construction time multiplier (default 1.0).
+ * @param seasonMult - Seasonal build cost multiplier (default 1.0). Rasputitsa penalty mitigated by road quality.
  */
-export function constructionSystem(eraTimeMult: number = 1.0, weatherTimeMult: number = 1.0): void {
+export function constructionSystem(
+  eraTimeMult = 1.0,
+  weatherTimeMult = 1.0,
+  seasonMult = 1.0
+): void {
   const snapshot = [...underConstruction.entities];
   const res = getResourceEntity()?.resources;
   for (const entity of snapshot) {
-    advanceBuilding(entity, res, eraTimeMult, weatherTimeMult);
+    advanceBuilding(entity, res, eraTimeMult, weatherTimeMult, seasonMult);
   }
 }

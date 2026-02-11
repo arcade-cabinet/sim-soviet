@@ -24,6 +24,12 @@ const OVERFLOW_SPOILAGE_RATE = 0.05;
 /** Base spoilage rate for food within storage (standard buildings). */
 const STORED_SPOILAGE_RATE = 0.005;
 
+/** Reduced spoilage rate for cold-storage buildings (10× better than standard). */
+const COLD_STORAGE_SPOILAGE_RATE = 0.0005;
+
+/** Reduced spoilage rate for grain elevators (5× better than standard). */
+const ELEVATOR_SPOILAGE_RATE = 0.001;
+
 /** Seasonal spoilage multipliers (keyed by month). */
 function getSeasonalSpoilageMult(month: number): number {
   // Summer (months 6-8): x2.0
@@ -85,11 +91,58 @@ export function calculateStorageCapacity(): number {
 }
 
 /**
+ * Calculate the effective spoilage rate based on storage building types.
+ *
+ * Cold storage and grain elevators reduce spoilage. The rate is a weighted
+ * average across all storage capacity — buildings with better preservation
+ * reduce the overall rate proportionally to their capacity contribution.
+ */
+function getEffectiveSpoilageRate(): number {
+  let totalCapacity = 200; // base storage at standard rate
+  let coldCapacity = 0;
+  let elevatorCapacity = 0;
+
+  for (const entity of buildingsLogic) {
+    const defId = entity.building.defId;
+    if (defId === 'cold-storage') {
+      coldCapacity += STORAGE_BY_DEF[defId] ?? 0;
+    } else if (defId === 'grain-elevator') {
+      elevatorCapacity += STORAGE_BY_DEF[defId] ?? 0;
+    } else {
+      const defCap = STORAGE_BY_DEF[defId];
+      if (defCap !== undefined) {
+        totalCapacity += defCap;
+        continue;
+      }
+      const def = getBuildingDef(defId);
+      const role = def?.role;
+      if (role) {
+        const roleCap = STORAGE_BY_ROLE[role];
+        if (roleCap !== undefined) {
+          totalCapacity += roleCap;
+        }
+      }
+    }
+  }
+
+  const allCapacity = totalCapacity + coldCapacity + elevatorCapacity;
+  if (allCapacity <= 0) return STORED_SPOILAGE_RATE;
+
+  // Weighted average: each capacity segment contributes its rate proportionally
+  return (
+    (totalCapacity * STORED_SPOILAGE_RATE +
+      coldCapacity * COLD_STORAGE_SPOILAGE_RATE +
+      elevatorCapacity * ELEVATOR_SPOILAGE_RATE) /
+    allCapacity
+  );
+}
+
+/**
  * Runs the storage & spoilage system for one tick.
  *
  * 1. Recalculates total storage capacity from buildings.
  * 2. Applies spoilage to food exceeding capacity.
- * 3. Applies baseline decay to stored food.
+ * 3. Applies baseline decay to stored food (rate reduced by cold storage/elevators).
  * 4. Updates the storageCapacity field on the resource store.
  *
  * @param month - Current game month (1-12) for seasonal spoilage modifier.
@@ -111,8 +164,9 @@ export function storageSystem(month: number): void {
     const spoiled = overflow * OVERFLOW_SPOILAGE_RATE * seasonalMult;
     store.resources.food = Math.max(0, food - spoiled);
   } else if (food > 0) {
-    // Stored food decays slowly
-    const decay = food * STORED_SPOILAGE_RATE * seasonalMult;
+    // Stored food decays — rate improved by cold storage and grain elevators
+    const rate = getEffectiveSpoilageRate();
+    const decay = food * rate * seasonalMult;
     store.resources.food = Math.max(0, food - decay);
   }
 

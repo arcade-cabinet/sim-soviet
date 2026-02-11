@@ -177,8 +177,9 @@
 ## Test & Build Status
 - **2144 tests passing, 67 test files** (+102 tests, +5 files from playtest fix session)
 - Typecheck clean (tsc --noEmit)
-- Production build succeeds (892 KB main JS, 258 KB gzip)
-- 0 Biome lint errors
+- Production build succeeds (897 KB main JS, 261 KB gzip)
+- Biome 100% clean (308 files, 0 errors, 0 warnings)
+- 6 monolithic files decomposed into focused sub-modules
 
 ## Known Issues
 - Audio files ~100MB, not included in deploy (need `pnpm download:audio`)

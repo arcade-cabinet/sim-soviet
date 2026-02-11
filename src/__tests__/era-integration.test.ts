@@ -18,6 +18,8 @@ function stubMeta(overrides: Partial<GameMeta> = {}): GameMeta {
     commendations: 0,
     threatLevel: 'safe',
     currentEra: 'war_communism',
+    roadQuality: 'none',
+    roadCondition: 100,
     ...overrides,
   };
 }

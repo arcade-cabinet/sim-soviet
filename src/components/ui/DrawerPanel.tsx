@@ -1,9 +1,11 @@
 /**
  * DrawerPanel — slide-out command panel from the right edge.
  *
- * Adapted from the approved prototype (src/prototypes/SovietGameHUD.tsx).
- * Wired to real game data via useGameSnapshot().
- * Includes save/load/export/import controls.
+ * Organized into 4 tabs for quick navigation:
+ *   1. OVERVIEW — Settlement, Population Registry, Alerts
+ *   2. PLAN — 5-Year Plan, Collective Focus, Personnel File, Leader
+ *   3. RADIO — Now Playing, Playlist, Announcements, Volume
+ *   4. ARCHIVES — Save/Load/Export/Import, Minimap
  */
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -13,7 +15,12 @@ import {
   Download,
   HardDrive,
   Map as MapIcon,
+  Music,
+  Pause,
+  Play,
+  Radio,
   Save,
+  SkipForward,
   Target,
   Upload,
   Users,
@@ -21,12 +28,21 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { GAMEPLAY_PLAYLIST, getAudioById } from '@/audio/AudioManifest';
 import type { AudioAPI, SaveSystemAPI, WorkerAPI } from '@/components/GameWorld';
+import { getRandomAnnouncement } from '@/content/worldbuilding/radio';
 import { exportDatabaseFile, importDatabaseFile } from '@/db/provider';
 import { cn } from '@/lib/utils';
-import { notifyStateChange, useGameSnapshot } from '@/stores/gameStore';
+import {
+  notifyStateChange,
+  setColorBlindMode,
+  useColorBlindMode,
+  useGameSnapshot,
+} from '@/stores/gameStore';
 import { addSovietToast } from '@/stores/toastStore';
+
+export type DrawerTab = 'overview' | 'plan' | 'radio' | 'archives';
 
 interface DrawerPanelProps {
   isOpen: boolean;
@@ -43,6 +59,22 @@ const TIER_RUSSIAN: Record<string, string> = {
   gorod: 'город',
 };
 
+const ROAD_QUALITY_LABELS: Record<string, string> = {
+  none: 'No Roads',
+  dirt: 'Dirt Tracks',
+  gravel: 'Gravel Roads',
+  paved: 'Paved Roads',
+  highway: 'Highway Network',
+};
+
+const ROAD_QUALITY_COLORS: Record<string, string> = {
+  none: 'text-[#888]',
+  dirt: 'text-[#d97706]',
+  gravel: 'text-[#eab308]',
+  paved: 'text-green-500',
+  highway: 'text-cyan-400',
+};
+
 const THREAT_LABELS: Record<string, { label: string; color: string }> = {
   safe: { label: 'SAFE', color: 'text-green-500' },
   watched: { label: 'WATCHED', color: 'text-yellow-500' },
@@ -52,8 +84,17 @@ const THREAT_LABELS: Record<string, { label: string; color: string }> = {
   arrested: { label: 'ARRESTED', color: 'text-red-600' },
 };
 
+const TABS: { id: DrawerTab; label: string; icon: React.ComponentType<{ className?: string }> }[] =
+  [
+    { id: 'overview', label: 'STATUS', icon: BarChart3 },
+    { id: 'plan', label: 'PLAN', icon: Target },
+    { id: 'radio', label: 'RADIO', icon: Radio },
+    { id: 'archives', label: 'FILES', icon: HardDrive },
+  ];
+
 export function DrawerPanel({ isOpen, onClose, saveApi, audioApi, workerApi }: DrawerPanelProps) {
   const snap = useGameSnapshot();
+  const [activeTab, setActiveTab] = useState<DrawerTab>('overview');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const threatInfo = THREAT_LABELS[snap.threatLevel] ?? THREAT_LABELS.safe!;
   const tierRussian = TIER_RUSSIAN[snap.settlementTier] ?? 'село';
@@ -93,58 +134,95 @@ export function DrawerPanel({ isOpen, onClose, saveApi, audioApi, workerApi }: D
             className="fixed right-0 top-0 bottom-0 w-72 sm:w-80 bg-[#2a2a2a] border-l-2 border-[#8b0000] z-50 flex flex-col shadow-2xl"
             style={{ fontFamily: "'VT323', monospace" }}
           >
-            <DrawerHeader onClose={onClose} />
+            {/* Header with close button */}
+            <div className="flex items-center justify-between px-4 py-2 border-b border-[#444] bg-[#1a1a1a]">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-[#8b0000] flex items-center justify-center">
+                  <span className="text-[#cfaa48] text-xs">☭</span>
+                </div>
+                <span className="text-[#cfaa48] text-xs font-bold uppercase tracking-wider">
+                  Command Panel
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-7 h-7 flex items-center justify-center bg-[#2a2a2a] border border-[#444] hover:border-[#8b0000] transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-3.5 h-3.5 text-[#888]" />
+              </button>
+            </div>
 
-            {/* Content */}
+            {/* Tab bar */}
+            <div className="flex border-b-2 border-[#8b0000] bg-[#1a1a1a]">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      'flex-1 flex flex-col items-center gap-0.5 py-2 px-1 transition-colors',
+                      isActive
+                        ? 'bg-[#2a2a2a] border-b-2 border-[#cfaa48] -mb-[2px]'
+                        : 'hover:bg-[#333]'
+                    )}
+                    aria-label={tab.label}
+                  >
+                    <Icon
+                      className={cn('w-3.5 h-3.5', isActive ? 'text-[#cfaa48]' : 'text-[#666]')}
+                    />
+                    <span
+                      className={cn(
+                        'text-[8px] font-bold uppercase tracking-wider',
+                        isActive ? 'text-[#cfaa48]' : 'text-[#666]'
+                      )}
+                    >
+                      {tab.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tab content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              <ArchivesSection saveApi={saveApi} fileInputRef={fileInputRef} onClose={onClose} />
-
-              <AudioSection
-                audioApi={audioApi}
-                isMuted={isMuted}
-                setIsMuted={setIsMuted}
-                musicVol={musicVol}
-                setMusicVol={setMusicVol}
-                ambientVol={ambientVol}
-                setAmbientVol={setAmbientVol}
-              />
-
-              {/* Minimap placeholder */}
-              <DrawerSection icon={MapIcon} title="TACTICAL MAP">
-                <div className="w-full aspect-square bg-[#1a1a1a] border-2 border-[#8b0000] relative">
-                  <div className="absolute inset-1 bg-gradient-to-br from-[#4a3a2a] to-[#2a1a0a]" />
-                  <div className="absolute inset-0 flex items-center justify-center text-[#ff4444] text-xs font-bold">
-                    MINIMAP
-                  </div>
-                </div>
-              </DrawerSection>
-
-              <SettlementSection snap={snap} tierRussian={tierRussian} threatInfo={threatInfo} />
-              <PopulationRegistrySection snap={snap} />
-              <QuotaSection snap={snap} quotaPct={quotaPct} yearsLeft={yearsLeft} />
-
-              <CollectiveFocusSection
-                collectiveFocus={collectiveFocus}
-                setCollectiveFocus={setCollectiveFocus}
-                workerApi={workerApi}
-              />
-
-              <AlertsSection snap={snap} quotaPct={quotaPct} yearsLeft={yearsLeft} />
-              <PersonnelFileSection snap={snap} threatInfo={threatInfo} />
-
-              {/* Leader */}
-              {snap.leaderName && (
-                <div className="bg-[#1a1a1a] border border-[#444] px-3 py-2">
-                  <div className="text-[#888] text-[8px] uppercase tracking-wider mb-1">
-                    General Secretary
-                  </div>
-                  <div className="text-[#ff6b6b] text-xs font-bold">{snap.leaderName}</div>
-                  {snap.leaderPersonality && (
-                    <div className="text-[#888] text-[9px] italic mt-0.5">
-                      {snap.leaderPersonality}
-                    </div>
-                  )}
-                </div>
+              {activeTab === 'overview' && (
+                <OverviewTab
+                  snap={snap}
+                  tierRussian={tierRussian}
+                  threatInfo={threatInfo}
+                  quotaPct={quotaPct}
+                  yearsLeft={yearsLeft}
+                />
+              )}
+              {activeTab === 'plan' && (
+                <PlanTab
+                  snap={snap}
+                  quotaPct={quotaPct}
+                  yearsLeft={yearsLeft}
+                  collectiveFocus={collectiveFocus}
+                  setCollectiveFocus={setCollectiveFocus}
+                  workerApi={workerApi}
+                  threatInfo={threatInfo}
+                />
+              )}
+              {activeTab === 'radio' && (
+                <RadioTab
+                  audioApi={audioApi}
+                  isMuted={isMuted}
+                  setIsMuted={setIsMuted}
+                  musicVol={musicVol}
+                  setMusicVol={setMusicVol}
+                  ambientVol={ambientVol}
+                  setAmbientVol={setAmbientVol}
+                />
+              )}
+              {activeTab === 'archives' && (
+                <ArchivesTab saveApi={saveApi} fileInputRef={fileInputRef} onClose={onClose} />
               )}
             </div>
 
@@ -161,122 +239,107 @@ export function DrawerPanel({ isOpen, onClose, saveApi, audioApi, workerApi }: D
   );
 }
 
-// ── Extracted Sections ────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// TAB: OVERVIEW — Settlement, Population, Alerts
+// ═══════════════════════════════════════════════════════════
 
-function DrawerHeader({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3 border-b-2 border-[#8b0000] bg-[#1a1a1a]">
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 bg-[#8b0000] flex items-center justify-center">
-          <span className="text-[#cfaa48] text-sm">☭</span>
-        </div>
-        <span className="text-[#cfaa48] text-sm font-bold uppercase tracking-wider">
-          Command Panel
-        </span>
-      </div>
-      <button
-        type="button"
-        onClick={onClose}
-        className="w-8 h-8 flex items-center justify-center bg-[#2a2a2a] border border-[#444] hover:border-[#8b0000] transition-colors"
-        aria-label="Close menu"
-      >
-        <X className="w-4 h-4 text-[#888]" />
-      </button>
-    </div>
-  );
-}
-
-function ArchivesSection({
-  saveApi,
-  fileInputRef,
-  onClose,
+function OverviewTab({
+  snap,
+  tierRussian,
+  threatInfo,
+  quotaPct,
+  yearsLeft,
 }: {
-  saveApi?: SaveSystemAPI | null;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  onClose: () => void;
+  snap: ReturnType<typeof useGameSnapshot>;
+  tierRussian: string;
+  threatInfo: { label: string; color: string };
+  quotaPct: number;
+  yearsLeft: number;
 }) {
-  const handleSave = async () => {
-    if (!saveApi) return;
-    const ok = await saveApi.save('manual_1');
-    addSovietToast(
-      ok ? 'warning' : 'critical',
-      ok ? 'Game saved to state archives' : 'Save failed — archival error'
-    );
-  };
-
-  const handleLoad = async () => {
-    if (!saveApi) return;
-    const ok = await saveApi.load('manual_1');
-    if (ok) {
-      notifyStateChange();
-      addSovietToast('warning', 'Game loaded from state archives');
-      onClose();
-    } else {
-      addSovietToast('critical', 'No saved game found in archives');
-    }
-  };
-
-  const handleExport = () => {
-    const data = exportDatabaseFile();
-    if (!data) {
-      addSovietToast('critical', 'Export failed — database not initialized');
-      return;
-    }
-    const blob = new Blob([data.buffer as ArrayBuffer], { type: 'application/x-sqlite3' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `simsoviet-save-${new Date().toISOString().slice(0, 10)}.db`;
-    a.click();
-    URL.revokeObjectURL(url);
-    addSovietToast('warning', 'Database exported — guard with your life');
-  };
-
-  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const buffer = await file.arrayBuffer();
-      await importDatabaseFile(new Uint8Array(buffer));
-      addSovietToast('warning', 'Database imported — reloading state');
-      if (saveApi) {
-        const loaded = await saveApi.load('autosave');
-        if (loaded) {
-          notifyStateChange();
-          onClose();
-        }
-      }
-    } catch (error) {
-      console.error('Import failed:', error);
-      addSovietToast('critical', 'Import failed — file is corrupted');
-    }
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
   return (
-    <DrawerSection icon={HardDrive} title="STATE ARCHIVES">
-      <div className="grid grid-cols-2 gap-2">
-        <DrawerButton icon={Save} label="SAVE" onClick={handleSave} disabled={!saveApi} />
-        <DrawerButton icon={Upload} label="LOAD" onClick={handleLoad} disabled={!saveApi} />
-        <DrawerButton icon={Download} label="EXPORT .DB" onClick={handleExport} />
-        <DrawerButton
-          icon={Upload}
-          label="IMPORT .DB"
-          onClick={() => fileInputRef.current?.click()}
-        />
-      </div>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".db,.sqlite,.sqlite3"
-        className="hidden"
-        onChange={handleFileSelected}
-      />
-    </DrawerSection>
+    <>
+      <DrawerSection icon={Building2} title="SETTLEMENT">
+        <div className="grid grid-cols-2 gap-2">
+          <StatCard label="Buildings" value={String(snap.buildingCount)} icon="🏛️" />
+          <StatCard label="Population" value={snap.pop.toLocaleString()} icon="👥" />
+          <StatCard label="Tier" value={tierRussian} icon="🏘️" />
+          <StatCard
+            label="Threat"
+            value={threatInfo.label}
+            icon="📋"
+            valueClass={threatInfo.color}
+          />
+          <StatCard
+            label="Roads"
+            value={ROAD_QUALITY_LABELS[snap.roadQuality] ?? 'No Roads'}
+            icon="🛤️"
+            valueClass={ROAD_QUALITY_COLORS[snap.roadQuality] ?? 'text-[#888]'}
+          />
+          <RoadConditionCard condition={snap.roadCondition} />
+          <StatCard label="Power" value={`${snap.powerUsed}/${snap.power}`} icon="⚡" />
+        </div>
+      </DrawerSection>
+
+      <PopulationRegistrySection snap={snap} />
+
+      <AlertsSection snap={snap} quotaPct={quotaPct} yearsLeft={yearsLeft} />
+    </>
   );
 }
 
-function AudioSection({
+// ═══════════════════════════════════════════════════════════
+// TAB: PLAN — 5-Year Plan, Collective Focus, Personnel, Leader
+// ═══════════════════════════════════════════════════════════
+
+function PlanTab({
+  snap,
+  quotaPct,
+  yearsLeft,
+  collectiveFocus,
+  setCollectiveFocus,
+  workerApi,
+  threatInfo,
+}: {
+  snap: ReturnType<typeof useGameSnapshot>;
+  quotaPct: number;
+  yearsLeft: number;
+  collectiveFocus: 'food' | 'construction' | 'production' | 'balanced';
+  setCollectiveFocus: (v: 'food' | 'construction' | 'production' | 'balanced') => void;
+  workerApi?: WorkerAPI | null;
+  threatInfo: { label: string; color: string };
+}) {
+  return (
+    <>
+      <QuotaSection snap={snap} quotaPct={quotaPct} yearsLeft={yearsLeft} />
+
+      <CollectiveFocusSection
+        collectiveFocus={collectiveFocus}
+        setCollectiveFocus={setCollectiveFocus}
+        workerApi={workerApi}
+      />
+
+      <PersonnelFileSection snap={snap} threatInfo={threatInfo} />
+
+      {snap.leaderName && (
+        <div className="bg-[#1a1a1a] border border-[#444] px-3 py-2">
+          <div className="text-[#888] text-[8px] uppercase tracking-wider mb-1">
+            General Secretary
+          </div>
+          <div className="text-[#ff6b6b] text-xs font-bold">{snap.leaderName}</div>
+          {snap.leaderPersonality && (
+            <div className="text-[#888] text-[9px] italic mt-0.5">{snap.leaderPersonality}</div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: RADIO — Now Playing, Playlist, Announcements, Volume
+// ═══════════════════════════════════════════════════════════
+
+function RadioTab({
   audioApi,
   isMuted,
   setIsMuted,
@@ -293,72 +356,223 @@ function AudioSection({
   ambientVol: number;
   setAmbientVol: (v: number) => void;
 }) {
+  const [currentTrack, setCurrentTrack] = useState<string | null>(
+    () => audioApi?.getCurrentMusic() ?? null
+  );
+  const [announcement, setAnnouncement] = useState(() => getRandomAnnouncement());
+
+  // Poll current track every 2s (music can change from era/season switches)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTrack(audioApi?.getCurrentMusic() ?? null);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [audioApi]);
+
+  // Cycle radio announcements every 20s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAnnouncement(getRandomAnnouncement());
+    }, 20000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentAsset = currentTrack ? getAudioById(currentTrack) : null;
+
+  const handlePlayTrack = useCallback(
+    (trackId: string) => {
+      audioApi?.playMusic(trackId);
+      setCurrentTrack(trackId);
+    },
+    [audioApi]
+  );
+
+  const handleSkip = useCallback(() => {
+    // Pick a random track from the playlist that isn't the current one
+    const candidates = GAMEPLAY_PLAYLIST.filter((id) => id !== currentTrack);
+    if (candidates.length > 0) {
+      const next = candidates[Math.floor(Math.random() * candidates.length)]!;
+      handlePlayTrack(next);
+    }
+  }, [currentTrack, handlePlayTrack]);
+
   return (
-    <DrawerSection icon={isMuted ? VolumeX : Volume2} title="AUDIO CONTROLS">
-      <div className="space-y-3">
-        <button
-          type="button"
-          className="w-full flex items-center justify-center gap-2 border px-3 py-2 text-xs font-bold uppercase tracking-wider"
-          style={{
-            borderColor: isMuted ? '#8b0000' : '#444',
-            background: isMuted ? 'rgba(139,0,0,0.3)' : 'rgba(26,26,26,0.8)',
-            color: isMuted ? '#ff4444' : '#aaa',
-          }}
-          onClick={() => {
-            const nowMuted = audioApi?.toggleMute() ?? !isMuted;
-            setIsMuted(nowMuted);
-          }}
-        >
-          {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-          {isMuted ? 'UNMUTE AUDIO' : 'MUTE AUDIO'}
-        </button>
-        <VolumeSlider
-          label="MUSIC"
-          value={musicVol}
-          onChange={(v) => {
-            setMusicVol(v);
-            audioApi?.setMusicVolume(v);
-          }}
+    <>
+      {/* Now Playing */}
+      <DrawerSection icon={Music} title="NOW PLAYING">
+        <div className="bg-[#1a1a1a] border border-[#444] px-3 py-2">
+          {currentAsset ? (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#ff4444] animate-pulse flex-shrink-0" />
+                <div className="text-[#cfaa48] text-xs font-bold truncate">
+                  {currentAsset.description}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={handleSkip}
+                  className="flex items-center gap-1 px-2 py-1 bg-[#2a2a2a] border border-[#444] hover:border-[#8b0000] transition-colors text-[#888] hover:text-[#cfaa48]"
+                  title="Skip to next track"
+                >
+                  <SkipForward className="w-3 h-3" />
+                  <span className="text-[9px] font-bold uppercase">Skip</span>
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="text-[#666] text-[10px] italic">No track playing</div>
+          )}
+        </div>
+      </DrawerSection>
+
+      {/* Radio Announcement */}
+      <DrawerSection icon={Radio} title="RADIO BROADCAST">
+        <div className="bg-[#1a1a1a] border border-[#444] px-3 py-2 relative">
+          <div className="absolute top-1.5 right-2">
+            <button
+              type="button"
+              onClick={() => setAnnouncement(getRandomAnnouncement())}
+              className="text-[#666] hover:text-[#cfaa48] text-[8px] uppercase tracking-wider transition-colors"
+            >
+              next
+            </button>
+          </div>
+          <div className="text-[#888] text-[8px] uppercase tracking-wider mb-1.5">
+            {announcement.category.replace('_', ' ')}
+          </div>
+          <div className="text-[#ddd] text-[11px] leading-relaxed italic pr-6">
+            &ldquo;{announcement.text}&rdquo;
+          </div>
+        </div>
+      </DrawerSection>
+
+      {/* Playlist */}
+      <DrawerSection icon={BarChart3} title="APPROVED PLAYLIST">
+        <div className="space-y-1 max-h-48 overflow-y-auto">
+          {GAMEPLAY_PLAYLIST.map((trackId) => {
+            const asset = getAudioById(trackId);
+            if (!asset) return null;
+            const isPlaying = trackId === currentTrack;
+            return (
+              <button
+                key={trackId}
+                type="button"
+                onClick={() => handlePlayTrack(trackId)}
+                className={cn(
+                  'w-full flex items-center gap-2 px-2 py-1.5 text-left transition-colors border',
+                  isPlaying
+                    ? 'border-[#8b0000] bg-[#8b0000]/20 text-[#cfaa48]'
+                    : 'border-[#333] bg-[#1a1a1a] text-[#888] hover:border-[#8b0000] hover:text-[#cfaa48]'
+                )}
+              >
+                {isPlaying ? (
+                  <Pause className="w-3 h-3 flex-shrink-0" />
+                ) : (
+                  <Play className="w-3 h-3 flex-shrink-0" />
+                )}
+                <span className="text-[10px] font-bold truncate">{asset.description}</span>
+              </button>
+            );
+          })}
+        </div>
+      </DrawerSection>
+
+      {/* Volume Controls */}
+      <DrawerSection icon={isMuted ? VolumeX : Volume2} title="VOLUME CONTROLS">
+        <div className="space-y-3">
+          <button
+            type="button"
+            className="w-full flex items-center justify-center gap-2 border px-3 py-2 text-xs font-bold uppercase tracking-wider"
+            style={{
+              borderColor: isMuted ? '#8b0000' : '#444',
+              background: isMuted ? 'rgba(139,0,0,0.3)' : 'rgba(26,26,26,0.8)',
+              color: isMuted ? '#ff4444' : '#aaa',
+            }}
+            onClick={() => {
+              const nowMuted = audioApi?.toggleMute() ?? !isMuted;
+              setIsMuted(nowMuted);
+            }}
+          >
+            {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            {isMuted ? 'UNMUTE AUDIO' : 'MUTE AUDIO'}
+          </button>
+          <VolumeSlider
+            label="MUSIC"
+            value={musicVol}
+            onChange={(v) => {
+              setMusicVol(v);
+              audioApi?.setMusicVolume(v);
+            }}
+          />
+          <VolumeSlider
+            label="AMBIENT"
+            value={ambientVol}
+            onChange={(v) => {
+              setAmbientVol(v);
+              audioApi?.setAmbientVolume(v);
+            }}
+          />
+        </div>
+      </DrawerSection>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: ARCHIVES — Save/Load, Export/Import, Minimap
+// ═══════════════════════════════════════════════════════════
+
+function AccessibilitySection() {
+  const colorBlind = useColorBlindMode();
+
+  return (
+    <DrawerSection icon={Users} title="ACCESSIBILITY">
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={colorBlind}
+          onChange={(e) => setColorBlindMode(e.target.checked)}
+          className="accent-[#ff4444] w-4 h-4"
         />
-        <VolumeSlider
-          label="AMBIENT"
-          value={ambientVol}
-          onChange={(v) => {
-            setAmbientVol(v);
-            audioApi?.setAmbientVolume(v);
-          }}
-        />
-      </div>
+        <span className="text-xs text-[#ccaa88]">Color-blind mode (shape outlines on workers)</span>
+      </label>
     </DrawerSection>
   );
 }
 
-function SettlementSection({
-  snap,
-  tierRussian,
-  threatInfo,
+function ArchivesTab({
+  saveApi,
+  fileInputRef,
+  onClose,
 }: {
-  snap: ReturnType<typeof useGameSnapshot>;
-  tierRussian: string;
-  threatInfo: { label: string; color: string };
+  saveApi?: SaveSystemAPI | null;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onClose: () => void;
 }) {
   return (
-    <DrawerSection icon={Building2} title="SETTLEMENT">
-      <div className="grid grid-cols-2 gap-2">
-        <StatCard label="Buildings" value={String(snap.buildingCount)} icon="🏛️" />
-        <StatCard label="Population" value={snap.pop.toLocaleString()} icon="👥" />
-        <StatCard label="Tier" value={tierRussian} icon="🏘️" />
-        <StatCard label="Threat" value={threatInfo.label} icon="📋" valueClass={threatInfo.color} />
-      </div>
-    </DrawerSection>
+    <>
+      <ArchivesSection saveApi={saveApi} fileInputRef={fileInputRef} onClose={onClose} />
+
+      <AccessibilitySection />
+
+      {/* Minimap placeholder */}
+      <DrawerSection icon={MapIcon} title="TACTICAL MAP">
+        <div className="w-full aspect-square bg-[#1a1a1a] border-2 border-[#8b0000] relative">
+          <div className="absolute inset-1 bg-gradient-to-br from-[#4a3a2a] to-[#2a1a0a]" />
+          <div className="absolute inset-0 flex items-center justify-center text-[#ff4444] text-xs font-bold">
+            MINIMAP
+          </div>
+        </div>
+      </DrawerSection>
+    </>
   );
 }
 
-function thresholdColor(value: number): string {
-  if (value < 30) return 'text-[#ff4444]';
-  if (value < 60) return 'text-[#ffaa00]';
-  return 'text-green-500';
-}
+// ═══════════════════════════════════════════════════════════
+// Shared Sections (used by tabs)
+// ═══════════════════════════════════════════════════════════
 
 function PopulationRegistrySection({ snap }: { snap: ReturnType<typeof useGameSnapshot> }) {
   return (
@@ -481,6 +695,127 @@ function AlertsSection({
   );
 }
 
+function PersonnelFileSection({
+  snap,
+  threatInfo,
+}: {
+  snap: ReturnType<typeof useGameSnapshot>;
+  threatInfo: { label: string; color: string };
+}) {
+  return (
+    <DrawerSection icon={Users} title="PERSONNEL FILE">
+      <div className="space-y-1.5">
+        <PersonnelRow label="Black Marks" value={snap.blackMarks} color="text-[#ff4444]" />
+        <PersonnelRow label="Commendations" value={snap.commendations} color="text-[#cfaa48]" />
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#444]">
+          <span className="text-[#888] text-[10px]">STATUS</span>
+          <span className={cn('text-xs font-bold', threatInfo.color)}>{threatInfo.label}</span>
+        </div>
+      </div>
+    </DrawerSection>
+  );
+}
+
+function ArchivesSection({
+  saveApi,
+  fileInputRef,
+  onClose,
+}: {
+  saveApi?: SaveSystemAPI | null;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onClose: () => void;
+}) {
+  const handleSave = async () => {
+    if (!saveApi) return;
+    const ok = await saveApi.save('manual_1');
+    addSovietToast(
+      ok ? 'warning' : 'critical',
+      ok ? 'Game saved to state archives' : 'Save failed — archival error'
+    );
+  };
+
+  const handleLoad = async () => {
+    if (!saveApi) return;
+    const ok = await saveApi.load('manual_1');
+    if (ok) {
+      notifyStateChange();
+      addSovietToast('warning', 'Game loaded from state archives');
+      onClose();
+    } else {
+      addSovietToast('critical', 'No saved game found in archives');
+    }
+  };
+
+  const handleExport = () => {
+    const data = exportDatabaseFile();
+    if (!data) {
+      addSovietToast('critical', 'Export failed — database not initialized');
+      return;
+    }
+    const blob = new Blob([data.buffer as ArrayBuffer], { type: 'application/x-sqlite3' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `simsoviet-save-${new Date().toISOString().slice(0, 10)}.db`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addSovietToast('warning', 'Database exported — guard with your life');
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const buffer = await file.arrayBuffer();
+      await importDatabaseFile(new Uint8Array(buffer));
+      addSovietToast('warning', 'Database imported — reloading state');
+      if (saveApi) {
+        const loaded = await saveApi.load('autosave');
+        if (loaded) {
+          notifyStateChange();
+          onClose();
+        }
+      }
+    } catch (error) {
+      console.error('Import failed:', error);
+      addSovietToast('critical', 'Import failed — file is corrupted');
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  return (
+    <DrawerSection icon={HardDrive} title="STATE ARCHIVES">
+      <div className="grid grid-cols-2 gap-2">
+        <DrawerButton icon={Save} label="SAVE" onClick={handleSave} disabled={!saveApi} />
+        <DrawerButton icon={Upload} label="LOAD" onClick={handleLoad} disabled={!saveApi} />
+        <DrawerButton icon={Download} label="EXPORT .DB" onClick={handleExport} />
+        <DrawerButton
+          icon={Upload}
+          label="IMPORT .DB"
+          onClick={() => fileInputRef.current?.click()}
+        />
+      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".db,.sqlite,.sqlite3"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
+    </DrawerSection>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// Helpers & Primitives
+// ═══════════════════════════════════════════════════════════
+
+function thresholdColor(value: number): string {
+  if (value < 30) return 'text-[#ff4444]';
+  if (value < 60) return 'text-[#ffaa00]';
+  return 'text-green-500';
+}
+
 function buildAlerts(
   snap: ReturnType<typeof useGameSnapshot>,
   quotaPct: number,
@@ -505,29 +840,6 @@ function buildAlerts(
   if (alerts.length === 0) alerts.push({ severity: 'info', message: 'No current alerts' });
   return alerts;
 }
-
-function PersonnelFileSection({
-  snap,
-  threatInfo,
-}: {
-  snap: ReturnType<typeof useGameSnapshot>;
-  threatInfo: { label: string; color: string };
-}) {
-  return (
-    <DrawerSection icon={Users} title="PERSONNEL FILE">
-      <div className="space-y-1.5">
-        <PersonnelRow label="Black Marks" value={snap.blackMarks} color="text-[#ff4444]" />
-        <PersonnelRow label="Commendations" value={snap.commendations} color="text-[#cfaa48]" />
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#444]">
-          <span className="text-[#888] text-[10px]">STATUS</span>
-          <span className={cn('text-xs font-bold', threatInfo.color)}>{threatInfo.label}</span>
-        </div>
-      </div>
-    </DrawerSection>
-  );
-}
-
-// ── Sub-components ────────────────────────────────────────
 
 function DrawerSection({
   icon: Icon,
@@ -598,6 +910,21 @@ function StatCard({
       <div className="text-sm mb-0.5">{icon}</div>
       <div className={cn('text-xs font-bold font-mono', valueClass ?? 'text-white')}>{value}</div>
       <div className="text-[#888] text-[8px] uppercase tracking-wider">{label}</div>
+    </div>
+  );
+}
+
+function RoadConditionCard({ condition }: { condition: number }) {
+  const pct = Math.round(condition);
+  const barColor = pct > 60 ? 'bg-green-500' : pct > 25 ? 'bg-yellow-500' : 'bg-[#ff4444]';
+  return (
+    <div className="bg-[#1a1a1a] border border-[#444] px-2 py-1.5 text-center">
+      <div className="text-sm mb-0.5">🔧</div>
+      <div className="text-xs font-bold font-mono text-white">{pct}%</div>
+      <div className="w-full h-1 bg-[#333] mt-0.5">
+        <div className={cn('h-full transition-all', barColor)} style={{ width: `${pct}%` }} />
+      </div>
+      <div className="text-[#888] text-[8px] uppercase tracking-wider mt-0.5">Condition</div>
     </div>
   );
 }

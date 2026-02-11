@@ -52,6 +52,8 @@ export const BUILDING_TIER_REQUIREMENTS: Readonly<Record<string, SettlementTier>
   school: 'posyolok',
   barracks: 'posyolok',
   'gulag-admin': 'posyolok',
+  'road-depot': 'posyolok',
+  'motor-pool': 'posyolok',
 
   // ── pgt (tier 2) — full infrastructure ────────────────────
   'apartment-tower-a': 'pgt',
@@ -59,6 +61,7 @@ export const BUILDING_TIER_REQUIREMENTS: Readonly<Record<string, SettlementTier>
   'government-hq': 'pgt',
   'ministry-office': 'pgt',
   'train-station': 'pgt',
+  'rail-depot': 'pgt',
   polyclinic: 'pgt',
   'workers-club': 'pgt',
   'cultural-palace': 'pgt',

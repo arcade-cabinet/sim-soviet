@@ -36,6 +36,7 @@ export const ALL_BUILDING_IDS: readonly string[] = [
   'collective-farm-hq',
   'concrete-block',
   'cultural-palace',
+  'dirt-path',
   'factory-office',
   'fence',
   'fence-low',
@@ -46,10 +47,13 @@ export const ALL_BUILDING_IDS: readonly string[] = [
   'hospital',
   'kgb-office',
   'ministry-office',
+  'motor-pool',
   'polyclinic',
   'post-office',
   'power-station',
   'radio-station',
+  'rail-depot',
+  'road-depot',
   'school',
   'train-station',
   'vodka-distillery',
@@ -83,6 +87,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'fence',
       'fence-low',
       'concrete-block',
+      'dirt-path',
     ],
 
     modifiers: {
@@ -131,6 +136,8 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'factory-office',
       'school',
       'barracks',
+      'road-depot',
+      'rail-depot',
     ],
 
     modifiers: {
@@ -230,6 +237,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'government-hq',
       'ministry-office',
       'train-station',
+      'motor-pool',
     ],
 
     modifiers: {

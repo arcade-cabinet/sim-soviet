@@ -15,7 +15,9 @@ import type { GameGrid } from '@/game/GameGrid';
 import type { Building } from '@/game/GameView';
 import type { MapSystem } from '@/game/map';
 import type { PoliticalEntityStats, PoliticalRole } from '@/game/political';
+import { isColorBlindMode } from '@/stores/gameStore';
 import { Camera2D } from './Camera2D';
+import type { CharacterSpriteLoader } from './CharacterSpriteLoader';
 import { FeatureTileRenderer } from './FeatureTileRenderer';
 import {
   depthKey,
@@ -84,6 +86,9 @@ export class Canvas2DRenderer {
   /** Citizen entities to render as small dots near buildings. */
   private citizenData: CitizenRenderData[] = [];
 
+  /** Character sprite loader for rendering citizens as sprites instead of dots. */
+  private characterSprites: CharacterSpriteLoader | null = null;
+
   constructor(
     private canvas: HTMLCanvasElement,
     private grid: GameGrid,
@@ -131,6 +136,11 @@ export class Canvas2DRenderer {
   /** Update the list of citizens to render as small indicator dots. */
   setCitizenData(data: CitizenRenderData[]): void {
     this.citizenData = data;
+  }
+
+  /** Set the character sprite loader for rendering citizens as sprites. */
+  setCharacterSprites(loader: CharacterSpriteLoader): void {
+    this.characterSprites = loader;
   }
 
   /** Start the render loop. Idempotent — cancels any existing loop first. */
@@ -437,12 +447,73 @@ export class Canvas2DRenderer {
     ctx.globalAlpha = 1;
   }
 
-  /** Draw small colored dots at grid positions where citizens are located. */
+  /** Draw a color-blind accessibility shape outline around a citizen dot. */
+  private drawColorBlindShape(
+    ctx: CanvasRenderingContext2D,
+    citizenClass: string,
+    cx: number,
+    cy: number,
+    r: number
+  ): void {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+
+    switch (citizenClass) {
+      case 'worker':
+      case 'farmer':
+        // Circle outline
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + 3, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+      case 'party_official':
+        // Square outline
+        ctx.strokeRect(cx - r - 2, cy - r - 2, (r + 2) * 2, (r + 2) * 2);
+        break;
+      case 'engineer':
+        // Diamond outline
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - r - 3);
+        ctx.lineTo(cx + r + 3, cy);
+        ctx.lineTo(cx, cy + r + 3);
+        ctx.lineTo(cx - r - 3, cy);
+        ctx.closePath();
+        ctx.stroke();
+        break;
+      case 'soldier':
+        // Triangle outline
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - r - 3);
+        ctx.lineTo(cx + r + 3, cy + r + 2);
+        ctx.lineTo(cx - r - 3, cy + r + 2);
+        ctx.closePath();
+        ctx.stroke();
+        break;
+      case 'prisoner':
+        // X shape
+        ctx.beginPath();
+        ctx.moveTo(cx - r - 2, cy - r - 2);
+        ctx.lineTo(cx + r + 2, cy + r + 2);
+        ctx.moveTo(cx + r + 2, cy - r - 2);
+        ctx.lineTo(cx - r - 2, cy + r + 2);
+        ctx.stroke();
+        break;
+    }
+  }
+
+  /** Render size for character sprites (pixels in world-space). */
+  private static readonly SPRITE_RENDER_SIZE = 20;
+
+  /** Draw citizens as sprites (with dot fallback when sprites aren't loaded). */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sprite vs dot fallback with frustum cull + jitter
   private drawCitizens(): void {
     if (this.citizenData.length === 0) return;
 
     const { ctx } = this;
     const DOT_RADIUS = 4;
+    const cbMode = isColorBlindMode();
+    const useSprites = this.characterSprites?.ready === true;
+    const spriteSize = Canvas2DRenderer.SPRITE_RENDER_SIZE;
 
     // Group citizens by grid cell to apply deterministic jitter
     const cellGroups = new Map<string, CitizenRenderData[]>();
@@ -476,18 +547,46 @@ export class Canvas2DRenderer {
       // Base position: near bottom of tile
       const baseCx = screen.x;
       const baseCy = screen.y + TILE_HEIGHT / 4;
+      // Jitter spacing adapts to sprite vs dot mode
+      const spacing = useSprites ? spriteSize * 1.1 : DOT_RADIUS * 2.5;
 
       for (let i = 0; i < group.length; i++) {
         const citizen = group[i]!;
         // Deterministic jitter: spread citizens in a row, wrapping after 5 per row
         const col = i % 5;
         const row = Math.floor(i / 5);
-        const offsetX = (col - 2) * (DOT_RADIUS * 2.5);
-        const offsetY = row * (DOT_RADIUS * 2.5);
+        const offsetX = (col - 2) * spacing;
+        const offsetY = row * spacing;
 
         const cx = baseCx + offsetX;
         const cy = baseCy + offsetY;
 
+        // Try sprite rendering first
+        if (useSprites) {
+          const sprite = this.characterSprites!.get(
+            citizen.citizenClass,
+            citizen.gender,
+            citizen.ageCategory
+          );
+          if (sprite) {
+            // Draw the idle frame (top-left cell of sprite sheet)
+            // anchored at feet (bottom-center of the destination rect)
+            ctx.drawImage(
+              sprite.image,
+              sprite.sx,
+              sprite.sy,
+              sprite.sw,
+              sprite.sh,
+              cx - spriteSize / 2,
+              cy - spriteSize,
+              spriteSize,
+              spriteSize
+            );
+            continue;
+          }
+        }
+
+        // Fallback: colored dot
         const color = citizen.dotColor ?? CITIZEN_CLASS_COLORS[citizen.citizenClass] ?? '#757575';
 
         // Dark border
@@ -501,6 +600,11 @@ export class Canvas2DRenderer {
         ctx.arc(cx, cy, DOT_RADIUS, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.fill();
+
+        // Color-blind shape overlay
+        if (cbMode) {
+          this.drawColorBlindShape(ctx, citizen.citizenClass, cx, cy, DOT_RADIUS);
+        }
       }
     }
   }

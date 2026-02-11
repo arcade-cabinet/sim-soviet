@@ -24,7 +24,12 @@
 
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
 import { getBuildingDef } from '@/data/buildingDefs';
-import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
+import {
+  buildingsLogic,
+  getMetaEntity,
+  getResourceEntity,
+  operationalBuildings,
+} from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import {
   constructionSystem,
@@ -90,6 +95,7 @@ import { eraIdToIndex, ScoringSystem } from './ScoringSystem';
 import type { GameRng } from './SeedSystem';
 import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from './SettlementSystem';
 import { SettlementSystem } from './SettlementSystem';
+import { type TransportSaveData, TransportSystem } from './TransportSystem';
 import type { TutorialMilestone, TutorialSaveData } from './TutorialSystem';
 import { TutorialSystem } from './TutorialSystem';
 import { getWeatherProfile, type WeatherType } from './WeatherSystem';
@@ -157,6 +163,7 @@ export interface SubsystemSaveData {
   tutorial?: TutorialSaveData;
   achievements?: AchievementTrackerSaveData;
   mandates?: PlanMandateState;
+  transport?: TransportSaveData;
   /** Engine-level state */
   engineState?: {
     lastSeason: string;
@@ -197,6 +204,7 @@ export class SimulationEngine {
   private tutorial: TutorialSystem;
   private achievements: AchievementTracker;
   private mandateState: PlanMandateState | null = null;
+  private transport: TransportSystem;
   private difficulty: DifficultyLevel;
   private quota: QuotaState;
   private rng: GameRng | undefined;
@@ -298,6 +306,10 @@ export class SimulationEngine {
 
     // Achievement Tracker — 28 achievements driven by game stats
     this.achievements = new AchievementTracker();
+
+    // Transport System — road quality, condition degradation, maintenance
+    this.transport = new TransportSystem(this.eraSystem.getCurrentEraId());
+    if (rng) this.transport.setRng(rng);
 
     // Plan Mandates — building construction mandates per era
     const initialEraId = this.eraSystem.getCurrentEraId();
@@ -428,6 +440,7 @@ export class SimulationEngine {
     this.tutorial = se.tutorial;
     this.achievements = se.achievements;
     this.mandateState = se.mandateState;
+    this.transport = se.transport;
     this.consecutiveQuotaFailures = se.consecutiveQuotaFailures;
     this.lastSeason = se.lastSeason;
     this.lastWeather = se.lastWeather;
@@ -494,13 +507,24 @@ export class SimulationEngine {
     const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult;
 
     powerSystem();
+
+    // Transport System — road quality, condition decay, maintenance, mitigation
+    const storeRef = getResourceEntity();
+    const transportResult = this.transport.tick(
+      operationalBuildings.entities,
+      this.settlement.getCurrentTier(),
+      this.chronology.getDate().totalTicks,
+      tickResult.season,
+      storeRef?.resources
+    );
+
     constructionSystem(
       this.eraSystem.getConstructionTimeMult(),
-      weatherProfile.constructionTimeMult
+      weatherProfile.constructionTimeMult,
+      transportResult.seasonBuildMult
     );
 
     // Capture pre-production resource levels for CompulsoryDeliveries delta
-    const storeRef = getResourceEntity();
     const foodBefore = storeRef?.resources.food ?? 0;
     const vodkaBefore = storeRef?.resources.vodka ?? 0;
 
@@ -524,7 +548,11 @@ export class SimulationEngine {
     this.tickEconomySystem();
 
     consumptionSystem(eraMods.consumptionMult);
-    populationSystem(this.rng, politburoMods.populationGrowthMult * eraMods.populationGrowthMult);
+    populationSystem(
+      this.rng,
+      politburoMods.populationGrowthMult * eraMods.populationGrowthMult,
+      this.chronology.getDate().month
+    );
 
     // Worker System — sync citizen entities to match population, then tick worker stats
     const pop = getResourceEntity()?.resources.population ?? 0;
@@ -682,6 +710,7 @@ export class SimulationEngine {
       tutorial: this.tutorial,
       achievements: this.achievements,
       mandateState: this.mandateState,
+      transport: this.transport,
       quota: this.quota,
       consecutiveQuotaFailures: this.consecutiveQuotaFailures,
       lastSeason: this.lastSeason,
@@ -773,6 +802,10 @@ export class SimulationEngine {
 
     // Sync era
     meta.gameMeta.currentEra = this.eraSystem.getCurrentEraId();
+
+    // Sync road quality + condition
+    meta.gameMeta.roadQuality = this.transport.getQuality();
+    meta.gameMeta.roadCondition = this.transport.getCondition();
   }
 
   /**
@@ -853,6 +886,10 @@ export class SimulationEngine {
         r.population = Math.max(0, r.population - losses);
       }
     }
+
+    // Consumer goods — satisfaction from blat + settlement tier
+    const settlementTier = this.settlement.getCurrentTier();
+    this.economySystem.tickConsumerGoods(r.population, settlementTier);
   }
 
   /**
@@ -1037,6 +1074,9 @@ export class SimulationEngine {
       // Update EconomySystem era (fondy reliability, rates, etc.)
       const economyEra = GAME_ERA_TO_ECONOMY_ERA[newEra.id] ?? 'revolution';
       this.economySystem.setEra(economyEra);
+
+      // Update TransportSystem era (score bonuses vary by era)
+      this.transport.setEra(newEra.id);
 
       // Generate new building mandates for the new era
       const newMandates = createMandatesForEra(newEra.id, this.difficulty);

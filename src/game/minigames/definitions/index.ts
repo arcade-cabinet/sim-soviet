@@ -10,9 +10,10 @@ import { THE_HUNT } from './hunt';
 import { IDEOLOGY_SESSION } from './ideology';
 import { THE_INSPECTION } from './inspection';
 import { INTERROGATION } from './interrogation';
+import { MINING_EXPEDITION } from './mining-expedition';
 import { THE_QUEUE } from './queue';
 
-/** All 8 minigame definitions, keyed by ID. */
+/** All 9 minigame definitions, keyed by ID. */
 export const MINIGAME_DEFINITIONS: ReadonlyArray<MinigameDefinition> = [
   THE_QUEUE,
   IDEOLOGY_SESSION,
@@ -22,6 +23,7 @@ export const MINIGAME_DEFINITIONS: ReadonlyArray<MinigameDefinition> = [
   FACTORY_EMERGENCY,
   THE_HUNT,
   INTERROGATION,
+  MINING_EXPEDITION,
 ];
 
 /** Lookup a definition by ID. */

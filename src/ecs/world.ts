@@ -231,6 +231,10 @@ export interface GameMeta {
   threatLevel: string;
   /** Current historical era ID (synced from EraSystem each tick) */
   currentEra: string;
+  /** Current road quality level (synced from TransportSystem each tick) */
+  roadQuality: string;
+  /** Road condition 0-100 (100 = pristine). Synced from TransportSystem each tick. */
+  roadCondition: number;
 }
 
 /**

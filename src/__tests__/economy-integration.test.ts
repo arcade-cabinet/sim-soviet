@@ -145,9 +145,9 @@ describe('Economy Integration', () => {
       const eco = new EconomySystem('revolution', 'comrade');
       const initialReliability = eco.getFondy().reliability;
 
-      const success = eco.spendBlat(5, 'improve_delivery');
+      const result = eco.spendBlat(5, 'improve_delivery');
 
-      expect(success).toBe(true);
+      expect(result.success).toBe(true);
       expect(eco.getBlat().connections).toBe(5);
       expect(eco.getBlat().totalSpent).toBe(5);
       expect(eco.getFondy().reliability).toBe(Math.min(1.0, initialReliability + 0.05));
@@ -155,9 +155,9 @@ describe('Economy Integration', () => {
 
     it('spending blat fails when insufficient connections', () => {
       const eco = new EconomySystem('revolution', 'comrade');
-      const success = eco.spendBlat(20, 'improve_delivery');
+      const result = eco.spendBlat(20, 'improve_delivery');
 
-      expect(success).toBe(false);
+      expect(result.success).toBe(false);
       expect(eco.getBlat().connections).toBe(10); // unchanged
     });
   });

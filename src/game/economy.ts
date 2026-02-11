@@ -199,6 +199,12 @@ export interface EconomyTickResult {
   currencyReform: CurrencyReformResult | null;
 }
 
+export interface ConsumerGoodsState {
+  available: number;
+  demand: number;
+  satisfaction: number;
+}
+
 export interface EconomySaveData {
   trudodni: {
     totalContributed: number;
@@ -240,6 +246,7 @@ export interface EconomySaveData {
     applied: boolean;
     confiscation?: { threshold: number; rate: number };
   }[];
+  consumerGoods?: ConsumerGoodsState;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -806,6 +813,9 @@ export class EconomySystem {
   // Heating
   private heating: HeatingState;
 
+  // Consumer goods
+  private consumerGoods: ConsumerGoodsState = { available: 50, demand: 100, satisfaction: 0.5 };
+
   // Currency reforms — own copy so mutations don't affect the shared constant
   private reforms: CurrencyReform[];
 
@@ -963,8 +973,10 @@ export class EconomySystem {
     this.blat.totalEarned += amount;
   }
 
-  spendBlat(amount: number, purpose: string): boolean {
-    if (this.blat.connections < amount) return false;
+  spendBlat(amount: number, purpose: string): { success: boolean; kgbDetected: boolean } {
+    if (this.blat.connections < amount) {
+      return { success: false, kgbDetected: false };
+    }
     this.blat.connections -= amount;
     this.blat.totalSpent += amount;
 
@@ -973,7 +985,20 @@ export class EconomySystem {
       this.fondy.reliability = Math.min(1.0, this.fondy.reliability + 0.05);
     }
 
-    return true;
+    // KGB detection risk: 2% per point above threshold of 5
+    // High blat + high visibility = corruption investigation
+    const kgbThreshold = 5;
+    let kgbDetected = false;
+    if (amount > kgbThreshold) {
+      const excessPoints = amount - kgbThreshold;
+      const detectionChance = excessPoints * 0.02;
+      const rand = this.rng ? this.rng.random() : Math.random();
+      if (rand < detectionChance) {
+        kgbDetected = true;
+      }
+    }
+
+    return { success: true, kgbDetected };
   }
 
   // ── Rations ────────────────────────────────────────────────────────────────
@@ -1138,6 +1163,33 @@ export class EconomySystem {
     };
   }
 
+  // ── Consumer Goods ──────────────────────────────────────────────────────
+
+  tickConsumerGoods(population: number, settlementTier: string): void {
+    // Consumer goods unlock at PGT tier
+    if (settlementTier !== 'pgt' && settlementTier !== 'gorod') {
+      this.consumerGoods.satisfaction = 0;
+      return;
+    }
+
+    // Demand scales with population
+    this.consumerGoods.demand = population * 0.5;
+
+    // Available goods = base supply + blat bonus
+    const blatBonus = this.blat.connections * 0.5;
+    this.consumerGoods.available = 20 + blatBonus;
+
+    // Satisfaction ratio (capped at 1.0)
+    this.consumerGoods.satisfaction = Math.min(
+      1.0,
+      this.consumerGoods.demand > 0 ? this.consumerGoods.available / this.consumerGoods.demand : 0
+    );
+  }
+
+  getConsumerGoodsSatisfaction(): number {
+    return this.consumerGoods.satisfaction;
+  }
+
   // ── Main Tick ──────────────────────────────────────────────────────────────
 
   tick(
@@ -1242,6 +1294,7 @@ export class EconomySystem {
         applied: r.applied,
         confiscation: r.confiscation ? { ...r.confiscation } : undefined,
       })),
+      consumerGoods: { ...this.consumerGoods },
     };
   }
 
@@ -1290,6 +1343,11 @@ export class EconomySystem {
         ...r,
         confiscation: r.confiscation ? { ...r.confiscation } : undefined,
       }));
+    }
+
+    // Restore consumer goods
+    if (data.consumerGoods) {
+      sys.consumerGoods = { ...data.consumerGoods };
     }
 
     return sys;
