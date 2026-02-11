@@ -78,6 +78,7 @@ export function App() {
   const [workerApi, setWorkerApi] = useState<WorkerAPI | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
+  const resolveMinigameRef = useRef<((choiceId: string) => void) | null>(null);
 
   // Check for existing saves on mount
   useEffect(() => {
@@ -122,7 +123,10 @@ export function App() {
       submitReportRef.current = submitFn;
     },
     onEraChanged: (era) => setEraTransition(era),
-    onMinigame: (active) => setActiveMinigame(active),
+    onMinigame: (active, resolveChoice) => {
+      setActiveMinigame(active);
+      resolveMinigameRef.current = resolveChoice;
+    },
     onTutorialMilestone: (_milestone) => {
       // Tutorial milestones already fire onAdvisor with Krupnik dialogue
       // in SimulationEngine.tickTutorial(). This callback is available
@@ -315,12 +319,15 @@ export function App() {
         {activeMinigame && !activeMinigame.resolved && (
           <MinigameModal
             minigame={activeMinigame}
-            onChoice={() => {
-              // Choice resolution routed through SimulationEngine.resolveMinigameChoice()
-              // via GameWorld — auto-resolve handles timeout if not explicitly resolved.
+            onChoice={(choiceId) => {
+              resolveMinigameRef.current?.(choiceId);
+              resolveMinigameRef.current = null;
               setActiveMinigame(null);
             }}
-            onClose={() => setActiveMinigame(null)}
+            onClose={() => {
+              setActiveMinigame(null);
+              resolveMinigameRef.current = null;
+            }}
           />
         )}
       </AnimatePresence>

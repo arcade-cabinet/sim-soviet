@@ -109,8 +109,8 @@ export interface SimCallbacks {
     data: AnnualReportData,
     submitReport: (submission: ReportSubmission) => void
   ) => void;
-  /** Fired when a minigame triggers. UI should present choices to the player. */
-  onMinigame?: (active: ActiveMinigame) => void;
+  /** Fired when a minigame triggers. UI should present choices and call resolveChoice(id). */
+  onMinigame?: (active: ActiveMinigame, resolveChoice: (choiceId: string) => void) => void;
   /** Fired when a tutorial milestone triggers (Krupnik guidance). */
   onTutorialMilestone?: (milestone: TutorialMilestone) => void;
   /** Fired when an achievement unlocks. */
@@ -553,7 +553,7 @@ export class SimulationEngine {
     });
     if (def) {
       const active = this.minigameRouter.startMinigame(def, totalTicks);
-      this.callbacks.onMinigame?.(active);
+      this.callbacks.onMinigame?.(active, (id) => this.resolveMinigameChoice(id));
     }
   }
 
@@ -1296,7 +1296,7 @@ export class SimulationEngine {
       const def = this.minigameRouter.checkTrigger('periodic', { totalTicks, population });
       if (def) {
         const active = this.minigameRouter.startMinigame(def, totalTicks);
-        this.callbacks.onMinigame(active);
+        this.callbacks.onMinigame(active, (id) => this.resolveMinigameChoice(id));
       }
     }
 
@@ -1317,7 +1317,7 @@ export class SimulationEngine {
     const def = this.minigameRouter.checkTrigger('event', { eventId, totalTicks, population });
     if (def) {
       const active = this.minigameRouter.startMinigame(def, totalTicks);
-      this.callbacks.onMinigame?.(active);
+      this.callbacks.onMinigame?.(active, (id) => this.resolveMinigameChoice(id));
     }
   }
 

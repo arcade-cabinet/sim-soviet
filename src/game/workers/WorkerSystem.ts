@@ -42,10 +42,14 @@ export interface WorkerSystemSaveData {
   workers: WorkerStatEntry[];
 }
 
+/** Governor runs every N ticks to avoid per-tick array copy overhead. */
+const GOVERNOR_INTERVAL = 10;
+
 export class WorkerSystem {
   private stats: Map<Entity, WorkerStats> = new Map();
   private rng: GameRng | null;
   private collectiveFocus: CollectiveFocus = 'balanced';
+  private tickCounter = 0;
 
   constructor(rng?: GameRng) {
     this.rng = rng ?? null;
@@ -236,17 +240,21 @@ export class WorkerSystem {
     }
 
     // Behavioral Governor — auto-assign idle/reassignable workers
-    const store = getResourceEntity();
-    if (store) {
-      for (const entity of [...citizens]) {
-        const stats = this.stats.get(entity);
-        if (!stats) continue;
-        const recommendation = runGovernor(entity, stats, store.resources, this.collectiveFocus);
-        if (recommendation) {
-          entity.citizen.assignment = recommendation.buildingDefId;
-          stats.assignmentSource = 'auto';
-          stats.assignmentDuration = 0;
-          world.reindex(entity);
+    // Throttled to every GOVERNOR_INTERVAL ticks to avoid per-tick array copy
+    this.tickCounter++;
+    if (this.tickCounter % GOVERNOR_INTERVAL === 0) {
+      const store = getResourceEntity();
+      if (store) {
+        for (const entity of [...citizens]) {
+          const stats = this.stats.get(entity);
+          if (!stats) continue;
+          const recommendation = runGovernor(entity, stats, store.resources, this.collectiveFocus);
+          if (recommendation) {
+            entity.citizen.assignment = recommendation.buildingDefId;
+            stats.assignmentSource = 'auto';
+            stats.assignmentDuration = 0;
+            world.reindex(entity);
+          }
         }
       }
     }

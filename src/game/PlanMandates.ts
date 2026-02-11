@@ -108,10 +108,14 @@ export function createMandatesForEra(
   eraId: string,
   difficulty: DifficultyLevel
 ): BuildingMandate[] {
-  const templates = ERA_MANDATE_TEMPLATES[eraId] ?? ERA_MANDATE_TEMPLATES.war_communism!;
+  const templates = ERA_MANDATE_TEMPLATES[eraId];
+  if (!templates) {
+    console.warn(`[PlanMandates] Unknown era ID "${eraId}", falling back to war_communism`);
+  }
+  const resolved = templates ?? ERA_MANDATE_TEMPLATES.war_communism!;
   const mult = DIFFICULTY_MULTIPLIERS[difficulty];
 
-  return templates.map((t) => ({
+  return resolved.map((t) => ({
     defId: t.defId,
     label: t.label,
     required: Math.max(1, Math.round(t.baseRequired * mult)),
