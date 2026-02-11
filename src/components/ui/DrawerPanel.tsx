@@ -70,16 +70,138 @@ export function DrawerPanel({ isOpen, onClose, saveApi, audioApi, workerApi }: D
   const quotaPct = Math.round(quotaProgress * 100);
   const yearsLeft = Math.max(snap.quota.deadlineYear - snap.date.year, 0);
 
-  // ── Save/Load Handlers ────────────────────────────────────────
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/60 z-40"
+            onClick={onClose}
+          />
 
+          {/* Drawer */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+            className="fixed right-0 top-0 bottom-0 w-72 sm:w-80 bg-[#2a2a2a] border-l-2 border-[#8b0000] z-50 flex flex-col shadow-2xl"
+            style={{ fontFamily: "'VT323', monospace" }}
+          >
+            <DrawerHeader onClose={onClose} />
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <ArchivesSection saveApi={saveApi} fileInputRef={fileInputRef} onClose={onClose} />
+
+              <AudioSection
+                audioApi={audioApi}
+                isMuted={isMuted}
+                setIsMuted={setIsMuted}
+                musicVol={musicVol}
+                setMusicVol={setMusicVol}
+                ambientVol={ambientVol}
+                setAmbientVol={setAmbientVol}
+              />
+
+              {/* Minimap placeholder */}
+              <DrawerSection icon={MapIcon} title="TACTICAL MAP">
+                <div className="w-full aspect-square bg-[#1a1a1a] border-2 border-[#8b0000] relative">
+                  <div className="absolute inset-1 bg-gradient-to-br from-[#4a3a2a] to-[#2a1a0a]" />
+                  <div className="absolute inset-0 flex items-center justify-center text-[#ff4444] text-xs font-bold">
+                    MINIMAP
+                  </div>
+                </div>
+              </DrawerSection>
+
+              <SettlementSection snap={snap} tierRussian={tierRussian} threatInfo={threatInfo} />
+              <PopulationRegistrySection snap={snap} />
+              <QuotaSection snap={snap} quotaPct={quotaPct} yearsLeft={yearsLeft} />
+
+              <CollectiveFocusSection
+                collectiveFocus={collectiveFocus}
+                setCollectiveFocus={setCollectiveFocus}
+                workerApi={workerApi}
+              />
+
+              <AlertsSection snap={snap} quotaPct={quotaPct} yearsLeft={yearsLeft} />
+              <PersonnelFileSection snap={snap} threatInfo={threatInfo} />
+
+              {/* Leader */}
+              {snap.leaderName && (
+                <div className="bg-[#1a1a1a] border border-[#444] px-3 py-2">
+                  <div className="text-[#888] text-[8px] uppercase tracking-wider mb-1">
+                    General Secretary
+                  </div>
+                  <div className="text-[#ff6b6b] text-xs font-bold">{snap.leaderName}</div>
+                  {snap.leaderPersonality && (
+                    <div className="text-[#888] text-[9px] italic mt-0.5">
+                      {snap.leaderPersonality}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 py-2 border-t border-[#444] bg-[#1a1a1a]">
+              <div className="text-[#666] text-[9px] text-center uppercase tracking-widest">
+                Ministry of Information
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ── Extracted Sections ────────────────────────────────────────
+
+function DrawerHeader({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-b-2 border-[#8b0000] bg-[#1a1a1a]">
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 bg-[#8b0000] flex items-center justify-center">
+          <span className="text-[#cfaa48] text-sm">☭</span>
+        </div>
+        <span className="text-[#cfaa48] text-sm font-bold uppercase tracking-wider">
+          Command Panel
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        className="w-8 h-8 flex items-center justify-center bg-[#2a2a2a] border border-[#444] hover:border-[#8b0000] transition-colors"
+        aria-label="Close menu"
+      >
+        <X className="w-4 h-4 text-[#888]" />
+      </button>
+    </div>
+  );
+}
+
+function ArchivesSection({
+  saveApi,
+  fileInputRef,
+  onClose,
+}: {
+  saveApi?: SaveSystemAPI | null;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onClose: () => void;
+}) {
   const handleSave = async () => {
     if (!saveApi) return;
     const ok = await saveApi.save('manual_1');
-    if (ok) {
-      addSovietToast('warning', 'Game saved to state archives');
-    } else {
-      addSovietToast('critical', 'Save failed — archival error');
-    }
+    addSovietToast(
+      ok ? 'warning' : 'critical',
+      ok ? 'Game saved to state archives' : 'Save failed — archival error'
+    );
   };
 
   const handleLoad = async () => {
@@ -110,20 +232,13 @@ export function DrawerPanel({ isOpen, onClose, saveApi, audioApi, workerApi }: D
     addSovietToast('warning', 'Database exported — guard with your life');
   };
 
-  const handleImport = () => {
-    fileInputRef.current?.click();
-  };
-
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
       const buffer = await file.arrayBuffer();
-      const data = new Uint8Array(buffer);
-      await importDatabaseFile(data);
+      await importDatabaseFile(new Uint8Array(buffer));
       addSovietToast('warning', 'Database imported — reloading state');
-      // Reload the autosave from the imported database
       if (saveApi) {
         const loaded = await saveApi.load('autosave');
         if (loaded) {
@@ -135,315 +250,280 @@ export function DrawerPanel({ isOpen, onClose, saveApi, audioApi, workerApi }: D
       console.error('Import failed:', error);
       addSovietToast('critical', 'Import failed — file is corrupted');
     }
-    // Reset file input so re-selecting the same file triggers onChange
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/60 z-40"
-            onClick={onClose}
-          />
+    <DrawerSection icon={HardDrive} title="STATE ARCHIVES">
+      <div className="grid grid-cols-2 gap-2">
+        <DrawerButton icon={Save} label="SAVE" onClick={handleSave} disabled={!saveApi} />
+        <DrawerButton icon={Upload} label="LOAD" onClick={handleLoad} disabled={!saveApi} />
+        <DrawerButton icon={Download} label="EXPORT .DB" onClick={handleExport} />
+        <DrawerButton
+          icon={Upload}
+          label="IMPORT .DB"
+          onClick={() => fileInputRef.current?.click()}
+        />
+      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".db,.sqlite,.sqlite3"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
+    </DrawerSection>
+  );
+}
 
-          {/* Drawer */}
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-            className="fixed right-0 top-0 bottom-0 w-72 sm:w-80 bg-[#2a2a2a] border-l-2 border-[#8b0000] z-50 flex flex-col shadow-2xl"
-            style={{ fontFamily: "'VT323', monospace" }}
+function AudioSection({
+  audioApi,
+  isMuted,
+  setIsMuted,
+  musicVol,
+  setMusicVol,
+  ambientVol,
+  setAmbientVol,
+}: {
+  audioApi?: AudioAPI | null;
+  isMuted: boolean;
+  setIsMuted: (v: boolean) => void;
+  musicVol: number;
+  setMusicVol: (v: number) => void;
+  ambientVol: number;
+  setAmbientVol: (v: number) => void;
+}) {
+  return (
+    <DrawerSection icon={isMuted ? VolumeX : Volume2} title="AUDIO CONTROLS">
+      <div className="space-y-3">
+        <button
+          type="button"
+          className="w-full flex items-center justify-center gap-2 border px-3 py-2 text-xs font-bold uppercase tracking-wider"
+          style={{
+            borderColor: isMuted ? '#8b0000' : '#444',
+            background: isMuted ? 'rgba(139,0,0,0.3)' : 'rgba(26,26,26,0.8)',
+            color: isMuted ? '#ff4444' : '#aaa',
+          }}
+          onClick={() => {
+            const nowMuted = audioApi?.toggleMute() ?? !isMuted;
+            setIsMuted(nowMuted);
+          }}
+        >
+          {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          {isMuted ? 'UNMUTE AUDIO' : 'MUTE AUDIO'}
+        </button>
+        <VolumeSlider
+          label="MUSIC"
+          value={musicVol}
+          onChange={(v) => {
+            setMusicVol(v);
+            audioApi?.setMusicVolume(v);
+          }}
+        />
+        <VolumeSlider
+          label="AMBIENT"
+          value={ambientVol}
+          onChange={(v) => {
+            setAmbientVol(v);
+            audioApi?.setAmbientVolume(v);
+          }}
+        />
+      </div>
+    </DrawerSection>
+  );
+}
+
+function SettlementSection({
+  snap,
+  tierRussian,
+  threatInfo,
+}: {
+  snap: ReturnType<typeof useGameSnapshot>;
+  tierRussian: string;
+  threatInfo: { label: string; color: string };
+}) {
+  return (
+    <DrawerSection icon={Building2} title="SETTLEMENT">
+      <div className="grid grid-cols-2 gap-2">
+        <StatCard label="Buildings" value={String(snap.buildingCount)} icon="🏛️" />
+        <StatCard label="Population" value={snap.pop.toLocaleString()} icon="👥" />
+        <StatCard label="Tier" value={tierRussian} icon="🏘️" />
+        <StatCard label="Threat" value={threatInfo.label} icon="📋" valueClass={threatInfo.color} />
+      </div>
+    </DrawerSection>
+  );
+}
+
+function thresholdColor(value: number): string {
+  if (value < 30) return 'text-[#ff4444]';
+  if (value < 60) return 'text-[#ffaa00]';
+  return 'text-green-500';
+}
+
+function PopulationRegistrySection({ snap }: { snap: ReturnType<typeof useGameSnapshot> }) {
+  return (
+    <DrawerSection icon={Users} title="POPULATION REGISTRY">
+      <div className="grid grid-cols-2 gap-2">
+        <StatCard label="Dvory" value={String(snap.dvorCount)} icon="🏠" />
+        <StatCard label="Citizens" value={snap.pop.toLocaleString()} icon="👤" />
+        <StatCard
+          label="Morale"
+          value={`${snap.avgMorale}%`}
+          icon="😐"
+          valueClass={thresholdColor(snap.avgMorale)}
+        />
+        <StatCard
+          label="Loyalty"
+          value={`${snap.avgLoyalty}%`}
+          icon="⭐"
+          valueClass={thresholdColor(snap.avgLoyalty)}
+        />
+        <StatCard label="Assigned" value={String(snap.assignedWorkers)} icon="🔨" />
+        <StatCard label="Idle" value={String(snap.idleWorkers)} icon="💤" />
+      </div>
+    </DrawerSection>
+  );
+}
+
+function QuotaSection({
+  snap,
+  quotaPct,
+  yearsLeft,
+}: {
+  snap: ReturnType<typeof useGameSnapshot>;
+  quotaPct: number;
+  yearsLeft: number;
+}) {
+  return (
+    <DrawerSection icon={BarChart3} title="5-YEAR PLAN">
+      <div className="bg-[#1a1a1a] border border-[#444] px-2 py-2">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[#cfaa48] text-[10px] font-bold uppercase">{snap.quota.type}</span>
+          <span className="text-[#888] text-[9px] font-mono">
+            {yearsLeft} {yearsLeft === 1 ? 'yr' : 'yrs'} left
+          </span>
+        </div>
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-white text-xs font-mono">
+            {Math.round(snap.quota.current)}/{snap.quota.target}
+          </span>
+          <span className="text-[#cfaa48] text-xs font-mono font-bold">{quotaPct}%</span>
+        </div>
+        <div className="w-full h-1.5 bg-[#333]">
+          <div className="h-full bg-[#8b0000] transition-all" style={{ width: `${quotaPct}%` }} />
+        </div>
+      </div>
+    </DrawerSection>
+  );
+}
+
+function CollectiveFocusSection({
+  collectiveFocus,
+  setCollectiveFocus,
+  workerApi,
+}: {
+  collectiveFocus: 'food' | 'construction' | 'production' | 'balanced';
+  setCollectiveFocus: (v: 'food' | 'construction' | 'production' | 'balanced') => void;
+  workerApi?: WorkerAPI | null;
+}) {
+  return (
+    <DrawerSection icon={Target} title="COLLECTIVE FOCUS">
+      <div className="grid grid-cols-2 gap-1.5">
+        {(
+          [
+            { id: 'balanced', label: 'BALANCED' },
+            { id: 'food', label: 'FOOD' },
+            { id: 'construction', label: 'BUILD' },
+            { id: 'production', label: 'PRODUCE' },
+          ] as const
+        ).map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => {
+              setCollectiveFocus(opt.id);
+              workerApi?.setCollectiveFocus(opt.id);
+            }}
+            className={cn(
+              'py-1.5 px-2 text-[10px] font-bold uppercase tracking-wider border transition-colors cursor-pointer',
+              collectiveFocus === opt.id
+                ? 'border-[#8b0000] bg-[#8b0000]/30 text-[#cfaa48]'
+                : 'border-[#444] bg-[#1a1a1a] text-[#888] hover:border-[#8b0000]'
+            )}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b-2 border-[#8b0000] bg-[#1a1a1a]">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#8b0000] flex items-center justify-center">
-                  <span className="text-[#cfaa48] text-sm">☭</span>
-                </div>
-                <span className="text-[#cfaa48] text-sm font-bold uppercase tracking-wider">
-                  Command Panel
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center bg-[#2a2a2a] border border-[#444] hover:border-[#8b0000] transition-colors"
-                aria-label="Close menu"
-              >
-                <X className="w-4 h-4 text-[#888]" />
-              </button>
-            </div>
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      <p className="text-[#666] text-[8px] mt-1.5">Shifts worker auto-assignment priorities</p>
+    </DrawerSection>
+  );
+}
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {/* Save / Load Controls */}
-              <DrawerSection icon={HardDrive} title="STATE ARCHIVES">
-                <div className="grid grid-cols-2 gap-2">
-                  <DrawerButton icon={Save} label="SAVE" onClick={handleSave} disabled={!saveApi} />
-                  <DrawerButton
-                    icon={Upload}
-                    label="LOAD"
-                    onClick={handleLoad}
-                    disabled={!saveApi}
-                  />
-                  <DrawerButton icon={Download} label="EXPORT .DB" onClick={handleExport} />
-                  <DrawerButton icon={Upload} label="IMPORT .DB" onClick={handleImport} />
-                </div>
-                {/* Hidden file input for import */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".db,.sqlite,.sqlite3"
-                  className="hidden"
-                  onChange={handleFileSelected}
-                />
-              </DrawerSection>
+function AlertsSection({
+  snap,
+  quotaPct,
+  yearsLeft,
+}: {
+  snap: ReturnType<typeof useGameSnapshot>;
+  quotaPct: number;
+  yearsLeft: number;
+}) {
+  const alerts = buildAlerts(snap, quotaPct, yearsLeft);
+  return (
+    <DrawerSection icon={AlertTriangle} title="ALERTS">
+      <div className="space-y-2">
+        {alerts.map((a) => (
+          <AlertItem key={a.message} severity={a.severity} message={a.message} />
+        ))}
+      </div>
+    </DrawerSection>
+  );
+}
 
-              {/* Audio Controls */}
-              <DrawerSection icon={isMuted ? VolumeX : Volume2} title="AUDIO CONTROLS">
-                <div className="space-y-3">
-                  <button
-                    type="button"
-                    className="w-full flex items-center justify-center gap-2 border px-3 py-2 text-xs font-bold uppercase tracking-wider"
-                    style={{
-                      borderColor: isMuted ? '#8b0000' : '#444',
-                      background: isMuted ? 'rgba(139,0,0,0.3)' : 'rgba(26,26,26,0.8)',
-                      color: isMuted ? '#ff4444' : '#aaa',
-                    }}
-                    onClick={() => {
-                      const nowMuted = audioApi?.toggleMute() ?? !isMuted;
-                      setIsMuted(nowMuted);
-                    }}
-                  >
-                    {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                    {isMuted ? 'UNMUTE AUDIO' : 'MUTE AUDIO'}
-                  </button>
-                  <VolumeSlider
-                    label="MUSIC"
-                    value={musicVol}
-                    onChange={(v) => {
-                      setMusicVol(v);
-                      audioApi?.setMusicVolume(v);
-                    }}
-                  />
-                  <VolumeSlider
-                    label="AMBIENT"
-                    value={ambientVol}
-                    onChange={(v) => {
-                      setAmbientVol(v);
-                      audioApi?.setAmbientVolume(v);
-                    }}
-                  />
-                </div>
-              </DrawerSection>
+function buildAlerts(
+  snap: ReturnType<typeof useGameSnapshot>,
+  quotaPct: number,
+  yearsLeft: number
+): Array<{ severity: 'critical' | 'warning' | 'info'; message: string }> {
+  const alerts: Array<{ severity: 'critical' | 'warning' | 'info'; message: string }> = [];
+  if (snap.food < 50)
+    alerts.push({ severity: 'critical', message: 'Food reserves critically low' });
+  if (snap.powerUsed > snap.power)
+    alerts.push({ severity: 'critical', message: 'Power demand exceeds supply' });
+  if (snap.food >= 50 && snap.food < 200)
+    alerts.push({ severity: 'warning', message: 'Food reserves declining' });
+  if (snap.blackMarks > 0) {
+    alerts.push({
+      severity: snap.blackMarks >= 5 ? 'critical' : 'warning',
+      message: `${snap.blackMarks} black mark${snap.blackMarks !== 1 ? 's' : ''} in personnel file`,
+    });
+  }
+  if (snap.quota.target > 0 && quotaPct < 30 && yearsLeft <= 1) {
+    alerts.push({ severity: 'warning', message: 'Quota deadline approaching — behind schedule' });
+  }
+  if (alerts.length === 0) alerts.push({ severity: 'info', message: 'No current alerts' });
+  return alerts;
+}
 
-              {/* Minimap placeholder */}
-              <DrawerSection icon={MapIcon} title="TACTICAL MAP">
-                <div className="w-full aspect-square bg-[#1a1a1a] border-2 border-[#8b0000] relative">
-                  <div className="absolute inset-1 bg-gradient-to-br from-[#4a3a2a] to-[#2a1a0a]" />
-                  <div className="absolute inset-0 flex items-center justify-center text-[#ff4444] text-xs font-bold">
-                    MINIMAP
-                  </div>
-                </div>
-              </DrawerSection>
-
-              {/* Settlement Stats */}
-              <DrawerSection icon={Building2} title="SETTLEMENT">
-                <div className="grid grid-cols-2 gap-2">
-                  <StatCard label="Buildings" value={String(snap.buildingCount)} icon="🏛️" />
-                  <StatCard label="Population" value={snap.pop.toLocaleString()} icon="👥" />
-                  <StatCard label="Tier" value={tierRussian} icon="🏘️" />
-                  <StatCard
-                    label="Threat"
-                    value={threatInfo.label}
-                    icon="📋"
-                    valueClass={threatInfo.color}
-                  />
-                </div>
-              </DrawerSection>
-
-              {/* Population Registry */}
-              <DrawerSection icon={Users} title="POPULATION REGISTRY">
-                <div className="grid grid-cols-2 gap-2">
-                  <StatCard label="Dvory" value={String(snap.dvorCount)} icon="🏠" />
-                  <StatCard label="Citizens" value={snap.pop.toLocaleString()} icon="👤" />
-                  <StatCard
-                    label="Morale"
-                    value={`${snap.avgMorale}%`}
-                    icon="😐"
-                    valueClass={
-                      snap.avgMorale < 30
-                        ? 'text-[#ff4444]'
-                        : snap.avgMorale < 60
-                          ? 'text-[#ffaa00]'
-                          : 'text-green-500'
-                    }
-                  />
-                  <StatCard
-                    label="Loyalty"
-                    value={`${snap.avgLoyalty}%`}
-                    icon="⭐"
-                    valueClass={
-                      snap.avgLoyalty < 30
-                        ? 'text-[#ff4444]'
-                        : snap.avgLoyalty < 60
-                          ? 'text-[#ffaa00]'
-                          : 'text-green-500'
-                    }
-                  />
-                  <StatCard label="Assigned" value={String(snap.assignedWorkers)} icon="🔨" />
-                  <StatCard label="Idle" value={String(snap.idleWorkers)} icon="💤" />
-                </div>
-              </DrawerSection>
-
-              {/* 5-Year Plan */}
-              <DrawerSection icon={BarChart3} title="5-YEAR PLAN">
-                <div className="bg-[#1a1a1a] border border-[#444] px-2 py-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[#cfaa48] text-[10px] font-bold uppercase">
-                      {snap.quota.type}
-                    </span>
-                    <span className="text-[#888] text-[9px] font-mono">
-                      {yearsLeft} {yearsLeft === 1 ? 'yr' : 'yrs'} left
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-white text-xs font-mono">
-                      {Math.round(snap.quota.current)}/{snap.quota.target}
-                    </span>
-                    <span className="text-[#cfaa48] text-xs font-mono font-bold">{quotaPct}%</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-[#333]">
-                    <div
-                      className="h-full bg-[#8b0000] transition-all"
-                      style={{ width: `${quotaPct}%` }}
-                    />
-                  </div>
-                </div>
-              </DrawerSection>
-
-              {/* Collective Focus */}
-              <DrawerSection icon={Target} title="COLLECTIVE FOCUS">
-                <div className="grid grid-cols-2 gap-1.5">
-                  {(
-                    [
-                      { id: 'balanced', label: 'BALANCED' },
-                      { id: 'food', label: 'FOOD' },
-                      { id: 'construction', label: 'BUILD' },
-                      { id: 'production', label: 'PRODUCE' },
-                    ] as const
-                  ).map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => {
-                        setCollectiveFocus(opt.id);
-                        workerApi?.setCollectiveFocus(opt.id);
-                      }}
-                      className={cn(
-                        'py-1.5 px-2 text-[10px] font-bold uppercase tracking-wider border transition-colors cursor-pointer',
-                        collectiveFocus === opt.id
-                          ? 'border-[#8b0000] bg-[#8b0000]/30 text-[#cfaa48]'
-                          : 'border-[#444] bg-[#1a1a1a] text-[#888] hover:border-[#8b0000]'
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[#666] text-[8px] mt-1.5">
-                  Shifts worker auto-assignment priorities
-                </p>
-              </DrawerSection>
-
-              {/* Alerts */}
-              <DrawerSection icon={AlertTriangle} title="ALERTS">
-                <div className="space-y-2">
-                  {snap.food < 50 && (
-                    <AlertItem severity="critical" message="Food reserves critically low" />
-                  )}
-                  {snap.powerUsed > snap.power && (
-                    <AlertItem severity="critical" message="Power demand exceeds supply" />
-                  )}
-                  {snap.food < 200 && snap.food >= 50 && (
-                    <AlertItem severity="warning" message="Food reserves declining" />
-                  )}
-                  {snap.blackMarks > 0 && (
-                    <AlertItem
-                      severity={snap.blackMarks >= 5 ? 'critical' : 'warning'}
-                      message={`${snap.blackMarks} black mark${snap.blackMarks !== 1 ? 's' : ''} in personnel file`}
-                    />
-                  )}
-                  {snap.quota.target > 0 && quotaPct < 30 && yearsLeft <= 1 && (
-                    <AlertItem
-                      severity="warning"
-                      message="Quota deadline approaching — behind schedule"
-                    />
-                  )}
-                  {snap.food >= 200 && snap.powerUsed <= snap.power && snap.blackMarks === 0 && (
-                    <AlertItem severity="info" message="No current alerts" />
-                  )}
-                </div>
-              </DrawerSection>
-
-              {/* Personnel File */}
-              <DrawerSection icon={Users} title="PERSONNEL FILE">
-                <div className="space-y-1.5">
-                  <PersonnelRow
-                    label="Black Marks"
-                    value={snap.blackMarks}
-                    color="text-[#ff4444]"
-                  />
-                  <PersonnelRow
-                    label="Commendations"
-                    value={snap.commendations}
-                    color="text-[#cfaa48]"
-                  />
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#444]">
-                    <span className="text-[#888] text-[10px]">STATUS</span>
-                    <span className={cn('text-xs font-bold', threatInfo.color)}>
-                      {threatInfo.label}
-                    </span>
-                  </div>
-                </div>
-              </DrawerSection>
-
-              {/* Leader */}
-              {snap.leaderName && (
-                <div className="bg-[#1a1a1a] border border-[#444] px-3 py-2">
-                  <div className="text-[#888] text-[8px] uppercase tracking-wider mb-1">
-                    General Secretary
-                  </div>
-                  <div className="text-[#ff6b6b] text-xs font-bold">{snap.leaderName}</div>
-                  {snap.leaderPersonality && (
-                    <div className="text-[#888] text-[9px] italic mt-0.5">
-                      {snap.leaderPersonality}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="px-4 py-2 border-t border-[#444] bg-[#1a1a1a]">
-              <div className="text-[#666] text-[9px] text-center uppercase tracking-widest">
-                Ministry of Information
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+function PersonnelFileSection({
+  snap,
+  threatInfo,
+}: {
+  snap: ReturnType<typeof useGameSnapshot>;
+  threatInfo: { label: string; color: string };
+}) {
+  return (
+    <DrawerSection icon={Users} title="PERSONNEL FILE">
+      <div className="space-y-1.5">
+        <PersonnelRow label="Black Marks" value={snap.blackMarks} color="text-[#ff4444]" />
+        <PersonnelRow label="Commendations" value={snap.commendations} color="text-[#cfaa48]" />
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#444]">
+          <span className="text-[#888] text-[10px]">STATUS</span>
+          <span className={cn('text-xs font-bold', threatInfo.color)}>{threatInfo.label}</span>
+        </div>
+      </div>
+    </DrawerSection>
   );
 }
 

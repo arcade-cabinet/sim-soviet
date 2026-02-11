@@ -7,6 +7,10 @@
  *   GameWorld (render-null) imperatively manages renderer, input, simulation.
  *   gameStore bridges mutable GameState with React via useSyncExternalStore.
  */
+
+import { GameModals } from '@app/components/GameModals';
+import type { GameOverInfo, Messages } from '@app/hooks/useSimCallbacks';
+import { useSimCallbacks } from '@app/hooks/useSimCallbacks';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AudioAPI, SaveSystemAPI, WorkerAPI } from '@/components/GameWorld';
@@ -15,44 +19,24 @@ import { AssignmentLetter } from '@/components/screens/AssignmentLetter';
 import { LandingPage } from '@/components/screens/LandingPage';
 import { type NewGameConfig, NewGameFlow } from '@/components/screens/NewGameFlow';
 import { Advisor } from '@/components/ui/Advisor';
-import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
-import { AnnualReportModal } from '@/components/ui/AnnualReportModal';
+import type { AnnualReportData } from '@/components/ui/AnnualReportModal';
 import { BottomStrip } from '@/components/ui/BottomStrip';
 import { BuildingInspector } from '@/components/ui/BuildingInspector';
 import { ConcreteFrame } from '@/components/ui/ConcreteFrame';
 import { DrawerPanel } from '@/components/ui/DrawerPanel';
-import { EraTransitionModal } from '@/components/ui/EraTransitionModal';
 import type { PlanDirective } from '@/components/ui/FiveYearPlanModal';
-import { FiveYearPlanModal } from '@/components/ui/FiveYearPlanModal';
-import { GameOverModal } from '@/components/ui/GameOverModal';
-import { GameTallyScreen } from '@/components/ui/GameTallyScreen';
-import { MinigameModal } from '@/components/ui/MinigameModal';
 import { RadialBuildMenu } from '@/components/ui/RadialBuildMenu';
-import { SettlementUpgradeModal } from '@/components/ui/SettlementUpgradeModal';
 import { SovietHUD } from '@/components/ui/SovietHUD';
 import { SovietToastStack } from '@/components/ui/SovietToastStack';
 import { WorkerInfoPanel } from '@/components/ui/WorkerInfoPanel';
 import { initDatabase } from '@/db/provider';
 import * as dbSchema from '@/db/schema';
-import { getResourceEntity } from '@/ecs/archetypes';
 import type { EraDefinition } from '@/game/era';
 import { ERA_DEFINITIONS } from '@/game/era';
 import type { TallyData } from '@/game/GameTally';
 import type { ActiveMinigame } from '@/game/minigames/MinigameTypes';
 import type { SettlementEvent } from '@/game/SettlementSystem';
-import type { SimCallbacks } from '@/game/SimulationEngine';
 import { useGameSnapshot } from '@/stores/gameStore';
-import { addSovietToast } from '@/stores/toastStore';
-
-interface Messages {
-  advisor: string | null;
-  pravda: string | null;
-}
-
-interface GameOverInfo {
-  victory: boolean;
-  reason: string;
-}
 
 export function App() {
   const snap = useGameSnapshot();
@@ -77,8 +61,18 @@ export function App() {
   const [audioApi, setAudioApi] = useState<AudioAPI | null>(null);
   const [workerApi, setWorkerApi] = useState<WorkerAPI | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
-  const resolveMinigameRef = useRef<((choiceId: string) => void) | null>(null);
+
+  // Callbacks for SimulationEngine → React state
+  const { simCallbacks, submitReportRef, resolveMinigameRef } = useSimCallbacks({
+    setMessages,
+    setGameOver,
+    setSettlementEvent,
+    setPlanDirective,
+    setAnnualReport,
+    setEraTransition,
+    setActiveMinigame,
+    setGameTally,
+  });
 
   // Check for existing saves on mount
   useEffect(() => {
@@ -95,48 +89,6 @@ export function App() {
         setHasSavedGame(hasLocal);
       });
   }, []);
-
-  // Callbacks for SimulationEngine → React state
-  const simCallbacks: SimCallbacks = {
-    onToast: (msg, severity) => addSovietToast(severity ?? 'warning', msg),
-    onAdvisor: (msg) => setMessages((p) => ({ ...p, advisor: msg })),
-    onPravda: (msg) => setMessages((p) => ({ ...p, pravda: msg })),
-    onStateChange: () => {
-      /* notifyStateChange() called in GameWorld */
-    },
-    onGameOver: (victory, reason) => setGameOver({ victory, reason }),
-    onSettlementChange: (event) => setSettlementEvent(event),
-    onNewPlan: (plan) => {
-      const res = getResourceEntity();
-      setPlanDirective({
-        ...plan,
-        currentFood: res?.resources.food ?? 0,
-        currentVodka: res?.resources.vodka ?? 0,
-        currentPop: res?.resources.population ?? 0,
-        currentPower: res?.resources.power ?? 0,
-        currentMoney: res?.resources.money ?? 0,
-        mandates: plan.mandates,
-      });
-    },
-    onAnnualReport: (data, submitFn) => {
-      setAnnualReport(data);
-      submitReportRef.current = submitFn;
-    },
-    onEraChanged: (era) => setEraTransition(era),
-    onMinigame: (active, resolveChoice) => {
-      setActiveMinigame(active);
-      resolveMinigameRef.current = resolveChoice;
-    },
-    onTutorialMilestone: (_milestone) => {
-      // Tutorial milestones already fire onAdvisor with Krupnik dialogue
-      // in SimulationEngine.tickTutorial(). This callback is available
-      // for future use (e.g. pausing simulation on milestone).
-    },
-    onAchievement: (name, description) => {
-      addSovietToast('warning', `ACHIEVEMENT: ${name} -- ${description}`);
-    },
-    onGameTally: (tally) => setGameTally(tally),
-  };
 
   const handleRestart = useCallback(() => {
     // Full page reload for clean state (ECS world, GameState, audio)
@@ -205,14 +157,25 @@ export function App() {
         />
       )}
 
-      {/* Game over modal */}
-      {gameOver && (
-        <GameOverModal
-          victory={gameOver.victory}
-          reason={gameOver.reason}
-          onRestart={handleRestart}
-        />
-      )}
+      {/* All game modals — GameOver, Settlement, AnnualReport, Plan, Era, Minigame, Tally */}
+      <GameModals
+        gameOver={gameOver}
+        onRestart={handleRestart}
+        settlementEvent={settlementEvent}
+        setSettlementEvent={setSettlementEvent}
+        annualReport={annualReport}
+        setAnnualReport={setAnnualReport}
+        submitReportRef={submitReportRef}
+        planDirective={planDirective}
+        setPlanDirective={setPlanDirective}
+        eraTransition={eraTransition}
+        setEraTransition={setEraTransition}
+        activeMinigame={activeMinigame}
+        setActiveMinigame={setActiveMinigame}
+        resolveMinigameRef={resolveMinigameRef}
+        gameTally={gameTally}
+        setGameTally={setGameTally}
+      />
 
       {/* Top HUD bar — resources, pause, speed, hamburger */}
       <SovietHUD onMenuToggle={() => setDrawerOpen(true)} />
@@ -278,64 +241,6 @@ export function App() {
         audioApi={audioApi}
         workerApi={workerApi}
       />
-
-      {/* Settlement upgrade decree modal */}
-      <AnimatePresence>
-        {settlementEvent && settlementEvent.type === 'upgrade' && (
-          <SettlementUpgradeModal
-            fromTier={settlementEvent.fromTier}
-            toTier={settlementEvent.toTier}
-            onClose={() => setSettlementEvent(null)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Annual Report (pripiski) modal — shown at quota deadline years */}
-      {annualReport && (
-        <AnnualReportModal
-          data={annualReport}
-          onSubmit={(submission) => {
-            submitReportRef.current?.(submission);
-            submitReportRef.current = null;
-            setAnnualReport(null);
-          }}
-        />
-      )}
-
-      {/* Five-Year Plan directive modal */}
-      {planDirective && (
-        <FiveYearPlanModal directive={planDirective} onAccept={() => setPlanDirective(null)} />
-      )}
-
-      {/* Era transition briefing modal */}
-      <AnimatePresence>
-        {eraTransition && (
-          <EraTransitionModal era={eraTransition} onClose={() => setEraTransition(null)} />
-        )}
-      </AnimatePresence>
-
-      {/* Minigame choice modal */}
-      <AnimatePresence>
-        {activeMinigame && !activeMinigame.resolved && (
-          <MinigameModal
-            minigame={activeMinigame}
-            onChoice={(choiceId) => {
-              resolveMinigameRef.current?.(choiceId);
-              resolveMinigameRef.current = null;
-              setActiveMinigame(null);
-            }}
-            onClose={() => {
-              setActiveMinigame(null);
-              resolveMinigameRef.current = null;
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* End-game tally summary screen */}
-      <AnimatePresence>
-        {gameTally && <GameTallyScreen tally={gameTally} onClose={() => setGameTally(null)} />}
-      </AnimatePresence>
     </div>
   );
 }

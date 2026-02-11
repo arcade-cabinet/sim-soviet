@@ -301,14 +301,9 @@ describe('Dvor System', () => {
 
     it('members have both genders', () => {
       createStartingSettlement('comrade');
-      let males = 0;
-      let females = 0;
-      for (const entity of dvory.entities) {
-        for (const member of entity.dvor.members) {
-          if (member.gender === 'male') males++;
-          if (member.gender === 'female') females++;
-        }
-      }
+      const allMembers = dvory.entities.flatMap((e) => e.dvor.members);
+      const males = allMembers.filter((m) => m.gender === 'male').length;
+      const females = allMembers.filter((m) => m.gender === 'female').length;
       expect(males).toBeGreaterThan(0);
       expect(females).toBeGreaterThan(0);
     });
@@ -382,19 +377,14 @@ describe('Dvor System', () => {
 
     it('members have ages spread across categories', () => {
       createStartingSettlement('comrade');
-      const ageCategories = { infant: 0, child: 0, adolescent: 0, worker: 0, elder: 0 };
-      for (const entity of dvory.entities) {
-        for (const member of entity.dvor.members) {
-          if (member.role === 'head' || member.role === 'spouse' || member.role === 'worker') {
-            ageCategories.worker++;
-          } else if (member.role in ageCategories) {
-            ageCategories[member.role as keyof typeof ageCategories]++;
-          }
-        }
-      }
+      const allMembers = dvory.entities.flatMap((e) => e.dvor.members);
+      const workerRoles = new Set(['head', 'spouse', 'worker']);
+      const workers = allMembers.filter((m) => workerRoles.has(m.role)).length;
+      const children = allMembers.filter((m) => m.role === 'child').length;
+      const adolescents = allMembers.filter((m) => m.role === 'adolescent').length;
       // Should have at least some members in multiple age categories
-      expect(ageCategories.worker).toBeGreaterThan(0);
-      expect(ageCategories.child + ageCategories.adolescent).toBeGreaterThan(0);
+      expect(workers).toBeGreaterThan(0);
+      expect(children + adolescents).toBeGreaterThan(0);
     });
   });
 

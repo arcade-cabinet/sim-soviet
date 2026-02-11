@@ -48,6 +48,25 @@ import { ChronologySystem } from './ChronologySystem';
 import type { CompulsoryDeliverySaveData } from './CompulsoryDeliveries';
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
 import { type EraId as EconomyEraId, type EconomySaveData, EconomySystem } from './economy';
+// ── Extracted helpers ──
+import {
+  tickAchievements as tickAchievementsHelper,
+  tickTutorial as tickTutorialHelper,
+} from './engine/achievementTick';
+import {
+  type AnnualReportEngineState,
+  checkQuota as checkQuotaHelper,
+} from './engine/annualReportTick';
+import {
+  checkBuildingTapMinigame as checkBuildingTapMinigameHelper,
+  checkEventMinigame as checkEventMinigameHelper,
+  resolveMinigameChoice as resolveMinigameChoiceHelper,
+  tickMinigames as tickMinigamesHelper,
+} from './engine/minigameTick';
+import {
+  restoreSubsystems as restoreSubsystemsHelper,
+  serializeSubsystems as serializeSubsystemsHelper,
+} from './engine/serializeEngine';
 import type { EraDefinition, EraSystemSaveData } from './era';
 import { ERA_DEFINITIONS, EraSystem } from './era';
 import type { EventSystemSaveData, GameEvent } from './events';
@@ -55,11 +74,7 @@ import { EventSystem } from './events';
 import type { GameGrid } from './GameGrid';
 import { createGameTally, type TallyData } from './GameTally';
 import { MinigameRouter } from './minigames/MinigameRouter';
-import type {
-  ActiveMinigame,
-  MinigameOutcome,
-  MinigameRouterSaveData,
-} from './minigames/MinigameTypes';
+import type { ActiveMinigame, MinigameRouterSaveData } from './minigames/MinigameTypes';
 import type { PersonnelFileSaveData } from './PersonnelFile';
 import { PersonnelFile } from './PersonnelFile';
 import type { MandateWithFulfillment, PlanMandateState } from './PlanMandates';
@@ -152,9 +167,6 @@ export interface SubsystemSaveData {
     ended: boolean;
   };
 }
-
-/** Consecutive quota failures that trigger game over. */
-const MAX_QUOTA_FAILURES = 3;
 
 /** Maps game EraSystem IDs → EconomySystem EraIds. */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -390,39 +402,7 @@ export class SimulationEngine {
    * Serialize all subsystem state into a single blob for save persistence.
    */
   public serializeSubsystems(): SubsystemSaveData {
-    return {
-      era: this.eraSystem.serialize(),
-      personnel: this.personnelFile.serialize(),
-      settlement: this.settlement.serialize(),
-      scoring: this.scoring.serialize(),
-      deliveries: this.deliveries.serialize(),
-      quota: {
-        type: this.quota.type,
-        target: this.quota.target,
-        current: this.quota.current,
-        deadlineYear: this.quota.deadlineYear,
-      },
-      consecutiveQuotaFailures: this.consecutiveQuotaFailures,
-      // Extended subsystems
-      chronology: this.chronology.serialize(),
-      economy: this.economySystem.serialize(),
-      events: this.eventSystem.serialize(),
-      pravda: this.pravdaSystem.serialize(),
-      politburo: this.politburo.serialize(),
-      politicalEntities: this.politicalEntities.serialize(),
-      minigames: this.minigameRouter.serialize(),
-      tutorial: this.tutorial.serialize(),
-      achievements: this.achievements.serialize(),
-      mandates: this.mandateState ?? undefined,
-      engineState: {
-        lastSeason: this.lastSeason,
-        lastWeather: this.lastWeather,
-        lastDayPhase: this.lastDayPhase,
-        lastThreatLevel: this.lastThreatLevel,
-        pendingReport: this.pendingReport,
-        ended: this.ended,
-      },
-    };
+    return serializeSubsystemsHelper(this.getSerializableEngine());
   }
 
   /**
@@ -430,103 +410,31 @@ export class SimulationEngine {
    * Replaces internal system instances with deserialized versions.
    */
   public restoreSubsystems(data: SubsystemSaveData): void {
-    // Restore Era System
-    this.eraSystem = EraSystem.deserialize(data.era);
-
-    // Restore Personnel File
-    this.personnelFile = PersonnelFile.deserialize(data.personnel);
-
-    // Restore Settlement System
-    this.settlement = SettlementSystem.deserialize(data.settlement);
-
-    // Restore Scoring System
-    this.scoring = ScoringSystem.deserialize(data.scoring);
-
-    // Restore Compulsory Deliveries
-    this.deliveries = CompulsoryDeliveries.deserialize(data.deliveries);
-    if (this.rng) this.deliveries.setRng(this.rng);
-
-    // Restore quota state
-    this.quota.type = data.quota.type as 'food' | 'vodka';
-    this.quota.target = data.quota.target;
-    this.quota.current = data.quota.current;
-    this.quota.deadlineYear = data.quota.deadlineYear;
-
-    // Restore engine-level state
-    this.consecutiveQuotaFailures = data.consecutiveQuotaFailures;
-
-    // ── Extended subsystems (optional — old saves won't have these) ──
-
-    if (data.chronology) {
-      this.chronology = ChronologySystem.deserialize(
-        data.chronology,
-        this.rng ??
-          ({
-            random: () => Math.random(),
-            int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
-            pick: <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!,
-          } as GameRng)
-      );
-    }
-
-    if (data.economy) {
-      this.economySystem = EconomySystem.deserialize(data.economy);
-      if (this.rng) this.economySystem.setRng(this.rng);
-    }
-
-    if (data.events) {
-      this.eventSystem = EventSystem.deserialize(data.events, this.eventHandler, this.rng);
-    }
-
-    if (data.pravda) {
-      this.pravdaSystem = PravdaSystem.deserialize(data.pravda, this.rng);
-    }
-
-    if (data.politburo) {
-      this.politburo = PolitburoSystem.deserialize(
-        data.politburo,
-        this.politburoEventHandler,
-        this.rng
-      );
-    }
-
-    if (data.politicalEntities) {
-      this.politicalEntities = PoliticalEntitySystem.deserialize(data.politicalEntities, this.rng);
-    }
-
-    if (data.minigames) {
-      this.minigameRouter = MinigameRouter.deserialize(data.minigames, this.rng);
-    }
-
-    if (data.tutorial) {
-      this.tutorial = TutorialSystem.deserialize(data.tutorial);
-    }
-
-    if (data.achievements) {
-      this.achievements = AchievementTracker.deserialize(data.achievements);
-    }
-
-    if (data.mandates) {
-      this.mandateState = data.mandates;
-    }
-
-    if (data.engineState) {
-      this.lastSeason = data.engineState.lastSeason;
-      this.lastWeather = data.engineState.lastWeather;
-      this.lastDayPhase = data.engineState.lastDayPhase;
-      this.lastThreatLevel = data.engineState.lastThreatLevel;
-      this.pendingReport = data.engineState.pendingReport;
-      this.ended = data.engineState.ended;
-    }
-
-    // Update economy system to match restored era (fallback for saves without economy data)
-    if (!data.economy) {
-      const economyEra = GAME_ERA_TO_ECONOMY_ERA[this.eraSystem.getCurrentEraId()] ?? 'revolution';
-      this.economySystem.setEra(economyEra);
-    }
-
-    // Sync restored state to ECS gameMeta
-    this.syncSystemsToMeta();
+    const se = this.getSerializableEngine();
+    restoreSubsystemsHelper(se, data);
+    // Write back any replaced system instances
+    this.chronology = se.chronology;
+    this.eraSystem = se.eraSystem;
+    this.economySystem = se.economySystem;
+    this.eventSystem = se.eventSystem;
+    this.pravdaSystem = se.pravdaSystem;
+    this.politburo = se.politburo;
+    this.personnelFile = se.personnelFile;
+    this.deliveries = se.deliveries;
+    this.settlement = se.settlement;
+    this.politicalEntities = se.politicalEntities;
+    this.minigameRouter = se.minigameRouter;
+    this.scoring = se.scoring;
+    this.tutorial = se.tutorial;
+    this.achievements = se.achievements;
+    this.mandateState = se.mandateState;
+    this.consecutiveQuotaFailures = se.consecutiveQuotaFailures;
+    this.lastSeason = se.lastSeason;
+    this.lastWeather = se.lastWeather;
+    this.lastDayPhase = se.lastDayPhase;
+    this.lastThreatLevel = se.lastThreatLevel;
+    this.pendingReport = se.pendingReport;
+    this.ended = se.ended;
   }
 
   /**
@@ -534,9 +442,7 @@ export class SimulationEngine {
    * Applies the outcome (resources, marks, commendations) and emits UI notifications.
    */
   public resolveMinigameChoice(choiceId: string): void {
-    const outcome = this.minigameRouter.resolveChoice(choiceId);
-    this.applyMinigameOutcome(outcome);
-    this.minigameRouter.clearResolved();
+    resolveMinigameChoiceHelper(this.getMinigameContext(), choiceId);
   }
 
   /**
@@ -544,17 +450,14 @@ export class SimulationEngine {
    * Checks if the building defId triggers a minigame.
    */
   public checkBuildingTapMinigame(buildingDefId: string): void {
-    const totalTicks = this.chronology.getDate().totalTicks;
-    const population = getResourceEntity()?.resources.population ?? 0;
-    const def = this.minigameRouter.checkTrigger('building_tap', {
-      buildingDefId,
-      totalTicks,
-      population,
-    });
-    if (def) {
-      const active = this.minigameRouter.startMinigame(def, totalTicks);
-      this.callbacks.onMinigame?.(active, (id) => this.resolveMinigameChoice(id));
-    }
+    checkBuildingTapMinigameHelper(this.getMinigameContext(), buildingDefId);
+  }
+
+  /**
+   * Called after EventSystem fires an event — check if the event triggers a minigame.
+   */
+  public checkEventMinigame(eventId: string): void {
+    checkEventMinigameHelper(this.getMinigameContext(), eventId);
   }
 
   /**
@@ -573,7 +476,9 @@ export class SimulationEngine {
     // Check era transition + quota on year boundary
     if (tickResult.newYear) {
       this.checkEraTransition();
-      this.checkQuota();
+      const reportCtx = this.getAnnualReportContext();
+      checkQuotaHelper(reportCtx);
+      this.syncAnnualReportState(reportCtx.engineState);
     }
 
     // Advance gradual modifier transition blend (if in progress)
@@ -661,7 +566,7 @@ export class SimulationEngine {
     this.tickPoliticalEntities();
 
     // Minigame Router — check periodic triggers and auto-resolve timeouts
-    this.tickMinigames();
+    tickMinigamesHelper(this.getMinigameContext());
 
     // 8-10. Events, Politburo, and Pravda
     this.eventSystem.tick(this.chronology.getDate().totalTicks, eraMods.eventFrequencyMult);
@@ -701,10 +606,10 @@ export class SimulationEngine {
     }
 
     // Tutorial System — check milestones for progressive disclosure (Era 1)
-    this.tickTutorial();
+    tickTutorialHelper(this.getAchievementContext());
 
     // Achievement Tracker — update stats and check unlock conditions
-    this.tickAchievements();
+    tickAchievementsHelper(this.getAchievementContext());
 
     // Sync non-resource state to gameMeta for React snapshots
     this.syncSystemsToMeta();
@@ -722,6 +627,86 @@ export class SimulationEngine {
     // Notify React
     this.callbacks.onStateChange();
   }
+
+  // ── Context builders for extracted helpers ──
+
+  private getMinigameContext() {
+    return {
+      chronology: this.chronology,
+      minigameRouter: this.minigameRouter,
+      personnelFile: this.personnelFile,
+      callbacks: this.callbacks,
+    };
+  }
+
+  private getAchievementContext() {
+    return {
+      chronology: this.chronology,
+      achievements: this.achievements,
+      tutorial: this.tutorial,
+      callbacks: this.callbacks,
+    };
+  }
+
+  private getAnnualReportContext() {
+    return {
+      chronology: this.chronology,
+      personnelFile: this.personnelFile,
+      scoring: this.scoring,
+      callbacks: this.callbacks,
+      rng: this.rng,
+      engineState: {
+        quota: this.quota,
+        consecutiveQuotaFailures: this.consecutiveQuotaFailures,
+        pendingReport: this.pendingReport,
+        mandateState: this.mandateState,
+      },
+      endGame: (victory: boolean, reason: string) => this.endGame(victory, reason),
+    };
+  }
+
+  private getSerializableEngine() {
+    return {
+      chronology: this.chronology,
+      eraSystem: this.eraSystem,
+      economySystem: this.economySystem,
+      eventSystem: this.eventSystem,
+      pravdaSystem: this.pravdaSystem,
+      politburo: this.politburo,
+      personnelFile: this.personnelFile,
+      deliveries: this.deliveries,
+      settlement: this.settlement,
+      politicalEntities: this.politicalEntities,
+      minigameRouter: this.minigameRouter,
+      scoring: this.scoring,
+      tutorial: this.tutorial,
+      achievements: this.achievements,
+      mandateState: this.mandateState,
+      quota: this.quota,
+      consecutiveQuotaFailures: this.consecutiveQuotaFailures,
+      lastSeason: this.lastSeason,
+      lastWeather: this.lastWeather,
+      lastDayPhase: this.lastDayPhase,
+      lastThreatLevel: this.lastThreatLevel,
+      pendingReport: this.pendingReport,
+      ended: this.ended,
+      rng: this.rng,
+      eventHandler: this.eventHandler,
+      politburoEventHandler: this.politburoEventHandler,
+      syncSystemsToMeta: () => this.syncSystemsToMeta(),
+    };
+  }
+
+  /**
+   * Syncs mutated annual report state back from the helper context object.
+   */
+  private syncAnnualReportState(state: AnnualReportEngineState): void {
+    this.consecutiveQuotaFailures = state.consecutiveQuotaFailures;
+    this.pendingReport = state.pendingReport;
+    this.mandateState = state.mandateState;
+  }
+
+  // ── Private methods that remain in the orchestrator ──
 
   /**
    * Syncs the chronology tick result to gameMeta date fields.
@@ -1112,303 +1097,6 @@ export class SimulationEngine {
             `The Politburo acknowledges your adequate performance. Do not let it go to your head.`
         );
       }
-    }
-  }
-
-  private checkQuota(): void {
-    const meta = getMetaEntity();
-    const res = getResourceEntity();
-    const currentYear = meta?.gameMeta.date.year ?? 1922;
-    if (currentYear < this.quota.deadlineYear) return;
-    if (this.pendingReport) return;
-
-    // If onAnnualReport callback is registered, defer evaluation to the player
-    if (this.callbacks.onAnnualReport) {
-      this.pendingReport = true;
-
-      const data: AnnualReportData = {
-        year: currentYear,
-        quotaType: this.quota.type as 'food' | 'vodka',
-        quotaTarget: this.quota.target,
-        quotaCurrent: this.quota.current,
-        actualFood: res?.resources.food ?? 0,
-        actualVodka: res?.resources.vodka ?? 0,
-        actualPop: res?.resources.population ?? 0,
-      };
-
-      this.callbacks.onAnnualReport(data, (submission: ReportSubmission) => {
-        this.processReport(submission);
-        this.pendingReport = false;
-      });
-    } else {
-      // No report UI — evaluate directly (backward compatible)
-      if (this.quota.current >= this.quota.target) {
-        this.handleQuotaMet();
-      } else {
-        this.handleQuotaMissed();
-      }
-    }
-  }
-
-  /**
-   * Processes an annual report submission (honest or falsified).
-   * Honest: standard quota evaluation.
-   * Falsified: risk-based investigation — if caught, extra black marks + honest eval;
-   * if not caught, reported values determine quota outcome.
-   */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: report processing has many branching outcomes (honest/falsified/caught/uncaught)
-  private processReport(submission: ReportSubmission): void {
-    const quotaActual = this.quota.current;
-    const res = getResourceEntity();
-    const isHonest =
-      submission.reportedQuota === quotaActual &&
-      submission.reportedSecondary ===
-        (this.quota.type === 'food' ? (res?.resources.vodka ?? 0) : (res?.resources.food ?? 0)) &&
-      submission.reportedPop === (res?.resources.population ?? 0);
-
-    if (isHonest) {
-      if (this.quota.current >= this.quota.target) {
-        this.handleQuotaMet();
-      } else {
-        this.handleQuotaMissed();
-      }
-      return;
-    }
-
-    // Falsified report — calculate aggregate risk
-    const quotaRisk = this.falsificationRisk(quotaActual, submission.reportedQuota);
-    const secActual =
-      this.quota.type === 'food' ? (res?.resources.vodka ?? 0) : (res?.resources.food ?? 0);
-    const secRisk = this.falsificationRisk(secActual, submission.reportedSecondary);
-    const popRisk = this.falsificationRisk(res?.resources.population ?? 0, submission.reportedPop);
-    const maxRisk = Math.max(quotaRisk, secRisk, popRisk);
-
-    // Investigation probability scales with risk (capped at 80%)
-    const investigationProb = Math.min(0.8, maxRisk / 100);
-    const roll = this.rng?.random() ?? Math.random();
-
-    if (roll < investigationProb) {
-      // CAUGHT — investigation detected falsification
-      const totalTicks = this.chronology.getDate().totalTicks;
-      this.personnelFile.addMark('report_falsified', totalTicks);
-      this.callbacks.onToast('FALSIFICATION DETECTED — Investigation ordered', 'evacuation');
-      this.callbacks.onAdvisor(
-        'Comrade, the State Committee has detected discrepancies in your report. ' +
-          'A black mark has been added to your personnel file.'
-      );
-
-      // Evaluate with ACTUAL values
-      if (this.quota.current >= this.quota.target) {
-        this.handleQuotaMet();
-      } else {
-        this.handleQuotaMissed();
-      }
-    } else {
-      // Got away with it — evaluate with REPORTED quota value
-      this.callbacks.onToast('Report accepted by Gosplan', 'warning');
-
-      if (submission.reportedQuota >= this.quota.target) {
-        this.handleQuotaMet();
-      } else {
-        this.handleQuotaMissed();
-      }
-    }
-  }
-
-  private falsificationRisk(actual: number, reported: number): number {
-    if (actual === 0 && reported === 0) return 0;
-    if (actual === 0) return 100;
-    return Math.round((Math.abs(reported - actual) / actual) * 100);
-  }
-
-  private handleQuotaMet(): void {
-    const totalTicks = this.chronology.getDate().totalTicks;
-    this.consecutiveQuotaFailures = 0;
-
-    // Score: quota met (+50)
-    this.scoring.onQuotaMet();
-
-    if (this.quota.current > this.quota.target * 1.1) {
-      this.personnelFile.addCommendation('quota_exceeded', totalTicks);
-      this.callbacks.onToast('+1 COMMENDATION: Quota exceeded', 'warning');
-      // Score: quota exceeded (+25)
-      this.scoring.onQuotaExceeded();
-    }
-
-    this.callbacks.onAdvisor('Quota met. Accept this medal made of tin. Now, produce VODKA.');
-    this.quota.type = 'vodka';
-    this.quota.target = 500;
-    const metaYear = getMetaEntity()?.gameMeta.date.year ?? 1922;
-    this.quota.deadlineYear = metaYear + 5;
-    this.quota.current = 0;
-
-    // Show the new plan directive modal
-    this.callbacks.onNewPlan?.({
-      quotaType: this.quota.type,
-      quotaTarget: this.quota.target,
-      startYear: metaYear,
-      endYear: this.quota.deadlineYear,
-      mandates: this.mandateState?.mandates,
-    });
-  }
-
-  private handleQuotaMissed(): void {
-    const totalTicks = this.chronology.getDate().totalTicks;
-    this.consecutiveQuotaFailures++;
-    const missPercent = 1 - this.quota.current / this.quota.target;
-
-    // Black marks based on how badly the quota was missed
-    if (missPercent > 0.6) {
-      this.personnelFile.addMark('quota_missed_catastrophic', totalTicks);
-    } else if (missPercent > 0.3) {
-      this.personnelFile.addMark('quota_missed_major', totalTicks);
-    } else if (missPercent > 0.1) {
-      this.personnelFile.addMark('quota_missed_minor', totalTicks);
-    }
-
-    if (this.consecutiveQuotaFailures >= MAX_QUOTA_FAILURES) {
-      this.endGame(
-        false,
-        `You failed ${MAX_QUOTA_FAILURES} consecutive 5-Year Plans. The Politburo has dissolved your position.`
-      );
-    } else {
-      this.callbacks.onAdvisor(
-        `You failed the 5-Year Plan (${this.consecutiveQuotaFailures}/${MAX_QUOTA_FAILURES} failures). The KGB is watching.`
-      );
-      this.quota.deadlineYear += 5;
-    }
-  }
-
-  /**
-   * Tick minigame router — check periodic triggers and auto-resolve timeouts.
-   */
-  private tickMinigames(): void {
-    // Only run minigames when the UI callback is registered — without a
-    // responder, minigames auto-resolve with penalties and silently add
-    // black marks to the personnel file.
-    if (!this.callbacks.onMinigame) return;
-
-    const totalTicks = this.chronology.getDate().totalTicks;
-    const population = getResourceEntity()?.resources.population ?? 0;
-
-    // Check periodic triggers (only when no active minigame)
-    if (!this.minigameRouter.isActive()) {
-      const def = this.minigameRouter.checkTrigger('periodic', { totalTicks, population });
-      if (def) {
-        const active = this.minigameRouter.startMinigame(def, totalTicks);
-        this.callbacks.onMinigame(active, (id) => this.resolveMinigameChoice(id));
-      }
-    }
-
-    // Auto-resolve if time limit expired
-    const autoOutcome = this.minigameRouter.tick(totalTicks);
-    if (autoOutcome) {
-      this.applyMinigameOutcome(autoOutcome);
-      this.minigameRouter.clearResolved();
-    }
-  }
-
-  /**
-   * Called after EventSystem fires an event — check if the event triggers a minigame.
-   */
-  public checkEventMinigame(eventId: string): void {
-    const totalTicks = this.chronology.getDate().totalTicks;
-    const population = getResourceEntity()?.resources.population ?? 0;
-    const def = this.minigameRouter.checkTrigger('event', { eventId, totalTicks, population });
-    if (def) {
-      const active = this.minigameRouter.startMinigame(def, totalTicks);
-      this.callbacks.onMinigame?.(active, (id) => this.resolveMinigameChoice(id));
-    }
-  }
-
-  /**
-   * Applies a MinigameOutcome's effects: resource deltas, marks, commendations, toast.
-   */
-  private applyMinigameOutcome(outcome: MinigameOutcome): void {
-    const totalTicks = this.chronology.getDate().totalTicks;
-
-    this.applyMinigameResources(outcome);
-    this.applyMinigameMarks(outcome, totalTicks);
-
-    // Emit UI notification
-    if (outcome.announcement) {
-      this.callbacks.onToast(outcome.announcement, outcome.severity);
-    }
-  }
-
-  private applyMinigameResources(outcome: MinigameOutcome): void {
-    const store = getResourceEntity();
-    const res = outcome.resources;
-    if (!store || !res) return;
-    const r = store.resources;
-    if (res.money) r.money = Math.max(0, r.money + res.money);
-    if (res.food) r.food = Math.max(0, r.food + res.food);
-    if (res.vodka) r.vodka = Math.max(0, r.vodka + res.vodka);
-    if (res.population) r.population = Math.max(0, r.population + res.population);
-  }
-
-  private applyMinigameMarks(outcome: MinigameOutcome, totalTicks: number): void {
-    const marks = outcome.blackMarks ?? 0;
-    for (let i = 0; i < marks; i++) {
-      this.personnelFile.addMark('black_market', totalTicks, outcome.announcement);
-    }
-    const commendations = outcome.commendations ?? 0;
-    for (let i = 0; i < commendations; i++) {
-      this.personnelFile.addCommendation('inspection_passed', totalTicks, outcome.announcement);
-    }
-  }
-
-  /**
-   * Tick the tutorial system — check milestone conditions each cycle.
-   * When a milestone triggers, fire advisor callback with Krupnik dialogue.
-   */
-  private tickTutorial(): void {
-    if (!this.tutorial.isActive()) return;
-
-    const meta = getMetaEntity();
-    const res = getResourceEntity();
-    if (!meta || !res) return;
-
-    const totalTicks = this.chronology.getDate().totalTicks;
-    const milestone = this.tutorial.tick(
-      totalTicks,
-      meta.gameMeta,
-      res.resources,
-      buildingsLogic.entities.length
-    );
-
-    if (milestone) {
-      // Fire advisor callback with Krupnik's dialogue
-      this.callbacks.onAdvisor(milestone.dialogue);
-      this.callbacks.onTutorialMilestone?.(milestone);
-
-      // If milestone pauses simulation, the UI layer handles that via the callback
-    }
-  }
-
-  /**
-   * Tick the achievement tracker — update running stats and check conditions.
-   * Achievement checks run every 10 ticks (not every tick) to limit overhead.
-   */
-  private tickAchievements(): void {
-    const totalTicks = this.chronology.getDate().totalTicks;
-    if (totalTicks % 10 !== 0) return;
-
-    const res = getResourceEntity();
-    const date = this.chronology.getDate();
-    const population = res?.resources.population ?? 0;
-
-    const newUnlocks = this.achievements.tick(
-      res?.resources ?? null,
-      buildingsLogic.entities.length,
-      population,
-      date.year,
-      10 / 30 // ~0.33 seconds per 10 ticks at 30 ticks/second
-    );
-
-    for (const ach of newUnlocks) {
-      this.callbacks.onToast(`ACHIEVEMENT: ${ach.name}`, 'warning');
-      this.callbacks.onAchievement?.(ach.name, ach.description);
     }
   }
 
