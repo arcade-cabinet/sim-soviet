@@ -81,12 +81,11 @@ export function evaluateWorkerPriority(
   }
 
   // Level 2: State demand — buildings under construction
+  // 'construction' or 'balanced' focus routes idle workers to construction.
+  // Auto-assigned workers already at production buildings won't be pulled away
+  // (runGovernor returns null for auto-assigned workers unless priority is 'survive').
   const hasConstruction = underConstruction.entities.length > 0;
   if (hasConstruction && (focus === 'construction' || focus === 'balanced')) {
-    return 'state_demand';
-  }
-  // Construction focus elevates this above trudodni
-  if (hasConstruction && focus === 'construction') {
     return 'state_demand';
   }
 

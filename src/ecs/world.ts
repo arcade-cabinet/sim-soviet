@@ -140,6 +140,8 @@ export interface DvorComponent {
   loyaltyToCollective: number;
   /** Surname for this household */
   surname: string;
+  /** Monotonic counter for generating unique member IDs (avoids collision on death+birth) */
+  nextMemberId?: number;
 }
 
 /**

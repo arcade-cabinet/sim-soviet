@@ -446,10 +446,9 @@ export function GameWorld({
           gridX: e.position.gridX,
           gridY: e.position.gridY,
           citizenClass: e.citizen.class,
-          dotColor: (e as { renderSlot?: { dotColor: string } }).renderSlot?.dotColor,
+          dotColor: e.renderSlot?.dotColor,
           gender: e.citizen.gender,
-          ageCategory: (e as { renderSlot?: { ageCategory: string } }).renderSlot
-            ?.ageCategory as CitizenRenderData['ageCategory'],
+          ageCategory: e.renderSlot?.ageCategory,
         }));
         renderer.setCitizenData(citizenRenderData);
       }
@@ -464,7 +463,7 @@ export function GameWorld({
       world.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- callbacks stored in callbacksRef
-  }, [gameStarted, gameConfig?.mapSize, gameConfig?.seed]);
+  }, [gameStarted, gameConfig?.mapSize, gameConfig?.seed, gameConfig?.difficulty]);
 
   // Keyboard shortcuts
   useEffect(() => {

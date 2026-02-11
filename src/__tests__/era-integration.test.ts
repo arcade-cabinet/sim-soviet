@@ -1,8 +1,48 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import type { GameMeta, Resources } from '@/ecs/world';
 import { ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from '@/game/era/definitions';
 import { EraSystem } from '@/game/era/EraSystem';
 import { getBuildingTierRequirement, tierMeetsRequirement } from '@/game/era/tiers';
 import type { EraId } from '@/game/era/types';
+
+/** Build a partial GameMeta for condition tests (only fields the check accesses). */
+function stubMeta(overrides: Partial<GameMeta> = {}): GameMeta {
+  return {
+    seed: '',
+    date: { year: 1922, month: 1, tick: 0 },
+    quota: { type: 'food', target: 0, current: 0, deadlineYear: 1927 },
+    selectedTool: 'none',
+    gameOver: null,
+    settlementTier: 'selo',
+    blackMarks: 0,
+    commendations: 0,
+    threatLevel: 'safe',
+    currentEra: 'war_communism',
+    ...overrides,
+  };
+}
+
+/** Build a partial Resources for condition tests (only fields the check accesses). */
+function stubResources(overrides: Partial<Resources> = {}): Resources {
+  return {
+    money: 0,
+    food: 0,
+    vodka: 0,
+    power: 0,
+    powerUsed: 0,
+    population: 0,
+    trudodni: 0,
+    blat: 0,
+    timber: 0,
+    steel: 0,
+    cement: 0,
+    prefab: 0,
+    seedFund: 0,
+    emergencyReserve: 0,
+    storageCapacity: 0,
+    ...overrides,
+  };
+}
 
 describe('Era Integration', () => {
   let eraSys: EraSystem;
@@ -192,51 +232,56 @@ describe('Era Integration', () => {
   describe('victory and failure conditions', () => {
     it('war_communism failure: all citizens starve', () => {
       const era = ERA_DEFINITIONS.war_communism;
-      const meta = {
-        date: { year: 1922, month: 1, tick: 0 },
-        settlementTier: 'selo' as const,
-      } as any;
+      const meta = stubMeta({ settlementTier: 'selo' });
 
       expect(era.failureCondition).toBeDefined();
       // Population 0 and food 0 => failure
-      expect(era.failureCondition!.check(meta, { population: 0, food: 0 } as any)).toBe(true);
+      expect(era.failureCondition!.check(meta, stubResources({ population: 0, food: 0 }))).toBe(
+        true
+      );
       // Population > 0 => not failure
-      expect(era.failureCondition!.check(meta, { population: 5, food: 0 } as any)).toBe(false);
+      expect(era.failureCondition!.check(meta, stubResources({ population: 5, food: 0 }))).toBe(
+        false
+      );
     });
 
     it('first_plans victory: posyolok tier with 100+ population', () => {
       const era = ERA_DEFINITIONS.first_plans;
-      const meta = { settlementTier: 'posyolok' } as any;
+      const meta = stubMeta({ settlementTier: 'posyolok' });
 
       expect(era.victoryCondition).toBeDefined();
-      expect(era.victoryCondition!.check(meta, { population: 100 } as any)).toBe(true);
-      expect(era.victoryCondition!.check(meta, { population: 50 } as any)).toBe(false);
+      expect(era.victoryCondition!.check(meta, stubResources({ population: 100 }))).toBe(true);
+      expect(era.victoryCondition!.check(meta, stubResources({ population: 50 }))).toBe(false);
     });
 
     it('great_patriotic victory: survive to 1945 with 25+ population', () => {
       const era = ERA_DEFINITIONS.great_patriotic;
-      const meta = { date: { year: 1945 } } as any;
+      const meta = stubMeta({ date: { year: 1945, month: 1, tick: 0 } });
 
-      expect(era.victoryCondition!.check(meta, { population: 25 } as any)).toBe(true);
-      expect(era.victoryCondition!.check(meta, { population: 10 } as any)).toBe(false);
+      expect(era.victoryCondition!.check(meta, stubResources({ population: 25 }))).toBe(true);
+      expect(era.victoryCondition!.check(meta, stubResources({ population: 10 }))).toBe(false);
     });
 
     it('stagnation failure: 0 power with 200+ population', () => {
       const era = ERA_DEFINITIONS.stagnation;
 
-      expect(era.failureCondition!.check({} as any, { power: 0, population: 200 } as any)).toBe(
-        true
-      );
-      expect(era.failureCondition!.check({} as any, { power: 100, population: 200 } as any)).toBe(
-        false
-      );
+      expect(
+        era.failureCondition!.check(stubMeta(), stubResources({ power: 0, population: 200 }))
+      ).toBe(true);
+      expect(
+        era.failureCondition!.check(stubMeta(), stubResources({ power: 100, population: 200 }))
+      ).toBe(false);
     });
 
     it('perestroika failure: food and vodka both zero', () => {
       const era = ERA_DEFINITIONS.perestroika;
 
-      expect(era.failureCondition!.check({} as any, { food: 0, vodka: 0 } as any)).toBe(true);
-      expect(era.failureCondition!.check({} as any, { food: 1, vodka: 0 } as any)).toBe(false);
+      expect(era.failureCondition!.check(stubMeta(), stubResources({ food: 0, vodka: 0 }))).toBe(
+        true
+      );
+      expect(era.failureCondition!.check(stubMeta(), stubResources({ food: 1, vodka: 0 }))).toBe(
+        false
+      );
     });
   });
 

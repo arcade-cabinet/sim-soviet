@@ -100,6 +100,7 @@ export function ageAllMembers(): number {
  * Base probability: 15% per year → ~1.25% per month.
  * Food modifier: foodLevel < 0.5 → ×0.5, foodLevel > 0.8 → ×1.2.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: birth eligibility + RNG + infant creation is inherently branchy
 export function birthCheck(
   rng: GameRng | null,
   foodLevel: number,
@@ -115,7 +116,10 @@ export function birthCheck(
   for (const entity of dvory) {
     const dvor = entity.dvor;
 
-    for (const member of dvor.members) {
+    // Snapshot members before iterating — births push to the array below
+    const existingMembers = [...dvor.members];
+
+    for (const member of existingMembers) {
       // Eligibility: female, fertile age, not pregnant
       if (member.gender !== 'female') continue;
       if (member.age < FERTILITY_MIN_AGE || member.age > FERTILITY_MAX_AGE) continue;
@@ -126,7 +130,8 @@ export function birthCheck(
         // Birth! Add infant to this dvor
         const infantGender: 'male' | 'female' =
           (rng?.random() ?? Math.random()) < 0.5 ? 'male' : 'female';
-        const infantId = `${dvor.id}-m${dvor.members.length}`;
+        dvor.nextMemberId = (dvor.nextMemberId ?? dvor.members.length) + 1;
+        const infantId = `${dvor.id}-m${dvor.nextMemberId}`;
 
         dvor.members.push({
           id: infantId,
