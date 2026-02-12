@@ -92,6 +92,10 @@ export async function waitForGameReady(page: Page): Promise<void> {
  * to get 3 ticks/sec → ~10s for a month change.
  */
 export async function waitForSimTick(page: Page, maxMs = 15_000): Promise<void> {
+  // Dismiss any open overlay (radial menu) that might block HUD clicks
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+
   // Speed up the simulation to avoid 30+ second waits
   const speed3x = page.locator('header').getByRole('button', { name: 'Speed 3x' });
   if (await speed3x.isVisible().catch(() => false)) {
