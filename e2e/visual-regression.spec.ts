@@ -1,9 +1,8 @@
 import { expect, test } from '@playwright/test';
 import {
   buildingButtons,
-  introOverlay,
-  quotaHud,
-  startButton,
+  dossier,
+  landingPage,
   startGameAndDismissAdvisor,
   toolbar,
   topBar,
@@ -17,37 +16,46 @@ import {
  *
  * The Playwright config has maxDiffPixelRatio: 0.05 for tolerance
  * (accounts for anti-aliasing, font rendering differences, etc.)
+ *
+ * To generate/update baselines:
+ *   npx playwright test e2e/visual-regression.spec.ts --update-snapshots
+ *
+ * For CI (Linux baselines):
+ *   docker run --rm -v $(pwd):/work -w /work mcr.microsoft.com/playwright:v1.52.0 \
+ *     npx playwright test e2e/visual-regression.spec.ts --update-snapshots
  */
 
 test.describe('Visual Regression', () => {
-  test.describe('Intro Modal', () => {
-    test('intro modal screenshot on load', async ({ page }) => {
+  test.describe('Landing Page (Tabbed Dossier)', () => {
+    test('landing page screenshot on load', async ({ page }) => {
       await page.goto('/');
-      // Wait for fonts and layout to settle
       await page.waitForLoadState('networkidle');
 
-      await expect(introOverlay(page)).toBeVisible();
-      await expect(page).toHaveScreenshot('intro-modal.png', {
+      await expect(landingPage(page)).toBeVisible();
+      await expect(page).toHaveScreenshot('landing-page.png', {
         fullPage: true,
       });
     });
 
-    test('dossier card screenshot', async ({ page }) => {
+    test('dossier tab content screenshot', async ({ page }) => {
       await page.goto('/');
       await page.waitForLoadState('networkidle');
 
-      const dossierEl = page.locator('.dossier');
+      const dossierEl = dossier(page);
       await expect(dossierEl).toBeVisible();
-      await expect(dossierEl).toHaveScreenshot('dossier-card.png');
+      await expect(dossierEl).toHaveScreenshot('dossier-tab-content.png');
     });
 
-    test('TOP SECRET stamp screenshot', async ({ page }) => {
+    test('credits tab screenshot', async ({ page }) => {
       await page.goto('/');
       await page.waitForLoadState('networkidle');
 
-      const stamp = page.locator('.stamp');
-      await expect(stamp).toBeVisible();
-      await expect(stamp).toHaveScreenshot('top-secret-stamp.png');
+      await page.getByText('CREDITS').click();
+      await page.waitForTimeout(300); // Animation settle
+
+      await expect(page).toHaveScreenshot('credits-tab.png', {
+        fullPage: true,
+      });
     });
   });
 
@@ -84,8 +92,7 @@ test.describe('Visual Regression', () => {
 
   test.describe('Toolbar', () => {
     test('toolbar default state screenshot', async ({ page }) => {
-      await page.goto('/');
-      await page.waitForLoadState('networkidle');
+      await startGameAndDismissAdvisor(page);
 
       const nav = toolbar(page);
       await expect(nav).toBeVisible();
@@ -131,8 +138,7 @@ test.describe('Visual Regression', () => {
 
   test.describe('Top Bar', () => {
     test('top bar screenshot', async ({ page }) => {
-      await page.goto('/');
-      await page.waitForLoadState('networkidle');
+      await startGameAndDismissAdvisor(page);
 
       const header = topBar(page);
       await expect(header).toBeVisible();
@@ -150,35 +156,13 @@ test.describe('Visual Regression', () => {
     });
   });
 
-  test.describe('Quota HUD', () => {
-    test('quota HUD screenshot', async ({ page }) => {
-      await page.goto('/');
-      await page.waitForLoadState('networkidle');
-
-      const hud = quotaHud(page);
-      await expect(hud).toBeVisible();
-      await expect(hud).toHaveScreenshot('quota-hud.png');
-    });
-  });
-
-  test.describe('Advisor Panel', () => {
-    test('advisor panel screenshot', async ({ page }) => {
-      await page.goto('/');
-      await startButton(page).click();
-
-      const advisor = page.locator('.advisor-panel');
-      await expect(advisor).toBeVisible({ timeout: 3000 });
-      await expect(advisor).toHaveScreenshot('advisor-panel.png');
-    });
-  });
-
   test.describe('CRT Effects', () => {
     test('full page with CRT overlay screenshot', async ({ page }) => {
       await page.goto('/');
       await page.waitForLoadState('networkidle');
 
       // Full page screenshot captures CRT overlay and scanlines
-      await expect(page).toHaveScreenshot('crt-effects-intro.png', {
+      await expect(page).toHaveScreenshot('crt-effects-landing.png', {
         fullPage: true,
       });
     });

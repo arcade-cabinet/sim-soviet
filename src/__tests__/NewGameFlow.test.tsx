@@ -68,10 +68,14 @@ describe('LandingPage', () => {
     hasSavedGame: false,
   };
 
-  it('renders NEW GAME and LOAD GAME buttons', () => {
+  it('renders tabbed interface with all four tabs', () => {
     render(<LandingPage {...defaultProps} />);
+    expect(screen.getByText('SIMSOVET 2000')).toBeDefined();
+    // Tabs show label text (hidden sm:inline renders in happy-dom)
     expect(screen.getByText('NEW GAME')).toBeDefined();
-    expect(screen.getByText('LOAD GAME')).toBeDefined();
+    expect(screen.getByText('LOAD')).toBeDefined();
+    expect(screen.getByText('SETTINGS')).toBeDefined();
+    expect(screen.getByText('CREDITS')).toBeDefined();
   });
 
   it('renders game title', () => {
@@ -81,33 +85,41 @@ describe('LandingPage', () => {
 
   it('does not render CONTINUE when hasSavedGame is false', () => {
     render(<LandingPage {...defaultProps} hasSavedGame={false} />);
-    expect(screen.queryByText('CONTINUE')).toBeNull();
+    expect(screen.queryByText('CONTINUE PREVIOUS ASSIGNMENT')).toBeNull();
   });
 
   it('renders CONTINUE when hasSavedGame is true', () => {
     render(<LandingPage {...defaultProps} hasSavedGame={true} />);
-    expect(screen.getByText('CONTINUE')).toBeDefined();
+    expect(screen.getByText('CONTINUE PREVIOUS ASSIGNMENT')).toBeDefined();
   });
 
-  it('calls onNewGame when NEW GAME is clicked', () => {
+  it('calls onNewGame when BEGIN NEW ASSIGNMENT is clicked', () => {
     const onNewGame = vi.fn();
     render(<LandingPage {...defaultProps} onNewGame={onNewGame} />);
-    fireEvent.click(screen.getByText('NEW GAME'));
+    fireEvent.click(screen.getByText('BEGIN NEW ASSIGNMENT'));
     expect(onNewGame).toHaveBeenCalledOnce();
   });
 
-  it('calls onLoadGame when LOAD GAME is clicked', () => {
+  it('calls onLoadGame via LOAD tab', () => {
     const onLoadGame = vi.fn();
-    render(<LandingPage {...defaultProps} onLoadGame={onLoadGame} />);
-    fireEvent.click(screen.getByText('LOAD GAME'));
+    render(<LandingPage {...defaultProps} onLoadGame={onLoadGame} hasSavedGame={true} />);
+    // Switch to Load tab
+    fireEvent.click(screen.getByText('LOAD'));
+    fireEvent.click(screen.getByText('LOAD FROM FILE'));
     expect(onLoadGame).toHaveBeenCalledOnce();
   });
 
-  it('calls onContinue when CONTINUE is clicked', () => {
+  it('calls onContinue when CONTINUE PREVIOUS ASSIGNMENT is clicked', () => {
     const onContinue = vi.fn();
     render(<LandingPage {...defaultProps} hasSavedGame={true} onContinue={onContinue} />);
-    fireEvent.click(screen.getByText('CONTINUE'));
+    fireEvent.click(screen.getByText('CONTINUE PREVIOUS ASSIGNMENT'));
     expect(onContinue).toHaveBeenCalledOnce();
+  });
+
+  it('shows credits tab with technology info', () => {
+    render(<LandingPage {...defaultProps} />);
+    fireEvent.click(screen.getByText('CREDITS'));
+    expect(screen.getByText('Canvas 2D + React 19')).toBeDefined();
   });
 });
 

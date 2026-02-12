@@ -1,36 +1,37 @@
 /**
- * LandingPage -- Main menu screen for SimSoviet 2000.
+ * LandingPage — Tabbed dossier main menu for SimSoviet 2000.
  *
- * Soviet propaganda poster aesthetic: bold, stark, authoritative.
- * Displays title, subtitle, random loading quote, and action buttons.
- * Uses concrete (dark) theme tokens.
+ * Manila-folder tabbed interface matching Soviet bureaucratic aesthetic.
+ * Four tabs: New Game | Load | Settings | Credits
+ *
+ * Uses parchment (light) theme tokens for the document/dossier feel,
+ * with concrete (dark) accent for the manila folder tabs.
  */
 import { AnimatePresence, motion } from 'framer-motion';
-import { Star } from 'lucide-react';
-import { useMemo } from 'react';
+import { Folder, Info, Settings, Star } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { LOADING_QUOTES } from '@/content/worldbuilding';
-import { accent, concrete, SOVIET_FONT } from '@/design/tokens';
+import { accent, concrete, DOCUMENT_FONT, parchment, SOVIET_FONT } from '@/design/tokens';
 import { cn } from '@/lib/utils';
 
-/** Props for the LandingPage component. */
 export interface LandingPageProps {
-  /** Navigate to new game configuration. */
   onNewGame: () => void;
-  /** Load the latest autosave and resume playing. */
   onContinue: () => void;
-  /** Open a file/save picker to load a specific save. */
   onLoadGame: () => void;
-  /** Whether an autosave exists (controls Continue button visibility). */
   hasSavedGame: boolean;
 }
 
-/**
- * Main menu screen with Soviet propaganda poster aesthetic.
- *
- * Full-viewport centered layout with game title, subtitle, random quote,
- * and stacked action buttons. CRT overlay is applied by App.tsx.
- */
+type Tab = 'new' | 'load' | 'settings' | 'credits';
+
+const TABS: { id: Tab; label: string; icon: typeof Star }[] = [
+  { id: 'new', label: 'NEW GAME', icon: Star },
+  { id: 'load', label: 'LOAD', icon: Folder },
+  { id: 'settings', label: 'SETTINGS', icon: Settings },
+  { id: 'credits', label: 'CREDITS', icon: Info },
+];
+
 export function LandingPage({ onNewGame, onContinue, onLoadGame, hasSavedGame }: LandingPageProps) {
+  const [activeTab, setActiveTab] = useState<Tab>('new');
   const quote = useMemo(
     () => LOADING_QUOTES[Math.floor(Math.random() * LOADING_QUOTES.length)]!,
     []
@@ -42,92 +43,123 @@ export function LandingPage({ onNewGame, onContinue, onLoadGame, hasSavedGame }:
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
-      className="fixed inset-0 z-30 flex flex-col items-center justify-center px-4"
+      className="fixed inset-0 z-30 flex flex-col items-center justify-center px-3 py-4"
       style={{
         fontFamily: SOVIET_FONT,
         background: `radial-gradient(ellipse at center, ${concrete.surface.panel} 0%, ${concrete.surface.deep} 70%)`,
       }}
     >
-      {/* Soviet star ornament */}
+      {/* Header — title + star */}
       <motion.div
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
-        className="mb-6"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+        className="text-center mb-4"
       >
-        <div
-          className="w-16 h-16 flex items-center justify-center rounded-full border-2"
-          style={{ borderColor: accent.red, background: `${accent.red}33` }}
-        >
-          <Star className="w-8 h-8" style={{ color: accent.gold }} fill={accent.gold} />
+        <div className="flex items-center justify-center gap-3 mb-1">
+          <Star className="w-5 h-5" style={{ color: accent.gold }} fill={accent.gold} />
+          <h1
+            className="text-3xl sm:text-4xl font-bold tracking-[0.2em] uppercase"
+            style={{ color: accent.redText }}
+          >
+            SIMSOVET 2000
+          </h1>
+          <Star className="w-5 h-5" style={{ color: accent.gold }} fill={accent.gold} />
         </div>
+        <div className="w-48 sm:w-64 h-0.5 mx-auto" style={{ background: accent.gold }} />
       </motion.div>
 
-      {/* Title */}
-      <motion.h1
-        initial={{ y: -30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-[0.2em] uppercase text-center mb-2"
-        style={{ color: accent.redText }}
-      >
-        SIMSOVET 2000
-      </motion.h1>
-
-      {/* Decorative rule */}
-      <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ delay: 0.5, duration: 0.4 }}
-        className="w-48 sm:w-64 h-0.5 mb-3"
-        style={{ background: accent.gold }}
-      />
-
-      {/* Subtitle */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6 }}
-        className="text-sm sm:text-base tracking-[0.15em] uppercase text-center mb-10"
-        style={{ color: accent.gold }}
-      >
-        A Five-Year Plan for Urban Development
-      </motion.p>
-
-      {/* Action buttons */}
+      {/* Dossier card with manila-folder tabs */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.4 }}
-        className="flex flex-col gap-3 w-full max-w-xs"
+        transition={{ delay: 0.4, duration: 0.4 }}
+        className="w-full max-w-lg"
       >
-        <MenuButton onClick={onNewGame} primary>
-          NEW GAME
-        </MenuButton>
+        {/* Tab bar — manila folder tabs */}
+        <div className="flex">
+          {TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border-t-2 border-x',
+                  active ? 'border-b-0 relative z-10' : 'border-b-2 hover:brightness-110'
+                )}
+                style={{
+                  fontFamily: SOVIET_FONT,
+                  background: active ? parchment.surface.paper : concrete.surface.panel,
+                  borderColor: active ? parchment.border.primary : concrete.border.subtle,
+                  color: active ? parchment.text.primary : concrete.text.muted,
+                  // Tab shape: rounded top corners
+                  borderTopLeftRadius: '6px',
+                  borderTopRightRadius: '6px',
+                  // Active tab overlaps the content border
+                  marginBottom: active ? '-2px' : '0',
+                  paddingBottom: active ? 'calc(0.5rem + 2px)' : '0.5rem',
+                }}
+              >
+                <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
-        <AnimatePresence>
-          {hasSavedGame && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <MenuButton onClick={onContinue}>CONTINUE</MenuButton>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <MenuButton onClick={onLoadGame}>LOAD GAME</MenuButton>
+        {/* Tab content — parchment dossier body */}
+        <div
+          className="border-2 border-t-2 min-h-[280px] max-h-[50vh] overflow-y-auto"
+          style={{
+            background: parchment.surface.paper,
+            borderColor: parchment.border.primary,
+            color: parchment.text.primary,
+            fontFamily: DOCUMENT_FONT,
+          }}
+        >
+          <AnimatePresence mode="wait">
+            {activeTab === 'new' && (
+              <TabContent key="new">
+                <NewGameTab
+                  onNewGame={onNewGame}
+                  onContinue={onContinue}
+                  hasSavedGame={hasSavedGame}
+                />
+              </TabContent>
+            )}
+            {activeTab === 'load' && (
+              <TabContent key="load">
+                <LoadTab
+                  onLoadGame={onLoadGame}
+                  onContinue={onContinue}
+                  hasSavedGame={hasSavedGame}
+                />
+              </TabContent>
+            )}
+            {activeTab === 'settings' && (
+              <TabContent key="settings">
+                <SettingsTab />
+              </TabContent>
+            )}
+            {activeTab === 'credits' && (
+              <TabContent key="credits">
+                <CreditsTab />
+              </TabContent>
+            )}
+          </AnimatePresence>
+        </div>
       </motion.div>
 
-      {/* Random loading quote */}
+      {/* Bottom quote */}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: 0.8 }}
-        className="absolute bottom-6 left-4 right-4 text-center text-xs sm:text-sm italic max-w-lg mx-auto leading-relaxed"
-        style={{ color: concrete.text.muted }}
+        transition={{ delay: 1.0, duration: 0.8 }}
+        className="mt-4 text-center text-xs italic max-w-md leading-relaxed"
+        style={{ color: concrete.text.muted, fontFamily: DOCUMENT_FONT }}
       >
         &ldquo;{quote}&rdquo;
       </motion.p>
@@ -135,9 +167,192 @@ export function LandingPage({ onNewGame, onContinue, onLoadGame, hasSavedGame }:
   );
 }
 
-// ── Sub-component ────────────────────────────────────────────
+// ── Tab animation wrapper ─────────────────────────────────
 
-function MenuButton({
+function TabContent({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.2 }}
+      className="p-4 sm:p-5"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ── Tab: New Game ─────────────────────────────────────────
+
+function NewGameTab({
+  onNewGame,
+  onContinue,
+  hasSavedGame,
+}: {
+  onNewGame: () => void;
+  onContinue: () => void;
+  hasSavedGame: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      <SectionHeader>Assignment Orders</SectionHeader>
+      <p className="text-xs leading-relaxed opacity-70">
+        By order of the Central Committee, you are hereby assigned to establish and manage a new
+        Soviet settlement. Report to the Ministry of Planning for further instructions.
+      </p>
+
+      <DossierButton onClick={onNewGame} primary>
+        BEGIN NEW ASSIGNMENT
+      </DossierButton>
+
+      {hasSavedGame && (
+        <DossierButton onClick={onContinue}>CONTINUE PREVIOUS ASSIGNMENT</DossierButton>
+      )}
+
+      <div className="border-t pt-3 mt-3" style={{ borderColor: `${parchment.border.primary}44` }}>
+        <p className="text-[10px] opacity-50 italic">
+          Form NP-1 &mdash; Ministry of Planning &mdash; Classification: RESTRICTED
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Tab: Load Game ────────────────────────────────────────
+
+function LoadTab({
+  onLoadGame,
+  onContinue,
+  hasSavedGame,
+}: {
+  onLoadGame: () => void;
+  onContinue: () => void;
+  hasSavedGame: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      <SectionHeader>Personnel Archives</SectionHeader>
+      <p className="text-xs leading-relaxed opacity-70">
+        Access previously filed assignment records. All saves are maintained in the central
+        registry.
+      </p>
+
+      {hasSavedGame ? (
+        <>
+          <DossierButton onClick={onContinue} primary>
+            RESUME AUTOSAVE
+          </DossierButton>
+          <DossierButton onClick={onLoadGame}>LOAD FROM FILE</DossierButton>
+        </>
+      ) : (
+        <div className="text-center py-6">
+          <p className="text-sm opacity-60 italic">No assignment records found in the archive.</p>
+          <p className="text-[10px] opacity-40 mt-2">
+            Begin a new assignment to create your first save.
+          </p>
+        </div>
+      )}
+
+      <div className="border-t pt-3 mt-3" style={{ borderColor: `${parchment.border.primary}44` }}>
+        <p className="text-[10px] opacity-50 italic">
+          Form AR-7 &mdash; Central Archive &mdash; Classification: CONFIDENTIAL
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Tab: Settings ─────────────────────────────────────────
+
+function SettingsTab() {
+  const [musicVol, setMusicVol] = useState(50);
+  const [sfxVol, setSfxVol] = useState(70);
+
+  return (
+    <div className="space-y-4">
+      <SectionHeader>Administrative Directives</SectionHeader>
+
+      <SettingsGroup label="Audio Levels">
+        <SettingsSlider label="Music" value={musicVol} onChange={setMusicVol} />
+        <SettingsSlider label="Effects" value={sfxVol} onChange={setSfxVol} />
+      </SettingsGroup>
+
+      <SettingsGroup label="Display">
+        <p className="text-[10px] opacity-60 italic">
+          Additional display settings available in-game via the drawer panel.
+        </p>
+      </SettingsGroup>
+
+      <div className="border-t pt-3 mt-3" style={{ borderColor: `${parchment.border.primary}44` }}>
+        <p className="text-[10px] opacity-50 italic">
+          Directive 42-B &mdash; Configuration Bureau &mdash; v0.1.0
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Tab: Credits ──────────────────────────────────────────
+
+function CreditsTab() {
+  return (
+    <div className="space-y-4">
+      <SectionHeader>Official Acknowledgments</SectionHeader>
+
+      <CreditBlock title="Development">
+        <CreditLine label="Lead Architect" name="The Central Committee" />
+        <CreditLine label="AI Assistant" name="Claude (Anthropic)" />
+      </CreditBlock>
+
+      <CreditBlock title="Technology">
+        <CreditLine label="Rendering" name="Canvas 2D + React 19" />
+        <CreditLine label="State" name="Miniplex 2 ECS" />
+        <CreditLine label="Build" name="Vite 7 + TypeScript 5.9" />
+        <CreditLine label="Styling" name="Tailwind CSS 4" />
+        <CreditLine label="Animation" name="Framer Motion" />
+      </CreditBlock>
+
+      <CreditBlock title="Assets">
+        <CreditLine label="Sprites" name="Blender → PNG pipeline" />
+        <CreditLine label="Characters" name="Google Imagen API" />
+        <CreditLine label="Music" name="Marxists Internet Archive" />
+        <CreditLine label="Font" name="VT323 (Peter Hull)" />
+      </CreditBlock>
+
+      <CreditBlock title="Inspiration">
+        <CreditLine label="Gameplay" name="SimCity 2000 (Maxis, 1993)" />
+        <CreditLine label="Aesthetic" name="Soviet constructivist posters" />
+        <CreditLine label="Humor" name="M*A*S*H (dark sardonic survival)" />
+      </CreditBlock>
+
+      <div className="border-t pt-3 mt-3" style={{ borderColor: `${parchment.border.primary}44` }}>
+        <p className="text-[10px] opacity-50 italic text-center">
+          SimSovet 2000 &mdash; A Five-Year Plan for Urban Development
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Shared sub-components ─────────────────────────────────
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="text-xs font-bold uppercase tracking-[0.15em] pb-1.5 mb-1 border-b"
+      style={{
+        fontFamily: SOVIET_FONT,
+        color: accent.red,
+        borderColor: `${parchment.border.primary}66`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DossierButton({
   children,
   onClick,
   primary = false,
@@ -151,21 +366,88 @@ function MenuButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full py-3 px-6 text-lg font-bold uppercase tracking-[0.2em]',
-        'border-2 transition-all duration-150',
+        'w-full py-2.5 px-4 text-sm font-bold uppercase tracking-[0.15em]',
+        'border-2 transition-all duration-150 cursor-pointer',
         'active:translate-y-0.5 active:brightness-75',
-        'cursor-pointer',
-        primary
-          ? 'text-white hover:brightness-125'
-          : 'hover:border-[#666] text-white/90 hover:text-white'
+        primary ? 'text-white hover:brightness-110' : 'hover:brightness-95'
       )}
       style={{
-        background: primary ? accent.red : concrete.surface.panel,
-        borderColor: primary ? accent.red : concrete.border.subtle,
         fontFamily: SOVIET_FONT,
+        background: primary ? accent.red : parchment.surface.alt,
+        borderColor: primary ? accent.red : parchment.border.primary,
+        color: primary ? '#ffffff' : parchment.text.primary,
       }}
     >
       {children}
     </button>
+  );
+}
+
+function CreditBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div
+        className="text-[10px] font-bold uppercase tracking-wider mb-1"
+        style={{ color: parchment.border.primary }}
+      >
+        {title}
+      </div>
+      <div className="space-y-0.5 ml-2">{children}</div>
+    </div>
+  );
+}
+
+function CreditLine({ label, name }: { label: string; name: string }) {
+  return (
+    <div className="flex text-[11px]">
+      <span className="opacity-50 w-24 flex-shrink-0">{label}:</span>
+      <span className="font-bold">{name}</span>
+    </div>
+  );
+}
+
+function SettingsGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div
+        className="text-[10px] font-bold uppercase tracking-wider mb-2"
+        style={{ color: parchment.border.primary }}
+      >
+        {label}
+      </div>
+      <div className="space-y-2 ml-2">{children}</div>
+    </div>
+  );
+}
+
+function SettingsSlider({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange(Number(e.target.value));
+    },
+    [onChange]
+  );
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-[11px] opacity-70 w-16 flex-shrink-0">{label}</span>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={value}
+        onChange={handleChange}
+        className="flex-1 h-1.5 accent-[#8b0000] cursor-pointer"
+      />
+      <span className="text-[10px] opacity-50 w-8 text-right">{value}%</span>
+    </div>
   );
 }

@@ -8,14 +8,17 @@ import type { Page } from '@playwright/test';
 
 // ── Locator Factories ────────────────────────────────────────────────────────
 
-/** The intro modal full-screen overlay. */
-export const introOverlay = (page: Page) => page.locator('.intro-overlay');
+/** The landing page full-screen overlay (tabbed dossier menu). */
+export const landingPage = (page: Page) => page.locator('[class*="fixed inset-0"]').first();
 
-/** The paper-textured dossier card inside the intro modal. */
-export const dossier = (page: Page) => page.locator('.dossier');
+/** The paper-textured dossier card (tab content area). */
+export const dossier = (page: Page) => page.locator('[style*="f4e8d0"]');
 
-/** The "I Serve the Soviet Union" start button (only button inside intro). */
-export const startButton = (page: Page) => page.locator('.intro-overlay button');
+/** The "BEGIN NEW ASSIGNMENT" button on the landing page New Game tab. */
+export const startButton = (page: Page) => page.getByText('BEGIN NEW ASSIGNMENT');
+
+// Legacy alias for E2E tests that reference the old intro overlay
+export const introOverlay = landingPage;
 
 /** The main game canvas element. */
 export const canvas = (page: Page) => page.locator('#gameCanvas');
@@ -123,13 +126,23 @@ export async function waitForMoneyChange(
 // ── Action Helpers ───────────────────────────────────────────────────────────
 
 /**
- * Navigate to the app and start the game by clicking the start button.
- * Waits for the intro modal to disappear and the canvas to be ready.
+ * Navigate to the app and start the game by stepping through the full
+ * new-game flow: Landing Page → NewGameFlow (3 steps) → AssignmentLetter → playing.
+ * Waits for the canvas to be ready before returning.
  */
 export async function startGame(page: Page): Promise<void> {
   await page.goto('/');
+  // Landing page — click "BEGIN NEW ASSIGNMENT" on the New Game tab
   await startButton(page).click();
-  await introOverlay(page).waitFor({ state: 'hidden', timeout: 3000 });
+  // NewGameFlow step 1 (Assignment) — click Next
+  await page.getByText('Next').click();
+  // NewGameFlow step 2 (Parameters) — click Next
+  await page.getByText('Next').click();
+  // NewGameFlow step 3 (Consequences) — click BEGIN
+  await page.getByText('BEGIN').click();
+  // AssignmentLetter — click Accept Assignment
+  await page.getByText('Accept Assignment').click();
+  // Wait for the game canvas to be ready
   await waitForGameReady(page);
 }
 
