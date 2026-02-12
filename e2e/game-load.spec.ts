@@ -2,18 +2,14 @@ import { expect, test } from '@playwright/test';
 import {
   advisorDismissBtn,
   advisorPanel,
-  buildingButtons,
   canvas,
   dossier,
-  HOUSING_BUILDING_COUNT,
   landingPage,
   quotaHud,
+  sovietHud,
   startButton,
   startGame,
   startGameAndDismissAdvisor,
-  TOP_ROW_BUTTON_COUNT,
-  topBar,
-  topRowButtons,
 } from './helpers';
 
 test.describe('Game Load', () => {
@@ -80,22 +76,38 @@ test.describe('Game Load', () => {
       await expect(canvas(page)).toBeVisible();
     });
 
-    test('top bar displays resource stat icons', async ({ page }) => {
+    test('SovietHUD displays resource chips', async ({ page }) => {
       await startGameAndDismissAdvisor(page);
-      const header = topBar(page);
-      await expect(header).toContainText('₽');
-      await expect(header).toContainText('👤');
-      await expect(header).toContainText('🥔');
-      await expect(header).toContainText('🍾');
-      await expect(header).toContainText('⚡');
-      await expect(header).toContainText('📅');
+      const hud = sovietHud(page);
+      // SovietHUD shows: Workers (👷), Food (🌾), Vodka (🍾), Power (⚡), Blat (🤝)
+      await expect(hud).toContainText('👷');
+      await expect(hud).toContainText('🌾');
+      await expect(hud).toContainText('🍾');
+      await expect(hud).toContainText('⚡');
+      await expect(hud).toContainText('🤝');
     });
 
-    test('top bar contains a pause button', async ({ page }) => {
+    test('SovietHUD displays settlement name and date', async ({ page }) => {
       await startGameAndDismissAdvisor(page);
-      const btn = page.locator('header button');
+      const hud = sovietHud(page);
+      // Date is in font-mono format: "MonthName YYYY"
+      const dateEl = hud.locator('.font-mono').first();
+      const dateText = await dateEl.innerText();
+      expect(dateText).toMatch(/\d{4}/);
+    });
+
+    test('SovietHUD contains a pause button', async ({ page }) => {
+      await startGameAndDismissAdvisor(page);
+      const btn = page.locator('header').getByRole('button', { name: /Pause|Resume/ });
       await expect(btn).toBeVisible();
-      await expect(btn).toContainText('⏸');
+    });
+
+    test('SovietHUD contains speed controls', async ({ page }) => {
+      await startGameAndDismissAdvisor(page);
+      const hud = sovietHud(page);
+      await expect(hud.getByRole('button', { name: 'Speed 1x' })).toBeVisible();
+      await expect(hud.getByRole('button', { name: 'Speed 2x' })).toBeVisible();
+      await expect(hud.getByRole('button', { name: 'Speed 3x' })).toBeVisible();
     });
 
     test('advisor appears after starting game', async ({ page }) => {
@@ -111,46 +123,6 @@ test.describe('Game Load', () => {
       await expect(advisor).toBeVisible({ timeout: 3000 });
       await advisorDismissBtn(page).click();
       await expect(advisor).toBeHidden();
-    });
-
-    test('toolbar top row has correct button count', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-      await expect(topRowButtons(page)).toHaveCount(TOP_ROW_BUTTON_COUNT);
-    });
-
-    test('toolbar shows Inspect and Purge (Bulldoze) buttons', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-      const buttons = topRowButtons(page);
-      await expect(buttons.first()).toContainText('🔍');
-      await expect(buttons.last()).toContainText('💣');
-    });
-
-    test('toolbar shows category tabs', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-      const topRow = topRowButtons(page);
-      const allText = await topRow.allInnerTexts();
-      const combined = allText.join(' ');
-      expect(combined).toContain('🏢');
-      expect(combined).toContain('🏭');
-      expect(combined).toContain('⚡');
-      expect(combined).toContain('🏥');
-      expect(combined).toContain('🏛️');
-      expect(combined).toContain('🎖️');
-      expect(combined).toContain('🚂');
-    });
-
-    test('toolbar bottom row shows housing buildings by default', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-      const buttons = buildingButtons(page);
-      await expect(buttons).toHaveCount(HOUSING_BUILDING_COUNT);
-    });
-
-    test('toolbar building buttons have names and icons', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-      const firstBuilding = buildingButtons(page).first();
-      await expect(firstBuilding).toBeVisible();
-      const text = await firstBuilding.innerText();
-      expect(text.length).toBeGreaterThan(0);
     });
 
     test('quota HUD displays 5-year plan info', async ({ page }) => {

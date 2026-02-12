@@ -1,17 +1,14 @@
 import { expect, test } from '@playwright/test';
 import {
   advisorPanel,
-  buildingButtons,
   canvas,
   dossier,
   landingPage,
   quotaHud,
+  sovietHud,
   startButton,
   startGame,
   startGameAndDismissAdvisor,
-  toolbar,
-  topBar,
-  topRowButtons,
 } from './helpers';
 
 /**
@@ -86,9 +83,9 @@ test.describe('Responsive Layout', () => {
       await startGameAndDismissAdvisor(page);
     });
 
-    test('top bar spans full width', async ({ page }) => {
-      const header = topBar(page);
-      const box = await header.boundingBox();
+    test('SovietHUD spans full width', async ({ page }) => {
+      const hud = sovietHud(page);
+      const box = await hud.boundingBox();
       const viewport = page.viewportSize();
 
       if (box && viewport) {
@@ -97,63 +94,10 @@ test.describe('Responsive Layout', () => {
       }
     });
 
-    test('top bar resource icons are visible', async ({ page }) => {
-      const header = topBar(page);
-      await expect(header).toContainText('₽');
-      await expect(header).toContainText('📅');
-    });
-
-    test('toolbar spans full width', async ({ page }) => {
-      const nav = toolbar(page);
-      const box = await nav.boundingBox();
-      const viewport = page.viewportSize();
-
-      if (box && viewport) {
-        expect(box.width).toBeGreaterThanOrEqual(viewport.width - 2);
-      }
-    });
-
-    test('toolbar is positioned at bottom of screen', async ({ page }) => {
-      const nav = toolbar(page);
-      const box = await nav.boundingBox();
-      const viewport = page.viewportSize();
-
-      if (box && viewport) {
-        // Toolbar bottom should be at or near viewport bottom
-        const bottomEdge = box.y + box.height;
-        expect(bottomEdge).toBeGreaterThan(viewport.height * 0.75);
-      }
-    });
-
-    test('toolbar top row buttons are all reachable', async ({ page }) => {
-      const buttons = topRowButtons(page);
-      const count = await buttons.count();
-      expect(count).toBeGreaterThan(0);
-
-      // First button should be visible
-      await expect(buttons.first()).toBeVisible();
-
-      // The top row scrolls on mobile — verify the scrollable container exists
-      const topRow = page.locator('nav > div').first();
-      const style = await topRow.evaluate((el) => {
-        return window.getComputedStyle(el).overflowX;
-      });
-      // Should be auto or scroll (scrollable) or visible (if it fits)
-      expect(['auto', 'scroll', 'visible']).toContain(style);
-    });
-
-    test('toolbar building row scrolls horizontally on mobile', async ({ page }) => {
-      const bottomRow = page.locator('nav > div').nth(1);
-      const overflowX = await bottomRow.evaluate((el) => {
-        return window.getComputedStyle(el).overflowX;
-      });
-      // The bottom row has overflow-x: auto via Tailwind
-      expect(['auto', 'scroll', 'visible']).toContain(overflowX);
-
-      // Buttons should exist
-      const buttons = buildingButtons(page);
-      const count = await buttons.count();
-      expect(count).toBeGreaterThan(0);
+    test('SovietHUD resource icons are visible', async ({ page }) => {
+      const hud = sovietHud(page);
+      await expect(hud).toContainText('👷');
+      await expect(hud).toContainText('🌾');
     });
 
     test('canvas fills available viewport space', async ({ page }) => {
@@ -166,16 +110,13 @@ test.describe('Responsive Layout', () => {
       }
     });
 
-    test('canvas is between top bar and toolbar', async ({ page }) => {
-      const headerBox = await topBar(page).boundingBox();
+    test('canvas is below the SovietHUD', async ({ page }) => {
+      const hudBox = await sovietHud(page).boundingBox();
       const canvasBox = await canvas(page).boundingBox();
-      const toolbarBox = await toolbar(page).boundingBox();
 
-      if (headerBox && canvasBox && toolbarBox) {
-        // Canvas should start below the top bar
-        expect(canvasBox.y).toBeGreaterThanOrEqual(headerBox.y + headerBox.height - 1);
-        // Canvas should end above the toolbar
-        expect(canvasBox.y + canvasBox.height).toBeLessThanOrEqual(toolbarBox.y + 5);
+      if (hudBox && canvasBox) {
+        // Canvas should start at or below the HUD bottom
+        expect(canvasBox.y).toBeGreaterThanOrEqual(hudBox.y + hudBox.height - 1);
       }
     });
 
@@ -247,38 +188,6 @@ test.describe('Responsive Layout', () => {
         return window.getComputedStyle(el).touchAction;
       });
       expect(touchAction).toBe('none');
-    });
-
-    test('toolbar buttons meet minimum tap target size', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-
-      const buttons = topRowButtons(page);
-      const count = await buttons.count();
-
-      for (let i = 0; i < Math.min(count, 3); i++) {
-        const box = await buttons.nth(i).boundingBox();
-        if (box) {
-          // CSS specifies min-width: 44px and min-height: 44px for btn-retro
-          expect(box.width).toBeGreaterThanOrEqual(44);
-          expect(box.height).toBeGreaterThanOrEqual(44);
-        }
-      }
-    });
-
-    test('building buttons are tappable on mobile viewports', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-
-      const buttons = buildingButtons(page);
-      const count = await buttons.count();
-      expect(count).toBeGreaterThan(0);
-
-      // First building button should have adequate size
-      const box = await buttons.first().boundingBox();
-      if (box) {
-        // min-width: 52px is set on building buttons
-        expect(box.width).toBeGreaterThanOrEqual(44);
-        expect(box.height).toBeGreaterThanOrEqual(44);
-      }
     });
   });
 

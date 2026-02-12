@@ -1,12 +1,5 @@
 import { expect, test } from '@playwright/test';
-import {
-  buildingButtons,
-  dossier,
-  landingPage,
-  startGameAndDismissAdvisor,
-  toolbar,
-  topBar,
-} from './helpers';
+import { dossier, landingPage, sovietHud, startGameAndDismissAdvisor } from './helpers';
 
 /**
  * Visual regression tests using Playwright's screenshot comparison.
@@ -69,90 +62,25 @@ test.describe('Visual Regression', () => {
         fullPage: true,
       });
     });
-
-    test('game board with buildings placed screenshot', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-
-      // Place a building to change the board state
-      await buildingButtons(page).first().click();
-      const canvasEl = page.locator('#gameCanvas');
-      const box = await canvasEl.boundingBox();
-      if (box) {
-        await canvasEl.click({
-          position: { x: box.width / 2, y: box.height / 2 },
-        });
-      }
-      await page.waitForTimeout(2000);
-
-      await expect(page).toHaveScreenshot('game-board-with-building.png', {
-        fullPage: true,
-      });
-    });
   });
 
-  test.describe('Toolbar', () => {
-    test('toolbar default state screenshot', async ({ page }) => {
+  test.describe('SovietHUD', () => {
+    test('SovietHUD screenshot', async ({ page }) => {
       await startGameAndDismissAdvisor(page);
 
-      const nav = toolbar(page);
-      await expect(nav).toBeVisible();
-      await expect(nav).toHaveScreenshot('toolbar-default.png');
+      const hud = sovietHud(page);
+      await expect(hud).toBeVisible();
+      await expect(hud).toHaveScreenshot('soviet-hud.png');
     });
 
-    test('toolbar with building selected screenshot', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-
-      // Select a building
-      await buildingButtons(page).first().click();
-
-      const nav = toolbar(page);
-      await expect(nav).toHaveScreenshot('toolbar-building-selected.png');
-    });
-
-    test('toolbar with bulldoze selected screenshot', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-
-      // Select bulldoze
-      const bulldozeBtn = page.locator('nav > div').first().locator('button').last();
-      await bulldozeBtn.click();
-
-      const nav = toolbar(page);
-      await expect(nav).toHaveScreenshot('toolbar-bulldoze-selected.png');
-    });
-
-    test('toolbar industry category screenshot', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-
-      // Switch to industry category
-      const industryTab = page
-        .locator('nav > div')
-        .first()
-        .locator('button')
-        .filter({ hasText: '🏭' });
-      await industryTab.click();
-
-      const nav = toolbar(page);
-      await expect(nav).toHaveScreenshot('toolbar-industry-category.png');
-    });
-  });
-
-  test.describe('Top Bar', () => {
-    test('top bar screenshot', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-
-      const header = topBar(page);
-      await expect(header).toBeVisible();
-      await expect(header).toHaveScreenshot('top-bar.png');
-    });
-
-    test('top bar paused state screenshot', async ({ page }) => {
+    test('SovietHUD paused state screenshot', async ({ page }) => {
       await startGameAndDismissAdvisor(page);
 
       // Pause the game
       await page.keyboard.press('Space');
 
-      const header = topBar(page);
-      await expect(header).toHaveScreenshot('top-bar-paused.png');
+      const hud = sovietHud(page);
+      await expect(hud).toHaveScreenshot('soviet-hud-paused.png');
     });
   });
 
@@ -161,7 +89,6 @@ test.describe('Visual Regression', () => {
       await page.goto('/');
       await page.waitForLoadState('networkidle');
 
-      // Full page screenshot captures CRT overlay and scanlines
       await expect(page).toHaveScreenshot('crt-effects-landing.png', {
         fullPage: true,
       });

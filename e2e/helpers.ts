@@ -1,8 +1,11 @@
 /**
  * E2E test helpers — shared selectors and utility functions.
  *
- * The current UI has NO element IDs on most components (except #gameCanvas).
- * All selectors use CSS classes, semantic HTML elements, or text content.
+ * Updated for the redesigned UI:
+ *   - SovietHUD (<header>) replaced TopBar — different resource icons
+ *   - BottomStrip replaced Toolbar — no building category tabs
+ *   - RadialBuildMenu replaced toolbar building selection
+ *   - Money (₽) is no longer displayed in the HUD
  */
 import type { Page } from '@playwright/test';
 
@@ -23,32 +26,18 @@ export const introOverlay = landingPage;
 /** The main game canvas element. */
 export const canvas = (page: Page) => page.locator('#gameCanvas');
 
-/** The top stats bar (<header> element). */
-export const topBar = (page: Page) => page.locator('header');
+/** The SovietHUD top bar (<header> element). Contains settlement info, resources, controls. */
+export const sovietHud = (page: Page) => page.locator('header');
 
-/** The pause/resume button (only button inside the header). */
-export const pauseButton = (page: Page) => page.locator('header button');
+// Legacy alias — old tests use topBar
+export const topBar = sovietHud;
 
-/** The bottom toolbar (<nav> element). */
-export const toolbar = (page: Page) => page.locator('nav');
+/** The pause/resume button (inside the SovietHUD, uses aria-label). */
+export const pauseButton = (page: Page) =>
+  page.locator('header').getByRole('button', { name: /Pause|Resume/ });
 
-/**
- * The toolbar's top row (Inspect + 7 category tabs + Bulldoze).
- * This is the first direct child div of the nav.
- */
-export const toolbarTopRow = (page: Page) => page.locator('nav > div').first();
-
-/**
- * The toolbar's bottom row (building buttons for the active category).
- * This is the second direct child div of the nav.
- */
-export const toolbarBottomRow = (page: Page) => page.locator('nav > div').nth(1);
-
-/** All buttons in the toolbar top row (Inspect, categories, Bulldoze). */
-export const topRowButtons = (page: Page) => toolbarTopRow(page).locator('button');
-
-/** All building buttons in the toolbar bottom row. */
-export const buildingButtons = (page: Page) => toolbarBottomRow(page).locator('button');
+/** The BottomStrip — context-sensitive bottom info bar. */
+export const bottomStrip = (page: Page) => page.locator('div.border-t-2.border-\\[\\#8b0000\\]');
 
 /** The quota HUD overlay (top-left of viewport). */
 export const quotaHud = (page: Page) => page.locator('.quota-hud');
@@ -62,14 +51,10 @@ export const advisorDismissBtn = (page: Page) => page.locator('.advisor-panel bu
 /** The toast notification element. */
 export const toast = (page: Page) => page.locator('.toast');
 
-/** The building inspector panel. */
-export const buildingInspector = (page: Page) =>
-  page.locator('[style*="soviet-gold"]').filter({ hasText: 'Position' });
-
 /** The Pravda news ticker. */
 export const pravdaTicker = (page: Page) => page.locator('.pravda-ticker');
 
-/** The game over modal (reuses .intro-overlay + .dossier). */
+/** The game over modal. */
 export const gameOverModal = (page: Page) =>
   page.locator('.intro-overlay').filter({ hasText: /Order of Lenin|KGB Notice/ });
 
@@ -77,7 +62,7 @@ export const gameOverModal = (page: Page) =>
 
 /**
  * Wait for the game canvas AND React UI overlay to be fully mounted.
- * Checks: canvas has dimensions + <header> and <nav> exist in DOM.
+ * Checks: canvas has dimensions + <header> exists in DOM.
  * This ensures React has completed its first render cycle after game start.
  */
 export async function waitForGameReady(page: Page): Promise<void> {
@@ -87,45 +72,48 @@ export async function waitForGameReady(page: Page): Promise<void> {
       if (!canvas || canvas.width === 0 || canvas.height === 0) return false;
       // React UI overlay must also be mounted
       const header = document.querySelector('header');
-      const nav = document.querySelector('nav');
-      return !!header && !!nav;
+      return !!header;
     },
     undefined,
     { timeout: 15_000 }
   );
 }
 
-/** Wait for the game simulation to advance (date text changes). */
+/**
+ * Wait for the game simulation to advance (date text changes).
+ * SovietHUD shows date as "MonthName YYYY" in a .font-mono element.
+ */
 export async function waitForSimTick(page: Page, maxMs = 5000): Promise<void> {
   const initialDate = await getDateText(page);
   await page.waitForFunction(
     (prev) => {
-      const header = document.querySelector('header');
-      if (!header) return false;
-      const match = header.innerText.match(/📅\s*([A-Za-z\s]+\d{4})/);
-      const current = match ? match[1].trim() : '';
-      return current !== prev;
+      const el = document.querySelector('header .font-mono');
+      if (!el) return false;
+      const current = el.textContent?.trim() ?? '';
+      return current !== prev && current.length > 0;
     },
     initialDate,
     { timeout: maxMs }
   );
 }
 
-/** Wait for money to change from a known value. */
-export async function waitForMoneyChange(
+/**
+ * Wait for the worker count to change from a known value.
+ */
+export async function waitForWorkerChange(
   page: Page,
-  previousMoney: number,
+  previousCount: number,
   maxMs = 5000
 ): Promise<void> {
   await page.waitForFunction(
     (prev) => {
-      const header = document.querySelector('header');
-      if (!header) return false;
-      const match = header.innerText.match(/₽\s*(\d+)/);
-      const current = match ? Number.parseInt(match[1], 10) : -1;
-      return current !== prev;
+      const chip = document.querySelector('[title="Workers"]');
+      if (!chip) return false;
+      const text = chip.querySelector('.font-mono')?.textContent?.trim() ?? '';
+      const current = Number.parseInt(text.replace(/,/g, ''), 10);
+      return !Number.isNaN(current) && current !== prev;
     },
-    previousMoney,
+    previousCount,
     { timeout: maxMs }
   );
 }
@@ -193,68 +181,35 @@ export async function startGameAndDismissAdvisor(page: Page): Promise<void> {
 }
 
 /**
- * Extract the current money value from the top bar.
- * Parses the text next to the ruble sign (₽).
+ * Extract the worker count from the SovietHUD.
+ * The Workers resource chip has title="Workers".
  */
-export async function getMoney(page: Page): Promise<number> {
-  const headerText = await topBar(page).innerText();
-  const match = headerText.match(/₽\s*(\d+)/);
-  return match ? Number.parseInt(match[1]!, 10) : -1;
+export async function getWorkerCount(page: Page): Promise<number> {
+  const chip = page.locator('[title="Workers"]');
+  const text = await chip.locator('.font-mono').innerText();
+  return Number.parseInt(text.replace(/,/g, ''), 10);
 }
 
 /**
- * Extract the current population value from the top bar.
+ * Extract the food count from the SovietHUD.
  */
-export async function getPopulation(page: Page): Promise<number> {
-  const headerText = await topBar(page).innerText();
-  // The population stat uses 👤 icon
-  const match = headerText.match(/👤\s*(\d+)/);
-  return match ? Number.parseInt(match[1]!, 10) : -1;
+export async function getFoodCount(page: Page): Promise<number> {
+  const chip = page.locator('[title="Food"]');
+  const text = await chip.locator('.font-mono').innerText();
+  return Number.parseInt(text.replace(/,/g, ''), 10);
 }
 
 /**
- * Extract the current date string (e.g. "JAN 1980") from the top bar.
+ * Extract the current date string (e.g., "October 1922") from the SovietHUD.
+ * The date is in a .font-mono element inside the settlement info section.
  */
 export async function getDateText(page: Page): Promise<string> {
-  const headerText = await topBar(page).innerText();
-  const match = headerText.match(/📅\s*([A-Za-z\s]+\d{4})/);
-  return match ? match[1]!.trim() : '';
-}
-
-/**
- * Click a category tab in the toolbar by its label text.
- * Works on desktop where labels are visible.
- */
-export async function selectCategory(page: Page, label: string): Promise<void> {
-  const btn = toolbarTopRow(page).locator('button').filter({ hasText: label });
-  await btn.click();
-}
-
-/**
- * Click a building button in the bottom row by its name text.
- */
-export async function selectBuilding(page: Page, name: string): Promise<void> {
-  const btn = buildingButtons(page).filter({ hasText: new RegExp(name, 'i') });
-  await btn.first().click();
-}
-
-/**
- * Click the Inspect button in the toolbar (first button in top row).
- */
-export async function selectInspect(page: Page): Promise<void> {
-  await topRowButtons(page).first().click();
-}
-
-/**
- * Click the Bulldoze/Purge button in the toolbar (last button in top row).
- */
-export async function selectBulldoze(page: Page): Promise<void> {
-  await topRowButtons(page).last().click();
+  const dateEl = page.locator('header .font-mono').first();
+  return (await dateEl.innerText()).trim();
 }
 
 /**
  * Click near the center of the game canvas.
- * Returns the bounding box for reference.
  */
 export async function clickCanvasCenter(page: Page): Promise<void> {
   const canvasEl = canvas(page);
@@ -279,20 +234,3 @@ export async function clickCanvasAt(page: Page, offsetX: number, offsetY: number
     },
   });
 }
-
-// ── Constants ────────────────────────────────────────────────────────────────
-
-/** Number of toolbar categories (Housing, Industry, Power, Services, Govt, Military, Infra). */
-export const CATEGORY_COUNT = 7;
-
-/** Total top-row buttons: 1 Inspect + 7 categories + 1 Bulldoze. */
-export const TOP_ROW_BUTTON_COUNT = 9;
-
-/** Number of housing buildings (default category on load). */
-export const HOUSING_BUILDING_COUNT = 7;
-
-/** Starting money for a new game. */
-export const STARTING_MONEY = 2000;
-
-/** Bulldoze cost (must match CanvasGestureManager.BULLDOZE_COST). */
-export const BULLDOZE_COST = 20;
