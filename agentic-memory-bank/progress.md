@@ -148,11 +148,24 @@
 - [x] Autosave every 60s
 - [x] sql.js WASM backend with localStorage fallback
 
+### Gameplay Polish (PR #14 — COMPLETE)
+- [x] Sky gradient with dawn/noon/sunset/night color interpolation
+- [x] Sun/moon celestial body rendering (glow + crescent cutout)
+- [x] Worker idle bob animation (sine-based per-citizen oscillation)
+- [x] Reduced darkness: lighter grid fills, night overlay 0.45→0.25
+- [x] Terrain features as ECS entities with edge-biased mountain placement
+- [x] Radial menu backdrop dismiss fix (Build + Inspect menus)
+- [x] Worker tap info panel fix (3-pass citizen search)
+- [x] Toast dedup (10s), rate limiting (3s), max 2 visible
+- [x] Event pacing: cooldown 25→60 ticks, probability 12%→8%, Pravda 45s→90s
+- [x] Radial INSPECT/HOUSEHOLD context menus (both Build and Inspect radials)
+
 ### Infrastructure
 - [x] Vite 7 + TypeScript 5.9 strict mode + Biome
-- [x] **2042 unit tests** passing across 62 test files (Vitest + happy-dom)
+- [x] **2328 unit tests** passing across 73 test files (Vitest + happy-dom)
 - [x] GitHub Actions CI + GitHub Pages auto-deploy
 - [x] Asset URLs use `import.meta.env.BASE_URL` for subdirectory deployments
+- [x] SonarCloud integration (PR #13)
 
 ## What's Left to Build
 
@@ -160,25 +173,20 @@
 - [ ] PWA manifest + service worker
 - [ ] Medal ceremony animations in GameOverModal
 - [ ] Color-blind accessibility mode
-- [ ] Notification log spatial panning
-- [ ] Consumer goods marketplace UI
-- [ ] Mining Expedition minigame (8th type)
-- [ ] Transport infrastructure (dirt paths, road depot, rail depot, motor pool)
+- [ ] Notification log with spatial panning (camera pan to event source)
+- [ ] Consumer goods marketplace UI (system exists from PR #12, no dedicated panel)
+- [ ] Tabbed dossier main menu (manila-folder tabs: New Game | Load | Settings | Credits)
 
-### Design Doc Gaps (cosmetic/edge-case)
+### Design Doc Gaps
 - [ ] Blat KGB risk mechanic (design spec: 2% arrest risk per point above threshold)
-- [ ] Overstaffing diminishing returns
 - [ ] Cold storage reduced spoilage
-- [ ] Gender-aware labor categories (women lower trudodni tier)
-- [ ] Disease system for demographic ticks
-- [ ] Citizen Dossier modal (tap on citizen → full page)
-- [ ] Radial INSPECT/HOUSEHOLD context menus (currently only BUILD context)
+- [ ] Citizen Dossier modal (tap on citizen → full page with stats/history)
+- [ ] Universal context-sensitive bottom panel (per ui-ux.md spec)
 
 ## Test & Build Status
-- **2144 tests passing, 67 test files** (+102 tests, +5 files from playtest fix session)
+- **2328 tests passing, 73 test files** (PR #14 added terrain ECS + toast + event tests)
 - Typecheck clean (tsc --noEmit)
-- Production build succeeds (897 KB main JS, 261 KB gzip)
-- Biome 100% clean (308 files, 0 errors, 0 warnings)
+- Biome clean (only pre-existing warnings)
 - 6 monolithic files decomposed into focused sub-modules
 
 ## Known Issues

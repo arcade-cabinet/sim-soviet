@@ -2,11 +2,14 @@
  * Canvas2DRenderer — Main rendering orchestrator for the isometric game view.
  *
  * Rendering layers (back-to-front):
- *   0. Ground fill (solid color per season)
+ *   0. Sky gradient (screen-space, time-of-day driven)
+ *   0.1 Sun/moon celestial body (screen-space)
  *   1. Grid diamonds (semi-transparent, shown during placement)
  *   2. Building sprites (sorted by depth key = gridX + gridY)
+ *   2.3 Citizen sprites/dots (with idle bob animation)
  *   3. Placement preview (green/red ghost)
  *   4. Weather particles (screen-space, added later)
+ *   5. Day/night overlay (screen-space)
  */
 
 import { getBuildingDef } from '@/data/buildingDefs';
@@ -65,6 +68,87 @@ const CITIZEN_CLASS_COLORS: Record<string, string> = {
   prisoner: '#616161',
 };
 
+// ── Sky color presets ──────────────────────────────────────────────────────
+
+interface SkyColors {
+  top: string;
+  bottom: string;
+}
+
+const SKY_NOON: SkyColors = { top: '#4a6fa5', bottom: '#87CEEB' };
+const SKY_SUNSET: SkyColors = { top: '#2d1b4e', bottom: '#c0392b' };
+const SKY_NIGHT: SkyColors = { top: '#0a0a1a', bottom: '#1a1a2e' };
+const SKY_DAWN: SkyColors = { top: '#3a2a5e', bottom: '#d4956b' };
+
+/** Parse a hex color string to [r, g, b]. */
+function hexToRgb(hex: string): [number, number, number] {
+  const n = Number.parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
+}
+
+/** Convert [r, g, b] to a hex color string. */
+function rgbToHex(r: number, g: number, b: number): string {
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
+/** Linearly interpolate between two hex colors. */
+function lerpColor(a: string, b: string, t: number): string {
+  const [ar, ag, ab] = hexToRgb(a);
+  const [br, bg, bb] = hexToRgb(b);
+  return rgbToHex(
+    Math.round(ar + (br - ar) * t),
+    Math.round(ag + (bg - ag) * t),
+    Math.round(ab + (bb - ab) * t)
+  );
+}
+
+/** Interpolate sky colors based on dayProgress (0=midnight, 0.5=noon, 1=midnight). */
+function getSkyColors(dayProgress: number): SkyColors {
+  // Keyframes: 0.0=midnight, 0.2=dawn start, 0.3=sunrise, 0.5=noon, 0.7=sunset, 0.8=dusk, 1.0=midnight
+  if (dayProgress < 0.2) {
+    // Night
+    return SKY_NIGHT;
+  }
+  if (dayProgress < 0.3) {
+    // Dawn transition (night → dawn)
+    const t = (dayProgress - 0.2) / 0.1;
+    return {
+      top: lerpColor(SKY_NIGHT.top, SKY_DAWN.top, t),
+      bottom: lerpColor(SKY_NIGHT.bottom, SKY_DAWN.bottom, t),
+    };
+  }
+  if (dayProgress < 0.4) {
+    // Sunrise (dawn → noon)
+    const t = (dayProgress - 0.3) / 0.1;
+    return {
+      top: lerpColor(SKY_DAWN.top, SKY_NOON.top, t),
+      bottom: lerpColor(SKY_DAWN.bottom, SKY_NOON.bottom, t),
+    };
+  }
+  if (dayProgress < 0.6) {
+    // Full daytime
+    return SKY_NOON;
+  }
+  if (dayProgress < 0.7) {
+    // Afternoon → sunset
+    const t = (dayProgress - 0.6) / 0.1;
+    return {
+      top: lerpColor(SKY_NOON.top, SKY_SUNSET.top, t),
+      bottom: lerpColor(SKY_NOON.bottom, SKY_SUNSET.bottom, t),
+    };
+  }
+  if (dayProgress < 0.8) {
+    // Sunset → night
+    const t = (dayProgress - 0.7) / 0.1;
+    return {
+      top: lerpColor(SKY_SUNSET.top, SKY_NIGHT.top, t),
+      bottom: lerpColor(SKY_SUNSET.bottom, SKY_NIGHT.bottom, t),
+    };
+  }
+  // Night
+  return SKY_NIGHT;
+}
+
 export class Canvas2DRenderer {
   public camera: Camera2D;
   public particles: ParticleSystem2D;
@@ -73,6 +157,7 @@ export class Canvas2DRenderer {
   private ctx: CanvasRenderingContext2D;
   private animFrameId = 0;
   private dayProgress = 0.5; // 0=midnight, 0.5=noon, 1=midnight
+  private frameCount = 0;
 
   /** Currently hovered grid cell (for highlight). */
   public hoverCell: { x: number; y: number } | null = null;
@@ -204,13 +289,16 @@ export class Canvas2DRenderer {
   /** Main render frame. */
   private render = (): void => {
     this.animFrameId = requestAnimationFrame(this.render);
+    this.frameCount++;
 
     const { ctx } = this;
     const { viewportWidth: vw, viewportHeight: vh } = this.camera;
 
-    // Layer 0: Ground fill (void behind terrain tiles)
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, vw, vh);
+    // Layer 0: Sky gradient (screen-space, time-of-day driven)
+    this.drawSkyGradient(vw, vh);
+
+    // Layer 0.1: Celestial body (sun/moon)
+    this.drawCelestialBody(vw, vh);
 
     // Apply camera transform for world-space drawing
     this.camera.applyTransform(ctx);
@@ -252,12 +340,69 @@ export class Canvas2DRenderer {
     this.particles.update(ctx);
   };
 
+  /** Draw a vertical sky gradient based on time of day. */
+  private drawSkyGradient(vw: number, vh: number): void {
+    const { ctx } = this;
+    const colors = getSkyColors(this.dayProgress);
+    const grad = ctx.createLinearGradient(0, 0, 0, vh);
+    grad.addColorStop(0, colors.top);
+    grad.addColorStop(1, colors.bottom);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, vw, vh);
+  }
+
+  /** Draw a sun or moon in screen-space based on time of day. */
+  private drawCelestialBody(vw: number, vh: number): void {
+    const { ctx } = this;
+
+    const isDay = this.dayProgress > 0.2 && this.dayProgress < 0.8;
+
+    // Compute arc position: body rises at 0.2/0.8, peaks at 0.5/0.0
+    let progress: number;
+    if (isDay) {
+      progress = (this.dayProgress - 0.2) / 0.6;
+    } else {
+      // Night: 0.8→1.0→0.0→0.2 mapped to 0→1
+      const nightPhase = this.dayProgress >= 0.8 ? this.dayProgress - 0.8 : this.dayProgress + 0.2;
+      progress = nightPhase / 0.4;
+    }
+
+    const arcX = progress * vw;
+    const peakY = vh * 0.08;
+    const baseY = vh * 0.25;
+    const arcY = baseY - Math.sin(progress * Math.PI) * (baseY - peakY);
+
+    if (isDay) {
+      // Sun: warm yellow circle with glow
+      ctx.save();
+      ctx.fillStyle = '#f4d03f';
+      ctx.shadowColor = '#f4d03f';
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.arc(arcX, arcY, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else {
+      // Moon: pale white circle with dark crescent cutout
+      const skyColors = getSkyColors(this.dayProgress);
+      ctx.fillStyle = '#e8e8f0';
+      ctx.beginPath();
+      ctx.arc(arcX, arcY, 10, 0, Math.PI * 2);
+      ctx.fill();
+      // Crescent cutout using sky background color
+      ctx.fillStyle = skyColors.top;
+      ctx.beginPath();
+      ctx.arc(arcX + 4, arcY - 2, 9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   /** Semi-transparent dark overlay that intensifies at night. */
   private drawDayNightOverlay(): void {
     // dayProgress: 0 = midnight, 0.5 = noon, 1 = midnight
-    // Map to a darkness alpha: 0 at noon, ~0.5 at midnight
+    // Map to a darkness alpha: 0 at noon, max 0.25 at midnight
     const distFromNoon = Math.abs(this.dayProgress - 0.5) * 2; // 0..1
-    const alpha = distFromNoon * distFromNoon * 0.45; // quadratic falloff, max 0.45
+    const alpha = distFromNoon * distFromNoon * 0.25; // quadratic falloff, max 0.25
     if (alpha < 0.01) return;
 
     const { ctx } = this;
@@ -289,12 +434,12 @@ export class Canvas2DRenderer {
 
         const cell = this.grid.getCell(x, y);
 
-        // Fill tile
+        // Fill tile (lightened from original #333/#2e2e2e)
         drawDiamond(ctx, screen.x, screen.y);
         if (cell?.type) {
-          ctx.fillStyle = '#333333';
+          ctx.fillStyle = '#3a3a3a';
         } else {
-          ctx.fillStyle = '#2e2e2e';
+          ctx.fillStyle = '#343434';
         }
         ctx.fill();
         ctx.stroke();
@@ -558,8 +703,12 @@ export class Canvas2DRenderer {
         const offsetX = (col - 2) * spacing;
         const offsetY = row * spacing;
 
+        // Idle bob: deterministic per-citizen phase, ±1.5px vertical oscillation
+        const bobPhase = (gridX * 7 + gridY * 13 + i * 3) % 100;
+        const bobOffset = Math.sin((this.frameCount + bobPhase) * 0.03) * 1.5;
+
         const cx = baseCx + offsetX;
-        const cy = baseCy + offsetY;
+        const cy = baseCy + offsetY + bobOffset;
 
         // Try sprite rendering first
         if (useSprites) {

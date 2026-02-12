@@ -19,3 +19,10 @@ export { ageCategoryFromAge, laborCapacityForAge, memberRoleForAge } from './dem
 export type { Difficulty, DvorMemberSeed } from './settlementFactories';
 export { createDvor, createStartingSettlement } from './settlementFactories';
 export { createGrid, createMetaStore, createResourceStore, createTile } from './storeFactories';
+export {
+  clearTerrainFeatures,
+  createForest,
+  createMarsh,
+  createMountain,
+  createRiver,
+} from './terrainFeatureFactories';

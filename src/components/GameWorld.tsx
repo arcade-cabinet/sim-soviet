@@ -307,6 +307,8 @@ export function GameWorld({
     // Generate terrain features (low-profile on border ring, prominent in interior fringe)
     const terrainFeatures = generateTerrain(GRID_SIZE, rng);
     renderer.featureTiles.setFeatures(terrainFeatures);
+    // Also sync ECS terrain entities (mountains, forests, etc. created by MapSystem)
+    renderer.featureTiles.syncFromECS();
     const terrainSpriteNames = getTerrainSpriteNames(terrainFeatures);
 
     // Also preload terrain overlay sprites based on map interior features

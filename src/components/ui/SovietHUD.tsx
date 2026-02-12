@@ -48,7 +48,7 @@ export function SovietHUD({ onMenuToggle, onNotificationLogToggle }: SovietHUDPr
   const powerCritical = snap.powerUsed > snap.power;
 
   return (
-    <div className="w-full bg-[#2a2a2a] border-b-2 border-[#8b0000] shadow-[0_4px_12px_rgba(0,0,0,0.6)] select-none">
+    <header className="w-full bg-[#2a2a2a] border-b-2 border-[#8b0000] shadow-[0_4px_12px_rgba(0,0,0,0.6)] select-none">
       <div className="flex items-center justify-between gap-1 px-2 py-1.5">
         {/* Settlement / Date */}
         <div className="min-w-0 flex-shrink-0">
@@ -136,7 +136,7 @@ export function SovietHUD({ onMenuToggle, onNotificationLogToggle }: SovietHUDPr
           </button>
         </div>
       </div>
-    </div>
+    </header>
   );
 }
 

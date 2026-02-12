@@ -341,19 +341,13 @@ export function RadialInspectMenu() {
   };
 
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: backdrop dismiss is supplementary
-    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop overlay dismiss pattern
-    <div
-      className="fixed inset-0 z-50"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) handleClose();
-      }}
-    >
+    <div className="fixed inset-0 z-50">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="absolute inset-0 bg-black/50"
+        onClick={handleClose}
       />
 
       <motion.div

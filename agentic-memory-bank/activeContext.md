@@ -21,26 +21,23 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 
 **Important**: Vite root is `./app`, so static assets must be in `app/public/` (not project-root `public/`). Asset URLs must use `import.meta.env.BASE_URL` prefix (not hardcoded `/`) to work on GitHub Pages subdirectory deployment.
 
-## Recently Completed: Monolith Decomposition + Biome Compliance
+## Recently Completed: Gameplay Polish (PR #14)
 
-### 6 Monolithic Files Decomposed
-- [x] **factories.ts** (785→29 lines): split into `src/ecs/factories/` — `buildingFactories.ts`, `citizenFactories.ts`, `settlementFactories.ts`, `storeFactories.ts`, `demographics.ts` + barrel `index.ts`
-- [x] **App.tsx** (341→245 lines): extracted `app/hooks/useSimCallbacks.ts` (103 lines) + `app/components/GameModals.tsx` (137 lines)
-- [x] **SimulationEngine.ts** (~600 lines removed): extracted `src/game/engine/` — `serializeEngine.ts`, `achievementTick.ts`, `annualReportTick.ts`, `minigameTick.ts`
-- [x] **DrawerPanel.tsx**: 10+ section sub-components (`DrawerHeader`, `ArchivesSection`, `AudioSection`, `SettlementSection`, `PopulationRegistrySection`, `QuotaSection`, `CollectiveFocusSection`, `AlertsSection`, `PersonnelFileSection`) + `buildAlerts()` pure function + `thresholdColor()` utility
-- [x] **constructionSystem.ts**: extracted `advanceBuilding()`, `resolveCosts()`, `hasSufficientMaterials()`, `deductMaterials()`, `perTickCost()`
-- [x] **WorkerSystem.ts**: extracted `processCitizens()`, `processDefections()`, `runGovernorTick()` private methods from monolithic `tick()`
+### 9 Gameplay/Visual Fixes
+- [x] **Sky gradient** — dawn/noon/sunset/night interpolation replaces flat void
+- [x] **Sun/moon** — celestial body with glow (sun) and crescent cutout (moon)
+- [x] **Worker idle bob** — sine-based vertical oscillation per citizen
+- [x] **Darkness reduction** — lighter grid, night overlay 0.45→0.25
+- [x] **Terrain ECS entities** — TerrainFeatureComponent, factory functions, edge-biased mountains
+- [x] **Radial menu fix** — backdrop dismiss works on both Build and Inspect menus
+- [x] **Worker tap fix** — 3-pass citizen search (exact → home → 1-tile radius)
+- [x] **Toast pacing** — dedup (10s), rate limit (3s), max 2 visible
+- [x] **Event pacing** — cooldown 25→60, prob 12%→8%, Pravda 45s→90s
 
-### Biome 100% Clean
-- [x] All cognitive complexity violations resolved (max 15 threshold)
-- [x] Template literal rules fixed (`settlementFactories.ts`)
-- [x] Array index key warnings fixed (`DrawerPanel.tsx`)
-- [x] **308 files checked, 0 errors, 0 warnings**
-
-### Previous Session: Playtest TDD Fixes + Code Review
-- [x] Population display, food balance, resource defaults, 5 UI callbacks
-- [x] Governor dead code, array mutation, unsafe casts, type safety
-- [x] +102 integration tests across 7 new test files
+### Previous: Economy, Accessibility, Marketplace, Disease (PR #12)
+- [x] Full economy system, accessibility features, marketplace, disease system
+- [x] Character sprites, transport system (PR #9)
+- [x] Monolith decomposition + Biome compliance
 
 ### All Previously Complete Systems (verified working)
 - [x] Material deduction during construction (constructionSystem.ts perTickCost/hasSufficientMaterials)
@@ -110,7 +107,11 @@ BabylonJS/Reactylon fully removed. The game uses a **Canvas 2D** renderer with *
 - **PR #1–#4**: All MERGED (Canvas 2D, deploy fix, asset paths, game systems)
 - **PR #5**: Complete all game systems — 1812 tests — MERGED
 - **PR #8**: Audio mute toggle — MERGED
-- **PR #9**: Playtest TDD fixes + decomposition — branch `fix/playtest-tdd-demographics-callbacks` — OPEN
+- **PR #9**: Character sprites, transport, gameplay polish — MERGED
+- **PR #11**: E2E test suite performance fix — MERGED
+- **PR #12**: Economy, accessibility, marketplace, disease — MERGED
+- **PR #13**: SonarCloud project properties — MERGED
+- **PR #14**: 9 gameplay polish fixes — OPEN
 
 ## Active Decisions
 

@@ -7,7 +7,8 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? 'list' : 'html',
-  timeout: 15_000,
+  // 30s per test — the 5-step new-game flow takes ~5-8s on CI
+  timeout: 30_000,
 
   expect: {
     timeout: 5_000,
@@ -20,8 +21,9 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    actionTimeout: 5_000,
-    navigationTimeout: 10_000,
+    // 10s action timeout — each NewGameFlow step click needs animation settle time
+    actionTimeout: 10_000,
+    navigationTimeout: 15_000,
   },
 
   projects: [
