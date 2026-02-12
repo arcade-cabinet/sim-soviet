@@ -70,18 +70,67 @@ export const pravdaTicker = (page: Page) => page.locator('.pravda-ticker');
 export const gameOverModal = (page: Page) =>
   page.locator('.intro-overlay').filter({ hasText: /Order of Lenin|KGB Notice/ });
 
+// ── Condition-Based Wait Helpers ─────────────────────────────────────────────
+
+/** Wait for the game canvas to be rendered and interactive. */
+export async function waitForGameReady(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const canvas = document.querySelector('#gameCanvas') as HTMLCanvasElement | null;
+      if (!canvas) return false;
+      return canvas.width > 0 && canvas.height > 0;
+    },
+    undefined,
+    { timeout: 10_000 },
+  );
+}
+
+/** Wait for the game simulation to advance (date text changes). */
+export async function waitForSimTick(page: Page, maxMs = 5000): Promise<void> {
+  const initialDate = await getDateText(page);
+  await page.waitForFunction(
+    (prev) => {
+      const header = document.querySelector('header');
+      if (!header) return false;
+      const match = header.innerText.match(/📅\s*([\w\s]+\d{4})/);
+      const current = match ? match[1].trim() : '';
+      return current !== prev;
+    },
+    initialDate,
+    { timeout: maxMs },
+  );
+}
+
+/** Wait for money to change from a known value. */
+export async function waitForMoneyChange(
+  page: Page,
+  previousMoney: number,
+  maxMs = 5000,
+): Promise<void> {
+  await page.waitForFunction(
+    (prev) => {
+      const header = document.querySelector('header');
+      if (!header) return false;
+      const match = header.innerText.match(/₽\s*(\d+)/);
+      const current = match ? parseInt(match[1], 10) : -1;
+      return current !== prev;
+    },
+    previousMoney,
+    { timeout: maxMs },
+  );
+}
+
 // ── Action Helpers ───────────────────────────────────────────────────────────
 
 /**
  * Navigate to the app and start the game by clicking the start button.
- * Waits for the intro modal to disappear.
+ * Waits for the intro modal to disappear and the canvas to be ready.
  */
 export async function startGame(page: Page): Promise<void> {
   await page.goto('/');
   await startButton(page).click();
   await introOverlay(page).waitFor({ state: 'hidden', timeout: 3000 });
-  // Brief wait for game systems to initialize
-  await page.waitForTimeout(500);
+  await waitForGameReady(page);
 }
 
 /**

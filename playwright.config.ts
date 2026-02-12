@@ -4,11 +4,13 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 2 : undefined,
+  reporter: process.env.CI ? 'list' : 'html',
+  timeout: 15_000,
 
   expect: {
+    timeout: 5_000,
     toHaveScreenshot: {
       maxDiffPixelRatio: 0.05,
     },
@@ -18,6 +20,8 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    actionTimeout: 5_000,
+    navigationTimeout: 10_000,
   },
 
   projects: [
@@ -55,7 +59,9 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'pnpm dev',
+    command: process.env.CI
+      ? 'pnpm exec vite preview --port 3000'
+      : 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 30000,

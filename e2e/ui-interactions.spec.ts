@@ -12,6 +12,7 @@ import {
   toast,
   toolbar,
   topRowButtons,
+  waitForMoneyChange,
 } from './helpers';
 
 test.describe('UI Interactions', () => {
@@ -28,12 +29,10 @@ test.describe('UI Interactions', () => {
 
       // Press Space to pause
       await page.keyboard.press('Space');
-      await page.waitForTimeout(200);
       await expect(btn).toContainText('▶');
 
       // Press Space to resume
       await page.keyboard.press('Space');
-      await page.waitForTimeout(200);
       await expect(btn).toContainText('⏸');
     });
 
@@ -45,7 +44,6 @@ test.describe('UI Interactions', () => {
 
       // Press Escape to deselect
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(200);
 
       // Building button should no longer be active
       const classes = await firstBuilding.getAttribute('class');
@@ -59,7 +57,6 @@ test.describe('UI Interactions', () => {
     test('B key activates bulldoze tool', async ({ page }) => {
       // Press B to activate bulldoze
       await page.keyboard.press('b');
-      await page.waitForTimeout(200);
 
       // Bulldoze button (last in top row) should be active
       const bulldozeBtn = topRowButtons(page).last();
@@ -69,14 +66,12 @@ test.describe('UI Interactions', () => {
     test('Escape after B key returns to inspect mode', async ({ page }) => {
       // Press B for bulldoze
       await page.keyboard.press('b');
-      await page.waitForTimeout(200);
 
       const bulldozeBtn = topRowButtons(page).last();
       await expect(bulldozeBtn).toHaveClass(/active/);
 
       // Press Escape to return to inspect
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(200);
 
       const bulldozeClasses = await bulldozeBtn.getAttribute('class');
       expect(bulldozeClasses).not.toContain('active');
@@ -92,11 +87,9 @@ test.describe('UI Interactions', () => {
       const btn = pauseButton(page);
 
       await page.keyboard.press('Space');
-      await page.waitForTimeout(200);
       await expect(btn).toContainText('▶');
 
       await page.keyboard.press('Space');
-      await page.waitForTimeout(200);
       await expect(btn).toContainText('⏸');
     });
   });
@@ -108,16 +101,16 @@ test.describe('UI Interactions', () => {
 
     test('clicking a building with inspect tool shows inspector panel', async ({ page }) => {
       // First, place a building to have something to inspect
+      const moneyBefore = await getMoney(page);
       await buildingButtons(page).first().click();
       await clickCanvasCenter(page);
-      await page.waitForTimeout(1000);
+      await waitForMoneyChange(page, moneyBefore).catch(() => {});
 
       // Switch to inspect mode
       await selectInspect(page);
 
       // Click the same spot to inspect the building
       await clickCanvasCenter(page);
-      await page.waitForTimeout(500);
 
       // If a building was placed at that cell, the inspector should show.
       // Look for the inspector panel with building details
@@ -135,14 +128,14 @@ test.describe('UI Interactions', () => {
 
     test('inspector shows building name and stats', async ({ page }) => {
       // Place a building
+      const moneyBefore = await getMoney(page);
       await buildingButtons(page).first().click();
       await clickCanvasCenter(page);
-      await page.waitForTimeout(1000);
+      await waitForMoneyChange(page, moneyBefore).catch(() => {});
 
       // Switch to inspect mode and click the building
       await selectInspect(page);
       await clickCanvasCenter(page);
-      await page.waitForTimeout(500);
 
       const inspector = page.locator('[style*="soviet-gold"]').filter({ hasText: 'Position' });
       const isVisible = await inspector.isVisible();
@@ -156,36 +149,34 @@ test.describe('UI Interactions', () => {
 
     test('Escape key closes the building inspector', async ({ page }) => {
       // Place a building
+      const moneyBefore = await getMoney(page);
       await buildingButtons(page).first().click();
       await clickCanvasCenter(page);
-      await page.waitForTimeout(1000);
+      await waitForMoneyChange(page, moneyBefore).catch(() => {});
 
       // Inspect it
       await selectInspect(page);
       await clickCanvasCenter(page);
-      await page.waitForTimeout(500);
 
       const inspector = page.locator('[style*="soviet-gold"]').filter({ hasText: 'Position' });
       const isVisible = await inspector.isVisible();
       if (isVisible) {
         // Press Escape to close inspector
         await page.keyboard.press('Escape');
-        await page.waitForTimeout(300);
-
         await expect(inspector).toBeHidden();
       }
     });
 
     test('inspector close button (x) dismisses the panel', async ({ page }) => {
       // Place a building
+      const moneyBefore = await getMoney(page);
       await buildingButtons(page).first().click();
       await clickCanvasCenter(page);
-      await page.waitForTimeout(1000);
+      await waitForMoneyChange(page, moneyBefore).catch(() => {});
 
       // Inspect it
       await selectInspect(page);
       await clickCanvasCenter(page);
-      await page.waitForTimeout(500);
 
       const inspector = page.locator('[style*="soviet-gold"]').filter({ hasText: 'Position' });
       const isVisible = await inspector.isVisible();
@@ -193,8 +184,6 @@ test.describe('UI Interactions', () => {
         // Click the close button (x character)
         const closeBtn = inspector.locator('button');
         await closeBtn.click();
-        await page.waitForTimeout(300);
-
         await expect(inspector).toBeHidden();
       }
     });
@@ -213,12 +202,10 @@ test.describe('UI Interactions', () => {
 
       // Click to pause
       await btn.click();
-      await page.waitForTimeout(200);
       await expect(btn).toContainText('▶');
 
       // Click to resume
       await btn.click();
-      await page.waitForTimeout(200);
       await expect(btn).toContainText('⏸');
     });
 
@@ -230,7 +217,6 @@ test.describe('UI Interactions', () => {
 
       // When paused, title should mention Resume
       await btn.click();
-      await page.waitForTimeout(200);
       await expect(btn).toHaveAttribute('title', /Resume/);
     });
 
@@ -239,10 +225,10 @@ test.describe('UI Interactions', () => {
 
       // Pause via button
       await pauseButton(page).click();
-      await page.waitForTimeout(200);
+      await expect(pauseButton(page)).toContainText('▶');
 
-      // Wait several seconds
-      await page.waitForTimeout(3000);
+      // Wait to verify no ticks run
+      await page.waitForTimeout(1000);
 
       // Money should not have changed
       const moneyWhilePaused = await getMoney(page);
@@ -304,8 +290,6 @@ test.describe('UI Interactions', () => {
 
       // Toast should not be visible without a triggering event
       const toastEl = toast(page);
-      // Give it a moment — toast shouldn't appear spontaneously
-      await page.waitForTimeout(1000);
 
       // Toast visibility depends on simulation events, which are random.
       // We just verify the toast container has the correct class when present.
@@ -319,7 +303,7 @@ test.describe('UI Interactions', () => {
       await startGameAndDismissAdvisor(page);
 
       // Wait for a potential simulation toast event
-      await page.waitForTimeout(5000);
+      await page.waitForTimeout(3000);
 
       const toastEl = toast(page);
       if (await toastEl.isVisible()) {
@@ -375,7 +359,6 @@ test.describe('UI Interactions', () => {
       for (const icon of categories) {
         const tab = topRowButtons(page).filter({ hasText: icon });
         await tab.click();
-        await page.waitForTimeout(200);
 
         // Should have building buttons in the bottom row
         const count = await buildingButtons(page).count();

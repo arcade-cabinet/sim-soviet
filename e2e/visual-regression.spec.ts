@@ -24,7 +24,7 @@ test.describe('Visual Regression', () => {
     test('intro modal screenshot on load', async ({ page }) => {
       await page.goto('/');
       // Wait for fonts and layout to settle
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
 
       await expect(introOverlay(page)).toBeVisible();
       await expect(page).toHaveScreenshot('intro-modal.png', {
@@ -34,7 +34,7 @@ test.describe('Visual Regression', () => {
 
     test('dossier card screenshot', async ({ page }) => {
       await page.goto('/');
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
 
       const dossierEl = page.locator('.dossier');
       await expect(dossierEl).toBeVisible();
@@ -43,7 +43,7 @@ test.describe('Visual Regression', () => {
 
     test('TOP SECRET stamp screenshot', async ({ page }) => {
       await page.goto('/');
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
 
       const stamp = page.locator('.stamp');
       await expect(stamp).toBeVisible();
@@ -85,7 +85,7 @@ test.describe('Visual Regression', () => {
   test.describe('Toolbar', () => {
     test('toolbar default state screenshot', async ({ page }) => {
       await page.goto('/');
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
 
       const nav = toolbar(page);
       await expect(nav).toBeVisible();
@@ -97,7 +97,6 @@ test.describe('Visual Regression', () => {
 
       // Select a building
       await buildingButtons(page).first().click();
-      await page.waitForTimeout(500);
 
       const nav = toolbar(page);
       await expect(nav).toHaveScreenshot('toolbar-building-selected.png');
@@ -109,7 +108,6 @@ test.describe('Visual Regression', () => {
       // Select bulldoze
       const bulldozeBtn = page.locator('nav > div').first().locator('button').last();
       await bulldozeBtn.click();
-      await page.waitForTimeout(500);
 
       const nav = toolbar(page);
       await expect(nav).toHaveScreenshot('toolbar-bulldoze-selected.png');
@@ -125,7 +123,6 @@ test.describe('Visual Regression', () => {
         .locator('button')
         .filter({ hasText: '🏭' });
       await industryTab.click();
-      await page.waitForTimeout(500);
 
       const nav = toolbar(page);
       await expect(nav).toHaveScreenshot('toolbar-industry-category.png');
@@ -135,7 +132,7 @@ test.describe('Visual Regression', () => {
   test.describe('Top Bar', () => {
     test('top bar screenshot', async ({ page }) => {
       await page.goto('/');
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
 
       const header = topBar(page);
       await expect(header).toBeVisible();
@@ -147,7 +144,6 @@ test.describe('Visual Regression', () => {
 
       // Pause the game
       await page.keyboard.press('Space');
-      await page.waitForTimeout(500);
 
       const header = topBar(page);
       await expect(header).toHaveScreenshot('top-bar-paused.png');
@@ -157,7 +153,7 @@ test.describe('Visual Regression', () => {
   test.describe('Quota HUD', () => {
     test('quota HUD screenshot', async ({ page }) => {
       await page.goto('/');
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
 
       const hud = quotaHud(page);
       await expect(hud).toBeVisible();
@@ -169,7 +165,6 @@ test.describe('Visual Regression', () => {
     test('advisor panel screenshot', async ({ page }) => {
       await page.goto('/');
       await startButton(page).click();
-      await page.waitForTimeout(1000);
 
       const advisor = page.locator('.advisor-panel');
       await expect(advisor).toBeVisible({ timeout: 3000 });
@@ -180,7 +175,7 @@ test.describe('Visual Regression', () => {
   test.describe('CRT Effects', () => {
     test('full page with CRT overlay screenshot', async ({ page }) => {
       await page.goto('/');
-      await page.waitForTimeout(1500);
+      await page.waitForLoadState('networkidle');
 
       // Full page screenshot captures CRT overlay and scanlines
       await expect(page).toHaveScreenshot('crt-effects-intro.png', {
