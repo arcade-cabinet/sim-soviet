@@ -191,8 +191,8 @@ export interface DifficultyMultipliers {
  * Result of the passive per-tick blat KGB risk check.
  *
  * High blat connections attract KGB attention. Above BLAT_SAFE_THRESHOLD,
- * each excess point carries a 2% investigation chance per tick. At very
- * high levels (>10), there is also a 1% arrest risk per tick.
+ * each excess point carries a 1% investigation chance per tick. At very
+ * high levels (>30), there is also a 1% arrest risk per tick.
  */
 export interface BlatKgbResult {
   /** Whether a KGB investigation was triggered (→ black mark) */
@@ -204,10 +204,13 @@ export interface BlatKgbResult {
 }
 
 /** Blat connections at or below this level are safe from KGB scrutiny. */
-export const BLAT_SAFE_THRESHOLD = 5;
+export const BLAT_SAFE_THRESHOLD = 15;
 
 /** Blat connections above this level risk outright arrest. */
-export const BLAT_ARREST_THRESHOLD = 10;
+export const BLAT_ARREST_THRESHOLD = 30;
+
+/** KGB investigation probability per excess blat point per tick. */
+export const KGB_INVESTIGATION_CHANCE_PER_POINT = 0.01;
 
 export interface EconomyTickResult {
   trudodniEarned: number;
@@ -1032,9 +1035,9 @@ export class EconomySystem {
    * High connections mean you know people, and knowing people means
    * someone, somewhere, is writing a report about you.
    *
-   * - Below BLAT_SAFE_THRESHOLD (5): safe, comrade. For now.
-   * - Above threshold: 2% investigation chance per excess point per tick.
-   * - Above BLAT_ARREST_THRESHOLD (10): additional 1% arrest chance per tick.
+   * - Below BLAT_SAFE_THRESHOLD (15): safe, comrade. For now.
+   * - Above threshold: 1% investigation chance per excess point per tick.
+   * - Above BLAT_ARREST_THRESHOLD (30): additional 1% arrest chance per tick.
    */
   checkBlatKgbRisk(): BlatKgbResult | null {
     const connections = this.blat.connections;
@@ -1045,7 +1048,7 @@ export class EconomySystem {
     const rng = this.rng;
     const rand = () => rng.random();
     const excessPoints = connections - BLAT_SAFE_THRESHOLD;
-    const investigationChance = Math.min(1, excessPoints * 0.02);
+    const investigationChance = Math.min(1, excessPoints * KGB_INVESTIGATION_CHANCE_PER_POINT);
 
     let investigated = false;
     let arrested = false;

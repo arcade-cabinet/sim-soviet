@@ -62,13 +62,13 @@ export function GameOverModal({
             Buildings: <strong>{snap.buildingCount}</strong>
           </li>
           <li>
-            Treasury: <strong>{snap.money}</strong>
+            Treasury: <strong>{Math.round(snap.money)}</strong>
           </li>
           <li>
-            Food Stores: <strong>{snap.food}</strong>
+            Food Stores: <strong>{Math.round(snap.food)}</strong>
           </li>
           <li>
-            Vodka Reserves: <strong>{snap.vodka}</strong>
+            Vodka Reserves: <strong>{Math.round(snap.vodka)}</strong>
           </li>
         </ul>
 
