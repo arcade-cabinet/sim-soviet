@@ -86,8 +86,18 @@ export async function waitForGameReady(page: Page): Promise<void> {
 /**
  * Wait for the game simulation to advance (date text changes).
  * SovietHUD shows date as "MonthName YYYY" in a .font-mono element.
+ *
+ * Date changes every 30 game-ticks (1 month = 10 days × 3 ticks/day).
+ * At 1x speed (1 tick/sec) that's 30s. We bump speed to 3x first
+ * to get 3 ticks/sec → ~10s for a month change.
  */
-export async function waitForSimTick(page: Page, maxMs = 5000): Promise<void> {
+export async function waitForSimTick(page: Page, maxMs = 15_000): Promise<void> {
+  // Speed up the simulation to avoid 30+ second waits
+  const speed3x = page.locator('header').getByRole('button', { name: 'Speed 3x' });
+  if (await speed3x.isVisible().catch(() => false)) {
+    await speed3x.click();
+  }
+
   const initialDate = await getDateText(page);
   await page.waitForFunction(
     (prev) => {
