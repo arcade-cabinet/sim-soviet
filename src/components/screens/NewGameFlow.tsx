@@ -6,7 +6,7 @@
  */
 import { motion } from 'framer-motion';
 import { ArrowLeft, Shuffle } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { MALE_GIVEN_NAMES, SURNAMES_MALE } from '@/ai/names';
 import { generateCityName } from '@/content/worldbuilding';
 import { accent, DOCUMENT_FONT, parchment, SOVIET_FONT } from '@/design/tokens';
@@ -82,6 +82,10 @@ const MAP_SIZE_INFO: Record<MapSize, { label: string; tiles: string }> = {
   large: { label: 'Large', tiles: `${MAP_SIZES.large}x${MAP_SIZES.large}` },
 };
 
+const DIFFICULTY_KEYS = Object.keys(DIFFICULTY_PRESETS) as DifficultyLevel[];
+const MAP_SIZE_KEYS = Object.keys(MAP_SIZES) as MapSize[];
+const CONSEQUENCE_KEYS = Object.keys(CONSEQUENCE_INFO) as ConsequenceLevel[];
+
 function randomSeed(): string {
   const adjectives = [
     'glorious',
@@ -148,9 +152,9 @@ export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
     onStart(config);
   }, [onStart, config]);
 
-  const difficulties = useMemo(() => Object.keys(DIFFICULTY_PRESETS) as DifficultyLevel[], []);
-  const mapSizes = useMemo(() => Object.keys(MAP_SIZES) as MapSize[], []);
-  const consequences = useMemo(() => Object.keys(CONSEQUENCE_INFO) as ConsequenceLevel[], []);
+  const difficulties = DIFFICULTY_KEYS;
+  const mapSizes = MAP_SIZE_KEYS;
+  const consequences = CONSEQUENCE_KEYS;
 
   return (
     <motion.div
@@ -203,9 +207,10 @@ export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
             information. Inaccuracies will be noted in your personnel file.
           </p>
 
-          <FormField label="Full Name (Comrade)">
+          <FormField label="Full Name (Comrade)" htmlFor="playerName">
             <div className="flex gap-2">
               <input
+                id="playerName"
                 type="text"
                 value={config.playerName}
                 onChange={(e) => update('playerName', e.target.value)}
@@ -225,9 +230,10 @@ export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
             </div>
           </FormField>
 
-          <FormField label="Settlement Designation">
+          <FormField label="Settlement Designation" htmlFor="cityName">
             <div className="flex gap-2">
               <input
+                id="cityName"
                 type="text"
                 value={config.cityName}
                 onChange={(e) => update('cityName', e.target.value)}
@@ -469,15 +475,24 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+function FormField({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <div
+      <label
+        htmlFor={htmlFor}
         className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5"
         style={{ color: '#5a3d20' }}
       >
         {label}
-      </div>
+      </label>
       {children}
     </div>
   );
