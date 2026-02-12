@@ -70,6 +70,4 @@ export function initializeSettlementPopulation(difficulty: GameDifficulty = 'com
       dvorId
     });
   }
-
-  console.log(`Initialized settlement with ${workerCount} workers, ${childCount} children, ${elderCount} elders.`);
 }

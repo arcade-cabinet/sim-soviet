@@ -5,14 +5,11 @@ import { world, citizens } from '@/ecs/archetypes';
 /**
  * WorkerSystem:
  *  - Assigns `worker` component to adult citizens (20-60) who lack it.
- *  - Assigns specific jobs based on gender/era rules (Dvor-based or general).
+ *  - Assigns specific jobs based on gender/era rules.
  *  - Manages retired/child status by removing `worker` component if age inappropriate.
- *  - Ensures `stats` component exists for every citizen (names, hunger, morale).
+ *  - Ensures `stats` component exists for every citizen.
  */
 export class WorkerSystem extends System<Entity> {
-  // We'll iterate over all citizens to check age/worker status
-  // In Miniplex, we can just iterate `citizens` archetype from world
-
   private stats = world.with('stats');
 
   constructor() {
@@ -21,25 +18,17 @@ export class WorkerSystem extends System<Entity> {
 
   public override update(_dt: number): void {
     // 1. Ensure everyone has stats (name, hunger, morale)
-    this.ensureStats();
+    for (const entity of citizens) {
+      this.ensureCitizenStats(entity);
+    }
 
     // 2. Manage Worker Roles (Assign/Revoke based on age)
     this.manageWorkerRoles();
   }
 
-  /**
-   * Handles linking to Dvor members (names) if possible.
-   */
-  private ensureStats(): void {
-    for (const entity of citizens) {
-      this.ensureCitizenStats(entity);
-    }
-  }
-
   private ensureCitizenStats(entity: Entity): void {
     if (this.stats.has(entity)) return;
 
-    // Default name if none
     let name = 'Comrade';
     let surname = 'Doe';
 
@@ -47,13 +36,10 @@ export class WorkerSystem extends System<Entity> {
     if (entity.dvorId) {
       const dvor = world.where(e => e.dvor && e.dvor.id === entity.dvorId).first;
       if (dvor && dvor.dvor) {
-        // Simple logic: adopt Dvor name as surname if defined, or generate one
         if (dvor.dvor.name) {
           surname = dvor.dvor.name.split(' ').pop() || 'Ivanov';
         }
 
-        // Find a member slot in the Dvor to identify this person?
-        // For now, just generate a random Russian-ish name
         const firstNames = entity.citizen.gender === 'male'
           ? ['Ivan', 'Dmitry', 'Alexei', 'Sergei', 'Vladimir', 'Pyotr', 'Mikhail']
           : ['Anna', 'Maria', 'Elena', 'Olga', 'Tatiana', 'Natasha', 'Svetlana'];
@@ -71,31 +57,31 @@ export class WorkerSystem extends System<Entity> {
   }
 
   private manageWorkerRoles(): void {
+    const eraId = 'revolution'; // TODO: Get from global Era system
+    const config = getGenderLaborConfig(eraId);
+
     for (const entity of citizens) {
-      this.manageCitizenRole(entity);
+      this.manageCitizenRole(entity, config);
     }
   }
 
-  private manageCitizenRole(entity: Entity): void {
+  private manageCitizenRole(entity: Entity, config: GenderLaborConfig): void {
     const { age } = entity.citizen;
     const isAdult = age >= 18 && age < 60;
 
-    // If adult and not a worker, make them a worker
     if (isAdult && !entity.worker) {
       this.assignWorkerRole(entity);
-    }
-
-    // If NOT adult (too old or too young) but HAS worker, remove it (retire/child)
-    if (!isAdult && entity.worker) {
+    } else if (!isAdult && entity.worker) {
       world.removeComponent(entity, 'worker');
     }
   }
 
   private assignWorkerRole(entity: Entity): void {
-    // Assign default job
+    // Assign default job based on gender config
     // For simplicity, we just assign 'worker' role generic
+    // In detailed system, we'd pick from allowedJobs in `config`
     world.addComponent(entity, 'worker', {
-      job: 'laborer', // Default generic job
+      job: 'laborer',
       skill: 1,
       experience: 0
     });

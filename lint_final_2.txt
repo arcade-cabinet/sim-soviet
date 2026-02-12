@@ -1,0 +1,823 @@
+
+> @arcade-cabinet/sim-soviet@0.1.0 lint /app
+> biome check .
+
+scripts/removeSpriteBg.ts:76:5 lint/style/useExponentiationOperator  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━
+
+  i Use the '**' operator instead of 'Math.pow'.
+
+    75 │   const dist = Math.sqrt(
+  > 76 │     Math.pow(r - bg.r, 2) +
+       │     ^^^^^^^^^^^^^^^^^^^^^
+    77 │     Math.pow(g - bg.g, 2) +
+    78 │     Math.pow(b - bg.b, 2)
+
+  i Safe fix: Use the '**' operator instead of 'Math.pow'.
+
+     74  74 │
+     75  75 │     const dist = Math.sqrt(
+     76     │ - ····Math.pow(r·-·bg.r,·2)·+
+         76 │ + ····(r·-·bg.r)·**·2·+
+     77  77 │       Math.pow(g - bg.g, 2) +
+     78  78 │       Math.pow(b - bg.b, 2)
+
+
+scripts/removeSpriteBg.ts:77:5 lint/style/useExponentiationOperator  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━
+
+  i Use the '**' operator instead of 'Math.pow'.
+
+    75 │   const dist = Math.sqrt(
+    76 │     Math.pow(r - bg.r, 2) +
+  > 77 │     Math.pow(g - bg.g, 2) +
+       │     ^^^^^^^^^^^^^^^^^^^^^
+    78 │     Math.pow(b - bg.b, 2)
+    79 │   );
+
+  i Safe fix: Use the '**' operator instead of 'Math.pow'.
+
+     75  75 │     const dist = Math.sqrt(
+     76  76 │       Math.pow(r - bg.r, 2) +
+     77     │ - ····Math.pow(g·-·bg.g,·2)·+
+         77 │ + ····(g·-·bg.g)·**·2·+
+     78  78 │       Math.pow(b - bg.b, 2)
+     79  79 │     );
+
+
+scripts/removeSpriteBg.ts:78:5 lint/style/useExponentiationOperator  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━
+
+  i Use the '**' operator instead of 'Math.pow'.
+
+    76 │     Math.pow(r - bg.r, 2) +
+    77 │     Math.pow(g - bg.g, 2) +
+  > 78 │     Math.pow(b - bg.b, 2)
+       │     ^^^^^^^^^^^^^^^^^^^^^
+    79 │   );
+    80 │
+
+  i Safe fix: Use the '**' operator instead of 'Math.pow'.
+
+     76  76 │       Math.pow(r - bg.r, 2) +
+     77  77 │       Math.pow(g - bg.g, 2) +
+     78     │ - ····Math.pow(b·-·bg.b,·2)
+         78 │ + ····(b·-·bg.b)·**·2
+     79  79 │     );
+     80  80 │
+
+
+app/components/NotificationLog.tsx:1:8 lint/style/useImportType  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! The default import is only used as a type.
+
+  > 1 │ import React, { useEffect, useRef, useState } from 'react';
+      │        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { cn } from '@/utils/utils';
+    3 │
+
+  i Importing the types with import type ensures that they are removed by the compilers and avoids loading unnecessary modules.
+
+  i Safe fix: Use import type.
+
+     1    │ - import·React,·{·useEffect,·useRef,·useState·}·from·'react';
+        1 │ + import·type·React·from·'react';
+        2 │ + import·{·useEffect,·useRef,·useState·}·from·'react';
+     2  3 │   import { cn } from '@/utils/utils';
+     3  4 │
+
+
+scripts/removeSpriteBg.ts:3:8 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! This import is unused.
+
+    2 │ import sharp from 'sharp';
+  > 3 │ import fs from 'fs/promises';
+      │        ^^
+    4 │ import path from 'path';
+    5 │
+
+  i Unused imports might be the result of an incomplete refactoring.
+
+  i Unsafe fix: Remove the unused imports.
+
+      1   1 │
+      2   2 │   import sharp from 'sharp';
+      3     │ - import·fs·from·'fs/promises';
+      4   3 │   import path from 'path';
+      5   4 │
+
+
+scripts/removeSpriteBg.ts:4:8 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! This import is unused.
+
+    2 │ import sharp from 'sharp';
+    3 │ import fs from 'fs/promises';
+  > 4 │ import path from 'path';
+      │        ^^^^
+    5 │
+    6 │ /**
+
+  i Unused imports might be the result of an incomplete refactoring.
+
+  i Unsafe fix: Remove the unused imports.
+
+      2   2 │   import sharp from 'sharp';
+      3   3 │   import fs from 'fs/promises';
+      4     │ - import·path·from·'path';
+      5   4 │
+      6   5 │   /**
+
+
+scripts/removeSpriteBg.ts:10:16 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! This function removeBackground is unused.
+
+     8 │  * Assumes the background color is uniform and matches the corners.
+     9 │  */
+  > 10 │ async function removeBackground(filePath: string, threshold: number): Promise<boolean> {
+       │                ^^^^^^^^^^^^^^^^
+    11 │   const { data, info } = await sharp(filePath)
+    12 │     .ensureAlpha()
+
+  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+
+  i Unsafe fix: If this is intentional, prepend removeBackground with an underscore.
+
+      8   8 │    * Assumes the background color is uniform and matches the corners.
+      9   9 │    */
+     10     │ - async·function·removeBackground(filePath:·string,·threshold:·number):·Promise<boolean>·{
+         10 │ + async·function·_removeBackground(filePath:·string,·threshold:·number):·Promise<boolean>·{
+     11  11 │     const { data, info } = await sharp(filePath)
+     12  12 │       .ensureAlpha()
+
+
+src/game/workers/WorkerSystem.ts:69:53 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+
+    67 │   }
+    68 │
+  > 69 │   private manageCitizenRole(entity: Entity, config: any): void {
+       │                                                     ^^^
+    70 │     const { age, gender } = entity.citizen;
+    71 │     const isAdult = age >= 18 && age < 60;
+
+  i any disables many type checking rules. Its use should be avoided.
+
+
+src/game/workers/WorkerSystem.ts:80:68 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+
+    78 │   }
+    79 │
+  > 80 │   private assignWorkerRole(entity: Entity, gender: string, config: any): void {
+       │                                                                    ^^^
+    81 │     // Assign default job based on gender config
+    82 │     // For simplicity, we just assign 'worker' role generic
+
+  i any disables many type checking rules. Its use should be avoided.
+
+
+src/rendering/Canvas2DRenderer.ts:18:10 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+
+    16 │   citizen?: { age: number; gender: string }; // Simplified
+    17 │   worker?: { job: string };
+  > 18 │   dvor?: any; // Keep permissive if specific type not available yet
+       │          ^^^
+    19 │ }
+    20 │
+
+  i any disables many type checking rules. Its use should be avoided.
+
+
+src/rendering/Canvas2DRenderer.ts:97:17 lint/correctness/noUnusedFunctionParameters  FIXABLE  ━━━━━━━━━━
+
+  ! This parameter is unused.
+
+    95 │   }
+    96 │
+  > 97 │   public update(dt: number) {
+       │                 ^^
+    98 │     const lerp = Canvas2DRenderer.CAMERA_LERP;
+    99 │     this.cameraX += (this.targetCameraX - this.cameraX) * lerp;
+
+  i Unused parameters might be the result of an incomplete refactoring.
+
+  i Unsafe fix: If this is intentional, prepend dt with an underscore.
+
+     95  95 │     }
+     96  96 │
+     97     │ - ··public·update(dt:·number)·{
+         97 │ + ··public·update(_dt:·number)·{
+     98  98 │       const lerp = Canvas2DRenderer.CAMERA_LERP;
+     99  99 │       this.cameraX += (this.targetCameraX - this.cameraX) * lerp;
+
+
+src/rendering/Canvas2DRenderer.ts:159:13 lint/complexity/useOptionalChain  FIXABLE  ━━━━━━━━━━━━━━━━
+
+  ! Change to an optional chain.
+
+    157 │         const img = this.tileImages.get(spriteName);
+    158 │
+  > 159 │         if (img && img.complete) {
+        │             ^^^^^^^^^^^^^^^^^^^
+    160 │           ctx.drawImage(img, x * tileSize, y * tileSize, tileSize, tileSize);
+    161 │         } else {
+
+  i Unsafe fix: Change to an optional chain.
+
+    157 157 │           const img = this.tileImages.get(spriteName);
+    158 158 │
+    159     │ - ········if·(img·&&·img.complete)·{
+        159 │ + ········if·(img?.complete)·{
+    160 160 │             ctx.drawImage(img, x * tileSize, y * tileSize, tileSize, tileSize);
+    161 161 │           } else {
+
+
+app/components/NotificationLog.tsx:14:3 lint/correctness/useExhaustiveDependencies  FIXABLE  ━━━━━━━━━━
+
+  × This hook specifies more dependencies than necessary: logs.
+
+    13 │   // Scroll to bottom when logs change if auto-scroll is enabled
+  > 14 │   useEffect(() => {
+       │   ^^^^^^^^^
+    15 │     if (isAutoScroll && bottomRef.current) {
+    16 │       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+
+  i Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+
+    16 │       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    17 │     }
+  > 18 │   }, [logs, isAutoScroll]);
+       │       ^^^^
+    19 │
+    20 │   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+
+  i React relies on hook dependencies to determine when to re-compute Effects.
+    Specifying more dependencies than required can lead to unnecessary re-rendering
+    and degraded performance.
+
+  i Unsafe fix: Remove the extra dependencies from the list.
+
+    18 │ ··},·[logs,·isAutoScroll]);
+       │       ------
+
+app/components/NotificationLog.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+    32 32 │           return 'border-l-red-600 text-red-300';
+    33 33 │         case 'warning':
+    34    │ - ······return·'border-l-yellow-600·text-yellow-200';
+       34 │ + ········return·'border-l-yellow-600·text-yellow-200';
+    35 35 │         default:
+    36 36 │           return 'border-l-yellow-600 text-yellow-200';
+    37 37 │       }
+    38    │ - ··}
+       38 │ + ··};
+    39 39 │
+    40 40 │     return (
+    41    │ - ····<div·
+    42    │ - ······className={cn("bg-black/40·backdrop-blur-sm·p-4·overflow-y-auto·font-mono·text-xs·border·border-[#8b4513]/30",·className)}
+       41 │ + ····<div
+       42 │ + ······className={cn(
+       43 │ + ········'bg-black/40·backdrop-blur-sm·p-4·overflow-y-auto·font-mono·text-xs·border·border-[#8b4513]/30',
+       44 │ + ········className
+       45 │ + ······)}
+    43 46 │         onScroll={handleScroll}
+    44 47 │       >
+    ····· │
+    48 51 │           )}
+    49 52 │           {logs.map((log) => (
+    50    │ - ··········<div·
+    51    │ - ············key={log.id}·
+       53 │ + ··········<div
+       54 │ + ············key={log.id}
+    52 55 │               className={cn(
+    53    │ - ··············"pl-2·py-1·border-l-2·border-opacity-50·hover:bg-white/5·transition-colors",
+       56 │ + ··············'pl-2·py-1·border-l-2·border-opacity-50·hover:bg-white/5·transition-colors',
+    54 57 │                 getLogColor(log.type)
+    55 58 │               )}
+    56 59 │             >
+    57    │ - ············<span·className="opacity-50·mr-2">[{new·Date().toLocaleTimeString([],·{hour:·'2-digit',·minute:'2-digit'})}]</span>
+       60 │ + ············<span·className="opacity-50·mr-2">
+       61 │ + ··············[{new·Date().toLocaleTimeString([],·{·hour:·'2-digit',·minute:·'2-digit'·})}]
+       62 │ + ············</span>
+    58 63 │               {log.message}
+    59 64 │             </div>
+
+
+scripts/removeSpriteBg.ts:2:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+
+  > 2 │ import sharp from 'sharp';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    3 │ import fs from 'fs/promises';
+    4 │ import path from 'path';
+
+  i Safe fix: Organize Imports (Biome)
+
+      1   1 │
+      2     │ - import·sharp·from·'sharp';
+      3     │ - import·fs·from·'fs/promises';
+      4     │ - import·path·from·'path';
+          2 │ + import·fs·from·'fs/promises';
+          3 │ + import·path·from·'path';
+          4 │ + import·sharp·from·'sharp';
+      5   5 │
+      6   6 │   /**
+
+
+scripts/removeSpriteBg.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+      1     │ -
+      2   1 │   import sharp from 'sharp';
+      3   2 │   import fs from 'fs/promises';
+    ······· │
+     35  34 │           width: info.width,
+     36  35 │           height: info.height,
+     37     │ - ········channels:·info.channels
+     38     │ - ······}
+     39     │ - ····})
+     40     │ - ····.toFile(filePath);
+         36 │ + ········channels:·info.channels,
+         37 │ + ······},
+         38 │ + ····}).toFile(filePath);
+     41  39 │     }
+     42  40 │
+    ······· │
+     45  43 │
+     46  44 │   function calculateBackgroundColor(data: Buffer, width: number, height: number, channels: number) {
+     47     │ - ··let·r·=·0,·g·=·0,·b·=·0;
+         45 │ + ··let·r·=·0,
+         46 │ + ····g·=·0,
+         47 │ + ····b·=·0;
+     48  48 │
+     49  49 │     // Sample the corners
+    ······· │
+     52  52 │       (width - 1) * channels, // Top-right
+     53  53 │       (height - 1) * width * channels, // Bottom-left
+     54     │ - ····(height·*·width·-·1)·*·channels·//·Bottom-right
+         54 │ + ····(height·*·width·-·1)·*·channels,·//·Bottom-right
+     55  55 │     ];
+     56  56 │
+    ······· │
+     64  64 │       r: Math.round(r / 4),
+     65  65 │       g: Math.round(g / 4),
+     66     │ - ····b:·Math.round(b·/·4)
+         66 │ + ····b:·Math.round(b·/·4),
+     67  67 │     };
+     68  68 │   }
+     69  69 │
+     70     │ - function·isBackgroundPixel(data:·Buffer,·idx:·number,·bg:·{r:·number,·g:·number,·b:·number},·threshold:·number):·boolean·{
+         70 │ + function·isBackgroundPixel(
+         71 │ + ··data:·Buffer,
+         72 │ + ··idx:·number,
+         73 │ + ··bg:·{·r:·number;·g:·number;·b:·number·},
+         74 │ + ··threshold:·number
+         75 │ + ):·boolean·{
+     71  76 │     const r = data[idx];
+     72  77 │     const g = data[idx + 1];
+     73  78 │     const b = data[idx + 2];
+     74  79 │
+     75     │ - ··const·dist·=·Math.sqrt(
+     76     │ - ····Math.pow(r·-·bg.r,·2)·+
+     77     │ - ····Math.pow(g·-·bg.g,·2)·+
+     78     │ - ····Math.pow(b·-·bg.b,·2)
+     79     │ - ··);
+         80 │ + ··const·dist·=·Math.sqrt(Math.pow(r·-·bg.r,·2)·+·Math.pow(g·-·bg.g,·2)·+·Math.pow(b·-·bg.b,·2));
+     80  81 │
+     81  82 │     return dist < threshold;
+    ······· │
+     84  85 │   function erodeAlpha(data: Buffer, width: number, height: number, channels: number): Buffer {
+     85  86 │     const eroded = Buffer.from(data);
+     86     │ - ··
+         87 │ +
+     87  88 │     for (let y = 1; y < height - 1; y++) {
+     88  89 │       for (let x = 1; x < width - 1; x++) {
+    ······· │
+     99 100 │   }
+    100 101 │
+    101     │ - function·hasTransparentNeighbor(data:·Buffer,·x:·number,·y:·number,·width:·number,·channels:·number):·boolean·{
+        102 │ + function·hasTransparentNeighbor(
+        103 │ + ··data:·Buffer,
+        104 │ + ··x:·number,
+        105 │ + ··y:·number,
+        106 │ + ··width:·number,
+        107 │ + ··channels:·number
+        108 │ + ):·boolean·{
+    102 109 │     const neighbors = [
+    103 110 │       ((y - 1) * width + x) * channels,
+    104 111 │       ((y + 1) * width + x) * channels,
+    105 112 │       (y * width + (x - 1)) * channels,
+    106     │ - ····(y·*·width·+·(x·+·1))·*·channels
+        113 │ + ····(y·*·width·+·(x·+·1))·*·channels,
+    107 114 │     ];
+    108     │ - ··
+    109     │ - ··return·neighbors.some(n·=>·data[n·+·3]·===·0);
+        115 │ +
+        116 │ + ··return·neighbors.some((n)·=>·data[n·+·3]·===·0);
+    110 117 │   }
+    111 118 │
+    112 119 │   // ... Rest of the script (main execution)
+    113 120 │   // For the purpose of this task, I'm just replacing the function logic.
+    114     │ - //·But·since·I·need·to·write·the·file,·I·should·probably·read·the·rest·of·the·file·or·just·output·the·function·if·it·was·a·partial·file.·
+    115     │ - //·Ah,·`removeSpriteBg.ts`·is·likely·a·script·file.·
+        121 │ + //·But·since·I·need·to·write·the·file,·I·should·probably·read·the·rest·of·the·file·or·just·output·the·function·if·it·was·a·partial·file.
+        122 │ + //·Ah,·`removeSpriteBg.ts`·is·likely·a·script·file.
+    116 123 │   // I'll read it first to ensure I don't overwrite imports or the main call.
+    117     │ -
+    118 124 │
+
+
+src/__tests__/NewGameFlow.test.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+    128 128 │       expect(screen.getByText('Parameters')).toBeDefined();
+    129 129 │       expect(screen.getByText('Consequences')).toBeDefined();
+    130     │ - ····
+        130 │ +
+    131 131 │       // Default content
+    132 132 │       expect(screen.getByText('Chairman Identity (Full Name)')).toBeDefined();
+    ······· │
+    195 195 │       const onStart = vi.fn();
+    196 196 │       render(<NewGameFlow {...defaultProps} onStart={onStart} />);
+    197     │ - ····
+        197 │ +
+    198 198 │       // Switch to consequences tab
+    199 199 │       fireEvent.click(screen.getByText('Consequences'));
+    200     │ - ····
+        200 │ +
+    201 201 │       // Select Harsh
+    202 202 │       fireEvent.click(screen.getByText('Harsh'));
+    203     │ - ····
+        203 │ +
+    204 204 │       // Submit
+    205 205 │       fireEvent.click(screen.getByText('EXECUTE ORDER'));
+
+
+src/game/workers/WorkerSystem.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━
+
+  × The imports and exports are not sorted.
+
+  > 1 │ import { System } from 'miniplex';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import type { Entity } from '@/ecs/world';
+    3 │ import { world, citizens } from '@/ecs/archetypes';
+
+  i Safe fix: Organize Imports (Biome)
+
+     1  1 │   import { System } from 'miniplex';
+     2    │ - import·type·{·Entity·}·from·'@/ecs/world';
+     3    │ - import·{·world,·citizens·}·from·'@/ecs/archetypes';
+     4    │ - import·{·getGenderLaborConfig,·type·GenderLaborConfig·}·from·'./genderLabor';
+        2 │ + import·{·citizens,·world·}·from·'@/ecs/archetypes';
+        3 │ + import·type·{·Entity·}·from·'@/ecs/world';
+        4 │ + import·{·type·GenderLaborConfig,·getGenderLaborConfig·}·from·'./genderLabor';
+     5  5 │
+     6  6 │   /**
+
+
+src/rendering/Canvas2DRenderer.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+     21  21 │   /**
+     22  22 │    * Canvas2DRenderer
+     23     │ - ·*·
+         23 │ + ·*
+     24  24 │    * Handles rendering the game world to a 2D canvas.
+     25  25 │    * Optimized for performance by batching draw calls where possible.
+    ······· │
+     30  30 │     private width: number;
+     31  31 │     private height: number;
+     32     │ - ··
+         32 │ +
+     33  33 │     // Camera state
+     34  34 │     private cameraX = 0;
+    ······· │
+     53  53 │       if (!ctx) throw new Error('Could not get 2D context');
+     54  54 │       this.ctx = ctx;
+     55     │ - ····
+         55 │ +
+     56  56 │       this.width = canvas.width;
+     57  57 │       this.height = canvas.height;
+     58  58 │
+     59  59 │       this.characterSprites = CharacterSpriteLoader.getInstance();
+     60     │ - ····
+         60 │ +
+     61  61 │       this.resize(canvas.clientWidth, canvas.clientHeight);
+     62  62 │       this.loadAssets();
+    ······· │
+     66  66 │       // Load terrain tiles
+     67  67 │       const terrains = [
+     68     │ - ······'grass_1',·'grass_2',·'grass_3',
+     69     │ - ······'forest_1',·'forest_2',·
+     70     │ - ······'hill_1',·
+     71     │ - ······'mountain_1',·'mountain_2',
+     72     │ - ······'water_1',·'water_deep_1'
+         68 │ + ······'grass_1',
+         69 │ + ······'grass_2',
+         70 │ + ······'grass_3',
+         71 │ + ······'forest_1',
+         72 │ + ······'forest_2',
+         73 │ + ······'hill_1',
+         74 │ + ······'mountain_1',
+         75 │ + ······'mountain_2',
+         76 │ + ······'water_1',
+         77 │ + ······'water_deep_1',
+     73  78 │       ];
+     74  79 │
+     75     │ - ····terrains.forEach(t·=>·{
+         80 │ + ····terrains.forEach((t)·=>·{
+     76  81 │         const img = new Image();
+     77  82 │         img.src = `/sprites/terrain/${t}.png`;
+    ······· │
+    102 107 │     }
+    103 108 │
+    104     │ - ··public·render(
+    105     │ - ····grid:·Grid,
+    106     │ - ····citizens:·RenderableEntity[],
+    107     │ - ····dvory:·RenderableEntity[]
+    108     │ - ··)·{
+        109 │ + ··public·render(grid:·Grid,·citizens:·RenderableEntity[],·dvory:·RenderableEntity[])·{
+    109 110 │       const { ctx, width, height, zoom, cameraX, cameraY } = this;
+    110 111 │       const TILE = Canvas2DRenderer.TILE_SIZE;
+    ······· │
+    115 116 │
+    116 117 │       ctx.save();
+    117     │ - ····
+        118 │ +
+    118 119 │       // Apply camera transform
+    119 120 │       ctx.translate(width / 2, height / 2);
+    ······· │
+    143 144 │
+    144 145 │     private renderTerrain(
+    145     │ - ····ctx:·CanvasRenderingContext2D,·
+    146     │ - ····grid:·Grid,·
+    147     │ - ····startX:·number,·endX:·number,·
+    148     │ - ····startY:·number,·endY:·number,·
+        146 │ + ····ctx:·CanvasRenderingContext2D,
+        147 │ + ····grid:·Grid,
+        148 │ + ····startX:·number,
+        149 │ + ····endX:·number,
+        150 │ + ····startY:·number,
+        151 │ + ····endY:·number,
+    149 152 │       tileSize: number
+    150 153 │     ) {
+    ······· │
+    168 171 │
+    169 172 │     private renderStructures(
+    170     │ - ····ctx:·CanvasRenderingContext2D,·
+    171     │ - ····structures:·RenderableEntity[],·
+    172     │ - ····startX:·number,·endX:·number,·
+    173     │ - ····startY:·number,·endY:·number,·
+        173 │ + ····ctx:·CanvasRenderingContext2D,
+        174 │ + ····structures:·RenderableEntity[],
+        175 │ + ····startX:·number,
+        176 │ + ····endX:·number,
+        177 │ + ····startY:·number,
+        178 │ + ····endY:·number,
+    174 179 │       tileSize: number
+    175 180 │     ) {
+    ······· │
+    177 182 │         if (!structure.position) continue;
+    178 183 │         const { x, y } = structure.position;
+    179     │ - ······
+        184 │ +
+    180 185 │         if (x < startX || x > endX || y < startY || y > endY) continue;
+    181 186 │
+    ······· │
+    183 188 │         ctx.fillStyle = '#5D4037';
+    184 189 │         ctx.fillRect(x * tileSize + 4, y * tileSize + 4, tileSize - 8, tileSize - 8);
+    185     │ - ······
+        190 │ +
+    186 191 │         // Roof/Details
+    187 192 │         ctx.fillStyle = '#3E2723';
+    ······· │
+    195 200 │
+    196 201 │     private renderCitizens(
+    197     │ - ····ctx:·CanvasRenderingContext2D,·
+    198     │ - ····citizens:·RenderableEntity[],·
+    199     │ - ····startX:·number,·endX:·number,·
+    200     │ - ····startY:·number,·endY:·number,·
+        202 │ + ····ctx:·CanvasRenderingContext2D,
+        203 │ + ····citizens:·RenderableEntity[],
+        204 │ + ····startX:·number,
+        205 │ + ····endX:·number,
+        206 │ + ····startY:·number,
+        207 │ + ····endY:·number,
+    201 208 │       tileSize: number
+    202 209 │     ) {
+    ······· │
+    221 228 │
+    222 229 │     private renderCitizenSprite(
+    223     │ - ····ctx:·CanvasRenderingContext2D,·
+    224     │ - ····citizen:·RenderableEntity,·
+    225     │ - ····x:·number,·y:·number,·
+    226     │ - ····tileSize:·number,·
+        230 │ + ····ctx:·CanvasRenderingContext2D,
+        231 │ + ····citizen:·RenderableEntity,
+        232 │ + ····x:·number,
+        233 │ + ····y:·number,
+        234 │ + ····tileSize:·number,
+    227 235 │       spriteSize: number,
+    228 236 │       now: number
+    229 237 │     ) {
+    230     │ - ····const·citizenClass·=·citizen.worker·?·'worker'·:·((citizen.citizen?.age·??·20)·<·18·?·'child'·:·'elder');
+    231     │ - ····const·action·=·'idle';·
+        238 │ + ····const·citizenClass·=·citizen.worker
+        239 │ + ······?·'worker'
+        240 │ + ······:·(citizen.citizen?.age·??·20)·<·18
+        241 │ + ········?·'child'
+        242 │ + ········:·'elder';
+        243 │ + ····const·action·=·'idle';
+    232 244 │       const frame = Math.floor(now / 100);
+    233 245 │
+    234 246 │       const sprite = this.characterSprites.get(citizenClass, action, frame, 0);
+    235     │ - ····
+        247 │ +
+    236 248 │       if (sprite) {
+    237 249 │         const screenX = x * tileSize;
+    238 250 │         const screenY = y * tileSize;
+    239     │ - ······
+        251 │ +
+    240 252 │         ctx.drawImage(
+  50 more lines truncated
+
+
+src/rendering/CharacterSpriteLoader.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+
+     1  1 │   export class CharacterSpriteLoader {
+     2    │ - ····private·sprites·=·new·Map<string,·HTMLImageElement>();
+     3    │ - ····private·loadingPromise:·Promise<void>·|·null·=·null;
+     4    │ - ····private·_ready·=·false;
+     5    │ - ··
+     6    │ - ····get·ready()·{
+     7    │ - ······return·this._ready;
+     8    │ - ····}
+     9    │ - ··
+    10    │ - ····load():·Promise<void>·{
+    11    │ - ······if·(this.loadingPromise)·return·this.loadingPromise;
+    12    │ - ··
+    13    │ - ······//·Load·the·single·atlas·file
+    14    │ - ······this.loadingPromise·=·this.loadImage('/assets/sprites/characters.png')
+    15    │ - ········.then((img)·=>·{
+    16    │ - ··········if·(img)·{
+    17    │ - ············this.sprites.set('atlas',·img);
+    18    │ - ············this._ready·=·true;
+    19    │ - ··········}·else·{
+    20    │ - ············console.error('Failed·to·load·character·atlas');
+    21    │ - ··········}
+    22    │ - ········})
+    23    │ - ········.catch((err)·=>·{
+    24    │ - ··········console.error('Error·loading·character·sprites:',·err);
+    25    │ - ········});
+    26    │ - ··
+    27    │ - ······return·this.loadingPromise;
+    28    │ - ····}
+    29    │ - ··
+    30    │ - ····get(citizenClass:·string):·{·image:·HTMLImageElement;·sx:·number;·sy:·number;·sw:·number;·sh:·number·}·|·undefined·{
+    31    │ - ······if·(!this._ready)·return·undefined;
+    32    │ - ······const·atlas·=·this.sprites.get('atlas');
+    33    │ - ······if·(!atlas)·return·undefined;
+    34    │ - ··
+    35    │ - ······//·Map·class·to·sprite·index/coordinates
+    36    │ - ······//·Assuming·a·simple·grid·or·specific·layout.·
+    37    │ - ······//·For·now,·let's·assume·specific·coordinates·or·indices·for·each·class.
+    38    │ - ······//·128x128·sprites,·4·cols·x·2·rows
+    39    │ - ··
+    40    │ - ······let·col·=·0;
+    41    │ - ······let·row·=·0;
+    42    │ - ··
+    43    │ - ······switch·(citizenClass)·{
+    44    │ - ········case·'worker':·col·=·0;·row·=·0;·break;
+    45    │ - ········case·'farmer':·col·=·1;·row·=·0;·break;
+    46    │ - ········case·'soldier':·col·=·2;·row·=·0;·break;
+    47    │ - ········case·'engineer':·col·=·3;·row·=·0;·break;
+    48    │ - ········case·'party_official':·col·=·0;·row·=·1;·break;
+    49    │ - ········case·'prisoner':·col·=·1;·row·=·1;·break;
+    50    │ - ········case·'child':·col·=·2;·row·=·1;·break;
+    51    │ - ········default:·col·=·0;·row·=·0;·break;·//·Fallback·to·worker
+    52    │ - ······}
+    53    │ - ··
+    54    │ - ······return·{
+    55    │ - ········image:·atlas,
+    56    │ - ········sx:·col·*·128,
+    57    │ - ········sy:·row·*·128,
+    58    │ - ········sw:·128,
+    59    │ - ········sh:·128
+    60    │ - ······};
+    61    │ - ····}
+    62    │ - ··
+    63    │ - ····private·loadImage(src:·string):·Promise<HTMLImageElement>·{
+    64    │ - ······return·new·Promise((resolve,·reject)·=>·{
+    65    │ - ········const·img·=·new·Image();
+    66    │ - ········img.onload·=·()·=>·resolve(img);
+    67    │ - ········img.onerror·=·reject;
+    68    │ - ········img.src·=·src;
+    69    │ - ······});
+    70    │ - ····}
+    71    │ - ··}
+        2 │ + ··private·sprites·=·new·Map<string,·HTMLImageElement>();
+        3 │ + ··private·loadingPromise:·Promise<void>·|·null·=·null;
+        4 │ + ··private·_ready·=·false;
+        5 │ +
+        6 │ + ··get·ready()·{
+        7 │ + ····return·this._ready;
+        8 │ + ··}
+        9 │ +
+       10 │ + ··load():·Promise<void>·{
+       11 │ + ····if·(this.loadingPromise)·return·this.loadingPromise;
+       12 │ +
+       13 │ + ····//·Load·the·single·atlas·file
+       14 │ + ····this.loadingPromise·=·this.loadImage('/assets/sprites/characters.png')
+       15 │ + ······.then((img)·=>·{
+       16 │ + ········if·(img)·{
+       17 │ + ··········this.sprites.set('atlas',·img);
+       18 │ + ··········this._ready·=·true;
+       19 │ + ········}·else·{
+       20 │ + ··········console.error('Failed·to·load·character·atlas');
+       21 │ + ········}
+       22 │ + ······})
+       23 │ + ······.catch((err)·=>·{
+       24 │ + ········console.error('Error·loading·character·sprites:',·err);
+       25 │ + ······});
+       26 │ +
+       27 │ + ····return·this.loadingPromise;
+       28 │ + ··}
+       29 │ +
+       30 │ + ··get(
+       31 │ + ····citizenClass:·string
+       32 │ + ··):·{·image:·HTMLImageElement;·sx:·number;·sy:·number;·sw:·number;·sh:·number·}·|·undefined·{
+       33 │ + ····if·(!this._ready)·return·undefined;
+       34 │ + ····const·atlas·=·this.sprites.get('atlas');
+       35 │ + ····if·(!atlas)·return·undefined;
+       36 │ +
+       37 │ + ····//·Map·class·to·sprite·index/coordinates
+       38 │ + ····//·Assuming·a·simple·grid·or·specific·layout.
+       39 │ + ····//·For·now,·let's·assume·specific·coordinates·or·indices·for·each·class.
+       40 │ + ····//·128x128·sprites,·4·cols·x·2·rows
+       41 │ +
+       42 │ + ····let·col·=·0;
+       43 │ + ····let·row·=·0;
+       44 │ +
+       45 │ + ····switch·(citizenClass)·{
+       46 │ + ······case·'worker':
+       47 │ + ········col·=·0;
+       48 │ + ········row·=·0;
+       49 │ + ········break;
+       50 │ + ······case·'farmer':
+       51 │ + ········col·=·1;
+       52 │ + ········row·=·0;
+       53 │ + ········break;
+       54 │ + ······case·'soldier':
+       55 │ + ········col·=·2;
+       56 │ + ········row·=·0;
+       57 │ + ········break;
+       58 │ + ······case·'engineer':
+       59 │ + ········col·=·3;
+       60 │ + ········row·=·0;
+       61 │ + ········break;
+       62 │ + ······case·'party_official':
+       63 │ + ········col·=·0;
+       64 │ + ········row·=·1;
+       65 │ + ········break;
+       66 │ + ······case·'prisoner':
+       67 │ + ········col·=·1;
+       68 │ + ········row·=·1;
+       69 │ + ········break;
+       70 │ + ······case·'child':
+       71 │ + ········col·=·2;
+       72 │ + ········row·=·1;
+       73 │ + ········break;
+       74 │ + ······default:
+       75 │ + ········col·=·0;
+       76 │ + ········row·=·0;
+       77 │ + ········break;·//·Fallback·to·worker
+       78 │ + ····}
+       79 │ +
+       80 │ + ····return·{
+  18 more lines truncated
+
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 42.
+Checked 323 files in 687ms. No fixes applied.
+Found 31 errors.
+Found 28 warnings.
+Found 3 infos.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+
+
+ ELIFECYCLE  Command failed with exit code 1.

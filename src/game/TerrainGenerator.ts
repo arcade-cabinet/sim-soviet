@@ -1,89 +1,96 @@
 import { GameRng } from './SeedSystem';
 
+/**
+ * Terrain types for the game world.
+ */
 export type TerrainType =
   | 'grass'
   | 'grass-forest'
   | 'grass-hill'
-  | 'grass-mountain'
-  | 'snow'
-  | 'snow-forest'
-  | 'snow-hill'
-  | 'snow-mountain'
   | 'water'
-  | 'water-deep';
+  | 'water-deep'
+  | 'mountain';
 
 export interface TerrainFeature {
-  type: TerrainType;
   gridX: number;
   gridY: number;
+  type: TerrainType;
 }
+
+export const TERRAIN_TYPES: TerrainType[] = [
+  'grass',
+  'grass-forest',
+  'grass-hill',
+  'water',
+  'water-deep',
+  'mountain',
+];
 
 /**
- * Depth of the "border" zone from the edge of the map.
- * Features in this zone are purely cosmetic/boundary.
+ * Returns the sprite name for a given terrain type.
+ * Currently maps 1:1, but allows future flexibility.
  */
-export const BORDER_DEPTH = 4;
-
-function generateFeature(x: number, y: number, gridSize: number, rng: GameRng): TerrainFeature | null {
-  // Determine if border
-  const distToEdge = Math.min(x, y, gridSize - 1 - x, gridSize - 1 - y);
-  const isBorder = distToEdge < BORDER_DEPTH;
-  const noiseVal = rng.next();
-
-  if (isBorder) {
-    // Border is always mountains or deep water to block movement
-    return {
-      type: noiseVal > 0.6 ? 'grass-mountain' : 'grass-forest',
-      gridX: x,
-      gridY: y
-    };
+export function getTerrainSpriteNames(type: TerrainType): string[] {
+  switch (type) {
+    case 'grass': return ['grass_1', 'grass_2', 'grass_3'];
+    case 'grass-forest': return ['forest_1', 'forest_2'];
+    case 'grass-hill': return ['hill_1'];
+    case 'water': return ['water_1'];
+    case 'water-deep': return ['water_deep_1'];
+    case 'mountain': return ['mountain_1', 'mountain_2'];
+    default: return ['grass_1'];
   }
-
-  // Interior generation
-  if (noiseVal > 0.96) {
-    return { type: 'grass-mountain', gridX: x, gridY: y };
-  } else if (noiseVal > 0.85) {
-    return { type: 'grass-hill', gridX: x, gridY: y };
-  } else if (noiseVal > 0.75) {
-    return { type: 'grass-forest', gridX: x, gridY: y };
-  } else if (noiseVal < 0.02) {
-    return { type: 'water', gridX: x, gridY: y };
-  }
-
-  return null;
 }
 
+/** Width of the border ring (cells) */
+export const BORDER_DEPTH = 4;
+
+/**
+ * Generates terrain features for the map.
+ * Enforces a border ring of mountains/water.
+ */
 export function generateTerrain(gridSize: number, rng: GameRng): TerrainFeature[] {
   const features: TerrainFeature[] = [];
+  const center = gridSize / 2;
+  const radius = gridSize / 2;
 
   for (let y = 0; y < gridSize; y++) {
     for (let x = 0; x < gridSize; x++) {
-      const feature = generateFeature(x, y, gridSize, rng);
-      if (feature) {
-        features.push(feature);
+      const dist = Math.sqrt((x - center) ** 2 + (y - center) ** 2);
+      const isBorder = dist >= radius - BORDER_DEPTH;
+
+      // Base terrain is grass (implicitly, where no feature exists)
+      // We only generate features for non-grass tiles to save entities/rendering
+
+      let type: TerrainType | null = null;
+
+      if (isBorder) {
+        // Border generation: mostly mountains/deep water
+        const noise = rng.next();
+        if (noise > 0.6) {
+          type = 'mountain';
+        } else if (noise > 0.4) {
+          type = 'water-deep';
+        } else if (noise > 0.3) {
+          type = 'grass-hill'; // Transition
+        }
+      } else {
+        // Interior generation
+        const noise = rng.next();
+        if (noise > 0.85) {
+          type = 'grass-forest';
+        } else if (noise > 0.92) {
+          type = 'grass-hill';
+        } else if (noise > 0.96) {
+          type = 'water';
+        }
+      }
+
+      if (type) {
+        features.push({ gridX: x, gridY: y, type });
       }
     }
   }
 
   return features;
-}
-
-/**
- * Helper to map TerrainType to the sprite name in the atlas.
- */
-export function getTerrainSpriteNames(type: TerrainType): string[] {
-  const map: Record<TerrainType, string[]> = {
-    'grass': ['grass_1', 'grass_2', 'grass_3'],
-    'grass-forest': ['forest_1', 'forest_2'],
-    'grass-hill': ['hill_1', 'hill_2'],
-    'grass-mountain': ['mountain_1', 'mountain_2'],
-    'snow': ['snow_1', 'snow_2'],
-    'snow-forest': ['forest_snow_1', 'forest_snow_2'],
-    'snow-hill': ['hill_snow_1'],
-    'snow-mountain': ['mountain_snow_1'],
-    'water': ['water_1'],
-    'water-deep': ['water_deep_1'],
-  };
-
-  return map[type] || ['grass_1'];
 }

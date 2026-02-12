@@ -13,9 +13,9 @@ interface Position {
 
 interface RenderableEntity {
   position?: Position;
-  citizen?: { age: number; gender: string }; // Simplified
+  citizen?: { age: number; gender: string };
   worker?: { job: string };
-  dvor?: any; // Keep permissive if specific type not available yet
+  dvor?: any;
 }
 
 /**

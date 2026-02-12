@@ -1,72 +1,43 @@
+import React from 'react';
+import { cn } from '@/lib/utils'; // Assuming this exists, based on usage in original file
+import { parchment } from '@/lib/theme'; // Assuming this exists
 
-import { Check, type LucideIcon } from 'lucide-react';
-import { GameButton } from '../../ui/GameButton';
-import { cn } from '@/utils/utils';
-
-export type SelectionOption<T extends string> = {
-  id: T;
-  label: string;
-  description?: string;
-  icon?: LucideIcon;
-  iconColor?: string;
-  size?: number;
-};
-
-type SelectionListProps<T extends string> = {
-  options: SelectionOption<T>[];
+interface SelectionListProps<T extends string | number> {
+  options: { id: T; label: string; description: string }[];
   selectedId: T;
-  onChange: (id: T) => void;
-  layout?: 'list' | 'grid';
-};
+  onSelect: (id: T) => void;
+}
 
-export function SelectionList<T extends string>({
-  options,
-  selectedId,
-  onChange,
-  layout = 'list'
-}: SelectionListProps<T>) {
+export function SelectionList<T extends string | number>({ options, selectedId, onSelect }: SelectionListProps<T>) {
   return (
-    <div className={layout === 'grid' ? "grid grid-cols-3 gap-3" : "space-y-3"}>
+    <div className="space-y-2">
       {options.map((option) => {
-        const selected = selectedId === option.id;
-        const Icon = option.icon;
-
+        const isSelected = selectedId === option.id;
         return (
-          <GameButton
+          <button
+            type="button"
             key={option.id}
-            onClick={() => onChange(option.id)}
-            selected={selected}
-            className={layout === 'grid' ? "text-center w-full" : "text-left w-full p-4"}
+            onClick={() => onSelect(option.id)}
+            className={cn(
+              "w-full text-left p-3 border-2 transition-all relative group",
+              isSelected
+                ? "bg-[#8b4513]/10 border-[#8b4513]"
+                : "border-transparent hover:border-[#8b4513]/30 hover:bg-[#8b4513]/5"
+            )}
           >
-            <div
-              className={cn(
-                "font-bold uppercase tracking-wider text-sm mb-1",
-                Icon && "flex items-center gap-2",
-                option.iconColor
-              )}
-            >
-              {Icon && <Icon className="w-4 h-4" />}
+            <div className="font-bold uppercase tracking-wider text-sm mb-1">
               {option.label}
             </div>
+            <div className="text-xs opacity-70 leading-relaxed">
+              {option.description}
+            </div>
 
-            {option.description && (
-              <div className="text-xs opacity-70 leading-relaxed mb-2">
-                {option.description}
+            {isSelected && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="w-2 h-2 bg-[#8b4513] rounded-full" />
               </div>
             )}
-
-            {option.size && (
-              <span className="block text-[10px] font-normal opacity-60 mt-0.5">
-                {option.size}x{option.size}
-              </span>
-            )}
-
-            {selected && (
-              <div className={layout === 'grid' ? "absolute top-1 right-1 text-[#8b4513]" : "absolute top-4 right-4 text-[#8b4513]"}>
-                <Check className={layout === 'grid' ? "w-3 h-3" : "w-5 h-5"} />
-              </div>
-            )}
-          </GameButton>
+          </button>
         );
       })}
     </div>
