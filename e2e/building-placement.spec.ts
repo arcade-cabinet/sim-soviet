@@ -105,8 +105,12 @@ test.describe('Building Placement', () => {
       await clickCanvasAt(page, ox!, oy!);
     }
 
-    // Brief pause for final state update
-    await page.waitForTimeout(500);
+    const moneyBeforeDrain = await getMoney(page);
+    for (const [ox, oy] of offsets) {
+      await clickCanvasAt(page, ox!, oy!);
+    }
+
+    await waitForMoneyChange(page, moneyBeforeDrain).catch(() => {});
 
     // Money should be >= 0 (never goes negative)
     const finalMoney = await getMoney(page);
