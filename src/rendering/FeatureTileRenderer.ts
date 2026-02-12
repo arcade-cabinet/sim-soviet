@@ -5,6 +5,7 @@
  * These are decorative overlays that sit between the ground and building layers.
  */
 
+import { terrainFeatures } from '@/ecs/archetypes';
 import type { Camera2D } from './Camera2D';
 import { gridToScreen, TILE_HEIGHT } from './GridMath';
 
@@ -41,6 +42,17 @@ export class FeatureTileRenderer {
   /** Set the terrain features to render. */
   setFeatures(features: TerrainFeature[]): void {
     this.features = features;
+  }
+
+  /** Append terrain features from ECS entities (call after setFeatures + MapSystem.generate()). */
+  syncFromECS(): void {
+    for (const entity of terrainFeatures) {
+      this.features.push({
+        gridX: entity.position.gridX,
+        gridY: entity.position.gridY,
+        spriteName: entity.terrainFeature.spriteName,
+      });
+    }
   }
 
   /** Load the tile manifest for anchor data. */

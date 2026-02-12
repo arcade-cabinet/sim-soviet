@@ -36,16 +36,16 @@ describe('EventSystem serialization', () => {
     // Force an event to set lastEventTick
     original.triggerEvent('earthquake_bread');
 
-    // Tick at 30 to update lastEventTick via the tick path
+    // Tick at 65 to update lastEventTick via the tick path (cooldown is 60)
     vi.spyOn(Math, 'random').mockReturnValue(0.01);
-    original.tick(30);
+    original.tick(65);
 
     const data = original.serialize();
-    expect(data.lastEventTick).toBe(30);
+    expect(data.lastEventTick).toBe(65);
 
     const restored = EventSystem.deserialize(data, onEvent);
     const restoredData = restored.serialize();
-    expect(restoredData.lastEventTick).toBe(30);
+    expect(restoredData.lastEventTick).toBe(65);
   });
 
   it('preserves event history through round-trip', () => {
@@ -84,20 +84,20 @@ describe('EventSystem serialization', () => {
   it('deserialized system respects cooldown from saved lastEventTick', () => {
     const original = new EventSystem(onEvent);
 
-    // Trigger an event at tick 30 via the tick path
+    // Trigger an event at tick 65 via the tick path (cooldown is 60)
     vi.spyOn(Math, 'random').mockReturnValue(0.01);
-    original.tick(30);
+    original.tick(65);
 
     const data = original.serialize();
     firedEvents = [];
     const restored = EventSystem.deserialize(data, onEvent);
 
-    // Tick at 40 — only 10 ticks since last event, cooldown is 25
-    restored.tick(40);
+    // Tick at 80 — only 15 ticks since last event at 65, cooldown is 60
+    restored.tick(80);
     expect(firedEvents).toHaveLength(0);
 
-    // Tick at 60 — 30 ticks since last event, past cooldown
-    restored.tick(60);
+    // Tick at 130 — 65 ticks since last event, past cooldown
+    restored.tick(130);
     // Should have tried to fire (might not if random doesn't produce eligible event)
     // But at minimum it should not throw
   });

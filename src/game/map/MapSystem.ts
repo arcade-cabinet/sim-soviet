@@ -7,6 +7,13 @@
  * building, and serialization for save/load.
  */
 
+import {
+  clearTerrainFeatures,
+  createForest,
+  createMarsh,
+  createMountain,
+  createRiver,
+} from '@/ecs/factories';
 import { GameRng } from '../SeedSystem';
 import { assignFeatures, checkConnectivity, fractalNoise } from './generation';
 import { generateRiverPath, rasterizeRiver } from './rivers';
@@ -80,11 +87,12 @@ export class MapSystem {
    *
    * Order of operations:
    * 1. Rivers (carved first so other terrain respects them)
-   * 2. Mountains (noise-based clusters)
+   * 2. Mountains (noise-based clusters, edge-biased away from center)
    * 3. Forests (noise + distance from center)
    * 4. Marshland (near rivers and low-elevation areas)
    * 5. Protect center 5x5 as guaranteed grass
    * 6. Connectivity validation (retry if paths are blocked)
+   * 7. Create ECS entities for all terrain features
    */
   generate(): void {
     // Reset RNG for deterministic results
@@ -101,6 +109,7 @@ export class MapSystem {
       this.protectCenter();
 
       if (checkConnectivity(this.terrain, this.size)) {
+        this.createTerrainEntities();
         return;
       }
 
@@ -109,6 +118,7 @@ export class MapSystem {
       this.protectCenter();
 
       if (checkConnectivity(this.terrain, this.size)) {
+        this.createTerrainEntities();
         return;
       }
     }
@@ -118,6 +128,35 @@ export class MapSystem {
     this.placeRivers();
     this.placeForests();
     this.protectCenter();
+    this.createTerrainEntities();
+  }
+
+  /**
+   * Create ECS entities for all terrain features in the grid.
+   * Clears existing terrain feature entities first (for save/load or regeneration).
+   */
+  private createTerrainEntities(): void {
+    clearTerrainFeatures();
+
+    for (let y = 0; y < this.size; y++) {
+      for (let x = 0; x < this.size; x++) {
+        const cell = this.terrain[y]![x]!;
+        switch (cell.type) {
+          case 'mountain':
+            createMountain(x, y, cell.elevation);
+            break;
+          case 'forest':
+            createForest(x, y);
+            break;
+          case 'marsh':
+            createMarsh(x, y);
+            break;
+          case 'river':
+            createRiver(x, y);
+            break;
+        }
+      }
+    }
   }
 
   private placeRivers(): void {
@@ -145,25 +184,26 @@ export class MapSystem {
     if (this.options.mountainDensity <= 0) return;
 
     const noise = fractalNoise(this.size, this.size, this.rng);
+    const center = this.size / 2;
     const targetCount = Math.floor(this.size * this.size * this.options.mountainDensity);
-    let placed = 0;
 
-    // Collect all noise values and sort to find threshold
-    const values: { x: number; y: number; v: number }[] = [];
+    // Score each grass cell: noise weighted by edge bias (mountains prefer periphery)
+    const candidates: { x: number; y: number; score: number }[] = [];
     for (let y = 0; y < this.size; y++) {
       for (let x = 0; x < this.size; x++) {
-        values.push({ x, y, v: noise[y]![x]! });
+        if (this.terrain[y]![x]!.type !== 'grass') continue;
+        const distFromCenter =
+          Math.sqrt((x - center) ** 2 + (y - center) ** 2) / (center * Math.SQRT2);
+        const edgeBias = 0.2 + 0.8 * distFromCenter;
+        candidates.push({ x, y, score: noise[y]![x]! * edgeBias });
       }
     }
-    values.sort((a, b) => b.v - a.v);
 
-    for (const { x, y, v: _ } of values) {
-      if (placed >= targetCount) break;
-      const cell = this.terrain[y]![x]!;
-      if (cell.type !== 'grass') continue;
-
+    candidates.sort((a, b) => b.score - a.score);
+    const count = Math.min(targetCount, candidates.length);
+    for (let i = 0; i < count; i++) {
+      const { x, y } = candidates[i]!;
       this.setCell(x, y, 'mountain');
-      placed++;
     }
   }
 

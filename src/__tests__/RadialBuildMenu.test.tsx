@@ -247,11 +247,11 @@ describe('RadialBuildMenu', () => {
   it('clicking backdrop calls closeRadialMenu', () => {
     render(<RadialBuildMenu />);
 
-    // The outermost div is the backdrop
-    const backdrop = screen.getByTitle('Build Menu').closest('.fixed');
-    expect(backdrop).toBeDefined();
+    // The backdrop is the semi-transparent overlay div (bg-black/50) with onClick={handleClose}
+    const container = screen.getByTitle('Build Menu').closest('.fixed')!;
+    const backdrop = container.querySelector('.bg-black\\/50');
+    expect(backdrop).not.toBeNull();
 
-    // Click the backdrop itself (not a child)
     fireEvent.click(backdrop!);
     expect(mockCloseRadialMenu).toHaveBeenCalled();
   });

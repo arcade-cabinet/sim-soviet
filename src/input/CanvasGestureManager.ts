@@ -331,26 +331,55 @@ export class CanvasGestureManager {
       desc: def?.presentation.desc ?? '',
     });
 
-    // Also check for citizens assigned to this building
-    const workerInfo = this.findCitizenForBuilding(defId);
+    // Also check for citizens assigned to this building at this tile
+    const workerInfo = this.findCitizenForBuildingAt(defId, gridX, gridY);
     if (workerInfo) {
       setInspectedWorker(workerInfo);
       this.onWorkerTap?.(workerInfo);
     }
   }
 
-  /** Find a citizen entity positioned at the given grid cell. */
+  /** Find a citizen entity at or near the given grid cell (position, home, or 1-tile radius). */
   private findCitizenAtCell(gridX: number, gridY: number): InspectedWorker | null {
+    // Exact position match
     for (const entity of citizens) {
       if (entity.position.gridX === gridX && entity.position.gridY === gridY) {
+        return this.buildWorkerInfo(entity);
+      }
+    }
+    // Home position match
+    for (const entity of citizens) {
+      if (entity.citizen.home?.gridX === gridX && entity.citizen.home?.gridY === gridY) {
+        return this.buildWorkerInfo(entity);
+      }
+    }
+    // 1-tile radius fallback
+    for (const entity of citizens) {
+      const dx = Math.abs(entity.position.gridX - gridX);
+      const dy = Math.abs(entity.position.gridY - gridY);
+      if (dx <= 1 && dy <= 1 && dx + dy > 0) {
         return this.buildWorkerInfo(entity);
       }
     }
     return null;
   }
 
-  /** Find a citizen entity assigned to a building with the given defId. */
-  private findCitizenForBuilding(defId: string): InspectedWorker | null {
+  /** Find a citizen assigned to a building at a specific tile (position-aware). */
+  private findCitizenForBuildingAt(
+    defId: string,
+    gridX: number,
+    gridY: number
+  ): InspectedWorker | null {
+    // First: citizens assigned to this defId that are positioned at/near the building
+    for (const entity of citizens) {
+      if (entity.citizen.assignment !== defId) continue;
+      const dx = Math.abs(entity.position.gridX - gridX);
+      const dy = Math.abs(entity.position.gridY - gridY);
+      if (dx <= 1 && dy <= 1) {
+        return this.buildWorkerInfo(entity);
+      }
+    }
+    // Fallback: any citizen assigned to this building type
     for (const entity of citizens) {
       if (entity.citizen.assignment === defId) {
         return this.buildWorkerInfo(entity);

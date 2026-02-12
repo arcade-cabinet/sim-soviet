@@ -150,6 +150,13 @@ export const renderableCitizens = world.with('position', 'citizen', 'renderSlot'
  */
 export const dvory = world.with('dvor', 'isDvor');
 
+// ─── Terrain Feature Archetypes ──────────────────────────────────────────────
+
+/**
+ * All terrain feature entities (mountains, forests, marshes, rivers).
+ */
+export const terrainFeatures = world.with('position', 'terrainFeature', 'isTerrainFeature');
+
 // ─── Tile Archetypes ─────────────────────────────────────────────────────────
 
 /**

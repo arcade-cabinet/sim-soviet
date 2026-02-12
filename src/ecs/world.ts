@@ -286,6 +286,28 @@ export interface CitizenRenderSlot {
   dialoguePool: 'worker' | 'party_official' | 'military' | 'ambient';
 }
 
+// ─── Terrain Feature Component ───────────────────────────────────────────────
+
+/** Terrain feature types that can exist as ECS entities. */
+export type TerrainFeatureType = 'mountain' | 'forest' | 'marsh' | 'river' | 'water';
+
+/**
+ * Terrain feature component — represents a natural terrain feature on the map.
+ * These are first-class ECS entities with seed-guided placement.
+ */
+export interface TerrainFeatureComponent {
+  /** Type of terrain feature */
+  featureType: TerrainFeatureType;
+  /** Elevation level: 0=flat, 1=hill, 2=mountain, 3=peak */
+  elevation: number;
+  /** Whether this feature can be harvested (e.g. forests for timber) */
+  harvestable: boolean;
+  /** Whether units/buildings can be placed here */
+  passable: boolean;
+  /** Sprite name for rendering (e.g. "grass-forest") */
+  spriteName: string;
+}
+
 // ─── Entity ──────────────────────────────────────────────────────────────────
 
 /**
@@ -316,6 +338,8 @@ export interface Entity {
   gameMeta?: GameMeta;
   /** Pre-computed rendering instructions for citizen entities */
   renderSlot?: CitizenRenderSlot;
+  /** Terrain feature data (mountains, forests, etc.) */
+  terrainFeature?: TerrainFeatureComponent;
 
   // ── Tag components ──
   /** Tag: entity is a building */
@@ -330,6 +354,8 @@ export interface Entity {
   isResourceStore?: true;
   /** Tag: entity is the game metadata singleton */
   isMetaStore?: true;
+  /** Tag: entity is a terrain feature */
+  isTerrainFeature?: true;
 }
 
 // ─── World Instance ──────────────────────────────────────────────────────────
