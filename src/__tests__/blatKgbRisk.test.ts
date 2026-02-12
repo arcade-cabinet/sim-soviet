@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   BLAT_ARREST_THRESHOLD,
   BLAT_SAFE_THRESHOLD,
-  KGB_INVESTIGATION_CHANCE_PER_POINT,
   EconomySystem,
+  KGB_INVESTIGATION_CHANCE_PER_POINT,
 } from '@/game/economy';
 import { PersonnelFile } from '@/game/PersonnelFile';
 import { GameRng } from '@/game/SeedSystem';
