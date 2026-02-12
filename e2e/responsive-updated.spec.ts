@@ -3,9 +3,11 @@ import {
   advisorPanel,
   buildingButtons,
   canvas,
-  introOverlay,
+  dossier,
+  landingPage,
   quotaHud,
   startButton,
+  startGame,
   startGameAndDismissAdvisor,
   toolbar,
   topBar,
@@ -21,33 +23,31 @@ import {
  */
 
 test.describe('Responsive Layout', () => {
-  test.describe('Intro Screen', () => {
+  test.describe('Landing Page', () => {
     test.beforeEach(async ({ page }) => {
       await page.goto('/');
+      await page.waitForLoadState('networkidle');
     });
 
-    test('intro overlay covers full viewport', async ({ page }) => {
-      const overlay = introOverlay(page);
+    test('landing page covers full viewport', async ({ page }) => {
+      const overlay = landingPage(page);
       await expect(overlay).toBeVisible();
 
       const box = await overlay.boundingBox();
       const viewport = page.viewportSize();
       if (box && viewport) {
-        // Overlay should cover the full viewport (position: fixed inset: 0)
         expect(box.width).toBeGreaterThanOrEqual(viewport.width - 1);
         expect(box.height).toBeGreaterThanOrEqual(viewport.height - 1);
       }
     });
 
     test('dossier card does not overflow viewport horizontally', async ({ page }) => {
-      const doc = page.locator('.dossier');
+      const doc = dossier(page);
       const box = await doc.boundingBox();
       const viewport = page.viewportSize();
 
       if (box && viewport) {
-        // width: min(500px, 100%) ensures it never exceeds viewport
         expect(box.width).toBeLessThanOrEqual(viewport.width);
-        // Card should not be cut off on the right
         expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 2);
       }
     });
@@ -60,7 +60,6 @@ test.describe('Responsive Layout', () => {
       const box = await btn.boundingBox();
       const viewport = page.viewportSize();
       if (box && viewport) {
-        // Button should be fully within the viewport
         expect(box.x).toBeGreaterThanOrEqual(0);
         expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1);
         expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1);
@@ -206,8 +205,7 @@ test.describe('Responsive Layout', () => {
 
   test.describe('Advisor Responsiveness', () => {
     test('advisor fits within viewport when shown', async ({ page }) => {
-      await page.goto('/');
-      await startButton(page).click();
+      await startGame(page);
 
       const advisor = advisorPanel(page);
       await expect(advisor).toBeVisible({ timeout: 3000 });
@@ -215,7 +213,6 @@ test.describe('Responsive Layout', () => {
       const box = await advisor.boundingBox();
       const viewport = page.viewportSize();
       if (box && viewport) {
-        // Advisor should not overflow viewport
         expect(box.x).toBeGreaterThanOrEqual(0);
         expect(box.y).toBeGreaterThanOrEqual(0);
         expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1);
@@ -224,8 +221,7 @@ test.describe('Responsive Layout', () => {
     });
 
     test('advisor dismiss button is tappable', async ({ page }) => {
-      await page.goto('/');
-      await startButton(page).click();
+      await startGame(page);
 
       const advisor = advisorPanel(page);
       await expect(advisor).toBeVisible({ timeout: 3000 });
@@ -234,11 +230,10 @@ test.describe('Responsive Layout', () => {
       await expect(dismissBtn).toBeVisible();
       await expect(dismissBtn).toBeEnabled();
 
-      // Button should have adequate tap target size (min 44x44 from CSS)
       const box = await dismissBtn.boundingBox();
       if (box) {
         expect(box.width).toBeGreaterThanOrEqual(40);
-        expect(box.height).toBeGreaterThanOrEqual(20); // Height may be smaller for the dismiss text
+        expect(box.height).toBeGreaterThanOrEqual(20);
       }
     });
   });

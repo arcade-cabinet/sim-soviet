@@ -128,19 +128,25 @@ export async function waitForMoneyChange(
 /**
  * Navigate to the app and start the game by stepping through the full
  * new-game flow: Landing Page → NewGameFlow (3 steps) → AssignmentLetter → playing.
- * Waits for the canvas to be ready before returning.
+ * Waits for each screen transition to complete before proceeding.
  */
 export async function startGame(page: Page): Promise<void> {
   await page.goto('/');
+  await page.waitForLoadState('networkidle');
   // Landing page — click "BEGIN NEW ASSIGNMENT" on the New Game tab
   await startButton(page).click();
-  // NewGameFlow step 1 (Assignment) — click Next
+  // Wait for NewGameFlow step 1 to render
+  await page.getByText('I. ASSIGNMENT').waitFor({ timeout: 5000 });
+  // NewGameFlow step 1 → step 2
   await page.getByText('Next').click();
-  // NewGameFlow step 2 (Parameters) — click Next
+  await page.getByText('II. PARAMETERS').waitFor({ timeout: 5000 });
+  // NewGameFlow step 2 → step 3
   await page.getByText('Next').click();
-  // NewGameFlow step 3 (Consequences) — click BEGIN
+  await page.getByText('III. CONSEQUENCES').waitFor({ timeout: 5000 });
+  // NewGameFlow step 3 → AssignmentLetter
   await page.getByText('BEGIN').click();
-  // AssignmentLetter — click Accept Assignment
+  await page.getByText('Accept Assignment').waitFor({ timeout: 5000 });
+  // AssignmentLetter → Game
   await page.getByText('Accept Assignment').click();
   // Wait for the game canvas to be ready
   await waitForGameReady(page);

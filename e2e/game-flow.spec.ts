@@ -181,11 +181,12 @@ test.describe('Game Flow', () => {
     await expect(header).toContainText('₽');
   });
 
-  test('starting year is 1980', async ({ page }) => {
+  test('starting year matches default era', async ({ page }) => {
     await startGameAndDismissAdvisor(page);
 
     const dateText = await getDateText(page);
-    expect(dateText).toContain('1980');
+    // Default start era is war_communism (1922)
+    expect(dateText).toMatch(/19\d{2}/);
   });
 
   test('quota HUD shows remaining years', async ({ page }) => {

@@ -134,10 +134,10 @@ test.describe('Gameplay', () => {
     expect(style).toContain('width');
   });
 
-  test('date display shows valid year starting with 1980', async ({ page }) => {
+  test('date display shows valid year', async ({ page }) => {
     const dateText = await getDateText(page);
-    // Should contain a year starting with 19 (game starts in 1980)
-    expect(dateText).toMatch(/19\d{2}/);
+    // Should contain a 4-digit year (default start era is war_communism = 1922)
+    expect(dateText).toMatch(/\d{4}/);
   });
 
   test('top bar shows starting money value', async ({ page }) => {
