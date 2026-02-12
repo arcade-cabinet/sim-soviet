@@ -92,7 +92,7 @@ export async function waitForSimTick(page: Page, maxMs = 5000): Promise<void> {
     (prev) => {
       const header = document.querySelector('header');
       if (!header) return false;
-      const match = header.innerText.match(/📅\s*([\w\s]+\d{4})/);
+      const match = header.innerText.match(/📅\s*([A-Za-z\s]+\d{4})/);
       const current = match ? match[1].trim() : '';
       return current !== prev;
     },
@@ -112,7 +112,7 @@ export async function waitForMoneyChange(
       const header = document.querySelector('header');
       if (!header) return false;
       const match = header.innerText.match(/₽\s*(\d+)/);
-      const current = match ? parseInt(match[1], 10) : -1;
+      const current = match ? Number.parseInt(match[1], 10) : -1;
       return current !== prev;
     },
     previousMoney,
@@ -153,7 +153,7 @@ export async function startGameAndDismissAdvisor(page: Page): Promise<void> {
 export async function getMoney(page: Page): Promise<number> {
   const headerText = await topBar(page).innerText();
   const match = headerText.match(/₽\s*(\d+)/);
-  return match ? parseInt(match[1]!, 10) : -1;
+  return match ? Number.parseInt(match[1]!, 10) : -1;
 }
 
 /**
@@ -163,7 +163,7 @@ export async function getPopulation(page: Page): Promise<number> {
   const headerText = await topBar(page).innerText();
   // The population stat uses 👤 icon
   const match = headerText.match(/👤\s*(\d+)/);
-  return match ? parseInt(match[1]!, 10) : -1;
+  return match ? Number.parseInt(match[1]!, 10) : -1;
 }
 
 /**
@@ -171,7 +171,7 @@ export async function getPopulation(page: Page): Promise<number> {
  */
 export async function getDateText(page: Page): Promise<string> {
   const headerText = await topBar(page).innerText();
-  const match = headerText.match(/📅\s*([\w\s]+\d{4})/);
+  const match = headerText.match(/📅\s*([A-Za-z\s]+\d{4})/);
   return match ? match[1]!.trim() : '';
 }
 
