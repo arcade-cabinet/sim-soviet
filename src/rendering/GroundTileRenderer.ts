@@ -332,8 +332,11 @@ export class GroundTileRenderer {
         // Use noise to pick a color
         const n = pseudoNoise(x * 0.1, y * 0.1);
         let fill = colorA;
-        if (n > 0.6) fill = colorB;
-        if (n > 0.8) fill = colorC;
+        if (n > 0.8) {
+          fill = colorC;
+        } else if (n > 0.6) {
+          fill = colorB;
+        }
 
         const screen = gridToScreen(x, y);
         const cx = screen.x - this.originX;
