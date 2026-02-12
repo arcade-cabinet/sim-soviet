@@ -392,7 +392,8 @@ export function initializeSettlementPopulation(difficulty: Difficulty = 'comrade
 
   // Update resource store population to match the actual created citizens
   const store = getResourceEntity();
-  if (store) {
+  const store = getResourceEntity();
+  if (store?.resources) {
     store.resources.population = totalCitizens;
   }
 }
