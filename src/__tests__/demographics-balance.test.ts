@@ -9,12 +9,8 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { citizens, dvory, getResourceEntity } from '@/ecs/archetypes';
-import {
-  createCitizen,
-  createMetaStore,
-  createResourceStore,
-  createStartingSettlement,
-} from '@/ecs/factories';
+import { createCitizen, createMetaStore, createResourceStore } from '@/ecs/factories';
+import { initializeSettlementPopulation } from '@/ecs/factories/settlementFactories';
 import { world } from '@/ecs/world';
 import { notifyStateChange } from '@/stores/gameStore';
 
@@ -33,32 +29,32 @@ describe('demographics & resource balance', () => {
 
   // ── Settlement population ──────────────────────────────────
 
-  describe('createStartingSettlement population counts', () => {
+  describe('initializeSettlementPopulation population counts', () => {
     it('comrade difficulty produces at least 50 citizens', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       const citizenCount = dvory.entities.reduce((sum, d) => sum + d.dvor.members.length, 0);
       expect(citizenCount).toBeGreaterThanOrEqual(50);
     });
 
     it('comrade difficulty produces at least 10 dvory', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       expect(dvory.entities.length).toBeGreaterThanOrEqual(10);
     });
 
     it('worker difficulty produces more citizens than comrade', () => {
-      createStartingSettlement('worker');
+      initializeSettlementPopulation('worker');
       const workerCount = dvory.entities.reduce((sum, d) => sum + d.dvor.members.length, 0);
       world.clear();
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       const comradeCount = dvory.entities.reduce((sum, d) => sum + d.dvor.members.length, 0);
       expect(workerCount).toBeGreaterThan(comradeCount);
     });
 
     it('tovarish difficulty produces fewer citizens than comrade', () => {
-      createStartingSettlement('tovarish');
+      initializeSettlementPopulation('tovarish');
       const tovarishCount = dvory.entities.reduce((sum, d) => sum + d.dvor.members.length, 0);
       world.clear();
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       const comradeCount = dvory.entities.reduce((sum, d) => sum + d.dvor.members.length, 0);
       expect(tovarishCount).toBeLessThan(comradeCount);
     });

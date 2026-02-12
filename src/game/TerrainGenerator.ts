@@ -1,119 +1,96 @@
+import { GameRng } from './SeedSystem';
+
 /**
- * @module game/TerrainGenerator
- *
- * Procedural terrain placement using seeded RNG.
- *
- * Two placement zones:
- * 1. **Border ring** (0 to BORDER_DEPTH-1 from edge): low-profile terrain
- *    only (rocks, sand, dirt) so the map edge looks like barren ground.
- * 2. **Interior fringe** (BORDER_DEPTH to BORDER_DEPTH+INTERIOR_FRINGE-1):
- *    forests, hills, and mountains that frame the playable area.
- * 3. **Deep interior** (beyond both zones): clear for building placement.
- *
- * Deterministic per seed.
+ * Terrain types for the game world.
  */
+export type TerrainType =
+  | 'grass'
+  | 'grass-forest'
+  | 'grass-hill'
+  | 'water'
+  | 'water-deep'
+  | 'mountain';
 
-import type { TerrainFeature } from '@/rendering/FeatureTileRenderer';
-import type { GameRng } from './SeedSystem';
+export interface TerrainFeature {
+  gridX: number;
+  gridY: number;
+  type: TerrainType;
+}
 
-/** Low-profile terrain for the border ring — no tall sprites. */
-const BORDER_TERRAIN = [
-  'sand-rocks',
-  'sand-desert',
-  'stone-rocks',
-  'dirt-lumber',
-  'water-rocks',
-] as const;
-
-/** Prominent terrain for the interior fringe — forests, hills, mountains. */
-const INTERIOR_TERRAIN = [
+export const TERRAIN_TYPES: TerrainType[] = [
+  'grass',
   'grass-forest',
   'grass-hill',
-  'stone-hill',
-  'stone-mountain',
-  'stone-rocks',
-  'water-rocks',
-  'water-island',
-] as const;
-
-/** How many cells deep the border ring extends (low-profile terrain only). */
-export const BORDER_DEPTH = 3;
-
-/** How many additional cells inward the interior fringe extends. */
-export const INTERIOR_FRINGE = 3;
-
-/** Probability of placing a feature on an eligible border cell. */
-const BORDER_FILL_CHANCE = 0.3;
-
-/** Probability of placing a feature in the interior fringe. */
-const INTERIOR_FILL_CHANCE = 0.2;
+  'water',
+  'water-deep',
+  'mountain',
+];
 
 /**
- * Generate deterministic terrain features in two zones around the map.
- *
- * @param gridSize  Width/height of the square grid.
- * @param rng       Seeded RNG for reproducibility.
- * @returns Array of terrain features to render.
+ * Returns the sprite name for a given terrain type.
+ * Currently maps 1:1, but allows future flexibility.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: terrain generation branches on zones, noise thresholds, and feature placement
+export function getTerrainSpriteNames(type: TerrainType): string[] {
+  switch (type) {
+    case 'grass': return ['grass_1', 'grass_2', 'grass_3'];
+    case 'grass-forest': return ['forest_1', 'forest_2'];
+    case 'grass-hill': return ['hill_1'];
+    case 'water': return ['water_1'];
+    case 'water-deep': return ['water_deep_1'];
+    case 'mountain': return ['mountain_1', 'mountain_2'];
+    default: return ['grass_1'];
+  }
+}
+
+/** Width of the border ring (cells) */
+export const BORDER_DEPTH = 4;
+
+/**
+ * Generates terrain features for the map.
+ * Enforces a border ring of mountains/water.
+ */
 export function generateTerrain(gridSize: number, rng: GameRng): TerrainFeature[] {
   const features: TerrainFeature[] = [];
-  const totalDepth = BORDER_DEPTH + INTERIOR_FRINGE;
+  const center = gridSize / 2;
+  const radius = gridSize / 2;
 
   for (let y = 0; y < gridSize; y++) {
     for (let x = 0; x < gridSize; x++) {
-      const distFromEdge = Math.min(x, y, gridSize - 1 - x, gridSize - 1 - y);
+      const dist = Math.sqrt((x - center) ** 2 + (y - center) ** 2);
+      const isBorder = dist >= radius - BORDER_DEPTH;
 
-      if (distFromEdge < BORDER_DEPTH) {
-        // ── Border ring: low-profile terrain only ──────────────
-        const edgeFactor = 1 - distFromEdge / BORDER_DEPTH;
-        if (rng.random() > BORDER_FILL_CHANCE * edgeFactor) continue;
+      // Base terrain is grass (implicitly, where no feature exists)
+      // We only generate features for non-grass tiles to save entities/rendering
 
-        features.push({
-          gridX: x,
-          gridY: y,
-          spriteName: rng.pick([...BORDER_TERRAIN]),
-        });
-      } else if (distFromEdge < totalDepth) {
-        // ── Interior fringe: forests, mountains, hills ─────────
-        const fringeDist = distFromEdge - BORDER_DEPTH;
-        const fringeFactor = 1 - fringeDist / INTERIOR_FRINGE;
-        if (rng.random() > INTERIOR_FILL_CHANCE * fringeFactor) continue;
+      let type: TerrainType | null = null;
 
-        features.push({
-          gridX: x,
-          gridY: y,
-          spriteName: pickInteriorTerrain(x, y, gridSize, rng),
-        });
+      if (isBorder) {
+        // Border generation: mostly mountains/deep water
+        const noise = rng.next();
+        if (noise > 0.6) {
+          type = 'mountain';
+        } else if (noise > 0.4) {
+          type = 'water-deep';
+        } else if (noise > 0.3) {
+          type = 'grass-hill'; // Transition
+        }
+      } else {
+        // Interior generation
+        const noise = rng.next();
+        if (noise > 0.85) {
+          type = 'grass-forest';
+        } else if (noise > 0.92) {
+          type = 'grass-hill';
+        } else if (noise > 0.96) {
+          type = 'water';
+        }
       }
-      // Deep interior: no features — reserved for building placement
+
+      if (type) {
+        features.push({ gridX: x, gridY: y, type });
+      }
     }
   }
 
   return features;
-}
-
-/**
- * Pick an interior fringe terrain type appropriate for the cell position.
- * Corner cells tend toward mountains; edges toward forests/hills.
- */
-function pickInteriorTerrain(x: number, y: number, gridSize: number, rng: GameRng): string {
-  const totalDepth = BORDER_DEPTH + INTERIOR_FRINGE;
-  const isCorner =
-    (x < totalDepth && y < totalDepth) ||
-    (x < totalDepth && y >= gridSize - totalDepth) ||
-    (x >= gridSize - totalDepth && y < totalDepth) ||
-    (x >= gridSize - totalDepth && y >= gridSize - totalDepth);
-
-  if (isCorner && rng.random() > 0.4) {
-    // Corners lean toward rocky/mountainous terrain
-    return rng.pick(['stone-mountain', 'stone-rocks', 'stone-hill']);
-  }
-
-  return rng.pick([...INTERIOR_TERRAIN]);
-}
-
-/** Returns the unique set of sprite names for preloading. */
-export function getTerrainSpriteNames(features: TerrainFeature[]): string[] {
-  return [...new Set(features.map((f) => f.spriteName))];
 }

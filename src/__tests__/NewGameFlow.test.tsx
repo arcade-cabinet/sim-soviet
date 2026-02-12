@@ -123,47 +123,46 @@ describe('NewGameFlow', () => {
 
   it('renders the first step (Assignment) initially', () => {
     render(<NewGameFlow {...defaultProps} />);
-    expect(screen.getByText('I. ASSIGNMENT')).toBeDefined();
+    // Tabs
+    expect(screen.getByText('Assignment')).toBeDefined();
+    expect(screen.getByText('Parameters')).toBeDefined();
+    expect(screen.getByText('Consequences')).toBeDefined();
+
+    // Default content
+    expect(screen.getByText('Chairman Identity (Full Name)')).toBeDefined();
   });
 
-  it('navigates from step 1 to step 2 on Next click', () => {
+  it('navigates to Parameters on tab click', () => {
     render(<NewGameFlow {...defaultProps} />);
-    fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('II. PARAMETERS')).toBeDefined();
+    fireEvent.click(screen.getByText('Parameters'));
+    expect(screen.getByText('Difficulty Classification')).toBeDefined();
   });
 
-  it('navigates from step 2 to step 3 on Next click', () => {
+  it('navigates to Consequences on tab click', () => {
     render(<NewGameFlow {...defaultProps} />);
-    // step 1 -> 2
-    fireEvent.click(screen.getByText('Next'));
-    // step 2 -> 3
-    fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('III. CONSEQUENCES')).toBeDefined();
+    fireEvent.click(screen.getByText('Consequences'));
+    expect(screen.getByText('Failure Consequence (Arrest Protocol)')).toBeDefined();
   });
 
-  it('navigates back from step 2 to step 1', () => {
+  it('navigates back to Assignment on tab click', () => {
     render(<NewGameFlow {...defaultProps} />);
-    fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('II. PARAMETERS')).toBeDefined();
-    fireEvent.click(screen.getByText('Back'));
-    expect(screen.getByText('I. ASSIGNMENT')).toBeDefined();
+    fireEvent.click(screen.getByText('Parameters'));
+    expect(screen.getByText('Difficulty Classification')).toBeDefined();
+    fireEvent.click(screen.getByText('Assignment'));
+    expect(screen.getByText('Chairman Identity (Full Name)')).toBeDefined();
   });
 
-  it('calls onBack when Back is clicked on step 1', () => {
+  it('calls onBack when Cancel Assignment is clicked', () => {
     const onBack = vi.fn();
     render(<NewGameFlow {...defaultProps} onBack={onBack} />);
-    fireEvent.click(screen.getByText('Back'));
+    fireEvent.click(screen.getByText('Cancel Assignment'));
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('shows BEGIN button on step 3 and calls onStart', () => {
+  it('calls onStart when EXECUTE ORDER is clicked', () => {
     const onStart = vi.fn();
     render(<NewGameFlow {...defaultProps} onStart={onStart} />);
-    // Navigate to step 3
-    fireEvent.click(screen.getByText('Next'));
-    fireEvent.click(screen.getByText('Next'));
-    // Click BEGIN
-    fireEvent.click(screen.getByText('BEGIN'));
+    fireEvent.click(screen.getByText('EXECUTE ORDER'));
     expect(onStart).toHaveBeenCalledOnce();
     // Verify the config shape
     const config = onStart.mock.calls[0]![0] as NewGameConfig;
@@ -176,34 +175,34 @@ describe('NewGameFlow', () => {
     expect(config.consequence).toBe('permadeath');
   });
 
-  it('renders difficulty options on step 2', () => {
+  it('renders difficulty options on Parameters tab', () => {
     render(<NewGameFlow {...defaultProps} />);
-    fireEvent.click(screen.getByText('Next'));
+    fireEvent.click(screen.getByText('Parameters'));
     expect(screen.getByText('Worker')).toBeDefined();
     expect(screen.getByText('Comrade')).toBeDefined();
     expect(screen.getByText('Tovarish')).toBeDefined();
   });
 
-  it('renders consequence options on step 3', () => {
+  it('renders consequence options on Consequences tab', () => {
     render(<NewGameFlow {...defaultProps} />);
-    fireEvent.click(screen.getByText('Next'));
-    fireEvent.click(screen.getByText('Next'));
+    fireEvent.click(screen.getByText('Consequences'));
     expect(screen.getByText('Forgiving')).toBeDefined();
-    // "Permadeath" appears both as a consequence button label and in the summary
-    expect(screen.getAllByText('Permadeath').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Permadeath')).toBeDefined(); // As button
     expect(screen.getByText('Harsh')).toBeDefined();
   });
 
   it('selects a consequence level when clicked', () => {
     const onStart = vi.fn();
     render(<NewGameFlow {...defaultProps} onStart={onStart} />);
-    // Navigate to step 3
-    fireEvent.click(screen.getByText('Next'));
-    fireEvent.click(screen.getByText('Next'));
-    // Click Harsh (default is permadeath, so Harsh only appears once as a button)
+
+    // Switch to consequences tab
+    fireEvent.click(screen.getByText('Consequences'));
+
+    // Select Harsh
     fireEvent.click(screen.getByText('Harsh'));
-    // Click BEGIN
-    fireEvent.click(screen.getByText('BEGIN'));
+
+    // Submit
+    fireEvent.click(screen.getByText('EXECUTE ORDER'));
     const config = onStart.mock.calls[0]![0] as NewGameConfig;
     expect(config.consequence).toBe('harsh');
   });

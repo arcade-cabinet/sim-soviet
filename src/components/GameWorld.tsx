@@ -11,7 +11,7 @@ import { GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS } from '@/audio/AudioManifest';
 import type { NewGameConfig } from '@/components/screens/NewGameFlow';
 import { initDatabase } from '@/db/provider';
 import { citizens, producers } from '@/ecs/archetypes';
-import { createMetaStore, createResourceStore, createStartingSettlement } from '@/ecs/factories';
+import { createMetaStore, createResourceStore, initializeSettlementPopulation } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { Season } from '@/game/Chronology';
 import { GameGrid } from '@/game/GameGrid';
@@ -281,7 +281,12 @@ export function GameWorld({
     createResourceStore();
     const seed = gameConfig?.seed ?? generateSeedPhrase();
     createMetaStore({ seed });
-    createStartingSettlement(gameConfig?.difficulty ?? 'comrade');
+
+    // Only initialize population for new games (no save loaded)
+    // If a save is loaded later, these entities will be cleared/overwritten by SaveSystem
+    if (!loadSaveOnStart) {
+      initializeSettlementPopulation(gameConfig?.difficulty ?? 'comrade');
+    }
 
     // Start simulation engine with seeded RNG
     const rng = new GameRng(seed);

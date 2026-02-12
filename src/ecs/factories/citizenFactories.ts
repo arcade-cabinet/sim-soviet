@@ -71,7 +71,8 @@ export function createCitizen(
   homeY?: number,
   gender: 'male' | 'female' = 'male',
   age: number = 25,
-  dvorId?: string
+  dvorId?: string,
+  memberId?: string
 ): Entity {
   const citizen: CitizenComponent = {
     class: citizenClass,
@@ -81,6 +82,7 @@ export function createCitizen(
     gender,
     age,
     dvorId,
+    memberId,
     memberRole: memberRoleForAge(age),
   };
 
