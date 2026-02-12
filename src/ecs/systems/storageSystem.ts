@@ -9,6 +9,8 @@
  * Spoilage rules (from economy.md):
  * - Base spoilage: food beyond storage capacity decays at 5% per tick
  * - Stored food: decays at 0.5% per tick (granary) or 0.1% per tick (elevator)
+ * - Cold storage: reduces baseline spoilage to 0.1% (must be operational + powered)
+ *   - Multiple cold storage buildings: diminishing returns toward 0.05% floor
  * - Seasonal modifier: summer spoilage x2.0, winter x0.3
  * - Timber: does not spoil (fire events handled elsewhere)
  * - Steel/cement: does not spoil
@@ -16,7 +18,7 @@
  */
 
 import { getBuildingDef } from '@/data/buildingDefs';
-import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
+import { buildingsLogic, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 
 /** Base spoilage rate for food exceeding storage capacity per tick. */
 const OVERFLOW_SPOILAGE_RATE = 0.05;
@@ -91,50 +93,117 @@ export function calculateStorageCapacity(): number {
 }
 
 /**
- * Calculate the effective spoilage rate based on storage building types.
+ * Counts the number of operational, powered cold-storage buildings.
  *
- * Cold storage and grain elevators reduce spoilage. The rate is a weighted
- * average across all storage capacity — buildings with better preservation
- * reduce the overall rate proportionally to their capacity contribution.
+ * Only buildings that have completed construction AND are receiving power
+ * contribute to spoilage reduction. Uses the `operationalBuildings` archetype
+ * so that buildings under construction are excluded.
  */
-function getEffectiveSpoilageRate(): number {
+export function countOperationalColdStorage(): number {
+  let count = 0;
+  for (const entity of operationalBuildings) {
+    if (entity.building.defId === 'cold-storage' && entity.building.powered) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/**
+ * Returns true if at least one operational, powered cold-storage building
+ * exists in the settlement.
+ */
+export function isColdStoragePresent(): boolean {
+  return countOperationalColdStorage() > 0;
+}
+
+/** Rate for a single cold-storage building: 0.1% per tick. */
+const SINGLE_COLD_STORAGE_RATE = 0.001;
+
+/**
+ * Calculates the cold-storage spoilage reduction factor.
+ *
+ * With one cold-storage building, baseline spoilage drops from 0.5% to 0.1%.
+ * Each additional cold-storage building halves the remaining gap between the
+ * current rate and the theoretical minimum floor (COLD_STORAGE_SPOILAGE_RATE).
+ *
+ * Diminishing returns:
+ *   n=0: 0.500%  (no cold storage)
+ *   n=1: 0.100%  (first building)
+ *   n=2: 0.075%  (floor + (0.1% - floor) * 0.5)
+ *   n=3: 0.0625% (floor + (0.1% - floor) * 0.25)
+ *   ...approaching floor of 0.05%
+ */
+function getColdStorageRate(count: number): number {
+  if (count <= 0) return STORED_SPOILAGE_RATE;
+  if (count === 1) return SINGLE_COLD_STORAGE_RATE;
+
+  // Additional buildings: diminishing returns toward the cold-storage floor
+  // Each extra building halves the gap between current rate and theoretical min
+  const floor = COLD_STORAGE_SPOILAGE_RATE;
+  const additionalCount = count - 1;
+  const gap = SINGLE_COLD_STORAGE_RATE - floor;
+  return floor + gap * 0.5 ** additionalCount;
+}
+
+/**
+ * Calculates standard vs elevator capacity-weighted spoilage rate.
+ *
+ * Iterates all buildings and accumulates standard and grain-elevator capacity.
+ * Returns a weighted average of their respective spoilage rates. Unpowered
+ * cold-storage buildings contribute capacity at the standard rate.
+ */
+function getStandardElevatorRate(): number {
   let totalCapacity = 200; // base storage at standard rate
-  let coldCapacity = 0;
   let elevatorCapacity = 0;
 
   for (const entity of buildingsLogic) {
     const defId = entity.building.defId;
-    if (defId === 'cold-storage') {
-      coldCapacity += STORAGE_BY_DEF[defId] ?? 0;
-    } else if (defId === 'grain-elevator') {
+    if (defId === 'grain-elevator') {
       elevatorCapacity += STORAGE_BY_DEF[defId] ?? 0;
-    } else {
-      const defCap = STORAGE_BY_DEF[defId];
-      if (defCap !== undefined) {
-        totalCapacity += defCap;
-        continue;
-      }
-      const def = getBuildingDef(defId);
-      const role = def?.role;
-      if (role) {
-        const roleCap = STORAGE_BY_ROLE[role];
-        if (roleCap !== undefined) {
-          totalCapacity += roleCap;
-        }
+      continue;
+    }
+    const defCap = STORAGE_BY_DEF[defId];
+    if (defCap !== undefined) {
+      totalCapacity += defCap;
+      continue;
+    }
+    const def = getBuildingDef(defId);
+    const role = def?.role;
+    if (role) {
+      const roleCap = STORAGE_BY_ROLE[role];
+      if (roleCap !== undefined) {
+        totalCapacity += roleCap;
       }
     }
   }
 
-  const allCapacity = totalCapacity + coldCapacity + elevatorCapacity;
+  const allCapacity = totalCapacity + elevatorCapacity;
   if (allCapacity <= 0) return STORED_SPOILAGE_RATE;
 
-  // Weighted average: each capacity segment contributes its rate proportionally
   return (
-    (totalCapacity * STORED_SPOILAGE_RATE +
-      coldCapacity * COLD_STORAGE_SPOILAGE_RATE +
-      elevatorCapacity * ELEVATOR_SPOILAGE_RATE) /
-    allCapacity
+    (totalCapacity * STORED_SPOILAGE_RATE + elevatorCapacity * ELEVATOR_SPOILAGE_RATE) / allCapacity
   );
+}
+
+/**
+ * Calculate the effective spoilage rate based on storage building types.
+ *
+ * Cold storage buildings (operational + powered) reduce baseline spoilage.
+ * Grain elevators contribute via weighted-average capacity blending.
+ * Cold storage applies a settlement-wide rate reduction (not capacity-weighted)
+ * because refrigeration benefits all stored food.
+ */
+function getEffectiveSpoilageRate(): number {
+  const coldCount = countOperationalColdStorage();
+
+  // If cold storage is present, it sets the baseline rate for ALL stored food
+  if (coldCount > 0) {
+    return getColdStorageRate(coldCount);
+  }
+
+  // Without cold storage, use weighted average of standard vs elevator capacity
+  return getStandardElevatorRate();
 }
 
 /**

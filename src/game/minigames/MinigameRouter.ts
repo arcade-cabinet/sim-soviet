@@ -15,6 +15,7 @@ import type {
   MinigameOutcome,
   MinigameRouterSaveData,
 } from './MinigameTypes';
+import { autoResolveMiningExpedition } from './MiningExpedition';
 
 // ─────────────────────────────────────────────────────────
 //  CONSTANTS
@@ -113,7 +114,7 @@ export class MinigameRouter {
       return { announcement: 'No active minigame.' };
     }
 
-    const outcome = this.active.definition.autoResolve;
+    const outcome = this.dynamicAutoResolve(this.active.definition);
     this.active.resolved = true;
     this.active.outcome = outcome;
 
@@ -241,5 +242,17 @@ export class MinigameRouter {
       default:
         return false;
     }
+  }
+
+  /**
+   * Resolve auto-resolve outcome for a minigame definition.
+   * Most minigames use the static `definition.autoResolve` outcome.
+   * The mining expedition uses RNG-driven dynamic resolution.
+   */
+  private dynamicAutoResolve(definition: MinigameDefinition): MinigameOutcome {
+    if (definition.id === 'mining_expedition' && _rng) {
+      return autoResolveMiningExpedition(_rng);
+    }
+    return definition.autoResolve;
   }
 }
