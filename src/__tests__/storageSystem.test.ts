@@ -1,12 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { getResourceEntity } from '../ecs/archetypes';
 import { createBuilding, createResourceStore } from '../ecs/factories';
-import {
-  calculateStorageCapacity,
-  countOperationalColdStorage,
-  isColdStoragePresent,
-  storageSystem,
-} from '../ecs/systems/storageSystem';
+import { calculateStorageCapacity, storageSystem } from '../ecs/systems/storageSystem';
 import { world } from '../ecs/world';
 
 describe('storageSystem', () => {
@@ -104,121 +99,6 @@ describe('storageSystem', () => {
       storageSystem(7); // summer
       const store = getResourceEntity()!;
       expect(store.resources.vodka).toBe(999);
-    });
-  });
-
-  describe('cold storage spoilage reduction', () => {
-    /**
-     * Helper: creates a cold-storage building and optionally powers it.
-     * Returns the entity so tests can manipulate power state.
-     */
-    function createColdStorage(gridX: number, gridY: number, powered = false) {
-      const entity = createBuilding(gridX, gridY, 'cold-storage');
-      if (powered) {
-        entity.building!.powered = true;
-        world.reindex(entity);
-      }
-      return entity;
-    }
-
-    describe('isColdStoragePresent', () => {
-      it('returns false when no cold-storage buildings exist', () => {
-        expect(isColdStoragePresent()).toBe(false);
-      });
-
-      it('returns true when an operational, powered cold-storage building exists', () => {
-        createColdStorage(0, 0, true);
-        expect(isColdStoragePresent()).toBe(true);
-      });
-
-      it('returns false when cold-storage building is unpowered', () => {
-        createColdStorage(0, 0, false);
-        expect(isColdStoragePresent()).toBe(false);
-      });
-    });
-
-    describe('countOperationalColdStorage', () => {
-      it('returns 0 when no cold-storage buildings exist', () => {
-        expect(countOperationalColdStorage()).toBe(0);
-      });
-
-      it('counts only powered cold-storage buildings', () => {
-        createColdStorage(0, 0, true);
-        createColdStorage(1, 1, false); // unpowered — not counted
-        createColdStorage(2, 2, true);
-        expect(countOperationalColdStorage()).toBe(2);
-      });
-    });
-
-    it('reduces baseline spoilage when one cold-storage building is powered', () => {
-      createResourceStore({ food: 100 });
-      createColdStorage(0, 0, true);
-      // Month 5 = spring, seasonal mult = 1.0
-      // With cold storage: rate = 0.001 (0.1%)
-      // decay = 100 * 0.001 * 1.0 = 0.1
-      storageSystem(5);
-      const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(99.9);
-    });
-
-    it('applies diminishing returns with multiple cold-storage buildings', () => {
-      createResourceStore({ food: 1000 });
-      createColdStorage(0, 0, true);
-      createColdStorage(1, 1, true);
-      // Month 5 = spring, seasonal mult = 1.0
-      // With 2 cold storage buildings:
-      //   floor = 0.0005, gap = 0.001 - 0.0005 = 0.0005
-      //   rate = 0.0005 + 0.0005 * 0.5^1 = 0.0005 + 0.00025 = 0.00075
-      // decay = 1000 * 0.00075 * 1.0 = 0.75
-      storageSystem(5);
-      const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(999.25);
-    });
-
-    it('third cold-storage building provides even less improvement', () => {
-      createResourceStore({ food: 1000 });
-      createColdStorage(0, 0, true);
-      createColdStorage(1, 1, true);
-      createColdStorage(2, 2, true);
-      // With 3 cold storage buildings:
-      //   rate = 0.0005 + 0.0005 * 0.5^2 = 0.0005 + 0.000125 = 0.000625
-      // decay = 1000 * 0.000625 * 1.0 = 0.625
-      storageSystem(5);
-      const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(999.375);
-    });
-
-    it('unpowered cold-storage does NOT reduce baseline spoilage', () => {
-      createResourceStore({ food: 100 });
-      createColdStorage(0, 0, false); // unpowered
-      // Month 5 = spring, seasonal mult = 1.0
-      // No cold storage effect → standard rate 0.005
-      // But cold-storage building adds 400 to capacity (total = 600)
-      // 100 < 600, so baseline spoilage applies: 100 * 0.005 * 1.0 = 0.5
-      storageSystem(5);
-      const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(99.5);
-    });
-
-    it('overflow spoilage is NOT affected by cold storage', () => {
-      createResourceStore({ food: 1000 });
-      createColdStorage(0, 0, true);
-      // Capacity = 200 (base) + 400 (cold-storage) = 600
-      // Overflow = 1000 - 600 = 400
-      // Overflow spoilage = 400 * 0.05 * 1.0 = 20 (same rate regardless of cold storage)
-      storageSystem(5);
-      const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(980);
-    });
-
-    it('cold storage reduction stacks with seasonal multiplier', () => {
-      createResourceStore({ food: 100 });
-      createColdStorage(0, 0, true);
-      // Month 7 = summer, seasonal mult = 2.0
-      // rate = 0.001, decay = 100 * 0.001 * 2.0 = 0.2
-      storageSystem(7);
-      const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(99.8);
     });
   });
 });

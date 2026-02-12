@@ -15,4 +15,3 @@ export type {
   MinigameOutcome,
   MinigameRouterSaveData,
 } from './MinigameTypes';
-export { autoResolveMiningExpedition } from './MiningExpedition';

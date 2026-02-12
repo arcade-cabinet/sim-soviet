@@ -381,8 +381,6 @@ export interface EconomyTickResult {
   heatingResult: HeatingTickResult | null;
   /** Currency reform if one triggered */
   currencyReform: CurrencyReformResult | null;
-  /** Passive per-tick KGB risk from high blat level */
-  blatKgbResult: { investigated: boolean; arrested: boolean; announcement: string | null } | null;
 }
 
 /** Remainder allocation after fondy deliveries — what's left for the people. */

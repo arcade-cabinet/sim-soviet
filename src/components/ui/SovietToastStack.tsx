@@ -10,7 +10,6 @@
  */
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, AlertTriangle, Radio, X } from 'lucide-react';
-import { useColorBlindMode } from '@/stores/gameStore';
 import type { ToastSeverity } from '@/stores/toastStore';
 import { dismissSovietToast, useSovietToasts } from '@/stores/toastStore';
 
@@ -55,13 +54,6 @@ const severityConfig: Record<
 
 // ── Toast item ───────────────────────────────────────────────────────────
 
-/** Severity → English text prefix for color-blind mode. */
-const CB_SEVERITY_PREFIX: Record<ToastSeverity, string> = {
-  warning: 'WARNING: ',
-  critical: 'CRITICAL: ',
-  evacuation: 'EVACUATION: ',
-};
-
 function ToastItem({
   id,
   severity,
@@ -73,8 +65,6 @@ function ToastItem({
 }) {
   const config = severityConfig[severity];
   const Icon = config.icon;
-  const colorBlind = useColorBlindMode();
-  const cbClass = colorBlind ? `toast-cb-${severity}` : '';
 
   return (
     <motion.div
@@ -92,7 +82,7 @@ function ToastItem({
         scale: 0.8,
         transition: { duration: 0.2 },
       }}
-      className={`relative w-full sm:w-80 shadow-2xl overflow-hidden border-2 ${config.borderColor} ${cbClass}`}
+      className={`relative w-full sm:w-80 shadow-2xl overflow-hidden border-2 ${config.borderColor}`}
       style={{
         boxShadow: '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
       }}
@@ -123,9 +113,6 @@ function ToastItem({
               severity === 'warning' ? 'text-yellow-900' : config.iconColor
             }`}
           >
-            {colorBlind && (
-              <span className="font-black underline">{CB_SEVERITY_PREFIX[severity]}</span>
-            )}
             {message}
           </p>
           <button

@@ -16,16 +16,3 @@ createRoot(root).render(
     <App />
   </StrictMode>
 );
-
-// Register service worker in production only
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const base = import.meta.env.BASE_URL.endsWith('/')
-      ? import.meta.env.BASE_URL
-      : `${import.meta.env.BASE_URL}/`;
-    const swUrl = `${base}sw.js`;
-    navigator.serviceWorker.register(swUrl).catch((err) => {
-      console.warn('SW registration failed:', err);
-    });
-  });
-}

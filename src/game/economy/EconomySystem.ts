@@ -614,7 +614,6 @@ export class EconomySystem {
       mtsResult,
       heatingResult,
       currencyReform,
-      blatKgbResult: null,
     };
   }
 

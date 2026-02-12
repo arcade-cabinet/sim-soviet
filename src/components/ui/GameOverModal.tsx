@@ -1,34 +1,20 @@
 /**
- * GameOverModal — Victory or defeat screen with game stats and medal ceremony.
+ * GameOverModal — Victory or defeat screen with game stats.
  *
  * Mirrors the IntroModal "dossier" aesthetic.
- * Victory: congratulations + stats + medal ceremony + final score.
- * Defeat: KGB notification + shame stats + whatever medals were scraped together.
- *
- * When tally data is available (medals + score), the MedalCeremony component
- * renders an animated reveal below the stats summary.
+ * Victory: congratulations + stats summary.
+ * Defeat: KGB notification + shame stats.
  */
-import { MedalCeremony } from '@app/components/MedalCeremony';
-import type { Medal } from '@/game/ScoringSystem';
 import { useGameSnapshot } from '@/stores/gameStore';
 
 interface GameOverModalProps {
   victory: boolean;
   reason: string;
   onRestart: () => void;
-  medals?: Medal[];
-  finalScore?: number;
 }
 
-export function GameOverModal({
-  victory,
-  reason,
-  onRestart,
-  medals,
-  finalScore,
-}: GameOverModalProps) {
+export function GameOverModal({ victory, reason, onRestart }: GameOverModalProps) {
   const snap = useGameSnapshot();
-  const hasCeremony = medals != null && finalScore != null;
 
   return (
     <div className="intro-overlay">
@@ -71,14 +57,6 @@ export function GameOverModal({
             Vodka Reserves: <strong>{snap.vodka}</strong>
           </li>
         </ul>
-
-        {/* Medal ceremony -- animated reveal when tally data available */}
-        {hasCeremony && (
-          <>
-            <hr className="border-black/30 mb-4" />
-            <MedalCeremony medals={medals} finalScore={finalScore} />
-          </>
-        )}
 
         <hr className="border-black/30 mb-4" />
 

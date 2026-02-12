@@ -63,14 +63,6 @@ export interface BuildingComponent {
  * Citizen component for individual NPC entities.
  * Each citizen has a class, mood stats, and optional assignments.
  */
-/** Active disease state for a citizen. */
-export interface CitizenDisease {
-  /** Disease type identifier */
-  type: 'typhus' | 'cholera' | 'influenza' | 'scurvy';
-  /** Ticks remaining until recovery (or death check) */
-  ticksRemaining: number;
-}
-
 export interface CitizenComponent {
   /** Social class / occupation */
   class: 'worker' | 'party_official' | 'engineer' | 'farmer' | 'soldier' | 'prisoner';
@@ -92,8 +84,6 @@ export interface CitizenComponent {
   age?: number;
   /** Demographic role within the household */
   memberRole?: MemberRole;
-  /** Active disease (if any) — sick citizens have reduced labor output */
-  disease?: CitizenDisease;
 }
 
 // ── Dvor (Household) System ──────────────────────────────────────────────────

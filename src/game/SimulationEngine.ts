@@ -52,7 +52,6 @@ import type { ChronologyState, TickResult } from './ChronologySystem';
 import { ChronologySystem } from './ChronologySystem';
 import type { CompulsoryDeliverySaveData } from './CompulsoryDeliveries';
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
-import { DISEASE_PRAVDA_HEADLINES, diseaseTick, initDiseaseSystem } from './DiseaseSystem';
 import { type EraId as EconomyEraId, type EconomySaveData, EconomySystem } from './economy';
 // ── Extracted helpers ──
 import {
@@ -312,9 +311,6 @@ export class SimulationEngine {
     this.transport = new TransportSystem(this.eraSystem.getCurrentEraId());
     if (rng) this.transport.setRng(rng);
 
-    // Disease System — outbreak/recovery/mortality per citizen
-    initDiseaseSystem(rng ?? null);
-
     // Plan Mandates — building construction mandates per era
     const initialEraId = this.eraSystem.getCurrentEraId();
     const initialMandates = createMandatesForEra(initialEraId, this.difficulty);
@@ -552,33 +548,6 @@ export class SimulationEngine {
     this.tickEconomySystem();
 
     consumptionSystem(eraMods.consumptionMult);
-
-    // Disease System — outbreak checks (monthly) + disease progression (every tick)
-    const diseaseResult = diseaseTick(
-      this.chronology.getDate().totalTicks,
-      this.chronology.getDate().month
-    );
-    // Sync disease deaths to the resource store
-    if (diseaseResult.deaths > 0 && storeRef) {
-      storeRef.resources.population = Math.max(
-        0,
-        storeRef.resources.population - diseaseResult.deaths
-      );
-    }
-    // Emit Pravda headlines for outbreaks
-    if (diseaseResult.outbreakTypes.length > 0) {
-      const rngLocal = this.rng;
-      for (const diseaseType of diseaseResult.outbreakTypes) {
-        const headlines = DISEASE_PRAVDA_HEADLINES[diseaseType];
-        if (headlines && headlines.length > 0) {
-          const headline = rngLocal
-            ? rngLocal.pick(headlines)
-            : headlines[Math.floor(Math.random() * headlines.length)]!;
-          this.callbacks.onPravda(headline);
-        }
-      }
-    }
-
     populationSystem(
       this.rng,
       politburoMods.populationGrowthMult * eraMods.populationGrowthMult,
@@ -915,31 +884,6 @@ export class SimulationEngine {
       if (atRisk > 0) {
         const losses = Math.ceil(atRisk * 0.01); // 1% of at-risk pop per tick
         r.population = Math.max(0, r.population - losses);
-      }
-    }
-
-    // Blat KGB risk — passive investigation/arrest from high connections
-    if (result.blatKgbResult) {
-      const kgb = result.blatKgbResult;
-      if (kgb.investigated) {
-        this.personnelFile.addMark(
-          'blat_noticed',
-          totalTicks,
-          kgb.announcement ?? 'KGB investigation into blat connections'
-        );
-        this.callbacks.onToast('KGB INVESTIGATION: Blat connections noticed', 'critical');
-      }
-      if (kgb.arrested) {
-        this.personnelFile.addMark(
-          'blat_noticed',
-          totalTicks,
-          kgb.announcement ?? 'Arrested for anti-Soviet networking activities'
-        );
-        this.callbacks.onAdvisor(
-          'Comrade, your extensive network of personal favors has attracted ' +
-            'unwelcome attention from the organs of state security. ' +
-            'Perhaps fewer friends would be safer.'
-        );
       }
     }
 
