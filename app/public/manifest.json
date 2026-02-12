@@ -1,13 +1,13 @@
 {
   "name": "SimSoviet 2000",
   "short_name": "SimSoviet",
-  "description": "Soviet satirical isometric city-builder",
-  "theme_color": "#8B0000",
-  "background_color": "#1a1a2e",
-  "display": "standalone",
-  "orientation": "any",
+  "description": "Satirical Soviet isometric city-builder",
   "start_url": "./",
-  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#b71c1c",
+  "orientation": "any",
+  "categories": ["games"],
   "icons": [
     {
       "src": "icons/icon-192x192.png",
@@ -27,6 +27,5 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "categories": ["games", "entertainment"]
+  ]
 }
