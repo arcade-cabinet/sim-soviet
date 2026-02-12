@@ -36,6 +36,8 @@ export function effectiveWorkers(workers: number, staffCap: number): number {
 
   let effective = staffCap;
   const extra = workers - staffCap;
+  // Fractional overstaffing triggers full tier benefits (avgWorkers may be
+  // fractional from division). Even 0.01 extra unlocks the first 50% tier.
   let contribution = 0.5; // first extra worker contributes 50%
 
   for (let i = 0; i < extra; i++) {

@@ -143,6 +143,12 @@ export function ConsumerGoodsMarket() {
     const res = getResourceEntity();
     if (!res) return;
 
+    // Defensive check: resources may have changed between render and click
+    const r = res.resources;
+    if (item.costType === 'money' && r.money < item.costAmount) return;
+    if (item.costType === 'vodka' && r.vodka < item.costAmount) return;
+    if (item.secondaryCost && r.money < item.secondaryCost.amount) return;
+
     deductCosts(res, item);
     applyEffect(item);
 

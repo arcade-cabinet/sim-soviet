@@ -282,40 +282,33 @@ body {
 
 /* --- Toast severity: add distinct border patterns --- */
 body.colorblind .toast-cb-critical {
-  border-left: 6px solid #ffffff;
-  border-left-style: double;
+  border-left: 6px double #fff;
 }
 
 body.colorblind .toast-cb-warning {
-  border-left: 6px dashed #ffffff;
+  border-left: 6px dashed #fff;
 }
 
 body.colorblind .toast-cb-evacuation {
-  border-left: 6px dotted #ffffff;
+  border-left: 6px dotted #fff;
 }
 
 /* --- Alert severity: add distinct left-border patterns --- */
 body.colorblind .alert-cb-critical {
-  border-left-width: 4px;
-  border-left-style: double;
-  border-left-color: #ffffff;
+  border-left: 4px double #fff;
 }
 
 body.colorblind .alert-cb-warning {
-  border-left-width: 4px;
-  border-left-style: dashed;
-  border-left-color: #ffffff;
+  border-left: 4px dashed #fff;
 }
 
 body.colorblind .alert-cb-info {
-  border-left-width: 4px;
-  border-left-style: dotted;
-  border-left-color: #ffffff;
+  border-left: 4px dotted #fff;
 }
 
 /* --- High-contrast borders on key panels --- */
 body.colorblind .cb-panel-border {
-  border-color: #ffffff !important;
+  border-color: #fff !important;
   border-width: 2px !important;
 }
 
@@ -328,7 +321,7 @@ body.colorblind .cb-panel-border {
   letter-spacing: 0.05em;
   padding: 0 3px;
   margin-left: 4px;
-  border: 1px solid currentColor;
+  border: 1px solid currentcolor;
   vertical-align: middle;
 }
 
