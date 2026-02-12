@@ -2,7 +2,7 @@
  * Tests for Landing Page, NewGameFlow, and AssignmentLetter screens.
  *
  * Uses @testing-library/react with happy-dom environment.
- * Mocks framer-motion so AnimatePresence doesn't block step transitions.
+ * Mocks framer-motion so AnimatePresence doesn't block transitions.
  */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
@@ -124,7 +124,7 @@ describe('LandingPage', () => {
 });
 
 // ─────────────────────────────────────────────────────────
-//  NewGameFlow
+//  NewGameFlow (single-page dossier)
 // ─────────────────────────────────────────────────────────
 
 describe('NewGameFlow', () => {
@@ -133,51 +133,57 @@ describe('NewGameFlow', () => {
     onBack: vi.fn(),
   };
 
-  it('renders the first step (Assignment) initially', () => {
+  it('renders all three sections on a single page', () => {
     render(<NewGameFlow {...defaultProps} />);
-    expect(screen.getByText('I. ASSIGNMENT')).toBeDefined();
+    expect(screen.getByText('I. Assignment')).toBeDefined();
+    expect(screen.getByText('II. Parameters')).toBeDefined();
+    expect(screen.getByText('III. Consequences')).toBeDefined();
   });
 
-  it('navigates from step 1 to step 2 on Next click', () => {
+  it('renders the dossier header', () => {
     render(<NewGameFlow {...defaultProps} />);
-    fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('II. PARAMETERS')).toBeDefined();
+    expect(screen.getByText('New Assignment Dossier')).toBeDefined();
   });
 
-  it('navigates from step 2 to step 3 on Next click', () => {
+  it('renders difficulty options', () => {
     render(<NewGameFlow {...defaultProps} />);
-    // step 1 -> 2
-    fireEvent.click(screen.getByText('Next'));
-    // step 2 -> 3
-    fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('III. CONSEQUENCES')).toBeDefined();
+    expect(screen.getByText('Worker')).toBeDefined();
+    // 'Comrade' appears in both the option button and the summary section
+    expect(screen.getAllByText('Comrade').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Tovarish')).toBeDefined();
   });
 
-  it('navigates back from step 2 to step 1', () => {
+  it('renders consequence options', () => {
     render(<NewGameFlow {...defaultProps} />);
-    fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('II. PARAMETERS')).toBeDefined();
-    fireEvent.click(screen.getByText('Back'));
-    expect(screen.getByText('I. ASSIGNMENT')).toBeDefined();
+    expect(screen.getByText('Forgiving')).toBeDefined();
+    expect(screen.getAllByText('Permadeath').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Harsh')).toBeDefined();
   });
 
-  it('calls onBack when Back is clicked on step 1', () => {
+  it('renders map size options', () => {
+    render(<NewGameFlow {...defaultProps} />);
+    expect(screen.getByText('Small')).toBeDefined();
+    expect(screen.getByText('Medium')).toBeDefined();
+    expect(screen.getByText('Large')).toBeDefined();
+  });
+
+  it('renders the assignment summary', () => {
+    render(<NewGameFlow {...defaultProps} />);
+    expect(screen.getByText('Assignment Summary')).toBeDefined();
+  });
+
+  it('calls onBack when Back is clicked', () => {
     const onBack = vi.fn();
     render(<NewGameFlow {...defaultProps} onBack={onBack} />);
     fireEvent.click(screen.getByText('Back'));
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('shows BEGIN button on step 3 and calls onStart', () => {
+  it('calls onStart with config when BEGIN is clicked', () => {
     const onStart = vi.fn();
     render(<NewGameFlow {...defaultProps} onStart={onStart} />);
-    // Navigate to step 3
-    fireEvent.click(screen.getByText('Next'));
-    fireEvent.click(screen.getByText('Next'));
-    // Click BEGIN
     fireEvent.click(screen.getByText('BEGIN'));
     expect(onStart).toHaveBeenCalledOnce();
-    // Verify the config shape
     const config = onStart.mock.calls[0]![0] as NewGameConfig;
     expect(config.playerName).toBeTruthy();
     expect(config.cityName).toBeTruthy();
@@ -188,36 +194,29 @@ describe('NewGameFlow', () => {
     expect(config.consequence).toBe('permadeath');
   });
 
-  it('renders difficulty options on step 2', () => {
-    render(<NewGameFlow {...defaultProps} />);
-    fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('Worker')).toBeDefined();
-    expect(screen.getByText('Comrade')).toBeDefined();
-    expect(screen.getByText('Tovarish')).toBeDefined();
-  });
-
-  it('renders consequence options on step 3', () => {
-    render(<NewGameFlow {...defaultProps} />);
-    fireEvent.click(screen.getByText('Next'));
-    fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('Forgiving')).toBeDefined();
-    // "Permadeath" appears both as a consequence button label and in the summary
-    expect(screen.getAllByText('Permadeath').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Harsh')).toBeDefined();
+  it('selects a difficulty level when clicked', () => {
+    const onStart = vi.fn();
+    render(<NewGameFlow {...defaultProps} onStart={onStart} />);
+    fireEvent.click(screen.getByText('Worker'));
+    fireEvent.click(screen.getByText('BEGIN'));
+    const config = onStart.mock.calls[0]![0] as NewGameConfig;
+    expect(config.difficulty).toBe('worker');
   });
 
   it('selects a consequence level when clicked', () => {
     const onStart = vi.fn();
     render(<NewGameFlow {...defaultProps} onStart={onStart} />);
-    // Navigate to step 3
-    fireEvent.click(screen.getByText('Next'));
-    fireEvent.click(screen.getByText('Next'));
-    // Click Harsh (default is permadeath, so Harsh only appears once as a button)
     fireEvent.click(screen.getByText('Harsh'));
-    // Click BEGIN
     fireEvent.click(screen.getByText('BEGIN'));
     const config = onStart.mock.calls[0]![0] as NewGameConfig;
     expect(config.consequence).toBe('harsh');
+  });
+
+  it('renders starting era dropdown with all eras', () => {
+    render(<NewGameFlow {...defaultProps} />);
+    // Era text may appear in both the dropdown and the summary section
+    expect(screen.getAllByText('War Communism (1922)').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('The Eternal Soviet (1991)')).toBeDefined();
   });
 });
 
