@@ -81,7 +81,7 @@ export async function waitForGameReady(page: Page): Promise<void> {
       return canvas.width > 0 && canvas.height > 0;
     },
     undefined,
-    { timeout: 10_000 },
+    { timeout: 10_000 }
   );
 }
 
@@ -97,7 +97,7 @@ export async function waitForSimTick(page: Page, maxMs = 5000): Promise<void> {
       return current !== prev;
     },
     initialDate,
-    { timeout: maxMs },
+    { timeout: maxMs }
   );
 }
 
@@ -105,7 +105,7 @@ export async function waitForSimTick(page: Page, maxMs = 5000): Promise<void> {
 export async function waitForMoneyChange(
   page: Page,
   previousMoney: number,
-  maxMs = 5000,
+  maxMs = 5000
 ): Promise<void> {
   await page.waitForFunction(
     (prev) => {
@@ -116,7 +116,7 @@ export async function waitForMoneyChange(
       return current !== prev;
     },
     previousMoney,
-    { timeout: maxMs },
+    { timeout: maxMs }
   );
 }
 

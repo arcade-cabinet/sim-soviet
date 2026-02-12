@@ -59,9 +59,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: process.env.CI
-      ? 'pnpm exec vite preview --port 3000'
-      : 'pnpm dev',
+    command: process.env.CI ? 'pnpm exec vite preview --port 3000' : 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
