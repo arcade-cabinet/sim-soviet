@@ -236,27 +236,31 @@ export function calcOutbreakModifier(
 export function progressDiseases(result: DiseaseTickResult): void {
   const rng = _rng;
 
-  for (const entity of [...citizens]) {
+  // Snapshot citizens array — world.remove() during iteration is safe
+  // because we iterate the snapshot, not the live archetype.
+  const snapshot = [...citizens];
+  for (const entity of snapshot) {
     const disease = entity.citizen.disease;
     if (!disease) continue;
 
-    disease.ticksRemaining--;
-
-    if (disease.ticksRemaining <= 0) {
+    if (disease.ticksRemaining <= 1) {
       // Disease has run its course — death or recovery check
       const def = DISEASE_DEFINITIONS.find((d) => d.type === disease.type);
       const mortalityRate = def?.mortalityRate ?? 0.1;
 
       const roll = rng?.random() ?? Math.random();
       if (roll < mortalityRate) {
-        // Death
+        // Death — remove entity from world
         result.deaths++;
+        entity.citizen.disease = undefined;
         world.remove(entity);
       } else {
         // Recovery
         entity.citizen.disease = undefined;
         result.recoveries++;
       }
+    } else {
+      disease.ticksRemaining--;
     }
   }
 }

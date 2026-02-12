@@ -27,7 +27,6 @@ import {
 } from './stakhanovites';
 import { calculateBuildingTrudodni, MINIMUM_TRUDODNI_BY_DIFFICULTY } from './trudodni';
 import type {
-  BlatKgbResult,
   BlatState,
   CurrencyReformEvent,
   CurrencyReformResult,
@@ -50,12 +49,6 @@ import type {
   TransferableResource,
   TrudodniRecord,
 } from './types';
-
-/** Blat connections at or below this level are safe from KGB scrutiny. */
-export const BLAT_SAFE_THRESHOLD = 5;
-
-/** Blat connections above this level risk outright arrest. */
-export const BLAT_ARREST_THRESHOLD = 10;
 
 export class EconomySystem {
   private trudodni: TrudodniRecord;
@@ -305,51 +298,6 @@ export class EconomySystem {
     }
 
     return { success: true, kgbDetected };
-  }
-
-  /**
-   * Passive per-tick KGB risk from accumulated blat connections.
-   *
-   * The KGB doesn't need you to spend blat to notice you have it.
-   * High connections mean you know people, and knowing people means
-   * someone, somewhere, is writing a report about you.
-   *
-   * - Below BLAT_SAFE_THRESHOLD (5): safe, comrade. For now.
-   * - Above threshold: 2% investigation chance per excess point per tick.
-   * - Above BLAT_ARREST_THRESHOLD (10): additional 1% arrest chance per tick.
-   */
-  checkBlatKgbRisk(): BlatKgbResult | null {
-    const connections = this.blat.connections;
-    if (connections <= BLAT_SAFE_THRESHOLD) return null;
-    // Require seeded RNG — per-tick random checks must be deterministic
-    if (!this.rng) return null;
-
-    const rng = this.rng;
-    const rand = () => rng.random();
-    const excessPoints = connections - BLAT_SAFE_THRESHOLD;
-    const investigationChance = excessPoints * 0.02;
-
-    let investigated = false;
-    let arrested = false;
-    let announcement: string | null = null;
-
-    if (rand() < investigationChance) {
-      investigated = true;
-      announcement =
-        'KGB Report: Citizen has been observed maintaining suspiciously ' +
-        'extensive personal connections. An investigation has been opened.';
-    }
-
-    if (connections > BLAT_ARREST_THRESHOLD && rand() < 0.01) {
-      arrested = true;
-      announcement =
-        'KGB DIRECTIVE: Citizen detained for questioning regarding ' +
-        'anti-Soviet networking activities. File transferred to special tribunal.';
-    }
-
-    if (!investigated && !arrested) return null;
-
-    return { investigated, arrested, announcement };
   }
 
   // ── Rations ───────────────────────────────────────────────────
@@ -656,9 +604,6 @@ export class EconomySystem {
     // Calculate ration demand
     const rationDemand = this.calculateDemand(population);
 
-    // Blat KGB risk — passive per-tick investigation/arrest chance
-    const blatKgbResult = this.checkBlatKgbRisk();
-
     return {
       trudodniEarned,
       fondyDelivered,
@@ -669,7 +614,7 @@ export class EconomySystem {
       mtsResult,
       heatingResult,
       currencyReform,
-      blatKgbResult,
+      blatKgbResult: null,
     };
   }
 

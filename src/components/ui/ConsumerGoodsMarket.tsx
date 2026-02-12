@@ -127,11 +127,13 @@ export function ConsumerGoodsMarket() {
 
   const canAfford = useCallback(
     (item: GoodsItem): boolean => {
+      // Check primary cost (money or vodka)
       if (item.costType === 'money' && snap.money < item.costAmount) return false;
       if (item.costType === 'vodka' && snap.vodka < item.costAmount) return false;
+      // Check secondary cost (e.g. vodka rations also cost rubles)
       if (item.secondaryCost && snap.money < item.secondaryCost.amount) return false;
+      // Check stock availability for distribution
       if (item.stockKey === 'food' && snap.food < 10) return false;
-      if (item.stockKey === 'vodka' && snap.vodka < item.costAmount) return false;
       return true;
     },
     [snap.money, snap.vodka, snap.food]

@@ -112,22 +112,6 @@ export interface BlatState {
   totalEarned: number;
 }
 
-/**
- * Result of the passive per-tick blat KGB risk check.
- *
- * High blat connections attract KGB attention. Above BLAT_SAFE_THRESHOLD,
- * each excess point carries a 2% investigation chance per tick. At very
- * high levels (>10), there is also a 1% arrest risk per tick.
- */
-export interface BlatKgbResult {
-  /** Whether a KGB investigation was triggered (adds a black mark) */
-  investigated: boolean;
-  /** Whether an arrest was triggered (additional black mark via PersonnelFile) */
-  arrested: boolean;
-  /** Soviet-flavored announcement text (only set when investigated or arrested) */
-  announcement: string | null;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 //  Ration Cards
 // ─────────────────────────────────────────────────────────────────────────────
@@ -398,7 +382,7 @@ export interface EconomyTickResult {
   /** Currency reform if one triggered */
   currencyReform: CurrencyReformResult | null;
   /** Passive per-tick KGB risk from high blat level */
-  blatKgbResult: BlatKgbResult | null;
+  blatKgbResult: { investigated: boolean; arrested: boolean; announcement: string | null } | null;
 }
 
 /** Remainder allocation after fondy deliveries — what's left for the people. */
