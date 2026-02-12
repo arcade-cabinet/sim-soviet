@@ -67,9 +67,15 @@ export function GameModals({
 }: GameModalsProps) {
   return (
     <>
-      {/* Game over modal */}
+      {/* Game over modal — with medal ceremony when tally data is available */}
       {gameOver && (
-        <GameOverModal victory={gameOver.victory} reason={gameOver.reason} onRestart={onRestart} />
+        <GameOverModal
+          victory={gameOver.victory}
+          reason={gameOver.reason}
+          onRestart={onRestart}
+          medals={gameTally?.medals}
+          finalScore={gameTally?.finalScore}
+        />
       )}
 
       {/* Settlement upgrade decree modal */}
