@@ -7,11 +7,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { dvory } from '../ecs/archetypes';
-import {
-  createDvor,
-  laborCapacityForAge,
-  memberRoleForAge,
-} from '../ecs/factories';
+import { createDvor, laborCapacityForAge, memberRoleForAge } from '../ecs/factories';
 import { initializeSettlementPopulation } from '../ecs/factories/settlementFactories';
 import type { DvorMember } from '../ecs/world';
 import { world } from '../ecs/world';

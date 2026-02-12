@@ -111,14 +111,15 @@ describe('Canvas2DRenderer citizen rendering', () => {
       // Mock sprite loader to return a valid sprite
       vi.spyOn(mockCharLoader, 'get').mockReturnValue({
         image: new Image(),
-        sx: 0, sy: 0, sw: 128, sh: 128
+        sx: 0,
+        sy: 0,
+        sw: 128,
+        sh: 128,
       });
       // Mock sprite loader ready state
       Object.defineProperty(mockCharLoader, 'ready', { value: true, configurable: true });
 
-      renderer.setCitizenData([
-        { gridX: 15, gridY: 15, citizenClass: 'worker' },
-      ]);
+      renderer.setCitizenData([{ gridX: 15, gridY: 15, citizenClass: 'worker' }]);
 
       const internal = renderer as unknown as TestableRenderer;
       internal.drawCitizens();
@@ -133,9 +134,7 @@ describe('Canvas2DRenderer citizen rendering', () => {
       // Mock sprite loader ready state
       Object.defineProperty(mockCharLoader, 'ready', { value: true, configurable: true });
 
-      renderer.setCitizenData([
-        { gridX: 15, gridY: 15, citizenClass: 'worker' },
-      ]);
+      renderer.setCitizenData([{ gridX: 15, gridY: 15, citizenClass: 'worker' }]);
 
       const internal = renderer as unknown as TestableRenderer;
       internal.drawCitizens();

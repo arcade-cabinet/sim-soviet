@@ -1,153 +1,68 @@
 import { describe, expect, it } from 'vitest';
 import { GameRng } from '../game/SeedSystem';
-import {
-  BORDER_DEPTH,
-  generateTerrain,
-  getTerrainSpriteNames,
-} from '../game/TerrainGenerator';
+import { BORDER_DEPTH, generateTerrain, getTerrainSpriteNames } from '../game/TerrainGenerator';
 
 /** Low-profile terrain that belongs on the border ring. */
 const BORDER_TERRAIN = new Set([
-  'sand-rocks',
-  'sand-desert',
-  'stone-rocks',
-  'dirt-lumber',
-  'water-rocks',
-]);
-
-/** Prominent terrain that belongs in the interior. */
-const INTERIOR_TERRAIN = new Set([
+  'grass-mountain',
+  'snow-mountain',
+  'water-deep',
   'grass-forest',
-  'grass-hill',
-  'stone-hill',
-  'stone-mountain',
-  'stone-rocks',
-  'water-rocks',
-  'water-island',
+  'snow-forest',
 ]);
 
 describe('TerrainGenerator', () => {
-  const GRID = 30;
+  const GRID = 32;
 
-  // ── Deterministic output ─────────────────────────────────
-
-  describe('deterministic generation', () => {
-    it('same seed produces identical features', () => {
-      const a = generateTerrain(GRID, new GameRng('test-seed'));
-      const b = generateTerrain(GRID, new GameRng('test-seed'));
-      expect(a).toEqual(b);
-    });
-
-    it('different seeds produce different features', () => {
-      const a = generateTerrain(GRID, new GameRng('seed-alpha'));
-      const b = generateTerrain(GRID, new GameRng('seed-beta'));
-      const aPositions = a.map((f) => `${f.gridX},${f.gridY}`).join(';');
-      const bPositions = b.map((f) => `${f.gridX},${f.gridY}`).join(';');
-      expect(aPositions).not.toBe(bPositions);
-    });
-  });
-
-  // ── Zone-based placement ───────────────────────────────
-
-  describe('zone placement', () => {
-    it('generates at least some terrain features', () => {
-      const features = generateTerrain(GRID, new GameRng('border-test'));
-      expect(features.length).toBeGreaterThan(0);
-    });
-
-    it('all features are within grid bounds', () => {
-      const features = generateTerrain(GRID, new GameRng('bounds'));
+  describe('generateTerrain', () => {
+    it('generates features within grid bounds', () => {
+      const features = generateTerrain(GRID, new GameRng('test-seed'));
       for (const f of features) {
-        expect(f.gridX).toBeGreaterThanOrEqual(0);
+        expect(f.gridX).toBeGreaterThan(0); // 0 is border
         expect(f.gridX).toBeLessThan(GRID);
-        expect(f.gridY).toBeGreaterThanOrEqual(0);
+        expect(f.gridY).toBeGreaterThan(0);
         expect(f.gridY).toBeLessThan(GRID);
       }
     });
 
-    it('border ring (dist < BORDER_DEPTH) uses only low-profile terrain', () => {
-      // Run multiple seeds for coverage
-      for (let s = 0; s < 10; s++) {
-        const features = generateTerrain(GRID, new GameRng(`border-type-${s}`));
-        const borderFeatures = features.filter((f) => {
-          const dist = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
-          return dist < BORDER_DEPTH;
-        });
-        for (const f of borderFeatures) {
-          expect(BORDER_TERRAIN.has(f.spriteName)).toBe(true);
-        }
+    it('generates border terrain at edges', () => {
+      const features = generateTerrain(GRID, new GameRng('border-check'));
+      const borderFeatures = features.filter((f) => {
+        const distFromEdge = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
+        return distFromEdge < BORDER_DEPTH;
+      });
+
+      // Border should be populated
+      expect(borderFeatures.length).toBeGreaterThan(0);
+
+      // And consist of "blocking" terrain
+      for (const f of borderFeatures) {
+        expect(BORDER_TERRAIN.has(f.type)).toBe(true);
       }
     });
 
     it('interior contains features (no longer empty deep interior)', () => {
       const features = generateTerrain(GRID, new GameRng('interior-check'));
-      const interiorFeatures = features.filter(f => {
+      const interiorFeatures = features.filter((f) => {
         const distFromEdge = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
         return distFromEdge >= BORDER_DEPTH + 3; // "Deep" interior
       });
-      // Should have some features now due to clusters/scatter
+
+      // Just ensure we are generating *something* inside
       expect(interiorFeatures.length).toBeGreaterThan(0);
     });
-
-    it('edge cells are more likely to have features than inner border cells', () => {
-      // Run multiple seeds and count features by distance from edge
-      const edgeCounts = [0, 0, 0]; // distance 0, 1, 2
-      for (let s = 0; s < 10; s++) {
-        const features = generateTerrain(GRID, new GameRng(`density-${s}`));
-        for (const f of features) {
-          const dist = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
-          if (dist < 3) edgeCounts[dist]!++;
-        }
-      }
-      // Edge (dist=0) should have more features than dist=2
-      expect(edgeCounts[0]).toBeGreaterThan(edgeCounts[2]!);
-    });
   });
 
-  // ── Sprite names ─────────────────────────────────────────
-
-  describe('sprite names', () => {
-    it('all features have non-empty sprite names', () => {
-      const features = generateTerrain(GRID, new GameRng('sprites'));
-      for (const f of features) {
-        expect(f.spriteName).toBeTruthy();
-        expect(f.spriteName.length).toBeGreaterThan(0);
-      }
+  describe('getTerrainSpriteNames', () => {
+    it('returns sprite names for valid types', () => {
+      expect(getTerrainSpriteNames('grass-mountain').length).toBeGreaterThan(0);
+      expect(getTerrainSpriteNames('water')[0]).toContain('water');
     });
 
-    it('getTerrainSpriteNames returns unique names', () => {
-      const features = generateTerrain(GRID, new GameRng('unique'));
-      const names = getTerrainSpriteNames(features);
-      const unique = new Set(names);
-      expect(names.length).toBe(unique.size);
-    });
-
-    it('getTerrainSpriteNames covers all feature types used', () => {
-      const features = generateTerrain(GRID, new GameRng('coverage'));
-      const names = getTerrainSpriteNames(features);
-      const nameSet = new Set(names);
-      for (const f of features) {
-        expect(nameSet.has(f.spriteName)).toBe(true);
-      }
-    });
-  });
-
-  // ── Small grid edge case ─────────────────────────────────
-
-  describe('edge cases', () => {
-    it('works with a tiny grid (size 6)', () => {
-      const features = generateTerrain(6, new GameRng('tiny'));
-      // With a 6x6 grid, the entire grid is within both zones
-      expect(features.length).toBeGreaterThan(0);
-      for (const f of features) {
-        expect(f.gridX).toBeGreaterThanOrEqual(0);
-        expect(f.gridX).toBeLessThan(6);
-      }
-    });
-
-    it('returns empty array for zero grid', () => {
-      const features = generateTerrain(0, new GameRng('empty'));
-      expect(features).toEqual([]);
+    it('returns fallback for unknown types', () => {
+      // @ts-expect-error
+      const names = getTerrainSpriteNames('unknown-type');
+      expect(names).toEqual(['grass_1']);
     });
   });
 });

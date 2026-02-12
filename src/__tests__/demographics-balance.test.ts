@@ -9,11 +9,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { citizens, dvory, getResourceEntity } from '@/ecs/archetypes';
-import {
-  createCitizen,
-  createMetaStore,
-  createResourceStore,
-} from '@/ecs/factories';
+import { createCitizen, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { initializeSettlementPopulation } from '@/ecs/factories/settlementFactories';
 import { world } from '@/ecs/world';
 import { notifyStateChange } from '@/stores/gameStore';

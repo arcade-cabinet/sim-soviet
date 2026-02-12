@@ -180,6 +180,7 @@ export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
             const isActive = activeTab === tab.id;
             return (
               <button
+                  type="button"
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
