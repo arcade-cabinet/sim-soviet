@@ -561,7 +561,7 @@ export class Canvas2DRenderer {
         const cx = baseCx + offsetX;
         const cy = baseCy + offsetY;
 
-        // Try sprite rendering first
+        // Only render if sprites are available
         if (useSprites) {
           const sprite = this.characterSprites!.get(
             citizen.citizenClass,
@@ -582,28 +582,7 @@ export class Canvas2DRenderer {
               spriteSize,
               spriteSize
             );
-            continue;
           }
-        }
-
-        // Fallback: colored dot
-        const color = citizen.dotColor ?? CITIZEN_CLASS_COLORS[citizen.citizenClass] ?? '#757575';
-
-        // Dark border
-        ctx.beginPath();
-        ctx.arc(cx, cy, DOT_RADIUS + 1, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fill();
-
-        // Colored fill
-        ctx.beginPath();
-        ctx.arc(cx, cy, DOT_RADIUS, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-
-        // Color-blind shape overlay
-        if (cbMode) {
-          this.drawColorBlindShape(ctx, citizen.citizenClass, cx, cy, DOT_RADIUS);
         }
       }
     }

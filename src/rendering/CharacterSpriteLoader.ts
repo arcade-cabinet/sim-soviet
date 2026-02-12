@@ -67,6 +67,14 @@ export class CharacterSpriteLoader {
     // Load in parallel, but don't fail if individual sprites are missing
     const results = await Promise.allSettled(loads);
     const loaded = results.filter((r) => r.status === 'fulfilled').length;
+
+    // Log failures
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        console.error(`CharacterSpriteLoader: Failed to load ${CHARACTER_NAMES[i]}`, r.reason);
+      }
+    });
+
     console.log(`CharacterSpriteLoader: ${loaded}/${CHARACTER_NAMES.length} sprites loaded`);
     this._ready = true;
   }
@@ -111,6 +119,8 @@ export class CharacterSpriteLoader {
 
     return undefined;
   }
+
+  private missingKeys = new Set<string>();
 
   private loadImage(src: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {

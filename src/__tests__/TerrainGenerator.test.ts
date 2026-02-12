@@ -4,7 +4,6 @@ import {
   BORDER_DEPTH,
   generateTerrain,
   getTerrainSpriteNames,
-  INTERIOR_FRINGE,
 } from '../game/TerrainGenerator';
 
 /** Low-profile terrain that belongs on the border ring. */
@@ -16,7 +15,7 @@ const BORDER_TERRAIN = new Set([
   'water-rocks',
 ]);
 
-/** Prominent terrain that belongs in the interior fringe. */
+/** Prominent terrain that belongs in the interior. */
 const INTERIOR_TERRAIN = new Set([
   'grass-forest',
   'grass-hill',
@@ -42,7 +41,6 @@ describe('TerrainGenerator', () => {
     it('different seeds produce different features', () => {
       const a = generateTerrain(GRID, new GameRng('seed-alpha'));
       const b = generateTerrain(GRID, new GameRng('seed-beta'));
-      // Could theoretically match, but with 30x30 grid and RNG it's essentially impossible
       const aPositions = a.map((f) => `${f.gridX},${f.gridY}`).join(';');
       const bPositions = b.map((f) => `${f.gridX},${f.gridY}`).join(';');
       expect(aPositions).not.toBe(bPositions);
@@ -67,15 +65,6 @@ describe('TerrainGenerator', () => {
       }
     });
 
-    it('no features in the deep interior (beyond border + fringe)', () => {
-      const features = generateTerrain(GRID, new GameRng('interior'));
-      const totalDepth = BORDER_DEPTH + INTERIOR_FRINGE;
-      for (const f of features) {
-        const distFromEdge = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
-        expect(distFromEdge).toBeLessThan(totalDepth);
-      }
-    });
-
     it('border ring (dist < BORDER_DEPTH) uses only low-profile terrain', () => {
       // Run multiple seeds for coverage
       for (let s = 0; s < 10; s++) {
@@ -90,25 +79,14 @@ describe('TerrainGenerator', () => {
       }
     });
 
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: test verifies terrain generation across multiple seeds and zones
-    it('interior fringe contains prominent terrain types', () => {
-      // Run multiple seeds and collect interior fringe sprite names
-      const fringeNames = new Set<string>();
-      for (let s = 0; s < 20; s++) {
-        const features = generateTerrain(GRID, new GameRng(`fringe-${s}`));
-        for (const f of features) {
-          const dist = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
-          if (dist >= BORDER_DEPTH) {
-            fringeNames.add(f.spriteName);
-          }
-        }
-      }
-      // Should include at least some prominent types
-      expect(fringeNames.has('grass-forest') || fringeNames.has('stone-mountain')).toBe(true);
-      // All fringe terrain must be from the interior palette
-      for (const name of fringeNames) {
-        expect(INTERIOR_TERRAIN.has(name)).toBe(true);
-      }
+    it('interior contains features (no longer empty deep interior)', () => {
+      const features = generateTerrain(GRID, new GameRng('interior-check'));
+      const interiorFeatures = features.filter(f => {
+        const distFromEdge = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
+        return distFromEdge >= BORDER_DEPTH + 3; // "Deep" interior
+      });
+      // Should have some features now due to clusters/scatter
+      expect(interiorFeatures.length).toBeGreaterThan(0);
     });
 
     it('edge cells are more likely to have features than inner border cells', () => {
@@ -123,22 +101,6 @@ describe('TerrainGenerator', () => {
       }
       // Edge (dist=0) should have more features than dist=2
       expect(edgeCounts[0]).toBeGreaterThan(edgeCounts[2]!);
-    });
-
-    it('interior fringe density decreases inward', () => {
-      const fringeCounts: number[] = Array.from({ length: INTERIOR_FRINGE }, () => 0);
-      for (let s = 0; s < 20; s++) {
-        const features = generateTerrain(GRID, new GameRng(`fringe-density-${s}`));
-        for (const f of features) {
-          const dist = Math.min(f.gridX, f.gridY, GRID - 1 - f.gridX, GRID - 1 - f.gridY);
-          const fringeIdx = dist - BORDER_DEPTH;
-          if (fringeIdx >= 0 && fringeIdx < INTERIOR_FRINGE) {
-            fringeCounts[fringeIdx]!++;
-          }
-        }
-      }
-      // Closest fringe ring should have more features than the farthest
-      expect(fringeCounts[0]).toBeGreaterThan(fringeCounts[INTERIOR_FRINGE - 1]!);
     });
   });
 

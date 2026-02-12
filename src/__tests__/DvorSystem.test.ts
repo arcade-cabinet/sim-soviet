@@ -9,10 +9,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { dvory } from '../ecs/archetypes';
 import {
   createDvor,
-  createStartingSettlement,
   laborCapacityForAge,
   memberRoleForAge,
 } from '../ecs/factories';
+import { initializeSettlementPopulation } from '../ecs/factories/settlementFactories';
 import type { DvorMember } from '../ecs/world';
 import { world } from '../ecs/world';
 
@@ -196,42 +196,42 @@ describe('Dvor System', () => {
 
   // ── Starting settlement ─────────────────────────────────────────────
 
-  describe('createStartingSettlement', () => {
-    it('creates 10 dvory for normal difficulty', () => {
-      createStartingSettlement('comrade');
-      expect(dvory.entities.length).toBe(10);
+  describe('initializeSettlementPopulation', () => {
+    it('creates 30 dvory for normal difficulty', () => {
+      initializeSettlementPopulation('comrade');
+      expect(dvory.entities.length).toBe(30);
     });
 
-    it('creates 12 dvory for easy difficulty', () => {
-      createStartingSettlement('worker');
-      expect(dvory.entities.length).toBe(12);
+    it('creates 35 dvory for easy difficulty', () => {
+      initializeSettlementPopulation('worker');
+      expect(dvory.entities.length).toBe(35);
     });
 
-    it('creates 7 dvory for hard difficulty', () => {
-      createStartingSettlement('tovarish');
-      expect(dvory.entities.length).toBe(7);
+    it('creates 20 dvory for hard difficulty', () => {
+      initializeSettlementPopulation('tovarish');
+      expect(dvory.entities.length).toBe(20);
     });
 
-    it('total population is approximately 55 for normal', () => {
-      createStartingSettlement('comrade');
+    it('total population is approximately 150 for normal', () => {
+      initializeSettlementPopulation('comrade');
       let totalPop = 0;
       for (const entity of dvory.entities) {
         totalPop += entity.dvor.members.length;
       }
-      // Design doc says ~55. Allow range 50-60.
-      expect(totalPop).toBeGreaterThanOrEqual(50);
-      expect(totalPop).toBeLessThanOrEqual(62);
+      // Target ~150. Allow range 130-180.
+      expect(totalPop).toBeGreaterThanOrEqual(130);
+      expect(totalPop).toBeLessThanOrEqual(180);
     });
 
     it('each dvor has at least one member', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       for (const entity of dvory.entities) {
         expect(entity.dvor.members.length).toBeGreaterThanOrEqual(1);
       }
     });
 
     it('each dvor has a head of household', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       for (const entity of dvory.entities) {
         const head = entity.dvor.members.find(
           (m: DvorMember) => m.id === entity.dvor.headOfHousehold
@@ -242,7 +242,7 @@ describe('Dvor System', () => {
     });
 
     it('most dvory have 4-6 members (historical average)', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       let matching = 0;
       for (const entity of dvory.entities) {
         if (entity.dvor.members.length >= 4 && entity.dvor.members.length <= 6) {
@@ -254,19 +254,19 @@ describe('Dvor System', () => {
     });
 
     it('contains working-age adults', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       let workers = 0;
       for (const entity of dvory.entities) {
         for (const member of entity.dvor.members) {
           if (member.laborCapacity >= 0.7) workers++;
         }
       }
-      // Design doc says ~25 working adults for normal difficulty
-      expect(workers).toBeGreaterThanOrEqual(15);
+      // With 150 pop, expect ~70-80 workers
+      expect(workers).toBeGreaterThanOrEqual(60);
     });
 
     it('contains children and dependents', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       let children = 0;
       for (const entity of dvory.entities) {
         for (const member of entity.dvor.members) {
@@ -274,18 +274,18 @@ describe('Dvor System', () => {
         }
       }
       // Should have multiple children across the settlement
-      expect(children).toBeGreaterThanOrEqual(5);
+      expect(children).toBeGreaterThanOrEqual(20);
     });
 
     it('each dvor has a unique id', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       const ids = dvory.entities.map((e) => e.dvor.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(ids.length);
     });
 
     it('each dvor has a surname', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       for (const entity of dvory.entities) {
         expect(entity.dvor.surname).toBeTruthy();
         expect(entity.dvor.surname.length).toBeGreaterThan(0);
@@ -293,14 +293,14 @@ describe('Dvor System', () => {
     });
 
     it('dvory have unique surnames', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       const surnames = dvory.entities.map((e) => e.dvor.surname);
       const unique = new Set(surnames);
       expect(unique.size).toBe(surnames.length);
     });
 
     it('members have both genders', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       const allMembers = dvory.entities.flatMap((e) => e.dvor.members);
       const males = allMembers.filter((m) => m.gender === 'male').length;
       const females = allMembers.filter((m) => m.gender === 'female').length;
@@ -309,7 +309,7 @@ describe('Dvor System', () => {
     });
 
     it('member names follow Russian patronymic convention (Given Otchestvo Familiya)', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       for (const entity of dvory.entities) {
         for (const member of entity.dvor.members) {
           const parts = member.name.split(' ');
@@ -327,7 +327,7 @@ describe('Dvor System', () => {
     });
 
     it('same-gender children in male-headed dvor share identical patronymic', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       const maleHeadedDvory = dvory.entities.filter((e) => {
         const head = e.dvor.members.find((m: DvorMember) => m.id === e.dvor.headOfHousehold);
         return head?.gender === 'male';
@@ -360,7 +360,7 @@ describe('Dvor System', () => {
     });
 
     it('female members have gendered surname forms', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       for (const entity of dvory.entities) {
         const maleSurname = entity.dvor.surname;
         for (const member of entity.dvor.members) {
@@ -376,7 +376,7 @@ describe('Dvor System', () => {
     });
 
     it('members have ages spread across categories', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       const allMembers = dvory.entities.flatMap((e) => e.dvor.members);
       const workerRoles = new Set(['head', 'spouse', 'worker']);
       const workers = allMembers.filter((m) => workerRoles.has(m.role)).length;
@@ -392,16 +392,16 @@ describe('Dvor System', () => {
 
   describe('settlement population helpers', () => {
     it('total effective labor = sum of laborCapacity across all members', () => {
-      createStartingSettlement('comrade');
+      initializeSettlementPopulation('comrade');
       let totalLabor = 0;
       for (const entity of dvory.entities) {
         for (const member of entity.dvor.members) {
           totalLabor += member.laborCapacity;
         }
       }
-      // Design doc says ~22-24 effective labor units for normal
-      expect(totalLabor).toBeGreaterThanOrEqual(15);
-      expect(totalLabor).toBeLessThanOrEqual(35);
+      // Expect high labor capacity with 150 people
+      expect(totalLabor).toBeGreaterThanOrEqual(60);
+      expect(totalLabor).toBeLessThanOrEqual(120);
     });
   });
 });

@@ -1,5 +1,6 @@
 /**
- * GroundTileRenderer — Draws terrain base tiles using hex sprite images.
+ * GroundTileRenderer — Draws terrain base tiles using hex sprite images
+ * and procedurally blended biomes.
  *
  * Uses an offscreen canvas cache that is rebuilt only when the season changes
  * or the MapSystem is (re)set. The cache is blitted as a single drawImage()
@@ -52,6 +53,11 @@ interface TileManifestEntry {
 }
 
 type SeasonManifest = Record<string, TileManifestEntry>;
+
+// Simple pseudo-random noise for biome blending
+function pseudoNoise(x: number, y: number): number {
+  return Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
+}
 
 export class GroundTileRenderer {
   private season = 'winter';
@@ -275,7 +281,10 @@ export class GroundTileRenderer {
     // Clear the offscreen canvas
     ctx.clearRect(0, 0, this.cacheWidth, this.cacheHeight);
 
-    // Draw each grid cell's base tile sprite
+    // 1. Draw interpolated biome background
+    this.drawBiomeBackground(ctx, size);
+
+    // 2. Draw each grid cell's base tile sprite on top
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         const cell = map.getCell(x, y);
@@ -301,6 +310,46 @@ export class GroundTileRenderer {
         }
 
         ctx.drawImage(img, drawX, drawY);
+      }
+    }
+  }
+
+  /**
+   * Draws a procedural blended background using large colored diamonds
+   * and noise to simulate biome variation beneath the tile grid.
+   */
+  private drawBiomeBackground(
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+    size: number
+  ): void {
+    // Base colors for biome blending
+    const colorA = '#2e3b2a'; // Deep forest green
+    const colorB = '#3e4530'; // Olive
+    const colorC = '#333333'; // Dark rocky grey
+
+    for (let y = -2; y < size + 2; y += 2) {
+      for (let x = -2; x < size + 2; x += 2) {
+        // Use noise to pick a color
+        const n = pseudoNoise(x * 0.1, y * 0.1);
+        let fill = colorA;
+        if (n > 0.6) fill = colorB;
+        if (n > 0.8) fill = colorC;
+
+        const screen = gridToScreen(x, y);
+        const cx = screen.x - this.originX;
+        const cy = screen.y - this.originY;
+
+        // Draw a large, soft diamond to blend
+        ctx.fillStyle = fill;
+        ctx.globalAlpha = 0.4; // Semi-transparent blending
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - TILE_HEIGHT * 2);
+        ctx.lineTo(cx + TILE_WIDTH * 2, cy);
+        ctx.lineTo(cx, cy + TILE_HEIGHT * 2);
+        ctx.lineTo(cx - TILE_WIDTH * 2, cy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
       }
     }
   }

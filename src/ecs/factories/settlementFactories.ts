@@ -13,8 +13,10 @@ import {
   SURNAMES_MALE,
   SURNAMES_RAW,
 } from '@/ai/names';
+import { getResourceEntity } from '../archetypes';
 import type { DvorComponent, DvorMember, Entity } from '../world';
 import { world } from '../world';
+import { createCitizen } from './citizenFactories';
 import { laborCapacityForAge, memberRoleForAge } from './demographics';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -33,9 +35,9 @@ export type Difficulty = 'worker' | 'comrade' | 'tovarish';
 
 /** Dvor count by difficulty. */
 const DVOR_COUNTS: Record<Difficulty, number> = {
-  worker: 12,
-  comrade: 10,
-  tovarish: 7,
+  worker: 35, // ~175 people
+  comrade: 30, // ~150 people (target)
+  tovarish: 20, // ~100 people
 };
 
 /**
@@ -292,10 +294,13 @@ export function createDvor(id: string, surname: string, memberSeeds: DvorMemberS
   return world.add({ dvor, isDvor: true });
 }
 
-// ── Starting Settlement ─────────────────────────────────────────────────────
+// ── Settlement Initialization ────────────────────────────────────────────────
 
 /**
- * Creates the starting settlement with historically-grounded households.
+ * Initializes the settlement population with historically-grounded households.
+ *
+ * This should ONLY be called once when starting a brand new game.
+ * It populates the empty world with initial families (Dvory) and citizens.
  *
  * Names follow proper Russian patronymic convention:
  * - Head: Given + Patronymic (from random father) + Surname
@@ -305,9 +310,11 @@ export function createDvor(id: string, surname: string, memberSeeds: DvorMemberS
  *
  * @param difficulty - Difficulty level (determines dvor count)
  */
-export function createStartingSettlement(difficulty: Difficulty = 'comrade'): void {
+export function initializeSettlementPopulation(difficulty: Difficulty = 'comrade'): void {
   const dvorCount = DVOR_COUNTS[difficulty];
   const usedSurnames = new Set<string>();
+
+  let totalCitizens = 0;
 
   for (let i = 0; i < dvorCount; i++) {
     const template = HOUSEHOLD_TEMPLATES[i % HOUSEHOLD_TEMPLATES.length]!;
@@ -364,6 +371,28 @@ export function createStartingSettlement(difficulty: Difficulty = 'comrade'): vo
       });
     }
 
-    createDvor(`dvor-${i + 1}`, surname, memberSeeds);
+    const dvorId = `dvor-${i + 1}`;
+    createDvor(dvorId, surname, memberSeeds);
+
+    // Create a Citizen entity for each member of the new dvor
+    // Dvor member IDs are generated as `${dvorId}-m${idx}` in createDvor
+    memberSeeds.forEach((seed, idx) => {
+      createCitizen(
+        'farmer', // Starting population is peasantry
+        undefined, // Homeless until auto-assigned
+        undefined,
+        seed.gender,
+        seed.age,
+        dvorId,
+        `${dvorId}-m${idx}`
+      );
+      totalCitizens++;
+    });
+  }
+
+  // Update resource store population to match the actual created citizens
+  const store = getResourceEntity();
+  if (store) {
+    store.resources.population = totalCitizens;
   }
 }

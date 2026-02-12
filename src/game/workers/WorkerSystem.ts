@@ -6,7 +6,7 @@
  * skill, vodka dependency, and class-specific production bonuses.
  */
 
-import { citizens, getResourceEntity } from '@/ecs/archetypes';
+import { citizens, dvory, getResourceEntity } from '@/ecs/archetypes';
 import { createCitizen } from '@/ecs/factories';
 import type { CitizenComponent, Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
@@ -192,6 +192,9 @@ export class WorkerSystem {
    * 7. Skill growth for assigned workers
    */
   tick(vodkaAvailable: number, foodAvailable: number): WorkerTickResult {
+    // Ensure all citizens have stats (e.g. from starting settlement or new arrivals)
+    this.ensureStats();
+
     const stakhanovites: WorkerTickResult['stakhanovites'] = [];
     const ctx: TickContext = {
       remainingVodka: vodkaAvailable,
@@ -255,6 +258,48 @@ export class WorkerSystem {
       classCount[cls]++;
     }
     return { classEffSum, classCount, toRemove };
+  }
+
+  /**
+   * Initialize stats for any citizens that exist in ECS but missing from this.stats.
+   * Handles linking to Dvor members (names) if possible.
+   */
+  private ensureStats(): void {
+    for (const entity of citizens) {
+      if (this.stats.has(entity)) continue;
+
+      const c = entity.citizen;
+      let name = 'Unnamed Worker';
+
+      // Try to hydrate name from Dvor member if available
+      if (c.dvorId && c.memberId) {
+        const dvorEntity = dvory.entities.find((d) => d.dvor.id === c.dvorId);
+        if (dvorEntity) {
+          const member = dvorEntity.dvor.members.find((m) => m.id === c.memberId);
+          if (member) {
+            name = member.name;
+          }
+        }
+      }
+
+      if (name === 'Unnamed Worker') {
+        name = this.rng ? generateWorkerName(this.rng) : 'Unnamed Worker';
+      }
+
+      const rng = this.rng;
+      const stats: WorkerStats = {
+        morale: 50,
+        loyalty: rng ? rng.int(40, 80) : 60,
+        skill: rng ? rng.int(10, 40) : 25,
+        vodkaDependency: c.class === 'prisoner' ? 0 : rng ? rng.int(5, 30) : 15,
+        ticksSinceVodka: 0,
+        name,
+        assignmentDuration: 0,
+        assignmentSource: 'auto',
+      };
+
+      this.stats.set(entity, stats);
+    }
   }
 
   /** Remove defecting/escaping citizens and return defection records. */

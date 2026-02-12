@@ -5,9 +5,9 @@ import {
   computeRenderSlot,
   createCitizen,
   createDvor,
-  createStartingSettlement,
   type DvorMemberSeed,
 } from '@/ecs/factories';
+import { initializeSettlementPopulation } from '@/ecs/factories/settlementFactories';
 import {
   ageAllMembers,
   birthCheck,
@@ -526,7 +526,7 @@ describe('deathCheck', () => {
 
 describe('demographicTick', () => {
   it('returns zero result on non-boundary ticks', () => {
-    createStartingSettlement('comrade');
+    initializeSettlementPopulation('comrade');
 
     const result = demographicTick(null, 15, 1.0);
 
