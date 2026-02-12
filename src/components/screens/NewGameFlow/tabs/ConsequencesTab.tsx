@@ -1,5 +1,5 @@
 
-import type { GameConfig } from '@/components/GameWorld';
+import type { GameConfig, GameConsequence } from '@/components/GameWorld';
 import { SelectionList } from './SelectionList';
 import { CONSEQUENCE_OPTIONS } from '../constants';
 
@@ -15,10 +15,10 @@ export function ConsequencesTab({ config, onChange }: ConsequencesTabProps) {
         "Comrade, be aware of the consequences of failure. The Party does not tolerate incompetence."
       </div>
 
-      <SelectionList
+      <SelectionList<GameConsequence>
         options={CONSEQUENCE_OPTIONS}
         selectedId={config.consequence || 'exile'}
-        onChange={(id) => onChange({ ...config, consequence: id as any })}
+        onChange={(id) => onChange({ ...config, consequence: id })}
       />
     </div>
   );

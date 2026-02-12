@@ -1,5 +1,5 @@
 
-import type { GameConfig } from '@/components/GameWorld';
+import type { GameConfig, GameDifficulty } from '@/components/GameWorld';
 import { SelectionList } from './SelectionList';
 import { DIFFICULTY_OPTIONS } from '../constants';
 
@@ -15,7 +15,7 @@ export function AssignmentTab({ config, onChange }: AssignmentTabProps) {
         "Administrator, your assignment has been selected based on your file. Review the parameters carefully."
       </div>
 
-      <SelectionList
+      <SelectionList<GameDifficulty>
         options={DIFFICULTY_OPTIONS}
         selectedId={config.difficulty || 'comrade'}
         onChange={(id) => onChange({ ...config, difficulty: id })}

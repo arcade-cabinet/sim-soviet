@@ -57,15 +57,12 @@ export class WorkerSystem extends System<Entity> {
   }
 
   private manageWorkerRoles(): void {
-    const eraId = 'revolution'; // TODO: Get from global Era system
-    const config = getGenderLaborConfig(eraId);
-
     for (const entity of citizens) {
-      this.manageCitizenRole(entity, config);
+      this.manageCitizenRole(entity);
     }
   }
 
-  private manageCitizenRole(entity: Entity, config: GenderLaborConfig): void {
+  private manageCitizenRole(entity: Entity): void {
     const { age } = entity.citizen;
     const isAdult = age >= 18 && age < 60;
 
@@ -77,9 +74,8 @@ export class WorkerSystem extends System<Entity> {
   }
 
   private assignWorkerRole(entity: Entity): void {
-    // Assign default job based on gender config
+    // Assign default job
     // For simplicity, we just assign 'worker' role generic
-    // In detailed system, we'd pick from allowedJobs in `config`
     world.addComponent(entity, 'worker', {
       job: 'laborer',
       skill: 1,

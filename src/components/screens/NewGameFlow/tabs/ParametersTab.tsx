@@ -1,5 +1,5 @@
 
-import type { GameConfig } from '@/components/GameWorld';
+import type { GameConfig, MapSize } from '@/components/GameWorld';
 import { SelectionList } from './SelectionList';
 import { MAP_SIZE_OPTIONS } from '../constants';
 
@@ -15,10 +15,10 @@ export function ParametersTab({ config, onChange }: ParametersTabProps) {
         <label className="block text-xs font-bold uppercase tracking-widest opacity-70">
           Territory Size
         </label>
-        <SelectionList
+        <SelectionList<MapSize>
           options={MAP_SIZE_OPTIONS}
           selectedId={config.mapSize || 'medium'}
-          onChange={(id) => onChange({ ...config, mapSize: id as any })}
+          onChange={(id) => onChange({ ...config, mapSize: id })}
           layout="grid"
         />
       </div>
