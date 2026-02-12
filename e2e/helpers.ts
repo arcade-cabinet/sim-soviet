@@ -75,16 +75,23 @@ export const gameOverModal = (page: Page) =>
 
 // ── Condition-Based Wait Helpers ─────────────────────────────────────────────
 
-/** Wait for the game canvas to be rendered and interactive. */
+/**
+ * Wait for the game canvas AND React UI overlay to be fully mounted.
+ * Checks: canvas has dimensions + <header> and <nav> exist in DOM.
+ * This ensures React has completed its first render cycle after game start.
+ */
 export async function waitForGameReady(page: Page): Promise<void> {
   await page.waitForFunction(
     () => {
       const canvas = document.querySelector('#gameCanvas') as HTMLCanvasElement | null;
-      if (!canvas) return false;
-      return canvas.width > 0 && canvas.height > 0;
+      if (!canvas || canvas.width === 0 || canvas.height === 0) return false;
+      // React UI overlay must also be mounted
+      const header = document.querySelector('header');
+      const nav = document.querySelector('nav');
+      return !!header && !!nav;
     },
     undefined,
-    { timeout: 10_000 }
+    { timeout: 15_000 }
   );
 }
 
@@ -129,26 +136,42 @@ export async function waitForMoneyChange(
  * Navigate to the app and start the game by stepping through the full
  * new-game flow: Landing Page → NewGameFlow (3 steps) → AssignmentLetter → playing.
  * Waits for each screen transition to complete before proceeding.
+ *
+ * Each step uses AnimatePresence with mode="wait", meaning the exit animation
+ * must complete before the next component mounts. Small settle delays prevent
+ * clicking during transitions on slow CI runners.
  */
 export async function startGame(page: Page): Promise<void> {
   await page.goto('/');
   await page.waitForLoadState('networkidle');
+
   // Landing page — click "BEGIN NEW ASSIGNMENT" on the New Game tab
   await startButton(page).click();
+
   // Wait for NewGameFlow step 1 to render
-  await page.getByText('I. ASSIGNMENT').waitFor({ timeout: 5000 });
+  await page.getByText('I. ASSIGNMENT').waitFor({ timeout: 8000 });
+  await page.waitForTimeout(300); // animation settle
+
   // NewGameFlow step 1 → step 2
-  await page.getByText('Next').click();
-  await page.getByText('II. PARAMETERS').waitFor({ timeout: 5000 });
+  await page.getByText('Next').first().click();
+  await page.getByText('II. PARAMETERS').waitFor({ timeout: 8000 });
+  await page.waitForTimeout(300);
+
   // NewGameFlow step 2 → step 3
-  await page.getByText('Next').click();
-  await page.getByText('III. CONSEQUENCES').waitFor({ timeout: 5000 });
+  await page.getByText('Next').first().click();
+  await page.getByText('III. CONSEQUENCES').waitFor({ timeout: 8000 });
+  await page.waitForTimeout(300);
+
   // NewGameFlow step 3 → AssignmentLetter
-  await page.getByText('BEGIN').click();
-  await page.getByText('Accept Assignment').waitFor({ timeout: 5000 });
+  // Use exact match to avoid matching "BEGIN NEW ASSIGNMENT" during exit animation
+  await page.getByRole('button', { name: 'BEGIN', exact: true }).click();
+  await page.getByText('Accept Assignment').waitFor({ timeout: 8000 });
+  await page.waitForTimeout(300);
+
   // AssignmentLetter → Game
   await page.getByText('Accept Assignment').click();
-  // Wait for the game canvas to be ready
+
+  // Wait for the game canvas AND React UI overlay to be ready
   await waitForGameReady(page);
 }
 
@@ -159,9 +182,13 @@ export async function startGame(page: Page): Promise<void> {
 export async function startGameAndDismissAdvisor(page: Page): Promise<void> {
   await startGame(page);
   const advisor = advisorPanel(page);
-  if (await advisor.isVisible()) {
+  try {
+    // Wait for the advisor to appear (it's async, may not render immediately)
+    await advisor.waitFor({ state: 'visible', timeout: 3000 });
     await advisorDismissBtn(page).click();
-    await advisor.waitFor({ state: 'hidden', timeout: 2000 });
+    await advisor.waitFor({ state: 'hidden', timeout: 3000 });
+  } catch {
+    // Advisor may not appear in all test scenarios — that's OK
   }
 }
 
