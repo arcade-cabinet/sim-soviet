@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { BLAT_ARREST_THRESHOLD, BLAT_SAFE_THRESHOLD, EconomySystem } from '@/game/economy';
+import {
+  BLAT_ARREST_THRESHOLD,
+  BLAT_SAFE_THRESHOLD,
+  KGB_INVESTIGATION_CHANCE_PER_POINT,
+  EconomySystem,
+} from '@/game/economy';
 import { PersonnelFile } from '@/game/PersonnelFile';
 import { GameRng } from '@/game/SeedSystem';
 
@@ -14,6 +19,10 @@ describe('Blat KGB Risk — Constants', () => {
 
   it('BLAT_ARREST_THRESHOLD is 30', () => {
     expect(BLAT_ARREST_THRESHOLD).toBe(30);
+  });
+
+  it('KGB_INVESTIGATION_CHANCE_PER_POINT is 0.01', () => {
+    expect(KGB_INVESTIGATION_CHANCE_PER_POINT).toBe(0.01);
   });
 
   it('arrest threshold is higher than safe threshold', () => {
