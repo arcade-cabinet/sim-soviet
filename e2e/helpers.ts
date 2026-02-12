@@ -140,12 +140,8 @@ export async function waitForWorkerChange(
 
 /**
  * Navigate to the app and start the game by stepping through the full
- * new-game flow: Landing Page → NewGameFlow (3 steps) → AssignmentLetter → playing.
+ * new-game flow: Landing Page → NewGameFlow (single-page dossier) → AssignmentLetter → playing.
  * Waits for each screen transition to complete before proceeding.
- *
- * Each step uses AnimatePresence with mode="wait", meaning the exit animation
- * must complete before the next component mounts. Small settle delays prevent
- * clicking during transitions on slow CI runners.
  */
 export async function startGame(page: Page): Promise<void> {
   await page.goto('/');
@@ -154,22 +150,11 @@ export async function startGame(page: Page): Promise<void> {
   // Landing page — click "BEGIN NEW ASSIGNMENT" on the New Game tab
   await startButton(page).click();
 
-  // Wait for NewGameFlow step 1 to render
-  await page.getByText('I. ASSIGNMENT').waitFor({ timeout: 8000 });
+  // Wait for single-page dossier to render (all sections visible at once)
+  await page.getByText('New Assignment Dossier').waitFor({ timeout: 8000 });
   await page.waitForTimeout(300); // animation settle
 
-  // NewGameFlow step 1 → step 2
-  await page.getByText('Next').first().click();
-  await page.getByText('II. PARAMETERS').waitFor({ timeout: 8000 });
-  await page.waitForTimeout(300);
-
-  // NewGameFlow step 2 → step 3
-  await page.getByText('Next').first().click();
-  await page.getByText('III. CONSEQUENCES').waitFor({ timeout: 8000 });
-  await page.waitForTimeout(300);
-
-  // NewGameFlow step 3 → AssignmentLetter
-  // Use exact match to avoid matching "BEGIN NEW ASSIGNMENT" during exit animation
+  // Click BEGIN to proceed to AssignmentLetter
   await page.getByRole('button', { name: 'BEGIN', exact: true }).click();
   await page.getByText('Accept Assignment').waitFor({ timeout: 8000 });
   await page.waitForTimeout(300);
