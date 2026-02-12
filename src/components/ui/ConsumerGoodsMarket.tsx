@@ -148,6 +148,7 @@ export function ConsumerGoodsMarket() {
     if (item.costType === 'money' && r.money < item.costAmount) return;
     if (item.costType === 'vodka' && r.vodka < item.costAmount) return;
     if (item.secondaryCost && r.money < item.secondaryCost.amount) return;
+    if (item.stockKey === 'food' && r.food < 10) return;
 
     deductCosts(res, item);
     applyEffect(item);
@@ -158,7 +159,7 @@ export function ConsumerGoodsMarket() {
     setTimeout(() => setLastPurchase(null), 1200);
   }, []);
 
-  const hasAnything = snap.food > 10 || snap.vodka > 10 || snap.money > 15;
+  const hasAnything = snap.food >= 10 || snap.vodka >= 10 || snap.money >= 15;
 
   return (
     <div className="space-y-2">

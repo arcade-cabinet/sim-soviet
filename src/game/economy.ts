@@ -1045,7 +1045,7 @@ export class EconomySystem {
     const rng = this.rng;
     const rand = () => rng.random();
     const excessPoints = connections - BLAT_SAFE_THRESHOLD;
-    const investigationChance = excessPoints * 0.02;
+    const investigationChance = Math.min(1, excessPoints * 0.02);
 
     let investigated = false;
     let arrested = false;
