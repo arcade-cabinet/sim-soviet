@@ -918,6 +918,31 @@ export class SimulationEngine {
       }
     }
 
+    // Blat KGB risk — passive investigation/arrest from high connections
+    if (result.blatKgbResult) {
+      const kgb = result.blatKgbResult;
+      if (kgb.investigated) {
+        this.personnelFile.addMark(
+          'blat_noticed',
+          totalTicks,
+          kgb.announcement ?? 'KGB investigation into blat connections'
+        );
+        this.callbacks.onToast('KGB INVESTIGATION: Blat connections noticed', 'critical');
+      }
+      if (kgb.arrested) {
+        this.personnelFile.addMark(
+          'blat_noticed',
+          totalTicks,
+          kgb.announcement ?? 'Arrested for anti-Soviet networking activities'
+        );
+        this.callbacks.onAdvisor(
+          'Comrade, your extensive network of personal favors has attracted ' +
+            'unwelcome attention from the organs of state security. ' +
+            'Perhaps fewer friends would be safer.'
+        );
+      }
+    }
+
     // Consumer goods — satisfaction from blat + settlement tier
     const settlementTier = this.settlement.getCurrentTier();
     this.economySystem.tickConsumerGoods(r.population, settlementTier);

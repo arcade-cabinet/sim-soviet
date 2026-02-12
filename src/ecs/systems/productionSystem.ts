@@ -12,16 +12,39 @@ import { getBuildingDef } from '@/data/buildingDefs';
 import { citizens, getResourceEntity, producers } from '@/ecs/archetypes';
 
 /**
+ * Minimum contribution ratio for extra workers (below this, no benefit).
+ * After ~6 extra workers the geometric decay drops below this threshold.
+ */
+const OVERSTAFFING_MIN_CONTRIBUTION = 0.015625; // 0.5^6
+
+/**
  * Calculate effective worker count with overstaffing diminishing returns.
  *
- * Workers beyond staffCap contribute only 25% effectiveness —
- * reflects the real Soviet problem of throwing bodies at production targets.
+ * The first `staffCap` workers contribute 100% productivity each.
+ * Each additional worker beyond staffCap contributes 50% less than the
+ * previous extra worker (geometric decay):
+ *   extra worker 1 → 50%, extra worker 2 → 25%, extra worker 3 → 12.5%, ...
  *
- * effectiveWorkers = min(workers, staffCap) + max(0, workers - staffCap) × 0.25
+ * Contributions below ~1.5% are capped at 0 (after ~6 extra workers).
+ *
+ * This reflects the real Soviet problem of throwing bodies at production
+ * targets: the first few extras help, but packing a factory floor with
+ * twice the workers mostly generates queues for the single wrench.
  */
-function effectiveWorkers(workers: number, staffCap: number): number {
+export function effectiveWorkers(workers: number, staffCap: number): number {
   if (staffCap <= 0 || workers <= staffCap) return workers;
-  return staffCap + (workers - staffCap) * 0.25;
+
+  let effective = staffCap;
+  const extra = workers - staffCap;
+  let contribution = 0.5; // first extra worker contributes 50%
+
+  for (let i = 0; i < extra; i++) {
+    if (contribution < OVERSTAFFING_MIN_CONTRIBUTION) break;
+    effective += contribution;
+    contribution *= 0.5;
+  }
+
+  return effective;
 }
 
 /**
@@ -44,7 +67,7 @@ function countAssignedWorkers(): Map<string, number> {
  *
  * Iterates all buildings that have a `produces` field. If the
  * building is powered, its output is added to the resource store.
- * Overstaffing beyond staffCap has diminishing returns (25% efficiency).
+ * Overstaffing beyond staffCap has geometric diminishing returns (50% decay).
  *
  * @param farmModifier  Weather-driven multiplier for food output (0.0–2.0, default 1.0).
  * @param vodkaModifier Politburo-driven multiplier for vodka output (default 1.0).

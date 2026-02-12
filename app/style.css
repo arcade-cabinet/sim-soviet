@@ -272,3 +272,66 @@ body {
 }
 
 /* ── Toast ──────────────────────────────────────────────────────────────── */
+
+/* ── Color-Blind Accessibility Mode ────────────────────────────────────── */
+
+/*
+ * When body.colorblind is active, we rely on patterns, borders, and text
+ * labels rather than color alone to convey severity and status.
+ */
+
+/* --- Toast severity: add distinct border patterns --- */
+body.colorblind .toast-cb-critical {
+  border-left: 6px solid #ffffff;
+  border-left-style: double;
+}
+
+body.colorblind .toast-cb-warning {
+  border-left: 6px dashed #ffffff;
+}
+
+body.colorblind .toast-cb-evacuation {
+  border-left: 6px dotted #ffffff;
+}
+
+/* --- Alert severity: add distinct left-border patterns --- */
+body.colorblind .alert-cb-critical {
+  border-left-width: 4px;
+  border-left-style: double;
+  border-left-color: #ffffff;
+}
+
+body.colorblind .alert-cb-warning {
+  border-left-width: 4px;
+  border-left-style: dashed;
+  border-left-color: #ffffff;
+}
+
+body.colorblind .alert-cb-info {
+  border-left-width: 4px;
+  border-left-style: dotted;
+  border-left-color: #ffffff;
+}
+
+/* --- High-contrast borders on key panels --- */
+body.colorblind .cb-panel-border {
+  border-color: #ffffff !important;
+  border-width: 2px !important;
+}
+
+/* --- Status text label badge (appended to color-coded values) --- */
+.cb-status-label {
+  display: none;
+  font-size: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 3px;
+  margin-left: 4px;
+  border: 1px solid currentColor;
+  vertical-align: middle;
+}
+
+body.colorblind .cb-status-label {
+  display: inline;
+}

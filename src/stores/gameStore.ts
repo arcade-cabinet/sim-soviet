@@ -370,6 +370,10 @@ export function isColorBlindMode(): boolean {
 
 export function setColorBlindMode(enabled: boolean): void {
   _colorBlindMode = enabled;
+  // Toggle CSS class on body for DOM-level color-blind overrides
+  if (typeof document !== 'undefined') {
+    document.body.classList.toggle('colorblind', enabled);
+  }
   for (const listener of _colorBlindListeners) {
     listener();
   }

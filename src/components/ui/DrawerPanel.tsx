@@ -20,6 +20,7 @@ import {
   Play,
   Radio,
   Save,
+  ShoppingBag,
   SkipForward,
   Target,
   Upload,
@@ -41,6 +42,7 @@ import {
   useGameSnapshot,
 } from '@/stores/gameStore';
 import { addSovietToast } from '@/stores/toastStore';
+import { ConsumerGoodsMarket } from './ConsumerGoodsMarket';
 
 export type DrawerTab = 'overview' | 'plan' | 'radio' | 'archives';
 
@@ -281,6 +283,10 @@ function OverviewTab({
       </DrawerSection>
 
       <PopulationRegistrySection snap={snap} />
+
+      <DrawerSection icon={ShoppingBag} title="GUM MARKET">
+        <ConsumerGoodsMarket />
+      </DrawerSection>
 
       <AlertsSection snap={snap} quotaPct={quotaPct} yearsLeft={yearsLeft} />
     </>
@@ -585,12 +591,14 @@ function PopulationRegistrySection({ snap }: { snap: ReturnType<typeof useGameSn
           value={`${snap.avgMorale}%`}
           icon="😐"
           valueClass={thresholdColor(snap.avgMorale)}
+          statusLabel={thresholdLabel(snap.avgMorale)}
         />
         <StatCard
           label="Loyalty"
           value={`${snap.avgLoyalty}%`}
           icon="⭐"
           valueClass={thresholdColor(snap.avgLoyalty)}
+          statusLabel={thresholdLabel(snap.avgLoyalty)}
         />
         <StatCard label="Assigned" value={String(snap.assignedWorkers)} icon="🔨" />
         <StatCard label="Idle" value={String(snap.idleWorkers)} icon="💤" />
@@ -816,6 +824,13 @@ function thresholdColor(value: number): string {
   return 'text-green-500';
 }
 
+/** Returns a text label for color-coded threshold values. */
+function thresholdLabel(value: number): string {
+  if (value < 30) return 'LOW';
+  if (value < 60) return 'OK';
+  return 'HIGH';
+}
+
 function buildAlerts(
   snap: ReturnType<typeof useGameSnapshot>,
   quotaPct: number,
@@ -899,16 +914,22 @@ function StatCard({
   value,
   icon,
   valueClass,
+  statusLabel,
 }: {
   label: string;
   value: string;
   icon: string;
   valueClass?: string;
+  /** Color-blind text label (e.g. LOW/OK/HIGH) shown when mode is active. */
+  statusLabel?: string;
 }) {
   return (
     <div className="bg-[#1a1a1a] border border-[#444] px-2 py-1.5 text-center">
       <div className="text-sm mb-0.5">{icon}</div>
-      <div className={cn('text-xs font-bold font-mono', valueClass ?? 'text-white')}>{value}</div>
+      <div className={cn('text-xs font-bold font-mono', valueClass ?? 'text-white')}>
+        {value}
+        {statusLabel && <span className="cb-status-label">{statusLabel}</span>}
+      </div>
       <div className="text-[#888] text-[8px] uppercase tracking-wider">{label}</div>
     </div>
   );
@@ -917,10 +938,13 @@ function StatCard({
 function RoadConditionCard({ condition }: { condition: number }) {
   const pct = Math.round(condition);
   const barColor = pct > 60 ? 'bg-green-500' : pct > 25 ? 'bg-yellow-500' : 'bg-[#ff4444]';
+  const condLabel = pct > 60 ? 'GOOD' : pct > 25 ? 'FAIR' : 'POOR';
   return (
     <div className="bg-[#1a1a1a] border border-[#444] px-2 py-1.5 text-center">
       <div className="text-sm mb-0.5">🔧</div>
-      <div className="text-xs font-bold font-mono text-white">{pct}%</div>
+      <div className="text-xs font-bold font-mono text-white">
+        {pct}%<span className="cb-status-label">{condLabel}</span>
+      </div>
       <div className="w-full h-1 bg-[#333] mt-0.5">
         <div className={cn('h-full transition-all', barColor)} style={{ width: `${pct}%` }} />
       </div>
@@ -936,13 +960,23 @@ function AlertItem({
   severity: 'critical' | 'warning' | 'info';
   message: string;
 }) {
+  const colorBlind = useColorBlindMode();
   const colors = {
     critical: 'border-[#ff4444] text-[#ff4444]',
     warning: 'border-[#ffaa00] text-[#ffaa00]',
     info: 'border-[#888] text-[#888]',
   };
+  const cbClass = colorBlind ? `alert-cb-${severity}` : '';
+  const prefixes: Record<string, string> = {
+    critical: 'CRITICAL: ',
+    warning: 'WARNING: ',
+    info: 'INFO: ',
+  };
   return (
-    <div className={cn('bg-[#1a1a1a] border-l-2 px-2 py-1.5 text-[10px]', colors[severity])}>
+    <div
+      className={cn('bg-[#1a1a1a] border-l-2 px-2 py-1.5 text-[10px]', colors[severity], cbClass)}
+    >
+      {colorBlind && <span className="font-bold">{prefixes[severity]}</span>}
       {message}
     </div>
   );
