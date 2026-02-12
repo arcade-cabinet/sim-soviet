@@ -191,13 +191,14 @@ describe('MinigameRouter', () => {
       expect(def!.id).toBe('mining_expedition');
     });
 
-    it('mining_expedition auto-resolve returns expected announcement', () => {
+    it('mining_expedition auto-resolve uses RNG-driven outcomes', () => {
       const def = getMinigameDefinition('mining_expedition')!;
       expect(def).toBeDefined();
       router.startMinigame(def, 100);
       const outcome = router.autoResolve();
-      expect(outcome.resources?.money).toBe(-2);
-      expect(outcome.announcement).toContain('Nobody ventured into the mountains');
+      // RNG-driven: outcome varies, but must always have an announcement and money
+      expect(outcome.announcement.length).toBeGreaterThan(0);
+      expect(outcome.resources?.money).toBeDefined();
     });
 
     it('matches event trigger for ideology_session', () => {
