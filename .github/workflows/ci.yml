@@ -135,6 +135,9 @@ jobs:
         with:
           install-args: "--frozen-lockfile"
 
+      - name: Build for E2E
+        run: pnpm build
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 

@@ -13,6 +13,8 @@ import {
   startGame,
   startGameAndDismissAdvisor,
   topBar,
+  waitForMoneyChange,
+  waitForSimTick,
 } from './helpers';
 
 test.describe('Game Flow', () => {
@@ -26,27 +28,27 @@ test.describe('Game Flow', () => {
 
     // Place a power building first (switch to Power category)
     await selectCategory(page, '⚡');
-    await page.waitForTimeout(200);
+    const moneyBeforePower = await getMoney(page);
     await buildingButtons(page).first().click();
     await clickCanvasCenter(page);
-    await page.waitForTimeout(1000);
+    await waitForMoneyChange(page, moneyBeforePower).catch(() => {});
 
     // Place a housing building
     await selectCategory(page, '🏢');
-    await page.waitForTimeout(200);
+    const moneyBeforeHousing = await getMoney(page);
     await buildingButtons(page).first().click();
     await clickCanvasAt(page, 80, 40);
-    await page.waitForTimeout(1000);
+    await waitForMoneyChange(page, moneyBeforeHousing).catch(() => {});
 
     // Place an industry building
     await selectCategory(page, '🏭');
-    await page.waitForTimeout(200);
+    const moneyBeforeIndustry = await getMoney(page);
     await buildingButtons(page).first().click();
     await clickCanvasAt(page, -80, 40);
-    await page.waitForTimeout(1000);
+    await waitForMoneyChange(page, moneyBeforeIndustry).catch(() => {});
 
     // Wait for simulation ticks to process
-    await page.waitForTimeout(5000);
+    await waitForSimTick(page);
 
     // Money should have changed (buildings cost money, simulation runs)
     const currentMoney = await getMoney(page);
@@ -59,14 +61,13 @@ test.describe('Game Flow', () => {
     const initialDate = await getDateText(page);
     expect(initialDate).toMatch(/19\d{2}/);
 
-    // Wait for several simulation ticks (date advances each tick)
-    await page.waitForTimeout(8000);
+    // Wait for the simulation to advance the date
+    await waitForSimTick(page);
 
     const laterDate = await getDateText(page);
     expect(laterDate).toMatch(/19\d{2}/);
 
     // Date text should have changed (month or year advanced)
-    // Note: this might not always differ if ticks are slow, but the year should be valid
     expect(laterDate.length).toBeGreaterThan(0);
   });
 
@@ -77,27 +78,23 @@ test.describe('Game Flow', () => {
     const hud = quotaHud(page);
     await expect(hud).toContainText('0%');
 
-    // Place buildings that produce food (the default quota is food)
-    // Industry category includes bread-factory which produces food
-    await selectCategory(page, '🏭');
-    await page.waitForTimeout(200);
-
     // Place a power plant first (buildings need power)
     await selectCategory(page, '⚡');
-    await page.waitForTimeout(200);
+    const m1 = await getMoney(page);
     await buildingButtons(page).first().click();
     await clickCanvasCenter(page);
-    await page.waitForTimeout(500);
+    await waitForMoneyChange(page, m1).catch(() => {});
 
     // Now place food production buildings
     await selectCategory(page, '🏭');
-    await page.waitForTimeout(200);
+    const m2 = await getMoney(page);
     await buildingButtons(page).first().click();
     await clickCanvasAt(page, 80, 40);
-    await page.waitForTimeout(500);
+    await waitForMoneyChange(page, m2).catch(() => {});
 
     // Wait for simulation to produce food
-    await page.waitForTimeout(10000);
+    await waitForSimTick(page);
+    await waitForSimTick(page);
 
     // Quota progress bar should have a width > 0%
     const progressBar = hud.locator('.transition-all');
@@ -114,17 +111,15 @@ test.describe('Game Flow', () => {
 
     // Press Space to pause
     await page.keyboard.press('Space');
-    await page.waitForTimeout(300);
 
     // Pause button should show play icon
     const btn = pauseButton(page);
     await expect(btn).toContainText('▶');
 
-    // Wait a few seconds while paused
-    await page.waitForTimeout(3000);
+    // Wait to verify no ticks run while paused
+    await page.waitForTimeout(1000);
 
-    // Money should not have changed significantly while paused
-    // (no simulation ticks running)
+    // Money should not have changed while paused
     const moneyWhilePaused = await getMoney(page);
     expect(moneyWhilePaused).toBe(moneyBefore);
   });
@@ -134,9 +129,6 @@ test.describe('Game Flow', () => {
 
     // Pause the game
     await page.keyboard.press('Space');
-    await page.waitForTimeout(300);
-
-    // Verify paused
     await expect(pauseButton(page)).toContainText('▶');
 
     // Record date while paused
@@ -144,17 +136,13 @@ test.describe('Game Flow', () => {
 
     // Resume the game
     await page.keyboard.press('Space');
-    await page.waitForTimeout(300);
-
-    // Pause button should show pause icon again
     await expect(pauseButton(page)).toContainText('⏸');
 
     // Wait for simulation to run
-    await page.waitForTimeout(5000);
+    await waitForSimTick(page);
 
     // Date should have advanced after resuming
     const resumedDate = await getDateText(page);
-    // At minimum, the date text should still be valid
     expect(resumedDate).toMatch(/19\d{2}/);
   });
 
@@ -172,15 +160,16 @@ test.describe('Game Flow', () => {
     await startGameAndDismissAdvisor(page);
 
     // Place a building
+    const moneyBeforePlace = await getMoney(page);
     await buildingButtons(page).first().click();
     await clickCanvasCenter(page);
-    await page.waitForTimeout(1500);
+    await waitForMoneyChange(page, moneyBeforePlace).catch(() => {});
 
     // Record state
     const _money1 = await getMoney(page);
 
     // Wait for more ticks
-    await page.waitForTimeout(3000);
+    await waitForSimTick(page);
 
     // State should still be valid (no crashes)
     const money2 = await getMoney(page);
@@ -221,22 +210,18 @@ test.describe('Game Flow', () => {
 
     // Pause
     await page.keyboard.press('Space');
-    await page.waitForTimeout(200);
     await expect(btn).toContainText('▶');
 
     // Resume
     await page.keyboard.press('Space');
-    await page.waitForTimeout(200);
     await expect(btn).toContainText('⏸');
 
     // Pause again
     await page.keyboard.press('Space');
-    await page.waitForTimeout(200);
     await expect(btn).toContainText('▶');
 
     // Resume again
     await page.keyboard.press('Space');
-    await page.waitForTimeout(200);
     await expect(btn).toContainText('⏸');
   });
 });

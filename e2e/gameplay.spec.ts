@@ -9,6 +9,8 @@ import {
   selectCategory,
   startGameAndDismissAdvisor,
   topRowButtons,
+  waitForMoneyChange,
+  waitForSimTick,
 } from './helpers';
 
 test.describe('Gameplay', () => {
@@ -59,9 +61,6 @@ test.describe('Gameplay', () => {
     // Switch to Industry category (second tab after Inspect)
     await selectCategory(page, '🏭');
 
-    // Wait briefly for React to update
-    await page.waitForTimeout(200);
-
     // Building list should be different now
     const newTexts = await buildingButtons(page).allInnerTexts();
     expect(newTexts.join()).not.toBe(initialTexts.join());
@@ -70,13 +69,11 @@ test.describe('Gameplay', () => {
   test('switching categories shows correct building count', async ({ page }) => {
     // Industry + Agriculture = 5 buildings
     await selectCategory(page, '🏭');
-    await page.waitForTimeout(200);
     const industryCount = await buildingButtons(page).count();
     expect(industryCount).toBe(5);
 
     // Military = 3 buildings
     await selectCategory(page, '🎖️');
-    await page.waitForTimeout(200);
     const militaryCount = await buildingButtons(page).count();
     expect(militaryCount).toBe(3);
   });
@@ -91,7 +88,7 @@ test.describe('Gameplay', () => {
     await clickCanvasCenter(page);
 
     // Wait for the placement + state update
-    await page.waitForTimeout(1500);
+    await waitForMoneyChange(page, moneyBefore).catch(() => {});
 
     const moneyAfter = await getMoney(page);
     // Money should have decreased (building was placed) or stayed the same
@@ -105,7 +102,7 @@ test.describe('Gameplay', () => {
     expect(initialMoney).toBeGreaterThanOrEqual(0);
 
     // Wait for multiple simulation ticks (each tick is 1 second)
-    await page.waitForTimeout(3000);
+    await waitForSimTick(page);
 
     // The top bar should still show valid resource numbers
     const currentMoney = await getMoney(page);
@@ -138,7 +135,6 @@ test.describe('Gameplay', () => {
   });
 
   test('date display shows valid year starting with 1980', async ({ page }) => {
-    await page.waitForTimeout(500);
     const dateText = await getDateText(page);
     // Should contain a year starting with 19 (game starts in 1980)
     expect(dateText).toMatch(/19\d{2}/);
@@ -154,7 +150,6 @@ test.describe('Gameplay', () => {
   test('category tabs persist active state while browsing buildings', async ({ page }) => {
     // Click Industry category
     await selectCategory(page, '🏭');
-    await page.waitForTimeout(200);
 
     // Select a building in industry
     const firstIndustry = buildingButtons(page).first();

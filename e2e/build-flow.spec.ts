@@ -16,6 +16,7 @@ import {
   getMoney,
   STARTING_MONEY,
   startGameAndDismissAdvisor,
+  waitForMoneyChange,
 } from './helpers';
 
 test.describe('Build Flow (Radial Menu)', () => {
@@ -27,7 +28,6 @@ test.describe('Build Flow (Radial Menu)', () => {
     // The radial menu opens when tapping an empty cell.
     // The menu is rendered as a fixed overlay with an SVG containing "Build Menu" title.
     await clickCanvasCenter(page);
-    await page.waitForTimeout(500);
 
     // Check if radial menu appeared (it has a title element "Build Menu")
     const buildMenu = page.locator('svg title:has-text("Build Menu")');
@@ -42,7 +42,6 @@ test.describe('Build Flow (Radial Menu)', () => {
   test('radial menu shows grid coordinates', async ({ page }) => {
     // Click an area likely to be empty
     await clickCanvasCenter(page);
-    await page.waitForTimeout(500);
 
     // If radial menu opened, it should show grid coordinates
     const gridLabel = page.locator('text=Grid [');
@@ -53,14 +52,12 @@ test.describe('Build Flow (Radial Menu)', () => {
 
   test('clicking backdrop dismisses radial menu', async ({ page }) => {
     await clickCanvasCenter(page);
-    await page.waitForTimeout(500);
 
     const buildMenu = page.locator('svg title:has-text("Build Menu")');
     if (await buildMenu.isVisible().catch(() => false)) {
       // Click the backdrop (the fixed inset-0 overlay)
       const backdrop = page.locator('.fixed.inset-0.z-50');
       await backdrop.click({ position: { x: 10, y: 10 } });
-      await page.waitForTimeout(300);
 
       // Menu should be dismissed
       await expect(buildMenu).not.toBeVisible();
@@ -79,7 +76,7 @@ test.describe('Build Flow (Radial Menu)', () => {
 
       // Click canvas to place
       await clickCanvasCenter(page);
-      await page.waitForTimeout(1500);
+      await waitForMoneyChange(page, moneyBefore).catch(() => {});
 
       const moneyAfter = await getMoney(page);
       // Money should not increase after placement
@@ -100,7 +97,6 @@ test.describe('Build Flow (Radial Menu)', () => {
     if (await buildingBtn.isVisible().catch(() => false)) {
       await buildingBtn.click();
       await clickCanvasCenter(page);
-      await page.waitForTimeout(500);
     }
 
     // Canvas should still be interactive

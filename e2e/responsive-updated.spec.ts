@@ -24,8 +24,6 @@ test.describe('Responsive Layout', () => {
   test.describe('Intro Screen', () => {
     test.beforeEach(async ({ page }) => {
       await page.goto('/');
-      // Wait for fonts to load
-      await page.waitForTimeout(1000);
     });
 
     test('intro overlay covers full viewport', async ({ page }) => {
@@ -210,7 +208,6 @@ test.describe('Responsive Layout', () => {
     test('advisor fits within viewport when shown', async ({ page }) => {
       await page.goto('/');
       await startButton(page).click();
-      await page.waitForTimeout(500);
 
       const advisor = advisorPanel(page);
       await expect(advisor).toBeVisible({ timeout: 3000 });
@@ -229,7 +226,6 @@ test.describe('Responsive Layout', () => {
     test('advisor dismiss button is tappable', async ({ page }) => {
       await page.goto('/');
       await startButton(page).click();
-      await page.waitForTimeout(500);
 
       const advisor = advisorPanel(page);
       await expect(advisor).toBeVisible({ timeout: 3000 });

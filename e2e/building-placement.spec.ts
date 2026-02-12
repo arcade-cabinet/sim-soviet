@@ -9,6 +9,7 @@ import {
   selectBulldoze,
   selectCategory,
   startGameAndDismissAdvisor,
+  waitForMoneyChange,
 } from './helpers';
 
 test.describe('Building Placement', () => {
@@ -28,7 +29,7 @@ test.describe('Building Placement', () => {
     await clickCanvasCenter(page);
 
     // Wait for the placement to process and React to re-render
-    await page.waitForTimeout(1500);
+    await waitForMoneyChange(page, moneyBefore).catch(() => {});
 
     const moneyAfter = await getMoney(page);
 
@@ -43,15 +44,17 @@ test.describe('Building Placement', () => {
     const firstBuilding = buildingButtons(page).first();
     await firstBuilding.click();
 
+    const moneyBeforePlace = await getMoney(page);
     await clickCanvasCenter(page);
-    await page.waitForTimeout(1000);
+    await waitForMoneyChange(page, moneyBeforePlace).catch(() => {});
 
     const moneyAfterPlace = await getMoney(page);
 
     // Step 2: Select bulldoze tool and click the same spot
     await selectBulldoze(page);
+    const moneyBeforeBulldoze = await getMoney(page);
     await clickCanvasCenter(page);
-    await page.waitForTimeout(1000);
+    await waitForMoneyChange(page, moneyBeforeBulldoze).catch(() => {});
 
     const moneyAfterBulldoze = await getMoney(page);
 
@@ -63,7 +66,6 @@ test.describe('Building Placement', () => {
   test('cannot place building with insufficient money', async ({ page }) => {
     // Switch to a category with expensive buildings (Government)
     await selectCategory(page, '🏛️');
-    await page.waitForTimeout(200);
 
     // Find the most expensive building — government buildings tend to be costly
     const buttons = buildingButtons(page);
@@ -73,9 +75,6 @@ test.describe('Building Placement', () => {
     if (count > 0) {
       await buttons.nth(count - 1).click();
     }
-
-    // Get current money
-    const _money = await getMoney(page);
 
     // Try to place many buildings to drain money
     // Place buildings at various offsets so they don't overlap
@@ -104,10 +103,14 @@ test.describe('Building Placement', () => {
 
     for (const [ox, oy] of offsets) {
       await clickCanvasAt(page, ox!, oy!);
-      await page.waitForTimeout(200);
     }
 
-    await page.waitForTimeout(1000);
+    const moneyBeforeDrain = await getMoney(page);
+    for (const [ox, oy] of offsets) {
+      await clickCanvasAt(page, ox!, oy!);
+    }
+
+    await waitForMoneyChange(page, moneyBeforeDrain).catch(() => {});
 
     // Money should be >= 0 (never goes negative)
     const finalMoney = await getMoney(page);
@@ -123,17 +126,17 @@ test.describe('Building Placement', () => {
 
     // Place at center
     await clickCanvasCenter(page);
-    await page.waitForTimeout(1000);
+    await waitForMoneyChange(page, money1).catch(() => {});
     const money2 = await getMoney(page);
 
     // Place at offset from center (different grid cell)
     await clickCanvasAt(page, 80, 0);
-    await page.waitForTimeout(1000);
+    await waitForMoneyChange(page, money2).catch(() => {});
     const money3 = await getMoney(page);
 
     // Place at another offset
     await clickCanvasAt(page, -80, 0);
-    await page.waitForTimeout(1000);
+    await waitForMoneyChange(page, money3).catch(() => {});
     const money4 = await getMoney(page);
 
     // Money should be non-increasing with each placement
@@ -197,7 +200,6 @@ test.describe('Building Placement', () => {
 
     // Switch to Power category
     await selectCategory(page, '⚡');
-    await page.waitForTimeout(200);
 
     // Select a power building
     const powerBtn = buildingButtons(page).first();
@@ -208,7 +210,7 @@ test.describe('Building Placement', () => {
     // Verify by checking the power category building is now the active tool
     const money = await getMoney(page);
     await clickCanvasCenter(page);
-    await page.waitForTimeout(1000);
+    await waitForMoneyChange(page, money).catch(() => {});
 
     // Money should be <= starting (placement attempt occurred)
     const moneyAfter = await getMoney(page);
