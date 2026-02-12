@@ -12,11 +12,11 @@ import { world } from '../world';
 
 /** Terrain type → default sprite name mapping. */
 const FEATURE_SPRITES: Record<TerrainFeatureType, string> = {
-  mountain: 'grass-mountain',
+  mountain: 'stone-mountain',
   forest: 'grass-forest',
-  marsh: 'grass-swamp',
-  river: 'grass-river',
-  water: 'grass-water',
+  marsh: 'sand',
+  river: 'river-straight',
+  water: 'water',
 };
 
 /** Create a mountain terrain feature entity. */

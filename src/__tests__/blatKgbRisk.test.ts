@@ -8,12 +8,12 @@ import { GameRng } from '@/game/SeedSystem';
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('Blat KGB Risk — Constants', () => {
-  it('BLAT_SAFE_THRESHOLD is 5', () => {
-    expect(BLAT_SAFE_THRESHOLD).toBe(5);
+  it('BLAT_SAFE_THRESHOLD is 15', () => {
+    expect(BLAT_SAFE_THRESHOLD).toBe(15);
   });
 
-  it('BLAT_ARREST_THRESHOLD is 10', () => {
-    expect(BLAT_ARREST_THRESHOLD).toBe(10);
+  it('BLAT_ARREST_THRESHOLD is 30', () => {
+    expect(BLAT_ARREST_THRESHOLD).toBe(30);
   });
 
   it('arrest threshold is higher than safe threshold', () => {
@@ -25,7 +25,7 @@ describe('Blat KGB Risk — Threshold behavior', () => {
   it('returns null when no RNG is set (requires deterministic seed)', () => {
     const sys = new EconomySystem('thaw', 'comrade');
     // No setRng call — system has no seeded RNG
-    // Default blat = 10, above threshold, but no RNG means no check
+    // Default blat = 10, below threshold, so null anyway
     const result = sys.checkBlatKgbRisk();
     expect(result).toBeNull();
   });
@@ -34,35 +34,32 @@ describe('Blat KGB Risk — Threshold behavior', () => {
     const sys = new EconomySystem('thaw', 'comrade');
     sys.setRng(new GameRng('safe-blat'));
 
-    // Default blat starts at 10, so set it to exactly 5
-    // We can't directly set blat, but we can spend down to threshold.
-    // Start at 10, spend 5 to get to 5.
-    sys.spendBlat(5, 'test');
-    expect(sys.getBlat().connections).toBe(5);
+    // Default blat starts at 10, which is below safe threshold (15)
+    expect(sys.getBlat().connections).toBe(10);
 
     const result = sys.checkBlatKgbRisk();
     expect(result).toBeNull();
   });
 
-  it('returns null when blat is below safe threshold', () => {
+  it('returns null when blat is exactly at safe threshold', () => {
     const sys = new EconomySystem('thaw', 'comrade');
-    sys.setRng(new GameRng('low-blat'));
+    sys.setRng(new GameRng('exact-threshold'));
 
-    // Spend down to 3
-    sys.spendBlat(7, 'test');
-    expect(sys.getBlat().connections).toBe(3);
+    // Grant blat to reach exactly 15
+    sys.grantBlat(5); // 10 + 5 = 15
+    expect(sys.getBlat().connections).toBe(15);
 
     const result = sys.checkBlatKgbRisk();
     expect(result).toBeNull();
   });
 
   it('can trigger investigation when blat is above safe threshold', () => {
-    // With blat at 10 (default), excessPoints = 5, chance = 10%
-    // Try many seeds to find one that triggers
+    // With blat at 25 (10 excess), excessPoints = 10, chance = 10%
     let foundInvestigation = false;
     for (let i = 0; i < 200; i++) {
       const sys = new EconomySystem('thaw', 'comrade');
       sys.setRng(new GameRng(`kgb-investigation-${i}`));
+      sys.grantBlat(15); // blat = 25, 10 excess points
 
       const result = sys.checkBlatKgbRisk();
       if (result?.investigated) {
@@ -76,19 +73,19 @@ describe('Blat KGB Risk — Threshold behavior', () => {
   });
 
   it('does not always trigger investigation at moderate blat', () => {
-    // With blat at 6 (1 above threshold), chance is only 2%
+    // With blat at 16 (1 above threshold), chance is only 1%
     // Most attempts should NOT trigger
     let safeCount = 0;
     const trials = 100;
     for (let i = 0; i < trials; i++) {
       const sys = new EconomySystem('thaw', 'comrade');
       sys.setRng(new GameRng(`moderate-blat-${i}`));
-      sys.spendBlat(4, 'test'); // blat goes from 10 to 6
+      sys.grantBlat(6); // blat goes from 10 to 16
 
       const result = sys.checkBlatKgbRisk();
       if (result === null) safeCount++;
     }
-    // At 2% chance, we expect ~98 safe out of 100
+    // At 1% chance, we expect ~99 safe out of 100
     expect(safeCount).toBeGreaterThan(80);
   });
 });
@@ -97,22 +94,22 @@ describe('Blat KGB Risk — Investigation probability scaling', () => {
   it('higher blat means more investigations over many trials', () => {
     const trials = 500;
 
-    // Low blat (6 connections, 1 excess = 2% chance)
+    // Low blat (16 connections, 1 excess = 1% chance)
     let lowInvestigations = 0;
     for (let i = 0; i < trials; i++) {
       const sys = new EconomySystem('thaw', 'comrade');
       sys.setRng(new GameRng(`low-excess-${i}`));
-      sys.spendBlat(4, 'test'); // 10 → 6
+      sys.grantBlat(6); // 10 → 16
       const result = sys.checkBlatKgbRisk();
       if (result?.investigated) lowInvestigations++;
     }
 
-    // High blat (50 connections, 45 excess = 90% chance)
+    // High blat (60 connections, 45 excess = 45% chance)
     let highInvestigations = 0;
     for (let i = 0; i < trials; i++) {
       const sys = new EconomySystem('thaw', 'comrade');
       sys.setRng(new GameRng(`high-excess-${i}`));
-      sys.grantBlat(40); // 10 + 40 = 50
+      sys.grantBlat(50); // 10 + 50 = 60
       const result = sys.checkBlatKgbRisk();
       if (result?.investigated) highInvestigations++;
     }
@@ -121,13 +118,13 @@ describe('Blat KGB Risk — Investigation probability scaling', () => {
     expect(highInvestigations).toBeGreaterThan(lowInvestigations);
   });
 
-  it('2% per excess point: at 10 connections (5 excess), ~10% trigger rate', () => {
+  it('1% per excess point: at 25 connections (10 excess), ~10% trigger rate', () => {
     const trials = 1000;
     let investigations = 0;
     for (let i = 0; i < trials; i++) {
       const sys = new EconomySystem('thaw', 'comrade');
       sys.setRng(new GameRng(`rate-check-${i}`));
-      // Default blat = 10, excess = 5, chance = 10%
+      sys.grantBlat(15); // blat = 25, excess = 10, chance = 10%
       const result = sys.checkBlatKgbRisk();
       if (result?.investigated) investigations++;
     }
@@ -138,12 +135,12 @@ describe('Blat KGB Risk — Investigation probability scaling', () => {
 });
 
 describe('Blat KGB Risk — Arrest at high blat', () => {
-  it('can trigger arrest when blat exceeds arrest threshold (>10)', () => {
+  it('can trigger arrest when blat exceeds arrest threshold (>30)', () => {
     let foundArrest = false;
     for (let i = 0; i < 500; i++) {
       const sys = new EconomySystem('thaw', 'comrade');
       sys.setRng(new GameRng(`arrest-${i}`));
-      sys.grantBlat(40); // blat = 50, well above arrest threshold
+      sys.grantBlat(50); // blat = 60, well above arrest threshold
 
       const result = sys.checkBlatKgbRisk();
       if (result?.arrested) {
@@ -157,13 +154,13 @@ describe('Blat KGB Risk — Arrest at high blat', () => {
   });
 
   it('arrest is not possible when blat is at or below arrest threshold', () => {
-    // At blat = 10 (arrest threshold), arrest should never trigger
+    // At blat = 30 (arrest threshold), arrest should never trigger
     const trials = 500;
     let arrests = 0;
     for (let i = 0; i < trials; i++) {
       const sys = new EconomySystem('thaw', 'comrade');
       sys.setRng(new GameRng(`no-arrest-${i}`));
-      // Default blat = 10, which is exactly BLAT_ARREST_THRESHOLD
+      sys.grantBlat(20); // blat = 30, which is exactly BLAT_ARREST_THRESHOLD
       // Arrest requires > threshold, not >=
       const result = sys.checkBlatKgbRisk();
       if (result?.arrested) arrests++;
@@ -217,9 +214,7 @@ describe('Blat KGB Risk — tick() integration', () => {
     const sys = new EconomySystem('thaw', 'comrade');
     sys.setRng(new GameRng('tick-safe'));
 
-    // Spend down to safe level
-    sys.spendBlat(5, 'test');
-
+    // Default blat = 10, below safe threshold (15)
     const result = sys.tick(0, 1960, 100, ['factory']);
     expect(result.blatKgbResult).toBeNull();
   });
@@ -229,7 +224,7 @@ describe('Blat KGB Risk — tick() integration', () => {
     for (let i = 0; i < 200; i++) {
       const sys = new EconomySystem('thaw', 'comrade');
       sys.setRng(new GameRng(`tick-high-blat-${i}`));
-      sys.grantBlat(40); // blat = 50
+      sys.grantBlat(40); // blat = 50, well above threshold
 
       const result = sys.tick(0, 1960, 100, ['factory']);
       if (result.blatKgbResult !== null) {

@@ -204,10 +204,10 @@ export interface BlatKgbResult {
 }
 
 /** Blat connections at or below this level are safe from KGB scrutiny. */
-export const BLAT_SAFE_THRESHOLD = 5;
+export const BLAT_SAFE_THRESHOLD = 15;
 
 /** Blat connections above this level risk outright arrest. */
-export const BLAT_ARREST_THRESHOLD = 10;
+export const BLAT_ARREST_THRESHOLD = 30;
 
 export interface EconomyTickResult {
   trudodniEarned: number;
@@ -1045,7 +1045,7 @@ export class EconomySystem {
     const rng = this.rng;
     const rand = () => rng.random();
     const excessPoints = connections - BLAT_SAFE_THRESHOLD;
-    const investigationChance = Math.min(1, excessPoints * 0.02);
+    const investigationChance = Math.min(1, excessPoints * 0.01);
 
     let investigated = false;
     let arrested = false;
