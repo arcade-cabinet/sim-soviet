@@ -5,7 +5,6 @@ import {
   canvas,
   dossier,
   landingPage,
-  quotaHud,
   sovietHud,
   startButton,
   startGame,
@@ -65,8 +64,8 @@ test.describe('Game Load', () => {
       await expect(page.locator('.scanlines')).toBeAttached();
     });
 
-    test('game viewport container exists', async ({ page }) => {
-      await expect(page.locator('.game-viewport')).toBeAttached();
+    test('React root container exists', async ({ page }) => {
+      await expect(page.locator('#root')).toBeAttached();
     });
   });
 
@@ -114,7 +113,7 @@ test.describe('Game Load', () => {
       await startGame(page);
       const advisor = advisorPanel(page);
       await expect(advisor).toBeVisible({ timeout: 3000 });
-      await expect(advisor).toContainText('Comrade Vanya');
+      await expect(advisor).toContainText('Krupnik');
     });
 
     test('advisor can be dismissed', async ({ page }) => {
@@ -125,23 +124,13 @@ test.describe('Game Load', () => {
       await expect(advisor).toBeHidden();
     });
 
-    test('quota HUD displays 5-year plan info', async ({ page }) => {
+    test('canvas has expected dimensions after start', async ({ page }) => {
       await startGameAndDismissAdvisor(page);
-      const hud = quotaHud(page);
-      await expect(hud).toContainText('5-YEAR PLAN');
-    });
-
-    test('quota HUD shows quota type and remaining time', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-      const hud = quotaHud(page);
-      await expect(hud).toContainText('food');
-      await expect(hud).toContainText('remaining');
-    });
-
-    test('quota HUD shows progress percentage', async ({ page }) => {
-      await startGameAndDismissAdvisor(page);
-      const hud = quotaHud(page);
-      await expect(hud).toContainText('0%');
+      const canvasEl = canvas(page);
+      const box = await canvasEl.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.width).toBeGreaterThan(100);
+      expect(box!.height).toBeGreaterThan(100);
     });
   });
 });

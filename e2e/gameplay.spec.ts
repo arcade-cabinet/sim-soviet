@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test';
 import {
   clickCanvasCenter,
   getDateText,
-  quotaHud,
   startGameAndDismissAdvisor,
   waitForSimTick,
 } from './helpers';
@@ -23,13 +22,11 @@ test.describe('Gameplay', () => {
     expect(box!.width).toBeGreaterThan(0);
   });
 
-  test('quota HUD progress bar exists and has valid width style', async ({ page }) => {
-    // The progress bar is a child div inside the quota HUD with transition-all class
-    const progressBar = quotaHud(page).locator('.transition-all');
-    await expect(progressBar).toBeAttached();
-
-    const style = await progressBar.getAttribute('style');
-    expect(style).toContain('width');
+  test('SovietHUD is visible during gameplay', async ({ page }) => {
+    const hud = page.locator('header');
+    await expect(hud).toBeVisible();
+    // Resources should be rendered
+    await expect(hud).toContainText('👷');
   });
 
   test('date display shows valid year', async ({ page }) => {

@@ -113,6 +113,7 @@ export function LandingPage({ onNewGame, onContinue, onLoadGame, hasSavedGame }:
         {/* Tab content — parchment dossier body */}
         <div
           className="border-2 border-t-2 min-h-[280px] max-h-[50vh] overflow-y-auto"
+          data-testid="dossier-content"
           style={{
             background: parchment.surface.paper,
             borderColor: parchment.border.primary,

@@ -104,12 +104,12 @@ test.describe('UI Interactions', () => {
       await expect(advisor).toBeHidden({ timeout: 12000 });
     });
 
-    test('advisor shows Comrade Vanya name', async ({ page }) => {
+    test('advisor shows Comrade Krupnik name', async ({ page }) => {
       await startGame(page);
 
       const advisor = advisorPanel(page);
       await expect(advisor).toBeVisible({ timeout: 3000 });
-      await expect(advisor).toContainText('Comrade Vanya');
+      await expect(advisor).toContainText('Krupnik');
     });
 
     test('advisor dismiss button works', async ({ page }) => {

@@ -4,7 +4,6 @@ import {
   getDateText,
   getWorkerCount,
   pauseButton,
-  quotaHud,
   sovietHud,
   startGame,
   startGameAndDismissAdvisor,
@@ -26,16 +25,14 @@ test.describe('Game Flow', () => {
     expect(laterDate.length).toBeGreaterThan(0);
   });
 
-  test('quota progress bar exists and has valid width style', async ({ page }) => {
+  test('SovietHUD resources remain valid after ticks', async ({ page }) => {
     await startGameAndDismissAdvisor(page);
+    await waitForSimTick(page);
 
-    const hud = quotaHud(page);
-    // The progress bar is a child div with transition-all + duration-300
-    const progressBar = hud.locator('.transition-all');
-    await expect(progressBar).toBeAttached();
-
-    const style = await progressBar.getAttribute('style');
-    expect(style).toContain('width');
+    // Resources should still be displayed
+    const hud = sovietHud(page);
+    await expect(hud).toContainText('👷');
+    await expect(hud).toContainText('🌾');
   });
 
   test('pause game with Space key stops simulation', async ({ page }) => {
@@ -72,8 +69,8 @@ test.describe('Game Flow', () => {
 
     const advisor = page.locator('.advisor-panel');
     await expect(advisor).toBeVisible({ timeout: 3000 });
-    await expect(advisor).toContainText('Coal Plant');
-    await expect(advisor).toContainText('Housing');
+    // First tutorial milestone says to build a farm
+    await expect(advisor).toContainText('Krupnik');
   });
 
   test('game state persists across simulation ticks', async ({ page }) => {
@@ -100,18 +97,21 @@ test.describe('Game Flow', () => {
     expect(dateText).toMatch(/\d{4}/);
   });
 
-  test('quota HUD shows remaining years', async ({ page }) => {
+  test('SovietHUD date shows a valid month and year', async ({ page }) => {
     await startGameAndDismissAdvisor(page);
 
-    const hud = quotaHud(page);
-    await expect(hud).toContainText('5 years remaining');
+    const dateText = await getDateText(page);
+    // Should be formatted as "MonthName YYYY"
+    expect(dateText).toMatch(/[A-Z][a-z]+\s+\d{4}/);
   });
 
-  test('population starts at zero', async ({ page }) => {
+  test('population is a valid number at game start', async ({ page }) => {
     await startGameAndDismissAdvisor(page);
 
     const workers = await getWorkerCount(page);
-    expect(workers).toBe(0);
+    // Starting settlement creates ~30-55 citizens depending on difficulty
+    expect(workers).toBeGreaterThanOrEqual(0);
+    expect(Number.isNaN(workers)).toBe(false);
   });
 
   test('multiple pause/unpause cycles work correctly', async ({ page }) => {

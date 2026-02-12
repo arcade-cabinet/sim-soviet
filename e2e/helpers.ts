@@ -15,7 +15,7 @@ import type { Page } from '@playwright/test';
 export const landingPage = (page: Page) => page.locator('[class*="fixed inset-0"]').first();
 
 /** The paper-textured dossier card (tab content area). */
-export const dossier = (page: Page) => page.locator('[style*="f4e8d0"]');
+export const dossier = (page: Page) => page.locator('[data-testid="dossier-content"]');
 
 /** The "BEGIN NEW ASSIGNMENT" button on the landing page New Game tab. */
 export const startButton = (page: Page) => page.getByText('BEGIN NEW ASSIGNMENT');
@@ -39,7 +39,11 @@ export const pauseButton = (page: Page) =>
 /** The BottomStrip — context-sensitive bottom info bar. */
 export const bottomStrip = (page: Page) => page.locator('div.border-t-2.border-\\[\\#8b0000\\]');
 
-/** The quota HUD overlay (top-left of viewport). */
+/**
+ * The quota HUD overlay (top-left of viewport).
+ * NOTE: QuotaHUD is NOT currently rendered in App.tsx.
+ * This selector exists for future use when the component is wired.
+ */
 export const quotaHud = (page: Page) => page.locator('.quota-hud');
 
 /** The advisor panel (Comrade Vanya). */

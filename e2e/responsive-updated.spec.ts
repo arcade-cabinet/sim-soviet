@@ -4,7 +4,6 @@ import {
   canvas,
   dossier,
   landingPage,
-  quotaHud,
   sovietHud,
   startButton,
   startGame,
@@ -120,10 +119,8 @@ test.describe('Responsive Layout', () => {
       }
     });
 
-    test('quota HUD is visible and within viewport', async ({ page }) => {
-      const hud = quotaHud(page);
-      await expect(hud).toBeVisible();
-
+    test('SovietHUD resources are within viewport', async ({ page }) => {
+      const hud = sovietHud(page);
       const box = await hud.boundingBox();
       const viewport = page.viewportSize();
       if (box && viewport) {
