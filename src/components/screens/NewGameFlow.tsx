@@ -1,16 +1,12 @@
 /**
- * NewGameFlow -- Multi-step new game configuration screen.
+ * NewGameFlow -- Single-page dossier for new game configuration.
  *
- * Three steps styled as a Soviet bureaucratic assignment form:
- *   1. Assignment -- player name + city name
- *   2. Parameters -- difficulty, map size, seed, starting era
- *   3. Consequences -- arrest behavior + summary + BEGIN
- *
- * Uses parchment (light) theme tokens for the form aesthetic.
+ * All settings on one scrollable parchment page — no wizard, no steps.
+ * Styled as a Soviet bureaucratic assignment form with proper contrast.
  */
-import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Shuffle } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Shuffle } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import { MALE_GIVEN_NAMES, SURNAMES_MALE } from '@/ai/names';
 import { generateCityName } from '@/content/worldbuilding';
 import { accent, DOCUMENT_FONT, parchment, SOVIET_FONT } from '@/design/tokens';
@@ -86,7 +82,9 @@ const MAP_SIZE_INFO: Record<MapSize, { label: string; tiles: string }> = {
   large: { label: 'Large', tiles: `${MAP_SIZES.large}x${MAP_SIZES.large}` },
 };
 
-const STEP_LABELS = ['I. ASSIGNMENT', 'II. PARAMETERS', 'III. CONSEQUENCES'];
+const DIFFICULTY_KEYS = Object.keys(DIFFICULTY_PRESETS) as DifficultyLevel[];
+const MAP_SIZE_KEYS = Object.keys(MAP_SIZES) as MapSize[];
+const CONSEQUENCE_KEYS = Object.keys(CONSEQUENCE_INFO) as ConsequenceLevel[];
 
 function randomSeed(): string {
   const adjectives = [
@@ -130,13 +128,12 @@ function randomPlayerName(): string {
 // ─────────────────────────────────────────────────────────
 
 /**
- * Multi-step new game configuration flow.
+ * Single-page new game configuration dossier.
  *
- * Renders three sequential steps with back/next navigation,
- * styled as a Soviet bureaucratic assignment form on parchment.
+ * All sections visible at once on a scrollable parchment page.
+ * No wizard steps — everything is on one form.
  */
 export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
-  const [step, setStep] = useState(0);
   const [config, setConfig] = useState<NewGameConfig>(() => ({
     playerName: randomPlayerName(),
     cityName: generateCityName(),
@@ -151,31 +148,20 @@ export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
     setConfig((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  const canAdvance = step < 2;
-  const canGoBack = step > 0;
-
-  const handleNext = useCallback(() => {
-    if (canAdvance) setStep((s) => s + 1);
-  }, [canAdvance]);
-
-  const handlePrev = useCallback(() => {
-    if (canGoBack) {
-      setStep((s) => s - 1);
-    } else {
-      onBack();
-    }
-  }, [canGoBack, onBack]);
-
   const handleBegin = useCallback(() => {
     onStart(config);
   }, [onStart, config]);
+
+  const difficulties = DIFFICULTY_KEYS;
+  const mapSizes = MAP_SIZE_KEYS;
+  const consequences = CONSEQUENCE_KEYS;
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-30 flex items-center justify-center px-3 py-4 overflow-y-auto"
+      className="fixed inset-0 z-30 flex items-start justify-center px-3 py-4 overflow-y-auto"
       style={{
         fontFamily: DOCUMENT_FONT,
         background: 'rgba(0,0,0,0.92)',
@@ -185,11 +171,11 @@ export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.15, duration: 0.4 }}
-        className="w-full max-w-lg rounded-none border-2 shadow-2xl"
+        className="w-full max-w-lg my-4 rounded-none border-2 shadow-2xl"
         style={{
           background: parchment.surface.paper,
           borderColor: parchment.border.primary,
-          color: parchment.text.primary,
+          color: '#3b2510',
         }}
       >
         {/* Header */}
@@ -200,65 +186,237 @@ export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
             borderColor: parchment.border.primary,
           }}
         >
-          <div className="text-[10px] uppercase tracking-[0.3em] mb-1 opacity-60">
-            Ministry of Planning -- Form NP-{step + 1}
+          <div className="text-[10px] uppercase tracking-[0.3em] mb-1" style={{ color: '#6b4a2a' }}>
+            Ministry of Planning -- Form NP-1
           </div>
           <h2
             className="text-lg font-bold uppercase tracking-[0.15em]"
-            style={{ fontFamily: SOVIET_FONT }}
+            style={{ fontFamily: SOVIET_FONT, color: '#2a1508' }}
           >
-            {STEP_LABELS[step]}
+            New Assignment Dossier
           </h2>
-          {/* Step indicator */}
-          <div className="flex justify-center gap-2 mt-2">
-            {STEP_LABELS.map((label, i) => (
-              <div
-                key={label}
-                className="w-8 h-1"
+        </div>
+
+        {/* Scrollable content — all sections */}
+        <div className="px-4 py-4 space-y-5">
+          {/* ── Section I: Assignment ── */}
+          <SectionDivider label="I. Assignment" />
+
+          <p className="text-xs leading-relaxed" style={{ color: '#5a3d20' }}>
+            Complete your assignment details. The Central Committee requires accurate personal
+            information. Inaccuracies will be noted in your personnel file.
+          </p>
+
+          <FormField label="Full Name (Comrade)" htmlFor="playerName">
+            <div className="flex gap-2">
+              <input
+                id="playerName"
+                type="text"
+                value={config.playerName}
+                onChange={(e) => update('playerName', e.target.value)}
+                className="flex-1 px-2 py-1.5 border-2 text-sm outline-none focus:border-[#8b0000]"
                 style={{
-                  background: i <= step ? accent.red : parchment.surface.alt,
+                  borderColor: parchment.border.primary,
+                  fontFamily: DOCUMENT_FONT,
+                  color: '#2a1508',
+                  background: '#faf3e6',
+                }}
+                placeholder="Enter your name"
+              />
+              <GenerateButton
+                onClick={() => update('playerName', randomPlayerName())}
+                label="Generate name"
+              />
+            </div>
+          </FormField>
+
+          <FormField label="Settlement Designation" htmlFor="cityName">
+            <div className="flex gap-2">
+              <input
+                id="cityName"
+                type="text"
+                value={config.cityName}
+                onChange={(e) => update('cityName', e.target.value)}
+                className="flex-1 px-2 py-1.5 border-2 text-sm outline-none focus:border-[#8b0000]"
+                style={{
+                  borderColor: parchment.border.primary,
+                  fontFamily: DOCUMENT_FONT,
+                  color: '#2a1508',
+                  background: '#faf3e6',
+                }}
+                placeholder="Enter city name"
+              />
+              <GenerateButton
+                onClick={() => update('cityName', generateCityName())}
+                label="Generate city"
+              />
+            </div>
+          </FormField>
+
+          {/* ── Section II: Parameters ── */}
+          <SectionDivider label="II. Parameters" />
+
+          {/* Difficulty */}
+          <FormField label="Difficulty Classification">
+            <div className="space-y-1.5">
+              {difficulties.map((d) => {
+                const info = DIFFICULTY_INFO[d];
+                const selected = config.difficulty === d;
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => update('difficulty', d)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 border-2 text-xs transition-all cursor-pointer',
+                      selected
+                        ? 'border-[#8b0000] bg-[#8b0000]/10'
+                        : 'border-transparent hover:border-[#8b4513]/40 bg-[#faf3e6]/50'
+                    )}
+                    style={{ fontFamily: DOCUMENT_FONT, color: '#3b2510' }}
+                  >
+                    <span className="font-bold uppercase tracking-wider">{info.label}</span>
+                    <span className="block text-[10px] mt-0.5" style={{ color: '#6b4a2a' }}>
+                      {info.description}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </FormField>
+
+          {/* Map Size */}
+          <FormField label="Sector Dimensions">
+            <div className="flex gap-2">
+              {mapSizes.map((s) => {
+                const info = MAP_SIZE_INFO[s];
+                const selected = config.mapSize === s;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => update('mapSize', s)}
+                    className={cn(
+                      'flex-1 py-2 border-2 text-xs font-bold uppercase text-center transition-all cursor-pointer',
+                      selected
+                        ? 'border-[#8b0000] bg-[#8b0000]/10'
+                        : 'border-[#8b4513]/30 hover:border-[#8b4513]/60 bg-[#faf3e6]/50'
+                    )}
+                    style={{ color: '#3b2510' }}
+                  >
+                    {info.label}
+                    <span className="block text-[9px] font-normal" style={{ color: '#6b4a2a' }}>
+                      {info.tiles}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </FormField>
+
+          {/* Seed */}
+          <FormField label="Cartographic Seed">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={config.seed}
+                onChange={(e) => update('seed', e.target.value)}
+                className="flex-1 px-2 py-1.5 border-2 text-xs outline-none focus:border-[#8b0000]"
+                style={{
+                  borderColor: parchment.border.primary,
+                  fontFamily: DOCUMENT_FONT,
+                  color: '#2a1508',
+                  background: '#faf3e6',
                 }}
               />
-            ))}
+              <GenerateButton onClick={() => update('seed', randomSeed())} label="Random seed" />
+            </div>
+          </FormField>
+
+          {/* Starting Era */}
+          <FormField label="Starting Era">
+            <select
+              value={config.startEra}
+              onChange={(e) => update('startEra', e.target.value as EraId)}
+              className="w-full px-2 py-1.5 border-2 text-xs outline-none focus:border-[#8b0000] cursor-pointer"
+              style={{
+                borderColor: parchment.border.primary,
+                fontFamily: DOCUMENT_FONT,
+                color: '#2a1508',
+                background: '#faf3e6',
+              }}
+            >
+              {ERA_ORDER.map((eraId) => {
+                const era = ERA_DEFINITIONS[eraId];
+                return (
+                  <option key={eraId} value={eraId}>
+                    {era.name} ({era.startYear})
+                  </option>
+                );
+              })}
+            </select>
+          </FormField>
+
+          {/* ── Section III: Consequences ── */}
+          <SectionDivider label="III. Consequences" />
+
+          <FormField label="Consequence of Arrest">
+            <div className="space-y-1.5">
+              {consequences.map((c) => {
+                const info = CONSEQUENCE_INFO[c];
+                const selected = config.consequence === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => update('consequence', c)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 border-2 text-xs transition-all cursor-pointer',
+                      selected
+                        ? 'border-[#8b0000] bg-[#8b0000]/10'
+                        : 'border-transparent hover:border-[#8b4513]/40 bg-[#faf3e6]/50'
+                    )}
+                    style={{ fontFamily: DOCUMENT_FONT, color: '#3b2510' }}
+                  >
+                    <span className="font-bold uppercase tracking-wider">{info.label}</span>
+                    <span className="block text-[10px] mt-0.5" style={{ color: '#6b4a2a' }}>
+                      {info.description}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </FormField>
+
+          {/* ── Summary ── */}
+          <div
+            className="border-2 p-3 text-[11px] space-y-1.5"
+            style={{
+              borderColor: parchment.border.primary,
+              background: '#e8dcc0',
+              color: '#3b2510',
+            }}
+          >
+            <div
+              className="font-bold uppercase tracking-[0.15em] text-xs mb-2"
+              style={{ color: '#2a1508' }}
+            >
+              Assignment Summary
+            </div>
+            <SummaryRow label="Comrade" value={config.playerName} />
+            <SummaryRow label="Settlement" value={config.cityName} />
+            <SummaryRow label="Difficulty" value={DIFFICULTY_INFO[config.difficulty].label} />
+            <SummaryRow label="Sector" value={MAP_SIZE_INFO[config.mapSize].tiles} />
+            <SummaryRow
+              label="Era"
+              value={`${ERA_DEFINITIONS[config.startEra].name} (${ERA_DEFINITIONS[config.startEra].startYear})`}
+            />
+            <SummaryRow label="Seed" value={config.seed} />
+            <SummaryRow label="Consequence" value={CONSEQUENCE_INFO[config.consequence].label} />
           </div>
         </div>
 
-        {/* Step content */}
-        <div className="px-4 py-4 min-h-[320px]">
-          <AnimatePresence mode="wait">
-            {step === 0 && (
-              <StepMotion key="step0">
-                <StepAssignment
-                  playerName={config.playerName}
-                  cityName={config.cityName}
-                  onPlayerName={(v) => update('playerName', v)}
-                  onCityName={(v) => update('cityName', v)}
-                />
-              </StepMotion>
-            )}
-            {step === 1 && (
-              <StepMotion key="step1">
-                <StepParameters
-                  difficulty={config.difficulty}
-                  mapSize={config.mapSize}
-                  seed={config.seed}
-                  startEra={config.startEra}
-                  onDifficulty={(v) => update('difficulty', v)}
-                  onMapSize={(v) => update('mapSize', v)}
-                  onSeed={(v) => update('seed', v)}
-                  onStartEra={(v) => update('startEra', v)}
-                />
-              </StepMotion>
-            )}
-            {step === 2 && (
-              <StepMotion key="step2">
-                <StepConsequences config={config} onConsequence={(v) => update('consequence', v)} />
-              </StepMotion>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Footer navigation */}
+        {/* Footer */}
         <div
           className="flex items-center justify-between px-4 py-3 border-t-2"
           style={{
@@ -268,11 +426,11 @@ export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
         >
           <button
             type="button"
-            onClick={handlePrev}
+            onClick={onBack}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold uppercase tracking-wider border-2 transition-all active:translate-y-0.5 cursor-pointer"
             style={{
               borderColor: parchment.border.primary,
-              color: parchment.text.primary,
+              color: '#3b2510',
               background: parchment.surface.paper,
             }}
           >
@@ -280,33 +438,18 @@ export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
             Back
           </button>
 
-          {canAdvance ? (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold uppercase tracking-wider border-2 text-white transition-all active:translate-y-0.5 cursor-pointer hover:brightness-110"
-              style={{
-                borderColor: accent.red,
-                background: accent.red,
-              }}
-            >
-              Next
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleBegin}
-              className="flex items-center gap-1.5 px-5 py-2 text-base font-bold uppercase tracking-[0.2em] border-2 text-white transition-all active:translate-y-0.5 cursor-pointer hover:brightness-110"
-              style={{
-                fontFamily: SOVIET_FONT,
-                borderColor: accent.red,
-                background: accent.red,
-              }}
-            >
-              BEGIN
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleBegin}
+            className="flex items-center gap-1.5 px-5 py-2 text-base font-bold uppercase tracking-[0.2em] border-2 text-white transition-all active:translate-y-0.5 cursor-pointer hover:brightness-110"
+            style={{
+              fontFamily: SOVIET_FONT,
+              borderColor: accent.red,
+              background: accent.red,
+            }}
+          >
+            BEGIN
+          </button>
         </div>
       </motion.div>
     </motion.div>
@@ -314,283 +457,42 @@ export function NewGameFlow({ onStart, onBack }: NewGameFlowProps) {
 }
 
 // ─────────────────────────────────────────────────────────
-//  STEP ANIMATION WRAPPER
-// ─────────────────────────────────────────────────────────
-
-function StepMotion({ children }: { children: React.ReactNode }) {
-  return (
-    <motion.div
-      initial={{ x: 40, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: -40, opacity: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-//  STEP 1: ASSIGNMENT
-// ─────────────────────────────────────────────────────────
-
-function StepAssignment({
-  playerName,
-  cityName,
-  onPlayerName,
-  onCityName,
-}: {
-  playerName: string;
-  cityName: string;
-  onPlayerName: (v: string) => void;
-  onCityName: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-5">
-      <p className="text-xs leading-relaxed opacity-70 italic">
-        Complete your assignment details. The Central Committee requires accurate personal
-        information. Inaccuracies will be noted in your personnel file.
-      </p>
-
-      <FormField label="Full Name (Comrade)">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={playerName}
-            onChange={(e) => onPlayerName(e.target.value)}
-            className="flex-1 px-2 py-1.5 border-2 text-sm bg-white/50 outline-none focus:border-[#8b0000]"
-            style={{
-              borderColor: parchment.border.primary,
-              fontFamily: DOCUMENT_FONT,
-              color: parchment.text.primary,
-            }}
-            placeholder="Enter your name"
-          />
-          <GenerateButton onClick={() => onPlayerName(randomPlayerName())} label="Generate name" />
-        </div>
-      </FormField>
-
-      <FormField label="Settlement Designation">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={cityName}
-            onChange={(e) => onCityName(e.target.value)}
-            className="flex-1 px-2 py-1.5 border-2 text-sm bg-white/50 outline-none focus:border-[#8b0000]"
-            style={{
-              borderColor: parchment.border.primary,
-              fontFamily: DOCUMENT_FONT,
-              color: parchment.text.primary,
-            }}
-            placeholder="Enter city name"
-          />
-          <GenerateButton onClick={() => onCityName(generateCityName())} label="Generate city" />
-        </div>
-      </FormField>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-//  STEP 2: PARAMETERS
-// ─────────────────────────────────────────────────────────
-
-function StepParameters({
-  difficulty,
-  mapSize,
-  seed,
-  startEra,
-  onDifficulty,
-  onMapSize,
-  onSeed,
-  onStartEra,
-}: {
-  difficulty: DifficultyLevel;
-  mapSize: MapSize;
-  seed: string;
-  startEra: EraId;
-  onDifficulty: (v: DifficultyLevel) => void;
-  onMapSize: (v: MapSize) => void;
-  onSeed: (v: string) => void;
-  onStartEra: (v: EraId) => void;
-}) {
-  const difficulties = useMemo(() => Object.keys(DIFFICULTY_PRESETS) as DifficultyLevel[], []);
-  const mapSizes = useMemo(() => Object.keys(MAP_SIZES) as MapSize[], []);
-
-  return (
-    <div className="space-y-4">
-      {/* Difficulty */}
-      <FormField label="Difficulty Classification">
-        <div className="space-y-1.5">
-          {difficulties.map((d) => {
-            const info = DIFFICULTY_INFO[d];
-            const selected = difficulty === d;
-            return (
-              <button
-                key={d}
-                type="button"
-                onClick={() => onDifficulty(d)}
-                className={cn(
-                  'w-full text-left px-3 py-2 border-2 text-xs transition-all cursor-pointer',
-                  selected
-                    ? 'border-[#8b0000] bg-[#8b0000]/10'
-                    : 'border-transparent hover:border-[#8b4513]/40 bg-white/30'
-                )}
-                style={{ fontFamily: DOCUMENT_FONT }}
-              >
-                <span className="font-bold uppercase tracking-wider">{info.label}</span>
-                <span className="block text-[10px] opacity-70 mt-0.5">{info.description}</span>
-              </button>
-            );
-          })}
-        </div>
-      </FormField>
-
-      {/* Map Size */}
-      <FormField label="Sector Dimensions">
-        <div className="flex gap-2">
-          {mapSizes.map((s) => {
-            const info = MAP_SIZE_INFO[s];
-            const selected = mapSize === s;
-            return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => onMapSize(s)}
-                className={cn(
-                  'flex-1 py-2 border-2 text-xs font-bold uppercase text-center transition-all cursor-pointer',
-                  selected
-                    ? 'border-[#8b0000] bg-[#8b0000]/10'
-                    : 'border-[#8b4513]/30 hover:border-[#8b4513]/60 bg-white/30'
-                )}
-              >
-                {info.label}
-                <span className="block text-[9px] font-normal opacity-60">{info.tiles}</span>
-              </button>
-            );
-          })}
-        </div>
-      </FormField>
-
-      {/* Seed */}
-      <FormField label="Cartographic Seed">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={seed}
-            onChange={(e) => onSeed(e.target.value)}
-            className="flex-1 px-2 py-1.5 border-2 text-xs bg-white/50 outline-none focus:border-[#8b0000]"
-            style={{
-              borderColor: parchment.border.primary,
-              fontFamily: DOCUMENT_FONT,
-              color: parchment.text.primary,
-            }}
-          />
-          <GenerateButton onClick={() => onSeed(randomSeed())} label="Random seed" />
-        </div>
-      </FormField>
-
-      {/* Starting Era */}
-      <FormField label="Starting Era">
-        <select
-          value={startEra}
-          onChange={(e) => onStartEra(e.target.value as EraId)}
-          className="w-full px-2 py-1.5 border-2 text-xs bg-white/50 outline-none focus:border-[#8b0000] cursor-pointer"
-          style={{
-            borderColor: parchment.border.primary,
-            fontFamily: DOCUMENT_FONT,
-            color: parchment.text.primary,
-          }}
-        >
-          {ERA_ORDER.map((eraId) => {
-            const era = ERA_DEFINITIONS[eraId];
-            return (
-              <option key={eraId} value={eraId}>
-                {era.name} ({era.startYear})
-              </option>
-            );
-          })}
-        </select>
-      </FormField>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-//  STEP 3: CONSEQUENCES
-// ─────────────────────────────────────────────────────────
-
-function StepConsequences({
-  config,
-  onConsequence,
-}: {
-  config: NewGameConfig;
-  onConsequence: (v: ConsequenceLevel) => void;
-}) {
-  const consequences = useMemo(() => Object.keys(CONSEQUENCE_INFO) as ConsequenceLevel[], []);
-  const era = ERA_DEFINITIONS[config.startEra];
-  const diffInfo = DIFFICULTY_INFO[config.difficulty];
-
-  return (
-    <div className="space-y-4">
-      {/* Consequence selector */}
-      <FormField label="Consequence of Arrest">
-        <div className="space-y-1.5">
-          {consequences.map((c) => {
-            const info = CONSEQUENCE_INFO[c];
-            const selected = config.consequence === c;
-            return (
-              <button
-                key={c}
-                type="button"
-                onClick={() => onConsequence(c)}
-                className={cn(
-                  'w-full text-left px-3 py-2 border-2 text-xs transition-all cursor-pointer',
-                  selected
-                    ? 'border-[#8b0000] bg-[#8b0000]/10'
-                    : 'border-transparent hover:border-[#8b4513]/40 bg-white/30'
-                )}
-                style={{ fontFamily: DOCUMENT_FONT }}
-              >
-                <span className="font-bold uppercase tracking-wider">{info.label}</span>
-                <span className="block text-[10px] opacity-70 mt-0.5">{info.description}</span>
-              </button>
-            );
-          })}
-        </div>
-      </FormField>
-
-      {/* Summary */}
-      <div
-        className="border-2 p-3 text-[10px] space-y-1.5"
-        style={{
-          borderColor: parchment.border.primary,
-          background: parchment.surface.alt,
-        }}
-      >
-        <div className="font-bold uppercase tracking-[0.15em] text-xs mb-2">Assignment Summary</div>
-        <SummaryRow label="Comrade" value={config.playerName} />
-        <SummaryRow label="Settlement" value={config.cityName} />
-        <SummaryRow label="Difficulty" value={diffInfo.label} />
-        <SummaryRow label="Sector" value={MAP_SIZE_INFO[config.mapSize].tiles} />
-        <SummaryRow label="Era" value={`${era.name} (${era.startYear})`} />
-        <SummaryRow label="Seed" value={config.seed} />
-        <SummaryRow label="Consequence" value={CONSEQUENCE_INFO[config.consequence].label} />
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
 //  SHARED SUB-COMPONENTS
 // ─────────────────────────────────────────────────────────
 
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 pt-1" style={{ borderColor: parchment.border.primary }}>
+      <div className="h-px flex-1" style={{ background: parchment.border.primary }} />
+      <span
+        className="text-xs font-bold uppercase tracking-[0.15em]"
+        style={{ fontFamily: SOVIET_FONT, color: accent.red }}
+      >
+        {label}
+      </span>
+      <div className="h-px flex-1" style={{ background: parchment.border.primary }} />
+    </div>
+  );
+}
+
+function FormField({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <div className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 opacity-70">
+      <label
+        htmlFor={htmlFor}
+        className="block text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5"
+        style={{ color: '#5a3d20' }}
+      >
         {label}
-      </div>
+      </label>
       {children}
     </div>
   );
@@ -605,7 +507,7 @@ function GenerateButton({ onClick, label }: { onClick: () => void; label: string
       style={{ borderColor: parchment.border.primary }}
       aria-label={label}
     >
-      <Shuffle className="w-3.5 h-3.5" style={{ color: parchment.text.primary }} />
+      <Shuffle className="w-3.5 h-3.5" style={{ color: '#3b2510' }} />
     </button>
   );
 }
@@ -613,8 +515,10 @@ function GenerateButton({ onClick, label }: { onClick: () => void; label: string
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between">
-      <span className="opacity-60">{label}:</span>
-      <span className="font-bold text-right">{value}</span>
+      <span style={{ color: '#6b4a2a' }}>{label}:</span>
+      <span className="font-bold text-right" style={{ color: '#2a1508' }}>
+        {value}
+      </span>
     </div>
   );
 }
