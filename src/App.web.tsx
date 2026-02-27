@@ -75,6 +75,9 @@ import { NewGameSetup, type NewGameConfig } from './ui/NewGameSetup';
 import { PersonnelFilePanel } from './ui/PersonnelFilePanel';
 import { AchievementsPanel } from './ui/AchievementsPanel';
 import { SettingsModal } from './ui/SettingsModal';
+import { LeadershipPanel } from './ui/LeadershipPanel';
+import { EconomyPanel } from './ui/EconomyPanel';
+import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
 import { Colors } from './ui/styles';
 
 type AppScreen = 'menu' | 'setup' | 'game';
@@ -102,6 +105,9 @@ const App: React.FC = () => {
   const [showPersonnelFile, setShowPersonnelFile] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showLeadership, setShowLeadership] = useState(false);
+  const [showEconomy, setShowEconomy] = useState(false);
+  const [showWorkers, setShowWorkers] = useState(false);
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -327,6 +333,18 @@ const App: React.FC = () => {
     setShowAchievements(true);
   }, []);
 
+  const handleShowLeadership = useCallback(() => {
+    setShowLeadership(true);
+  }, []);
+
+  const handleShowEconomy = useCallback(() => {
+    setShowEconomy(true);
+  }, []);
+
+  const handleShowWorkers = useCallback(() => {
+    setShowWorkers(true);
+  }, []);
+
   // --- Modal callbacks ---
   const handleDismissEra = useCallback(() => setEraTransition(null), []);
   const handleMinigameChoice = useCallback((choiceId: string) => {
@@ -420,6 +438,9 @@ const App: React.FC = () => {
               settlementTier={snap.settlementTier}
               onThreatPress={handleThreatPress}
               onShowAchievements={handleShowAchievements}
+              onShowLeadership={handleShowLeadership}
+              onShowEconomy={handleShowEconomy}
+              onShowWorkers={handleShowWorkers}
             />
 
             <Toast
@@ -505,6 +526,21 @@ const App: React.FC = () => {
         <AchievementsPanel
           visible={showAchievements}
           onDismiss={() => setShowAchievements(false)}
+        />
+
+        <LeadershipPanel
+          visible={showLeadership}
+          onDismiss={() => setShowLeadership(false)}
+        />
+
+        <EconomyPanel
+          visible={showEconomy}
+          onDismiss={() => setShowEconomy(false)}
+        />
+
+        <WorkerRosterPanel
+          visible={showWorkers}
+          onDismiss={() => setShowWorkers(false)}
         />
 
         <SettingsModal

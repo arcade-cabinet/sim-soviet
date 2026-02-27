@@ -29,6 +29,9 @@ export interface TopBarProps {
   settlementTier?: string;
   onThreatPress?: () => void;
   onShowAchievements?: () => void;
+  onShowLeadership?: () => void;
+  onShowEconomy?: () => void;
+  onShowWorkers?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -53,6 +56,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   settlementTier = 'selo',
   onThreatPress,
   onShowAchievements,
+  onShowLeadership,
+  onShowEconomy,
+  onShowWorkers,
 }) => {
   return (
     <View style={[SharedStyles.panel, styles.container]}>
@@ -77,6 +83,21 @@ export const TopBar: React.FC<TopBarProps> = ({
         {onShowAchievements && (
           <TouchableOpacity onPress={onShowAchievements} style={styles.achBtn} activeOpacity={0.7}>
             <Text style={styles.achBtnText}>{'\u2605'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowLeadership && (
+          <TouchableOpacity onPress={onShowLeadership} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u262D'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowEconomy && (
+          <TouchableOpacity onPress={onShowEconomy} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u20BD'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowWorkers && (
+          <TouchableOpacity onPress={onShowWorkers} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u2692'}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -340,5 +361,13 @@ const styles = StyleSheet.create({
   achBtnText: {
     fontSize: 16,
     color: Colors.sovietGold,
+  },
+  navBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  navBtnText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
   },
 });
