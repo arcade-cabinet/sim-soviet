@@ -19,17 +19,31 @@ import { GRID_SIZE } from '@/config';
  * match the GLB model names directly, so `type` is the defId.
  */
 export function getBuildingStates(): BuildingState[] {
+  // Build a quick elevation lookup from terrain features
+  const elevationMap = new Map<string, number>();
+  for (const entity of terrainFeatures.entities) {
+    const { gridX, gridY } = entity.position;
+    elevationMap.set(`${gridX}_${gridY}`, entity.terrainFeature.elevation);
+  }
+  for (const entity of tiles.entities) {
+    const { gridX, gridY } = entity.position;
+    if (entity.tile.elevation > 0) {
+      elevationMap.set(`${gridX}_${gridY}`, entity.tile.elevation);
+    }
+  }
+
   return buildings.entities.map((entity) => {
-    const { position, building, renderable } = entity;
+    const { position, building } = entity;
+    const key = `${position.gridX}_${position.gridY}`;
     return {
-      id: `${position.gridX}_${position.gridY}`,
+      id: key,
       type: building.defId,
       level: 0, // ECS uses defId variants instead of levels
       gridX: position.gridX,
       gridY: position.gridY,
-      elevation: 0, // TODO: read from tile entity elevation
+      elevation: elevationMap.get(key) ?? 0,
       powered: building.powered,
-      onFire: false, // TODO: wire to ECS fire state
+      onFire: false, // ECS doesn't track fire state yet
     };
   });
 }

@@ -47,6 +47,11 @@ import {
   getRandomTickerMsg,
 } from './engine/helpers';
 import type { TabType, LensType } from './engine/GameState';
+import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
+import type { EraDefinition } from './game/era';
+import type { ActiveMinigame } from './game/minigames/MinigameTypes';
+import type { SettlementEvent } from './game/SettlementSystem';
+import type { TallyData } from './game/GameTally';
 
 // UI components
 import { TopBar } from './ui/TopBar';
@@ -62,6 +67,7 @@ import { LensSelector } from './ui/LensSelector';
 import { IntroModal } from './ui/IntroModal';
 import { MainMenu } from './ui/MainMenu';
 import { LoadingScreen } from './ui/LoadingScreen';
+import { GameModals, type PlanDirective, type GameOverInfo } from './ui/GameModals';
 import { Colors } from './ui/styles';
 
 type AppScreen = 'menu' | 'game';
@@ -83,6 +89,17 @@ const App: React.FC = () => {
   const [tickerText, setTickerText] = useState(
     'CITIZENS REMINDED THAT COMPLAINING IS A CRIME  ///  WEATHER FORECAST: PERPETUAL GRAY  ///  '
   );
+
+  // ── Modal state ──
+  const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
+  const [activeMinigame, setActiveMinigame] = useState<ActiveMinigame | null>(null);
+  const resolveMinigameRef = useRef<((choiceId: string) => void) | null>(null);
+  const [annualReport, setAnnualReport] = useState<AnnualReportData | null>(null);
+  const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
+  const [settlementEvent, setSettlementEvent] = useState<SettlementEvent | null>(null);
+  const [planDirective, setPlanDirective] = useState<PlanDirective | null>(null);
+  const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
+  const [gameTally, setGameTally] = useState<TallyData | null>(null);
 
   // Start ECS game loop (replaces old flat-state game loop)
   useECSGameLoop();
@@ -120,10 +137,7 @@ const App: React.FC = () => {
           gameState.timeOfDay = dayProgress;
         },
         onGameOver: (victory, reason) => {
-          const { showAdvisor } = require('./engine/helpers');
-          showAdvisor(gameState, victory
-            ? `VICTORY: ${reason}`
-            : `GAME OVER: ${reason}`);
+          setGameOver({ victory, reason });
         },
         onAchievement: (name, description) => {
           const { showToast } = require('./engine/helpers');
@@ -137,59 +151,34 @@ const App: React.FC = () => {
           showToast(gameState, `BUILDING COLLAPSED: ${type} at (${gridX},${gridY})`);
         },
         onSettlementChange: (event) => {
-          const { showAdvisor } = require('./engine/helpers');
-          showAdvisor(
-            gameState,
-            `Settlement ${event.type}: ${event.fromTier} → ${event.toTier}. ${event.description}`,
-          );
+          setSettlementEvent(event);
         },
         onNewPlan: (plan) => {
-          const { showAdvisor } = require('./engine/helpers');
-          showAdvisor(
-            gameState,
-            `NEW 5-YEAR PLAN: Produce ${plan.quotaTarget} ${plan.quotaType} by ${plan.endYear}`,
-          );
-        },
-        onEraChanged: (era) => {
-          const { showAdvisor, showToast } = require('./engine/helpers');
-          showToast(gameState, `ERA: ${era.name}`);
-          showAdvisor(gameState, `Welcome to the ${era.name} era (${era.startYear}-${era.endYear}).`);
-        },
-        onAnnualReport: (data, submitReport) => {
-          // Auto-submit the report for now (until AnnualReport modal is built)
-          const met = data.quotaCurrent >= data.quotaTarget;
-          const { showAdvisor } = require('./engine/helpers');
-          showAdvisor(
-            gameState,
-            `ANNUAL REPORT ${data.year}: Quota ${met ? 'MET' : 'MISSED'} (${data.quotaCurrent}/${data.quotaTarget} ${data.quotaType})`,
-          );
-          // Auto-submit truthfully
-          submitReport({
-            reportedQuota: data.quotaCurrent,
-            reportedSecondary: data.actualFood,
-            reportedPop: data.actualPop,
+          setPlanDirective({
+            quotaType: plan.quotaType,
+            quotaTarget: plan.quotaTarget,
+            startYear: plan.startYear,
+            endYear: plan.endYear,
+            mandates: plan.mandates,
           });
         },
+        onEraChanged: (era) => {
+          setEraTransition(era);
+        },
+        onAnnualReport: (data, submitReport) => {
+          setAnnualReport(data);
+          submitReportRef.current = submitReport;
+        },
         onMinigame: (active, resolveChoice) => {
-          // Auto-resolve minigames for now (until minigame modal is built)
-          const def = active.definition;
-          const { showToast } = require('./engine/helpers');
-          showToast(gameState, `MINIGAME: ${def.name}`);
-          if (def.choices.length > 0) {
-            resolveChoice(def.choices[0].id);
-          }
+          setActiveMinigame(active);
+          resolveMinigameRef.current = resolveChoice;
         },
         onTutorialMilestone: (milestone) => {
           const { showAdvisor } = require('./engine/helpers');
           showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
         },
         onGameTally: (tally) => {
-          const { showAdvisor } = require('./engine/helpers');
-          const medalNames = tally.medals.map((m) => m.name).join(', ');
-          showAdvisor(
-            gameState,
-            `FINAL TALLY — Score: ${tally.finalScore}, Medals: ${medalNames || 'none'}`,
-          );
+          setGameTally(tally);
         },
       });
 
@@ -261,6 +250,29 @@ const App: React.FC = () => {
   const handleDismissIntro = useCallback(() => {
     setShowIntro(false);
     AudioManager.getInstance().startPlaylist();
+  }, []);
+
+  // --- Modal callbacks ---
+  const handleDismissEra = useCallback(() => setEraTransition(null), []);
+  const handleMinigameChoice = useCallback((choiceId: string) => {
+    resolveMinigameRef.current?.(choiceId);
+    resolveMinigameRef.current = null;
+  }, []);
+  const handleDismissMinigame = useCallback(() => {
+    setActiveMinigame(null);
+    resolveMinigameRef.current = null;
+  }, []);
+  const handleSubmitReport = useCallback((submission: ReportSubmission) => {
+    submitReportRef.current?.(submission);
+    submitReportRef.current = null;
+    setAnnualReport(null);
+  }, []);
+  const handleDismissSettlement = useCallback(() => setSettlementEvent(null), []);
+  const handleAcceptPlan = useCallback(() => setPlanDirective(null), []);
+  const handleRestart = useCallback(() => {
+    // For now, just dismiss — full restart requires page reload
+    setGameOver(null);
+    setGameTally(null);
   }, []);
 
   // Read toast/advisor from side-channel
@@ -384,6 +396,24 @@ const App: React.FC = () => {
             onFadeComplete={handleLoadingFadeComplete}
           />
         )}
+
+        {/* Game modals — era transitions, minigames, reports, etc. */}
+        <GameModals
+          eraTransition={eraTransition}
+          onDismissEra={handleDismissEra}
+          activeMinigame={activeMinigame}
+          onMinigameChoice={handleMinigameChoice}
+          onDismissMinigame={handleDismissMinigame}
+          annualReport={annualReport}
+          onSubmitReport={handleSubmitReport}
+          settlementEvent={settlementEvent}
+          onDismissSettlement={handleDismissSettlement}
+          planDirective={planDirective}
+          onAcceptPlan={handleAcceptPlan}
+          gameOver={gameOver}
+          gameTally={gameTally}
+          onRestart={handleRestart}
+        />
 
         {/* Intro modal — shown after loading, on top of everything */}
         <IntroModal

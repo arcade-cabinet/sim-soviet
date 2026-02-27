@@ -18,14 +18,20 @@ import { GRID_SIZE } from '@/config';
 /**
  * Map from old Toolbar tool keys → ECS building defIds.
  *
- * Only includes keys that produce placeable ECS buildings.
- * Zone, road, pipe, and utility tools are excluded (handled separately).
+ * Zone tools directly place the cheapest building of their category
+ * (the 2D game auto-grew buildings on zones; in 3D we place immediately).
  */
 const TOOL_TO_DEF_ID: Record<string, string> = {
+  // Zone tools → place basic building of that category
+  'zone-res': 'workers-house-a',       // Cheapest housing (80₽)
+  'zone-ind': 'factory-office',        // Basic industry (180₽)
+  'zone-farm': 'collective-farm-hq',   // Agriculture (150₽)
+
   // Infrastructure
   power: 'power-station',
   nuke: 'power-station',         // No reactor model yet — use power station
   station: 'train-station',
+  pump: 'warehouse',             // Water pump → warehouse (closest utility)
 
   // State buildings
   tower: 'radio-station',        // Propaganda tower → radio station
@@ -50,9 +56,7 @@ export function placeECSBuilding(
     toolKey === 'none' ||
     toolKey === 'bulldoze' ||
     toolKey === 'pipe' ||
-    toolKey === 'road' ||
-    toolKey === 'pump' ||
-    toolKey.startsWith('zone-')
+    toolKey === 'road'
   ) {
     return false;
   }
