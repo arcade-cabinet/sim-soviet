@@ -30,6 +30,7 @@ import type { Role } from '../data/buildingDefs.schema';
 import { showToast } from '../engine/helpers';
 import {
   openInspectMenu,
+  setCursorTooltip,
   type InspectBuildingType,
   type InspectMenuOccupant,
 } from '../stores/gameStore';
@@ -228,18 +229,12 @@ const GhostPreview: React.FC = () => {
       const m = meshesRef.current!;
       const tool = gameState.selectedTool;
 
-      // Hide if no tool selected, bulldoze, or unsupported tool
-      if (tool === 'none' || tool === 'bulldoze' || tool === 'road' || tool === 'pipe') {
-        m.box.isVisible = false;
-        m.zoneOverlay.isVisible = false;
-        return;
-      }
-
-      // Pick the ground position from pointer
+      // Pick the ground position from pointer (used by both ghost + tooltip)
       const pickResult = scene.pick(scene.pointerX, scene.pointerY);
       if (!pickResult?.hit || !pickResult.pickedPoint) {
         m.box.isVisible = false;
         m.zoneOverlay.isVisible = false;
+        setCursorTooltip(null);
         return;
       }
 
@@ -248,6 +243,34 @@ const GhostPreview: React.FC = () => {
       const gridZ = Math.floor(worldPos.z);
 
       if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) {
+        m.box.isVisible = false;
+        m.zoneOverlay.isVisible = false;
+        setCursorTooltip(null);
+        return;
+      }
+
+      // ── Publish hovered tile data for CursorTooltip ──
+      const tooltipCell = gameState.grid[gridZ]?.[gridX];
+      if (tooltipCell) {
+        const canvas = scene.getEngine().getRenderingCanvas();
+        const rect = canvas?.getBoundingClientRect();
+        setCursorTooltip({
+          terrain: tooltipCell.terrain,
+          type: tooltipCell.type || undefined,
+          smog: tooltipCell.smog ?? 0,
+          watered: tooltipCell.watered ?? false,
+          onFire: !!(tooltipCell.onFire),
+          zone: tooltipCell.zone || undefined,
+          z: tooltipCell.z ?? 0,
+          screenX: (rect?.left ?? 0) + scene.pointerX,
+          screenY: (rect?.top ?? 0) + scene.pointerY,
+        });
+      } else {
+        setCursorTooltip(null);
+      }
+
+      // Hide ghost if no tool selected, bulldoze, or unsupported tool
+      if (tool === 'none' || tool === 'bulldoze' || tool === 'road' || tool === 'pipe') {
         m.box.isVisible = false;
         m.zoneOverlay.isVisible = false;
         return;
@@ -421,6 +444,7 @@ const GhostPreview: React.FC = () => {
       scene.onPointerObservable.remove(longPressUpObs);
       canvas?.removeEventListener('contextmenu', preventContextMenu);
       if (longPressTimer) clearTimeout(longPressTimer);
+      setCursorTooltip(null);
       const m = meshesRef.current!;
       m.box.dispose();
       m.zoneOverlay.dispose();

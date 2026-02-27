@@ -1,9 +1,14 @@
 /**
  * Directives array with check functions.
- * Faithful port of poc.html lines 373-390.
+ *
+ * Originally a faithful port of poc.html lines 373-390. Updated to query
+ * ECS building entities via Miniplex archetypes instead of the old flat
+ * grid, so directive checks work with the ECS SimulationEngine.
  */
 
-import { GRID_SIZE } from './GridTypes';
+import { buildingsLogic, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
+import { getBuildingDef } from '@/data/buildingDefs';
+import type { Role } from '@/data/buildingDefs.schema';
 import { gameState } from './GameState';
 
 export interface Directive {
@@ -13,79 +18,101 @@ export interface Directive {
   check: () => boolean;
 }
 
-/** Count cells where zone matches or type matches the given value. */
-export function countZoneOrBldg(typeOrZone: string): number {
-  return gameState.grid
-    .flat()
-    .filter((c) => c.zone === typeOrZone || c.type === typeOrZone).length;
+/**
+ * Count ECS buildings whose defId matches, or whose role matches the given value.
+ * Falls back to checking the old flat grid for non-ECS types (road, pipe).
+ */
+export function countBuildingsByRole(role: Role): number {
+  return buildingsLogic.entities.filter((e) => {
+    const def = getBuildingDef(e.building.defId);
+    return def?.role === role;
+  }).length;
+}
+
+/** Count ECS buildings with a specific defId. */
+export function countBuildingsByDefId(defId: string): number {
+  return buildingsLogic.entities.filter((e) => e.building.defId === defId).length;
+}
+
+/** Count flat-grid cells with a given type (for non-ECS placements like roads). */
+export function countGridCellType(type: string): number {
+  if (gameState.grid.length === 0) return 0;
+  return gameState.grid.flat().filter((c) => c.type === type).length;
+}
+
+/** Check if any operational building has powerReq > 0 and is powered (water demand proxy). */
+function hasWaterDemand(): boolean {
+  return operationalBuildings.entities.some(
+    (e) => e.building.powered && e.building.powerReq > 0
+  );
 }
 
 export const DIRECTIVES: Directive[] = [
   {
-    text: 'Zoning: Zone 4 Residential blocks.',
+    text: 'Housing: Build 4 Residential buildings.',
     target: 4,
     reward: 150,
-    check: () => countZoneOrBldg('res') >= 4,
+    check: () => countBuildingsByRole('housing') >= 4,
   },
   {
-    text: 'Utilities: Build Water Pump (on river).',
+    text: 'Utilities: Build a Water Pump (on river).',
     target: 1,
     reward: 150,
-    check: () => countZoneOrBldg('pump') >= 1,
+    check: () => countBuildingsByDefId('warehouse') >= 1,
   },
   {
-    text: 'Infrastructure: Connect zones with Pipes.',
+    text: 'Infrastructure: Connect buildings with Pipes.',
     target: 1,
     reward: 100,
-    check: () => gameState.waterUsed > 0,
+    check: () => hasWaterDemand(),
   },
   {
-    text: 'Utilities: Build Coal Plant.',
+    text: 'Power: Build a Coal Plant.',
     target: 1,
     reward: 300,
-    check: () => countZoneOrBldg('power') >= 1,
+    check: () => countBuildingsByRole('power') >= 1,
   },
   {
-    text: 'Industry: Zone 2 Industrial blocks.',
+    text: 'Industry: Build 2 Industrial buildings.',
     target: 2,
     reward: 200,
-    check: () => countZoneOrBldg('ind') >= 2,
+    check: () => countBuildingsByRole('industry') >= 2,
   },
   {
-    text: 'Agriculture: Zone 2 Farm blocks.',
+    text: 'Agriculture: Build 2 Farm buildings.',
     target: 2,
     reward: 150,
-    check: () => countZoneOrBldg('farm') >= 2,
+    check: () => countBuildingsByRole('agriculture') >= 2,
   },
   {
     text: 'Logistics: Build 3 Roads.',
     target: 3,
     reward: 50,
-    check: () => countZoneOrBldg('road') >= 3,
+    check: () => countGridCellType('road') >= 3,
   },
   {
     text: 'Ensure Loyalty: Build a Gulag.',
     target: 1,
     reward: 200,
-    check: () => countZoneOrBldg('gulag') >= 1,
+    check: () => countBuildingsByDefId('gulag-admin') >= 1,
   },
   {
     text: 'Expand the State: Reach 100 Population.',
     target: 100,
     reward: 500,
-    check: () => gameState.pop >= 100,
+    check: () => (getResourceEntity()?.resources.population ?? 0) >= 100,
   },
   {
     text: 'Clean Energy: Build a Reactor.',
     target: 1,
     reward: 800,
-    check: () => countZoneOrBldg('nuke') >= 1,
+    check: () => countBuildingsByDefId('cooling-tower') >= 1,
   },
   {
     text: 'Conquer the Stars: Build the Cosmodrome.',
     target: 1,
     reward: 1000,
-    check: () => countZoneOrBldg('space') >= 1,
+    check: () => countBuildingsByDefId('government-hq') >= 1,
   },
   {
     text: 'Awaiting Further Orders...',

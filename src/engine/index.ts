@@ -51,7 +51,9 @@ export { updateWaterNetwork } from './WaterNetwork';
 // Directives
 export {
   DIRECTIVES,
-  countZoneOrBldg,
+  countBuildingsByRole,
+  countBuildingsByDefId,
+  countGridCellType,
   type Directive,
 } from './Directives';
 

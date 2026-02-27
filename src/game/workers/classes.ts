@@ -3,6 +3,14 @@
  * production efficiency, and class-specific bonus logic.
  */
 
+import {
+  FEMALE_GIVEN_NAMES,
+  getSurname,
+  MALE_GIVEN_NAMES,
+  PATRONYMIC_FATHER_NAMES,
+  PATRONYMIC_RULES,
+  SURNAMES_RAW,
+} from '@/ai/names';
 import type { CitizenComponent } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';
 import {
@@ -11,14 +19,10 @@ import {
   DEFECTION_LOYALTY_THRESHOLD,
   FACTORY_PREFIXES,
   FARM_PREFIXES,
-  FIRST_NAMES_FEMALE,
-  FIRST_NAMES_MALE,
   FOOD_PER_WORKER,
   HOUSING_MORALE_BOOST,
   HUNGER_MORALE_PENALTY,
   PARTY_MORALE_BOOST,
-  PATRONYMICS_FEMALE,
-  PATRONYMICS_MALE,
   PRISONER_ESCAPE_CHANCE,
   SKILL_GROWTH_RATE,
   STAKHANOVITE_CHANCE,
@@ -74,13 +78,21 @@ export function resolveStatus(
   return 'idle';
 }
 
-/** Generate a Soviet-appropriate name using seeded RNG. */
-export function generateWorkerName(rng: GameRng): string {
-  const isMale = rng.coinFlip();
-  if (isMale) {
-    return `${rng.pick(FIRST_NAMES_MALE)} ${rng.pick(PATRONYMICS_MALE)}`;
-  }
-  return `${rng.pick(FIRST_NAMES_FEMALE)} ${rng.pick(PATRONYMICS_FEMALE)}`;
+/**
+ * Generate a full Russian-style worker name: "Given Patronymic Surname".
+ *
+ * Uses the rich name database from @/ai/names (80+ male given names,
+ * 40+ female, 70+ patronymic fathers, 130+ gendered surnames) for
+ * ~400k+ unique male and ~160k+ unique female combinations.
+ */
+export function generateWorkerName(rng: GameRng): { name: string; gender: 'male' | 'female' } {
+  const gender: 'male' | 'female' = rng.coinFlip() ? 'male' : 'female';
+  const givenName = gender === 'male' ? rng.pick(MALE_GIVEN_NAMES) : rng.pick(FEMALE_GIVEN_NAMES);
+  const fatherName = rng.pick(PATRONYMIC_FATHER_NAMES);
+  const patronymic = PATRONYMIC_RULES.generate(fatherName, gender);
+  const surnameIndex = rng.int(0, SURNAMES_RAW.length - 1);
+  const surname = getSurname(surnameIndex, gender);
+  return { name: `${givenName} ${patronymic} ${surname}`, gender };
 }
 
 // ─────────────────────────────────────────────────────────

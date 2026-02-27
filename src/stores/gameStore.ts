@@ -689,6 +689,45 @@ function subscribeCitizenDossierIndex(listener: () => void): () => void {
   };
 }
 
+// ── Cursor Tooltip ────────────────────────────────────────────────────────
+
+export interface CursorTooltipState {
+  terrain: string;
+  type?: string;
+  smog: number;
+  watered: boolean;
+  onFire: boolean;
+  zone?: string;
+  z: number;
+  screenX: number;
+  screenY: number;
+}
+
+let _cursorTooltip: CursorTooltipState | null = null;
+const _cursorTooltipListeners = new Set<() => void>();
+
+export function getCursorTooltip(): CursorTooltipState | null {
+  return _cursorTooltip;
+}
+
+export function setCursorTooltip(state: CursorTooltipState | null): void {
+  _cursorTooltip = state;
+  for (const listener of _cursorTooltipListeners) {
+    listener();
+  }
+}
+
+export function useCursorTooltip(): CursorTooltipState | null {
+  return useSyncExternalStore(subscribeCursorTooltip, getCursorTooltip, getCursorTooltip);
+}
+
+function subscribeCursorTooltip(listener: () => void): () => void {
+  _cursorTooltipListeners.add(listener);
+  return () => {
+    _cursorTooltipListeners.delete(listener);
+  };
+}
+
 // ── Placement Callback (bridges React → imperative CanvasGestureManager) ─
 
 type PlacementCallback = (gridX: number, gridY: number, defId: string) => boolean;

@@ -196,8 +196,8 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
   const statsMap = workerSystem?.getStatsMap();
   const workerStats = statsMap?.get(entity) ?? null;
 
-  // Basic identity
-  const name = workerInfo?.name ?? 'Unknown Comrade';
+  // Basic identity — prefer WorkerSystem name, fall back to ECS citizen name
+  const name = workerInfo?.name ?? citizen.name ?? 'Unknown Comrade';
   const cls = citizen.class;
   const classLabel = CLASS_LABELS[cls] ?? cls;
   const classIcon = CLASS_ICONS[cls] ?? '\u2638';

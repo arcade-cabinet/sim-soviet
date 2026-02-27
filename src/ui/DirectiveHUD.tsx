@@ -17,10 +17,12 @@ export const DirectiveHUD: React.FC<DirectiveHUDProps> = ({ text, reward }) => {
     <View style={[SharedStyles.panel, styles.container]}>
       <Text style={styles.heading}>ACTIVE DIRECTIVE</Text>
       <Text style={styles.directiveText}>{text}</Text>
-      <View style={styles.rewardBox}>
-        <Text style={styles.rewardLabel}>REWARD:</Text>
-        <Text style={styles.rewardValue}>{reward}</Text>
-      </View>
+      {reward !== '' && reward !== '+0\u20BD' && (
+        <View style={styles.rewardBox}>
+          <Text style={styles.rewardLabel}>REWARD:</Text>
+          <Text style={styles.rewardValue}>{reward}</Text>
+        </View>
+      )}
     </View>
   );
 };

@@ -4,10 +4,15 @@
  * IMPORTANT: simTick operates on whatever GameState you pass, but the
  * Directives module uses the `gameState` singleton internally for its
  * check functions. So for directive tests we must use the singleton.
+ *
+ * Directive checks now query ECS building entities (via Miniplex),
+ * so directive tests must add entities to the ECS world.
  */
 import { GameState, gameState } from '../../src/engine/GameState';
 import { simTick } from '../../src/engine/SimTick';
 import { GRID_SIZE, TICKS_PER_MONTH } from '../../src/engine/GridTypes';
+import { world } from '../../src/ecs/world';
+import { createBuilding } from '../../src/ecs/factories/buildingFactories';
 
 /** Reset the singleton to a fresh state for each test. */
 function resetSingleton(): GameState {
@@ -38,6 +43,12 @@ function resetSingleton(): GameState {
   gameState.quota = { type: 'food', target: 500, current: 0, deadlineYear: 1922 };
   gameState.simAccumulator = 0;
   gameState.initGrid();
+
+  // Clear ECS world (directive checks now query Miniplex entities)
+  for (const entity of [...world.entities]) {
+    world.remove(entity);
+  }
+
   return gameState;
 }
 
@@ -227,24 +238,16 @@ describe('simTick', () => {
   });
 
   describe('directives', () => {
-    it('completes directive 0 (zone 4 residential) when condition met', () => {
+    it('completes directive 0 (build 4 housing) when condition met', () => {
       const s = gameState;
       s.directiveIndex = 0;
-      // Place 4 residential zones on the singleton's grid
-      let placed = 0;
-      for (let y = 0; y < GRID_SIZE && placed < 4; y++) {
-        for (let x = 0; x < GRID_SIZE && placed < 4; x++) {
-          const cell = s.grid[y][x];
-          if (cell.terrain === 'grass' && !cell.isRail && !cell.type) {
-            cell.zone = 'res';
-            placed++;
-          }
-        }
+      // Place 4 housing buildings via ECS (directive checks query Miniplex entities)
+      for (let i = 0; i < 4; i++) {
+        createBuilding(i, 0, 'workers-house-a');
       }
-      expect(placed).toBe(4);
       const moneyBefore = s.money;
       simTick(s);
-      // Directive check uses the singleton — should detect 4 res zones
+      // Directive check uses ECS entities — should detect 4 housing buildings
       expect(s.directiveIndex).toBe(1);
       expect(s.money).toBeGreaterThan(moneyBefore);
     });

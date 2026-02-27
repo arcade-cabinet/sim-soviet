@@ -66,6 +66,7 @@ import {
   type AnnualReportEngineState,
   checkQuota as checkQuotaHelper,
 } from './engine/annualReportTick';
+import { tickDirectives as tickDirectivesHelper } from './engine/directiveTick';
 import {
   checkBuildingTapMinigame as checkBuildingTapMinigameHelper,
   checkEventMinigame as checkEventMinigameHelper,
@@ -712,6 +713,9 @@ export class SimulationEngine {
 
     // Tutorial System — check milestones for progressive disclosure (Era 1)
     tickTutorialHelper(this.getAchievementContext());
+
+    // Directives — sequential objectives tracked by DirectiveHUD
+    tickDirectivesHelper({ callbacks: this.callbacks });
 
     // Achievement Tracker — update stats and check unlock conditions
     tickAchievementsHelper(this.getAchievementContext());

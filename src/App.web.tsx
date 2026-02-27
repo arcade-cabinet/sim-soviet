@@ -47,6 +47,7 @@ import {
   closeBuildingInspector,
   useCitizenDossierIndex,
   closeCitizenDossierByIndex,
+  useCursorTooltip,
 } from './stores/gameStore';
 import { getTotalModelCount } from './scene/ModelCache';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
@@ -112,6 +113,8 @@ import { EconomyDetailPanel } from './ui/EconomyDetailPanel';
 import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { BuildingInspectorPanel } from './ui/BuildingInspectorPanel';
 import { CitizenDossierModal } from './ui/CitizenDossierModal';
+import { ConsumerGoodsMarketPanel } from './ui/ConsumerGoodsMarketPanel';
+import { CursorTooltip } from './ui/CursorTooltip';
 import { Colors } from './ui/styles';
 
 /**
@@ -193,6 +196,7 @@ const App: React.FC = () => {
   const [showWorkerAnalytics, setShowWorkerAnalytics] = useState(false);
   const [showEconomyDetail, setShowEconomyDetail] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
+  const [showMarket, setShowMarket] = useState(false);
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -225,9 +229,10 @@ const App: React.FC = () => {
   // Subscribe to game state (old hook — still used by 3D scene components)
   const snap = useGameSnapshot();
 
-  // ── Building Inspector + Citizen Dossier (store-driven panels) ──
+  // ── Building Inspector + Citizen Dossier + Cursor Tooltip (store-driven panels) ──
   const buildingInspector = useBuildingInspector();
   const citizenDossierIdx = useCitizenDossierIndex();
+  const cursorTooltip = useCursorTooltip();
 
   const handleDismissBuildingInspector = useCallback(() => {
     closeBuildingInspector();
@@ -544,6 +549,9 @@ const App: React.FC = () => {
   const handleShowEconomyDetail = useCallback(() => {
     setShowEconomyDetail(true);
   }, []);
+  const handleShowMarket = useCallback(() => {
+    setShowMarket(true);
+  }, []);
   // ── Save/Load state ──
   const [saveNames, setSaveNames] = useState<string[]>([]);
   const [lastSaveTime, setLastSaveTime] = useState<number | undefined>(undefined);
@@ -703,6 +711,7 @@ const App: React.FC = () => {
               onShowWorkerAnalytics={handleShowWorkerAnalytics}
               onShowEconomyDetail={handleShowEconomyDetail}
               onShowSaveLoad={handleShowSaveLoad}
+              onShowMarket={handleShowMarket}
             />
 
             <Toast
@@ -749,6 +758,20 @@ const App: React.FC = () => {
                 onSelectTool={handleSelectTool}
               />
             </View>
+
+            <CursorTooltip
+              visible={!!cursorTooltip}
+              tileData={cursorTooltip ? {
+                terrain: cursorTooltip.terrain,
+                type: cursorTooltip.type,
+                smog: cursorTooltip.smog,
+                watered: cursorTooltip.watered,
+                onFire: cursorTooltip.onFire,
+                zone: cursorTooltip.zone,
+                z: cursorTooltip.z,
+              } : { terrain: 'grass', smog: 0, watered: false, onFire: false, z: 0 }}
+              position={cursorTooltip ? { x: cursorTooltip.screenX, y: cursorTooltip.screenY } : { x: 0, y: 0 }}
+            />
           </View>
         )}
 
@@ -889,6 +912,11 @@ const App: React.FC = () => {
           saveNames={saveNames}
           autoSaveEnabled
           lastSaveTime={lastSaveTime}
+        />
+
+        <ConsumerGoodsMarketPanel
+          visible={showMarket}
+          onDismiss={() => setShowMarket(false)}
         />
 
         <BuildingInspectorPanel

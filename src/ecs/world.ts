@@ -98,6 +98,8 @@ export interface CitizenComponent {
   memberRole?: MemberRole;
   /** Active disease (if any) — sick citizens have reduced labor output */
   disease?: CitizenDisease;
+  /** Full name (Given Patronymic Surname) — set at creation, persists on the ECS entity */
+  name?: string;
 }
 
 // ── Dvor (Household) System ──────────────────────────────────────────────────

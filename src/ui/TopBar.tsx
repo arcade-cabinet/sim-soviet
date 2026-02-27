@@ -48,6 +48,7 @@ export interface TopBarProps {
   onShowWorkerAnalytics?: () => void;
   onShowEconomyDetail?: () => void;
   onShowSaveLoad?: () => void;
+  onShowMarket?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -91,6 +92,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onShowWorkerAnalytics,
   onShowEconomyDetail,
   onShowSaveLoad,
+  onShowMarket,
 }) => {
   return (
     <View style={[SharedStyles.panel, styles.container]}>
@@ -210,6 +212,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         {onShowSaveLoad && (
           <TouchableOpacity onPress={onShowSaveLoad} style={styles.navBtn} activeOpacity={0.7}>
             <Text style={styles.navBtnText}>{'\u{1F4BE}'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowMarket && (
+          <TouchableOpacity onPress={onShowMarket} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u{1F6D2}'}</Text>
           </TouchableOpacity>
         )}
       </View>

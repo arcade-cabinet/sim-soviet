@@ -14,9 +14,16 @@
  *   - Tick 0 is skipped (no events before the game starts)
  */
 
+import {
+  FEMALE_GIVEN_NAMES,
+  MALE_GIVEN_NAMES,
+  PATRONYMIC_RULES,
+  SURNAMES_RAW,
+} from '@/ai/names';
 import { dvory } from '@/ecs/archetypes';
 import { laborCapacityForAge, memberRoleForAge } from '@/ecs/factories';
 import { world } from '@/ecs/world';
+import type { DvorComponent } from '@/ecs/world';
 import { TICKS_PER_MONTH, TICKS_PER_YEAR } from '@/game/Chronology';
 import type { GameRng } from '@/game/SeedSystem';
 
@@ -91,6 +98,53 @@ export function ageAllMembers(): number {
   return totalAged;
 }
 
+// ── Infant Name Generation ──────────────────────────────────────────────────
+
+/**
+ * Generate a proper Russian name for a newborn infant.
+ *
+ * Follows convention: Given + Patronymic (from father/head) + Gendered Surname.
+ * The head of household's given name is used for the patronymic (Russian custom).
+ */
+function generateInfantName(
+  dvor: DvorComponent,
+  infantGender: 'male' | 'female',
+  rng: GameRng | null
+): string {
+  const r = () => rng?.random() ?? Math.random();
+  const pickFrom = <T>(arr: readonly T[]): T =>
+    arr[Math.floor(r() * arr.length)]!;
+
+  // Given name
+  const givenName = infantGender === 'male'
+    ? pickFrom(MALE_GIVEN_NAMES)
+    : pickFrom(FEMALE_GIVEN_NAMES);
+
+  // Patronymic: derived from head of household's given name (first word of their full name)
+  const head = dvor.members.find((m) => m.id === dvor.headOfHousehold);
+  const headGivenName = head?.name.split(' ')[0] ?? 'Ivan';
+  const patronymic = PATRONYMIC_RULES.generate(headGivenName, infantGender);
+
+  // Surname: gendered form of the dvor surname
+  const surnameEntry = SURNAMES_RAW.find((s) => s.male === dvor.surname);
+  let surname: string;
+  if (surnameEntry) {
+    surname = infantGender === 'female'
+      ? (surnameEntry.female ?? surnameEntry.male)
+      : surnameEntry.male;
+  } else {
+    // Fallback: apply common Russian gendering rules
+    surname = dvor.surname;
+    if (infantGender === 'female') {
+      if (surname.endsWith('ov') || surname.endsWith('ev') || surname.endsWith('in')) {
+        surname = `${surname}a`;
+      }
+    }
+  }
+
+  return `${givenName} ${patronymic} ${surname}`;
+}
+
 // ── Births ───────────────────────────────────────────────────────────────────
 
 /**
@@ -132,10 +186,11 @@ export function birthCheck(
           (rng?.random() ?? Math.random()) < 0.5 ? 'male' : 'female';
         dvor.nextMemberId = (dvor.nextMemberId ?? dvor.members.length) + 1;
         const infantId = `${dvor.id}-m${dvor.nextMemberId}`;
+        const infantName = generateInfantName(dvor, infantGender, rng);
 
         dvor.members.push({
           id: infantId,
-          name: `Infant ${infantId}`,
+          name: infantName,
           gender: infantGender,
           age: 0,
           role: 'infant',
