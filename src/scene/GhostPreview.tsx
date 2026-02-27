@@ -25,6 +25,8 @@ import { GRID_SIZE } from '../engine/GridTypes';
 import { BUILDING_TYPES, getBuildingHeight } from '../engine/BuildingTypes';
 import { handleClick } from '../engine/BuildActions';
 import { placeECSBuilding, bulldozeECSBuilding } from '../bridge/BuildingPlacement';
+import { getResourceEntity } from '../ecs/archetypes';
+import { getBuildingDef } from '../data/buildingDefs';
 
 const VALID_COLOR = new Color3(0, 1, 0);
 const INVALID_COLOR = new Color3(1, 0, 0);
@@ -71,6 +73,21 @@ function createGhostMeshes(scene: Scene): GhostMeshes {
   return { box, zoneOverlay, boxMat, zoneMat };
 }
 
+/** Quick lookup for zone/tool → defId (mirrors BuildingPlacement.ts) */
+const TOOL_DEF_MAP: Record<string, string> = {
+  'zone-res': 'workers-house-a',
+  'zone-ind': 'factory-office',
+  'zone-farm': 'collective-farm-hq',
+  power: 'power-station',
+  nuke: 'power-station',
+  station: 'train-station',
+  pump: 'warehouse',
+  tower: 'radio-station',
+  gulag: 'gulag-admin',
+  mast: 'fire-station',
+  space: 'government-hq',
+};
+
 function canPlace(tool: string, x: number, y: number): boolean {
   if (x < 0 || y < 0 || x >= GRID_SIZE || y >= GRID_SIZE) return false;
   const grid = gameState.grid;
@@ -82,6 +99,8 @@ function canPlace(tool: string, x: number, y: number): boolean {
   if (cell.terrain === 'water' && tool !== 'road' && tool !== 'pump') return false;
   if (cell.terrain !== 'water' && tool === 'pump') return false;
   if (cell.terrain === 'tree' || cell.terrain === 'irradiated') return false;
+  if (cell.terrain === 'mountain') return false;
+  if (cell.terrain === 'marsh' && tool !== 'road' && tool !== 'pipe') return false;
   if (cell.terrain === 'rail' && tool !== 'road' && tool !== 'pipe') return false;
   if (tool === 'tap' && cell.terrain !== 'crater') return false;
   if (tool !== 'tap' && cell.terrain === 'crater') return false;
@@ -89,8 +108,18 @@ function canPlace(tool: string, x: number, y: number): boolean {
     const railY = gameState.train.y;
     if (y < railY - 1 || y > railY + 1) return false;
   }
-  const cost = BUILDING_TYPES[tool]?.cost ?? 0;
-  if (gameState.money < cost) return false;
+
+  // Check ECS resources for actual cost (more accurate than old GameState)
+  const defId = TOOL_DEF_MAP[tool];
+  if (defId) {
+    const def = getBuildingDef(defId);
+    const cost = def?.presentation.cost ?? BUILDING_TYPES[tool]?.cost ?? 0;
+    const res = getResourceEntity();
+    if (res && res.resources.money < cost) return false;
+  } else {
+    const cost = BUILDING_TYPES[tool]?.cost ?? 0;
+    if (gameState.money < cost) return false;
+  }
 
   return true;
 }
