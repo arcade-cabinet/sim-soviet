@@ -16,7 +16,6 @@ import {
   Mesh,
   MeshBuilder,
   PBRMaterial,
-  StandardMaterial,
   Texture,
   Vector3,
 } from '@babylonjs/core';
@@ -179,9 +178,11 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
     disposablesRef.current.push(groundMat);
 
     // --- PERIMETER HILLS ---
-    const hillMat = new StandardMaterial('hillMat', scene);
-    hillMat.diffuseColor = getHillColor(season);
-    hillMat.specularColor = Color3.Black();
+    // PBRMaterial with max roughness prevents IBL reflections (the "glowing ball" problem)
+    const hillMat = new PBRMaterial('hillMat', scene);
+    hillMat.albedoColor = getHillColor(season);
+    hillMat.roughness = 1;
+    hillMat.metallic = 0;
     disposablesRef.current.push(hillMat);
 
     const hills = [
