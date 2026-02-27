@@ -35,6 +35,7 @@ import { gameState } from './engine/GameState';
 import { initGame, isGameInitialized } from './bridge/GameInit';
 import { notifyStateChange, setPaused, setGameSpeed } from './stores/gameStore';
 import { getTotalModelCount } from './scene/ModelCache';
+import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import {
   setSpeed,
   setTab,
@@ -45,6 +46,8 @@ import {
   getAdvisor,
   dismissAdvisor,
   getRandomTickerMsg,
+  showToast,
+  showAdvisor,
 } from './engine/helpers';
 import type { TabType, LensType } from './engine/GameState';
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
@@ -120,13 +123,10 @@ const App: React.FC = () => {
     if (screen === 'game' && !isGameInitialized()) {
       // Initialize ECS with callbacks that bridge to React state
       initGame({
-        onToast: (msg, severity) => {
-          // Bridge to the existing toast system
-          const { showToast } = require('./engine/helpers');
+        onToast: (msg) => {
           showToast(gameState, msg);
         },
         onAdvisor: (msg) => {
-          const { showAdvisor } = require('./engine/helpers');
           showAdvisor(gameState, msg);
         },
         onPravda: (msg) => {
@@ -134,10 +134,9 @@ const App: React.FC = () => {
         },
         onStateChange: () => {
           // Sync ECS building powered state to old GameState for 3D effects
-          const { buildings: ecsBldgs } = require('./ecs/archetypes');
-          for (const e of ecsBldgs.entities) {
+          for (const e of ecsBuildingsArchetype.entities) {
             const b = gameState.buildings.find(
-              (bi: any) => bi.x === e.position.gridX && bi.y === e.position.gridY,
+              (bi) => bi.x === e.position.gridX && bi.y === e.position.gridY,
             );
             if (b) b.powered = e.building.powered;
           }
@@ -145,25 +144,21 @@ const App: React.FC = () => {
           gameState.notify();
         },
         onWeatherChanged: (weather) => {
-          // Sync ECS weather to old GameState for 3D WeatherFX
           gameState.currentWeather = weather as typeof gameState.currentWeather;
         },
         onDayPhaseChanged: (_phase, dayProgress) => {
-          // Sync day progress to old GameState for 3D lighting
           gameState.timeOfDay = dayProgress;
         },
         onGameOver: (victory, reason) => {
           setGameOver({ victory, reason });
         },
         onAchievement: (name, description) => {
-          const { showToast } = require('./engine/helpers');
           showToast(gameState, `★ ${name}: ${description}`);
         },
         onSeasonChanged: (_season) => {
-          // Audio seasonal switching placeholder (AudioManager doesn't support seasons yet)
+          // Audio seasonal switching placeholder
         },
         onBuildingCollapsed: (gridX, gridY, type) => {
-          const { showToast } = require('./engine/helpers');
           showToast(gameState, `BUILDING COLLAPSED: ${type} at (${gridX},${gridY})`);
         },
         onSettlementChange: (event) => {
@@ -190,7 +185,6 @@ const App: React.FC = () => {
           resolveMinigameRef.current = resolveChoice;
         },
         onTutorialMilestone: (milestone) => {
-          const { showAdvisor } = require('./engine/helpers');
           showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
         },
         onGameTally: (tally) => {
@@ -203,7 +197,6 @@ const App: React.FC = () => {
         gameState.initGrid();
 
         // Sync ECS terrain → old grid so canPlace() terrain checks match 3D scene
-        const { terrainFeatures, buildings } = require('./ecs/archetypes');
         const featureToTerrain: Record<string, string> = {
           mountain: 'mountain',
           forest: 'tree',
@@ -211,7 +204,7 @@ const App: React.FC = () => {
           river: 'water',
           water: 'water',
         };
-        for (const entity of terrainFeatures.entities) {
+        for (const entity of ecsTerrainFeatures.entities) {
           const { gridX, gridY } = entity.position;
           const cell = gameState.grid[gridY]?.[gridX];
           if (cell) {
@@ -222,7 +215,7 @@ const App: React.FC = () => {
         }
 
         // Sync ECS buildings → old grid + buildings array for scene components
-        for (const entity of buildings.entities) {
+        for (const entity of ecsBuildingsArchetype.entities) {
           const { gridX, gridY } = entity.position;
           const cell = gameState.grid[gridY]?.[gridX];
           if (cell) cell.type = entity.building.defId;
