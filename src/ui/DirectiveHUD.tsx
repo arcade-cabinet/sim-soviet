@@ -28,10 +28,10 @@ export const DirectiveHUD: React.FC<DirectiveHUDProps> = ({ text, reward }) => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 172,
-    left: 20,
-    width: 240,
-    padding: 12,
+    top: 190,
+    left: 10,
+    width: 220,
+    padding: 10,
     zIndex: 50,
   },
   heading: {

@@ -14,7 +14,7 @@ import {
 } from '@babylonjs/core';
 import { useScene } from 'reactylon';
 import { getModelName } from './ModelMapping';
-import { cloneModel, disposeModel } from './ModelCache';
+import { cloneModel, disposeModel, isPreloaded } from './ModelCache';
 import { shadowGenerator } from './Lighting';
 
 export interface BuildingState {
@@ -71,6 +71,9 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings }) => {
   const managedRef = useRef<Map<string, ManagedBuilding>>(new Map());
 
   useEffect(() => {
+    // Don't attempt cloning until all models have finished preloading
+    if (!isPreloaded()) return;
+
     const managed = managedRef.current;
     const currentIds = new Set(buildings.map((b) => b.id));
 
@@ -100,10 +103,9 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings }) => {
         // Clone a new model from the preloaded cache
         const node = cloneModel(modelName, building.id);
         if (!node) {
-          console.log(`[Building] Clone failed for ${modelName} (${building.id}) — models not ready`);
+          console.warn(`[Building] Model "${modelName}" not found in cache for ${building.id}`);
           continue;
         }
-        console.log(`[Building] Placed ${building.type} at (${building.gridX}, ${building.gridY}) model=${modelName}`);
 
         // Scale building to fill its tile footprint. Use XZ extent only
         // so buildings stand naturally tall (not squished by height).

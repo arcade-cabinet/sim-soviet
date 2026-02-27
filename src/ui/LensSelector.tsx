@@ -48,8 +48,8 @@ export const LensSelector: React.FC<LensSelectorProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 16,
-    right: 16,
+    bottom: 140,
+    right: 10,
     flexDirection: 'column',
     gap: 4,
     zIndex: 50,

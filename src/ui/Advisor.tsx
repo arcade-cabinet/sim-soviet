@@ -36,9 +36,9 @@ export const Advisor: React.FC<AdvisorProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    width: 320,
+    bottom: 140,
+    left: 10,
+    width: 300,
     backgroundColor: Colors.panelBg,
     borderWidth: 2,
     borderColor: Colors.sovietGold,

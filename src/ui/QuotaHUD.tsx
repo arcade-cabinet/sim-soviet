@@ -54,10 +54,10 @@ export const QuotaHUD: React.FC<QuotaHUDProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 20,
-    right: 20,
-    width: 240,
-    padding: 12,
+    top: 60,
+    right: 10,
+    width: 200,
+    padding: 10,
     zIndex: 50,
   },
   heading: {

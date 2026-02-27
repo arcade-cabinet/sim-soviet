@@ -115,6 +115,20 @@ const App: React.FC = () => {
           // Sync ECS weather to old GameState for 3D WeatherFX
           gameState.currentWeather = weather as typeof gameState.currentWeather;
         },
+        onDayPhaseChanged: (_phase, dayProgress) => {
+          // Sync day progress to old GameState for 3D lighting
+          gameState.timeOfDay = dayProgress;
+        },
+        onGameOver: (victory, reason) => {
+          const { showAdvisor } = require('./engine/helpers');
+          showAdvisor(gameState, victory
+            ? `VICTORY: ${reason}`
+            : `GAME OVER: ${reason}`);
+        },
+        onAchievement: (name, description) => {
+          const { showToast } = require('./engine/helpers');
+          showToast(gameState, `★ ${name}: ${description}`);
+        },
       });
 
       // Also initialize the old flat grid for 3D terrain rendering

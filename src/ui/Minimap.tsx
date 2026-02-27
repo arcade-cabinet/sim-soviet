@@ -23,10 +23,10 @@ export const Minimap: React.FC<MinimapProps> = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 20,
-    left: 20,
-    width: 140,
-    height: 140,
+    top: 60,
+    left: 10,
+    width: 120,
+    height: 120,
     zIndex: 50,
   },
   placeholder: {

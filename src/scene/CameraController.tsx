@@ -29,14 +29,17 @@ const CameraController: React.FC = () => {
   const scene = useScene();
 
   useEffect(() => {
-    const gridCenter = GRID_SIZE / 2;
+    // Start focused on the starter buildings (roughly at grid 5-9, 4-8)
+    // rather than the grid center, so the player sees the city immediately
+    const targetX = 7;
+    const targetZ = 6;
 
     const camera = new ArcRotateCamera(
       'cityCamera',
       -Math.PI / 4,    // alpha: 45° from +X — viewing from southwest
       Math.PI / 3.5,   // beta: ~51° from vertical — classic city builder bird's-eye
-      40,               // radius: distance from target
-      new Vector3(gridCenter, 0, gridCenter), // target at ground level
+      25,               // radius: closer to buildings for better initial view
+      new Vector3(targetX, 0, targetZ), // target centered on starter buildings
       scene,
     );
 
