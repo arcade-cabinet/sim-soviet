@@ -136,15 +136,16 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
 
     const groundMat = new PBRMaterial('envGroundMat', scene);
 
-    // Season-dependent textures
-    const isWinter = season === 'winter';
-    const colorFile = isWinter
+    // Season-dependent textures & tint
+    // Winter + autumn use snow; spring/summer use grass
+    const useSnow = season === 'winter' || season === 'autumn';
+    const colorFile = useSnow
       ? '/assets/textures/snow/Snow003_1K-JPG_Color.jpg'
       : '/assets/textures/grass/Grass001_1K-JPG_Color.jpg';
-    const normalFile = isWinter
+    const normalFile = useSnow
       ? '/assets/textures/snow/Snow003_1K-JPG_NormalGL.jpg'
       : '/assets/textures/grass/Grass001_1K-JPG_NormalGL.jpg';
-    const roughFile = isWinter
+    const roughFile = useSnow
       ? '/assets/textures/snow/Snow003_1K-JPG_Roughness.jpg'
       : '/assets/textures/grass/Grass001_1K-JPG_Roughness.jpg';
 
@@ -154,6 +155,22 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
     albedo.uScale = tileScale;
     albedo.vScale = tileScale;
     groundMat.albedoTexture = albedo;
+
+    // Tint the ground per-season so it matches the terrain vertex colors
+    switch (season) {
+      case 'winter':
+        groundMat.albedoColor = new Color3(0.9, 0.92, 0.95); // cold white
+        break;
+      case 'autumn':
+        groundMat.albedoColor = new Color3(0.65, 0.60, 0.50); // muddy brown-gray
+        break;
+      case 'spring':
+        groundMat.albedoColor = new Color3(0.55, 0.65, 0.45); // muted fresh green
+        break;
+      default: // summer
+        groundMat.albedoColor = new Color3(0.50, 0.58, 0.40); // subdued green
+        break;
+    }
 
     const normalTex = new Texture(normalFile, scene);
     normalTex.uScale = tileScale;
