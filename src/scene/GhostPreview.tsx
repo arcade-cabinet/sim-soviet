@@ -23,10 +23,10 @@ import { useScene } from 'reactylon';
 import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
 import { BUILDING_TYPES, getBuildingHeight } from '../engine/BuildingTypes';
-import { handleClick } from '../engine/BuildActions';
 import { placeECSBuilding, bulldozeECSBuilding } from '../bridge/BuildingPlacement';
 import { getResourceEntity } from '../ecs/archetypes';
 import { getBuildingDef } from '../data/buildingDefs';
+import { showToast } from '../engine/helpers';
 
 const VALID_COLOR = new Color3(0, 1, 0);
 const INVALID_COLOR = new Color3(1, 0, 0);
@@ -136,8 +136,8 @@ const GhostPreview: React.FC = () => {
       const m = meshesRef.current!;
       const tool = gameState.selectedTool;
 
-      // Hide if no tool selected or bulldoze
-      if (tool === 'none' || tool === 'bulldoze') {
+      // Hide if no tool selected, bulldoze, or unsupported tool
+      if (tool === 'none' || tool === 'bulldoze' || tool === 'road' || tool === 'pipe') {
         m.box.isVisible = false;
         m.zoneOverlay.isVisible = false;
         return;
@@ -215,15 +215,14 @@ const GhostPreview: React.FC = () => {
 
         if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) return;
 
-        // Place building in ECS (source of truth for simulation)
+        // Handle building placement/demolition through ECS (sole authority)
         if (tool === 'bulldoze') {
           bulldozeECSBuilding(gridX, gridZ);
+        } else if (tool === 'road' || tool === 'pipe') {
+          showToast(gameState, 'INFRASTRUCTURE DEVELOPMENT PENDING APPROVAL');
         } else {
           placeECSBuilding(tool, gridX, gridZ);
         }
-
-        // Also update old GameState for legacy grid rendering
-        handleClick(gameState, gridX, gridZ, false);
       },
     )!;
 

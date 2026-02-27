@@ -33,7 +33,7 @@ import { useGameSnapshot } from './hooks/useGameState';
 import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
 import { initGame, isGameInitialized } from './bridge/GameInit';
-import { notifyStateChange, setPaused } from './stores/gameStore';
+import { notifyStateChange, setPaused, setGameSpeed } from './stores/gameStore';
 import { getTotalModelCount } from './scene/ModelCache';
 import {
   setSpeed,
@@ -231,6 +231,8 @@ const App: React.FC = () => {
 
   // --- Game callbacks ---
   const handleSetSpeed = useCallback((sp: number) => {
+    // Update both ECS game loop speed and old GameState for UI display
+    setGameSpeed(sp as 1 | 2 | 3);
     setSpeed(gameState, sp);
   }, []);
 

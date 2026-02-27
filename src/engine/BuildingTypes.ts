@@ -33,9 +33,9 @@ export interface GrownLevel {
 
 export const BUILDING_TYPES: Record<string, BuildingTypeInfo> = {
   none: { name: 'Inspect', category: 'all', cost: 0, icon: '🔍', color: '#000', type: 'tool' },
-  'zone-res': { name: 'Res. Zone', category: 'zone', cost: 10, icon: '🟩', type: 'zone', desc: 'Grows Housing. Needs Water/Power.', color: '#4caf50' },
-  'zone-ind': { name: 'Ind. Zone', category: 'zone', cost: 15, icon: '🟨', type: 'zone', desc: 'Grows Factories. Needs Water/Power.', color: '#ffeb3b' },
-  'zone-farm': { name: 'Agri. Zone', category: 'zone', cost: 5, icon: '🟫', type: 'zone', desc: 'Grows Farms. Needs Water.', color: '#795548' },
+  'zone-res': { name: 'Housing', category: 'zone', cost: 80, icon: '🏠', type: 'zone', desc: 'Worker housing (workers-house-a).', color: '#4caf50' },
+  'zone-ind': { name: 'Factory', category: 'zone', cost: 180, icon: '🏭', type: 'zone', desc: 'Factory office. Produces money.', color: '#ffeb3b' },
+  'zone-farm': { name: 'Kolkhoz', category: 'zone', cost: 150, icon: '🌾', type: 'zone', desc: 'Collective farm. Produces food.', color: '#795548' },
   road: { name: 'Road', category: 'infra', cost: 10, icon: '🛣️', type: 'infra', desc: 'Transportation.', color: '#778899' },
   pipe: { name: 'Water Pipe', category: 'infra', cost: 5, icon: '🟦', type: 'infra', desc: 'Distributes Water (Underground).', color: '#00b0ff' },
   pump: { name: 'Water Pump', category: 'infra', cost: 100, icon: '🚰', type: 'utility', water: 50, desc: 'Must be built on river.', color: '#00b0ff' },
