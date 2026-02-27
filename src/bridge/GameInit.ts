@@ -7,7 +7,7 @@
  */
 
 import { createResourceStore, createMetaStore, createGrid } from '@/ecs/factories';
-import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
+import { createBuilding } from '@/ecs/factories/buildingFactories';
 import { createStartingSettlement } from '@/ecs/factories/settlementFactories';
 import { terrainFeatures } from '@/ecs/archetypes';
 import { world } from '@/ecs/world';
@@ -28,11 +28,16 @@ let initialized = false;
 export function initGame(callbacks: SimCallbacks): SimulationEngine {
   if (engine && initialized) return engine;
 
-  // Create singleton store entities
-  createResourceStore();
+  // Create singleton store entities with enough materials for early construction
+  createResourceStore({
+    food: 800,
+    timber: 150,
+    steel: 60,
+    cement: 30,
+  });
   createMetaStore({
     seed: 'simsoviet-3d',
-    date: { year: 1922, month: 10, tick: 0 },
+    date: { year: 1922, month: 4, tick: 0 },
   });
 
   // Create tile grid
@@ -57,7 +62,8 @@ export function initGame(callbacks: SimCallbacks): SimulationEngine {
     }
   }
 
-  // Place starter buildings
+  // Place starter buildings — use createBuilding() (operational immediately)
+  // NOT placeNewBuilding() which starts construction phase
   const starters: { x: number; y: number; defId: string }[] = [
     { x: 5, y: 4, defId: 'power-station' },
     { x: 7, y: 4, defId: 'workers-house-a' },
@@ -67,12 +73,13 @@ export function initGame(callbacks: SimCallbacks): SimulationEngine {
     { x: 5, y: 6, defId: 'factory-office' },
     { x: 5, y: 8, defId: 'vodka-distillery' },
     { x: 9, y: 8, defId: 'collective-farm-hq' },
+    { x: 3, y: 8, defId: 'collective-farm-hq' },
     { x: 7, y: 8, defId: 'radio-station' },
     { x: 3, y: 6, defId: 'gulag-admin' },
   ];
 
   for (const s of starters) {
-    placeNewBuilding(s.x, s.y, s.defId);
+    createBuilding(s.x, s.y, s.defId);
   }
 
   // Create starting settlement (citizens, dvory)
