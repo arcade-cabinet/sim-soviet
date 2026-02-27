@@ -125,9 +125,14 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
   }, [onDelete, busy, showStatus]);
 
   const handleCustomSave = useCallback(() => {
-    const trimmed = customName.trim();
+    const trimmed = customName.trim().replace(/[^a-zA-Z0-9_\- ]/g, '');
     if (!trimmed) {
       showStatus('ENTER A SAVE NAME, COMRADE', 'error');
+      return;
+    }
+    const reserved = new Set(['autosave', ...SLOT_NAMES]);
+    if (reserved.has(trimmed.toLowerCase())) {
+      showStatus('NAME RESERVED BY THE STATE', 'error');
       return;
     }
     handleSave(trimmed);

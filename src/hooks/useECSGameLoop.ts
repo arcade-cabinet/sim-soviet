@@ -27,6 +27,7 @@ export function useECSGameLoop(): void {
       const engine = getEngine();
       const paused = isPaused();
       const speed = getGameSpeed();
+      let didTick = false;
 
       if (engine && !paused && speed > 0) {
         // Accumulate time for sim ticks
@@ -37,19 +38,22 @@ export function useECSGameLoop(): void {
         while (simAccumulator.current >= tickMs) {
           simAccumulator.current -= tickMs;
           engine.tick();
+          didTick = true;
         }
       }
 
       // Advance time of day for 3D lighting (cosmetic only)
       if (!paused && speed > 0) {
         gameState.timeOfDay = (gameState.timeOfDay + dt * 0.005 * speed) % 1;
+        // Notify old gameState for 3D scene components (lighting updates)
+        gameState.notify();
       }
 
-      // Notify React of state changes (the engine calls onStateChange per tick,
-      // but we also notify here for animation-only updates)
-      notifyStateChange();
-      // Also notify the old gameState for 3D scene components still reading from it
-      gameState.notify();
+      // Only notify React of state changes when the engine actually ticked
+      // (the engine also calls onStateChange per tick via callbacks)
+      if (didTick) {
+        notifyStateChange();
+      }
 
       rafRef.current = requestAnimationFrame(loop);
     }

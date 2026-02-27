@@ -33,6 +33,7 @@ import { useGameSnapshot } from './hooks/useGameState';
 import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
 import { initGame, isGameInitialized, getSaveSystem, type GameInitOptions } from './bridge/GameInit';
+import { initDatabase, persistToIndexedDB } from './db/provider';
 import { notifyStateChange, setPaused, setGameSpeed } from './stores/gameStore';
 import { getTotalModelCount } from './scene/ModelCache';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
@@ -170,8 +171,17 @@ const App: React.FC = () => {
 
   // Initialize ECS world and SimulationEngine when entering game
   useEffect(() => {
-    if (screen === 'game' && !isGameInitialized()) {
-      // Initialize ECS with callbacks that bridge to React state
+    if (screen !== 'game' || isGameInitialized()) return;
+
+    // Async init: database first, then game engine
+    (async () => {
+      // Initialize SQLite database (loads persisted saves from IndexedDB)
+      try {
+        await initDatabase();
+      } catch {
+        // Falls back to localStorage if sql.js WASM fails to load
+      }
+
       initGame({
         onToast: (msg) => {
           showToast(gameState, msg);
@@ -278,7 +288,16 @@ const App: React.FC = () => {
           });
         }
       }
-    }
+    })();
+
+    // Persist database to IndexedDB before page unload
+    const handleBeforeUnload = () => {
+      persistToIndexedDB();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, [screen]);
 
   // Ticker message accumulation (only when game is active)

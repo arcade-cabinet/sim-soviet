@@ -357,75 +357,78 @@ export class SaveSystem {
     const meta = getMetaEntity();
     if (!res || !meta) return false;
 
-    // Upsert: delete old save with same name, insert new one
-    const existing = db.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).get();
-    if (existing) {
-      db.delete(dbSchema.buildings).where(eq(dbSchema.buildings.saveId, existing.id)).run();
-      db.delete(dbSchema.resources).where(eq(dbSchema.resources.saveId, existing.id)).run();
-      db.delete(dbSchema.chronology).where(eq(dbSchema.chronology.saveId, existing.id)).run();
-      db.delete(dbSchema.quotas).where(eq(dbSchema.quotas.saveId, existing.id)).run();
-      db.delete(dbSchema.saves).where(eq(dbSchema.saves.id, existing.id)).run();
-    }
+    // Atomic upsert: wrap in transaction to prevent partial writes on interrupt
+    db.transaction((tx) => {
+      // Delete old save with same name
+      const existing = tx.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).get();
+      if (existing) {
+        tx.delete(dbSchema.buildings).where(eq(dbSchema.buildings.saveId, existing.id)).run();
+        tx.delete(dbSchema.resources).where(eq(dbSchema.resources.saveId, existing.id)).run();
+        tx.delete(dbSchema.chronology).where(eq(dbSchema.chronology.saveId, existing.id)).run();
+        tx.delete(dbSchema.quotas).where(eq(dbSchema.quotas.saveId, existing.id)).run();
+        tx.delete(dbSchema.saves).where(eq(dbSchema.saves.id, existing.id)).run();
+      }
 
-    const save = db
-      .insert(dbSchema.saves)
-      .values({
-        name,
-        timestamp: Date.now(),
-        version: '2.0.0',
-        gameState: JSON.stringify(extendedState),
-      })
-      .returning()
-      .get();
+      const save = tx
+        .insert(dbSchema.saves)
+        .values({
+          name,
+          timestamp: Date.now(),
+          version: '2.0.0',
+          gameState: JSON.stringify(extendedState),
+        })
+        .returning()
+        .get();
 
-    if (!save) return false;
+      if (!save) return;
 
-    // Also write legacy tables for backward compatibility
-    db.insert(dbSchema.resources)
-      .values({
-        saveId: save.id,
-        money: res.resources.money,
-        food: res.resources.food,
-        vodka: res.resources.vodka,
-        power: res.resources.power,
-        powerUsed: res.resources.powerUsed,
-        population: res.resources.population,
-      })
-      .run();
-
-    db.insert(dbSchema.chronology)
-      .values({
-        saveId: save.id,
-        year: meta.gameMeta.date.year,
-        month: meta.gameMeta.date.month,
-        tick: meta.gameMeta.date.tick,
-      })
-      .run();
-
-    db.insert(dbSchema.quotas)
-      .values({
-        saveId: save.id,
-        type: meta.gameMeta.quota.type,
-        target: meta.gameMeta.quota.target,
-        current: meta.gameMeta.quota.current,
-        deadlineYear: meta.gameMeta.quota.deadlineYear,
-      })
-      .run();
-
-    const ecsBuildings = buildingsLogic.entities;
-    if (ecsBuildings.length > 0) {
-      db.insert(dbSchema.buildings)
-        .values(
-          ecsBuildings.map((e) => ({
-            saveId: save.id,
-            gridX: e.position.gridX,
-            gridY: e.position.gridY,
-            type: e.building.defId,
-            powered: e.building.powered,
-          }))
-        )
+      // Also write legacy tables for backward compatibility
+      tx.insert(dbSchema.resources)
+        .values({
+          saveId: save.id,
+          money: res.resources.money,
+          food: res.resources.food,
+          vodka: res.resources.vodka,
+          power: res.resources.power,
+          powerUsed: res.resources.powerUsed,
+          population: res.resources.population,
+        })
         .run();
-    }
+
+      tx.insert(dbSchema.chronology)
+        .values({
+          saveId: save.id,
+          year: meta.gameMeta.date.year,
+          month: meta.gameMeta.date.month,
+          tick: meta.gameMeta.date.tick,
+        })
+        .run();
+
+      tx.insert(dbSchema.quotas)
+        .values({
+          saveId: save.id,
+          type: meta.gameMeta.quota.type,
+          target: meta.gameMeta.quota.target,
+          current: meta.gameMeta.quota.current,
+          deadlineYear: meta.gameMeta.quota.deadlineYear,
+        })
+        .run();
+
+      const ecsBuildings = buildingsLogic.entities;
+      if (ecsBuildings.length > 0) {
+        tx.insert(dbSchema.buildings)
+          .values(
+            ecsBuildings.map((e) => ({
+              saveId: save.id,
+              gridX: e.position.gridX,
+              gridY: e.position.gridY,
+              type: e.building.defId,
+              powered: e.building.powered,
+            }))
+          )
+          .run();
+      }
+    });
 
     // Persist SQLite to IndexedDB (fire-and-forget)
     persistToIndexedDB();

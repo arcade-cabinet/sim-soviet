@@ -28,6 +28,7 @@ export interface GameInitOptions {
 let engine: SimulationEngine | null = null;
 let gameGrid: GameGrid | null = null;
 let saveSystem: SaveSystem | null = null;
+let stopAutoSave: (() => void) | null = null;
 let initialized = false;
 
 /**
@@ -115,7 +116,7 @@ export function initGame(
   // Create SaveSystem wired to the grid and engine
   saveSystem = new SaveSystem(grid);
   saveSystem.setEngine(engine);
-  saveSystem.startAutoSave();
+  stopAutoSave = saveSystem.startAutoSave();
 
   initialized = true;
 
@@ -143,4 +144,12 @@ export function getGameGrid(): GameGrid | null {
 /** Get the SaveSystem instance (null if game not initialized). */
 export function getSaveSystem(): SaveSystem | null {
   return saveSystem;
+}
+
+/** Stop autosave timer. Call on page unload or game shutdown. */
+export function shutdownSaveSystem(): void {
+  if (stopAutoSave) {
+    stopAutoSave();
+    stopAutoSave = null;
+  }
 }

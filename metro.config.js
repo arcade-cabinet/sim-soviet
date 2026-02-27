@@ -11,9 +11,16 @@ config.server = {
   enhanceMiddleware: (middleware) => {
     const serveStatic = require('serve-static');
     const assetsDir = path.resolve(__dirname, 'assets');
+    const publicDir = path.resolve(__dirname, 'public');
     const staticHandler = serveStatic(assetsDir, {
       setHeaders: (res) => {
         res.setHeader('Access-Control-Allow-Origin', '*');
+      },
+    });
+    const publicHandler = serveStatic(publicDir, {
+      setHeaders: (res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Content-Type', 'application/wasm');
       },
     });
 
@@ -22,6 +29,10 @@ config.server = {
       if (req.url.startsWith('/assets/')) {
         req.url = req.url.slice('/assets'.length);
         return staticHandler(req, res, () => middleware(req, res, next));
+      }
+      // Route /wasm/* requests to public/wasm/ (sql.js WASM binary)
+      if (req.url.startsWith('/wasm/')) {
+        return publicHandler(req, res, () => middleware(req, res, next));
       }
       return middleware(req, res, next);
     };
