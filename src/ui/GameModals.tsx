@@ -163,20 +163,31 @@ const MinigameContent: React.FC<{
     >
       <Text style={modalStyles.terminalBody}>{def.description}</Text>
       <View style={modalStyles.choiceList}>
-        {def.choices.map((choice) => (
-          <TouchableOpacity
-            key={choice.id}
-            style={modalStyles.choiceButton}
-            activeOpacity={0.7}
-            onPress={() => {
-              onChoice(choice.id);
-              onClose();
-            }}
-          >
-            <Text style={modalStyles.choiceLabel}>{choice.label}</Text>
-            <Text style={modalStyles.choiceDesc}>{choice.description}</Text>
-          </TouchableOpacity>
-        ))}
+        {def.choices.map((choice) => {
+          const pct = Math.round(choice.successChance * 100);
+          const riskTier = pct >= 70 ? 0 : pct >= 40 ? 1 : 2;
+          const riskColors = [Colors.termGreen, Colors.sovietGold, Colors.sovietRed];
+          const riskLabels = ['FAVORABLE', 'UNCERTAIN', 'RISKY'];
+          return (
+            <TouchableOpacity
+              key={choice.id}
+              style={[modalStyles.choiceButton, { borderLeftWidth: 3, borderLeftColor: riskColors[riskTier] }]}
+              activeOpacity={0.7}
+              onPress={() => {
+                onChoice(choice.id);
+                onClose();
+              }}
+            >
+              <View style={modalStyles.choiceHeader}>
+                <Text style={modalStyles.choiceLabel}>{choice.label}</Text>
+                <Text style={[modalStyles.choiceRisk, { color: riskColors[riskTier] }]}>
+                  {pct}% {riskLabels[riskTier]}
+                </Text>
+              </View>
+              <Text style={modalStyles.choiceDesc}>{choice.description}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </SovietModal>
   );
@@ -654,12 +665,23 @@ const modalStyles = StyleSheet.create({
     borderColor: '#444',
     padding: 12,
   },
+  choiceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   choiceLabel: {
     fontSize: 14,
     fontFamily: monoFont,
     fontWeight: 'bold',
     color: Colors.sovietGold,
-    marginBottom: 4,
+  },
+  choiceRisk: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
   choiceDesc: {
     fontSize: 12,
