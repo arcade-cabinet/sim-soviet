@@ -101,7 +101,7 @@ function createSnapshot(state: GameState): GameSnapshot {
   let waterDemand = 0;
   for (const b of operationalBuildings.entities) {
     // Pump buildings produce water (defId contains 'pump' or has waterOutput)
-    if (b.building.defId === 'pump' || b.building.defId === 'water-pump') {
+    if (b.building.defId === 'pump' || b.building.defId === 'water-pump' || b.building.defId === 'warehouse') {
       waterCapacity += 50;
     }
     // All powered buildings consume some water

@@ -152,8 +152,8 @@ const GhostPreview: React.FC = () => {
       }
 
       const worldPos = pickResult.pickedPoint;
-      const gridX = Math.round(worldPos.x);
-      const gridZ = Math.round(worldPos.z);
+      const gridX = Math.floor(worldPos.x);
+      const gridZ = Math.floor(worldPos.z);
 
       if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) {
         m.box.isVisible = false;
@@ -164,13 +164,13 @@ const GhostPreview: React.FC = () => {
       const valid = canPlace(tool, gridX, gridZ);
       const color = valid ? VALID_COLOR : INVALID_COLOR;
 
-      const cellZ = gameState.grid[gridZ]?.[gridX]?.z ?? 0;
+      const cellElev = (gameState.grid[gridZ]?.[gridX]?.z ?? 0) * 0.5;
 
       if (tool.startsWith('zone-')) {
         // Zone overlay
         m.box.isVisible = false;
         m.zoneOverlay.isVisible = true;
-        m.zoneOverlay.position = new Vector3(gridX, cellZ + 0.02, gridZ);
+        m.zoneOverlay.position = new Vector3(gridX + 0.5, cellElev + 0.02, gridZ + 0.5);
         m.zoneMat.emissiveColor = color;
 
         // Use zone color for tint
@@ -191,7 +191,7 @@ const GhostPreview: React.FC = () => {
         // Scale box to building height
         const height = getBuildingHeight(tool, 0) * 0.02 || 0.5;
         m.box.scaling = new Vector3(1, height, 1);
-        m.box.position = new Vector3(gridX, cellZ + height / 2, gridZ);
+        m.box.position = new Vector3(gridX + 0.5, cellElev + height / 2, gridZ + 0.5);
         m.boxMat.emissiveColor = color;
         m.boxMat.alpha = GHOST_ALPHA;
       }
@@ -210,8 +210,8 @@ const GhostPreview: React.FC = () => {
         if (!pickResult?.hit || !pickResult.pickedPoint) return;
 
         const worldPos = pickResult.pickedPoint;
-        const gridX = Math.round(worldPos.x);
-        const gridZ = Math.round(worldPos.z);
+        const gridX = Math.floor(worldPos.x);
+        const gridZ = Math.floor(worldPos.z);
 
         if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) return;
 
