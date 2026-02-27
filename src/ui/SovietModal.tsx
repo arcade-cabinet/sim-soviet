@@ -58,7 +58,7 @@ export const SovietModal: React.FC<SovietModalProps> = ({
       <TouchableOpacity
         style={StyleSheet.absoluteFill}
         activeOpacity={1}
-        onPress={dismissOnOverlay ? (onDismiss ?? onAction) : undefined}
+        onPress={dismissOnOverlay ? (onDismiss ?? onAction) : () => {}}
       />
       <View style={[styles.modal, isParchment ? styles.parchment : styles.terminal]}>
         {/* Header */}

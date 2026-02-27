@@ -341,7 +341,6 @@ const App: React.FC = () => {
     <>
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.root}>
-        {/* 3D Scene — reactylon/web Engine creates an HTML canvas */}
         <View style={styles.sceneContainer}>
           <Engine forceWebGL>
             <Scene>
@@ -353,10 +352,8 @@ const App: React.FC = () => {
           </Engine>
         </View>
 
-        {/* UI Overlays — only visible after loading completes */}
         {loadingFaded && (
           <View style={styles.uiOverlay} pointerEvents="box-none">
-            {/* Top bar */}
             <TopBar
               season={snap.seasonLabel}
               weather={snap.weatherLabel}
@@ -375,13 +372,11 @@ const App: React.FC = () => {
               onSetSpeed={handleSetSpeed}
             />
 
-            {/* Toast notification */}
             <Toast
               message={toast?.text ?? null}
               onDismiss={handleDismissToast}
             />
 
-            {/* Quota HUD (top-right) */}
             {snap.quotaTarget > 0 && (
               <QuotaHUD
                 targetType={snap.quotaType}
@@ -391,29 +386,24 @@ const App: React.FC = () => {
               />
             )}
 
-            {/* Minimap (top-left) */}
             <Minimap />
 
-            {/* Directive HUD (below minimap) */}
             <DirectiveHUD
               text={snap.directiveText}
               reward={snap.directiveReward}
             />
 
-            {/* Lens selector (bottom-right) */}
             <LensSelector
               activeLens={snap.activeLens}
               onLensChange={handleLensChange}
             />
 
-            {/* Advisor (bottom-left) */}
             <Advisor
               visible={!!advisor}
               message={advisor?.text ?? ''}
               onDismiss={handleDismissAdvisor}
             />
 
-            {/* Bottom panel: Ticker + Tabs + Toolbar */}
             <View style={styles.bottomPanel}>
               <Ticker messages={tickerText} />
               <TabBar
@@ -429,7 +419,6 @@ const App: React.FC = () => {
           </View>
         )}
 
-        {/* Loading screen overlay — fades out when assets are ready */}
         {!loadingFaded && (
           <LoadingScreen
             progress={loadPct}
@@ -441,7 +430,6 @@ const App: React.FC = () => {
           />
         )}
 
-        {/* Game modals — era transitions, minigames, reports, etc. */}
         <GameModals
           eraTransition={eraTransition}
           onDismissEra={handleDismissEra}
@@ -459,7 +447,6 @@ const App: React.FC = () => {
           onRestart={handleRestart}
         />
 
-        {/* Intro modal — shown after loading, on top of everything */}
         <IntroModal
           visible={showIntro}
           onDismiss={handleDismissIntro}

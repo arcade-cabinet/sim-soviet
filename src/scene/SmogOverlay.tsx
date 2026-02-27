@@ -23,15 +23,18 @@ import { useScene } from 'reactylon';
 import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
 
-/** Lerp between green and orange based on smog ratio */
+/** Minimum smog value to render (skip nearly-clean cells) */
+const SMOG_THRESHOLD = 8;
+
+/** Lerp between muted green and warm amber based on smog ratio */
 function smogColor(ratio: number): Color3 {
-  // Green (0,0.6,0) -> Yellow (0.8,0.8,0) -> Orange (1,0.4,0)
+  // Muted green (0.2,0.4,0.1) -> Warm yellow (0.6,0.5,0.1) -> Amber (0.7,0.3,0.05)
   if (ratio < 0.5) {
     const t = ratio * 2;
-    return new Color3(t * 0.8, 0.6 + t * 0.2, 0);
+    return new Color3(0.2 + t * 0.4, 0.4 + t * 0.1, 0.1);
   }
   const t = (ratio - 0.5) * 2;
-  return new Color3(0.8 + t * 0.2, 0.8 - t * 0.4, 0);
+  return new Color3(0.6 + t * 0.1, 0.5 - t * 0.2, 0.1 - t * 0.05);
 }
 
 const SmogOverlay: React.FC = () => {
@@ -50,8 +53,8 @@ const SmogOverlay: React.FC = () => {
 
     const mat = new StandardMaterial('smogMat', scene);
     mat.disableLighting = true;
-    mat.alpha = 0.4;
-    mat.emissiveColor = new Color3(0.3, 0.6, 0);
+    mat.alpha = 0.2;
+    mat.emissiveColor = new Color3(0.3, 0.5, 0.1);
     mat.backFaceCulling = false;
     box.material = mat;
 
@@ -71,19 +74,23 @@ const SmogOverlay: React.FC = () => {
         if (!row) continue;
         for (let x = 0; x < GRID_SIZE; x++) {
           const cell = row[x];
-          if (!cell || cell.smog <= 0) continue;
+          if (!cell || cell.smog < SMOG_THRESHOLD) continue;
 
           const ratio = Math.min(1.0, cell.smog / 100);
-          const height = 0.3 + ratio * 1.2; // volumetric height scales with smog
+          // Quadratic falloff: low smog fades fast, high smog builds gradually
+          const intensity = ratio * ratio;
+          const height = 0.2 + intensity * 0.8;
+          // Shrink low-smog boxes to create natural gaps at the edge
+          const spread = 0.5 + ratio * 0.5;
           const m = Matrix.Compose(
-            new Vector3(1, height, 1),
+            new Vector3(spread, height, spread),
             Vector3.Zero().toQuaternion(),
-            new Vector3(x, cell.z + height / 2, y),
+            new Vector3(x + 0.5, (cell.z ?? 0) * 0.5 + height / 2, y + 0.5),
           );
           matrices.push(m);
 
           const c = smogColor(ratio);
-          const alpha = ratio * 0.6;
+          const alpha = intensity * 0.5;
           colors.push(c.r, c.g, c.b, alpha);
         }
       }

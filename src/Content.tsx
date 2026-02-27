@@ -85,38 +85,32 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
     }
   }, [snap.season]);
 
-  return (
-    <>
-      {/* Core scene */}
-      <CameraController />
-      <Environment season={snap.season} />
-      <Lighting
-        timeOfDay={snap.timeOfDay}
-        season={snap.season}
-        isStorm={state.currentWeather === 'storm'}
-      />
-      <TerrainGrid grid={ecsGrid} season={snap.season} />
-      <BuildingRenderer buildings={buildings} />
-      <SceneProps season={snap.season} />
-      <ProceduralGoats />
-
-      {/* VFX layers */}
-      <WeatherFX />
-      <SmogOverlay />
-      <FireRenderer />
-      <AuraRenderer />
-      <LightningRenderer />
-      <TrainRenderer />
-      <VehicleRenderer />
-      <ZeppelinRenderer />
-      <MeteorRenderer />
-      <FloatingText />
-
-      {/* Interaction */}
-      <GhostPreview />
-      <LensSystem />
-    </>
-  );
+  // Core scene + VFX layers + Interaction
+  return (<>
+    <CameraController />
+    <Environment season={snap.season} />
+    <Lighting
+      timeOfDay={snap.timeOfDay}
+      season={snap.season}
+      isStorm={state.currentWeather === 'storm'}
+    />
+    <TerrainGrid grid={ecsGrid} season={snap.season} />
+    <BuildingRenderer buildings={buildings} />
+    <SceneProps season={snap.season} />
+    <ProceduralGoats />
+    <WeatherFX />
+    <SmogOverlay />
+    <FireRenderer />
+    <AuraRenderer />
+    <LightningRenderer />
+    <TrainRenderer />
+    <VehicleRenderer />
+    <ZeppelinRenderer />
+    <MeteorRenderer />
+    <FloatingText />
+    <GhostPreview />
+    <LensSystem />
+  </>);
 };
 
 export default Content;
