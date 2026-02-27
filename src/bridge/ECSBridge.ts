@@ -43,7 +43,7 @@ export function getBuildingStates(): BuildingState[] {
       gridY: position.gridY,
       elevation: elevationMap.get(key) ?? 0,
       powered: building.powered,
-      onFire: false, // ECS doesn't track fire state yet
+      onFire: entity.building.onFire === true
     };
   });
 }
@@ -101,12 +101,16 @@ export function getGridCells(): GridCell[][] {
     }
   }
 
-  // Mark building cells
+  // Mark building cells (include fire state from ECS)
   for (const entity of buildings.entities) {
     const { position, building } = entity;
     const { gridX, gridY } = position;
     if (gridY >= 0 && gridY < GRID_SIZE && gridX >= 0 && gridX < GRID_SIZE) {
-      grid[gridY][gridX].type = building.defId;
+      const cell = grid[gridY][gridX];
+      cell.type = building.defId;
+      if (building.onFire) {
+        cell.onFire = Math.max(1, Math.min(building.fireTicksRemaining ?? 1, 15));
+      }
     }
   }
 

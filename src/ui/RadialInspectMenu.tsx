@@ -25,6 +25,7 @@ import Svg, {
 import { getBuildingDef } from '../data/buildingDefs';
 import {
   closeInspectMenu,
+  openBuildingInspector,
   type InspectBuildingType,
   type InspectMenuState,
   useInspectMenu,
@@ -59,6 +60,14 @@ const BASE_ACTIONS: ActionDef[] = [
       const name = def?.presentation.name ?? state.buildingDefId;
       const powered = def?.stats.powerReq ? `Power: ${def.stats.powerReq}W` : 'No power needed';
       return `${name} [${state.gridX},${state.gridY}] ${powered}`;
+    },
+    onActivate: (state) => {
+      openBuildingInspector({
+        buildingDefId: state.buildingDefId,
+        gridX: state.gridX,
+        gridY: state.gridY,
+      });
+      return null; // Close radial menu
     },
   },
   {

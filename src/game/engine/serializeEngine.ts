@@ -39,6 +39,8 @@ import type { TransportSystem } from '../TransportSystem';
 import { TransportSystem as TransportSystemClass } from '../TransportSystem';
 import type { TutorialSystem } from '../TutorialSystem';
 import { TutorialSystem as TutorialSystemClass } from '../TutorialSystem';
+import type { FireSystem } from '../FireSystem';
+import { FireSystem as FireSystemClass } from '../FireSystem';
 
 /** Maps game EraSystem IDs to EconomySystem EraIds (needed for fallback on restore). */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -70,6 +72,7 @@ export interface SerializableEngine {
   achievements: AchievementTracker;
   mandateState: PlanMandateState | null;
   transport: TransportSystem;
+  fireSystem: FireSystem;
   quota: QuotaState;
   consecutiveQuotaFailures: number;
   lastSeason: string;
@@ -113,6 +116,7 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
     achievements: engine.achievements.serialize(),
     mandates: engine.mandateState ?? undefined,
     transport: engine.transport.serialize(),
+    fire: engine.fireSystem.serialize(),
     engineState: {
       lastSeason: engine.lastSeason,
       lastWeather: engine.lastWeather,
@@ -216,6 +220,10 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
   if (data.transport) {
     engine.transport = TransportSystemClass.deserialize(data.transport);
     if (engine.rng) engine.transport.setRng(engine.rng);
+  }
+
+  if (data.fire) {
+    engine.fireSystem = FireSystemClass.deserialize(data.fire, engine.rng ?? undefined);
   }
 
   if (data.engineState) {

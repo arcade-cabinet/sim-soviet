@@ -615,6 +615,80 @@ function subscribeInspectMenu(listener: () => void): () => void {
   };
 }
 
+// ── Building Inspector Panel ──────────────────────────────────────────────
+
+export interface BuildingInspectorState {
+  buildingDefId: string;
+  gridX: number;
+  gridY: number;
+}
+
+let _buildingInspector: BuildingInspectorState | null = null;
+const _buildingInspectorListeners = new Set<() => void>();
+
+export function getBuildingInspector(): BuildingInspectorState | null {
+  return _buildingInspector;
+}
+
+export function openBuildingInspector(state: BuildingInspectorState): void {
+  _buildingInspector = state;
+  for (const listener of _buildingInspectorListeners) {
+    listener();
+  }
+}
+
+export function closeBuildingInspector(): void {
+  _buildingInspector = null;
+  for (const listener of _buildingInspectorListeners) {
+    listener();
+  }
+}
+
+export function useBuildingInspector(): BuildingInspectorState | null {
+  return useSyncExternalStore(subscribeBuildingInspector, getBuildingInspector, getBuildingInspector);
+}
+
+function subscribeBuildingInspector(listener: () => void): () => void {
+  _buildingInspectorListeners.add(listener);
+  return () => {
+    _buildingInspectorListeners.delete(listener);
+  };
+}
+
+// ── Citizen Dossier Index ─────────────────────────────────────────────────
+
+let _citizenDossierIndex: number | null = null;
+const _citizenDossierIndexListeners = new Set<() => void>();
+
+export function getCitizenDossierIndex(): number | null {
+  return _citizenDossierIndex;
+}
+
+export function openCitizenDossierByIndex(index: number): void {
+  _citizenDossierIndex = index;
+  for (const listener of _citizenDossierIndexListeners) {
+    listener();
+  }
+}
+
+export function closeCitizenDossierByIndex(): void {
+  _citizenDossierIndex = null;
+  for (const listener of _citizenDossierIndexListeners) {
+    listener();
+  }
+}
+
+export function useCitizenDossierIndex(): number | null {
+  return useSyncExternalStore(subscribeCitizenDossierIndex, getCitizenDossierIndex, getCitizenDossierIndex);
+}
+
+function subscribeCitizenDossierIndex(listener: () => void): () => void {
+  _citizenDossierIndexListeners.add(listener);
+  return () => {
+    _citizenDossierIndexListeners.delete(listener);
+  };
+}
+
 // ── Placement Callback (bridges React → imperative CanvasGestureManager) ─
 
 type PlacementCallback = (gridX: number, gridY: number, defId: string) => boolean;

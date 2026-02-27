@@ -35,9 +35,19 @@ import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
 import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
-import { initGame, isGameInitialized, getSaveSystem, type GameInitOptions } from './bridge/GameInit';
+import { initGame, isGameInitialized, getEngine, getSaveSystem, type GameInitOptions } from './bridge/GameInit';
+import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
 import { initDatabase, persistToIndexedDB } from './db/provider';
-import { notifyStateChange, setPaused, isPaused, setGameSpeed } from './stores/gameStore';
+import {
+  notifyStateChange,
+  setPaused,
+  isPaused,
+  setGameSpeed,
+  useBuildingInspector,
+  closeBuildingInspector,
+  useCitizenDossierIndex,
+  closeCitizenDossierByIndex,
+} from './stores/gameStore';
 import { getTotalModelCount } from './scene/ModelCache';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import {
@@ -100,6 +110,8 @@ import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { EconomyDetailPanel } from './ui/EconomyDetailPanel';
 import { SaveLoadPanel } from './ui/SaveLoadPanel';
+import { BuildingInspectorPanel } from './ui/BuildingInspectorPanel';
+import { CitizenDossierModal } from './ui/CitizenDossierModal';
 import { Colors } from './ui/styles';
 
 /**
@@ -213,6 +225,26 @@ const App: React.FC = () => {
   // Subscribe to game state (old hook — still used by 3D scene components)
   const snap = useGameSnapshot();
 
+  // ── Building Inspector + Citizen Dossier (store-driven panels) ──
+  const buildingInspector = useBuildingInspector();
+  const citizenDossierIdx = useCitizenDossierIndex();
+
+  const handleDismissBuildingInspector = useCallback(() => {
+    closeBuildingInspector();
+  }, []);
+
+  const handleDemolishInspected = useCallback(() => {
+    if (buildingInspector) {
+      bulldozeECSBuilding(buildingInspector.gridX, buildingInspector.gridY);
+      closeBuildingInspector();
+      notifyStateChange();
+    }
+  }, [buildingInspector]);
+
+  const handleDismissCitizenDossier = useCallback(() => {
+    closeCitizenDossierByIndex();
+  }, []);
+
   // Initialize ECS world and SimulationEngine when entering game
   useEffect(() => {
     if (screen !== 'game' || isGameInitialized()) return;
@@ -244,6 +276,15 @@ const App: React.FC = () => {
             );
             if (b) b.powered = e.building.powered;
           }
+
+          // Sync fire + zeppelin state from ECS → GameState for 3D renderers
+          const eng = getEngine();
+          if (eng) {
+            const fireSys = eng.getFireSystem();
+            fireSys.syncToGameState(gameState.grid);
+            gameState.zeppelins = fireSys.getZeppelinRenderState();
+          }
+
           notifyStateChange();
           gameState.notify();
         },
@@ -848,6 +889,21 @@ const App: React.FC = () => {
           saveNames={saveNames}
           autoSaveEnabled
           lastSaveTime={lastSaveTime}
+        />
+
+        <BuildingInspectorPanel
+          visible={!!buildingInspector}
+          buildingDefId={buildingInspector?.buildingDefId ?? ''}
+          gridX={buildingInspector?.gridX ?? 0}
+          gridY={buildingInspector?.gridY ?? 0}
+          onDismiss={handleDismissBuildingInspector}
+          onDemolish={handleDemolishInspected}
+        />
+
+        <CitizenDossierModal
+          visible={citizenDossierIdx != null}
+          citizenIndex={citizenDossierIdx ?? 0}
+          onDismiss={handleDismissCitizenDossier}
         />
 
         <SettingsModal

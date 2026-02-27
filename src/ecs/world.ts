@@ -59,6 +59,10 @@ export interface BuildingComponent {
   constructionProgress?: number;
   /** Integer ticks elapsed during construction (avoids floating-point accumulation) */
   constructionTicks?: number;
+  /** Whether this building is currently on fire */
+  onFire?: boolean;
+  /** Ticks remaining until fire self-extinguishes (0 = not burning) */
+  fireTicksRemaining?: number;
 }
 
 /**

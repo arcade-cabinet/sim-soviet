@@ -17,6 +17,7 @@
  *   8. quotaSystem             — track 5-year plan progress
  *   9. SettlementSystem        — evaluate tier upgrades/downgrades
  *  10. EventSystem             — random satirical events
+ *  10b. FireSystem             — fire spread, damage, zeppelin firefighting
  *  11. PolitburoSystem         — corruption drain, politburo events
  *  12. PravdaSystem            — generate propaganda headlines
  *  13. PersonnelFile           — black mark decay, arrest check
@@ -30,6 +31,8 @@ import {
   getResourceEntity,
   operationalBuildings,
 } from '@/ecs/archetypes';
+import type { FireSystemSaveData } from './FireSystem';
+import { FireSystem } from './FireSystem';
 import type { QuotaState } from '@/ecs/systems';
 import {
   constructionSystem,
@@ -165,6 +168,7 @@ export interface SubsystemSaveData {
   achievements?: AchievementTrackerSaveData;
   mandates?: PlanMandateState;
   transport?: TransportSaveData;
+  fire?: FireSystemSaveData;
   /** Engine-level state */
   engineState?: {
     lastSeason: string;
@@ -188,6 +192,12 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
   eternal_soviet: 'eternal',
 };
 
+/** Event IDs that should ignite a building when triggered. */
+const FIRE_EVENT_IDS = new Set([
+  'cultural_palace_fire',
+  'power_station_explosion',
+]);
+
 export class SimulationEngine {
   private chronology: ChronologySystem;
   private eraSystem: EraSystem;
@@ -206,6 +216,7 @@ export class SimulationEngine {
   private achievements: AchievementTracker;
   private mandateState: PlanMandateState | null = null;
   private transport: TransportSystem;
+  private fireSystem: FireSystem;
   private difficulty: DifficultyLevel;
   private quota: QuotaState;
   private rng: GameRng | undefined;
@@ -267,6 +278,11 @@ export class SimulationEngine {
         // minor + trivial events
         this.callbacks.onToast(event.title, 'warning');
       }
+
+      // Fire-triggering events ignite a random building
+      if (FIRE_EVENT_IDS.has(event.id)) {
+        this.fireSystem.igniteRandom();
+      }
     };
 
     this.eventSystem = new EventSystem(this.eventHandler, rng);
@@ -314,6 +330,17 @@ export class SimulationEngine {
     // Transport System — road quality, condition degradation, maintenance
     this.transport = new TransportSystem(this.eraSystem.getCurrentEraId());
     if (rng) this.transport.setRng(rng);
+
+    // Fire System — fire spread, damage, zeppelin firefighting
+    this.fireSystem = new FireSystem(rng, {
+      onBuildingCollapsed: (gridX, gridY, defId) => {
+        this.callbacks.onToast(`FIRE DESTROYED: ${defId} at (${gridX}, ${gridY})`, 'critical');
+        this.callbacks.onBuildingCollapsed?.(gridX, gridY, defId);
+      },
+      onFireStarted: (gridX, gridY) => {
+        this.callbacks.onToast(`FIRE AT (${gridX}, ${gridY})`, 'warning');
+      },
+    });
 
     // Disease System — outbreak/recovery/mortality per citizen
     initDiseaseSystem(rng ?? null);
@@ -397,6 +424,10 @@ export class SimulationEngine {
     return this.tutorial;
   }
 
+  public getFireSystem(): FireSystem {
+    return this.fireSystem;
+  }
+
   public getAchievements(): AchievementTracker {
     return this.achievements;
   }
@@ -448,6 +479,7 @@ export class SimulationEngine {
     this.achievements = se.achievements;
     this.mandateState = se.mandateState;
     this.transport = se.transport;
+    this.fireSystem = se.fireSystem;
     this.consecutiveQuotaFailures = se.consecutiveQuotaFailures;
     this.lastSeason = se.lastSeason;
     this.lastWeather = se.lastWeather;
@@ -641,6 +673,9 @@ export class SimulationEngine {
     // 8-10. Events, Politburo, and Pravda
     this.eventSystem.tick(this.chronology.getDate().totalTicks, eraMods.eventFrequencyMult);
 
+    // Fire System — spread, damage, zeppelin AI (after events so new fires are processed)
+    this.fireSystem.tick(tickResult.weather, this.grid);
+
     // PolitburoSystem now writes ECS directly — no delta-capture hack needed
     this.politburo.setCorruptionMult(eraMods.corruptionMult);
     this.politburo.tick(tickResult);
@@ -754,6 +789,7 @@ export class SimulationEngine {
       achievements: this.achievements,
       mandateState: this.mandateState,
       transport: this.transport,
+      fireSystem: this.fireSystem,
       quota: this.quota,
       consecutiveQuotaFailures: this.consecutiveQuotaFailures,
       lastSeason: this.lastSeason,
