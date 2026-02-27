@@ -86,6 +86,11 @@ import { RadialInspectMenu } from './ui/RadialInspectMenu';
 import { EventHistoryPanel } from './ui/EventHistoryPanel';
 import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
 import { ScoringPanel } from './ui/ScoringPanel';
+import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
+import { EraTechTreePanel } from './ui/EraTechTreePanel';
+import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
+import { PolitburoPanel } from './ui/PolitburoPanel';
+import { CompulsoryDeliveriesPanel } from './ui/CompulsoryDeliveriesPanel';
 import { Colors } from './ui/styles';
 
 type AppScreen = 'menu' | 'setup' | 'game';
@@ -122,6 +127,11 @@ const App: React.FC = () => {
   const [showEvents, setShowEvents] = useState(false);
   const [showPolitical, setShowPolitical] = useState(false);
   const [showScoring, setShowScoring] = useState(false);
+  const [showWeather, setShowWeather] = useState(false);
+  const [showEra, setShowEra] = useState(false);
+  const [showSettlement, setShowSettlement] = useState(false);
+  const [showPolitburo, setShowPolitburo] = useState(false);
+  const [showDeliveries, setShowDeliveries] = useState(false);
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -379,6 +389,21 @@ const App: React.FC = () => {
   const handleShowScoring = useCallback(() => {
     setShowScoring(true);
   }, []);
+  const handleShowWeather = useCallback(() => {
+    setShowWeather(true);
+  }, []);
+  const handleShowEra = useCallback(() => {
+    setShowEra(true);
+  }, []);
+  const handleShowSettlement = useCallback(() => {
+    setShowSettlement(true);
+  }, []);
+  const handleShowPolitburo = useCallback(() => {
+    setShowPolitburo(true);
+  }, []);
+  const handleShowDeliveries = useCallback(() => {
+    setShowDeliveries(true);
+  }, []);
 
   // --- Modal callbacks ---
   const handleDismissEra = useCallback(() => setEraTransition(null), []);
@@ -482,6 +507,11 @@ const App: React.FC = () => {
               onShowEvents={handleShowEvents}
               onShowPolitical={handleShowPolitical}
               onShowScoring={handleShowScoring}
+              onShowWeather={handleShowWeather}
+              onShowEra={handleShowEra}
+              onShowSettlement={handleShowSettlement}
+              onShowPolitburo={handleShowPolitburo}
+              onShowDeliveries={handleShowDeliveries}
             />
 
             <Toast
@@ -612,6 +642,31 @@ const App: React.FC = () => {
         <ScoringPanel
           visible={showScoring}
           onDismiss={() => setShowScoring(false)}
+        />
+
+        <WeatherForecastPanel
+          visible={showWeather}
+          onDismiss={() => setShowWeather(false)}
+        />
+
+        <EraTechTreePanel
+          visible={showEra}
+          onDismiss={() => setShowEra(false)}
+        />
+
+        <SettlementProgressPanel
+          visible={showSettlement}
+          onDismiss={() => setShowSettlement(false)}
+        />
+
+        <PolitburoPanel
+          visible={showPolitburo}
+          onDismiss={() => setShowPolitburo(false)}
+        />
+
+        <CompulsoryDeliveriesPanel
+          visible={showDeliveries}
+          onDismiss={() => setShowDeliveries(false)}
         />
 
         <SettingsModal
