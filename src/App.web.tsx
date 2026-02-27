@@ -78,6 +78,9 @@ import { SettingsModal } from './ui/SettingsModal';
 import { LeadershipPanel } from './ui/LeadershipPanel';
 import { EconomyPanel } from './ui/EconomyPanel';
 import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
+import { MandateProgressPanel } from './ui/MandateProgressPanel';
+import { DiseasePanel } from './ui/DiseasePanel';
+import { InfrastructurePanel } from './ui/InfrastructurePanel';
 import { Colors } from './ui/styles';
 
 type AppScreen = 'menu' | 'setup' | 'game';
@@ -108,6 +111,9 @@ const App: React.FC = () => {
   const [showLeadership, setShowLeadership] = useState(false);
   const [showEconomy, setShowEconomy] = useState(false);
   const [showWorkers, setShowWorkers] = useState(false);
+  const [showMandates, setShowMandates] = useState(false);
+  const [showDisease, setShowDisease] = useState(false);
+  const [showInfra, setShowInfra] = useState(false);
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -345,6 +351,18 @@ const App: React.FC = () => {
     setShowWorkers(true);
   }, []);
 
+  const handleShowMandates = useCallback(() => {
+    setShowMandates(true);
+  }, []);
+
+  const handleShowDisease = useCallback(() => {
+    setShowDisease(true);
+  }, []);
+
+  const handleShowInfra = useCallback(() => {
+    setShowInfra(true);
+  }, []);
+
   // --- Modal callbacks ---
   const handleDismissEra = useCallback(() => setEraTransition(null), []);
   const handleMinigameChoice = useCallback((choiceId: string) => {
@@ -441,6 +459,9 @@ const App: React.FC = () => {
               onShowLeadership={handleShowLeadership}
               onShowEconomy={handleShowEconomy}
               onShowWorkers={handleShowWorkers}
+              onShowMandates={handleShowMandates}
+              onShowDisease={handleShowDisease}
+              onShowInfra={handleShowInfra}
             />
 
             <Toast
@@ -541,6 +562,21 @@ const App: React.FC = () => {
         <WorkerRosterPanel
           visible={showWorkers}
           onDismiss={() => setShowWorkers(false)}
+        />
+
+        <MandateProgressPanel
+          visible={showMandates}
+          onDismiss={() => setShowMandates(false)}
+        />
+
+        <DiseasePanel
+          visible={showDisease}
+          onDismiss={() => setShowDisease(false)}
+        />
+
+        <InfrastructurePanel
+          visible={showInfra}
+          onDismiss={() => setShowInfra(false)}
         />
 
         <SettingsModal
