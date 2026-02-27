@@ -69,7 +69,11 @@ export function getUpgradeInfo(defId: string): {
 
   const nextDefId = chain[nextLevel];
   const nextDef = getBuildingDef(nextDefId);
-  const baseCost = nextDef?.presentation.cost ?? 0;
+  if (!nextDef) {
+    console.error(`[BuildingPlacement] getUpgradeInfo: unknown defId "${nextDefId}" in upgrade chain`);
+    return null;
+  }
+  const baseCost = nextDef.presentation.cost;
   const multiplier = UPGRADE_COST_MULTIPLIER[nextLevel] ?? 1;
   const cost = Math.ceil(baseCost * multiplier);
 
@@ -170,6 +174,13 @@ export function placeECSBuilding(
 
   const def = getBuildingDef(defId);
   const cost = def?.presentation.cost ?? BUILDING_TYPES[toolKey]?.cost ?? 0;
+
+  // FIX-02: Reject placement if cost resolves to zero or negative — indicates missing def data
+  if (cost <= 0) {
+    console.error(`[BuildingPlacement] Cost resolved to ${cost} for defId "${defId}" (tool "${toolKey}") — rejecting placement`);
+    return false;
+  }
+
   if (res.resources.money < cost) return false;
 
   // Deduct cost from ECS resources
@@ -282,32 +293,36 @@ export function upgradeECSBuilding(
   if (!res) {
     return { success: false, reason: 'Resource store not found' };
   }
+
+  // FIX-03: Validate upgrade def BEFORE charging the player
+  const newDef = getBuildingDef(upgradeInfo.nextDefId);
+  if (!newDef) {
+    return { success: false, reason: `Unknown upgrade target: "${upgradeInfo.nextDefId}"` };
+  }
+
   if (res.resources.money < upgradeInfo.cost) {
     return { success: false, reason: `Insufficient funds (need ${upgradeInfo.cost} rubles)` };
   }
 
-  // Deduct cost
+  // Deduct cost (only after all validation passes)
   res.resources.money -= upgradeInfo.cost;
 
-  // Get the new building def for updated stats
-  const newDef = getBuildingDef(upgradeInfo.nextDefId);
-
-  // Update ECS building component
+  // Update ECS building component — newDef guaranteed non-null
   entity.building.defId = upgradeInfo.nextDefId;
   entity.building.level = upgradeInfo.nextLevel;
-  entity.building.powerReq = newDef?.stats.powerReq ?? entity.building.powerReq;
-  entity.building.powerOutput = newDef?.stats.powerOutput ?? entity.building.powerOutput;
-  entity.building.housingCap = newDef?.stats.housingCap ?? entity.building.housingCap;
-  entity.building.pollution = newDef?.stats.pollution ?? entity.building.pollution;
-  entity.building.fear = newDef?.stats.fear ?? entity.building.fear;
-  entity.building.produces = newDef?.stats.produces ?? entity.building.produces;
+  entity.building.powerReq = newDef.stats.powerReq;
+  entity.building.powerOutput = newDef.stats.powerOutput;
+  entity.building.housingCap = newDef.stats.housingCap;
+  entity.building.pollution = newDef.stats.pollution;
+  entity.building.fear = newDef.stats.fear;
+  entity.building.produces = newDef.stats.produces;
 
   // Update renderable sprite info
   if (entity.renderable) {
     entity.renderable.spriteId = upgradeInfo.nextDefId;
-    entity.renderable.spritePath = newDef?.sprite.path ?? '';
-    entity.renderable.footprintX = newDef?.footprint.tilesX ?? 1;
-    entity.renderable.footprintY = newDef?.footprint.tilesY ?? 1;
+    entity.renderable.spritePath = newDef.sprite.path;
+    entity.renderable.footprintX = newDef.footprint.tilesX;
+    entity.renderable.footprintY = newDef.footprint.tilesY;
   }
 
   // Update spatial grid

@@ -31,6 +31,7 @@ interface ModelTemplate {
 const templates = new Map<string, ModelTemplate>();
 let preloaded = false;
 let loadedCount = 0;
+const failedModels: string[] = [];
 
 /** Progress callback: (loaded, total, currentModelName) */
 export type ModelLoadProgress = (loaded: number, total: number, name: string) => void;
@@ -89,6 +90,7 @@ export async function preloadModels(
           onProgress?.(loadedCount, total, name);
         } catch (err) {
           console.warn(`[ModelCache] Failed to load model "${name}":`, err);
+          failedModels.push(name);
           loadedCount++;
           onProgress?.(loadedCount, total, name);
         }
@@ -163,6 +165,11 @@ export function hasModel(name: string): boolean {
   return templates.has(name);
 }
 
+/** Get list of model names that failed to load. */
+export function getFailedModels(): string[] {
+  return [...failedModels];
+}
+
 /** Number of successfully loaded model templates. */
 export function getLoadedCount(): number {
   return loadedCount;
@@ -186,4 +193,5 @@ export function disposeAll(): void {
   templates.clear();
   preloaded = false;
   loadedCount = 0;
+  failedModels.length = 0;
 }

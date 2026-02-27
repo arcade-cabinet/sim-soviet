@@ -143,6 +143,8 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
       if (!citizen) continue;
 
       const cls = citizen.class;
+      if (!citizen.gender) console.warn(`[WorkerRoster] Citizen missing gender`);
+      if (citizen.age == null) console.warn(`[WorkerRoster] Citizen missing age`);
       const gender = citizen.gender ?? 'male';
       const age = citizen.age ?? 25;
       const hasDiseaseFlag = citizen.disease != null;

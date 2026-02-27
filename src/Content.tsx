@@ -11,7 +11,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useScene } from 'reactylon';
 import { useGameSnapshot } from './hooks/useGameState';
-import { preloadModels, type ModelLoadProgress } from './scene/ModelCache';
+import { preloadModels, getFailedModels, type ModelLoadProgress } from './scene/ModelCache';
 import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
@@ -51,6 +51,10 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
   useEffect(() => {
     preloadModels(scene, 'assets', onLoadProgress)
       .then(() => {
+        const failed = getFailedModels();
+        if (failed.length > 0) {
+          console.warn(`[Content] ${failed.length} model(s) failed to load: ${failed.join(', ')}`);
+        }
         // Notify forces re-render through useSyncExternalStore,
         // so BuildingRenderer retries cloning now that models are ready
         gameState.notify();

@@ -516,6 +516,7 @@ export class WorkerSystem {
         }
       }
       if (weakest) {
+        if (!this.stats.has(weakest)) console.error('[WorkerSystem] Removing untracked entity');
         const name = this.stats.get(weakest)?.name ?? 'Unknown';
         result.removedNames.push(name);
         this.removeWorker(weakest, 'natural_attrition');
@@ -554,6 +555,7 @@ export class WorkerSystem {
       const unassigned = [...citizens].filter((e) => !e.citizen.assignment && this.stats.has(e));
       if (unassigned.length > 0) {
         const leaver = this.rng.pick(unassigned);
+        if (!this.stats.has(leaver)) console.error('[WorkerSystem] Removing untracked entity');
         const name = this.stats.get(leaver)?.name ?? 'Unknown';
         result.removedNames.push(name);
         this.removeWorker(leaver, 'youth_flight');

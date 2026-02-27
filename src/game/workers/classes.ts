@@ -158,11 +158,12 @@ export function checkDefection(
   rng: GameRng | null
 ): boolean {
   if (cls === 'prisoner') {
-    return !!rng?.coinFlip(PRISONER_ESCAPE_CHANCE);
+    // FIX-17: Fall back to Math.random() when no seeded RNG — events must still fire
+    return rng ? rng.coinFlip(PRISONER_ESCAPE_CHANCE) : Math.random() < PRISONER_ESCAPE_CHANCE;
   }
   if (stats.loyalty < DEFECTION_LOYALTY_THRESHOLD) {
     const chance = DEFECTION_BASE_CHANCE * (1 - stats.loyalty / DEFECTION_LOYALTY_THRESHOLD);
-    return !!rng?.coinFlip(chance);
+    return rng ? rng.coinFlip(chance) : Math.random() < chance;
   }
   return false;
 }

@@ -29,6 +29,9 @@ import type { SimulationEngine, SubsystemSaveData } from './SimulationEngine';
 
 const LOCALSTORAGE_KEY = 'simsoviet_save_v2';
 
+/** Module-level flag to log SQLite fallback warning only once. */
+let _sqliteWarningLogged = false;
+
 /** Shape of building data in save files. */
 interface BuildingSaveEntry {
   x: number;
@@ -123,7 +126,8 @@ export class SaveSystem {
         return rows.length > 0;
       }
       return localStorage.getItem(LOCALSTORAGE_KEY) !== null;
-    } catch {
+    } catch (error) {
+      console.error('[SaveSystem] hasSave failed:', error);
       return false;
     }
   }
@@ -137,7 +141,8 @@ export class SaveSystem {
         return rows.length > 0;
       }
       return localStorage.getItem(LOCALSTORAGE_KEY) !== null;
-    } catch {
+    } catch (error) {
+      console.error('[SaveSystem] hasAnySave failed:', error);
       return false;
     }
   }
@@ -151,7 +156,8 @@ export class SaveSystem {
         return rows.map((r) => r.name);
       }
       return localStorage.getItem(LOCALSTORAGE_KEY) !== null ? ['autosave'] : [];
-    } catch {
+    } catch (error) {
+      console.error('[SaveSystem] listSaves failed:', error);
       return [];
     }
   }
@@ -171,7 +177,8 @@ export class SaveSystem {
         return data.timestamp;
       }
       return undefined;
-    } catch {
+    } catch (error) {
+      console.error('[SaveSystem] getLastSaveTime failed:', error);
       return undefined;
     }
   }
@@ -350,7 +357,11 @@ export class SaveSystem {
   private tryGetDb(): SQLJsDatabase<typeof dbSchema> | null {
     try {
       return getDatabase();
-    } catch {
+    } catch (error) {
+      if (!_sqliteWarningLogged) {
+        console.warn('[SaveSystem] SQLite unavailable, using localStorage fallback:', error);
+        _sqliteWarningLogged = true;
+      }
       return null;
     }
   }

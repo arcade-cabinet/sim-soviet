@@ -524,6 +524,13 @@ export class SimulationEngine {
   public tick(): void {
     if (this.ended) return;
 
+    // FIX-05: Guard against missing resource entity — abort tick entirely
+    const storeRef = getResourceEntity();
+    if (!storeRef) {
+      console.error('[SimulationEngine] Resource entity missing — aborting tick');
+      return;
+    }
+
     // 1. Advance time via ChronologySystem
     const tickResult = this.chronology.tick();
     this.syncChronologyToMeta(tickResult);
@@ -552,13 +559,12 @@ export class SimulationEngine {
     powerSystem();
 
     // Transport System — road quality, condition decay, maintenance, mitigation
-    const storeRef = getResourceEntity();
     const transportResult = this.transport.tick(
       operationalBuildings.entities,
       this.settlement.getCurrentTier(),
       this.chronology.getDate().totalTicks,
       tickResult.season,
-      storeRef?.resources
+      storeRef.resources
     );
 
     constructionSystem(
@@ -568,9 +574,9 @@ export class SimulationEngine {
     );
 
     // Capture pre-production resource levels for CompulsoryDeliveries delta
-    const foodBefore = storeRef?.resources.food ?? 0;
-    const vodkaBefore = storeRef?.resources.vodka ?? 0;
-    const moneyBefore = storeRef?.resources.money ?? 0;
+    const foodBefore = storeRef.resources.food;
+    const vodkaBefore = storeRef.resources.vodka;
+    const moneyBefore = storeRef.resources.money;
 
     productionSystem(farmMod, vodkaMod);
 
@@ -583,7 +589,7 @@ export class SimulationEngine {
     // Apply CompulsoryDeliveries — state extraction of new production + income
     // Runs AFTER both productionSystem and economySystem so we capture all
     // new food, vodka, and money generated this tick.
-    if (storeRef) {
+    {
       const newFood = Math.max(0, storeRef.resources.food - foodBefore);
       const newVodka = Math.max(0, storeRef.resources.vodka - vodkaBefore);
       const newMoney = Math.max(0, storeRef.resources.money - moneyBefore);
@@ -603,7 +609,7 @@ export class SimulationEngine {
       this.chronology.getDate().month
     );
     // Sync disease deaths to the resource store
-    if (diseaseResult.deaths > 0 && storeRef) {
+    if (diseaseResult.deaths > 0) {
       storeRef.resources.population = Math.max(
         0,
         storeRef.resources.population - diseaseResult.deaths
@@ -630,23 +636,21 @@ export class SimulationEngine {
     );
 
     // Worker System — sync citizen entities to match population, then tick worker stats
-    const pop = getResourceEntity()?.resources.population ?? 0;
+    const pop = storeRef.resources.population;
     this.workerSystem.syncPopulation(pop);
-    const vodkaAvail = getResourceEntity()?.resources.vodka ?? 0;
-    const foodAvail = getResourceEntity()?.resources.food ?? 0;
+    const vodkaAvail = storeRef.resources.vodka;
+    const foodAvail = storeRef.resources.food;
     this.workerSystem.tick(vodkaAvail, foodAvail);
 
     // Demographic System — births, deaths, aging for dvor households
-    const normalizedFood = storeRef
-      ? Math.min(1, storeRef.resources.food / Math.max(1, storeRef.resources.population * 2))
-      : 0.5;
+    const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, storeRef.resources.population * 2));
     const demoResult = demographicTick(
       this.rng ?? null,
       this.chronology.getDate().totalTicks,
       normalizedFood
     );
     // Sync dvor population changes to the resource store
-    if (storeRef && (demoResult.births > 0 || demoResult.deaths > 0)) {
+    if (demoResult.births > 0 || demoResult.deaths > 0) {
       storeRef.resources.population = Math.max(
         0,
         storeRef.resources.population + demoResult.births - demoResult.deaths
@@ -724,9 +728,8 @@ export class SimulationEngine {
     this.syncSystemsToMeta();
 
     // Check loss: population wiped out (only after first year so starting at 0 doesn't auto-lose)
-    const store = getResourceEntity();
     if (
-      (store?.resources.population ?? 0) <= 0 &&
+      storeRef.resources.population <= 0 &&
       this.chronology.getDate().totalTicks > TICKS_PER_YEAR &&
       buildingsLogic.entities.length > 0
     ) {

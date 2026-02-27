@@ -197,14 +197,18 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
   const workerStats = statsMap?.get(entity) ?? null;
 
   // Basic identity — prefer WorkerSystem name, fall back to ECS citizen name
-  const name = workerInfo?.name ?? citizen.name ?? 'Unknown Comrade';
+  if (workerInfo == null && citizen.name == null) {
+    console.warn(`[CitizenDossier] Citizen entity at index ${citizenIndex} has no name`);
+  }
+  const name = workerInfo?.name ?? citizen.name ?? (workerInfo == null && citizen.name == null ? 'RECORDS MISSING' : 'Unknown Comrade');
   const cls = citizen.class;
   const classLabel = CLASS_LABELS[cls] ?? cls;
   const classIcon = CLASS_ICONS[cls] ?? '\u2638';
   const gender = citizen.gender;
   const age = citizen.age;
 
-  // Stats
+  // Stats — if workerStats is null, we have no real data; flag for UI below
+  const hasWorkerStats = workerStats != null;
   const morale = workerStats?.morale ?? citizen.happiness;
   const loyalty = workerStats?.loyalty ?? 50;
   const skill = workerStats?.skill ?? 0;
@@ -239,7 +243,7 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
   const draftStatus = getDraftStatus(cls, gender, age);
 
   // Worker status
-  const status = workerInfo?.status ?? 'idle';
+  const status = workerInfo?.status ?? (workerInfo == null ? 'UNREGISTERED' : 'idle');
   const statusLabel = status.toUpperCase();
   const statusColor =
     status === 'working' ? Colors.termGreen :
@@ -320,11 +324,21 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
 
       {/* Stats Bars */}
       <SectionDivider label="Psychological Profile" />
-      <DossierBar label="MORALE" value={morale} />
-      <DossierBar label="LOYALTY" value={loyalty} />
-      <DossierBar label="SKILL" value={skill} />
-      <DossierBar label="HUNGER" value={hunger} inverse />
-      <DossierBar label="VODKA DEPENDENCY" value={vodkaDep} inverse />
+      {hasWorkerStats ? (
+        <>
+          <DossierBar label="MORALE" value={morale} />
+          <DossierBar label="LOYALTY" value={loyalty} />
+          <DossierBar label="SKILL" value={skill} />
+          <DossierBar label="HUNGER" value={hunger} inverse />
+          <DossierBar label="VODKA DEPENDENCY" value={vodkaDep} inverse />
+        </>
+      ) : (
+        <View style={styles.commissarBox}>
+          <Text style={styles.warningNote}>
+            NO WORKER FILE {'\u2014'} UNREGISTERED CITIZEN
+          </Text>
+        </View>
+      )}
 
       {/* Production Efficiency */}
       {workerInfo?.productionEfficiency != null && (
