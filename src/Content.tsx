@@ -36,7 +36,7 @@ import LensSystem from './scene/LensSystem';
 import FloatingText from './scene/FloatingText';
 import Environment from './scene/Environment';
 import SceneProps from './scene/SceneProps';
-import ProceduralGoats from './scene/ProceduralGoats';
+
 
 interface ContentProps {
   onLoadProgress?: ModelLoadProgress;
@@ -97,7 +97,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
     <TerrainGrid grid={ecsGrid} season={snap.season} />
     <BuildingRenderer buildings={buildings} />
     <SceneProps season={snap.season} />
-    <ProceduralGoats />
+
     <WeatherFX />
     <SmogOverlay />
     <FireRenderer />

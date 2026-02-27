@@ -1,0 +1,442 @@
+{
+  "version": "1.0.0",
+  "generator": "render_sprites.py",
+  "camera": {
+    "projection": "orthographic",
+    "type": "dimetric_2:1",
+    "rotation_x_deg": 60,
+    "rotation_z_deg": 45,
+    "note": "Matches SimCity 2000 / classic isometric viewing angle"
+  },
+  "scale": {
+    "pixels_per_unit": 80,
+    "frame_padding": 1.25
+  },
+  "sprites": {
+    "apartment-tower-a": {
+      "sprite": "sprites/soviet/apartment-tower-a.png",
+      "role": "housing",
+      "width": 126,
+      "height": 236,
+      "anchor_x": 59,
+      "anchor_y": 207,
+      "model_size": {
+        "x": 1.1,
+        "y": 1.25,
+        "z": 2.5
+      }
+    },
+    "apartment-tower-b": {
+      "sprite": "sprites/soviet/apartment-tower-b.png",
+      "role": "housing",
+      "width": 126,
+      "height": 193,
+      "anchor_x": 59,
+      "anchor_y": 164,
+      "model_size": {
+        "x": 1.1,
+        "y": 1.25,
+        "z": 1.888
+      }
+    },
+    "apartment-tower-c": {
+      "sprite": "sprites/soviet/apartment-tower-c.png",
+      "role": "housing",
+      "width": 135,
+      "height": 280,
+      "anchor_x": 67,
+      "anchor_y": 252,
+      "model_size": {
+        "x": 1.1,
+        "y": 1.275,
+        "z": 3.138
+      }
+    },
+    "apartment-tower-d": {
+      "sprite": "sprites/soviet/apartment-tower-d.png",
+      "role": "housing",
+      "width": 126,
+      "height": 322,
+      "anchor_x": 63,
+      "anchor_y": 290,
+      "model_size": {
+        "x": 1.1,
+        "y": 1.1,
+        "z": 3.763
+      }
+    },
+    "barracks": {
+      "sprite": "sprites/soviet/barracks.png",
+      "role": "military",
+      "width": 129,
+      "height": 107,
+      "anchor_x": 66,
+      "anchor_y": 76,
+      "model_size": {
+        "x": 1.37,
+        "y": 0.916,
+        "z": 1.038
+      }
+    },
+    "bread-factory": {
+      "sprite": "sprites/soviet/bread-factory.png",
+      "role": "industry",
+      "width": 116,
+      "height": 115,
+      "anchor_x": 56,
+      "anchor_y": 88,
+      "model_size": {
+        "x": 1.034,
+        "y": 1.02,
+        "z": 1.049
+      }
+    },
+    "collective-farm-hq": {
+      "sprite": "sprites/soviet/collective-farm-hq.png",
+      "role": "agriculture",
+      "width": 108,
+      "height": 133,
+      "anchor_x": 55,
+      "anchor_y": 105,
+      "model_size": {
+        "x": 0.921,
+        "y": 1.02,
+        "z": 1.15
+      }
+    },
+    "concrete-block": {
+      "sprite": "sprites/soviet/concrete-block.png",
+      "role": "utility",
+      "width": 136,
+      "height": 120,
+      "anchor_x": 68,
+      "anchor_y": 85,
+      "model_size": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 0.625
+      }
+    },
+    "cultural-palace": {
+      "sprite": "sprites/soviet/cultural-palace.png",
+      "role": "culture",
+      "width": 151,
+      "height": 138,
+      "anchor_x": 76,
+      "anchor_y": 99,
+      "model_size": {
+        "x": 1.314,
+        "y": 1.406,
+        "z": 1.156
+      }
+    },
+    "factory-office": {
+      "sprite": "sprites/soviet/factory-office.png",
+      "role": "industry",
+      "width": 130,
+      "height": 114,
+      "anchor_x": 65,
+      "anchor_y": 81,
+      "model_size": {
+        "x": 1.286,
+        "y": 1.028,
+        "z": 1.034
+      }
+    },
+    "fence": {
+      "sprite": "sprites/soviet/fence.png",
+      "role": "environment",
+      "width": 52,
+      "height": 55,
+      "anchor_x": 26,
+      "anchor_y": 41,
+      "model_size": {
+        "x": 0.475,
+        "y": 0.075,
+        "z": 0.27
+      }
+    },
+    "fence-low": {
+      "sprite": "sprites/soviet/fence-low.png",
+      "role": "environment",
+      "width": 150,
+      "height": 90,
+      "anchor_x": 75,
+      "anchor_y": 55,
+      "model_size": {
+        "x": 1.275,
+        "y": 0.837,
+        "z": 0.17
+      }
+    },
+    "fire-station": {
+      "sprite": "sprites/soviet/fire-station.png",
+      "role": "services",
+      "width": 110,
+      "height": 125,
+      "anchor_x": 50,
+      "anchor_y": 95,
+      "model_size": {
+        "x": 1.028,
+        "y": 1.02,
+        "z": 1.141
+      }
+    },
+    "government-hq": {
+      "sprite": "sprites/soviet/government-hq.png",
+      "role": "government",
+      "width": 141,
+      "height": 107,
+      "anchor_x": 72,
+      "anchor_y": 71,
+      "model_size": {
+        "x": 1.3,
+        "y": 1.028,
+        "z": 0.834
+      }
+    },
+    "guard-post": {
+      "sprite": "sprites/soviet/guard-post.png",
+      "role": "military",
+      "width": 141,
+      "height": 105,
+      "anchor_x": 73,
+      "anchor_y": 68,
+      "model_size": {
+        "x": 1.286,
+        "y": 1.028,
+        "z": 0.738
+      }
+    },
+    "gulag-admin": {
+      "sprite": "sprites/soviet/gulag-admin.png",
+      "role": "military",
+      "width": 134,
+      "height": 121,
+      "anchor_x": 63,
+      "anchor_y": 85,
+      "model_size": {
+        "x": 1.428,
+        "y": 1.087,
+        "z": 1.137
+      }
+    },
+    "hospital": {
+      "sprite": "sprites/soviet/hospital.png",
+      "role": "services",
+      "width": 121,
+      "height": 123,
+      "anchor_x": 65,
+      "anchor_y": 89,
+      "model_size": {
+        "x": 1.24,
+        "y": 0.99,
+        "z": 0.918
+      }
+    },
+    "kgb-office": {
+      "sprite": "sprites/soviet/kgb-office.png",
+      "role": "government",
+      "width": 184,
+      "height": 140,
+      "anchor_x": 88,
+      "anchor_y": 106,
+      "model_size": {
+        "x": 1.784,
+        "y": 1.378,
+        "z": 1.137
+      }
+    },
+    "ministry-office": {
+      "sprite": "sprites/soviet/ministry-office.png",
+      "role": "government",
+      "width": 163,
+      "height": 124,
+      "anchor_x": 78,
+      "anchor_y": 84,
+      "model_size": {
+        "x": 1.828,
+        "y": 1.14,
+        "z": 1.138
+      }
+    },
+    "polyclinic": {
+      "sprite": "sprites/soviet/polyclinic.png",
+      "role": "services",
+      "width": 133,
+      "height": 132,
+      "anchor_x": 68,
+      "anchor_y": 99,
+      "model_size": {
+        "x": 1.3,
+        "y": 1.028,
+        "z": 1.137
+      }
+    },
+    "post-office": {
+      "sprite": "sprites/soviet/post-office.png",
+      "role": "services",
+      "width": 125,
+      "height": 120,
+      "anchor_x": 65,
+      "anchor_y": 87,
+      "model_size": {
+        "x": 1.27,
+        "y": 1.028,
+        "z": 1.138
+      }
+    },
+    "power-station": {
+      "sprite": "sprites/soviet/power-station.png",
+      "role": "power",
+      "width": 166,
+      "height": 121,
+      "anchor_x": 88,
+      "anchor_y": 82,
+      "model_size": {
+        "x": 1.45,
+        "y": 1.178,
+        "z": 0.768
+      }
+    },
+    "radio-station": {
+      "sprite": "sprites/soviet/radio-station.png",
+      "role": "propaganda",
+      "width": 188,
+      "height": 127,
+      "anchor_x": 92,
+      "anchor_y": 78,
+      "model_size": {
+        "x": 1.428,
+        "y": 1.428,
+        "z": 0.737
+      }
+    },
+    "school": {
+      "sprite": "sprites/soviet/school.png",
+      "role": "services",
+      "width": 160,
+      "height": 135,
+      "anchor_x": 80,
+      "anchor_y": 94,
+      "model_size": {
+        "x": 1.428,
+        "y": 1.406,
+        "z": 1.137
+      }
+    },
+    "train-station": {
+      "sprite": "sprites/soviet/train-station.png",
+      "role": "transport",
+      "width": 122,
+      "height": 101,
+      "anchor_x": 59,
+      "anchor_y": 69,
+      "model_size": {
+        "x": 1.24,
+        "y": 0.886,
+        "z": 0.918
+      }
+    },
+    "vodka-distillery": {
+      "sprite": "sprites/soviet/vodka-distillery.png",
+      "role": "industry",
+      "width": 120,
+      "height": 122,
+      "anchor_x": 61,
+      "anchor_y": 88,
+      "model_size": {
+        "x": 1.406,
+        "y": 1.086,
+        "z": 1.137
+      }
+    },
+    "warehouse": {
+      "sprite": "sprites/soviet/warehouse.png",
+      "role": "industry",
+      "width": 140,
+      "height": 115,
+      "anchor_x": 70,
+      "anchor_y": 80,
+      "model_size": {
+        "x": 1.3,
+        "y": 0.916,
+        "z": 0.737
+      }
+    },
+    "workers-club": {
+      "sprite": "sprites/soviet/workers-club.png",
+      "role": "culture",
+      "width": 152,
+      "height": 132,
+      "anchor_x": 79,
+      "anchor_y": 94,
+      "model_size": {
+        "x": 1.756,
+        "y": 1.028,
+        "z": 1.237
+      }
+    },
+    "workers-house-a": {
+      "sprite": "sprites/soviet/workers-house-a.png",
+      "role": "housing",
+      "width": 188,
+      "height": 163,
+      "anchor_x": 94,
+      "anchor_y": 115,
+      "model_size": {
+        "x": 1.096,
+        "y": 2.0,
+        "z": 1.144
+      }
+    },
+    "workers-house-b": {
+      "sprite": "sprites/soviet/workers-house-b.png",
+      "role": "housing",
+      "width": 181,
+      "height": 185,
+      "anchor_x": 85,
+      "anchor_y": 143,
+      "model_size": {
+        "x": 1.091,
+        "y": 2.2,
+        "z": 1.981
+      }
+    },
+    "workers-house-c": {
+      "sprite": "sprites/soviet/workers-house-c.png",
+      "role": "housing",
+      "width": 209,
+      "height": 199,
+      "anchor_x": 113,
+      "anchor_y": 143,
+      "model_size": {
+        "x": 2.0,
+        "y": 2.2,
+        "z": 1.981
+      }
+    }
+  },
+  "roles": {
+    "agriculture": ["collective-farm-hq"],
+    "culture": ["cultural-palace", "workers-club"],
+    "environment": ["fence", "fence-low"],
+    "government": ["government-hq", "kgb-office", "ministry-office"],
+    "housing": [
+      "apartment-tower-a",
+      "apartment-tower-b",
+      "apartment-tower-c",
+      "apartment-tower-d",
+      "workers-house-a",
+      "workers-house-b",
+      "workers-house-c"
+    ],
+    "industry": ["bread-factory", "factory-office", "vodka-distillery", "warehouse"],
+    "military": ["barracks", "guard-post", "gulag-admin"],
+    "power": ["power-station"],
+    "propaganda": ["radio-station"],
+    "services": ["fire-station", "hospital", "polyclinic", "post-office", "school"],
+    "transport": ["train-station"],
+    "utility": ["concrete-block"]
+  }
+}

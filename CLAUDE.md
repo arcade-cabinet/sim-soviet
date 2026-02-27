@@ -78,7 +78,6 @@ src/
 │   ├── VehicleRenderer.tsx    # Cars on roads
 │   ├── ZeppelinRenderer.tsx   # Firefighting airships
 │   ├── MeteorRenderer.tsx # Meteor descent + explosion
-│   ├── ProceduralGoats.tsx    # Wandering procedural goats
 │   ├── GhostPreview.tsx   # Building placement preview
 │   ├── LensSystem.tsx     # Visual lens modes (water/power/smog/aura)
 │   ├── FloatingText.tsx   # Billboard text above buildings
