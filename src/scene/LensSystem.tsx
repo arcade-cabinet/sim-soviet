@@ -155,11 +155,14 @@ const LensSystem: React.FC = () => {
       const colors: number[] = [];
 
       for (const b of buildings) {
-        const isPowerSrc = b.type === 'farm' || b.type === 'tap' || b.type === 'pump';
+        // Dim buildings that don't participate in the power grid
+        const isPowerIrrelevant =
+          b.type === 'farm' || b.type === 'tap' || b.type === 'pump' ||
+          b.type === 'collective-farm-hq' || b.type === 'warehouse';
         const cell = gameState.grid[b.y]?.[b.x];
         const z = cell?.z ?? 0;
 
-        if (isPowerSrc) {
+        if (isPowerIrrelevant) {
           // Dim non-power buildings
           matrices.push(Matrix.Translation(b.x, z + 0.25, b.y));
           colors.push(0.2, 0.2, 0.2, 0.5);

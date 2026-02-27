@@ -14,6 +14,7 @@ import { BUILDING_TYPES } from '../engine/BuildingTypes';
 import { getGameGrid } from './GameInit';
 import { notifyStateChange } from '@/stores/gameStore';
 import { GRID_SIZE } from '@/config';
+import { gameState } from '../engine/GameState';
 
 /**
  * Map from old Toolbar tool keys → ECS building defIds.
@@ -99,6 +100,19 @@ export function placeECSBuilding(
     grid.setCell(gridX, gridZ, defId);
   }
 
+  // Sync old gameState so legacy scene components see the building
+  const oldCell = gameState.grid[gridZ]?.[gridX];
+  if (oldCell) {
+    oldCell.type = defId;
+  }
+  gameState.buildings.push({
+    x: gridX,
+    y: gridZ,
+    type: defId,
+    powered: false,
+    level: 0,
+  });
+
   // Reindex so archetypes pick up the new entity immediately
   world.reindex(entity);
 
@@ -123,6 +137,16 @@ export function bulldozeECSBuilding(gridX: number, gridZ: number): boolean {
       if (grid) {
         grid.setCell(gridX, gridZ, null);
       }
+
+      // Sync old gameState so legacy scene components see the removal
+      const oldCell = gameState.grid[gridZ]?.[gridX];
+      if (oldCell) {
+        oldCell.type = null;
+      }
+      const bIdx = gameState.buildings.findIndex(
+        (b) => b.x === gridX && b.y === gridZ,
+      );
+      if (bIdx !== -1) gameState.buildings.splice(bIdx, 1);
 
       notifyStateChange();
       return true;

@@ -133,6 +133,14 @@ const App: React.FC = () => {
           setTickerText((prev) => prev + msg + '  ///  ');
         },
         onStateChange: () => {
+          // Sync ECS building powered state to old GameState for 3D effects
+          const { buildings: ecsBldgs } = require('./ecs/archetypes');
+          for (const e of ecsBldgs.entities) {
+            const b = gameState.buildings.find(
+              (bi: any) => bi.x === e.position.gridX && bi.y === e.position.gridY,
+            );
+            if (b) b.powered = e.building.powered;
+          }
           notifyStateChange();
           gameState.notify();
         },
@@ -193,6 +201,39 @@ const App: React.FC = () => {
       // Also initialize the old flat grid for 3D terrain rendering
       if (gameState.grid.length === 0) {
         gameState.initGrid();
+
+        // Sync ECS terrain → old grid so canPlace() terrain checks match 3D scene
+        const { terrainFeatures, buildings } = require('./ecs/archetypes');
+        const featureToTerrain: Record<string, string> = {
+          mountain: 'mountain',
+          forest: 'tree',
+          marsh: 'marsh',
+          river: 'water',
+          water: 'water',
+        };
+        for (const entity of terrainFeatures.entities) {
+          const { gridX, gridY } = entity.position;
+          const cell = gameState.grid[gridY]?.[gridX];
+          if (cell) {
+            const mapped = featureToTerrain[entity.terrainFeature.featureType];
+            if (mapped) cell.terrain = mapped as typeof cell.terrain;
+            cell.z = entity.terrainFeature.elevation;
+          }
+        }
+
+        // Sync ECS buildings → old grid + buildings array for scene components
+        for (const entity of buildings.entities) {
+          const { gridX, gridY } = entity.position;
+          const cell = gameState.grid[gridY]?.[gridX];
+          if (cell) cell.type = entity.building.defId;
+          gameState.buildings.push({
+            x: gridX,
+            y: gridY,
+            type: entity.building.defId,
+            powered: entity.building.powered,
+            level: 0,
+          });
+        }
       }
     }
   }, [screen]);

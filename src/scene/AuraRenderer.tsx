@@ -78,7 +78,7 @@ const AuraRenderer: React.FC = () => {
       for (const b of gameState.buildings) {
         if (!b.powered) continue;
 
-        if (b.type === 'tower') {
+        if (b.type === 'tower' || b.type === 'radio-station') {
           const key = `tower_${b.x}_${b.y}`;
           activeKeys.add(key);
 
@@ -113,7 +113,7 @@ const AuraRenderer: React.FC = () => {
               (ring.material as StandardMaterial).alpha = alpha;
             }
           }
-        } else if (b.type === 'gulag') {
+        } else if (b.type === 'gulag' || b.type === 'gulag-admin') {
           const key = `gulag_${b.x}_${b.y}`;
           activeKeys.add(key);
 
