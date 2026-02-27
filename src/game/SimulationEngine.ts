@@ -283,6 +283,9 @@ export class SimulationEngine {
     // Personnel File — tracks black marks and commendations (game-over mechanic)
     this.personnelFile = new PersonnelFile();
 
+    // Wire EventSystem → PersonnelFile so events generate marks/commendations
+    this.eventSystem.setPersonnelFile(this.personnelFile);
+
     // Compulsory Deliveries — state takes cut of production, doctrine from era
     this.deliveries = new CompulsoryDeliveries(this.eraSystem.getDoctrine());
     if (rng) this.deliveries.setRng(rng);
@@ -452,6 +455,9 @@ export class SimulationEngine {
     this.lastThreatLevel = se.lastThreatLevel;
     this.pendingReport = se.pendingReport;
     this.ended = se.ended;
+
+    // Re-wire EventSystem → PersonnelFile after deserialization replaces instances
+    this.eventSystem.setPersonnelFile(this.personnelFile);
   }
 
   /**
@@ -531,25 +537,30 @@ export class SimulationEngine {
     // Capture pre-production resource levels for CompulsoryDeliveries delta
     const foodBefore = storeRef?.resources.food ?? 0;
     const vodkaBefore = storeRef?.resources.vodka ?? 0;
+    const moneyBefore = storeRef?.resources.money ?? 0;
 
     productionSystem(farmMod, vodkaMod);
-
-    // Apply CompulsoryDeliveries — state extraction of new production
-    if (storeRef) {
-      const newFood = storeRef.resources.food - foodBefore;
-      const newVodka = storeRef.resources.vodka - vodkaBefore;
-      if (newFood > 0 || newVodka > 0) {
-        const result = this.deliveries.applyDeliveries(newFood, newVodka, 0);
-        storeRef.resources.food = Math.max(0, storeRef.resources.food - result.foodTaken);
-        storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - result.vodkaTaken);
-      }
-    }
 
     // Storage & spoilage — capacity from buildings, seasonal food decay
     storageSystem(this.chronology.getDate().month);
 
     // Economy System — trudodni, fondy, blat, stakhanovite, MTS, heating, reforms
     this.tickEconomySystem();
+
+    // Apply CompulsoryDeliveries — state extraction of new production + income
+    // Runs AFTER both productionSystem and economySystem so we capture all
+    // new food, vodka, and money generated this tick.
+    if (storeRef) {
+      const newFood = Math.max(0, storeRef.resources.food - foodBefore);
+      const newVodka = Math.max(0, storeRef.resources.vodka - vodkaBefore);
+      const newMoney = Math.max(0, storeRef.resources.money - moneyBefore);
+      if (newFood > 0 || newVodka > 0 || newMoney > 0) {
+        const result = this.deliveries.applyDeliveries(newFood, newVodka, newMoney);
+        storeRef.resources.food = Math.max(0, storeRef.resources.food - result.foodTaken);
+        storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - result.vodkaTaken);
+        storeRef.resources.money = Math.max(0, storeRef.resources.money - result.moneyTaken);
+      }
+    }
 
     consumptionSystem(eraMods.consumptionMult);
 
@@ -714,6 +725,7 @@ export class SimulationEngine {
       scoring: this.scoring,
       callbacks: this.callbacks,
       rng: this.rng,
+      deliveries: this.deliveries,
       engineState: {
         quota: this.quota,
         consecutiveQuotaFailures: this.consecutiveQuotaFailures,

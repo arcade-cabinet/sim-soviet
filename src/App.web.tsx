@@ -8,7 +8,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { SafeAreaView, View, StatusBar, StyleSheet, Platform } from 'react-native';
+import { SafeAreaView, View, Text, StatusBar, StyleSheet, Platform } from 'react-native';
 import { Engine } from 'reactylon/web';
 import { Scene } from 'reactylon';
 
@@ -23,6 +23,8 @@ if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getEle
       height: 100% !important;
       display: block;
       outline: none;
+      position: relative;
+      z-index: 0;
     }
   `;
   document.head.appendChild(style);
@@ -99,6 +101,41 @@ import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { EconomyDetailPanel } from './ui/EconomyDetailPanel';
 import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { Colors } from './ui/styles';
+
+/**
+ * Error boundary to catch Engine/WebGL crashes and show a fallback
+ * instead of a blank white screen.
+ */
+class EngineErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: string | null }
+> {
+  state = { error: null as string | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error: error.message || 'Unknown 3D engine error' };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <View style={{ flex: 1, backgroundColor: Colors.bgColor, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+          <Text style={{ color: Colors.sovietRed, fontFamily: 'monospace', fontSize: 14, fontWeight: 'bold', marginBottom: 12 }}>
+            ENGINE MALFUNCTION
+          </Text>
+          <Text style={{ color: '#ccc', fontFamily: 'monospace', fontSize: 11, textAlign: 'center' }}>
+            {this.state.error}
+          </Text>
+          <Text style={{ color: '#888', fontFamily: 'monospace', fontSize: 10, marginTop: 16, textAlign: 'center' }}>
+            Reload the page to try again. If this persists, your browser may not support WebGL.
+          </Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/** Minimum time (ms) the loading screen stays visible so it doesn't just flash */
+const MIN_LOADING_DISPLAY_MS = 1500;
 
 type AppScreen = 'menu' | 'setup' | 'game';
 
@@ -325,8 +362,22 @@ const App: React.FC = () => {
     [],
   );
 
+  // Track when loading started so we can enforce a minimum display time
+  const loadStartRef = useRef(0);
+  useEffect(() => {
+    if (screen === 'game' && loadStartRef.current === 0) {
+      loadStartRef.current = Date.now();
+    }
+  }, [screen]);
+
   const handleLoadComplete = useCallback(() => {
-    setAssetsReady(true);
+    const elapsed = Date.now() - loadStartRef.current;
+    const remaining = Math.max(0, MIN_LOADING_DISPLAY_MS - elapsed);
+    if (remaining > 0) {
+      setTimeout(() => setAssetsReady(true), remaining);
+    } else {
+      setAssetsReady(true);
+    }
   }, []);
 
   const handleLoadingFadeComplete = useCallback(() => {
@@ -556,14 +607,16 @@ const App: React.FC = () => {
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.root}>
         <View style={styles.sceneContainer}>
-          <Engine forceWebGL>
-            <Scene>
-              <Content
-                onLoadProgress={handleLoadProgress}
-                onLoadComplete={handleLoadComplete}
-              />
-            </Scene>
-          </Engine>
+          <EngineErrorBoundary>
+            <Engine forceWebGL>
+              <Scene>
+                <Content
+                  onLoadProgress={handleLoadProgress}
+                  onLoadComplete={handleLoadComplete}
+                />
+              </Scene>
+            </Engine>
+          </EngineErrorBoundary>
         </View>
 
         {loadingFaded && (
@@ -822,6 +875,7 @@ const styles = StyleSheet.create({
   },
   sceneContainer: {
     ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
   },
   uiOverlay: {
     ...StyleSheet.absoluteFillObject,

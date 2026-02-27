@@ -15,6 +15,10 @@ export interface AnnualReportData {
   actualFood: number;
   /** Actual vodka in storage at end of year. */
   actualVodka: number;
+  /** Cumulative compulsory deliveries extracted during this plan period. */
+  deliveries?: { food: number; vodka: number; money: number };
+  /** Mandate fulfillment ratio (0.0-1.0) at time of report. */
+  mandateFulfillment?: number;
 }
 
 export interface ReportSubmission {

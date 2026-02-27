@@ -49,13 +49,19 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
 
   // Preload all GLB models and initialize audio on mount
   useEffect(() => {
-    preloadModels(scene, 'assets', onLoadProgress).then(() => {
-      // Notify forces re-render through useSyncExternalStore,
-      // so BuildingRenderer retries cloning now that models are ready
-      gameState.notify();
-      notifyStateChange();
-      onLoadComplete?.();
-    });
+    preloadModels(scene, 'assets', onLoadProgress)
+      .then(() => {
+        // Notify forces re-render through useSyncExternalStore,
+        // so BuildingRenderer retries cloning now that models are ready
+        gameState.notify();
+        notifyStateChange();
+        onLoadComplete?.();
+      })
+      .catch((err) => {
+        console.error('[Content] Model preload failed:', err);
+        // Still complete loading so the user isn't stuck on the loading screen
+        onLoadComplete?.();
+      });
 
     // Initialize audio — starts playlist after user interaction (IntroModal dismiss)
     const audio = AudioManager.getInstance();

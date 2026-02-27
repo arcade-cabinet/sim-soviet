@@ -33,7 +33,8 @@ export type CommendationSource =
   | 'quota_exceeded'
   | 'stakhanovite_celebrated'
   | 'inspection_passed'
-  | 'ideology_session_passed';
+  | 'ideology_session_passed'
+  | 'mandates_fulfilled';
 
 export interface FileEntry {
   tick: number;
@@ -78,6 +79,7 @@ const COMMENDATION_AMOUNTS: Record<CommendationSource, number> = {
   stakhanovite_celebrated: 1,
   inspection_passed: 0.5,
   ideology_session_passed: 0.5,
+  mandates_fulfilled: 1,
 };
 
 const DECAY_INTERVALS: Record<Difficulty, number> = {
@@ -106,6 +108,7 @@ const DEFAULT_COMMENDATION_DESCRIPTIONS: Record<CommendationSource, string> = {
   stakhanovite_celebrated: 'Stakhanovite worker celebrated',
   inspection_passed: 'Passed official inspection',
   ideology_session_passed: 'Ideology session: all participants passed',
+  mandates_fulfilled: 'All Five-Year Plan building mandates fulfilled',
 };
 
 const ARREST_THRESHOLD = 7;

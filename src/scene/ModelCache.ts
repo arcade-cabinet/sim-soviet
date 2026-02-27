@@ -45,7 +45,14 @@ export async function preloadModels(
   baseUrl: string = '',
   onProgress?: ModelLoadProgress,
 ): Promise<void> {
-  if (preloaded) return;
+  // If already loaded for THIS scene, skip. But if the scene changed
+  // (e.g. HMR remount), templates may belong to a disposed scene — reload.
+  if (preloaded && templates.size > 0) {
+    const first = templates.values().next().value;
+    if (first && first.scene === scene) return;
+    // Scene changed (HMR) — clear stale templates
+    disposeAll();
+  }
 
   const entries = Object.entries(manifest.assets) as [
     string,

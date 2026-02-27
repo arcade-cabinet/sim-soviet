@@ -11,7 +11,7 @@ import { getResourceEntity, tiles } from '@/ecs/archetypes';
 import { world } from '@/ecs/world';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { BUILDING_TYPES } from '../engine/BuildingTypes';
-import { getGameGrid } from './GameInit';
+import { getEngine, getGameGrid } from './GameInit';
 import { notifyStateChange } from '@/stores/gameStore';
 import { GRID_SIZE } from '@/config';
 import { gameState } from '../engine/GameState';
@@ -112,6 +112,12 @@ export function placeECSBuilding(
     powered: false,
     level: 0,
   });
+
+  // Track building placement for Five-Year Plan mandate fulfillment
+  const engine = getEngine();
+  if (engine) {
+    engine.recordBuildingForMandates(defId);
+  }
 
   // Reindex so archetypes pick up the new entity immediately
   world.reindex(entity);

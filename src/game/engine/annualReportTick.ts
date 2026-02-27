@@ -10,8 +10,10 @@ import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualR
 import { getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import type { ChronologySystem } from '../ChronologySystem';
+import type { CompulsoryDeliveries } from '../CompulsoryDeliveries';
 import type { PersonnelFile } from '../PersonnelFile';
 import type { MandateWithFulfillment, PlanMandateState } from '../PlanMandates';
+import { allMandatesComplete, getMandateFulfillment } from '../PlanMandates';
 import type { ScoringSystem } from '../ScoringSystem';
 import type { GameRng } from '../SeedSystem';
 import type { SimCallbacks } from '../SimulationEngine';
@@ -35,6 +37,7 @@ export interface AnnualReportContext {
   callbacks: SimCallbacks;
   rng: GameRng | undefined;
   engineState: AnnualReportEngineState;
+  deliveries: CompulsoryDeliveries;
   endGame: (victory: boolean, reason: string) => void;
 }
 
@@ -63,6 +66,10 @@ export function checkQuota(ctx: AnnualReportContext): void {
       actualFood: res?.resources.food ?? 0,
       actualVodka: res?.resources.vodka ?? 0,
       actualPop: res?.resources.population ?? 0,
+      deliveries: ctx.deliveries.getTotalDelivered(),
+      mandateFulfillment: engineState.mandateState
+        ? getMandateFulfillment(engineState.mandateState)
+        : undefined,
     };
 
     ctx.callbacks.onAnnualReport(data, (submission: ReportSubmission) => {
@@ -153,6 +160,52 @@ export function falsificationRisk(actual: number, reported: number): number {
   return Math.round((Math.abs(reported - actual) / actual) * 100);
 }
 
+/**
+ * Evaluates mandate fulfillment at plan deadline.
+ *
+ * All mandates complete → commendation.
+ * Any mandates incomplete → black mark (construction_mandate).
+ * Partial completion (>50%) with some incomplete → advisory warning only.
+ *
+ * Called by both handleQuotaMet and handleQuotaMissed since mandates
+ * are evaluated independently from production quota.
+ */
+function evaluateMandates(ctx: AnnualReportContext): void {
+  const { engineState } = ctx;
+  const totalTicks = ctx.chronology.getDate().totalTicks;
+
+  if (!engineState.mandateState || engineState.mandateState.mandates.length === 0) {
+    return;
+  }
+
+  const fulfillmentRatio = getMandateFulfillment(engineState.mandateState);
+
+  if (allMandatesComplete(engineState.mandateState)) {
+    // All mandates fulfilled — commendation
+    ctx.personnelFile.addCommendation('mandates_fulfilled', totalTicks);
+    ctx.callbacks.onToast('+1 COMMENDATION: All building mandates fulfilled', 'warning');
+  } else if (fulfillmentRatio < 0.5) {
+    // Less than half fulfilled — black mark
+    ctx.personnelFile.addMark(
+      'construction_mandate',
+      totalTicks,
+      `Building mandates severely unfulfilled (${Math.round(fulfillmentRatio * 100)}% complete)`
+    );
+    ctx.callbacks.onToast('BLACK MARK: Construction mandates not met', 'critical');
+    ctx.callbacks.onAdvisor(
+      'Comrade, the State Planning Committee has noted your failure to meet ' +
+        'the construction mandates of the Five-Year Plan. ' +
+        'A notation has been made in your personnel file.'
+    );
+  } else {
+    // Partially fulfilled (50-99%) — warning but no mark
+    ctx.callbacks.onAdvisor(
+      `Building mandates partially fulfilled (${Math.round(fulfillmentRatio * 100)}%). ` +
+        'The Committee has noted your... adequate effort.'
+    );
+  }
+}
+
 export function handleQuotaMet(ctx: AnnualReportContext): void {
   const { engineState } = ctx;
   const totalTicks = ctx.chronology.getDate().totalTicks;
@@ -167,6 +220,12 @@ export function handleQuotaMet(ctx: AnnualReportContext): void {
     // Score: quota exceeded (+25)
     ctx.scoring.onQuotaExceeded();
   }
+
+  // Evaluate building mandates independently from quota
+  evaluateMandates(ctx);
+
+  // Reset delivery totals for the new plan period
+  ctx.deliveries.resetTotals();
 
   ctx.callbacks.onAdvisor('Quota met. Accept this medal made of tin. Now, produce VODKA.');
   engineState.quota.type = 'vodka';
@@ -199,6 +258,12 @@ export function handleQuotaMissed(ctx: AnnualReportContext): void {
   } else if (missPercent > 0.1) {
     ctx.personnelFile.addMark('quota_missed_minor', totalTicks);
   }
+
+  // Evaluate building mandates independently from quota
+  evaluateMandates(ctx);
+
+  // Reset delivery totals for the extended plan period
+  ctx.deliveries.resetTotals();
 
   if (engineState.consecutiveQuotaFailures >= MAX_QUOTA_FAILURES) {
     ctx.endGame(

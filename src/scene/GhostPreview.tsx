@@ -24,9 +24,15 @@ import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
 import { BUILDING_TYPES, getBuildingHeight } from '../engine/BuildingTypes';
 import { placeECSBuilding, bulldozeECSBuilding } from '../bridge/BuildingPlacement';
-import { getResourceEntity } from '../ecs/archetypes';
+import { getResourceEntity, buildingsLogic, citizens } from '../ecs/archetypes';
 import { getBuildingDef } from '../data/buildingDefs';
+import type { Role } from '../data/buildingDefs.schema';
 import { showToast } from '../engine/helpers';
+import {
+  openInspectMenu,
+  type InspectBuildingType,
+  type InspectMenuOccupant,
+} from '../stores/gameStore';
 
 const VALID_COLOR = new Color3(0, 1, 0);
 const INVALID_COLOR = new Color3(1, 0, 0);
@@ -124,6 +130,92 @@ function canPlace(tool: string, x: number, y: number): boolean {
   return true;
 }
 
+// ── Inspect helpers ───────────────────────────────────────────────────────
+
+/** Map building def role → InspectBuildingType for the radial menu. */
+function classifyBuildingType(role: Role, constructionPhase?: string): InspectBuildingType {
+  if (constructionPhase && constructionPhase !== 'complete') return 'construction';
+  switch (role) {
+    case 'housing':
+      return 'housing';
+    case 'industry':
+    case 'agriculture':
+    case 'power':
+      return 'production';
+    case 'government':
+    case 'propaganda':
+      return 'government';
+    case 'military':
+      return 'military';
+    case 'transport':
+    case 'utility':
+    case 'environment':
+      return 'general';
+    case 'services':
+    case 'culture':
+      return 'general';
+    default:
+      return 'general';
+  }
+}
+
+/** Find the ECS building entity at a grid cell and open the inspect menu. */
+function openInspectAtCell(gridX: number, gridZ: number, screenX: number, screenY: number): void {
+  // Find the ECS building entity at this grid position
+  const entity = buildingsLogic.entities.find(
+    (e) => e.position.gridX === gridX && e.position.gridY === gridZ,
+  );
+  if (!entity) return;
+
+  const defId = entity.building.defId;
+  const def = getBuildingDef(defId);
+  if (!def) return;
+
+  const buildingType = classifyBuildingType(def.role, entity.building.constructionPhase);
+
+  // Count workers assigned to this building's defId at this position
+  const workerCount = citizens.entities.filter(
+    (c) => c.citizen.assignment === defId,
+  ).length;
+
+  // Gather occupants for housing buildings
+  let housingCap: number | undefined;
+  let occupants: InspectMenuOccupant[] | undefined;
+  if (buildingType === 'housing' && entity.building.housingCap > 0) {
+    housingCap = entity.building.housingCap;
+    occupants = citizens.entities
+      .filter(
+        (c) =>
+          c.citizen.home &&
+          c.citizen.home.gridX === gridX &&
+          c.citizen.home.gridY === gridZ,
+      )
+      .map((c) => ({
+        name: `Citizen`, // Citizens don't store display names on the component
+        age: c.citizen.age ?? 30,
+        role: c.citizen.memberRole ?? c.citizen.class,
+        gender: c.citizen.gender ?? 'male',
+      }));
+  }
+
+  openInspectMenu({
+    screenX,
+    screenY,
+    gridX,
+    gridY: gridZ,
+    buildingDefId: defId,
+    buildingType,
+    workerCount,
+    housingCap,
+    occupants,
+  });
+}
+
+/** Long-press threshold in milliseconds. */
+const LONG_PRESS_MS = 500;
+/** Max pointer drift (pixels) before long-press is cancelled. */
+const LONG_PRESS_DRIFT = 10;
+
 const GhostPreview: React.FC = () => {
   const scene = useScene();
   const meshesRef = useRef<GhostMeshes | null>(null);
@@ -197,11 +289,23 @@ const GhostPreview: React.FC = () => {
       }
     }
 
+    // ── Long-press state (hoisted so tapObs can check longPressFired) ────
+    let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+    let longPressStartX = 0;
+    let longPressStartY = 0;
+    let longPressFired = false;
+
     // Handle taps (not drags) to place buildings.
     // POINTERTAP only fires if the pointer didn't move much between down and up.
     const tapObs: Observer<PointerInfo> = scene.onPointerObservable.add(
       (info) => {
         if (info.type !== PointerEventTypes.POINTERTAP) return;
+
+        // Skip if a long-press just triggered the inspect menu
+        if (longPressFired) {
+          longPressFired = false;
+          return;
+        }
 
         const tool = gameState.selectedTool;
         if (tool === 'none') return;
@@ -226,10 +330,97 @@ const GhostPreview: React.FC = () => {
       },
     )!;
 
+    // ── Right-click → inspect building ────────────────────────────────────
+    // Suppress browser context menu on the canvas so right-click fires normally.
+    const canvas = scene.getEngine().getRenderingCanvas();
+    const preventContextMenu = (e: Event) => e.preventDefault();
+    canvas?.addEventListener('contextmenu', preventContextMenu);
+
+    const rightClickObs: Observer<PointerInfo> = scene.onPointerObservable.add(
+      (info) => {
+        if (info.type !== PointerEventTypes.POINTERDOWN) return;
+        const evt = info.event as PointerEvent;
+        if (evt.button !== 2) return; // Only right-click
+
+        const pickResult = info.pickInfo;
+        if (!pickResult?.hit || !pickResult.pickedPoint) return;
+
+        const worldPos = pickResult.pickedPoint;
+        const gridX = Math.floor(worldPos.x);
+        const gridZ = Math.floor(worldPos.z);
+        if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) return;
+
+        // Only inspect if there's a building on this cell
+        const cell = gameState.grid[gridZ]?.[gridX];
+        if (!cell?.type) return;
+
+        openInspectAtCell(gridX, gridZ, evt.clientX, evt.clientY);
+      },
+    )!;
+
+    // ── Long-press → inspect building (mobile fallback) ───────────────────
+    const longPressDownObs: Observer<PointerInfo> = scene.onPointerObservable.add(
+      (info) => {
+        if (info.type !== PointerEventTypes.POINTERDOWN) return;
+        const evt = info.event as PointerEvent;
+        if (evt.button !== 0) return; // Only primary button for long-press
+
+        longPressFired = false;
+        longPressStartX = evt.clientX;
+        longPressStartY = evt.clientY;
+
+        // Capture pick info at press-time (before any pointer move)
+        const pickResult = info.pickInfo;
+        if (!pickResult?.hit || !pickResult.pickedPoint) return;
+        const worldPos = pickResult.pickedPoint;
+        const gridX = Math.floor(worldPos.x);
+        const gridZ = Math.floor(worldPos.z);
+        if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) return;
+        const cell = gameState.grid[gridZ]?.[gridX];
+        if (!cell?.type) return;
+
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          longPressFired = true;
+          openInspectAtCell(gridX, gridZ, evt.clientX, evt.clientY);
+        }, LONG_PRESS_MS);
+      },
+    )!;
+
+    const longPressMoveObs: Observer<PointerInfo> = scene.onPointerObservable.add(
+      (info) => {
+        if (info.type !== PointerEventTypes.POINTERMOVE) return;
+        if (!longPressTimer) return;
+        const evt = info.event as PointerEvent;
+        const dx = evt.clientX - longPressStartX;
+        const dy = evt.clientY - longPressStartY;
+        if (dx * dx + dy * dy > LONG_PRESS_DRIFT * LONG_PRESS_DRIFT) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      },
+    )!;
+
+    const longPressUpObs: Observer<PointerInfo> = scene.onPointerObservable.add(
+      (info) => {
+        if (info.type !== PointerEventTypes.POINTERUP) return;
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      },
+    )!;
+
     scene.onPointerMove = onPointerMove;
     return () => {
       scene.onPointerMove = undefined as any;
       scene.onPointerObservable.remove(tapObs);
+      scene.onPointerObservable.remove(rightClickObs);
+      scene.onPointerObservable.remove(longPressDownObs);
+      scene.onPointerObservable.remove(longPressMoveObs);
+      scene.onPointerObservable.remove(longPressUpObs);
+      canvas?.removeEventListener('contextmenu', preventContextMenu);
+      if (longPressTimer) clearTimeout(longPressTimer);
       const m = meshesRef.current!;
       m.box.dispose();
       m.zoneOverlay.dispose();
