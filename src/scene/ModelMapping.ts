@@ -23,7 +23,7 @@ const MODEL_MAP: Record<BuildingType, readonly [string, string, string]> = {
   distillery: ['vodka-distillery', 'vodka-distillery', 'vodka-distillery'],
   farm: ['collective-farm-hq', 'collective-farm-hq', 'collective-farm-hq'],
   power: ['power-station', 'power-station', 'power-station'],
-  nuke: ['power-station', 'power-station', 'power-station'],
+  nuke: ['cooling-tower', 'cooling-tower', 'cooling-tower'],
   gulag: ['gulag-admin', 'gulag-admin', 'gulag-admin'],
   tower: ['radio-station', 'radio-station', 'radio-station'],
   pump: ['concrete-block', 'concrete-block', 'concrete-block'],

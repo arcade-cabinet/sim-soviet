@@ -1160,6 +1160,43 @@
         "category": "res"
       },
       "eraAvailable": "first_plans"
+    },
+    "cooling-tower": {
+      "id": "cooling-tower",
+      "role": "power",
+      "sprite": {
+        "path": "sprites/soviet/power-station.png",
+        "width": 166,
+        "height": 121,
+        "anchorX": 88,
+        "anchorY": 82
+      },
+      "footprint": {
+        "tilesX": 1,
+        "tilesY": 1
+      },
+      "modelSize": {
+        "x": 1.0,
+        "y": 1.5,
+        "z": 1.0
+      },
+      "stats": {
+        "powerReq": 0,
+        "powerOutput": 500,
+        "housingCap": 0,
+        "pollution": 5,
+        "fear": 10,
+        "decayRate": 0.08,
+        "jobs": 30
+      },
+      "presentation": {
+        "name": "Nuclear Reactor",
+        "icon": "☢️",
+        "cost": 1000,
+        "desc": "DO NOT LET BURN.",
+        "category": "utility"
+      },
+      "eraAvailable": "stagnation"
     }
   }
 }

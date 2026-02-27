@@ -47,7 +47,7 @@ interface PropTemplate {
   /** Scale range [min, max] */
   scale: [number, number];
   /** Where this prop can be placed */
-  placement: 'perimeter' | 'grass' | 'forest-edge' | 'farm-animal';
+  placement: 'perimeter' | 'grass' | 'forest-edge' | 'farm-animal' | 'irradiated';
 }
 
 const PROP_DEFS: PropTemplate[] = [
@@ -70,6 +70,12 @@ const PROP_DEFS: PropTemplate[] = [
   { name: 'Cow', file: 'Cow.glb', count: 4, scale: [0.08, 0.1], placement: 'farm-animal' },
   { name: 'Horse', file: 'Horse_White.glb', count: 3, scale: [0.08, 0.1], placement: 'farm-animal' },
   { name: 'Donkey', file: 'Donkey.glb', count: 3, scale: [0.07, 0.09], placement: 'farm-animal' },
+
+  // Radiation — on irradiated tiles (after nuke meltdown)
+  { name: 'RadBarrel', file: 'rad_barrel.glb', count: 6, scale: [0.5, 0.8], placement: 'irradiated' },
+  { name: 'RadSign', file: 'rad_sign.glb', count: 4, scale: [0.6, 0.9], placement: 'irradiated' },
+  { name: 'RadDebris', file: 'rad_debris.glb', count: 5, scale: [0.4, 0.7], placement: 'irradiated' },
+  { name: 'RadGlow', file: 'rad_glow.glb', count: 10, scale: [0.8, 1.5], placement: 'irradiated' },
 ];
 
 /** Get valid positions for each placement type */
@@ -187,6 +193,22 @@ function getPlacementPositions(
                 y: (cell.z ?? 0) * 0.5,
               });
             }
+          }
+        }
+      }
+      break;
+    }
+    case 'irradiated': {
+      // Scatter on irradiated tiles (from nuke meltdowns)
+      for (let y = 0; y < GRID_SIZE; y++) {
+        for (let x = 0; x < GRID_SIZE; x++) {
+          const cell = grid[y]?.[x];
+          if (cell?.terrain === 'irradiated') {
+            positions.push({
+              x: x + rng() * 0.8 + 0.1,
+              z: y + rng() * 0.8 + 0.1,
+              y: (cell.z ?? 0) * 0.5,
+            });
           }
         }
       }

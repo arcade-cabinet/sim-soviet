@@ -30,7 +30,7 @@ const TOOL_TO_DEF_ID: Record<string, string> = {
 
   // Infrastructure
   power: 'power-station',
-  nuke: 'power-station',         // No reactor model yet — use power station
+  nuke: 'cooling-tower',          // Reactor → cooling tower (bpy-scripted model)
   station: 'train-station',
   pump: 'warehouse',             // Water pump → warehouse (closest utility)
 

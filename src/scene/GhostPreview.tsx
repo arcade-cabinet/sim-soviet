@@ -79,7 +79,7 @@ const TOOL_DEF_MAP: Record<string, string> = {
   'zone-ind': 'factory-office',
   'zone-farm': 'collective-farm-hq',
   power: 'power-station',
-  nuke: 'power-station',
+  nuke: 'cooling-tower',
   station: 'train-station',
   pump: 'warehouse',
   tower: 'radio-station',

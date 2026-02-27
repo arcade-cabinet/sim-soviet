@@ -331,6 +331,12 @@
       "source": "fence-low.glb",
       "role": "environment",
       "texture": "Concrete028"
+    },
+    "cooling-tower": {
+      "file": "models/soviet/cooling-tower.glb",
+      "source": "bpy-procedural",
+      "role": "power",
+      "texture": "none"
     }
   },
   "roles": {
@@ -348,7 +354,7 @@
     "services": ["polyclinic", "school", "post-office", "hospital", "fire-station"],
     "military": ["guard-post", "barracks", "gulag-admin"],
     "culture": ["workers-club", "cultural-palace"],
-    "power": ["power-station"],
+    "power": ["power-station", "cooling-tower"],
     "agriculture": ["collective-farm-hq"],
     "propaganda": ["radio-station"],
     "transport": ["train-station"],
