@@ -81,6 +81,8 @@ import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
 import { MandateProgressPanel } from './ui/MandateProgressPanel';
 import { DiseasePanel } from './ui/DiseasePanel';
 import { InfrastructurePanel } from './ui/InfrastructurePanel';
+import { RadialBuildMenu } from './ui/RadialBuildMenu';
+import { RadialInspectMenu } from './ui/RadialInspectMenu';
 import { Colors } from './ui/styles';
 
 type AppScreen = 'menu' | 'setup' | 'game';
@@ -588,6 +590,10 @@ const App: React.FC = () => {
           visible={showIntro}
           onDismiss={handleDismissIntro}
         />
+
+        {/* Radial menus — topmost overlays */}
+        <RadialBuildMenu />
+        <RadialInspectMenu />
       </SafeAreaView>
     </>
   );
