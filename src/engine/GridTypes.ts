@@ -14,7 +14,9 @@ export type TerrainType =
   | 'rail'
   | 'tree'
   | 'crater'
-  | 'irradiated';
+  | 'irradiated'
+  | 'mountain'
+  | 'marsh';
 
 export interface GridCell {
   type: string | null;

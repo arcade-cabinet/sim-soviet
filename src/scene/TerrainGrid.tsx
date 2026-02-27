@@ -59,6 +59,20 @@ function getTerrainColor(terrain: TerrainType, season: Season): Color4 {
       return new Color4(0.25, 0.10, 0.30, 1); // dark purple
     case 'irradiated':
       return new Color4(0.40, 0.55, 0.15, 1); // sickly green
+    case 'mountain':
+      switch (season) {
+        case 'winter':
+          return new Color4(0.80, 0.82, 0.85, 1); // snow-capped
+        default:
+          return new Color4(0.42, 0.38, 0.35, 1); // rocky gray-brown
+      }
+    case 'marsh':
+      switch (season) {
+        case 'winter':
+          return new Color4(0.60, 0.65, 0.68, 1); // frozen mud
+        default:
+          return new Color4(0.30, 0.38, 0.25, 1); // dark boggy green
+      }
     default:
       return new Color4(0.35, 0.50, 0.28, 1);
   }
@@ -216,10 +230,80 @@ function buildTrees(
   return trees;
 }
 
+/**
+ * Build rocky mountain peaks for mountain tiles.
+ * Each mountain: 2-3 irregular cones to look like a craggy peak.
+ */
+function buildMountains(
+  scene: Scene,
+  grid: GridCell[][],
+  season: Season,
+): Mesh[] {
+  const rocks: Mesh[] = [];
+
+  const rockMat = new StandardMaterial('rockMat', scene);
+  rockMat.specularColor = Color3.Black();
+  if (season === 'winter') {
+    rockMat.diffuseColor = new Color3(0.82, 0.84, 0.88); // snow-capped rock
+  } else {
+    rockMat.diffuseColor = new Color3(0.45, 0.40, 0.35); // gray-brown rock
+  }
+
+  for (let row = 0; row < GRID_SIZE; row++) {
+    for (let col = 0; col < GRID_SIZE; col++) {
+      const cell = grid[row]?.[col];
+      if (!cell || cell.terrain !== 'mountain') continue;
+
+      const y = cell.z * 0.5;
+      const cx = col + 0.5;
+      const cz = row + 0.5;
+
+      // Seeded pseudo-random from position
+      const seed = (col * 31 + row * 17) % 100;
+      const scale = 0.7 + (seed % 30) / 100;
+
+      // Main peak — tall narrow cone
+      const peak = MeshBuilder.CreateCylinder(
+        `peak_${row}_${col}`,
+        {
+          height: 1.2 * scale,
+          diameterTop: 0.05,
+          diameterBottom: 0.7 * scale,
+          tessellation: 5,
+        },
+        scene,
+      );
+      peak.position = new Vector3(cx, y + 0.6 * scale, cz);
+      peak.material = rockMat;
+
+      // Secondary shorter peak, offset
+      const offsetX = ((seed % 7) - 3) * 0.08;
+      const offsetZ = ((seed % 5) - 2) * 0.08;
+      const peak2 = MeshBuilder.CreateCylinder(
+        `peak2_${row}_${col}`,
+        {
+          height: 0.7 * scale,
+          diameterTop: 0.03,
+          diameterBottom: 0.5 * scale,
+          tessellation: 5,
+        },
+        scene,
+      );
+      peak2.position = new Vector3(cx + 0.25 + offsetX, y + 0.35 * scale, cz + 0.2 + offsetZ);
+      peak2.material = rockMat;
+
+      rocks.push(peak, peak2);
+    }
+  }
+
+  return rocks;
+}
+
 const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) => {
   const scene = useScene();
   const terrainRef = useRef<Mesh | null>(null);
   const treesRef = useRef<Mesh[]>([]);
+  const mountainsRef = useRef<Mesh[]>([]);
 
   useEffect(() => {
     // Clean up previous terrain
@@ -229,15 +313,22 @@ const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) =>
     for (const tree of treesRef.current) {
       tree.dispose();
     }
+    for (const rock of mountainsRef.current) {
+      rock.dispose();
+    }
 
     // Build new terrain
     terrainRef.current = buildTerrainMesh(scene, grid, season);
     treesRef.current = buildTrees(scene, grid, season);
+    mountainsRef.current = buildMountains(scene, grid, season);
 
     return () => {
       terrainRef.current?.dispose();
       for (const tree of treesRef.current) {
         tree.dispose();
+      }
+      for (const rock of mountainsRef.current) {
+        rock.dispose();
       }
     };
   }, [scene, grid, season]);

@@ -7,8 +7,7 @@
  * shapes the 3D components understand.
  */
 
-import { buildings } from '@/ecs/archetypes';
-import { tiles } from '@/ecs/archetypes';
+import { buildings, tiles, terrainFeatures } from '@/ecs/archetypes';
 import type { BuildingState } from '../scene/BuildingRenderer';
 import type { GridCell, TerrainType } from '../engine/GridTypes';
 import { GRID_SIZE } from '@/config';
@@ -76,6 +75,18 @@ export function getGridCells(): GridCell[][] {
     }
   }
 
+  // Overlay terrain features (mountains, forests, marshes, rivers)
+  // These are separate ECS entities from tiles — MapSystem creates them
+  for (const entity of terrainFeatures.entities) {
+    const { position, terrainFeature } = entity;
+    const { gridX, gridY } = position;
+    if (gridY >= 0 && gridY < GRID_SIZE && gridX >= 0 && gridX < GRID_SIZE) {
+      const cell = grid[gridY][gridX];
+      cell.terrain = mapTerrain(terrainFeature.featureType);
+      cell.z = terrainFeature.elevation;
+    }
+  }
+
   // Mark building cells
   for (const entity of buildings.entities) {
     const { position, building } = entity;
@@ -92,11 +103,16 @@ export function getGridCells(): GridCell[][] {
 function mapTerrain(ecsTerrain: string): TerrainType {
   switch (ecsTerrain) {
     case 'water':
+    case 'river':
       return 'water';
+    case 'mountain':
+      return 'mountain';
+    case 'forest':
+      return 'tree';
+    case 'marsh':
+      return 'marsh';
     case 'road':
-      return 'grass'; // Roads rendered as grass in 3D for now
     case 'foundation':
-      return 'grass';
     default:
       return 'grass';
   }

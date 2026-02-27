@@ -9,8 +9,11 @@
 import { createResourceStore, createMetaStore, createGrid } from '@/ecs/factories';
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import { createStartingSettlement } from '@/ecs/factories/settlementFactories';
+import { terrainFeatures } from '@/ecs/archetypes';
+import { world } from '@/ecs/world';
 import { SimulationEngine, type SimCallbacks } from '@/game/SimulationEngine';
 import { GameGrid } from '@/game/GameGrid';
+import { MapSystem } from '@/game/map';
 import { GRID_SIZE } from '@/config';
 import { notifyStateChange } from '@/stores/gameStore';
 
@@ -34,6 +37,25 @@ export function initGame(callbacks: SimCallbacks): SimulationEngine {
 
   // Create tile grid
   createGrid(GRID_SIZE);
+
+  // Generate procedural terrain (mountains, forests, marshes, rivers)
+  const mapSystem = new MapSystem({
+    seed: 'simsoviet-3d',
+    size: 'medium',
+    riverCount: 1,
+    forestDensity: 0.12,
+    marshDensity: 0.04,
+    mountainDensity: 0.04,
+  });
+  mapSystem.generate();
+
+  // Clear terrain features that overlap the starter building area (2-10, 3-9)
+  for (const entity of [...terrainFeatures.entities]) {
+    const { gridX, gridY } = entity.position;
+    if (gridX >= 2 && gridX <= 10 && gridY >= 3 && gridY <= 9) {
+      world.remove(entity);
+    }
+  }
 
   // Place starter buildings
   const starters: { x: number; y: number; defId: string }[] = [
