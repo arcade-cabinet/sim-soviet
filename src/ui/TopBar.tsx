@@ -35,6 +35,9 @@ export interface TopBarProps {
   onShowMandates?: () => void;
   onShowDisease?: () => void;
   onShowInfra?: () => void;
+  onShowEvents?: () => void;
+  onShowPolitical?: () => void;
+  onShowScoring?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -65,6 +68,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   onShowMandates,
   onShowDisease,
   onShowInfra,
+  onShowEvents,
+  onShowPolitical,
+  onShowScoring,
 }) => {
   return (
     <View style={[SharedStyles.panel, styles.container]}>
@@ -119,6 +125,21 @@ export const TopBar: React.FC<TopBarProps> = ({
         {onShowInfra && (
           <TouchableOpacity onPress={onShowInfra} style={styles.navBtn} activeOpacity={0.7}>
             <Text style={styles.navBtnText}>{'\u2302'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowEvents && (
+          <TouchableOpacity onPress={onShowEvents} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u2139'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowPolitical && (
+          <TouchableOpacity onPress={onShowPolitical} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u{1F50D}'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowScoring && (
+          <TouchableOpacity onPress={onShowScoring} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u{1F3C6}'}</Text>
           </TouchableOpacity>
         )}
       </View>

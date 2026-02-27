@@ -83,6 +83,9 @@ import { DiseasePanel } from './ui/DiseasePanel';
 import { InfrastructurePanel } from './ui/InfrastructurePanel';
 import { RadialBuildMenu } from './ui/RadialBuildMenu';
 import { RadialInspectMenu } from './ui/RadialInspectMenu';
+import { EventHistoryPanel } from './ui/EventHistoryPanel';
+import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
+import { ScoringPanel } from './ui/ScoringPanel';
 import { Colors } from './ui/styles';
 
 type AppScreen = 'menu' | 'setup' | 'game';
@@ -116,6 +119,9 @@ const App: React.FC = () => {
   const [showMandates, setShowMandates] = useState(false);
   const [showDisease, setShowDisease] = useState(false);
   const [showInfra, setShowInfra] = useState(false);
+  const [showEvents, setShowEvents] = useState(false);
+  const [showPolitical, setShowPolitical] = useState(false);
+  const [showScoring, setShowScoring] = useState(false);
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -364,6 +370,15 @@ const App: React.FC = () => {
   const handleShowInfra = useCallback(() => {
     setShowInfra(true);
   }, []);
+  const handleShowEvents = useCallback(() => {
+    setShowEvents(true);
+  }, []);
+  const handleShowPolitical = useCallback(() => {
+    setShowPolitical(true);
+  }, []);
+  const handleShowScoring = useCallback(() => {
+    setShowScoring(true);
+  }, []);
 
   // --- Modal callbacks ---
   const handleDismissEra = useCallback(() => setEraTransition(null), []);
@@ -464,6 +479,9 @@ const App: React.FC = () => {
               onShowMandates={handleShowMandates}
               onShowDisease={handleShowDisease}
               onShowInfra={handleShowInfra}
+              onShowEvents={handleShowEvents}
+              onShowPolitical={handleShowPolitical}
+              onShowScoring={handleShowScoring}
             />
 
             <Toast
@@ -579,6 +597,21 @@ const App: React.FC = () => {
         <InfrastructurePanel
           visible={showInfra}
           onDismiss={() => setShowInfra(false)}
+        />
+
+        <EventHistoryPanel
+          visible={showEvents}
+          onDismiss={() => setShowEvents(false)}
+        />
+
+        <PoliticalEntityPanel
+          visible={showPolitical}
+          onDismiss={() => setShowPolitical(false)}
+        />
+
+        <ScoringPanel
+          visible={showScoring}
+          onDismiss={() => setShowScoring(false)}
         />
 
         <SettingsModal
