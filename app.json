@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "SimSoviet1917",
+    "slug": "sim-soviet-1917",
+    "version": "0.1.0",
+    "orientation": "landscape",
+    "platforms": ["web", "ios", "android"],
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "ios": {
+      "bundleIdentifier": "com.simgames.simsoviet1917"
+    },
+    "android": {
+      "package": "com.simgames.simsoviet1917"
+    }
+  }
+}

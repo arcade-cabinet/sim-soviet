@@ -4,93 +4,120 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SimSoviet 2000 is a satirical isometric city-builder game set in the Soviet Union (starting 1980). Players build structures (coal plants, tenements, kolkhozes, vodka plants, gulags) and manage resources (rubles, food, vodka, power, population) against 5-year plan quotas. The game runs in-browser and targets mobile via Capacitor (PWA + Android/iOS).
+**SimSoviet 1917** is a satirical 3D city-builder game set in the Soviet Union (starting 1917). Players build structures and manage resources (rubles, food, vodka, power, population) against 5-year plan quotas. Built with **Reactylon Native** (BabylonJS 8 + React Native).
+
+The `archive/` directory contains the previous 2D Canvas version (SimSoviet 2000) for reference. The current codebase is a full 3D rewrite.
 
 ## Commands
 
 ```bash
-pnpm install              # Install dependencies (pnpm 10+, Node 22+ required)
-pnpm dev                  # Dev server on http://localhost:3000
-pnpm build                # TypeScript check + Vite production build → dist/
-pnpm typecheck            # tsc --noEmit (strict mode, noUncheckedIndexedAccess)
-pnpm lint                 # Biome linter
-pnpm lint:fix             # Biome auto-fix
-pnpm format               # Biome formatter
-pnpm test                 # Vitest unit tests (single run)
-pnpm test:watch           # Vitest in watch mode
-pnpm test:e2e             # Playwright tests (Desktop Chrome, iPhone SE, Pixel 8a, iPad)
-pnpm test:e2e:mobile      # Playwright — mobile device projects only
-pnpm download:audio       # Download Soviet-era music from marxists.org → app/public/audio/
+npm install                # Install dependencies
+npx react-native run-ios   # Run on iOS simulator
+npx react-native run-android  # Run on Android emulator
+npx react-native start     # Start Metro bundler
+npm test                   # Jest tests
+npm run lint               # ESLint
 ```
-
-Run a single test file: `pnpm vitest run src/__tests__/SimulationEngine.test.ts`
 
 ## Tech Stack
 
-- **Rendering**: Canvas 2D with pre-baked isometric sprites (Blender pipeline)
-- **UI**: React 19 + Tailwind CSS 4, overlaid on the canvas
-- **State**: Custom `useSyncExternalStore` bridge in `src/stores/gameStore.ts` — mutable `GameState` class with immutable snapshots for React
-- **ECS**: Miniplex 2 with archetypes for buildings, citizens, tiles, resources
-- **Audio**: Tone.js for procedural SFX + HTMLAudioElement for music tracks (OGG/Opus)
-- **Build**: Vite 7, TypeScript 5.9, Biome for lint/format
-- **Testing**: Vitest (happy-dom env), Playwright for E2E
+- **3D Engine**: BabylonJS 8 via Reactylon Native (`reactylon ^3.5.4`)
+- **UI**: React Native 0.74 overlay components (absolute-positioned on 3D canvas)
+- **State**: Mutable `GameState` singleton with subscribe/notify + `useSyncExternalStore`
+- **Audio**: BabylonJS Sound for OGG music playback (52 Soviet-era public domain tracks)
+- **Build**: React Native CLI, Babel with `babel-plugin-reactylon`, TypeScript 5
+- **Models**: 55 GLB models in `assets/models/soviet/` with manifest.json
 
 ## Architecture
 
-### Two-layer rendering: Canvas 2D + React DOM
+### Two-layer rendering: BabylonJS 3D + React Native DOM
 
-The `App.tsx` component hosts both:
-1. **Canvas 2D viewport** — `GameWorld` component (`src/components/GameWorld.tsx`) imperatively creates `Canvas2DRenderer`, `CanvasGestureManager`, `ParticleSystem2D`, and `SimulationEngine`. Sprites are pre-baked isometric PNGs from Blender.
-2. **React DOM overlays** — `TopBar`, `Toolbar`, `QuotaHUD`, `Toast`, `Advisor`, `PravdaTicker`, `IntroModal` sit in DOM elements on top of the canvas.
+`App.tsx` hosts both:
+1. **3D Viewport** — `NativeEngine` + `Scene` + `Content.tsx` (composes all scene components)
+2. **React Native overlays** — TopBar, Toolbar, QuotaHUD, Toast, Advisor, Ticker, IntroModal, etc.
+
+### Source structure
+
+```
+src/
+├── engine/        # Pure TypeScript game logic (no rendering)
+│   ├── GameState.ts       # Mutable state class with subscribe/notify
+│   ├── SimTick.ts         # Core simulation tick (directives, growth, power, smog, fire, population)
+│   ├── BuildingTypes.ts   # 16 building types + 4 grown types × 3 levels
+│   ├── GridTypes.ts       # 30×30 grid, terrain types, cell interface
+│   ├── BuildActions.ts    # Building placement/bulldoze logic
+│   ├── WaterNetwork.ts    # BFS water distribution from pumps through pipes
+│   ├── WeatherSystem.ts   # Season/weather state machine
+│   ├── TrainSystem.ts     # Train movement + supply drops
+│   ├── TrafficSystem.ts   # Vehicle movement on roads
+│   ├── MeteorSystem.ts    # Meteor descent + crater impact
+│   ├── Directives.ts      # 12 sequential tutorial objectives
+│   └── helpers.ts         # Toast, advisor, speed, lens, floating text utilities
+├── scene/         # BabylonJS 3D components (React FC returning null, imperative in useEffect)
+│   ├── ModelCache.ts      # GLB preloader + clone/dispose
+│   ├── ModelMapping.ts    # Building type → GLB model name mapping
+│   ├── TerrainGrid.tsx    # 30×30 merged mesh with vertex colors + tree geometry
+│   ├── CameraController.tsx  # UniversalCamera: pan/zoom/tilt, street-to-bird-eye
+│   ├── Lighting.tsx       # Sun + overcast + fog with day/night cycle
+│   ├── BuildingRenderer.tsx  # Manages 3D mesh clones from game state
+│   ├── WeatherFX.tsx      # Snow/rain/storm particle systems
+│   ├── SmogOverlay.tsx    # Per-tile smog visualization
+│   ├── FireRenderer.tsx   # Building fire particles + point lights
+│   ├── AuraRenderer.tsx   # Propaganda/gulag aura rings
+│   ├── LightningRenderer.tsx  # Jagged bolt mesh + screen flash
+│   ├── TrainRenderer.tsx  # Animated train on rail with smoke
+│   ├── VehicleRenderer.tsx    # Cars on roads
+│   ├── ZeppelinRenderer.tsx   # Firefighting airships
+│   ├── MeteorRenderer.tsx # Meteor descent + explosion
+│   ├── GhostPreview.tsx   # Building placement preview
+│   ├── LensSystem.tsx     # Visual lens modes (water/power/smog/aura)
+│   └── FloatingText.tsx   # Billboard text above buildings
+├── ui/            # React Native overlay components
+│   ├── styles.ts          # Colors, panel styles, monospace font
+│   ├── TopBar.tsx         # Resource bar + calendar + speed controls
+│   ├── TabBar.tsx         # ZONING/INFRASTRUCTURE/STATE/PURGE tabs
+│   ├── Toolbar.tsx        # Building tool buttons
+│   ├── QuotaHUD.tsx       # State quota panel
+│   ├── DirectiveHUD.tsx   # Active directive display
+│   ├── Advisor.tsx        # Comrade Vanya notification
+│   ├── Toast.tsx          # Auto-dismissing notification banner
+│   ├── Ticker.tsx         # Scrolling Pravda news ticker
+│   ├── Minimap.tsx        # Minimap placeholder
+│   ├── CursorTooltip.tsx  # Tile info on long-press
+│   ├── LensSelector.tsx   # Lens toggle buttons
+│   └── IntroModal.tsx     # Dossier briefing overlay
+├── hooks/         # React hooks
+│   ├── useGameState.ts    # useSyncExternalStore bridge to GameState
+│   └── useGameLoop.ts     # rAF game loop (simTick + per-frame updates)
+├── audio/         # Audio system
+│   ├── AudioManifest.ts   # Track definitions, playlists, mood mapping
+│   └── AudioManager.ts    # BabylonJS Sound-based music player
+├── App.tsx        # Root: NativeEngine + Scene + all UI overlays
+└── Content.tsx    # Scene graph root composing all 3D components
+```
 
 ### State flow
 
-`GameState` (mutable class) → mutated by `SimulationEngine.tick()` and `GestureManager` → `notifyStateChange()` creates an immutable `GameSnapshot` → React components subscribe via `useGameSnapshot()`.
+`GameState` (mutable singleton) → mutated by `simTick()` + user actions → `notify()` → React re-renders via `useSyncExternalStore` in `useGameSnapshot()`.
 
-The `SimCallbacks` interface passes messages (toast, advisor, pravda) from the simulation back to React state in `App.tsx`.
+Toast/advisor messages use a module-level side-channel in `helpers.ts` (not on GameState).
 
-### ECS layer (src/ecs/)
+### Key patterns
 
-Uses Miniplex 2's single-Entity-interface pattern. All components are optional properties on `Entity`. Predicate-based archetypes (powered/unpowered buildings, producers, housing) in `archetypes.ts` require `world.reindex(entity)` after mutations. Systems are pure functions in `src/ecs/systems/` (power, production, consumption, population, decay, quota).
+- Scene components are React FCs that return `null` and do all BabylonJS work imperatively in `useEffect` + `registerBeforeRender`
+- `useScene()` from `reactylon` provides the BabylonJS Scene inside `<Scene>` children
+- UI components use `pointerEvents="box-none"` to pass through touches to the 3D canvas
+- GLB models are preloaded as disabled templates, then cloned per-building
 
-### Input: GestureManager
+## Assets
 
-State machine (`idle → pending → panning`) distinguishes taps from camera pans on touch devices. Only confirmed taps trigger `scene.pick()` for building placement. Replaces the old `InputManager` that fired on pointerdown.
-
-### Event system
-
-`EventSystem` fires weighted-random events (disasters, political, economic, cultural, absurdist) with conditions, cooldowns, and deduplication. `PravdaSystem` generates satirical Pravda newspaper headlines from events and ambient state. Events have dynamic text via functions over `GameState`.
-
-### Path aliases
-
-```
-@/*    → src/*
-@app/* → app/*
-```
-
-Defined in both `tsconfig.json` and `vite.config.ts` (+ `vitest.config.ts`).
-
-### Vite configuration
-
-The Vite root is `./app` (not project root). Output builds to `../dist`. Asset URLs must use `import.meta.env.BASE_URL` for GitHub Pages subdirectory deployment.
+- `assets/models/soviet/` — 55 GLB models with `manifest.json` mapping roles
+- `assets/audio/music/` — 52 OGG music tracks (Soviet anthems, war songs, folk)
+- `archive/` — Previous 2D Canvas codebase + `poc.html` (reference implementation)
 
 ## Code Style
 
-- Biome: 2-space indent, single quotes, trailing commas (ES5), 100-char line width, semicolons always
-- TypeScript strict mode with `noUncheckedIndexedAccess`
-- `noNonNullAssertion` is off (non-null assertions are allowed)
-
-## Testing
-
-- Unit tests live in `src/__tests__/` and match `src/**/*.test.ts` or `src/**/*.spec.ts`
-- Test environment: happy-dom with `restoreMocks: true`
-- E2E tests live in `e2e/`, run against `http://localhost:3000` with visual regression (`maxDiffPixelRatio: 0.05`)
-- CI runs: lint → typecheck → test → build (GitHub Actions)
-
-## Deploy
-
-Merges to `main` auto-deploy to GitHub Pages via `.github/workflows/deploy.yml`. The build passes `--base /<repo-name>/` to Vite for correct asset paths.
-
-## Agentic Memory Bank
-
-This project maintains an `agentic-memory-bank/` directory with structured context files that persist across AI agent sessions. See `.clinerules` for the protocol. At session start, read the memory bank files to rebuild project context. After significant work, update `activeContext.md` and `progress.md`.
+- TypeScript strict mode
+- React Native `StyleSheet.create` for all styling (no Tailwind)
+- Monospace font: Menlo (iOS) / monospace (Android)
+- Soviet aesthetic: red (#c62828), gold (#fbc02d), terminal green (#00e676), dark panels (#2a2e33)

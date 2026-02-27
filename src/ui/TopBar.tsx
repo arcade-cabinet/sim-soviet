@@ -1,0 +1,241 @@
+/**
+ * TopBar — Resource bar, calendar, speed controls.
+ * Port of poc.html lines 179-231.
+ */
+
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Colors, SharedStyles, monoFont } from './styles';
+
+export interface TopBarProps {
+  season: string;
+  weather: string;
+  waterUsed: number;
+  waterGen: number;
+  powerUsed: number;
+  powerGen: number;
+  money: number;
+  income: number;
+  food: number;
+  vodka: number;
+  population: number;
+  dateLabel: string;
+  monthProgress: number; // 0..1
+  speed: number; // 0 | 1 | 3
+  onSetSpeed: (speed: number) => void;
+}
+
+export const TopBar: React.FC<TopBarProps> = ({
+  season,
+  weather,
+  waterUsed,
+  waterGen,
+  powerUsed,
+  powerGen,
+  money,
+  income,
+  food,
+  vodka,
+  population,
+  dateLabel,
+  monthProgress,
+  speed,
+  onSetSpeed,
+}) => {
+  return (
+    <View style={[SharedStyles.panel, styles.container]}>
+      {/* Left: title + season/weather */}
+      <View style={styles.leftGroup}>
+        <Text style={styles.title}>
+          <Text style={{ color: Colors.sovietRed }}>SIM</Text>
+          <Text style={{ color: Colors.white }}>SOVIET</Text>
+          {' '}
+          <Text style={styles.titleYear}>1917</Text>
+        </Text>
+        <View style={styles.seasonBox}>
+          <Text style={[styles.seasonText, { color: Colors.white }]}>{season}</Text>
+          <Text style={[styles.seasonText, { color: Colors.termBlue }]}>{weather}</Text>
+        </View>
+      </View>
+
+      {/* Right: resources, calendar, speed */}
+      <View style={styles.rightGroup}>
+        <ResourceStat label="WATER" emoji="💧" value={`${waterUsed}/${waterGen}`} color="#60a5fa" />
+        <ResourceStat label="POWER" emoji="⚡" value={`${powerUsed}/${powerGen}`} color={Colors.sovietGold} />
+        <ResourceStat label="FUNDS ₽" value={String(money)} color={Colors.white}>
+          <Text style={styles.income}>{income >= 0 ? `+${income}` : String(income)}</Text>
+        </ResourceStat>
+        <ResourceStat label="FOOD" emoji="🥔" value={String(food)} color="#fdba74" />
+        <ResourceStat label="VODKA" emoji="🍾" value={String(vodka)} color={Colors.termBlue} />
+        <ResourceStat label="POPULATION" value={String(population)} color={Colors.white} borderRight />
+
+        {/* Calendar */}
+        <View style={styles.calendarBox}>
+          <Text style={styles.statLabel}>CALENDAR</Text>
+          <Text style={styles.dateText}>{dateLabel}</Text>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${Math.round(monthProgress * 100)}%` }]} />
+          </View>
+        </View>
+
+        {/* Speed controls */}
+        <View style={styles.speedRow}>
+          <SpeedButton label="||" value={0} active={speed === 0} onPress={onSetSpeed} />
+          <SpeedButton label="▶" value={1} active={speed === 1} onPress={onSetSpeed} />
+          <SpeedButton label="▶▶" value={3} active={speed === 3} onPress={onSetSpeed} />
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// --- Sub-components ---
+
+interface ResourceStatProps {
+  label: string;
+  emoji?: string;
+  value: string;
+  color: string;
+  borderRight?: boolean;
+  children?: React.ReactNode;
+}
+
+const ResourceStat: React.FC<ResourceStatProps> = ({ label, emoji, value, color, borderRight, children }) => (
+  <View style={[styles.statCol, borderRight && styles.statBorderRight]}>
+    <Text style={styles.statLabel}>
+      {label} {emoji}
+    </Text>
+    <View style={styles.statValueRow}>
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      {children}
+    </View>
+  </View>
+);
+
+interface SpeedButtonProps {
+  label: string;
+  value: number;
+  active: boolean;
+  onPress: (v: number) => void;
+}
+
+const SpeedButton: React.FC<SpeedButtonProps> = ({ label, value, active, onPress }) => (
+  <TouchableOpacity
+    onPress={() => onPress(value)}
+    style={[SharedStyles.timeBtn, active && SharedStyles.timeBtnActive, styles.speedBtn]}
+    activeOpacity={0.7}
+  >
+    <Text style={[styles.speedLabel, active && { color: Colors.white }]}>{label}</Text>
+  </TouchableOpacity>
+);
+
+// --- Styles ---
+
+const styles = StyleSheet.create({
+  container: {
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+  },
+  leftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    fontFamily: monoFont,
+    letterSpacing: -1,
+  },
+  titleYear: {
+    color: '#9e9e9e',
+    fontSize: 16,
+    fontWeight: 'normal',
+  },
+  seasonBox: {
+    borderLeftWidth: 1,
+    borderLeftColor: '#555',
+    paddingLeft: 12,
+  },
+  seasonText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
+  rightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  statCol: {
+    alignItems: 'flex-end',
+  },
+  statBorderRight: {
+    borderRightWidth: 1,
+    borderRightColor: '#555',
+    paddingRight: 12,
+  },
+  statLabel: {
+    color: '#9e9e9e',
+    fontSize: 9,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: monoFont,
+  },
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  income: {
+    color: Colors.termGreen,
+    fontSize: 9,
+    fontFamily: monoFont,
+    marginBottom: 2,
+  },
+  calendarBox: {
+    alignItems: 'flex-start',
+    width: 90,
+  },
+  dateText: {
+    color: '#f5f5f5',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: monoFont,
+    letterSpacing: 2,
+  },
+  progressTrack: {
+    width: '100%',
+    height: 4,
+    backgroundColor: '#111',
+    borderWidth: 1,
+    borderColor: '#333',
+    marginTop: 3,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: Colors.sovietRed,
+  },
+  speedRow: {
+    flexDirection: 'row',
+  },
+  speedBtn: {
+    width: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  speedLabel: {
+    fontSize: 14,
+    fontFamily: monoFont,
+    color: Colors.textSecondary,
+  },
+});

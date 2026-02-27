@@ -1,0 +1,107 @@
+/**
+ * Content — Scene graph root that composes all 3D components.
+ *
+ * Placed inside <Scene> by App.tsx. Reads game state via the
+ * useGameSnapshot hook and passes derived props to each scene component.
+ *
+ * After the archive merge, building data comes from the ECS bridge
+ * while the old GameState is kept for visual-only systems (weather, time).
+ */
+
+import React, { useEffect } from 'react';
+import { useScene } from 'reactylon';
+import { useGameSnapshot } from './hooks/useGameState';
+import { preloadModels, type ModelLoadProgress } from './scene/ModelCache';
+import AudioManager from './audio/AudioManager';
+import { gameState } from './engine/GameState';
+import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
+import { notifyStateChange } from './stores/gameStore';
+
+// Scene components
+import TerrainGrid from './scene/TerrainGrid';
+import CameraController from './scene/CameraController';
+import Lighting from './scene/Lighting';
+import BuildingRenderer from './scene/BuildingRenderer';
+import WeatherFX from './scene/WeatherFX';
+import SmogOverlay from './scene/SmogOverlay';
+import FireRenderer from './scene/FireRenderer';
+import AuraRenderer from './scene/AuraRenderer';
+import LightningRenderer from './scene/LightningRenderer';
+import TrainRenderer from './scene/TrainRenderer';
+import VehicleRenderer from './scene/VehicleRenderer';
+import ZeppelinRenderer from './scene/ZeppelinRenderer';
+import MeteorRenderer from './scene/MeteorRenderer';
+import GhostPreview from './scene/GhostPreview';
+import LensSystem from './scene/LensSystem';
+import FloatingText from './scene/FloatingText';
+import Environment from './scene/Environment';
+
+interface ContentProps {
+  onLoadProgress?: ModelLoadProgress;
+  onLoadComplete?: () => void;
+}
+
+const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => {
+  const scene = useScene();
+  const snap = useGameSnapshot();
+  const { state } = snap;
+
+  // Preload all GLB models and initialize audio on mount
+  useEffect(() => {
+    preloadModels(scene, 'assets', onLoadProgress).then(() => {
+      // Notify forces re-render through useSyncExternalStore,
+      // so BuildingRenderer retries cloning now that models are ready
+      gameState.notify();
+      notifyStateChange();
+      onLoadComplete?.();
+    });
+
+    // Initialize audio — starts playlist after user interaction (IntroModal dismiss)
+    const audio = AudioManager.getInstance();
+    audio.init(scene);
+
+    return () => {
+      audio.dispose();
+    };
+  }, [scene]);
+
+  // Derive building states from ECS (archive merge)
+  // The ECS building defIds match GLB model names directly
+  const buildings = getBuildingStates();
+
+  // Get grid from ECS for terrain rendering
+  const ecsGrid = getGridCells();
+
+  return (
+    <>
+      {/* Core scene */}
+      <CameraController />
+      <Environment season={snap.season} />
+      <Lighting
+        timeOfDay={snap.timeOfDay}
+        season={snap.season}
+        isStorm={state.currentWeather === 'storm'}
+      />
+      <TerrainGrid grid={ecsGrid} season={snap.season} />
+      <BuildingRenderer buildings={buildings} />
+
+      {/* VFX layers */}
+      <WeatherFX />
+      <SmogOverlay />
+      <FireRenderer />
+      <AuraRenderer />
+      <LightningRenderer />
+      <TrainRenderer />
+      <VehicleRenderer />
+      <ZeppelinRenderer />
+      <MeteorRenderer />
+      <FloatingText />
+
+      {/* Interaction */}
+      <GhostPreview />
+      <LensSystem />
+    </>
+  );
+};
+
+export default Content;

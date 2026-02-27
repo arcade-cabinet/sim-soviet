@@ -1,6 +1,0 @@
-# Audio assets directory
-# Run: pnpm run download:audio
-# Or: ./scripts/download-audio.sh
-#
-# Audio files are not committed to git due to size.
-# They are downloaded from marxists.org or generated.

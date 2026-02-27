@@ -1,9 +1,0 @@
-{
-  "appId": "com.arcadecabinet.simsoviet",
-  "appName": "SimSoviet 2000",
-  "webDir": "dist",
-  "server": {
-    "androidScheme": "https",
-    "hostname": "simsoviet.app"
-  }
-}

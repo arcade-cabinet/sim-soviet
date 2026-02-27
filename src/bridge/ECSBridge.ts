@@ -1,0 +1,103 @@
+/**
+ * ECSBridge — reads ECS archetypes and produces data structures
+ * for the BabylonJS 3D rendering layer.
+ *
+ * The 3D renderers (BuildingRenderer, TerrainGrid, etc.) expect flat arrays.
+ * This module reads from Miniplex ECS entities and converts them to the
+ * shapes the 3D components understand.
+ */
+
+import { buildings } from '@/ecs/archetypes';
+import { tiles } from '@/ecs/archetypes';
+import type { BuildingState } from '../scene/BuildingRenderer';
+import type { GridCell, TerrainType } from '../engine/GridTypes';
+import { GRID_SIZE } from '@/config';
+
+/**
+ * Read ECS building entities and produce BuildingState[] for the 3D renderer.
+ *
+ * The archive's building defIds (e.g. "apartment-tower-a", "vodka-distillery")
+ * match the GLB model names directly, so `type` is the defId.
+ */
+export function getBuildingStates(): BuildingState[] {
+  return buildings.entities.map((entity) => {
+    const { position, building, renderable } = entity;
+    return {
+      id: `${position.gridX}_${position.gridY}`,
+      type: building.defId,
+      level: 0, // ECS uses defId variants instead of levels
+      gridX: position.gridX,
+      gridY: position.gridY,
+      elevation: 0, // TODO: read from tile entity elevation
+      powered: building.powered,
+      onFire: false, // TODO: wire to ECS fire state
+    };
+  });
+}
+
+/**
+ * Read ECS tile entities and produce a 2D GridCell[][] for the terrain renderer.
+ *
+ * The 3D TerrainGrid expects the flat-array grid format from the old GameState.
+ * This bridges ECS tiles to that format.
+ */
+export function getGridCells(): GridCell[][] {
+  const grid: GridCell[][] = [];
+
+  // Initialize empty grid
+  for (let y = 0; y < GRID_SIZE; y++) {
+    const row: GridCell[] = [];
+    for (let x = 0; x < GRID_SIZE; x++) {
+      row.push({
+        type: null,
+        zone: null,
+        z: 0,
+        terrain: 'grass' as TerrainType,
+        isRail: false,
+        bridge: false,
+        smog: 0,
+        onFire: 0,
+        hasPipe: false,
+        watered: false,
+      });
+    }
+    grid.push(row);
+  }
+
+  // Populate from ECS tile entities
+  for (const entity of tiles.entities) {
+    const { position, tile } = entity;
+    const { gridX, gridY } = position;
+    if (gridY >= 0 && gridY < GRID_SIZE && gridX >= 0 && gridX < GRID_SIZE) {
+      const cell = grid[gridY][gridX];
+      // Map ECS terrain type to 3D terrain type
+      cell.terrain = mapTerrain(tile.terrain);
+      cell.z = tile.elevation;
+    }
+  }
+
+  // Mark building cells
+  for (const entity of buildings.entities) {
+    const { position, building } = entity;
+    const { gridX, gridY } = position;
+    if (gridY >= 0 && gridY < GRID_SIZE && gridX >= 0 && gridX < GRID_SIZE) {
+      grid[gridY][gridX].type = building.defId;
+    }
+  }
+
+  return grid;
+}
+
+/** Map ECS terrain names to the 3D renderer's TerrainType. */
+function mapTerrain(ecsTerrain: string): TerrainType {
+  switch (ecsTerrain) {
+    case 'water':
+      return 'water';
+    case 'road':
+      return 'grass'; // Roads rendered as grass in 3D for now
+    case 'foundation':
+      return 'grass';
+    default:
+      return 'grass';
+  }
+}
