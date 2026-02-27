@@ -111,7 +111,6 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
     // --- PROCEDURAL SKY (SkyMaterial) ---
     const skyMat = new SkyMaterial('skyMat', scene);
     configureSky(skyMat, season);
-    console.log('[Environment] SkyMaterial created, inclination:', skyMat.inclination);
 
     const skybox = MeshBuilder.CreateBox('skyBox', { size: 1000 }, scene);
     skybox.material = skyMat;
@@ -122,11 +121,7 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
     // --- HDRI for Image-Based Lighting (IBL) ---
     // Provides realistic ambient light on PBR materials
     const hdriFile = getHdriFile(season);
-    console.log('[Environment] Loading HDRI from:', hdriFile);
     const hdrTexture = new HDRCubeTexture(hdriFile, scene, 256);
-    hdrTexture.onLoadObservable.addOnce(() => {
-      console.log('[Environment] HDRI loaded successfully');
-    });
     scene.environmentTexture = hdrTexture;
     disposablesRef.current.push(hdrTexture);
 

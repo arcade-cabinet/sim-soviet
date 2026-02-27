@@ -141,6 +141,40 @@ export class SaveSystem {
     }
   }
 
+  /** List all save names. */
+  public async listSaves(): Promise<string[]> {
+    try {
+      const db = this.tryGetDb();
+      if (db) {
+        const rows = db.select({ name: dbSchema.saves.name }).from(dbSchema.saves).all();
+        return rows.map((r) => r.name);
+      }
+      return localStorage.getItem(LOCALSTORAGE_KEY) !== null ? ['autosave'] : [];
+    } catch {
+      return [];
+    }
+  }
+
+  /** Get timestamp of the most recent save. */
+  public async getLastSaveTime(): Promise<number | undefined> {
+    try {
+      const db = this.tryGetDb();
+      if (db) {
+        const rows = db.select({ timestamp: dbSchema.saves.timestamp }).from(dbSchema.saves).all();
+        if (rows.length === 0) return undefined;
+        return Math.max(...rows.map((r) => r.timestamp));
+      }
+      const raw = localStorage.getItem(LOCALSTORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        return data.timestamp;
+      }
+      return undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   /** Delete a save. */
   public async deleteSave(name = 'autosave'): Promise<void> {
     try {

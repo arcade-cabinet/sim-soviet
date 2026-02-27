@@ -89,7 +89,6 @@ export async function preloadModels(
     );
   }
 
-  console.log(`[ModelCache] Loaded ${loadedCount}/${entries.length} models`);
   preloaded = true;
 }
 

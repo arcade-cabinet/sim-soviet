@@ -14,6 +14,7 @@ import { world } from '@/ecs/world';
 import { SimulationEngine, type SimCallbacks } from '@/game/SimulationEngine';
 import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
+import { SaveSystem } from '@/game/SaveSystem';
 import { GRID_SIZE } from '@/config';
 import { notifyStateChange } from '@/stores/gameStore';
 import type { DifficultyLevel, ConsequenceLevel } from '@/game/ScoringSystem';
@@ -26,6 +27,7 @@ export interface GameInitOptions {
 
 let engine: SimulationEngine | null = null;
 let gameGrid: GameGrid | null = null;
+let saveSystem: SaveSystem | null = null;
 let initialized = false;
 
 /**
@@ -109,6 +111,12 @@ export function initGame(
 
   // Create and configure SimulationEngine
   engine = new SimulationEngine(grid, callbacks, undefined, difficulty, consequence);
+
+  // Create SaveSystem wired to the grid and engine
+  saveSystem = new SaveSystem(grid);
+  saveSystem.setEngine(engine);
+  saveSystem.startAutoSave();
+
   initialized = true;
 
   // Initial notification to populate React snapshot
@@ -130,4 +138,9 @@ export function isGameInitialized(): boolean {
 /** Get the spatial grid (for placement validation). */
 export function getGameGrid(): GameGrid | null {
   return gameGrid;
+}
+
+/** Get the SaveSystem instance (null if game not initialized). */
+export function getSaveSystem(): SaveSystem | null {
+  return saveSystem;
 }

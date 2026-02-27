@@ -32,7 +32,7 @@ import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
 import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
-import { initGame, isGameInitialized, type GameInitOptions } from './bridge/GameInit';
+import { initGame, isGameInitialized, getSaveSystem, type GameInitOptions } from './bridge/GameInit';
 import { notifyStateChange, setPaused, setGameSpeed } from './stores/gameStore';
 import { getTotalModelCount } from './scene/ModelCache';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
@@ -426,9 +426,49 @@ const App: React.FC = () => {
   const handleShowEconomyDetail = useCallback(() => {
     setShowEconomyDetail(true);
   }, []);
-  const handleShowSaveLoad = useCallback(() => {
-    setShowSaveLoad(true);
+  // ── Save/Load state ──
+  const [saveNames, setSaveNames] = useState<string[]>([]);
+  const [lastSaveTime, setLastSaveTime] = useState<number | undefined>(undefined);
+
+  const refreshSaveState = useCallback(async () => {
+    const sys = getSaveSystem();
+    if (!sys) return;
+    const names = await sys.listSaves();
+    const time = await sys.getLastSaveTime();
+    setSaveNames(names);
+    setLastSaveTime(time);
   }, []);
+
+  const handleShowSaveLoad = useCallback(() => {
+    refreshSaveState();
+    setShowSaveLoad(true);
+  }, [refreshSaveState]);
+
+  const handleSaveGame = useCallback(async (name: string): Promise<boolean> => {
+    const sys = getSaveSystem();
+    if (!sys) return false;
+    const ok = await sys.save(name);
+    await refreshSaveState();
+    return ok;
+  }, [refreshSaveState]);
+
+  const handleLoadGame = useCallback(async (name: string): Promise<boolean> => {
+    const sys = getSaveSystem();
+    if (!sys) return false;
+    const ok = await sys.load(name);
+    if (ok) {
+      notifyStateChange();
+      gameState.notify();
+    }
+    return ok;
+  }, []);
+
+  const handleDeleteSave = useCallback(async (name: string): Promise<void> => {
+    const sys = getSaveSystem();
+    if (!sys) return;
+    await sys.deleteSave(name);
+    await refreshSaveState();
+  }, [refreshSaveState]);
 
   // --- Modal callbacks ---
   const handleDismissEra = useCallback(() => setEraTransition(null), []);
@@ -722,6 +762,12 @@ const App: React.FC = () => {
         <SaveLoadPanel
           visible={showSaveLoad}
           onDismiss={() => setShowSaveLoad(false)}
+          onSave={handleSaveGame}
+          onLoad={handleLoadGame}
+          onDelete={handleDeleteSave}
+          saveNames={saveNames}
+          autoSaveEnabled
+          lastSaveTime={lastSaveTime}
         />
 
         <SettingsModal
