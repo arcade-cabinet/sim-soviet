@@ -129,6 +129,68 @@ const App: React.FC = () => {
           const { showToast } = require('./engine/helpers');
           showToast(gameState, `★ ${name}: ${description}`);
         },
+        onSeasonChanged: (_season) => {
+          // Audio seasonal switching placeholder (AudioManager doesn't support seasons yet)
+        },
+        onBuildingCollapsed: (gridX, gridY, type) => {
+          const { showToast } = require('./engine/helpers');
+          showToast(gameState, `BUILDING COLLAPSED: ${type} at (${gridX},${gridY})`);
+        },
+        onSettlementChange: (event) => {
+          const { showAdvisor } = require('./engine/helpers');
+          showAdvisor(
+            gameState,
+            `Settlement ${event.type}: ${event.fromTier} → ${event.toTier}. ${event.description}`,
+          );
+        },
+        onNewPlan: (plan) => {
+          const { showAdvisor } = require('./engine/helpers');
+          showAdvisor(
+            gameState,
+            `NEW 5-YEAR PLAN: Produce ${plan.quotaTarget} ${plan.quotaType} by ${plan.endYear}`,
+          );
+        },
+        onEraChanged: (era) => {
+          const { showAdvisor, showToast } = require('./engine/helpers');
+          showToast(gameState, `ERA: ${era.name}`);
+          showAdvisor(gameState, `Welcome to the ${era.name} era (${era.startYear}-${era.endYear}).`);
+        },
+        onAnnualReport: (data, submitReport) => {
+          // Auto-submit the report for now (until AnnualReport modal is built)
+          const met = data.quotaCurrent >= data.quotaTarget;
+          const { showAdvisor } = require('./engine/helpers');
+          showAdvisor(
+            gameState,
+            `ANNUAL REPORT ${data.year}: Quota ${met ? 'MET' : 'MISSED'} (${data.quotaCurrent}/${data.quotaTarget} ${data.quotaType})`,
+          );
+          // Auto-submit truthfully
+          submitReport({
+            reportedQuota: data.quotaCurrent,
+            reportedSecondary: data.actualFood,
+            reportedPop: data.actualPop,
+          });
+        },
+        onMinigame: (active, resolveChoice) => {
+          // Auto-resolve minigames for now (until minigame modal is built)
+          const def = active.definition;
+          const { showToast } = require('./engine/helpers');
+          showToast(gameState, `MINIGAME: ${def.name}`);
+          if (def.choices.length > 0) {
+            resolveChoice(def.choices[0].id);
+          }
+        },
+        onTutorialMilestone: (milestone) => {
+          const { showAdvisor } = require('./engine/helpers');
+          showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
+        },
+        onGameTally: (tally) => {
+          const { showAdvisor } = require('./engine/helpers');
+          const medalNames = tally.medals.map((m) => m.name).join(', ');
+          showAdvisor(
+            gameState,
+            `FINAL TALLY — Score: ${tally.finalScore}, Medals: ${medalNames || 'none'}`,
+          );
+        },
       });
 
       // Also initialize the old flat grid for 3D terrain rendering

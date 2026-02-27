@@ -15,6 +15,7 @@ import { GRID_SIZE } from '@/config';
 import { notifyStateChange } from '@/stores/gameStore';
 
 let engine: SimulationEngine | null = null;
+let gameGrid: GameGrid | null = null;
 let initialized = false;
 
 /**
@@ -56,7 +57,8 @@ export function initGame(callbacks: SimCallbacks): SimulationEngine {
   createStartingSettlement('comrade');
 
   // Create spatial index grid
-  const grid = new GameGrid(GRID_SIZE);
+  gameGrid = new GameGrid(GRID_SIZE);
+  const grid = gameGrid;
   // Mark starter building cells in the spatial grid
   for (const s of starters) {
     grid.setCell(s.x, s.y, s.defId);
@@ -80,4 +82,9 @@ export function getEngine(): SimulationEngine | null {
 /** Whether the game has been initialized. */
 export function isGameInitialized(): boolean {
   return initialized;
+}
+
+/** Get the spatial grid (for placement validation). */
+export function getGameGrid(): GameGrid | null {
+  return gameGrid;
 }

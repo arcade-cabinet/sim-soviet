@@ -13,7 +13,7 @@ import { getSeason } from '../engine/WeatherSystem';
 import { DIRECTIVES } from '../engine/Directives';
 import { TICKS_PER_MONTH } from '../engine/GridTypes';
 import type { Season } from '../scene/TerrainGrid';
-import { getResourceEntity, getMetaEntity, citizens } from '@/ecs/archetypes';
+import { getResourceEntity, getMetaEntity, citizens, operationalBuildings } from '@/ecs/archetypes';
 import { getGameSpeed } from '@/stores/gameStore';
 
 /** Immutable snapshot of derived values for UI consumption. */
@@ -65,6 +65,10 @@ const MONTH_NAMES = [
   'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
 ];
 
+// Track money across snapshots to compute income delta
+let _previousMoney: number | null = null;
+let _lastIncome = 0;
+
 function seasonLabelToSeason(label: string): Season {
   if (label === 'WINTER') return 'winter';
   if (label.includes('SPRING')) return 'spring';
@@ -86,6 +90,26 @@ function createSnapshot(state: GameState): GameSnapshot {
   const powerUsed = res?.resources.powerUsed ?? state.powerUsed;
   const pop = m ? citizens.entities.length : state.pop;
 
+  // Compute income as money delta between snapshots
+  if (_previousMoney !== null) {
+    _lastIncome = money - _previousMoney;
+  }
+  _previousMoney = money;
+
+  // Derive water capacity from pump buildings in ECS
+  let waterCapacity = 0;
+  let waterDemand = 0;
+  for (const b of operationalBuildings.entities) {
+    // Pump buildings produce water (defId contains 'pump' or has waterOutput)
+    if (b.building.defId === 'pump' || b.building.defId === 'water-pump') {
+      waterCapacity += 50;
+    }
+    // All powered buildings consume some water
+    if (b.building.powered && b.building.powerReq > 0) {
+      waterDemand += Math.ceil(b.building.powerReq / 5);
+    }
+  }
+
   // Date — prefer ECS metaStore
   const year = m?.date.year ?? state.date.year;
   const month = m?.date.month ?? state.date.month;
@@ -101,14 +125,14 @@ function createSnapshot(state: GameState): GameSnapshot {
   const dir = DIRECTIVES[state.directiveIndex];
   return {
     money,
-    lastIncome: state.lastIncome,
+    lastIncome: _lastIncome,
     pop,
     food,
     vodka,
     powerGen,
     powerUsed,
-    waterGen: state.waterGen,
-    waterUsed: state.waterUsed,
+    waterGen: waterCapacity,
+    waterUsed: waterDemand,
 
     year,
     month,

@@ -24,6 +24,7 @@ import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
 import { BUILDING_TYPES, getBuildingHeight } from '../engine/BuildingTypes';
 import { handleClick } from '../engine/BuildActions';
+import { placeECSBuilding, bulldozeECSBuilding } from '../bridge/BuildingPlacement';
 
 const VALID_COLOR = new Color3(0, 1, 0);
 const INVALID_COLOR = new Color3(1, 0, 0);
@@ -185,6 +186,14 @@ const GhostPreview: React.FC = () => {
 
         if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) return;
 
+        // Place building in ECS (source of truth for simulation)
+        if (tool === 'bulldoze') {
+          bulldozeECSBuilding(gridX, gridZ);
+        } else {
+          placeECSBuilding(tool, gridX, gridZ);
+        }
+
+        // Also update old GameState for legacy grid rendering
         handleClick(gameState, gridX, gridZ, false);
       },
     )!;
