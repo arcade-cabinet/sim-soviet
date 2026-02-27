@@ -43,6 +43,11 @@ export interface TopBarProps {
   onShowSettlement?: () => void;
   onShowPolitburo?: () => void;
   onShowDeliveries?: () => void;
+  onShowMinigames?: () => void;
+  onShowPravda?: () => void;
+  onShowWorkerAnalytics?: () => void;
+  onShowEconomyDetail?: () => void;
+  onShowSaveLoad?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -81,6 +86,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   onShowSettlement,
   onShowPolitburo,
   onShowDeliveries,
+  onShowMinigames,
+  onShowPravda,
+  onShowWorkerAnalytics,
+  onShowEconomyDetail,
+  onShowSaveLoad,
 }) => {
   return (
     <View style={[SharedStyles.panel, styles.container]}>
@@ -175,6 +185,31 @@ export const TopBar: React.FC<TopBarProps> = ({
         {onShowDeliveries && (
           <TouchableOpacity onPress={onShowDeliveries} style={styles.navBtn} activeOpacity={0.7}>
             <Text style={styles.navBtnText}>{'\u{1F4E6}'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowMinigames && (
+          <TouchableOpacity onPress={onShowMinigames} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u{1F3B2}'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowPravda && (
+          <TouchableOpacity onPress={onShowPravda} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u{1F4F0}'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowWorkerAnalytics && (
+          <TouchableOpacity onPress={onShowWorkerAnalytics} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u{1F4CA}'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowEconomyDetail && (
+          <TouchableOpacity onPress={onShowEconomyDetail} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u{1F4B0}'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowSaveLoad && (
+          <TouchableOpacity onPress={onShowSaveLoad} style={styles.navBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u{1F4BE}'}</Text>
           </TouchableOpacity>
         )}
       </View>

@@ -91,6 +91,11 @@ import { EraTechTreePanel } from './ui/EraTechTreePanel';
 import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
 import { PolitburoPanel } from './ui/PolitburoPanel';
 import { CompulsoryDeliveriesPanel } from './ui/CompulsoryDeliveriesPanel';
+import { MinigameReferencePanel } from './ui/MinigameReferencePanel';
+import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
+import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
+import { EconomyDetailPanel } from './ui/EconomyDetailPanel';
+import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { Colors } from './ui/styles';
 
 type AppScreen = 'menu' | 'setup' | 'game';
@@ -132,6 +137,11 @@ const App: React.FC = () => {
   const [showSettlement, setShowSettlement] = useState(false);
   const [showPolitburo, setShowPolitburo] = useState(false);
   const [showDeliveries, setShowDeliveries] = useState(false);
+  const [showMinigames, setShowMinigames] = useState(false);
+  const [showPravda, setShowPravda] = useState(false);
+  const [showWorkerAnalytics, setShowWorkerAnalytics] = useState(false);
+  const [showEconomyDetail, setShowEconomyDetail] = useState(false);
+  const [showSaveLoad, setShowSaveLoad] = useState(false);
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -404,6 +414,21 @@ const App: React.FC = () => {
   const handleShowDeliveries = useCallback(() => {
     setShowDeliveries(true);
   }, []);
+  const handleShowMinigames = useCallback(() => {
+    setShowMinigames(true);
+  }, []);
+  const handleShowPravda = useCallback(() => {
+    setShowPravda(true);
+  }, []);
+  const handleShowWorkerAnalytics = useCallback(() => {
+    setShowWorkerAnalytics(true);
+  }, []);
+  const handleShowEconomyDetail = useCallback(() => {
+    setShowEconomyDetail(true);
+  }, []);
+  const handleShowSaveLoad = useCallback(() => {
+    setShowSaveLoad(true);
+  }, []);
 
   // --- Modal callbacks ---
   const handleDismissEra = useCallback(() => setEraTransition(null), []);
@@ -512,6 +537,11 @@ const App: React.FC = () => {
               onShowSettlement={handleShowSettlement}
               onShowPolitburo={handleShowPolitburo}
               onShowDeliveries={handleShowDeliveries}
+              onShowMinigames={handleShowMinigames}
+              onShowPravda={handleShowPravda}
+              onShowWorkerAnalytics={handleShowWorkerAnalytics}
+              onShowEconomyDetail={handleShowEconomyDetail}
+              onShowSaveLoad={handleShowSaveLoad}
             />
 
             <Toast
@@ -667,6 +697,31 @@ const App: React.FC = () => {
         <CompulsoryDeliveriesPanel
           visible={showDeliveries}
           onDismiss={() => setShowDeliveries(false)}
+        />
+
+        <MinigameReferencePanel
+          visible={showMinigames}
+          onDismiss={() => setShowMinigames(false)}
+        />
+
+        <PravdaArchivePanel
+          visible={showPravda}
+          onDismiss={() => setShowPravda(false)}
+        />
+
+        <WorkerAnalyticsPanel
+          visible={showWorkerAnalytics}
+          onDismiss={() => setShowWorkerAnalytics(false)}
+        />
+
+        <EconomyDetailPanel
+          visible={showEconomyDetail}
+          onDismiss={() => setShowEconomyDetail(false)}
+        />
+
+        <SaveLoadPanel
+          visible={showSaveLoad}
+          onDismiss={() => setShowSaveLoad(false)}
         />
 
         <SettingsModal
