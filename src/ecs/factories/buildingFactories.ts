@@ -27,6 +27,7 @@ export function createBuilding(gridX: number, gridY: number, defId: string): Ent
   // Derive building component from generated defs
   const building: BuildingComponent = {
     defId,
+    level: 0,
     powered: false,
     powerReq: def?.stats.powerReq ?? 0,
     powerOutput: def?.stats.powerOutput ?? 0,
@@ -76,6 +77,7 @@ export function placeNewBuilding(gridX: number, gridY: number, defId: string): E
 
   const building: BuildingComponent = {
     defId,
+    level: 0,
     powered: false,
     powerReq: def?.stats.powerReq ?? 0,
     powerOutput: def?.stats.powerOutput ?? 0,

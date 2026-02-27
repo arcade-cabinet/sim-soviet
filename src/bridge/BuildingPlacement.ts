@@ -4,10 +4,12 @@
  * Maps old BUILDING_TYPES tool keys (used by Toolbar) to ECS defIds
  * (used by placeNewBuilding), validates placement, deducts ECS resources,
  * creates ECS entity, and updates the spatial grid.
+ *
+ * Also handles building upgrades via upgradeECSBuilding().
  */
 
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
-import { getResourceEntity, tiles } from '@/ecs/archetypes';
+import { buildings as buildingsArchetype, getResourceEntity, tiles } from '@/ecs/archetypes';
 import { world } from '@/ecs/world';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { BUILDING_TYPES } from '../engine/BuildingTypes';
@@ -15,6 +17,87 @@ import { getEngine, getGameGrid } from './GameInit';
 import { notifyStateChange } from '@/stores/gameStore';
 import { GRID_SIZE } from '@/config';
 import { gameState } from '../engine/GameState';
+
+// ── Upgrade Chains ───────────────────────────────────────────────────────────
+
+/**
+ * Upgrade chains: maps a base defId to the ordered list of defIds in
+ * that upgrade path. Level = index in the array.
+ *
+ * Only buildings listed here can be upgraded. All others are max level.
+ */
+const UPGRADE_CHAINS: readonly (readonly string[])[] = [
+  // Housing: workers-house-a → apartment-tower-a → apartment-tower-c
+  ['workers-house-a', 'apartment-tower-a', 'apartment-tower-c'],
+  // Industry: warehouse → factory-office → bread-factory
+  ['warehouse', 'factory-office', 'bread-factory'],
+  // Government: ministry-office → government-hq → kgb-office
+  ['ministry-office', 'government-hq', 'kgb-office'],
+] as const;
+
+/** Reverse lookup: defId → { chain, level } */
+const UPGRADE_LOOKUP = new Map<string, { chain: readonly string[]; level: number }>();
+for (const chain of UPGRADE_CHAINS) {
+  for (let i = 0; i < chain.length; i++) {
+    UPGRADE_LOOKUP.set(chain[i], { chain, level: i });
+  }
+}
+
+/** Cost multiplier by target level (level 1 = 1.5×, level 2 = 2.5× base cost). */
+const UPGRADE_COST_MULTIPLIER: Record<number, number> = {
+  1: 1.5,
+  2: 2.5,
+};
+
+/**
+ * Get upgrade info for a building at the given defId.
+ * Returns null if the building cannot be upgraded (not in a chain or already max level).
+ */
+export function getUpgradeInfo(defId: string): {
+  nextDefId: string;
+  currentLevel: number;
+  nextLevel: number;
+  maxLevel: number;
+  cost: number;
+} | null {
+  const entry = UPGRADE_LOOKUP.get(defId);
+  if (!entry) return null;
+
+  const { chain, level } = entry;
+  const nextLevel = level + 1;
+  if (nextLevel >= chain.length) return null; // Already at max
+
+  const nextDefId = chain[nextLevel];
+  const nextDef = getBuildingDef(nextDefId);
+  const baseCost = nextDef?.presentation.cost ?? 0;
+  const multiplier = UPGRADE_COST_MULTIPLIER[nextLevel] ?? 1;
+  const cost = Math.ceil(baseCost * multiplier);
+
+  return {
+    nextDefId,
+    currentLevel: level,
+    nextLevel,
+    maxLevel: chain.length - 1,
+    cost,
+  };
+}
+
+/**
+ * Check if a building defId is part of an upgrade chain.
+ */
+export function isUpgradeable(defId: string): boolean {
+  const entry = UPGRADE_LOOKUP.get(defId);
+  if (!entry) return false;
+  return entry.level < entry.chain.length - 1;
+}
+
+/**
+ * Get the current upgrade level for a defId (0-based).
+ * Returns 0 if the defId is not in any upgrade chain.
+ */
+export function getUpgradeLevel(defId: string): number {
+  return UPGRADE_LOOKUP.get(defId)?.level ?? 0;
+}
 
 /**
  * Map from old Toolbar tool keys → ECS building defIds.
@@ -159,4 +242,98 @@ export function bulldozeECSBuilding(gridX: number, gridZ: number): boolean {
     }
   }
   return false;
+}
+
+// ── Building Upgrade ──────────────────────────────────────────────────────────
+
+/**
+ * Attempt to upgrade a building at the given grid position.
+ *
+ * Returns an object with `success` and a human-readable `reason` on failure.
+ * On success, the ECS entity's defId and level are updated, the model will
+ * automatically swap because BuildingRenderer detects type changes.
+ */
+export function upgradeECSBuilding(
+  gridX: number,
+  gridZ: number,
+): { success: boolean; reason?: string } {
+  // Find the ECS building entity at this position
+  const entity = buildingsArchetype.entities.find(
+    (e) => e.position.gridX === gridX && e.position.gridY === gridZ,
+  );
+  if (!entity) {
+    return { success: false, reason: 'No building at this position' };
+  }
+
+  // Must be operational (not under construction)
+  const phase = entity.building.constructionPhase;
+  if (phase && phase !== 'complete') {
+    return { success: false, reason: 'Building is under construction' };
+  }
+
+  // Check upgrade availability
+  const upgradeInfo = getUpgradeInfo(entity.building.defId);
+  if (!upgradeInfo) {
+    return { success: false, reason: 'Building is already at maximum level' };
+  }
+
+  // Check affordability
+  const res = getResourceEntity();
+  if (!res) {
+    return { success: false, reason: 'Resource store not found' };
+  }
+  if (res.resources.money < upgradeInfo.cost) {
+    return { success: false, reason: `Insufficient funds (need ${upgradeInfo.cost} rubles)` };
+  }
+
+  // Deduct cost
+  res.resources.money -= upgradeInfo.cost;
+
+  // Get the new building def for updated stats
+  const newDef = getBuildingDef(upgradeInfo.nextDefId);
+
+  // Update ECS building component
+  entity.building.defId = upgradeInfo.nextDefId;
+  entity.building.level = upgradeInfo.nextLevel;
+  entity.building.powerReq = newDef?.stats.powerReq ?? entity.building.powerReq;
+  entity.building.powerOutput = newDef?.stats.powerOutput ?? entity.building.powerOutput;
+  entity.building.housingCap = newDef?.stats.housingCap ?? entity.building.housingCap;
+  entity.building.pollution = newDef?.stats.pollution ?? entity.building.pollution;
+  entity.building.fear = newDef?.stats.fear ?? entity.building.fear;
+  entity.building.produces = newDef?.stats.produces ?? entity.building.produces;
+
+  // Update renderable sprite info
+  if (entity.renderable) {
+    entity.renderable.spriteId = upgradeInfo.nextDefId;
+    entity.renderable.spritePath = newDef?.sprite.path ?? '';
+    entity.renderable.footprintX = newDef?.footprint.tilesX ?? 1;
+    entity.renderable.footprintY = newDef?.footprint.tilesY ?? 1;
+  }
+
+  // Update spatial grid
+  const grid = getGameGrid();
+  if (grid) {
+    grid.setCell(gridX, gridZ, upgradeInfo.nextDefId);
+  }
+
+  // Sync legacy GameState
+  const oldCell = gameState.grid[gridZ]?.[gridX];
+  if (oldCell) {
+    oldCell.type = upgradeInfo.nextDefId;
+  }
+  const legacyBuilding = gameState.buildings.find(
+    (b) => b.x === gridX && b.y === gridZ,
+  );
+  if (legacyBuilding) {
+    legacyBuilding.type = upgradeInfo.nextDefId;
+    legacyBuilding.level = upgradeInfo.nextLevel;
+  }
+
+  // Reindex so archetypes reflect the change
+  world.reindex(entity);
+
+  // Notify React to re-render
+  notifyStateChange();
+
+  return { success: true };
 }

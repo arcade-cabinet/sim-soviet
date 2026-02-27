@@ -35,6 +35,7 @@ interface BuildingSaveEntry {
   y: number;
   defId: string;
   powered: boolean;
+  level?: number;
   durability?: { current: number; decayRate: number };
 }
 
@@ -239,6 +240,7 @@ export class SaveSystem {
         y: e.position.gridY,
         defId: e.building.defId,
         powered: e.building.powered,
+        level: e.building.level ?? 0,
         durability: durabilityMap.get(key),
       };
     });
@@ -318,6 +320,10 @@ export class SaveSystem {
 
     for (const b of data.buildings) {
       const entity = createBuilding(b.x, b.y, b.defId);
+      // Restore level if present
+      if (entity.building && b.level != null) {
+        entity.building.level = b.level;
+      }
       // Restore durability if present
       if (b.durability && entity.durability) {
         entity.durability.current = b.durability.current;

@@ -38,7 +38,7 @@ export function getBuildingStates(): BuildingState[] {
     return {
       id: key,
       type: building.defId,
-      level: 0, // ECS uses defId variants instead of levels
+      level: building.level ?? 0,
       gridX: position.gridX,
       gridY: position.gridY,
       elevation: elevationMap.get(key) ?? 0,

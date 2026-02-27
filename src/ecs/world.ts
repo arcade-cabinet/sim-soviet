@@ -37,6 +37,8 @@ export type ConstructionPhase = 'foundation' | 'building' | 'complete';
 export interface BuildingComponent {
   /** Building definition ID (sprite ID key into BUILDING_DEFS) */
   defId: string;
+  /** Upgrade level (0 = base, 1 = mid, 2 = top) */
+  level: number;
   /** Whether this building currently receives power */
   powered: boolean;
   /** Power units this building requires to operate */

@@ -29,6 +29,11 @@ import {
   type InspectMenuState,
   useInspectMenu,
 } from '../stores/gameStore';
+import {
+  getUpgradeInfo,
+  isUpgradeable,
+  upgradeECSBuilding,
+} from '../bridge/BuildingPlacement';
 import { Colors, monoFont } from './styles';
 
 // ── Action Definitions ────────────────────────────────────────────────────
@@ -39,6 +44,8 @@ interface ActionDef {
   icon: string;
   /** Returns detail text for the outer ring when selected. */
   getDetail: (state: InspectMenuState) => string;
+  /** Optional callback executed when the action is tapped a second time (while selected). */
+  onActivate?: (state: InspectMenuState) => string | null;
 }
 
 /** Shared actions available for all building types. */
@@ -147,19 +154,48 @@ const CONSTRUCTION_ACTION: ActionDef = {
   getDetail: () => 'Construction in progress',
 };
 
-/** Resolve the set of actions based on building type. */
-function getActionsForType(buildingType: InspectBuildingType): ActionDef[] {
+/** Upgrade action — shown for buildings that have an upgrade path. */
+const UPGRADE_ACTION: ActionDef = {
+  id: 'upgrade',
+  label: 'Upgrade',
+  icon: '\u{2B06}',
+  getDetail: (state) => {
+    const info = getUpgradeInfo(state.buildingDefId);
+    if (!info) return 'MAX LEVEL';
+    const nextDef = getBuildingDef(info.nextDefId);
+    const nextName = nextDef?.presentation.name ?? info.nextDefId;
+    return `Upgrade to ${nextName} (${info.cost} rubles)`;
+  },
+  onActivate: (state) => {
+    const result = upgradeECSBuilding(state.gridX, state.gridY);
+    if (result.success) {
+      return null; // Close menu on success
+    }
+    return result.reason ?? 'Upgrade failed';
+  },
+};
+
+/**
+ * Resolve the set of actions based on building type.
+ * Includes the UPGRADE action if the building has an upgrade path.
+ */
+function getActionsForType(buildingType: InspectBuildingType, buildingDefId: string): ActionDef[] {
+  const canUpgrade = isUpgradeable(buildingDefId);
+  const upgradeSlice = canUpgrade ? [UPGRADE_ACTION] : [];
+
   switch (buildingType) {
     case 'housing':
-      return [BASE_ACTIONS[0]!, ...HOUSEHOLD_ACTIONS, BASE_ACTIONS[2]!];
+      return [BASE_ACTIONS[0]!, ...HOUSEHOLD_ACTIONS, ...upgradeSlice, BASE_ACTIONS[2]!];
     case 'production':
-      return [...BASE_ACTIONS, PRODUCTION_ACTION];
+      return [...BASE_ACTIONS, PRODUCTION_ACTION, ...upgradeSlice];
     case 'storage':
-      return [...BASE_ACTIONS, STORAGE_ACTION];
+      return [...BASE_ACTIONS, STORAGE_ACTION, ...upgradeSlice];
     case 'construction':
       return [...BASE_ACTIONS, CONSTRUCTION_ACTION];
+    case 'government':
+      return [...BASE_ACTIONS, ...upgradeSlice];
     default:
-      return [...BASE_ACTIONS];
+      return [...BASE_ACTIONS, ...upgradeSlice];
   }
 }
 
@@ -300,6 +336,7 @@ const DetailRing: React.FC<{ text: string }> = ({ text }) => {
 export const RadialInspectMenu: React.FC = () => {
   const menu = useInspectMenu();
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
+  const [detailOverride, setDetailOverride] = useState<string | null>(null);
 
   // Animation values
   const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -340,6 +377,7 @@ export const RadialInspectMenu: React.FC = () => {
       }),
     ]).start(() => {
       setSelectedAction(null);
+      setDetailOverride(null);
       closeInspectMenu();
     });
   }, [scaleAnim, opacityAnim]);
@@ -350,12 +388,12 @@ export const RadialInspectMenu: React.FC = () => {
   const def = getBuildingDef(buildingDefId);
   const buildingName = def?.presentation.name ?? buildingDefId;
 
-  const actions = getActionsForType(buildingType);
+  const actions = getActionsForType(buildingType, buildingDefId);
   const actionAngle = 360 / actions.length;
   const gap = 2;
 
   const selectedActionDef = actions.find((a) => a.id === selectedAction);
-  const detailText = selectedActionDef?.getDetail(menu) ?? null;
+  const detailText = detailOverride ?? selectedActionDef?.getDetail(menu) ?? null;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -404,9 +442,27 @@ export const RadialInspectMenu: React.FC = () => {
               actionAngle={actionAngle}
               gap={gap}
               isSelected={selectedAction === action.id}
-              onToggle={() =>
-                setSelectedAction(selectedAction === action.id ? null : action.id)
-              }
+              onToggle={() => {
+                if (selectedAction === action.id) {
+                  // Second tap on selected action — activate if handler exists
+                  if (action.onActivate && menu) {
+                    const result = action.onActivate(menu);
+                    if (result === null) {
+                      // Success — close the menu
+                      handleClose();
+                      return;
+                    }
+                    // Failure — show reason in detail ring, keep selected
+                    setDetailOverride(result);
+                    return;
+                  }
+                  setSelectedAction(null);
+                  setDetailOverride(null);
+                } else {
+                  setSelectedAction(action.id);
+                  setDetailOverride(null);
+                }
+              }}
             />
           ))}
 
