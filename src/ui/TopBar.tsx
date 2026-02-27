@@ -27,6 +27,8 @@ export interface TopBarProps {
   blackMarks?: number;
   commendations?: number;
   settlementTier?: string;
+  onThreatPress?: () => void;
+  onShowAchievements?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -49,6 +51,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   blackMarks = 0,
   commendations = 0,
   settlementTier = 'selo',
+  onThreatPress,
+  onShowAchievements,
 }) => {
   return (
     <View style={[SharedStyles.panel, styles.container]}>
@@ -68,7 +72,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           blackMarks={blackMarks}
           commendations={commendations}
           settlementTier={settlementTier}
+          onPress={onThreatPress}
         />
+        {onShowAchievements && (
+          <TouchableOpacity onPress={onShowAchievements} style={styles.achBtn} activeOpacity={0.7}>
+            <Text style={styles.achBtnText}>{'\u2605'}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Right: resources, calendar, speed */}
@@ -125,11 +135,14 @@ const ThreatIndicator: React.FC<{
   blackMarks: number;
   commendations: number;
   settlementTier: string;
-}> = ({ threatLevel, blackMarks, commendations, settlementTier }) => {
+  onPress?: () => void;
+}> = ({ threatLevel, blackMarks, commendations, settlementTier, onPress }) => {
   const cfg = THREAT_CONFIG[threatLevel] ?? THREAT_CONFIG.safe;
   const effectiveMarks = Math.max(0, blackMarks - commendations);
+  const Container = onPress ? TouchableOpacity : View;
+  const containerProps = onPress ? { onPress, activeOpacity: 0.7 } : {};
   return (
-    <View style={styles.threatBox}>
+    <Container {...containerProps} style={styles.threatBox}>
       <Text style={styles.statLabel}>
         {TIER_LABELS[settlementTier] ?? 'SELO'}
       </Text>
@@ -140,7 +153,7 @@ const ThreatIndicator: React.FC<{
       <Text style={styles.marksText}>
         {effectiveMarks > 0 ? `${effectiveMarks}\u2620` : '\u2605'}
       </Text>
-    </View>
+    </Container>
   );
 };
 
@@ -317,5 +330,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: monoFont,
     color: Colors.textSecondary,
+  },
+  achBtn: {
+    borderLeftWidth: 1,
+    borderLeftColor: '#555',
+    paddingLeft: 10,
+    paddingVertical: 4,
+  },
+  achBtnText: {
+    fontSize: 16,
+    color: Colors.sovietGold,
   },
 });

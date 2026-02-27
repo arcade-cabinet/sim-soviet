@@ -72,6 +72,9 @@ import { MainMenu } from './ui/MainMenu';
 import { LoadingScreen } from './ui/LoadingScreen';
 import { GameModals, type PlanDirective, type GameOverInfo } from './ui/GameModals';
 import { NewGameSetup, type NewGameConfig } from './ui/NewGameSetup';
+import { PersonnelFilePanel } from './ui/PersonnelFilePanel';
+import { AchievementsPanel } from './ui/AchievementsPanel';
+import { SettingsModal } from './ui/SettingsModal';
 import { Colors } from './ui/styles';
 
 type AppScreen = 'menu' | 'setup' | 'game';
@@ -94,6 +97,11 @@ const App: React.FC = () => {
   const [tickerText, setTickerText] = useState(
     'CITIZENS REMINDED THAT COMPLAINING IS A CRIME  ///  WEATHER FORECAST: PERPETUAL GRAY  ///  '
   );
+
+  // ── Panel state ──
+  const [showPersonnelFile, setShowPersonnelFile] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -274,6 +282,10 @@ const App: React.FC = () => {
     setScreen('game');
   }, []);
 
+  const handleSettings = useCallback(() => {
+    setShowSettings(true);
+  }, []);
+
   // --- Game callbacks ---
   const handleSetSpeed = useCallback((sp: number) => {
     // Update both ECS game loop speed and old GameState for UI display
@@ -305,6 +317,14 @@ const App: React.FC = () => {
   const handleDismissIntro = useCallback(() => {
     setShowIntro(false);
     AudioManager.getInstance().startPlaylist();
+  }, []);
+
+  const handleThreatPress = useCallback(() => {
+    setShowPersonnelFile(true);
+  }, []);
+
+  const handleShowAchievements = useCallback(() => {
+    setShowAchievements(true);
   }, []);
 
   // --- Modal callbacks ---
@@ -339,7 +359,11 @@ const App: React.FC = () => {
     return (
       <>
         <StatusBar barStyle="light-content" />
-        <MainMenu onNewGame={handleNewGame} />
+        <MainMenu onNewGame={handleNewGame} onSettings={handleSettings} />
+        <SettingsModal
+          visible={showSettings}
+          onDismiss={() => setShowSettings(false)}
+        />
       </>
     );
   }
@@ -394,6 +418,8 @@ const App: React.FC = () => {
               blackMarks={snap.blackMarks}
               commendations={snap.commendations}
               settlementTier={snap.settlementTier}
+              onThreatPress={handleThreatPress}
+              onShowAchievements={handleShowAchievements}
             />
 
             <Toast
@@ -469,6 +495,21 @@ const App: React.FC = () => {
           gameOver={gameOver}
           gameTally={gameTally}
           onRestart={handleRestart}
+        />
+
+        <PersonnelFilePanel
+          visible={showPersonnelFile}
+          onDismiss={() => setShowPersonnelFile(false)}
+        />
+
+        <AchievementsPanel
+          visible={showAchievements}
+          onDismiss={() => setShowAchievements(false)}
+        />
+
+        <SettingsModal
+          visible={showSettings}
+          onDismiss={() => setShowSettings(false)}
         />
 
         <IntroModal
