@@ -1,65 +1,97 @@
-# SimSoviet 2000 -- Design Documents
+# SimSoviet 1917 — Documentation
 
 > *"All documentation is accurate. Discrepancies are the reader's fault."*
 
-This directory contains the foundational design specifications and reference
-documents for SimSoviet 2000. These are permanent records -- they define
-the game's systems, content, and creative voice.
+This directory contains the design specifications, reference documents, and development logs for **SimSoviet 1917** — a satirical 3D city-builder set in an alternate-history Soviet Union that never collapses. Built with Reactylon (BabylonJS 8 + React Native).
+
+---
+
+## Start Here
+
+| Document | What You'll Learn |
+|----------|-------------------|
+| **[GAME_VISION.md](GAME_VISION.md)** | The complete game vision in one document — core loop, eras, economy, political system, what's implemented vs aspirational |
+| **[GDD-master.md](GDD-master.md)** | The full master GDD with every mechanic specified in detail |
+
+---
+
+## Game Design (in `design/`)
+
+Domain-specific design documents. Each covers one system in depth.
+
+| Document | Domain | Status |
+|----------|--------|--------|
+| [overview.md](design/overview.md) | Game identity, core loop, settlement evolution | Complete |
+| [economy.md](design/economy.md) | Planned economy: trudodni, fondy, blat, production formulas, heating, storage | Complete |
+| [workers.md](design/workers.md) | Worker roles, lifecycle, morale/loyalty/skill, autonomous collective | Complete |
+| [demographics.md](design/demographics.md) | Dvor (household) system, family structures, birth/death | Draft |
+| [political.md](design/political.md) | Politruks, KGB, military, personnel file, pripiski | Complete |
+| [eras.md](design/eras.md) | 8 era campaigns, transitions, doctrine integration | Complete |
+| [map-terrain.md](design/map-terrain.md) | Procedural generation, camera, terrain types | Complete |
+| [ui-ux.md](design/ui-ux.md) | Mobile-first brutalist UI design | Complete |
+| [minigames.md](design/minigames.md) | 8 building/tile-triggered minigames | Complete |
+| [scoring.md](design/scoring.md) | Scoring, difficulty, permadeath, consequences | Complete |
 
 ---
 
 ## Architecture & Systems
 
+Deep reference documents for complex subsystems.
+
 | Document | Description |
 |----------|-------------|
-| [ECS Architecture](design-ecs-architecture.md) | Miniplex 2.0 Entity Component System -- 7 data components, 4 tag components, 14 archetype queries, 6 system functions. Unified Entity interface, system pipeline execution order, React bindings. |
-| [Leadership Architecture](design-leadership-architecture.md) | ECS component design for the political system -- Leader, Ministry, PolicyModifiers, Politburo components. Modifier pipeline, data flow, phased implementation plan. |
-| [Era Doctrines](design-era-doctrines.md) | The 8 composable policy modifier sets any leader can adopt: Revolutionary, Industrialization, Wartime, Reconstruction, Thaw, Freeze, Stagnation, Eternal. TypeScript interfaces, transition graph. |
-| [Power Transitions](design-power-transitions.md) | Leadership succession mechanics -- 7 transition types (natural death, coup, health reasons, mysterious disappearance, assassination, palace revolution, the immortal). Probability engine, state machine, announcement system. |
-| [Leader Archetypes](design-leader-archetypes.md) | The 11 procedurally-generated leader personality types: Zealot, Idealist, Reformer, Technocrat, Apparatchik, Populist, Militarist, Mystic, Poet, Collector, Ghost. Succession matrices, purge chains, cross-archetype systems. |
+| [ECS Architecture](design-ecs-architecture.md) | Miniplex 2.0 — components, archetypes, system pipeline |
+| [Leadership Architecture](design-leadership-architecture.md) | Political ECS components, modifier pipeline |
+| [Era Doctrines](design-era-doctrines.md) | 8 composable policy modifier sets |
+| [Power Transitions](design-power-transitions.md) | 7 leadership succession types, probability engine |
+| [Leader Archetypes](design-leader-archetypes.md) | 11 procedural leader personalities |
+
+---
 
 ## Content & Creative
 
 | Document | Description |
 |----------|-------------|
-| [Dialog Bible](design-dialog-bible.md) | Complete voice guide for all in-game text. Trilingual voice (Russian, Yiddish, accented English), advisor monologues, leader decrees by archetype, citizen complaints, building placement lines, game-over states. |
-| [Pravda System Reference](reference-pravda-system.md) | Procedural propaganda headline generator -- 61 generators across 6 categories, 279 word pool entries producing 145,000+ unique combinations. Contextual, ambient, and event-reactive modes. |
+| [Dialog Bible](design-dialog-bible.md) | Trilingual voice guide, advisor monologues, leader decrees |
+| [Pravda System](reference-pravda-system.md) | Procedural headline generator — 145K+ combinations |
+| [World-Building](reference-world-building.md) | Timeline events, achievements, building flavor, loading quotes |
+| [Name Generator](reference-name-generator.md) | Russian name generator — 1.1M+ combinations |
+
+---
 
 ## Technical Reference
 
 | Document | Description |
 |----------|-------------|
-| [Politburo System Reference](reference-politburo-system.md) | Ministry & Politburo simulation -- 10 ministries, 8 personality archetypes, 80-cell interaction matrix, inter-ministry tension system, coup/purge probability engines, 29 event templates, appointment strategies. |
-| [Name Generator Reference](reference-name-generator.md) | Procedural Russian name generator API -- 3-part naming (given + patronymic + surname), 81 male names, 40 female names, 173 surnames, 85 titles. `generate()`, `generatePolitburo()`, `generateCabinet()`. |
-| [World-Building Reference](reference-world-building.md) | Content module reference -- 36 alternate-history timeline events, city naming system, 36 radio announcements, 17 building flavor texts, 42 loading quotes, 31 achievements. |
-| [Yuka AI Research](research-yuka-ai.md) | Capabilities mapping of the Yuka v0.7.8 AI library to the leadership system -- GoalEvaluator, StateMachine, FuzzyModule, MemorySystem, steering behaviors, JSON serialization. |
+| [Politburo System](reference-politburo-system.md) | Ministry simulation — 10 ministries, 80-cell matrix, 29 events |
+| [Yuka AI Research](research-yuka-ai.md) | AI library capabilities mapping |
+| [Audio Assets](AUDIO_ASSETS.md) | 52 Soviet-era music tracks inventory |
 
-## Assets
+---
 
-| Document | Description |
+## Development
+
+| Location | Description |
 |----------|-------------|
-| [Audio Assets](AUDIO_ASSETS.md) | Inventory of the 40+ Soviet-era music tracks sourced from public domain. Download script reference. |
+| [devlog/](devlog/README.md) | Chronological record of major milestones |
+| [plans/](plans/) | Implementation plans and PRDs |
 
 ---
 
 ## Reading Order
 
-For a new contributor, the recommended reading order is:
+**Quick start**: Read [GAME_VISION.md](GAME_VISION.md) — covers everything in ~10 minutes.
 
-1. **ECS Architecture** -- understand the entity-component-system backbone
-2. **Leadership Architecture** -- understand the political ECS components
-3. **Era Doctrines** -- understand the policy modifier system
-4. **Leader Archetypes** -- understand who drives those policies
-5. **Power Transitions** -- understand how leaders come and go
-6. **Politburo System Reference** -- understand the ministry simulation engine
-7. **Dialog Bible** -- understand the game's creative voice
-8. **Name Generator + World-Building** -- understand the content layer
-9. **Yuka AI Research** -- understand the planned AI integration
-
-## Development Log
-
-Chronological record of major milestones: [docs/devlog/](devlog/README.md)
+**Deep dive** (for implementation):
+1. GAME_VISION.md — overall picture
+2. design/overview.md — core loop and settlement evolution
+3. design/economy.md — the planned economy (most complex system)
+4. design/workers.md — worker AI and population dynamics
+5. design/political.md — personnel file and political apparatus
+6. design/eras.md — 8 era campaigns
+7. GDD-master.md — full reference for all mechanics
+8. design-ecs-architecture.md — technical architecture
 
 ---
 
-*Document count: 12 + devlog | Last updated: February 2026*
+*42 documentation files | Last updated: February 2026*
