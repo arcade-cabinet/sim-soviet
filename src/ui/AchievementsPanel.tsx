@@ -10,6 +10,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 import { getEngine } from '../bridge/GameInit';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { ACHIEVEMENTS } from '../content/worldbuilding/achievements';
 
 export interface AchievementsPanelProps {
@@ -18,6 +19,8 @@ export interface AchievementsPanelProps {
 }
 
 export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({ visible, onDismiss }) => {
+  // Subscribe to game state for real-time achievement unlock updates
+  useGameSnapshot();
   const engine = getEngine();
   const tracker = engine?.getAchievements();
   if (!visible) return null;

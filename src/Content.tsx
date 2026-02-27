@@ -46,7 +46,6 @@ interface ContentProps {
 const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => {
   const scene = useScene();
   const snap = useGameSnapshot();
-  const { state } = snap;
 
   // Preload all GLB models and initialize audio on mount
   useEffect(() => {
@@ -92,7 +91,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
     <Lighting
       timeOfDay={snap.timeOfDay}
       season={snap.season}
-      isStorm={state.currentWeather === 'storm'}
+      isStorm={snap.weatherLabel === 'STORM'}
     />
     <TerrainGrid grid={ecsGrid} season={snap.season} />
     <BuildingRenderer buildings={buildings} />

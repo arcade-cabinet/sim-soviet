@@ -14,8 +14,9 @@ import { Scene } from 'reactylon';
 
 // Inject global CSS to make the BabylonJS canvas fill its container.
 // The reactylon Engine creates <canvas id="reactylon-canvas"> with no sizing CSS.
-if (Platform.OS === 'web' && typeof document !== 'undefined') {
+if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getElementById('reactylon-canvas-fix')) {
   const style = document.createElement('style');
+  style.id = 'reactylon-canvas-fix';
   style.textContent = `
     #reactylon-canvas {
       width: 100% !important;
@@ -34,7 +35,7 @@ import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
 import { initGame, isGameInitialized, getSaveSystem, type GameInitOptions } from './bridge/GameInit';
 import { initDatabase, persistToIndexedDB } from './db/provider';
-import { notifyStateChange, setPaused, setGameSpeed } from './stores/gameStore';
+import { notifyStateChange, setPaused, isPaused, setGameSpeed } from './stores/gameStore';
 import { getTotalModelCount } from './scene/ModelCache';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import {
@@ -155,12 +156,18 @@ const App: React.FC = () => {
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
   const [gameTally, setGameTally] = useState<TallyData | null>(null);
 
-  // Auto-pause when interactive modals are open
+  // Auto-pause when interactive modals are open (restore prior state on close)
   const hasInteractiveModal =
     !!annualReport || !!activeMinigame || !!planDirective || !!gameOver;
+  const wasPausedBeforeModal = useRef(false);
   useEffect(() => {
-    if (hasInteractiveModal) setPaused(true);
-    else setPaused(false);
+    if (hasInteractiveModal) {
+      wasPausedBeforeModal.current = isPaused();
+      setPaused(true);
+    } else {
+      // Restore prior pause state when modal closes
+      if (!wasPausedBeforeModal.current) setPaused(false);
+    }
   }, [hasInteractiveModal]);
 
   // Start ECS game loop (replaces old flat-state game loop)
@@ -507,9 +514,10 @@ const App: React.FC = () => {
   const handleDismissSettlement = useCallback(() => setSettlementEvent(null), []);
   const handleAcceptPlan = useCallback(() => setPlanDirective(null), []);
   const handleRestart = useCallback(() => {
-    // For now, just dismiss — full restart requires page reload
     setGameOver(null);
     setGameTally(null);
+    // Full restart requires clearing all module-level singletons — page reload
+    window.location.reload();
   }, []);
 
   // Read toast/advisor from side-channel

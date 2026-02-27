@@ -11,6 +11,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 import { getEngine } from '../bridge/GameInit';
+import { useGameSnapshot } from '../hooks/useGameState';
 import type { FileEntry } from '../game/PersonnelFile';
 
 const THREAT_CONFIG: Record<string, { label: string; color: string }> = {
@@ -28,6 +29,8 @@ export interface PersonnelFilePanelProps {
 }
 
 export const PersonnelFilePanel: React.FC<PersonnelFilePanelProps> = ({ visible, onDismiss }) => {
+  // Subscribe to game state for real-time threat level updates
+  useGameSnapshot();
   const engine = getEngine();
   const file = engine?.getPersonnelFile();
   if (!visible || !file) return null;

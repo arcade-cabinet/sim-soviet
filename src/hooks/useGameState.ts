@@ -62,9 +62,6 @@ export interface GameSnapshot {
   commendations: number;
   settlementTier: string;
   currentEra: string;
-
-  // Raw state reference (for scene components that need grid/buildings)
-  state: GameState;
 }
 
 const MONTH_NAMES = [
@@ -169,8 +166,6 @@ function createSnapshot(state: GameState): GameSnapshot {
     commendations: m?.commendations ?? 0,
     settlementTier: m?.settlementTier ?? 'selo',
     currentEra: m?.currentEra ?? 'war_communism',
-
-    state,
   };
 }
 

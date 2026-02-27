@@ -351,9 +351,6 @@ const SuccessionSection: React.FC<{ history: GeneralSecretary[] }> = ({ history 
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>SUCCESSION HISTORY</Text>
       {[...history].reverse().map((leader, i) => {
-        const yearsInPower = leader.causeOfDeath
-          ? `${leader.yearAppointed}\u2013???`
-          : `${leader.yearAppointed}\u2013???`;
         const personalityColor = PERSONALITY_COLORS[leader.personality] ?? '#888';
         const deathText = leader.causeOfDeath
           ? DEATH_LABELS[leader.causeOfDeath] ?? 'Unknown'
@@ -369,10 +366,7 @@ const SuccessionSection: React.FC<{ history: GeneralSecretary[] }> = ({ history 
             </View>
             <View style={styles.historyDetailRow}>
               <Text style={styles.historyDetail}>
-                Appointed {leader.yearAppointed} {'\u00B7'} Age {leader.age}
-              </Text>
-              <Text style={[styles.historyDeath, { color: Colors.sovietRed }]}>
-                {deathText}
+                {leader.yearAppointed} {'\u00B7'} Age {leader.age} {'\u00B7'} {deathText}
               </Text>
             </View>
           </View>
