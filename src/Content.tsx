@@ -8,7 +8,7 @@
  * while the old GameState is kept for visual-only systems (weather, time).
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useScene } from 'reactylon';
 import { useGameSnapshot } from './hooks/useGameState';
 import { preloadModels, type ModelLoadProgress } from './scene/ModelCache';
@@ -69,8 +69,19 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
   // The ECS building defIds match GLB model names directly
   const buildings = getBuildingStates();
 
-  // Get grid from ECS for terrain rendering
-  const ecsGrid = getGridCells();
+  // Cache the terrain grid — it only needs to rebuild when season changes
+  // (terrain features don't move). Without this, getGridCells() returns a new
+  // array every render, causing TerrainGrid to dispose and rebuild all meshes
+  // (terrain quads, tree cones, mountain peaks) on every tick.
+  const lastSeasonRef = useRef(snap.season);
+  const [ecsGrid, setEcsGrid] = useState(() => getGridCells());
+
+  useEffect(() => {
+    if (lastSeasonRef.current !== snap.season) {
+      lastSeasonRef.current = snap.season;
+      setEcsGrid(getGridCells());
+    }
+  }, [snap.season]);
 
   return (
     <>

@@ -37,7 +37,7 @@ export function initGame(callbacks: SimCallbacks): SimulationEngine {
   });
   createMetaStore({
     seed: 'simsoviet-3d',
-    date: { year: 1922, month: 4, tick: 0 },
+    date: { year: 1922, month: 10, tick: 0 },
   });
 
   // Create tile grid
