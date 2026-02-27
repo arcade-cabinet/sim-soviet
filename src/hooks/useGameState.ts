@@ -56,6 +56,13 @@ export interface GameSnapshot {
   directiveText: string;
   directiveReward: string;
 
+  // Personnel / Political
+  threatLevel: string;
+  blackMarks: number;
+  commendations: number;
+  settlementTier: string;
+  currentEra: string;
+
   // Raw state reference (for scene components that need grid/buildings)
   state: GameState;
 }
@@ -156,6 +163,12 @@ function createSnapshot(state: GameState): GameSnapshot {
 
     directiveText: dir ? dir.text : 'No active directive.',
     directiveReward: dir ? `+${dir.reward}₽` : '',
+
+    threatLevel: m?.threatLevel ?? 'safe',
+    blackMarks: m?.blackMarks ?? 0,
+    commendations: m?.commendations ?? 0,
+    settlementTier: m?.settlementTier ?? 'selo',
+    currentEra: m?.currentEra ?? 'war_communism',
 
     state,
   };

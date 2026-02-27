@@ -32,7 +32,7 @@ import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
 import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
-import { initGame, isGameInitialized } from './bridge/GameInit';
+import { initGame, isGameInitialized, type GameInitOptions } from './bridge/GameInit';
 import { notifyStateChange, setPaused, setGameSpeed } from './stores/gameStore';
 import { getTotalModelCount } from './scene/ModelCache';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
@@ -71,13 +71,15 @@ import { IntroModal } from './ui/IntroModal';
 import { MainMenu } from './ui/MainMenu';
 import { LoadingScreen } from './ui/LoadingScreen';
 import { GameModals, type PlanDirective, type GameOverInfo } from './ui/GameModals';
+import { NewGameSetup, type NewGameConfig } from './ui/NewGameSetup';
 import { Colors } from './ui/styles';
 
-type AppScreen = 'menu' | 'game';
+type AppScreen = 'menu' | 'setup' | 'game';
 
 const App: React.FC = () => {
   // Screen state
   const [screen, setScreen] = useState<AppScreen>('menu');
+  const gameConfigRef = useRef<GameInitOptions | undefined>(undefined);
   const [assetsReady, setAssetsReady] = useState(false);
   const [loadingFaded, setLoadingFaded] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
@@ -190,7 +192,7 @@ const App: React.FC = () => {
         onGameTally: (tally) => {
           setGameTally(tally);
         },
-      });
+      }, gameConfigRef.current);
 
       // Also initialize the old flat grid for 3D terrain rendering
       if (gameState.grid.length === 0) {
@@ -260,6 +262,15 @@ const App: React.FC = () => {
 
   // --- Menu callbacks ---
   const handleNewGame = useCallback(() => {
+    setScreen('setup');
+  }, []);
+
+  const handleSetupBack = useCallback(() => {
+    setScreen('menu');
+  }, []);
+
+  const handleSetupStart = useCallback((config: NewGameConfig) => {
+    gameConfigRef.current = config;
     setScreen('game');
   }, []);
 
@@ -333,6 +344,15 @@ const App: React.FC = () => {
     );
   }
 
+  if (screen === 'setup') {
+    return (
+      <>
+        <StatusBar barStyle="light-content" />
+        <NewGameSetup onStart={handleSetupStart} onBack={handleSetupBack} />
+      </>
+    );
+  }
+
   // ─── GAME (with loading overlay) ───
   const loadPct =
     loadProgress.total > 0 ? loadProgress.loaded / loadProgress.total : 0;
@@ -370,6 +390,10 @@ const App: React.FC = () => {
               monthProgress={snap.monthProgress}
               speed={snap.speed}
               onSetSpeed={handleSetSpeed}
+              threatLevel={snap.threatLevel}
+              blackMarks={snap.blackMarks}
+              commendations={snap.commendations}
+              settlementTier={snap.settlementTier}
             />
 
             <Toast

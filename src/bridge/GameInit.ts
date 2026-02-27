@@ -16,6 +16,13 @@ import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
 import { GRID_SIZE } from '@/config';
 import { notifyStateChange } from '@/stores/gameStore';
+import type { DifficultyLevel, ConsequenceLevel } from '@/game/ScoringSystem';
+
+export interface GameInitOptions {
+  difficulty?: DifficultyLevel;
+  consequence?: ConsequenceLevel;
+  seed?: string;
+}
 
 let engine: SimulationEngine | null = null;
 let gameGrid: GameGrid | null = null;
@@ -25,8 +32,15 @@ let initialized = false;
  * Initialize the ECS world with all entities and return a SimulationEngine.
  * Safe to call multiple times — subsequent calls return the existing engine.
  */
-export function initGame(callbacks: SimCallbacks): SimulationEngine {
+export function initGame(
+  callbacks: SimCallbacks,
+  options?: GameInitOptions
+): SimulationEngine {
   if (engine && initialized) return engine;
+
+  const difficulty = options?.difficulty ?? 'comrade';
+  const consequence = options?.consequence ?? 'permadeath';
+  const seed = options?.seed ?? 'simsoviet-3d';
 
   // Create singleton store entities with enough materials for early construction
   createResourceStore({
@@ -36,7 +50,7 @@ export function initGame(callbacks: SimCallbacks): SimulationEngine {
     cement: 30,
   });
   createMetaStore({
-    seed: 'simsoviet-3d',
+    seed,
     date: { year: 1922, month: 10, tick: 0 },
   });
 
@@ -45,7 +59,7 @@ export function initGame(callbacks: SimCallbacks): SimulationEngine {
 
   // Generate procedural terrain (mountains, forests, marshes, rivers)
   const mapSystem = new MapSystem({
-    seed: 'simsoviet-3d',
+    seed,
     size: 'medium',
     riverCount: 1,
     forestDensity: 0.12,
@@ -83,7 +97,7 @@ export function initGame(callbacks: SimCallbacks): SimulationEngine {
   }
 
   // Create starting settlement (citizens, dvory)
-  createStartingSettlement('comrade');
+  createStartingSettlement(difficulty);
 
   // Create spatial index grid
   gameGrid = new GameGrid(GRID_SIZE);
@@ -94,7 +108,7 @@ export function initGame(callbacks: SimCallbacks): SimulationEngine {
   }
 
   // Create and configure SimulationEngine
-  engine = new SimulationEngine(grid, callbacks);
+  engine = new SimulationEngine(grid, callbacks, undefined, difficulty, consequence);
   initialized = true;
 
   // Initial notification to populate React snapshot

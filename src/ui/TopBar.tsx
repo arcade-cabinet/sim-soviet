@@ -23,6 +23,10 @@ export interface TopBarProps {
   monthProgress: number; // 0..1
   speed: number; // 0 | 1 | 3
   onSetSpeed: (speed: number) => void;
+  threatLevel?: string;
+  blackMarks?: number;
+  commendations?: number;
+  settlementTier?: string;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -41,10 +45,13 @@ export const TopBar: React.FC<TopBarProps> = ({
   monthProgress,
   speed,
   onSetSpeed,
+  threatLevel = 'safe',
+  blackMarks = 0,
+  commendations = 0,
+  settlementTier = 'selo',
 }) => {
   return (
     <View style={[SharedStyles.panel, styles.container]}>
-      {/* Left: title + season/weather */}
       <View style={styles.leftGroup}>
         <Text style={styles.title}>
           <Text style={{ color: Colors.sovietRed }}>SIM</Text>
@@ -56,6 +63,12 @@ export const TopBar: React.FC<TopBarProps> = ({
           <Text style={[styles.seasonText, { color: Colors.white }]}>{season}</Text>
           <Text style={[styles.seasonText, { color: Colors.termBlue }]}>{weather}</Text>
         </View>
+        <ThreatIndicator
+          threatLevel={threatLevel}
+          blackMarks={blackMarks}
+          commendations={commendations}
+          settlementTier={settlementTier}
+        />
       </View>
 
       {/* Right: resources, calendar, speed */}
@@ -90,6 +103,46 @@ export const TopBar: React.FC<TopBarProps> = ({
 };
 
 // --- Sub-components ---
+
+const TIER_LABELS: Record<string, string> = {
+  selo: 'SELO',
+  posyolok: 'POSYOLOK',
+  pgt: 'PGT',
+  gorod: 'GOROD',
+};
+
+const THREAT_CONFIG: Record<string, { label: string; color: string }> = {
+  safe: { label: 'SAFE', color: Colors.termGreen },
+  watched: { label: 'WATCHED', color: Colors.sovietGold },
+  warned: { label: 'WARNED', color: '#ff9800' },
+  investigated: { label: 'INVESTIGATED', color: '#ff5722' },
+  reviewed: { label: 'UNDER REVIEW', color: Colors.sovietRed },
+  arrested: { label: 'ARRESTED', color: '#b71c1c' },
+};
+
+const ThreatIndicator: React.FC<{
+  threatLevel: string;
+  blackMarks: number;
+  commendations: number;
+  settlementTier: string;
+}> = ({ threatLevel, blackMarks, commendations, settlementTier }) => {
+  const cfg = THREAT_CONFIG[threatLevel] ?? THREAT_CONFIG.safe;
+  const effectiveMarks = Math.max(0, blackMarks - commendations);
+  return (
+    <View style={styles.threatBox}>
+      <Text style={styles.statLabel}>
+        {TIER_LABELS[settlementTier] ?? 'SELO'}
+      </Text>
+      <View style={styles.threatRow}>
+        <View style={[styles.threatDot, { backgroundColor: cfg.color }]} />
+        <Text style={[styles.threatText, { color: cfg.color }]}>{cfg.label}</Text>
+      </View>
+      <Text style={styles.marksText}>
+        {effectiveMarks > 0 ? `${effectiveMarks}\u2620` : '\u2605'}
+      </Text>
+    </View>
+  );
+};
 
 interface ResourceStatProps {
   label: string;
@@ -165,6 +218,33 @@ const styles = StyleSheet.create({
     fontFamily: monoFont,
     fontWeight: 'bold',
     letterSpacing: 2,
+  },
+  threatBox: {
+    borderLeftWidth: 1,
+    borderLeftColor: '#555',
+    paddingLeft: 12,
+    alignItems: 'center',
+  },
+  threatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  threatDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  threatText: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  marksText: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    color: '#9e9e9e',
   },
   rightGroup: {
     flexDirection: 'row',
