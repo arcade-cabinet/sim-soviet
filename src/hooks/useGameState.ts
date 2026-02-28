@@ -8,13 +8,13 @@
  */
 
 import { useSyncExternalStore } from 'react';
-import { gameState, type GameState } from '../engine/GameState';
-import { getSeason } from '../engine/WeatherSystem';
-import { DIRECTIVES } from '../engine/Directives';
-import { TICKS_PER_MONTH } from '../engine/GridTypes';
-import type { Season } from '../scene/TerrainGrid';
-import { getResourceEntity, getMetaEntity, citizens, operationalBuildings, dvory } from '@/ecs/archetypes';
+import { citizens, dvory, getMetaEntity, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 import { getGameSpeed } from '@/stores/gameStore';
+import { DIRECTIVES } from '../engine/Directives';
+import { type GameState, gameState } from '../engine/GameState';
+import { TICKS_PER_MONTH } from '../engine/GridTypes';
+import { getSeason } from '../engine/WeatherSystem';
+import type { Season } from '../scene/TerrainGrid';
 
 /** Immutable snapshot of derived values for UI consumption. */
 export interface GameSnapshot {
@@ -77,10 +77,7 @@ export interface GameSnapshot {
   avgLoyalty: number;
 }
 
-const MONTH_NAMES = [
-  '', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
-];
+const MONTH_NAMES = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 // Track money across snapshots to compute income delta
 let _previousMoney: number | null = null;
@@ -152,9 +149,7 @@ function createSnapshot(state: GameState): GameSnapshot {
   for (const d of dvory.entities) {
     loyaltySum += d.dvor.loyaltyToCollective;
   }
-  const avgLoyalty = dvory.entities.length > 0
-    ? Math.round(loyaltySum / dvory.entities.length)
-    : 0;
+  const avgLoyalty = dvory.entities.length > 0 ? Math.round(loyaltySum / dvory.entities.length) : 0;
 
   // Morale average
   let moraleSum = 0;
@@ -220,11 +215,11 @@ function createSnapshot(state: GameState): GameSnapshot {
 
 // Snapshot cache — only recalculate when notify() fires
 let cachedSnapshot: GameSnapshot | null = null;
-let snapshotVersion = 0;
+let _snapshotVersion = 0;
 
 function subscribe(callback: () => void): () => void {
   return gameState.subscribe(() => {
-    snapshotVersion++;
+    _snapshotVersion++;
     cachedSnapshot = null; // invalidate
     callback();
   });

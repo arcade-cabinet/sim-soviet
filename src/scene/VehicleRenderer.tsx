@@ -8,9 +8,11 @@
  * R3F migration: uses <instancedMesh> with useFrame to update instance
  * matrices and colors each frame.
  */
-import React, { useRef, useMemo } from 'react';
-import * as THREE from 'three';
+
 import { useFrame } from '@react-three/fiber';
+import type React from 'react';
+import { useMemo, useRef } from 'react';
+import * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 
@@ -18,7 +20,7 @@ import { gameState } from '../engine/GameState';
 const MAX_VEHICLES = 200;
 
 /** Parse a hex color string to THREE.Color */
-function hexToColor(hex: string): THREE.Color {
+function _hexToColor(hex: string): THREE.Color {
   return new THREE.Color(hex);
 }
 
@@ -27,10 +29,7 @@ const VehicleRenderer: React.FC = () => {
 
   // Shared geometry and material
   const geometry = useMemo(() => new THREE.BoxGeometry(0.3, 0.15, 0.2), []);
-  const material = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: '#4d4d4d' }),
-    [],
-  );
+  const material = useMemo(() => new THREE.MeshStandardMaterial({ color: '#4d4d4d' }), []);
 
   // Temp objects for matrix composition (avoid GC pressure)
   const tmpMatrix = useMemo(() => new THREE.Matrix4(), []);
@@ -65,13 +64,7 @@ const VehicleRenderer: React.FC = () => {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   });
 
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[geometry, material, MAX_VEHICLES]}
-      frustumCulled={false}
-    />
-  );
+  return <instancedMesh ref={meshRef} args={[geometry, material, MAX_VEHICLES]} frustumCulled={false} />;
 };
 
 export default VehicleRenderer;

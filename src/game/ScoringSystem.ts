@@ -290,8 +290,7 @@ export const MEDALS: Medal[] = [
   {
     id: 'socialist_paperwork',
     name: 'Hero of Socialist Paperwork',
-    description:
-      'For processing 1,000 quota ticks without a single paper cut. The filing cabinet weeps with pride.',
+    description: 'For processing 1,000 quota ticks without a single paper cut. The filing cabinet weeps with pride.',
     tier: 'iron',
     requirement: 'Accumulate 1,000 ticks of quota tracking',
   },
@@ -306,8 +305,7 @@ export const MEDALS: Medal[] = [
   {
     id: 'concrete_enthusiasm',
     name: 'Order of Concrete Enthusiasm',
-    description:
-      'Built 20 buildings. Each one a monument to ambition. Most of them leak. All of them are grey.',
+    description: 'Built 20 buildings. Each one a monument to ambition. Most of them leak. All of them are grey.',
     tier: 'concrete',
     requirement: 'Place 20 buildings',
   },
@@ -330,8 +328,7 @@ export const MEDALS: Medal[] = [
   {
     id: 'peoples_architect',
     name: "The People's Architect (Posthumous)",
-    description:
-      'Had 5 buildings collapse in a single game. Architectural vision exceeded structural reality.',
+    description: 'Had 5 buildings collapse in a single game. Architectural vision exceeded structural reality.',
     tier: 'tin',
     requirement: '5 building collapses',
   },
@@ -346,8 +343,7 @@ export const MEDALS: Medal[] = [
   {
     id: 'five_year_hero',
     name: 'Five-Year Plan Hero (First Class)',
-    description:
-      'Completed 3 consecutive quota plans. The planning committee is suspicious of your competence.',
+    description: 'Completed 3 consecutive quota plans. The planning committee is suspicious of your competence.',
     tier: 'bronze',
     requirement: 'Complete 3 consecutive quotas',
   },
@@ -392,10 +388,7 @@ export function getEraMultiplier(eraIndex: number): number {
 /**
  * Returns the score settings multiplier for a difficulty + consequence combo.
  */
-export function getSettingsMultiplier(
-  difficulty: DifficultyLevel,
-  consequence: ConsequenceLevel
-): number {
+export function getSettingsMultiplier(difficulty: DifficultyLevel, consequence: ConsequenceLevel): number {
   return SCORE_MULTIPLIER_MATRIX[difficulty][consequence];
 }
 
@@ -420,10 +413,7 @@ export class ScoringSystem {
   /** Medals awarded during the game. */
   private awardedMedalIds: Set<string> = new Set();
 
-  constructor(
-    difficulty: DifficultyLevel = 'comrade',
-    consequence: ConsequenceLevel = 'permadeath'
-  ) {
+  constructor(difficulty: DifficultyLevel = 'comrade', consequence: ConsequenceLevel = 'permadeath') {
     this.difficulty = difficulty;
     this.consequence = consequence;
   }
@@ -471,7 +461,7 @@ export class ScoringSystem {
     workersAlive: number,
     buildingsStanding: number,
     commendations: number,
-    blackMarks: number
+    blackMarks: number,
   ): void {
     const workersAlivePoints = workersAlive * POINTS.workersAlive;
     const quotasMetPoints = this.currentEraQuotasMet * POINTS.quotaMet;
@@ -594,7 +584,7 @@ export class ScoringSystem {
     workersAlive: number,
     buildingsStanding: number,
     commendations: number,
-    blackMarks: number
+    blackMarks: number,
   ): EraScoreBreakdown {
     const workersAlivePoints = workersAlive * POINTS.workersAlive;
     const quotasMetPoints = this.currentEraQuotasMet * POINTS.quotaMet;

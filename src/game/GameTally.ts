@@ -16,13 +16,7 @@
 
 import { ACHIEVEMENTS } from '@/content/worldbuilding';
 import type { AchievementStats, AchievementTracker } from './AchievementTracker';
-import type {
-  ConsequenceLevel,
-  DifficultyLevel,
-  Medal,
-  ScoreBreakdown,
-  ScoringSystem,
-} from './ScoringSystem';
+import type { ConsequenceLevel, DifficultyLevel, Medal, ScoreBreakdown, ScoringSystem } from './ScoringSystem';
 
 // ─────────────────────────────────────────────────────────
 //  TYPES
@@ -170,7 +164,7 @@ function generateVerdict(state: TallyGameState, stats: AchievementStats): TallyV
 export function createGameTally(
   scoring: ScoringSystem,
   achievements: AchievementTracker,
-  state: TallyGameState
+  state: TallyGameState,
 ): TallyData {
   const stats = achievements.getStats();
   const unlockedIds = achievements.getUnlockedIds();
@@ -206,16 +200,16 @@ export function createGameTally(
   };
 
   // Build achievement list: show visible ones + unlocked hidden ones
-  const tallyAchievements: TallyAchievement[] = ACHIEVEMENTS.filter(
-    (a) => !a.hidden || unlockedIds.has(a.id)
-  ).map((a) => ({
-    id: a.id,
-    name: a.name,
-    description: a.description,
-    subtext: a.subtext,
-    hidden: a.hidden,
-    unlocked: unlockedIds.has(a.id),
-  }));
+  const tallyAchievements: TallyAchievement[] = ACHIEVEMENTS.filter((a) => !a.hidden || unlockedIds.has(a.id)).map(
+    (a) => ({
+      id: a.id,
+      name: a.name,
+      description: a.description,
+      subtext: a.subtext,
+      hidden: a.hidden,
+      unlocked: unlockedIds.has(a.id),
+    }),
+  );
 
   return {
     verdict,

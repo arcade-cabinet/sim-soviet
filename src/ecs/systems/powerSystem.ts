@@ -65,7 +65,7 @@ function distributePower(totalPower: number): number {
 function assignConsumerPower(
   entity: With<Entity, 'position' | 'building'>,
   powerUsed: number,
-  totalPower: number
+  totalPower: number,
 ): number {
   const newUsed = powerUsed + entity.building.powerReq;
   const wasPowered = entity.building.powered;

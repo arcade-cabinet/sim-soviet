@@ -22,8 +22,7 @@ export const HARVEST_CAMPAIGN: MinigameDefinition = {
       onSuccess: {
         resources: { food: 30 },
         commendations: 1,
-        announcement:
-          'Record harvest! The grain silos overflow. Pravda will mention this on page seven.',
+        announcement: 'Record harvest! The grain silos overflow. Pravda will mention this on page seven.',
       },
       onFailure: {
         resources: { food: 10, population: -1 },
@@ -39,8 +38,7 @@ export const HARVEST_CAMPAIGN: MinigameDefinition = {
       successChance: 0.85,
       onSuccess: {
         resources: { food: 15 },
-        announcement:
-          'Harvest completed on schedule. Nobody celebrated. Nobody complained. A Soviet ideal.',
+        announcement: 'Harvest completed on schedule. Nobody celebrated. Nobody complained. A Soviet ideal.',
       },
       onFailure: {
         resources: { food: 5 },
@@ -56,22 +54,19 @@ export const HARVEST_CAMPAIGN: MinigameDefinition = {
       onSuccess: {
         resources: { food: -5, vodka: 20, money: 15 },
         blat: 2,
-        announcement:
-          'The grain became vodka. The workers are content. The nutritionists are not consulted.',
+        announcement: 'The grain became vodka. The workers are content. The nutritionists are not consulted.',
       },
       onFailure: {
         resources: { food: -10 },
         blackMarks: 1,
-        announcement:
-          'The diversion was discovered. The food is gone and the vodka is evidence.',
+        announcement: 'The diversion was discovered. The food is gone and the vodka is evidence.',
         severity: 'critical',
       },
     },
   ],
   autoResolve: {
     resources: { food: -15 },
-    announcement:
-      'Nobody organized the harvest. The grain rotted. The crows ate well. The people did not.',
+    announcement: 'Nobody organized the harvest. The grain rotted. The crows ate well. The people did not.',
     severity: 'warning',
   },
 };

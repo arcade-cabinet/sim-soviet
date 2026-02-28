@@ -1,11 +1,5 @@
 import { GameGrid } from '@/game/GameGrid';
-import {
-  DEFAULT_MAP_OPTIONS,
-  MAP_SIZES,
-  type MapGenerationOptions,
-  MapSystem,
-  type TerrainType,
-} from '@/game/map';
+import { DEFAULT_MAP_OPTIONS, MAP_SIZES, type MapGenerationOptions, MapSystem, type TerrainType } from '@/game/map';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

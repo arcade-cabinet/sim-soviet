@@ -400,9 +400,7 @@ describe('SettlementSystem', () => {
       const def = system.getTierDefinition();
 
       expect(def.tier).toBe('posyolok');
-      expect(def.russian).toBe(
-        '\u0440\u0430\u0431\u043e\u0447\u0438\u0439 \u043f\u043e\u0441\u0451\u043b\u043e\u043a'
-      );
+      expect(def.russian).toBe('\u0440\u0430\u0431\u043e\u0447\u0438\u0439 \u043f\u043e\u0441\u0451\u043b\u043e\u043a');
       expect(def.populationReq).toBe(50);
     });
 

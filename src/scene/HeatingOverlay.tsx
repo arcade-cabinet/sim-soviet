@@ -11,7 +11,7 @@
  * - <points> for chimney smoke particles
  * - Semi-transparent planes for cold tint overlays
  */
-import React from 'react';
+import type React from 'react';
 
 const HeatingOverlay: React.FC = () => {
   // TODO: Implement heating overlay for R3F

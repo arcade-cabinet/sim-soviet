@@ -5,13 +5,7 @@
  * snapshots that refresh when notifyStateChange() is called.
  */
 import { useSyncExternalStore } from 'react';
-import {
-  buildingsLogic,
-  citizens,
-  dvory,
-  getMetaEntity,
-  getResourceEntity,
-} from '@/ecs/archetypes';
+import { buildingsLogic, citizens, dvory, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import type { GameMeta } from '@/ecs/world';
 
 // ── Snapshot type (immutable view for React) ──────────────────────────────
@@ -65,7 +59,6 @@ export interface GameSnapshot {
 const _listeners = new Set<() => void>();
 let _snapshot: GameSnapshot | null = null;
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: snapshot aggregates many ECS fields with fallback defaults
 function createSnapshot(): GameSnapshot {
   const res = getResourceEntity();
   const meta = getMetaEntity();
@@ -97,9 +90,7 @@ function createSnapshot(): GameSnapshot {
     powerUsed: res?.resources.powerUsed ?? 0,
     date: m?.date ? { ...m.date } : { year: 1922, month: 10, tick: 0 },
     selectedTool: m?.selectedTool ?? 'none',
-    quota: m?.quota
-      ? { ...m.quota }
-      : { type: 'food', target: 500, current: 0, deadlineYear: 1927 },
+    quota: m?.quota ? { ...m.quota } : { type: 'food', target: 500, current: 0, deadlineYear: 1927 },
     buildingCount: buildingsLogic.entities.length,
     gameOver: m?.gameOver ?? null,
     paused: _paused,
@@ -417,7 +408,7 @@ export function addNotification(
   severity: 'warning' | 'critical' | 'evacuation',
   timestamp: number,
   gridX?: number,
-  gridY?: number
+  gridY?: number,
 ): void {
   _notificationId++;
   const entry: NotificationEntry = {

@@ -18,12 +18,7 @@
  * Soviet flavor: all diseases are officially "capitalist sabotage."
  */
 
-import {
-  citizens,
-  getResourceEntity,
-  housing as housingArchetype,
-  operationalBuildings,
-} from '@/ecs/archetypes';
+import { citizens, getResourceEntity, housing as housingArchetype, operationalBuildings } from '@/ecs/archetypes';
 import type { CitizenDisease } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import { TICKS_PER_MONTH } from '@/game/Chronology';
@@ -168,10 +163,7 @@ export function countMedicalBuildings(): Map<string, number> {
  *
  * Returns a multiplier in [MAX_CLINIC_REDUCTION, 1.0].
  */
-export function clinicPreventionFactor(
-  disease: DiseaseDefinition,
-  medicalCounts: Map<string, number>
-): number {
+export function clinicPreventionFactor(disease: DiseaseDefinition, medicalCounts: Map<string, number>): number {
   if (disease.preventedBy.length === 0) return 1.0;
 
   let totalClinics = 0;
@@ -195,7 +187,7 @@ export function calcOutbreakModifier(
   month: number,
   housingCap: number,
   population: number,
-  foodRatio: number
+  foodRatio: number,
 ): number {
   let modifier = 1.0;
 
@@ -269,7 +261,6 @@ export function progressDiseases(result: DiseaseTickResult): void {
  * Check for new disease outbreaks among healthy citizens.
  * Called once per month (every 30 ticks).
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: outbreak logic requires iterating citizens × diseases with environmental modifiers
 export function checkOutbreaks(month: number, result: DiseaseTickResult): void {
   const rng = _rng;
   const store = getResourceEntity();
@@ -300,13 +291,7 @@ export function checkOutbreaks(month: number, result: DiseaseTickResult): void {
     if (entity.citizen.disease) continue; // already sick
 
     for (const diseaseDef of DISEASE_DEFINITIONS) {
-      const envModifier = calcOutbreakModifier(
-        diseaseDef,
-        month,
-        housingCap,
-        population,
-        foodRatio
-      );
+      const envModifier = calcOutbreakModifier(diseaseDef, month, housingCap, population, foodRatio);
       if (envModifier === 0) continue;
 
       const clinicFactor = clinicPreventionFactor(diseaseDef, medicalCounts);

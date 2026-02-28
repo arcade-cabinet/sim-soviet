@@ -291,12 +291,7 @@ describe('TransportSystem', () => {
         sys.tick([makeEntity('dirt-path')], 'selo', 0, summer);
 
         // Tick 15 with different entities — should still use cached score
-        const result = sys.tick(
-          [makeEntity('rail-depot'), makeEntity('motor-pool')],
-          'gorod',
-          15,
-          summer
-        );
+        const result = sys.tick([makeEntity('rail-depot'), makeEntity('motor-pool')], 'gorod', 15, summer);
         expect(result.recalculated).toBe(false);
         // Quality should still be DIRT from the first calc, not HIGHWAY
         expect(sys.getQuality()).toBe(RoadQuality.DIRT);
@@ -307,12 +302,7 @@ describe('TransportSystem', () => {
         const summer = makeSeason(Season.SHORT_SUMMER);
         sys.tick([], 'selo', 0, summer); // Score = 5 (thaw)
 
-        const result = sys.tick(
-          [makeEntity('rail-depot'), makeEntity('motor-pool')],
-          'gorod',
-          30,
-          summer
-        );
+        const result = sys.tick([makeEntity('rail-depot'), makeEntity('motor-pool')], 'gorod', 30, summer);
         expect(result.recalculated).toBe(true);
         // rail-depot(5) + motor-pool(4) + gorod(8) + thaw(5) = 22 → HIGHWAY
         expect(sys.getQuality()).toBe(RoadQuality.HIGHWAY);
@@ -386,8 +376,7 @@ describe('TransportSystem', () => {
         // Now tick with timber (condition < 80 so maintenance fires)
         sys.tick([], 'selo', 400 * 30, summer, { timber: 100 });
         // Expected: condBefore - BASELINE_DECAY + MAINTENANCE_RECOVERY
-        const expected =
-          condBefore - TransportSystem.BASELINE_DECAY + TransportSystem.MAINTENANCE_RECOVERY;
+        const expected = condBefore - TransportSystem.BASELINE_DECAY + TransportSystem.MAINTENANCE_RECOVERY;
         expect(sys.getCondition()).toBeCloseTo(expected, 3);
       });
 

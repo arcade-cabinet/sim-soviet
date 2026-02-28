@@ -26,8 +26,7 @@ export function randInt(min: number, max: number): number {
 }
 
 /** A building is a "gulag" if it has negative housing capacity (drains population). */
-export const isGulag = (b: Building): boolean =>
-  (getBuildingDef(b.defId)?.stats.housingCap ?? 0) < 0;
+export const isGulag = (b: Building): boolean => (getBuildingDef(b.defId)?.stats.housingCap ?? 0) < 0;
 
 export function coinFlip(probability = 0.5): boolean {
   return _rng ? _rng.coinFlip(probability) : Math.random() < probability;

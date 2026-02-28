@@ -225,17 +225,13 @@ export class SettlementSystem {
     if (tierIndex < TIER_ORDER.length - 1) {
       const nextTier = TIER_ORDER[tierIndex + 1]!;
       const nextDef = TIER_DEFINITIONS[nextTier];
-      toUpgrade =
-        nextDef.upgradeTicks > 0 ? this.consecutiveUpgradeTicks / nextDef.upgradeTicks : 0;
+      toUpgrade = nextDef.upgradeTicks > 0 ? this.consecutiveUpgradeTicks / nextDef.upgradeTicks : 0;
     }
 
     let toDowngrade = 0;
     if (tierIndex > 0) {
       const currentDef = TIER_DEFINITIONS[this.currentTier];
-      toDowngrade =
-        currentDef.downgradeTicks > 0
-          ? this.consecutiveDowngradeTicks / currentDef.downgradeTicks
-          : 0;
+      toDowngrade = currentDef.downgradeTicks > 0 ? this.consecutiveDowngradeTicks / currentDef.downgradeTicks : 0;
     }
 
     return { toUpgrade, toDowngrade };
@@ -264,10 +260,7 @@ export class SettlementSystem {
 
     // Non-agricultural percentage check
     if (tierDef.nonAgriPercent > 0) {
-      const percent =
-        metrics.totalWorkers > 0
-          ? (metrics.nonAgriculturalWorkers / metrics.totalWorkers) * 100
-          : 0;
+      const percent = metrics.totalWorkers > 0 ? (metrics.nonAgriculturalWorkers / metrics.totalWorkers) * 100 : 0;
       if (percent < tierDef.nonAgriPercent) return false;
     }
 
@@ -287,11 +280,7 @@ export class SettlementSystem {
     return true;
   }
 
-  private buildEvent(
-    type: SettlementEventType,
-    fromTier: SettlementTier,
-    toTier: SettlementTier
-  ): SettlementEvent {
+  private buildEvent(type: SettlementEventType, fromTier: SettlementTier, toTier: SettlementTier): SettlementEvent {
     const key = `${fromTier}\u2192${toTier}`;
     const flavorMap = type === 'upgrade' ? UPGRADE_FLAVOR : DOWNGRADE_FLAVOR;
     const flavor = flavorMap[key] ?? {

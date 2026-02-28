@@ -3,9 +3,9 @@
  * Replaces the old building-type browser.
  */
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Colors, SharedStyles, monoFont } from './styles';
+import type React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors, monoFont, SharedStyles } from './styles';
 
 export type SovietTab = 'mandates' | 'workers' | 'reports' | 'purge';
 
@@ -40,9 +40,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeTab, onTabChange }) => {
             activeOpacity={0.7}
           >
             <Text style={styles.tabIcon}>{tab.icon}</Text>
-            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
-              {tab.label}
-            </Text>
+            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
           </TouchableOpacity>
         );
       })}

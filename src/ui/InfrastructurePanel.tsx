@@ -6,12 +6,12 @@
  * variant for dark-panel aesthetic.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getMetaEntity } from '../ecs/archetypes';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { getMetaEntity } from '../ecs/archetypes';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Props
@@ -69,19 +69,13 @@ function utilityColor(gen: number, used: number): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
 
 /** Progress bar with configurable color. */
-const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({
-  ratio,
-  color,
-  height = 10,
-}) => {
+const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({ ratio, color, height = 10 }) => {
   const clamped = Math.max(0, Math.min(ratio, 1));
   return (
     <View style={[styles.barTrack, { height }]}>
@@ -159,23 +153,17 @@ export const InfrastructurePanel: React.FC<InfrastructurePanelProps> = ({ visibl
 
       <View style={styles.row}>
         <Text style={styles.label}>QUALITY:</Text>
-        <Text style={[styles.value, { color: roadCfg.color }]}>
-          {roadCfg.label}
-        </Text>
+        <Text style={[styles.value, { color: roadCfg.color }]}>{roadCfg.label}</Text>
       </View>
 
       <View style={styles.row}>
         <Text style={styles.label}>CONDITION:</Text>
-        <Text style={[styles.value, { color: condColor }]}>
-          {Math.round(roadCondition)}%
-        </Text>
+        <Text style={[styles.value, { color: condColor }]}>{Math.round(roadCondition)}%</Text>
       </View>
 
       <View style={styles.barRow}>
         <ProgressBar ratio={roadCondition / 100} color={condColor} />
-        <Text style={[styles.barPercent, { color: condColor }]}>
-          {Math.round(roadCondition)}%
-        </Text>
+        <Text style={[styles.barPercent, { color: condColor }]}>{Math.round(roadCondition)}%</Text>
       </View>
 
       <Divider />
@@ -185,9 +173,7 @@ export const InfrastructurePanel: React.FC<InfrastructurePanelProps> = ({ visibl
 
       <View style={styles.row}>
         <Text style={styles.label}>TIER:</Text>
-        <Text style={[styles.value, { color: Colors.sovietGold }]}>
-          {tierCfg.label}
-        </Text>
+        <Text style={[styles.value, { color: Colors.sovietGold }]}>{tierCfg.label}</Text>
       </View>
 
       <View style={styles.row}>
@@ -207,16 +193,8 @@ export const InfrastructurePanel: React.FC<InfrastructurePanelProps> = ({ visibl
           </View>
 
           <View style={styles.barRow}>
-            <ProgressBar
-              ratio={tierProgress}
-              color={tierProgress >= 1 ? Colors.termGreen : Colors.sovietGold}
-            />
-            <Text
-              style={[
-                styles.barPercent,
-                { color: tierProgress >= 1 ? Colors.termGreen : Colors.sovietGold },
-              ]}
-            >
+            <ProgressBar ratio={tierProgress} color={tierProgress >= 1 ? Colors.termGreen : Colors.sovietGold} />
+            <Text style={[styles.barPercent, { color: tierProgress >= 1 ? Colors.termGreen : Colors.sovietGold }]}>
               {Math.round(tierProgress * 100)}%
             </Text>
           </View>
@@ -239,16 +217,8 @@ export const InfrastructurePanel: React.FC<InfrastructurePanelProps> = ({ visibl
           </Text>
         </View>
         <View style={styles.barRow}>
-          <ProgressBar
-            ratio={waterRatio}
-            color={utilityColor(waterGen, waterUsed)}
-          />
-          <Text
-            style={[
-              styles.barPercent,
-              { color: utilityColor(waterGen, waterUsed) },
-            ]}
-          >
+          <ProgressBar ratio={waterRatio} color={utilityColor(waterGen, waterUsed)} />
+          <Text style={[styles.barPercent, { color: utilityColor(waterGen, waterUsed) }]}>
             {waterGen > 0 ? Math.round((waterUsed / waterGen) * 100) : waterUsed > 0 ? 'OVER' : '0'}
             {waterGen > 0 ? '%' : ''}
           </Text>
@@ -264,16 +234,8 @@ export const InfrastructurePanel: React.FC<InfrastructurePanelProps> = ({ visibl
           </Text>
         </View>
         <View style={styles.barRow}>
-          <ProgressBar
-            ratio={powerRatio}
-            color={utilityColor(powerGen, powerUsed)}
-          />
-          <Text
-            style={[
-              styles.barPercent,
-              { color: utilityColor(powerGen, powerUsed) },
-            ]}
-          >
+          <ProgressBar ratio={powerRatio} color={utilityColor(powerGen, powerUsed)} />
+          <Text style={[styles.barPercent, { color: utilityColor(powerGen, powerUsed) }]}>
             {powerGen > 0 ? Math.round((powerUsed / powerGen) * 100) : powerUsed > 0 ? 'OVER' : '0'}
             {powerGen > 0 ? '%' : ''}
           </Text>

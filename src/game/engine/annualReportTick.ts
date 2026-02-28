@@ -67,9 +67,7 @@ export function checkQuota(ctx: AnnualReportContext): void {
       actualVodka: res?.resources.vodka ?? 0,
       actualPop: res?.resources.population ?? 0,
       deliveries: ctx.deliveries.getTotalDelivered(),
-      mandateFulfillment: engineState.mandateState
-        ? getMandateFulfillment(engineState.mandateState)
-        : undefined,
+      mandateFulfillment: engineState.mandateState ? getMandateFulfillment(engineState.mandateState) : undefined,
     };
 
     ctx.callbacks.onAnnualReport(data, (submission: ReportSubmission) => {
@@ -92,7 +90,6 @@ export function checkQuota(ctx: AnnualReportContext): void {
  * Falsified: risk-based investigation -- if caught, extra black marks + honest eval;
  * if not caught, reported values determine quota outcome.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: report processing has many branching outcomes (honest/falsified/caught/uncaught)
 export function processReport(ctx: AnnualReportContext, submission: ReportSubmission): void {
   const { engineState } = ctx;
   const quotaActual = engineState.quota.current;
@@ -100,9 +97,7 @@ export function processReport(ctx: AnnualReportContext, submission: ReportSubmis
   const isHonest =
     submission.reportedQuota === quotaActual &&
     submission.reportedSecondary ===
-      (engineState.quota.type === 'food'
-        ? (res?.resources.vodka ?? 0)
-        : (res?.resources.food ?? 0)) &&
+      (engineState.quota.type === 'food' ? (res?.resources.vodka ?? 0) : (res?.resources.food ?? 0)) &&
     submission.reportedPop === (res?.resources.population ?? 0);
 
   if (isHonest) {
@@ -116,8 +111,7 @@ export function processReport(ctx: AnnualReportContext, submission: ReportSubmis
 
   // Falsified report -- calculate aggregate risk
   const quotaRisk = falsificationRisk(quotaActual, submission.reportedQuota);
-  const secActual =
-    engineState.quota.type === 'food' ? (res?.resources.vodka ?? 0) : (res?.resources.food ?? 0);
+  const secActual = engineState.quota.type === 'food' ? (res?.resources.vodka ?? 0) : (res?.resources.food ?? 0);
   const secRisk = falsificationRisk(secActual, submission.reportedSecondary);
   const popRisk = falsificationRisk(res?.resources.population ?? 0, submission.reportedPop);
   const maxRisk = Math.max(quotaRisk, secRisk, popRisk);
@@ -133,7 +127,7 @@ export function processReport(ctx: AnnualReportContext, submission: ReportSubmis
     ctx.callbacks.onToast('FALSIFICATION DETECTED — Investigation ordered', 'evacuation');
     ctx.callbacks.onAdvisor(
       'Comrade, the State Committee has detected discrepancies in your report. ' +
-        'A black mark has been added to your personnel file.'
+        'A black mark has been added to your personnel file.',
     );
 
     // Evaluate with ACTUAL values
@@ -189,19 +183,19 @@ function evaluateMandates(ctx: AnnualReportContext): void {
     ctx.personnelFile.addMark(
       'construction_mandate',
       totalTicks,
-      `Building mandates severely unfulfilled (${Math.round(fulfillmentRatio * 100)}% complete)`
+      `Building mandates severely unfulfilled (${Math.round(fulfillmentRatio * 100)}% complete)`,
     );
     ctx.callbacks.onToast('BLACK MARK: Construction mandates not met', 'critical');
     ctx.callbacks.onAdvisor(
       'Comrade, the State Planning Committee has noted your failure to meet ' +
         'the construction mandates of the Five-Year Plan. ' +
-        'A notation has been made in your personnel file.'
+        'A notation has been made in your personnel file.',
     );
   } else {
     // Partially fulfilled (50-99%) — warning but no mark
     ctx.callbacks.onAdvisor(
       `Building mandates partially fulfilled (${Math.round(fulfillmentRatio * 100)}%). ` +
-        'The Committee has noted your... adequate effort.'
+        'The Committee has noted your... adequate effort.',
     );
   }
 }
@@ -268,11 +262,11 @@ export function handleQuotaMissed(ctx: AnnualReportContext): void {
   if (engineState.consecutiveQuotaFailures >= MAX_QUOTA_FAILURES) {
     ctx.endGame(
       false,
-      `You failed ${MAX_QUOTA_FAILURES} consecutive 5-Year Plans. The Politburo has dissolved your position.`
+      `You failed ${MAX_QUOTA_FAILURES} consecutive 5-Year Plans. The Politburo has dissolved your position.`,
     );
   } else {
     ctx.callbacks.onAdvisor(
-      `You failed the 5-Year Plan (${engineState.consecutiveQuotaFailures}/${MAX_QUOTA_FAILURES} failures). The KGB is watching.`
+      `You failed the 5-Year Plan (${engineState.consecutiveQuotaFailures}/${MAX_QUOTA_FAILURES} failures). The KGB is watching.`,
     );
     engineState.quota.deadlineYear += 5;
   }

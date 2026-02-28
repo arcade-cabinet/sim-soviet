@@ -156,7 +156,7 @@ describe('NameGenerator', () => {
     });
 
     it('each category has at least 5 titles', () => {
-      for (const [category, titles] of Object.entries(TITLES)) {
+      for (const [_category, titles] of Object.entries(TITLES)) {
         expect(titles.length).toBeGreaterThanOrEqual(5);
       }
     });
@@ -191,9 +191,7 @@ describe('NameGenerator', () => {
 
     it('shortName uses initials + surname', () => {
       const leader = gen.generate();
-      expect(leader.shortName).toBe(
-        `${leader.givenName[0]}.${leader.patronymic[0]}. ${leader.surname}`
-      );
+      expect(leader.shortName).toBe(`${leader.givenName[0]}.${leader.patronymic[0]}. ${leader.surname}`);
     });
 
     it('introduction contains title, surname, and epithet', () => {

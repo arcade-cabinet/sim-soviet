@@ -1,19 +1,8 @@
 import { GameRng } from '../../src/game/SeedSystem';
-import {
-  BORDER_DEPTH,
-  generateTerrain,
-  getTerrainSpriteNames,
-  INTERIOR_FRINGE,
-} from '../../src/game/TerrainGenerator';
+import { BORDER_DEPTH, generateTerrain, getTerrainSpriteNames, INTERIOR_FRINGE } from '../../src/game/TerrainGenerator';
 
 /** Low-profile terrain that belongs on the border ring. */
-const BORDER_TERRAIN = new Set([
-  'sand-rocks',
-  'sand-desert',
-  'stone-rocks',
-  'dirt-lumber',
-  'water-rocks',
-]);
+const BORDER_TERRAIN = new Set(['sand-rocks', 'sand-desert', 'stone-rocks', 'dirt-lumber', 'water-rocks']);
 
 /** Prominent terrain that belongs in the interior fringe. */
 const INTERIOR_TERRAIN = new Set([
@@ -89,7 +78,6 @@ describe('TerrainGenerator', () => {
       }
     });
 
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: test verifies terrain generation across multiple seeds and zones
     it('interior fringe contains prominent terrain types', () => {
       // Run multiple seeds and collect interior fringe sprite names
       const fringeNames = new Set<string>();

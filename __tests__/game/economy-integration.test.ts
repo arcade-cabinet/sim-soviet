@@ -1,10 +1,5 @@
 import { CompulsoryDeliveries } from '@/game/CompulsoryDeliveries';
-import {
-  DIFFICULTY_MULTIPLIERS,
-  EconomySystem,
-  calculateBuildingTrudodni,
-  DEFAULT_TRUDODNI,
-} from '@/game/economy';
+import { calculateBuildingTrudodni, DEFAULT_TRUDODNI, DIFFICULTY_MULTIPLIERS, EconomySystem } from '@/game/economy';
 import { GameRng } from '@/game/SeedSystem';
 
 describe('Economy Integration', () => {

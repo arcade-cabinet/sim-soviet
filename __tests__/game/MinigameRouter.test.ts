@@ -1,8 +1,5 @@
+import { getMinigameNameForBuilding, resolveBuildingTrigger } from '../../src/game/minigames/BuildingMinigameMap';
 import { getMinigameDefinition, MINIGAME_DEFINITIONS } from '../../src/game/minigames/definitions';
-import {
-  getMinigameNameForBuilding,
-  resolveBuildingTrigger,
-} from '../../src/game/minigames/BuildingMinigameMap';
 import { MinigameRouter } from '../../src/game/minigames/MinigameRouter';
 import type { MinigameId, MinigameOutcome } from '../../src/game/minigames/MinigameTypes';
 import { GameRng } from '../../src/game/SeedSystem';
@@ -825,7 +822,7 @@ describe('BuildingMinigameMap', () => {
     });
 
     it('all 8 building-type mappings resolve to valid minigames', () => {
-      const router = new MinigameRouter(new GameRng('all-mappings'));
+      const _router = new MinigameRouter(new GameRng('all-mappings'));
       const mappings: [string, string][] = [
         ['factory-office', 'production_quotas'],
         ['collective-farm-hq', 'harvest_campaign'],

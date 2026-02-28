@@ -95,10 +95,7 @@ export const DEFAULT_MODIFIERS: MinistryModifiers = {
  * │ Transport    │ forced  │ public   │ reform   │ rail       │ decay       │ bus      │ logistic  │ ley    │
  * └──────────────┴─────────┴──────────┴──────────┴────────────┴─────────────┴──────────┴───────────┴────────┘
  */
-export const PERSONALITY_MINISTRY_MATRIX: Record<
-  Ministry,
-  Record<PersonalityType, ModifierOverride>
-> = {
+export const PERSONALITY_MINISTRY_MATRIX: Record<Ministry, Record<PersonalityType, ModifierOverride>> = {
   // ════════════════════════════════════════════════════════════════════════════
   // KGB CHAIRMAN
   // Controls: fear level, purge frequency, surveillance events, disappearances
@@ -653,8 +650,7 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.AGRICULTURE,
     personalityB: PersonalityType.REFORMER,
     tensionDelta: 30,
-    description:
-      'KGB Chairman demands arrest of farmers with private gardens. Agriculture Minister refuses.',
+    description: 'KGB Chairman demands arrest of farmers with private gardens. Agriculture Minister refuses.',
   },
   {
     ministryA: Ministry.KGB,
@@ -670,8 +666,7 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.AGRICULTURE,
     personalityB: PersonalityType.IDEALIST,
     tensionDelta: 25,
-    description:
-      'Heavy Industry requisitions farmland for tank factory. Agriculture weeps into turnip field.',
+    description: 'Heavy Industry requisitions farmland for tank factory. Agriculture weeps into turnip field.',
   },
   {
     ministryA: Ministry.DEFENSE,
@@ -679,8 +674,7 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.HEALTH,
     personalityB: PersonalityType.REFORMER,
     tensionDelta: 20,
-    description:
-      'Defense Minister wants hospital beds for wounded soldiers. Health Minister wants them for civilians.',
+    description: 'Defense Minister wants hospital beds for wounded soldiers. Health Minister wants them for civilians.',
   },
   {
     ministryA: Ministry.GOSPLAN,
@@ -688,8 +682,7 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.TRANSPORT,
     personalityB: PersonalityType.APPARATCHIK,
     tensionDelta: 15,
-    description:
-      'Gosplan demands impossible delivery schedules. Transport Ministry loses the memo.',
+    description: 'Gosplan demands impossible delivery schedules. Transport Ministry loses the memo.',
   },
   {
     ministryA: Ministry.MVD,
@@ -697,8 +690,7 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.KGB,
     personalityB: PersonalityType.ZEALOT,
     tensionDelta: 35,
-    description:
-      'MVD Minister tries to release political prisoners. KGB Chairman adds MVD Minister to watch list.',
+    description: 'MVD Minister tries to release political prisoners. KGB Chairman adds MVD Minister to watch list.',
   },
   {
     ministryA: Ministry.EDUCATION,
@@ -715,8 +707,7 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.AGRICULTURE,
     personalityB: PersonalityType.POPULIST,
     tensionDelta: 15,
-    description:
-      "Health Minister bans vodka. Agriculture Minister's vodka-producing kolkhozes revolt.",
+    description: "Health Minister bans vodka. Agriculture Minister's vodka-producing kolkhozes revolt.",
   },
 
   // ── Natural alliances (negative tension = cooperation bonus) ──
@@ -726,8 +717,7 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.DEFENSE,
     personalityB: PersonalityType.MILITARIST,
     tensionDelta: -20,
-    description:
-      'KGB and Defense form iron alliance. Citizens have never been more terrified or "safe."',
+    description: 'KGB and Defense form iron alliance. Citizens have never been more terrified or "safe."',
   },
   {
     ministryA: Ministry.AGRICULTURE,
@@ -735,8 +725,7 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.GOSPLAN,
     personalityB: PersonalityType.REFORMER,
     tensionDelta: -25,
-    description:
-      'Agriculture and Gosplan reformers unite. Economy briefly improves. Everyone suspicious.',
+    description: 'Agriculture and Gosplan reformers unite. Economy briefly improves. Everyone suspicious.',
   },
   {
     ministryA: Ministry.EDUCATION,
@@ -744,8 +733,7 @@ export const TENSION_RULES: TensionRule[] = [
     ministryB: Ministry.HEAVY_INDUSTRY,
     personalityB: PersonalityType.TECHNOCRAT,
     tensionDelta: -15,
-    description:
-      'Education and Industry technocrats collaborate. Factories improve. Workers feel like test subjects.',
+    description: 'Education and Industry technocrats collaborate. Factories improve. Workers feel like test subjects.',
   },
   {
     ministryA: Ministry.CULTURE,
@@ -769,29 +757,19 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
     loyaltyThreshold: 90,
     meritBased: false,
     purgesKGB: true,
-    transitionDescription:
-      'The new General Secretary purges the entire cabinet. Loyalty is the only qualification.',
+    transitionDescription: 'The new General Secretary purges the entire cabinet. Loyalty is the only qualification.',
   },
   [PersonalityType.IDEALIST]: {
     retentionRate: 0.4,
-    preferredTypes: [
-      PersonalityType.IDEALIST,
-      PersonalityType.REFORMER,
-      PersonalityType.TECHNOCRAT,
-    ],
+    preferredTypes: [PersonalityType.IDEALIST, PersonalityType.REFORMER, PersonalityType.TECHNOCRAT],
     loyaltyThreshold: 30,
     meritBased: false,
     purgesKGB: false,
-    transitionDescription:
-      'The new leader keeps some old faces for stability, but whispers of change circulate.',
+    transitionDescription: 'The new leader keeps some old faces for stability, but whispers of change circulate.',
   },
   [PersonalityType.REFORMER]: {
     retentionRate: 0.6,
-    preferredTypes: [
-      PersonalityType.REFORMER,
-      PersonalityType.TECHNOCRAT,
-      PersonalityType.IDEALIST,
-    ],
+    preferredTypes: [PersonalityType.REFORMER, PersonalityType.TECHNOCRAT, PersonalityType.IDEALIST],
     loyaltyThreshold: 20,
     meritBased: true,
     purgesKGB: false,
@@ -813,8 +791,7 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
     loyaltyThreshold: 10,
     meritBased: false,
     purgesKGB: false,
-    transitionDescription:
-      'Almost nothing changes. Those who waited longest get promoted. The system endures.',
+    transitionDescription: 'Almost nothing changes. Those who waited longest get promoted. The system endures.',
   },
   [PersonalityType.POPULIST]: {
     retentionRate: 0.4,
@@ -822,8 +799,7 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
     loyaltyThreshold: 30,
     meritBased: false,
     purgesKGB: false,
-    transitionDescription:
-      'Popular ministers kept. Unpopular ones replaced with people who smile more.',
+    transitionDescription: 'Popular ministers kept. Unpopular ones replaced with people who smile more.',
   },
   [PersonalityType.MILITARIST]: {
     retentionRate: 0.3,

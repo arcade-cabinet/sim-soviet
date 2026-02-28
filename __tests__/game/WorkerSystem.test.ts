@@ -77,14 +77,7 @@ describe('WorkerSystem', () => {
     });
 
     it('assigns a valid citizen class', () => {
-      const validClasses = [
-        'worker',
-        'engineer',
-        'farmer',
-        'party_official',
-        'soldier',
-        'prisoner',
-      ];
+      const validClasses = ['worker', 'engineer', 'farmer', 'party_official', 'soldier', 'prisoner'];
       for (let i = 0; i < 30; i++) {
         const entity = system.spawnWorker();
         expect(validClasses).toContain(entity.citizen!.class);

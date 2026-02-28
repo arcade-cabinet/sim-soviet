@@ -9,40 +9,26 @@
  * instead of framer-motion.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  Easing,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Svg, {
-  Circle,
-  G,
-  Path,
-  Text as SvgText,
-} from 'react-native-svg';
-import { BUILDING_DEFS, getBuildingsByRole } from '../data/buildingDefs';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Easing, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
+import { getEngine } from '../bridge/GameInit';
 import type { BuildingDef, Role } from '../data/buildingDefs';
+import { BUILDING_DEFS, getBuildingsByRole } from '../data/buildingDefs';
 import { DEFAULT_MATERIAL_COST } from '../ecs/systems/constructionSystem';
 import { getAvailableBuildingsForYear } from '../game/era';
 import type { SettlementTier } from '../game/SettlementSystem';
-import { MILESTONE_LABELS } from '../game/TutorialSystem';
 import type { TutorialSystem } from '../game/TutorialSystem';
-import { getEngine } from '../bridge/GameInit';
-import {
-  closeRadialMenu,
-  requestPlacement,
-  useRadialMenu,
-} from '../stores/gameStore';
+import { MILESTONE_LABELS } from '../game/TutorialSystem';
 import { useGameSnapshot } from '../hooks/useGameState';
+import { closeRadialMenu, requestPlacement, useRadialMenu } from '../stores/gameStore';
 import { Colors, monoFont } from './styles';
 
 /** Check if the player can afford the material cost for a building. */
 function canAffordBuilding(
   snap: { timber: number; steel: number; cement: number; prefab: number },
-  def: BuildingDef
+  def: BuildingDef,
 ): boolean {
   const cc = def.stats.constructionCost;
   return (
@@ -121,11 +107,7 @@ function describeWedge(
 }
 
 /** Check if any building in a category fits the available space and is era-unlocked. */
-function categoryHasFittingBuilding(
-  cat: CategoryDef,
-  availableSpace: number,
-  eraAvailable: Set<string>,
-): boolean {
+function categoryHasFittingBuilding(cat: CategoryDef, availableSpace: number, eraAvailable: Set<string>): boolean {
   const ids = cat.roles.flatMap((r) => getBuildingsByRole(r));
   return ids.some((id) => {
     if (!eraAvailable.has(id)) return false;
@@ -249,28 +231,17 @@ const BuildingWedge: React.FC<BuildingWedgeProps> = ({
   const canAfford = canAffordBuilding(snap, def);
   const canBuild = fits && canAfford;
   const displayName =
-    def.presentation.name.length > 14
-      ? `${def.presentation.name.slice(0, 12)}..`
-      : def.presentation.name;
+    def.presentation.name.length > 14 ? `${def.presentation.name.slice(0, 12)}..` : def.presentation.name;
 
   return (
-    <G
-      onPress={canBuild ? () => onSelect(id) : undefined}
-      opacity={canBuild ? 1 : 0.35}
-    >
+    <G onPress={canBuild ? () => onSelect(id) : undefined} opacity={canBuild ? 1 : 0.35}>
       <Path
         d={describeWedge(CENTER, CENTER, BUILDING_INNER_R, BUILDING_OUTER_R, startA, endA)}
         fill={canBuild ? '#2a2a2a' : '#1a1a1a'}
         stroke={canBuild ? '#666' : '#333'}
         strokeWidth={1}
       />
-      <SvgText
-        x={labelPos.x}
-        y={labelPos.y - 8}
-        textAnchor="middle"
-        alignmentBaseline="central"
-        fontSize={16}
-      >
+      <SvgText x={labelPos.x} y={labelPos.y - 8} textAnchor="middle" alignmentBaseline="central" fontSize={16}>
         {def.presentation.icon}
       </SvgText>
       <SvgText
@@ -362,21 +333,22 @@ export const RadialBuildMenu: React.FC = () => {
     });
   }, [scaleAnim, opacityAnim]);
 
-  const handleSelect = useCallback((defId: string) => {
-    if (!menu) return;
-    requestPlacement(menu.gridX, menu.gridY, defId);
-    setSelectedCat(null);
-    closeRadialMenu();
-  }, [menu]);
+  const handleSelect = useCallback(
+    (defId: string) => {
+      if (!menu) return;
+      requestPlacement(menu.gridX, menu.gridY, defId);
+      setSelectedCat(null);
+      closeRadialMenu();
+    },
+    [menu],
+  );
 
   if (!menu) return null;
 
   const { screenX, screenY, gridX, gridY, availableSpace } = menu;
 
   // Filter buildings by era + settlement tier
-  const eraAvailable = new Set(
-    getAvailableBuildingsForYear(snap.year, snap.settlementTier as SettlementTier),
-  );
+  const eraAvailable = new Set(getAvailableBuildingsForYear(snap.year, snap.settlementTier as SettlementTier));
 
   // Tutorial progressive disclosure — gate categories by milestone progress
   const tutorial: TutorialSystem | null = getEngine()?.getTutorial() ?? null;
@@ -394,7 +366,7 @@ export const RadialBuildMenu: React.FC = () => {
     const unlocked = tutorial.isCategoryUnlocked(catBuildingIds);
     if (unlocked) return { isLocked: false, lockReason: null };
     const milestoneId = tutorial.getNextUnlockMilestoneForBuildings(catBuildingIds);
-    const label = milestoneId ? MILESTONE_LABELS[milestoneId] ?? milestoneId : null;
+    const label = milestoneId ? (MILESTONE_LABELS[milestoneId] ?? milestoneId) : null;
     return { isLocked: true, lockReason: label };
   }
 
@@ -427,11 +399,7 @@ export const RadialBuildMenu: React.FC = () => {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Overlay backdrop */}
-      <TouchableOpacity
-        style={styles.backdrop}
-        activeOpacity={1}
-        onPress={handleClose}
-      />
+      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
 
       {/* SVG Pie Menu */}
       <Animated.View
@@ -448,19 +416,9 @@ export const RadialBuildMenu: React.FC = () => {
         ]}
         pointerEvents="box-none"
       >
-        <Svg
-          width={VIEW_SIZE}
-          height={VIEW_SIZE}
-          viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}
-        >
+        <Svg width={VIEW_SIZE} height={VIEW_SIZE} viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}>
           {/* Center dot */}
-          <Circle
-            cx={CENTER}
-            cy={CENTER}
-            r={8}
-            fill={Colors.sovietGold}
-            opacity={0.6}
-          />
+          <Circle cx={CENTER} cy={CENTER} r={8} fill={Colors.sovietGold} opacity={0.6} />
 
           {/* Category ring (inner) */}
           {activeCats.map((cat, i) => {

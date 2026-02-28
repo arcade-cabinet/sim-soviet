@@ -9,23 +9,24 @@
  * position tracking. Pointer events handled via canvas event listeners
  * attached in useEffect (R3F's raycasting is used for grid picking).
  */
-import React, { useRef, useEffect, useCallback, useMemo } from 'react';
-import * as THREE from 'three';
-import { useFrame, useThree } from '@react-three/fiber';
 
-import { gameState } from '../engine/GameState';
-import { GRID_SIZE } from '../engine/GridTypes';
-import { BUILDING_TYPES, getBuildingHeight } from '../engine/BuildingTypes';
-import { placeECSBuilding, bulldozeECSBuilding } from '../bridge/BuildingPlacement';
-import { getResourceEntity, buildingsLogic, citizens } from '../ecs/archetypes';
+import { useFrame, useThree } from '@react-three/fiber';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import * as THREE from 'three';
+import { bulldozeECSBuilding, placeECSBuilding } from '../bridge/BuildingPlacement';
 import { getBuildingDef } from '../data/buildingDefs';
 import type { Role } from '../data/buildingDefs.schema';
+import { buildingsLogic, citizens, getResourceEntity } from '../ecs/archetypes';
+import { BUILDING_TYPES, getBuildingHeight } from '../engine/BuildingTypes';
+import { gameState } from '../engine/GameState';
+import { GRID_SIZE } from '../engine/GridTypes';
 import { showToast } from '../engine/helpers';
 import {
-  openInspectMenu,
-  setCursorTooltip,
   type InspectBuildingType,
   type InspectMenuOccupant,
+  openInspectMenu,
+  setCursorTooltip,
 } from '../stores/gameStore';
 
 const VALID_COLOR = new THREE.Color(0, 1, 0);
@@ -88,26 +89,31 @@ function canPlace(tool: string, x: number, y: number): boolean {
 function classifyBuildingType(role: Role, constructionPhase?: string): InspectBuildingType {
   if (constructionPhase && constructionPhase !== 'complete') return 'construction';
   switch (role) {
-    case 'housing': return 'housing';
+    case 'housing':
+      return 'housing';
     case 'industry':
     case 'agriculture':
-    case 'power': return 'production';
+    case 'power':
+      return 'production';
     case 'government':
-    case 'propaganda': return 'government';
-    case 'military': return 'military';
+    case 'propaganda':
+      return 'government';
+    case 'military':
+      return 'military';
     case 'transport':
     case 'utility':
-    case 'environment': return 'general';
+    case 'environment':
+      return 'general';
     case 'services':
-    case 'culture': return 'general';
-    default: return 'general';
+    case 'culture':
+      return 'general';
+    default:
+      return 'general';
   }
 }
 
 function openInspectAtCell(gridX: number, gridZ: number, screenX: number, screenY: number): void {
-  const entity = buildingsLogic.entities.find(
-    (e) => e.position.gridX === gridX && e.position.gridY === gridZ,
-  );
+  const entity = buildingsLogic.entities.find((e) => e.position.gridX === gridX && e.position.gridY === gridZ);
   if (!entity) return;
 
   const defId = entity.building.defId;
@@ -116,21 +122,14 @@ function openInspectAtCell(gridX: number, gridZ: number, screenX: number, screen
 
   const buildingType = classifyBuildingType(def.role, entity.building.constructionPhase);
 
-  const workerCount = citizens.entities.filter(
-    (c) => c.citizen.assignment === defId,
-  ).length;
+  const workerCount = citizens.entities.filter((c) => c.citizen.assignment === defId).length;
 
   let housingCap: number | undefined;
   let occupants: InspectMenuOccupant[] | undefined;
   if (buildingType === 'housing' && entity.building.housingCap > 0) {
     housingCap = entity.building.housingCap;
     occupants = citizens.entities
-      .filter(
-        (c) =>
-          c.citizen.home &&
-          c.citizen.home.gridX === gridX &&
-          c.citizen.home.gridY === gridZ,
-      )
+      .filter((c) => c.citizen.home && c.citizen.home.gridX === gridX && c.citizen.home.gridY === gridZ)
       .map((c) => ({
         name: 'Citizen',
         age: c.citizen.age ?? 30,
@@ -170,7 +169,7 @@ const GhostPreview: React.FC = () => {
   const longPressFired = useRef(false);
 
   // Materials (memoized to avoid re-creation)
-  const boxMaterial = useMemo(() => {
+  const _boxMaterial = useMemo(() => {
     const mat = new THREE.MeshBasicMaterial({
       color: VALID_COLOR,
       transparent: true,
@@ -181,7 +180,7 @@ const GhostPreview: React.FC = () => {
     return mat;
   }, []);
 
-  const zoneMaterial = useMemo(() => {
+  const _zoneMaterial = useMemo(() => {
     const mat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(0.3, 0.7, 0.3),
       transparent: true,
@@ -360,7 +359,7 @@ const GhostPreview: React.FC = () => {
         type: tooltipCell.type || undefined,
         smog: tooltipCell.smog ?? 0,
         watered: tooltipCell.watered ?? false,
-        onFire: !!(tooltipCell.onFire),
+        onFire: !!tooltipCell.onFire,
         zone: tooltipCell.zone || undefined,
         z: tooltipCell.z ?? 0,
         screenX,

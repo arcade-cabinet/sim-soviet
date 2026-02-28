@@ -8,9 +8,11 @@
  * R3F migration: uses <instancedMesh> for GPU-batched smog tiles.
  * Instance matrices and colors are updated via useEffect when smog data changes.
  */
-import React, { useRef, useEffect, useMemo } from 'react';
-import * as THREE from 'three';
+
 import { useFrame } from '@react-three/fiber';
+import type React from 'react';
+import { useMemo, useRef } from 'react';
+import * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
@@ -106,13 +108,7 @@ const SmogOverlay: React.FC = () => {
     prevCountRef.current = instanceIdx;
   });
 
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[geometry, material, MAX_INSTANCES]}
-      frustumCulled={false}
-    />
-  );
+  return <instancedMesh ref={meshRef} args={[geometry, material, MAX_INSTANCES]} frustumCulled={false} />;
 };
 
 export default SmogOverlay;

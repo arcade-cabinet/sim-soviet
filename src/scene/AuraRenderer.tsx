@@ -9,9 +9,10 @@
  * R3F migration: uses <mesh> with <torusGeometry>/<coneGeometry> and
  * useFrame for pulsing/rotation animation.
  */
-import React, { useRef, useMemo } from 'react';
-import * as THREE from 'three';
+
 import { useFrame } from '@react-three/fiber';
+import React, { useMemo, useRef } from 'react';
+import * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 
@@ -33,21 +34,25 @@ const PropagandaRings: React.FC<PropagandaRingsProps> = ({ x, z }) => {
 
   // Create ring materials
   const materials = useMemo(() => {
-    return Array.from({ length: RING_COUNT }, () =>
-      new THREE.MeshBasicMaterial({
-        color: new THREE.Color(1, 0.1, 0.1),
-        transparent: true,
-        opacity: 0.4,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-      }),
+    return Array.from(
+      { length: RING_COUNT },
+      () =>
+        new THREE.MeshBasicMaterial({
+          color: new THREE.Color(1, 0.1, 0.1),
+          transparent: true,
+          opacity: 0.4,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+        }),
     );
   }, []);
 
   useEffect(() => {
     materialsRef.current = materials;
     return () => {
-      materials.forEach((m) => m.dispose());
+      materials.forEach((m) => {
+        m.dispose();
+      });
     };
   }, [materials]);
 
@@ -62,7 +67,7 @@ const PropagandaRings: React.FC<PropagandaRingsProps> = ({ x, z }) => {
       const mat = mats[i];
       if (!ring || !mat) continue;
 
-      const t = ((time / 2) + (i * (1 / RING_COUNT))) % 1;
+      const t = (time / 2 + i * (1 / RING_COUNT)) % 1;
       const radius = t * TOWER_RADIUS;
       const alpha = (1 - t) * 0.6;
 
@@ -76,7 +81,9 @@ const PropagandaRings: React.FC<PropagandaRingsProps> = ({ x, z }) => {
       {materials.map((mat, i) => (
         <mesh
           key={i}
-          ref={(el) => { if (el) ringsRef.current[i] = el; }}
+          ref={(el) => {
+            if (el) ringsRef.current[i] = el;
+          }}
           material={mat}
           rotation={[-Math.PI / 2, 0, 0]}
         >
@@ -109,13 +116,7 @@ const GulagCone: React.FC<GulagConeProps> = ({ x, z }) => {
   return (
     <mesh ref={coneRef} position={[x, 1.5, z]}>
       <coneGeometry args={[GULAG_RADIUS, 3, 16]} />
-      <meshBasicMaterial
-        color="#ffffe6"
-        transparent
-        opacity={0.08}
-        side={THREE.DoubleSide}
-        depthWrite={false}
-      />
+      <meshBasicMaterial color="#ffffe6" transparent opacity={0.08} side={THREE.DoubleSide} depthWrite={false} />
     </mesh>
   );
 };

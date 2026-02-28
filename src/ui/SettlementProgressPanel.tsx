@@ -8,20 +8,16 @@
  * Uses SovietModal with terminal variant for dark-panel aesthetic.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getBuildingDef } from '@/data/buildingDefs';
+import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
+import { getEngine } from '../bridge/GameInit';
+import type { SettlementTier, TierDefinition } from '../game/SettlementSystem';
+import { GOROD_MIN_DISTINCT_ROLES, TIER_DEFINITIONS, TIER_ORDER } from '../game/SettlementSystem';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import {
-  TIER_ORDER,
-  TIER_DEFINITIONS,
-  GOROD_MIN_DISTINCT_ROLES,
-} from '../game/SettlementSystem';
-import type { SettlementTier, TierDefinition } from '../game/SettlementSystem';
-import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
-import { getBuildingDef } from '@/data/buildingDefs';
 
 // ---------------------------------------------------------------------------
 //  Props
@@ -65,10 +61,7 @@ function computeCurrentMetrics() {
     }
   }
 
-  const nonAgriPercent =
-    totalCapacity > 0
-      ? Math.round((nonAgriCapacity / totalCapacity) * 100)
-      : 0;
+  const nonAgriPercent = totalCapacity > 0 ? Math.round((nonAgriCapacity / totalCapacity) * 100) : 0;
   const distinctRoles = new Set(roles);
 
   return { population, nonAgriPercent, distinctRoles };
@@ -79,19 +72,13 @@ function computeCurrentMetrics() {
 // ---------------------------------------------------------------------------
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
 
 /** Progress bar with configurable color. */
-const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({
-  ratio,
-  color,
-  height = 10,
-}) => {
+const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({ ratio, color, height = 10 }) => {
   const clamped = Math.max(0, Math.min(ratio, 1));
   return (
     <View style={[styles.barTrack, { height }]}>
@@ -115,30 +102,20 @@ const TierCard: React.FC<{
   isCurrent: boolean;
   isPast: boolean;
 }> = ({ def, isCurrent, isPast }) => {
-  const nameColor = isCurrent
-    ? Colors.sovietGold
-    : isPast
-      ? Colors.textMuted
-      : '#555';
+  const nameColor = isCurrent ? Colors.sovietGold : isPast ? Colors.textMuted : '#555';
   const borderColor = isCurrent ? Colors.sovietGold : isPast ? '#333' : '#222';
   const bgColor = isCurrent ? '#2a2200' : '#111';
 
   return (
     <View style={[styles.tierCard, { borderColor, backgroundColor: bgColor }]}>
       <View style={styles.tierCardHeader}>
-        <Text style={[styles.tierRussian, { color: nameColor }]}>
-          {def.russian.toUpperCase()}
-        </Text>
-        {isCurrent && (
-          <Text style={styles.tierCurrentBadge}>{'\u25C0'} CURRENT</Text>
-        )}
+        <Text style={[styles.tierRussian, { color: nameColor }]}>{def.russian.toUpperCase()}</Text>
+        {isCurrent && <Text style={styles.tierCurrentBadge}>{'\u25C0'} CURRENT</Text>}
       </View>
       <Text style={[styles.tierEnglish, { color: isPast ? Colors.textMuted : Colors.textSecondary }]}>
         {TIER_ENGLISH[def.tier]}
       </Text>
-      <Text style={[styles.tierTitle, { color: isPast ? '#444' : Colors.textSecondary }]}>
-        {def.title}
-      </Text>
+      <Text style={[styles.tierTitle, { color: isPast ? '#444' : Colors.textSecondary }]}>{def.title}</Text>
       <View style={styles.tierReqsRow}>
         <Text style={[styles.tierReqLabel, { color: isPast ? '#444' : Colors.textMuted }]}>
           POP: {def.populationReq}
@@ -164,21 +141,13 @@ const TierCard: React.FC<{
 };
 
 /** Requirement checklist row. */
-const ReqRow: React.FC<{ label: string; met: boolean; value: string }> = ({
-  label,
-  met,
-  value,
-}) => (
+const ReqRow: React.FC<{ label: string; met: boolean; value: string }> = ({ label, met, value }) => (
   <View style={styles.reqRow}>
     <Text style={[styles.reqIcon, { color: met ? Colors.termGreen : Colors.sovietRed }]}>
       {met ? '\u2713' : '\u2717'}
     </Text>
-    <Text style={[styles.reqLabel, { color: met ? Colors.termGreen : Colors.textPrimary }]}>
-      {label}
-    </Text>
-    <Text style={[styles.reqValue, { color: met ? Colors.termGreen : Colors.textSecondary }]}>
-      {value}
-    </Text>
+    <Text style={[styles.reqLabel, { color: met ? Colors.termGreen : Colors.textPrimary }]}>{label}</Text>
+    <Text style={[styles.reqValue, { color: met ? Colors.termGreen : Colors.textSecondary }]}>{value}</Text>
   </View>
 );
 
@@ -186,10 +155,7 @@ const ReqRow: React.FC<{ label: string; met: boolean; value: string }> = ({
 //  Main Component
 // ---------------------------------------------------------------------------
 
-export const SettlementProgressPanel: React.FC<SettlementProgressPanelProps> = ({
-  visible,
-  onDismiss,
-}) => {
+export const SettlementProgressPanel: React.FC<SettlementProgressPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
   const snap = useGameSnapshot();
 
@@ -228,22 +194,14 @@ export const SettlementProgressPanel: React.FC<SettlementProgressPanelProps> = (
       <SectionHeader title="CURRENT CLASSIFICATION" />
 
       <View style={styles.currentBlock}>
-        <Text style={styles.currentRussian}>
-          {currentDef.russian.toUpperCase()}
-        </Text>
-        <Text style={styles.currentEnglish}>
-          {TIER_ENGLISH[currentTier]}
-        </Text>
-        <Text style={styles.currentTitle}>
-          {currentDef.title}
-        </Text>
+        <Text style={styles.currentRussian}>{currentDef.russian.toUpperCase()}</Text>
+        <Text style={styles.currentEnglish}>{TIER_ENGLISH[currentTier]}</Text>
+        <Text style={styles.currentTitle}>{currentDef.title}</Text>
         <View style={styles.currentPopRow}>
           <Text style={styles.currentPopLabel}>POPULATION:</Text>
           <Text style={styles.currentPopValue}>
             {metrics.population}
-            {hasNextTier && nextDef
-              ? ` / ${nextDef.populationReq} (next tier)`
-              : ' (MAX TIER)'}
+            {hasNextTier && nextDef ? ` / ${nextDef.populationReq} (next tier)` : ' (MAX TIER)'}
           </Text>
         </View>
       </View>
@@ -254,25 +212,15 @@ export const SettlementProgressPanel: React.FC<SettlementProgressPanelProps> = (
           <View style={styles.progressRow}>
             <Text style={styles.progressLabel}>UPGRADE</Text>
             <View style={styles.progressBarWrapper}>
-              <ProgressBar
-                ratio={progress.toUpgrade}
-                color={Colors.termGreen}
-                height={8}
-              />
+              <ProgressBar ratio={progress.toUpgrade} color={Colors.termGreen} height={8} />
             </View>
-            <Text style={styles.progressPercent}>
-              {Math.round(progress.toUpgrade * 100)}%
-            </Text>
+            <Text style={styles.progressPercent}>{Math.round(progress.toUpgrade * 100)}%</Text>
           </View>
           {currentIndex > 0 && (
             <View style={styles.progressRow}>
               <Text style={styles.progressLabel}>RISK</Text>
               <View style={styles.progressBarWrapper}>
-                <ProgressBar
-                  ratio={progress.toDowngrade}
-                  color={Colors.sovietRed}
-                  height={8}
-                />
+                <ProgressBar ratio={progress.toDowngrade} color={Colors.sovietRed} height={8} />
               </View>
               <Text style={[styles.progressPercent, { color: Colors.sovietRed }]}>
                 {Math.round(progress.toDowngrade * 100)}%
@@ -287,11 +235,7 @@ export const SettlementProgressPanel: React.FC<SettlementProgressPanelProps> = (
           <View style={styles.progressRow}>
             <Text style={styles.progressLabel}>RISK</Text>
             <View style={styles.progressBarWrapper}>
-              <ProgressBar
-                ratio={progress.toDowngrade}
-                color={Colors.sovietRed}
-                height={8}
-              />
+              <ProgressBar ratio={progress.toDowngrade} color={Colors.sovietRed} height={8} />
             </View>
             <Text style={[styles.progressPercent, { color: Colors.sovietRed }]}>
               {Math.round(progress.toDowngrade * 100)}%
@@ -309,9 +253,7 @@ export const SettlementProgressPanel: React.FC<SettlementProgressPanelProps> = (
         const def = TIER_DEFINITIONS[tier];
         const isCurrent = tier === currentTier;
         const isPast = idx < currentIndex;
-        return (
-          <TierCard key={tier} def={def} isCurrent={isCurrent} isPast={isPast} />
-        );
+        return <TierCard key={tier} def={def} isCurrent={isCurrent} isPast={isPast} />;
       })}
 
       <Divider />
@@ -319,9 +261,7 @@ export const SettlementProgressPanel: React.FC<SettlementProgressPanelProps> = (
       {/* -- SECTION 3: REQUIREMENTS CHECKLIST ------------------------- */}
       {hasNextTier && nextDef ? (
         <>
-          <SectionHeader
-            title={`REQUIREMENTS FOR ${nextDef.russian.toUpperCase()}`}
-          />
+          <SectionHeader title={`REQUIREMENTS FOR ${nextDef.russian.toUpperCase()}`} />
 
           {/* Population */}
           <ReqRow
@@ -361,8 +301,7 @@ export const SettlementProgressPanel: React.FC<SettlementProgressPanelProps> = (
           {/* Upgrade tick duration note */}
           <View style={styles.tickNote}>
             <Text style={styles.tickNoteText}>
-              Requirements must be sustained for {nextDef.upgradeTicks} consecutive
-              ticks to trigger promotion.
+              Requirements must be sustained for {nextDef.upgradeTicks} consecutive ticks to trigger promotion.
             </Text>
           </View>
         </>

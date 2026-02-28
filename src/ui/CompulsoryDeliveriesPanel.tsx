@@ -8,14 +8,14 @@
  * Uses SovietModal with terminal variant for dark-panel aesthetic.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { Doctrine } from '../game/CompulsoryDeliveries';
+import { ERA_DEFINITIONS, ERA_ORDER } from '../game/era/definitions';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import type { Doctrine } from '../game/CompulsoryDeliveries';
-import { ERA_ORDER, ERA_DEFINITIONS } from '../game/era/definitions';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Props
@@ -31,20 +31,14 @@ export interface CompulsoryDeliveriesPanelProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DOCTRINE_FLAVOR: Record<Doctrine, string> = {
-  revolutionary:
-    'All property belongs to the revolution. Deliveries are voluntary. Voluntary is mandatory.',
-  industrialization:
-    'The Plan demands sacrifice. Your grain feeds the factories. The factories feed the Plan.',
+  revolutionary: 'All property belongs to the revolution. Deliveries are voluntary. Voluntary is mandatory.',
+  industrialization: 'The Plan demands sacrifice. Your grain feeds the factories. The factories feed the Plan.',
   wartime: 'Everything for the front. Everything for victory. Everything.',
-  reconstruction:
-    'The rebuilding requires resources. The state requires patience. You require both.',
+  reconstruction: 'The rebuilding requires resources. The state requires patience. You require both.',
   thaw: 'A kinder, gentler extraction. The state takes less. Relatively.',
-  freeze:
-    'Reform of the reform. Deliveries are restructured. The restructuring requires more deliveries.',
-  stagnation:
-    'The system is mature. The deliveries are traditional. The corruption is administrative.',
-  eternal:
-    'The quotas are eternal. The deliveries are eternal. The paperwork is eternal.',
+  freeze: 'Reform of the reform. Deliveries are restructured. The restructuring requires more deliveries.',
+  stagnation: 'The system is mature. The deliveries are traditional. The corruption is administrative.',
+  eternal: 'The quotas are eternal. The deliveries are eternal. The paperwork is eternal.',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,9 +46,7 @@ const DOCTRINE_FLAVOR: Record<Doctrine, string> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
@@ -64,12 +56,7 @@ const RateBar: React.FC<{ ratio: number }> = ({ ratio }) => {
   const clamped = Math.max(0, Math.min(ratio, 1));
   return (
     <View style={styles.rateBarTrack}>
-      <View
-        style={[
-          styles.rateBarFill,
-          { width: `${Math.round(clamped * 100)}%` },
-        ]}
-      />
+      <View style={[styles.rateBarFill, { width: `${Math.round(clamped * 100)}%` }]} />
     </View>
   );
 };
@@ -88,10 +75,7 @@ const RESOURCE_KEYS: Array<{ key: 'food' | 'vodka' | 'money'; label: string }> =
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const CompulsoryDeliveriesPanel: React.FC<CompulsoryDeliveriesPanelProps> = ({
-  visible,
-  onDismiss,
-}) => {
+export const CompulsoryDeliveriesPanel: React.FC<CompulsoryDeliveriesPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
   const snap = useGameSnapshot();
 
@@ -135,9 +119,7 @@ export const CompulsoryDeliveriesPanel: React.FC<CompulsoryDeliveriesPanelProps>
         <View style={styles.doctrineSection}>
           <Text style={styles.doctrineName}>{doctrine.toUpperCase()}</Text>
 
-          {doctrineFlavor && (
-            <Text style={styles.doctrineFlavor}>{doctrineFlavor}</Text>
-          )}
+          {doctrineFlavor && <Text style={styles.doctrineFlavor}>{doctrineFlavor}</Text>}
 
           <View style={styles.row}>
             <Text style={styles.label}>QUOTA ESCALATION:</Text>
@@ -185,12 +167,8 @@ export const CompulsoryDeliveriesPanel: React.FC<CompulsoryDeliveriesPanelProps>
                 <RateBar ratio={rate} />
 
                 <View style={styles.rateDetails}>
-                  <Text style={styles.rateDetailText}>
-                    STOCKPILE: {currentAmount}
-                  </Text>
-                  <Text style={styles.rateEstimate}>
-                    EST. DELIVERY: ~{estimatedDelivery}
-                  </Text>
+                  <Text style={styles.rateDetailText}>STOCKPILE: {currentAmount}</Text>
+                  <Text style={styles.rateEstimate}>EST. DELIVERY: ~{estimatedDelivery}</Text>
                 </View>
               </View>
             );
@@ -212,22 +190,11 @@ export const CompulsoryDeliveriesPanel: React.FC<CompulsoryDeliveriesPanelProps>
           const rates = eraDef.deliveryRates;
 
           return (
-            <View
-              key={eraId}
-              style={[
-                styles.historyRow,
-                isCurrent && styles.historyRowCurrent,
-              ]}
-            >
+            <View key={eraId} style={[styles.historyRow, isCurrent && styles.historyRowCurrent]}>
               <View style={styles.historyLeft}>
                 {isCurrent && <View style={styles.currentIndicator} />}
                 <View style={styles.historyInfo}>
-                  <Text
-                    style={[
-                      styles.historyDoctrine,
-                      isCurrent && styles.historyDoctrineCurrent,
-                    ]}
-                  >
+                  <Text style={[styles.historyDoctrine, isCurrent && styles.historyDoctrineCurrent]}>
                     {eraDef.doctrine.toUpperCase()}
                   </Text>
                   <Text style={styles.historyYears}>
@@ -238,15 +205,9 @@ export const CompulsoryDeliveriesPanel: React.FC<CompulsoryDeliveriesPanelProps>
               </View>
 
               <View style={styles.historyRates}>
-                <Text style={styles.historyRateText}>
-                  F:{Math.round(rates.food * 100)}%
-                </Text>
-                <Text style={styles.historyRateText}>
-                  V:{Math.round(rates.vodka * 100)}%
-                </Text>
-                <Text style={styles.historyRateText}>
-                  R:{Math.round(rates.money * 100)}%
-                </Text>
+                <Text style={styles.historyRateText}>F:{Math.round(rates.food * 100)}%</Text>
+                <Text style={styles.historyRateText}>V:{Math.round(rates.vodka * 100)}%</Text>
+                <Text style={styles.historyRateText}>R:{Math.round(rates.money * 100)}%</Text>
               </View>
             </View>
           );

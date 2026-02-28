@@ -45,10 +45,7 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 /** Calculate class-specific production bonus for a given assignment. */
-export function calcClassBonus(
-  cls: CitizenComponent['class'],
-  assignment: string | undefined
-): number {
+export function calcClassBonus(cls: CitizenComponent['class'], assignment: string | undefined): number {
   if (!assignment) return 0;
   if (cls === 'engineer' && FACTORY_PREFIXES.some((p) => assignment.startsWith(p))) {
     return CLASS_PRODUCTION_BONUS.engineer;
@@ -67,10 +64,7 @@ export function calcBaseEfficiency(morale: number, skill: number): number {
 }
 
 /** Determine worker display status. */
-export function resolveStatus(
-  citizen: CitizenComponent,
-  stats: WorkerStats
-): WorkerDisplayInfo['status'] {
+export function resolveStatus(citizen: CitizenComponent, stats: WorkerStats): WorkerDisplayInfo['status'] {
   if (stats.loyalty < DEFECTION_LOYALTY_THRESHOLD) return 'defecting';
   if (citizen.hunger > 70) return 'hungry';
   if (stats.ticksSinceVodka > 10 && stats.vodkaDependency > 50) return 'drunk';
@@ -100,11 +94,7 @@ export function generateWorkerName(rng: GameRng): { name: string; gender: 'male'
 // ─────────────────────────────────────────────────────────
 
 /** Process vodka consumption for a single worker. */
-export function processVodka(
-  stats: WorkerStats,
-  cls: CitizenComponent['class'],
-  ctx: TickContext
-): void {
+export function processVodka(stats: WorkerStats, cls: CitizenComponent['class'], ctx: TickContext): void {
   if (cls === 'prisoner' || stats.vodkaDependency <= 0) return;
   const vodkaWanted = VODKA_PER_WORKER * (stats.vodkaDependency / 50);
   if (ctx.remainingVodka >= vodkaWanted) {
@@ -134,11 +124,7 @@ export function processFood(citizen: CitizenComponent, stats: WorkerStats, ctx: 
 }
 
 /** Apply morale adjustments for housing and party officials. */
-export function applyMorale(
-  citizen: CitizenComponent,
-  stats: WorkerStats,
-  partyOfficialCount: number
-): void {
+export function applyMorale(citizen: CitizenComponent, stats: WorkerStats, partyOfficialCount: number): void {
   if (citizen.home) {
     stats.morale = Math.min(100, stats.morale + HOUSING_MORALE_BOOST);
   } else {
@@ -152,11 +138,7 @@ export function applyMorale(
 }
 
 /** Check if a worker should defect or escape. Returns true if they should be removed. */
-export function checkDefection(
-  cls: CitizenComponent['class'],
-  stats: WorkerStats,
-  rng: GameRng | null
-): boolean {
+export function checkDefection(cls: CitizenComponent['class'], stats: WorkerStats, rng: GameRng | null): boolean {
   if (cls === 'prisoner') {
     // FIX-17: Fall back to Math.random() when no seeded RNG — events must still fire
     return rng ? rng.coinFlip(PRISONER_ESCAPE_CHANCE) : Math.random() < PRISONER_ESCAPE_CHANCE;
@@ -174,13 +156,9 @@ export function processProductionAndGrowth(
   assignment: string | undefined,
   cls: CitizenComponent['class'],
   rng: GameRng | null,
-  stakhanovites: WorkerTickResult['stakhanovites']
+  stakhanovites: WorkerTickResult['stakhanovites'],
 ): number {
-  const efficiency = clamp(
-    calcBaseEfficiency(stats.morale, stats.skill) + calcClassBonus(cls, assignment),
-    0,
-    1.5
-  );
+  const efficiency = clamp(calcBaseEfficiency(stats.morale, stats.skill) + calcClassBonus(cls, assignment), 0, 1.5);
   if (rng && assignment && stats.morale > STAKHANOVITE_MORALE_THRESHOLD) {
     if (rng.coinFlip(STAKHANOVITE_CHANCE)) {
       stakhanovites.push({ name: stats.name, class: cls });

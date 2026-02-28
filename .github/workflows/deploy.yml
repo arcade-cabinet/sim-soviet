@@ -24,12 +24,12 @@ jobs:
         with:
           lfs: true
 
-      - name: Setup Node + npm
+      - name: Setup Node + pnpm
         uses: ./.github/actions/setup-node-pnpm
 
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
+      - run: pnpm run typecheck
+      - run: pnpm test
+      - run: pnpm run build
       - name: Copy static assets into dist
         run: |
           mkdir -p dist/assets

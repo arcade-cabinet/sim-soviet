@@ -1,8 +1,4 @@
-import {
-  type BuildingCollapsedCallback,
-  decaySystem,
-  setBuildingCollapsedCallback,
-} from '@/ecs/systems/decaySystem';
+import { type BuildingCollapsedCallback, decaySystem, setBuildingCollapsedCallback } from '@/ecs/systems/decaySystem';
 import type { Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
 

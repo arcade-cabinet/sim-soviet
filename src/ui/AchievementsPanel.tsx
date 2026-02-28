@@ -5,13 +5,13 @@
  * and hidden ones as ???. Accessible from the STATE tab.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import { ACHIEVEMENTS } from '../content/worldbuilding/achievements';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { ACHIEVEMENTS } from '../content/worldbuilding/achievements';
 
 export interface AchievementsPanelProps {
   visible: boolean;
@@ -40,9 +40,7 @@ export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({ visible, o
       dismissOnOverlay
       onDismiss={onDismiss}
     >
-      <Text style={styles.subtitle}>
-        MINISTRY OF RECOGNITION — AWARDS DIVISION
-      </Text>
+      <Text style={styles.subtitle}>MINISTRY OF RECOGNITION — AWARDS DIVISION</Text>
 
       {ACHIEVEMENTS.map((ach) => {
         const unlocked = unlockedIds.has(ach.id);
@@ -50,9 +48,7 @@ export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({ visible, o
 
         return (
           <View key={ach.id} style={[styles.achRow, unlocked && styles.achRowUnlocked]}>
-            <Text style={styles.achIcon}>
-              {unlocked ? '\u2605' : isHidden ? '\u2620' : '\u25CB'}
-            </Text>
+            <Text style={styles.achIcon}>{unlocked ? '\u2605' : isHidden ? '\u2620' : '\u25CB'}</Text>
             <View style={styles.achContent}>
               <Text style={[styles.achName, !unlocked && styles.achNameLocked]}>
                 {isHidden ? '??? CLASSIFIED ???' : ach.name}
@@ -60,9 +56,7 @@ export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({ visible, o
               <Text style={[styles.achDesc, !unlocked && styles.achDescLocked]}>
                 {isHidden ? 'Achievement details are classified.' : ach.description}
               </Text>
-              {unlocked && ach.subtext && (
-                <Text style={styles.achSubtext}>&quot;{ach.subtext}&quot;</Text>
-              )}
+              {unlocked && ach.subtext && <Text style={styles.achSubtext}>&quot;{ach.subtext}&quot;</Text>}
             </View>
           </View>
         );

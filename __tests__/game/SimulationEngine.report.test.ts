@@ -52,10 +52,7 @@ describe('SimulationEngine — Annual Report', () => {
     for (let i = 0; i < 90; i++) engine.tick();
 
     expect(cb.onAnnualReport).toHaveBeenCalledTimes(1);
-    const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [
-      AnnualReportData,
-      (s: ReportSubmission) => void,
-    ];
+    const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [AnnualReportData, (s: ReportSubmission) => void];
     expect(data.year).toBe(1927);
     expect(data.quotaType).toBe('food');
     expect(data.quotaTarget).toBe(500);
@@ -71,10 +68,7 @@ describe('SimulationEngine — Annual Report', () => {
     for (let i = 0; i < 90; i++) engine.tick();
 
     expect(cb.onAnnualReport).toHaveBeenCalledTimes(1);
-    const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [
-      AnnualReportData,
-      (s: ReportSubmission) => void,
-    ];
+    const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [AnnualReportData, (s: ReportSubmission) => void];
 
     // Submit honest report
     submitFn({
@@ -97,10 +91,7 @@ describe('SimulationEngine — Annual Report', () => {
     for (let i = 0; i < 90; i++) engine.tick();
 
     expect(cb.onAnnualReport).toHaveBeenCalledTimes(1);
-    const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [
-      AnnualReportData,
-      (s: ReportSubmission) => void,
-    ];
+    const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [AnnualReportData, (s: ReportSubmission) => void];
 
     submitFn({
       reportedQuota: data.quotaCurrent,
@@ -122,10 +113,7 @@ describe('SimulationEngine — Annual Report', () => {
 
     for (let i = 0; i < 90; i++) engine.tick();
 
-    const [_data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [
-      AnnualReportData,
-      (s: ReportSubmission) => void,
-    ];
+    const [_data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [AnnualReportData, (s: ReportSubmission) => void];
 
     // Submit wildly inflated numbers
     submitFn({
@@ -135,10 +123,7 @@ describe('SimulationEngine — Annual Report', () => {
     });
 
     // Should be caught
-    expect(cb.onToast).toHaveBeenCalledWith(
-      expect.stringContaining('FALSIFICATION DETECTED'),
-      'evacuation'
-    );
+    expect(cb.onToast).toHaveBeenCalledWith(expect.stringContaining('FALSIFICATION DETECTED'), 'evacuation');
   });
 
   it('falsified report can succeed (low risk or lucky roll)', () => {
@@ -151,10 +136,7 @@ describe('SimulationEngine — Annual Report', () => {
 
     for (let i = 0; i < 90; i++) engine.tick();
 
-    const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [
-      AnnualReportData,
-      (s: ReportSubmission) => void,
-    ];
+    const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [AnnualReportData, (s: ReportSubmission) => void];
 
     // Inflate quota slightly (small enough risk, but enough to pass)
     submitFn({
@@ -320,10 +302,7 @@ describe('SimulationEngine — quota commendation on exceeded', () => {
 
     // Without onAnnualReport, direct evaluation happens
     // But we have cb.onAnnualReport set, so submit honest report
-    const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [
-      AnnualReportData,
-      (s: ReportSubmission) => void,
-    ];
+    const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [AnnualReportData, (s: ReportSubmission) => void];
     submitFn({
       reportedQuota: data.quotaCurrent,
       reportedSecondary: data.actualVodka,

@@ -1,12 +1,6 @@
 import { fakePercent, pick, randInt } from '../helpers';
 import type { HeadlineGenerator } from '../types';
-import {
-  LEADER_ACHIEVEMENTS,
-  LEADER_QUALITIES,
-  LEADER_TITLES,
-  NATURE_CREDITS,
-  WESTERN_COUNTRIES,
-} from '../wordPools';
+import { LEADER_ACHIEVEMENTS, LEADER_QUALITIES, LEADER_TITLES, NATURE_CREDITS, WESTERN_COUNTRIES } from '../wordPools';
 
 // ── LEADERSHIP PRAISE generators (sycophantic) ──
 

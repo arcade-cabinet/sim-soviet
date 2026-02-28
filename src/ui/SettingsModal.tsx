@@ -5,13 +5,14 @@
  * SETTINGS button and in-game pause.
  */
 
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { SovietModal } from './SovietModal';
-import { Colors, monoFont } from './styles';
+import type React from 'react';
+import { useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AudioManager from '../audio/AudioManager';
 import SFXManager from '../audio/SFXManager';
 import { isColorBlindMode, setColorBlindMode } from '../stores/gameStore';
+import { SovietModal } from './SovietModal';
+import { Colors, monoFont } from './styles';
 
 export interface SettingsModalProps {
   visible: boolean;
@@ -50,9 +51,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
       dismissOnOverlay
       onDismiss={onDismiss}
     >
-      <Text style={styles.subtitle}>
-        CENTRAL CONFIGURATION BUREAU
-      </Text>
+      <Text style={styles.subtitle}>CENTRAL CONFIGURATION BUREAU</Text>
 
       <SettingToggle
         label="MUSIC"
@@ -76,9 +75,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
       />
 
       <View style={styles.divider} />
-      <Text style={styles.footer}>
-        SETTINGS ARE SAVED AUTOMATICALLY /// THE STATE REMEMBERS
-      </Text>
+      <Text style={styles.footer}>SETTINGS ARE SAVED AUTOMATICALLY /// THE STATE REMEMBERS</Text>
     </SovietModal>
   );
 };
@@ -101,9 +98,7 @@ const SettingToggle: React.FC<SettingToggleProps> = ({ label, description, value
       style={[styles.toggleBtn, value && styles.toggleBtnActive]}
       activeOpacity={0.7}
     >
-      <Text style={[styles.toggleText, value && styles.toggleTextActive]}>
-        {value ? 'ON' : 'OFF'}
-      </Text>
+      <Text style={[styles.toggleText, value && styles.toggleTextActive]}>{value ? 'ON' : 'OFF'}</Text>
     </TouchableOpacity>
   </View>
 );

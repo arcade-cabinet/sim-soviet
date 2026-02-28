@@ -3,8 +3,8 @@
  * Faithful port of poc.html lines 581-615.
  */
 
-import { GRID_SIZE } from './GridTypes';
 import type { GameState } from './GameState';
+import { GRID_SIZE } from './GridTypes';
 
 export function updateWaterNetwork(state: GameState): void {
   // Reset all watered flags
@@ -15,9 +15,7 @@ export function updateWaterNetwork(state: GameState): void {
   }
 
   // Find all working pumps
-  const pumps = state.buildings.filter(
-    (b) => b.type === 'pump' && state.grid[b.y][b.x].onFire === 0
-  );
+  const pumps = state.buildings.filter((b) => b.type === 'pump' && state.grid[b.y][b.x].onFire === 0);
 
   // BFS from pump locations along pipes
   const queue: { x: number; y: number; dist: number }[] = [];

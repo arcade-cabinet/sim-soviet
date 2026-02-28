@@ -7,9 +7,11 @@
  *
  * R3F migration: uses <mesh> + <pointLight> + useFrame for per-frame updates.
  */
-import React, { useRef } from 'react';
-import * as THREE from 'three';
+
 import { useFrame } from '@react-three/fiber';
+import type React from 'react';
+import { useRef } from 'react';
+import type * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 
@@ -55,13 +57,7 @@ const MeteorRenderer: React.FC = () => {
       </mesh>
 
       {/* Orange glow light */}
-      <pointLight
-        ref={lightRef}
-        color="#ff8800"
-        intensity={5}
-        distance={30}
-        decay={2}
-      />
+      <pointLight ref={lightRef} color="#ff8800" intensity={5} distance={30} decay={2} />
     </group>
   );
 };

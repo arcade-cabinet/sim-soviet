@@ -51,11 +51,7 @@ function perTickCost(totalCost: number, baseTicks: number): number {
 }
 
 /** Check if resources are sufficient for one construction tick. */
-function hasSufficientMaterials(
-  resources: MaterialSet,
-  costs: MaterialSet,
-  baseTicks: number
-): boolean {
+function hasSufficientMaterials(resources: MaterialSet, costs: MaterialSet, baseTicks: number): boolean {
   return MATERIAL_KEYS.every((k) => {
     const rate = perTickCost(costs[k], baseTicks);
     return rate === 0 || resources[k] >= rate;
@@ -63,12 +59,7 @@ function hasSufficientMaterials(
 }
 
 /** Deduct per-tick material costs from resources, clamping to exact totals. */
-function deductMaterials(
-  res: MaterialSet,
-  costs: MaterialSet,
-  baseTicks: number,
-  ticksSoFar: number
-): void {
+function deductMaterials(res: MaterialSet, costs: MaterialSet, baseTicks: number, ticksSoFar: number): void {
   for (const k of MATERIAL_KEYS) {
     const rate = perTickCost(costs[k], baseTicks);
     const remaining = costs[k] - ticksSoFar * rate;
@@ -77,20 +68,12 @@ function deductMaterials(
 }
 
 /** Resolve material costs for a building, falling back to defaults. */
-function resolveCosts(
-  defId: string,
-  eraTimeMult: number,
-  weatherTimeMult: number,
-  seasonMult: number
-) {
+function resolveCosts(defId: string, eraTimeMult: number, weatherTimeMult: number, seasonMult: number) {
   const def = getBuildingDef(defId);
   const defCost = def?.stats.constructionCost;
   const baseTicks = defCost?.baseTicks ?? DEFAULT_BASE_TICKS;
   return {
-    effectiveBaseTicks: Math.max(
-      1,
-      Math.ceil(baseTicks * eraTimeMult * weatherTimeMult * seasonMult)
-    ),
+    effectiveBaseTicks: Math.max(1, Math.ceil(baseTicks * eraTimeMult * weatherTimeMult * seasonMult)),
     materialCost: {
       timber: defCost?.timber ?? DEFAULT_MATERIAL_COST.timber,
       steel: defCost?.steel ?? DEFAULT_MATERIAL_COST.steel,
@@ -106,19 +89,14 @@ function advanceBuilding(
   res: MaterialSet | undefined,
   eraTimeMult: number,
   weatherTimeMult: number,
-  seasonMult: number
+  seasonMult: number,
 ): void {
   const building = entity.building;
   if (!building) return;
   const phase = building.constructionPhase;
   if (phase == null || phase === 'complete') return;
 
-  const { effectiveBaseTicks, materialCost } = resolveCosts(
-    building.defId,
-    eraTimeMult,
-    weatherTimeMult,
-    seasonMult
-  );
+  const { effectiveBaseTicks, materialCost } = resolveCosts(building.defId, eraTimeMult, weatherTimeMult, seasonMult);
 
   if (res && !hasSufficientMaterials(res, materialCost, effectiveBaseTicks)) return;
   if (res) deductMaterials(res, materialCost, effectiveBaseTicks, building.constructionTicks ?? 0);
@@ -143,11 +121,7 @@ function advanceBuilding(
  * @param weatherTimeMult - Weather-specific construction time multiplier (default 1.0).
  * @param seasonMult - Seasonal build cost multiplier (default 1.0). Rasputitsa penalty mitigated by road quality.
  */
-export function constructionSystem(
-  eraTimeMult = 1.0,
-  weatherTimeMult = 1.0,
-  seasonMult = 1.0
-): void {
+export function constructionSystem(eraTimeMult = 1.0, weatherTimeMult = 1.0, seasonMult = 1.0): void {
   const snapshot = [...underConstruction.entities];
   const res = getResourceEntity()?.resources;
   for (const entity of snapshot) {

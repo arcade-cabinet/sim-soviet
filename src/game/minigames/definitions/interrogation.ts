@@ -20,8 +20,7 @@ export const INTERROGATION: MinigameDefinition = {
       onSuccess: {
         resources: { population: -1 },
         commendations: 1,
-        announcement:
-          'You cooperated. A worker was arrested. The KGB commends your loyalty to the State.',
+        announcement: 'You cooperated. A worker was arrested. The KGB commends your loyalty to the State.',
       },
       onFailure: {
         // successChance is 1.0, so this never fires
@@ -38,8 +37,7 @@ export const INTERROGATION: MinigameDefinition = {
       },
       onFailure: {
         blackMarks: 2,
-        announcement:
-          'The KGB saw through your deflection. Two black marks. The agent is no longer smiling.',
+        announcement: 'The KGB saw through your deflection. Two black marks. The agent is no longer smiling.',
         severity: 'critical',
       },
     },
@@ -50,8 +48,7 @@ export const INTERROGATION: MinigameDefinition = {
       successChance: 1.0,
       onSuccess: {
         blackMarks: 1,
-        announcement:
-          'You said nothing. The KGB adds a mark to your file. Your workers are grateful, quietly.',
+        announcement: 'You said nothing. The KGB adds a mark to your file. Your workers are grateful, quietly.',
         severity: 'warning',
       },
       onFailure: {
@@ -63,8 +60,7 @@ export const INTERROGATION: MinigameDefinition = {
   autoResolve: {
     resources: { population: -1 },
     blackMarks: 1,
-    announcement:
-      'Silence was taken as guilt. A confession was extracted. A worker was taken. A mark was added.',
+    announcement: 'Silence was taken as guilt. A confession was extracted. A worker was taken. A mark was added.',
     severity: 'critical',
   },
 };

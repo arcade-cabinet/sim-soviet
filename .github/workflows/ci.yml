@@ -22,13 +22,13 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup Node + npm
+      - name: Setup Node + pnpm
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Run linter
         run: |
           echo "::group::Running linter"
-          npm run lint 2>&1 | tee lint-output.log
+          pnpm run lint 2>&1 | tee lint-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -45,7 +45,7 @@ jobs:
       - name: Run TypeScript type checking
         run: |
           echo "::group::Running TypeScript type checking"
-          npm run typecheck 2>&1 | tee check-output.log
+          pnpm run typecheck 2>&1 | tee check-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -62,7 +62,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           echo "::group::Running tests with coverage"
-          npm run test:coverage 2>&1 | tee test-output.log
+          pnpm run test:coverage 2>&1 | tee test-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -92,7 +92,7 @@ jobs:
       - name: Build project
         run: |
           echo "::group::Building project"
-          npm run build 2>&1 | tee build-output.log
+          pnpm run build 2>&1 | tee build-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -128,19 +128,19 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup Node + npm
+      - name: Setup Node + pnpm
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Build for E2E
-        run: npm run build
+        run: pnpm run build
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Run E2E tests
         run: |
           echo "::group::Running E2E tests"
-          npm run test:e2e -- --project='Desktop Chrome' --grep-invert 'Visual Regression' 2>&1 | tee e2e-output.log
+          pnpm run test:e2e -- --project='Desktop Chrome' --grep-invert 'Visual Regression' 2>&1 | tee e2e-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then

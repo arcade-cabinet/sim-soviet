@@ -89,8 +89,7 @@ export class NameGenerator {
     titleCategory?: keyof typeof TITLES;
     epithet?: string;
   }): GeneratedLeader {
-    const gender =
-      options?.gender ?? ((_rng?.random() ?? Math.random()) < 0.85 ? 'male' : 'female');
+    const gender = options?.gender ?? ((_rng?.random() ?? Math.random()) < 0.85 ? 'male' : 'female');
 
     // Pick components, retry on duplicate
     let givenName: string;
@@ -159,7 +158,7 @@ export class NameGenerator {
     options?: {
       gender?: 'male' | 'female';
       titleCategory?: keyof typeof TITLES;
-    }
+    },
   ): GeneratedLeader[] {
     const leaders: GeneratedLeader[] = [];
     for (let i = 0; i < count; i++) {

@@ -8,37 +8,21 @@
  * Ported from archive/src/components/ui/RadialInspectMenu.tsx.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  Easing,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Svg, {
-  Circle,
-  G,
-  Path,
-  Text as SvgText,
-} from 'react-native-svg';
-import { getBuildingDef } from '../data/buildingDefs';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Easing, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
+import { getUpgradeInfo, isUpgradeable, upgradeECSBuilding } from '../bridge/BuildingPlacement';
 import { getEngine } from '../bridge/GameInit';
-import {
-  getMinigameNameForBuilding,
-} from '../game/minigames/BuildingMinigameMap';
+import { getBuildingDef } from '../data/buildingDefs';
+import { getMinigameNameForBuilding } from '../game/minigames/BuildingMinigameMap';
 import {
   closeInspectMenu,
-  openBuildingInspector,
   type InspectBuildingType,
   type InspectMenuState,
+  openBuildingInspector,
   useInspectMenu,
 } from '../stores/gameStore';
-import {
-  getUpgradeInfo,
-  isUpgradeable,
-  upgradeECSBuilding,
-} from '../bridge/BuildingPlacement';
 import { Colors, monoFont } from './styles';
 
 // ── Action Definitions ────────────────────────────────────────────────────
@@ -116,8 +100,7 @@ const HOUSEHOLD_ACTIONS: ActionDef[] = [
     label: 'Men',
     icon: '\u{1F468}',
     getDetail: (state) => {
-      const count =
-        state.occupants?.filter((o) => o.gender === 'male' && o.age >= 18 && o.age < 60).length ?? 0;
+      const count = state.occupants?.filter((o) => o.gender === 'male' && o.age >= 18 && o.age < 60).length ?? 0;
       return `Men: ${count}`;
     },
   },
@@ -126,8 +109,7 @@ const HOUSEHOLD_ACTIONS: ActionDef[] = [
     label: 'Women',
     icon: '\u{1F469}',
     getDetail: (state) => {
-      const count =
-        state.occupants?.filter((o) => o.gender === 'female' && o.age >= 18 && o.age < 60).length ?? 0;
+      const count = state.occupants?.filter((o) => o.gender === 'female' && o.age >= 18 && o.age < 60).length ?? 0;
       return `Women: ${count}`;
     },
   },
@@ -306,13 +288,7 @@ const ActionWedge: React.FC<{
         stroke={strokeColor}
         strokeWidth={isSelected ? 2 : 1}
       />
-      <SvgText
-        x={labelPos.x}
-        y={labelPos.y - 4}
-        textAnchor="middle"
-        alignmentBaseline="central"
-        fontSize={18}
-      >
+      <SvgText x={labelPos.x} y={labelPos.y - 4} textAnchor="middle" alignmentBaseline="central" fontSize={18}>
         {action.icon}
       </SvgText>
       <SvgText
@@ -441,11 +417,7 @@ export const RadialInspectMenu: React.FC = () => {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop */}
-      <TouchableOpacity
-        style={styles.backdrop}
-        activeOpacity={1}
-        onPress={handleClose}
-      />
+      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
 
       {/* SVG Pie Menu */}
       <Animated.View
@@ -462,19 +434,9 @@ export const RadialInspectMenu: React.FC = () => {
         ]}
         pointerEvents="box-none"
       >
-        <Svg
-          width={VIEW_SIZE}
-          height={VIEW_SIZE}
-          viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}
-        >
+        <Svg width={VIEW_SIZE} height={VIEW_SIZE} viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}>
           {/* Center pip — dark red for inspect */}
-          <Circle
-            cx={CENTER}
-            cy={CENTER}
-            r={8}
-            fill="#8b0000"
-            opacity={0.7}
-          />
+          <Circle cx={CENTER} cy={CENTER} r={8} fill="#8b0000" opacity={0.7} />
 
           {/* Action ring (inner) */}
           {actions.map((action, i) => (
@@ -527,9 +489,9 @@ export const RadialInspectMenu: React.FC = () => {
       >
         <Animated.Text style={styles.tooltipText}>
           {buildingName} {'\u2022'} [{menu.gridX},{menu.gridY}]
-          {buildingType === 'housing' && menu.housingCap != null && (
-            ` ${'\u2022'} ${menu.occupants?.length ?? 0}/${menu.housingCap} occupants`
-          )}
+          {buildingType === 'housing' &&
+            menu.housingCap != null &&
+            ` ${'\u2022'} ${menu.occupants?.length ?? 0}/${menu.housingCap} occupants`}
         </Animated.Text>
       </Animated.View>
     </View>

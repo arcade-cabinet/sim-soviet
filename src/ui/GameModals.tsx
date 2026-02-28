@@ -7,16 +7,17 @@
  * State is managed by App.web.tsx and passed down as props.
  */
 
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { SovietModal } from './SovietModal';
-import { Colors, monoFont } from './styles';
+import type React from 'react';
+import { useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { AnnualReportData, ReportSubmission } from '../components/ui/AnnualReportModal';
+import { getTimelineEvent } from '../content/worldbuilding/timeline';
 import type { EraDefinition } from '../game/era';
+import type { TallyData } from '../game/GameTally';
 import type { ActiveMinigame } from '../game/minigames/MinigameTypes';
 import type { SettlementEvent } from '../game/SettlementSystem';
-import type { TallyData } from '../game/GameTally';
-import { getTimelineEvent } from '../content/worldbuilding/timeline';
+import { SovietModal } from './SovietModal';
+import { Colors, monoFont } from './styles';
 
 // ── Types ──
 
@@ -80,11 +81,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
   return (
     <>
       <EraTransitionContent era={eraTransition} onClose={onDismissEra} />
-      <MinigameContent
-        minigame={activeMinigame}
-        onChoice={onMinigameChoice}
-        onClose={onDismissMinigame}
-      />
+      <MinigameContent minigame={activeMinigame} onChoice={onMinigameChoice} onClose={onDismissMinigame} />
       <AnnualReportContent data={annualReport} onSubmit={onSubmitReport} />
       <SettlementUpgradeContent event={settlementEvent} onClose={onDismissSettlement} />
       <FiveYearPlanContent directive={planDirective} onAccept={onAcceptPlan} />
@@ -123,13 +120,9 @@ const EraTransitionContent: React.FC<{
       </Text>
       {timelineEvent && (
         <View style={modalStyles.timelineSection}>
-          <Text style={modalStyles.timelineHeadline}>
-            PRAVDA ARCHIVES: {timelineEvent.headline}
-          </Text>
+          <Text style={modalStyles.timelineHeadline}>PRAVDA ARCHIVES: {timelineEvent.headline}</Text>
           <Text style={modalStyles.terminalBody}>{timelineEvent.description}</Text>
-          <Text style={modalStyles.classifiedNote}>
-            [CLASSIFIED] {timelineEvent.classified}
-          </Text>
+          <Text style={modalStyles.classifiedNote}>[CLASSIFIED] {timelineEvent.classified}</Text>
         </View>
       )}
     </SovietModal>
@@ -243,9 +236,7 @@ const AnnualReportInner: React.FC<{
       {isFalsified && (
         <View style={modalStyles.statRow}>
           <Text style={[modalStyles.statLabel, { fontStyle: 'italic' }]}>Actual:</Text>
-          <Text style={[modalStyles.statLabel, { fontStyle: 'italic' }]}>
-            {Math.floor(data.quotaCurrent)}
-          </Text>
+          <Text style={[modalStyles.statLabel, { fontStyle: 'italic' }]}>{Math.floor(data.quotaCurrent)}</Text>
         </View>
       )}
       <View style={modalStyles.statRow}>
@@ -269,19 +260,11 @@ const AnnualReportInner: React.FC<{
           {[0, 10, 20, 30, 50].map((pct) => (
             <TouchableOpacity
               key={pct}
-              style={[
-                modalStyles.pripiskiBtn,
-                inflation === pct && modalStyles.pripiskiBtnActive,
-              ]}
+              style={[modalStyles.pripiskiBtn, inflation === pct && modalStyles.pripiskiBtnActive]}
               onPress={() => setInflation(pct)}
               activeOpacity={0.7}
             >
-              <Text
-                style={[
-                  modalStyles.pripiskiBtnText,
-                  inflation === pct && modalStyles.pripiskiBtnTextActive,
-                ]}
-              >
+              <Text style={[modalStyles.pripiskiBtnText, inflation === pct && modalStyles.pripiskiBtnTextActive]}>
                 {pct === 0 ? 'HONEST' : `+${pct}%`}
               </Text>
             </TouchableOpacity>
@@ -290,9 +273,7 @@ const AnnualReportInner: React.FC<{
         {inflation > 0 && (
           <View style={modalStyles.riskRow}>
             <Text style={modalStyles.statLabel}>KGB Detection Risk:</Text>
-            <Text style={[modalStyles.statValue, { color: RISK_COLORS[riskLevel] }]}>
-              {RISK_LABELS[riskLevel]}
-            </Text>
+            <Text style={[modalStyles.statValue, { color: RISK_COLORS[riskLevel] }]}>{RISK_LABELS[riskLevel]}</Text>
           </View>
         )}
       </View>
@@ -326,9 +307,8 @@ const TIER_TITLES: Record<string, string> = {
 
 const TIER_CEREMONY: Record<string, string> = {
   posyolok:
-    'A modest ceremony is held. The attending brass band consists of one tuba player. He is also the mayor\'s cousin. Attendance was mandatory.',
-  pgt:
-    'The Presidium sends a telegraph of congratulation. The telegraph operator adds "good luck" in pencil. This is the most sincere communication you will receive from Moscow.',
+    "A modest ceremony is held. The attending brass band consists of one tuba player. He is also the mayor's cousin. Attendance was mandatory.",
+  pgt: 'The Presidium sends a telegraph of congratulation. The telegraph operator adds "good luck" in pencil. This is the most sincere communication you will receive from Moscow.',
   gorod:
     'A delegation from the Central Committee arrives for the declaration. They inspect everything. They approve of nothing. They sign the papers anyway. The ink is still wet as they leave.',
 };
@@ -356,10 +336,7 @@ const SettlementUpgradeContent: React.FC<{
       <Text style={modalStyles.parchmentHeading}>Settlement Promotion</Text>
       <Text style={modalStyles.parchmentBody}>
         By decree of the Presidium of the Supreme Soviet, this settlement is hereby elevated from{' '}
-        <Text style={modalStyles.parchmentBold}>
-          {TIER_LABELS[event.fromTier] ?? event.fromTier}
-        </Text>
-        {' '}to{' '}
+        <Text style={modalStyles.parchmentBold}>{TIER_LABELS[event.fromTier] ?? event.fromTier}</Text> to{' '}
         <Text style={modalStyles.parchmentBold}>{TIER_LABELS[event.toTier] ?? event.toTier}</Text>.
       </Text>
       {newTitle && (
@@ -368,14 +345,8 @@ const SettlementUpgradeContent: React.FC<{
         </Text>
       )}
       <Text style={modalStyles.parchmentBody}>{event.description}</Text>
-      {ceremony && (
-        <Text style={[modalStyles.parchmentBody, { fontStyle: 'italic', opacity: 0.8 }]}>
-          {ceremony}
-        </Text>
-      )}
-      <Text style={modalStyles.parchmentNote}>
-        {'\u2605'} New construction options may now be available.
-      </Text>
+      {ceremony && <Text style={[modalStyles.parchmentBody, { fontStyle: 'italic', opacity: 0.8 }]}>{ceremony}</Text>}
+      <Text style={modalStyles.parchmentNote}>{'\u2605'} New construction options may now be available.</Text>
     </SovietModal>
   );
 };
@@ -402,9 +373,7 @@ const FiveYearPlanContent: React.FC<{
       </Text>
       <View style={modalStyles.statRow}>
         <Text style={modalStyles.statLabel}>Primary quota ({directive.quotaType}):</Text>
-        <Text style={[modalStyles.statValue, modalStyles.statBold]}>
-          {directive.quotaTarget}
-        </Text>
+        <Text style={[modalStyles.statValue, modalStyles.statBold]}>{directive.quotaTarget}</Text>
       </View>
       {directive.mandates && directive.mandates.length > 0 && (
         <View style={modalStyles.mandateSection}>
@@ -416,16 +385,8 @@ const FiveYearPlanContent: React.FC<{
             const progress = Math.min(m.fulfilled / m.required, 1);
             const isComplete = m.fulfilled >= m.required;
             const isBehind = !isComplete && progress < 0.5;
-            const statusColor = isComplete
-              ? '#2e7d32'
-              : isBehind
-                ? Colors.sovietRed
-                : Colors.sovietGold;
-            const statusLabel = isComplete
-              ? 'COMPLETE'
-              : isBehind
-                ? 'BEHIND SCHEDULE'
-                : 'ON TRACK';
+            const statusColor = isComplete ? '#2e7d32' : isBehind ? Colors.sovietRed : Colors.sovietGold;
+            const statusLabel = isComplete ? 'COMPLETE' : isBehind ? 'BEHIND SCHEDULE' : 'ON TRACK';
 
             return (
               <View key={m.defId} style={modalStyles.mandateRow}>
@@ -435,9 +396,7 @@ const FiveYearPlanContent: React.FC<{
                     <Text style={[modalStyles.mandateCount, { color: statusColor }]}>
                       {m.fulfilled} / {m.required}
                     </Text>
-                    <Text style={[modalStyles.mandateStatus, { color: statusColor }]}>
-                      {statusLabel}
-                    </Text>
+                    <Text style={[modalStyles.mandateStatus, { color: statusColor }]}>{statusLabel}</Text>
                   </View>
                 </View>
                 <View style={modalStyles.mandateProgressTrack}>
@@ -456,9 +415,7 @@ const FiveYearPlanContent: React.FC<{
           })}
         </View>
       )}
-      <Text style={modalStyles.parchmentNote}>
-        {'\u2605'} The Party expects full compliance. Glory to the workers!
-      </Text>
+      <Text style={modalStyles.parchmentNote}>{'\u2605'} The Party expects full compliance. Glory to the workers!</Text>
     </SovietModal>
   );
 };
@@ -502,9 +459,7 @@ const GameOverContent: React.FC<{
           <Text style={headingStyle}>Final Score</Text>
           <View style={modalStyles.statRow}>
             <Text style={modalStyles.statLabel}>Score:</Text>
-            <Text style={[modalStyles.statValue, modalStyles.statBold]}>
-              {tally.finalScore}
-            </Text>
+            <Text style={[modalStyles.statValue, modalStyles.statBold]}>{tally.finalScore}</Text>
           </View>
           <View style={modalStyles.statRow}>
             <Text style={modalStyles.statLabel}>Difficulty:</Text>
@@ -514,9 +469,7 @@ const GameOverContent: React.FC<{
           </View>
           <View style={modalStyles.statRow}>
             <Text style={modalStyles.statLabel}>Multiplier:</Text>
-            <Text style={modalStyles.statValue}>
-              x{tally.scoreBreakdown.settingsMultiplier.toFixed(1)}
-            </Text>
+            <Text style={modalStyles.statValue}>x{tally.scoreBreakdown.settingsMultiplier.toFixed(1)}</Text>
           </View>
 
           <Text style={headingStyle}>Statistics</Text>
@@ -571,9 +524,7 @@ const GameOverContent: React.FC<{
                   <Text style={[textStyle, { fontWeight: 'bold' }]}>
                     {'\u2605'} {medal.name}
                   </Text>
-                  <Text style={[textStyle, { fontSize: 11, opacity: 0.8 }]}>
-                    {medal.description}
-                  </Text>
+                  <Text style={[textStyle, { fontSize: 11, opacity: 0.8 }]}>{medal.description}</Text>
                 </View>
               ))}
             </View>
@@ -584,14 +535,16 @@ const GameOverContent: React.FC<{
               <Text style={headingStyle}>
                 Achievements ({tally.achievementsUnlocked}/{tally.achievementsTotal})
               </Text>
-              {tally.achievements.filter((a) => a.unlocked).map((a) => (
-                <View key={a.id} style={modalStyles.medalRow}>
-                  <Text style={[textStyle, { fontWeight: 'bold' }]}>
-                    {'\u2605'} {a.name}
-                  </Text>
-                  <Text style={[textStyle, { fontSize: 11, opacity: 0.7 }]}>{a.subtext}</Text>
-                </View>
-              ))}
+              {tally.achievements
+                .filter((a) => a.unlocked)
+                .map((a) => (
+                  <View key={a.id} style={modalStyles.medalRow}>
+                    <Text style={[textStyle, { fontWeight: 'bold' }]}>
+                      {'\u2605'} {a.name}
+                    </Text>
+                    <Text style={[textStyle, { fontSize: 11, opacity: 0.7 }]}>{a.subtext}</Text>
+                  </View>
+                ))}
             </View>
           )}
         </>

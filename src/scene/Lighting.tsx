@@ -8,9 +8,11 @@
  * - Day/night cycle: sun position orbits based on timeOfDay (0-1)
  * - Season-dependent ambient and fog
  */
-import React, { useRef, useMemo } from 'react';
-import * as THREE from 'three';
+
 import { useFrame, useThree } from '@react-three/fiber';
+import type React from 'react';
+import { useMemo, useRef } from 'react';
+import * as THREE from 'three';
 import type { Season } from './TerrainGrid';
 
 interface LightingProps {
@@ -29,7 +31,6 @@ function seasonBrightness(season: Season): number {
       return 0.85;
     case 'autumn':
       return 0.95;
-    case 'spring':
     default:
       return 1.0;
   }
@@ -63,11 +64,7 @@ const FOG_COLOR = '#a6b8d1'; // (0.65, 0.72, 0.82)
 const SHADOW_MAP_SIZE = 1024;
 const SHADOW_CAMERA_SIZE = 50;
 
-const Lighting: React.FC<LightingProps> = ({
-  timeOfDay = 0.5,
-  season = 'summer',
-  isStorm = false,
-}) => {
+const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer', isStorm = false }) => {
   const sunRef = useRef<THREE.DirectionalLight>(null);
   const hemiRef = useRef<THREE.HemisphereLight>(null);
   const { scene } = useThree();
@@ -75,7 +72,7 @@ const Lighting: React.FC<LightingProps> = ({
   // Compute sun values
   const intensity = sunIntensity(timeOfDay);
   const position = sunPosition(timeOfDay);
-  const dir = sunDirection(timeOfDay);
+  const _dir = sunDirection(timeOfDay);
   const hemiIntensity = 1.0 * seasonBrightness(season);
 
   // Storm dimming
@@ -125,11 +122,7 @@ const Lighting: React.FC<LightingProps> = ({
       </directionalLight>
 
       {/* Hemispheric light — warm ambient fill */}
-      <hemisphereLight
-        ref={hemiRef}
-        args={['#b3bfd9', '#594f47', hemiIntensity * stormMul]}
-        position={[0, 50, 0]}
-      />
+      <hemisphereLight ref={hemiRef} args={['#b3bfd9', '#594f47', hemiIntensity * stormMul]} position={[0, 50, 0]} />
     </>
   );
 };

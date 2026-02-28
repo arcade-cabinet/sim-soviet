@@ -69,10 +69,7 @@ describe('SimulationEngine edge cases', () => {
       advanceYears(engine2, 5);
 
       // onGameOver should NOT have been called with victory=true
-      const gameOverCalls = (cb2.onGameOver as ReturnType<typeof jest.fn>).mock.calls as [
-        boolean,
-        string,
-      ][];
+      const gameOverCalls = (cb2.onGameOver as ReturnType<typeof jest.fn>).mock.calls as [boolean, string][];
       const victoryCalls = gameOverCalls.filter((call) => call[0] === true);
       expect(victoryCalls).toHaveLength(0);
     });
@@ -231,8 +228,7 @@ describe('SimulationEngine edge cases', () => {
 
       const yearAtGameOver = getMetaEntity()!.gameMeta.date.year;
       const popAtGameOver = getResourceEntity()!.resources.population;
-      const stateChangeCountAtGameOver = (cb2.onStateChange as ReturnType<typeof jest.fn>).mock.calls
-        .length;
+      const stateChangeCountAtGameOver = (cb2.onStateChange as ReturnType<typeof jest.fn>).mock.calls.length;
 
       // Additional ticks should be ignored
       engine2.tick();
@@ -319,13 +315,11 @@ describe('SimulationEngine edge cases', () => {
       const overflow = Math.max(0, initialFood - capacity);
       const spoilageMargin = overflow * 0.05 * 2 + initialFood * 0.005 * 2 + 1; // generous: 2x seasonal
       if (store.resources.population === 0) {
-        expect(getResourceEntity()!.resources.food).toBeGreaterThanOrEqual(
-          initialFood - spoilageMargin
-        );
+        expect(getResourceEntity()!.resources.food).toBeGreaterThanOrEqual(initialFood - spoilageMargin);
       } else {
         // With population, consumption + spoilage may offset production
         expect(getResourceEntity()!.resources.food).toBeGreaterThanOrEqual(
-          initialFood - Math.ceil(store.resources.population / 10) - spoilageMargin
+          initialFood - Math.ceil(store.resources.population / 10) - spoilageMargin,
         );
       }
     });
@@ -346,9 +340,7 @@ describe('SimulationEngine edge cases', () => {
       } else {
         // With population, consumption may offset production
         const consumed = Math.ceil(store.resources.population / 20);
-        expect(getResourceEntity()!.resources.vodka).toBeGreaterThanOrEqual(
-          initialVodka - consumed
-        );
+        expect(getResourceEntity()!.resources.vodka).toBeGreaterThanOrEqual(initialVodka - consumed);
       }
     });
 

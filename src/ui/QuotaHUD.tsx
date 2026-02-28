@@ -3,9 +3,9 @@
  * Port of poc.html lines 243-250.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Colors, SharedStyles, monoFont } from './styles';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Colors, monoFont, SharedStyles } from './styles';
 
 export interface QuotaHUDProps {
   targetType: string;
@@ -14,12 +14,7 @@ export interface QuotaHUDProps {
   deadlineYear: number;
 }
 
-export const QuotaHUD: React.FC<QuotaHUDProps> = ({
-  targetType,
-  targetAmount,
-  current,
-  deadlineYear,
-}) => {
+export const QuotaHUD: React.FC<QuotaHUDProps> = ({ targetType, targetAmount, current, deadlineYear }) => {
   const progress = targetAmount > 0 ? Math.min(current / targetAmount, 1) : 0;
 
   return (
@@ -40,12 +35,7 @@ export const QuotaHUD: React.FC<QuotaHUDProps> = ({
 
       {/* Progress bar */}
       <View style={styles.barTrack}>
-        <View
-          style={[
-            styles.barFill,
-            { width: `${Math.round(progress * 100)}%` },
-          ]}
-        />
+        <View style={[styles.barFill, { width: `${Math.round(progress * 100)}%` }]} />
       </View>
     </View>
   );

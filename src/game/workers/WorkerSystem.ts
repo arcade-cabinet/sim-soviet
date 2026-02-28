@@ -147,7 +147,7 @@ export class WorkerSystem {
     worker: Entity,
     buildingGridX: number,
     buildingGridY: number,
-    source: 'player' | 'forced' | 'auto' = 'player'
+    source: 'player' | 'forced' | 'auto' = 'player',
   ): boolean {
     if (!worker.citizen) return false;
 
@@ -250,13 +250,7 @@ export class WorkerSystem {
         continue;
       }
 
-      const efficiency = processProductionAndGrowth(
-        stats,
-        entity.citizen.assignment,
-        cls,
-        ctx.rng,
-        stakhanovites
-      );
+      const efficiency = processProductionAndGrowth(stats, entity.citizen.assignment, cls, ctx.rng, stakhanovites);
       classEffSum[cls] += efficiency;
       classCount[cls]++;
     }
@@ -265,7 +259,7 @@ export class WorkerSystem {
 
   /** Remove defecting/escaping citizens and return defection records. */
   private processDefections(
-    toRemove: Array<{ entity: Entity; name: string; cls: CitizenComponent['class'] }>
+    toRemove: Array<{ entity: Entity; name: string; cls: CitizenComponent['class'] }>,
   ): WorkerTickResult['defections'] {
     return toRemove.map(({ entity, name, cls }) => {
       this.removeWorker(entity, cls === 'prisoner' ? 'escape' : 'defection');
@@ -352,10 +346,9 @@ export class WorkerSystem {
       assignment,
       status: resolveStatus(entity.citizen, stats),
       productionEfficiency: clamp(
-        calcBaseEfficiency(stats.morale, stats.skill) +
-          calcClassBonus(cls, assignment ?? undefined),
+        calcBaseEfficiency(stats.morale, stats.skill) + calcClassBonus(cls, assignment ?? undefined),
         0,
-        1.5
+        1.5,
       ),
     };
   }

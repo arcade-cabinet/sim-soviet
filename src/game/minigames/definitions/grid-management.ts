@@ -21,13 +21,11 @@ export const GRID_MANAGEMENT: MinigameDefinition = {
       successChance: 0.8,
       onSuccess: {
         resources: { money: -5 },
-        announcement:
-          'Blackouts managed. No district was dark for more than two hours. The citizens adapted.',
+        announcement: 'Blackouts managed. No district was dark for more than two hours. The citizens adapted.',
       },
       onFailure: {
         resources: { money: -15 },
-        announcement:
-          'The rotation schedule confused the operators. Three districts went dark simultaneously.',
+        announcement: 'The rotation schedule confused the operators. Three districts went dark simultaneously.',
         severity: 'warning',
       },
     },
@@ -39,14 +37,12 @@ export const GRID_MANAGEMENT: MinigameDefinition = {
       onSuccess: {
         resources: { money: 25 },
         commendations: 1,
-        announcement:
-          'Full power maintained. The grid held. The engineers are surprised and the Party is pleased.',
+        announcement: 'Full power maintained. The grid held. The engineers are surprised and the Party is pleased.',
       },
       onFailure: {
         resources: { money: -40, population: -1 },
         blackMarks: 1,
-        announcement:
-          'Transformer explosion. One worker electrocuted. The lights went out in a very dramatic fashion.',
+        announcement: 'Transformer explosion. One worker electrocuted. The lights went out in a very dramatic fashion.',
         severity: 'critical',
       },
     },
@@ -58,21 +54,18 @@ export const GRID_MANAGEMENT: MinigameDefinition = {
       onSuccess: {
         resources: { money: -15 },
         blat: 1,
-        announcement:
-          'Neighboring district shared power. You owe them a favor. This is how the Soviet system works.',
+        announcement: 'Neighboring district shared power. You owe them a favor. This is how the Soviet system works.',
       },
       onFailure: {
         resources: { money: -15 },
-        announcement:
-          'The neighboring district had no surplus. They lied on their reports too. Solidarity.',
+        announcement: 'The neighboring district had no surplus. They lied on their reports too. Solidarity.',
       },
     },
   ],
   autoResolve: {
     resources: { money: -30 },
     blackMarks: 1,
-    announcement:
-      'The grid failed without intervention. A citywide blackout lasted 6 hours. The darkness was total.',
+    announcement: 'The grid failed without intervention. A citywide blackout lasted 6 hours. The darkness was total.',
     severity: 'critical',
   },
 };

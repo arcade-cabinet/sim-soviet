@@ -3,13 +3,13 @@
  */
 
 export {
-  getMinigameDefinition,
-  MINIGAME_DEFINITIONS,
-} from './definitions';
-export {
   getMinigameNameForBuilding,
   resolveBuildingTrigger,
 } from './BuildingMinigameMap';
+export {
+  getMinigameDefinition,
+  MINIGAME_DEFINITIONS,
+} from './definitions';
 export { MinigameRouter } from './MinigameRouter';
 export type {
   ActiveMinigame,

@@ -7,8 +7,7 @@ import type { MinigameDefinition } from '../MinigameTypes';
 export const BLACK_MARKET: MinigameDefinition = {
   id: 'black_market',
   name: 'Black Market',
-  description:
-    'A man in a long coat approaches. He has goods. You have needs. The State has opinions about both.',
+  description: 'A man in a long coat approaches. He has goods. You have needs. The State has opinions about both.',
   triggerType: 'building_tap',
   triggerCondition: 'market',
   tickLimit: 15,
@@ -37,8 +36,7 @@ export const BLACK_MARKET: MinigameDefinition = {
       onSuccess: {
         resources: { food: 30, vodka: 10, money: -40 },
         blat: 3,
-        announcement:
-          'A windfall of goods arrives under cover of darkness. The people eat well tonight.',
+        announcement: 'A windfall of goods arrives under cover of darkness. The people eat well tonight.',
       },
       onFailure: {
         resources: { money: -40 },
@@ -55,8 +53,7 @@ export const BLACK_MARKET: MinigameDefinition = {
       onSuccess: {
         commendations: 1,
         blat: -3,
-        announcement:
-          'You reported the black market. The KGB is pleased. Your former contacts are not.',
+        announcement: 'You reported the black market. The KGB is pleased. Your former contacts are not.',
       },
       onFailure: {
         // successChance is 1.0, so this never fires

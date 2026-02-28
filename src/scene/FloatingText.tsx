@@ -8,10 +8,12 @@
  * R3F migration: uses drei <Billboard> + <Text> replacing BabylonJS
  * DynamicTexture on plane meshes.
  */
-import React, { useRef } from 'react';
-import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+
 import { Billboard, Text } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import type React from 'react';
+import { useRef } from 'react';
+import type * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 

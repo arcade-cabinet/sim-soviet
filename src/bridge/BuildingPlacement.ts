@@ -8,17 +8,17 @@
  * Also handles building upgrades via upgradeECSBuilding().
  */
 
-import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
-import { buildings as buildingsArchetype, getResourceEntity, tiles } from '@/ecs/archetypes';
-import { world } from '@/ecs/world';
-import { getBuildingDef } from '@/data/buildingDefs';
-import { DEFAULT_MATERIAL_COST } from '@/ecs/systems/constructionSystem';
-import { getEngine, getGameGrid } from './GameInit';
-import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 import { GRID_SIZE } from '@/config';
-import { gameState } from '../engine/GameState';
-import SFXManager from '../audio/SFXManager';
+import { getBuildingDef } from '@/data/buildingDefs';
+import { buildings as buildingsArchetype, getResourceEntity } from '@/ecs/archetypes';
+import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
+import { DEFAULT_MATERIAL_COST } from '@/ecs/systems/constructionSystem';
+import { world } from '@/ecs/world';
 import { recalculatePaths } from '@/game/PathSystem';
+import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
+import SFXManager from '../audio/SFXManager';
+import { gameState } from '../engine/GameState';
+import { getEngine, getGameGrid } from './GameInit';
 
 // ── Upgrade Chains ───────────────────────────────────────────────────────────
 
@@ -113,21 +113,21 @@ export function getUpgradeLevel(defId: string): number {
  */
 const TOOL_TO_DEF_ID: Record<string, string> = {
   // Zone tools → place basic building of that category
-  'zone-res': 'workers-house-a',       // Cheapest housing (80₽)
-  'zone-ind': 'factory-office',        // Basic industry (180₽)
-  'zone-farm': 'collective-farm-hq',   // Agriculture (150₽)
+  'zone-res': 'workers-house-a', // Cheapest housing (80₽)
+  'zone-ind': 'factory-office', // Basic industry (180₽)
+  'zone-farm': 'collective-farm-hq', // Agriculture (150₽)
 
   // Infrastructure
   power: 'power-station',
-  nuke: 'cooling-tower',          // Reactor → cooling tower (bpy-scripted model)
+  nuke: 'cooling-tower', // Reactor → cooling tower (bpy-scripted model)
   station: 'train-station',
-  pump: 'warehouse',             // Water pump → warehouse (closest utility)
+  pump: 'warehouse', // Water pump → warehouse (closest utility)
 
   // State buildings
-  tower: 'radio-station',        // Propaganda tower → radio station
+  tower: 'radio-station', // Propaganda tower → radio station
   gulag: 'gulag-admin',
-  mast: 'fire-station',          // Aero-mast → fire station (closest match)
-  space: 'government-hq',        // Cosmodrome → govt HQ placeholder
+  mast: 'fire-station', // Aero-mast → fire station (closest match)
+  space: 'government-hq', // Cosmodrome → govt HQ placeholder
 };
 
 /**
@@ -138,7 +138,7 @@ const TOOL_TO_DEF_ID: Record<string, string> = {
  */
 function canAffordMaterials(
   resources: { timber: number; steel: number; cement: number; prefab: number },
-  defId: string
+  defId: string,
 ): boolean {
   const def = getBuildingDef(defId);
   const cc = def?.stats.constructionCost;
@@ -147,10 +147,7 @@ function canAffordMaterials(
   const cement = cc?.cement ?? DEFAULT_MATERIAL_COST.cement;
   const prefab = cc?.prefab ?? 0;
   return (
-    resources.timber >= timber &&
-    resources.steel >= steel &&
-    resources.cement >= cement &&
-    resources.prefab >= prefab
+    resources.timber >= timber && resources.steel >= steel && resources.cement >= cement && resources.prefab >= prefab
   );
 }
 
@@ -160,18 +157,9 @@ function canAffordMaterials(
  * Returns true if the building was placed, false if placement was invalid
  * or the tool doesn't map to an ECS building.
  */
-export function placeECSBuilding(
-  toolKey: string,
-  gridX: number,
-  gridZ: number,
-): boolean {
+export function placeECSBuilding(toolKey: string, gridX: number, gridZ: number): boolean {
   // Skip non-building tools
-  if (
-    toolKey === 'none' ||
-    toolKey === 'bulldoze' ||
-    toolKey === 'pipe' ||
-    toolKey === 'road'
-  ) {
+  if (toolKey === 'none' || toolKey === 'bulldoze' || toolKey === 'pipe' || toolKey === 'road') {
     return false;
   }
 
@@ -265,9 +253,7 @@ export function bulldozeECSBuilding(gridX: number, gridZ: number): boolean {
       if (oldCell) {
         oldCell.type = null;
       }
-      const bIdx = gameState.buildings.findIndex(
-        (b) => b.x === gridX && b.y === gridZ,
-      );
+      const bIdx = gameState.buildings.findIndex((b) => b.x === gridX && b.y === gridZ);
       if (bIdx !== -1) gameState.buildings.splice(bIdx, 1);
 
       // Recalculate dirt paths after demolition
@@ -293,14 +279,9 @@ export function bulldozeECSBuilding(gridX: number, gridZ: number): boolean {
  * On success, the ECS entity's defId and level are updated, the model will
  * automatically swap because BuildingRenderer detects type changes.
  */
-export function upgradeECSBuilding(
-  gridX: number,
-  gridZ: number,
-): { success: boolean; reason?: string } {
+export function upgradeECSBuilding(gridX: number, gridZ: number): { success: boolean; reason?: string } {
   // Find the ECS building entity at this position
-  const entity = buildingsArchetype.entities.find(
-    (e) => e.position.gridX === gridX && e.position.gridY === gridZ,
-  );
+  const entity = buildingsArchetype.entities.find((e) => e.position.gridX === gridX && e.position.gridY === gridZ);
   if (!entity) {
     return { success: false, reason: 'No building at this position' };
   }
@@ -365,9 +346,7 @@ export function upgradeECSBuilding(
   if (oldCell) {
     oldCell.type = upgradeInfo.nextDefId;
   }
-  const legacyBuilding = gameState.buildings.find(
-    (b) => b.x === gridX && b.y === gridZ,
-  );
+  const legacyBuilding = gameState.buildings.find((b) => b.x === gridX && b.y === gridZ);
   if (legacyBuilding) {
     legacyBuilding.type = upgradeInfo.nextDefId;
     legacyBuilding.level = upgradeInfo.nextLevel;

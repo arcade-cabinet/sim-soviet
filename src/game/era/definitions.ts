@@ -114,8 +114,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'temporarily permitted. Build what you can from what you have. What you ' +
       'have is: mud, hope, and an unreasonable number of potatoes. The potatoes ' +
       'are small. The hope is smaller.',
-    briefingFlavor:
-      "Chaos. NEP remnants. Famine risk. Build the foundation of the workers' paradise from scratch.",
+    briefingFlavor: "Chaos. NEP remnants. Famine risk. Build the foundation of the workers' paradise from scratch.",
   },
 
   // ── FIRST FIVE-YEAR PLANS (1928-1941) ─────────────────
@@ -216,8 +215,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'Vodka is rationed. Hope is rationed but remains available in unlimited theoretical ' +
       'quantities. Your task is simple: survive. Everything else is a luxury. ' +
       'Luxuries have been suspended for the duration.',
-    briefingFlavor:
-      'Total war economy. Conscription. Rationing. Survival is the only quota that matters.',
+    briefingFlavor: 'Total war economy. Conscription. Rationing. Survival is the only quota that matters.',
   },
 
   // ── RECONSTRUCTION (1945-1953) ────────────────────────
@@ -265,8 +263,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'of Soviet resilience. The symbol should be made of concrete. Everything ' +
       'should be made of concrete. Concrete is the material of the future. ' +
       'The future is grey.',
-    briefingFlavor:
-      'Rebuilding from ashes. Stalinist architecture. Paranoia as a management style.',
+    briefingFlavor: 'Rebuilding from ashes. Stalinist architecture. Paranoia as a management style.',
   },
 
   // ── THE THAW (1953-1964) ──────────────────────────────
@@ -280,13 +277,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     deliveryRates: { food: 0.3, vodka: 0.2, money: 0.25 },
     quotaEscalation: 1.1,
 
-    unlockedBuildings: [
-      'apartment-tower-b',
-      'polyclinic',
-      'workers-club',
-      'post-office',
-      'cultural-palace',
-    ],
+    unlockedBuildings: ['apartment-tower-b', 'polyclinic', 'workers-club', 'post-office', 'cultural-palace'],
 
     modifiers: {
       productionMult: 1.3,
@@ -302,8 +293,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
 
     victoryCondition: {
       description: 'Reach 300+ population with positive food and vodka',
-      check: (_meta, resources) =>
-        resources.population >= 300 && resources.food > 0 && resources.vodka > 0,
+      check: (_meta, resources) => resources.population >= 300 && resources.food > 0 && resources.vodka > 0,
     },
 
     introTitle: 'Assignment: De-Stalinization',
@@ -328,13 +318,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     deliveryRates: { food: 0.45, vodka: 0.4, money: 0.5 },
     quotaEscalation: 1.15,
 
-    unlockedBuildings: [
-      'apartment-tower-c',
-      'kgb-office',
-      'radio-station',
-      'vodka-distillery',
-      'fire-station',
-    ],
+    unlockedBuildings: ['apartment-tower-c', 'kgb-office', 'radio-station', 'vodka-distillery', 'fire-station'],
 
     modifiers: {
       productionMult: 0.9,
@@ -401,8 +385,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'itself a reform. Openness has been declared. The openness reveals that ' +
       'everything behind the curtain was held together with string and optimism. ' +
       'The string has snapped. The optimism was never structural.',
-    briefingFlavor:
-      'Gorbachev. Reform attempts. Shortages. The system discovers it is the problem.',
+    briefingFlavor: 'Gorbachev. Reform attempts. Shortages. The system discovers it is the problem.',
   },
 
   // ── THE ETERNAL SOVIET (1991+) ────────────────────────
@@ -437,8 +420,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'renovating. The world outside has changed. The world inside has not. ' +
       'This is considered a feature. The feature is made of concrete. ' +
       'The concrete is eternal. You are less so, but your paperwork will outlive you.',
-    briefingFlavor:
-      'The USSR that never fell. Increasingly absurd. The bureaucracy has achieved sentience.',
+    briefingFlavor: 'The USSR that never fell. Increasingly absurd. The bureaucracy has achieved sentience.',
   },
 };
 

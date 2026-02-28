@@ -18,8 +18,8 @@
  *   - Performance budget: < 16 ms on a 30x30 grid.
  */
 
-import { buildings, tiles } from '@/ecs/archetypes';
 import { GRID_SIZE } from '@/config';
+import { buildings, tiles } from '@/ecs/archetypes';
 
 /** Maximum BFS distance between two buildings to create a connecting path. */
 const MAX_PATH_DISTANCE = 10;
@@ -33,7 +33,10 @@ const IMPASSABLE_FEATURES = new Set(['mountain', 'river', 'water', 'forest', 'ma
 // ── 4-directional neighbors ─────────────────────────────────────────────────
 
 const DIRS: readonly [number, number][] = [
-  [0, -1], [0, 1], [-1, 0], [1, 0],
+  [0, -1],
+  [0, 1],
+  [-1, 0],
+  [1, 0],
 ];
 
 // ── Internal helpers ────────────────────────────────────────────────────────
@@ -106,11 +109,7 @@ function isWalkable(info: TileInfo): boolean {
 /**
  * Find entrance cells for a building at (bx, by) — empty adjacent cells.
  */
-function findEntrances(
-  bx: number,
-  by: number,
-  lookup: TileInfo[][],
-): { x: number; y: number }[] {
+function findEntrances(bx: number, by: number, lookup: TileInfo[][]): { x: number; y: number }[] {
   const entrances: { x: number; y: number }[] = [];
   for (const [dx, dy] of DIRS) {
     const nx = bx + dx;

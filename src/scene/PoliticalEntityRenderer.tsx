@@ -7,7 +7,7 @@
  * TODO: Read political entities from ECS in future and render procedural
  * capsule-body figures with faction-colored materials and floating badges.
  */
-import React from 'react';
+import type React from 'react';
 
 const PoliticalEntityRenderer: React.FC = () => {
   // TODO: Read political entities from ECS and render procedural figures

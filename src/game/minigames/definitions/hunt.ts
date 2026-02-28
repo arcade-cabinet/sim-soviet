@@ -7,8 +7,7 @@ import type { MinigameDefinition } from '../MinigameTypes';
 export const THE_HUNT: MinigameDefinition = {
   id: 'the_hunt',
   name: 'The Hunt',
-  description:
-    'The forest offers what the State cannot: food that was not planned, allocated, or redistributed.',
+  description: 'The forest offers what the State cannot: food that was not planned, allocated, or redistributed.',
   triggerType: 'building_tap',
   triggerCondition: 'forest',
   tickLimit: 25,
@@ -24,8 +23,7 @@ export const THE_HUNT: MinigameDefinition = {
       },
       onFailure: {
         resources: { food: 2 },
-        announcement:
-          'The rabbits were faster than the hunters. A few mushrooms were gathered instead.',
+        announcement: 'The rabbits were faster than the hunters. A few mushrooms were gathered instead.',
       },
     },
     {
@@ -39,8 +37,7 @@ export const THE_HUNT: MinigameDefinition = {
       },
       onFailure: {
         resources: { food: -5, population: -1 },
-        announcement:
-          'The forest did not cooperate. One hunter did not return. The bears send their regards.',
+        announcement: 'The forest did not cooperate. One hunter did not return. The bears send their regards.',
         severity: 'warning',
       },
     },
@@ -63,7 +60,6 @@ export const THE_HUNT: MinigameDefinition = {
   ],
   autoResolve: {
     resources: { food: -3 },
-    announcement:
-      'Nobody went hunting. The forest remains indifferent. Dinner is turnip soup. Again.',
+    announcement: 'Nobody went hunting. The forest remains indifferent. Dinner is turnip soup. Again.',
   },
 };

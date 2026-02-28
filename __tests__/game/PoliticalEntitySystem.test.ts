@@ -83,10 +83,8 @@ describe('PoliticalEntitySystem', () => {
       warSys.syncEntities('gorod', 'great_patriotic_war', 0);
 
       const peaceMilitary =
-        peaceSys.getEntityCounts().military_officer +
-        peaceSys.getEntityCounts().conscription_officer;
-      const warMilitary =
-        warSys.getEntityCounts().military_officer + warSys.getEntityCounts().conscription_officer;
+        peaceSys.getEntityCounts().military_officer + peaceSys.getEntityCounts().conscription_officer;
+      const warMilitary = warSys.getEntityCounts().military_officer + warSys.getEntityCounts().conscription_officer;
 
       expect(warMilitary).toBeGreaterThanOrEqual(peaceMilitary);
     });
@@ -100,9 +98,7 @@ describe('PoliticalEntitySystem', () => {
       lowSys.syncEntities('gorod', 'stagnation', 10);
       highSys.syncEntities('gorod', 'stagnation', 80);
 
-      expect(highSys.getEntityCounts().kgb_agent).toBeGreaterThanOrEqual(
-        lowSys.getEntityCounts().kgb_agent
-      );
+      expect(highSys.getEntityCounts().kgb_agent).toBeGreaterThanOrEqual(lowSys.getEntityCounts().kgb_agent);
     });
 
     it('all entities have valid positions', () => {
@@ -130,10 +126,7 @@ describe('PoliticalEntitySystem', () => {
       const politruk = entities.find((e) => e.role === 'politruk');
 
       if (politruk) {
-        const effects = system.getBuildingEffects(
-          politruk.stationedAt.gridX,
-          politruk.stationedAt.gridY
-        );
+        const effects = system.getBuildingEffects(politruk.stationedAt.gridX, politruk.stationedAt.gridY);
         expect(effects.hasPolitruk).toBe(true);
         expect(effects.moraleModifier).toBeGreaterThan(0);
         expect(effects.productionModifier).toBeLessThan(0);
@@ -368,11 +361,7 @@ describe('PoliticalEntitySystem', () => {
 
       if (entities.length > 0) {
         const entity = entities[0]!;
-        const dialogue = system.getEntityDialogue(
-          entity.stationedAt.gridX,
-          entity.stationedAt.gridY,
-          context
-        );
+        const dialogue = system.getEntityDialogue(entity.stationedAt.gridX, entity.stationedAt.gridY, context);
         expect(dialogue).not.toBeNull();
         expect(typeof dialogue).toBe('string');
         expect(dialogue!.length).toBeGreaterThan(0);
@@ -390,11 +379,7 @@ describe('PoliticalEntitySystem', () => {
 
       const dialoguesByRole = new Map<string, string[]>();
       for (const entity of entities) {
-        const dialogue = system.getEntityDialogue(
-          entity.stationedAt.gridX,
-          entity.stationedAt.gridY,
-          context
-        );
+        const dialogue = system.getEntityDialogue(entity.stationedAt.gridX, entity.stationedAt.gridY, context);
         if (dialogue) {
           const existing = dialoguesByRole.get(entity.role) ?? [];
           existing.push(dialogue);

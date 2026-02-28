@@ -176,9 +176,7 @@ describe('SimulationEngine', () => {
     it('marks buildings as unpowered when power exceeds supply', () => {
       createBuilding(1, 1, 'apartment-tower-a'); // No power plant
       engine.tick();
-      const building = buildingsLogic.entities.find(
-        (e) => e.building.defId === 'apartment-tower-a'
-      );
+      const building = buildingsLogic.entities.find((e) => e.building.defId === 'apartment-tower-a');
       expect(building!.building.powered).toBe(false);
     });
 

@@ -9,16 +9,17 @@
  *   4. TOP WORKERS        — top 5 by production efficiency
  */
 
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { SovietModal } from './SovietModal';
-import { Colors, monoFont } from './styles';
+import type React from 'react';
+import { useMemo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
 import { citizens } from '../ecs/archetypes';
-import type { WorkerDisplayInfo } from '../game/workers/types';
 import { CLASS_ORDER } from '../game/workers/constants';
 import type { CollectiveFocus } from '../game/workers/governor';
+import type { WorkerDisplayInfo } from '../game/workers/types';
+import { useGameSnapshot } from '../hooks/useGameState';
+import { SovietModal } from './SovietModal';
+import { Colors, monoFont } from './styles';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -46,13 +47,7 @@ const STATUS_COLORS: Record<WorkerDisplayInfo['status'], string> = {
   defecting: Colors.sovietRed,
 };
 
-const STATUS_ORDER: WorkerDisplayInfo['status'][] = [
-  'working',
-  'idle',
-  'hungry',
-  'drunk',
-  'defecting',
-];
+const STATUS_ORDER: WorkerDisplayInfo['status'][] = ['working', 'idle', 'hungry', 'drunk', 'defecting'];
 
 const FOCUS_LABELS: Record<CollectiveFocus, string> = {
   balanced: 'BALANCED',
@@ -104,10 +99,7 @@ function computeAnalytics(workers: WorkerDisplayInfo[], focus: CollectiveFocus):
   const total = workers.length;
 
   // Per-class accumulators
-  const classAccum = new Map<
-    WorkerDisplayInfo['class'],
-    { count: number; moraleSum: number; effSum: number }
-  >();
+  const classAccum = new Map<WorkerDisplayInfo['class'], { count: number; moraleSum: number; effSum: number }>();
   for (const cls of CLASS_ORDER) {
     classAccum.set(cls, { count: 0, moraleSum: 0, effSum: 0 });
   }
@@ -150,19 +142,14 @@ function computeAnalytics(workers: WorkerDisplayInfo[], focus: CollectiveFocus):
   }
 
   // Top 5 by efficiency
-  const topWorkers = [...workers]
-    .sort((a, b) => b.productionEfficiency - a.productionEfficiency)
-    .slice(0, 5);
+  const topWorkers = [...workers].sort((a, b) => b.productionEfficiency - a.productionEfficiency).slice(0, 5);
 
   return { total, focus, avgMorale, avgEfficiency, byClass, byStatus: statusCounts, topWorkers };
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const WorkerAnalyticsPanel: React.FC<WorkerAnalyticsPanelProps> = ({
-  visible,
-  onDismiss,
-}) => {
+export const WorkerAnalyticsPanel: React.FC<WorkerAnalyticsPanelProps> = ({ visible, onDismiss }) => {
   // Pull game snapshot to trigger re-renders on state change
   useGameSnapshot();
 
@@ -178,7 +165,7 @@ export const WorkerAnalyticsPanel: React.FC<WorkerAnalyticsPanelProps> = ({
 
     const focus = workerSystem?.getCollectiveFocus() ?? 'balanced';
     return computeAnalytics(allWorkers, focus as CollectiveFocus);
-  }, [visible]);
+  }, []);
 
   return (
     <SovietModal
@@ -216,9 +203,7 @@ export const WorkerAnalyticsPanel: React.FC<WorkerAnalyticsPanelProps> = ({
             <Text style={styles.statCaption}>AVG MORALE</Text>
           </View>
           <View style={styles.overviewStat}>
-            <Text style={[styles.statValue, { color: Colors.termBlue }]}>
-              {formatEff(analytics.avgEfficiency)}
-            </Text>
+            <Text style={[styles.statValue, { color: Colors.termBlue }]}>{formatEff(analytics.avgEfficiency)}</Text>
             <Text style={styles.statCaption}>AVG EFFICIENCY</Text>
           </View>
         </View>
@@ -277,21 +262,12 @@ export const WorkerAnalyticsPanel: React.FC<WorkerAnalyticsPanelProps> = ({
           const stats = analytics.byClass.get(cls)!;
           return (
             <View key={cls} style={styles.tableRow}>
-              <Text
-                style={[styles.tableCellValue, styles.classCol, { color: CLASS_COLORS[cls] }]}
-                numberOfLines={1}
-              >
+              <Text style={[styles.tableCellValue, styles.classCol, { color: CLASS_COLORS[cls] }]} numberOfLines={1}>
                 {classLabel(cls)}
               </Text>
               <Text style={[styles.tableCellValue, styles.countCol]}>{stats.count}</Text>
               <Text style={[styles.tableCellValue, styles.pctCol]}>{formatPct(stats.pct)}</Text>
-              <Text
-                style={[
-                  styles.tableCellValue,
-                  styles.moraleCol,
-                  { color: moraleColor(stats.avgMorale) },
-                ]}
-              >
+              <Text style={[styles.tableCellValue, styles.moraleCol, { color: moraleColor(stats.avgMorale) }]}>
                 {stats.count > 0 ? formatPct(stats.avgMorale) : '-'}
               </Text>
               <Text style={[styles.tableCellValue, styles.effCol]}>
@@ -310,9 +286,7 @@ export const WorkerAnalyticsPanel: React.FC<WorkerAnalyticsPanelProps> = ({
           const pct = analytics.total > 0 ? (count / analytics.total) * 100 : 0;
           return (
             <View key={status} style={styles.statusRow}>
-              <Text style={[styles.statusLabel, { color: STATUS_COLORS[status] }]}>
-                {status.toUpperCase()}
-              </Text>
+              <Text style={[styles.statusLabel, { color: STATUS_COLORS[status] }]}>{status.toUpperCase()}</Text>
               <View style={styles.statusBarTrack}>
                 <View
                   style={[
@@ -352,13 +326,7 @@ export const WorkerAnalyticsPanel: React.FC<WorkerAnalyticsPanelProps> = ({
               >
                 {classLabel(w.class)}
               </Text>
-              <Text
-                style={[
-                  styles.tableCellValue,
-                  styles.twMoraleCol,
-                  { color: moraleColor(w.morale) },
-                ]}
-              >
+              <Text style={[styles.tableCellValue, styles.twMoraleCol, { color: moraleColor(w.morale) }]}>
                 {formatPct(w.morale)}
               </Text>
               <Text style={[styles.tableCellValue, styles.twEffCol]}>{formatEff(w.productionEfficiency)}</Text>

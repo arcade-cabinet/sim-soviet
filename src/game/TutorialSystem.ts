@@ -342,13 +342,7 @@ export class TutorialSystem {
    *
    * @returns The triggered milestone, or null if nothing triggered.
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: tutorial checks 14 milestone conditions sequentially
-  tick(
-    totalTicks: number,
-    meta: GameMeta,
-    resources: Resources,
-    buildingCount: number
-  ): TutorialMilestone | null {
+  tick(totalTicks: number, meta: GameMeta, resources: Resources, buildingCount: number): TutorialMilestone | null {
     if (!this.active) return null;
 
     for (const milestone of this.milestones) {
@@ -477,7 +471,6 @@ export class TutorialSystem {
   }
 
   /** Restore a TutorialSystem from saved data. */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: restoring tutorial state from many fields
   static deserialize(data: TutorialSaveData): TutorialSystem {
     const system = new TutorialSystem();
     system.active = data.active;

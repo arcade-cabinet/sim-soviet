@@ -3,8 +3,9 @@
  * Port of poc.html line 262.
  */
 
-import React, { useEffect, useRef } from 'react';
-import { Animated, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface ToastProps {

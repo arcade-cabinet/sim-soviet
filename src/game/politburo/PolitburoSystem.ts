@@ -34,14 +34,7 @@ import {
   weightedSelect,
 } from './ministers';
 import { applyMinisterOverrides } from './modifiers';
-import type {
-  Faction,
-  GeneralSecretary,
-  Minister,
-  MinistryModifiers,
-  PolitburoState,
-  TensionRule,
-} from './types';
+import type { Faction, GeneralSecretary, Minister, MinistryModifiers, PolitburoState, TensionRule } from './types';
 import { Ministry, PersonalityType } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,7 +68,7 @@ export class PolitburoSystem {
   constructor(
     private onEvent: (event: GameEvent) => void,
     rng?: GameRng,
-    initialYear?: number
+    initialYear?: number,
   ) {
     if (rng) setRng(rng);
     // Generate initial government
@@ -202,23 +195,11 @@ export class PolitburoSystem {
   private personalityCompatibility(a: PersonalityType, b: PersonalityType): boolean {
     const compatMap: Record<PersonalityType, PersonalityType[]> = {
       [PersonalityType.ZEALOT]: [PersonalityType.ZEALOT, PersonalityType.MILITARIST],
-      [PersonalityType.IDEALIST]: [
-        PersonalityType.IDEALIST,
-        PersonalityType.REFORMER,
-        PersonalityType.POPULIST,
-      ],
-      [PersonalityType.REFORMER]: [
-        PersonalityType.REFORMER,
-        PersonalityType.TECHNOCRAT,
-        PersonalityType.IDEALIST,
-      ],
+      [PersonalityType.IDEALIST]: [PersonalityType.IDEALIST, PersonalityType.REFORMER, PersonalityType.POPULIST],
+      [PersonalityType.REFORMER]: [PersonalityType.REFORMER, PersonalityType.TECHNOCRAT, PersonalityType.IDEALIST],
       [PersonalityType.TECHNOCRAT]: [PersonalityType.TECHNOCRAT, PersonalityType.REFORMER],
       [PersonalityType.APPARATCHIK]: [PersonalityType.APPARATCHIK, PersonalityType.TECHNOCRAT],
-      [PersonalityType.POPULIST]: [
-        PersonalityType.POPULIST,
-        PersonalityType.IDEALIST,
-        PersonalityType.REFORMER,
-      ],
+      [PersonalityType.POPULIST]: [PersonalityType.POPULIST, PersonalityType.IDEALIST, PersonalityType.REFORMER],
       [PersonalityType.MILITARIST]: [PersonalityType.MILITARIST, PersonalityType.ZEALOT],
       [PersonalityType.MYSTIC]: [PersonalityType.MYSTIC, PersonalityType.IDEALIST],
     };
@@ -303,8 +284,7 @@ export class PolitburoSystem {
     return MINISTRY_EVENTS.filter((template) => {
       const minister = this.state.ministers.get(template.ministry);
       if (!minister) return false;
-      if (template.requiredPersonality && minister.personality !== template.requiredPersonality)
-        return false;
+      if (template.requiredPersonality && minister.personality !== template.requiredPersonality) return false;
       if (template.condition && !template.condition(minister, createGameView())) return false;
       return true;
     });
@@ -315,13 +295,8 @@ export class PolitburoSystem {
     const minister = this.state.ministers.get(selected.ministry)!;
     const view = createGameView();
     const description =
-      typeof selected.description === 'function'
-        ? selected.description(minister, view)
-        : selected.description;
-    const effects =
-      typeof selected.effects === 'function'
-        ? selected.effects(minister, view)
-        : { ...selected.effects };
+      typeof selected.description === 'function' ? selected.description(minister, view) : selected.description;
+    const effects = typeof selected.effects === 'function' ? selected.effects(minister, view) : { ...selected.effects };
     const netImpact =
       (effects.money ?? 0) +
       (effects.food ?? 0) +
@@ -403,11 +378,7 @@ export class PolitburoSystem {
     this.state.ministers.set(minister.ministry, replacement);
 
     // Paranoia increases after purge
-    this.state.generalSecretary.paranoia = clamp(
-      this.state.generalSecretary.paranoia + randInt(3, 8),
-      0,
-      100
-    );
+    this.state.generalSecretary.paranoia = clamp(this.state.generalSecretary.paranoia + randInt(3, 8), 0, 100);
 
     this.recalculateModifiers();
   }
@@ -544,7 +515,7 @@ export class PolitburoSystem {
   private retainMinister(
     ministry: Ministry,
     oldMinister: Minister | undefined,
-    strategy: (typeof APPOINTMENT_STRATEGIES)[PersonalityType]
+    strategy: (typeof APPOINTMENT_STRATEGIES)[PersonalityType],
   ): boolean {
     if (!oldMinister) return false;
 
@@ -566,10 +537,7 @@ export class PolitburoSystem {
   }
 
   /** Appoint a fresh minister to a ministry post. */
-  private appointNewMinister(
-    ministry: Ministry,
-    strategy: (typeof APPOINTMENT_STRATEGIES)[PersonalityType]
-  ): void {
+  private appointNewMinister(ministry: Ministry, strategy: (typeof APPOINTMENT_STRATEGIES)[PersonalityType]): void {
     const newPersonality = pick(strategy.preferredTypes);
     const newMinister = generateMinister(ministry, newPersonality);
     newMinister.loyalty = clamp(newMinister.loyalty + 15, 0, 100);
@@ -596,10 +564,7 @@ export class PolitburoSystem {
           alignment: personality,
           memberIds: members.map((m) => m.id),
           influence: members.reduce((sum, m) => sum + m.competence + m.ambition, 0),
-          supportsCurrent: this.personalityCompatibility(
-            this.state.generalSecretary.personality,
-            personality
-          ),
+          supportsCurrent: this.personalityCompatibility(this.state.generalSecretary.personality, personality),
         };
 
         for (const member of members) {
@@ -624,9 +589,7 @@ export class PolitburoSystem {
   serialize(): PolitburoSaveData {
     return {
       generalSecretary: { ...this.state.generalSecretary },
-      ministers: Array.from(this.state.ministers.entries()).map(
-        ([k, v]) => [k, { ...v }] as [Ministry, Minister]
-      ),
+      ministers: Array.from(this.state.ministers.entries()).map(([k, v]) => [k, { ...v }] as [Ministry, Minister]),
       factions: this.state.factions.map((f) => ({ ...f, memberIds: [...f.memberIds] })),
       tensions: Array.from(this.state.tensions.entries()),
       activeModifiers: { ...this.state.activeModifiers },
@@ -640,11 +603,7 @@ export class PolitburoSystem {
     };
   }
 
-  static deserialize(
-    data: PolitburoSaveData,
-    onEvent: (event: GameEvent) => void,
-    rng?: GameRng
-  ): PolitburoSystem {
+  static deserialize(data: PolitburoSaveData, onEvent: (event: GameEvent) => void, rng?: GameRng): PolitburoSystem {
     // Create a minimal instance — we bypass the normal constructor by
     // using Object.create so that no random generation occurs.
     const system = Object.create(PolitburoSystem.prototype) as PolitburoSystem;

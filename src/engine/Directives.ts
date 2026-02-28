@@ -6,9 +6,9 @@
  * grid, so directive checks work with the ECS SimulationEngine.
  */
 
-import { buildingsLogic, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 import { getBuildingDef } from '@/data/buildingDefs';
 import type { Role } from '@/data/buildingDefs.schema';
+import { buildingsLogic, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 import { gameState } from './GameState';
 
 export interface Directive {
@@ -42,9 +42,7 @@ export function countGridCellType(type: string): number {
 
 /** Check if any operational building has powerReq > 0 and is powered (water demand proxy). */
 function hasWaterDemand(): boolean {
-  return operationalBuildings.entities.some(
-    (e) => e.building.powered && e.building.powerReq > 0
-  );
+  return operationalBuildings.entities.some((e) => e.building.powered && e.building.powerReq > 0);
 }
 
 export const DIRECTIVES: Directive[] = [

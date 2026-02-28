@@ -6,8 +6,8 @@
  * The actual Three.js material manipulation is tested via integration tests.
  */
 
-import { TIER_TINTS, type TierTint } from '../../src/scene/TierTinting';
-import { TIER_ORDER, type SettlementTier } from '../../src/game/SettlementSystem';
+import { type SettlementTier, TIER_ORDER } from '../../src/game/SettlementSystem';
+import { TIER_TINTS } from '../../src/scene/TierTinting';
 
 describe('TierTinting', () => {
   // ── 1. All tiers have tint definitions ─────────────────────

@@ -721,7 +721,9 @@ describe('TutorialSystem', () => {
     it('getNextUnlockMilestoneForBuildings returns earliest milestone for mixed list', () => {
       // government-hq is unlocked at 'government_buildings', cultural-palace at 'cultural_progress'
       // government_buildings comes first in the milestone list
-      expect(tutorial.getNextUnlockMilestoneForBuildings(['government-hq', 'cultural-palace'])).toBe('government_buildings');
+      expect(tutorial.getNextUnlockMilestoneForBuildings(['government-hq', 'cultural-palace'])).toBe(
+        'government_buildings',
+      );
     });
 
     it('getNextUnlockMilestoneForBuildings returns null for buildings not in any milestone', () => {

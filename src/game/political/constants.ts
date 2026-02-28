@@ -14,10 +14,7 @@ import type { PoliticalRole } from './types';
 // ─── Entity Scaling ─────────────────────────────────────────────────────────
 
 /** Entity count ranges per tier: [min, max] for each role. */
-export const ENTITY_SCALING: Record<
-  SettlementTier,
-  Record<PoliticalRole, [min: number, max: number]>
-> = {
+export const ENTITY_SCALING: Record<SettlementTier, Record<PoliticalRole, [min: number, max: number]>> = {
   selo: {
     politruk: [0, 1],
     kgb_agent: [0, 0],
@@ -91,7 +88,7 @@ export function calcTargetCount(
   max: number,
   role: PoliticalRole,
   isWartime: boolean,
-  highCorruption: boolean
+  highCorruption: boolean,
 ): number {
   let count = base;
   if (isWartime && (role === 'military_officer' || role === 'conscription_officer')) {
@@ -104,9 +101,7 @@ export function calcTargetCount(
 }
 
 /** Pick a random building position from the ECS world. */
-export function pickRandomBuildingPosition(
-  rng: GameRng
-): { gridX: number; gridY: number; defId: string } | null {
+export function pickRandomBuildingPosition(rng: GameRng): { gridX: number; gridY: number; defId: string } | null {
   const all = [...buildingsLogic];
   if (all.length === 0) return null;
   const building = rng.pick(all);
@@ -118,9 +113,7 @@ export function pickRandomBuildingPosition(
 }
 
 /** Map a political role to its dialogue character key. */
-export function roleToDialogueCharacter(
-  role: PoliticalRole
-): 'politruk' | 'kgb' | 'military' | null {
+export function roleToDialogueCharacter(role: PoliticalRole): 'politruk' | 'kgb' | 'military' | null {
   switch (role) {
     case 'politruk':
       return 'politruk';
@@ -135,7 +128,7 @@ export function roleToDialogueCharacter(
 /** Get dialogue for a specific character in a given context. */
 export function getEntityDialogueText(
   character: 'politruk' | 'kgb' | 'military',
-  context: DialogueContext
+  context: DialogueContext,
 ): string | null {
   return getDialogue(character, context);
 }

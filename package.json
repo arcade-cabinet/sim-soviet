@@ -13,8 +13,11 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "build": "expo export --platform web",
-    "lint": "eslint ."
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "format": "biome format --write ."
   },
+  "packageManager": "pnpm@10.28.2",
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
     "@react-three/drei": "^10.7.7",
@@ -39,6 +42,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "@biomejs/biome": "^2.4.4",
     "@expo/metro-config": "~54.0.14",
     "@types/react": "~19.1.10",
     "@types/sql.js": "^1.4.9",

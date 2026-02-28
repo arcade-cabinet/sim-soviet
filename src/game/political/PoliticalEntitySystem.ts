@@ -24,12 +24,7 @@ import {
   WARTIME_ERAS,
 } from './constants';
 import { createInvestigation, KGB_REASSIGNMENT_INTERVAL, tickInvestigations } from './kgb';
-import {
-  processConscriptionQueue,
-  processOrgnaborQueue,
-  processReturns,
-  WARTIME_CASUALTY_RATE,
-} from './military';
+import { processConscriptionQueue, processOrgnaborQueue, processReturns, WARTIME_CASUALTY_RATE } from './military';
 import {
   applyPolitrukTick,
   POLITRUK_MORALE_BOOST,
@@ -74,12 +69,7 @@ export class PoliticalEntitySystem {
     const highCorruption = corruption > HIGH_CORRUPTION_THRESHOLD;
     const scaling = ENTITY_SCALING[tier];
 
-    const roles: PoliticalRole[] = [
-      'politruk',
-      'kgb_agent',
-      'military_officer',
-      'conscription_officer',
-    ];
+    const roles: PoliticalRole[] = ['politruk', 'kgb_agent', 'military_officer', 'conscription_officer'];
 
     for (const role of roles) {
       const [min, max] = scaling[role];
@@ -132,12 +122,7 @@ export class PoliticalEntitySystem {
     this.investigations = tickInvestigations(this.investigations, this.rng, result);
 
     // 4. Process conscription queue
-    const conscriptionReturns = processConscriptionQueue(
-      this.conscriptionQueue,
-      totalTicks,
-      this.rng,
-      result
-    );
+    const conscriptionReturns = processConscriptionQueue(this.conscriptionQueue, totalTicks, this.rng, result);
     this.returnQueue.push(...conscriptionReturns);
 
     // 5. Process orgnabor queue
@@ -185,9 +170,7 @@ export class PoliticalEntitySystem {
    */
   triggerConscription(count: number, permanent: boolean): ConscriptionEvent {
     const rng = this.rng;
-    const officerName = rng
-      ? generateOfficerName('conscription_officer', rng)
-      : 'Conscription Officer';
+    const officerName = rng ? generateOfficerName('conscription_officer', rng) : 'Conscription Officer';
 
     const casualties = permanent ? Math.floor(count * WARTIME_CASUALTY_RATE) : 0;
     const returnTick = permanent ? -1 : 0; // Will be set when processed
@@ -306,9 +289,7 @@ export class PoliticalEntitySystem {
     const id = rng.id();
     const name = generateOfficerName(role, rng);
     const buildingPos = pickRandomBuildingPosition(rng);
-    const stationedAt = buildingPos
-      ? { gridX: buildingPos.gridX, gridY: buildingPos.gridY }
-      : { gridX: 0, gridY: 0 };
+    const stationedAt = buildingPos ? { gridX: buildingPos.gridX, gridY: buildingPos.gridY } : { gridX: 0, gridY: 0 };
 
     const ticksRemaining = this.getInitialTicks(role);
 
@@ -366,20 +347,14 @@ export class PoliticalEntitySystem {
     }
   }
 
-  private tickKGB(
-    entity: PoliticalEntityStats,
-    _totalTicks: number,
-    result: PoliticalTickResult
-  ): void {
+  private tickKGB(entity: PoliticalEntityStats, _totalTicks: number, result: PoliticalTickResult): void {
     // Start an investigation when arriving at a new building
     if (entity.ticksRemaining <= 0 && entity.targetBuilding) {
       const rng = this.rng;
       if (rng) {
         const investigation = createInvestigation(entity, rng);
         result.newInvestigations.push(investigation);
-        result.announcements.push(
-          `KGB ${entity.name} has begun a ${investigation.intensity} investigation.`
-        );
+        result.announcements.push(`KGB ${entity.name} has begun a ${investigation.intensity} investigation.`);
         this.investigations.push(investigation);
       }
       this.reassignToBuilding(entity, KGB_REASSIGNMENT_INTERVAL);

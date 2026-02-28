@@ -181,9 +181,7 @@ function getStandardElevatorRate(): number {
   const allCapacity = totalCapacity + elevatorCapacity;
   if (allCapacity <= 0) return STORED_SPOILAGE_RATE;
 
-  return (
-    (totalCapacity * STORED_SPOILAGE_RATE + elevatorCapacity * ELEVATOR_SPOILAGE_RATE) / allCapacity
-  );
+  return (totalCapacity * STORED_SPOILAGE_RATE + elevatorCapacity * ELEVATOR_SPOILAGE_RATE) / allCapacity;
 }
 
 /**

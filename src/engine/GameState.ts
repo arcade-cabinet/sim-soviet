@@ -3,7 +3,7 @@
  * Faithful port of poc.html lines 392-404, 480-502.
  */
 
-import { GRID_SIZE, type GridCell, type GridPoint, type TerrainType } from './GridTypes';
+import { GRID_SIZE, type GridCell, type TerrainType } from './GridTypes';
 
 // --- Interfaces ---
 
@@ -177,13 +177,7 @@ export class GameState {
           if (noise > 0.4) elev = 1;
           if (noise > 0.8) elev = 2;
         }
-        const terrainType: TerrainType = isWater
-          ? 'water'
-          : isRailY
-            ? 'rail'
-            : isTree
-              ? 'tree'
-              : 'grass';
+        const terrainType: TerrainType = isWater ? 'water' : isRailY ? 'rail' : isTree ? 'tree' : 'grass';
 
         row.push({
           type: null,

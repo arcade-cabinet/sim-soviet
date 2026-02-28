@@ -199,7 +199,7 @@ describe('GameTally', () => {
         5,
         200,
         1930,
-        1
+        1,
       );
       achievements.tick(
         {
@@ -222,7 +222,7 @@ describe('GameTally', () => {
         5,
         50,
         1930,
-        1
+        1,
       );
 
       const state = makeGameState({ population: 50 });
@@ -331,7 +331,7 @@ describe('GameTally', () => {
       const tally = createGameTally(
         new ScoringSystem(),
         new AchievementTracker(),
-        makeGameState({ currentYear: 1922, startYear: 1922 })
+        makeGameState({ currentYear: 1922, startYear: 1922 }),
       );
 
       expect(tally.finalScore).toBe(0);

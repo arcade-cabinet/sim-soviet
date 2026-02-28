@@ -116,8 +116,7 @@ const CONDITIONS: Record<string, ConditionFn> = {
   play_one_hour: (s) => s.playTimeSeconds >= 3600,
   play_five_hours: (s) => s.playTimeSeconds >= 18_000,
   vodka_economy: (_s, r) => r != null && r.vodka > r.money,
-  only_gulags: (s) =>
-    s.gulags >= 1 && s.uniqueBuildingTypes.length === 1 && s.uniqueBuildingTypes[0] === 'gulag',
+  only_gulags: (s) => s.gulags >= 1 && s.uniqueBuildingTypes.length === 1 && s.uniqueBuildingTypes[0] === 'gulag',
   perfect_quota: (s) => s.quotasCompletedExactly >= 1,
   survive_purge: (s) => s.survivedPurge,
   reelected: (s) => s.wonReelection,
@@ -163,7 +162,7 @@ export class AchievementTracker {
     buildingCount: number,
     population: number,
     currentYear: number,
-    deltaSeconds: number
+    deltaSeconds: number,
   ): Achievement[] {
     this.stats.currentYear = currentYear;
     this.stats.playTimeSeconds += deltaSeconds;

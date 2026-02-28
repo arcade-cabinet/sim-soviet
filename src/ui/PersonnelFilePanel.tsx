@@ -6,13 +6,13 @@
  * threat indicator in TopBar.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { FileEntry } from '../game/PersonnelFile';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import type { FileEntry } from '../game/PersonnelFile';
 
 const THREAT_CONFIG: Record<string, { label: string; color: string }> = {
   safe: { label: 'SAFE', color: Colors.termGreen },
@@ -91,9 +91,7 @@ export const PersonnelFilePanel: React.FC<PersonnelFilePanelProps> = ({ visible,
         </View>
       </View>
 
-      <Text style={styles.note}>
-        Arrest threshold: 7 effective marks. Marks decay over time if no new infractions.
-      </Text>
+      <Text style={styles.note}>Arrest threshold: 7 effective marks. Marks decay over time if no new infractions.</Text>
 
       {/* History log */}
       <View style={styles.divider} />
@@ -102,9 +100,7 @@ export const PersonnelFilePanel: React.FC<PersonnelFilePanelProps> = ({ visible,
       {history.length === 0 ? (
         <Text style={styles.emptyHistory}>No entries. Record is clean... for now.</Text>
       ) : (
-        [...history].reverse().map((entry, i) => (
-          <HistoryEntry key={i} entry={entry} />
-        ))
+        [...history].reverse().map((entry, i) => <HistoryEntry key={i} entry={entry} />)
       )}
     </SovietModal>
   );

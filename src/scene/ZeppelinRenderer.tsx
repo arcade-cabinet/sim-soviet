@@ -8,9 +8,11 @@
  *
  * R3F migration: uses <mesh> primitives + useFrame for smooth movement.
  */
-import React, { useRef, useMemo } from 'react';
-import * as THREE from 'three';
+
 import { useFrame } from '@react-three/fiber';
+import type React from 'react';
+import { useMemo, useRef } from 'react';
+import * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 
@@ -97,10 +99,7 @@ const Zep: React.FC<ZepProps> = ({ index }) => {
 
 const ZeppelinRenderer: React.FC = () => {
   // Pre-allocate a fixed pool of zeppelin slots
-  const slots = useMemo(
-    () => Array.from({ length: MAX_ZEPPELINS }, (_, i) => i),
-    [],
-  );
+  const slots = useMemo(() => Array.from({ length: MAX_ZEPPELINS }, (_, i) => i), []);
 
   return (
     <>

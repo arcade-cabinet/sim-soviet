@@ -15,11 +15,11 @@
  * and synced to gameState.grid[y][x].onFire for the 3D renderers.
  */
 
+import type { With } from 'miniplex';
 import { GRID_SIZE } from '@/config';
 import { buildingsLogic, operationalBuildings } from '@/ecs/archetypes';
 import type { Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
-import type { With } from 'miniplex';
 
 import type { GameGrid } from './GameGrid';
 import type { GameRng } from './SeedSystem';
@@ -150,9 +150,7 @@ export class FireSystem {
    * Returns true if a building was successfully ignited.
    */
   igniteRandom(): boolean {
-    const candidates = buildingsLogic.entities.filter(
-      (e) => !e.building.onFire && this.isBuildingOperational(e)
-    );
+    const candidates = buildingsLogic.entities.filter((e) => !e.building.onFire && this.isBuildingOperational(e));
     if (candidates.length === 0) return false;
 
     const target = this.rng ? this.rng.pick(candidates) : candidates[Math.floor(Math.random() * candidates.length)]!;
@@ -258,10 +256,10 @@ export class FireSystem {
 
   // ── Zeppelin AI ────────────────────────────────────────────────────────────
 
-  private tickZeppelins(grid: GameGrid): void {
+  private tickZeppelins(_grid: GameGrid): void {
     // Check if fire stations exist (operational + powered)
     const hasFireStation = operationalBuildings.entities.some(
-      (e) => e.building.defId === 'fire-station' && e.building.powered
+      (e) => e.building.defId === 'fire-station' && e.building.powered,
     );
 
     // Find burning buildings for targeting
@@ -277,18 +275,16 @@ export class FireSystem {
       while (this.zeppelins.length < MAX_ZEPPELINS && burningBuildings.length > 0) {
         // Find fire station position for launch point
         const fireStation = operationalBuildings.entities.find(
-          (e) => e.building.defId === 'fire-station' && e.building.powered
+          (e) => e.building.defId === 'fire-station' && e.building.powered,
         );
         if (!fireStation) break;
 
         // Pick a target fire that no other zeppelin is already targeting
         const targetedPositions = new Set(
-          this.zeppelins
-            .filter((z) => z.phase !== 'returning')
-            .map((z) => `${z.tx}_${z.ty}`)
+          this.zeppelins.filter((z) => z.phase !== 'returning').map((z) => `${z.tx}_${z.ty}`),
         );
         const untargeted = burningBuildings.filter(
-          (b) => !targetedPositions.has(`${b.position.gridX}_${b.position.gridY}`)
+          (b) => !targetedPositions.has(`${b.position.gridX}_${b.position.gridY}`),
         );
         if (untargeted.length === 0) break;
 
@@ -331,7 +327,7 @@ export class FireSystem {
           if (!targetEntity || !targetEntity.building.onFire) {
             // Try to find another fire
             const newTarget = burningBuildings.find(
-              (b) => b.position.gridX !== Math.round(z.tx) || b.position.gridY !== Math.round(z.ty)
+              (b) => b.position.gridX !== Math.round(z.tx) || b.position.gridY !== Math.round(z.ty),
             );
             if (newTarget) {
               z.tx = newTarget.position.gridX;
@@ -348,7 +344,7 @@ export class FireSystem {
           if (z.extinguishTicks >= ZEPPELIN_EXTINGUISH_TICKS) {
             // Extinguish the fire
             const target = this.findBuildingAt(Math.round(z.tx), Math.round(z.ty));
-            if (target && target.building.onFire) {
+            if (target?.building.onFire) {
               this.extinguishFire(target);
             }
             z.phase = 'returning';
@@ -359,7 +355,7 @@ export class FireSystem {
         case 'returning': {
           // Return to fire station
           const station = operationalBuildings.entities.find(
-            (e) => e.building.defId === 'fire-station' && e.building.powered
+            (e) => e.building.defId === 'fire-station' && e.building.powered,
           );
           if (!station) {
             toRemove.push(i);
@@ -423,9 +419,7 @@ export class FireSystem {
   }
 
   private findBuildingAt(gridX: number, gridY: number): BuildingEntity | undefined {
-    return buildingsLogic.entities.find(
-      (e) => e.position.gridX === gridX && e.position.gridY === gridY
-    );
+    return buildingsLogic.entities.find((e) => e.position.gridX === gridX && e.position.gridY === gridY);
   }
 
   private isBuildingOperational(entity: BuildingEntity): boolean {

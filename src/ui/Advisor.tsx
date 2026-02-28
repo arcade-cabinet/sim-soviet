@@ -3,8 +3,8 @@
  * Port of poc.html lines 267-274.
  */
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface AdvisorProps {
@@ -14,12 +14,7 @@ export interface AdvisorProps {
   onDismiss: () => void;
 }
 
-export const Advisor: React.FC<AdvisorProps> = ({
-  visible,
-  name = 'COMRADE VANYA',
-  message,
-  onDismiss,
-}) => {
+export const Advisor: React.FC<AdvisorProps> = ({ visible, name = 'COMRADE VANYA', message, onDismiss }) => {
   if (!visible) return null;
 
   return (

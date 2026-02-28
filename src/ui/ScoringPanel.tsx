@@ -6,18 +6,13 @@
  * Uses SovietModal with terminal variant for dark-panel aesthetic.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { ConsequenceLevel, DifficultyLevel, EraScoreBreakdown, Medal } from '../game/ScoringSystem';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { getEngine } from '../bridge/GameInit';
-import type {
-  DifficultyLevel,
-  ConsequenceLevel,
-  EraScoreBreakdown,
-  Medal,
-} from '../game/ScoringSystem';
 
 // ---------------------------------------------------------------------------
 //  Props
@@ -83,19 +78,13 @@ const BREAKDOWN_CATEGORIES: BreakdownCategory[] = [
 // ---------------------------------------------------------------------------
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
 
 /** Progress bar with configurable color. */
-const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({
-  ratio,
-  color,
-  height = 10,
-}) => {
+const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({ ratio, color, height = 10 }) => {
   const clamped = Math.max(0, Math.min(ratio, 1));
   return (
     <View style={[styles.barTrack, { height }]}>
@@ -156,10 +145,7 @@ export const ScoringPanel: React.FC<ScoringPanelProps> = ({ visible, onDismiss }
   });
 
   // Find the max absolute value for bar scaling
-  const maxAbsTotal = Math.max(
-    1,
-    ...categoryTotals.map((c) => Math.abs(c.total))
-  );
+  const maxAbsTotal = Math.max(1, ...categoryTotals.map((c) => Math.abs(c.total)));
 
   return (
     <SovietModal
@@ -189,15 +175,11 @@ export const ScoringPanel: React.FC<ScoringPanelProps> = ({ visible, onDismiss }
         </View>
         <View style={styles.labelPill}>
           <Text style={styles.labelPillCaption}>CONSEQUENCE</Text>
-          <Text style={[styles.labelPillValue, { color: Colors.textPrimary }]}>
-            {CONSEQUENCE_LABELS[consequence]}
-          </Text>
+          <Text style={[styles.labelPillValue, { color: Colors.textPrimary }]}>{CONSEQUENCE_LABELS[consequence]}</Text>
         </View>
         <View style={styles.labelPill}>
           <Text style={styles.labelPillCaption}>MULTIPLIER</Text>
-          <Text style={[styles.labelPillValue, { color: Colors.termBlue }]}>
-            x{settingsMultiplier.toFixed(1)}
-          </Text>
+          <Text style={[styles.labelPillValue, { color: Colors.termBlue }]}>x{settingsMultiplier.toFixed(1)}</Text>
         </View>
       </View>
 
@@ -214,13 +196,9 @@ export const ScoringPanel: React.FC<ScoringPanelProps> = ({ visible, onDismiss }
             <View key={cat.label} style={styles.breakdownRow}>
               <View style={styles.breakdownLabelRow}>
                 <Text style={styles.breakdownLabel}>{cat.label}</Text>
-                <Text
-                  style={[
-                    styles.breakdownValue,
-                    { color: cat.total >= 0 ? cat.color : Colors.sovietRed },
-                  ]}
-                >
-                  {cat.total >= 0 ? '+' : ''}{cat.total}
+                <Text style={[styles.breakdownValue, { color: cat.total >= 0 ? cat.color : Colors.sovietRed }]}>
+                  {cat.total >= 0 ? '+' : ''}
+                  {cat.total}
                 </Text>
               </View>
               <View style={styles.barRow}>
@@ -247,9 +225,7 @@ export const ScoringPanel: React.FC<ScoringPanelProps> = ({ visible, onDismiss }
             ))}
             <View style={[styles.row, styles.subtotalRow]}>
               <Text style={styles.subtotalLabel}>SUBTOTAL</Text>
-              <Text style={styles.subtotalValue}>
-                {(breakdown?.subtotal ?? 0).toLocaleString()}
-              </Text>
+              <Text style={styles.subtotalValue}>{(breakdown?.subtotal ?? 0).toLocaleString()}</Text>
             </View>
           </View>
         </>

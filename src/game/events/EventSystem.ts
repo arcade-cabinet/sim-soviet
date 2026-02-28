@@ -83,7 +83,7 @@ export class EventSystem {
 
   constructor(
     private onEventCallback: (event: GameEvent) => void,
-    rng?: GameRng
+    rng?: GameRng,
   ) {
     if (rng) setEventRng(rng);
   }
@@ -173,16 +173,12 @@ export class EventSystem {
   private resolveTemplate(template: EventTemplate): GameEvent {
     const gs = createGameView();
 
-    const description =
-      typeof template.description === 'function' ? template.description(gs) : template.description;
+    const description = typeof template.description === 'function' ? template.description(gs) : template.description;
 
     const pravdaHeadline =
-      typeof template.pravdaHeadline === 'function'
-        ? template.pravdaHeadline(gs)
-        : template.pravdaHeadline;
+      typeof template.pravdaHeadline === 'function' ? template.pravdaHeadline(gs) : template.pravdaHeadline;
 
-    const effects =
-      typeof template.effects === 'function' ? template.effects(gs) : { ...template.effects };
+    const effects = typeof template.effects === 'function' ? template.effects(gs) : { ...template.effects };
 
     // Determine type for UI coloring
     const netImpact =
@@ -231,21 +227,13 @@ export class EventSystem {
 
     const markSource = EVENT_MARK_MAP[event.id];
     if (markSource) {
-      this.personnelFile.addMark(
-        markSource,
-        this.currentTick,
-        `Event: ${event.title}`
-      );
+      this.personnelFile.addMark(markSource, this.currentTick, `Event: ${event.title}`);
       return;
     }
 
     const commendationSource = EVENT_COMMENDATION_MAP[event.id];
     if (commendationSource) {
-      this.personnelFile.addCommendation(
-        commendationSource,
-        this.currentTick,
-        `Event: ${event.title}`
-      );
+      this.personnelFile.addCommendation(commendationSource, this.currentTick, `Event: ${event.title}`);
     }
   }
 
@@ -262,7 +250,7 @@ export class EventSystem {
   static deserialize(
     data: EventSystemSaveData,
     onEventCallback: (event: GameEvent) => void,
-    rng?: GameRng
+    rng?: GameRng,
   ): EventSystem {
     const system = new EventSystem(onEventCallback, rng);
     system.lastEventTick = data.lastEventTick;

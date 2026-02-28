@@ -61,7 +61,7 @@ function placeBuilding(
     housingCap?: number;
     constructionPhase?: 'foundation' | 'building' | 'complete';
     durability?: number;
-  } = {}
+  } = {},
 ): Entity {
   const entity = world.add({
     position: { gridX, gridY },

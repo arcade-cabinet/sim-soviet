@@ -34,13 +34,11 @@ export const THE_QUEUE: MinigameDefinition = {
       successChance: 0.7,
       onSuccess: {
         resources: { food: -5 },
-        announcement:
-          'Workers fed. Production continues. Others write letters of complaint to nobody.',
+        announcement: 'Workers fed. Production continues. Others write letters of complaint to nobody.',
       },
       onFailure: {
         resources: { food: -10, population: -1 },
-        announcement:
-          'Workers fed, but the elderly were not. One citizen did not survive the queue.',
+        announcement: 'Workers fed, but the elderly were not. One citizen did not survive the queue.',
         severity: 'warning',
       },
     },

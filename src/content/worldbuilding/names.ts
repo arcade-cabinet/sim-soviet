@@ -108,11 +108,7 @@ export function generateCityName(includeModifier = false): string {
 }
 
 /** Generates a renaming event with appropriate propaganda messaging. */
-export function renameCityForLeaderChange(
-  currentName: string,
-  _disgraced: string,
-  newLeader: string
-): CityRenaming {
+export function renameCityForLeaderChange(currentName: string, _disgraced: string, newLeader: string): CityRenaming {
   const _rng = getRng();
   const suffix = pick(CITY_SUFFIXES);
   const newName = `${newLeader}${suffix}`;

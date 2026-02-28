@@ -7,10 +7,12 @@
  *
  * R3F migration: uses drei <Line> + useFrame for bolt animation and fade.
  */
-import React, { useRef, useState, useCallback } from 'react';
-import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+
 import { Line } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import type React from 'react';
+import { useRef, useState } from 'react';
+import * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 
@@ -87,14 +89,7 @@ const LightningRenderer: React.FC = () => {
   if (!boltPoints) return null;
 
   return (
-    <Line
-      ref={lineRef}
-      points={boltPoints}
-      color="white"
-      lineWidth={3}
-      transparent
-      opacity={opacityRef.current}
-    />
+    <Line ref={lineRef} points={boltPoints} color="white" lineWidth={3} transparent opacity={opacityRef.current} />
   );
 };
 

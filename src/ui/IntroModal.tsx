@@ -3,8 +3,9 @@
  * Port of poc.html lines 148-177.
  */
 
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface IntroModalProps {
@@ -53,14 +54,13 @@ export const IntroModal: React.FC<IntroModalProps> = ({ visible, onDismiss }) =>
         {/* Briefing text */}
         <Text style={styles.briefing}>Comrade Mayor,</Text>
         <Text style={styles.body}>
-          You have been assigned oversight of this settlement by order of the Central Committee.
-          The Party expects nothing less than total dedication to the construction of a model
-          socialist city. Resources are scarce, the people are restless, and the Five-Year Plan
-          waits for no one.
+          You have been assigned oversight of this settlement by order of the Central Committee. The Party expects
+          nothing less than total dedication to the construction of a model socialist city. Resources are scarce, the
+          people are restless, and the Five-Year Plan waits for no one.
         </Text>
         <Text style={styles.body}>
-          Your mandate is clear: transform this barren outpost into a beacon of Soviet progress.
-          Failure will not be tolerated. Success will be noted in your personnel file.
+          Your mandate is clear: transform this barren outpost into a beacon of Soviet progress. Failure will not be
+          tolerated. Success will be noted in your personnel file.
         </Text>
 
         {/* Bullet points */}

@@ -8,14 +8,14 @@
  * Uses SovietModal with terminal variant for dark-panel aesthetic.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { HeatingTier, TransferableResource } from '../game/economy';
+import { HEATING_CONFIGS } from '../game/economy';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import type { TransferableResource, HeatingTier } from '../game/economy';
-import { HEATING_CONFIGS } from '../game/economy';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Props
@@ -55,7 +55,7 @@ const HEATING_TIER_CONFIG: Record<string, { label: string; color: string }> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Color for a delivery ratio: green=complete, gold=partial, red=none. */
-function deliveryColor(delivered: number, allocated: number): string {
+function _deliveryColor(delivered: number, allocated: number): string {
   if (allocated <= 0) return Colors.textMuted;
   const ratio = delivered / allocated;
   if (ratio >= 0.9) return Colors.termGreen;
@@ -83,19 +83,13 @@ function blatRiskLabel(connections: number): { label: string; color: string } {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
 
 /** Progress bar with configurable color. */
-const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({
-  ratio,
-  color,
-  height = 10,
-}) => {
+const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({ ratio, color, height = 10 }) => {
   const clamped = Math.max(0, Math.min(ratio, 1));
   return (
     <View style={[styles.barTrack, { height }]}>
@@ -176,16 +170,8 @@ export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }
       </View>
 
       <View style={styles.barRow}>
-        <ProgressBar
-          ratio={trudodniRatio}
-          color={trudodniRatio >= 1 ? Colors.termGreen : Colors.sovietRed}
-        />
-        <Text
-          style={[
-            styles.barPercent,
-            { color: trudodniRatio >= 1 ? Colors.termGreen : Colors.sovietRed },
-          ]}
-        >
+        <ProgressBar ratio={trudodniRatio} color={trudodniRatio >= 1 ? Colors.termGreen : Colors.sovietRed} />
+        <Text style={[styles.barPercent, { color: trudodniRatio >= 1 ? Colors.termGreen : Colors.sovietRed }]}>
           {Math.round(trudodniRatio * 100)}%
         </Text>
       </View>
@@ -210,12 +196,7 @@ export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }
           })}
           <View style={styles.row}>
             <Text style={styles.sublabel}>RELIABILITY:</Text>
-            <Text
-              style={[
-                styles.value,
-                { color: fondy.reliability >= 0.7 ? Colors.termGreen : Colors.sovietRed },
-              ]}
-            >
+            <Text style={[styles.value, { color: fondy.reliability >= 0.7 ? Colors.termGreen : Colors.sovietRed }]}>
               {Math.round(fondy.reliability * 100)}%
             </Text>
           </View>
@@ -278,21 +259,15 @@ export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }
           <View style={styles.deliveryRatesRow}>
             <View style={styles.deliveryRateItem}>
               <Text style={styles.deliveryRateLabel}>FOOD</Text>
-              <Text style={styles.deliveryRateValue}>
-                {Math.round(deliveryRates.food * 100)}%
-              </Text>
+              <Text style={styles.deliveryRateValue}>{Math.round(deliveryRates.food * 100)}%</Text>
             </View>
             <View style={styles.deliveryRateItem}>
               <Text style={styles.deliveryRateLabel}>VODKA</Text>
-              <Text style={styles.deliveryRateValue}>
-                {Math.round(deliveryRates.vodka * 100)}%
-              </Text>
+              <Text style={styles.deliveryRateValue}>{Math.round(deliveryRates.vodka * 100)}%</Text>
             </View>
             <View style={styles.deliveryRateItem}>
               <Text style={styles.deliveryRateLabel}>MONEY</Text>
-              <Text style={styles.deliveryRateValue}>
-                {Math.round(deliveryRates.money * 100)}%
-              </Text>
+              <Text style={styles.deliveryRateValue}>{Math.round(deliveryRates.money * 100)}%</Text>
             </View>
           </View>
 
@@ -301,21 +276,15 @@ export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }
               <Text style={styles.deliveredHeading}>DELIVERED THIS PERIOD:</Text>
               <View style={styles.row}>
                 <Text style={styles.sublabel}>FOOD:</Text>
-                <Text style={[styles.value, { color: Colors.sovietRed }]}>
-                  {Math.round(totalDelivered.food)}
-                </Text>
+                <Text style={[styles.value, { color: Colors.sovietRed }]}>{Math.round(totalDelivered.food)}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.sublabel}>VODKA:</Text>
-                <Text style={[styles.value, { color: Colors.sovietRed }]}>
-                  {Math.round(totalDelivered.vodka)}
-                </Text>
+                <Text style={[styles.value, { color: Colors.sovietRed }]}>{Math.round(totalDelivered.vodka)}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.sublabel}>MONEY:</Text>
-                <Text style={[styles.value, { color: Colors.sovietRed }]}>
-                  {Math.round(totalDelivered.money)}
-                </Text>
+                <Text style={[styles.value, { color: Colors.sovietRed }]}>{Math.round(totalDelivered.money)}</Text>
               </View>
             </>
           )}
@@ -333,9 +302,7 @@ export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }
         <>
           <View style={styles.row}>
             <Text style={styles.label}>TIER:</Text>
-            <Text style={[styles.value, { color: heatingTierCfg.color }]}>
-              {heatingTierCfg.label}
-            </Text>
+            <Text style={[styles.value, { color: heatingTierCfg.color }]}>{heatingTierCfg.label}</Text>
           </View>
 
           <View style={styles.barRow}>
@@ -343,7 +310,13 @@ export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }
             <View style={styles.barRowInner}>
               <ProgressBar
                 ratio={heating.efficiency}
-                color={heatingCoverage >= 70 ? Colors.termGreen : heatingCoverage >= 40 ? Colors.sovietGold : Colors.sovietRed}
+                color={
+                  heatingCoverage >= 70
+                    ? Colors.termGreen
+                    : heatingCoverage >= 40
+                      ? Colors.sovietGold
+                      : Colors.sovietRed
+                }
               />
               <Text
                 style={[
@@ -368,12 +341,7 @@ export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }
             return (
               <View style={styles.row}>
                 <Text style={styles.sublabel}>FUEL:</Text>
-                <Text
-                  style={[
-                    styles.value,
-                    { color: heating.failing ? Colors.sovietRed : Colors.termGreen },
-                  ]}
-                >
+                <Text style={[styles.value, { color: heating.failing ? Colors.sovietRed : Colors.termGreen }]}>
                   {heating.failing
                     ? 'FAILING'
                     : `${cfg.consumption.resource.toUpperCase()} (${cfg.consumption.amount}/tick)`}
@@ -382,11 +350,7 @@ export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }
             );
           })()}
 
-          {heating.failing && (
-            <Text style={styles.warningText}>
-              HEATING FAILURE — Population at risk!
-            </Text>
-          )}
+          {heating.failing && <Text style={styles.warningText}>HEATING FAILURE — Population at risk!</Text>}
         </>
       ) : (
         <Text style={styles.noData}>No heating data.</Text>
@@ -397,9 +361,7 @@ export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }
       {/* ── REMAINDER ─────────────────────────────────────────────── */}
       <SectionHeader title="REMAINDER (AFTER STATE CUT)" />
 
-      <Text style={styles.remainderNote}>
-        After compulsory deliveries, surplus is split:
-      </Text>
+      <Text style={styles.remainderNote}>After compulsory deliveries, surplus is split:</Text>
 
       <View style={styles.remainderBreakdown}>
         <View style={styles.remainderItem}>
@@ -412,7 +374,7 @@ export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }
         </View>
       </View>
 
-      {rations && rations.active && (
+      {rations?.active && (
         <View style={styles.rationsActive}>
           <Text style={styles.rationsActiveLabel}>RATION CARDS ACTIVE</Text>
           <Text style={styles.rationsActiveDetail}>

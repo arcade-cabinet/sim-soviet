@@ -12,12 +12,7 @@ import {
   producers,
   underConstruction,
 } from '../../src/ecs/archetypes';
-import {
-  createBuilding,
-  createResourceStore,
-  isOperational,
-  placeNewBuilding,
-} from '../../src/ecs/factories';
+import { createBuilding, createResourceStore, isOperational, placeNewBuilding } from '../../src/ecs/factories';
 import {
   constructionSystem,
   DEFAULT_BASE_TICKS,
@@ -183,15 +178,9 @@ describe('constructionSystem', () => {
       constructionSystem();
 
       // Per-tick deduction = total / baseTicks (rounded up, min 1 if total > 0)
-      const perTickTimber = Math.max(
-        1,
-        Math.ceil(DEFAULT_MATERIAL_COST.timber / DEFAULT_BASE_TICKS)
-      );
+      const perTickTimber = Math.max(1, Math.ceil(DEFAULT_MATERIAL_COST.timber / DEFAULT_BASE_TICKS));
       const perTickSteel = Math.max(1, Math.ceil(DEFAULT_MATERIAL_COST.steel / DEFAULT_BASE_TICKS));
-      const perTickCement = Math.max(
-        1,
-        Math.ceil(DEFAULT_MATERIAL_COST.cement / DEFAULT_BASE_TICKS)
-      );
+      const perTickCement = Math.max(1, Math.ceil(DEFAULT_MATERIAL_COST.cement / DEFAULT_BASE_TICKS));
 
       expect(timberBefore - res.timber).toBe(perTickTimber);
       expect(steelBefore - res.steel).toBe(perTickSteel);

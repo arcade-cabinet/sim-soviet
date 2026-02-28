@@ -2,8 +2,8 @@
  * WaterNetwork — BFS water distribution tests.
  */
 import { GameState } from '../../src/engine/GameState';
-import { updateWaterNetwork } from '../../src/engine/WaterNetwork';
 import { GRID_SIZE } from '../../src/engine/GridTypes';
+import { updateWaterNetwork } from '../../src/engine/WaterNetwork';
 
 function freshState(): GameState {
   const s = new GameState();
@@ -32,13 +32,15 @@ describe('updateWaterNetwork', () => {
 
     // Place pipes adjacent to pump (on land tiles next to water)
     const pipeTiles: Array<{ x: number; y: number }> = [];
-    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+    for (const [dx, dy] of [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+    ]) {
       const nx = px + dx;
       const ny = py + dy;
-      if (
-        nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE &&
-        s.grid[ny][nx].terrain !== 'water'
-      ) {
+      if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && s.grid[ny][nx].terrain !== 'water') {
         s.grid[ny][nx].hasPipe = true;
         pipeTiles.push({ x: nx, y: ny });
       }
@@ -99,13 +101,13 @@ describe('updateWaterNetwork', () => {
 
     // Place some pipes near each pump
     for (const b of s.buildings) {
-      for (const [dx, dy] of [[-1, 0], [1, 0]]) {
+      for (const [dx, dy] of [
+        [-1, 0],
+        [1, 0],
+      ]) {
         const nx = b.x + dx;
         const ny = b.y + dy;
-        if (
-          nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE &&
-          s.grid[ny][nx].terrain !== 'water'
-        ) {
+        if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && s.grid[ny][nx].terrain !== 'water') {
           s.grid[ny][nx].hasPipe = true;
         }
       }

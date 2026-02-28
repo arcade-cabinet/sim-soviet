@@ -11,9 +11,11 @@
  * - Zoom limits: minDistance 8, maxDistance 80
  * - Tilt limits: maxPolarAngle PI/2.2 (never go below ground)
  */
-import React, { useEffect, useRef } from 'react';
+
 import { MapControls } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
 import { GRID_SIZE } from '../engine/GridTypes';
 
 const CameraController: React.FC = () => {

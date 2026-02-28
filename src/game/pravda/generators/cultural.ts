@@ -17,8 +17,7 @@ export const culturalVictoryGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `ACADEMY OF SCIENCES ANNOUNCES ${pick(FAKE_DISCOVERIES)}`,
     subtext: `Western scientists: "impossible." Our scientists: "watch us." (They cannot \u2014 it's classified.)`,
-    reality:
-      'The discovery was a clerical error. The scientist responsible has been promoted to avoid embarrassment.',
+    reality: 'The discovery was a clerical error. The scientist responsible has been promoted to avoid embarrassment.',
     category: 'culture',
   }),
 
@@ -26,8 +25,7 @@ export const culturalVictoryGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `${pick(['PEOPLES ORCHESTRA', 'STATE BALLET', 'YOUTH CHOIR', 'REVOLUTIONARY THEATER COMPANY', 'PROLETARIAN POETRY CIRCLE'])} ACHIEVES ${pick(['STANDING OVATION', 'RECORD ATTENDANCE', 'CRITICAL ACCLAIM', '11-HOUR PERFORMANCE', 'EMOTIONAL BREAKTHROUGH'])}`,
     subtext: `Audience response: ${pick(['weeping', 'cheering', 'standing', 'sitting very still', 'awake'])} (all approved responses).`,
-    reality:
-      'The performance was 4 hours of patriotic marching music. The seats were removed to prevent sleeping.',
+    reality: 'The performance was 4 hours of patriotic marching music. The seats were removed to prevent sleeping.',
     category: 'culture',
   }),
 
@@ -51,8 +49,7 @@ export const culturalVictoryGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `WESTERN ${pick(['ART', 'MUSIC', 'LITERATURE', 'CINEMA', 'DANCE', 'ARCHITECTURE'])} DECLARED "DECADENT AND DYING" BY MINISTRY OF CULTURE`,
     subtext: `In contrast, Soviet ${pick(['concrete sculptures', 'patriotic ballads', 'productivity reports', 'queue management', 'weather endurance'])} flourish.`,
-    reality:
-      'Ministry of Culture has one employee. He has seen no Western art. He remains confident.',
+    reality: 'Ministry of Culture has one employee. He has seen no Western art. He remains confident.',
     category: 'culture',
   }),
 ];

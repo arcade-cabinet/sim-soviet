@@ -94,8 +94,7 @@ export const internalTriumphGenerators: HeadlineGenerator[] = [
         pct > 100
           ? `The extra ${pct - 100}% attributed to "revolutionary enthusiasm."`
           : `The missing ${100 - pct}% under investigation.`,
-      reality:
-        'Ballot had one name. Instructions said "mark X for yes." There was no option for no.',
+      reality: 'Ballot had one name. Instructions said "mark X for yes." There was no option for no.',
       category: 'editorial',
     };
   },

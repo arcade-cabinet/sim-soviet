@@ -8,9 +8,10 @@
  *
  * R3F migration: uses <mesh> primitives + useFrame for per-frame animation.
  */
-import React, { useRef, useMemo } from 'react';
-import * as THREE from 'three';
+
 import { useFrame } from '@react-three/fiber';
+import React, { useMemo, useRef } from 'react';
+import * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
@@ -36,10 +37,7 @@ const TrainRenderer: React.FC = () => {
   const groupRef = useRef<THREE.Group>(null);
 
   // Create refs for trailing cars
-  const carRefs = useMemo(
-    () => Array.from({ length: CAR_COUNT }, () => React.createRef<THREE.Mesh>()),
-    [],
-  );
+  const carRefs = useMemo(() => Array.from({ length: CAR_COUNT }, () => React.createRef<THREE.Mesh>()), []);
 
   // Smoothed position for lerp
   const smoothX = useRef(-5);

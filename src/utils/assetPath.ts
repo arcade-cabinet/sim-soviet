@@ -6,10 +6,7 @@
  * matching Expo's experiments.baseUrl.
  */
 
-const BASE_URL =
-  process.env.NODE_ENV === 'production'
-    ? '/sim-soviet'
-    : '';
+const BASE_URL = process.env.NODE_ENV === 'production' ? '/sim-soviet' : '';
 
 /** Resolve a path like "assets/models/foo.glb" or "/assets/hdri/bar.hdr" */
 export function assetUrl(path: string): string {

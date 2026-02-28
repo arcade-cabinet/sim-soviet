@@ -17,12 +17,7 @@ import type { TerrainCell, TerrainType } from './types';
  * Creates a coarse grid of random values, then bilinearly interpolates
  * to produce smooth noise at arbitrary resolution.
  */
-export function generateNoiseMap(
-  width: number,
-  height: number,
-  scale: number,
-  rng: GameRng
-): number[][] {
+export function generateNoiseMap(width: number, height: number, scale: number, rng: GameRng): number[][] {
   // Coarse grid dimensions
   const coarseW = Math.ceil(width / scale) + 2;
   const coarseH = Math.ceil(height / scale) + 2;
@@ -73,9 +68,7 @@ export function generateNoiseMap(
  * Multi-octave noise combining multiple scales for natural-looking terrain.
  */
 export function fractalNoise(width: number, height: number, rng: GameRng, octaves = 3): number[][] {
-  const result: number[][] = Array.from({ length: height }, () =>
-    Array.from({ length: width }, () => 0)
-  );
+  const result: number[][] = Array.from({ length: height }, () => Array.from({ length: width }, () => 0));
 
   let amplitude = 1;
   let totalAmp = 0;

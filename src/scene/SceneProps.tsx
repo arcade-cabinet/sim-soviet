@@ -14,15 +14,16 @@
  * R3F migration: uses drei useGLTF + Clone for model instancing.
  * Each prop wrapped in React.Suspense. Animal wandering via useFrame.
  */
-import React, { useRef, useMemo, Suspense } from 'react';
-import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
-import { useGLTF, Clone } from '@react-three/drei';
 
-import { GRID_SIZE } from '../engine/GridTypes';
+import { Clone, useGLTF } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import type React from 'react';
+import { Suspense, useMemo, useRef } from 'react';
+import type * as THREE from 'three';
 import { gameState } from '../engine/GameState';
-import type { Season } from './TerrainGrid';
+import { GRID_SIZE } from '../engine/GridTypes';
 import { getPropUrl } from './ModelPreloader';
+import type { Season } from './TerrainGrid';
 
 // ── Seeded PRNG (mulberry32) for deterministic scatter ──────────────────────
 
@@ -148,10 +149,7 @@ function getPlacementPositions(
     }
     case 'farm-animal': {
       const farms = gameState.buildings.filter(
-        (b) =>
-          b.type === 'collective-farm-hq' ||
-          b.type === 'zone-farm' ||
-          b.type === 'farm',
+        (b) => b.type === 'collective-farm-hq' || b.type === 'zone-farm' || b.type === 'farm',
       );
       for (const farm of farms) {
         for (let i = 0; i < 6; i++) {
@@ -219,14 +217,7 @@ interface PropInstanceProps {
 const PropInstance: React.FC<PropInstanceProps> = ({ url, position, scale, rotationY }) => {
   const { scene } = useGLTF(url);
 
-  return (
-    <Clone
-      object={scene}
-      position={position}
-      scale={[scale, scale, scale]}
-      rotation={[0, rotationY, 0]}
-    />
-  );
+  return <Clone object={scene} position={position} scale={[scale, scale, scale]} rotation={[0, rotationY, 0]} />;
 };
 
 // ── Animal instance with wandering animation ────────────────────────────────
@@ -274,12 +265,7 @@ const AnimalInstance: React.FC<AnimalInstanceProps> = ({
   });
 
   return (
-    <group
-      ref={groupRef}
-      position={basePos}
-      scale={[scale, scale, scale]}
-      rotation={[0, initialRotY, 0]}
-    >
+    <group ref={groupRef} position={basePos} scale={[scale, scale, scale]} rotation={[0, initialRotY, 0]}>
       <Clone object={scene} />
     </group>
   );
@@ -301,9 +287,7 @@ interface PlacedProp {
 function computePlacements(season: Season): PlacedProp[] {
   if (!gameState.grid.length) return [];
 
-  const rng = mulberry32(
-    42 + (season === 'winter' ? 0 : season === 'spring' ? 1 : season === 'summer' ? 2 : 3),
-  );
+  const rng = mulberry32(42 + (season === 'winter' ? 0 : season === 'spring' ? 1 : season === 'summer' ? 2 : 3));
 
   const placements: PlacedProp[] = [];
 
@@ -367,12 +351,7 @@ const SceneProps: React.FC<ScenePropsProps> = ({ season = 'winter' }) => {
               timeOffset={p.timeOffset}
             />
           ) : (
-            <PropInstance
-              url={p.url}
-              position={p.position}
-              scale={p.scale}
-              rotationY={p.rotationY}
-            />
+            <PropInstance url={p.url} position={p.position} scale={p.scale} rotationY={p.rotationY} />
           )}
         </Suspense>
       ))}

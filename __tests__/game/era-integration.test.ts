@@ -237,13 +237,9 @@ describe('Era Integration', () => {
 
       expect(era.failureCondition).toBeDefined();
       // Population 0 and food 0 => failure
-      expect(era.failureCondition!.check(meta, stubResources({ population: 0, food: 0 }))).toBe(
-        true
-      );
+      expect(era.failureCondition!.check(meta, stubResources({ population: 0, food: 0 }))).toBe(true);
       // Population > 0 => not failure
-      expect(era.failureCondition!.check(meta, stubResources({ population: 5, food: 0 }))).toBe(
-        false
-      );
+      expect(era.failureCondition!.check(meta, stubResources({ population: 5, food: 0 }))).toBe(false);
     });
 
     it('first_plans victory: posyolok tier with 100+ population', () => {
@@ -266,23 +262,15 @@ describe('Era Integration', () => {
     it('stagnation failure: 0 power with 200+ population', () => {
       const era = ERA_DEFINITIONS.stagnation;
 
-      expect(
-        era.failureCondition!.check(stubMeta(), stubResources({ power: 0, population: 200 }))
-      ).toBe(true);
-      expect(
-        era.failureCondition!.check(stubMeta(), stubResources({ power: 100, population: 200 }))
-      ).toBe(false);
+      expect(era.failureCondition!.check(stubMeta(), stubResources({ power: 0, population: 200 }))).toBe(true);
+      expect(era.failureCondition!.check(stubMeta(), stubResources({ power: 100, population: 200 }))).toBe(false);
     });
 
     it('perestroika failure: food and vodka both zero', () => {
       const era = ERA_DEFINITIONS.perestroika;
 
-      expect(era.failureCondition!.check(stubMeta(), stubResources({ food: 0, vodka: 0 }))).toBe(
-        true
-      );
-      expect(era.failureCondition!.check(stubMeta(), stubResources({ food: 1, vodka: 0 }))).toBe(
-        false
-      );
+      expect(era.failureCondition!.check(stubMeta(), stubResources({ food: 0, vodka: 0 }))).toBe(true);
+      expect(era.failureCondition!.check(stubMeta(), stubResources({ food: 1, vodka: 0 }))).toBe(false);
     });
   });
 

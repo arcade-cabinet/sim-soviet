@@ -41,9 +41,7 @@ export function tickDirectives(ctx: DirectiveContext): void {
 
     const nextDir = DIRECTIVES[gameState.directiveIndex];
     if (nextDir && nextDir.reward > 0) {
-      ctx.callbacks.onAdvisor(
-        `New Directive Issued: ${nextDir.text}`
-      );
+      ctx.callbacks.onAdvisor(`New Directive Issued: ${nextDir.text}`);
     }
 
     // Notify old GameState so useGameSnapshot picks up the new directiveIndex

@@ -25,14 +25,7 @@
 
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
 import { getBuildingDef } from '@/data/buildingDefs';
-import {
-  buildingsLogic,
-  getMetaEntity,
-  getResourceEntity,
-  operationalBuildings,
-} from '@/ecs/archetypes';
-import type { FireSystemSaveData } from './FireSystem';
-import { FireSystem } from './FireSystem';
+import { buildingsLogic, getMetaEntity, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import {
   constructionSystem,
@@ -62,10 +55,7 @@ import {
   tickAchievements as tickAchievementsHelper,
   tickTutorial as tickTutorialHelper,
 } from './engine/achievementTick';
-import {
-  type AnnualReportEngineState,
-  checkQuota as checkQuotaHelper,
-} from './engine/annualReportTick';
+import { type AnnualReportEngineState, checkQuota as checkQuotaHelper } from './engine/annualReportTick';
 import { tickDirectives as tickDirectivesHelper } from './engine/directiveTick';
 import {
   checkBuildingTapMinigame as checkBuildingTapMinigameHelper,
@@ -82,6 +72,8 @@ import type { EraDefinition, EraSystemSaveData } from './era';
 import { ERA_DEFINITIONS, EraSystem } from './era';
 import type { EventSystemSaveData, GameEvent } from './events';
 import { EventSystem } from './events';
+import type { FireSystemSaveData } from './FireSystem';
+import { FireSystem } from './FireSystem';
 import type { GameGrid } from './GameGrid';
 import { createGameTally, type TallyData } from './GameTally';
 import { MinigameRouter } from './minigames/MinigameRouter';
@@ -132,10 +124,7 @@ export interface SimCallbacks {
   /** Fired when the game transitions to a new historical era. */
   onEraChanged?: (era: EraDefinition) => void;
   /** Fired at quota deadline years. Player submits report via the closure. */
-  onAnnualReport?: (
-    data: AnnualReportData,
-    submitReport: (submission: ReportSubmission) => void
-  ) => void;
+  onAnnualReport?: (data: AnnualReportData, submitReport: (submission: ReportSubmission) => void) => void;
   /** Fired when a minigame triggers. UI should present choices and call resolveChoice(id). */
   onMinigame?: (active: ActiveMinigame, resolveChoice: (choiceId: string) => void) => void;
   /** Fired when a tutorial milestone triggers (Krupnik guidance). */
@@ -195,10 +184,7 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
 };
 
 /** Event IDs that should ignite a building when triggered. */
-const FIRE_EVENT_IDS = new Set([
-  'cultural_palace_fire',
-  'power_station_explosion',
-]);
+const FIRE_EVENT_IDS = new Set(['cultural_palace_fire', 'power_station_explosion']);
 
 export class SimulationEngine {
   private chronology: ChronologySystem;
@@ -238,7 +224,7 @@ export class SimulationEngine {
     private callbacks: SimCallbacks,
     rng?: GameRng,
     difficulty?: DifficultyLevel,
-    consequence?: ConsequenceLevel
+    consequence?: ConsequenceLevel,
   ) {
     this.rng = rng;
     this.difficulty = difficulty ?? 'comrade';
@@ -252,7 +238,7 @@ export class SimulationEngine {
           int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
           pick: <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!,
         } as GameRng),
-      startYear
+      startYear,
     );
     // Era System — determines historical period, modifiers, building gates
     this.eraSystem = new EraSystem(startYear);
@@ -529,7 +515,6 @@ export class SimulationEngine {
    * Main simulation tick — runs all ECS systems in order,
    * then syncs system state to ECS gameMeta for React.
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: tick orchestrates 18+ subsystems sequentially
   public tick(): void {
     if (this.ended) return;
 
@@ -561,8 +546,7 @@ export class SimulationEngine {
     const weatherProfile = getWeatherProfile(tickResult.weather as WeatherType);
     const politburoMods = this.politburo.getModifiers();
     const eraMods = this.eraSystem.getModifiers();
-    const farmMod =
-      weatherProfile.farmModifier * politburoMods.foodProductionMult * eraMods.productionMult;
+    const farmMod = weatherProfile.farmModifier * politburoMods.foodProductionMult * eraMods.productionMult;
     const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult;
 
     powerSystem();
@@ -573,13 +557,13 @@ export class SimulationEngine {
       this.settlement.getCurrentTier(),
       this.chronology.getDate().totalTicks,
       tickResult.season,
-      storeRef.resources
+      storeRef.resources,
     );
 
     constructionSystem(
       this.eraSystem.getConstructionTimeMult(),
       weatherProfile.constructionTimeMult,
-      transportResult.seasonBuildMult
+      transportResult.seasonBuildMult,
     );
 
     // Capture pre-production resource levels for CompulsoryDeliveries delta
@@ -613,16 +597,10 @@ export class SimulationEngine {
     consumptionSystem(eraMods.consumptionMult);
 
     // Disease System — outbreak checks (monthly) + disease progression (every tick)
-    const diseaseResult = diseaseTick(
-      this.chronology.getDate().totalTicks,
-      this.chronology.getDate().month
-    );
+    const diseaseResult = diseaseTick(this.chronology.getDate().totalTicks, this.chronology.getDate().month);
     // Sync disease deaths to the resource store
     if (diseaseResult.deaths > 0) {
-      storeRef.resources.population = Math.max(
-        0,
-        storeRef.resources.population - diseaseResult.deaths
-      );
+      storeRef.resources.population = Math.max(0, storeRef.resources.population - diseaseResult.deaths);
     }
     // Emit Pravda headlines for outbreaks
     if (diseaseResult.outbreakTypes.length > 0) {
@@ -641,7 +619,7 @@ export class SimulationEngine {
     populationSystem(
       this.rng,
       politburoMods.populationGrowthMult * eraMods.populationGrowthMult,
-      this.chronology.getDate().month
+      this.chronology.getDate().month,
     );
 
     // Worker System — sync citizen entities to match population, then tick worker stats
@@ -653,16 +631,12 @@ export class SimulationEngine {
 
     // Demographic System — births, deaths, aging for dvor households
     const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, storeRef.resources.population * 2));
-    const demoResult = demographicTick(
-      this.rng ?? null,
-      this.chronology.getDate().totalTicks,
-      normalizedFood
-    );
+    const demoResult = demographicTick(this.rng ?? null, this.chronology.getDate().totalTicks, normalizedFood);
     // Sync dvor population changes to the resource store
     if (demoResult.births > 0 || demoResult.deaths > 0) {
       storeRef.resources.population = Math.max(
         0,
-        storeRef.resources.population + demoResult.births - demoResult.deaths
+        storeRef.resources.population + demoResult.births - demoResult.deaths,
       );
     }
 
@@ -702,11 +676,7 @@ export class SimulationEngine {
 
     // Track threat level escalation for scoring (investigation = no clean era bonus)
     const currentThreat = this.personnelFile.getThreatLevel();
-    if (
-      currentThreat === 'investigated' ||
-      currentThreat === 'reviewed' ||
-      currentThreat === 'arrested'
-    ) {
+    if (currentThreat === 'investigated' || currentThreat === 'reviewed' || currentThreat === 'arrested') {
       if (
         this.lastThreatLevel !== 'investigated' &&
         this.lastThreatLevel !== 'reviewed' &&
@@ -720,7 +690,7 @@ export class SimulationEngine {
     if (this.personnelFile.isArrested()) {
       this.endGame(
         false,
-        'Your personnel file has been reviewed. You have been declared an Enemy of the People. No further correspondence is expected.'
+        'Your personnel file has been reviewed. You have been declared an Enemy of the People. No further correspondence is expected.',
       );
     }
 
@@ -955,7 +925,7 @@ export class SimulationEngine {
       this.callbacks.onAdvisor(
         `Comrade, the State has enacted the ${reformName}. ` +
           `Your treasury has been adjusted from ${Math.round(result.currencyReform.moneyBefore)} ` +
-          `to ${Math.round(result.currencyReform.moneyAfter)} rubles.`
+          `to ${Math.round(result.currencyReform.moneyAfter)} rubles.`,
       );
     }
 
@@ -963,7 +933,7 @@ export class SimulationEngine {
     if (result.stakhanovite) {
       const s = result.stakhanovite;
       this.callbacks.onPravda(
-        `HERO OF LABOR: Comrade ${s.workerName} at ${s.building} exceeds quota by ${Math.round(s.productionBoost * 100)}%!`
+        `HERO OF LABOR: Comrade ${s.workerName} at ${s.building} exceeds quota by ${Math.round(s.productionBoost * 100)}%!`,
       );
     }
 
@@ -989,7 +959,7 @@ export class SimulationEngine {
         this.personnelFile.addMark(
           'blat_noticed',
           totalTicks,
-          kgb.announcement ?? 'KGB investigation into blat connections'
+          kgb.announcement ?? 'KGB investigation into blat connections',
         );
         this.callbacks.onToast('KGB INVESTIGATION: Blat connections noticed', 'critical');
       }
@@ -997,12 +967,12 @@ export class SimulationEngine {
         this.personnelFile.addMark(
           'blat_noticed',
           totalTicks,
-          kgb.announcement ?? 'Arrested for anti-Soviet networking activities'
+          kgb.announcement ?? 'Arrested for anti-Soviet networking activities',
         );
         this.callbacks.onAdvisor(
           'Comrade, your extensive network of personal favors has attracted ' +
             'unwelcome attention from the organs of state security. ' +
-            'Perhaps fewer friends would be safer.'
+            'Perhaps fewer friends would be safer.',
         );
       }
     }
@@ -1062,8 +1032,7 @@ export class SimulationEngine {
       population,
       buildings: buildingList,
       totalWorkers: population,
-      nonAgriculturalWorkers:
-        totalCapacity > 0 ? Math.round((nonAgriCapacity / totalCapacity) * population) : 0,
+      nonAgriculturalWorkers: totalCapacity > 0 ? Math.round((nonAgriCapacity / totalCapacity) * population) : 0,
     };
 
     const event = this.settlement.tick(metrics);
@@ -1101,10 +1070,7 @@ export class SimulationEngine {
 
     // Apply population drain from conscription
     if (result.workersConscripted > 0 && store) {
-      store.resources.population = Math.max(
-        0,
-        store.resources.population - result.workersConscripted
-      );
+      store.resources.population = Math.max(0, store.resources.population - result.workersConscripted);
       this.scoring.onConscription(result.workersConscripted);
     }
 
@@ -1118,11 +1084,7 @@ export class SimulationEngine {
       this.scoring.onKGBLoss(result.blackMarksAdded);
     }
     for (let i = 0; i < result.blackMarksAdded; i++) {
-      this.personnelFile.addMark(
-        'lying_to_kgb',
-        totalTicks,
-        'KGB investigation uncovered irregularities'
-      );
+      this.personnelFile.addMark('lying_to_kgb', totalTicks, 'KGB investigation uncovered irregularities');
     }
 
     // Emit announcements
@@ -1176,7 +1138,7 @@ export class SimulationEngine {
           store?.resources.population ?? 0,
           buildingsLogic.entities.length,
           this.personnelFile.getCommendations(),
-          this.personnelFile.getBlackMarks()
+          this.personnelFile.getBlackMarks(),
         );
       }
 
@@ -1185,7 +1147,7 @@ export class SimulationEngine {
         JSON.stringify({
           year: currentYear,
           eraId: newEra.id,
-        })
+        }),
       );
 
       // Update CompulsoryDeliveries doctrine to match the new era
@@ -1229,10 +1191,7 @@ export class SimulationEngine {
     // Grace period: skip era conditions during the first year so the player
     // isn't immediately eliminated before they have a chance to act.
     // Also skip if there are no buildings (game hasn't really started).
-    if (
-      this.chronology.getDate().totalTicks <= TICKS_PER_YEAR ||
-      buildingsLogic.entities.length === 0
-    ) {
+    if (this.chronology.getDate().totalTicks <= TICKS_PER_YEAR || buildingsLogic.entities.length === 0) {
       return;
     }
 
@@ -1254,7 +1213,7 @@ export class SimulationEngine {
         this.callbacks.onToast(`ERA VICTORY: ${era.name.toUpperCase()}`, 'warning');
         this.callbacks.onAdvisor(
           `Congratulations, Comrade Director. You have completed the objectives for ${era.name}. ` +
-            `The Politburo acknowledges your adequate performance. Do not let it go to your head.`
+            `The Politburo acknowledges your adequate performance. Do not let it go to your head.`,
         );
       }
     }

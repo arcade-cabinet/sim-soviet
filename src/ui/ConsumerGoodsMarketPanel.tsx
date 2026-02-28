@@ -9,14 +9,15 @@
  * a blat_noticed mark on the player's PersonnelFile.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { SovietModal } from './SovietModal';
-import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
+import type React from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getResourceEntity } from '@/ecs/archetypes';
 import { notifyStateChange } from '@/stores/gameStore';
+import { getEngine } from '../bridge/GameInit';
+import { useGameSnapshot } from '../hooks/useGameState';
+import { SovietModal } from './SovietModal';
+import { Colors, monoFont } from './styles';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Types & Constants
@@ -37,7 +38,7 @@ interface RiskConfig {
 }
 
 const RISK_TIERS: { threshold: number; config: RiskConfig }[] = [
-  { threshold: 8, config: { label: 'CRITICAL', color: '#b71c1c', detectionChance: 0.60 } },
+  { threshold: 8, config: { label: 'CRITICAL', color: '#b71c1c', detectionChance: 0.6 } },
   { threshold: 5, config: { label: 'DANGEROUS', color: Colors.sovietRed, detectionChance: 0.35 } },
   { threshold: 3, config: { label: 'MODERATE', color: '#ff9800', detectionChance: 0.15 } },
   { threshold: 0, config: { label: 'LOW', color: Colors.termGreen, detectionChance: 0.05 } },
@@ -114,9 +115,7 @@ function getRandomGossip(): string {
 //  Sub-Components
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 const Divider: React.FC = () => <View style={styles.divider} />;
 
@@ -124,10 +123,7 @@ const Divider: React.FC = () => <View style={styles.divider} />;
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> = ({
-  visible,
-  onDismiss,
-}) => {
+export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> = ({ visible, onDismiss }) => {
   const snap = useGameSnapshot();
   const engine = getEngine();
 
@@ -190,22 +186,17 @@ export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> =
         actionLabel: 'SELL',
       },
     ],
-    [foodBuyCost, vodkaBuyCost, foodSellPrice, vodkaSellPrice]
+    [foodBuyCost, vodkaBuyCost, foodSellPrice, vodkaSellPrice],
   );
 
   // ── Affordability check ──────────────────────────────────────────────────
 
   const canAfford = useCallback(
     (trade: TradeOperation): boolean => {
-      const available =
-        trade.costType === 'money'
-          ? snap.money
-          : trade.costType === 'food'
-            ? snap.food
-            : snap.vodka;
+      const available = trade.costType === 'money' ? snap.money : trade.costType === 'food' ? snap.food : snap.vodka;
       return available >= trade.costAmount;
     },
-    [snap.money, snap.food, snap.vodka]
+    [snap.money, snap.food, snap.vodka],
   );
 
   // ── Transaction handler ──────────────────────────────────────────────────
@@ -218,12 +209,7 @@ export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> =
       const r = res.resources;
 
       // Defensive re-check
-      const available =
-        trade.costType === 'money'
-          ? r.money
-          : trade.costType === 'food'
-            ? r.food
-            : r.vodka;
+      const available = trade.costType === 'money' ? r.money : trade.costType === 'food' ? r.food : r.vodka;
       if (available < trade.costAmount) return;
 
       // Deduct cost
@@ -250,17 +236,13 @@ export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> =
         const file = engine.getPersonnelFile();
         // Get current tick from the snapshot (best available without deep engine access)
         const tick = snap.tick ?? 0;
-        file.addMark(
-          'blat_noticed',
-          tick,
-          `Underground market activity detected: ${trade.label.toLowerCase()}`
-        );
+        file.addMark('blat_noticed', tick, `Underground market activity detected: ${trade.label.toLowerCase()}`);
       }
 
       // Notify React of ECS resource mutation
       notifyStateChange();
     },
-    [transactionCount, engine, snap.tick]
+    [transactionCount, engine, snap.tick],
   );
 
   // ── Risk meter ───────────────────────────────────────────────────────────
@@ -311,15 +293,11 @@ export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> =
         </View>
         <View style={styles.rateRow}>
           <Text style={styles.rateLabel}>FOOD (sell):</Text>
-          <Text style={[styles.rateValue, { color: Colors.sovietRed }]}>
-            {foodSellPrice} rub/unit
-          </Text>
+          <Text style={[styles.rateValue, { color: Colors.sovietRed }]}>{foodSellPrice} rub/unit</Text>
         </View>
         <View style={styles.rateRow}>
           <Text style={styles.rateLabel}>VODKA (sell):</Text>
-          <Text style={[styles.rateValue, { color: Colors.sovietRed }]}>
-            {vodkaSellPrice} rub/unit
-          </Text>
+          <Text style={[styles.rateValue, { color: Colors.sovietRed }]}>{vodkaSellPrice} rub/unit</Text>
         </View>
       </View>
 
@@ -340,17 +318,10 @@ export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> =
               else if (i < 8) segColor = Colors.sovietRed;
               else segColor = '#b71c1c';
             }
-            return (
-              <View
-                key={i}
-                style={[styles.riskSegment, filled && { backgroundColor: segColor }]}
-              />
-            );
+            return <View key={i} style={[styles.riskSegment, filled && { backgroundColor: segColor }]} />;
           })}
         </View>
-        <Text style={[styles.riskLevelText, { color: riskConfig.color }]}>
-          {riskConfig.label}
-        </Text>
+        <Text style={[styles.riskLevelText, { color: riskConfig.color }]}>{riskConfig.label}</Text>
       </View>
 
       <View style={styles.row}>
@@ -359,9 +330,7 @@ export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> =
       </View>
       <View style={styles.row}>
         <Text style={styles.sublabel}>DETECTION PROBABILITY:</Text>
-        <Text style={[styles.value, { color: riskConfig.color }]}>
-          {Math.round(riskConfig.detectionChance * 100)}%
-        </Text>
+        <Text style={[styles.value, { color: riskConfig.color }]}>{Math.round(riskConfig.detectionChance * 100)}%</Text>
       </View>
 
       <Divider />
@@ -377,19 +346,14 @@ export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> =
         return (
           <View
             key={trade.id}
-            style={[
-              styles.tradeCard,
-              justTraded && styles.tradeCardSuccess,
-              !affordable && styles.tradeCardDisabled,
-            ]}
+            style={[styles.tradeCard, justTraded && styles.tradeCardSuccess, !affordable && styles.tradeCardDisabled]}
           >
             <View style={styles.tradeContent}>
               <Text style={styles.tradeName}>{trade.label}</Text>
               <Text style={styles.tradeDesc}>{trade.description}</Text>
               <View style={styles.tradeCostRow}>
                 <Text style={styles.tradeCost}>
-                  {isBuy ? 'COST' : 'SPEND'}: {trade.costAmount}{' '}
-                  {trade.costType === 'money' ? 'rub' : trade.costType}
+                  {isBuy ? 'COST' : 'SPEND'}: {trade.costAmount} {trade.costType === 'money' ? 'rub' : trade.costType}
                 </Text>
                 <Text style={styles.tradeGain}>
                   {isBuy ? 'RECEIVE' : 'GAIN'}: +{trade.gainAmount}{' '}
@@ -399,9 +363,7 @@ export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> =
               {/* Per-transaction KGB risk indicator */}
               <View style={styles.tradeRiskRow}>
                 <Text style={styles.tradeRiskIcon}>{'\u2620'}</Text>
-                <Text style={[styles.tradeRiskText, { color: riskConfig.color }]}>
-                  KGB RISK: {riskConfig.label}
-                </Text>
+                <Text style={[styles.tradeRiskText, { color: riskConfig.color }]}>KGB RISK: {riskConfig.label}</Text>
               </View>
             </View>
             <TouchableOpacity
@@ -425,9 +387,7 @@ export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> =
 
       <View style={styles.gossipBox}>
         <Text style={styles.gossipQuote}>{`"${gossip}"`}</Text>
-        <Text style={styles.gossipAttribution}>
-          -- overheard at the communal kitchen, {snap.year}
-        </Text>
+        <Text style={styles.gossipAttribution}>-- overheard at the communal kitchen, {snap.year}</Text>
       </View>
 
       {/* Footer disclaimer */}

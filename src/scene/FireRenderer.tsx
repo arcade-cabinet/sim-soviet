@@ -8,13 +8,13 @@
  * R3F migration: uses <points> + useFrame for rising flame particles,
  * and <pointLight> for per-fire illumination.
  */
-import React, { useRef, useMemo } from 'react';
-import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
 
+import { useFrame } from '@react-three/fiber';
+import React, { useMemo, useRef } from 'react';
+import * as THREE from 'three';
+import { getBuildingHeight } from '../engine/BuildingTypes';
 import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
-import { getBuildingHeight } from '../engine/BuildingTypes';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -45,9 +45,9 @@ const FireEffect: React.FC<FireEffectProps> = ({ x, z, y, intensity }) => {
   const positions = useMemo(() => {
     const arr = new Float32Array(PARTICLE_COUNT * 3);
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      arr[i * 3] = x + (Math.random() - 0.5) * 0.6;     // X spread
-      arr[i * 3 + 1] = y + Math.random() * 1.5;          // Y rising
-      arr[i * 3 + 2] = z + (Math.random() - 0.5) * 0.6;  // Z spread
+      arr[i * 3] = x + (Math.random() - 0.5) * 0.6; // X spread
+      arr[i * 3 + 1] = y + Math.random() * 1.5; // Y rising
+      arr[i * 3 + 2] = z + (Math.random() - 0.5) * 0.6; // Z spread
     }
     return arr;
   }, [x, z, y]);
@@ -83,13 +83,11 @@ const FireEffect: React.FC<FireEffectProps> = ({ x, z, y, intensity }) => {
   const lightRef = useRef<THREE.PointLight>(null);
   useFrame(() => {
     if (!lightRef.current) return;
-    const flicker =
-      Math.sin(frameRef.current * 0.3) * 0.3 +
-      Math.sin(frameRef.current * 0.7) * 0.2;
+    const flicker = Math.sin(frameRef.current * 0.3) * 0.3 + Math.sin(frameRef.current * 0.7) * 0.2;
     lightRef.current.intensity = 0.5 + intensity * 0.1 + flicker;
   });
 
-  const emitRate = 50 + intensity * 20;
+  const _emitRate = 50 + intensity * 20;
   const particleSize = 0.05 + intensity * 0.015;
 
   return (
@@ -97,10 +95,7 @@ const FireEffect: React.FC<FireEffectProps> = ({ x, z, y, intensity }) => {
       {/* Fire particles */}
       <points ref={pointsRef}>
         <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            args={[positions, 3]}
-          />
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         </bufferGeometry>
         <pointsMaterial
           color="#ff6600"
@@ -147,8 +142,7 @@ const FireRenderer: React.FC = () => {
 
         const bRef = gameState.buildings.find((b) => b.x === x && b.y === y);
         const level = bRef?.level ?? 0;
-        const buildingH =
-          getBuildingHeight(cell.type, level) * 0.02 + cell.z;
+        const buildingH = getBuildingHeight(cell.type, level) * 0.02 + cell.z;
         const intensity = Math.min(cell.onFire, 15);
 
         newFires.push({
@@ -166,10 +160,7 @@ const FireRenderer: React.FC = () => {
       if (prev.length !== newFires.length) return newFires;
       // Check if any fire changed position/intensity
       for (let i = 0; i < prev.length; i++) {
-        if (
-          prev[i].key !== newFires[i]?.key ||
-          prev[i].intensity !== newFires[i]?.intensity
-        ) {
+        if (prev[i].key !== newFires[i]?.key || prev[i].intensity !== newFires[i]?.intensity) {
           return newFires;
         }
       }
@@ -180,13 +171,7 @@ const FireRenderer: React.FC = () => {
   return (
     <group>
       {fires.map((fire) => (
-        <FireEffect
-          key={fire.key}
-          x={fire.x}
-          z={fire.z}
-          y={fire.y}
-          intensity={fire.intensity}
-        />
+        <FireEffect key={fire.key} x={fire.x} z={fire.z} y={fire.y} intensity={fire.intensity} />
       ))}
     </group>
   );

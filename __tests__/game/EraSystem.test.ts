@@ -557,41 +557,25 @@ describe('Era conditions', () => {
 
   it('first_plans victory: non-selo with 100+ pop', () => {
     const cond = ERA_DEFINITIONS.first_plans.victoryCondition!;
-    expect(
-      cond.check(makeMeta({ settlementTier: 'posyolok' }), makeResources({ population: 100 }))
-    ).toBe(true);
-    expect(
-      cond.check(makeMeta({ settlementTier: 'selo' }), makeResources({ population: 200 }))
-    ).toBe(false);
-    expect(
-      cond.check(makeMeta({ settlementTier: 'posyolok' }), makeResources({ population: 50 }))
-    ).toBe(false);
+    expect(cond.check(makeMeta({ settlementTier: 'posyolok' }), makeResources({ population: 100 }))).toBe(true);
+    expect(cond.check(makeMeta({ settlementTier: 'selo' }), makeResources({ population: 200 }))).toBe(false);
+    expect(cond.check(makeMeta({ settlementTier: 'posyolok' }), makeResources({ population: 50 }))).toBe(false);
   });
 
   it('great_patriotic victory: year >= 1945 with 25+ pop', () => {
     const cond = ERA_DEFINITIONS.great_patriotic.victoryCondition!;
-    expect(
-      cond.check(
-        makeMeta({ date: { year: 1945, month: 1, tick: 0 } }),
-        makeResources({ population: 25 })
-      )
-    ).toBe(true);
-    expect(
-      cond.check(
-        makeMeta({ date: { year: 1944, month: 12, tick: 0 } }),
-        makeResources({ population: 100 })
-      )
-    ).toBe(false);
+    expect(cond.check(makeMeta({ date: { year: 1945, month: 1, tick: 0 } }), makeResources({ population: 25 }))).toBe(
+      true,
+    );
+    expect(cond.check(makeMeta({ date: { year: 1944, month: 12, tick: 0 } }), makeResources({ population: 100 }))).toBe(
+      false,
+    );
   });
 
   it('thaw victory: 300+ pop with positive food and vodka', () => {
     const cond = ERA_DEFINITIONS.thaw.victoryCondition!;
-    expect(cond.check(makeMeta(), makeResources({ population: 300, food: 1, vodka: 1 }))).toBe(
-      true
-    );
-    expect(cond.check(makeMeta(), makeResources({ population: 300, food: 0, vodka: 1 }))).toBe(
-      false
-    );
+    expect(cond.check(makeMeta(), makeResources({ population: 300, food: 1, vodka: 1 }))).toBe(true);
+    expect(cond.check(makeMeta(), makeResources({ population: 300, food: 0, vodka: 1 }))).toBe(false);
   });
 
   it('stagnation failure: 0 power with 200+ pop', () => {
@@ -876,9 +860,7 @@ describe('Era-specific event templates', () => {
     expect(warCommEvents.length).toBeGreaterThanOrEqual(2);
     expect(warCommEvents.some((e) => e.id === 'bandit_raid')).toBe(true);
 
-    const firstPlansEvents = ERA_SPECIFIC_EVENTS.filter((e) =>
-      e.eraFilter!.includes('first_plans')
-    );
+    const firstPlansEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('first_plans'));
     expect(firstPlansEvents.some((e) => e.id === 'kulak_purge')).toBe(true);
     expect(firstPlansEvents.some((e) => e.id === 'great_terror_wave')).toBe(true);
 
@@ -891,9 +873,7 @@ describe('Era-specific event templates', () => {
     const stagnationEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('stagnation'));
     expect(stagnationEvents.some((e) => e.id === 'vodka_economy_boom')).toBe(true);
 
-    const eternalEvents = ERA_SPECIFIC_EVENTS.filter((e) =>
-      e.eraFilter!.includes('eternal_soviet')
-    );
+    const eternalEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('eternal_soviet'));
     expect(eternalEvents.some((e) => e.id === 'bureaucratic_singularity_approach')).toBe(true);
   });
 });

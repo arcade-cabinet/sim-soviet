@@ -3,9 +3,9 @@
  * Port of poc.html lines 179-231.
  */
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Colors, SharedStyles, monoFont } from './styles';
+import type React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors, monoFont, SharedStyles } from './styles';
 
 const ERA_LABELS: Record<string, string> = {
   war_communism: 'WAR COMMUNISM',
@@ -114,9 +114,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       <View style={styles.leftGroup}>
         <Text style={styles.title}>
           <Text style={{ color: Colors.sovietRed }}>SIM</Text>
-          <Text style={{ color: Colors.white }}>SOVIET</Text>
-          {' '}
-          <Text style={styles.titleYear}>1917</Text>
+          <Text style={{ color: Colors.white }}>SOVIET</Text> <Text style={styles.titleYear}>1917</Text>
         </Text>
         <View style={styles.seasonBox}>
           <Text style={[styles.seasonText, { color: Colors.white }]}>{season}</Text>
@@ -244,9 +242,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Text style={styles.navBtnText}>{'\u{1F514}'}</Text>
             {unreadNotifications > 0 && (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>
-                  {unreadNotifications > 99 ? '99+' : String(unreadNotifications)}
-                </Text>
+                <Text style={styles.badgeText}>{unreadNotifications > 99 ? '99+' : String(unreadNotifications)}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -314,16 +310,12 @@ const ThreatIndicator: React.FC<{
   const containerProps = onPress ? { onPress, activeOpacity: 0.7 } : {};
   return (
     <Container {...containerProps} style={styles.threatBox}>
-      <Text style={styles.statLabel}>
-        {TIER_LABELS[settlementTier] ?? 'SELO'}
-      </Text>
+      <Text style={styles.statLabel}>{TIER_LABELS[settlementTier] ?? 'SELO'}</Text>
       <View style={styles.threatRow}>
         <View style={[styles.threatDot, { backgroundColor: cfg.color }]} />
         <Text style={[styles.threatText, { color: cfg.color }]}>{cfg.label}</Text>
       </View>
-      <Text style={styles.marksText}>
-        {effectiveMarks > 0 ? `${effectiveMarks}\u2620` : '\u2605'}
-      </Text>
+      <Text style={styles.marksText}>{effectiveMarks > 0 ? `${effectiveMarks}\u2620` : '\u2605'}</Text>
     </Container>
   );
 };

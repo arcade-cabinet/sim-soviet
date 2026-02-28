@@ -6,13 +6,14 @@
  * Uses terminal-variant SovietModal for dark-panel aesthetic.
  */
 
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { useMemo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { EventCategory, EventSeverity, GameEvent, ResourceDelta } from '../game/events/types';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { getEngine } from '../bridge/GameInit';
-import type { GameEvent, EventCategory, EventSeverity, ResourceDelta } from '../game/events/types';
 
 // ── Props ───────────────────────────────────────────────────────────────────
 
@@ -24,10 +25,10 @@ export interface EventHistoryPanelProps {
 // ── Category Icons ──────────────────────────────────────────────────────────
 
 const CATEGORY_ICON: Record<EventCategory, string> = {
-  disaster: '\u2620',    // ☠
-  political: '\u262D',   // ☭
-  economic: '\u20BD',    // ₽
-  cultural: '\uD83C\uDFAD',  // 🎭
+  disaster: '\u2620', // ☠
+  political: '\u262D', // ☭
+  economic: '\u20BD', // ₽
+  cultural: '\uD83C\uDFAD', // 🎭
   absurdist: '\uD83E\uDD21', // 🤡
 };
 
@@ -76,9 +77,7 @@ function hasEffects(effects: ResourceDelta): boolean {
 // ── Sub-components ──────────────────────────────────────────────────────────
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
@@ -109,7 +108,9 @@ const EventCard: React.FC<{ event: GameEvent }> = ({ event }) => {
 
       {/* Pravda headline */}
       <Text style={styles.pravdaHeadline}>
-        {'\u00AB'}{event.pravdaHeadline}{'\u00BB'}
+        {'\u00AB'}
+        {event.pravdaHeadline}
+        {'\u00BB'}
       </Text>
 
       {/* Resource effects */}
@@ -134,7 +135,7 @@ export const EventHistoryPanel: React.FC<EventHistoryPanelProps> = ({ visible, o
     const recent = engine?.getEventSystem()?.getRecentEvents(20) ?? [];
     // Reverse for most-recent-first display
     return [...recent].reverse();
-  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!visible) return null;
 
@@ -155,14 +156,10 @@ export const EventHistoryPanel: React.FC<EventHistoryPanelProps> = ({ visible, o
       <SectionHeader title="RECENT EVENTS" />
 
       {totalCount > 0 ? (
-        events.map((event, index) => (
-          <EventCard key={`${event.id}-${index}`} event={event} />
-        ))
+        events.map((event, index) => <EventCard key={`${event.id}-${index}`} event={event} />)
       ) : (
         <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>
-            No events recorded. The silence is suspicious.
-          </Text>
+          <Text style={styles.emptyText}>No events recorded. The silence is suspicious.</Text>
         </View>
       )}
 

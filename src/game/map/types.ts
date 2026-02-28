@@ -19,15 +19,7 @@ export const MAP_SIZES: Record<MapSize, number> = {
 // ─── Terrain Types ──────────────────────────────────────────────────────────
 
 /** All possible terrain types for a grid cell. */
-export type TerrainType =
-  | 'grass'
-  | 'forest'
-  | 'marsh'
-  | 'mountain'
-  | 'river'
-  | 'road'
-  | 'foundation'
-  | 'water';
+export type TerrainType = 'grass' | 'forest' | 'marsh' | 'mountain' | 'river' | 'road' | 'foundation' | 'water';
 
 /** Full description of a single terrain cell. */
 export interface TerrainCell {
@@ -46,10 +38,7 @@ export interface TerrainCell {
 }
 
 /** Terrain type → default properties lookup. */
-export const TERRAIN_DEFAULTS: Record<
-  TerrainType,
-  { buildable: boolean; movementCost: number; elevation: number }
-> = {
+export const TERRAIN_DEFAULTS: Record<TerrainType, { buildable: boolean; movementCost: number; elevation: number }> = {
   grass: { buildable: true, movementCost: 1.0, elevation: 0 },
   forest: { buildable: false, movementCost: 1.3, elevation: 0 },
   marsh: { buildable: true, movementCost: 1.5, elevation: 0 },

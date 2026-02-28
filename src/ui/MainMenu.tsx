@@ -9,14 +9,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Animated,
-  StyleSheet,
-  Platform,
-} from 'react-native';
+import { Animated, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface MainMenuProps {
@@ -34,12 +27,7 @@ const PROPAGANDA_LINES = [
   'COMRADE, YOUR CITY AWAITS.',
 ];
 
-export const MainMenu: React.FC<MainMenuProps> = ({
-  onNewGame,
-  onContinue,
-  hasSaveData = false,
-  onSettings,
-}) => {
+export const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onContinue, hasSaveData = false, onSettings }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const titleSlide = useRef(new Animated.Value(-30)).current;
   const [propagandaIdx, setPropagandaIdx] = React.useState(0);
@@ -78,9 +66,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         <Text style={styles.star}>{'\u2605'}</Text>
 
         {/* Title block */}
-        <Animated.View
-          style={[styles.titleBlock, { transform: [{ translateY: titleSlide }] }]}
-        >
+        <Animated.View style={[styles.titleBlock, { transform: [{ translateY: titleSlide }] }]}>
           <View style={styles.titleBorder}>
             <Text style={styles.title}>SIMSOVIET</Text>
             <Text style={styles.titleYear}>1 9 1 7</Text>
@@ -98,11 +84,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         {/* Menu buttons */}
         <View style={styles.menuButtons}>
           {/* New Game — primary action */}
-          <TouchableOpacity
-            onPress={onNewGame}
-            style={styles.btnPrimary}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity onPress={onNewGame} style={styles.btnPrimary} activeOpacity={0.8}>
             <Text style={styles.btnPrimaryText}>{'\u2605'} NEW GAME</Text>
           </TouchableOpacity>
 
@@ -113,33 +95,18 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             activeOpacity={hasSaveData ? 0.8 : 1}
             disabled={!hasSaveData}
           >
-            <Text
-              style={[
-                styles.btnSecondaryText,
-                !hasSaveData && styles.btnDisabledText,
-              ]}
-            >
-              CONTINUE GAME
-            </Text>
-            {!hasSaveData && (
-              <Text style={styles.btnSubText}>NO SAVE DATA</Text>
-            )}
+            <Text style={[styles.btnSecondaryText, !hasSaveData && styles.btnDisabledText]}>CONTINUE GAME</Text>
+            {!hasSaveData && <Text style={styles.btnSubText}>NO SAVE DATA</Text>}
           </TouchableOpacity>
 
           {/* Settings */}
-          <TouchableOpacity
-            onPress={onSettings}
-            style={styles.btnTertiary}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity onPress={onSettings} style={styles.btnTertiary} activeOpacity={0.8}>
             <Text style={styles.btnTertiaryText}>SETTINGS</Text>
           </TouchableOpacity>
         </View>
 
         {/* Rotating propaganda text */}
-        <Text style={styles.propaganda}>
-          {PROPAGANDA_LINES[propagandaIdx]}
-        </Text>
+        <Text style={styles.propaganda}>{PROPAGANDA_LINES[propagandaIdx]}</Text>
 
         {/* Version */}
         <Text style={styles.version}>v0.1.0 /// CENTRAL PLANNING BUREAU</Text>

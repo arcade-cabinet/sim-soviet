@@ -3,14 +3,13 @@
  * Faithful port of poc.html lines 871-903.
  */
 
-import { GRID_SIZE } from './GridTypes';
 import type { GameState } from './GameState';
+import { GRID_SIZE } from './GridTypes';
 import { getSeason } from './WeatherSystem';
 
 export function updateTraffic(state: GameState, dt: number): void {
   const season = getSeason(state.date.month);
-  const speedMult =
-    season === 'MUD (SPRING)' ? 0.015 : season === 'WINTER' ? 0.025 : 0.04;
+  const speedMult = season === 'MUD (SPRING)' ? 0.015 : season === 'WINTER' ? 0.025 : 0.04;
   const SPEED = speedMult * (dt / 16);
 
   // Spawn new vehicles
@@ -50,12 +49,7 @@ export function updateTraffic(state: GameState, dt: number): void {
       const valid = dirs
         .map((d) => ({ x: v.x + d.x, y: v.y + d.y }))
         .filter(
-          (n) =>
-            n.x >= 0 &&
-            n.x < GRID_SIZE &&
-            n.y >= 0 &&
-            n.y < GRID_SIZE &&
-            state.grid[n.y][n.x].type === 'road'
+          (n) => n.x >= 0 && n.x < GRID_SIZE && n.y >= 0 && n.y < GRID_SIZE && state.grid[n.y][n.x].type === 'road',
         );
 
       // Prefer not to reverse direction

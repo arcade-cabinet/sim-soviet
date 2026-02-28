@@ -7,8 +7,7 @@ import type { MinigameDefinition } from '../MinigameTypes';
 export const FACTORY_EMERGENCY: MinigameDefinition = {
   id: 'factory_emergency',
   name: 'Factory Emergency',
-  description:
-    'The boiler is making sounds not found in any engineering manual. Workers are looking at you.',
+  description: 'The boiler is making sounds not found in any engineering manual. Workers are looking at you.',
   triggerType: 'event',
   triggerCondition: 'factory_malfunction',
   tickLimit: 10,
@@ -20,13 +19,11 @@ export const FACTORY_EMERGENCY: MinigameDefinition = {
       successChance: 0.7,
       onSuccess: {
         resources: { money: -40 },
-        announcement:
-          'Emergency repairs successful. The boiler now makes slightly different sounds.',
+        announcement: 'Emergency repairs successful. The boiler now makes slightly different sounds.',
       },
       onFailure: {
         resources: { money: -40, population: -1 },
-        announcement:
-          'Repairs failed. One worker was injured by a flying valve. The boiler is unrepentant.',
+        announcement: 'Repairs failed. One worker was injured by a flying valve. The boiler is unrepentant.',
         severity: 'warning',
       },
     },
@@ -52,8 +49,7 @@ export const FACTORY_EMERGENCY: MinigameDefinition = {
       successChance: 0.3,
       onSuccess: {
         resources: { money: 20 },
-        announcement:
-          'The boiler calmed down on its own. Production continued. The workers are heroes. Probably.',
+        announcement: 'The boiler calmed down on its own. Production continued. The workers are heroes. Probably.',
       },
       onFailure: {
         resources: { population: -3, money: -60 },
@@ -66,8 +62,7 @@ export const FACTORY_EMERGENCY: MinigameDefinition = {
   autoResolve: {
     resources: { population: -2, money: -50 },
     blackMarks: 1,
-    announcement:
-      'Nobody gave orders. The boiler exploded. Workers injured. The factory is silent now.',
+    announcement: 'Nobody gave orders. The boiler exploded. Workers injured. The factory is silent now.',
     severity: 'critical',
   },
 };

@@ -1,8 +1,9 @@
 /**
  * BuildActions — building placement, bulldoze, validation.
  */
-import { GameState } from '../../src/engine/GameState';
+
 import { handleClick } from '../../src/engine/BuildActions';
+import { GameState } from '../../src/engine/GameState';
 import { GRID_SIZE } from '../../src/engine/GridTypes';
 
 function freshState(): GameState {

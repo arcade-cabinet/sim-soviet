@@ -11,9 +11,10 @@
  * R3F migration: uses <points> with <bufferGeometry> + <pointsMaterial>
  * and useFrame for per-frame animation (replaces scene.registerBeforeRender).
  */
-import React, { useRef, useMemo, useEffect } from 'react';
-import * as THREE from 'three';
+
 import { useFrame } from '@react-three/fiber';
+import React, { useMemo, useRef } from 'react';
+import type * as THREE from 'three';
 
 import { gameState, type WeatherType } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
@@ -66,7 +67,6 @@ function getConfig(weather: WeatherType): ParticleConfig | null {
       return RAIN_CONFIG;
     case 'storm':
       return STORM_CONFIG;
-    case 'clear':
     default:
       return null;
   }
@@ -105,9 +105,9 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ config }) => {
 
     for (let i = 0; i < config.count; i++) {
       const idx = i * 3;
-      arr[idx] += gx * delta;       // X drift
-      arr[idx + 1] += gy * delta;   // Y fall
-      arr[idx + 2] += gz * delta;   // Z drift
+      arr[idx] += gx * delta; // X drift
+      arr[idx + 1] += gy * delta; // Y fall
+      arr[idx + 2] += gz * delta; // Z drift
 
       // Reset particle when it falls below ground
       if (arr[idx + 1] < 0) {
@@ -135,10 +135,7 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ config }) => {
   return (
     <points ref={pointsRef}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
       <pointsMaterial
         color={config.color}
@@ -156,9 +153,7 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ config }) => {
 
 const WeatherFX: React.FC = () => {
   const weatherRef = useRef<WeatherType>(gameState.currentWeather);
-  const [config, setConfig] = React.useState<ParticleConfig | null>(
-    () => getConfig(gameState.currentWeather),
-  );
+  const [config, setConfig] = React.useState<ParticleConfig | null>(() => getConfig(gameState.currentWeather));
 
   // Poll weather state each frame and update config when it changes
   useFrame(() => {

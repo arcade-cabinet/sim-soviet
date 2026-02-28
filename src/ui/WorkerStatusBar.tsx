@@ -7,13 +7,14 @@
  * governor's assignment priorities.
  */
 
-import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Colors, SharedStyles, monoFont } from './styles';
-import { useGameSnapshot } from '../hooks/useGameState';
+import type React from 'react';
+import { useCallback } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
-import { notifyStateChange } from '../stores/gameStore';
 import type { CollectiveFocus } from '../game/workers/governor';
+import { useGameSnapshot } from '../hooks/useGameState';
+import { notifyStateChange } from '../stores/gameStore';
+import { Colors, monoFont, SharedStyles } from './styles';
 
 const FOCUS_OPTIONS: { key: CollectiveFocus; label: string; icon: string }[] = [
   { key: 'food', label: 'FOOD', icon: '\u{1F33E}' },
@@ -32,10 +33,13 @@ export const WorkerStatusBar: React.FC<WorkerStatusBarProps> = ({ onShowWorkers 
   const workerSystem = engine?.getWorkerSystem() ?? null;
   const currentFocus: CollectiveFocus = workerSystem?.getCollectiveFocus() ?? 'balanced';
 
-  const handleFocusChange = useCallback((focus: CollectiveFocus) => {
-    workerSystem?.setCollectiveFocus(focus);
-    notifyStateChange();
-  }, [workerSystem]);
+  const handleFocusChange = useCallback(
+    (focus: CollectiveFocus) => {
+      workerSystem?.setCollectiveFocus(focus);
+      notifyStateChange();
+    },
+    [workerSystem],
+  );
 
   return (
     <View style={[SharedStyles.panel, styles.container]}>
@@ -51,9 +55,15 @@ export const WorkerStatusBar: React.FC<WorkerStatusBarProps> = ({ onShowWorkers 
 
       <View style={styles.statBox}>
         <Text style={styles.label}>MORALE</Text>
-        <Text style={[styles.value, {
-          color: snap.avgMorale > 60 ? Colors.termGreen : snap.avgMorale > 30 ? Colors.sovietGold : Colors.sovietRed,
-        }]}>
+        <Text
+          style={[
+            styles.value,
+            {
+              color:
+                snap.avgMorale > 60 ? Colors.termGreen : snap.avgMorale > 30 ? Colors.sovietGold : Colors.sovietRed,
+            },
+          ]}
+        >
           {snap.avgMorale}%
         </Text>
       </View>
@@ -70,9 +80,7 @@ export const WorkerStatusBar: React.FC<WorkerStatusBarProps> = ({ onShowWorkers 
             activeOpacity={0.7}
           >
             <Text style={styles.focusIcon}>{opt.icon}</Text>
-            <Text style={[styles.focusText, currentFocus === opt.key && { color: Colors.white }]}>
-              {opt.label}
-            </Text>
+            <Text style={[styles.focusText, currentFocus === opt.key && { color: Colors.white }]}>{opt.label}</Text>
           </TouchableOpacity>
         ))}
       </View>

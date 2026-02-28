@@ -125,7 +125,7 @@ describe('SimulationEngine — system wiring', () => {
       // Should have fired a toast with ACHIEVEMENT prefix
       const toastCalls = cb.onToast.mock.calls;
       const achievementToast = toastCalls.find(
-        (call) => typeof call[0] === 'string' && call[0].includes('ACHIEVEMENT')
+        (call) => typeof call[0] === 'string' && call[0].includes('ACHIEVEMENT'),
       );
       expect(achievementToast).toBeDefined();
     });

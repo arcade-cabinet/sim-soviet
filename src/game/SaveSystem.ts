@@ -14,12 +14,7 @@ import { eq } from 'drizzle-orm';
 import type { SQLJsDatabase } from 'drizzle-orm/sql-js';
 import { getDatabase, persistToIndexedDB } from '@/db/provider';
 import * as dbSchema from '@/db/schema';
-import {
-  buildingsLogic,
-  decayableBuildings,
-  getMetaEntity,
-  getResourceEntity,
-} from '@/ecs/archetypes';
+import { buildingsLogic, decayableBuildings, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import { createBuilding } from '@/ecs/factories';
 import type { Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
@@ -224,12 +219,7 @@ export class SaveSystem {
       const data: ExtendedSaveData = JSON.parse(json);
 
       // Validate required top-level keys
-      if (
-        !data.version ||
-        !data.resources ||
-        !data.gameMeta ||
-        !Array.isArray(data.buildings)
-      ) {
+      if (!data.version || !data.resources || !data.gameMeta || !Array.isArray(data.buildings)) {
         return false;
       }
 
@@ -323,7 +313,6 @@ export class SaveSystem {
   }
 
   /** Restore the full extended game state to ECS + subsystems. */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: restoring many subsystem states requires sequential field assignment
   private restoreExtendedState(data: ExtendedSaveData): boolean {
     const res = getResourceEntity();
     const meta = getMetaEntity();
@@ -484,7 +473,7 @@ export class SaveSystem {
               gridY: e.position.gridY,
               type: e.building.defId,
               powered: e.building.powered,
-            }))
+            })),
           )
           .run();
       }
@@ -520,11 +509,7 @@ export class SaveSystem {
     const meta = getMetaEntity();
     if (!res || !meta) return false;
 
-    const dbRes = db
-      .select()
-      .from(dbSchema.resources)
-      .where(eq(dbSchema.resources.saveId, saveId))
-      .get();
+    const dbRes = db.select().from(dbSchema.resources).where(eq(dbSchema.resources.saveId, saveId)).get();
     if (dbRes) {
       res.resources.money = dbRes.money;
       res.resources.food = dbRes.food;
@@ -534,11 +519,7 @@ export class SaveSystem {
       res.resources.population = dbRes.population;
     }
 
-    const chrono = db
-      .select()
-      .from(dbSchema.chronology)
-      .where(eq(dbSchema.chronology.saveId, saveId))
-      .get();
+    const chrono = db.select().from(dbSchema.chronology).where(eq(dbSchema.chronology.saveId, saveId)).get();
     if (chrono) {
       meta.gameMeta.date = {
         year: chrono.year,
@@ -565,11 +546,7 @@ export class SaveSystem {
     // Clear grid and restore from save
     this.grid.resetGrid();
 
-    const savedBuildings = db
-      .select()
-      .from(dbSchema.buildings)
-      .where(eq(dbSchema.buildings.saveId, saveId))
-      .all();
+    const savedBuildings = db.select().from(dbSchema.buildings).where(eq(dbSchema.buildings.saveId, saveId)).all();
 
     for (const b of savedBuildings) {
       createBuilding(b.gridX, b.gridY, b.type);

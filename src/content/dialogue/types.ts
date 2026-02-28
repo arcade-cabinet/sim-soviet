@@ -7,14 +7,7 @@ export interface DialogueContext {
   settlementTier: 'selo' | 'posyolok' | 'pgt' | 'gorod';
 }
 
-export type DialogueCharacter =
-  | 'worker'
-  | 'politruk'
-  | 'kgb'
-  | 'military'
-  | 'party_official'
-  | 'advisor'
-  | 'ambient';
+export type DialogueCharacter = 'worker' | 'politruk' | 'kgb' | 'military' | 'party_official' | 'advisor' | 'ambient';
 
 export interface DialogueLine {
   text: string;

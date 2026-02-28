@@ -7,110 +7,105 @@
  * instead of the native NativeEngine.
  */
 
-import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { SafeAreaView, View, Text, StatusBar, StyleSheet } from 'react-native';
 import { Canvas } from '@react-three/fiber';
-
-import Content from './Content';
-import { useECSGameLoop } from './hooks/useECSGameLoop';
-import { useGameSnapshot } from './hooks/useGameState';
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import AudioManager from './audio/AudioManager';
-import SFXManager from './audio/SFXManager';
 import { SEASON_CONTEXTS } from './audio/AudioManifest';
-import { gameState } from './engine/GameState';
-import { initGame, isGameInitialized, getEngine, getSaveSystem, type GameInitOptions } from './bridge/GameInit';
+import SFXManager from './audio/SFXManager';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
+import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitialized } from './bridge/GameInit';
+import Content from './Content';
+import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import { initDatabase, persistToIndexedDB } from './db/provider';
-import {
-  notifyStateChange,
-  setPaused,
-  isPaused,
-  setGameSpeed,
-  useBuildingInspector,
-  closeBuildingInspector,
-  useCitizenDossierIndex,
-  closeCitizenDossierByIndex,
-  useCursorTooltip,
-  usePoliticalPanel,
-  closePoliticalPanel,
-} from './stores/gameStore';
-import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
+import type { LensType } from './engine/GameState';
+import { gameState } from './engine/GameState';
 import {
-  setSpeed,
+  clearToast,
+  dismissAdvisor,
+  getAdvisor,
+  getToast,
   selectTool,
   setLens,
-  getToast,
-  clearToast,
-  getAdvisor,
-  dismissAdvisor,
-  showToast,
+  setSpeed,
   showAdvisor,
+  showToast,
 } from './engine/helpers';
-import type { LensType } from './engine/GameState';
-import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import type { EraDefinition } from './game/era';
+import type { TallyData } from './game/GameTally';
 import type { ActiveMinigame } from './game/minigames/MinigameTypes';
 import type { SettlementEvent } from './game/SettlementSystem';
-import type { TallyData } from './game/GameTally';
-
-// UI components
-import { TopBar } from './ui/TopBar';
-import { Toolbar } from './ui/Toolbar';
-import type { SovietTab } from './ui/Toolbar';
-import { QuotaHUD } from './ui/QuotaHUD';
-import { DirectiveHUD } from './ui/DirectiveHUD';
-import { Advisor } from './ui/Advisor';
-import { Toast } from './ui/Toast';
-import { Ticker } from './ui/Ticker';
-import { Minimap } from './ui/Minimap';
-import { LensSelector } from './ui/LensSelector';
-import { IntroModal } from './ui/IntroModal';
-import { MainMenu } from './ui/MainMenu';
-import { LoadingScreen } from './ui/LoadingScreen';
-import { GameModals, type PlanDirective, type GameOverInfo } from './ui/GameModals';
-import { NewGameSetup, type NewGameConfig } from './ui/NewGameSetup';
-import { PersonnelFilePanel } from './ui/PersonnelFilePanel';
+import { useECSGameLoop } from './hooks/useECSGameLoop';
+import { useGameSnapshot } from './hooks/useGameState';
+import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
+import {
+  closeBuildingInspector,
+  closeCitizenDossierByIndex,
+  closePoliticalPanel,
+  isPaused,
+  notifyStateChange,
+  setGameSpeed,
+  setPaused,
+  useBuildingInspector,
+  useCitizenDossierIndex,
+  useCursorTooltip,
+  usePoliticalPanel,
+} from './stores/gameStore';
 import { AchievementsPanel } from './ui/AchievementsPanel';
-import { SettingsModal } from './ui/SettingsModal';
-import { LeadershipPanel } from './ui/LeadershipPanel';
-import { EconomyPanel } from './ui/EconomyPanel';
-import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
-import { MandateProgressPanel } from './ui/MandateProgressPanel';
-import { DiseasePanel } from './ui/DiseasePanel';
-import { InfrastructurePanel } from './ui/InfrastructurePanel';
-import { RadialBuildMenu } from './ui/RadialBuildMenu';
-import { RadialInspectMenu } from './ui/RadialInspectMenu';
-import { EventHistoryPanel } from './ui/EventHistoryPanel';
-import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
-import { ScoringPanel } from './ui/ScoringPanel';
-import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
-import { EraTechTreePanel } from './ui/EraTechTreePanel';
-import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
-import { PolitburoPanel } from './ui/PolitburoPanel';
-import { CompulsoryDeliveriesPanel } from './ui/CompulsoryDeliveriesPanel';
-import { MinigameReferencePanel } from './ui/MinigameReferencePanel';
-import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
-import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
-import { EconomyDetailPanel } from './ui/EconomyDetailPanel';
-import { SaveLoadPanel } from './ui/SaveLoadPanel';
+import { Advisor } from './ui/Advisor';
 import { BuildingInspectorPanel } from './ui/BuildingInspectorPanel';
 import { CitizenDossierModal } from './ui/CitizenDossierModal';
+import { CompulsoryDeliveriesPanel } from './ui/CompulsoryDeliveriesPanel';
 import { ConsumerGoodsMarketPanel } from './ui/ConsumerGoodsMarketPanel';
 import { CursorTooltip } from './ui/CursorTooltip';
-import { WorkerStatusBar } from './ui/WorkerStatusBar';
+import { DirectiveHUD } from './ui/DirectiveHUD';
+import { DiseasePanel } from './ui/DiseasePanel';
+import { EconomyDetailPanel } from './ui/EconomyDetailPanel';
+import { EconomyPanel } from './ui/EconomyPanel';
+import { EraTechTreePanel } from './ui/EraTechTreePanel';
+import { EventHistoryPanel } from './ui/EventHistoryPanel';
+import { GameModals, type GameOverInfo, type PlanDirective } from './ui/GameModals';
+import { InfrastructurePanel } from './ui/InfrastructurePanel';
+import { IntroModal } from './ui/IntroModal';
+import { LeadershipPanel } from './ui/LeadershipPanel';
+import { LensSelector } from './ui/LensSelector';
+import { LoadingScreen } from './ui/LoadingScreen';
+import { MainMenu } from './ui/MainMenu';
+import { MandateProgressPanel } from './ui/MandateProgressPanel';
+import { MinigameReferencePanel } from './ui/MinigameReferencePanel';
+import { Minimap } from './ui/Minimap';
+import { type NewGameConfig, NewGameSetup } from './ui/NewGameSetup';
 import { NotificationHistory } from './ui/NotificationHistory';
 import { getUnreadCount, subscribeNotifications } from './ui/NotificationStore';
+import { PersonnelFilePanel } from './ui/PersonnelFilePanel';
+import { PolitburoPanel } from './ui/PolitburoPanel';
+import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
+import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
+import { QuotaHUD } from './ui/QuotaHUD';
+import { RadialBuildMenu } from './ui/RadialBuildMenu';
+import { RadialInspectMenu } from './ui/RadialInspectMenu';
+import { SaveLoadPanel } from './ui/SaveLoadPanel';
+import { ScoringPanel } from './ui/ScoringPanel';
+import { SettingsModal } from './ui/SettingsModal';
+import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
 import { Colors } from './ui/styles';
+import { Ticker } from './ui/Ticker';
+import { Toast } from './ui/Toast';
+import type { SovietTab } from './ui/Toolbar';
+import { Toolbar } from './ui/Toolbar';
+// UI components
+import { TopBar } from './ui/TopBar';
+import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
+import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
+import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
+import { WorkerStatusBar } from './ui/WorkerStatusBar';
 
 /**
  * Error boundary to catch Engine/WebGL crashes and show a fallback
  * instead of a blank white screen.
  */
-class EngineErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { error: string | null }
-> {
+class EngineErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: string | null }> {
   state = { error: null as string | null };
   static getDerivedStateFromError(error: Error) {
     return { error: error.message || 'Unknown 3D engine error' };
@@ -118,8 +113,24 @@ class EngineErrorBoundary extends React.Component<
   render() {
     if (this.state.error) {
       return (
-        <View style={{ flex: 1, backgroundColor: Colors.bgColor, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-          <Text style={{ color: Colors.sovietRed, fontFamily: 'monospace', fontSize: 14, fontWeight: 'bold', marginBottom: 12 }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: Colors.bgColor,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 40,
+          }}
+        >
+          <Text
+            style={{
+              color: Colors.sovietRed,
+              fontFamily: 'monospace',
+              fontSize: 14,
+              fontWeight: 'bold',
+              marginBottom: 12,
+            }}
+          >
             ENGINE MALFUNCTION
           </Text>
           <Text style={{ color: '#ccc', fontFamily: 'monospace', fontSize: 11, textAlign: 'center' }}>
@@ -156,7 +167,7 @@ const App: React.FC = () => {
   });
 
   const [tickerText, setTickerText] = useState(
-    'CITIZENS REMINDED THAT COMPLAINING IS A CRIME  ///  WEATHER FORECAST: PERPETUAL GRAY  ///  '
+    'CITIZENS REMINDED THAT COMPLAINING IS A CRIME  ///  WEATHER FORECAST: PERPETUAL GRAY  ///  ',
   );
 
   // ── Panel state ──
@@ -200,8 +211,7 @@ const App: React.FC = () => {
   const [gameTally, setGameTally] = useState<TallyData | null>(null);
 
   // Auto-pause when interactive modals are open (restore prior state on close)
-  const hasInteractiveModal =
-    !!annualReport || !!activeMinigame || !!planDirective || !!gameOver;
+  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver;
   const wasPausedBeforeModal = useRef(false);
   useEffect(() => {
     if (hasInteractiveModal) {
@@ -244,11 +254,7 @@ const App: React.FC = () => {
   const politicalPanelFromScene = usePoliticalPanel();
 
   // ── Notification history (store-driven unread count) ──
-  const unreadNotifications = useSyncExternalStore(
-    subscribeNotifications,
-    getUnreadCount,
-    getUnreadCount,
-  );
+  const unreadNotifications = useSyncExternalStore(subscribeNotifications, getUnreadCount, getUnreadCount);
 
   const handleDismissBuildingInspector = useCallback(() => {
     closeBuildingInspector();
@@ -279,96 +285,97 @@ const App: React.FC = () => {
         // Falls back to localStorage if sql.js WASM fails to load
       }
 
-      initGame({
-        onToast: (msg) => {
-          showToast(gameState, msg);
-          SFXManager.getInstance().play('toast_notification');
-        },
-        onAdvisor: (msg) => {
-          showAdvisor(gameState, msg);
-          SFXManager.getInstance().play('advisor_message');
-        },
-        onPravda: (msg) => {
-          setTickerText((prev) => prev + msg + '  ///  ');
-        },
-        onStateChange: () => {
-          // Sync ECS building powered state to old GameState for 3D effects
-          for (const e of ecsBuildingsArchetype.entities) {
-            const b = gameState.buildings.find(
-              (bi) => bi.x === e.position.gridX && bi.y === e.position.gridY,
-            );
-            if (b) b.powered = e.building.powered;
-          }
+      initGame(
+        {
+          onToast: (msg) => {
+            showToast(gameState, msg);
+            SFXManager.getInstance().play('toast_notification');
+          },
+          onAdvisor: (msg) => {
+            showAdvisor(gameState, msg);
+            SFXManager.getInstance().play('advisor_message');
+          },
+          onPravda: (msg) => {
+            setTickerText((prev) => `${prev + msg}  ///  `);
+          },
+          onStateChange: () => {
+            // Sync ECS building powered state to old GameState for 3D effects
+            for (const e of ecsBuildingsArchetype.entities) {
+              const b = gameState.buildings.find((bi) => bi.x === e.position.gridX && bi.y === e.position.gridY);
+              if (b) b.powered = e.building.powered;
+            }
 
-          // Sync fire + zeppelin state from ECS → GameState for 3D renderers
-          const eng = getEngine();
-          if (eng) {
-            const fireSys = eng.getFireSystem();
-            fireSys.syncToGameState(gameState.grid);
-            gameState.zeppelins = fireSys.getZeppelinRenderState();
-          }
+            // Sync fire + zeppelin state from ECS → GameState for 3D renderers
+            const eng = getEngine();
+            if (eng) {
+              const fireSys = eng.getFireSystem();
+              fireSys.syncToGameState(gameState.grid);
+              gameState.zeppelins = fireSys.getZeppelinRenderState();
+            }
 
-          notifyStateChange();
-          gameState.notify();
+            notifyStateChange();
+            gameState.notify();
+          },
+          onWeatherChanged: (weather) => {
+            gameState.currentWeather = weather as typeof gameState.currentWeather;
+          },
+          onDayPhaseChanged: (_phase, dayProgress) => {
+            gameState.timeOfDay = dayProgress;
+          },
+          onGameOver: (victory, reason) => {
+            setGameOver({ victory, reason });
+            SFXManager.getInstance().play('game_over');
+          },
+          onAchievement: (name, description) => {
+            showToast(gameState, `★ ${name}: ${description}`);
+            SFXManager.getInstance().play('achievement');
+          },
+          onSeasonChanged: (season) => {
+            const ctx = SEASON_CONTEXTS[season];
+            if (ctx) {
+              AudioManager.getInstance().playContext(ctx);
+            }
+            SFXManager.getInstance().play('season_change');
+          },
+          onBuildingCollapsed: (gridX, gridY, type) => {
+            showToast(gameState, `BUILDING COLLAPSED: ${type} at (${gridX},${gridY})`);
+            SFXManager.getInstance().play('building_demolish');
+          },
+          onSettlementChange: (event) => {
+            setSettlementEvent(event);
+          },
+          onNewPlan: (plan) => {
+            setPlanDirective({
+              quotaType: plan.quotaType,
+              quotaTarget: plan.quotaTarget,
+              startYear: plan.startYear,
+              endYear: plan.endYear,
+              mandates: plan.mandates,
+            });
+          },
+          onEraChanged: (era) => {
+            setEraTransition(era);
+            SFXManager.getInstance().play('era_transition');
+          },
+          onAnnualReport: (data, submitReport) => {
+            setAnnualReport(data);
+            submitReportRef.current = submitReport;
+          },
+          onMinigame: (active, resolveChoice) => {
+            setActiveMinigame(active);
+            resolveMinigameRef.current = resolveChoice;
+          },
+          onTutorialMilestone: (milestone) => {
+            showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
+            // Notify store so RadialBuildMenu re-renders with newly unlocked categories
+            notifyStateChange();
+          },
+          onGameTally: (tally) => {
+            setGameTally(tally);
+          },
         },
-        onWeatherChanged: (weather) => {
-          gameState.currentWeather = weather as typeof gameState.currentWeather;
-        },
-        onDayPhaseChanged: (_phase, dayProgress) => {
-          gameState.timeOfDay = dayProgress;
-        },
-        onGameOver: (victory, reason) => {
-          setGameOver({ victory, reason });
-          SFXManager.getInstance().play('game_over');
-        },
-        onAchievement: (name, description) => {
-          showToast(gameState, `★ ${name}: ${description}`);
-          SFXManager.getInstance().play('achievement');
-        },
-        onSeasonChanged: (season) => {
-          const ctx = SEASON_CONTEXTS[season];
-          if (ctx) {
-            AudioManager.getInstance().playContext(ctx);
-          }
-          SFXManager.getInstance().play('season_change');
-        },
-        onBuildingCollapsed: (gridX, gridY, type) => {
-          showToast(gameState, `BUILDING COLLAPSED: ${type} at (${gridX},${gridY})`);
-          SFXManager.getInstance().play('building_demolish');
-        },
-        onSettlementChange: (event) => {
-          setSettlementEvent(event);
-        },
-        onNewPlan: (plan) => {
-          setPlanDirective({
-            quotaType: plan.quotaType,
-            quotaTarget: plan.quotaTarget,
-            startYear: plan.startYear,
-            endYear: plan.endYear,
-            mandates: plan.mandates,
-          });
-        },
-        onEraChanged: (era) => {
-          setEraTransition(era);
-          SFXManager.getInstance().play('era_transition');
-        },
-        onAnnualReport: (data, submitReport) => {
-          setAnnualReport(data);
-          submitReportRef.current = submitReport;
-        },
-        onMinigame: (active, resolveChoice) => {
-          setActiveMinigame(active);
-          resolveMinigameRef.current = resolveChoice;
-        },
-        onTutorialMilestone: (milestone) => {
-          showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
-          // Notify store so RadialBuildMenu re-renders with newly unlocked categories
-          notifyStateChange();
-        },
-        onGameTally: (tally) => {
-          setGameTally(tally);
-        },
-      }, gameConfigRef.current);
+        gameConfigRef.current,
+      );
 
       // Also initialize the old flat grid for 3D terrain rendering
       if (gameState.grid.length === 0) {
@@ -423,12 +430,9 @@ const App: React.FC = () => {
   // The old static setInterval fallback has been removed.
 
   // --- Loading callbacks ---
-  const handleLoadProgress = useCallback(
-    (loaded: number, total: number, name: string) => {
-      setLoadProgress({ loaded, total, name });
-    },
-    [],
-  );
+  const handleLoadProgress = useCallback((loaded: number, total: number, name: string) => {
+    setLoadProgress({ loaded, total, name });
+  }, []);
 
   // Track when loading started so we can enforce a minimum display time
   const loadStartRef = useRef(0);
@@ -478,7 +482,7 @@ const App: React.FC = () => {
     setSpeed(gameState, sp);
   }, []);
 
-  const handleSelectTool = useCallback((tool: string) => {
+  const _handleSelectTool = useCallback((tool: string) => {
     selectTool(gameState, tool);
   }, []);
 
@@ -525,23 +529,26 @@ const App: React.FC = () => {
     setShowMandates(true);
   }, []);
 
-  const handleSovietTab = useCallback((tab: SovietTab) => {
-    setSovietTab(tab);
-    switch (tab) {
-      case 'mandates':
-        handleShowMandates();
-        break;
-      case 'workers':
-        handleShowWorkers();
-        break;
-      case 'reports':
-        handleShowEconomy();
-        break;
-      case 'purge':
-        selectTool(gameState, 'bulldoze');
-        break;
-    }
-  }, [handleShowMandates, handleShowWorkers, handleShowEconomy]);
+  const handleSovietTab = useCallback(
+    (tab: SovietTab) => {
+      setSovietTab(tab);
+      switch (tab) {
+        case 'mandates':
+          handleShowMandates();
+          break;
+        case 'workers':
+          handleShowWorkers();
+          break;
+        case 'reports':
+          handleShowEconomy();
+          break;
+        case 'purge':
+          selectTool(gameState, 'bulldoze');
+          break;
+      }
+    },
+    [handleShowMandates, handleShowWorkers, handleShowEconomy],
+  );
 
   const handleShowDisease = useCallback(() => {
     setShowDisease(true);
@@ -610,13 +617,16 @@ const App: React.FC = () => {
     setShowSaveLoad(true);
   }, [refreshSaveState]);
 
-  const handleSaveGame = useCallback(async (name: string): Promise<boolean> => {
-    const sys = getSaveSystem();
-    if (!sys) return false;
-    const ok = await sys.save(name);
-    await refreshSaveState();
-    return ok;
-  }, [refreshSaveState]);
+  const handleSaveGame = useCallback(
+    async (name: string): Promise<boolean> => {
+      const sys = getSaveSystem();
+      if (!sys) return false;
+      const ok = await sys.save(name);
+      await refreshSaveState();
+      return ok;
+    },
+    [refreshSaveState],
+  );
 
   const handleLoadGame = useCallback(async (name: string): Promise<boolean> => {
     const sys = getSaveSystem();
@@ -629,12 +639,15 @@ const App: React.FC = () => {
     return ok;
   }, []);
 
-  const handleDeleteSave = useCallback(async (name: string): Promise<void> => {
-    const sys = getSaveSystem();
-    if (!sys) return;
-    await sys.deleteSave(name);
-    await refreshSaveState();
-  }, [refreshSaveState]);
+  const handleDeleteSave = useCallback(
+    async (name: string): Promise<void> => {
+      const sys = getSaveSystem();
+      if (!sys) return;
+      await sys.deleteSave(name);
+      await refreshSaveState();
+    },
+    [refreshSaveState],
+  );
 
   const handleExportSave = useCallback((): string | null => {
     const sys = getSaveSystem();
@@ -687,10 +700,7 @@ const App: React.FC = () => {
       <>
         <StatusBar barStyle="light-content" />
         <MainMenu onNewGame={handleNewGame} onSettings={handleSettings} />
-        <SettingsModal
-          visible={showSettings}
-          onDismiss={() => setShowSettings(false)}
-        />
+        <SettingsModal visible={showSettings} onDismiss={() => setShowSettings(false)} />
       </>
     );
   }
@@ -705,8 +715,7 @@ const App: React.FC = () => {
   }
 
   // ─── GAME (with loading overlay) ───
-  const loadPct =
-    loadProgress.total > 0 ? loadProgress.loaded / loadProgress.total : 0;
+  const loadPct = loadProgress.total > 0 ? loadProgress.loaded / loadProgress.total : 0;
 
   return (
     <>
@@ -720,10 +729,7 @@ const App: React.FC = () => {
               style={{ width: '100%', height: '100%' }}
               gl={{ antialias: true, alpha: false }}
             >
-              <Content
-                onLoadProgress={handleLoadProgress}
-                onLoadComplete={handleLoadComplete}
-              />
+              <Content onLoadProgress={handleLoadProgress} onLoadComplete={handleLoadComplete} />
             </Canvas>
           </EngineErrorBoundary>
         </View>
@@ -776,10 +782,7 @@ const App: React.FC = () => {
               unreadNotifications={unreadNotifications}
             />
 
-            <Toast
-              message={toast?.text ?? null}
-              onDismiss={handleDismissToast}
-            />
+            <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
 
             {snap.quotaTarget > 0 && (
               <QuotaHUD
@@ -792,42 +795,33 @@ const App: React.FC = () => {
 
             <Minimap />
 
-            <DirectiveHUD
-              text={snap.directiveText}
-              reward={snap.directiveReward}
-            />
+            <DirectiveHUD text={snap.directiveText} reward={snap.directiveReward} />
 
-            <LensSelector
-              activeLens={snap.activeLens}
-              onLensChange={handleLensChange}
-            />
+            <LensSelector activeLens={snap.activeLens} onLensChange={handleLensChange} />
 
-            <Advisor
-              visible={!!advisor}
-              message={advisor?.text ?? ''}
-              onDismiss={handleDismissAdvisor}
-            />
+            <Advisor visible={!!advisor} message={advisor?.text ?? ''} onDismiss={handleDismissAdvisor} />
 
             <View style={styles.bottomPanel}>
               <Ticker messages={tickerText} />
-              <Toolbar
-                activeTab={sovietTab}
-                onTabChange={handleSovietTab}
-              />
+              <Toolbar activeTab={sovietTab} onTabChange={handleSovietTab} />
               <WorkerStatusBar onShowWorkers={handleShowWorkers} />
             </View>
 
             <CursorTooltip
               visible={!!cursorTooltip}
-              tileData={cursorTooltip ? {
-                terrain: cursorTooltip.terrain,
-                type: cursorTooltip.type,
-                smog: cursorTooltip.smog,
-                watered: cursorTooltip.watered,
-                onFire: cursorTooltip.onFire,
-                zone: cursorTooltip.zone,
-                z: cursorTooltip.z,
-              } : { terrain: 'grass', smog: 0, watered: false, onFire: false, z: 0 }}
+              tileData={
+                cursorTooltip
+                  ? {
+                      terrain: cursorTooltip.terrain,
+                      type: cursorTooltip.type,
+                      smog: cursorTooltip.smog,
+                      watered: cursorTooltip.watered,
+                      onFire: cursorTooltip.onFire,
+                      zone: cursorTooltip.zone,
+                      z: cursorTooltip.z,
+                    }
+                  : { terrain: 'grass', smog: 0, watered: false, onFire: false, z: 0 }
+              }
               position={cursorTooltip ? { x: cursorTooltip.screenX, y: cursorTooltip.screenY } : { x: 0, y: 0 }}
             />
           </View>
@@ -861,50 +855,23 @@ const App: React.FC = () => {
           onRestart={handleRestart}
         />
 
-        <PersonnelFilePanel
-          visible={showPersonnelFile}
-          onDismiss={() => setShowPersonnelFile(false)}
-        />
+        <PersonnelFilePanel visible={showPersonnelFile} onDismiss={() => setShowPersonnelFile(false)} />
 
-        <AchievementsPanel
-          visible={showAchievements}
-          onDismiss={() => setShowAchievements(false)}
-        />
+        <AchievementsPanel visible={showAchievements} onDismiss={() => setShowAchievements(false)} />
 
-        <LeadershipPanel
-          visible={showLeadership}
-          onDismiss={() => setShowLeadership(false)}
-        />
+        <LeadershipPanel visible={showLeadership} onDismiss={() => setShowLeadership(false)} />
 
-        <EconomyPanel
-          visible={showEconomy}
-          onDismiss={() => setShowEconomy(false)}
-        />
+        <EconomyPanel visible={showEconomy} onDismiss={() => setShowEconomy(false)} />
 
-        <WorkerRosterPanel
-          visible={showWorkers}
-          onDismiss={() => setShowWorkers(false)}
-        />
+        <WorkerRosterPanel visible={showWorkers} onDismiss={() => setShowWorkers(false)} />
 
-        <MandateProgressPanel
-          visible={showMandates}
-          onDismiss={() => setShowMandates(false)}
-        />
+        <MandateProgressPanel visible={showMandates} onDismiss={() => setShowMandates(false)} />
 
-        <DiseasePanel
-          visible={showDisease}
-          onDismiss={() => setShowDisease(false)}
-        />
+        <DiseasePanel visible={showDisease} onDismiss={() => setShowDisease(false)} />
 
-        <InfrastructurePanel
-          visible={showInfra}
-          onDismiss={() => setShowInfra(false)}
-        />
+        <InfrastructurePanel visible={showInfra} onDismiss={() => setShowInfra(false)} />
 
-        <EventHistoryPanel
-          visible={showEvents}
-          onDismiss={() => setShowEvents(false)}
-        />
+        <EventHistoryPanel visible={showEvents} onDismiss={() => setShowEvents(false)} />
 
         <PoliticalEntityPanel
           visible={showPolitical || politicalPanelFromScene}
@@ -914,55 +881,25 @@ const App: React.FC = () => {
           }}
         />
 
-        <ScoringPanel
-          visible={showScoring}
-          onDismiss={() => setShowScoring(false)}
-        />
+        <ScoringPanel visible={showScoring} onDismiss={() => setShowScoring(false)} />
 
-        <WeatherForecastPanel
-          visible={showWeather}
-          onDismiss={() => setShowWeather(false)}
-        />
+        <WeatherForecastPanel visible={showWeather} onDismiss={() => setShowWeather(false)} />
 
-        <EraTechTreePanel
-          visible={showEra}
-          onDismiss={() => setShowEra(false)}
-        />
+        <EraTechTreePanel visible={showEra} onDismiss={() => setShowEra(false)} />
 
-        <SettlementProgressPanel
-          visible={showSettlement}
-          onDismiss={() => setShowSettlement(false)}
-        />
+        <SettlementProgressPanel visible={showSettlement} onDismiss={() => setShowSettlement(false)} />
 
-        <PolitburoPanel
-          visible={showPolitburo}
-          onDismiss={() => setShowPolitburo(false)}
-        />
+        <PolitburoPanel visible={showPolitburo} onDismiss={() => setShowPolitburo(false)} />
 
-        <CompulsoryDeliveriesPanel
-          visible={showDeliveries}
-          onDismiss={() => setShowDeliveries(false)}
-        />
+        <CompulsoryDeliveriesPanel visible={showDeliveries} onDismiss={() => setShowDeliveries(false)} />
 
-        <MinigameReferencePanel
-          visible={showMinigames}
-          onDismiss={() => setShowMinigames(false)}
-        />
+        <MinigameReferencePanel visible={showMinigames} onDismiss={() => setShowMinigames(false)} />
 
-        <PravdaArchivePanel
-          visible={showPravda}
-          onDismiss={() => setShowPravda(false)}
-        />
+        <PravdaArchivePanel visible={showPravda} onDismiss={() => setShowPravda(false)} />
 
-        <WorkerAnalyticsPanel
-          visible={showWorkerAnalytics}
-          onDismiss={() => setShowWorkerAnalytics(false)}
-        />
+        <WorkerAnalyticsPanel visible={showWorkerAnalytics} onDismiss={() => setShowWorkerAnalytics(false)} />
 
-        <EconomyDetailPanel
-          visible={showEconomyDetail}
-          onDismiss={() => setShowEconomyDetail(false)}
-        />
+        <EconomyDetailPanel visible={showEconomyDetail} onDismiss={() => setShowEconomyDetail(false)} />
 
         <SaveLoadPanel
           visible={showSaveLoad}
@@ -977,15 +914,9 @@ const App: React.FC = () => {
           lastSaveTime={lastSaveTime}
         />
 
-        <ConsumerGoodsMarketPanel
-          visible={showMarket}
-          onDismiss={() => setShowMarket(false)}
-        />
+        <ConsumerGoodsMarketPanel visible={showMarket} onDismiss={() => setShowMarket(false)} />
 
-        <NotificationHistory
-          visible={showNotifications}
-          onDismiss={() => setShowNotifications(false)}
-        />
+        <NotificationHistory visible={showNotifications} onDismiss={() => setShowNotifications(false)} />
 
         <BuildingInspectorPanel
           visible={!!buildingInspector}
@@ -1002,15 +933,9 @@ const App: React.FC = () => {
           onDismiss={handleDismissCitizenDossier}
         />
 
-        <SettingsModal
-          visible={showSettings}
-          onDismiss={() => setShowSettings(false)}
-        />
+        <SettingsModal visible={showSettings} onDismiss={() => setShowSettings(false)} />
 
-        <IntroModal
-          visible={showIntro}
-          onDismiss={handleDismissIntro}
-        />
+        <IntroModal visible={showIntro} onDismiss={handleDismissIntro} />
 
         {/* Radial menus — topmost overlays */}
         <RadialBuildMenu />

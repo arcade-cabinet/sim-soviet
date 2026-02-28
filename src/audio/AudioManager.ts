@@ -10,10 +10,10 @@
  *   manager.startPlaylist();
  */
 
-import { GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS, getTrack } from './AudioManifest';
 import { assetUrl } from '../utils/assetPath';
+import { GAMEPLAY_PLAYLIST, getTrack, MUSIC_CONTEXTS } from './AudioManifest';
 
-const AUDIO_BASE_PATH = assetUrl('assets/audio/music') + '/';
+const AUDIO_BASE_PATH = `${assetUrl('assets/audio/music')}/`;
 const CROSSFADE_MS = 2000;
 const MASTER_VOLUME = 0.5;
 
@@ -23,7 +23,6 @@ class AudioManager {
   private audioCtx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private currentSource: AudioBufferSourceNode | null = null;
-  private currentTrackVolume = 1;
   private bufferCache: Map<string, AudioBuffer> = new Map();
 
   private playlist: string[] = [];

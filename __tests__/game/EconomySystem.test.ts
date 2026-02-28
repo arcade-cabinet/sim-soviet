@@ -225,9 +225,7 @@ describe('EconomySystem — Trudodni', () => {
     const worker = new EconomySystem('thaw', 'worker');
     const tovarish = new EconomySystem('thaw', 'tovarish');
 
-    expect(worker.getTrudodni().minimumRequired).toBeLessThan(
-      tovarish.getTrudodni().minimumRequired
-    );
+    expect(worker.getTrudodni().minimumRequired).toBeLessThan(tovarish.getTrudodni().minimumRequired);
   });
 
   it('all known buildings have positive trudodni rates', () => {
@@ -1011,9 +1009,7 @@ describe('EconomySystem — Heating', () => {
 
   it('determineHeatingTier degrades to crumbling after threshold ticks', () => {
     expect(determineHeatingTier(200, DISTRICT_TO_CRUMBLING_TICKS, 'district')).toBe('crumbling');
-    expect(determineHeatingTier(200, DISTRICT_TO_CRUMBLING_TICKS + 100, 'district')).toBe(
-      'crumbling'
-    );
+    expect(determineHeatingTier(200, DISTRICT_TO_CRUMBLING_TICKS + 100, 'district')).toBe('crumbling');
   });
 
   it('determineHeatingTier does not crumble before threshold', () => {
@@ -1091,9 +1087,7 @@ describe('EconomySystem — Heating', () => {
   });
 
   it('crumbling tier has lower efficiency than district', () => {
-    expect(HEATING_CONFIGS.crumbling.baseEfficiency).toBeLessThan(
-      HEATING_CONFIGS.district.baseEfficiency
-    );
+    expect(HEATING_CONFIGS.crumbling.baseEfficiency).toBeLessThan(HEATING_CONFIGS.district.baseEfficiency);
   });
 });
 

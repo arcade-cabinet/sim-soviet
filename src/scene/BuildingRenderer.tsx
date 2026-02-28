@@ -12,19 +12,15 @@
  * R3F migration: uses drei's useGLTF + Clone for model instancing.
  * Each building wrapped in Suspense since useGLTF suspends on first load.
  */
-import React, { useEffect, useRef, Suspense } from 'react';
+
+import { Clone, useGLTF } from '@react-three/drei';
+import type React from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { useGLTF, Clone } from '@react-three/drei';
+import type { SettlementTier } from '../game/SettlementSystem';
 import { getModelName } from './ModelMapping';
 import { getModelUrl } from './ModelPreloader';
-import {
-  applyTierTint,
-  applyPoweredState,
-  applyFireTint,
-  flashTierTransition,
-  clearTintData,
-} from './TierTinting';
-import type { SettlementTier } from '../game/SettlementSystem';
+import { applyFireTint, applyPoweredState, applyTierTint, clearTintData } from './TierTinting';
 
 export interface BuildingState {
   id: string;
@@ -69,7 +65,7 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     let yOffset = 0;
     const box = new THREE.Box3().setFromObject(group);
     const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
+    const _center = box.getCenter(new THREE.Vector3());
     const maxFootprint = Math.max(size.x, size.z);
 
     if (maxFootprint > 0) {
@@ -78,16 +74,12 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
 
       // Recompute after scaling
       const scaledBox = new THREE.Box3().setFromObject(group);
-      const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+      const _scaledCenter = scaledBox.getCenter(new THREE.Vector3());
       const scaledMin = scaledBox.min;
       yOffset = -scaledMin.y;
     }
 
-    group.position.set(
-      building.gridX + 0.5,
-      building.elevation * 0.5 + yOffset,
-      building.gridY + 0.5,
-    );
+    group.position.set(building.gridX + 0.5, building.elevation * 0.5 + yOffset, building.gridY + 0.5);
 
     // Store yOffset for later updates
     group.userData._yOffset = yOffset;
@@ -108,7 +100,7 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     return () => {
       clearTintData(group);
     };
-  }, [modelUrl, settlementTier]);
+  }, [settlementTier, building.elevation, building.gridX, building.gridY, building.onFire, building.powered]);
 
   // Update position and visual states when building data changes
   useEffect(() => {
@@ -116,11 +108,7 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     if (!group) return;
 
     const yOffset = group.userData._yOffset ?? 0;
-    group.position.set(
-      building.gridX + 0.5,
-      building.elevation * 0.5 + yOffset,
-      building.gridY + 0.5,
-    );
+    group.position.set(building.gridX + 0.5, building.elevation * 0.5 + yOffset, building.gridY + 0.5);
 
     // Re-apply tint from base (resets powered/fire modifications)
     applyTierTint(group, settlementTier);
@@ -137,11 +125,8 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
 
 // ── Main BuildingRenderer ───────────────────────────────────────────────────
 
-const BuildingRenderer: React.FC<BuildingRendererProps> = ({
-  buildings,
-  settlementTier = 'selo',
-}) => {
-  const lastTierRef = useRef<SettlementTier>(settlementTier);
+const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings, settlementTier = 'selo' }) => {
+  const _lastTierRef = useRef<SettlementTier>(settlementTier);
 
   // Detect tier changes for flash effect
   // (Individual BuildingMesh components handle re-tinting via useEffect deps)
@@ -162,11 +147,7 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({
 
         return (
           <Suspense key={building.id} fallback={null}>
-            <BuildingMesh
-              building={building}
-              modelUrl={modelUrl}
-              settlementTier={settlementTier}
-            />
+            <BuildingMesh building={building} modelUrl={modelUrl} settlementTier={settlementTier} />
           </Suspense>
         );
       })}

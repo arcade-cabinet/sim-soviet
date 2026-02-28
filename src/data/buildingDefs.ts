@@ -12,13 +12,7 @@
 
 // Vite handles JSON imports — this resolves at build time.
 import generatedJson from './buildingDefs.generated.json';
-import type {
-  BuildingDef,
-  BuildingDefsFile,
-  Footprint,
-  Role,
-  SpriteData,
-} from './buildingDefs.schema';
+import type { BuildingDef, BuildingDefsFile, Footprint, Role, SpriteData } from './buildingDefs.schema';
 import { BuildingDefsFileSchema } from './buildingDefs.schema';
 
 // ── Validate at module load ──────────────────────────────────────────────────

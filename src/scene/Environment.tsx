@@ -10,9 +10,11 @@
  *
  * HDRI credits: Poly Haven (CC0) — snowy_field, winter_sky, snowy_park_01
  */
-import React, { useMemo } from 'react';
+
+import { Environment as DreiEnvironment, Sky, useTexture } from '@react-three/drei';
+import type React from 'react';
+import { useMemo } from 'react';
 import * as THREE from 'three';
-import { Sky, Environment as DreiEnvironment, useTexture } from '@react-three/drei';
 import { GRID_SIZE } from '../engine/GridTypes';
 import { assetUrl } from '../utils/assetPath';
 import type { Season } from './TerrainGrid';
@@ -36,13 +38,32 @@ function getHdriFile(season: Season): string {
 function getSkyParams(season: Season) {
   switch (season) {
     case 'winter':
-      return { turbidity: 20, rayleigh: 1, mieCoefficient: 0.01, mieDirectionalG: 0.8, inclination: 0.42, azimuth: 0.25 };
+      return {
+        turbidity: 20,
+        rayleigh: 1,
+        mieCoefficient: 0.01,
+        mieDirectionalG: 0.8,
+        inclination: 0.42,
+        azimuth: 0.25,
+      };
     case 'autumn':
-      return { turbidity: 15, rayleigh: 2, mieCoefficient: 0.008, mieDirectionalG: 0.8, inclination: 0.45, azimuth: 0.25 };
-    case 'summer':
-    case 'spring':
+      return {
+        turbidity: 15,
+        rayleigh: 2,
+        mieCoefficient: 0.008,
+        mieDirectionalG: 0.8,
+        inclination: 0.45,
+        azimuth: 0.25,
+      };
     default:
-      return { turbidity: 10, rayleigh: 2, mieCoefficient: 0.005, mieDirectionalG: 0.8, inclination: 0.49, azimuth: 0.25 };
+      return {
+        turbidity: 10,
+        rayleigh: 2,
+        mieCoefficient: 0.005,
+        mieDirectionalG: 0.8,
+        inclination: 0.49,
+        azimuth: 0.25,
+      };
   }
 }
 
@@ -116,11 +137,7 @@ const Ground: React.FC<{ season: Season }> = ({ season }) => {
   }, [colorMap, normalMap, roughnessMap]);
 
   return (
-    <mesh
-      position={[center, GROUND_Y, center]}
-      rotation={[-Math.PI / 2, 0, 0]}
-      receiveShadow
-    >
+    <mesh position={[center, GROUND_Y, center]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[GROUND_SIZE, GROUND_SIZE, 4, 4]} />
       <meshStandardMaterial
         map={colorMap}
@@ -153,14 +170,15 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
       Math.sin(inclination * Math.PI) * dist,
       Math.sin(azimuth * 2 * Math.PI) * Math.cos(inclination * Math.PI) * dist,
     ];
-  }, [skyParams.inclination, skyParams.azimuth]);
+  }, [skyParams.inclination, skyParams.azimuth, skyParams]);
 
   // Pre-compute hill positions (offset by grid center)
-  const hillsData = useMemo(() =>
-    HILLS.map((h) => ({
-      position: [h.x + center, h.sy * 0.3, h.z + center] as [number, number, number],
-      scale: [h.sx, h.sy, h.sz] as [number, number, number],
-    })),
+  const hillsData = useMemo(
+    () =>
+      HILLS.map((h) => ({
+        position: [h.x + center, h.sy * 0.3, h.z + center] as [number, number, number],
+        scale: [h.sx, h.sy, h.sz] as [number, number, number],
+      })),
     [center],
   );
 

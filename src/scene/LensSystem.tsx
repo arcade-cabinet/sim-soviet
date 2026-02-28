@@ -16,9 +16,7 @@
  * most common state during normal gameplay). The SmogOverlay and AuraRenderer
  * components already handle their respective lens visualization independently.
  */
-import React from 'react';
-
-import { gameState, type LensType } from '../engine/GameState';
+import type React from 'react';
 
 const LensSystem: React.FC = () => {
   // TODO: Implement lens overlay system for R3F

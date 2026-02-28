@@ -15,12 +15,7 @@ import {
   resourceStore,
   unpoweredBuildings,
 } from '@/ecs/archetypes';
-import {
-  createBuilding,
-  createCitizen,
-  createMetaStore,
-  createResourceStore,
-} from '@/ecs/factories';
+import { createBuilding, createCitizen, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 
 describe('archetypes', () => {

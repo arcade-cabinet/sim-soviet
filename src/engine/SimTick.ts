@@ -3,13 +3,13 @@
  * Faithful port of poc.html lines 618-868.
  */
 
-import { GRID_SIZE, TICKS_PER_MONTH } from './GridTypes';
-import type { GameState, BuildingInstance } from './GameState';
 import { BUILDING_TYPES, GROWN_TYPES } from './BuildingTypes';
 import { DIRECTIVES } from './Directives';
-import { getSeason, updateWeatherSystem } from './WeatherSystem';
+import type { BuildingInstance, GameState } from './GameState';
+import { GRID_SIZE, TICKS_PER_MONTH } from './GridTypes';
+import { addFloatingText, setSpeed, showAdvisor, showToast } from './helpers';
 import { updateWaterNetwork } from './WaterNetwork';
-import { addFloatingText, showToast, showAdvisor, setSpeed } from './helpers';
+import { getSeason, updateWeatherSystem } from './WeatherSystem';
 
 export function simTick(state: GameState): void {
   state.date.tick++;
@@ -17,22 +17,13 @@ export function simTick(state: GameState): void {
 
   // --- Directive checking ---
   const currentDir = DIRECTIVES[state.directiveIndex];
-  if (currentDir && currentDir.check()) {
+  if (currentDir?.check()) {
     state.money += currentDir.reward;
     showToast(state, `DIRECTIVE COMPLETE: +${currentDir.reward}₽`);
-    addFloatingText(
-      state,
-      GRID_SIZE / 2,
-      GRID_SIZE / 2,
-      `DIRECTIVE: +${currentDir.reward}₽`,
-      '#cfaa48'
-    );
+    addFloatingText(state, GRID_SIZE / 2, GRID_SIZE / 2, `DIRECTIVE: +${currentDir.reward}₽`, '#cfaa48');
     state.directiveIndex++;
     if (DIRECTIVES[state.directiveIndex]) {
-      showAdvisor(
-        state,
-        'New Directive Issued: ' + DIRECTIVES[state.directiveIndex].text
-      );
+      showAdvisor(state, `New Directive Issued: ${DIRECTIVES[state.directiveIndex].text}`);
     }
     state.notify();
   }
@@ -45,22 +36,11 @@ export function simTick(state: GameState): void {
     const cell = state.grid[ly][lx];
 
     const activeGulags = state.buildings.filter(
-      (b) =>
-        b.type === 'gulag' &&
-        state.grid[b.y][b.x].onFire === 0 &&
-        b.powered !== false
+      (b) => b.type === 'gulag' && state.grid[b.y][b.x].onFire === 0 && b.powered !== false,
     );
-    const isPacified = activeGulags.some(
-      (g) => Math.hypot(g.x - lx, g.y - ly) <= 7
-    );
+    const isPacified = activeGulags.some((g) => Math.hypot(g.x - lx, g.y - ly) <= 7);
 
-    if (
-      cell.type &&
-      cell.type !== 'road' &&
-      cell.type !== 'pipe' &&
-      !isPacified &&
-      cell.onFire === 0
-    ) {
+    if (cell.type && cell.type !== 'road' && cell.type !== 'pipe' && !isPacified && cell.onFire === 0) {
       cell.onFire = 1;
       showToast(state, 'LIGHTNING STRUCK A BUILDING!');
     } else if (cell.terrain === 'tree' && !cell.type && !isPacified) {
@@ -78,10 +58,8 @@ export function simTick(state: GameState): void {
   ) {
     state.meteor.active = true;
     do {
-      state.meteor.tx =
-        Math.floor(Math.random() * (GRID_SIZE - 4)) + 2;
-      state.meteor.ty =
-        Math.floor(Math.random() * (GRID_SIZE - 4)) + 2;
+      state.meteor.tx = Math.floor(Math.random() * (GRID_SIZE - 4)) + 2;
+      state.meteor.ty = Math.floor(Math.random() * (GRID_SIZE - 4)) + 2;
     } while (state.meteor.ty === state.train.y);
     state.meteor.x = state.meteor.tx + 15;
     state.meteor.y = state.meteor.ty - 15;
@@ -116,16 +94,10 @@ export function simTick(state: GameState): void {
         houses[Math.floor(Math.random() * houses.length)].x,
         houses[Math.floor(Math.random() * houses.length)].y,
         `+${tax}₽ TAX`,
-        '#ffca28'
+        '#ffca28',
       );
     } else {
-      addFloatingText(
-        state,
-        GRID_SIZE / 2,
-        GRID_SIZE / 2,
-        `+${tax}₽ TAX`,
-        '#ffca28'
-      );
+      addFloatingText(state, GRID_SIZE / 2, GRID_SIZE / 2, `+${tax}₽ TAX`, '#ffca28');
     }
 
     // Spring thaw — ice roads sink
@@ -134,18 +106,10 @@ export function simTick(state: GameState): void {
       for (let y = 0; y < GRID_SIZE; y++) {
         for (let x = 0; x < GRID_SIZE; x++) {
           const cell = state.grid[y][x];
-          if (
-            cell.terrain === 'water' &&
-            cell.type === 'road' &&
-            !cell.bridge &&
-            !cell.isRail
-          ) {
+          if (cell.terrain === 'water' && cell.type === 'road' && !cell.bridge && !cell.isRail) {
             cell.type = null;
             sunkRoads++;
-            state.traffic = state.traffic.filter(
-              (v) =>
-                !(Math.round(v.x) === x && Math.round(v.y) === y)
-            );
+            state.traffic = state.traffic.filter((v) => !(Math.round(v.x) === x && Math.round(v.y) === y));
           }
         }
       }
@@ -155,16 +119,10 @@ export function simTick(state: GameState): void {
     }
 
     const activeTowers = state.buildings.filter(
-      (b) =>
-        b.type === 'tower' &&
-        state.grid[b.y][b.x].onFire === 0 &&
-        b.powered
+      (b) => b.type === 'tower' && state.grid[b.y][b.x].onFire === 0 && b.powered,
     );
     const activeGulags = state.buildings.filter(
-      (b) =>
-        b.type === 'gulag' &&
-        state.grid[b.y][b.x].onFire === 0 &&
-        b.powered
+      (b) => b.type === 'gulag' && state.grid[b.y][b.x].onFire === 0 && b.powered,
     );
 
     // --- ZONING GROWTH LOGIC ---
@@ -195,10 +153,8 @@ export function simTick(state: GameState): void {
             }
           } else if (GROWN_TYPES[cell.type]) {
             // Upgrade logic
-            const b = state.buildings.find(
-              (bl) => bl.x === x && bl.y === y
-            );
-            if (b && b.powered && cell.watered) {
+            const b = state.buildings.find((bl) => bl.x === x && bl.y === y);
+            if (b?.powered && cell.watered) {
               const maxLevel = GROWN_TYPES[b.type].length - 1;
               if (b.level < maxLevel && Math.random() < 0.08) {
                 let canUpgrade = false;
@@ -207,12 +163,8 @@ export function simTick(state: GameState): void {
                 } else if (b.level === 1) {
                   // Level 2 -> Level 3 needs Aura and Low Smog
                   const hasAura =
-                    activeTowers.some(
-                      (t) => Math.hypot(t.x - x, t.y - y) <= 5
-                    ) ||
-                    activeGulags.some(
-                      (g) => Math.hypot(g.x - x, g.y - y) <= 7
-                    );
+                    activeTowers.some((t) => Math.hypot(t.x - x, t.y - y) <= 5) ||
+                    activeGulags.some((g) => Math.hypot(g.x - x, g.y - y) <= 7);
                   if (hasAura && cell.smog < 25) canUpgrade = true;
                 }
 
@@ -240,14 +192,9 @@ export function simTick(state: GameState): void {
   let reqWater = 0;
 
   state.buildings.forEach((b) => {
-    const baseStats =
-      BUILDING_TYPES[b.type] ||
-      (GROWN_TYPES[b.type] ? GROWN_TYPES[b.type][b.level || 0] : null);
+    const baseStats = BUILDING_TYPES[b.type] || (GROWN_TYPES[b.type] ? GROWN_TYPES[b.type][b.level || 0] : null);
     if (!baseStats) return;
-    if (
-      (b.type === 'power' || b.type === 'nuke' || b.type === 'tap') &&
-      state.grid[b.y][b.x].onFire === 0
-    ) {
+    if ((b.type === 'power' || b.type === 'nuke' || b.type === 'tap') && state.grid[b.y][b.x].onFire === 0) {
       prodPower += (baseStats as any).power || 0;
     }
     if (b.type === 'pump' && state.grid[b.y][b.x].onFire === 0) {
@@ -267,11 +214,7 @@ export function simTick(state: GameState): void {
       if (state.grid[y][x].terrain === 'irradiated') nextSmog[y][x] += 30;
       const s = state.grid[y][x].smog;
       if (s > 0) {
-        const decay =
-          state.currentWeather === 'rain' ||
-          state.currentWeather === 'storm'
-            ? 0.25
-            : 0.35;
+        const decay = state.currentWeather === 'rain' || state.currentWeather === 'storm' ? 0.25 : 0.35;
         const spread = s * 0.15;
         const kept = s * decay;
         nextSmog[y][x] += kept;
@@ -284,17 +227,10 @@ export function simTick(state: GameState): void {
   }
 
   // --- Active towers / gulags / zeppelins (per-tick) ---
-  const activeTowers = state.buildings.filter(
-    (b) => b.type === 'tower' && state.grid[b.y][b.x].onFire === 0
-  );
-  const activeGulags = state.buildings.filter(
-    (b) => b.type === 'gulag' && state.grid[b.y][b.x].onFire === 0
-  );
+  const activeTowers = state.buildings.filter((b) => b.type === 'tower' && state.grid[b.y][b.x].onFire === 0);
+  const activeGulags = state.buildings.filter((b) => b.type === 'gulag' && state.grid[b.y][b.x].onFire === 0);
   const activeMasts = state.buildings.filter(
-    (b) =>
-      b.type === 'mast' &&
-      b.powered !== false &&
-      state.grid[b.y][b.x].onFire === 0
+    (b) => b.type === 'mast' && b.powered !== false && state.grid[b.y][b.x].onFire === 0,
   ).length;
 
   while (state.zeppelins.length < activeMasts) {
@@ -319,17 +255,12 @@ export function simTick(state: GameState): void {
 
   // --- Building simulation ---
   state.buildings.forEach((b) => {
-    const stats =
-      BUILDING_TYPES[b.type] ||
-      (GROWN_TYPES[b.type] ? GROWN_TYPES[b.type][b.level || 0] : null);
+    const stats = BUILDING_TYPES[b.type] || (GROWN_TYPES[b.type] ? GROWN_TYPES[b.type][b.level || 0] : null);
     if (!stats) return;
 
     b.powered = true;
     const cell = state.grid[b.y][b.x];
-    const isPacified = activeGulags.some(
-      (g) =>
-        Math.hypot(g.x - b.x, g.y - b.y) <= 7 && g.powered !== false
-    );
+    const isPacified = activeGulags.some((g) => Math.hypot(g.x - b.x, g.y - b.y) <= 7 && g.powered !== false);
 
     if (isPacified) cell.onFire = 0;
 
@@ -345,20 +276,13 @@ export function simTick(state: GameState): void {
             { x: b.x, y: b.y - 1 },
           ];
           neighbors.forEach((n) => {
-            if (
-              n.x >= 0 &&
-              n.x < GRID_SIZE &&
-              n.y >= 0 &&
-              n.y < GRID_SIZE
-            ) {
+            if (n.x >= 0 && n.x < GRID_SIZE && n.y >= 0 && n.y < GRID_SIZE) {
               const nCell = state.grid[n.y][n.x];
               if (
                 nCell.type &&
                 nCell.type !== 'road' &&
                 nCell.onFire === 0 &&
-                !activeGulags.some(
-                  (g) => Math.hypot(g.x - n.x, g.y - n.y) <= 7
-                )
+                !activeGulags.some((g) => Math.hypot(g.x - n.x, g.y - n.y) <= 7)
               ) {
                 nCell.onFire = 1;
               }
@@ -400,11 +324,7 @@ export function simTick(state: GameState): void {
       let multiplier = 1;
       if (
         (stats as any).prod &&
-        activeTowers.some(
-          (t) =>
-            Math.hypot(t.x - b.x, t.y - b.y) <= 5 &&
-            t.powered !== false
-        )
+        activeTowers.some((t) => Math.hypot(t.x - b.x, t.y - b.y) <= 5 && t.powered !== false)
       ) {
         multiplier = 2;
       }
@@ -436,12 +356,7 @@ export function simTick(state: GameState): void {
       }
 
       // Random riots
-      if (
-        !isPacified &&
-        !['tower', 'gulag', 'mast', 'space', 'station', 'tap', 'pump'].includes(
-          b.type
-        )
-      ) {
+      if (!isPacified && !['tower', 'gulag', 'mast', 'space', 'station', 'tap', 'pump'].includes(b.type)) {
         let riotChance = 0;
         if (starvation) riotChance += 0.05;
         if (sobering) riotChance += 0.02;
@@ -452,12 +367,7 @@ export function simTick(state: GameState): void {
           if (state.speed > 1) setSpeed(state, 1);
         }
       }
-    } else if (
-      isMonthPassed &&
-      cell.zone &&
-      !b.powered &&
-      Math.random() < 0.2
-    ) {
+    } else if (isMonthPassed && cell.zone && !b.powered && Math.random() < 0.2) {
       // Abandonment if unpowered
       if (b.level > 0) {
         b.level--;
@@ -477,9 +387,7 @@ export function simTick(state: GameState): void {
     const c = state.grid[b.y][b.x];
     c.type = null;
     c.onFire = 0;
-    state.buildings = state.buildings.filter(
-      (ob) => !(ob.x === b.x && ob.y === b.y)
-    );
+    state.buildings = state.buildings.filter((ob) => !(ob.x === b.x && ob.y === b.y));
   });
 
   // --- Meltdown ---
@@ -499,9 +407,7 @@ export function simTick(state: GameState): void {
               if (!state.grid[ny][nx].isRail) {
                 state.grid[ny][nx].bridge = false;
               }
-              state.buildings = state.buildings.filter(
-                (ob) => !(ob.x === nx && ob.y === ny)
-              );
+              state.buildings = state.buildings.filter((ob) => !(ob.x === nx && ob.y === ny));
             }
           }
         }
@@ -534,11 +440,7 @@ export function simTick(state: GameState): void {
   let housingCap = 0;
   let smogDeaths = 0;
   state.buildings.forEach((b) => {
-    if (
-      b.type === 'housing' &&
-      b.powered &&
-      state.grid[b.y][b.x].onFire === 0
-    ) {
+    if (b.type === 'housing' && b.powered && state.grid[b.y][b.x].onFire === 0) {
       housingCap += GROWN_TYPES[b.type][b.level || 0].cap!;
       if (state.grid[b.y][b.x].smog > 40) {
         smogDeaths += Math.floor(state.grid[b.y][b.x].smog / 20);
@@ -549,11 +451,7 @@ export function simTick(state: GameState): void {
   if (smogDeaths > 0 && isMonthPassed) {
     state.pop = Math.max(0, state.pop - smogDeaths);
     showToast(state, `CHOKING: -${smogDeaths} POPULATION`);
-  } else if (
-    state.pop < housingCap &&
-    state.food > 10 &&
-    isMonthPassed
-  ) {
+  } else if (state.pop < housingCap && state.food > 10 && isMonthPassed) {
     state.pop += Math.floor(Math.random() * 3);
   }
 
@@ -576,11 +474,7 @@ function checkQuota(state: GameState): void {
       state.quota.deadlineYear = state.date.year + 5;
       state.quota.current = 0;
     } else {
-      showAdvisor(
-        state,
-        'Min. Planning: You failed the 5-Year Plan. The KGB is at your door.',
-        'PLANNING'
-      );
+      showAdvisor(state, 'Min. Planning: You failed the 5-Year Plan. The KGB is at your door.', 'PLANNING');
       state.quota.deadlineYear += 5;
     }
   }

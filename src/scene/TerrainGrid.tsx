@@ -11,9 +11,10 @@
  * R3F migration: uses <mesh> with <bufferGeometry> + <meshStandardMaterial>
  * with vertexColors. Trees/mountains/marshes rendered as grouped JSX meshes.
  */
-import React, { useMemo } from 'react';
+import type React from 'react';
+import { useMemo } from 'react';
 import * as THREE from 'three';
-import { GRID_SIZE, type TerrainType, type GridCell } from '../engine/GridTypes';
+import { GRID_SIZE, type GridCell, type TerrainType } from '../engine/GridTypes';
 
 /** Seeded PRNG (mulberry32) for deterministic scatter */
 function mulberry32(seed: number) {
@@ -41,59 +42,57 @@ function getTerrainColor(terrain: TerrainType, season: Season): [number, number,
         case 'winter':
           return [0.75, 0.78, 0.82]; // snow-covered
         case 'autumn':
-          return [0.55, 0.50, 0.30]; // brown-yellow
+          return [0.55, 0.5, 0.3]; // brown-yellow
         case 'spring':
-          return [0.40, 0.55, 0.30]; // fresh green
-        case 'summer':
+          return [0.4, 0.55, 0.3]; // fresh green
         default:
-          return [0.35, 0.50, 0.28]; // green-gray Soviet grass
+          return [0.35, 0.5, 0.28]; // green-gray Soviet grass
       }
     case 'water':
-      if (season === 'winter') return [0.65, 0.70, 0.75]; // frozen
-      return [0.20, 0.35, 0.55]; // dark blue
+      if (season === 'winter') return [0.65, 0.7, 0.75]; // frozen
+      return [0.2, 0.35, 0.55]; // dark blue
     case 'rail':
-      return [0.30, 0.30, 0.32]; // dark gray
+      return [0.3, 0.3, 0.32]; // dark gray
     case 'tree':
       switch (season) {
         case 'winter':
-          return [0.70, 0.73, 0.76]; // snow
+          return [0.7, 0.73, 0.76]; // snow
         case 'autumn':
-          return [0.60, 0.40, 0.20]; // orange-brown
+          return [0.6, 0.4, 0.2]; // orange-brown
         default:
-          return [0.25, 0.42, 0.20]; // dark green
+          return [0.25, 0.42, 0.2]; // dark green
       }
     case 'crater':
-      return [0.25, 0.10, 0.30]; // dark purple
+      return [0.25, 0.1, 0.3]; // dark purple
     case 'irradiated':
-      return [0.40, 0.55, 0.15]; // sickly green
+      return [0.4, 0.55, 0.15]; // sickly green
     case 'mountain':
       switch (season) {
         case 'winter':
-          return [0.80, 0.82, 0.85]; // snow-capped
+          return [0.8, 0.82, 0.85]; // snow-capped
         default:
           return [0.42, 0.38, 0.35]; // rocky gray-brown
       }
     case 'marsh':
       switch (season) {
         case 'winter':
-          return [0.60, 0.65, 0.68]; // frozen mud
+          return [0.6, 0.65, 0.68]; // frozen mud
         default:
-          return [0.30, 0.38, 0.25]; // dark boggy green
+          return [0.3, 0.38, 0.25]; // dark boggy green
       }
     case 'path':
       switch (season) {
         case 'winter':
-          return [0.58, 0.55, 0.50]; // snow-dusted dirt
+          return [0.58, 0.55, 0.5]; // snow-dusted dirt
         case 'autumn':
           return [0.42, 0.35, 0.25]; // muddy brown
         case 'spring':
           return [0.45, 0.38, 0.28]; // wet earth
-        case 'summer':
         default:
-          return [0.48, 0.40, 0.30]; // packed earth brown
+          return [0.48, 0.4, 0.3]; // packed earth brown
       }
     default:
-      return [0.35, 0.50, 0.28];
+      return [0.35, 0.5, 0.28];
   }
 }
 
@@ -103,10 +102,7 @@ function getTerrainColor(terrain: TerrainType, season: Season): [number, number,
  * Build a PlaneGeometry with per-vertex colors and elevation from grid data.
  * Each tile is a 1x1 quad on the XZ plane, offset by cell elevation.
  */
-function buildTerrainGeometry(
-  grid: GridCell[][],
-  season: Season,
-): THREE.BufferGeometry {
+function buildTerrainGeometry(grid: GridCell[][], season: Season): THREE.BufferGeometry {
   const positions: number[] = [];
   const indices: number[] = [];
   const colors: number[] = [];
@@ -130,10 +126,18 @@ function buildTerrainGeometry(
       const z0 = row;
 
       positions.push(
-        x0, y, z0,           // v0
-        x0 + 1, y, z0,       // v1
-        x0, y, z0 + 1,       // v2
-        x0 + 1, y, z0 + 1,   // v3
+        x0,
+        y,
+        z0, // v0
+        x0 + 1,
+        y,
+        z0, // v1
+        x0,
+        y,
+        z0 + 1, // v2
+        x0 + 1,
+        y,
+        z0 + 1, // v3
       );
 
       // Up-facing normals
@@ -143,10 +147,7 @@ function buildTerrainGeometry(
       }
 
       // Two triangles (CCW winding for Three.js front face)
-      indices.push(
-        vertIdx, vertIdx + 2, vertIdx + 1,
-        vertIdx + 1, vertIdx + 2, vertIdx + 3,
-      );
+      indices.push(vertIdx, vertIdx + 2, vertIdx + 1, vertIdx + 1, vertIdx + 2, vertIdx + 3);
 
       vertIdx += 4;
     }
@@ -171,7 +172,7 @@ interface TreeData {
 
 function collectTrees(grid: GridCell[][]): TreeData[] {
   const trees: TreeData[] = [];
-  const rng = mulberry32(0xF0_BE57);
+  const rng = mulberry32(0xf0_be57);
 
   for (let row = 0; row < GRID_SIZE; row++) {
     for (let col = 0; col < GRID_SIZE; col++) {
@@ -213,7 +214,7 @@ interface MountainData {
 
 function collectMountains(grid: GridCell[][]): MountainData[] {
   const mountains: MountainData[] = [];
-  const rng = mulberry32(0xD0C4_A1B5);
+  const rng = mulberry32(0xd0c4_a1b5);
 
   for (let row = 0; row < GRID_SIZE; row++) {
     for (let col = 0; col < GRID_SIZE; col++) {
@@ -283,7 +284,7 @@ interface MarshTileData {
 
 function collectMarshes(grid: GridCell[][]): MarshTileData[] {
   const marshes: MarshTileData[] = [];
-  const rng = mulberry32(0xBA_D5EA);
+  const rng = mulberry32(0xba_d5ea);
 
   for (let row = 0; row < GRID_SIZE; row++) {
     for (let col = 0; col < GRID_SIZE; col++) {
@@ -394,10 +395,7 @@ function getPuddleColor(season: Season): string {
 
 const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) => {
   // Build terrain geometry with per-vertex colors
-  const terrainGeometry = useMemo(
-    () => buildTerrainGeometry(grid, season),
-    [grid, season],
-  );
+  const terrainGeometry = useMemo(() => buildTerrainGeometry(grid, season), [grid, season]);
 
   // Collect scatter data
   const trees = useMemo(() => collectTrees(grid), [grid]);
@@ -447,10 +445,7 @@ const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) =>
       {/* Mountains — craggy cone peaks */}
       {mountains.map((mountain, mi) =>
         mountain.peaks.map((peak, pi) => (
-          <mesh
-            key={`mtn_${mi}_${pi}`}
-            position={peak.position}
-          >
+          <mesh key={`mtn_${mi}_${pi}`} position={peak.position}>
             <coneGeometry args={[peak.bottomRadius, peak.height, 5]} />
             <meshStandardMaterial color={rockColor} roughness={0.95} />
           </mesh>
@@ -461,17 +456,9 @@ const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) =>
       {marshes.map((marsh, mi) => (
         <group key={`marsh_${mi}`}>
           {/* Puddle disc (flat circle on XZ plane) */}
-          <mesh
-            position={marsh.puddle.position}
-            rotation={[-Math.PI / 2, 0, 0]}
-          >
+          <mesh position={marsh.puddle.position} rotation={[-Math.PI / 2, 0, 0]}>
             <circleGeometry args={[marsh.puddle.radius, 8]} />
-            <meshStandardMaterial
-              color={puddleColor}
-              transparent
-              opacity={0.7}
-              roughness={0.3}
-            />
+            <meshStandardMaterial color={puddleColor} transparent opacity={0.7} roughness={0.3} />
           </mesh>
 
           {/* Reeds */}
@@ -480,18 +467,12 @@ const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) =>
             return (
               <group key={`reed_${mi}_${ri}`}>
                 {/* Reed stalk */}
-                <mesh
-                  position={[rx, ry + reed.height / 2, rz]}
-                  rotation={[reed.tiltX, 0, reed.tiltZ]}
-                >
+                <mesh position={[rx, ry + reed.height / 2, rz]} rotation={[reed.tiltX, 0, reed.tiltZ]}>
                   <cylinderGeometry args={[0.015, 0.015, reed.height, 4]} />
                   <meshStandardMaterial color={reedColor} roughness={0.9} />
                 </mesh>
                 {/* Cattail tuft on top */}
-                <mesh
-                  position={[rx, ry + reed.height + 0.02, rz]}
-                  rotation={[reed.tiltX, 0, reed.tiltZ]}
-                >
+                <mesh position={[rx, ry + reed.height + 0.02, rz]} rotation={[reed.tiltX, 0, reed.tiltZ]}>
                   <coneGeometry args={[reed.tuftBottomRadius, 0.08, 5]} />
                   <meshStandardMaterial color={tuftColor} roughness={0.9} />
                 </mesh>

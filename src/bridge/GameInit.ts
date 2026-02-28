@@ -6,19 +6,19 @@
  * ready for tick().
  */
 
-import { createResourceStore, createMetaStore, createGrid } from '@/ecs/factories';
+import { GRID_SIZE } from '@/config';
+import { terrainFeatures } from '@/ecs/archetypes';
+import { createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { createBuilding } from '@/ecs/factories/buildingFactories';
 import { createStartingSettlement } from '@/ecs/factories/settlementFactories';
-import { terrainFeatures } from '@/ecs/archetypes';
 import { world } from '@/ecs/world';
-import { SimulationEngine, type SimCallbacks } from '@/game/SimulationEngine';
 import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
-import { SaveSystem } from '@/game/SaveSystem';
-import { GRID_SIZE } from '@/config';
-import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
-import type { DifficultyLevel, ConsequenceLevel } from '@/game/ScoringSystem';
 import { recalculatePaths } from '@/game/PathSystem';
+import { SaveSystem } from '@/game/SaveSystem';
+import type { ConsequenceLevel, DifficultyLevel } from '@/game/ScoringSystem';
+import { type SimCallbacks, SimulationEngine } from '@/game/SimulationEngine';
+import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 
 export interface GameInitOptions {
   difficulty?: DifficultyLevel;
@@ -36,10 +36,7 @@ let initialized = false;
  * Initialize the ECS world with all entities and return a SimulationEngine.
  * Safe to call multiple times — subsequent calls return the existing engine.
  */
-export function initGame(
-  callbacks: SimCallbacks,
-  options?: GameInitOptions
-): SimulationEngine {
+export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): SimulationEngine {
   if (engine && initialized) return engine;
 
   const difficulty = options?.difficulty ?? 'comrade';

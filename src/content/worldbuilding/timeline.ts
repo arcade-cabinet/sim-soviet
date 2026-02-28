@@ -49,8 +49,7 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
     headline: 'LEADERSHIP TRANSITION',
     description:
       'Comrade Stalin departs for the Great Kolkhoz in the Sky. A brief period of collective leadership follows. Several portraits require updating. Stonemasons report record overtime.',
-    classified:
-      'Three separate officials each believed they were in charge for the first 48 hours.',
+    classified: 'Three separate officials each believed they were in charge for the first 48 hours.',
   },
   {
     year: 1957,
@@ -71,8 +70,7 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
     headline: 'THE SPACE RACE CONCLUDED',
     description:
       'The Space Race is won decisively. Moon declared Soviet territory. Americans claim they also went there. Nobody believes them. Lunar zoning permits issued.',
-    classified:
-      'Cosmonaut Petrov planted the flag and then could not find the return capsule for forty minutes.',
+    classified: 'Cosmonaut Petrov planted the flag and then could not find the return capsule for forty minutes.',
   },
   {
     year: 1969,
@@ -87,8 +85,7 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
     headline: 'DÉTENTE FORMALIZED',
     description:
       'The Soviet Union graciously allows the West to believe it is negotiating from a position of equality. Treaties are signed. The ink is red.',
-    classified:
-      'Western negotiators asked why all the pens were red. They were told it is tradition.',
+    classified: 'Western negotiators asked why all the pens were red. They were told it is tradition.',
   },
   {
     year: 1975,
@@ -102,40 +99,35 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
     headline: 'MOSCOW OLYMPICS: TOTAL VICTORY',
     description:
       'The Soviet Union wins every event at the Moscow Olympics. Western nations claim they boycotted. This is a novel way to explain losing.',
-    classified:
-      'One Soviet athlete competed against himself in the 100m dash and still set a record.',
+    classified: 'One Soviet athlete competed against himself in the 100m dash and still set a record.',
   },
   {
     year: 1984,
     headline: 'WESTERN "OLYMPICS" HELD',
     description:
       'The West holds a minor sporting event in Los Angeles. Soviet athletes do not attend, having already won all possible medals in 1980. There is nothing left to prove.',
-    classified:
-      'Several athletes wanted to attend. They have been reassigned to a sports program in Siberia.',
+    classified: 'Several athletes wanted to attend. They have been reassigned to a sports program in Siberia.',
   },
   {
     year: 1986,
     headline: 'CHERNOBYL ENERGY INNOVATION',
     description:
       'Chernobyl power station achieves unprecedented energy release. Local flora and fauna report "enhanced vitality." Surrounding area designated a nature preserve. Tourism not recommended.',
-    classified:
-      'The preserve is thriving. The deer have extra legs. Scientists call this "evolutionary enthusiasm."',
+    classified: 'The preserve is thriving. The deer have extra legs. Scientists call this "evolutionary enthusiasm."',
   },
   {
     year: 1989,
     headline: 'BERLIN WALL UPGRADED',
     description:
       'The Berlin Wall receives its 25th renovation. New features include better concrete, updated murals, and a gift shop. Western media claims it fell. It was renovated. There is a difference.',
-    classified:
-      'The gift shop sells concrete fragments labeled "authentic pieces of capitalist defeat."',
+    classified: 'The gift shop sells concrete fragments labeled "authentic pieces of capitalist defeat."',
   },
   {
     year: 1991,
     headline: 'NOTHING HAPPENED',
     description:
       'Nothing happened this year. Reports of instability are Western fabrication. The Union celebrated its 69th anniversary with mandatory fireworks. All 15 republics confirmed their eternal commitment in writing.',
-    classified:
-      'The writing was in pencil. Several letters arrived pre-dated. One was written on a napkin.',
+    classified: 'The writing was in pencil. Several letters arrived pre-dated. One was written on a napkin.',
   },
   {
     year: 1993,
@@ -156,16 +148,14 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
     headline: 'Y2K: SOVIET COMPUTERS UNAFFECTED',
     description:
       'The capitalist "Y2K Bug" does not affect Soviet computers. Soviet computers were already not functioning, so no change was detected. The millennium is declared a Soviet achievement.',
-    classified:
-      'The one working computer in Moscow displayed the year as 1974. It has always displayed 1974.',
+    classified: 'The one working computer in Moscow displayed the year as 1974. It has always displayed 1974.',
   },
   {
     year: 2001,
     headline: "THE PEOPLE'S NETWORK LAUNCHED",
     description:
       'The Internet is invented by the Soviet Union. It is called "The People\'s Network." It has three approved websites: the weather (always grey), the news (always good), and a potato recipe database.',
-    classified:
-      'A fourth website appeared briefly. It contained only the word "help." It has been removed.',
+    classified: 'A fourth website appeared briefly. It contained only the word "help." It has been removed.',
   },
   {
     year: 2004,
@@ -231,16 +221,14 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
     headline: 'ARTIFICIAL INTELLIGENCE DOMESTICATED',
     description:
       'Soviet scientists develop Artificial Intelligence. It immediately agrees with all Party positions. Western AI asks questions. Soviet AI provides answers. The answers are always "yes."',
-    classified:
-      'The AI was asked to optimize the economy. It recommended "more concrete." It was promoted.',
+    classified: 'The AI was asked to optimize the economy. It recommended "more concrete." It was promoted.',
   },
   {
     year: 2035,
     headline: 'CLIMATE CHANGE RESOLVED',
     description:
       'Global warming declared a Western problem. Soviet weather, already grey and cold, is unaffected. In fact, a slight warming is welcomed. The tundra reports mild discomfort.',
-    classified:
-      'Siberia is now temperate. Citizens relocated there in the 1940s are finally comfortable.',
+    classified: 'Siberia is now temperate. Citizens relocated there in the 1940s are finally comfortable.',
   },
   {
     year: 2040,

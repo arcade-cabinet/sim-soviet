@@ -248,9 +248,9 @@ class SFXManager {
 
   private playBuildingComplete(): void {
     // Soviet fanfare chord --- rising major triad (C-E-G)
-    this.makeOsc('square', 262, 0.3, 0.4);       // C4
+    this.makeOsc('square', 262, 0.3, 0.4); // C4
     this.makeOsc('square', 330, 0.25, 0.35, 0.08); // E4
-    this.makeOsc('square', 392, 0.3, 0.4, 0.16);  // G4
+    this.makeOsc('square', 392, 0.3, 0.4, 0.16); // G4
     this.makeOsc('square', 523, 0.35, 0.3, 0.24); // C5 (octave cap)
     // Triumphant noise burst
     this.noise(0.08, 0.15, 0.24);
@@ -266,7 +266,7 @@ class SFXManager {
 
   private playResourceProduce(): void {
     // Subtle chime --- single soft bell tone
-    this.makeOsc('sine', 1047, 0.15, 0.2);   // C6
+    this.makeOsc('sine', 1047, 0.15, 0.2); // C6
     this.makeOsc('sine', 1319, 0.12, 0.1, 0.03); // E6 grace note
   }
 
@@ -279,7 +279,7 @@ class SFXManager {
 
   private playQuotaFulfilled(): void {
     // Triumphant brass --- ascending 5ths (Soviet anthem feel)
-    this.makeOsc('sawtooth', 196, 0.2, 0.4);    // G3
+    this.makeOsc('sawtooth', 196, 0.2, 0.4); // G3
     this.makeOsc('sawtooth', 262, 0.2, 0.4, 0.1); // C4
     this.makeOsc('sawtooth', 330, 0.2, 0.35, 0.2); // E4
     this.makeOsc('sawtooth', 392, 0.25, 0.4, 0.3); // G4
@@ -292,7 +292,7 @@ class SFXManager {
 
   private playQuotaFailed(): void {
     // Somber descending minor chord
-    this.makeOsc('sawtooth', 330, 0.3, 0.4);      // E4
+    this.makeOsc('sawtooth', 330, 0.3, 0.4); // E4
     this.makeOsc('sawtooth', 277, 0.3, 0.35, 0.12); // C#4
     this.makeOsc('sawtooth', 220, 0.35, 0.4, 0.24); // A3
     this.makeOsc('sawtooth', 165, 0.4, 0.35, 0.36); // E3
@@ -310,7 +310,7 @@ class SFXManager {
 
   private playWorkerDeath(): void {
     // Solemn bell toll --- low sine with slow decay
-    this.makeOsc('sine', 196, 0.8, 0.4);     // G3
+    this.makeOsc('sine', 196, 0.8, 0.4); // G3
     this.makeOsc('sine', 247, 0.6, 0.2, 0.05); // B3 overtone
     this.makeOsc('sine', 131, 1.0, 0.15, 0.1); // C3 undertone
   }
@@ -318,8 +318,8 @@ class SFXManager {
   private playSeasonChange(): void {
     // Wind + crystalline chime
     this.noise(0.4, 0.15);
-    this.makeOsc('sine', 880, 0.15, 0.2, 0.05);  // A5
-    this.makeOsc('sine', 1047, 0.12, 0.15, 0.1);  // C6
+    this.makeOsc('sine', 880, 0.15, 0.2, 0.05); // A5
+    this.makeOsc('sine', 1047, 0.12, 0.15, 0.1); // C6
     this.makeOsc('sine', 1319, 0.1, 0.12, 0.15); // E6
   }
 
@@ -355,11 +355,11 @@ class SFXManager {
   private playGameOver(): void {
     // Dramatic descending chord --- dissonant resolution
     this.noise(0.15, 0.4);
-    this.makeOsc('sawtooth', 440, 0.3, 0.5, 0.05);  // A4
+    this.makeOsc('sawtooth', 440, 0.3, 0.5, 0.05); // A4
     this.makeOsc('sawtooth', 370, 0.35, 0.45, 0.15); // F#4
-    this.makeOsc('sawtooth', 294, 0.4, 0.5, 0.25);  // D4
+    this.makeOsc('sawtooth', 294, 0.4, 0.5, 0.25); // D4
     this.makeOsc('sawtooth', 220, 0.5, 0.45, 0.35); // A3
-    this.makeOsc('sawtooth', 147, 0.6, 0.5, 0.45);  // D3
+    this.makeOsc('sawtooth', 147, 0.6, 0.5, 0.45); // D3
     // Final low rumble
     this.makeOsc('sine', 55, 0.8, 0.3, 0.5);
     this.noise(0.3, 0.2, 0.6);
@@ -367,9 +367,9 @@ class SFXManager {
 
   private playAchievement(): void {
     // Star unlock --- bright ascending arpeggio
-    this.makeOsc('sine', 523, 0.1, 0.3);       // C5
-    this.makeOsc('sine', 659, 0.1, 0.3, 0.06);  // E5
-    this.makeOsc('sine', 784, 0.1, 0.3, 0.12);  // G5
+    this.makeOsc('sine', 523, 0.1, 0.3); // C5
+    this.makeOsc('sine', 659, 0.1, 0.3, 0.06); // E5
+    this.makeOsc('sine', 784, 0.1, 0.3, 0.12); // G5
     this.makeOsc('sine', 1047, 0.2, 0.35, 0.18); // C6
     // Sparkle
     this.makeOsc('sine', 2093, 0.15, 0.15, 0.25);
@@ -388,25 +388,63 @@ class SFXManager {
     this.masterGain!.gain.value = this.masterVolume * effectVol;
 
     switch (name) {
-      case 'ui_click': this.playUIClick(); break;
-      case 'ui_modal_open': this.playModalOpen(); break;
-      case 'ui_modal_close': this.playModalClose(); break;
-      case 'building_place': this.playBuildingPlace(); break;
-      case 'building_construct_tick': this.playConstructTick(); break;
-      case 'building_complete': this.playBuildingComplete(); break;
-      case 'building_demolish': this.playBuildingDemolish(); break;
-      case 'resource_produce': this.playResourceProduce(); break;
-      case 'resource_storage_full': this.playStorageFull(); break;
-      case 'quota_fulfilled': this.playQuotaFulfilled(); break;
-      case 'quota_failed': this.playQuotaFailed(); break;
-      case 'fire_start': this.playFireStart(); break;
-      case 'worker_death': this.playWorkerDeath(); break;
-      case 'season_change': this.playSeasonChange(); break;
-      case 'era_transition': this.playEraTransition(); break;
-      case 'advisor_message': this.playAdvisorMessage(); break;
-      case 'toast_notification': this.playToastNotification(); break;
-      case 'game_over': this.playGameOver(); break;
-      case 'achievement': this.playAchievement(); break;
+      case 'ui_click':
+        this.playUIClick();
+        break;
+      case 'ui_modal_open':
+        this.playModalOpen();
+        break;
+      case 'ui_modal_close':
+        this.playModalClose();
+        break;
+      case 'building_place':
+        this.playBuildingPlace();
+        break;
+      case 'building_construct_tick':
+        this.playConstructTick();
+        break;
+      case 'building_complete':
+        this.playBuildingComplete();
+        break;
+      case 'building_demolish':
+        this.playBuildingDemolish();
+        break;
+      case 'resource_produce':
+        this.playResourceProduce();
+        break;
+      case 'resource_storage_full':
+        this.playStorageFull();
+        break;
+      case 'quota_fulfilled':
+        this.playQuotaFulfilled();
+        break;
+      case 'quota_failed':
+        this.playQuotaFailed();
+        break;
+      case 'fire_start':
+        this.playFireStart();
+        break;
+      case 'worker_death':
+        this.playWorkerDeath();
+        break;
+      case 'season_change':
+        this.playSeasonChange();
+        break;
+      case 'era_transition':
+        this.playEraTransition();
+        break;
+      case 'advisor_message':
+        this.playAdvisorMessage();
+        break;
+      case 'toast_notification':
+        this.playToastNotification();
+        break;
+      case 'game_over':
+        this.playGameOver();
+        break;
+      case 'achievement':
+        this.playAchievement();
+        break;
     }
 
     // Restore master gain (effects manage their own envelopes)

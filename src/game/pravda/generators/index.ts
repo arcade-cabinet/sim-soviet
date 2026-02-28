@@ -3,13 +3,7 @@ import type { GameView } from '../../GameView';
 import { coinFlip, getPravdaRng, pick } from '../helpers';
 import { categoryFromEvent, spinEventEffects } from '../spin';
 import type { GeneratedHeadline, HeadlineGenerator } from '../types';
-import {
-  DESTRUCTION_SPINS,
-  INSTITUTIONS,
-  LEADER_TITLES,
-  QUALIFIERS,
-  WESTERN_COUNTRIES,
-} from '../wordPools';
+import { DESTRUCTION_SPINS, INSTITUTIONS, LEADER_TITLES, QUALIFIERS, WESTERN_COUNTRIES } from '../wordPools';
 import { contextualGenerators } from './absurdist';
 import { culturalVictoryGenerators } from './cultural';
 import { weatherFillerGenerators } from './daily';

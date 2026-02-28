@@ -36,10 +36,7 @@ const MODEL_MAP: Record<BuildingType, readonly [string, string, string]> = {
  * Get the GLB model name for a building type and density level.
  * Returns null if the building type is not recognized.
  */
-export function getModelName(
-  type: string,
-  level: number = 0,
-): string | null {
+export function getModelName(type: string, level: number = 0): string | null {
   const entry = MODEL_MAP[type as BuildingType];
   if (!entry) return null;
   const clamped = Math.max(0, Math.min(2, Math.floor(level)));

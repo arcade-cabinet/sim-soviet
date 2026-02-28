@@ -6,8 +6,9 @@
  * - 'terminal': Dark background with gold/green text (minigames, eras, alerts)
  */
 
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, StyleSheet, ScrollView } from 'react-native';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
+import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface SovietModalProps {
@@ -63,20 +64,12 @@ export const SovietModal: React.FC<SovietModalProps> = ({
       <View style={[styles.modal, isParchment ? styles.parchment : styles.terminal]}>
         {/* Header */}
         <View style={styles.headerRow}>
-          <Text
-            style={[styles.title, isParchment ? styles.titleParchment : styles.titleTerminal]}
-            numberOfLines={2}
-          >
+          <Text style={[styles.title, isParchment ? styles.titleParchment : styles.titleTerminal]} numberOfLines={2}>
             {title}
           </Text>
           {stampText && (
             <View style={[styles.stamp, isParchment ? styles.stampParchment : styles.stampTerminal]}>
-              <Text
-                style={[
-                  styles.stampLabel,
-                  isParchment ? styles.stampLabelParchment : styles.stampLabelTerminal,
-                ]}
-              >
+              <Text style={[styles.stampLabel, isParchment ? styles.stampLabelParchment : styles.stampLabelTerminal]}>
                 {stampText}
               </Text>
             </View>

@@ -69,8 +69,7 @@ export const externalThreatGenerators: HeadlineGenerator[] = [
   // Pattern: Western radio interference
   () => ({
     headline: `${pick(WESTERN_COUNTRIES)} RADIO PROPAGANDA JAMMED SUCCESSFULLY FOR ${randInt(100, 999)}TH DAY`,
-    subtext:
-      'Citizens report: "We cannot hear the lies." (They also cannot hear the weather forecast.)',
+    subtext: 'Citizens report: "We cannot hear the lies." (They also cannot hear the weather forecast.)',
     reality: 'The jamming equipment broke. Radio silence achieved by power outage instead.',
     category: 'threat',
   }),
@@ -87,8 +86,7 @@ export const externalThreatGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `SOVIET DELEGATION HUMILIATES ${pick(WESTERN_COUNTRIES)} AT ${pick(['UN SUMMIT', 'TRADE TALKS', 'ARMS NEGOTIATION', 'CULTURAL EXCHANGE', 'CHESS TOURNAMENT', 'SCIENTIFIC CONFERENCE'])}`,
     subtext: `Western delegates seen weeping. Soviet delegate seen smiling (approved smile #3).`,
-    reality:
-      'The Soviet delegation arrived at the wrong building. This was declared a strategic maneuver.',
+    reality: 'The Soviet delegation arrived at the wrong building. This was declared a strategic maneuver.',
     category: 'threat',
   }),
 
