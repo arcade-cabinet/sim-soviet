@@ -25,7 +25,13 @@
 
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
 import { getBuildingDef } from '@/data/buildingDefs';
-import { buildingsLogic, getMetaEntity, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
+import {
+  buildingsLogic,
+  decayableBuildings,
+  getMetaEntity,
+  getResourceEntity,
+  operationalBuildings,
+} from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import {
   constructionSystem,
@@ -174,14 +180,14 @@ export interface SubsystemSaveData {
 
 /** Maps game EraSystem IDs → EconomySystem EraIds. */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
-  war_communism: 'revolution',
-  first_plans: 'industrialization',
+  revolution: 'revolution',
+  collectivization: 'industrialization',
+  industrialization: 'industrialization',
   great_patriotic: 'wartime',
   reconstruction: 'reconstruction',
-  thaw: 'thaw',
+  thaw_and_freeze: 'thaw',
   stagnation: 'stagnation',
-  perestroika: 'perestroika',
-  eternal_soviet: 'eternal',
+  the_eternal: 'eternal',
 };
 
 /** Event IDs that should ignite a building when triggered. */
@@ -214,6 +220,10 @@ export class SimulationEngine {
   private lastDayPhase = '';
   private lastThreatLevel = '';
   private consecutiveQuotaFailures = 0;
+  /** MTS grain multiplier from last tick (applied to next tick's farm production) */
+  private mtsGrainMultiplier = 1.0;
+  /** Stakhanovite production boost active this tick (building defId → multiplier) */
+  private stakhanoviteBoosts: Map<string, number> = new Map();
   private pendingReport = false;
   private ended = false;
   /** How many times the player got away with pripiski (falsified reports). */
@@ -557,8 +567,13 @@ export class SimulationEngine {
     const eraMods = this.eraSystem.getModifiers();
     // Heating failure penalty: -50% production when heating is non-operational in winter
     const heatingPenalty = this.economySystem.getHeating().failing ? 0.5 : 1.0;
+    // FIX-03: MTS grain multiplier applied to farm production (was calculated but ignored)
     const farmMod =
-      weatherProfile.farmModifier * politburoMods.foodProductionMult * eraMods.productionMult * heatingPenalty;
+      weatherProfile.farmModifier *
+      politburoMods.foodProductionMult *
+      eraMods.productionMult *
+      heatingPenalty *
+      this.mtsGrainMultiplier;
     const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult * heatingPenalty;
 
     powerSystem();
@@ -583,7 +598,23 @@ export class SimulationEngine {
     const vodkaBefore = storeRef.resources.vodka;
     const moneyBefore = storeRef.resources.money;
 
-    productionSystem(farmMod, vodkaMod);
+    // FIX-07: Compute expanded production modifiers (skill, condition)
+    const avgSkill = this.getAverageWorkerSkill();
+    const avgCondition = this.getAverageBuildingCondition();
+    productionSystem(farmMod, vodkaMod, {
+      skillFactor: avgSkill,
+      conditionFactor: avgCondition,
+      stakhanoviteBoosts: this.stakhanoviteBoosts,
+    });
+
+    // FIX-10: Production chains — multi-step resource conversion (grain→bread, grain→vodka, etc.)
+    {
+      const chainBuildingIds: string[] = [];
+      for (const entity of buildingsLogic) {
+        chainBuildingIds.push(entity.building.defId);
+      }
+      this.economySystem.tickProductionChains(chainBuildingIds, storeRef.resources);
+    }
 
     // Storage & spoilage — capacity from buildings, seasonal food decay
     storageSystem(this.chronology.getDate().month);
@@ -610,9 +641,9 @@ export class SimulationEngine {
 
     // Disease System — outbreak checks (monthly) + disease progression (every tick)
     const diseaseResult = diseaseTick(this.chronology.getDate().totalTicks, this.chronology.getDate().month);
-    // Sync disease deaths to the resource store
-    if (diseaseResult.deaths > 0) {
-      storeRef.resources.population = Math.max(0, storeRef.resources.population - diseaseResult.deaths);
+    // Route disease deaths through WorkerSystem for proper stats cleanup
+    for (const deadEntity of diseaseResult.deadEntities) {
+      this.workerSystem.removeWorker(deadEntity, 'disease_death');
     }
     // Emit Pravda headlines for outbreaks
     if (diseaseResult.outbreakTypes.length > 0) {
@@ -629,28 +660,74 @@ export class SimulationEngine {
     }
 
     const diffConfig = DIFFICULTY_PRESETS[this.difficulty];
-    populationSystem(
+
+    // Population growth gate — housing + food check (no longer modifies population directly)
+    const growthResult = populationSystem(
       this.rng,
       politburoMods.populationGrowthMult * eraMods.populationGrowthMult * diffConfig.growthMultiplier,
       this.chronology.getDate().month,
     );
 
-    // Worker System — sync citizen entities to match population, then tick worker stats
-    const pop = storeRef.resources.population;
-    this.workerSystem.syncPopulation(pop);
-    const vodkaAvail = storeRef.resources.vodka;
-    const foodAvail = storeRef.resources.food;
-    this.workerSystem.tick(vodkaAvail, foodAvail, this.economySystem.getHeating().failing);
+    // Spawn new workers based on housing growth check
+    if (growthResult.growthCount > 0) {
+      for (let i = 0; i < growthResult.growthCount; i++) {
+        this.workerSystem.spawnWorker();
+      }
+    }
+
+    // Worker System — AUTHORITATIVE population tick
+    // Handles: vodka/food consumption, morale, defection, migration flight,
+    // youth flight, workplace accidents, trudodni, governor, and population sync.
+    const workerResult = this.workerSystem.tick({
+      vodkaAvailable: storeRef.resources.vodka,
+      foodAvailable: storeRef.resources.food,
+      heatingFailing: this.economySystem.getHeating().failing,
+      month: this.chronology.getDate().month,
+      eraId: this.eraSystem.getCurrentEra().id,
+      totalTicks: this.chronology.getDate().totalTicks,
+    });
+
+    // Emit drain events to UI
+    for (const drain of workerResult.drains) {
+      if (drain.reason === 'migration') {
+        this.callbacks.onToast(`WORKER FLED: ${drain.name} has abandoned the collective`, 'warning');
+        this.callbacks.onPravda('TRAITOR ABANDONS GLORIOUS COLLECTIVE — GOOD RIDDANCE');
+      } else if (drain.reason === 'youth_flight') {
+        this.callbacks.onToast(`YOUTH DEPARTED: ${drain.name} has left for the city`, 'warning');
+      } else if (drain.reason === 'workplace_accident') {
+        this.callbacks.onToast(`WORKPLACE ACCIDENT: ${drain.name} killed in industrial incident`, 'critical');
+        this.callbacks.onPravda('HEROIC WORKER MARTYRED IN SERVICE OF PRODUCTION');
+      } else if (drain.reason === 'defection') {
+        this.callbacks.onToast(`DEFECTION: ${drain.name} has defected`, 'warning');
+      }
+    }
+
+    // Critical morale warning
+    if (workerResult.averageMorale < 30 && this.chronology.getDate().totalTicks % 60 === 0) {
+      this.callbacks.onAdvisor(
+        'Comrade Mayor! Workers are deeply unhappy. If conditions do not improve, they WILL flee!',
+      );
+    }
 
     // Demographic System — births, deaths, aging for dvor households
-    const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, storeRef.resources.population * 2));
+    const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, workerResult.population * 2));
     const demoResult = demographicTick(this.rng ?? null, this.chronology.getDate().totalTicks, normalizedFood);
-    // Sync dvor population changes to the resource store
-    if (demoResult.births > 0 || demoResult.deaths > 0) {
-      storeRef.resources.population = Math.max(
-        0,
-        storeRef.resources.population + demoResult.births - demoResult.deaths,
-      );
+    // Sync dvor demographic births/deaths through WorkerSystem
+    if (demoResult.births > 0) {
+      for (let i = 0; i < demoResult.births; i++) {
+        this.workerSystem.spawnWorker();
+      }
+    }
+    if (demoResult.deaths > 0) {
+      // Remove workers for demographic deaths (oldest first via syncPopulation trim)
+      const currentPop = this.workerSystem.getPopulation();
+      const targetPop = Math.max(0, currentPop - demoResult.deaths);
+      this.workerSystem.syncPopulation(targetPop);
+    }
+
+    // Reset annual trudodni at year boundary
+    if (tickResult.newYear) {
+      this.workerSystem.resetAnnualTrudodni();
     }
 
     decaySystem(politburoMods.infrastructureDecayMult * eraMods.decayMult * diffConfig.decayMultiplier);
@@ -930,6 +1007,26 @@ export class SimulationEngine {
       r.vodka += delivered.vodka;
     }
 
+    // FIX-01: Remainder allocation — distribute surplus after compulsory deliveries
+    // 70% goes to local distribution, 30% reserved for next tick
+    if (result.fondyDelivered?.delivered) {
+      const delivered = result.fondyDelivered.actualDelivered;
+      const surplus = {
+        food: Math.max(0, delivered.food * 0.3),
+        vodka: Math.max(0, delivered.vodka * 0.3),
+        money: Math.max(0, delivered.money * 0.3),
+        steel: Math.max(0, delivered.steel * 0.3),
+        timber: Math.max(0, delivered.timber * 0.3),
+      };
+      const remainder = this.economySystem.allocateRemainder(surplus);
+      // Apply distributed portion directly to resources
+      r.food += remainder.distributed.food;
+      r.vodka += remainder.distributed.vodka;
+      r.money += remainder.distributed.money;
+      r.steel += remainder.distributed.steel;
+      r.timber += remainder.distributed.timber;
+    }
+
     // Sync trudodni and blat to ECS
     r.trudodni += result.trudodniEarned;
     r.blat = result.blatLevel;
@@ -946,17 +1043,55 @@ export class SimulationEngine {
       );
     }
 
-    // Stakhanovite event — production hero notification
+    // FIX-02: Stakhanovite event — apply all effects (was only granting 5 blat + headline)
     if (result.stakhanovite) {
       const s = result.stakhanovite;
       this.callbacks.onPravda(
-        `HERO OF LABOR: Comrade ${s.workerName} at ${s.building} exceeds quota by ${Math.round(s.productionBoost * 100)}%!`,
+        `HERO OF LABOR: Comrade ${s.workerName} at ${s.building} exceeds quota by ${Math.round((s.productionBoost - 1) * 100)}%!`,
       );
+
+      // Apply production boost — store for next tick's production calculation
+      this.stakhanoviteBoosts.set(s.building, s.productionBoost);
+
+      // Apply quota increase — raise current plan targets
+      this.quota.target = Math.round(this.quota.target * (1 + s.quotaIncrease));
+
+      // Apply propaganda value — grant commendation for high propaganda
+      if (s.propagandaValue >= 30) {
+        this.personnelFile.addCommendation('stakhanovite_celebrated', totalTicks, s.announcement);
+      }
+    } else {
+      // Clear stakhanovite boosts when no event active
+      this.stakhanoviteBoosts.clear();
     }
 
-    // MTS farm productivity cost — deduct rental from treasury
+    // FIX-03: MTS farm productivity — store grain multiplier for next tick's farmMod
     if (result.mtsResult?.applied) {
       r.money = Math.max(0, r.money - result.mtsResult.cost);
+      this.mtsGrainMultiplier = result.mtsResult.grainMultiplier;
+    } else {
+      this.mtsGrainMultiplier = 1.0;
+    }
+
+    // FIX-04: Ration card deductions — consume food/vodka based on ration demand
+    if (result.rationDemand && result.rationsActive) {
+      const demand = result.rationDemand;
+      if (demand.food > 0) {
+        if (r.food >= demand.food) {
+          r.food -= demand.food;
+        } else {
+          // Insufficient food for rations — starvation penalty
+          const deficit = demand.food - r.food;
+          r.food = 0;
+          const starvationLosses = Math.ceil(deficit * 0.1);
+          r.population = Math.max(0, r.population - starvationLosses);
+          this.callbacks.onToast('RATION SHORTAGE: Insufficient food for card holders', 'critical');
+        }
+      }
+      if (demand.vodka > 0) {
+        r.vodka = Math.max(0, r.vodka - demand.vodka);
+        // No death from vodka shortage — citizens merely suffer
+      }
     }
 
     // Heating — fuel consumption + at-risk population
@@ -1015,15 +1150,22 @@ export class SimulationEngine {
    * of "disappearing" a citizen.
    */
   private processGulagEffect(): void {
-    const store = getResourceEntity();
-    if (!store || store.resources.population <= 0) return;
+    if (this.workerSystem.getPopulation() <= 0) return;
 
     for (const entity of buildingsLogic) {
       if (entity.building.housingCap < 0) {
-        if (entity.building.powered && store.resources.population > 0) {
+        if (entity.building.powered && this.workerSystem.getPopulation() > 0) {
           if ((this.rng?.random() ?? Math.random()) < 0.1) {
-            store.resources.population--;
-            this.scoring.onKGBLoss(1);
+            const arrest = this.workerSystem.arrestWorker();
+            if (arrest) {
+              this.scoring.onKGBLoss(1);
+              this.personnelFile.addMark(
+                'worker_arrested',
+                this.chronology.getDate().totalTicks,
+                'Gulag processing of enemy of the people',
+              );
+              this.callbacks.onPravda('ENEMY OF THE PEOPLE SENTENCED TO CORRECTIVE LABOR');
+            }
           }
         }
       }
@@ -1092,22 +1234,40 @@ export class SimulationEngine {
     if (totalTicks % 30 === 0) {
       const avgCorruption = this.getAveragePolitburoCorruption();
       this.politicalEntities.syncEntities(tier, eraId, avgCorruption);
+
+      // Threshold effects → entity spawning: higher threat = more KGB/politruks
+      const threatLevel = this.personnelFile.getThreatLevel();
+      if (threatLevel === 'investigated' || threatLevel === 'reviewed') {
+        // Extra KGB and politruk presence when under investigation
+        this.politicalEntities.syncEntities(tier, eraId, avgCorruption + 30);
+      }
     }
 
     // Orgnabor — periodic organized labor recruitment during industrialization eras
-    // Fires every ~180 ticks (half a year) during first_plans and reconstruction
-    if (totalTicks % 180 === 0 && (eraId === 'first_plans' || eraId === 'reconstruction') && store) {
+    // Fires every ~180 ticks (half a year) during collectivization/industrialization and reconstruction
+    if (totalTicks % 180 === 0 && (eraId === 'collectivization' || eraId === 'industrialization' || eraId === 'reconstruction') && store) {
       const pop = store.resources.population;
       if (pop >= 15) {
         const count = Math.min(Math.max(2, Math.floor(pop * 0.05)), 5);
         const duration = 60 + Math.floor(Math.random() * 60); // 60-120 ticks
         const purpose =
-          eraId === 'first_plans' ? 'the Great Construction of Socialism' : 'post-war reconstruction of the Motherland';
+          eraId === 'reconstruction' ? 'post-war reconstruction of the Motherland' : 'the Great Construction of Socialism';
         this.politicalEntities.triggerOrgnabor(count, duration, purpose);
       }
     }
 
-    const result = this.politicalEntities.tick(totalTicks);
+    // Build doctrine context for era-specific mechanics
+    const doctrineCtx = this.rng && store ? {
+      currentEraId: eraId,
+      totalTicks,
+      currentFood: store.resources.food,
+      currentPop: store.resources.population,
+      currentMoney: store.resources.money,
+      quotaProgress: this.quota.target > 0 ? this.quota.current / this.quota.target : 0,
+      rng: this.rng,
+    } : undefined;
+
+    const result = this.politicalEntities.tick(totalTicks, doctrineCtx);
 
     // Apply population drain from conscription
     if (result.workersConscripted > 0 && store) {
@@ -1120,12 +1280,33 @@ export class SimulationEngine {
       store.resources.population += result.workersReturned;
     }
 
+    // Apply KGB worker arrests — actually REMOVE workers from population
+    if (result.workersArrested > 0 && store) {
+      store.resources.population = Math.max(0, store.resources.population - result.workersArrested);
+      this.scoring.onKGBLoss(result.workersArrested);
+    }
+
     // Apply KGB black marks to personnel file
     if (result.blackMarksAdded > 0) {
       this.scoring.onKGBLoss(result.blackMarksAdded);
     }
     for (let i = 0; i < result.blackMarksAdded; i++) {
       this.personnelFile.addMark('lying_to_kgb', totalTicks, 'KGB investigation uncovered irregularities');
+    }
+
+    // Apply doctrine mechanic effects to resources
+    for (const effect of result.doctrineMechanicEffects) {
+      if (store) {
+        store.resources.food = Math.max(0, store.resources.food + effect.foodDelta);
+        store.resources.money = Math.max(0, store.resources.money + effect.moneyDelta);
+        store.resources.vodka = Math.max(0, store.resources.vodka + effect.vodkaDelta);
+        if (effect.popDelta !== 0) {
+          store.resources.population = Math.max(0, store.resources.population + effect.popDelta);
+        }
+      }
+      if (effect.description) {
+        this.callbacks.onToast(effect.description, 'warning');
+      }
     }
 
     // Emit announcements
@@ -1139,6 +1320,37 @@ export class SimulationEngine {
       meta.gameMeta.commendations = this.personnelFile.getCommendations();
       meta.gameMeta.threatLevel = this.personnelFile.getThreatLevel();
     }
+  }
+
+  /**
+   * FIX-07: Compute average worker skill level (0.5 - 1.5 range).
+   * Maps average skill from [0, 100] to [0.5, 1.5] as a production multiplier.
+   */
+  private getAverageWorkerSkill(): number {
+    const statsMap = this.workerSystem.getStatsMap();
+    if (statsMap.size === 0) return 1.0;
+    let totalSkill = 0;
+    for (const stats of statsMap.values()) {
+      totalSkill += stats.skill;
+    }
+    const avgSkill = totalSkill / statsMap.size;
+    // Map [0..100] → [0.5..1.5]
+    return 0.5 + (avgSkill / 100);
+  }
+
+  /**
+   * FIX-07: Compute average building condition factor (0.0 - 1.0).
+   * Durability 100 = pristine (factor 1.0), durability 0 = collapsed (factor 0.0).
+   */
+  private getAverageBuildingCondition(): number {
+    let totalCondition = 0;
+    let count = 0;
+    for (const entity of decayableBuildings) {
+      totalCondition += entity.durability.current / 100;
+      count++;
+    }
+    if (count === 0) return 1.0;
+    return totalCondition / count;
   }
 
   /**

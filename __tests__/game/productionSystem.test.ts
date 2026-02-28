@@ -68,15 +68,19 @@ describe('productionSystem', () => {
   });
 
   // ── Distillery production ─────────────────────────────────
+  // FIX-05: Vodka now requires 2 grain (food) per 1 vodka produced.
+  // Tests pre-seed food to cover grain costs.
 
   describe('distillery vodka production', () => {
-    it('a powered distillery produces 10 vodka per tick', () => {
+    it('a powered distillery produces 10 vodka per tick (with grain)', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 1000; // sufficient grain
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem();
-      const store = getResourceEntity()!;
       expect(store.resources.vodka).toBe(10);
+      expect(store.resources.food).toBe(980); // 1000 - 10*2
     });
 
     it('an unpowered distillery produces 0 vodka', () => {
@@ -87,24 +91,49 @@ describe('productionSystem', () => {
       expect(store.resources.vodka).toBe(0);
     });
 
-    it('two powered distilleries produce 20 vodka per tick', () => {
+    it('two powered distilleries produce 20 vodka per tick (with grain)', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 1000;
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'vodka-distillery');
       createBuilding(2, 2, 'vodka-distillery');
       powerSystem();
       productionSystem();
-      const store = getResourceEntity()!;
       expect(store.resources.vodka).toBe(20);
+      expect(store.resources.food).toBe(960); // 1000 - 20*2
     });
 
-    it('vodka accumulates over multiple ticks', () => {
+    it('vodka accumulates over multiple ticks (with grain)', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 1000;
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem();
       productionSystem();
-      const store = getResourceEntity()!;
       expect(store.resources.vodka).toBe(20);
+      expect(store.resources.food).toBe(960); // 1000 - 2*10*2
+    });
+
+    it('vodka production is limited by available grain', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 10; // only enough for 5 vodka
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'vodka-distillery');
+      powerSystem();
+      productionSystem();
+      expect(store.resources.vodka).toBe(5); // 10 food / 2 = 5 vodka
+      expect(store.resources.food).toBe(0);
+    });
+
+    it('no vodka produced when no grain available', () => {
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'vodka-distillery');
+      powerSystem();
+      productionSystem();
+      const store = getResourceEntity()!;
+      expect(store.resources.vodka).toBe(0);
+      expect(store.resources.food).toBe(0);
     });
   });
 
@@ -128,11 +157,12 @@ describe('productionSystem', () => {
     });
 
     it('distillery that loses power stops producing', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 1000;
       const plant = createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem();
-      const store = getResourceEntity()!;
       expect(store.resources.vodka).toBe(10);
 
       world.remove(plant);
@@ -142,6 +172,8 @@ describe('productionSystem', () => {
     });
 
     it('partially powered: some producers work, some do not', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 10000; // enough grain for all vodka
       createBuilding(0, 0, 'power-station'); // 100 output
       // 20 distilleries * 5 powerReq = 100, plus 1 extra = 105 > 100
       for (let i = 0; i < 21; i++) {
@@ -150,7 +182,6 @@ describe('productionSystem', () => {
       powerSystem();
       productionSystem();
 
-      const store = getResourceEntity()!;
       // 20 powered * 10 vodka = 200 (the 21st is unpowered)
       expect(store.resources.vodka).toBe(200);
     });
@@ -160,13 +191,15 @@ describe('productionSystem', () => {
 
   describe('multiple producers stack correctly', () => {
     it('farms and distilleries both produce in the same tick', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 1000; // grain for vodka
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'collective-farm-hq');
       createBuilding(2, 2, 'vodka-distillery');
       powerSystem();
       productionSystem();
-      const store = getResourceEntity()!;
-      expect(store.resources.food).toBe(20);
+      // Farm produces 20 food, distillery consumes 20 grain (10 vodka * 2)
+      expect(store.resources.food).toBe(1000 + 20 - 20); // net 0 food change
       expect(store.resources.vodka).toBe(10);
     });
 
@@ -181,7 +214,8 @@ describe('productionSystem', () => {
       powerSystem();
       productionSystem();
 
-      expect(store.resources.food).toBe(120);
+      // Farm +20 food, distillery -20 food (grain cost), +10 vodka
+      expect(store.resources.food).toBe(100); // 100 + 20 - 20
       expect(store.resources.vodka).toBe(60);
     });
   });
@@ -217,11 +251,12 @@ describe('productionSystem', () => {
     });
 
     it('farmModifier does not affect vodka production', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 1000;
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem(0.0); // zero farmModifier
-      const store = getResourceEntity()!;
       expect(store.resources.vodka).toBe(10); // unaffected
     });
   });
@@ -230,20 +265,22 @@ describe('productionSystem', () => {
 
   describe('vodkaModifier parameter', () => {
     it('vodkaModifier=0.5 halves vodka production', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 1000;
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem(1.0, 0.5);
-      const store = getResourceEntity()!;
       expect(store.resources.vodka).toBe(5); // 10 * 0.5
     });
 
     it('vodkaModifier=2.0 doubles vodka production', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 1000;
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       productionSystem(1.0, 2.0);
-      const store = getResourceEntity()!;
       expect(store.resources.vodka).toBe(20); // 10 * 2.0
     });
 
@@ -257,13 +294,15 @@ describe('productionSystem', () => {
     });
 
     it('both modifiers apply independently', () => {
+      const store = getResourceEntity()!;
+      store.resources.food = 1000;
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'collective-farm-hq');
       createBuilding(2, 2, 'vodka-distillery');
       powerSystem();
       productionSystem(0.5, 1.5);
-      const store = getResourceEntity()!;
-      expect(store.resources.food).toBe(10); // 20 * 0.5
+      // Farm: 20 * 0.5 = 10 food added; Distillery: 10 * 1.5 = 15 vodka, costs 30 food
+      expect(store.resources.food).toBe(1000 + 10 - 30); // 980
       expect(store.resources.vodka).toBe(15); // 10 * 1.5
     });
   });

@@ -65,16 +65,33 @@ function countAssignedWorkers(): Map<string, number> {
 }
 
 /**
+ * Optional expanded production modifiers for the full formula:
+ *   baseRate x workers x skill x season x doctrine x condition
+ */
+export interface ProductionModifiers {
+  /** Average worker skill factor (0.5 - 1.5, default 1.0) */
+  skillFactor?: number;
+  /** Building average condition factor (0.0 - 1.0, default 1.0) */
+  conditionFactor?: number;
+  /** Per-building stakhanovite boosts (defId → multiplier) */
+  stakhanoviteBoosts?: ReadonlyMap<string, number>;
+}
+
+/**
  * Runs the production system for one simulation tick.
  *
  * Iterates all buildings that have a `produces` field. If the
  * building is powered, its output is added to the resource store.
  * Overstaffing beyond staffCap has geometric diminishing returns (50% decay).
  *
+ * FIX-07: Expanded formula: baseRate x workers x skill x season x doctrine x condition
+ * (season and doctrine are folded into farmModifier/vodkaModifier by SimulationEngine)
+ *
  * @param farmModifier  Weather-driven multiplier for food output (0.0–2.0, default 1.0).
  * @param vodkaModifier Politburo-driven multiplier for vodka output (default 1.0).
+ * @param mods          Optional expanded production modifiers.
  */
-export function productionSystem(farmModifier = 1.0, vodkaModifier = 1.0): void {
+export function productionSystem(farmModifier = 1.0, vodkaModifier = 1.0, mods?: ProductionModifiers): void {
   const store = getResourceEntity();
   if (!store) return;
 
@@ -109,13 +126,34 @@ export function productionSystem(farmModifier = 1.0, vodkaModifier = 1.0): void 
       }
     }
 
+    // FIX-07: Expanded production formula factors
+    const skillFactor = mods?.skillFactor ?? 1.0;
+    const conditionFactor = mods?.conditionFactor ?? 1.0;
+    // FIX-02: Apply per-building stakhanovite boost if active
+    const stakhanoviteBoost = mods?.stakhanoviteBoosts?.get(defId) ?? 1.0;
+    const expandedMult = workerMult * skillFactor * conditionFactor * stakhanoviteBoost;
+
     switch (prod.resource) {
       case 'food':
-        store.resources.food += prod.amount * farmModifier * workerMult;
+        store.resources.food += prod.amount * farmModifier * expandedMult;
         break;
-      case 'vodka':
-        store.resources.vodka += prod.amount * vodkaModifier * workerMult;
+      case 'vodka': {
+        // FIX-05: Vodka/grain diversion — 2 grain (food) per 1 vodka produced
+        const vodkaOutput = prod.amount * vodkaModifier * expandedMult;
+        const grainCost = vodkaOutput * 2;
+        if (store.resources.food >= grainCost) {
+          store.resources.food -= grainCost;
+          store.resources.vodka += vodkaOutput;
+        } else {
+          // Insufficient grain — produce proportionally to available grain
+          const affordable = store.resources.food / 2;
+          if (affordable > 0) {
+            store.resources.food -= affordable * 2;
+            store.resources.vodka += affordable;
+          }
+        }
         break;
+      }
     }
   }
 }
