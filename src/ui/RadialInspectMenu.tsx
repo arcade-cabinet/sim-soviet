@@ -23,6 +23,10 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 import { getBuildingDef } from '../data/buildingDefs';
+import { getEngine } from '../bridge/GameInit';
+import {
+  getMinigameNameForBuilding,
+} from '../game/minigames/BuildingMinigameMap';
 import {
   closeInspectMenu,
   openBuildingInspector,
@@ -185,26 +189,56 @@ const UPGRADE_ACTION: ActionDef = {
 };
 
 /**
+ * Create a minigame action for a building.
+ * Returns null if no minigame is mapped for the building defId,
+ * or if the minigame is on cooldown / another minigame is active.
+ */
+function createMinigameAction(buildingDefId: string): ActionDef | null {
+  const minigameName = getMinigameNameForBuilding(buildingDefId);
+  if (!minigameName) return null;
+
+  const engine = getEngine();
+  if (!engine || !engine.isMinigameAvailable(buildingDefId)) return null;
+
+  return {
+    id: 'minigame',
+    label: minigameName,
+    icon: '\u{26A1}', // Lightning bolt — special action
+    getDetail: () => `SPECIAL ACTION: ${minigameName}`,
+    onActivate: (state) => {
+      const eng = getEngine();
+      if (eng) {
+        eng.checkBuildingTapMinigame(state.buildingDefId);
+      }
+      return null; // Close menu — minigame modal will open via callback chain
+    },
+  };
+}
+
+/**
  * Resolve the set of actions based on building type.
  * Includes the UPGRADE action if the building has an upgrade path.
+ * Includes the MINIGAME action if a building-tap minigame is available.
  */
 function getActionsForType(buildingType: InspectBuildingType, buildingDefId: string): ActionDef[] {
   const canUpgrade = isUpgradeable(buildingDefId);
   const upgradeSlice = canUpgrade ? [UPGRADE_ACTION] : [];
+  const minigameAction = createMinigameAction(buildingDefId);
+  const minigameSlice = minigameAction ? [minigameAction] : [];
 
   switch (buildingType) {
     case 'housing':
-      return [BASE_ACTIONS[0]!, ...HOUSEHOLD_ACTIONS, ...upgradeSlice, BASE_ACTIONS[2]!];
+      return [BASE_ACTIONS[0]!, ...HOUSEHOLD_ACTIONS, ...minigameSlice, ...upgradeSlice, BASE_ACTIONS[2]!];
     case 'production':
-      return [...BASE_ACTIONS, PRODUCTION_ACTION, ...upgradeSlice];
+      return [...BASE_ACTIONS, PRODUCTION_ACTION, ...minigameSlice, ...upgradeSlice];
     case 'storage':
-      return [...BASE_ACTIONS, STORAGE_ACTION, ...upgradeSlice];
+      return [...BASE_ACTIONS, STORAGE_ACTION, ...minigameSlice, ...upgradeSlice];
     case 'construction':
-      return [...BASE_ACTIONS, CONSTRUCTION_ACTION];
+      return [...BASE_ACTIONS, CONSTRUCTION_ACTION, ...minigameSlice];
     case 'government':
-      return [...BASE_ACTIONS, ...upgradeSlice];
+      return [...BASE_ACTIONS, ...minigameSlice, ...upgradeSlice];
     default:
-      return [...BASE_ACTIONS, ...upgradeSlice];
+      return [...BASE_ACTIONS, ...minigameSlice, ...upgradeSlice];
   }
 }
 

@@ -1,4 +1,8 @@
 import { getMinigameDefinition, MINIGAME_DEFINITIONS } from '../../src/game/minigames/definitions';
+import {
+  getMinigameNameForBuilding,
+  resolveBuildingTrigger,
+} from '../../src/game/minigames/BuildingMinigameMap';
 import { MinigameRouter } from '../../src/game/minigames/MinigameRouter';
 import type { MinigameId, MinigameOutcome } from '../../src/game/minigames/MinigameTypes';
 import { GameRng } from '../../src/game/SeedSystem';
@@ -17,6 +21,14 @@ const ALL_IDS: MinigameId[] = [
   'the_hunt',
   'interrogation',
   'mining_expedition',
+  'production_quotas',
+  'harvest_campaign',
+  'quality_control',
+  'prisoner_reform',
+  'paperwork_avalanche',
+  'grid_management',
+  'ideological_education',
+  'military_inspection',
 ];
 
 /** Compute a rough "goodness score" for an outcome (positive = good). */
@@ -39,13 +51,13 @@ function outcomeScore(o: MinigameOutcome): number {
 // ─────────────────────────────────────────────────────────
 
 describe('MinigameDefinitions', () => {
-  it('has exactly 9 minigame definitions', () => {
-    expect(MINIGAME_DEFINITIONS).toHaveLength(9);
+  it('has exactly 17 minigame definitions', () => {
+    expect(MINIGAME_DEFINITIONS).toHaveLength(17);
   });
 
   it('all IDs are unique', () => {
     const ids = MINIGAME_DEFINITIONS.map((d) => d.id);
-    expect(new Set(ids).size).toBe(9);
+    expect(new Set(ids).size).toBe(17);
   });
 
   it('covers all expected MinigameId values', () => {
@@ -280,6 +292,86 @@ describe('MinigameRouter', () => {
       // With population 10, only inspection should match
       expect(def).not.toBeNull();
       expect(def!.id).toBe('the_inspection');
+    });
+
+    it('matches building_tap trigger for production_quotas (factory_tap)', () => {
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: 'factory_tap',
+        totalTicks: 100,
+        population: 50,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('production_quotas');
+    });
+
+    it('matches building_tap trigger for harvest_campaign (farm_tap)', () => {
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: 'farm_tap',
+        totalTicks: 100,
+        population: 50,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('harvest_campaign');
+    });
+
+    it('matches building_tap trigger for quality_control (distillery_tap)', () => {
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: 'distillery_tap',
+        totalTicks: 100,
+        population: 50,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('quality_control');
+    });
+
+    it('matches building_tap trigger for prisoner_reform (gulag_tap)', () => {
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: 'gulag_tap',
+        totalTicks: 100,
+        population: 50,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('prisoner_reform');
+    });
+
+    it('matches building_tap trigger for paperwork_avalanche (ministry_tap)', () => {
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: 'ministry_tap',
+        totalTicks: 100,
+        population: 50,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('paperwork_avalanche');
+    });
+
+    it('matches building_tap trigger for grid_management (power_tap)', () => {
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: 'power_tap',
+        totalTicks: 100,
+        population: 50,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('grid_management');
+    });
+
+    it('matches building_tap trigger for ideological_education (school_tap)', () => {
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: 'school_tap',
+        totalTicks: 100,
+        population: 50,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('ideological_education');
+    });
+
+    it('matches building_tap trigger for military_inspection (barracks_tap)', () => {
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: 'barracks_tap',
+        totalTicks: 100,
+        population: 50,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('military_inspection');
     });
 
     it('returns null for unmatched building_tap', () => {
@@ -630,6 +722,133 @@ describe('MinigameRouter', () => {
 
       expect(router.isActive()).toBe(true);
       expect(router.getActive()).not.toBeNull();
+    });
+  });
+});
+
+// ── BuildingMinigameMap ──────────────────────────────────
+
+describe('BuildingMinigameMap', () => {
+  describe('resolveBuildingTrigger', () => {
+    it('maps factory-office to factory_tap', () => {
+      expect(resolveBuildingTrigger('factory-office')).toBe('factory_tap');
+    });
+
+    it('maps bread-factory to factory_tap', () => {
+      expect(resolveBuildingTrigger('bread-factory')).toBe('factory_tap');
+    });
+
+    it('maps collective-farm-hq to farm_tap', () => {
+      expect(resolveBuildingTrigger('collective-farm-hq')).toBe('farm_tap');
+    });
+
+    it('maps vodka-distillery to distillery_tap', () => {
+      expect(resolveBuildingTrigger('vodka-distillery')).toBe('distillery_tap');
+    });
+
+    it('maps gulag-admin to gulag_tap', () => {
+      expect(resolveBuildingTrigger('gulag-admin')).toBe('gulag_tap');
+    });
+
+    it('maps ministry-office to ministry_tap', () => {
+      expect(resolveBuildingTrigger('ministry-office')).toBe('ministry_tap');
+    });
+
+    it('maps government-hq to ministry_tap', () => {
+      expect(resolveBuildingTrigger('government-hq')).toBe('ministry_tap');
+    });
+
+    it('maps power-station to power_tap', () => {
+      expect(resolveBuildingTrigger('power-station')).toBe('power_tap');
+    });
+
+    it('maps school to school_tap', () => {
+      expect(resolveBuildingTrigger('school')).toBe('school_tap');
+    });
+
+    it('maps barracks to barracks_tap', () => {
+      expect(resolveBuildingTrigger('barracks')).toBe('barracks_tap');
+    });
+
+    it('passes through unmapped building IDs unchanged', () => {
+      expect(resolveBuildingTrigger('apartment-tower-a')).toBe('apartment-tower-a');
+    });
+
+    it('passes through terrain features unchanged', () => {
+      expect(resolveBuildingTrigger('forest')).toBe('forest');
+      expect(resolveBuildingTrigger('mountain')).toBe('mountain');
+      expect(resolveBuildingTrigger('market')).toBe('market');
+    });
+  });
+
+  describe('getMinigameNameForBuilding', () => {
+    it('returns minigame name for mapped buildings', () => {
+      expect(getMinigameNameForBuilding('factory-office')).toBe('Production Quotas');
+      expect(getMinigameNameForBuilding('collective-farm-hq')).toBe('Harvest Campaign');
+      expect(getMinigameNameForBuilding('vodka-distillery')).toBe('Quality Control');
+      expect(getMinigameNameForBuilding('gulag-admin')).toBe('Prisoner Reform');
+      expect(getMinigameNameForBuilding('ministry-office')).toBe('Paperwork Avalanche');
+      expect(getMinigameNameForBuilding('power-station')).toBe('Grid Management');
+      expect(getMinigameNameForBuilding('school')).toBe('Ideological Education');
+      expect(getMinigameNameForBuilding('barracks')).toBe('Military Inspection');
+    });
+
+    it('returns null for unmapped buildings', () => {
+      expect(getMinigameNameForBuilding('apartment-tower-a')).toBeNull();
+      expect(getMinigameNameForBuilding('fence')).toBeNull();
+    });
+  });
+
+  describe('building defId → minigame trigger integration', () => {
+    it('resolving factory-office and checking trigger finds production_quotas', () => {
+      const router = new MinigameRouter(new GameRng('integration-test'));
+      const resolvedId = resolveBuildingTrigger('factory-office');
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: resolvedId,
+        totalTicks: 100,
+        population: 50,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('production_quotas');
+    });
+
+    it('resolving barracks and checking trigger finds military_inspection', () => {
+      const router = new MinigameRouter(new GameRng('integration-test-2'));
+      const resolvedId = resolveBuildingTrigger('barracks');
+      const def = router.checkTrigger('building_tap', {
+        buildingDefId: resolvedId,
+        totalTicks: 100,
+        population: 50,
+      });
+      expect(def).not.toBeNull();
+      expect(def!.id).toBe('military_inspection');
+    });
+
+    it('all 8 building-type mappings resolve to valid minigames', () => {
+      const router = new MinigameRouter(new GameRng('all-mappings'));
+      const mappings: [string, string][] = [
+        ['factory-office', 'production_quotas'],
+        ['collective-farm-hq', 'harvest_campaign'],
+        ['vodka-distillery', 'quality_control'],
+        ['gulag-admin', 'prisoner_reform'],
+        ['ministry-office', 'paperwork_avalanche'],
+        ['power-station', 'grid_management'],
+        ['school', 'ideological_education'],
+        ['barracks', 'military_inspection'],
+      ];
+
+      for (const [defId, expectedMinigameId] of mappings) {
+        // Each needs a fresh router because only one can be active
+        const freshRouter = new MinigameRouter(new GameRng(`test-${defId}`));
+        const resolvedId = resolveBuildingTrigger(defId);
+        const def = freshRouter.checkTrigger('building_tap', {
+          buildingDefId: resolvedId,
+          totalTicks: 100,
+          population: 50,
+        });
+        expect(def).not.toBeNull();
+        expect(def!.id).toBe(expectedMinigameId);
+      }
     });
   });
 });

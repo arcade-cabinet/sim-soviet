@@ -70,6 +70,7 @@ import { tickDirectives as tickDirectivesHelper } from './engine/directiveTick';
 import {
   checkBuildingTapMinigame as checkBuildingTapMinigameHelper,
   checkEventMinigame as checkEventMinigameHelper,
+  isMinigameAvailable as isMinigameAvailableHelper,
   resolveMinigameChoice as resolveMinigameChoiceHelper,
   tickMinigames as tickMinigamesHelper,
 } from './engine/minigameTick';
@@ -507,6 +508,14 @@ export class SimulationEngine {
    */
   public checkBuildingTapMinigame(buildingDefId: string): void {
     checkBuildingTapMinigameHelper(this.getMinigameContext(), buildingDefId);
+  }
+
+  /**
+   * Check whether a building-tap minigame is available for a given building defId.
+   * Used by the RadialInspectMenu to show/hide the Special Action button.
+   */
+  public isMinigameAvailable(buildingDefId: string): boolean {
+    return isMinigameAvailableHelper(this.getMinigameContext(), buildingDefId);
   }
 
   /**

@@ -6,6 +6,10 @@ export {
   getMinigameDefinition,
   MINIGAME_DEFINITIONS,
 } from './definitions';
+export {
+  getMinigameNameForBuilding,
+  resolveBuildingTrigger,
+} from './BuildingMinigameMap';
 export { MinigameRouter } from './MinigameRouter';
 export type {
   ActiveMinigame,
