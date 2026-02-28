@@ -23,7 +23,7 @@ export async function initDatabase(): Promise<SQLJsDatabase<typeof schema>> {
   if (_db) return _db;
 
   const SQL = await initSqlJs({
-    // sql.js Wasm binary loaded from CDN
+    // sql.js Wasm binary served from public/wasm/ via Metro middleware
     locateFile: (file: string) => `/wasm/${file}`,
   });
 

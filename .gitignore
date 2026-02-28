@@ -189,6 +189,9 @@ app/public/audio/*.ogg
 app/public/audio/*.wav
 !app/public/audio/.gitkeep
 
+# Test results (Playwright, Vitest)
+test-results/
+
 # Expo
 .expo
 dist/
