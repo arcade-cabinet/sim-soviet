@@ -28,6 +28,9 @@ import type { BuildingDef, Role } from '../data/buildingDefs';
 import { DEFAULT_MATERIAL_COST } from '../ecs/systems/constructionSystem';
 import { getAvailableBuildingsForYear } from '../game/era';
 import type { SettlementTier } from '../game/SettlementSystem';
+import { MILESTONE_LABELS } from '../game/TutorialSystem';
+import type { TutorialSystem } from '../game/TutorialSystem';
+import { getEngine } from '../bridge/GameInit';
 import {
   closeRadialMenu,
   requestPlacement,
@@ -140,6 +143,10 @@ interface CategoryWedgeProps {
   gap: number;
   isSelected: boolean;
   hasEnabled: boolean;
+  /** True when the tutorial is active and no building in this category is unlocked yet. */
+  isLocked: boolean;
+  /** Human-readable description of what milestone unlocks this category. */
+  lockReason: string | null;
   onToggle: () => void;
 }
 
@@ -150,6 +157,8 @@ const CategoryWedge: React.FC<CategoryWedgeProps> = ({
   gap,
   isSelected,
   hasEnabled,
+  isLocked,
+  lockReason,
   onToggle,
 }) => {
   const startA = index * catAngle + gap / 2;
@@ -157,37 +166,53 @@ const CategoryWedge: React.FC<CategoryWedgeProps> = ({
   const midA = (startA + endA) / 2;
   const labelPos = polarToXY(CENTER, CENTER, (INNER_R + OUTER_R) / 2, midA);
 
+  // Locked categories are always dimmed and non-interactive
+  const isDisabled = isLocked || !hasEnabled;
+
   return (
-    <G onPress={hasEnabled ? onToggle : undefined} opacity={hasEnabled ? 1 : 0.4}>
+    <G onPress={!isDisabled ? onToggle : undefined} opacity={isDisabled ? 0.3 : 1}>
       <Path
         d={describeWedge(CENTER, CENTER, INNER_R, OUTER_R, startA, endA)}
-        fill={isSelected ? '#8b0000' : hasEnabled ? '#2a2a2a' : '#1a1a1a'}
-        stroke={isSelected ? '#ff4444' : '#444'}
+        fill={isLocked ? '#0d0d0d' : isSelected ? '#8b0000' : hasEnabled ? '#2a2a2a' : '#1a1a1a'}
+        stroke={isLocked ? '#333' : isSelected ? '#ff4444' : '#444'}
         strokeWidth={isSelected ? 2 : 1}
       />
       <SvgText
         x={labelPos.x}
-        y={labelPos.y - 4}
+        y={labelPos.y - (isLocked ? 8 : 4)}
         textAnchor="middle"
         alignmentBaseline="central"
-        fontSize={18}
-        opacity={hasEnabled ? 1 : 0.3}
+        fontSize={isLocked ? 14 : 18}
+        opacity={isDisabled ? 0.3 : 1}
       >
-        {cat.icon}
+        {isLocked ? '\u{1F512}' : cat.icon}
       </SvgText>
       <SvgText
         x={labelPos.x}
-        y={labelPos.y + 14}
+        y={labelPos.y + (isLocked ? 6 : 14)}
         textAnchor="middle"
         alignmentBaseline="central"
-        fontSize={7}
-        fill={isSelected ? '#fff' : hasEnabled ? '#ccc' : '#666'}
+        fontSize={isLocked ? 5.5 : 7}
+        fill={isLocked ? '#555' : isSelected ? '#fff' : hasEnabled ? '#ccc' : '#666'}
         fontFamily={monoFont}
         fontWeight="bold"
         letterSpacing={0.5}
       >
         {cat.label.toUpperCase()}
       </SvgText>
+      {isLocked && lockReason && (
+        <SvgText
+          x={labelPos.x}
+          y={labelPos.y + 16}
+          textAnchor="middle"
+          alignmentBaseline="central"
+          fontSize={4.5}
+          fill="#8b0000"
+          fontFamily={monoFont}
+        >
+          {lockReason}
+        </SvgText>
+      )}
     </G>
   );
 };
@@ -353,17 +378,42 @@ export const RadialBuildMenu: React.FC = () => {
     getAvailableBuildingsForYear(snap.year, snap.settlementTier as SettlementTier),
   );
 
+  // Tutorial progressive disclosure — gate categories by milestone progress
+  const tutorial: TutorialSystem | null = getEngine()?.getTutorial() ?? null;
+  const tutorialActive = tutorial?.isActive() ?? false;
+
+  /**
+   * For each category, collect the era-available building defIds.
+   * Then check if any are tutorial-unlocked. If none are, the
+   * category is locked and we compute the milestone tooltip.
+   */
+  function getCategoryLockInfo(cat: CategoryDef): { isLocked: boolean; lockReason: string | null } {
+    if (!tutorialActive || !tutorial) return { isLocked: false, lockReason: null };
+    const catBuildingIds = cat.roles.flatMap((r) => getBuildingsByRole(r)).filter((id) => eraAvailable.has(id));
+    if (catBuildingIds.length === 0) return { isLocked: false, lockReason: null };
+    const unlocked = tutorial.isCategoryUnlocked(catBuildingIds);
+    if (unlocked) return { isLocked: false, lockReason: null };
+    const milestoneId = tutorial.getNextUnlockMilestoneForBuildings(catBuildingIds);
+    const label = milestoneId ? MILESTONE_LABELS[milestoneId] ?? milestoneId : null;
+    return { isLocked: true, lockReason: label };
+  }
+
   const activeCats = CATEGORIES.filter((c) =>
     c.roles.some((role) => getBuildingsByRole(role).some((id) => eraAvailable.has(id))),
   );
   const catAngle = activeCats.length > 0 ? 360 / activeCats.length : 0;
   const gap = 2;
 
+  // Pre-compute lock info for each category
+  const catLockInfo = new Map(activeCats.map((c) => [c.id, getCategoryLockInfo(c)]));
+
   const selectedCategory = activeCats.find((c) => c.id === selectedCat);
+  // For the building ring, also filter by tutorial unlock status
   const buildingIds = selectedCategory
     ? selectedCategory.roles
         .flatMap((role) => getBuildingsByRole(role))
         .filter((id) => eraAvailable.has(id))
+        .filter((id) => !tutorialActive || !tutorial || tutorial.isBuildingUnlocked(id))
     : [];
   buildingIds.sort((a, b) => {
     const defA = BUILDING_DEFS[a];
@@ -413,18 +463,23 @@ export const RadialBuildMenu: React.FC = () => {
           />
 
           {/* Category ring (inner) */}
-          {activeCats.map((cat, i) => (
-            <CategoryWedge
-              key={cat.id}
-              cat={cat}
-              index={i}
-              catAngle={catAngle}
-              gap={gap}
-              isSelected={selectedCat === cat.id}
-              hasEnabled={categoryHasFittingBuilding(cat, availableSpace, eraAvailable)}
-              onToggle={() => setSelectedCat(selectedCat === cat.id ? null : cat.id)}
-            />
-          ))}
+          {activeCats.map((cat, i) => {
+            const lockInfo = catLockInfo.get(cat.id) ?? { isLocked: false, lockReason: null };
+            return (
+              <CategoryWedge
+                key={cat.id}
+                cat={cat}
+                index={i}
+                catAngle={catAngle}
+                gap={gap}
+                isSelected={selectedCat === cat.id}
+                hasEnabled={categoryHasFittingBuilding(cat, availableSpace, eraAvailable)}
+                isLocked={lockInfo.isLocked}
+                lockReason={lockInfo.lockReason}
+                onToggle={() => setSelectedCat(selectedCat === cat.id ? null : cat.id)}
+              />
+            );
+          })}
 
           {/* Building ring (outer) — shown when category selected */}
           {selectedCat && buildingIds.length > 0 && (

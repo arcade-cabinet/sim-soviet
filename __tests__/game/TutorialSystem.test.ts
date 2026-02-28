@@ -1,5 +1,6 @@
 import type { GameMeta, Resources } from '@/ecs/world';
 import {
+  MILESTONE_LABELS,
   TUTORIAL_MILESTONES,
   type TutorialSaveData,
   TutorialSystem,
@@ -664,6 +665,85 @@ describe('TutorialSystem', () => {
     it('build_housing milestone has pauseOnTrigger=true', () => {
       const milestone = TUTORIAL_MILESTONES.find((m) => m.id === 'build_housing');
       expect(milestone?.pauseOnTrigger).toBe(true);
+    });
+  });
+
+  describe('category-level locking (progressive disclosure)', () => {
+    it('isCategoryUnlocked returns false when no buildings in list are unlocked', () => {
+      // Before any milestones, workers-house-a is not yet unlocked
+      expect(tutorial.isCategoryUnlocked(['workers-house-a', 'workers-house-b'])).toBe(false);
+    });
+
+    it('isCategoryUnlocked returns true when any building in list is unlocked', () => {
+      const meta = makeMeta();
+      const res = makeResources();
+      tutorial.tick(0, meta, res, 0); // welcome → unlocks collective-farm-hq
+      expect(tutorial.isCategoryUnlocked(['collective-farm-hq', 'vodka-distillery'])).toBe(true);
+    });
+
+    it('isCategoryUnlocked returns true when tutorial is inactive', () => {
+      tutorial.skip();
+      expect(tutorial.isCategoryUnlocked(['anything', 'nonexistent'])).toBe(true);
+    });
+
+    it('isCategoryUnlocked returns true for empty defId list when tutorial inactive', () => {
+      tutorial.skip();
+      expect(tutorial.isCategoryUnlocked([])).toBe(true);
+    });
+
+    it('getNextUnlockMilestoneForBuildings returns null when tutorial is inactive', () => {
+      tutorial.skip();
+      expect(tutorial.getNextUnlockMilestoneForBuildings(['power-station'])).toBeNull();
+    });
+
+    it('getNextUnlockMilestoneForBuildings returns null when category is already unlocked', () => {
+      const meta = makeMeta();
+      const res = makeResources();
+      tutorial.tick(0, meta, res, 0); // welcome → unlocks collective-farm-hq
+      expect(tutorial.getNextUnlockMilestoneForBuildings(['collective-farm-hq'])).toBeNull();
+    });
+
+    it('getNextUnlockMilestoneForBuildings returns the correct milestone for locked buildings', () => {
+      const meta = makeMeta();
+      const res = makeResources();
+      tutorial.tick(0, meta, res, 0); // welcome only
+
+      // power-station is unlocked by the 'power' milestone
+      expect(tutorial.getNextUnlockMilestoneForBuildings(['power-station'])).toBe('power');
+
+      // workers-house-a is unlocked by 'build_housing'
+      expect(tutorial.getNextUnlockMilestoneForBuildings(['workers-house-a'])).toBe('build_housing');
+
+      // vodka-distillery is unlocked by 'vodka_economy'
+      expect(tutorial.getNextUnlockMilestoneForBuildings(['vodka-distillery'])).toBe('vodka_economy');
+    });
+
+    it('getNextUnlockMilestoneForBuildings returns earliest milestone for mixed list', () => {
+      // government-hq is unlocked at 'government_buildings', cultural-palace at 'cultural_progress'
+      // government_buildings comes first in the milestone list
+      expect(tutorial.getNextUnlockMilestoneForBuildings(['government-hq', 'cultural-palace'])).toBe('government_buildings');
+    });
+
+    it('getNextUnlockMilestoneForBuildings returns null for buildings not in any milestone', () => {
+      // 'nonexistent-building' is not listed in any milestone's unlockedBuildings
+      expect(tutorial.getNextUnlockMilestoneForBuildings(['nonexistent-building'])).toBeNull();
+    });
+  });
+
+  describe('milestone labels', () => {
+    it('has a label for every milestone that unlocks buildings', () => {
+      for (const milestone of TUTORIAL_MILESTONES) {
+        if (milestone.unlockedBuildings && milestone.unlockedBuildings.length > 0) {
+          expect(MILESTONE_LABELS[milestone.id]).toBeDefined();
+          expect(typeof MILESTONE_LABELS[milestone.id]).toBe('string');
+        }
+      }
+    });
+
+    it('has a label for every milestone ID', () => {
+      for (const milestone of TUTORIAL_MILESTONES) {
+        expect(MILESTONE_LABELS[milestone.id]).toBeDefined();
+      }
     });
   });
 });
