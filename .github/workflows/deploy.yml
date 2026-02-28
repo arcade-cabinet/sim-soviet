@@ -32,6 +32,7 @@ jobs:
       - run: npm run build
       - name: Copy static assets into dist
         run: |
+          mkdir -p dist/assets
           cp -r assets/models dist/assets/models
           cp -r assets/hdri dist/assets/hdri
           cp -r assets/textures dist/assets/textures
