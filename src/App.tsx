@@ -136,12 +136,12 @@ const App: React.FC = () => {
           <TopBar
             season={snap.seasonLabel}
             weather={snap.weatherLabel}
-            waterUsed={snap.waterUsed}
-            waterGen={snap.waterGen}
+            timber={snap.timber}
+            steel={snap.steel}
+            cement={snap.cement}
             powerUsed={snap.powerUsed}
             powerGen={snap.powerGen}
-            money={snap.money}
-            income={snap.lastIncome}
+            currentEra={snap.currentEra}
             food={snap.food}
             vodka={snap.vodka}
             population={snap.pop}

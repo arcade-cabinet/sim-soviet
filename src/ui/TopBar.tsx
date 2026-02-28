@@ -7,15 +7,26 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Colors, SharedStyles, monoFont } from './styles';
 
+const ERA_LABELS: Record<string, string> = {
+  war_communism: 'WAR COMMUNISM',
+  first_plans: 'FIRST 5-YEAR PLAN',
+  great_patriotic: 'GREAT PATRIOTIC WAR',
+  reconstruction: 'RECONSTRUCTION',
+  thaw: 'THE THAW',
+  stagnation: 'ERA OF STAGNATION',
+  perestroika: 'PERESTROIKA',
+  eternal_soviet: 'ETERNAL SOVIET',
+};
+
 export interface TopBarProps {
   season: string;
   weather: string;
-  waterUsed: number;
-  waterGen: number;
+  timber: number;
+  steel: number;
+  cement: number;
   powerUsed: number;
   powerGen: number;
-  money: number;
-  income: number;
+  currentEra: string;
   food: number;
   vodka: number;
   population: number;
@@ -54,12 +65,12 @@ export interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({
   season,
   weather,
-  waterUsed,
-  waterGen,
+  timber,
+  steel,
+  cement,
   powerUsed,
   powerGen,
-  money,
-  income,
+  currentEra,
   food,
   vodka,
   population,
@@ -106,6 +117,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         <View style={styles.seasonBox}>
           <Text style={[styles.seasonText, { color: Colors.white }]}>{season}</Text>
           <Text style={[styles.seasonText, { color: Colors.termBlue }]}>{weather}</Text>
+        </View>
+        <View style={styles.eraBox}>
+          <Text style={[styles.seasonText, { color: Colors.sovietGold }]}>
+            {ERA_LABELS[currentEra] ?? currentEra.toUpperCase()}
+          </Text>
         </View>
         <ThreatIndicator
           threatLevel={threatLevel}
@@ -223,14 +239,13 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Right: resources, calendar, speed */}
       <View style={styles.rightGroup}>
-        <ResourceStat label="WATER" emoji="💧" value={`${waterUsed}/${waterGen}`} color="#60a5fa" />
-        <ResourceStat label="POWER" emoji="⚡" value={`${powerUsed}/${powerGen}`} color={Colors.sovietGold} />
-        <ResourceStat label="FUNDS ₽" value={String(money)} color={Colors.white}>
-          <Text style={styles.income}>{income >= 0 ? `+${income}` : String(income)}</Text>
-        </ResourceStat>
-        <ResourceStat label="FOOD" emoji="🥔" value={String(food)} color="#fdba74" />
-        <ResourceStat label="VODKA" emoji="🍾" value={String(vodka)} color={Colors.termBlue} />
-        <ResourceStat label="POPULATION" value={String(population)} color={Colors.white} borderRight />
+        <ResourceStat label="TIMBER" emoji={'\u{1FAB5}'} value={String(timber)} color="#a1887f" />
+        <ResourceStat label="STEEL" emoji={'\u{1F529}'} value={String(steel)} color="#90a4ae" />
+        <ResourceStat label="CEMENT" value={String(cement)} color="#bdbdbd" />
+        <ResourceStat label="POWER" emoji={'\u26A1'} value={`${powerUsed}/${powerGen}`} color={Colors.sovietGold} />
+        <ResourceStat label="FOOD" emoji={'\u{1F954}'} value={String(food)} color="#fdba74" />
+        <ResourceStat label="VODKA" emoji={'\u{1F37E}'} value={String(vodka)} color={Colors.termBlue} />
+        <ResourceStat label="POP" value={String(population)} color={Colors.white} borderRight />
 
         {/* Calendar */}
         <View style={styles.calendarBox}>
@@ -366,6 +381,12 @@ const styles = StyleSheet.create({
     borderLeftColor: '#555',
     paddingLeft: 12,
   },
+  eraBox: {
+    borderLeftWidth: 1,
+    borderLeftColor: '#555',
+    paddingLeft: 12,
+    paddingRight: 4,
+  },
   seasonText: {
     fontSize: 10,
     fontFamily: monoFont,
@@ -428,12 +449,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 4,
-  },
-  income: {
-    color: Colors.termGreen,
-    fontSize: 9,
-    fontFamily: monoFont,
-    marginBottom: 2,
   },
   calendarBox: {
     alignItems: 'flex-start',
