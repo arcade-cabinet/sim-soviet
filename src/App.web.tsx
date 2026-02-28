@@ -360,6 +360,8 @@ const App: React.FC = () => {
             if (ctx) {
               AudioManager.getInstance().playContext(ctx);
             }
+            // Notify store so RadialBuildMenu re-renders with newly unlocked buildings
+            notifyStateChange();
           },
           onAnnualReport: (data, submitReport) => {
             setAnnualReport(data);
