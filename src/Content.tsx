@@ -1,23 +1,28 @@
 /**
  * Content — Scene graph root that composes all 3D components.
  *
- * Placed inside <Scene> by App.tsx. Reads game state via the
+ * Placed inside <Canvas> by App.web.tsx. Reads game state via the
  * useGameSnapshot hook and passes derived props to each scene component.
  *
  * After the archive merge, building data comes from the ECS bridge
  * while the old GameState is kept for visual-only systems (weather, time).
+ *
+ * R3F migration: uses drei's useProgress for loading tracking.
+ * Models are preloaded via ModelPreloader (import side-effect).
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useScene } from 'reactylon';
+import { useProgress } from '@react-three/drei';
 import { useGameSnapshot } from './hooks/useGameState';
-import { preloadModels, getFailedModels, type ModelLoadProgress } from './scene/ModelCache';
 import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
-import { assetUrl } from './utils/assetPath';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
 import { notifyStateChange, useTerrainVersion } from './stores/gameStore';
 import type { SettlementTier } from './game/SettlementSystem';
+
+// Import ModelPreloader for its side-effect (calls useGLTF.preload)
+import './scene/ModelPreloader';
+import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 
 // Scene components
 import TerrainGrid from './scene/TerrainGrid';
@@ -41,6 +46,8 @@ import Environment from './scene/Environment';
 import SceneProps from './scene/SceneProps';
 import PoliticalEntityRenderer from './scene/PoliticalEntityRenderer';
 
+/** Progress callback: (loaded, total, currentModelName) */
+type ModelLoadProgress = (loaded: number, total: number, name: string) => void;
 
 interface ContentProps {
   onLoadProgress?: ModelLoadProgress;
@@ -48,37 +55,40 @@ interface ContentProps {
 }
 
 const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => {
-  const scene = useScene();
   const snap = useGameSnapshot();
 
-  // Preload all GLB models and initialize audio on mount
-  useEffect(() => {
-    preloadModels(scene, assetUrl('assets'), onLoadProgress)
-      .then(() => {
-        const failed = getFailedModels();
-        if (failed.length > 0) {
-          console.warn(`[Content] ${failed.length} model(s) failed to load: ${failed.join(', ')}`);
-        }
-        // Notify forces re-render through useSyncExternalStore,
-        // so BuildingRenderer retries cloning now that models are ready
-        gameState.notify();
-        notifyStateChange();
-        onLoadComplete?.();
-      })
-      .catch((err) => {
-        console.error('[Content] Model preload failed:', err);
-        // Still complete loading so the user isn't stuck on the loading screen
-        onLoadComplete?.();
-      });
+  // Track drei loading progress (useGLTF.preload triggers this)
+  const { loaded, total, item } = useProgress();
+  const completedRef = useRef(false);
 
-    // Initialize audio — starts playlist after user interaction (IntroModal dismiss)
+  useEffect(() => {
+    if (total > 0) {
+      // Map drei progress to our progress callback
+      // Use TOTAL_MODEL_COUNT as a stable "total" since drei's total can fluctuate
+      const displayTotal = Math.max(total, TOTAL_MODEL_COUNT);
+      const modelName = item ? item.split('/').pop()?.replace('.glb', '') ?? '' : '';
+      onLoadProgress?.(loaded, displayTotal, modelName);
+    }
+
+    if (total > 0 && loaded === total && !completedRef.current) {
+      completedRef.current = true;
+      // Notify forces re-render through useSyncExternalStore,
+      // so BuildingRenderer retries cloning now that models are ready
+      gameState.notify();
+      notifyStateChange();
+      onLoadComplete?.();
+    }
+  }, [loaded, total, item]);
+
+  // Initialize audio on mount (no scene param needed for R3F — uses Web Audio API)
+  useEffect(() => {
     const audio = AudioManager.getInstance();
-    audio.init(scene);
+    audio.init();
 
     return () => {
       audio.dispose();
     };
-  }, [scene]);
+  }, []);
 
   // Derive building states from ECS (archive merge)
   // The ECS building defIds match GLB model names directly

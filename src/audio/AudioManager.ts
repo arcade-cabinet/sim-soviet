@@ -34,8 +34,8 @@ class AudioManager {
     return AudioManager.instance;
   }
 
-  init(scene: Scene): void {
-    this.scene = scene;
+  init(scene?: Scene): void {
+    if (scene) this.scene = scene;
   }
 
   /** Start playing the gameplay playlist in shuffled order. */
