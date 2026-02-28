@@ -25,6 +25,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
+          # Release events use tag refs — force checkout of main for Pages
+          # environment protection (which only allows branch deploys)
+          ref: main
 
       - name: Setup Node + pnpm
         uses: ./.github/actions/setup-node-pnpm
@@ -51,7 +54,7 @@ jobs:
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
 
   android-apk:
-    name: Build Android APKs
+    name: Build Android APK
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -71,24 +74,11 @@ jobs:
       - name: Prebuild Android
         run: npx expo prebuild --platform android --clean
 
-      - name: Add ABI splits to build.gradle
-        run: |
-          # Inject ABI splits into android block of app/build.gradle
-          sed -i '/^android {/a\
-              splits {\
-                  abi {\
-                      enable true\
-                      reset()\
-                      include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"\
-                      universalApk true\
-                  }\
-              }' android/app/build.gradle
-
-      - name: Build debug APKs (all architectures)
+      - name: Build universal debug APK
         working-directory: android
         run: ./gradlew assembleDebug
 
-      - name: Upload APKs to release
+      - name: Upload APK to release
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           TAG: ${{ github.event.release.tag_name }}
