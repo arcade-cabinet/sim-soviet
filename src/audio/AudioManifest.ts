@@ -94,6 +94,21 @@ export const MUSIC_CONTEXTS: Record<string, string> = {
   industrial: 'dubinushka',
 };
 
+/**
+ * Season → music context mapping.
+ * Keys match the Season enum values from game/Chronology.ts.
+ * Falls back to 'gameplay' if a season has no specific context.
+ */
+export const SEASON_CONTEXTS: Record<string, string> = {
+  winter: 'winter',               // melancholic winter hardship
+  rasputitsa_spring: 'melancholic', // mud season — bleak
+  short_summer: 'upbeat',          // brief warmth, hopeful
+  golden_week: 'upbeat',           // peak harvest, triumphant
+  stifling_heat: 'industrial',     // hot and dusty, labor
+  early_frost: 'melancholic',      // frost creeping in
+  rasputitsa_autumn: 'melancholic', // mud returns, winter approaches
+};
+
 export function getTrack(id: string): MusicTrack | undefined {
   return MUSIC_TRACKS.find((t) => t.id === id);
 }

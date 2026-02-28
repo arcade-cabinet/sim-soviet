@@ -10,7 +10,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Platform, StyleSheet } from 'react-native';
 import { SharedStyles } from './styles';
-import { gameState } from '../engine/GameState';
+import { getGridCells } from '../bridge/ECSBridge';
 import { GRID_SIZE, type TerrainType } from '../engine/GridTypes';
 
 const PIXEL_SIZE = Math.floor(120 / GRID_SIZE); // 4px per cell
@@ -42,7 +42,7 @@ export const Minimap: React.FC = () => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const grid = gameState.grid;
+      const grid = getGridCells();
       if (!grid.length) return;
 
       for (let y = 0; y < GRID_SIZE; y++) {

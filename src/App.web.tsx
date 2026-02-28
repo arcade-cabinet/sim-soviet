@@ -34,6 +34,7 @@ import Content from './Content';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
 import AudioManager from './audio/AudioManager';
+import { SEASON_CONTEXTS } from './audio/AudioManifest';
 import { gameState } from './engine/GameState';
 import { initGame, isGameInitialized, getEngine, getSaveSystem, type GameInitOptions } from './bridge/GameInit';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
@@ -59,7 +60,6 @@ import {
   clearToast,
   getAdvisor,
   dismissAdvisor,
-  getRandomTickerMsg,
   showToast,
   showAdvisor,
 } from './engine/helpers';
@@ -308,8 +308,11 @@ const App: React.FC = () => {
         onAchievement: (name, description) => {
           showToast(gameState, `★ ${name}: ${description}`);
         },
-        onSeasonChanged: (_season) => {
-          // Audio seasonal switching placeholder
+        onSeasonChanged: (season) => {
+          const ctx = SEASON_CONTEXTS[season];
+          if (ctx) {
+            AudioManager.getInstance().playContext(ctx);
+          }
         },
         onBuildingCollapsed: (gridX, gridY, type) => {
           showToast(gameState, `BUILDING COLLAPSED: ${type} at (${gridX},${gridY})`);
@@ -393,15 +396,9 @@ const App: React.FC = () => {
     };
   }, [screen]);
 
-  // Ticker message accumulation (only when game is active)
-  const tickerIntervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
-  useEffect(() => {
-    if (screen !== 'game' || !loadingFaded) return;
-    tickerIntervalRef.current = setInterval(() => {
-      setTickerText((prev) => prev + getRandomTickerMsg() + '  ///  ');
-    }, 8000);
-    return () => clearInterval(tickerIntervalRef.current);
-  }, [screen, loadingFaded]);
+  // Ticker messages now come exclusively from PravdaSystem via
+  // the onPravda callback (event-reactive + ambient headlines).
+  // The old static setInterval fallback has been removed.
 
   // --- Loading callbacks ---
   const handleLoadProgress = useCallback(
