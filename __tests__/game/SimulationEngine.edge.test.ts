@@ -171,7 +171,8 @@ describe('SimulationEngine edge cases', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 0, vodka: 0, population: 3 });
+      // Start with pop=0 — WorkerSystem spawns no citizen entities
+      createResourceStore({ food: 0, vodka: 0, population: 0 });
       createMetaStore();
       const engine2 = new SimulationEngine(grid2, cb2);
       createBuilding(0, 0, 'apartment-tower-a');
@@ -179,7 +180,7 @@ describe('SimulationEngine edge cases', () => {
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
       engine2.tick();
 
-      // Pop drops to 0 but within first year (totalTicks <= TICKS_PER_YEAR), so no game over
+      // Pop is 0 but within first year (totalTicks <= TICKS_PER_YEAR), so no game over
       expect(getResourceEntity()!.resources.population).toBe(0);
       expect(cb2.onGameOver).not.toHaveBeenCalled();
     });

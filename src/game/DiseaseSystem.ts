@@ -134,6 +134,8 @@ export interface DiseaseTickResult {
   recoveries: number;
   /** Number of disease deaths this tick */
   deaths: number;
+  /** Citizen entities that died from disease (for WorkerSystem cleanup) */
+  deadEntities: import('@/ecs/world').Entity[];
   /** Types of diseases that broke out (for Pravda headlines) */
   outbreakTypes: DiseaseType[];
 }
@@ -228,8 +230,6 @@ export function calcOutbreakModifier(
 export function progressDiseases(result: DiseaseTickResult): void {
   const rng = _rng;
 
-  // Snapshot citizens array — world.remove() during iteration is safe
-  // because we iterate the snapshot, not the live archetype.
   const snapshot = [...citizens];
   for (const entity of snapshot) {
     const disease = entity.citizen.disease;
@@ -242,10 +242,10 @@ export function progressDiseases(result: DiseaseTickResult): void {
 
       const roll = rng?.random() ?? Math.random();
       if (roll < mortalityRate) {
-        // Death — remove entity from world
+        // Death — collect for WorkerSystem removal (don't remove here)
         result.deaths++;
+        result.deadEntities.push(entity);
         entity.citizen.disease = undefined;
-        world.remove(entity);
       } else {
         // Recovery
         entity.citizen.disease = undefined;
@@ -329,6 +329,7 @@ export function diseaseTick(totalTicks: number, month: number): DiseaseTickResul
     newInfections: 0,
     recoveries: 0,
     deaths: 0,
+    deadEntities: [],
     outbreakTypes: [],
   };
 

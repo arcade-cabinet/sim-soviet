@@ -171,6 +171,12 @@ export class WorkerSystem {
         this.removeWorker(sorted[i]!, 'population_sync');
       }
     }
+
+    // Keep resource store in sync with entity count
+    const store = getResourceEntity();
+    if (store) {
+      store.resources.population = this.getPopulation();
+    }
   }
 
   /**

@@ -24,28 +24,28 @@ describe('WorkerSystem', () => {
 
   describe('generateWorkerName', () => {
     it('produces a three-part name (given + patronymic + surname)', () => {
-      const name = generateWorkerName(new GameRng('name-test'));
-      const parts = name.split(' ');
+      const result = generateWorkerName(new GameRng('name-test'));
+      const parts = result.name.split(' ');
       expect(parts.length).toBe(3);
     });
 
     it('produces deterministic names from same seed', () => {
       const rng1 = new GameRng('deterministic-name');
       const rng2 = new GameRng('deterministic-name');
-      expect(generateWorkerName(rng1)).toBe(generateWorkerName(rng2));
+      expect(generateWorkerName(rng1)).toStrictEqual(generateWorkerName(rng2));
     });
 
     it('produces different names from different seeds', () => {
-      const name1 = generateWorkerName(new GameRng('seed-a'));
-      const name2 = generateWorkerName(new GameRng('seed-b'));
+      const result1 = generateWorkerName(new GameRng('seed-a'));
+      const result2 = generateWorkerName(new GameRng('seed-b'));
       // Very unlikely to be the same with different seeds
-      expect(name1).not.toBe(name2);
+      expect(result1.name).not.toBe(result2.name);
     });
 
     it('first and last names are non-empty strings', () => {
       for (let i = 0; i < 20; i++) {
-        const name = generateWorkerName(new GameRng(`name-${i}`));
-        const [first, patronymic] = name.split(' ');
+        const result = generateWorkerName(new GameRng(`name-${i}`));
+        const [first, patronymic] = result.name.split(' ');
         expect(first!.length).toBeGreaterThan(0);
         expect(patronymic!.length).toBeGreaterThan(0);
       }
