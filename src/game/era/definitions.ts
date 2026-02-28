@@ -127,14 +127,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     deliveryRates: { food: 0.5, vodka: 0.4, money: 0.6 },
     quotaEscalation: 1.3,
 
-    unlockedBuildings: [
-      'workers-house-c',
-      'bread-factory',
-      'warehouse',
-      'school',
-      'barracks',
-      'road-depot',
-    ],
+    unlockedBuildings: ['workers-house-c', 'bread-factory', 'warehouse', 'school', 'barracks', 'road-depot'],
 
     modifiers: {
       productionMult: 1.0,
@@ -165,8 +158,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'History has not yet been written. You will write it. In triplicate. ' +
       'Collectivize the farms. Build the warehouses. The kulaks will resist. ' +
       'Resistance is also collectivized.',
-    briefingFlavor:
-      'Forced collectivization. Kulak purges. Quotas that exist in a dimension where math is optional.',
+    briefingFlavor: 'Forced collectivization. Kulak purges. Quotas that exist in a dimension where math is optional.',
   },
 
   // ── INDUSTRIALIZATION (1932-1941) ───────────────────────
@@ -219,8 +211,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'build more factories. The second factories will build things that ' +
       'are not factories. What those things are has not been decided. ' +
       'Decide quickly. The Plan does not wait.',
-    briefingFlavor:
-      'Industrialization at gunpoint. Five-year plans. The Great Terror. Build or be built upon.',
+    briefingFlavor: 'Industrialization at gunpoint. Five-year plans. The Great Terror. Build or be built upon.',
   },
 
   // ── GREAT PATRIOTIC WAR (1941-1945) ───────────────────

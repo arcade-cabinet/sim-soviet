@@ -189,7 +189,8 @@ const HOUSEHOLD_ACTIONS: ActionDef[] = [
     label: 'Men',
     icon: '\u{1F468}',
     getDetail: (state) => {
-      const count = state.occupants?.filter((o) => o.gender === 'male' && Number(o.age) >= 18 && Number(o.age) < 60).length ?? 0;
+      const count =
+        state.occupants?.filter((o) => o.gender === 'male' && Number(o.age) >= 18 && Number(o.age) < 60).length ?? 0;
       return `Men: ${count}`;
     },
   },
@@ -198,7 +199,8 @@ const HOUSEHOLD_ACTIONS: ActionDef[] = [
     label: 'Women',
     icon: '\u{1F469}',
     getDetail: (state) => {
-      const count = state.occupants?.filter((o) => o.gender === 'female' && Number(o.age) >= 18 && Number(o.age) < 60).length ?? 0;
+      const count =
+        state.occupants?.filter((o) => o.gender === 'female' && Number(o.age) >= 18 && Number(o.age) < 60).length ?? 0;
       return `Women: ${count}`;
     },
   },
@@ -343,13 +345,7 @@ const Wedge: React.FC<{
   const endA = (index + 1) * totalAngle - gap / 2;
   const midA = (startA + endA) / 2;
   const labelPos = polarToXY(CENTER, CENTER, (innerR + outerR) / 2, midA);
-  const fill = isDisabled
-    ? fillDisabled
-    : isSelected
-      ? fillActive
-      : isDanger
-        ? '#3a1a1a'
-        : fillDefault;
+  const fill = isDisabled ? fillDisabled : isSelected ? fillActive : isDanger ? '#3a1a1a' : fillDefault;
   const stroke = isDisabled ? '#333' : isSelected ? strokeActive : isDanger ? '#662222' : strokeDefault;
 
   return (
@@ -407,9 +403,34 @@ const DetailRing: React.FC<{ text: string }> = ({ text }) => {
   const displayText = text.length > 40 ? `${text.slice(0, 38)}..` : text;
   return (
     <G>
-      <Circle cx={CENTER} cy={CENTER} r={DETAIL_INNER_R - 3} fill="none" stroke="#8b0000" strokeWidth={1} strokeDasharray="3 3" opacity={0.5} />
-      <Path d={describeWedge(CENTER, CENTER, DETAIL_INNER_R, DETAIL_OUTER_R, 0, 359.99)} fill="#1e1e1e" stroke="#333" strokeWidth={1} opacity={0.85} />
-      <SvgText x={CENTER} y={CENTER - DETAIL_INNER_R - 20} textAnchor="middle" alignmentBaseline="central" fontSize={9} fill={Colors.sovietGold} fontFamily={monoFont} fontWeight="bold" letterSpacing={1}>
+      <Circle
+        cx={CENTER}
+        cy={CENTER}
+        r={DETAIL_INNER_R - 3}
+        fill="none"
+        stroke="#8b0000"
+        strokeWidth={1}
+        strokeDasharray="3 3"
+        opacity={0.5}
+      />
+      <Path
+        d={describeWedge(CENTER, CENTER, DETAIL_INNER_R, DETAIL_OUTER_R, 0, 359.99)}
+        fill="#1e1e1e"
+        stroke="#333"
+        strokeWidth={1}
+        opacity={0.85}
+      />
+      <SvgText
+        x={CENTER}
+        y={CENTER - DETAIL_INNER_R - 20}
+        textAnchor="middle"
+        alignmentBaseline="central"
+        fontSize={9}
+        fill={Colors.sovietGold}
+        fontFamily={monoFont}
+        fontWeight="bold"
+        letterSpacing={1}
+      >
         {displayText}
       </SvgText>
     </G>
@@ -424,7 +445,7 @@ const BuildModeContent: React.FC<{
   menu: { screenX: number; screenY: number; gridX: number; gridY: number; availableSpace: number };
   snap: ReturnType<typeof useGameSnapshot>;
   onClose: () => void;
-}> = ({ menu, snap, onClose }) => {
+}> = ({ menu, snap, onClose: _onClose }) => {
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
 
   const eraAvailable = new Set(getAvailableBuildingsForYear(snap.year, snap.settlementTier as SettlementTier));
@@ -508,7 +529,16 @@ const BuildModeContent: React.FC<{
       {/* Building ring (outer) */}
       {selectedCat && buildingIds.length > 0 && (
         <G>
-          <Circle cx={CENTER} cy={CENTER} r={DETAIL_INNER_R - 3} fill="none" stroke="#8b0000" strokeWidth={1} strokeDasharray="3 3" opacity={0.5} />
+          <Circle
+            cx={CENTER}
+            cy={CENTER}
+            r={DETAIL_INNER_R - 3}
+            fill="none"
+            stroke="#8b0000"
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            opacity={0.5}
+          />
           {buildingIds.map((id, i) => {
             const def = BUILDING_DEFS[id];
             if (!def) return null;
@@ -518,7 +548,8 @@ const BuildModeContent: React.FC<{
               def,
             );
             const canBuild = fits && canAfford;
-            const displayName = def.presentation.name.length > 14 ? `${def.presentation.name.slice(0, 12)}..` : def.presentation.name;
+            const displayName =
+              def.presentation.name.length > 14 ? `${def.presentation.name.slice(0, 12)}..` : def.presentation.name;
             return (
               <Wedge
                 key={id}
@@ -646,7 +677,10 @@ export const RadialMenu: React.FC = () => {
   if (!menu || !mode) return null;
 
   const { screenX, screenY, gridX, gridY } = menu;
-  const buildingName = mode === 'inspect' && inspectMenu ? (getBuildingDef(inspectMenu.buildingDefId)?.presentation.name ?? inspectMenu.buildingDefId) : null;
+  const buildingName =
+    mode === 'inspect' && inspectMenu
+      ? (getBuildingDef(inspectMenu.buildingDefId)?.presentation.name ?? inspectMenu.buildingDefId)
+      : null;
   const availableSpace = 'availableSpace' in menu ? (menu as { availableSpace: number }).availableSpace : 0;
 
   return (
@@ -671,19 +705,12 @@ export const RadialMenu: React.FC = () => {
           {mode === 'build' && buildMenu && (
             <BuildModeContent menu={{ ...buildMenu, availableSpace }} snap={snap} onClose={handleClose} />
           )}
-          {mode === 'inspect' && inspectMenu && (
-            <InspectModeContent menu={inspectMenu} onClose={handleClose} />
-          )}
+          {mode === 'inspect' && inspectMenu && <InspectModeContent menu={inspectMenu} onClose={handleClose} />}
         </Svg>
       </Animated.View>
 
       {/* Tooltip */}
-      <Animated.View
-        style={[
-          styles.tooltip,
-          { left: screenX - 50, top: screenY + CENTER + 10, opacity: opacityAnim },
-        ]}
-      >
+      <Animated.View style={[styles.tooltip, { left: screenX - 50, top: screenY + CENTER + 10, opacity: opacityAnim }]}>
         <Animated.Text style={styles.tooltipText}>
           {mode === 'build'
             ? `Grid [${gridX},${gridY}] \u2022 ${availableSpace}x${availableSpace} free`

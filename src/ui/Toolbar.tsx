@@ -104,9 +104,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 onPress={() => onBuildTabChange?.(sub.key)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.subTabText, isActive && styles.subTabTextActive]}>
-                  {sub.label}
-                </Text>
+                <Text style={[styles.subTabText, isActive && styles.subTabTextActive]}>{sub.label}</Text>
               </TouchableOpacity>
             );
           })}

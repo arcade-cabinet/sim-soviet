@@ -20,7 +20,6 @@
 
 import { citizens, getResourceEntity, housing as housingArchetype, operationalBuildings } from '@/ecs/archetypes';
 import type { CitizenDisease } from '@/ecs/world';
-import { world } from '@/ecs/world';
 import { TICKS_PER_MONTH } from '@/game/Chronology';
 import type { GameRng } from '@/game/SeedSystem';
 

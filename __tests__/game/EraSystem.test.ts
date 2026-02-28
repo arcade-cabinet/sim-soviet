@@ -67,7 +67,15 @@ describe('ERA_DEFINITIONS', () => {
   });
 
   it('every era has a valid doctrine', () => {
-    const validDoctrines = ['revolutionary', 'industrialization', 'wartime', 'reconstruction', 'thaw', 'stagnation', 'eternal'];
+    const validDoctrines = [
+      'revolutionary',
+      'industrialization',
+      'wartime',
+      'reconstruction',
+      'thaw',
+      'stagnation',
+      'eternal',
+    ];
     for (const eraId of ERA_ORDER) {
       const def = ERA_DEFINITIONS[eraId];
       expect(validDoctrines).toContain(def.doctrine);

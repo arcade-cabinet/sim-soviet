@@ -76,12 +76,7 @@ export interface BlatState {
 }
 
 /** FIX-09: All valid blat spending purposes. */
-export type BlatPurpose =
-  | 'improve_delivery'
-  | 'reduce_quota'
-  | 'kgb_protection'
-  | 'consumer_goods'
-  | 'trading';
+export type BlatPurpose = 'improve_delivery' | 'reduce_quota' | 'kgb_protection' | 'consumer_goods' | 'trading';
 
 /** FIX-09: Effect returned from blat spending (for SimulationEngine to apply). */
 export interface BlatEffect {
@@ -1012,10 +1007,7 @@ export class EconomySystem {
     this.blat.totalEarned += amount;
   }
 
-  spendBlat(
-    amount: number,
-    purpose: BlatPurpose,
-  ): { success: boolean; kgbDetected: boolean; effect?: BlatEffect } {
+  spendBlat(amount: number, purpose: BlatPurpose): { success: boolean; kgbDetected: boolean; effect?: BlatEffect } {
     if (this.blat.connections < amount) {
       return { success: false, kgbDetected: false };
     }
@@ -1349,8 +1341,10 @@ export class EconomySystem {
       // Execute chain: consume inputs, produce outputs
       for (const step of chain.steps) {
         for (const [resource, amount] of Object.entries(step.input)) {
-          (resources as Record<string, number>)[resource] =
-            Math.max(0, ((resources as Record<string, number>)[resource] ?? 0) - amount);
+          (resources as Record<string, number>)[resource] = Math.max(
+            0,
+            ((resources as Record<string, number>)[resource] ?? 0) - amount,
+          );
         }
         for (const [resource, amount] of Object.entries(step.output)) {
           (resources as Record<string, number>)[resource] =

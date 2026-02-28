@@ -303,9 +303,7 @@ export class WorkerSystem {
    */
   moscowAssignment(): PopulationInflowEvent {
     const rng = this.rng;
-    const count = rng
-      ? rng.int(MOSCOW_ASSIGNMENT_COUNT[0], MOSCOW_ASSIGNMENT_COUNT[1])
-      : MOSCOW_ASSIGNMENT_COUNT[0];
+    const count = rng ? rng.int(MOSCOW_ASSIGNMENT_COUNT[0], MOSCOW_ASSIGNMENT_COUNT[1]) : MOSCOW_ASSIGNMENT_COUNT[0];
 
     for (let i = 0; i < count; i++) {
       this.spawnWorker();
@@ -374,11 +372,7 @@ export class WorkerSystem {
    */
   tick(ctx: WorkerTickContext): WorkerTickResult;
   tick(vodkaAvailable: number, foodAvailable: number, heatingFailing?: boolean): WorkerTickResult;
-  tick(
-    ctxOrVodka: WorkerTickContext | number,
-    foodAvailable?: number,
-    heatingFailing?: boolean,
-  ): WorkerTickResult {
+  tick(ctxOrVodka: WorkerTickContext | number, foodAvailable?: number, heatingFailing?: boolean): WorkerTickResult {
     const ctx: WorkerTickContext =
       typeof ctxOrVodka === 'number'
         ? {
@@ -416,7 +410,7 @@ export class WorkerSystem {
 
     // Process defections
     for (const { entity, name, cls } of toRemove) {
-      const reason = cls === 'prisoner' ? 'escape' as const : 'defection' as const;
+      const reason = cls === 'prisoner' ? ('escape' as const) : ('defection' as const);
       this.removeWorker(entity, reason);
       drains.push({ name, class: cls, reason });
     }
@@ -475,8 +469,7 @@ export class WorkerSystem {
     if (avgMorale >= FLIGHT_MORALE_THRESHOLD) return;
 
     const rng = this.rng;
-    const [min, max] =
-      avgMorale < FLIGHT_MORALE_CRITICAL ? FLIGHT_COUNT_CRITICAL : FLIGHT_COUNT_NORMAL;
+    const [min, max] = avgMorale < FLIGHT_MORALE_CRITICAL ? FLIGHT_COUNT_CRITICAL : FLIGHT_COUNT_NORMAL;
     const fleeCount = rng ? rng.int(min, max) : min;
 
     // Select lowest-morale workers to flee
@@ -507,9 +500,7 @@ export class WorkerSystem {
     if (avgMorale >= YOUTH_FLIGHT_MORALE_THRESHOLD) return;
 
     // Check if any youth retention buildings exist
-    const hasRetention = [...operationalBuildings].some((e) =>
-      YOUTH_RETENTION_BUILDINGS.includes(e.building.defId),
-    );
+    const hasRetention = [...operationalBuildings].some((e) => YOUTH_RETENTION_BUILDINGS.includes(e.building.defId));
     if (hasRetention) return;
 
     // One youth flees per check
@@ -562,9 +553,7 @@ export class WorkerSystem {
           const assignment = e.citizen.assignment;
           if (!assignment) return false;
           return (
-            assignment.includes('factory') ||
-            assignment.includes('industrial') ||
-            assignment === 'vodka-distillery'
+            assignment.includes('factory') || assignment.includes('industrial') || assignment === 'vodka-distillery'
           );
         });
 
@@ -580,9 +569,7 @@ export class WorkerSystem {
         if (lowSkill.length > 0 && (rng?.random() ?? Math.random()) < ACCIDENT_LOW_SKILL_MULT / 3) {
           victim = rng ? lowSkill[rng.int(0, lowSkill.length - 1)]! : lowSkill[0]!;
         } else {
-          victim = rng
-            ? factoryWorkers[rng.int(0, factoryWorkers.length - 1)]!
-            : factoryWorkers[0]!;
+          victim = rng ? factoryWorkers[rng.int(0, factoryWorkers.length - 1)]! : factoryWorkers[0]!;
         }
 
         const stats = this.stats.get(victim);

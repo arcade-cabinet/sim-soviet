@@ -2,8 +2,8 @@ import { citizens } from '@/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
-import { WorkerSystem } from '@/game/workers';
 import type { WorkerTickContext } from '@/game/workers';
+import { WorkerSystem } from '@/game/workers';
 
 /** Build a default tick context with overrides. */
 function makeCtx(overrides: Partial<WorkerTickContext> = {}): WorkerTickContext {

@@ -132,7 +132,9 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
           </View>
           <Text style={styles.flavor}>{MAP_SIZE_CONFIG[mapSize].desc}</Text>
           <View style={styles.statsRow}>
-            <Text style={styles.statText}>Grid: {MAP_SIZE_CONFIG[mapSize].gridSize}x{MAP_SIZE_CONFIG[mapSize].gridSize}</Text>
+            <Text style={styles.statText}>
+              Grid: {MAP_SIZE_CONFIG[mapSize].gridSize}x{MAP_SIZE_CONFIG[mapSize].gridSize}
+            </Text>
           </View>
         </View>
 

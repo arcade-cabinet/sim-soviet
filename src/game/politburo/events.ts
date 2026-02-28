@@ -344,7 +344,7 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     id: 'heavy_industry_accident',
     ministry: Ministry.HEAVY_INDUSTRY,
     title: 'INDUSTRIAL ACCIDENT',
-    description: (m, gs) => {
+    description: (_m, gs) => {
       const casualties = Math.max(1, Math.floor(gs.pop * 0.02));
       return `Accident at the factory. ${casualties} workers injured. Safety inspector was on mandatory vacation. The vacation was in Siberia.`;
     },

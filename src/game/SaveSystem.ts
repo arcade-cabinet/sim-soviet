@@ -403,9 +403,9 @@ export class SaveSystem {
     meta.gameMeta.seed = gm.seed;
     meta.gameMeta.date = { ...gm.date };
     meta.gameMeta.quota = { ...gm.quota };
-    meta.gameMeta.settlementTier = (['selo', 'posyolok', 'pgt', 'gorod'].includes(gm.settlementTier)
-      ? gm.settlementTier
-      : 'selo') as typeof meta.gameMeta.settlementTier;
+    meta.gameMeta.settlementTier = (
+      ['selo', 'posyolok', 'pgt', 'gorod'].includes(gm.settlementTier) ? gm.settlementTier : 'selo'
+    ) as typeof meta.gameMeta.settlementTier;
     meta.gameMeta.blackMarks = gm.blackMarks;
     meta.gameMeta.commendations = gm.commendations;
     meta.gameMeta.threatLevel = gm.threatLevel;

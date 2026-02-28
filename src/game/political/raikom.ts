@@ -85,24 +85,72 @@ interface DirectiveTemplate {
 
 const DIRECTIVE_TEMPLATES: Record<RaikomPersonality, DirectiveTemplate[]> = {
   hardliner: [
-    { type: 'build', descriptions: ['Build a guard post immediately.', 'Construct additional housing for workers.'], penaltyMarks: 2 },
-    { type: 'purge', descriptions: ['Root out counter-revolutionary elements.', 'Conduct loyalty audit of all workers.'], penaltyMarks: 1 },
-    { type: 'produce', descriptions: ['Increase food production by 20%.', 'Double vodka output this quarter.'], penaltyMarks: 2 },
+    {
+      type: 'build',
+      descriptions: ['Build a guard post immediately.', 'Construct additional housing for workers.'],
+      penaltyMarks: 2,
+    },
+    {
+      type: 'purge',
+      descriptions: ['Root out counter-revolutionary elements.', 'Conduct loyalty audit of all workers.'],
+      penaltyMarks: 1,
+    },
+    {
+      type: 'produce',
+      descriptions: ['Increase food production by 20%.', 'Double vodka output this quarter.'],
+      penaltyMarks: 2,
+    },
   ],
   pragmatist: [
-    { type: 'build', descriptions: ['Expand infrastructure as needed.', 'Build a warehouse for surplus storage.'], penaltyMarks: 1 },
-    { type: 'produce', descriptions: ['Meet this quarter production target.', 'Ensure food stores are adequate.'], penaltyMarks: 1 },
-    { type: 'celebrate', descriptions: ['Organize a workers celebration.', 'Commemorate the anniversary of the revolution.'], penaltyMarks: 1 },
+    {
+      type: 'build',
+      descriptions: ['Expand infrastructure as needed.', 'Build a warehouse for surplus storage.'],
+      penaltyMarks: 1,
+    },
+    {
+      type: 'produce',
+      descriptions: ['Meet this quarter production target.', 'Ensure food stores are adequate.'],
+      penaltyMarks: 1,
+    },
+    {
+      type: 'celebrate',
+      descriptions: ['Organize a workers celebration.', 'Commemorate the anniversary of the revolution.'],
+      penaltyMarks: 1,
+    },
   ],
   careerist: [
-    { type: 'produce', descriptions: ['Exceed quota by 15% for my report.', 'Produce enough vodka to impress Moscow.'], penaltyMarks: 2 },
-    { type: 'celebrate', descriptions: ['Stage a parade for visiting officials.', 'Prepare a ceremonial display of achievements.'], penaltyMarks: 1 },
-    { type: 'build', descriptions: ['Build something impressive for the delegation.', 'Construct a monument to Soviet progress.'], penaltyMarks: 2 },
+    {
+      type: 'produce',
+      descriptions: ['Exceed quota by 15% for my report.', 'Produce enough vodka to impress Moscow.'],
+      penaltyMarks: 2,
+    },
+    {
+      type: 'celebrate',
+      descriptions: ['Stage a parade for visiting officials.', 'Prepare a ceremonial display of achievements.'],
+      penaltyMarks: 1,
+    },
+    {
+      type: 'build',
+      descriptions: ['Build something impressive for the delegation.', 'Construct a monument to Soviet progress.'],
+      penaltyMarks: 2,
+    },
   ],
   reformist: [
-    { type: 'build', descriptions: ['Build a school for the children.', 'Establish a medical clinic.'], penaltyMarks: 1 },
-    { type: 'produce', descriptions: ['Diversify food production.', 'Improve worker living conditions.'], penaltyMarks: 1 },
-    { type: 'celebrate', descriptions: ['Organize cultural activities for workers.', 'Hold a community meeting.'], penaltyMarks: 0 },
+    {
+      type: 'build',
+      descriptions: ['Build a school for the children.', 'Establish a medical clinic.'],
+      penaltyMarks: 1,
+    },
+    {
+      type: 'produce',
+      descriptions: ['Diversify food production.', 'Improve worker living conditions.'],
+      penaltyMarks: 1,
+    },
+    {
+      type: 'celebrate',
+      descriptions: ['Organize cultural activities for workers.', 'Hold a community meeting.'],
+      penaltyMarks: 0,
+    },
   ],
 };
 
@@ -149,9 +197,7 @@ export function processVisit(
   const newDirectives: RaikomDirective[] = [];
 
   // Clean up expired/fulfilled directives
-  raikom.activeDirectives = raikom.activeDirectives.filter(
-    (d) => !d.fulfilled && totalTicks < d.deadlineTick,
-  );
+  raikom.activeDirectives = raikom.activeDirectives.filter((d) => !d.fulfilled && totalTicks < d.deadlineTick);
 
   // Issue new directives (up to MAX_ACTIVE_DIRECTIVES)
   const slotsAvailable = MAX_ACTIVE_DIRECTIVES - raikom.activeDirectives.length;

@@ -73,11 +73,7 @@ export function rollInvestigationIntensity(
 }
 
 /** Create a new KGB investigation at the agent's current position. */
-export function createInvestigation(
-  entity: PoliticalEntityStats,
-  rng: GameRng,
-  priorMarks?: number,
-): KGBInvestigation {
+export function createInvestigation(entity: PoliticalEntityStats, rng: GameRng, priorMarks?: number): KGBInvestigation {
   const intensity = rollInvestigationIntensity(entity.effectiveness, rng, priorMarks);
   const duration = rng.int(INVESTIGATION_MIN_TICKS, INVESTIGATION_MAX_TICKS);
 
@@ -194,7 +190,7 @@ export function tickInformants(
     informant.nextReportTick = totalTicks + INFORMANT_REPORT_INTERVAL;
 
     // Informant produces a report — chance to flag based on reliability
-    if (rng && rng.coinFlip((informant.reliability / 100) * INFORMANT_FLAG_CHANCE)) {
+    if (rng?.coinFlip((informant.reliability / 100) * INFORMANT_FLAG_CHANCE)) {
       // This flag feeds into the investigation targeting system
       result.announcements.push(
         `Informant report received from building (${informant.buildingPos.gridX},${informant.buildingPos.gridY}).`,

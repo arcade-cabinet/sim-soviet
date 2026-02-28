@@ -180,7 +180,11 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
   );
 
   const handleCustomSave = useCallback(() => {
-    const trimmed = customName.trim().replace(/\s+/g, '-').replace(/[^a-z0-9_\-]/gi, '').slice(0, 50);
+    const trimmed = customName
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9_-]/gi, '')
+      .slice(0, 50);
     if (!trimmed) {
       showStatus('ENTER A SAVE NAME, COMRADE', 'error');
       return;

@@ -5,6 +5,8 @@
  * entities on the game map. Also includes Raikom and doctrine mechanics.
  */
 
+export type { DoctrineContext, DoctrinePolicy } from './doctrine';
+export { evaluateDoctrineMechanics, getDoctrinePolicyForEra } from './doctrine';
 export { PoliticalEntitySystem } from './PoliticalEntitySystem';
 // Public API — matches original PoliticalEntitySystem.ts exports
 export type {
@@ -26,5 +28,3 @@ export type {
   RaikomPersonality,
   RaikomState,
 } from './types';
-export { evaluateDoctrineMechanics, getDoctrinePolicyForEra } from './doctrine';
-export type { DoctrineContext, DoctrinePolicy } from './doctrine';

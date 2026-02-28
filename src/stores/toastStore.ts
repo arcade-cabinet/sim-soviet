@@ -53,9 +53,8 @@ let _toastCounter = 0;
 
 /** Show a toast immediately (bypasses rate limit — used by the drain loop). */
 function showToast(severity: ToastSeverity, message: string): void {
-  const id = typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `toast-${Date.now()}-${++_toastCounter}`;
+  const id =
+    typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `toast-${Date.now()}-${++_toastCounter}`;
   _toasts = [{ id, severity, message }, ..._toasts].slice(0, MAX_TOASTS);
   _lastToastTime = Date.now();
   _recentMessages.set(message, Date.now());

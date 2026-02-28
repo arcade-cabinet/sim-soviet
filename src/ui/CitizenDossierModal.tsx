@@ -369,7 +369,11 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({ visibl
           <SectionDivider label="Household Members" />
           <View style={styles.householdBox}>
             <InfoRow label="HOUSEHOLD" value={dvorSurname ? `${dvorSurname} Dvor` : `Dvor #${dvor.id.slice(0, 6)}`} />
-            <InfoRow label="LOYALTY TO COLLECTIVE" value={`${dvor.loyaltyToCollective}%`} valueColor={thresholdColor(dvor.loyaltyToCollective)} />
+            <InfoRow
+              label="LOYALTY TO COLLECTIVE"
+              value={`${dvor.loyaltyToCollective}%`}
+              valueColor={thresholdColor(dvor.loyaltyToCollective)}
+            />
             <View style={styles.memberList}>
               {dvor.members.map((member: DvorMember) => {
                 const isCurrentCitizen = member.name === name;

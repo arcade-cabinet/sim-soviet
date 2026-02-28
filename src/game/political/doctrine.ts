@@ -77,7 +77,7 @@ const WARTIME_PRODUCTION_BONUS = 0.1;
  * War Communism: Forced grain requisitioning.
  * All food production goes to the state first. Citizens get leftovers.
  */
-function applyGrainRequisitioning(currentFood: number, rng: GameRng): DoctrineMechanicEffect {
+function applyGrainRequisitioning(currentFood: number, _rng: GameRng): DoctrineMechanicEffect {
   const foodTaken = Math.floor(currentFood * GRAIN_REQUISITION_RATE);
 
   return {
@@ -95,11 +95,7 @@ function applyGrainRequisitioning(currentFood: number, rng: GameRng): DoctrineMe
  * Collectivization: Private plot seizure.
  * Periodic food redistribution with chance of resistance.
  */
-function applyCollectivizationSeizure(
-  currentFood: number,
-  currentPop: number,
-  rng: GameRng,
-): DoctrineMechanicEffect {
+function applyCollectivizationSeizure(currentFood: number, currentPop: number, rng: GameRng): DoctrineMechanicEffect {
   const foodSeized = Math.floor(currentFood * COLLECTIVIZATION_SEIZURE_RATE);
 
   // Chance of resistance causing population loss (kulak resistance)
@@ -108,9 +104,10 @@ function applyCollectivizationSeizure(
     popLoss = rng.int(1, Math.max(1, Math.floor(currentPop * 0.02)));
   }
 
-  const desc = popLoss > 0
-    ? `Collectivization: ${foodSeized} food seized. ${popLoss} kulak${popLoss > 1 ? 's' : ''} resisted and were dealt with.`
-    : `Collectivization: ${foodSeized} food redistributed to the collective.`;
+  const desc =
+    popLoss > 0
+      ? `Collectivization: ${foodSeized} food seized. ${popLoss} kulak${popLoss > 1 ? 's' : ''} resisted and were dealt with.`
+      : `Collectivization: ${foodSeized} food redistributed to the collective.`;
 
   return {
     mechanicId: 'collectivization_seizure',
@@ -158,7 +155,7 @@ function applyStakhanoviteBonus(quotaProgress: number, rng: GameRng): DoctrineMe
  * Great Patriotic War: Military mobilization.
  * Periodic conscription of workforce with wartime production bonus.
  */
-function applyWartimeConscription(currentPop: number, rng: GameRng): DoctrineMechanicEffect {
+function applyWartimeConscription(currentPop: number, _rng: GameRng): DoctrineMechanicEffect {
   const conscripted = Math.max(1, Math.floor(currentPop * WARTIME_CONSCRIPTION_RATE));
 
   return {

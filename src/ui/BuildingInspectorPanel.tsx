@@ -292,25 +292,26 @@ const DistributionBar: React.FC<{
   return (
     <View style={ringStyles.distContainer}>
       <View style={ringStyles.distBar}>
-        {segments.filter(s => s.value > 0).map((seg, i) => (
-          <View
-            key={i}
-            style={[
-              ringStyles.distSegment,
-              { width: `${(seg.value / total) * 100}%`, backgroundColor: seg.color },
-            ]}
-          />
-        ))}
+        {segments
+          .filter((s) => s.value > 0)
+          .map((seg, i) => (
+            <View
+              key={i}
+              style={[ringStyles.distSegment, { width: `${(seg.value / total) * 100}%`, backgroundColor: seg.color }]}
+            />
+          ))}
       </View>
       <View style={ringStyles.distLegend}>
-        {segments.filter(s => s.value > 0).map((seg, i) => (
-          <View key={i} style={ringStyles.distLegendItem}>
-            <View style={[ringStyles.distDot, { backgroundColor: seg.color }]} />
-            <Text style={ringStyles.distLegendText}>
-              {seg.label} {seg.value}
-            </Text>
-          </View>
-        ))}
+        {segments
+          .filter((s) => s.value > 0)
+          .map((seg, i) => (
+            <View key={i} style={ringStyles.distLegendItem}>
+              <View style={[ringStyles.distDot, { backgroundColor: seg.color }]} />
+              <Text style={ringStyles.distLegendText}>
+                {seg.label} {seg.value}
+              </Text>
+            </View>
+          ))}
       </View>
     </View>
   );
@@ -329,7 +330,17 @@ const ProductionRing: React.FC<{
   powerOutput: number;
   storageContribution: number;
   role: string;
-}> = ({ produces, effectiveOutput, efficiencyPct, avgWorkerEfficiency, workerCount, workerCap, powerOutput, storageContribution, role }) => {
+}> = ({
+  produces,
+  effectiveOutput,
+  efficiencyPct,
+  avgWorkerEfficiency,
+  workerCount,
+  workerCap,
+  powerOutput,
+  storageContribution,
+  role,
+}) => {
   // Only show for buildings that produce something
   const hasProduction = produces || powerOutput > 0 || storageContribution > 0;
   if (!hasProduction) return null;
@@ -340,16 +351,8 @@ const ProductionRing: React.FC<{
 
       {produces && (
         <>
-          <InfoRow
-            label="RESOURCE"
-            value={produces.resource.toUpperCase()}
-            valueColor={Colors.termGreen}
-          />
-          <InfoRow
-            label="BASE RATE"
-            value={`${produces.amount}/tick`}
-            valueColor="#9e9e9e"
-          />
+          <InfoRow label="RESOURCE" value={produces.resource.toUpperCase()} valueColor={Colors.termGreen} />
+          <InfoRow label="BASE RATE" value={`${produces.amount}/tick`} valueColor="#9e9e9e" />
           <StatBar
             label="EFFECTIVE OUTPUT"
             value={effectiveOutput}
@@ -357,11 +360,7 @@ const ProductionRing: React.FC<{
             color={effectiveOutput > 0 ? Colors.termGreen : '#ef4444'}
             suffix="/tick"
           />
-          <InfoRow
-            label="PLANT EFFICIENCY"
-            value={`${efficiencyPct}%`}
-            valueColor={efficiencyColor(efficiencyPct)}
-          />
+          <InfoRow label="PLANT EFFICIENCY" value={`${efficiencyPct}%`} valueColor={efficiencyColor(efficiencyPct)} />
           {workerCap > 0 && workerCount > 0 && (
             <InfoRow
               label="AVG WORKER EFF."
@@ -502,9 +501,7 @@ const DemographicRing: React.FC<{
         </>
       )}
 
-      {workerCount === 0 && (
-        <Text style={styles.noWorkers}>No workers assigned — building idle</Text>
-      )}
+      {workerCount === 0 && <Text style={styles.noWorkers}>No workers assigned — building idle</Text>}
     </View>
   );
 };
@@ -530,7 +527,25 @@ const RecordsRing: React.FC<{
   gridY: number;
   role: string;
   level: number;
-}> = ({ constructionInfo, health, decayRate, pollution, fear, onFire, fireTicksRemaining, powered, powerReq, powerOutput, footX, footY, cost, gridX, gridY, role, level }) => {
+}> = ({
+  constructionInfo,
+  health,
+  decayRate,
+  pollution,
+  fear,
+  onFire,
+  fireTicksRemaining,
+  powered,
+  powerReq,
+  powerOutput,
+  footX,
+  footY,
+  cost,
+  gridX,
+  gridY,
+  role,
+  level,
+}) => {
   // Estimated remaining lifespan based on current health and decay rate
   const estimatedLife = decayRate > 0 ? Math.round(health / decayRate) : null;
 
@@ -564,7 +579,9 @@ const RecordsRing: React.FC<{
 
       {/* Operational status */}
       <View style={ringStyles.statusBadge}>
-        <Text style={[ringStyles.statusText, { color: opColor }]}>{'\u25CF'} {opStatus}</Text>
+        <Text style={[ringStyles.statusText, { color: opColor }]}>
+          {'\u25CF'} {opStatus}
+        </Text>
       </View>
 
       {/* Construction progress */}
@@ -801,10 +818,7 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
       />
 
       {/* ═══ Demographic Ring ═══ */}
-      <DemographicRing
-        workers={assignedWorkers}
-        workerCap={workerCap}
-      />
+      <DemographicRing workers={assignedWorkers} workerCap={workerCap} />
 
       {/* ═══ Records Ring ═══ */}
       <RecordsRing

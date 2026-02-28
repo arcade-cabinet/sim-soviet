@@ -54,7 +54,9 @@ interface EdgeIndicator {
  * Since we don't have direct camera frustum info, we use a simple heuristic:
  * recent notifications with grid coordinates get indicators on the nearest edge.
  */
-function computeIndicators(notifications: { id: number; severity: string; gridX?: number; gridY?: number; message: string }[]): EdgeIndicator[] {
+function computeIndicators(
+  notifications: { id: number; severity: string; gridX?: number; gridY?: number; message: string }[],
+): EdgeIndicator[] {
   const MAX_INDICATORS = 4;
   const recent = notifications.slice(0, 8);
   const indicators: EdgeIndicator[] = [];
@@ -81,7 +83,7 @@ function computeIndicators(notifications: { id: number; severity: string; gridX?
       id: n.id,
       edge,
       color: severityColor(n.severity),
-      label: n.message.length > 20 ? n.message.slice(0, 18) + '..' : n.message,
+      label: n.message.length > 20 ? `${n.message.slice(0, 18)}..` : n.message,
     });
   }
 

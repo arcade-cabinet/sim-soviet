@@ -1266,27 +1266,36 @@ export class SimulationEngine {
 
     // Orgnabor — periodic organized labor recruitment during industrialization eras
     // Fires every ~180 ticks (half a year) during collectivization/industrialization and reconstruction
-    if (totalTicks % 180 === 0 && (eraId === 'collectivization' || eraId === 'industrialization' || eraId === 'reconstruction') && store) {
+    if (
+      totalTicks % 180 === 0 &&
+      (eraId === 'collectivization' || eraId === 'industrialization' || eraId === 'reconstruction') &&
+      store
+    ) {
       const pop = store.resources.population;
       if (pop >= 15) {
         const count = Math.min(Math.max(2, Math.floor(pop * 0.05)), 5);
         const duration = 60 + Math.floor(Math.random() * 60); // 60-120 ticks
         const purpose =
-          eraId === 'reconstruction' ? 'post-war reconstruction of the Motherland' : 'the Great Construction of Socialism';
+          eraId === 'reconstruction'
+            ? 'post-war reconstruction of the Motherland'
+            : 'the Great Construction of Socialism';
         this.politicalEntities.triggerOrgnabor(count, duration, purpose);
       }
     }
 
     // Build doctrine context for era-specific mechanics
-    const doctrineCtx = this.rng && store ? {
-      currentEraId: eraId,
-      totalTicks,
-      currentFood: store.resources.food,
-      currentPop: store.resources.population,
-      currentMoney: store.resources.money,
-      quotaProgress: this.quota.target > 0 ? this.quota.current / this.quota.target : 0,
-      rng: this.rng,
-    } : undefined;
+    const doctrineCtx =
+      this.rng && store
+        ? {
+            currentEraId: eraId,
+            totalTicks,
+            currentFood: store.resources.food,
+            currentPop: store.resources.population,
+            currentMoney: store.resources.money,
+            quotaProgress: this.quota.target > 0 ? this.quota.current / this.quota.target : 0,
+            rng: this.rng,
+          }
+        : undefined;
 
     const result = this.politicalEntities.tick(totalTicks, doctrineCtx);
 
@@ -1366,7 +1375,7 @@ export class SimulationEngine {
     }
     const avgSkill = totalSkill / statsMap.size;
     // Map [0..100] → [0.5..1.5]
-    return 0.5 + (avgSkill / 100);
+    return 0.5 + avgSkill / 100;
   }
 
   /**

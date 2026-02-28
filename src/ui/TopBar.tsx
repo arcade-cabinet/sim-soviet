@@ -3,7 +3,8 @@
  * Thin chrome: essential indicators only, secondary panels in overflow menu.
  */
 
-import React, { useCallback, useState } from 'react';
+import type React from 'react';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont, SharedStyles } from './styles';
 
@@ -132,9 +133,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   const overflowItems: OverflowItem[] = [];
   if (onShowLeadership) overflowItems.push({ icon: '\u262D', label: 'LEADERSHIP', handler: onShowLeadership });
   if (onShowEconomy) overflowItems.push({ icon: '\u20BD', label: 'ECONOMY', handler: onShowEconomy });
-  if (onShowEconomyDetail) overflowItems.push({ icon: '\u{1F4B0}', label: 'ECONOMY DETAIL', handler: onShowEconomyDetail });
+  if (onShowEconomyDetail)
+    overflowItems.push({ icon: '\u{1F4B0}', label: 'ECONOMY DETAIL', handler: onShowEconomyDetail });
   if (onShowWorkers) overflowItems.push({ icon: '\u2692', label: 'WORKERS', handler: onShowWorkers });
-  if (onShowWorkerAnalytics) overflowItems.push({ icon: '\u{1F4CA}', label: 'WORKER ANALYTICS', handler: onShowWorkerAnalytics });
+  if (onShowWorkerAnalytics)
+    overflowItems.push({ icon: '\u{1F4CA}', label: 'WORKER ANALYTICS', handler: onShowWorkerAnalytics });
   if (onShowMandates) overflowItems.push({ icon: '\u2261', label: 'MANDATES', handler: onShowMandates });
   if (onShowDisease) overflowItems.push({ icon: '\u2695', label: 'DISEASE', handler: onShowDisease });
   if (onShowInfra) overflowItems.push({ icon: '\u2302', label: 'INFRASTRUCTURE', handler: onShowInfra });
@@ -229,11 +232,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       {/* Overflow dropdown */}
       {showOverflow && (
         <>
-          <TouchableOpacity
-            style={styles.overflowBackdrop}
-            activeOpacity={1}
-            onPress={() => setShowOverflow(false)}
-          />
+          <TouchableOpacity style={styles.overflowBackdrop} activeOpacity={1} onPress={() => setShowOverflow(false)} />
           <View style={styles.overflowMenu}>
             <ScrollView style={styles.overflowScroll} nestedScrollEnabled>
               {overflowItems.map((item) => (

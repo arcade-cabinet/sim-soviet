@@ -10,11 +10,11 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
+import { citizens as citizensArchetype } from '../ecs/archetypes';
 import type { CitizenComponent } from '../ecs/world';
 import type { CollectiveFocus } from '../game/workers/governor';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { openCitizenDossierByIndex } from '../stores/gameStore';
-import { citizens as citizensArchetype } from '../ecs/archetypes';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 
@@ -259,9 +259,7 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
     let filtered = rows.filter((r) => matchesFilter(r, activeFilter));
     if (searchText.trim()) {
       const q = searchText.trim().toLowerCase();
-      filtered = filtered.filter(
-        (r) => r.name.toLowerCase().includes(q) || r.assignment.toLowerCase().includes(q),
-      );
+      filtered = filtered.filter((r) => r.name.toLowerCase().includes(q) || r.assignment.toLowerCase().includes(q));
     }
     const sorted = sortRows(filtered, sortKey, sortAsc);
     return sorted.slice(0, MAX_DISPLAYED_WORKERS);
@@ -271,9 +269,7 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
     let filtered = rows.filter((r) => matchesFilter(r, activeFilter));
     if (searchText.trim()) {
       const q = searchText.trim().toLowerCase();
-      filtered = filtered.filter(
-        (r) => r.name.toLowerCase().includes(q) || r.assignment.toLowerCase().includes(q),
-      );
+      filtered = filtered.filter((r) => r.name.toLowerCase().includes(q) || r.assignment.toLowerCase().includes(q));
     }
     return filtered.length;
   }, [rows, activeFilter, searchText]);
@@ -422,13 +418,9 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
         {displayRows.length === 0 ? (
           <Text style={styles.emptyText}>No citizens match filter.</Text>
         ) : (
-          displayRows.map((row) => (
-            <WorkerRowItem key={row.key} row={row} onTap={handleTapWorker} />
-          ))
+          displayRows.map((row) => <WorkerRowItem key={row.key} row={row} onTap={handleTapWorker} />)
         )}
-        {truncated && (
-          <Text style={styles.truncatedText}>... and {filteredTotal - MAX_DISPLAYED_WORKERS} more</Text>
-        )}
+        {truncated && <Text style={styles.truncatedText}>... and {filteredTotal - MAX_DISPLAYED_WORKERS} more</Text>}
       </ScrollView>
     </SovietModal>
   );
@@ -453,11 +445,7 @@ const WorkerRowItem: React.FC<{ row: WorkerRow; onTap: (index: number) => void }
   if (row.health < 20) indicators.push('\u{1F480}');
 
   return (
-    <TouchableOpacity
-      style={styles.workerRow}
-      activeOpacity={0.6}
-      onPress={() => onTap(row.citizenIndex)}
-    >
+    <TouchableOpacity style={styles.workerRow} activeOpacity={0.6} onPress={() => onTap(row.citizenIndex)}>
       <View style={styles.colClass}>
         <Text style={[styles.classIcon, { color: classColor }]}>{classIcon}</Text>
         <Text style={[styles.classLabel, { color: classColor }]}>{CLASS_LABELS[row.cls]}</Text>
@@ -580,7 +568,13 @@ const styles = StyleSheet.create({
   // Sort buttons
   sortRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
   sortLabel: { fontSize: 8, fontFamily: monoFont, fontWeight: 'bold', color: '#777', marginRight: 4 },
-  sortBtn: { paddingHorizontal: 6, paddingVertical: 3, backgroundColor: '#1a1a1a', borderWidth: 1, borderColor: '#333' },
+  sortBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
   sortBtnActive: { backgroundColor: '#2a1a1a', borderColor: Colors.sovietGold },
   sortBtnText: { fontSize: 7, fontFamily: monoFont, fontWeight: 'bold', color: '#777' },
   sortBtnTextActive: { color: Colors.sovietGold },

@@ -45,9 +45,7 @@ describe('PlanMandates', () => {
       expect(mandates.length).toBeGreaterThan(0);
       // Collectivization era should mandate housing and institutional buildings
       const defIds = mandates.map((m) => m.defId);
-      expect(defIds.some((id) => id.includes('house') || id.includes('warehouse') || id.includes('school'))).toBe(
-        true,
-      );
+      expect(defIds.some((id) => id.includes('house') || id.includes('warehouse') || id.includes('school'))).toBe(true);
     });
 
     it('generates more mandates on harder difficulty', () => {
