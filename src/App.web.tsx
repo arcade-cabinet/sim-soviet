@@ -7,7 +7,7 @@
  * instead of the native NativeEngine.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { SafeAreaView, View, Text, StatusBar, StyleSheet, Platform } from 'react-native';
 import { Engine } from 'reactylon/web';
 import { Scene } from 'reactylon';
@@ -116,6 +116,8 @@ import { CitizenDossierModal } from './ui/CitizenDossierModal';
 import { ConsumerGoodsMarketPanel } from './ui/ConsumerGoodsMarketPanel';
 import { CursorTooltip } from './ui/CursorTooltip';
 import { WorkerStatusBar } from './ui/WorkerStatusBar';
+import { NotificationHistory } from './ui/NotificationHistory';
+import { getUnreadCount, subscribeNotifications } from './ui/NotificationStore';
 import { Colors } from './ui/styles';
 
 /**
@@ -198,6 +200,7 @@ const App: React.FC = () => {
   const [showEconomyDetail, setShowEconomyDetail] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
   const [showMarket, setShowMarket] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // ── Soviet tab state ──
   const [sovietTab, setSovietTab] = useState<SovietTab>('mandates');
@@ -255,6 +258,13 @@ const App: React.FC = () => {
   const buildingInspector = useBuildingInspector();
   const citizenDossierIdx = useCitizenDossierIndex();
   const cursorTooltip = useCursorTooltip();
+
+  // ── Notification history (store-driven unread count) ──
+  const unreadNotifications = useSyncExternalStore(
+    subscribeNotifications,
+    getUnreadCount,
+    getUnreadCount,
+  );
 
   const handleDismissBuildingInspector = useCallback(() => {
     closeBuildingInspector();
@@ -595,6 +605,9 @@ const App: React.FC = () => {
   const handleShowMarket = useCallback(() => {
     setShowMarket(true);
   }, []);
+  const handleShowNotifications = useCallback(() => {
+    setShowNotifications(true);
+  }, []);
   // ── Save/Load state ──
   const [saveNames, setSaveNames] = useState<string[]>([]);
   const [lastSaveTime, setLastSaveTime] = useState<number | undefined>(undefined);
@@ -638,6 +651,23 @@ const App: React.FC = () => {
     await sys.deleteSave(name);
     await refreshSaveState();
   }, [refreshSaveState]);
+
+  const handleExportSave = useCallback((): string | null => {
+    const sys = getSaveSystem();
+    if (!sys) return null;
+    return sys.exportSaveData();
+  }, []);
+
+  const handleImportSave = useCallback((json: string): boolean => {
+    const sys = getSaveSystem();
+    if (!sys) return false;
+    const ok = sys.importSaveData(json);
+    if (ok) {
+      notifyStateChange();
+      gameState.notify();
+    }
+    return ok;
+  }, []);
 
   // --- Modal callbacks ---
   const handleDismissEra = useCallback(() => setEraTransition(null), []);
@@ -755,6 +785,8 @@ const App: React.FC = () => {
               onShowEconomyDetail={handleShowEconomyDetail}
               onShowSaveLoad={handleShowSaveLoad}
               onShowMarket={handleShowMarket}
+              onShowNotifications={handleShowNotifications}
+              unreadNotifications={unreadNotifications}
             />
 
             <Toast
@@ -948,6 +980,8 @@ const App: React.FC = () => {
           onSave={handleSaveGame}
           onLoad={handleLoadGame}
           onDelete={handleDeleteSave}
+          onExport={handleExportSave}
+          onImport={handleImportSave}
           saveNames={saveNames}
           autoSaveEnabled
           lastSaveTime={lastSaveTime}
@@ -956,6 +990,11 @@ const App: React.FC = () => {
         <ConsumerGoodsMarketPanel
           visible={showMarket}
           onDismiss={() => setShowMarket(false)}
+        />
+
+        <NotificationHistory
+          visible={showNotifications}
+          onDismiss={() => setShowNotifications(false)}
         />
 
         <BuildingInspectorPanel

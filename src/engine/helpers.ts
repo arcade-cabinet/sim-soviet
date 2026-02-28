@@ -8,6 +8,7 @@
 
 import type { GameState, TabType, LensType } from './GameState';
 import { TICKER_MESSAGES } from './BuildingTypes';
+import { pushNotification } from '../ui/NotificationStore';
 
 // --- Floating text ---
 
@@ -90,8 +91,19 @@ export interface AdvisorMessage {
 let _currentToast: ToastMessage | null = null;
 let _currentAdvisor: AdvisorMessage | null = null;
 
+const MONTH_NAMES = [
+  '', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+];
+
+function getDateLabel(state: GameState): string {
+  const m = MONTH_NAMES[state.date.month] ?? '???';
+  return `${m} ${state.date.year}`;
+}
+
 export function showToast(state: GameState, text: string): void {
   _currentToast = { text, timestamp: Date.now() };
+  pushNotification(text, 'toast', getDateLabel(state));
   state.notify();
 }
 
@@ -109,6 +121,7 @@ export function showAdvisor(
   source?: string
 ): void {
   _currentAdvisor = { text, source, timestamp: Date.now() };
+  pushNotification(text, 'advisor', getDateLabel(state), '\u262D');
   state.notify();
 }
 

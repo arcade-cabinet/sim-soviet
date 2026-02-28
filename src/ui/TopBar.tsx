@@ -60,6 +60,8 @@ export interface TopBarProps {
   onShowEconomyDetail?: () => void;
   onShowSaveLoad?: () => void;
   onShowMarket?: () => void;
+  onShowNotifications?: () => void;
+  unreadNotifications?: number;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -104,6 +106,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onShowEconomyDetail,
   onShowSaveLoad,
   onShowMarket,
+  onShowNotifications,
+  unreadNotifications = 0,
 }) => {
   return (
     <View style={[SharedStyles.panel, styles.container]}>
@@ -233,6 +237,18 @@ export const TopBar: React.FC<TopBarProps> = ({
         {onShowMarket && (
           <TouchableOpacity onPress={onShowMarket} style={styles.navBtn} activeOpacity={0.7}>
             <Text style={styles.navBtnText}>{'\u{1F6D2}'}</Text>
+          </TouchableOpacity>
+        )}
+        {onShowNotifications && (
+          <TouchableOpacity onPress={onShowNotifications} style={styles.notifBtn} activeOpacity={0.7}>
+            <Text style={styles.navBtnText}>{'\u{1F514}'}</Text>
+            {unreadNotifications > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {unreadNotifications > 99 ? '99+' : String(unreadNotifications)}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         )}
       </View>
@@ -503,5 +519,28 @@ const styles = StyleSheet.create({
   navBtnText: {
     fontSize: 14,
     color: Colors.textSecondary,
+  },
+  notifBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    position: 'relative' as const,
+  },
+  badge: {
+    position: 'absolute' as const,
+    top: -2,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: Colors.sovietRed,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    fontFamily: monoFont,
+    fontSize: 8,
+    fontWeight: 'bold' as const,
+    color: Colors.white,
   },
 });
