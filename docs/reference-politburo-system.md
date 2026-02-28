@@ -1,6 +1,6 @@
 # Politburo & Ministry System -- Reference
 
-> Source: `src/game/PolitburoSystem.ts` (2,196 lines)
+> Source: `src/game/politburo/PolitburoSystem.ts` (2,196 lines)
 >
 > Generates a full Politburo government around each General Secretary.
 > Every minister has personality, loyalty, competence, ambition, and

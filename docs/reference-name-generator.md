@@ -2,7 +2,7 @@
 
 > Source: `src/ai/NameGenerator.ts`
 >
-> Generates unlimited unique Soviet leader identities for SimSoviet 2000's
+> Generates unlimited unique Soviet leader identities for SimSoviet 1917's
 > Politburo, KGB, ministries, and local government organs.
 
 ---

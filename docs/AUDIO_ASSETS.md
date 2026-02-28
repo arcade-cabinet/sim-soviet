@@ -1,4 +1,4 @@
-# Audio Assets for SimSoviet 2000
+# Audio Assets for SimSoviet 1917
 
 ## Authentic Soviet Audio Sources
 

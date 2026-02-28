@@ -1,4 +1,4 @@
-# PRD: SimSoviet 2000 — Full Production Gap Closure
+# PRD: SimSoviet 1917 — Full Production Gap Closure
 
 > **Date**: 2026-02-10
 > **Status**: Draft
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-SimSoviet 2000 has ~48 systems implemented and passing 1863+ unit tests. However, a thorough playtest + code audit against all 10 design documents (including the new `demographics.md`) reveals **critical integration gaps** that break the core gameplay loop. Buildings appear instantly without cost, all buildings are available in Era 1, the tutorial system exists but is never called, terrain features only render on the border ring, and **population is modeled as atomic citizens rather than the historically accurate dvor (household) system** that underpins every aspect of Soviet kolkhoz administration.
+SimSoviet 1917 has ~48 systems implemented and passing 1863+ unit tests. However, a thorough playtest + code audit against all 10 design documents (including the new `demographics.md`) reveals **critical integration gaps** that break the core gameplay loop. Buildings appear instantly without cost, all buildings are available in Era 1, the tutorial system exists but is never called, terrain features only render on the border ring, and **population is modeled as atomic citizens rather than the historically accurate dvor (household) system** that underpins every aspect of Soviet kolkhoz administration.
 
 This PRD catalogs **every** gap — from game-breaking core loop failures to minor UI polish — organized by priority and dependency order. Nothing is omitted.
 

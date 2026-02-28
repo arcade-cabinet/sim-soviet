@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the procedurally generated leader archetypes for SimSoviet 2000, a satirical city-builder set in an alternate Soviet-style republic. Each archetype governs how a leader behaves when in power, what policies they enact, how they distort the economy, and how they interact with other archetypes in the Politburo.
+This document defines the procedurally generated leader archetypes for SimSoviet 1917, a satirical city-builder set in an alternate Soviet-style republic. Each archetype governs how a leader behaves when in power, what policies they enact, how they distort the economy, and how they interact with other archetypes in the Politburo.
 
 Leaders are not direct copies of historical figures — they are exaggerated composites, filtered through dark comedy. The game should feel like a playable political cartoon from *Krokodil* magazine.
 
@@ -922,5 +922,5 @@ Leaders should be generated with:
 ---
 
 *Document version: 1.0*
-*For use with SimSoviet 2000 game design specification*
+*For use with SimSoviet 1917 game design specification*
 *"Workers of the world, good luck — you will need it."*

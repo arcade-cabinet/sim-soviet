@@ -1,4 +1,4 @@
-# Dialog Bible — SimSoviet 2000
+# Dialog Bible — SimSoviet 1917
 
 ---
 
@@ -466,7 +466,7 @@
 
 ---
 
-*End of SimSoviet 2000 Dialog Bible, v1.0*
+*End of SimSoviet 1917 Dialog Bible, v1.0*
 *Compiled by the Ministry of Ludological Narrative under protest*
 *[YI: Zol zayn mit mazl] [subtitle: May it be with luck]*
 *[This document is classified: Level "Everyone Will Read It Anyway"]*

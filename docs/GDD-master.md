@@ -5,7 +5,7 @@ status: Active
 category: design
 ---
 
-# SimSoviet 2000 — Master Game Design Document
+# SimSoviet 1917 — Master Game Design Document
 
 ## Alternate History. The Soviet State Endures.
 
