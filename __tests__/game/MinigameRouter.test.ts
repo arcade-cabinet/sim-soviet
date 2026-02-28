@@ -546,16 +546,16 @@ describe('MinigameRouter', () => {
   describe('tick', () => {
     it('auto-resolves when tick limit is reached', () => {
       const def = getMinigameDefinition('the_queue')!;
-      expect(def.tickLimit).toBe(30);
+      expect(def.tickLimit).toBe(75);
 
       router.startMinigame(def, 100);
 
       // Before limit
-      expect(router.tick(129)).toBeNull();
+      expect(router.tick(174)).toBeNull();
       expect(router.isActive()).toBe(true);
 
-      // At limit (100 + 30 = 130)
-      const outcome = router.tick(130);
+      // At limit (100 + 75 = 175)
+      const outcome = router.tick(175);
       expect(outcome).not.toBeNull();
       expect(outcome!.announcement).toContain('Chaotic distribution');
       expect(router.isActive()).toBe(false);

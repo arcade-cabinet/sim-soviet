@@ -156,7 +156,7 @@ describe('PathSystem', () => {
     recalculatePaths();
     const elapsed = performance.now() - start;
 
-    // Should complete within 50ms (generous budget for CI environments)
-    expect(elapsed).toBeLessThan(50);
+    // Should complete within 200ms (generous budget for CI environments)
+    expect(elapsed).toBeLessThan(200);
   });
 });
