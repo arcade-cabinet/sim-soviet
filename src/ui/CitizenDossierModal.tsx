@@ -4,17 +4,21 @@
  * Triggered from the RadialInspectMenu when inspecting a citizen or from
  * the WorkerRosterPanel. Shows full KGB-style personnel file: name, class,
  * age, health, morale/loyalty bars, skill level, current assignment,
- * vodka dependency, and commissar notes.
+ * vodka dependency, commissar notes, household member list, and a
+ * reassign/assign action button.
  *
  * Reads citizen data from the ECS citizens archetype and WorkerSystem stats.
+ * The dvor (household) section shows all family members with role, age, and
+ * health. The reassign button enters assignment mode via gameStore.
  */
 
 import type React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
 import { citizens, dvory } from '../ecs/archetypes';
-import type { CitizenComponent, DvorComponent, Entity } from '../ecs/world';
+import type { CitizenComponent, DvorComponent, DvorMember, Entity } from '../ecs/world';
+import { setAssignmentMode } from '../stores/gameStore';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 
@@ -79,6 +83,28 @@ function getDraftStatus(cls: string, gender: string | undefined, age: number | u
   if (age != null && age < 18) return 'EXEMPT (minor)';
   if (age != null && age > 55) return 'EXEMPT (age)';
   return 'ELIGIBLE';
+}
+
+/** Abbreviation for household member role. */
+function memberRoleAbbrev(role: string): string {
+  switch (role) {
+    case 'head':
+      return 'HEAD';
+    case 'spouse':
+      return 'SPO';
+    case 'worker':
+      return 'WRK';
+    case 'elder':
+      return 'ELD';
+    case 'adolescent':
+      return 'ADO';
+    case 'child':
+      return 'CHD';
+    case 'infant':
+      return 'INF';
+    default:
+      return role.slice(0, 3).toUpperCase();
+  }
 }
 
 /** Color for bar based on value (0-100). */
@@ -336,6 +362,77 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({ visibl
           WARNING: Subject exhibits signs of vodka dependency above acceptable threshold. Ration review recommended.
         </Text>
       )}
+
+      {/* Household Members */}
+      {dvor && dvor.members.length > 0 && (
+        <>
+          <SectionDivider label="Household Members" />
+          <View style={styles.householdBox}>
+            <InfoRow label="HOUSEHOLD" value={dvorSurname ? `${dvorSurname} Dvor` : `Dvor #${dvor.id.slice(0, 6)}`} />
+            <InfoRow
+              label="LOYALTY TO COLLECTIVE"
+              value={`${dvor.loyaltyToCollective}%`}
+              valueColor={thresholdColor(dvor.loyaltyToCollective)}
+            />
+            <View style={styles.memberList}>
+              {dvor.members.map((member: DvorMember) => {
+                const isCurrentCitizen = member.name === name;
+                return (
+                  <View key={member.id} style={[styles.memberRow, isCurrentCitizen && styles.memberRowHighlight]}>
+                    <Text style={styles.memberRole}>{memberRoleAbbrev(member.role)}</Text>
+                    <Text style={[styles.memberName, isCurrentCitizen && styles.memberNameHighlight]} numberOfLines={1}>
+                      {member.name}
+                    </Text>
+                    <Text style={styles.memberAge}>{member.age}y</Text>
+                    <Text style={[styles.memberHealth, { color: thresholdColor(member.health) }]}>
+                      {member.health}hp
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+            {dvor.privatePlotSize > 0 && (
+              <InfoRow label="PRIVATE PLOT" value={`${dvor.privatePlotSize.toFixed(2)} ha`} valueColor="#9e9e9e" />
+            )}
+          </View>
+        </>
+      )}
+
+      {/* Reassign Action */}
+      {assignment && cls !== 'prisoner' && (
+        <>
+          <SectionDivider label="Actions" />
+          <TouchableOpacity
+            style={styles.reassignBtn}
+            onPress={() => {
+              setAssignmentMode({ workerName: name, workerClass: cls });
+              onDismiss();
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.reassignBtnText}>REASSIGN WORKER</Text>
+          </TouchableOpacity>
+          <Text style={styles.reassignNote}>Tap a building to reassign this worker. Current: {assignmentName}</Text>
+        </>
+      )}
+
+      {/* Unassigned workers can also be assigned */}
+      {!assignment && cls !== 'prisoner' && hasWorkerStats && (
+        <>
+          <SectionDivider label="Actions" />
+          <TouchableOpacity
+            style={styles.assignBtn}
+            onPress={() => {
+              setAssignmentMode({ workerName: name, workerClass: cls });
+              onDismiss();
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.assignBtnText}>ASSIGN TO BUILDING</Text>
+          </TouchableOpacity>
+          <Text style={styles.reassignNote}>Tap a building to assign this idle worker.</Text>
+        </>
+      )}
     </SovietModal>
   );
 };
@@ -497,5 +594,100 @@ const styles = StyleSheet.create({
     borderColor: '#ff9800',
     backgroundColor: 'rgba(255, 152, 0, 0.1)',
     padding: 8,
+  },
+
+  // Household
+  householdBox: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderWidth: 1,
+    borderColor: '#333',
+    padding: 8,
+  },
+  memberList: {
+    marginTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    paddingTop: 4,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
+    gap: 6,
+  },
+  memberRowHighlight: {
+    backgroundColor: 'rgba(251, 192, 45, 0.1)',
+  },
+  memberRole: {
+    fontSize: 8,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: '#777',
+    width: 28,
+    letterSpacing: 1,
+  },
+  memberName: {
+    flex: 1,
+    fontSize: 9,
+    fontFamily: monoFont,
+    color: '#ccc',
+  },
+  memberNameHighlight: {
+    color: Colors.sovietGold,
+    fontWeight: 'bold',
+  },
+  memberAge: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    color: '#9e9e9e',
+    width: 28,
+    textAlign: 'right',
+  },
+  memberHealth: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    width: 32,
+    textAlign: 'right',
+  },
+
+  // Reassign / Assign buttons
+  reassignBtn: {
+    backgroundColor: 'rgba(198, 40, 40, 0.3)',
+    borderWidth: 1,
+    borderColor: Colors.sovietDarkRed,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  reassignBtnText: {
+    fontSize: 12,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.sovietRed,
+    letterSpacing: 2,
+  },
+  assignBtn: {
+    backgroundColor: 'rgba(0, 230, 118, 0.1)',
+    borderWidth: 1,
+    borderColor: Colors.termGreen,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  assignBtnText: {
+    fontSize: 12,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.termGreen,
+    letterSpacing: 2,
+  },
+  reassignNote: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    color: '#666',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 4,
   },
 });

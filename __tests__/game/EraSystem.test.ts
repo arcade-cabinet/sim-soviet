@@ -46,10 +46,10 @@ describe('ERA_DEFINITIONS', () => {
     }
   });
 
-  it('only eternal_soviet has endYear === -1', () => {
+  it('only the_eternal has endYear === -1', () => {
     for (const eraId of ERA_ORDER) {
       const def = ERA_DEFINITIONS[eraId];
-      if (eraId === 'eternal_soviet') {
+      if (eraId === 'the_eternal') {
         expect(def.endYear).toBe(-1);
       } else {
         expect(def.endYear).toBeGreaterThan(def.startYear);
@@ -73,7 +73,6 @@ describe('ERA_DEFINITIONS', () => {
       'wartime',
       'reconstruction',
       'thaw',
-      'freeze',
       'stagnation',
       'eternal',
     ];
@@ -144,8 +143,8 @@ describe('ERA modifiers', () => {
     }
   });
 
-  it('thaw era has most favorable modifiers (highest pop growth, lowest decay)', () => {
-    const thaw = ERA_DEFINITIONS.thaw;
+  it('thaw_and_freeze era has most favorable modifiers (highest pop growth, lowest decay)', () => {
+    const thaw = ERA_DEFINITIONS.thaw_and_freeze;
     expect(thaw.modifiers.populationGrowthMult).toBe(1.5);
     expect(thaw.modifiers.decayMult).toBe(0.7);
     expect(thaw.modifiers.consumptionMult).toBe(0.8);
@@ -171,27 +170,26 @@ describe('Building availability', () => {
     expect(allUnlocked).toHaveLength(35);
   });
 
-  it('war_communism unlocks basic infrastructure', () => {
-    const unlocked = ERA_DEFINITIONS.war_communism.unlockedBuildings;
+  it('revolution unlocks basic infrastructure', () => {
+    const unlocked = ERA_DEFINITIONS.revolution.unlockedBuildings;
     expect(unlocked).toContain('workers-house-a');
     expect(unlocked).toContain('collective-farm-hq');
-    expect(unlocked).toContain('power-station');
   });
 
-  it('gulag unlocks during great_patriotic war', () => {
-    expect(ERA_DEFINITIONS.great_patriotic.unlockedBuildings).toContain('gulag-admin');
+  it('gulag unlocks during industrialization', () => {
+    expect(ERA_DEFINITIONS.industrialization.unlockedBuildings).toContain('gulag-admin');
   });
 
-  it('vodka-distillery unlocks during stagnation', () => {
-    expect(ERA_DEFINITIONS.stagnation.unlockedBuildings).toContain('vodka-distillery');
+  it('vodka-distillery unlocks during industrialization', () => {
+    expect(ERA_DEFINITIONS.industrialization.unlockedBuildings).toContain('vodka-distillery');
   });
 
-  it('perestroika unlocks no new buildings', () => {
-    expect(ERA_DEFINITIONS.perestroika.unlockedBuildings).toHaveLength(0);
+  it('great_patriotic unlocks no new buildings', () => {
+    expect(ERA_DEFINITIONS.great_patriotic.unlockedBuildings).toHaveLength(0);
   });
 
-  it('apartment-tower-d unlocks in eternal_soviet', () => {
-    expect(ERA_DEFINITIONS.eternal_soviet.unlockedBuildings).toContain('apartment-tower-d');
+  it('apartment-tower-d unlocks in stagnation', () => {
+    expect(ERA_DEFINITIONS.stagnation.unlockedBuildings).toContain('apartment-tower-d');
   });
 });
 
@@ -200,36 +198,35 @@ describe('Building availability', () => {
 // ─────────────────────────────────────────────────────────
 
 describe('EraSystem', () => {
-  it('defaults to 1922 (war_communism)', () => {
+  it('defaults to 1917 (revolution)', () => {
     const sys = new EraSystem();
-    expect(sys.getCurrentEraId()).toBe('war_communism');
-    expect(sys.getYear()).toBe(1922);
+    expect(sys.getCurrentEraId()).toBe('revolution');
+    expect(sys.getYear()).toBe(1917);
   });
 
   it('accepts a custom start year', () => {
-    const sys = new EraSystem(1965);
+    const sys = new EraSystem(1990);
     expect(sys.getCurrentEraId()).toBe('stagnation');
   });
 
   it('returns correct era for each year boundary', () => {
     const yearToEra: [number, EraId][] = [
-      [1922, 'war_communism'],
-      [1927, 'war_communism'],
-      [1928, 'first_plans'],
-      [1940, 'first_plans'],
+      [1917, 'revolution'],
+      [1921, 'revolution'],
+      [1922, 'collectivization'],
+      [1931, 'collectivization'],
+      [1932, 'industrialization'],
+      [1940, 'industrialization'],
       [1941, 'great_patriotic'],
       [1944, 'great_patriotic'],
       [1945, 'reconstruction'],
-      [1952, 'reconstruction'],
-      [1953, 'thaw'],
-      [1963, 'thaw'],
-      [1964, 'stagnation'],
-      [1984, 'stagnation'],
-      [1985, 'perestroika'],
-      [1990, 'perestroika'],
-      [1991, 'eternal_soviet'],
-      [2000, 'eternal_soviet'],
-      [2100, 'eternal_soviet'],
+      [1955, 'reconstruction'],
+      [1956, 'thaw_and_freeze'],
+      [1981, 'thaw_and_freeze'],
+      [1982, 'stagnation'],
+      [1999, 'stagnation'],
+      [2000, 'the_eternal'],
+      [2100, 'the_eternal'],
     ];
 
     for (const [year, expectedEra] of yearToEra) {
@@ -245,44 +242,46 @@ describe('EraSystem', () => {
 
 describe('Era transitions', () => {
   it('checkTransition returns new era when crossing boundary', () => {
-    const sys = new EraSystem(1927);
-    expect(sys.getCurrentEraId()).toBe('war_communism');
+    const sys = new EraSystem(1921);
+    expect(sys.getCurrentEraId()).toBe('revolution');
 
-    const newEra = sys.checkTransition(1928);
+    const newEra = sys.checkTransition(1922);
     expect(newEra).not.toBeNull();
-    expect(newEra!.id).toBe('first_plans');
-    expect(sys.getCurrentEraId()).toBe('first_plans');
+    expect(newEra!.id).toBe('collectivization');
+    expect(sys.getCurrentEraId()).toBe('collectivization');
   });
 
   it('checkTransition returns null when staying in same era', () => {
-    const sys = new EraSystem(1930);
-    const result = sys.checkTransition(1935);
+    const sys = new EraSystem(1925);
+    const result = sys.checkTransition(1930);
     expect(result).toBeNull();
-    expect(sys.getCurrentEraId()).toBe('first_plans');
+    expect(sys.getCurrentEraId()).toBe('collectivization');
   });
 
   it('tracks previous era after transition', () => {
-    const sys = new EraSystem(1927);
+    const sys = new EraSystem(1921);
     expect(sys.getPreviousEraId()).toBeNull();
 
-    sys.checkTransition(1928);
-    expect(sys.getPreviousEraId()).toBe('war_communism');
+    sys.checkTransition(1922);
+    expect(sys.getPreviousEraId()).toBe('revolution');
 
     sys.checkTransition(1941);
-    expect(sys.getPreviousEraId()).toBe('first_plans');
+    // Jumps from collectivization (current after 1922 transition) to great_patriotic,
+    // skipping industrialization — so previous is collectivization
+    expect(sys.getPreviousEraId()).toBe('collectivization');
   });
 
   it('transitions through all eras sequentially', () => {
-    const sys = new EraSystem(1922);
-    const transitionYears = [1928, 1941, 1945, 1953, 1964, 1985, 1991];
+    const sys = new EraSystem(1917);
+    const transitionYears = [1922, 1932, 1941, 1945, 1956, 1982, 2000];
     const expectedEras: EraId[] = [
-      'first_plans',
+      'collectivization',
+      'industrialization',
       'great_patriotic',
       'reconstruction',
-      'thaw',
+      'thaw_and_freeze',
       'stagnation',
-      'perestroika',
-      'eternal_soviet',
+      'the_eternal',
     ];
 
     for (let i = 0; i < transitionYears.length; i++) {
@@ -292,12 +291,12 @@ describe('Era transitions', () => {
     }
   });
 
-  it('handles skipping eras (jumping from 1922 to 1991)', () => {
-    const sys = new EraSystem(1922);
-    const newEra = sys.checkTransition(1991);
+  it('handles skipping eras (jumping from 1917 to 2000)', () => {
+    const sys = new EraSystem(1917);
+    const newEra = sys.checkTransition(2000);
     expect(newEra).not.toBeNull();
-    expect(newEra!.id).toBe('eternal_soviet');
-    expect(sys.getPreviousEraId()).toBe('war_communism');
+    expect(newEra!.id).toBe('the_eternal');
+    expect(sys.getPreviousEraId()).toBe('revolution');
   });
 });
 
@@ -306,31 +305,31 @@ describe('Era transitions', () => {
 // ─────────────────────────────────────────────────────────
 
 describe('EraSystem.getAvailableBuildings', () => {
-  it('war_communism has only its 9 buildings', () => {
-    const sys = new EraSystem(1922);
+  it('revolution has only its 8 buildings', () => {
+    const sys = new EraSystem(1917);
     const available = sys.getAvailableBuildings();
-    expect(available).toHaveLength(9);
+    expect(available).toHaveLength(8);
     expect(available).toContain('workers-house-a');
-    expect(available).toContain('power-station');
+    expect(available).not.toContain('power-station');
   });
 
-  it('first_plans accumulates war_communism + its own', () => {
-    const sys = new EraSystem(1930);
+  it('collectivization accumulates revolution + its own', () => {
+    const sys = new EraSystem(1925);
     const available = sys.getAvailableBuildings();
-    // 9 (war_communism) + 8 (first_plans) = 17
-    expect(available).toHaveLength(17);
-    expect(available).toContain('workers-house-a'); // from war_communism
-    expect(available).toContain('bread-factory'); // from first_plans
+    // 8 (revolution) + 6 (collectivization) = 14
+    expect(available).toHaveLength(14);
+    expect(available).toContain('workers-house-a'); // from revolution
+    expect(available).toContain('bread-factory'); // from collectivization
   });
 
-  it('eternal_soviet has all 35 buildings', () => {
+  it('the_eternal has all 35 buildings', () => {
     const sys = new EraSystem(2000);
     const available = sys.getAvailableBuildings();
     expect(available).toHaveLength(35);
   });
 
   it('getLockedBuildings returns complement', () => {
-    const sys = new EraSystem(1922);
+    const sys = new EraSystem(1917);
     const available = sys.getAvailableBuildings();
     const locked = sys.getLockedBuildings();
     expect(available.length + locked.length).toBe(35);
@@ -343,7 +342,7 @@ describe('EraSystem.getAvailableBuildings', () => {
   });
 
   it('isBuildingAvailable returns correct results', () => {
-    const sys = new EraSystem(1930);
+    const sys = new EraSystem(1925);
     expect(sys.isBuildingAvailable('workers-house-a')).toBe(true);
     expect(sys.isBuildingAvailable('bread-factory')).toBe(true);
     expect(sys.isBuildingAvailable('apartment-tower-d')).toBe(false);
@@ -352,9 +351,9 @@ describe('EraSystem.getAvailableBuildings', () => {
 
   it('getBuildingUnlockEra returns the correct era', () => {
     const sys = new EraSystem();
-    expect(sys.getBuildingUnlockEra('gulag-admin')?.id).toBe('great_patriotic');
-    expect(sys.getBuildingUnlockEra('vodka-distillery')?.id).toBe('stagnation');
-    expect(sys.getBuildingUnlockEra('apartment-tower-d')?.id).toBe('eternal_soviet');
+    expect(sys.getBuildingUnlockEra('gulag-admin')?.id).toBe('industrialization');
+    expect(sys.getBuildingUnlockEra('vodka-distillery')?.id).toBe('industrialization');
+    expect(sys.getBuildingUnlockEra('apartment-tower-d')?.id).toBe('stagnation');
     expect(sys.getBuildingUnlockEra('nonexistent')).toBeNull();
   });
 });
@@ -416,14 +415,14 @@ describe('Settlement tier gating', () => {
   });
 
   it('tier gating still respects era gating', () => {
-    // war_communism era (1922) only has 9 buildings
-    const sys = new EraSystem(1922);
+    // revolution era (1917) only has 8 buildings
+    const sys = new EraSystem(1917);
     const gorod = sys.getAvailableBuildings('gorod');
 
-    // Even with gorod tier, can only see war_communism buildings
-    expect(gorod).toHaveLength(9);
+    // Even with gorod tier, can only see revolution buildings
+    expect(gorod).toHaveLength(8);
     expect(gorod).toContain('workers-house-a');
-    expect(gorod).not.toContain('bread-factory'); // first_plans era
+    expect(gorod).not.toContain('bread-factory'); // collectivization era
   });
 
   it('SETTLEMENT_TIER_ORDER has correct progression', () => {
@@ -492,7 +491,7 @@ describe('EraSystem getters', () => {
   });
 
   it('getDeliveryRates returns a copy', () => {
-    const sys = new EraSystem(1965);
+    const sys = new EraSystem(1990);
     const rates = sys.getDeliveryRates();
     expect(rates).toEqual({ food: 0.45, vodka: 0.4, money: 0.5 });
     rates.food = 999;
@@ -500,8 +499,8 @@ describe('EraSystem getters', () => {
   });
 
   it('getQuotaEscalation varies by era', () => {
-    expect(new EraSystem(1922).getQuotaEscalation()).toBe(1.0);
-    expect(new EraSystem(1930).getQuotaEscalation()).toBe(1.3);
+    expect(new EraSystem(1917).getQuotaEscalation()).toBe(1.0);
+    expect(new EraSystem(1925).getQuotaEscalation()).toBe(1.3);
     expect(new EraSystem(1942).getQuotaEscalation()).toBe(1.5);
   });
 });
@@ -522,7 +521,7 @@ describe('Era conditions', () => {
       blackMarks: 0,
       commendations: 0,
       threatLevel: 'safe',
-      currentEra: 'war_communism',
+      currentEra: 'revolution',
       roadQuality: 'none',
       roadCondition: 100,
       ...overrides,
@@ -548,15 +547,15 @@ describe('Era conditions', () => {
       ...overrides,
     }) satisfies import('@/ecs/world').Resources;
 
-  it('war_communism failure: zero pop + zero food', () => {
-    const cond = ERA_DEFINITIONS.war_communism.failureCondition!;
+  it('revolution failure: zero pop + zero food', () => {
+    const cond = ERA_DEFINITIONS.revolution.failureCondition!;
     expect(cond.check(makeMeta(), makeResources({ population: 0, food: 0 }))).toBe(true);
     expect(cond.check(makeMeta(), makeResources({ population: 0, food: 10 }))).toBe(false);
     expect(cond.check(makeMeta(), makeResources({ population: 10, food: 0 }))).toBe(false);
   });
 
-  it('first_plans victory: non-selo with 100+ pop', () => {
-    const cond = ERA_DEFINITIONS.first_plans.victoryCondition!;
+  it('collectivization victory: non-selo with 100+ pop', () => {
+    const cond = ERA_DEFINITIONS.collectivization.victoryCondition!;
     expect(cond.check(makeMeta({ settlementTier: 'posyolok' }), makeResources({ population: 100 }))).toBe(true);
     expect(cond.check(makeMeta({ settlementTier: 'selo' }), makeResources({ population: 200 }))).toBe(false);
     expect(cond.check(makeMeta({ settlementTier: 'posyolok' }), makeResources({ population: 50 }))).toBe(false);
@@ -572,8 +571,8 @@ describe('Era conditions', () => {
     );
   });
 
-  it('thaw victory: 300+ pop with positive food and vodka', () => {
-    const cond = ERA_DEFINITIONS.thaw.victoryCondition!;
+  it('thaw_and_freeze victory: 300+ pop with positive food and vodka', () => {
+    const cond = ERA_DEFINITIONS.thaw_and_freeze.victoryCondition!;
     expect(cond.check(makeMeta(), makeResources({ population: 300, food: 1, vodka: 1 }))).toBe(true);
     expect(cond.check(makeMeta(), makeResources({ population: 300, food: 0, vodka: 1 }))).toBe(false);
   });
@@ -583,12 +582,6 @@ describe('Era conditions', () => {
     expect(cond.check(makeMeta(), makeResources({ power: 0, population: 200 }))).toBe(true);
     expect(cond.check(makeMeta(), makeResources({ power: 10, population: 200 }))).toBe(false);
   });
-
-  it('perestroika failure: both food and vodka at zero', () => {
-    const cond = ERA_DEFINITIONS.perestroika.failureCondition!;
-    expect(cond.check(makeMeta(), makeResources({ food: 0, vodka: 0 }))).toBe(true);
-    expect(cond.check(makeMeta(), makeResources({ food: 1, vodka: 0 }))).toBe(false);
-  });
 });
 
 // ─────────────────────────────────────────────────────────
@@ -597,8 +590,8 @@ describe('Era conditions', () => {
 
 describe('Serialization', () => {
   it('serialize/deserialize preserves state', () => {
-    const sys = new EraSystem(1927);
-    sys.checkTransition(1928);
+    const sys = new EraSystem(1921);
+    sys.checkTransition(1922);
     sys.checkTransition(1941);
 
     const data = sys.serialize();
@@ -610,29 +603,29 @@ describe('Serialization', () => {
   });
 
   it('serialized data is plain JSON', () => {
-    const sys = new EraSystem(1965);
-    sys.checkTransition(1985);
+    const sys = new EraSystem(1960);
+    sys.checkTransition(1982);
 
     const data = sys.serialize();
     const json = JSON.stringify(data);
     const parsed = JSON.parse(json);
     const restored = EraSystem.deserialize(parsed);
 
-    expect(restored.getCurrentEraId()).toBe('perestroika');
-    expect(restored.getPreviousEraId()).toBe('stagnation');
+    expect(restored.getCurrentEraId()).toBe('stagnation');
+    expect(restored.getPreviousEraId()).toBe('thaw_and_freeze');
   });
 
   it('deserialize with no previous era', () => {
-    const sys = new EraSystem(1922);
+    const sys = new EraSystem(1917);
     const data = sys.serialize();
     const restored = EraSystem.deserialize(data);
     expect(restored.getPreviousEraId()).toBeNull();
-    expect(restored.getCurrentEraId()).toBe('war_communism');
+    expect(restored.getCurrentEraId()).toBe('revolution');
   });
 
   it('serializes transitionTicksRemaining', () => {
-    const sys = new EraSystem(1927);
-    sys.checkTransition(1928); // triggers transition with 10 ticks remaining
+    const sys = new EraSystem(1921);
+    sys.checkTransition(1922); // triggers transition with 10 ticks remaining
     const data = sys.serialize();
     expect(data.transitionTicksRemaining).toBe(10);
 
@@ -647,25 +640,25 @@ describe('Serialization', () => {
 
 describe('Gradual modifier transition', () => {
   it('transition starts after checkTransition detects era change', () => {
-    const sys = new EraSystem(1927);
+    const sys = new EraSystem(1921);
     expect(sys.isTransitioning()).toBe(false);
 
-    sys.checkTransition(1928);
+    sys.checkTransition(1922);
     expect(sys.isTransitioning()).toBe(true);
   });
 
   it('transition does not start when staying in same era', () => {
-    const sys = new EraSystem(1930);
-    sys.checkTransition(1935);
+    const sys = new EraSystem(1925);
+    sys.checkTransition(1930);
     expect(sys.isTransitioning()).toBe(false);
   });
 
   it('modifiers blend linearly during transition (t=0 returns old, t=1 returns new)', () => {
-    const sys = new EraSystem(1927);
-    const oldMods = sys.getModifiers(); // war_communism modifiers
+    const sys = new EraSystem(1921);
+    const oldMods = sys.getModifiers(); // revolution modifiers
 
-    sys.checkTransition(1928); // transition to first_plans
-    const newMods = ERA_DEFINITIONS.first_plans.modifiers;
+    sys.checkTransition(1922); // transition to collectivization
+    const newMods = ERA_DEFINITIONS.collectivization.modifiers;
 
     // At tick 0 of transition (just started), t = 0, should be mostly old
     const blended = sys.getModifiers();
@@ -689,8 +682,8 @@ describe('Gradual modifier transition', () => {
   });
 
   it('tickTransition returns true while transitioning, false when done', () => {
-    const sys = new EraSystem(1927);
-    sys.checkTransition(1928);
+    const sys = new EraSystem(1921);
+    sys.checkTransition(1922);
 
     for (let i = 0; i < 9; i++) {
       expect(sys.tickTransition()).toBe(true);
@@ -721,8 +714,9 @@ describe('Construction method progression', () => {
   });
 
   it('manual eras have 2.0x time', () => {
-    expect(ERA_DEFINITIONS.war_communism.constructionTimeMult).toBe(2.0);
-    expect(ERA_DEFINITIONS.first_plans.constructionTimeMult).toBe(2.0);
+    expect(ERA_DEFINITIONS.revolution.constructionTimeMult).toBe(2.0);
+    expect(ERA_DEFINITIONS.collectivization.constructionTimeMult).toBe(2.0);
+    expect(ERA_DEFINITIONS.industrialization.constructionTimeMult).toBe(2.0);
   });
 
   it('mechanized eras have 1.0x time', () => {
@@ -731,21 +725,20 @@ describe('Construction method progression', () => {
   });
 
   it('industrial eras have 0.6x time (fastest)', () => {
-    expect(ERA_DEFINITIONS.thaw.constructionTimeMult).toBe(0.6);
+    expect(ERA_DEFINITIONS.thaw_and_freeze.constructionTimeMult).toBe(0.6);
     expect(ERA_DEFINITIONS.stagnation.constructionTimeMult).toBe(0.6);
   });
 
   it('decaying eras have 1.5x time', () => {
-    expect(ERA_DEFINITIONS.perestroika.constructionTimeMult).toBe(1.5);
-    expect(ERA_DEFINITIONS.eternal_soviet.constructionTimeMult).toBe(1.5);
+    expect(ERA_DEFINITIONS.the_eternal.constructionTimeMult).toBe(1.5);
   });
 
   it('EraSystem exposes construction method and multiplier', () => {
-    const sys = new EraSystem(1922);
+    const sys = new EraSystem(1917);
     expect(sys.getConstructionMethod()).toBe('manual');
     expect(sys.getConstructionTimeMult()).toBe(2.0);
 
-    sys.checkTransition(1953);
+    sys.checkTransition(1956);
     expect(sys.getConstructionMethod()).toBe('industrial');
     expect(sys.getConstructionTimeMult()).toBe(0.6);
   });
@@ -757,49 +750,49 @@ describe('Construction method progression', () => {
 
 describe('Era checkpoint system', () => {
   it('saveCheckpoint stores a checkpoint for the current era', () => {
-    const sys = new EraSystem(1922);
-    expect(sys.hasCheckpoint('war_communism')).toBe(false);
+    const sys = new EraSystem(1917);
+    expect(sys.hasCheckpoint('revolution')).toBe(false);
 
     sys.saveCheckpoint('{"test": true}');
-    expect(sys.hasCheckpoint('war_communism')).toBe(true);
+    expect(sys.hasCheckpoint('revolution')).toBe(true);
   });
 
   it('getCheckpoint returns the saved checkpoint', () => {
-    const sys = new EraSystem(1930);
+    const sys = new EraSystem(1925);
     const snapshot = '{"resources": {"food": 100}}';
     sys.saveCheckpoint(snapshot);
 
-    const cp = sys.getCheckpoint('first_plans');
+    const cp = sys.getCheckpoint('collectivization');
     expect(cp).not.toBeNull();
-    expect(cp!.eraId).toBe('first_plans');
-    expect(cp!.year).toBe(1930);
+    expect(cp!.eraId).toBe('collectivization');
+    expect(cp!.year).toBe(1925);
     expect(cp!.snapshot).toBe(snapshot);
   });
 
   it('getCheckpoint returns null for unsaved era', () => {
-    const sys = new EraSystem(1922);
-    expect(sys.getCheckpoint('thaw')).toBeNull();
+    const sys = new EraSystem(1917);
+    expect(sys.getCheckpoint('thaw_and_freeze')).toBeNull();
   });
 
   it('getAllCheckpoints returns all saved checkpoints', () => {
-    const sys = new EraSystem(1922);
+    const sys = new EraSystem(1917);
     sys.saveCheckpoint('snap1');
 
-    sys.checkTransition(1928);
+    sys.checkTransition(1922);
     sys.saveCheckpoint('snap2');
 
     const all = sys.getAllCheckpoints();
     expect(all.size).toBe(2);
-    expect(all.has('war_communism')).toBe(true);
-    expect(all.has('first_plans')).toBe(true);
+    expect(all.has('revolution')).toBe(true);
+    expect(all.has('collectivization')).toBe(true);
   });
 
   it('checkpoints overwrite for the same era', () => {
-    const sys = new EraSystem(1922);
+    const sys = new EraSystem(1917);
     sys.saveCheckpoint('old');
     sys.saveCheckpoint('new');
 
-    const cp = sys.getCheckpoint('war_communism');
+    const cp = sys.getCheckpoint('revolution');
     expect(cp!.snapshot).toBe('new');
   });
 });
@@ -856,24 +849,24 @@ describe('Era-specific event templates', () => {
   });
 
   it('events for specific eras match expected themes', () => {
-    const warCommEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('war_communism'));
+    const warCommEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('revolution'));
     expect(warCommEvents.length).toBeGreaterThanOrEqual(2);
     expect(warCommEvents.some((e) => e.id === 'bandit_raid')).toBe(true);
 
-    const firstPlansEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('first_plans'));
-    expect(firstPlansEvents.some((e) => e.id === 'kulak_purge')).toBe(true);
-    expect(firstPlansEvents.some((e) => e.id === 'great_terror_wave')).toBe(true);
+    const collectivizationEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('collectivization'));
+    expect(collectivizationEvents.some((e) => e.id === 'kulak_purge')).toBe(true);
+    expect(collectivizationEvents.some((e) => e.id === 'great_terror_wave')).toBe(true);
 
     const warEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('great_patriotic'));
     expect(warEvents.some((e) => e.id === 'conscription_wave')).toBe(true);
 
-    const thawEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('thaw'));
+    const thawEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('thaw_and_freeze'));
     expect(thawEvents.some((e) => e.id === 'private_gardens_allowed')).toBe(true);
 
     const stagnationEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('stagnation'));
     expect(stagnationEvents.some((e) => e.id === 'vodka_economy_boom')).toBe(true);
 
-    const eternalEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('eternal_soviet'));
+    const eternalEvents = ERA_SPECIFIC_EVENTS.filter((e) => e.eraFilter!.includes('the_eternal'));
     expect(eternalEvents.some((e) => e.id === 'bureaucratic_singularity_approach')).toBe(true);
   });
 });

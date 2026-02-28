@@ -11,7 +11,7 @@ export const PRISONER_REFORM: MinigameDefinition = {
   description: 'The prisoners request better conditions. Through labor, salvation. Through paperwork, madness.',
   triggerType: 'building_tap',
   triggerCondition: 'gulag_tap',
-  tickLimit: 20,
+  tickLimit: 50,
   choices: [
     {
       id: 'increase_rations',

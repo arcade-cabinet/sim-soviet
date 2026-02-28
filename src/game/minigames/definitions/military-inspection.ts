@@ -12,7 +12,7 @@ export const MILITARY_INSPECTION: MinigameDefinition = {
     'The garrison commander is conducting a readiness inspection. The boots are polished. The rifles are oiled. The truth is flexible.',
   triggerType: 'building_tap',
   triggerCondition: 'barracks_tap',
-  tickLimit: 15,
+  tickLimit: 40,
   choices: [
     {
       id: 'parade_formation',

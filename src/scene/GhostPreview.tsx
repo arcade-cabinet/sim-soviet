@@ -147,7 +147,7 @@ function openInspectAtCell(gridX: number, gridZ: number, screenX: number, screen
       const dialogue = politicalSystem.getEntityDialogue(gridX, gridZ, {
         season: dialogueSeason,
         resourceLevel,
-        era: meta?.currentEra ?? 'war_communism',
+        era: meta?.currentEra ?? 'revolution',
         threatLevel: (meta?.threatLevel as 'safe' | 'watched' | 'endangered' | 'critical') ?? 'safe',
         settlementTier: (meta?.settlementTier as 'selo' | 'posyolok' | 'pgt' | 'gorod') ?? 'selo',
       });

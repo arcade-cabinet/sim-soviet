@@ -237,8 +237,7 @@ export function placeECSBuilding(toolKey: string, gridX: number, gridZ: number):
  * Returns true if a building was found and removed.
  */
 export function bulldozeECSBuilding(gridX: number, gridZ: number): boolean {
-  const { buildings } = require('@/ecs/archetypes');
-  for (const entity of buildings.entities) {
+  for (const entity of buildingsArchetype.entities) {
     if (entity.position.gridX === gridX && entity.position.gridY === gridZ) {
       world.remove(entity);
 

@@ -16,6 +16,7 @@ import { GAMEPLAY_PLAYLIST, getTrack, MUSIC_CONTEXTS } from './AudioManifest';
 const AUDIO_BASE_PATH = `${assetUrl('assets/audio/music')}/`;
 const CROSSFADE_MS = 2000;
 const MASTER_VOLUME = 0.5;
+const MAX_BUFFER_CACHE_SIZE = 50;
 
 class AudioManager {
   private static instance: AudioManager | null = null;
@@ -177,6 +178,13 @@ class AudioManager {
 
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await this.audioCtx.decodeAudioData(arrayBuffer);
+
+    // Evict oldest entry if cache exceeds max size (simple LRU by insertion order)
+    if (this.bufferCache.size >= MAX_BUFFER_CACHE_SIZE) {
+      const oldestKey = this.bufferCache.keys().next().value;
+      if (oldestKey) this.bufferCache.delete(oldestKey);
+    }
+
     this.bufferCache.set(url, audioBuffer);
     return audioBuffer;
   }

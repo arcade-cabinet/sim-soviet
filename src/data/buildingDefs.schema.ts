@@ -112,14 +112,14 @@ export const BuildingStatsSchema = z.object({
 
 /** Historical era in which this building first becomes available. */
 export const EraIdSchema = z.enum([
-  'war_communism',
-  'first_plans',
+  'revolution',
+  'collectivization',
+  'industrialization',
   'great_patriotic',
   'reconstruction',
-  'thaw',
+  'thaw_and_freeze',
   'stagnation',
-  'perestroika',
-  'eternal_soviet',
+  'the_eternal',
 ]);
 
 // ── Role classification ──────────────────────────────────────────────────────

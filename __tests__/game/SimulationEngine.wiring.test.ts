@@ -197,8 +197,8 @@ describe('SimulationEngine — system wiring', () => {
       // advance it. Let's directly test the callback is in the mock set.
       expect(cb.onEraChanged).not.toHaveBeenCalled();
 
-      // The engine was created with startYear=1922. We need to advance
-      // the chronology to trigger a new year at 1929 (when war_communism ends).
+      // The engine was created with startYear=1917. We need to advance
+      // the chronology to trigger a new year at 1922 (when revolution ends).
       // TICKS_PER_YEAR = 360, so 7 years = 2520 ticks.
       // This is too many ticks for a unit test. Instead verify the callback
       // is properly wired by checking it's in the callbacks object.

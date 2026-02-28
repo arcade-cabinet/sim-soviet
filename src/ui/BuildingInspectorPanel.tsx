@@ -1,10 +1,17 @@
 /**
- * BuildingInspectorPanel — Detailed building inspection modal.
+ * BuildingInspectorPanel — Detailed building inspection modal with data rings.
  *
- * Triggered from the RadialInspectMenu "Info" action. Shows building name,
- * type, production output, power status, worker list with morale indicators,
- * production rate, efficiency percentage, construction progress, health/decay,
- * smog output, and a DEMOLISH button.
+ * Triggered from the RadialInspectMenu "Info" action. Organized into three
+ * type-specific data ring sections:
+ *
+ *   Production Ring  (green)  — output rates, efficiency, worker contribution,
+ *                               star rating. Only for buildings that produce.
+ *   Demographic Ring (gold)   — class distribution, morale distribution,
+ *                               aggregate stats, personnel roster. Only for
+ *                               buildings with worker capacity.
+ *   Records Ring     (blue)   — identification, operational status, structural
+ *                               integrity, power, fire, environmental impact.
+ *                               Shown for all buildings.
  *
  * Reads the building entity directly from ECS by grid position.
  */
@@ -13,7 +20,7 @@ import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
-import { buildingsLogic, decayableBuildings, getResourceEntity } from '../ecs/archetypes';
+import { buildingsLogic, decayableBuildings } from '../ecs/archetypes';
 import { effectiveWorkers } from '../ecs/systems/productionSystem';
 import { getBuildingStorageContribution } from '../ecs/systems/storageSystem';
 import type { BuildingComponent, CitizenComponent, Durability } from '../ecs/world';
@@ -261,6 +268,383 @@ const StatBar: React.FC<{
   );
 };
 
+// ── Ring Header ─────────────────────────────────────────────────────────────
+
+/** A visually distinctive ring section header with Soviet-style framing. */
+const RingHeader: React.FC<{ label: string; icon: string; color: string }> = ({ label, icon, color }) => (
+  <View style={ringStyles.header}>
+    <View style={[ringStyles.headerAccent, { backgroundColor: color }]} />
+    <Text style={[ringStyles.headerIcon, { color }]}>{icon}</Text>
+    <Text style={[ringStyles.headerLabel, { color }]}>{label}</Text>
+    <View style={[ringStyles.headerLine, { backgroundColor: color }]} />
+    <Text style={[ringStyles.headerDot, { color }]}>{'\u25C9'}</Text>
+  </View>
+);
+
+// ── Mini Distribution Bar ───────────────────────────────────────────────────
+
+/** Horizontal stacked distribution bar for showing class/morale breakdowns. */
+const DistributionBar: React.FC<{
+  segments: Array<{ label: string; value: number; color: string }>;
+  total: number;
+}> = ({ segments, total }) => {
+  if (total === 0) return null;
+  return (
+    <View style={ringStyles.distContainer}>
+      <View style={ringStyles.distBar}>
+        {segments
+          .filter((s) => s.value > 0)
+          .map((seg, i) => (
+            <View
+              key={i}
+              style={[ringStyles.distSegment, { width: `${(seg.value / total) * 100}%`, backgroundColor: seg.color }]}
+            />
+          ))}
+      </View>
+      <View style={ringStyles.distLegend}>
+        {segments
+          .filter((s) => s.value > 0)
+          .map((seg, i) => (
+            <View key={i} style={ringStyles.distLegendItem}>
+              <View style={[ringStyles.distDot, { backgroundColor: seg.color }]} />
+              <Text style={ringStyles.distLegendText}>
+                {seg.label} {seg.value}
+              </Text>
+            </View>
+          ))}
+      </View>
+    </View>
+  );
+};
+
+// ── Production Ring ─────────────────────────────────────────────────────────
+
+/** Type-specific production data ring — output rates, efficiency, worker contribution. */
+const ProductionRing: React.FC<{
+  produces: { resource: string; amount: number } | undefined;
+  effectiveOutput: number;
+  efficiencyPct: number;
+  avgWorkerEfficiency: number;
+  workerCount: number;
+  workerCap: number;
+  powerOutput: number;
+  storageContribution: number;
+  role: string;
+}> = ({
+  produces,
+  effectiveOutput,
+  efficiencyPct,
+  avgWorkerEfficiency,
+  workerCount,
+  workerCap,
+  powerOutput,
+  storageContribution,
+  role,
+}) => {
+  // Only show for buildings that produce something
+  const hasProduction = produces || powerOutput > 0 || storageContribution > 0;
+  if (!hasProduction) return null;
+
+  return (
+    <View style={ringStyles.ring}>
+      <RingHeader label="PRODUCTION RING" icon={'\u2699'} color={Colors.termGreen} />
+
+      {produces && (
+        <>
+          <InfoRow label="RESOURCE" value={produces.resource.toUpperCase()} valueColor={Colors.termGreen} />
+          <InfoRow label="BASE RATE" value={`${produces.amount}/tick`} valueColor="#9e9e9e" />
+          <StatBar
+            label="EFFECTIVE OUTPUT"
+            value={effectiveOutput}
+            max={produces.amount}
+            color={effectiveOutput > 0 ? Colors.termGreen : '#ef4444'}
+            suffix="/tick"
+          />
+          <InfoRow label="PLANT EFFICIENCY" value={`${efficiencyPct}%`} valueColor={efficiencyColor(efficiencyPct)} />
+          {workerCap > 0 && workerCount > 0 && (
+            <InfoRow
+              label="AVG WORKER EFF."
+              value={`${Math.round(avgWorkerEfficiency * 100)}%`}
+              valueColor={efficiencyColor(Math.round(avgWorkerEfficiency * 100))}
+            />
+          )}
+        </>
+      )}
+
+      {powerOutput > 0 && (
+        <>
+          <InfoRow label="POWER GENERATED" value={`${powerOutput}W`} valueColor={Colors.termGreen} />
+          <InfoRow label="ROLE" value="POWER GENERATION" valueColor="#9e9e9e" />
+        </>
+      )}
+
+      {storageContribution > 0 && (
+        <InfoRow label="STORAGE ADDED" value={`+${storageContribution} units`} valueColor={Colors.sovietGold} />
+      )}
+
+      {/* Output rating — a quick visual assessment */}
+      {produces && (
+        <View style={ringStyles.ratingRow}>
+          <Text style={ringStyles.ratingLabel}>OUTPUT RATING</Text>
+          <Text style={[ringStyles.ratingStars, { color: efficiencyColor(efficiencyPct) }]}>
+            {outputRatingStars(efficiencyPct)}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
+/** Convert efficiency pct to a star rating (1-5 stars). */
+function outputRatingStars(pct: number): string {
+  const stars = Math.max(1, Math.min(5, Math.ceil(pct / 20)));
+  return '\u2605'.repeat(stars) + '\u2606'.repeat(5 - stars);
+}
+
+// ── Demographic Ring ────────────────────────────────────────────────────────
+
+/** Type-specific demographic data ring — class distribution, morale, skill breakdown. */
+const DemographicRing: React.FC<{
+  workers: AssignedWorkerInfo[];
+  workerCap: number;
+}> = ({ workers, workerCap }) => {
+  if (workerCap === 0) return null;
+
+  const workerCount = workers.length;
+
+  // Class distribution
+  const classCounts: Record<string, number> = {};
+  for (const w of workers) {
+    classCounts[w.class] = (classCounts[w.class] ?? 0) + 1;
+  }
+  const classSegments = Object.entries(classCounts).map(([cls, count]) => ({
+    label: CLASS_ABBREV[cls as CitizenComponent['class']] ?? cls.toUpperCase(),
+    value: count,
+    color: CLASS_COLOR[cls as CitizenComponent['class']] ?? '#9e9e9e',
+  }));
+
+  // Morale distribution
+  const moraleBuckets = { high: 0, mid: 0, low: 0 };
+  let totalSkill = 0;
+  for (const w of workers) {
+    if (w.morale >= 70) moraleBuckets.high++;
+    else if (w.morale >= 40) moraleBuckets.mid++;
+    else moraleBuckets.low++;
+    totalSkill += (w as unknown as { skill?: number }).skill ?? 50;
+  }
+  const moraleSegments = [
+    { label: 'HIGH', value: moraleBuckets.high, color: Colors.termGreen },
+    { label: 'MED', value: moraleBuckets.mid, color: Colors.sovietGold },
+    { label: 'LOW', value: moraleBuckets.low, color: '#ef4444' },
+  ];
+
+  // Average stats
+  const avgMorale = workerCount > 0 ? Math.round(workers.reduce((s, w) => s + w.morale, 0) / workerCount) : 0;
+  const avgSkill = workerCount > 0 ? Math.round(totalSkill / workerCount) : 0;
+
+  return (
+    <View style={ringStyles.ring}>
+      <RingHeader label="DEMOGRAPHIC RING" icon={'\u263A'} color={Colors.sovietGold} />
+
+      <StatBar
+        label="STAFFING"
+        value={workerCount}
+        max={workerCap}
+        color={workerCount >= workerCap ? Colors.termGreen : Colors.sovietGold}
+      />
+
+      {workerCount > 0 && (
+        <>
+          {/* Class distribution */}
+          <Text style={ringStyles.subLabel}>CLASS DISTRIBUTION</Text>
+          <DistributionBar segments={classSegments} total={workerCount} />
+
+          {/* Morale distribution */}
+          <Text style={ringStyles.subLabel}>MORALE DISTRIBUTION</Text>
+          <DistributionBar segments={moraleSegments} total={workerCount} />
+
+          {/* Aggregate stats */}
+          <View style={ringStyles.statsRow}>
+            <View style={ringStyles.statCell}>
+              <Text style={ringStyles.statValue}>{avgMorale}</Text>
+              <Text style={ringStyles.statLabel}>AVG MORALE</Text>
+            </View>
+            <View style={ringStyles.statCell}>
+              <Text style={ringStyles.statValue}>{avgSkill}</Text>
+              <Text style={ringStyles.statLabel}>AVG SKILL</Text>
+            </View>
+            <View style={ringStyles.statCell}>
+              <Text style={ringStyles.statValue}>{workerCount}</Text>
+              <Text style={ringStyles.statLabel}>ASSIGNED</Text>
+            </View>
+          </View>
+
+          {/* Worker list */}
+          <Text style={ringStyles.subLabel}>PERSONNEL ROSTER</Text>
+          <View style={styles.workerList}>
+            {workers.slice(0, MAX_DISPLAYED_WORKERS).map((w, i) => (
+              <View key={i} style={styles.workerRow}>
+                <Text style={[styles.workerClass, { color: CLASS_COLOR[w.class] }]}>{CLASS_ABBREV[w.class]}</Text>
+                <Text style={styles.workerName} numberOfLines={1}>
+                  {w.name}
+                </Text>
+                <Text style={[styles.workerMorale, { color: moraleColor(w.morale) }]}>
+                  {moraleIcon(w.morale)} {w.morale}
+                </Text>
+                <Text style={[styles.workerStatus, { color: statusColor(w.status) }]}>{statusLabel(w.status)}</Text>
+              </View>
+            ))}
+            {workerCount > MAX_DISPLAYED_WORKERS && (
+              <Text style={styles.workerOverflow}>+{workerCount - MAX_DISPLAYED_WORKERS} more workers</Text>
+            )}
+          </View>
+        </>
+      )}
+
+      {workerCount === 0 && <Text style={styles.noWorkers}>No workers assigned — building idle</Text>}
+    </View>
+  );
+};
+
+// ── Records Ring ────────────────────────────────────────────────────────────
+
+/** Structural records ring — construction data, health, operational stats. */
+const RecordsRing: React.FC<{
+  constructionInfo: { label: string; progress: number } | null;
+  health: number;
+  decayRate: number;
+  pollution: number;
+  fear: number;
+  onFire: boolean;
+  fireTicksRemaining: number;
+  powered: boolean;
+  powerReq: number;
+  powerOutput: number;
+  footX: number;
+  footY: number;
+  cost: number;
+  gridX: number;
+  gridY: number;
+  role: string;
+  level: number;
+}> = ({
+  constructionInfo,
+  health,
+  decayRate,
+  pollution,
+  fear,
+  onFire,
+  fireTicksRemaining,
+  powered,
+  powerReq,
+  powerOutput,
+  footX,
+  footY,
+  cost,
+  gridX,
+  gridY,
+  role,
+  level,
+}) => {
+  // Estimated remaining lifespan based on current health and decay rate
+  const estimatedLife = decayRate > 0 ? Math.round(health / decayRate) : null;
+
+  // Operational status summary
+  const opStatus = constructionInfo
+    ? 'UNDER CONSTRUCTION'
+    : onFire
+      ? 'EMERGENCY — FIRE'
+      : !powered && powerReq > 0
+        ? 'OFFLINE — NO POWER'
+        : 'OPERATIONAL';
+
+  const opColor = constructionInfo
+    ? '#ff9800'
+    : onFire
+      ? '#ef4444'
+      : !powered && powerReq > 0
+        ? '#ef4444'
+        : Colors.termGreen;
+
+  return (
+    <View style={ringStyles.ring}>
+      <RingHeader label="RECORDS RING" icon={'\u2318'} color={Colors.termBlue} />
+
+      {/* Identification */}
+      <InfoRow label="GRID POSITION" value={`[${gridX}, ${gridY}]`} />
+      <InfoRow label="CLASSIFICATION" value={role.toUpperCase()} />
+      <InfoRow label="UPGRADE LEVEL" value={`TIER ${level}`} />
+      <InfoRow label="FOOTPRINT" value={`${footX}\u00D7${footY} cells`} />
+      {cost > 0 && <InfoRow label="CONSTRUCTION COST" value={`\u20BD ${cost}`} valueColor={Colors.sovietGold} />}
+
+      {/* Operational status */}
+      <View style={ringStyles.statusBadge}>
+        <Text style={[ringStyles.statusText, { color: opColor }]}>
+          {'\u25CF'} {opStatus}
+        </Text>
+      </View>
+
+      {/* Construction progress */}
+      {constructionInfo && (
+        <>
+          <InfoRow label="PHASE" value={constructionInfo.label} valueColor="#ff9800" />
+          <StatBar
+            label="PROGRESS"
+            value={Math.round(constructionInfo.progress * 100)}
+            max={100}
+            color="#ff9800"
+            suffix="%"
+          />
+        </>
+      )}
+
+      {/* Structural integrity */}
+      <StatBar label="STRUCTURAL INTEGRITY" value={health} max={100} color={healthColor(health)} />
+      {decayRate > 0 && (
+        <>
+          <InfoRow label="DECAY RATE" value={`-${decayRate}/tick`} valueColor="#ef4444" />
+          {estimatedLife !== null && (
+            <InfoRow
+              label="EST. LIFESPAN"
+              value={`~${estimatedLife} ticks`}
+              valueColor={estimatedLife < 50 ? '#ef4444' : estimatedLife < 200 ? Colors.sovietGold : '#9e9e9e'}
+            />
+          )}
+        </>
+      )}
+
+      {/* Power */}
+      {powerOutput > 0 ? (
+        <InfoRow label="POWER OUTPUT" value={`${powerOutput}W`} valueColor={Colors.termGreen} />
+      ) : powerReq > 0 ? (
+        <InfoRow
+          label="POWER STATUS"
+          value={powered ? `POWERED (${powerReq}W)` : `UNPOWERED (${powerReq}W req.)`}
+          valueColor={powerColor(powered)}
+        />
+      ) : null}
+
+      {/* Fire */}
+      {onFire && (
+        <>
+          <InfoRow label="FIRE STATUS" value="ACTIVE FIRE" valueColor="#ef4444" />
+          {fireTicksRemaining > 0 && (
+            <InfoRow label="EXTINGUISHES IN" value={`${fireTicksRemaining} ticks`} valueColor="#ff9800" />
+          )}
+        </>
+      )}
+
+      {/* Environmental */}
+      {(pollution > 0 || fear > 0) && (
+        <>
+          {pollution > 0 && <InfoRow label="SMOG OUTPUT" value={`${pollution}/tick`} valueColor="#9e9e9e" />}
+          {fear > 0 && <InfoRow label="FEAR RADIUS" value={`${fear}/tick`} valueColor={Colors.sovietRed} />}
+        </>
+      )}
+    </View>
+  );
+};
+
 // ── Info Row ────────────────────────────────────────────────────────────────
 
 const InfoRow: React.FC<{
@@ -271,16 +655,6 @@ const InfoRow: React.FC<{
   <View style={styles.infoRow}>
     <Text style={styles.infoLabel}>{label}</Text>
     <Text style={[styles.infoValue, valueColor ? { color: valueColor } : null]}>{value}</Text>
-  </View>
-);
-
-// ── Section Divider ─────────────────────────────────────────────────────────
-
-const SectionDivider: React.FC<{ label: string }> = ({ label }) => (
-  <View style={styles.sectionDivider}>
-    <View style={styles.dividerLine} />
-    <Text style={styles.dividerLabel}>{label}</Text>
-    <View style={styles.dividerLine} />
   </View>
 );
 
@@ -357,9 +731,6 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
 
   // Storage
   const storageContribution = getBuildingStorageContribution(buildingDefId);
-  const resEntity = getResourceEntity();
-  const currentFood = Math.round(resEntity?.resources.food ?? 0);
-  const totalStorageCap = resEntity?.resources.storageCapacity ?? 200;
 
   // Footprint
   const footX = def?.footprint.tilesX ?? 1;
@@ -408,32 +779,9 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
       {/* Description */}
       {desc ? <Text style={styles.desc}>{desc}</Text> : null}
 
-      {/* Location & Type */}
-      <SectionDivider label="Identification" />
-      <InfoRow label="POSITION" value={`[${gridX}, ${gridY}]`} />
-      <InfoRow label="TYPE" value={role.toUpperCase()} />
-      <InfoRow label="FOOTPRINT" value={`${footX} x ${footY}`} />
-      {cost > 0 && <InfoRow label="COST" value={`${cost}`} valueColor={Colors.sovietGold} />}
-
-      {/* Construction Progress */}
-      {constructionInfo && (
-        <>
-          <SectionDivider label="Construction" />
-          <InfoRow label="PHASE" value={constructionInfo.label} valueColor="#ff9800" />
-          <StatBar
-            label="PROGRESS"
-            value={Math.round(constructionInfo.progress * 100)}
-            max={100}
-            color="#ff9800"
-            suffix="%"
-          />
-        </>
-      )}
-
-      {/* Efficiency */}
+      {/* Efficiency summary (compact, always visible for productive buildings) */}
       {!constructionInfo && (workerCap > 0 || produces) && (
-        <>
-          <SectionDivider label="Efficiency" />
+        <View style={ringStyles.efficiencySummary}>
           <StatBar
             label="EFFICIENCY"
             value={efficiency.pct}
@@ -444,126 +792,54 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
           {efficiency.reasons.length > 0 && (
             <Text style={styles.efficiencyReasons}>{efficiency.reasons.join(' \u2022 ')}</Text>
           )}
-        </>
+        </View>
       )}
 
-      {/* Power Status */}
-      <SectionDivider label="Power" />
-      {powerOutput > 0 ? (
-        <InfoRow label="POWER OUTPUT" value={`${powerOutput}W`} valueColor={Colors.termGreen} />
-      ) : powerReq > 0 ? (
-        <>
-          <InfoRow label="POWER STATUS" value={powered ? 'POWERED' : 'UNPOWERED'} valueColor={powerColor(powered)} />
-          <InfoRow label="POWER DEMAND" value={`${powerReq}W`} />
-        </>
-      ) : (
-        <InfoRow label="POWER" value="NO REQUIREMENT" valueColor="#9e9e9e" />
-      )}
-
-      {/* Production Rate */}
-      {produces && (
-        <>
-          <SectionDivider label="Production" />
-          <InfoRow
-            label="BASE OUTPUT"
-            value={`${produces.resource.toUpperCase()}: ${produces.amount}/tick`}
-            valueColor="#9e9e9e"
-          />
-          <InfoRow
-            label="EFFECTIVE OUTPUT"
-            value={`${produces.resource.toUpperCase()}: ${effectiveOutput}/tick`}
-            valueColor={effectiveOutput > 0 ? Colors.termGreen : '#ef4444'}
-          />
-          {workerCap > 0 && workerCount > 0 && (
-            <InfoRow
-              label="AVG WORKER EFF."
-              value={`${Math.round(avgWorkerEfficiency * 100)}%`}
-              valueColor={efficiencyColor(Math.round(avgWorkerEfficiency * 100))}
-            />
-          )}
-        </>
-      )}
-
-      {/* Workers */}
-      {workerCap > 0 && (
-        <>
-          <SectionDivider label="Workers" />
-          <StatBar
-            label="STAFF"
-            value={workerCount}
-            max={workerCap}
-            color={workerCount >= workerCap ? Colors.termGreen : Colors.sovietGold}
-          />
-          {workerCount === 0 ? (
-            <Text style={styles.noWorkers}>No workers assigned</Text>
-          ) : (
-            <View style={styles.workerList}>
-              {assignedWorkers.slice(0, MAX_DISPLAYED_WORKERS).map((w, i) => (
-                <View key={i} style={styles.workerRow}>
-                  <Text style={[styles.workerClass, { color: CLASS_COLOR[w.class] }]}>{CLASS_ABBREV[w.class]}</Text>
-                  <Text style={styles.workerName} numberOfLines={1}>
-                    {w.name}
-                  </Text>
-                  <Text style={[styles.workerMorale, { color: moraleColor(w.morale) }]}>
-                    {moraleIcon(w.morale)} {w.morale}
-                  </Text>
-                  <Text style={[styles.workerStatus, { color: statusColor(w.status) }]}>{statusLabel(w.status)}</Text>
-                </View>
-              ))}
-              {workerCount > MAX_DISPLAYED_WORKERS && (
-                <Text style={styles.workerOverflow}>+{workerCount - MAX_DISPLAYED_WORKERS} more workers</Text>
-              )}
-            </View>
-          )}
-        </>
-      )}
-
-      {/* Housing */}
+      {/* Housing note (compact, above rings) */}
       {housingCap > 0 && (
-        <>
-          <SectionDivider label="Housing" />
-          <InfoRow label="CAPACITY" value={`${housingCap} citizens`} />
-        </>
+        <View style={ringStyles.housingBadge}>
+          <Text style={ringStyles.housingText}>
+            {'\u2302'} HOUSING CAPACITY: {housingCap} CITIZENS
+          </Text>
+        </View>
       )}
 
-      {/* Storage */}
-      {storageContribution > 0 && (
-        <>
-          <SectionDivider label="Storage" />
-          <InfoRow label="CONTRIBUTION" value={`+${storageContribution} units`} valueColor={Colors.termGreen} />
-          <StatBar
-            label="SETTLEMENT FOOD STORED"
-            value={currentFood}
-            max={totalStorageCap}
-            color={currentFood > totalStorageCap ? '#ef4444' : Colors.sovietGold}
-          />
-        </>
-      )}
+      {/* ═══ Production Ring ═══ */}
+      <ProductionRing
+        produces={produces}
+        effectiveOutput={effectiveOutput}
+        efficiencyPct={efficiency.pct}
+        avgWorkerEfficiency={avgWorkerEfficiency}
+        workerCount={workerCount}
+        workerCap={workerCap}
+        powerOutput={powerOutput}
+        storageContribution={storageContribution}
+        role={role}
+      />
 
-      {/* Fire */}
-      {onFire && (
-        <>
-          <SectionDivider label="Fire" />
-          <InfoRow label="STATUS" value="BURNING" valueColor="#ef4444" />
-          {fireTicksRemaining > 0 && (
-            <InfoRow label="EXTINGUISHES IN" value={`${fireTicksRemaining} ticks`} valueColor="#ff9800" />
-          )}
-        </>
-      )}
+      {/* ═══ Demographic Ring ═══ */}
+      <DemographicRing workers={assignedWorkers} workerCap={workerCap} />
 
-      {/* Health / Decay */}
-      <SectionDivider label="Structural Integrity" />
-      <StatBar label="HEALTH" value={health} max={100} color={healthColor(health)} />
-      {decayRate > 0 && <InfoRow label="DECAY RATE" value={`-${decayRate}/tick`} valueColor="#ef4444" />}
-
-      {/* Environmental */}
-      {(pollution > 0 || fear > 0) && (
-        <>
-          <SectionDivider label="Environmental Impact" />
-          {pollution > 0 && <InfoRow label="SMOG OUTPUT" value={`${pollution}/tick`} valueColor="#9e9e9e" />}
-          {fear > 0 && <InfoRow label="FEAR OUTPUT" value={`${fear}/tick`} valueColor={Colors.sovietRed} />}
-        </>
-      )}
+      {/* ═══ Records Ring ═══ */}
+      <RecordsRing
+        constructionInfo={constructionInfo}
+        health={health}
+        decayRate={decayRate}
+        pollution={pollution}
+        fear={fear}
+        onFire={onFire}
+        fireTicksRemaining={fireTicksRemaining}
+        powered={powered}
+        powerReq={powerReq}
+        powerOutput={powerOutput}
+        footX={footX}
+        footY={footY}
+        cost={cost}
+        gridX={gridX}
+        gridY={gridY}
+        role={role}
+        level={building?.level ?? 0}
+      />
 
       {/* Demolish Button */}
       <View style={styles.demolishContainer}>
@@ -586,27 +862,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: 8,
     lineHeight: 16,
-  },
-
-  // Section divider
-  sectionDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.sovietDarkRed,
-  },
-  dividerLabel: {
-    fontSize: 9,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    color: '#ff4444',
-    letterSpacing: 2,
   },
 
   // Info rows
@@ -761,5 +1016,184 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 6,
+  },
+});
+
+// ── Ring Styles ────────────────────────────────────────────────────────────
+
+const ringStyles = StyleSheet.create({
+  // Ring container
+  ring: {
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: '#333',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    padding: 10,
+  },
+
+  // Ring header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 6,
+  },
+  headerAccent: {
+    width: 3,
+    height: 16,
+  },
+  headerIcon: {
+    fontSize: 14,
+    fontFamily: monoFont,
+  },
+  headerLabel: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
+  headerLine: {
+    flex: 1,
+    height: 1,
+    opacity: 0.4,
+  },
+  headerDot: {
+    fontSize: 10,
+  },
+
+  // Sub-label within a ring
+  subLabel: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: '#777',
+    letterSpacing: 1.5,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+
+  // Distribution bar
+  distContainer: {
+    marginBottom: 6,
+  },
+  distBar: {
+    flexDirection: 'row',
+    height: 8,
+    borderWidth: 1,
+    borderColor: '#444',
+    backgroundColor: '#222',
+    overflow: 'hidden',
+  },
+  distSegment: {
+    height: '100%',
+  },
+  distLegend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 3,
+  },
+  distLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  distDot: {
+    width: 6,
+    height: 6,
+  },
+  distLegendText: {
+    fontSize: 8,
+    fontFamily: monoFont,
+    color: '#999',
+  },
+
+  // Stats row (3-column aggregate)
+  statsRow: {
+    flexDirection: 'row',
+    marginTop: 8,
+    marginBottom: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    paddingTop: 6,
+  },
+  statCell: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 16,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  statLabel: {
+    fontSize: 7,
+    fontFamily: monoFont,
+    color: '#777',
+    letterSpacing: 1,
+    marginTop: 2,
+  },
+
+  // Rating row
+  ratingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    paddingTop: 6,
+  },
+  ratingLabel: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: '#777',
+    letterSpacing: 1,
+  },
+  ratingStars: {
+    fontSize: 14,
+    fontFamily: monoFont,
+    letterSpacing: 2,
+  },
+
+  // Status badge
+  statusBadge: {
+    marginVertical: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderWidth: 1,
+    borderColor: '#444',
+    alignSelf: 'flex-start',
+  },
+  statusText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+
+  // Efficiency summary (above rings)
+  efficiencySummary: {
+    marginBottom: 4,
+  },
+
+  // Housing badge
+  housingBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(64, 196, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: Colors.termBlue,
+    marginBottom: 4,
+  },
+  housingText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.termBlue,
+    letterSpacing: 1,
   },
 });

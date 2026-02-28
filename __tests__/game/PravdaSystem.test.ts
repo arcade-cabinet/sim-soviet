@@ -239,7 +239,7 @@ describe('PravdaSystem', () => {
       expect(second).toBeNull();
     });
 
-    it('returns null when called within 90-second cooldown', () => {
+    it('returns null when called within 45-second cooldown', () => {
       jest.spyOn(Date, 'now').mockReturnValue(100000);
       pravda.generateAmbientHeadline();
 
@@ -312,7 +312,7 @@ describe('PravdaSystem', () => {
 
       const data = pravda.serialize();
       expect(data.lastHeadlineTime).toBe(100000);
-      expect(data.headlineCooldown).toBe(90000);
+      expect(data.headlineCooldown).toBe(45000);
 
       const restored = PravdaSystem.deserialize(data);
 

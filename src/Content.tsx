@@ -26,6 +26,7 @@ import { notifyStateChange, useTerrainVersion } from './stores/gameStore';
 import './scene/ModelPreloader';
 import AuraRenderer from './scene/AuraRenderer';
 import BuildingRenderer from './scene/BuildingRenderer';
+import BuildingStatusBadges from './scene/BuildingStatusBadges';
 import CameraController from './scene/CameraController';
 import Environment from './scene/Environment';
 import FireRenderer from './scene/FireRenderer';
@@ -124,6 +125,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
         settlementTier={snap.settlementTier as SettlementTier}
         season={snap.season}
       />
+      <BuildingStatusBadges buildings={buildings} />
       <SceneProps season={snap.season} />
 
       <WeatherFX />

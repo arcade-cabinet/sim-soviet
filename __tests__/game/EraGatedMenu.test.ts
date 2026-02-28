@@ -21,13 +21,13 @@ const CATEGORIES: { id: string; roles: Role[] }[] = [
 ];
 
 describe('Era-gated build menu filtering', () => {
-  it('war_communism (1922) has at least one building available', () => {
-    const available = new Set(getAvailableBuildingsForYear(1922));
+  it('revolution (1917) has at least one building available', () => {
+    const available = new Set(getAvailableBuildingsForYear(1917));
     expect(available.size).toBeGreaterThan(0);
   });
 
   it('future-era buildings are excluded from early eras', () => {
-    const era1Available = new Set(getAvailableBuildingsForYear(1922));
+    const era1Available = new Set(getAvailableBuildingsForYear(1917));
 
     // Collect buildings only unlocked in later eras
     const laterEraBuildings: string[] = [];

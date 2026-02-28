@@ -12,7 +12,7 @@ export const PRODUCTION_QUOTAS: MinigameDefinition = {
     'Moscow demands numbers. The machines demand maintenance. The workers demand lunch. You have two of these three things.',
   triggerType: 'building_tap',
   triggerCondition: 'factory_tap',
-  tickLimit: 20,
+  tickLimit: 50,
   choices: [
     {
       id: 'double_shift',

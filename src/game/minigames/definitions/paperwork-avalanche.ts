@@ -11,7 +11,7 @@ export const PAPERWORK_AVALANCHE: MinigameDefinition = {
   description: 'Form 27-B/6 requires Form 14-A/3 which requires Form 27-B/6. The bureaucracy is a perfect circle.',
   triggerType: 'building_tap',
   triggerCondition: 'ministry_tap',
-  tickLimit: 20,
+  tickLimit: 50,
   choices: [
     {
       id: 'process_diligently',

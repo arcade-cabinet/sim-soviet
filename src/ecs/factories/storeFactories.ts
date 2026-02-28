@@ -148,7 +148,7 @@ export function createMetaStore(initialValues?: Partial<GameMeta>): Entity {
       blackMarks: initialValues?.blackMarks ?? 0,
       commendations: initialValues?.commendations ?? 0,
       threatLevel: initialValues?.threatLevel ?? 'safe',
-      currentEra: initialValues?.currentEra ?? 'war_communism',
+      currentEra: initialValues?.currentEra ?? 'revolution',
       roadQuality: initialValues?.roadQuality ?? 'none',
       roadCondition: initialValues?.roadCondition ?? 100,
     },

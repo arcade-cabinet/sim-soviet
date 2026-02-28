@@ -6,14 +6,14 @@
  * unique tensions and absurdities.
  *
  * Era mapping (EraId → era theme):
- *   war_communism   — Revolution, civil war chaos, survival
- *   first_plans     — Collectivization + Industrialization, kulak purges, Great Terror
- *   great_patriotic — WWII, conscription, rationing, bombardment
- *   reconstruction  — Post-war rebuilding, veteran integration, rubble salvage
- *   thaw            — De-Stalinization, cultural freedom, private gardens
- *   stagnation      — Decay, vodka economy, queues, corruption
- *   perestroika     — Reform chaos, shortages, system collapse
- *   eternal_soviet  — Bureaucratic singularity, absurdist endgame
+ *   revolution        — Revolution, civil war chaos, survival
+ *   collectivization  — Forced collectivization, kulak purges
+ *   industrialization — Five-year plans, Great Terror, rapid industry
+ *   great_patriotic   — WWII, conscription, rationing, bombardment
+ *   reconstruction    — Post-war rebuilding, veteran integration, rubble salvage
+ *   thaw_and_freeze   — De-Stalinization, cultural freedom, then re-freeze
+ *   stagnation        — Decay, vodka economy, queues, corruption, reform chaos
+ *   the_eternal       — Bureaucratic singularity, absurdist endgame
  */
 
 import type { EventTemplate } from '../types';
@@ -32,7 +32,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     severity: 'major',
     effects: (gs) => ({ food: -Math.min(30, Math.floor(gs.food * 0.2)), pop: -1 }),
     condition: (gs) => gs.food > 20,
-    eraFilter: ['war_communism'],
+    eraFilter: ['revolution'],
     weight: 1.5,
   },
   {
@@ -46,7 +46,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     severity: 'major',
     effects: (gs) => ({ food: -Math.min(40, Math.floor(gs.food * 0.3)) }),
     condition: (gs) => gs.food > 30,
-    eraFilter: ['war_communism'],
+    eraFilter: ['revolution'],
     weight: 1.2,
   },
 
@@ -67,7 +67,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
       food: -Math.min(20, Math.floor(gs.food * 0.15)),
     }),
     condition: (gs) => gs.pop > 30,
-    eraFilter: ['first_plans'],
+    eraFilter: ['collectivization', 'industrialization'],
     weight: 1.5,
   },
   {
@@ -84,7 +84,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
       pop: -Math.min(12, Math.floor(gs.pop * 0.1)),
     }),
     condition: (gs) => gs.pop > 40 && gs.date.year >= 1936,
-    eraFilter: ['first_plans'],
+    eraFilter: ['collectivization', 'industrialization'],
     weight: 0.8,
   },
   {
@@ -98,7 +98,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'economic',
     severity: 'minor',
     effects: { food: 15, vodka: 5 },
-    eraFilter: ['first_plans'],
+    eraFilter: ['collectivization', 'industrialization'],
     weight: 0.7,
   },
 
@@ -198,7 +198,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'economic',
     severity: 'minor',
     effects: { food: 25 },
-    eraFilter: ['thaw'],
+    eraFilter: ['thaw_and_freeze'],
     weight: 1.5,
   },
   {
@@ -212,7 +212,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'cultural',
     severity: 'minor',
     effects: { pop: 2, vodka: 3 },
-    eraFilter: ['thaw'],
+    eraFilter: ['thaw_and_freeze'],
     weight: 1.0,
   },
   {
@@ -226,7 +226,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'political',
     severity: 'major',
     effects: { food: -15, pop: -2 },
-    eraFilter: ['thaw'],
+    eraFilter: ['thaw_and_freeze'],
     weight: 0.8,
   },
 
@@ -290,7 +290,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'political',
     severity: 'minor',
     effects: { money: -15 },
-    eraFilter: ['perestroika'],
+    eraFilter: ['stagnation'],
     weight: 1.5,
   },
   {
@@ -304,7 +304,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'economic',
     severity: 'major',
     effects: { food: -20, vodka: -10 },
-    eraFilter: ['perestroika'],
+    eraFilter: ['stagnation'],
     weight: 1.2,
   },
 
@@ -321,7 +321,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'absurdist',
     severity: 'minor',
     effects: { money: -25 },
-    eraFilter: ['eternal_soviet'],
+    eraFilter: ['the_eternal'],
     weight: 2.0,
   },
   {
@@ -335,7 +335,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'absurdist',
     severity: 'minor',
     effects: {},
-    eraFilter: ['eternal_soviet'],
+    eraFilter: ['the_eternal'],
     weight: 1.5,
   },
   {
@@ -353,7 +353,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
       const roll = gs.date.tick % 2;
       return roll === 0 ? { food: 20 } : { food: -20 };
     },
-    eraFilter: ['eternal_soviet'],
+    eraFilter: ['the_eternal'],
     weight: 1.2,
   },
   {
@@ -367,7 +367,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'absurdist',
     severity: 'catastrophic',
     effects: { money: -50 },
-    eraFilter: ['eternal_soviet'],
+    eraFilter: ['the_eternal'],
     weight: 0.5,
   },
 ];

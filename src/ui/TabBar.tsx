@@ -1,6 +1,11 @@
 /**
- * TabBar — Category tab strip (ZONING, INFRASTRUCTURE, STATE, PURGE).
- * Port of poc.html lines 293-299.
+ * TabBar — Backward-compatible re-export.
+ *
+ * The TabBar has been consolidated into Toolbar.tsx as a unified command bar.
+ * Building category tabs (ZONING / INFRASTRUCTURE / STATE) now appear as a
+ * secondary row within the Toolbar when the BUILD tab is active.
+ *
+ * This file re-exports the Toolbar as TabBar for backward compatibility.
  */
 
 import type React from 'react';
@@ -26,6 +31,11 @@ const TABS: TabDef[] = [
   { key: 'purge', label: 'PURGE', redText: true },
 ];
 
+/**
+ * Standalone TabBar — provided for backward compatibility.
+ * Prefer using the unified Toolbar component with activeBuildTab/onBuildTabChange
+ * props instead.
+ */
 export const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabPress }) => {
   return (
     <View style={styles.container}>

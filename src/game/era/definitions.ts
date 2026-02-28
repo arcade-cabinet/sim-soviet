@@ -13,14 +13,14 @@ import type { EraDefinition, EraId } from './types';
 
 /** Eras in chronological order. */
 export const ERA_ORDER: readonly EraId[] = [
-  'war_communism',
-  'first_plans',
+  'revolution',
+  'collectivization',
+  'industrialization',
   'great_patriotic',
   'reconstruction',
-  'thaw',
+  'thaw_and_freeze',
   'stagnation',
-  'perestroika',
-  'eternal_soviet',
+  'the_eternal',
 ];
 
 // ─── ALL BUILDING DEF IDS ───────────────────────────────────────────────────
@@ -67,12 +67,12 @@ export const ALL_BUILDING_IDS: readonly string[] = [
 // ─── ERA DEFINITIONS ────────────────────────────────────────────────────────
 
 export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
-  // ── WAR COMMUNISM (1922-1928) ─────────────────────────
-  war_communism: {
-    id: 'war_communism',
-    name: 'War Communism',
-    startYear: 1922,
-    endYear: 1928,
+  // ── REVOLUTION (1917-1922) ──────────────────────────────
+  revolution: {
+    id: 'revolution',
+    name: 'Revolution',
+    startYear: 1917,
+    endYear: 1922,
 
     doctrine: 'revolutionary',
     deliveryRates: { food: 0.4, vodka: 0.3, money: 0.2 },
@@ -82,7 +82,6 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'workers-house-a',
       'workers-house-b',
       'collective-farm-hq',
-      'power-station',
       'guard-post',
       'fence',
       'fence-low',
@@ -117,30 +116,21 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     briefingFlavor: "Chaos. NEP remnants. Famine risk. Build the foundation of the workers' paradise from scratch.",
   },
 
-  // ── FIRST FIVE-YEAR PLANS (1928-1941) ─────────────────
-  first_plans: {
-    id: 'first_plans',
-    name: 'First Five-Year Plans',
-    startYear: 1928,
-    endYear: 1941,
+  // ── COLLECTIVIZATION (1922-1932) ────────────────────────
+  collectivization: {
+    id: 'collectivization',
+    name: 'Collectivization',
+    startYear: 1922,
+    endYear: 1932,
 
     doctrine: 'industrialization',
     deliveryRates: { food: 0.5, vodka: 0.4, money: 0.6 },
     quotaEscalation: 1.3,
 
-    unlockedBuildings: [
-      'workers-house-c',
-      'bread-factory',
-      'warehouse',
-      'factory-office',
-      'school',
-      'barracks',
-      'road-depot',
-      'rail-depot',
-    ],
+    unlockedBuildings: ['workers-house-c', 'bread-factory', 'warehouse', 'school', 'barracks', 'road-depot'],
 
     modifiers: {
-      productionMult: 1.2,
+      productionMult: 1.0,
       consumptionMult: 1.0,
       decayMult: 1.1,
       populationGrowthMult: 0.8,
@@ -157,6 +147,58 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     },
 
     failureCondition: {
+      description: 'Population drops below 10 during collectivization',
+      check: (_meta, resources) => resources.population > 0 && resources.population < 10,
+    },
+
+    introTitle: 'Assignment: Collectivization',
+    introText:
+      'The land belongs to the people now. The people belong to the collective. ' +
+      'The collective belongs to the Party. The Party belongs to history. ' +
+      'History has not yet been written. You will write it. In triplicate. ' +
+      'Collectivize the farms. Build the warehouses. The kulaks will resist. ' +
+      'Resistance is also collectivized.',
+    briefingFlavor: 'Forced collectivization. Kulak purges. Quotas that exist in a dimension where math is optional.',
+  },
+
+  // ── INDUSTRIALIZATION (1932-1941) ───────────────────────
+  industrialization: {
+    id: 'industrialization',
+    name: 'Industrialization',
+    startYear: 1932,
+    endYear: 1941,
+
+    doctrine: 'industrialization',
+    deliveryRates: { food: 0.5, vodka: 0.4, money: 0.6 },
+    quotaEscalation: 1.3,
+
+    unlockedBuildings: [
+      'power-station',
+      'factory-office',
+      'rail-depot',
+      'vodka-distillery',
+      'radio-station',
+      'gulag-admin',
+    ],
+
+    modifiers: {
+      productionMult: 1.2,
+      consumptionMult: 1.0,
+      decayMult: 1.1,
+      populationGrowthMult: 0.8,
+      eventFrequencyMult: 1.2,
+      corruptionMult: 0.7,
+    },
+
+    constructionMethod: 'manual',
+    constructionTimeMult: 2.0,
+
+    victoryCondition: {
+      description: 'Build a power station and factory with 150+ population',
+      check: (_meta, resources) => resources.population >= 150,
+    },
+
+    failureCondition: {
       description: 'Population drops below 10 during industrialization',
       check: (_meta, resources) => resources.population > 0 && resources.population < 10,
     },
@@ -169,8 +211,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'build more factories. The second factories will build things that ' +
       'are not factories. What those things are has not been decided. ' +
       'Decide quickly. The Plan does not wait.',
-    briefingFlavor:
-      'Industrialization at gunpoint. Collectivization. Quotas that exist in a dimension where math is optional.',
+    briefingFlavor: 'Industrialization at gunpoint. Five-year plans. The Great Terror. Build or be built upon.',
   },
 
   // ── GREAT PATRIOTIC WAR (1941-1945) ───────────────────
@@ -184,7 +225,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     deliveryRates: { food: 0.7, vodka: 0.6, money: 0.7 },
     quotaEscalation: 1.5,
 
-    unlockedBuildings: ['gulag-admin'],
+    unlockedBuildings: [],
 
     modifiers: {
       productionMult: 0.6,
@@ -218,12 +259,12 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     briefingFlavor: 'Total war economy. Conscription. Rationing. Survival is the only quota that matters.',
   },
 
-  // ── RECONSTRUCTION (1945-1953) ────────────────────────
+  // ── RECONSTRUCTION (1945-1956) ────────────────────────
   reconstruction: {
     id: 'reconstruction',
     name: 'Reconstruction',
     startYear: 1945,
-    endYear: 1953,
+    endYear: 1956,
 
     doctrine: 'reconstruction',
     deliveryRates: { food: 0.35, vodka: 0.25, money: 0.3 },
@@ -266,18 +307,27 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     briefingFlavor: 'Rebuilding from ashes. Stalinist architecture. Paranoia as a management style.',
   },
 
-  // ── THE THAW (1953-1964) ──────────────────────────────
-  thaw: {
-    id: 'thaw',
-    name: 'The Thaw',
-    startYear: 1953,
-    endYear: 1964,
+  // ── THAW AND FREEZE (1956-1982) ────────────────────────
+  thaw_and_freeze: {
+    id: 'thaw_and_freeze',
+    name: 'Thaw & Freeze',
+    startYear: 1956,
+    endYear: 1982,
 
     doctrine: 'thaw',
     deliveryRates: { food: 0.3, vodka: 0.2, money: 0.25 },
     quotaEscalation: 1.1,
 
-    unlockedBuildings: ['apartment-tower-b', 'polyclinic', 'workers-club', 'post-office', 'cultural-palace'],
+    unlockedBuildings: [
+      'apartment-tower-b',
+      'apartment-tower-c',
+      'polyclinic',
+      'workers-club',
+      'post-office',
+      'cultural-palace',
+      'kgb-office',
+      'fire-station',
+    ],
 
     modifiers: {
       productionMult: 1.3,
@@ -304,21 +354,21 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'being removed from certain places they should not have been in the first ' +
       'place. Things are warming up. The permafrost remains, but the political ' +
       'climate thaws. Temporarily. Everything is temporarily.',
-    briefingFlavor: 'Khrushchev. De-Stalinization. The space race. Brief, suspicious optimism.',
+    briefingFlavor: 'Khrushchev to Brezhnev. De-Stalinization, the space race, then creeping stagnation.',
   },
 
-  // ── STAGNATION (1964-1985) ────────────────────────────
+  // ── STAGNATION (1982-2000) ─────────────────────────────
   stagnation: {
     id: 'stagnation',
     name: 'Era of Stagnation',
-    startYear: 1964,
-    endYear: 1985,
+    startYear: 1982,
+    endYear: 2000,
 
     doctrine: 'stagnation',
     deliveryRates: { food: 0.45, vodka: 0.4, money: 0.5 },
     quotaEscalation: 1.15,
 
-    unlockedBuildings: ['apartment-tower-c', 'kgb-office', 'radio-station', 'vodka-distillery', 'fire-station'],
+    unlockedBuildings: ['apartment-tower-d'],
 
     modifiers: {
       productionMult: 0.9,
@@ -344,62 +394,21 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'instability is itself stable. Vodka production has never been higher. ' +
       'This is considered the golden age. The gold is actually tin. The tin ' +
       'is actually rust. But the vodka is real. The vodka is always real.',
-    briefingFlavor: 'Brezhnev. Corruption. Decay. The golden age of vodka and creative accounting.',
+    briefingFlavor: 'Late Soviet decay. Corruption. Reform attempts. The system discovers it is the problem.',
   },
 
-  // ── PERESTROIKA (1985-1991) ───────────────────────────
-  perestroika: {
-    id: 'perestroika',
-    name: 'Perestroika',
-    startYear: 1985,
-    endYear: 1991,
-
-    doctrine: 'freeze',
-    deliveryRates: { food: 0.45, vodka: 0.35, money: 0.5 },
-    quotaEscalation: 1.4,
-
-    // No new buildings — the era of trying to fix what exists
-    unlockedBuildings: [],
-
-    modifiers: {
-      productionMult: 0.7,
-      consumptionMult: 1.3,
-      decayMult: 1.2,
-      populationGrowthMult: 0.5,
-      eventFrequencyMult: 1.8,
-      corruptionMult: 1.2,
-    },
-
-    constructionMethod: 'decaying',
-    constructionTimeMult: 1.5,
-
-    failureCondition: {
-      description: 'Food and vodka both reach zero',
-      check: (_meta, resources) => resources.food <= 0 && resources.vodka <= 0,
-    },
-
-    introTitle: 'Assignment: Restructuring',
-    introText:
-      'The system is being reformed. The reforms are reforming the reforms. ' +
-      'Nobody is sure what the reforms are reforming or whether reforming is ' +
-      'itself a reform. Openness has been declared. The openness reveals that ' +
-      'everything behind the curtain was held together with string and optimism. ' +
-      'The string has snapped. The optimism was never structural.',
-    briefingFlavor: 'Gorbachev. Reform attempts. Shortages. The system discovers it is the problem.',
-  },
-
-  // ── THE ETERNAL SOVIET (1991+) ────────────────────────
-  eternal_soviet: {
-    id: 'eternal_soviet',
+  // ── THE ETERNAL (2000+) ────────────────────────────────
+  the_eternal: {
+    id: 'the_eternal',
     name: 'The Eternal Soviet',
-    startYear: 1991,
+    startYear: 2000,
     endYear: -1,
 
     doctrine: 'eternal',
     deliveryRates: { food: 0.4, vodka: 0.35, money: 0.4 },
     quotaEscalation: 1.25,
 
-    unlockedBuildings: ['apartment-tower-d'],
+    unlockedBuildings: [],
 
     modifiers: {
       productionMult: 1.0,

@@ -3,6 +3,11 @@
  *
  * Web: sql.js (Wasm-based, in-memory with IndexedDB persistence)
  * Mobile: @capacitor-community/sqlite (future)
+ *
+ * Storage security note: Game state stored in IndexedDB is intentionally
+ * unencrypted. This is single-player game save data with no sensitive user
+ * information (no passwords, tokens, PII, or payment data). Encrypting
+ * local game saves would add complexity without meaningful security benefit.
  */
 
 import type { SQLJsDatabase } from 'drizzle-orm/sql-js';
@@ -23,10 +28,20 @@ let _sqlDb: InstanceType<Awaited<ReturnType<typeof initSqlJs>>['Database']> | nu
 export async function initDatabase(): Promise<SQLJsDatabase<typeof schema>> {
   if (_db) return _db;
 
-  const SQL = await initSqlJs({
-    // sql.js Wasm binary served from public/wasm/ via Metro middleware
-    locateFile: (file: string) => assetUrl(`wasm/${file}`),
-  });
+  let SQL: Awaited<ReturnType<typeof initSqlJs>>;
+  try {
+    SQL = await initSqlJs({
+      // sql.js Wasm binary served from public/wasm/ via Metro middleware
+      locateFile: (file: string) => assetUrl(`wasm/${file}`),
+    });
+  } catch (err) {
+    console.warn(
+      '[DB] sql.js WASM failed to load. SaveSystem will fall back to localStorage.',
+      'This may happen in environments without WebAssembly support.',
+      err,
+    );
+    throw err;
+  }
 
   // Try to restore persisted database from IndexedDB
   const persisted = await loadFromIndexedDB();

@@ -19,7 +19,7 @@
  */
 
 import { GRID_SIZE } from '@/config';
-import { buildings, tiles } from '@/ecs/archetypes';
+import { buildings, terrainFeatures, tiles } from '@/ecs/archetypes';
 
 /** Maximum BFS distance between two buildings to create a connecting path. */
 const MAX_PATH_DISTANCE = 10;
@@ -79,8 +79,6 @@ function buildLookup(): TileInfo[][] {
   }
 
   // Mark terrain features (mountains, forests, etc.)
-  // Import lazily to avoid circular deps
-  const { terrainFeatures } = require('@/ecs/archetypes');
   for (const entity of terrainFeatures.entities) {
     const { gridX, gridY } = entity.position;
     if (gridY >= 0 && gridY < GRID_SIZE && gridX >= 0 && gridX < GRID_SIZE) {

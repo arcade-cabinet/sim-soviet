@@ -81,6 +81,85 @@ export const SKILL_GROWTH_RATE = 0.01;
 export const VODKA_DEPENDENCY_GROWTH = 0.1;
 
 // ─────────────────────────────────────────────────────────
+//  POPULATION DRAIN CONSTANTS
+// ─────────────────────────────────────────────────────────
+
+/** Morale threshold below which workers begin fleeing. */
+export const FLIGHT_MORALE_THRESHOLD = 30;
+
+/** Critical morale threshold — accelerated flight. */
+export const FLIGHT_MORALE_CRITICAL = 15;
+
+/** How often (in ticks) the migration check runs. */
+export const FLIGHT_CHECK_INTERVAL = 60;
+
+/** Workers fleeing per check when morale < FLIGHT_MORALE_THRESHOLD. */
+export const FLIGHT_COUNT_NORMAL: [min: number, max: number] = [1, 2];
+
+/** Workers fleeing per check when morale < FLIGHT_MORALE_CRITICAL. */
+export const FLIGHT_COUNT_CRITICAL: [min: number, max: number] = [3, 5];
+
+/** Youth flight check interval (ticks). */
+export const YOUTH_FLIGHT_INTERVAL = 120;
+
+/** Youth max age for flight eligibility. */
+export const YOUTH_MAX_AGE = 25;
+
+/** Youth min age for flight eligibility. */
+export const YOUTH_MIN_AGE = 16;
+
+/** Morale threshold below which youth consider leaving. */
+export const YOUTH_FLIGHT_MORALE_THRESHOLD = 40;
+
+/** Building defIds that prevent youth flight (cultural/educational). */
+export const YOUTH_RETENTION_BUILDINGS = ['school', 'club', 'cinema', 'library', 'university'];
+
+/** Workplace accident probability per factory per tick. */
+export const ACCIDENT_RATE_PER_FACTORY = 1 / 500;
+
+/** Accident rate multiplier for low-skill workers (skill < 20). */
+export const ACCIDENT_LOW_SKILL_MULT = 2.0;
+
+// ─────────────────────────────────────────────────────────
+//  POPULATION INFLOW CONSTANTS
+// ─────────────────────────────────────────────────────────
+
+/** Moscow assignment: min-max workers per decree. */
+export const MOSCOW_ASSIGNMENT_COUNT: [min: number, max: number] = [3, 12];
+
+/** Forced resettlement: min-max hostile workers. */
+export const FORCED_RESETTLEMENT_COUNT: [min: number, max: number] = [5, 30];
+
+/** Forced resettlement: initial morale range for hostile workers. */
+export const FORCED_RESETTLEMENT_MORALE: [min: number, max: number] = [10, 30];
+
+/** Kolkhoz amalgamation: min-max workers from merged collective. */
+export const KOLKHOZ_AMALGAMATION_COUNT: [min: number, max: number] = [20, 60];
+
+// ─────────────────────────────────────────────────────────
+//  TRUDODNI CONSTANTS
+// ─────────────────────────────────────────────────────────
+
+/** Base annual trudodni requirement per worker. */
+export const TRUDODNI_ANNUAL_MINIMUM = 200;
+
+/** Morale penalty for failing to meet trudodni minimum. */
+export const TRUDODNI_SHORTFALL_MORALE_PENALTY = 10;
+
+/** Trudodni earned per tick when assigned to production. */
+export const TRUDODNI_PER_TICK = 0.5;
+
+// ─────────────────────────────────────────────────────────
+//  PRIVATE PLOT CONSTANTS
+// ─────────────────────────────────────────────────────────
+
+/** Food produced per hectare of private plot per year. */
+export const PRIVATE_PLOT_FOOD_PER_HECTARE = 10;
+
+/** Morale boost per tick when private plot is active. */
+export const PRIVATE_PLOT_MORALE_BOOST = 5;
+
+// ─────────────────────────────────────────────────────────
 //  NAME GENERATION DATA
 // ─────────────────────────────────────────────────────────
 

@@ -78,16 +78,16 @@ describe('createGameView', () => {
       expect(view.buildings).toHaveLength(0);
     });
 
-    it('reads currentEra from ECS meta (defaults to war_communism)', () => {
+    it('reads currentEra from ECS meta (defaults to revolution)', () => {
       const view = createGameView();
-      expect(view.currentEra).toBe('war_communism');
+      expect(view.currentEra).toBe('revolution');
     });
 
     it('reads currentEra when set explicitly', () => {
       const meta = getMetaEntity();
-      meta!.gameMeta.currentEra = 'thaw';
+      meta!.gameMeta.currentEra = 'thaw_and_freeze';
       const view = createGameView();
-      expect(view.currentEra).toBe('thaw');
+      expect(view.currentEra).toBe('thaw_and_freeze');
     });
   });
 

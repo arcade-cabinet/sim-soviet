@@ -30,6 +30,34 @@ export interface WorkerStats {
   assignmentSource: AssignmentSource;
 }
 
+/** Reason a worker was removed from the population. */
+export type PopulationDrainReason =
+  | 'defection'
+  | 'escape'
+  | 'migration'
+  | 'youth_flight'
+  | 'kgb_arrest'
+  | 'disease_death'
+  | 'workplace_accident'
+  | 'population_sync';
+
+/** Reason new workers arrived. */
+export type PopulationInflowReason = 'moscow_assignment' | 'forced_resettlement' | 'kolkhoz_amalgamation';
+
+/** A single population drain event. */
+export interface PopulationDrainEvent {
+  name: string;
+  class: CitizenComponent['class'];
+  reason: PopulationDrainReason;
+}
+
+/** A single population inflow event. */
+export interface PopulationInflowEvent {
+  count: number;
+  reason: PopulationInflowReason;
+  averageMorale: number;
+}
+
 /** Result returned by each tick of the worker system. */
 export interface WorkerTickResult {
   /** Total vodka consumed this tick */
@@ -42,6 +70,14 @@ export interface WorkerTickResult {
   stakhanovites: Array<{ name: string; class: CitizenComponent['class'] }>;
   /** Per-class aggregate production efficiency (0-1.5) */
   classEfficiency: Record<CitizenComponent['class'], number>;
+  /** All population losses this tick (defections + drains) */
+  drains: PopulationDrainEvent[];
+  /** All population gains this tick */
+  inflows: PopulationInflowEvent[];
+  /** Average collective morale (0-100) */
+  averageMorale: number;
+  /** Current total population (authoritative count from citizen entities) */
+  population: number;
 }
 
 /** Display info for a single worker. */

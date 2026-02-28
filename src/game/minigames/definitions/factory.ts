@@ -10,7 +10,7 @@ export const FACTORY_EMERGENCY: MinigameDefinition = {
   description: 'The boiler is making sounds not found in any engineering manual. Workers are looking at you.',
   triggerType: 'event',
   triggerCondition: 'factory_collapse',
-  tickLimit: 10,
+  tickLimit: 30,
   choices: [
     {
       id: 'rush_repair',

@@ -67,38 +67,41 @@ describe('consumptionSystem', () => {
   // ── Starvation ────────────────────────────────────────────
 
   describe('starvation', () => {
-    it('reduces population by 5 when food is insufficient', () => {
+    it('returns 5 starvation deaths when food is insufficient', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 0;
-      consumptionSystem();
-      expect(store.resources.population).toBe(95);
+      const result = consumptionSystem();
+      // starvationDeaths = min(5, pop) = 5
+      expect(result.starvationDeaths).toBe(5);
+      // Population is NOT modified — caller (SimulationEngine) routes through WorkerSystem
+      expect(store.resources.population).toBe(100);
     });
 
     it('does not reduce food below 0 during starvation (food stays the same)', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 5; // need ceil(100/10)=10, have only 5
-      consumptionSystem();
-      // Starvation path: food is NOT consumed, population drops by 5
-      expect(store.resources.population).toBe(95);
+      const result = consumptionSystem();
+      // Starvation path: food is NOT consumed, deaths are returned
+      expect(result.starvationDeaths).toBe(5);
       expect(store.resources.food).toBe(5); // food unchanged in starvation
     });
 
-    it('clamps population at 0 during starvation', () => {
+    it('clamps starvation deaths at population size when pop < 5', () => {
       const store = getResourceEntity()!;
       store.resources.population = 3;
       store.resources.food = 0;
-      consumptionSystem();
-      expect(store.resources.population).toBe(0);
+      const result = consumptionSystem();
+      expect(result.starvationDeaths).toBe(3);
     });
 
-    it('clamps population at 0 when pop is less than 5', () => {
+    it('returns 1 starvation death when pop is 1', () => {
       const store = getResourceEntity()!;
       store.resources.population = 1;
       store.resources.food = 0;
-      consumptionSystem();
-      expect(store.resources.population).toBe(0);
+      const result = consumptionSystem();
+      expect(result.starvationDeaths).toBe(1);
     });
 
     it('fires starvation callback when starvation occurs', () => {
@@ -174,12 +177,13 @@ describe('consumptionSystem', () => {
       expect(store.resources.vodka).toBe(0);
     });
 
-    it('vodka shortage does not reduce population', () => {
+    it('vodka shortage does not cause starvation deaths', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 1000;
       store.resources.vodka = 0;
-      consumptionSystem();
+      const result = consumptionSystem();
+      expect(result.starvationDeaths).toBe(0);
       expect(store.resources.population).toBe(100);
     });
 

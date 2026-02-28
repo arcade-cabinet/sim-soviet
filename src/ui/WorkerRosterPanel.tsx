@@ -1,17 +1,20 @@
 /**
- * WorkerRosterPanel — Collective worker roster with stats, assignments, and conditions.
+ * WorkerRosterPanel — Population browser with filters, sorting, search,
+ * bulk actions, and tap-to-dossier.
  *
- * Shows individual workers in the collective with morale/loyalty/skill bars,
+ * Shows individual citizens in the collective with morale/loyalty/skill bars,
  * class icons, assignment info, and status indicators. Includes a collective
  * focus selector and summary stats row.
  */
 
-import React, { useCallback, useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
+import { citizens as citizensArchetype } from '../ecs/archetypes';
 import type { CitizenComponent } from '../ecs/world';
 import type { CollectiveFocus } from '../game/workers/governor';
 import { useGameSnapshot } from '../hooks/useGameState';
+import { openCitizenDossierByIndex } from '../stores/gameStore';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 
@@ -20,12 +23,12 @@ import { Colors, monoFont } from './styles';
 const MAX_DISPLAYED_WORKERS = 50;
 
 const CLASS_ICONS: Record<CitizenComponent['class'], string> = {
-  worker: '\u2692', // hammer and pick
-  party_official: '\u2605', // star
-  engineer: '\u2699', // gear
-  farmer: '\u2E3D', // wheat (palmyrene left-pointing fleuron, close to wheat glyph)
-  soldier: '\u26E8', // shield
-  prisoner: '\u26D3', // chains
+  worker: '\u2692',
+  party_official: '\u2605',
+  engineer: '\u2699',
+  farmer: '\u2E3D',
+  soldier: '\u26E8',
+  prisoner: '\u26D3',
 };
 
 const CLASS_COLORS: Record<CitizenComponent['class'], string> = {
@@ -46,7 +49,6 @@ const CLASS_LABELS: Record<CitizenComponent['class'], string> = {
   prisoner: 'PRS',
 };
 
-/** Class sort order — keeps grouping consistent. */
 const CLASS_SORT_ORDER: Record<CitizenComponent['class'], number> = {
   party_official: 0,
   engineer: 1,
@@ -70,6 +72,27 @@ const FOCUS_OPTIONS: FocusOption[] = [
   { key: 'balanced', label: 'BAL', icon: '\u2696', iconColor: Colors.white },
 ];
 
+// ── Filter / Sort Types ──────────────────────────────────────────────────────
+
+type FilterTab = 'all' | 'workers' | 'dependents' | 'children' | 'elderly';
+type SortKey = 'name' | 'morale' | 'skill' | 'class' | 'age';
+
+const FILTER_TABS: { key: FilterTab; label: string }[] = [
+  { key: 'all', label: 'ALL' },
+  { key: 'workers', label: 'WORKERS' },
+  { key: 'dependents', label: 'DEPEND.' },
+  { key: 'children', label: 'CHILDREN' },
+  { key: 'elderly', label: 'ELDERLY' },
+];
+
+const SORT_KEYS: { key: SortKey; label: string }[] = [
+  { key: 'name', label: 'NAME' },
+  { key: 'morale', label: 'MOR' },
+  { key: 'skill', label: 'SKL' },
+  { key: 'class', label: 'CLS' },
+  { key: 'age', label: 'AGE' },
+];
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface WorkerRosterPanelProps {
@@ -77,9 +100,9 @@ export interface WorkerRosterPanelProps {
   onDismiss: () => void;
 }
 
-/** Flattened worker row data for rendering. */
 interface WorkerRow {
   key: string;
+  citizenIndex: number;
   cls: CitizenComponent['class'];
   gender: 'male' | 'female';
   age: number;
@@ -95,29 +118,71 @@ interface WorkerRow {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Return a color based on a 0-100 value: red < 30, gold 30-60, green > 60. */
 function statColor(value: number): string {
   if (value < 30) return Colors.sovietRed;
   if (value <= 60) return Colors.sovietGold;
   return Colors.termGreen;
 }
 
-/** Format gender + age string. */
 function genderAge(gender: 'male' | 'female', age: number): string {
   const g = gender === 'male' ? 'M' : 'F';
   return `${g}/${age}`;
 }
 
+function matchesFilter(row: WorkerRow, filter: FilterTab): boolean {
+  switch (filter) {
+    case 'all':
+      return true;
+    case 'workers':
+      return row.age >= 18 && row.age < 60 && row.assignment !== 'IDLE';
+    case 'dependents':
+      return row.age >= 18 && row.age < 60 && row.assignment === 'IDLE';
+    case 'children':
+      return row.age < 18;
+    case 'elderly':
+      return row.age >= 60;
+  }
+}
+
+function sortRows(rows: WorkerRow[], sortKey: SortKey, ascending: boolean): WorkerRow[] {
+  const sorted = [...rows];
+  sorted.sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case 'name':
+        cmp = a.name.localeCompare(b.name);
+        break;
+      case 'morale':
+        cmp = a.morale - b.morale;
+        break;
+      case 'skill':
+        cmp = a.skill - b.skill;
+        break;
+      case 'class':
+        cmp = (CLASS_SORT_ORDER[a.cls] ?? 99) - (CLASS_SORT_ORDER[b.cls] ?? 99);
+        break;
+      case 'age':
+        cmp = a.age - b.age;
+        break;
+    }
+    return ascending ? cmp : -cmp;
+  });
+  return sorted;
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, onDismiss }) => {
-  // Subscribe so the panel re-renders on game ticks
   useGameSnapshot();
+
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const [sortKey, setSortKey] = useState<SortKey>('class');
+  const [sortAsc, setSortAsc] = useState(true);
+  const [searchText, setSearchText] = useState('');
 
   const engine = getEngine();
   const workerSystem = engine?.getWorkerSystem() ?? null;
 
-  // Build worker rows from the stats map
   const { rows, totalCount, summaryStats } = useMemo(() => {
     if (!workerSystem) {
       return {
@@ -129,6 +194,7 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
 
     const statsMap = workerSystem.getStatsMap();
     const allRows: WorkerRow[] = [];
+    const citizenEntities = citizensArchetype.entities;
 
     let moraleSum = 0;
     let loyaltySum = 0;
@@ -142,13 +208,14 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
       if (!citizen) continue;
 
       const cls = citizen.class;
-      if (!citizen.gender) console.warn(`[WorkerRoster] Citizen missing gender`);
-      if (citizen.age == null) console.warn(`[WorkerRoster] Citizen missing age`);
       const gender = citizen.gender ?? 'male';
       const age = citizen.age ?? 25;
       const hasDiseaseFlag = citizen.disease != null;
-      // health may not exist on WorkerStats yet — forward-compatible access
       const health = 'health' in stats ? (stats as { health: number }).health : 100;
+
+      // Find citizen index in the archetype for dossier linking
+      // entity is already verified to have citizen+position via statsMap iteration
+      const citizenIndex = citizenEntities.indexOf(entity as (typeof citizenEntities)[number]);
 
       moraleSum += stats.morale;
       loyaltySum += stats.loyalty;
@@ -159,6 +226,7 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
 
       allRows.push({
         key: stats.name || `worker-${count}`,
+        citizenIndex,
         cls,
         gender,
         age,
@@ -173,16 +241,8 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
       });
     }
 
-    // Sort: by class order, then by morale ascending (most urgent first)
-    allRows.sort((a, b) => {
-      const classA = CLASS_SORT_ORDER[a.cls] ?? 99;
-      const classB = CLASS_SORT_ORDER[b.cls] ?? 99;
-      if (classA !== classB) return classA - classB;
-      return a.morale - b.morale;
-    });
-
     return {
-      rows: allRows.slice(0, MAX_DISPLAYED_WORKERS),
+      rows: allRows,
       totalCount: allRows.length,
       summaryStats: {
         avgMorale: count > 0 ? Math.round(moraleSum / count) : 0,
@@ -194,6 +254,26 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
     };
   }, [workerSystem]);
 
+  // Apply filter, search, and sort
+  const displayRows = useMemo(() => {
+    let filtered = rows.filter((r) => matchesFilter(r, activeFilter));
+    if (searchText.trim()) {
+      const q = searchText.trim().toLowerCase();
+      filtered = filtered.filter((r) => r.name.toLowerCase().includes(q) || r.assignment.toLowerCase().includes(q));
+    }
+    const sorted = sortRows(filtered, sortKey, sortAsc);
+    return sorted.slice(0, MAX_DISPLAYED_WORKERS);
+  }, [rows, activeFilter, searchText, sortKey, sortAsc]);
+
+  const filteredTotal = useMemo(() => {
+    let filtered = rows.filter((r) => matchesFilter(r, activeFilter));
+    if (searchText.trim()) {
+      const q = searchText.trim().toLowerCase();
+      filtered = filtered.filter((r) => r.name.toLowerCase().includes(q) || r.assignment.toLowerCase().includes(q));
+    }
+    return filtered.length;
+  }, [rows, activeFilter, searchText]);
+
   const currentFocus = workerSystem?.getCollectiveFocus() ?? 'balanced';
 
   const handleFocusChange = useCallback(
@@ -203,9 +283,27 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
     [workerSystem],
   );
 
+  const handleSort = useCallback(
+    (key: SortKey) => {
+      if (key === sortKey) {
+        setSortAsc((v) => !v);
+      } else {
+        setSortKey(key);
+        setSortAsc(true);
+      }
+    },
+    [sortKey],
+  );
+
+  const handleTapWorker = useCallback((citizenIndex: number) => {
+    if (citizenIndex >= 0) {
+      openCitizenDossierByIndex(citizenIndex);
+    }
+  }, []);
+
   if (!visible) return null;
 
-  const truncated = totalCount > MAX_DISPLAYED_WORKERS;
+  const truncated = filteredTotal > MAX_DISPLAYED_WORKERS;
 
   return (
     <SovietModal
@@ -255,6 +353,54 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
         />
       </View>
 
+      {/* Filter Tabs */}
+      <View style={styles.divider} />
+      <View style={styles.filterRow}>
+        {FILTER_TABS.map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.filterBtn, activeFilter === tab.key && styles.filterBtnActive]}
+            onPress={() => setActiveFilter(tab.key)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterBtnText, activeFilter === tab.key && styles.filterBtnTextActive]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Search */}
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.searchInput}
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder="Search by name or assignment..."
+          placeholderTextColor="#555"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <Text style={styles.resultCount}>{filteredTotal} found</Text>
+      </View>
+
+      {/* Sort Buttons */}
+      <View style={styles.sortRow}>
+        <Text style={styles.sortLabel}>SORT:</Text>
+        {SORT_KEYS.map((s) => (
+          <TouchableOpacity
+            key={s.key}
+            style={[styles.sortBtn, sortKey === s.key && styles.sortBtnActive]}
+            onPress={() => handleSort(s.key)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.sortBtnText, sortKey === s.key && styles.sortBtnTextActive]}>
+              {s.label} {sortKey === s.key ? (sortAsc ? '\u25B2' : '\u25BC') : ''}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* Column headers */}
       <View style={styles.divider} />
       <View style={styles.headerRow}>
@@ -269,14 +415,12 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
 
       {/* Worker list */}
       <ScrollView style={styles.workerList} nestedScrollEnabled showsVerticalScrollIndicator>
-        {rows.length === 0 ? (
-          <Text style={styles.emptyText}>No workers in collective.</Text>
+        {displayRows.length === 0 ? (
+          <Text style={styles.emptyText}>No citizens match filter.</Text>
         ) : (
-          rows.map((row) => <WorkerRowItem key={row.key} row={row} />)
+          displayRows.map((row) => <WorkerRowItem key={row.key} row={row} onTap={handleTapWorker} />)
         )}
-        {truncated && (
-          <Text style={styles.truncatedText}>... and {totalCount - MAX_DISPLAYED_WORKERS} more workers</Text>
-        )}
+        {truncated && <Text style={styles.truncatedText}>... and {filteredTotal - MAX_DISPLAYED_WORKERS} more</Text>}
       </ScrollView>
     </SovietModal>
   );
@@ -291,41 +435,29 @@ const SummaryStat: React.FC<{ label: string; value: number; color: string }> = (
   </View>
 );
 
-const WorkerRowItem: React.FC<{ row: WorkerRow }> = React.memo(({ row }) => {
+const WorkerRowItem: React.FC<{ row: WorkerRow; onTap: (index: number) => void }> = React.memo(({ row, onTap }) => {
   const classColor = CLASS_COLORS[row.cls];
   const classIcon = CLASS_ICONS[row.cls];
 
-  // Status indicators
   const indicators: string[] = [];
-  if (row.hasDiseaseFlag) indicators.push('\u{1F912}'); // sick face
-  if (row.vodkaDependency > 50) indicators.push('\u{1F37A}'); // beer mug (vodka proxy)
-  if (row.health < 20) indicators.push('\u{1F480}'); // skull
+  if (row.hasDiseaseFlag) indicators.push('\u{1F912}');
+  if (row.vodkaDependency > 50) indicators.push('\u{1F37A}');
+  if (row.health < 20) indicators.push('\u{1F480}');
 
   return (
-    <View style={styles.workerRow}>
-      {/* Class icon + label */}
+    <TouchableOpacity style={styles.workerRow} activeOpacity={0.6} onPress={() => onTap(row.citizenIndex)}>
       <View style={styles.colClass}>
         <Text style={[styles.classIcon, { color: classColor }]}>{classIcon}</Text>
         <Text style={[styles.classLabel, { color: classColor }]}>{CLASS_LABELS[row.cls]}</Text>
       </View>
-
-      {/* Gender / Age */}
       <Text style={[styles.cellText, styles.colAge]}>{genderAge(row.gender, row.age)}</Text>
-
-      {/* Morale bar */}
       <View style={styles.colBar}>
         <MiniBar value={row.morale} color={statColor(row.morale)} />
       </View>
-
-      {/* Loyalty bar */}
       <View style={styles.colBar}>
         <MiniBar value={row.loyalty} color={statColor(row.loyalty)} />
       </View>
-
-      {/* Skill number */}
       <Text style={[styles.cellText, styles.colSkill]}>{Math.round(row.skill)}</Text>
-
-      {/* Assignment */}
       <Text
         style={[styles.cellText, styles.colAssignment, row.assignment === 'IDLE' && styles.idleText]}
         numberOfLines={1}
@@ -333,14 +465,11 @@ const WorkerRowItem: React.FC<{ row: WorkerRow }> = React.memo(({ row }) => {
       >
         {row.assignment.toUpperCase()}
       </Text>
-
-      {/* Status indicators */}
       <Text style={[styles.statusCell, styles.colStatus]}>{indicators.join('')}</Text>
-    </View>
+    </TouchableOpacity>
   );
 });
 
-/** Tiny horizontal bar (0-100 scale). */
 const MiniBar: React.FC<{ value: number; color: string }> = ({ value, color }) => {
   const pct = Math.max(0, Math.min(100, value));
   return (
@@ -362,12 +491,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
 
-  // ── Focus selector ──
-  focusRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 8,
-  },
+  // Focus selector
+  focusRow: { flexDirection: 'row', gap: 6, marginBottom: 8 },
   focusBtn: {
     flex: 1,
     alignItems: 'center',
@@ -377,14 +502,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#444',
   },
-  focusBtnActive: {
-    backgroundColor: Colors.sovietRed,
-    borderColor: '#ff5252',
-  },
-  focusIcon: {
-    fontSize: 14,
-    marginBottom: 2,
-  },
+  focusBtnActive: { backgroundColor: Colors.sovietRed, borderColor: '#ff5252' },
+  focusIcon: { fontSize: 14, marginBottom: 2 },
   focusBtnLabel: {
     fontSize: 8,
     fontFamily: monoFont,
@@ -392,16 +511,10 @@ const styles = StyleSheet.create({
     color: '#9e9e9e',
     letterSpacing: 1,
   },
-  focusBtnLabelActive: {
-    color: Colors.white,
-  },
+  focusBtnLabelActive: { color: Colors.white },
 
-  // ── Summary stats ──
-  summaryRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 8,
-  },
+  // Summary stats
+  summaryRow: { flexDirection: 'row', gap: 6, marginBottom: 8 },
   summaryStatBox: {
     flex: 1,
     alignItems: 'center',
@@ -410,11 +523,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333',
   },
-  summaryValue: {
-    fontSize: 16,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-  },
+  summaryValue: { fontSize: 16, fontFamily: monoFont, fontWeight: 'bold' },
   summaryLabel: {
     fontSize: 7,
     fontFamily: monoFont,
@@ -424,14 +533,53 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
-  // ── Divider ──
-  divider: {
-    borderTopWidth: 1,
-    borderTopColor: '#333',
-    marginVertical: 8,
-  },
+  // Divider
+  divider: { borderTopWidth: 1, borderTopColor: '#333', marginVertical: 8 },
 
-  // ── Column headers ──
+  // Filter tabs
+  filterRow: { flexDirection: 'row', gap: 4, marginBottom: 8 },
+  filterBtn: {
+    flex: 1,
+    paddingVertical: 5,
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  filterBtnActive: { backgroundColor: '#3a1a1a', borderColor: Colors.sovietRed },
+  filterBtnText: { fontSize: 8, fontFamily: monoFont, fontWeight: 'bold', color: '#777', letterSpacing: 1 },
+  filterBtnTextActive: { color: '#ff5252' },
+
+  // Search
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  searchInput: {
+    flex: 1,
+    backgroundColor: '#111',
+    borderWidth: 1,
+    borderColor: '#444',
+    color: Colors.white,
+    fontFamily: monoFont,
+    fontSize: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  resultCount: { fontSize: 9, fontFamily: monoFont, color: '#9e9e9e' },
+
+  // Sort buttons
+  sortRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
+  sortLabel: { fontSize: 8, fontFamily: monoFont, fontWeight: 'bold', color: '#777', marginRight: 4 },
+  sortBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  sortBtnActive: { backgroundColor: '#2a1a1a', borderColor: Colors.sovietGold },
+  sortBtnText: { fontSize: 7, fontFamily: monoFont, fontWeight: 'bold', color: '#777' },
+  sortBtnTextActive: { color: Colors.sovietGold },
+
+  // Column headers
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -448,37 +596,16 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  // ── Column widths ──
-  colClass: {
-    width: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  colAge: {
-    width: 36,
-  },
-  colBar: {
-    width: 40,
-    justifyContent: 'center',
-  },
-  colSkill: {
-    width: 28,
-    textAlign: 'center',
-  },
-  colAssignment: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  colStatus: {
-    width: 36,
-    textAlign: 'right',
-  },
+  // Column widths
+  colClass: { width: 44, flexDirection: 'row', alignItems: 'center', gap: 2 },
+  colAge: { width: 36 },
+  colBar: { width: 40, justifyContent: 'center' },
+  colSkill: { width: 28, textAlign: 'center' },
+  colAssignment: { flex: 1, marginHorizontal: 4 },
+  colStatus: { width: 36, textAlign: 'right' },
 
-  // ── Worker list ──
-  workerList: {
-    maxHeight: 280,
-  },
+  // Worker list
+  workerList: { maxHeight: 240 },
   workerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -487,41 +614,18 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1a1a1a',
   },
 
-  // ── Cell text ──
-  cellText: {
-    fontSize: 10,
-    fontFamily: monoFont,
-    color: Colors.textPrimary,
-  },
-  classIcon: {
-    fontSize: 12,
-  },
-  classLabel: {
-    fontSize: 8,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-  },
-  idleText: {
-    color: Colors.textMuted,
-    fontStyle: 'italic',
-  },
-  statusCell: {
-    fontSize: 12,
-  },
+  // Cell text
+  cellText: { fontSize: 10, fontFamily: monoFont, color: Colors.textPrimary },
+  classIcon: { fontSize: 12 },
+  classLabel: { fontSize: 8, fontFamily: monoFont, fontWeight: 'bold' },
+  idleText: { color: Colors.textMuted, fontStyle: 'italic' },
+  statusCell: { fontSize: 12 },
 
-  // ── Mini bar ──
-  barTrack: {
-    height: 6,
-    backgroundColor: '#333',
-    borderWidth: 1,
-    borderColor: '#444',
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-  },
+  // Mini bar
+  barTrack: { height: 6, backgroundColor: '#333', borderWidth: 1, borderColor: '#444', overflow: 'hidden' },
+  barFill: { height: '100%' },
 
-  // ── Empty / truncated ──
+  // Empty / truncated
   emptyText: {
     fontSize: 11,
     fontFamily: monoFont,

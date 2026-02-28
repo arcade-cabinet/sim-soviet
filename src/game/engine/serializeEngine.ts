@@ -44,14 +44,14 @@ import { TutorialSystem as TutorialSystemClass } from '../TutorialSystem';
 
 /** Maps game EraSystem IDs to EconomySystem EraIds (needed for fallback on restore). */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
-  war_communism: 'revolution',
-  first_plans: 'industrialization',
+  revolution: 'revolution',
+  collectivization: 'industrialization',
+  industrialization: 'industrialization',
   great_patriotic: 'wartime',
   reconstruction: 'reconstruction',
-  thaw: 'thaw',
+  thaw_and_freeze: 'thaw',
   stagnation: 'stagnation',
-  perestroika: 'perestroika',
-  eternal_soviet: 'eternal',
+  the_eternal: 'eternal',
 };
 
 /** All mutable subsystem references that serialization reads/writes. */

@@ -38,7 +38,7 @@ describe('Political Integration', () => {
       createBuilding(0, 0, 'power-station');
 
       const polSys = new PoliticalEntitySystem(rng);
-      polSys.syncEntities('selo', 'war_communism', 0);
+      polSys.syncEntities('selo', 'revolution', 0);
 
       const counts = polSys.getEntityCounts();
       // selo: politruk [0,1], kgb [0,0], military [0,0], conscription [0,0]

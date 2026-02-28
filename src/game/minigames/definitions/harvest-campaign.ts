@@ -12,7 +12,7 @@ export const HARVEST_CAMPAIGN: MinigameDefinition = {
     'The wheat is ripe. The tractors are mostly functional. The weather has opinions. Comrade, the harvest waits for no one.',
   triggerType: 'building_tap',
   triggerCondition: 'farm_tap',
-  tickLimit: 25,
+  tickLimit: 60,
   choices: [
     {
       id: 'mobilize_all',

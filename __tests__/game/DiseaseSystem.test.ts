@@ -38,7 +38,7 @@ function createTestRng(fixedValue = 0.5): GameRng {
 }
 
 function emptyResult(): DiseaseTickResult {
-  return { newInfections: 0, recoveries: 0, deaths: 0, outbreakTypes: [] };
+  return { newInfections: 0, recoveries: 0, deaths: 0, deadEntities: [], outbreakTypes: [] };
 }
 
 // ── Test Suite ───────────────────────────────────────────────────────────────
@@ -228,13 +228,14 @@ describe('DiseaseSystem', () => {
       const citizen = createCitizen('worker', 0, 0);
       citizen.citizen!.disease = { type: 'typhus', ticksRemaining: 1 };
 
-      const citizensBefore = [...citizens].length;
       const result = emptyResult();
       progressDiseases(result);
 
       expect(result.deaths).toBe(1);
       expect(result.recoveries).toBe(0);
-      expect([...citizens].length).toBe(citizensBefore - 1);
+      // Dead entities are collected for WorkerSystem removal (not removed in-place)
+      expect(result.deadEntities.length).toBe(1);
+      expect(result.deadEntities[0]).toBe(citizen);
     });
 
     it('cholera has higher mortality than influenza', () => {

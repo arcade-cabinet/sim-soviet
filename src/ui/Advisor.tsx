@@ -1,5 +1,5 @@
 /**
- * Advisor — Comrade Vanya notification panel (bottom-left).
+ * Advisor — Comrade Krupnik notification panel (bottom-left).
  * Port of poc.html lines 267-274.
  */
 
@@ -14,7 +14,7 @@ export interface AdvisorProps {
   onDismiss: () => void;
 }
 
-export const Advisor: React.FC<AdvisorProps> = ({ visible, name = 'COMRADE VANYA', message, onDismiss }) => {
+export const Advisor: React.FC<AdvisorProps> = ({ visible, name = 'COMRADE KRUPNIK', message, onDismiss }) => {
   if (!visible) return null;
 
   return (

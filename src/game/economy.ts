@@ -75,6 +75,16 @@ export interface BlatState {
   totalEarned: number;
 }
 
+/** FIX-09: All valid blat spending purposes. */
+export type BlatPurpose = 'improve_delivery' | 'reduce_quota' | 'kgb_protection' | 'consumer_goods' | 'trading';
+
+/** FIX-09: Effect returned from blat spending (for SimulationEngine to apply). */
+export interface BlatEffect {
+  type: BlatPurpose;
+  /** Numeric effect value — meaning depends on type. */
+  value: number;
+}
+
 export interface RationTier {
   share: number;
   food: number;
@@ -490,9 +500,9 @@ export const DIFFICULTY_QUOTA_MULT: Record<DifficultyLevel, number> = {
 
 /** Difficulty multiplier for starting resources. */
 export const DIFFICULTY_RESOURCE_MULT: Record<DifficultyLevel, number> = {
-  worker: 1.5,
+  worker: 2.0,
   comrade: 1.0,
-  tovarish: 0.7,
+  tovarish: 0.5,
 };
 
 /** Era multiplier for starting resources. */
@@ -997,16 +1007,39 @@ export class EconomySystem {
     this.blat.totalEarned += amount;
   }
 
-  spendBlat(amount: number, purpose: string): { success: boolean; kgbDetected: boolean } {
+  spendBlat(amount: number, purpose: BlatPurpose): { success: boolean; kgbDetected: boolean; effect?: BlatEffect } {
     if (this.blat.connections < amount) {
       return { success: false, kgbDetected: false };
     }
     this.blat.connections -= amount;
     this.blat.totalSpent += amount;
 
-    // Special: spending blat to improve delivery reliability
-    if (purpose === 'improve_delivery') {
-      this.fondy.reliability = Math.min(1.0, this.fondy.reliability + 0.05);
+    let effect: BlatEffect | undefined;
+
+    switch (purpose) {
+      case 'improve_delivery':
+        // Existing: improve fondy delivery reliability
+        this.fondy.reliability = Math.min(1.0, this.fondy.reliability + 0.05);
+        effect = { type: 'improve_delivery', value: 0.05 };
+        break;
+      case 'reduce_quota':
+        // FIX-09: Spend blat to reduce current quota targets by 5% per point
+        effect = { type: 'reduce_quota', value: amount * 0.05 };
+        break;
+      case 'kgb_protection':
+        // FIX-09: Spend blat to reduce KGB investigation risk
+        // Each point spent provides temporary protection (reduces effective threat)
+        effect = { type: 'kgb_protection', value: amount * 2 };
+        break;
+      case 'consumer_goods':
+        // FIX-09: Spend blat to acquire consumer goods (boost satisfaction)
+        this.consumerGoods.available += amount * 5;
+        effect = { type: 'consumer_goods', value: amount * 5 };
+        break;
+      case 'trading':
+        // FIX-09: Spend blat for favorable trade terms (money bonus)
+        effect = { type: 'trading', value: amount * 10 };
+        break;
     }
 
     // KGB detection risk: 2% per point above threshold of 5
@@ -1022,7 +1055,7 @@ export class EconomySystem {
       }
     }
 
-    return { success: true, kgbDetected };
+    return { success: true, kgbDetected, effect };
   }
 
   /**
@@ -1262,6 +1295,67 @@ export class EconomySystem {
 
   getConsumerGoodsSatisfaction(): number {
     return this.consumerGoods.satisfaction;
+  }
+
+  // ── Production Chains ─────────────────────────────────────────────────────
+
+  /**
+   * FIX-10: Process production chains — multi-step resource conversion.
+   *
+   * Checks each chain's requirements against available buildings and resources.
+   * If all inputs are available and the required building exists, consumes inputs
+   * and produces outputs.
+   *
+   * @param buildingDefIds - Currently placed building defIds
+   * @param resources - Mutable resource record to read/write
+   * @returns Array of chain IDs that produced this tick
+   */
+  tickProductionChains(
+    buildingDefIds: string[],
+    resources: { food: number; vodka: number; timber: number; steel: number },
+  ): string[] {
+    const produced: string[] = [];
+    const buildingSet = new Set(buildingDefIds);
+
+    for (const chain of PRODUCTION_CHAINS) {
+      // Check all steps can execute: building exists and inputs are available
+      let canExecute = true;
+      for (const step of chain.steps) {
+        if (!buildingSet.has(step.building)) {
+          canExecute = false;
+          break;
+        }
+        // Check inputs
+        for (const [resource, amount] of Object.entries(step.input)) {
+          const available = (resources as Record<string, number>)[resource] ?? 0;
+          if (available < amount) {
+            canExecute = false;
+            break;
+          }
+        }
+        if (!canExecute) break;
+      }
+
+      if (!canExecute) continue;
+
+      // Execute chain: consume inputs, produce outputs
+      for (const step of chain.steps) {
+        for (const [resource, amount] of Object.entries(step.input)) {
+          (resources as Record<string, number>)[resource] = Math.max(
+            0,
+            ((resources as Record<string, number>)[resource] ?? 0) - amount,
+          );
+        }
+        for (const [resource, amount] of Object.entries(step.output)) {
+          (resources as Record<string, number>)[resource] =
+            ((resources as Record<string, number>)[resource] ?? 0) + amount;
+        }
+      }
+
+      produced.push(chain.id);
+    }
+
+    return produced;
   }
 
   // ── Main Tick ──────────────────────────────────────────────────────────────

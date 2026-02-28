@@ -18,6 +18,9 @@ export const WARTIME_CASUALTY_RATE = 0.2;
  * Process the conscription queue, drafting workers and scheduling returns.
  * Returns new return-queue entries to be appended.
  */
+/** Default deadline window for player to respond to conscription (ticks). */
+export const CONSCRIPTION_DEADLINE_TICKS = 30;
+
 export function processConscriptionQueue(
   queue: ConscriptionEvent[],
   totalTicks: number,
@@ -25,10 +28,22 @@ export function processConscriptionQueue(
   result: PoliticalTickResult,
 ): Array<{ returnTick: number; count: number }> {
   const newReturns: Array<{ returnTick: number; count: number }> = [];
+  const remaining: ConscriptionEvent[] = [];
 
-  while (queue.length > 0) {
-    const event = queue.shift()!;
+  for (const event of queue) {
+    // If player hasn't responded and deadline hasn't passed, skip processing
+    if (!event.playerResponded && event.responseDedlineTick) {
+      if (totalTicks < event.responseDedlineTick) {
+        remaining.push(event);
+        continue;
+      }
+      // Deadline passed — auto-accept
+      event.playerResponded = true;
+    }
+
     const drafted = event.targetCount;
+    if (drafted <= 0) continue; // Rejected conscription
+
     event.drafted = drafted;
 
     result.workersConscripted += drafted;
@@ -53,6 +68,10 @@ export function processConscriptionQueue(
       }
     }
   }
+
+  // Replace queue contents with remaining items
+  queue.length = 0;
+  queue.push(...remaining);
 
   return newReturns;
 }

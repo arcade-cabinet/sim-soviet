@@ -1,11 +1,24 @@
 import { citizens } from '@/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
-import { powerSystem } from '@/ecs/systems';
 import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
+import type { WorkerTickContext } from '@/game/workers';
 import { WorkerSystem } from '@/game/workers';
 
-describe('WorkerSystem — Population Dynamics', () => {
+/** Build a default tick context with overrides. */
+function makeCtx(overrides: Partial<WorkerTickContext> = {}): WorkerTickContext {
+  return {
+    vodkaAvailable: 100,
+    foodAvailable: 1000,
+    heatingFailing: false,
+    month: 6,
+    eraId: 'revolution',
+    totalTicks: 0,
+    ...overrides,
+  };
+}
+
+describe('WorkerSystem — Population Drains via tick()', () => {
   let system: WorkerSystem;
   let rng: GameRng;
 
@@ -21,288 +34,114 @@ describe('WorkerSystem — Population Dynamics', () => {
     world.clear();
   });
 
-  // ── Natural attrition ──────────────────────────────────────
+  // ── Migration flight ─────────────────────────────────────
 
-  describe('tickPopulationDynamics — natural attrition', () => {
-    it('removes low-health workers over many ticks', () => {
-      system.syncPopulation(20);
-      // Set a few workers to very low health
-      const allStats = [...system.getStatsMap().values()];
-      allStats[0]!.health = 3; // Below death threshold
-      allStats[1]!.health = 4;
-
-      let totalDeaths = 0;
-      for (let i = 0; i < 200; i++) {
-        const result = system.tickPopulationDynamics(i, 100, 1000, 20);
-        totalDeaths += result.attritionDeaths;
+  describe('migration flight (low morale)', () => {
+    it('drains workers when collective morale is very low', () => {
+      system.syncPopulation(30);
+      // Set all workers to very low morale (below FLIGHT_MORALE_THRESHOLD of 30)
+      for (const s of system.getStatsMap().values()) {
+        (s as { morale: number }).morale = 10;
       }
 
-      // Workers with health <= 5 should die from health decay
-      expect(totalDeaths).toBeGreaterThan(0);
+      let totalDrains = 0;
+      for (let i = 0; i < 500; i++) {
+        // Flight checks happen every FLIGHT_CHECK_INTERVAL (60) ticks
+        const result = system.tick(makeCtx({ totalTicks: i * 60 }));
+        totalDrains += result.drains.filter((d) => d.reason === 'migration').length;
+      }
+
+      expect(totalDrains).toBeGreaterThan(0);
     });
 
-    it('aging slowly reduces health', () => {
-      system.syncPopulation(5);
-      const stats = [...system.getStatsMap().values()][0]!;
-      const initialHealth = stats.health;
+    it('no migration when morale is above threshold', () => {
+      system.syncPopulation(10);
+      for (const s of system.getStatsMap().values()) {
+        (s as { morale: number }).morale = 60;
+      }
 
-      // Run many ticks
+      let totalDrains = 0;
       for (let i = 0; i < 100; i++) {
-        system.tickPopulationDynamics(i, 100, 1000, 5);
+        const result = system.tick(makeCtx({ totalTicks: i * 60 }));
+        totalDrains += result.drains.filter((d) => d.reason === 'migration').length;
       }
 
-      // Health should have decreased due to aging
-      expect(stats.health).toBeLessThan(initialHealth);
-    });
-
-    it('starvation accelerates health decay', () => {
-      const worker = system.spawnWorker();
-      worker.citizen!.hunger = 90; // Starving
-      const stats = system.getStatsMap().get(worker)!;
-      const initialHealth = stats.health;
-
-      system.tickPopulationDynamics(1, 100, 1000, 1);
-
-      // Should lose more than just aging (2 + 0.05)
-      expect(stats.health).toBeLessThan(initialHealth - 1);
+      expect(totalDrains).toBe(0);
     });
   });
 
-  // ── Youth flight ───────────────────────────────────────────
+  // ── Youth flight ─────────────────────────────────────────
 
-  describe('tickPopulationDynamics — youth flight', () => {
-    it('removes workers over many ticks', () => {
+  describe('youth flight', () => {
+    it('removes workers over many ticks when morale is low', () => {
       system.syncPopulation(30);
-      // Set low morale to increase flight chance
+      // Set low morale to increase flight chance (below YOUTH_FLIGHT_MORALE_THRESHOLD of 40)
       for (const s of system.getStatsMap().values()) {
-        s.morale = 20;
+        (s as { morale: number }).morale = 20;
       }
 
       let totalFlight = 0;
       for (let i = 0; i < 500; i++) {
-        const result = system.tickPopulationDynamics(i, 100, 1000, 30);
-        totalFlight += result.youthFlight;
+        // Youth flight checks every YOUTH_FLIGHT_INTERVAL (120) ticks
+        const result = system.tick(makeCtx({ totalTicks: i * 120 }));
+        totalFlight += result.drains.filter((d) => d.reason === 'youth_flight').length;
       }
 
       expect(totalFlight).toBeGreaterThan(0);
     });
+  });
 
-    it('prefers removing unassigned workers', () => {
-      system.syncPopulation(10);
-      const allCitizens = [...citizens];
+  // ── Defections ───────────────────────────────────────────
 
-      // Assign first 5 workers
-      for (let i = 0; i < 5; i++) {
-        createBuilding(i, 0, 'power-station');
-        system.assignWorker(allCitizens[i]!, i, 0);
+  describe('defections', () => {
+    it('workers with very low loyalty can defect', () => {
+      system.syncPopulation(20);
+      // Defections trigger when loyalty < DEFECTION_LOYALTY_THRESHOLD (20)
+      for (const s of system.getStatsMap().values()) {
+        (s as { loyalty: number }).loyalty = 5;
       }
 
-      let flight = 0;
+      let totalDefections = 0;
       for (let i = 0; i < 300; i++) {
-        const result = system.tickPopulationDynamics(i, 100, 1000, 10);
-        flight += result.youthFlight;
+        const result = system.tick(makeCtx({ totalTicks: i }));
+        totalDefections += result.defections.length;
       }
 
-      // If any youth fled, check that assigned workers survived preferentially
-      if (flight > 0) {
-        const remaining = [...citizens].filter((e) => e.citizen.assignment != null);
-        expect(remaining.length).toBeGreaterThan(0);
-      }
+      expect(totalDefections).toBeGreaterThan(0);
     });
   });
 
-  // ── Illegal migration ─────────────────────────────────────
+  // ── Drain events tracked ─────────────────────────────────
 
-  describe('tickPopulationDynamics — illegal migration', () => {
-    it('workers with morale < 20 can flee', () => {
+  describe('drain event tracking', () => {
+    it('drain events include worker names', () => {
       system.syncPopulation(20);
       for (const s of system.getStatsMap().values()) {
-        s.morale = 5; // Very low morale
+        (s as { morale: number }).morale = 1;
       }
 
-      let totalMigration = 0;
-      for (let i = 0; i < 100; i++) {
-        const result = system.tickPopulationDynamics(i, 100, 1000, 20);
-        totalMigration += result.illegalMigration;
+      const allDrains: Array<{ name: string; reason: string }> = [];
+      for (let i = 0; i < 300; i++) {
+        const result = system.tick(makeCtx({ totalTicks: i * 60 }));
+        for (const d of result.drains) {
+          allDrains.push(d);
+        }
       }
 
-      expect(totalMigration).toBeGreaterThan(0);
-    });
-
-    it('workers with morale >= 20 do not flee via migration', () => {
-      system.syncPopulation(10);
-      for (const s of system.getStatsMap().values()) {
-        s.morale = 50; // Comfortable
+      if (allDrains.length > 0) {
+        // Names are generated as "FirstName MiddleName LastName"
+        expect(allDrains[0]!.name.length).toBeGreaterThan(0);
       }
-
-      let totalMigration = 0;
-      for (let i = 0; i < 100; i++) {
-        const result = system.tickPopulationDynamics(i, 100, 1000, 10);
-        totalMigration += result.illegalMigration;
-      }
-
-      expect(totalMigration).toBe(0);
-    });
-
-    it('flee chance scales with how far below threshold morale is', () => {
-      // Very low morale should have higher flee rate
-      system.syncPopulation(50);
-      for (const s of system.getStatsMap().values()) {
-        s.morale = 1; // Nearly zero
-      }
-
-      let migration1 = 0;
-      for (let i = 0; i < 50; i++) {
-        const result = system.tickPopulationDynamics(i, 100, 1000, 50);
-        migration1 += result.illegalMigration;
-      }
-
-      // Reset
-      world.clear();
-      createResourceStore({ food: 1000 });
-      createMetaStore();
-      const rng2 = new GameRng('test-pop-dynamics-2');
-      const sys2 = new WorkerSystem(rng2);
-      sys2.syncPopulation(50);
-      for (const s of sys2.getStatsMap().values()) {
-        s.morale = 18; // Just below threshold
-      }
-
-      let migration2 = 0;
-      for (let i = 0; i < 50; i++) {
-        const result = sys2.tickPopulationDynamics(i, 100, 1000, 50);
-        migration2 += result.illegalMigration;
-      }
-
-      // Very low morale workers flee more than barely-below-threshold workers
-      expect(migration1).toBeGreaterThanOrEqual(migration2);
     });
   });
 
-  // ── Natural births ─────────────────────────────────────────
+  // ── Population count stays consistent ────────────────────
 
-  describe('tickPopulationDynamics — natural births', () => {
-    it('births occur when housing and food conditions met', () => {
-      system.syncPopulation(5);
-
-      let totalBirths = 0;
-      for (let i = 0; i < 500; i++) {
-        // housingCap > pop, food > 2 * pop
-        const result = system.tickPopulationDynamics(i, 100, 1000, 5);
-        totalBirths += result.births;
-      }
-
-      expect(totalBirths).toBeGreaterThan(0);
-    });
-
-    it('no births when at housing capacity', () => {
-      system.syncPopulation(10);
-
-      let totalBirths = 0;
-      for (let i = 0; i < 200; i++) {
-        // housingCap = current pop → no births
-        const result = system.tickPopulationDynamics(i, 10, 1000, 10);
-        totalBirths += result.births;
-      }
-
-      expect(totalBirths).toBe(0);
-    });
-
-    it('no births when food is insufficient', () => {
-      system.syncPopulation(10);
-
-      let totalBirths = 0;
-      for (let i = 0; i < 200; i++) {
-        // food < 2 * population → no births
-        const result = system.tickPopulationDynamics(i, 100, 10, 10);
-        totalBirths += result.births;
-      }
-
-      expect(totalBirths).toBe(0);
-    });
-
-    it('birth rate scales with birthMult', () => {
-      system.syncPopulation(5);
-
-      let highBirths = 0;
-      for (let i = 0; i < 500; i++) {
-        const result = system.tickPopulationDynamics(i, 100, 1000, 5, 1.0, 2.0);
-        highBirths += result.births;
-      }
-
-      world.clear();
-      createResourceStore({ food: 1000 });
-      createMetaStore();
-      const rng2 = new GameRng('test-pop-dynamics');
-      const sys2 = new WorkerSystem(rng2);
-      sys2.syncPopulation(5);
-
-      let lowBirths = 0;
-      for (let i = 0; i < 500; i++) {
-        const result = sys2.tickPopulationDynamics(i, 100, 1000, 5, 1.0, 0.5);
-        lowBirths += result.births;
-      }
-
-      // Higher birth mult should produce more births on average
-      expect(highBirths).toBeGreaterThanOrEqual(lowBirths);
-    });
-  });
-
-  // ── Drain multiplier ───────────────────────────────────────
-
-  describe('tickPopulationDynamics — drain multiplier', () => {
-    it('higher drain mult increases drain rate', () => {
-      system.syncPopulation(30);
-      for (const s of system.getStatsMap().values()) {
-        s.morale = 5;
-      }
-
-      let highDrainLosses = 0;
-      for (let i = 0; i < 100; i++) {
-        const result = system.tickPopulationDynamics(i, 100, 1000, 30, 2.0);
-        highDrainLosses += result.attritionDeaths + result.youthFlight + result.illegalMigration;
-      }
-
-      world.clear();
-      createResourceStore({ food: 1000 });
-      createMetaStore();
-      const rng2 = new GameRng('test-pop-dynamics');
-      const sys2 = new WorkerSystem(rng2);
-      sys2.syncPopulation(30);
-      for (const s of sys2.getStatsMap().values()) {
-        s.morale = 5;
-      }
-
-      let lowDrainLosses = 0;
-      for (let i = 0; i < 100; i++) {
-        const result = sys2.tickPopulationDynamics(i, 100, 1000, 30, 0.5);
-        lowDrainLosses += result.attritionDeaths + result.youthFlight + result.illegalMigration;
-      }
-
-      expect(highDrainLosses).toBeGreaterThanOrEqual(lowDrainLosses);
-    });
-  });
-
-  // ── Removed names tracking ─────────────────────────────────
-
-  describe('tickPopulationDynamics — name tracking', () => {
-    it('tracks names of removed workers', () => {
-      system.syncPopulation(20);
-      for (const s of system.getStatsMap().values()) {
-        s.morale = 1;
-        s.health = 3; // Very low health
-      }
-
-      let allNames: string[] = [];
-      for (let i = 0; i < 100; i++) {
-        const result = system.tickPopulationDynamics(i, 100, 1000, 20);
-        allNames = allNames.concat(result.removedNames);
-      }
-
-      if (allNames.length > 0) {
-        expect(allNames[0]!.length).toBeGreaterThan(0);
-        expect(allNames[0]!.split(' ').length).toBe(3);
-      }
+  describe('population consistency', () => {
+    it('tick result population matches getPopulation()', () => {
+      system.syncPopulation(15);
+      const result = system.tick(makeCtx({ totalTicks: 1 }));
+      expect(result.population).toBe(system.getPopulation());
     });
   });
 });
@@ -325,75 +164,60 @@ describe('WorkerSystem — Event-Driven Inflows', () => {
 
   // ── Moscow assignments ─────────────────────────────────────
 
-  describe('receiveMoscowWorkers', () => {
-    it('spawns the requested number of workers', () => {
-      const spawned = system.receiveMoscowWorkers(8);
-      expect(spawned.length).toBe(8);
-      expect([...citizens].length).toBe(8);
+  describe('moscowAssignment', () => {
+    it('spawns workers and returns inflow event', () => {
+      const event = system.moscowAssignment();
+      expect(event.count).toBeGreaterThan(0);
+      expect(event.reason).toBe('moscow_assignment');
+      expect([...citizens].length).toBe(event.count);
     });
 
-    it('workers have variable stats', () => {
-      const spawned = system.receiveMoscowWorkers(10);
-      const loyalties = spawned.map((e) => system.getStatsMap().get(e)!.loyalty);
-      const uniqueLoyalties = new Set(loyalties);
-      // With 10 workers and wide range, we should see some variety
-      expect(uniqueLoyalties.size).toBeGreaterThan(1);
-    });
-
-    it('some workers may be informants (high loyalty)', () => {
-      // Spawn enough to statistically guarantee at least one informant (20% chance)
-      const spawned = system.receiveMoscowWorkers(30);
-      const highLoyalty = spawned.filter((e) => system.getStatsMap().get(e)!.loyalty >= 70);
-      expect(highLoyalty.length).toBeGreaterThan(0);
+    it('spawns 3-12 workers', () => {
+      const event = system.moscowAssignment();
+      expect(event.count).toBeGreaterThanOrEqual(3);
+      expect(event.count).toBeLessThanOrEqual(12);
     });
   });
 
   // ── Forced resettlement ────────────────────────────────────
 
-  describe('receiveResettlement', () => {
+  describe('forcedResettlement', () => {
     it('spawns hostile workers with low morale', () => {
-      const spawned = system.receiveResettlement(10);
-      expect(spawned.length).toBe(10);
-
-      for (const e of spawned) {
-        const stats = system.getStatsMap().get(e)!;
-        expect(stats.morale).toBeLessThanOrEqual(30);
-        expect(stats.loyalty).toBeLessThanOrEqual(20);
-      }
+      const event = system.forcedResettlement();
+      expect(event.count).toBeGreaterThan(0);
+      expect(event.reason).toBe('forced_resettlement');
+      // Average morale should be low (FORCED_RESETTLEMENT_MORALE is [10, 30])
+      expect(event.averageMorale).toBeLessThanOrEqual(30);
     });
 
-    it('resettled workers have lower health', () => {
-      const spawned = system.receiveResettlement(10);
-      for (const e of spawned) {
-        const stats = system.getStatsMap().get(e)!;
-        expect(stats.health).toBeLessThanOrEqual(80);
-      }
+    it('spawns 5-30 workers', () => {
+      const event = system.forcedResettlement();
+      expect(event.count).toBeGreaterThanOrEqual(5);
+      expect(event.count).toBeLessThanOrEqual(30);
     });
   });
 
   // ── Kolkhoz amalgamation ───────────────────────────────────
 
-  describe('receiveAmalgamation', () => {
-    it('spawns workers with mixed stats', () => {
-      const spawned = system.receiveAmalgamation(30);
-      expect(spawned.length).toBe(30);
-      expect([...citizens].length).toBe(30);
+  describe('kolkhozAmalgamation', () => {
+    it('spawns workers with moderate stats', () => {
+      const event = system.kolkhozAmalgamation();
+      expect(event.count).toBeGreaterThan(0);
+      expect(event.reason).toBe('kolkhoz_amalgamation');
+      // Average morale should be moderate (30-60 range)
+      expect(event.averageMorale).toBeGreaterThanOrEqual(30);
+      expect(event.averageMorale).toBeLessThanOrEqual(60);
     });
 
-    it('amalgamation workers have moderate stats', () => {
-      const spawned = system.receiveAmalgamation(20);
-      for (const e of spawned) {
-        const stats = system.getStatsMap().get(e)!;
-        expect(stats.morale).toBeGreaterThanOrEqual(20);
-        expect(stats.morale).toBeLessThanOrEqual(60);
-        expect(stats.skill).toBeGreaterThanOrEqual(20);
-        expect(stats.skill).toBeLessThanOrEqual(70);
-      }
+    it('spawns 20-60 workers', () => {
+      const event = system.kolkhozAmalgamation();
+      expect(event.count).toBeGreaterThanOrEqual(20);
+      expect(event.count).toBeLessThanOrEqual(60);
     });
   });
 });
 
-describe('WorkerSystem — Auto-Assign', () => {
+describe('WorkerSystem — Assignment', () => {
   let system: WorkerSystem;
   let rng: GameRng;
 
@@ -401,7 +225,7 @@ describe('WorkerSystem — Auto-Assign', () => {
     world.clear();
     createResourceStore();
     createMetaStore();
-    rng = new GameRng('test-auto-assign');
+    rng = new GameRng('test-assign');
     system = new WorkerSystem(rng);
   });
 
@@ -409,62 +233,38 @@ describe('WorkerSystem — Auto-Assign', () => {
     world.clear();
   });
 
-  it('assigns idle workers to buildings with job slots', () => {
-    // Create a farm and a power station
-    createBuilding(0, 0, 'power-station'); // 15 jobs, role: power
-    createBuilding(2, 2, 'collective-farm-hq'); // 10 jobs, role: agriculture
-
-    system.syncPopulation(10);
-    const assigned = system.autoAssign();
-
-    expect(assigned).toBeGreaterThan(0);
-    expect(assigned).toBeLessThanOrEqual(10);
-  });
-
-  it('prioritizes food production over power', () => {
-    createBuilding(0, 0, 'power-station'); // power role
-    createBuilding(2, 2, 'collective-farm-hq'); // agriculture role
-
-    system.syncPopulation(5);
-    system.autoAssign();
-
-    // Agriculture is higher priority — farm should get workers first
-    const farmWorkers = [...citizens].filter((e) => e.citizen.assignment === 'collective-farm-hq');
-    expect(farmWorkers.length).toBeGreaterThan(0);
-  });
-
-  it('does not overfill buildings beyond job capacity', () => {
-    createBuilding(0, 0, 'post-office'); // 6 jobs
-    system.syncPopulation(20);
-    system.autoAssign();
-
-    const postWorkers = [...citizens].filter((e) => e.citizen.assignment === 'post-office');
-    expect(postWorkers.length).toBeLessThanOrEqual(6);
-  });
-
-  it('returns 0 when no idle workers', () => {
+  it('assignWorker assigns a citizen to a building', () => {
     createBuilding(0, 0, 'power-station');
     system.syncPopulation(5);
+    const worker = [...citizens][0]!;
 
-    // Assign all workers manually
-    for (const c of [...citizens]) {
-      system.assignWorker(c, 0, 0);
-    }
-
-    const assigned = system.autoAssign();
-    expect(assigned).toBe(0);
+    const success = system.assignWorker(worker, 0, 0);
+    expect(success).toBe(true);
+    expect(worker.citizen.assignment).toBe('power-station');
   });
 
-  it('returns 0 when no buildings with jobs', () => {
-    createBuilding(0, 0, 'apartment-tower-a'); // housing, 0 jobs
-    system.syncPopulation(5);
+  it('assignWorker fails for non-existent building', () => {
+    system.syncPopulation(1);
+    const worker = [...citizens][0]!;
 
-    const assigned = system.autoAssign();
-    expect(assigned).toBe(0);
+    const success = system.assignWorker(worker, 99, 99);
+    expect(success).toBe(false);
+  });
+
+  it('unassignWorker clears assignment', () => {
+    createBuilding(0, 0, 'power-station');
+    system.syncPopulation(1);
+    const worker = [...citizens][0]!;
+
+    system.assignWorker(worker, 0, 0);
+    expect(worker.citizen.assignment).toBe('power-station');
+
+    system.unassignWorker(worker);
+    expect(worker.citizen.assignment).toBeUndefined();
   });
 });
 
-describe('WorkerSystem — Housing Management', () => {
+describe('WorkerSystem — Core API', () => {
   let system: WorkerSystem;
   let rng: GameRng;
 
@@ -472,7 +272,7 @@ describe('WorkerSystem — Housing Management', () => {
     world.clear();
     createResourceStore();
     createMetaStore();
-    rng = new GameRng('test-housing');
+    rng = new GameRng('test-core');
     system = new WorkerSystem(rng);
   });
 
@@ -480,58 +280,9 @@ describe('WorkerSystem — Housing Management', () => {
     world.clear();
   });
 
-  it('assigns homeless workers to powered housing', () => {
-    // Create powered housing
-    createBuilding(0, 0, 'power-station');
-    createBuilding(1, 1, 'apartment-tower-a'); // housingCap=50
-
-    // Power the buildings
-    powerSystem();
-
-    system.syncPopulation(5);
-    const housed = system.assignHousing();
-
-    expect(housed).toBe(5);
-    expect(system.getHousedCount()).toBe(5);
-  });
-
-  it('does not assign to unpowered housing', () => {
-    createBuilding(1, 1, 'apartment-tower-a'); // Unpowered
-
-    system.syncPopulation(5);
-    const housed = system.assignHousing();
-
-    expect(housed).toBe(0);
-  });
-
-  it('respects housing capacity limits', () => {
-    createBuilding(0, 0, 'power-station');
-    createBuilding(1, 1, 'workers-house-a'); // Lower housing cap
-
-    powerSystem();
-
-    // Get the actual housing cap
-    const cap = system.getHousingCapacity();
-    system.syncPopulation(cap + 10); // More workers than housing
-    const housed = system.assignHousing();
-
-    expect(housed).toBeLessThanOrEqual(cap);
-  });
-
-  it('getHousingCapacity returns total from powered buildings', () => {
-    createBuilding(0, 0, 'power-station');
-    createBuilding(1, 1, 'apartment-tower-a'); // 50
-    createBuilding(2, 2, 'apartment-tower-b'); // varies
-
-    powerSystem();
-
-    const cap = system.getHousingCapacity();
-    expect(cap).toBeGreaterThan(0);
-  });
-
-  it('getWorkerCount returns total managed workers', () => {
+  it('getPopulation returns total managed workers', () => {
     system.syncPopulation(15);
-    expect(system.getWorkerCount()).toBe(15);
+    expect(system.getPopulation()).toBe(15);
   });
 
   it('getAverageMorale returns average', () => {
@@ -543,5 +294,42 @@ describe('WorkerSystem — Housing Management', () => {
 
   it('getAverageMorale returns 50 with no workers', () => {
     expect(system.getAverageMorale()).toBe(50);
+  });
+
+  it('syncPopulation spawns workers to match target', () => {
+    system.syncPopulation(10);
+    expect(system.getPopulation()).toBe(10);
+    expect([...citizens].length).toBe(10);
+  });
+
+  it('syncPopulation removes excess workers', () => {
+    system.syncPopulation(10);
+    system.syncPopulation(5);
+    expect(system.getPopulation()).toBe(5);
+  });
+
+  it('spawnWorker creates a citizen entity with stats', () => {
+    const entity = system.spawnWorker();
+    expect(entity.citizen).toBeDefined();
+    expect(system.getStatsMap().has(entity)).toBe(true);
+    const stats = system.getStatsMap().get(entity)!;
+    expect(stats.morale).toBe(50);
+    expect(stats.name.length).toBeGreaterThan(0);
+  });
+
+  it('arrestWorker removes a non-party worker', () => {
+    system.syncPopulation(5);
+    const before = system.getPopulation();
+
+    const event = system.arrestWorker();
+    expect(event).not.toBeNull();
+    expect(event!.reason).toBe('kgb_arrest');
+    expect(system.getPopulation()).toBe(before - 1);
+  });
+
+  it('arrestWorker returns null when no eligible workers', () => {
+    // No workers at all
+    const event = system.arrestWorker();
+    expect(event).toBeNull();
   });
 });

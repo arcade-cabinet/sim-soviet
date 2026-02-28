@@ -11,14 +11,14 @@ import type { Doctrine } from '../CompulsoryDeliveries';
 
 /** The 8 historical eras of the Soviet campaign. */
 export type EraId =
-  | 'war_communism'
-  | 'first_plans'
+  | 'revolution'
+  | 'collectivization'
+  | 'industrialization'
   | 'great_patriotic'
   | 'reconstruction'
-  | 'thaw'
+  | 'thaw_and_freeze'
   | 'stagnation'
-  | 'perestroika'
-  | 'eternal_soviet';
+  | 'the_eternal';
 
 // ─── Era Modifiers ──────────────────────────────────────────────────────────
 
@@ -61,7 +61,7 @@ export interface EraDefinition {
   name: string;
   /** Calendar year this era begins */
   startYear: number;
-  /** Calendar year this era ends (-1 for eternal_soviet) */
+  /** Calendar year this era ends (-1 for the_eternal) */
   endYear: number;
 
   /** Maps to CompulsoryDeliveries doctrine for state extraction rates */

@@ -34,7 +34,7 @@ export class EraSystem {
   /** Era checkpoints keyed by EraId for restart-from-checkpoint. */
   private checkpoints: Map<EraId, EraCheckpoint> = new Map();
 
-  constructor(startYear = 1922) {
+  constructor(startYear = 1917) {
     this.currentYear = startYear;
     this.previousEraId = null;
   }

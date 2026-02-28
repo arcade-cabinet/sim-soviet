@@ -163,7 +163,7 @@ export const DIFFICULTY_PRESETS: Record<DifficultyLevel, DifficultyConfig> = {
     growthMultiplier: 1.5,
     winterModifier: 'shorter',
     decayMultiplier: 0.7,
-    resourceMultiplier: 1.5,
+    resourceMultiplier: 2.0,
   },
   comrade: {
     label: 'Comrade',
@@ -185,7 +185,7 @@ export const DIFFICULTY_PRESETS: Record<DifficultyLevel, DifficultyConfig> = {
     growthMultiplier: 0.7,
     winterModifier: 'longer',
     decayMultiplier: 1.5,
-    resourceMultiplier: 0.7,
+    resourceMultiplier: 0.5,
   },
 };
 

@@ -129,17 +129,29 @@ export function processReport(ctx: AnnualReportContext, submission: ReportSubmis
   // Investigation probability scales with risk (capped at 80%).
   // Prior successful pripiski increase baseline inspection probability by +15% each.
   const historyBonus = engineState.pripiskiCount * PRIPISKI_HISTORY_INSPECTION_BONUS;
-  const investigationProb = Math.min(0.8, maxRisk / 100 + historyBonus);
+
+  // Blat insurance: spending blat reduces investigation chance.
+  // Each point of blat reduces detection probability by 0.5% (max 25% reduction).
+  const blatLevel = res?.resources.blat ?? 0;
+  const blatInsurance = Math.min(0.25, blatLevel * 0.005);
+
+  const investigationProb = Math.min(0.8, Math.max(0, maxRisk / 100 + historyBonus - blatInsurance));
   const roll = ctx.rng?.random() ?? Math.random();
 
+  // Spend blat when falsifying — connections used to smooth things over
+  if (blatInsurance > 0 && res) {
+    const blatCost = Math.min(res.resources.blat, Math.ceil(blatLevel * 0.1));
+    res.resources.blat = Math.max(0, res.resources.blat - blatCost);
+  }
+
   if (roll < investigationProb) {
-    // CAUGHT -- investigation detected falsification
+    // CAUGHT -- investigation detected falsification (now +3 marks per docs)
     const totalTicks = ctx.chronology.getDate().totalTicks;
     ctx.personnelFile.addMark('report_falsified', totalTicks);
     ctx.callbacks.onToast('FALSIFICATION DETECTED — Investigation ordered', 'evacuation');
     ctx.callbacks.onAdvisor(
       'Comrade, the State Committee has detected discrepancies in your report. ' +
-        'A black mark has been added to your personnel file.',
+        'Black marks have been added to your personnel file.',
     );
 
     // Evaluate with ACTUAL values
