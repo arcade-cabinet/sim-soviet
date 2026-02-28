@@ -9,7 +9,7 @@ export const CONSCRIPTION_SELECTION: MinigameDefinition = {
   name: 'Conscription Selection',
   description: 'The army needs bodies. Your city has bodies. The math is simple. The choice is not.',
   triggerType: 'event',
-  triggerCondition: 'conscription_order',
+  triggerCondition: 'conscription_wave',
   tickLimit: 20,
   choices: [
     {

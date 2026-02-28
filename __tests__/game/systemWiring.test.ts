@@ -1,14 +1,22 @@
 /**
  * Tests for game system wiring: GAP-013 (pripiski downstream), GAP-023 (difficulty),
  * GAP-026 (weather effects), GAP-017 (heating), GAP-024 (minigame triggers),
- * and GAP-027 (event era filtering).
+ * GAP-027 (event era filtering), GAP-018 (currency reform), GAP-019 (orgnabor),
+ * GAP-020 (conscription), and GAP-022 (save/load).
  */
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
 import { getResourceEntity } from '@/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import type { QuotaState } from '@/ecs/systems';
 import { world } from '@/ecs/world';
-import { EconomySystem, HEATING_CONFIGS, type HeatingTier } from '@/game/economy';
+import {
+  CURRENCY_REFORMS,
+  EconomySystem,
+  HEATING_CONFIGS,
+  type HeatingTier,
+  applyCurrencyReform,
+  findPendingReform,
+} from '@/game/economy';
 import {
   type AnnualReportContext,
   type AnnualReportEngineState,
@@ -21,6 +29,9 @@ import { GameGrid } from '@/game/GameGrid';
 import { resolveBuildingTrigger } from '@/game/minigames/BuildingMinigameMap';
 import { MINIGAME_DEFINITIONS } from '@/game/minigames/definitions';
 import { MinigameRouter } from '@/game/minigames/MinigameRouter';
+import { PoliticalEntitySystem } from '@/game/political/PoliticalEntitySystem';
+import { processConscriptionQueue, processOrgnaborQueue, processReturns } from '@/game/political/military';
+import type { ConscriptionEvent, OrgnaborEvent, PoliticalTickResult } from '@/game/political/types';
 import { DIFFICULTY_PRESETS } from '@/game/ScoringSystem';
 import { SimulationEngine } from '@/game/SimulationEngine';
 import { WEATHER_PROFILES, WeatherType } from '@/game/WeatherSystem';
@@ -539,5 +550,288 @@ describe('GAP-027: Event era filtering', () => {
       );
       expect(eventsForEra.length).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+// ── GAP-018: Currency Reform ──
+
+describe('GAP-018: Currency reform', () => {
+  it('CURRENCY_REFORMS contains 4 historical reforms in chronological order', () => {
+    expect(CURRENCY_REFORMS).toHaveLength(4);
+    expect(CURRENCY_REFORMS[0]!.year).toBe(1924);
+    expect(CURRENCY_REFORMS[1]!.year).toBe(1947);
+    expect(CURRENCY_REFORMS[2]!.year).toBe(1961);
+    expect(CURRENCY_REFORMS[3]!.year).toBe(1991);
+  });
+
+  it('findPendingReform returns first unapplied reform at or before currentYear', () => {
+    const reforms = CURRENCY_REFORMS.map((r) => ({ ...r }));
+    const pending = findPendingReform(reforms, 1950);
+    expect(pending).not.toBeNull();
+    expect(pending!.year).toBe(1924);
+  });
+
+  it('findPendingReform returns null when all reforms are applied', () => {
+    const reforms = CURRENCY_REFORMS.map((r) => ({ ...r, applied: true }));
+    const pending = findPendingReform(reforms, 2000);
+    expect(pending).toBeNull();
+  });
+
+  it('applyCurrencyReform divides money by reform rate', () => {
+    const reform = { year: 1947, name: 'Post-War Reform', rate: 10, applied: false };
+    const result = applyCurrencyReform(1000, reform);
+    expect(result.moneyBefore).toBe(1000);
+    expect(result.moneyAfter).toBe(100);
+    expect(result.amountLost).toBe(900);
+  });
+
+  it('EconomySystem.checkCurrencyReform applies reform and marks it applied', () => {
+    const econ = new EconomySystem('reconstruction', 'comrade');
+    // Mark the 1924 reform as applied so the 1947 reform is first pending
+    econ.markReformsBeforeYear(1946);
+
+    const result = econ.checkCurrencyReform(1947, 500);
+    expect(result).not.toBeNull();
+    expect(result!.reform.name).toBe('Post-War Reform');
+    expect(result!.moneyAfter).toBe(50);
+
+    // After applying, a second check at the same year should return null
+    const result2 = econ.checkCurrencyReform(1947, 500);
+    // Next pending would be the 1961 reform, but 1947 < 1961 so null
+    expect(result2).toBeNull();
+  });
+});
+
+// ── GAP-019: Orgnabor ──
+
+describe('GAP-019: Orgnabor', () => {
+  it('triggerOrgnabor adds event to orgnabor queue', () => {
+    const system = new PoliticalEntitySystem();
+    const event = system.triggerOrgnabor(5, 90, 'canal construction');
+    expect(event.purpose).toBe('canal construction');
+    expect(event.announcement).toContain('canal construction');
+  });
+
+  it('processOrgnaborQueue drains queue and schedules returns', () => {
+    const queue: OrgnaborEvent[] = [
+      { borrowedCount: 4, returnTick: 90, purpose: 'factory', announcement: 'Workers borrowed.' },
+    ];
+    const result: PoliticalTickResult = {
+      workersConscripted: 0,
+      workersReturned: 0,
+      newInvestigations: [],
+      completedInvestigations: 0,
+      blackMarksAdded: 0,
+      politrukEffects: [],
+      announcements: [],
+    };
+
+    const returns = processOrgnaborQueue(queue, 100, result);
+    expect(queue).toHaveLength(0);
+    expect(result.workersConscripted).toBe(4);
+    expect(returns).toHaveLength(1);
+    expect(returns[0]!.returnTick).toBe(190); // totalTicks(100) + duration(90)
+    expect(returns[0]!.count).toBe(4);
+  });
+
+  it('processReturns returns workers when totalTicks >= returnTick', () => {
+    const returnQueue = [
+      { returnTick: 200, count: 3 },
+      { returnTick: 300, count: 5 },
+    ];
+    const { returned, remaining } = processReturns(returnQueue, 250);
+    expect(returned).toBe(3);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]!.returnTick).toBe(300);
+  });
+
+  it('PoliticalEntitySystem tick processes orgnabor queue and schedules returns', () => {
+    const system = new PoliticalEntitySystem();
+    system.triggerOrgnabor(3, 60, 'dam construction');
+    const result = system.tick(100);
+    expect(result.workersConscripted).toBe(3);
+    // Return should be scheduled at totalTicks(100) + duration(60) = 160
+    const returnQueue = system.getReturnQueue();
+    expect(returnQueue.length).toBeGreaterThanOrEqual(1);
+    const entry = returnQueue.find((r) => r.returnTick === 160);
+    expect(entry).toBeDefined();
+    expect(entry!.count).toBe(3);
+  });
+
+  it('workers return after the scheduled ticks', () => {
+    const system = new PoliticalEntitySystem();
+    system.triggerOrgnabor(4, 50, 'railway');
+    // Process the queue
+    system.tick(100);
+    // Tick again at 149 — not yet returned
+    const result1 = system.tick(149);
+    expect(result1.workersReturned).toBe(0);
+    // Tick at 150 — workers return
+    const result2 = system.tick(150);
+    expect(result2.workersReturned).toBe(4);
+  });
+});
+
+// ── GAP-020: Conscription ──
+
+describe('GAP-020: Conscription', () => {
+  it('conscription_wave event template exists and targets great_patriotic era', () => {
+    const template = ALL_EVENT_TEMPLATES.find((t) => t.id === 'conscription_wave');
+    expect(template).toBeDefined();
+    expect(template!.eraFilter).toContain('great_patriotic');
+  });
+
+  it('conscription minigame triggerCondition matches conscription_wave event', () => {
+    const minigame = MINIGAME_DEFINITIONS.find((d) => d.id === 'conscription_selection');
+    expect(minigame).toBeDefined();
+    expect(minigame!.triggerCondition).toBe('conscription_wave');
+  });
+
+  it('triggerConscription adds event to conscription queue', () => {
+    const system = new PoliticalEntitySystem();
+    const event = system.triggerConscription(5, false);
+    expect(event.targetCount).toBe(5);
+    expect(event.announcement).toContain('5 workers');
+  });
+
+  it('processConscriptionQueue drafts workers and schedules returns for non-permanent', () => {
+    const queue: ConscriptionEvent[] = [
+      {
+        officerName: 'Commissar Petrov',
+        targetCount: 5,
+        drafted: 0,
+        returnTick: 0, // non-permanent
+        casualties: 0,
+        announcement: 'Workers drafted.',
+      },
+    ];
+    const result: PoliticalTickResult = {
+      workersConscripted: 0,
+      workersReturned: 0,
+      newInvestigations: [],
+      completedInvestigations: 0,
+      blackMarksAdded: 0,
+      politrukEffects: [],
+      announcements: [],
+    };
+
+    jest.spyOn(Math, 'random').mockReturnValue(0.5);
+    const returns = processConscriptionQueue(queue, 100, null, result);
+    jest.restoreAllMocks();
+
+    expect(queue).toHaveLength(0);
+    expect(result.workersConscripted).toBe(5);
+    expect(returns).toHaveLength(1);
+    // returnTick should be totalTicks + duration (180-360 range, null rng uses 270)
+    expect(returns[0]!.returnTick).toBe(370); // 100 + 270
+    expect(returns[0]!.count).toBe(5);
+  });
+
+  it('permanent conscription schedules survivors to return after longer duration', () => {
+    const queue: ConscriptionEvent[] = [
+      {
+        officerName: 'Commissar Ivanov',
+        targetCount: 10,
+        drafted: 0,
+        returnTick: -1, // permanent (wartime)
+        casualties: 2, // 20% of 10
+        announcement: 'For the Motherland.',
+      },
+    ];
+    const result: PoliticalTickResult = {
+      workersConscripted: 0,
+      workersReturned: 0,
+      newInvestigations: [],
+      completedInvestigations: 0,
+      blackMarksAdded: 0,
+      politrukEffects: [],
+      announcements: [],
+    };
+
+    const returns = processConscriptionQueue(queue, 100, null, result);
+    expect(result.workersConscripted).toBe(10);
+    expect(returns).toHaveLength(1);
+    // Survivors = 10 - 2 = 8, returnTick = 100 + 540 (null rng default)
+    expect(returns[0]!.count).toBe(8);
+    expect(returns[0]!.returnTick).toBe(640);
+  });
+
+  it('event-triggered minigame routes conscription_wave to conscription_selection', () => {
+    const router = new MinigameRouter();
+    const def = router.checkTrigger('event', {
+      eventId: 'conscription_wave',
+      totalTicks: 100,
+      population: 50,
+    });
+    expect(def).not.toBeNull();
+    expect(def!.id).toBe('conscription_selection');
+  });
+});
+
+// ── GAP-022: Save/Load serialization ──
+
+describe('GAP-022: Save/Load serialization', () => {
+  beforeEach(() => {
+    world.clear();
+  });
+
+  afterEach(() => {
+    world.clear();
+  });
+
+  it('PoliticalEntitySystem serialize/deserialize roundtrips queues', () => {
+    const system = new PoliticalEntitySystem();
+    system.triggerOrgnabor(3, 60, 'factory');
+    system.triggerConscription(5, false);
+
+    const data = system.serialize();
+    expect(data.orgnaborQueue).toHaveLength(1);
+    expect(data.conscriptionQueue).toHaveLength(1);
+
+    const restored = PoliticalEntitySystem.deserialize(data);
+    const restoredData = restored.serialize();
+    expect(restoredData.orgnaborQueue).toHaveLength(1);
+    expect(restoredData.conscriptionQueue).toHaveLength(1);
+    expect(restoredData.orgnaborQueue[0]!.purpose).toBe('factory');
+    expect(restoredData.conscriptionQueue[0]!.targetCount).toBe(5);
+  });
+
+  it('SubsystemSaveData includes politicalEntities field', () => {
+    createResourceStore({ food: 100, vodka: 50, population: 50 });
+    createMetaStore({ date: { year: 1930, month: 1, tick: 0 } });
+
+    const engine = new SimulationEngine({
+      startYear: 1930,
+      callbacks: createMockCallbacks(),
+    });
+
+    const data = engine.serializeSubsystems();
+    expect(data).toHaveProperty('politicalEntities');
+    expect(data.politicalEntities).toHaveProperty('entities');
+    expect(data.politicalEntities).toHaveProperty('conscriptionQueue');
+    expect(data.politicalEntities).toHaveProperty('orgnaborQueue');
+    expect(data.politicalEntities).toHaveProperty('returnQueue');
+  });
+
+  it('serializeSubsystems includes all critical subsystems', () => {
+    createResourceStore({ food: 100, vodka: 50, population: 50 });
+    createMetaStore({ date: { year: 1930, month: 1, tick: 0 } });
+
+    const engine = new SimulationEngine({
+      startYear: 1930,
+      callbacks: createMockCallbacks(),
+    });
+
+    const data = engine.serializeSubsystems();
+    expect(data).toHaveProperty('era');
+    expect(data).toHaveProperty('personnel');
+    expect(data).toHaveProperty('settlement');
+    expect(data).toHaveProperty('scoring');
+    expect(data).toHaveProperty('deliveries');
+    expect(data).toHaveProperty('quota');
+    expect(data).toHaveProperty('chronology');
+    expect(data).toHaveProperty('economy');
+    expect(data).toHaveProperty('events');
+    expect(data).toHaveProperty('minigames');
   });
 });

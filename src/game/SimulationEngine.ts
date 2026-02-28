@@ -276,6 +276,9 @@ export class SimulationEngine {
       if (FIRE_EVENT_IDS.has(event.id)) {
         this.fireSystem.igniteRandom();
       }
+
+      // Route events to minigame system — event-triggered minigames
+      this.checkEventMinigame(event.id);
     };
 
     this.eventSystem = new EventSystem(this.eventHandler, rng);
@@ -1089,6 +1092,21 @@ export class SimulationEngine {
     if (totalTicks % 30 === 0) {
       const avgCorruption = this.getAveragePolitburoCorruption();
       this.politicalEntities.syncEntities(tier, eraId, avgCorruption);
+    }
+
+    // Orgnabor — periodic organized labor recruitment during industrialization eras
+    // Fires every ~180 ticks (half a year) during first_plans and reconstruction
+    if (totalTicks % 180 === 0 && (eraId === 'first_plans' || eraId === 'reconstruction') && store) {
+      const pop = store.resources.population;
+      if (pop >= 15) {
+        const count = Math.min(Math.max(2, Math.floor(pop * 0.05)), 5);
+        const duration = 60 + Math.floor(Math.random() * 60); // 60-120 ticks
+        const purpose =
+          eraId === 'first_plans'
+            ? 'the Great Construction of Socialism'
+            : 'post-war reconstruction of the Motherland';
+        this.politicalEntities.triggerOrgnabor(count, duration, purpose);
+      }
     }
 
     const result = this.politicalEntities.tick(totalTicks);

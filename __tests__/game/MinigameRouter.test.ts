@@ -211,7 +211,7 @@ describe('MinigameRouter', () => {
 
     it('matches event trigger for ideology_session', () => {
       const def = router.checkTrigger('event', {
-        eventId: 'politruk_visit',
+        eventId: 'party_official_visit',
         totalTicks: 100,
         population: 50,
       });
@@ -221,7 +221,7 @@ describe('MinigameRouter', () => {
 
     it('matches event trigger for factory_emergency', () => {
       const def = router.checkTrigger('event', {
-        eventId: 'factory_malfunction',
+        eventId: 'factory_collapse',
         totalTicks: 100,
         population: 50,
       });
@@ -231,7 +231,7 @@ describe('MinigameRouter', () => {
 
     it('matches event trigger for conscription_selection', () => {
       const def = router.checkTrigger('event', {
-        eventId: 'conscription_order',
+        eventId: 'conscription_wave',
         totalTicks: 100,
         population: 50,
       });
@@ -241,7 +241,7 @@ describe('MinigameRouter', () => {
 
     it('matches event trigger for interrogation', () => {
       const def = router.checkTrigger('event', {
-        eventId: 'kgb_investigation',
+        eventId: 'kgb_inspection',
         totalTicks: 100,
         population: 50,
       });
@@ -398,7 +398,7 @@ describe('MinigameRouter', () => {
       router.startMinigame(def, 100);
 
       const result = router.checkTrigger('event', {
-        eventId: 'politruk_visit',
+        eventId: 'party_official_visit',
         totalTicks: 100,
         population: 50,
       });
@@ -413,7 +413,7 @@ describe('MinigameRouter', () => {
 
       // Different minigame should now be available (not the_queue, it is on cooldown)
       const result = router.checkTrigger('event', {
-        eventId: 'politruk_visit',
+        eventId: 'party_official_visit',
         totalTicks: 200,
         population: 50,
       });

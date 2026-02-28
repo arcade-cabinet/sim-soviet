@@ -9,7 +9,7 @@ export const IDEOLOGY_SESSION: MinigameDefinition = {
   name: 'Ideology Session',
   description: 'The politruk has arrived. He has questions. The correct answers are the ones he already knows.',
   triggerType: 'event',
-  triggerCondition: 'politruk_visit',
+  triggerCondition: 'party_official_visit',
   tickLimit: 20,
   choices: [
     {

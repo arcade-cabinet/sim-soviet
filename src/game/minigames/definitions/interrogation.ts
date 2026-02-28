@@ -9,7 +9,7 @@ export const INTERROGATION: MinigameDefinition = {
   name: 'Interrogation',
   description: 'The KGB agent smiles warmly. This is not reassuring.',
   triggerType: 'event',
-  triggerCondition: 'kgb_investigation',
+  triggerCondition: 'kgb_inspection',
   tickLimit: 15,
   choices: [
     {
