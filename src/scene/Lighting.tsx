@@ -1,21 +1,16 @@
 /**
  * Lighting — bright, inviting scene lighting with day/night cycle.
  *
- * - DirectionalLight "sun" rotates by timeOfDay (0-1), casts shadows
- * - HemisphericLight provides warm ambient fill
- * - Light fog for depth cueing (not oppressive Soviet gloom)
- * - ShadowGenerator for ground-contact shadows
+ * R3F migration:
+ * - <directionalLight> with castShadow for sun
+ * - <hemisphereLight> for ambient fill
+ * - <fog> for distance depth cueing
+ * - Day/night cycle: sun position orbits based on timeOfDay (0-1)
+ * - Season-dependent ambient and fog
  */
-import React, { useEffect, useRef } from 'react';
-import {
-  Color3,
-  Color4,
-  DirectionalLight,
-  HemisphericLight,
-  ShadowGenerator,
-  Vector3,
-} from '@babylonjs/core';
-import { useScene } from 'reactylon';
+import React, { useRef, useMemo } from 'react';
+import * as THREE from 'three';
+import { useFrame, useThree } from '@react-three/fiber';
 import type { Season } from './TerrainGrid';
 
 interface LightingProps {
@@ -24,10 +19,6 @@ interface LightingProps {
   season?: Season;
   isStorm?: boolean;
 }
-
-/** Bright sky blue — the game should feel inviting, not oppressive */
-const SKY_COLOR = new Color4(0.53, 0.68, 0.85, 1);
-const FOG_COLOR = new Color3(0.65, 0.72, 0.82);
 
 /** Season multiplier for hemisphere light intensity */
 function seasonBrightness(season: Season): number {
@@ -44,107 +35,103 @@ function seasonBrightness(season: Season): number {
   }
 }
 
-/**
- * Sun intensity over 24h cycle. Peak at noon (timeOfDay=0.5), off at night.
- */
+/** Sun intensity over 24h cycle. Peak at noon (timeOfDay=0.5), off at night. */
 function sunIntensity(t: number): number {
   const angle = t * Math.PI * 2;
   const raw = Math.sin(angle - Math.PI / 2);
-  return Math.max(0, raw) * 1.8; // much brighter than before (was 1.2)
+  return Math.max(0, raw) * 1.8;
 }
 
-/**
- * Sun direction vector based on time. Rotates around the scene.
- */
-function sunDirection(t: number): Vector3 {
+/** Sun direction vector based on time. Rotates around the scene. */
+function sunDirection(t: number): [number, number, number] {
   const angle = t * Math.PI * 2;
   const x = Math.cos(angle);
-  const y = -Math.abs(Math.sin(angle)) - 0.3; // steeper downward for better shadows
+  const y = -Math.abs(Math.sin(angle)) - 0.3;
   const z = 0.3;
-  return new Vector3(x, y, z).normalize();
+  const len = Math.sqrt(x * x + y * y + z * z);
+  return [x / len, y / len, z / len];
 }
 
-/** Exported so Environment.tsx can attach shadow casters */
-export let shadowGenerator: ShadowGenerator | null = null;
+/** Sun position for shadow casting (offset from origin along sun direction) */
+function sunPosition(t: number): [number, number, number] {
+  const dir = sunDirection(t);
+  // Position the light source away from origin along the inverse direction
+  return [-dir[0] * 40, -dir[1] * 40, -dir[2] * 40];
+}
+
+const FOG_COLOR = '#a6b8d1'; // (0.65, 0.72, 0.82)
+const SHADOW_MAP_SIZE = 1024;
+const SHADOW_CAMERA_SIZE = 50;
 
 const Lighting: React.FC<LightingProps> = ({
   timeOfDay = 0.5,
   season = 'summer',
   isStorm = false,
 }) => {
-  const scene = useScene();
-  const sunRef = useRef<DirectionalLight | null>(null);
-  const hemiRef = useRef<HemisphericLight | null>(null);
-  const shadowRef = useRef<ShadowGenerator | null>(null);
+  const sunRef = useRef<THREE.DirectionalLight>(null);
+  const hemiRef = useRef<THREE.HemisphereLight>(null);
+  const { scene } = useThree();
 
-  useEffect(() => {
-    // Scene background — bright sky blue
-    scene.clearColor = SKY_COLOR;
+  // Compute sun values
+  const intensity = sunIntensity(timeOfDay);
+  const position = sunPosition(timeOfDay);
+  const dir = sunDirection(timeOfDay);
+  const hemiIntensity = 1.0 * seasonBrightness(season);
 
-    // Light fog for depth cueing — much lighter than before
-    scene.fogMode = 2; // exponential
-    scene.fogColor = FOG_COLOR;
+  // Storm dimming
+  const stormMul = isStorm ? 0.5 : 1.0;
 
-    // Directional light (sun) — main light source
-    const dir = sunDirection(timeOfDay);
-    const sun = new DirectionalLight('sun', dir, scene);
-    sun.diffuse = new Color3(1.0, 0.96, 0.88); // warm sunlight
-    sun.specular = new Color3(0.9, 0.85, 0.75);
-    sun.intensity = sunIntensity(timeOfDay);
-    sun.position = new Vector3(-20, 40, -20); // for shadow projection
-    sunRef.current = sun;
-
-    // ShadowGenerator — ground-contact shadows give buildings depth
-    const sg = new ShadowGenerator(1024, sun);
-    sg.useBlurExponentialShadowMap = true;
-    sg.blurKernel = 32;
-    sg.depthScale = 50;
-    sg.darkness = 0.4; // soft shadows, not pitch black
-    shadowRef.current = sg;
-    shadowGenerator = sg;
-
-    // Hemispheric light — warm ambient fill from above
-    const hemi = new HemisphericLight('ambient', new Vector3(0, 1, 0), scene);
-    hemi.diffuse = new Color3(0.70, 0.75, 0.85); // sky blue ambient
-    hemi.groundColor = new Color3(0.35, 0.32, 0.28); // warm earth bounce
-    hemi.intensity = 1.0 * seasonBrightness(season);
-    hemiRef.current = hemi;
-
-    return () => {
-      sun.dispose();
-      hemi.dispose();
-      if (shadowRef.current) {
-        shadowRef.current.dispose();
-        shadowRef.current = null;
-        shadowGenerator = null;
-      }
-    };
-  }, [scene]);
-
-  // Update lighting parameters reactively
-  useEffect(() => {
-    if (sunRef.current) {
-      sunRef.current.direction = sunDirection(timeOfDay);
-      sunRef.current.intensity = sunIntensity(timeOfDay);
-    }
-  }, [timeOfDay]);
-
-  useEffect(() => {
-    if (hemiRef.current) {
-      hemiRef.current.intensity = 1.0 * seasonBrightness(season);
-    }
-  }, [season]);
-
-  useEffect(() => {
-    // Fog density: very light by default, heavier during storms
-    let density = 0.002; // much lighter than before (was 0.006)
+  // Fog density: very light by default, heavier at night and during storms
+  const fogDensity = useMemo(() => {
+    let density = 0.002;
     const nightFactor = 1 - sunIntensity(timeOfDay);
     density += nightFactor * 0.005;
     if (isStorm) density += 0.01;
-    scene.fogDensity = density;
-  }, [scene, timeOfDay, isStorm]);
+    return density;
+  }, [timeOfDay, isStorm]);
 
-  return null;
+  // Update fog on the scene each frame (fog density is not easily animated via JSX)
+  useFrame(() => {
+    if (scene.fog && scene.fog instanceof THREE.FogExp2) {
+      scene.fog.density = fogDensity;
+    }
+  });
+
+  return (
+    <>
+      {/* Exponential fog for depth cueing */}
+      <fogExp2 attach="fog" args={[FOG_COLOR, fogDensity]} />
+
+      {/* Directional light (sun) — main light source with shadows */}
+      <directionalLight
+        ref={sunRef}
+        position={position}
+        intensity={intensity * stormMul}
+        color="#fff5e0"
+        castShadow
+        shadow-mapSize-width={SHADOW_MAP_SIZE}
+        shadow-mapSize-height={SHADOW_MAP_SIZE}
+        shadow-camera-left={-SHADOW_CAMERA_SIZE}
+        shadow-camera-right={SHADOW_CAMERA_SIZE}
+        shadow-camera-top={SHADOW_CAMERA_SIZE}
+        shadow-camera-bottom={-SHADOW_CAMERA_SIZE}
+        shadow-camera-near={0.5}
+        shadow-camera-far={200}
+        shadow-bias={-0.0005}
+        shadow-normalBias={0.02}
+      >
+        {/* Point the directional light at origin */}
+        <primitive object={new THREE.Object3D()} attach="target" position={[0, 0, 0]} />
+      </directionalLight>
+
+      {/* Hemispheric light — warm ambient fill */}
+      <hemisphereLight
+        ref={hemiRef}
+        args={['#b3bfd9', '#594f47', hemiIntensity * stormMul]}
+        position={[0, 50, 0]}
+      />
+    </>
+  );
 };
 
 export default Lighting;
