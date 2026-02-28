@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/arcade-cabinet/sim-soviet/compare/v1.0.0...v1.1.0) (2026-02-28)
+
+
+### Features
+
+* WebGPU cross-platform migration — renderer, assets, native, XR ([#27](https://github.com/arcade-cabinet/sim-soviet/issues/27)) ([f24c4d0](https://github.com/arcade-cabinet/sim-soviet/commit/f24c4d045563402b01ebc9758f89c17a274c5b1f))
+
+
+### Bug Fixes
+
+* **ci:** fix release workflow — Pages ref + remove ABI splits ([#25](https://github.com/arcade-cabinet/sim-soviet/issues/25)) ([262c9fd](https://github.com/arcade-cabinet/sim-soviet/commit/262c9fd3c2ec62d3e6406905b60e9443a41f32c8))
+
 ## 1.0.0 (2026-02-28)
 
 
