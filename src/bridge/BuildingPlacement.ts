@@ -1,9 +1,9 @@
 /**
  * BuildingPlacement — bridges building placement from UI to ECS.
  *
- * Maps old BUILDING_TYPES tool keys (used by Toolbar) to ECS defIds
- * (used by placeNewBuilding), validates placement, deducts ECS resources,
- * creates ECS entity, and updates the spatial grid.
+ * Maps old Toolbar tool keys to ECS defIds (used by placeNewBuilding),
+ * validates placement and material affordability, creates ECS entity,
+ * and updates the spatial grid.
  *
  * Also handles building upgrades via upgradeECSBuilding().
  */
@@ -12,7 +12,7 @@ import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import { buildings as buildingsArchetype, getResourceEntity, tiles } from '@/ecs/archetypes';
 import { world } from '@/ecs/world';
 import { getBuildingDef } from '@/data/buildingDefs';
-import { BUILDING_TYPES } from '../engine/BuildingTypes';
+import { DEFAULT_MATERIAL_COST } from '@/ecs/systems/constructionSystem';
 import { getEngine, getGameGrid } from './GameInit';
 import { notifyStateChange } from '@/stores/gameStore';
 import { GRID_SIZE } from '@/config';
@@ -129,6 +129,30 @@ const TOOL_TO_DEF_ID: Record<string, string> = {
 };
 
 /**
+ * Check if the player has enough materials to start construction.
+ * Uses building's constructionCost or fallback defaults.
+ * Note: materials are NOT deducted here — constructionSystem
+ * handles per-tick deduction during the build process.
+ */
+function canAffordMaterials(
+  resources: { timber: number; steel: number; cement: number; prefab: number },
+  defId: string
+): boolean {
+  const def = getBuildingDef(defId);
+  const cc = def?.stats.constructionCost;
+  const timber = cc?.timber ?? DEFAULT_MATERIAL_COST.timber;
+  const steel = cc?.steel ?? DEFAULT_MATERIAL_COST.steel;
+  const cement = cc?.cement ?? DEFAULT_MATERIAL_COST.cement;
+  const prefab = cc?.prefab ?? 0;
+  return (
+    resources.timber >= timber &&
+    resources.steel >= steel &&
+    resources.cement >= cement &&
+    resources.prefab >= prefab
+  );
+}
+
+/**
  * Attempt to place a building via ECS.
  *
  * Returns true if the building was placed, false if placement was invalid
@@ -172,19 +196,8 @@ export function placeECSBuilding(
   const res = getResourceEntity();
   if (!res) return false;
 
-  const def = getBuildingDef(defId);
-  const cost = def?.presentation.cost ?? BUILDING_TYPES[toolKey]?.cost ?? 0;
-
-  // FIX-02: Reject placement if cost resolves to zero or negative — indicates missing def data
-  if (cost <= 0) {
-    console.error(`[BuildingPlacement] Cost resolved to ${cost} for defId "${defId}" (tool "${toolKey}") — rejecting placement`);
-    return false;
-  }
-
-  if (res.resources.money < cost) return false;
-
-  // Deduct cost from ECS resources
-  res.resources.money -= cost;
+  // Validate material affordability (constructionSystem deducts per-tick)
+  if (!canAffordMaterials(res.resources, defId)) return false;
 
   // Create ECS building entity (starts construction)
   const entity = placeNewBuilding(gridX, gridZ, defId);
