@@ -155,14 +155,14 @@ export const SEASON_CONTEXTS: Record<string, string> = {
  * Keys match the EraId values from game/era/types.ts.
  */
 export const ERA_CONTEXTS: Record<string, string> = {
-  war_communism: 'intense', // revolutionary upheaval, civil war
-  first_plans: 'industrial', // rapid industrialization
+  revolution: 'intense', // revolutionary upheaval, civil war
+  collectivization: 'industrial', // forced collectivization
+  industrialization: 'industrial', // rapid industrialization
   great_patriotic: 'intense', // wartime struggle
   reconstruction: 'melancholic', // rebuilding from ruins
-  thaw: 'upbeat', // cultural relaxation, optimism
+  thaw_and_freeze: 'upbeat', // cultural relaxation, then stiffening
   stagnation: 'melancholic', // decline, disillusionment
-  perestroika: 'upbeat', // reform and hope
-  eternal_soviet: 'triumphant', // utopian endgame — fixed from 'victory' (nonexistent context)
+  the_eternal: 'triumphant', // utopian endgame
 };
 
 export function getTrack(id: string): MusicTrack | undefined {

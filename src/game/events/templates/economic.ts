@@ -24,7 +24,7 @@ export const ECONOMIC_EVENTS: EventTemplate[] = [
     severity: 'major',
     effects: (gs) => ({ money: -Math.floor(gs.money * 0.15) }),
     condition: (gs) => gs.money > 100,
-    eraFilter: ['reconstruction', 'perestroika'],
+    eraFilter: ['reconstruction', 'stagnation'],
   },
   {
     id: 'factory_output_report',
@@ -100,7 +100,7 @@ export const ECONOMIC_EVENTS: EventTemplate[] = [
     category: 'economic',
     severity: 'trivial',
     effects: { money: -25 },
-    eraFilter: ['first_plans', 'reconstruction'],
+    eraFilter: ['collectivization', 'industrialization', 'reconstruction'],
   },
   {
     id: 'coal_shortage',
@@ -135,7 +135,7 @@ export const ECONOMIC_EVENTS: EventTemplate[] = [
     severity: 'minor',
     effects: { vodka: 20 },
     weight: 0.4,
-    eraFilter: ['reconstruction', 'thaw', 'stagnation'],
+    eraFilter: ['reconstruction', 'thaw_and_freeze', 'stagnation'],
   },
   {
     id: 'lost_rubles',

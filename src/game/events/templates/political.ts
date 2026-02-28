@@ -30,7 +30,7 @@ export const POLITICAL_EVENTS: EventTemplate[] = [
     category: 'political',
     severity: 'trivial',
     effects: {},
-    eraFilter: ['first_plans', 'reconstruction', 'thaw', 'stagnation'],
+    eraFilter: ['collectivization', 'industrialization', 'reconstruction', 'thaw_and_freeze', 'stagnation'],
   },
   {
     id: 'agricultural_record',
@@ -65,7 +65,7 @@ export const POLITICAL_EVENTS: EventTemplate[] = [
     severity: 'major',
     effects: (gs) => ({ pop: -Math.min(5, Math.floor(gs.pop * 0.05)) }),
     condition: (gs) => gs.pop > 10,
-    eraFilter: ['thaw', 'stagnation', 'perestroika'],
+    eraFilter: ['thaw_and_freeze', 'stagnation'],
   },
   {
     id: 'name_change',
@@ -97,7 +97,7 @@ export const POLITICAL_EVENTS: EventTemplate[] = [
     severity: 'minor',
     effects: { food: 10, vodka: 5, pop: -1 },
     condition: (gs) => gs.pop > 5,
-    eraFilter: ['war_communism', 'first_plans', 'great_patriotic'],
+    eraFilter: ['revolution', 'collectivization', 'industrialization', 'great_patriotic'],
   },
   {
     id: 'bureaucracy_achievement',

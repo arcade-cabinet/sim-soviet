@@ -46,16 +46,20 @@ interface MandateTemplate {
 }
 
 const ERA_MANDATE_TEMPLATES: Record<string, MandateTemplate[]> = {
-  war_communism: [
+  revolution: [
     { defId: 'workers-house-a', label: 'Workers Housing', baseRequired: 2 },
     { defId: 'collective-farm-hq', label: 'Collective Farm HQ', baseRequired: 1 },
     { defId: 'guard-post', label: 'Guard Post', baseRequired: 1 },
   ],
-  first_plans: [
-    { defId: 'power-station', label: 'Power Station', baseRequired: 1 },
-    { defId: 'vodka-distillery', label: 'Vodka Distillery', baseRequired: 1 },
+  collectivization: [
     { defId: 'workers-house-b', label: 'Workers Housing B', baseRequired: 2 },
+    { defId: 'warehouse', label: 'Warehouse', baseRequired: 1 },
+    { defId: 'school', label: 'School', baseRequired: 1 },
+  ],
+  industrialization: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 1 },
     { defId: 'factory-office', label: 'Factory Office', baseRequired: 1 },
+    { defId: 'vodka-distillery', label: 'Vodka Distillery', baseRequired: 1 },
   ],
   great_patriotic: [
     { defId: 'barracks', label: 'Military Barracks', baseRequired: 2 },
@@ -64,11 +68,10 @@ const ERA_MANDATE_TEMPLATES: Record<string, MandateTemplate[]> = {
   ],
   reconstruction: [
     { defId: 'workers-house-a', label: 'Workers Housing', baseRequired: 3 },
-    { defId: 'school', label: 'School', baseRequired: 1 },
     { defId: 'power-station', label: 'Power Station', baseRequired: 1 },
     { defId: 'bread-factory', label: 'Bread Factory', baseRequired: 1 },
   ],
-  thaw: [
+  thaw_and_freeze: [
     { defId: 'apartment-tower-a', label: 'Apartment Tower', baseRequired: 2 },
     { defId: 'cultural-palace', label: 'Cultural Palace', baseRequired: 1 },
     { defId: 'polyclinic', label: 'Polyclinic', baseRequired: 1 },
@@ -78,12 +81,7 @@ const ERA_MANDATE_TEMPLATES: Record<string, MandateTemplate[]> = {
     { defId: 'ministry-office', label: 'Ministry Office', baseRequired: 1 },
     { defId: 'workers-club', label: 'Workers Club', baseRequired: 1 },
   ],
-  perestroika: [
-    { defId: 'apartment-tower-c', label: 'Apartment Tower C', baseRequired: 2 },
-    { defId: 'post-office', label: 'Post Office', baseRequired: 1 },
-    { defId: 'radio-station', label: 'Radio Station', baseRequired: 1 },
-  ],
-  eternal_soviet: [
+  the_eternal: [
     { defId: 'apartment-tower-d', label: 'Apartment Tower D', baseRequired: 3 },
     { defId: 'government-hq', label: 'Government HQ', baseRequired: 1 },
     { defId: 'kgb-office', label: 'KGB Office', baseRequired: 1 },
@@ -107,9 +105,9 @@ const DIFFICULTY_MULTIPLIERS: Record<DifficultyLevel, number> = {
 export function createMandatesForEra(eraId: string, difficulty: DifficultyLevel): BuildingMandate[] {
   const templates = ERA_MANDATE_TEMPLATES[eraId];
   if (!templates) {
-    console.warn(`[PlanMandates] Unknown era ID "${eraId}", falling back to war_communism`);
+    console.warn(`[PlanMandates] Unknown era ID "${eraId}", falling back to revolution`);
   }
-  const resolved = templates ?? ERA_MANDATE_TEMPLATES.war_communism!;
+  const resolved = templates ?? ERA_MANDATE_TEMPLATES.revolution!;
   const mult = DIFFICULTY_MULTIPLIERS[difficulty];
 
   return resolved.map((t) => ({

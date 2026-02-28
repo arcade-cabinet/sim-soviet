@@ -67,14 +67,14 @@ const TIER_BONUS: Record<SettlementTier, number> = {
 
 /** Bonus score from historical era (technology/investment). */
 const ERA_BONUS: Record<string, number> = {
-  war_communism: 0,
-  first_plans: 1,
+  revolution: 0,
+  collectivization: 0,
+  industrialization: 1,
   great_patriotic: 0,
   reconstruction: 3,
-  thaw: 5,
+  thaw_and_freeze: 5,
   stagnation: 4,
-  perestroika: 2,
-  eternal_soviet: 3,
+  the_eternal: 3,
 };
 
 // ── Mitigation Table ─────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ export class TransportSystem {
   /** Timber cost per maintenance recovery application. */
   static readonly MAINTENANCE_TIMBER_COST = 1;
 
-  constructor(eraId = 'war_communism') {
+  constructor(eraId = 'revolution') {
     this.eraId = eraId;
   }
 
@@ -302,7 +302,7 @@ export class TransportSystem {
 
   static deserialize(data: TransportSaveData): TransportSystem {
     const valid = Object.values(RoadQuality) as string[];
-    const sys = new TransportSystem(data.eraId ?? 'war_communism');
+    const sys = new TransportSystem(data.eraId ?? 'revolution');
     sys.quality = valid.includes(data.quality) ? data.quality : RoadQuality.NONE;
     sys.rawScore = data.rawScore ?? 0;
     sys._condition = data.condition ?? 100;
