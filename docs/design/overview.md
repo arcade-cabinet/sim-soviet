@@ -9,7 +9,7 @@ coverage: "Full — core loop, ECS architecture, Canvas 2D rendering, all subsys
 
 ## Game Identity
 
-**Genre**: Worker-management survival sim with isometric city-building
+**Genre**: Worker-management survival sim with 3D city-building
 **Setting**: Alternate history — the Soviet Union never collapses. The state endures from 1917 through the present and beyond.
 **Platform**: Mobile-first (phone), browser, PWA
 **Tone**: Dark satirical comedy. *Krokodil* magazine meets Papers, Please meets Banished.

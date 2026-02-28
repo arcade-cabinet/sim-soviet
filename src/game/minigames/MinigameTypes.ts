@@ -19,7 +19,15 @@ export type MinigameId =
   | 'factory_emergency'
   | 'the_hunt'
   | 'interrogation'
-  | 'mining_expedition';
+  | 'mining_expedition'
+  | 'production_quotas'
+  | 'harvest_campaign'
+  | 'quality_control'
+  | 'prisoner_reform'
+  | 'paperwork_avalanche'
+  | 'grid_management'
+  | 'ideological_education'
+  | 'military_inspection';
 
 // ─────────────────────────────────────────────────────────
 //  OUTCOME

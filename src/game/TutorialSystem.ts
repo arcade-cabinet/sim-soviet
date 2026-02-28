@@ -254,6 +254,31 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
 ];
 
 // ─────────────────────────────────────────────────────────
+//  MILESTONE DISPLAY LABELS
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Human-readable labels for tutorial milestones.
+ * Used in "locked" tooltips: "Complete [label] to unlock".
+ */
+export const MILESTONE_LABELS: Readonly<Record<string, string>> = {
+  welcome: 'Begin your assignment',
+  first_building: 'Place your first building',
+  build_farm: 'Wait for the farmers',
+  first_harvest: 'Harvest food (50+)',
+  build_housing: 'House the workers',
+  power: 'Electrify the settlement',
+  first_winter: 'Survive first winter',
+  vodka_economy: 'Establish vodka production',
+  the_quota: 'Face the quota',
+  infrastructure: 'Develop infrastructure',
+  first_year_complete: 'Survive one full year',
+  government_buildings: 'Impress Moscow',
+  cultural_progress: 'Advance Soviet culture',
+  era_transition: 'Complete Era 1',
+};
+
+// ─────────────────────────────────────────────────────────
 //  UI REVEAL SCHEDULE
 // ─────────────────────────────────────────────────────────
 
@@ -388,6 +413,38 @@ export class TutorialSystem {
   getUnlockedBuildings(): string[] {
     if (!this.active) return [];
     return [...this.unlockedBuildings];
+  }
+
+  /**
+   * Returns true if ANY building in the given defId list is unlocked.
+   * When the tutorial is inactive, returns true (all unlocked).
+   * Used by RadialBuildMenu to determine if a category is accessible.
+   */
+  isCategoryUnlocked(buildingDefIds: string[]): boolean {
+    if (!this.active) return true;
+    return buildingDefIds.some((id) => this.unlockedBuildings.has(id));
+  }
+
+  /**
+   * Returns the name of the next milestone that will unlock buildings
+   * in the given defId list, or null if all are already unlocked or
+   * no milestone will unlock them.
+   * Used by RadialBuildMenu to show "Complete [milestone] to unlock" tooltips.
+   */
+  getNextUnlockMilestoneForBuildings(buildingDefIds: string[]): string | null {
+    if (!this.active) return null;
+    // If any building is already unlocked, category is accessible
+    if (buildingDefIds.some((id) => this.unlockedBuildings.has(id))) return null;
+
+    // Find the first uncompleted milestone that unlocks any building in the list
+    for (const milestone of this.milestones) {
+      if (this.completedMilestones.has(milestone.id)) continue;
+      if (!milestone.unlockedBuildings) continue;
+      if (milestone.unlockedBuildings.some((defId) => buildingDefIds.includes(defId))) {
+        return milestone.id;
+      }
+    }
+    return null;
   }
 
   /** Returns Krupnik's most recent guidance dialogue, or null if none yet. */

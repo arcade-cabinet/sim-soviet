@@ -615,6 +615,149 @@ function subscribeInspectMenu(listener: () => void): () => void {
   };
 }
 
+// ── Building Inspector Panel ──────────────────────────────────────────────
+
+export interface BuildingInspectorState {
+  buildingDefId: string;
+  gridX: number;
+  gridY: number;
+}
+
+let _buildingInspector: BuildingInspectorState | null = null;
+const _buildingInspectorListeners = new Set<() => void>();
+
+export function getBuildingInspector(): BuildingInspectorState | null {
+  return _buildingInspector;
+}
+
+export function openBuildingInspector(state: BuildingInspectorState): void {
+  _buildingInspector = state;
+  for (const listener of _buildingInspectorListeners) {
+    listener();
+  }
+}
+
+export function closeBuildingInspector(): void {
+  _buildingInspector = null;
+  for (const listener of _buildingInspectorListeners) {
+    listener();
+  }
+}
+
+export function useBuildingInspector(): BuildingInspectorState | null {
+  return useSyncExternalStore(subscribeBuildingInspector, getBuildingInspector, getBuildingInspector);
+}
+
+function subscribeBuildingInspector(listener: () => void): () => void {
+  _buildingInspectorListeners.add(listener);
+  return () => {
+    _buildingInspectorListeners.delete(listener);
+  };
+}
+
+// ── Citizen Dossier Index ─────────────────────────────────────────────────
+
+let _citizenDossierIndex: number | null = null;
+const _citizenDossierIndexListeners = new Set<() => void>();
+
+export function getCitizenDossierIndex(): number | null {
+  return _citizenDossierIndex;
+}
+
+export function openCitizenDossierByIndex(index: number): void {
+  _citizenDossierIndex = index;
+  for (const listener of _citizenDossierIndexListeners) {
+    listener();
+  }
+}
+
+export function closeCitizenDossierByIndex(): void {
+  _citizenDossierIndex = null;
+  for (const listener of _citizenDossierIndexListeners) {
+    listener();
+  }
+}
+
+export function useCitizenDossierIndex(): number | null {
+  return useSyncExternalStore(subscribeCitizenDossierIndex, getCitizenDossierIndex, getCitizenDossierIndex);
+}
+
+function subscribeCitizenDossierIndex(listener: () => void): () => void {
+  _citizenDossierIndexListeners.add(listener);
+  return () => {
+    _citizenDossierIndexListeners.delete(listener);
+  };
+}
+
+// ── Cursor Tooltip ────────────────────────────────────────────────────────
+
+export interface CursorTooltipState {
+  terrain: string;
+  type?: string;
+  smog: number;
+  watered: boolean;
+  onFire: boolean;
+  zone?: string;
+  z: number;
+  screenX: number;
+  screenY: number;
+}
+
+let _cursorTooltip: CursorTooltipState | null = null;
+const _cursorTooltipListeners = new Set<() => void>();
+
+export function getCursorTooltip(): CursorTooltipState | null {
+  return _cursorTooltip;
+}
+
+export function setCursorTooltip(state: CursorTooltipState | null): void {
+  _cursorTooltip = state;
+  for (const listener of _cursorTooltipListeners) {
+    listener();
+  }
+}
+
+export function useCursorTooltip(): CursorTooltipState | null {
+  return useSyncExternalStore(subscribeCursorTooltip, getCursorTooltip, getCursorTooltip);
+}
+
+function subscribeCursorTooltip(listener: () => void): () => void {
+  _cursorTooltipListeners.add(listener);
+  return () => {
+    _cursorTooltipListeners.delete(listener);
+  };
+}
+
+// ── Terrain Dirty Flag (signals Content.tsx to rebuild terrain grid) ─────
+
+let _terrainDirtyVersion = 0;
+const _terrainDirtyListeners = new Set<() => void>();
+
+/** Increment the terrain version counter — forces terrain grid refresh. */
+export function notifyTerrainDirty(): void {
+  _terrainDirtyVersion++;
+  for (const listener of _terrainDirtyListeners) {
+    listener();
+  }
+}
+
+/** Current terrain version (monotonically increasing). */
+export function getTerrainVersion(): number {
+  return _terrainDirtyVersion;
+}
+
+/** React hook — returns the terrain dirty version for useEffect dependencies. */
+export function useTerrainVersion(): number {
+  return useSyncExternalStore(subscribeTerrainDirty, getTerrainVersion, getTerrainVersion);
+}
+
+function subscribeTerrainDirty(listener: () => void): () => void {
+  _terrainDirtyListeners.add(listener);
+  return () => {
+    _terrainDirtyListeners.delete(listener);
+  };
+}
+
 // ── Placement Callback (bridges React → imperative CanvasGestureManager) ─
 
 type PlacementCallback = (gridX: number, gridY: number, defId: string) => boolean;
@@ -629,6 +772,41 @@ export function setPlacementCallback(cb: PlacementCallback | null): void {
 /** Called by RadialBuildMenu to place a building at a grid position. */
 export function requestPlacement(gridX: number, gridY: number, defId: string): boolean {
   return _placementCallback?.(gridX, gridY, defId) ?? false;
+}
+
+// ── Political Entity Panel (scene-driven) ─────────────────────────────────
+
+let _showPoliticalPanel = false;
+const _politicalPanelListeners = new Set<() => void>();
+
+export function getPoliticalPanelVisible(): boolean {
+  return _showPoliticalPanel;
+}
+
+/** Open the political entity panel from the 3D scene (e.g. tapping a political entity mesh). */
+export function openPoliticalPanel(): void {
+  _showPoliticalPanel = true;
+  for (const listener of _politicalPanelListeners) {
+    listener();
+  }
+}
+
+export function closePoliticalPanel(): void {
+  _showPoliticalPanel = false;
+  for (const listener of _politicalPanelListeners) {
+    listener();
+  }
+}
+
+export function usePoliticalPanel(): boolean {
+  return useSyncExternalStore(subscribePoliticalPanel, getPoliticalPanelVisible, getPoliticalPanelVisible);
+}
+
+function subscribePoliticalPanel(listener: () => void): () => void {
+  _politicalPanelListeners.add(listener);
+  return () => {
+    _politicalPanelListeners.delete(listener);
+  };
 }
 
 // ── Internal ──────────────────────────────────────────────────────────────

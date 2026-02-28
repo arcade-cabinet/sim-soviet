@@ -154,9 +154,20 @@ __pycache__/
 # Playtest screenshots (temporary)
 playtest-*.png
 prototype-*.png
+sim-soviet-*.png
+game-*.png
+scene-*.png
+screenshot-*.png
+initial-load.png
+loading-complete.png
+main-menu-*.png
+
+# Review screenshots (Claude reference only)
+glasnost-*.png
 
 # POC experiments
 poc/
+poc.html
 
 # Android
 android/
@@ -174,3 +185,8 @@ app/public/audio/*.mp3
 app/public/audio/*.ogg
 app/public/audio/*.wav
 !app/public/audio/.gitkeep
+
+# Expo
+.expo
+dist/
+web-build/

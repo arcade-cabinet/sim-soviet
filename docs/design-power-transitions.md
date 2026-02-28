@@ -844,4 +844,4 @@ For integration with the existing codebase at `/Users/jbogaty/src/arcade-cabinet
 
 ---
 
-This document provides the complete mechanical specification for power transitions as the core disruption mechanic in SimSoviet 2000. Every random disaster in the existing `EventSystem` is secondary to these leadership changes -- they are the earthquakes around which the player must build their concrete paradise.
+This document provides the complete mechanical specification for power transitions as the core disruption mechanic in SimSoviet 1917. Every random disaster in the existing `EventSystem` is secondary to these leadership changes -- they are the earthquakes around which the player must build their concrete paradise.

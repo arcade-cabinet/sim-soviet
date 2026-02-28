@@ -29,12 +29,16 @@ import type { SimulationEngine, SubsystemSaveData } from './SimulationEngine';
 
 const LOCALSTORAGE_KEY = 'simsoviet_save_v2';
 
+/** Module-level flag to log SQLite fallback warning only once. */
+let _sqliteWarningLogged = false;
+
 /** Shape of building data in save files. */
 interface BuildingSaveEntry {
   x: number;
   y: number;
   defId: string;
   powered: boolean;
+  level?: number;
   durability?: { current: number; decayRate: number };
 }
 
@@ -122,7 +126,8 @@ export class SaveSystem {
         return rows.length > 0;
       }
       return localStorage.getItem(LOCALSTORAGE_KEY) !== null;
-    } catch {
+    } catch (error) {
+      console.error('[SaveSystem] hasSave failed:', error);
       return false;
     }
   }
@@ -136,8 +141,45 @@ export class SaveSystem {
         return rows.length > 0;
       }
       return localStorage.getItem(LOCALSTORAGE_KEY) !== null;
-    } catch {
+    } catch (error) {
+      console.error('[SaveSystem] hasAnySave failed:', error);
       return false;
+    }
+  }
+
+  /** List all save names. */
+  public async listSaves(): Promise<string[]> {
+    try {
+      const db = this.tryGetDb();
+      if (db) {
+        const rows = db.select({ name: dbSchema.saves.name }).from(dbSchema.saves).all();
+        return rows.map((r) => r.name);
+      }
+      return localStorage.getItem(LOCALSTORAGE_KEY) !== null ? ['autosave'] : [];
+    } catch (error) {
+      console.error('[SaveSystem] listSaves failed:', error);
+      return [];
+    }
+  }
+
+  /** Get timestamp of the most recent save. */
+  public async getLastSaveTime(): Promise<number | undefined> {
+    try {
+      const db = this.tryGetDb();
+      if (db) {
+        const rows = db.select({ timestamp: dbSchema.saves.timestamp }).from(dbSchema.saves).all();
+        if (rows.length === 0) return undefined;
+        return Math.max(...rows.map((r) => r.timestamp));
+      }
+      const raw = localStorage.getItem(LOCALSTORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        return data.timestamp;
+      }
+      return undefined;
+    } catch (error) {
+      console.error('[SaveSystem] getLastSaveTime failed:', error);
+      return undefined;
     }
   }
 
@@ -160,6 +202,49 @@ export class SaveSystem {
       }
     } catch (error) {
       console.error('Failed to delete save:', error);
+    }
+  }
+
+  /**
+   * Export the current game state as a JSON string for file download.
+   * Returns null if no game state is available.
+   */
+  public exportSaveData(): string | null {
+    const data = this.collectExtendedState();
+    if (!data) return null;
+    return JSON.stringify(data, null, 2);
+  }
+
+  /**
+   * Import game state from a JSON string (e.g. from a file upload).
+   * Validates the structure before restoring. Returns true on success.
+   */
+  public importSaveData(json: string): boolean {
+    try {
+      const data: ExtendedSaveData = JSON.parse(json);
+
+      // Validate required top-level keys
+      if (
+        !data.version ||
+        !data.resources ||
+        !data.gameMeta ||
+        !Array.isArray(data.buildings)
+      ) {
+        return false;
+      }
+
+      // Validate gameMeta has required fields
+      if (
+        !data.gameMeta.date ||
+        typeof data.gameMeta.date.year !== 'number' ||
+        typeof data.gameMeta.date.month !== 'number'
+      ) {
+        return false;
+      }
+
+      return this.restoreExtendedState(data);
+    } catch {
+      return false;
     }
   }
 
@@ -205,6 +290,7 @@ export class SaveSystem {
         y: e.position.gridY,
         defId: e.building.defId,
         powered: e.building.powered,
+        level: e.building.level ?? 0,
         durability: durabilityMap.get(key),
       };
     });
@@ -284,6 +370,10 @@ export class SaveSystem {
 
     for (const b of data.buildings) {
       const entity = createBuilding(b.x, b.y, b.defId);
+      // Restore level if present
+      if (entity.building && b.level != null) {
+        entity.building.level = b.level;
+      }
       // Restore durability if present
       if (b.durability && entity.durability) {
         entity.durability.current = b.durability.current;
@@ -310,7 +400,11 @@ export class SaveSystem {
   private tryGetDb(): SQLJsDatabase<typeof dbSchema> | null {
     try {
       return getDatabase();
-    } catch {
+    } catch (error) {
+      if (!_sqliteWarningLogged) {
+        console.warn('[SaveSystem] SQLite unavailable, using localStorage fallback:', error);
+        _sqliteWarningLogged = true;
+      }
       return null;
     }
   }
@@ -323,75 +417,78 @@ export class SaveSystem {
     const meta = getMetaEntity();
     if (!res || !meta) return false;
 
-    // Upsert: delete old save with same name, insert new one
-    const existing = db.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).get();
-    if (existing) {
-      db.delete(dbSchema.buildings).where(eq(dbSchema.buildings.saveId, existing.id)).run();
-      db.delete(dbSchema.resources).where(eq(dbSchema.resources.saveId, existing.id)).run();
-      db.delete(dbSchema.chronology).where(eq(dbSchema.chronology.saveId, existing.id)).run();
-      db.delete(dbSchema.quotas).where(eq(dbSchema.quotas.saveId, existing.id)).run();
-      db.delete(dbSchema.saves).where(eq(dbSchema.saves.id, existing.id)).run();
-    }
+    // Atomic upsert: wrap in transaction to prevent partial writes on interrupt
+    db.transaction((tx) => {
+      // Delete old save with same name
+      const existing = tx.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).get();
+      if (existing) {
+        tx.delete(dbSchema.buildings).where(eq(dbSchema.buildings.saveId, existing.id)).run();
+        tx.delete(dbSchema.resources).where(eq(dbSchema.resources.saveId, existing.id)).run();
+        tx.delete(dbSchema.chronology).where(eq(dbSchema.chronology.saveId, existing.id)).run();
+        tx.delete(dbSchema.quotas).where(eq(dbSchema.quotas.saveId, existing.id)).run();
+        tx.delete(dbSchema.saves).where(eq(dbSchema.saves.id, existing.id)).run();
+      }
 
-    const save = db
-      .insert(dbSchema.saves)
-      .values({
-        name,
-        timestamp: Date.now(),
-        version: '2.0.0',
-        gameState: JSON.stringify(extendedState),
-      })
-      .returning()
-      .get();
+      const save = tx
+        .insert(dbSchema.saves)
+        .values({
+          name,
+          timestamp: Date.now(),
+          version: '2.0.0',
+          gameState: JSON.stringify(extendedState),
+        })
+        .returning()
+        .get();
 
-    if (!save) return false;
+      if (!save) return;
 
-    // Also write legacy tables for backward compatibility
-    db.insert(dbSchema.resources)
-      .values({
-        saveId: save.id,
-        money: res.resources.money,
-        food: res.resources.food,
-        vodka: res.resources.vodka,
-        power: res.resources.power,
-        powerUsed: res.resources.powerUsed,
-        population: res.resources.population,
-      })
-      .run();
-
-    db.insert(dbSchema.chronology)
-      .values({
-        saveId: save.id,
-        year: meta.gameMeta.date.year,
-        month: meta.gameMeta.date.month,
-        tick: meta.gameMeta.date.tick,
-      })
-      .run();
-
-    db.insert(dbSchema.quotas)
-      .values({
-        saveId: save.id,
-        type: meta.gameMeta.quota.type,
-        target: meta.gameMeta.quota.target,
-        current: meta.gameMeta.quota.current,
-        deadlineYear: meta.gameMeta.quota.deadlineYear,
-      })
-      .run();
-
-    const ecsBuildings = buildingsLogic.entities;
-    if (ecsBuildings.length > 0) {
-      db.insert(dbSchema.buildings)
-        .values(
-          ecsBuildings.map((e) => ({
-            saveId: save.id,
-            gridX: e.position.gridX,
-            gridY: e.position.gridY,
-            type: e.building.defId,
-            powered: e.building.powered,
-          }))
-        )
+      // Also write legacy tables for backward compatibility
+      tx.insert(dbSchema.resources)
+        .values({
+          saveId: save.id,
+          money: res.resources.money,
+          food: res.resources.food,
+          vodka: res.resources.vodka,
+          power: res.resources.power,
+          powerUsed: res.resources.powerUsed,
+          population: res.resources.population,
+        })
         .run();
-    }
+
+      tx.insert(dbSchema.chronology)
+        .values({
+          saveId: save.id,
+          year: meta.gameMeta.date.year,
+          month: meta.gameMeta.date.month,
+          tick: meta.gameMeta.date.tick,
+        })
+        .run();
+
+      tx.insert(dbSchema.quotas)
+        .values({
+          saveId: save.id,
+          type: meta.gameMeta.quota.type,
+          target: meta.gameMeta.quota.target,
+          current: meta.gameMeta.quota.current,
+          deadlineYear: meta.gameMeta.quota.deadlineYear,
+        })
+        .run();
+
+      const ecsBuildings = buildingsLogic.entities;
+      if (ecsBuildings.length > 0) {
+        tx.insert(dbSchema.buildings)
+          .values(
+            ecsBuildings.map((e) => ({
+              saveId: save.id,
+              gridX: e.position.gridX,
+              gridY: e.position.gridY,
+              type: e.building.defId,
+              powered: e.building.powered,
+            }))
+          )
+          .run();
+      }
+    });
 
     // Persist SQLite to IndexedDB (fire-and-forget)
     persistToIndexedDB();

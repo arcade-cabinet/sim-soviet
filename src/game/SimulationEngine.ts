@@ -17,6 +17,7 @@
  *   8. quotaSystem             — track 5-year plan progress
  *   9. SettlementSystem        — evaluate tier upgrades/downgrades
  *  10. EventSystem             — random satirical events
+ *  10b. FireSystem             — fire spread, damage, zeppelin firefighting
  *  11. PolitburoSystem         — corruption drain, politburo events
  *  12. PravdaSystem            — generate propaganda headlines
  *  13. PersonnelFile           — black mark decay, arrest check
@@ -30,6 +31,8 @@ import {
   getResourceEntity,
   operationalBuildings,
 } from '@/ecs/archetypes';
+import type { FireSystemSaveData } from './FireSystem';
+import { FireSystem } from './FireSystem';
 import type { QuotaState } from '@/ecs/systems';
 import {
   constructionSystem,
@@ -63,9 +66,11 @@ import {
   type AnnualReportEngineState,
   checkQuota as checkQuotaHelper,
 } from './engine/annualReportTick';
+import { tickDirectives as tickDirectivesHelper } from './engine/directiveTick';
 import {
   checkBuildingTapMinigame as checkBuildingTapMinigameHelper,
   checkEventMinigame as checkEventMinigameHelper,
+  isMinigameAvailable as isMinigameAvailableHelper,
   resolveMinigameChoice as resolveMinigameChoiceHelper,
   tickMinigames as tickMinigamesHelper,
 } from './engine/minigameTick';
@@ -165,6 +170,7 @@ export interface SubsystemSaveData {
   achievements?: AchievementTrackerSaveData;
   mandates?: PlanMandateState;
   transport?: TransportSaveData;
+  fire?: FireSystemSaveData;
   /** Engine-level state */
   engineState?: {
     lastSeason: string;
@@ -188,6 +194,12 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
   eternal_soviet: 'eternal',
 };
 
+/** Event IDs that should ignite a building when triggered. */
+const FIRE_EVENT_IDS = new Set([
+  'cultural_palace_fire',
+  'power_station_explosion',
+]);
+
 export class SimulationEngine {
   private chronology: ChronologySystem;
   private eraSystem: EraSystem;
@@ -206,6 +218,7 @@ export class SimulationEngine {
   private achievements: AchievementTracker;
   private mandateState: PlanMandateState | null = null;
   private transport: TransportSystem;
+  private fireSystem: FireSystem;
   private difficulty: DifficultyLevel;
   private quota: QuotaState;
   private rng: GameRng | undefined;
@@ -267,6 +280,11 @@ export class SimulationEngine {
         // minor + trivial events
         this.callbacks.onToast(event.title, 'warning');
       }
+
+      // Fire-triggering events ignite a random building
+      if (FIRE_EVENT_IDS.has(event.id)) {
+        this.fireSystem.igniteRandom();
+      }
     };
 
     this.eventSystem = new EventSystem(this.eventHandler, rng);
@@ -282,6 +300,9 @@ export class SimulationEngine {
 
     // Personnel File — tracks black marks and commendations (game-over mechanic)
     this.personnelFile = new PersonnelFile();
+
+    // Wire EventSystem → PersonnelFile so events generate marks/commendations
+    this.eventSystem.setPersonnelFile(this.personnelFile);
 
     // Compulsory Deliveries — state takes cut of production, doctrine from era
     this.deliveries = new CompulsoryDeliveries(this.eraSystem.getDoctrine());
@@ -311,6 +332,17 @@ export class SimulationEngine {
     // Transport System — road quality, condition degradation, maintenance
     this.transport = new TransportSystem(this.eraSystem.getCurrentEraId());
     if (rng) this.transport.setRng(rng);
+
+    // Fire System — fire spread, damage, zeppelin firefighting
+    this.fireSystem = new FireSystem(rng, {
+      onBuildingCollapsed: (gridX, gridY, defId) => {
+        this.callbacks.onToast(`FIRE DESTROYED: ${defId} at (${gridX}, ${gridY})`, 'critical');
+        this.callbacks.onBuildingCollapsed?.(gridX, gridY, defId);
+      },
+      onFireStarted: (gridX, gridY) => {
+        this.callbacks.onToast(`FIRE AT (${gridX}, ${gridY})`, 'warning');
+      },
+    });
 
     // Disease System — outbreak/recovery/mortality per citizen
     initDiseaseSystem(rng ?? null);
@@ -394,6 +426,10 @@ export class SimulationEngine {
     return this.tutorial;
   }
 
+  public getFireSystem(): FireSystem {
+    return this.fireSystem;
+  }
+
   public getAchievements(): AchievementTracker {
     return this.achievements;
   }
@@ -445,6 +481,7 @@ export class SimulationEngine {
     this.achievements = se.achievements;
     this.mandateState = se.mandateState;
     this.transport = se.transport;
+    this.fireSystem = se.fireSystem;
     this.consecutiveQuotaFailures = se.consecutiveQuotaFailures;
     this.lastSeason = se.lastSeason;
     this.lastWeather = se.lastWeather;
@@ -452,6 +489,9 @@ export class SimulationEngine {
     this.lastThreatLevel = se.lastThreatLevel;
     this.pendingReport = se.pendingReport;
     this.ended = se.ended;
+
+    // Re-wire EventSystem → PersonnelFile after deserialization replaces instances
+    this.eventSystem.setPersonnelFile(this.personnelFile);
   }
 
   /**
@@ -471,6 +511,14 @@ export class SimulationEngine {
   }
 
   /**
+   * Check whether a building-tap minigame is available for a given building defId.
+   * Used by the RadialInspectMenu to show/hide the Special Action button.
+   */
+  public isMinigameAvailable(buildingDefId: string): boolean {
+    return isMinigameAvailableHelper(this.getMinigameContext(), buildingDefId);
+  }
+
+  /**
    * Called after EventSystem fires an event — check if the event triggers a minigame.
    */
   public checkEventMinigame(eventId: string): void {
@@ -484,6 +532,13 @@ export class SimulationEngine {
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: tick orchestrates 18+ subsystems sequentially
   public tick(): void {
     if (this.ended) return;
+
+    // FIX-05: Guard against missing resource entity — abort tick entirely
+    const storeRef = getResourceEntity();
+    if (!storeRef) {
+      console.error('[SimulationEngine] Resource entity missing — aborting tick');
+      return;
+    }
 
     // 1. Advance time via ChronologySystem
     const tickResult = this.chronology.tick();
@@ -513,13 +568,12 @@ export class SimulationEngine {
     powerSystem();
 
     // Transport System — road quality, condition decay, maintenance, mitigation
-    const storeRef = getResourceEntity();
     const transportResult = this.transport.tick(
       operationalBuildings.entities,
       this.settlement.getCurrentTier(),
       this.chronology.getDate().totalTicks,
       tickResult.season,
-      storeRef?.resources
+      storeRef.resources
     );
 
     constructionSystem(
@@ -529,27 +583,32 @@ export class SimulationEngine {
     );
 
     // Capture pre-production resource levels for CompulsoryDeliveries delta
-    const foodBefore = storeRef?.resources.food ?? 0;
-    const vodkaBefore = storeRef?.resources.vodka ?? 0;
+    const foodBefore = storeRef.resources.food;
+    const vodkaBefore = storeRef.resources.vodka;
+    const moneyBefore = storeRef.resources.money;
 
     productionSystem(farmMod, vodkaMod);
-
-    // Apply CompulsoryDeliveries — state extraction of new production
-    if (storeRef) {
-      const newFood = storeRef.resources.food - foodBefore;
-      const newVodka = storeRef.resources.vodka - vodkaBefore;
-      if (newFood > 0 || newVodka > 0) {
-        const result = this.deliveries.applyDeliveries(newFood, newVodka, 0);
-        storeRef.resources.food = Math.max(0, storeRef.resources.food - result.foodTaken);
-        storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - result.vodkaTaken);
-      }
-    }
 
     // Storage & spoilage — capacity from buildings, seasonal food decay
     storageSystem(this.chronology.getDate().month);
 
     // Economy System — trudodni, fondy, blat, stakhanovite, MTS, heating, reforms
     this.tickEconomySystem();
+
+    // Apply CompulsoryDeliveries — state extraction of new production + income
+    // Runs AFTER both productionSystem and economySystem so we capture all
+    // new food, vodka, and money generated this tick.
+    {
+      const newFood = Math.max(0, storeRef.resources.food - foodBefore);
+      const newVodka = Math.max(0, storeRef.resources.vodka - vodkaBefore);
+      const newMoney = Math.max(0, storeRef.resources.money - moneyBefore);
+      if (newFood > 0 || newVodka > 0 || newMoney > 0) {
+        const result = this.deliveries.applyDeliveries(newFood, newVodka, newMoney);
+        storeRef.resources.food = Math.max(0, storeRef.resources.food - result.foodTaken);
+        storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - result.vodkaTaken);
+        storeRef.resources.money = Math.max(0, storeRef.resources.money - result.moneyTaken);
+      }
+    }
 
     consumptionSystem(eraMods.consumptionMult);
 
@@ -559,7 +618,7 @@ export class SimulationEngine {
       this.chronology.getDate().month
     );
     // Sync disease deaths to the resource store
-    if (diseaseResult.deaths > 0 && storeRef) {
+    if (diseaseResult.deaths > 0) {
       storeRef.resources.population = Math.max(
         0,
         storeRef.resources.population - diseaseResult.deaths
@@ -586,23 +645,21 @@ export class SimulationEngine {
     );
 
     // Worker System — sync citizen entities to match population, then tick worker stats
-    const pop = getResourceEntity()?.resources.population ?? 0;
+    const pop = storeRef.resources.population;
     this.workerSystem.syncPopulation(pop);
-    const vodkaAvail = getResourceEntity()?.resources.vodka ?? 0;
-    const foodAvail = getResourceEntity()?.resources.food ?? 0;
+    const vodkaAvail = storeRef.resources.vodka;
+    const foodAvail = storeRef.resources.food;
     this.workerSystem.tick(vodkaAvail, foodAvail);
 
     // Demographic System — births, deaths, aging for dvor households
-    const normalizedFood = storeRef
-      ? Math.min(1, storeRef.resources.food / Math.max(1, storeRef.resources.population * 2))
-      : 0.5;
+    const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, storeRef.resources.population * 2));
     const demoResult = demographicTick(
       this.rng ?? null,
       this.chronology.getDate().totalTicks,
       normalizedFood
     );
     // Sync dvor population changes to the resource store
-    if (storeRef && (demoResult.births > 0 || demoResult.deaths > 0)) {
+    if (demoResult.births > 0 || demoResult.deaths > 0) {
       storeRef.resources.population = Math.max(
         0,
         storeRef.resources.population + demoResult.births - demoResult.deaths
@@ -629,6 +686,9 @@ export class SimulationEngine {
 
     // 8-10. Events, Politburo, and Pravda
     this.eventSystem.tick(this.chronology.getDate().totalTicks, eraMods.eventFrequencyMult);
+
+    // Fire System — spread, damage, zeppelin AI (after events so new fires are processed)
+    this.fireSystem.tick(tickResult.weather, this.grid);
 
     // PolitburoSystem now writes ECS directly — no delta-capture hack needed
     this.politburo.setCorruptionMult(eraMods.corruptionMult);
@@ -667,6 +727,9 @@ export class SimulationEngine {
     // Tutorial System — check milestones for progressive disclosure (Era 1)
     tickTutorialHelper(this.getAchievementContext());
 
+    // Directives — sequential objectives tracked by DirectiveHUD
+    tickDirectivesHelper({ callbacks: this.callbacks });
+
     // Achievement Tracker — update stats and check unlock conditions
     tickAchievementsHelper(this.getAchievementContext());
 
@@ -674,9 +737,8 @@ export class SimulationEngine {
     this.syncSystemsToMeta();
 
     // Check loss: population wiped out (only after first year so starting at 0 doesn't auto-lose)
-    const store = getResourceEntity();
     if (
-      (store?.resources.population ?? 0) <= 0 &&
+      storeRef.resources.population <= 0 &&
       this.chronology.getDate().totalTicks > TICKS_PER_YEAR &&
       buildingsLogic.entities.length > 0
     ) {
@@ -714,6 +776,7 @@ export class SimulationEngine {
       scoring: this.scoring,
       callbacks: this.callbacks,
       rng: this.rng,
+      deliveries: this.deliveries,
       engineState: {
         quota: this.quota,
         consecutiveQuotaFailures: this.consecutiveQuotaFailures,
@@ -742,6 +805,7 @@ export class SimulationEngine {
       achievements: this.achievements,
       mandateState: this.mandateState,
       transport: this.transport,
+      fireSystem: this.fireSystem,
       quota: this.quota,
       consecutiveQuotaFailures: this.consecutiveQuotaFailures,
       lastSeason: this.lastSeason,

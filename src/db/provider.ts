@@ -24,7 +24,7 @@ export async function initDatabase(): Promise<SQLJsDatabase<typeof schema>> {
 
   const SQL = await initSqlJs({
     // sql.js Wasm binary loaded from CDN
-    locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
+    locateFile: (file: string) => `/wasm/${file}`,
   });
 
   // Try to restore persisted database from IndexedDB
@@ -185,7 +185,7 @@ export function exportDatabaseFile(): Uint8Array | null {
  */
 export async function importDatabaseFile(data: Uint8Array): Promise<SQLJsDatabase<typeof schema>> {
   const SQL = await initSqlJs({
-    locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
+    locateFile: (file: string) => `/wasm/${file}`,
   });
 
   // Close existing database

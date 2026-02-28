@@ -37,6 +37,8 @@ export type ConstructionPhase = 'foundation' | 'building' | 'complete';
 export interface BuildingComponent {
   /** Building definition ID (sprite ID key into BUILDING_DEFS) */
   defId: string;
+  /** Upgrade level (0 = base, 1 = mid, 2 = top) */
+  level: number;
   /** Whether this building currently receives power */
   powered: boolean;
   /** Power units this building requires to operate */
@@ -57,6 +59,10 @@ export interface BuildingComponent {
   constructionProgress?: number;
   /** Integer ticks elapsed during construction (avoids floating-point accumulation) */
   constructionTicks?: number;
+  /** Whether this building is currently on fire */
+  onFire?: boolean;
+  /** Ticks remaining until fire self-extinguishes (0 = not burning) */
+  fireTicksRemaining?: number;
 }
 
 /**
@@ -92,6 +98,8 @@ export interface CitizenComponent {
   memberRole?: MemberRole;
   /** Active disease (if any) — sick citizens have reduced labor output */
   disease?: CitizenDisease;
+  /** Full name (Given Patronymic Surname) — set at creation, persists on the ECS entity */
+  name?: string;
 }
 
 // ── Dvor (Household) System ──────────────────────────────────────────────────

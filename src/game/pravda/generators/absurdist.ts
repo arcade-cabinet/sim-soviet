@@ -30,7 +30,7 @@ export const contextualGenerators: ContextualGenerator[] = [
     generate: (gs) => ({
       headline: `CITIZENS ACHIEVE NEW FASTING RECORD: DAY ${randInt(3, 30)}`,
       subtext: `Health benefits of not eating: extensively documented by the Ministry of ${pick(['Health', 'Nutrition', 'Convenient Explanations'])}.`,
-      reality: `Food supply: ${gs.food} units. Citizens spotted eating a poster of food.`,
+      reality: `Food supply: ${Math.round(gs.food)} units. Citizens spotted eating a poster of food.`,
       category: 'spin',
     }),
   },
@@ -40,9 +40,9 @@ export const contextualGenerators: ContextualGenerator[] = [
     condition: (gs) => gs.money < 50,
     weight: 2,
     generate: (gs) => ({
-      headline: `POST-MONETARY ECONOMY ACHIEVED: TREASURY AT LEAN ${gs.money} RUBLES`,
+      headline: `POST-MONETARY ECONOMY ACHIEVED: TREASURY AT LEAN ${Math.round(gs.money)} RUBLES`,
       subtext: `Money is a capitalist construct. We have moved beyond it. (We had no choice.)`,
-      reality: `The treasury is a tin box with ${gs.money} rubles and a moth.`,
+      reality: `The treasury is a tin box with ${Math.round(gs.money)} rubles and a moth.`,
       category: 'spin',
     }),
   },
@@ -89,7 +89,7 @@ export const contextualGenerators: ContextualGenerator[] = [
     condition: (gs) => gs.vodka > 100,
     weight: 1.5,
     generate: (gs) => ({
-      headline: `VODKA RESERVES AT ${gs.vodka} UNITS: MORALE INFRASTRUCTURE SECURE`,
+      headline: `VODKA RESERVES AT ${Math.round(gs.vodka)} UNITS: MORALE INFRASTRUCTURE SECURE`,
       subtext: `Ministry of Spirits confirms: nation can withstand ${Math.floor(gs.vodka / gs.pop || 1)}-day morale siege.`,
       reality: `Workers operating at blood-vodka level of ${(gs.vodka / Math.max(1, gs.pop)).toFixed(1)}%. Productivity: debatable.`,
       category: 'production',

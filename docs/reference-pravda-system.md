@@ -1,8 +1,8 @@
 # Pravda Headline Generator -- Reference
 
-> Source: `src/game/PravdaSystem.ts` (1,458 lines)
+> Source: `src/game/pravda/PravdaSystem.ts` (1,458 lines)
 >
-> Procedural propaganda headline engine for SimSoviet 2000. Generates
+> Procedural propaganda headline engine for SimSoviet 1917. Generates
 > unlimited unique Pravda newspaper headlines from compositional grammars.
 > All news is good news. Bad news is better news, presented correctly.
 

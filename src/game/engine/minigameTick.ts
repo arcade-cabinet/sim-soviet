@@ -7,6 +7,7 @@
 
 import { getResourceEntity } from '@/ecs/archetypes';
 import type { ChronologySystem } from '../ChronologySystem';
+import { resolveBuildingTrigger } from '../minigames/BuildingMinigameMap';
 import type { MinigameRouter } from '../minigames/MinigameRouter';
 import type { MinigameOutcome } from '../minigames/MinigameTypes';
 import type { PersonnelFile } from '../PersonnelFile';
@@ -50,12 +51,16 @@ export function tickMinigames(ctx: MinigameContext): void {
 /**
  * Called by CanvasGestureManager (via callback) when a building is tapped.
  * Checks if the building defId triggers a minigame.
+ *
+ * Uses BuildingMinigameMap to resolve building defIds to abstract trigger
+ * conditions (e.g. 'factory-office' → 'factory_tap').
  */
 export function checkBuildingTapMinigame(ctx: MinigameContext, buildingDefId: string): void {
   const totalTicks = ctx.chronology.getDate().totalTicks;
   const population = getResourceEntity()?.resources.population ?? 0;
+  const resolvedId = resolveBuildingTrigger(buildingDefId);
   const def = ctx.minigameRouter.checkTrigger('building_tap', {
-    buildingDefId,
+    buildingDefId: resolvedId,
     totalTicks,
     population,
   });
@@ -63,6 +68,24 @@ export function checkBuildingTapMinigame(ctx: MinigameContext, buildingDefId: st
     const active = ctx.minigameRouter.startMinigame(def, totalTicks);
     ctx.callbacks.onMinigame?.(active, (id) => resolveMinigameChoice(ctx, id));
   }
+}
+
+/**
+ * Check whether a minigame is currently available for a given building defId.
+ * Returns true if there is a matching definition and it is not on cooldown.
+ * Used by the RadialInspectMenu to show/hide the Special Action button.
+ */
+export function isMinigameAvailable(ctx: MinigameContext, buildingDefId: string): boolean {
+  if (ctx.minigameRouter.isActive()) return false;
+  const totalTicks = ctx.chronology.getDate().totalTicks;
+  const population = getResourceEntity()?.resources.population ?? 0;
+  const resolvedId = resolveBuildingTrigger(buildingDefId);
+  const def = ctx.minigameRouter.checkTrigger('building_tap', {
+    buildingDefId: resolvedId,
+    totalTicks,
+    population,
+  });
+  return def !== null;
 }
 
 /**

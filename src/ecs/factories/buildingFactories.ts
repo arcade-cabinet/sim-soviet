@@ -23,25 +23,27 @@ import { world } from '../world';
  */
 export function createBuilding(gridX: number, gridY: number, defId: string): Entity {
   const def = getBuildingDef(defId);
+  if (!def) throw new Error(`[buildingFactories] Unknown building defId: "${defId}"`);
 
   // Derive building component from generated defs
   const building: BuildingComponent = {
     defId,
+    level: 0,
     powered: false,
-    powerReq: def?.stats.powerReq ?? 0,
-    powerOutput: def?.stats.powerOutput ?? 0,
-    produces: def?.stats.produces,
-    housingCap: def?.stats.housingCap ?? 0,
-    pollution: def?.stats.pollution ?? 0,
-    fear: def?.stats.fear ?? 0,
+    powerReq: def.stats.powerReq,
+    powerOutput: def.stats.powerOutput,
+    produces: def.stats.produces,
+    housingCap: def.stats.housingCap,
+    pollution: def.stats.pollution,
+    fear: def.stats.fear,
   };
 
   // Derive renderable from sprite data
   const renderable: Renderable = {
     spriteId: defId,
-    spritePath: def?.sprite.path ?? '',
-    footprintX: def?.footprint.tilesX ?? 1,
-    footprintY: def?.footprint.tilesY ?? 1,
+    spritePath: def.sprite.path,
+    footprintX: def.footprint.tilesX,
+    footprintY: def.footprint.tilesY,
     visible: true,
   };
 
@@ -49,7 +51,7 @@ export function createBuilding(gridX: number, gridY: number, defId: string): Ent
     position: { gridX, gridY },
     building,
     renderable,
-    durability: { current: 100, decayRate: def?.stats.decayRate ?? 0.05 },
+    durability: { current: 100, decayRate: def.stats.decayRate },
     isBuilding: true,
   };
 
@@ -73,16 +75,18 @@ export function createBuilding(gridX: number, gridY: number, defId: string): Ent
  */
 export function placeNewBuilding(gridX: number, gridY: number, defId: string): Entity {
   const def = getBuildingDef(defId);
+  if (!def) throw new Error(`[buildingFactories] Unknown building defId: "${defId}"`);
 
   const building: BuildingComponent = {
     defId,
+    level: 0,
     powered: false,
-    powerReq: def?.stats.powerReq ?? 0,
-    powerOutput: def?.stats.powerOutput ?? 0,
-    produces: def?.stats.produces,
-    housingCap: def?.stats.housingCap ?? 0,
-    pollution: def?.stats.pollution ?? 0,
-    fear: def?.stats.fear ?? 0,
+    powerReq: def.stats.powerReq,
+    powerOutput: def.stats.powerOutput,
+    produces: def.stats.produces,
+    housingCap: def.stats.housingCap,
+    pollution: def.stats.pollution,
+    fear: def.stats.fear,
     constructionPhase: 'foundation',
     constructionProgress: 0,
     constructionTicks: 0,
@@ -90,9 +94,9 @@ export function placeNewBuilding(gridX: number, gridY: number, defId: string): E
 
   const renderable: Renderable = {
     spriteId: defId,
-    spritePath: def?.sprite.path ?? '',
-    footprintX: def?.footprint.tilesX ?? 1,
-    footprintY: def?.footprint.tilesY ?? 1,
+    spritePath: def.sprite.path,
+    footprintX: def.footprint.tilesX,
+    footprintY: def.footprint.tilesY,
     visible: true,
   };
 
@@ -100,7 +104,7 @@ export function placeNewBuilding(gridX: number, gridY: number, defId: string): E
     position: { gridX, gridY },
     building,
     renderable,
-    durability: { current: 100, decayRate: def?.stats.decayRate ?? 0.05 },
+    durability: { current: 100, decayRate: def.stats.decayRate },
     isBuilding: true,
   };
 

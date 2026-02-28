@@ -2,7 +2,7 @@
 
 Source: `src/content/WorldBuilding.ts`
 
-This document covers the world-building content module for SimSoviet 2000 -- the
+This document covers the world-building content module for SimSoviet 1917 -- the
 narrative, flavor, and satirical text layer that gives the game its voice. Every
 string a player reads outside of the core UI (radio chatter, loading screens,
 building tooltips, achievements, city names) originates from this file.

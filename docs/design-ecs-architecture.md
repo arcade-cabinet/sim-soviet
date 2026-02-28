@@ -2,7 +2,7 @@
 
 > Sources: `src/ecs/world.ts`, `src/ecs/archetypes.ts`, `src/ecs/systems/*.ts`
 >
-> SimSoviet 2000 uses a Miniplex 2.0 Entity Component System as the
+> SimSoviet 1917 uses a Miniplex 2.0 Entity Component System as the
 > backbone of all gameplay simulation. Every building, citizen, tile, and
 > resource stockpile is an entity. Systems are pure functions that operate
 > on the world each tick. The People do not need to understand the

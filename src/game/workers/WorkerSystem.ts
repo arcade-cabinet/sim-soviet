@@ -103,9 +103,15 @@ export class WorkerSystem {
     const rng = this.rng;
     const classIndex = rng ? rng.weightedIndex(CLASS_WEIGHTS) : 0;
     const citizenClass = CLASS_ORDER[classIndex]!;
-    const name = rng ? generateWorkerName(rng) : 'Unnamed Worker';
+    const generated = rng ? generateWorkerName(rng) : { name: 'Unnamed Worker', gender: 'male' as const };
+    const name = generated.name;
 
     const entity = createCitizen(citizenClass, homeX, homeY);
+    // Persist the name on the ECS citizen component
+    if (entity.citizen) {
+      entity.citizen.name = name;
+      if (!entity.citizen.gender) entity.citizen.gender = generated.gender;
+    }
 
     const stats: WorkerStats = {
       morale: 50,

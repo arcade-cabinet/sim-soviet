@@ -1,7 +1,7 @@
 ---
 title: UI/UX — Mobile-First Brutalist
 status: Partial
-implementation: src/components/ui/, src/components/screens/, app/App.tsx
+implementation: src/ui/, src/scene/. Note: CitizenDossierModal.tsx, BuildingInspectorPanel.tsx, RadialInspectMenu.tsx, RadialBuildMenu.tsx now exist.
 tests: src/__tests__/ConcreteFrame.test.tsx, src/__tests__/NewGameFlow.test.tsx
 last_verified: 2026-02-10
 coverage: "Landing page, new game flow, HUD, drawer, radial build menu — MISSING: universal context menu, building interiors, citizen dossier, population registry"

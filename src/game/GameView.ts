@@ -38,10 +38,19 @@ export interface GameView {
 /**
  * Creates a GameView by reading current ECS state.
  * Cheap to build — just reads two singleton entities + iterates ~30 buildings.
+ *
+ * FIX-12: Throws if resource or meta entities are missing instead of
+ * silently fabricating fake data that hides initialization bugs.
  */
 export function createGameView(): GameView {
   const res = getResourceEntity();
+  if (!res) {
+    throw new Error('[GameView] Resource entity missing — cannot create GameView');
+  }
   const meta = getMetaEntity();
+  if (!meta) {
+    throw new Error('[GameView] Meta entity missing — cannot create GameView');
+  }
 
   const buildings: Building[] = [];
   for (const entity of buildingsLogic) {
@@ -54,21 +63,16 @@ export function createGameView(): GameView {
   }
 
   return {
-    money: res?.resources.money ?? 0,
-    pop: res?.resources.population ?? 0,
-    food: res?.resources.food ?? 0,
-    vodka: res?.resources.vodka ?? 0,
-    power: res?.resources.power ?? 0,
-    powerUsed: res?.resources.powerUsed ?? 0,
+    money: res.resources.money,
+    pop: res.resources.population,
+    food: res.resources.food,
+    vodka: res.resources.vodka,
+    power: res.resources.power,
+    powerUsed: res.resources.powerUsed,
     buildings,
-    date: meta?.gameMeta.date ?? { year: 1922, month: 10, tick: 0 },
-    quota: meta?.gameMeta.quota ?? {
-      type: 'food',
-      target: 500,
-      current: 0,
-      deadlineYear: 1927,
-    },
-    currentEra: meta?.gameMeta.currentEra ?? 'war_communism',
+    date: meta.gameMeta.date,
+    quota: meta.gameMeta.quota,
+    currentEra: meta.gameMeta.currentEra,
   };
 }
 

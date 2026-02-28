@@ -12,9 +12,11 @@
 
 import {
   FEMALE_GIVEN_NAMES,
+  getSurname,
   MALE_GIVEN_NAMES,
   PATRONYMIC_FATHER_NAMES,
   PATRONYMIC_RULES,
+  SURNAMES_RAW,
 } from '@/ai/names';
 import { GRID_SIZE } from '@/config';
 import { getBuildingDef } from '@/data/buildingDefs';
@@ -163,17 +165,20 @@ const DEATH_HEALTH_THRESHOLD = 5;
 // ── Name Generation ─────────────────────────────────────────────────────────
 
 /**
- * Generate a procedural Russian worker name: "FirstName Patronymic".
+ * Generate a full Russian-style worker name: "Given Patronymic Surname".
  *
- * Uses the existing name syllable pools and patronymic rules to produce
- * authentic two-part names. Deterministic given the same RNG state.
+ * Uses the rich name database from @/ai/names for authentic three-part
+ * names with gender-aware patronymics and gendered surnames.
  */
 export function generateWorkerName(rng: GameRng): string {
   const isMale = rng.random() < 0.5;
+  const gender: 'male' | 'female' = isMale ? 'male' : 'female';
   const givenName = isMale ? rng.pick(MALE_GIVEN_NAMES) : rng.pick(FEMALE_GIVEN_NAMES);
   const fatherName = rng.pick(PATRONYMIC_FATHER_NAMES);
-  const patronymic = PATRONYMIC_RULES.generate(fatherName, isMale ? 'male' : 'female');
-  return `${givenName} ${patronymic}`;
+  const patronymic = PATRONYMIC_RULES.generate(fatherName, gender);
+  const surnameIndex = Math.floor(rng.random() * SURNAMES_RAW.length);
+  const surname = getSurname(surnameIndex, gender);
+  return `${givenName} ${patronymic} ${surname}`;
 }
 
 // ── Worker System ───────────────────────────────────────────────────────────
@@ -218,6 +223,7 @@ export class WorkerSystem {
       hunger: 0,
       assignment: undefined,
       home: homeX != null && homeY != null ? { gridX: homeX, gridY: homeY } : undefined,
+      name,
     };
 
     const entity: Entity = {
@@ -510,6 +516,7 @@ export class WorkerSystem {
         }
       }
       if (weakest) {
+        if (!this.stats.has(weakest)) console.error('[WorkerSystem] Removing untracked entity');
         const name = this.stats.get(weakest)?.name ?? 'Unknown';
         result.removedNames.push(name);
         this.removeWorker(weakest, 'natural_attrition');
@@ -548,6 +555,7 @@ export class WorkerSystem {
       const unassigned = [...citizens].filter((e) => !e.citizen.assignment && this.stats.has(e));
       if (unassigned.length > 0) {
         const leaver = this.rng.pick(unassigned);
+        if (!this.stats.has(leaver)) console.error('[WorkerSystem] Removing untracked entity');
         const name = this.stats.get(leaver)?.name ?? 'Unknown';
         result.removedNames.push(name);
         this.removeWorker(leaver, 'youth_flight');
