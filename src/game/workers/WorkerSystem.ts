@@ -87,6 +87,8 @@ export interface WorkerTickContext {
   eraId: string;
   /** Total ticks elapsed (for periodic checks). */
   totalTicks: number;
+  /** FIX-08: Trudodni fulfillment ratio (0-1+). Above 1.0 = exceeding minimum. */
+  trudodniRatio?: number;
 }
 
 /** Governor runs every N ticks to avoid per-tick array copy overhead. */
@@ -404,7 +406,7 @@ export class WorkerSystem {
       if (c.citizen.class === 'party_official') tickCtx.partyOfficialCount++;
     }
 
-    const { classEffSum, classCount, toRemove } = this.processCitizens(tickCtx, stakhanovites);
+    const { classEffSum, classCount, toRemove } = this.processCitizens(tickCtx, stakhanovites, ctx.trudodniRatio);
 
     // Process defections
     for (const { entity, name, cls } of toRemove) {
@@ -603,7 +605,7 @@ export class WorkerSystem {
   // ── Internal Processing ─────────────────────────────────
 
   /** Process all citizens: vodka, food, morale, defection, production. */
-  private processCitizens(ctx: TickContext, stakhanovites: WorkerTickResult['stakhanovites']) {
+  private processCitizens(ctx: TickContext, stakhanovites: WorkerTickResult['stakhanovites'], trudodniRatio?: number) {
     const classEffSum = emptyClassRecord();
     const classCount = emptyClassRecord();
     const toRemove: Array<{ entity: Entity; name: string; cls: CitizenComponent['class'] }> = [];
@@ -616,6 +618,18 @@ export class WorkerSystem {
       processVodka(stats, cls, ctx);
       processFood(entity.citizen, stats, ctx);
       applyMorale(entity.citizen, stats, ctx.partyOfficialCount, ctx.heatingFailing);
+
+      // FIX-08: Trudodni -> morale: meeting the minimum gives a small morale boost
+      if (trudodniRatio !== undefined) {
+        if (trudodniRatio >= 1.0) {
+          // Meeting or exceeding trudodni minimum: +2 morale (capped)
+          stats.morale = Math.min(100, stats.morale + 2);
+        } else if (trudodniRatio < 0.5) {
+          // Severely underperforming: -3 morale (comrades notice slacking)
+          stats.morale = Math.max(0, stats.morale - 3);
+        }
+        entity.citizen.happiness = Math.round(stats.morale);
+      }
 
       if (checkDefection(cls, stats, ctx.rng)) {
         toRemove.push({ entity, name: stats.name, cls });

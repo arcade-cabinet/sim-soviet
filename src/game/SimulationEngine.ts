@@ -321,8 +321,13 @@ export class SimulationEngine {
     // Minigame Router — trigger/resolve/auto-resolve minigames
     this.minigameRouter = new MinigameRouter(rng);
 
-    // Worker System — manages citizen entities, morale, assignment, vodka
+    // Worker System — AUTHORITATIVE population manager
     this.workerSystem = new WorkerSystem(rng);
+    // Sync initial citizen entities from resource store population count
+    const initialStore = getResourceEntity();
+    if (initialStore && initialStore.resources.population > 0) {
+      this.workerSystem.syncPopulation(initialStore.resources.population);
+    }
 
     // Scoring System — accumulates score at era boundaries
     this.scoring = new ScoringSystem(difficulty ?? 'comrade', consequence ?? 'permadeath');
@@ -685,6 +690,8 @@ export class SimulationEngine {
       month: this.chronology.getDate().month,
       eraId: this.eraSystem.getCurrentEra().id,
       totalTicks: this.chronology.getDate().totalTicks,
+      // FIX-08: Trudodni -> morale: pass ratio so workers know if collective is meeting labor targets
+      trudodniRatio: this.economySystem.getTrudodniRatio(),
     });
 
     // Emit drain events to UI
