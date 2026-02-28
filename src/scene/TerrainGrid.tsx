@@ -13,7 +13,7 @@
  */
 import type React from 'react';
 import { useMemo } from 'react';
-import * as THREE from 'three';
+import * as THREE from 'three/webgpu';
 import { GRID_SIZE, type GridCell, type TerrainType } from '../engine/GridTypes';
 
 /** Seeded PRNG (mulberry32) for deterministic scatter */

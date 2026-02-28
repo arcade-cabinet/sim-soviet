@@ -11,7 +11,7 @@
 
 import { useFrame } from '@react-three/fiber';
 import React, { useMemo, useRef } from 'react';
-import * as THREE from 'three';
+import * as THREE from 'three/webgpu';
 import { getBuildingHeight } from '../engine/BuildingTypes';
 import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';

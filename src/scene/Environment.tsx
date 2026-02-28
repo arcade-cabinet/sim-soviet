@@ -11,10 +11,11 @@
  * HDRI credits: Poly Haven (CC0) — snowy_field, winter_sky, snowy_park_01
  */
 
-import { Environment as DreiEnvironment, Sky, useTexture } from '@react-three/drei';
+import { Environment as DreiEnvironment, useTexture } from '@react-three/drei';
 import type React from 'react';
-import { useMemo } from 'react';
-import * as THREE from 'three';
+import { useEffect, useMemo, useRef } from 'react';
+import * as THREE from 'three/webgpu';
+import { SkyMesh } from 'three/examples/jsm/objects/SkyMesh.js';
 import { GRID_SIZE } from '../engine/GridTypes';
 import { assetUrl } from '../utils/assetPath';
 import type { Season } from './TerrainGrid';
@@ -173,6 +174,20 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
     ];
   }, [skyParams.inclination, skyParams.azimuth, skyParams]);
 
+  // Create SkyMesh (TSL NodeMaterial — works with both WebGPU and WebGL2 fallback)
+  const skyMesh = useMemo(() => new SkyMesh(), []);
+  const skyMeshRef = useRef(skyMesh);
+
+  // Update sky uniforms when season changes
+  useEffect(() => {
+    const sky = skyMeshRef.current;
+    sky.turbidity.value = skyParams.turbidity;
+    sky.rayleigh.value = skyParams.rayleigh;
+    sky.mieCoefficient.value = skyParams.mieCoefficient;
+    sky.mieDirectionalG.value = skyParams.mieDirectionalG;
+    sky.sunPosition.value.set(...sunPosition);
+  }, [skyParams, sunPosition]);
+
   // Pre-compute hill positions (offset by grid center)
   const hillsData = useMemo(
     () =>
@@ -185,14 +200,8 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
 
   return (
     <>
-      {/* Procedural sky (Preetham model) */}
-      <Sky
-        turbidity={skyParams.turbidity}
-        rayleigh={skyParams.rayleigh}
-        mieCoefficient={skyParams.mieCoefficient}
-        mieDirectionalG={skyParams.mieDirectionalG}
-        sunPosition={sunPosition}
-      />
+      {/* Procedural sky (Preetham model via TSL SkyMesh — WebGPU compatible) */}
+      <primitive object={skyMesh} scale={[10000, 10000, 10000]} />
 
       {/* HDRI for image-based lighting (IBL) */}
       <DreiEnvironment files={hdriFile} />

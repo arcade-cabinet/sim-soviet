@@ -12,8 +12,16 @@
  */
 
 import { useProgress } from '@react-three/drei';
+import { extend } from '@react-three/fiber';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three/webgpu';
+
+// Register the WebGPU-aware Three.js namespace with R3F's reconciler
+// so JSX elements (mesh, meshStandardMaterial, etc.) resolve to
+// the correct WebGPU-compatible classes.
+// @ts-expect-error three/webgpu namespace includes non-constructor re-exports (e.g. RendererUtils)
+extend(THREE);
 import AudioManager from './audio/AudioManager';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
