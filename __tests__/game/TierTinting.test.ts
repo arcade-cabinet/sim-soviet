@@ -139,6 +139,46 @@ describe('TierTinting', () => {
     expect(g).toBeCloseTo(0.75);
     expect(b).toBeCloseTo(0.8);
   });
+
+  // ── 11. PBR roughness progression ──────────────────────────
+
+  it('all tiers have roughness and metalness defined', () => {
+    for (const tier of TIER_ORDER) {
+      expect(TIER_TINTS[tier].roughness).toBeDefined();
+      expect(TIER_TINTS[tier].metalness).toBeDefined();
+    }
+  });
+
+  it('roughness decreases from selo to gorod (rustic → polished)', () => {
+    expect(TIER_TINTS.selo.roughness).toBeGreaterThan(TIER_TINTS.posyolok.roughness);
+    expect(TIER_TINTS.posyolok.roughness).toBeGreaterThan(TIER_TINTS.pgt.roughness);
+    expect(TIER_TINTS.pgt.roughness).toBeGreaterThan(TIER_TINTS.gorod.roughness);
+  });
+
+  it('metalness increases from selo to gorod (wood → industrial)', () => {
+    expect(TIER_TINTS.selo.metalness).toBeLessThan(TIER_TINTS.posyolok.metalness);
+    expect(TIER_TINTS.posyolok.metalness).toBeLessThan(TIER_TINTS.pgt.metalness);
+    expect(TIER_TINTS.pgt.metalness).toBeLessThan(TIER_TINTS.gorod.metalness);
+  });
+
+  it('PBR values are in valid range (0 to 1)', () => {
+    for (const tier of TIER_ORDER) {
+      expect(TIER_TINTS[tier].roughness).toBeGreaterThanOrEqual(0);
+      expect(TIER_TINTS[tier].roughness).toBeLessThanOrEqual(1);
+      expect(TIER_TINTS[tier].metalness).toBeGreaterThanOrEqual(0);
+      expect(TIER_TINTS[tier].metalness).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('selo is fully rough and non-metallic (wooden)', () => {
+    expect(TIER_TINTS.selo.roughness).toBeCloseTo(0.95);
+    expect(TIER_TINTS.selo.metalness).toBeCloseTo(0.0);
+  });
+
+  it('gorod is smooth with slight metallic tint (concrete/industrial)', () => {
+    expect(TIER_TINTS.gorod.roughness).toBeCloseTo(0.35);
+    expect(TIER_TINTS.gorod.metalness).toBeCloseTo(0.2);
+  });
 });
 
 // ── Season Tinting ──────────────────────────────────────────────────────────

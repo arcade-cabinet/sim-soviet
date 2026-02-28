@@ -23,6 +23,10 @@ import type { Season } from './TerrainGrid';
 export interface TierTint {
   /** RGB multiplier applied to material color */
   colorFactor: [number, number, number];
+  /** PBR roughness override (0 = mirror, 1 = fully rough) */
+  roughness: number;
+  /** PBR metalness override (0 = dielectric, 1 = fully metallic) */
+  metalness: number;
   /** Human-readable label for debugging */
   label: string;
 }
@@ -30,18 +34,26 @@ export interface TierTint {
 export const TIER_TINTS: Readonly<Record<SettlementTier, TierTint>> = {
   selo: {
     colorFactor: [0.85, 0.7, 0.5],
+    roughness: 0.95,
+    metalness: 0.0,
     label: 'Warm brown (rustic wood)',
   },
   posyolok: {
     colorFactor: [1.0, 1.0, 1.0],
+    roughness: 0.75,
+    metalness: 0.05,
     label: 'Neutral (no tint)',
   },
   pgt: {
     colorFactor: [0.8, 0.8, 0.85],
+    roughness: 0.55,
+    metalness: 0.1,
     label: 'Slight grey (early industrial)',
   },
   gorod: {
     colorFactor: [0.7, 0.75, 0.8],
+    roughness: 0.35,
+    metalness: 0.2,
     label: 'Cool grey-blue (concrete)',
   },
 };
@@ -82,13 +94,32 @@ function forEachMeshChild(
 function storeOriginalColor(mesh: THREE.Mesh, mat: THREE.MeshStandardMaterial): void {
   // Store per-material using material.uuid as key, since one mesh can have
   // multiple materials and we need to track each independently.
-  const key = `originalColor_${mat.uuid}`;
-  if (mesh.userData[key]) return; // already stored
-  mesh.userData[key] = mat.color.clone();
+  const colorKey = `originalColor_${mat.uuid}`;
+  if (!mesh.userData[colorKey]) {
+    mesh.userData[colorKey] = mat.color.clone();
+  }
+  const roughKey = `originalRoughness_${mat.uuid}`;
+  if (mesh.userData[roughKey] == null) {
+    mesh.userData[roughKey] = mat.roughness;
+  }
+  const metalKey = `originalMetalness_${mat.uuid}`;
+  if (mesh.userData[metalKey] == null) {
+    mesh.userData[metalKey] = mat.metalness;
+  }
 }
 
 function getOriginalColor(mesh: THREE.Mesh, mat: THREE.MeshStandardMaterial): THREE.Color | null {
   const key = `originalColor_${mat.uuid}`;
+  return mesh.userData[key] ?? null;
+}
+
+function getOriginalRoughness(mesh: THREE.Mesh, mat: THREE.MeshStandardMaterial): number | null {
+  const key = `originalRoughness_${mat.uuid}`;
+  return mesh.userData[key] ?? null;
+}
+
+function getOriginalMetalness(mesh: THREE.Mesh, mat: THREE.MeshStandardMaterial): number | null {
+  const key = `originalMetalness_${mat.uuid}`;
   return mesh.userData[key] ?? null;
 }
 
@@ -101,6 +132,13 @@ function getOriginalColor(mesh: THREE.Mesh, mat: THREE.MeshStandardMaterial): TH
  * does not affect others. The original color is preserved in userData
  * so re-tinting on tier change applies the new factor to the original base.
  */
+/**
+ * Blend weight for PBR property overrides (roughness/metalness).
+ * 0.0 = use original model value, 1.0 = use tier target value.
+ * 0.7 gives a strong tier feel while preserving some model-specific character.
+ */
+const PBR_BLEND_WEIGHT = 0.7;
+
 export function applyTierTint(group: THREE.Object3D, tier: SettlementTier): void {
   const tint = TIER_TINTS[tier];
   if (!tint) return;
@@ -124,6 +162,11 @@ export function applyTierTint(group: THREE.Object3D, tier: SettlementTier): void
       if (orig) {
         cloned.color.setRGB(orig.r * fr, orig.g * fg, orig.b * fb);
       }
+      // Apply PBR overrides
+      const origR = getOriginalRoughness(mesh, cloned);
+      const origM = getOriginalMetalness(mesh, cloned);
+      if (origR != null) cloned.roughness = origR + (tint.roughness - origR) * PBR_BLEND_WEIGHT;
+      if (origM != null) cloned.metalness = origM + (tint.metalness - origM) * PBR_BLEND_WEIGHT;
       return;
     }
 
@@ -132,6 +175,11 @@ export function applyTierTint(group: THREE.Object3D, tier: SettlementTier): void
     if (orig) {
       mat.color.setRGB(orig.r * fr, orig.g * fg, orig.b * fb);
     }
+    // Apply PBR overrides
+    const origR = getOriginalRoughness(mesh, mat);
+    const origM = getOriginalMetalness(mesh, mat);
+    if (origR != null) mat.roughness = origR + (tint.roughness - origR) * PBR_BLEND_WEIGHT;
+    if (origM != null) mat.metalness = origM + (tint.metalness - origM) * PBR_BLEND_WEIGHT;
   });
 }
 
@@ -263,9 +311,14 @@ export function flashTierTransition(
 export function clearTintData(group: THREE.Object3D): void {
   group.traverse((child) => {
     if (child instanceof THREE.Mesh) {
-      // Remove all originalColor_ keys from userData
+      // Remove all stored original values from userData
       for (const key of Object.keys(child.userData)) {
-        if (key.startsWith('originalColor_') || key === '_ownMaterial') {
+        if (
+          key.startsWith('originalColor_') ||
+          key.startsWith('originalRoughness_') ||
+          key.startsWith('originalMetalness_') ||
+          key === '_ownMaterial'
+        ) {
           delete child.userData[key];
         }
       }
