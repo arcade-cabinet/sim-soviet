@@ -8,6 +8,7 @@
 import type { SQLJsDatabase } from 'drizzle-orm/sql-js';
 import { drizzle } from 'drizzle-orm/sql-js';
 import initSqlJs from 'sql.js';
+import { assetUrl } from '../utils/assetPath';
 import * as schema from './schema';
 
 const DB_STORAGE_KEY = 'simsoviet_db';
@@ -24,7 +25,7 @@ export async function initDatabase(): Promise<SQLJsDatabase<typeof schema>> {
 
   const SQL = await initSqlJs({
     // sql.js Wasm binary served from public/wasm/ via Metro middleware
-    locateFile: (file: string) => `/wasm/${file}`,
+    locateFile: (file: string) => assetUrl(`wasm/${file}`),
   });
 
   // Try to restore persisted database from IndexedDB
@@ -185,7 +186,7 @@ export function exportDatabaseFile(): Uint8Array | null {
  */
 export async function importDatabaseFile(data: Uint8Array): Promise<SQLJsDatabase<typeof schema>> {
   const SQL = await initSqlJs({
-    locateFile: (file: string) => `/wasm/${file}`,
+    locateFile: (file: string) => assetUrl(`wasm/${file}`),
   });
 
   // Close existing database
