@@ -9,6 +9,8 @@ export { default as CameraController } from './CameraController';
 export { default as Lighting } from './Lighting';
 export { default as BuildingRenderer } from './BuildingRenderer';
 export type { BuildingState } from './BuildingRenderer';
+export { applyTierTint, flashTierTransition, clearTintData, TIER_TINTS } from './TierTinting';
+export type { TierTint } from './TierTinting';
 
 // VFX components
 export { default as WeatherFX } from './WeatherFX';
@@ -23,3 +25,4 @@ export { default as MeteorRenderer } from './MeteorRenderer';
 export { default as GhostPreview } from './GhostPreview';
 export { default as LensSystem } from './LensSystem';
 export { default as FloatingText } from './FloatingText';
+export { default as PoliticalEntityRenderer } from './PoliticalEntityRenderer';

@@ -3,6 +3,10 @@
  *
  * For each building in state: lookup model via getModelName, clone from ModelCache,
  * position at grid coordinates with elevation, and manage lifecycle on state changes.
+ *
+ * Buildings are tinted per settlement tier (selo→posyolok→pgt→gorod) to visually
+ * communicate the settlement's progression. On tier change, all buildings are
+ * re-tinted with an optional flash celebration effect.
  */
 import React, { useEffect, useRef } from 'react';
 import {
@@ -16,6 +20,8 @@ import { useScene } from 'reactylon';
 import { getModelName } from './ModelMapping';
 import { cloneModel, disposeModel, isPreloaded } from './ModelCache';
 import { shadowGenerator } from './Lighting';
+import { applyTierTint, flashTierTransition, clearTintData } from './TierTinting';
+import type { SettlementTier } from '../game/SettlementSystem';
 
 export interface BuildingState {
   id: string;
@@ -30,6 +36,8 @@ export interface BuildingState {
 
 interface BuildingRendererProps {
   buildings: BuildingState[];
+  /** Current settlement tier — drives material tinting */
+  settlementTier?: SettlementTier;
 }
 
 interface ManagedBuilding {
@@ -66,9 +74,25 @@ function applyBuildingEffects(
   }
 }
 
-const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings }) => {
+const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings, settlementTier = 'selo' }) => {
   const scene = useScene();
   const managedRef = useRef<Map<string, ManagedBuilding>>(new Map());
+  const lastTierRef = useRef<SettlementTier>(settlementTier);
+
+  // ── Handle tier changes: re-tint all buildings with flash effect ──
+  useEffect(() => {
+    if (!isPreloaded()) return;
+    const prevTier = lastTierRef.current;
+    if (prevTier === settlementTier) return;
+
+    lastTierRef.current = settlementTier;
+    const managed = managedRef.current;
+
+    // Re-tint all existing buildings with celebration flash
+    for (const [, mb] of managed) {
+      flashTierTransition(mb.node, settlementTier, 500);
+    }
+  }, [settlementTier]);
 
   useEffect(() => {
     // Don't attempt cloning until all models have finished preloading
@@ -80,6 +104,7 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings }) => {
     // Remove buildings no longer in state
     for (const [id, mb] of managed) {
       if (!currentIds.has(id)) {
+        clearTintData(mb.node);
         disposeModel(mb.node);
         managed.delete(id);
       }
@@ -95,6 +120,7 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings }) => {
 
       // If type or level changed, need to swap mesh
       if (existing && (existing.type !== building.type || existing.level !== building.level)) {
+        clearTintData(existing.node);
         disposeModel(existing.node);
         managed.delete(building.id);
       }
@@ -136,6 +162,9 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings }) => {
           building.gridY + 0.5,
         );
 
+        // Apply tier tint to the newly created building
+        applyTierTint(node, settlementTier);
+
         // Register as shadow caster
         if (shadowGenerator) {
           for (const m of node.getChildMeshes()) {
@@ -163,12 +192,13 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings }) => {
         applyBuildingEffects(mb.node, building.powered, building.onFire);
       }
     }
-  }, [buildings]);
+  }, [buildings, settlementTier]);
 
   // Cleanup all on unmount
   useEffect(() => {
     return () => {
       for (const [, mb] of managedRef.current) {
+        clearTintData(mb.node);
         disposeModel(mb.node);
       }
       managedRef.current.clear();

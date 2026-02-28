@@ -16,6 +16,7 @@ import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
 import { notifyStateChange, useTerrainVersion } from './stores/gameStore';
+import type { SettlementTier } from './game/SettlementSystem';
 
 // Scene components
 import TerrainGrid from './scene/TerrainGrid';
@@ -37,6 +38,7 @@ import FloatingText from './scene/FloatingText';
 import HeatingOverlay from './scene/HeatingOverlay';
 import Environment from './scene/Environment';
 import SceneProps from './scene/SceneProps';
+import PoliticalEntityRenderer from './scene/PoliticalEntityRenderer';
 
 
 interface ContentProps {
@@ -108,7 +110,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
       isStorm={snap.weatherLabel === 'STORM'}
     />
     <TerrainGrid grid={ecsGrid} season={snap.season} />
-    <BuildingRenderer buildings={buildings} />
+    <BuildingRenderer buildings={buildings} settlementTier={snap.settlementTier as SettlementTier} />
     <SceneProps season={snap.season} />
 
     <WeatherFX />
@@ -122,6 +124,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
     <ZeppelinRenderer />
     <MeteorRenderer />
     <FloatingText />
+    <PoliticalEntityRenderer />
     <GhostPreview />
     <LensSystem />
   </>);

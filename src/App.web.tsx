@@ -50,6 +50,8 @@ import {
   useCitizenDossierIndex,
   closeCitizenDossierByIndex,
   useCursorTooltip,
+  usePoliticalPanel,
+  closePoliticalPanel,
 } from './stores/gameStore';
 import { getTotalModelCount } from './scene/ModelCache';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
@@ -254,10 +256,11 @@ const App: React.FC = () => {
   // Subscribe to game state (old hook — still used by 3D scene components)
   const snap = useGameSnapshot();
 
-  // ── Building Inspector + Citizen Dossier + Cursor Tooltip (store-driven panels) ──
+  // ── Building Inspector + Citizen Dossier + Cursor Tooltip + Political Panel (store-driven) ──
   const buildingInspector = useBuildingInspector();
   const citizenDossierIdx = useCitizenDossierIndex();
   const cursorTooltip = useCursorTooltip();
+  const politicalPanelFromScene = usePoliticalPanel();
 
   // ── Notification history (store-driven unread count) ──
   const unreadNotifications = useSyncExternalStore(
@@ -920,8 +923,11 @@ const App: React.FC = () => {
         />
 
         <PoliticalEntityPanel
-          visible={showPolitical}
-          onDismiss={() => setShowPolitical(false)}
+          visible={showPolitical || politicalPanelFromScene}
+          onDismiss={() => {
+            setShowPolitical(false);
+            closePoliticalPanel();
+          }}
         />
 
         <ScoringPanel

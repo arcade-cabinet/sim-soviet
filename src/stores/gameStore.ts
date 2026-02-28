@@ -774,6 +774,41 @@ export function requestPlacement(gridX: number, gridY: number, defId: string): b
   return _placementCallback?.(gridX, gridY, defId) ?? false;
 }
 
+// ── Political Entity Panel (scene-driven) ─────────────────────────────────
+
+let _showPoliticalPanel = false;
+const _politicalPanelListeners = new Set<() => void>();
+
+export function getPoliticalPanelVisible(): boolean {
+  return _showPoliticalPanel;
+}
+
+/** Open the political entity panel from the 3D scene (e.g. tapping a political entity mesh). */
+export function openPoliticalPanel(): void {
+  _showPoliticalPanel = true;
+  for (const listener of _politicalPanelListeners) {
+    listener();
+  }
+}
+
+export function closePoliticalPanel(): void {
+  _showPoliticalPanel = false;
+  for (const listener of _politicalPanelListeners) {
+    listener();
+  }
+}
+
+export function usePoliticalPanel(): boolean {
+  return useSyncExternalStore(subscribePoliticalPanel, getPoliticalPanelVisible, getPoliticalPanelVisible);
+}
+
+function subscribePoliticalPanel(listener: () => void): () => void {
+  _politicalPanelListeners.add(listener);
+  return () => {
+    _politicalPanelListeners.delete(listener);
+  };
+}
+
 // ── Internal ──────────────────────────────────────────────────────────────
 
 function subscribe(listener: () => void): () => void {
