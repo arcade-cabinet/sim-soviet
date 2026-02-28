@@ -13,8 +13,9 @@ import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
-import { buildingsLogic, decayableBuildings } from '../ecs/archetypes';
+import { buildingsLogic, decayableBuildings, getResourceEntity } from '../ecs/archetypes';
 import { effectiveWorkers } from '../ecs/systems/productionSystem';
+import { getBuildingStorageContribution } from '../ecs/systems/storageSystem';
 import type { BuildingComponent, CitizenComponent, Durability } from '../ecs/world';
 import type { WorkerDisplayInfo } from '../game/workers/types';
 import { SovietModal } from './SovietModal';
@@ -350,6 +351,16 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
   // Fear
   const fear = building?.fear ?? def?.stats.fear ?? 0;
 
+  // Fire
+  const onFire = building?.onFire ?? false;
+  const fireTicksRemaining = building?.fireTicksRemaining ?? 0;
+
+  // Storage
+  const storageContribution = getBuildingStorageContribution(buildingDefId);
+  const resEntity = getResourceEntity();
+  const currentFood = Math.round(resEntity?.resources.food ?? 0);
+  const totalStorageCap = resEntity?.resources.storageCapacity ?? 200;
+
   // Footprint
   const footX = def?.footprint.tilesX ?? 1;
   const footY = def?.footprint.tilesY ?? 1;
@@ -371,9 +382,11 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
   // Effective production rate (base amount * efficiency factor)
   const effectiveOutput = produces ? +(produces.amount * (efficiency.pct / 100)).toFixed(1) : 0;
 
-  // Determine stamp text based on construction / power state
+  // Determine stamp text based on construction / power / fire state
   let stampText: string;
-  if (constructionInfo) {
+  if (onFire) {
+    stampText = 'ON FIRE';
+  } else if (constructionInfo) {
     stampText = 'CONSTRUCTION';
   } else if (powered || powerReq === 0) {
     stampText = 'OPERATIONAL';
@@ -510,6 +523,31 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
         <>
           <SectionDivider label="Housing" />
           <InfoRow label="CAPACITY" value={`${housingCap} citizens`} />
+        </>
+      )}
+
+      {/* Storage */}
+      {storageContribution > 0 && (
+        <>
+          <SectionDivider label="Storage" />
+          <InfoRow label="CONTRIBUTION" value={`+${storageContribution} units`} valueColor={Colors.termGreen} />
+          <StatBar
+            label="SETTLEMENT FOOD STORED"
+            value={currentFood}
+            max={totalStorageCap}
+            color={currentFood > totalStorageCap ? '#ef4444' : Colors.sovietGold}
+          />
+        </>
+      )}
+
+      {/* Fire */}
+      {onFire && (
+        <>
+          <SectionDivider label="Fire" />
+          <InfoRow label="STATUS" value="BURNING" valueColor="#ef4444" />
+          {fireTicksRemaining > 0 && (
+            <InfoRow label="EXTINGUISHES IN" value={`${fireTicksRemaining} ticks`} valueColor="#ff9800" />
+          )}
         </>
       )}
 
