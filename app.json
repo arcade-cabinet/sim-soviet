@@ -18,6 +18,12 @@
     },
     "android": {
       "package": "com.simgames.simsoviet1917"
-    }
+    },
+    "assetBundlePatterns": [
+      "assets/models/**/*.glb",
+      "assets/textures/**/*",
+      "assets/hdri/**/*",
+      "public/models/**/*.glb"
+    ]
   }
 }

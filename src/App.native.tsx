@@ -1,23 +1,28 @@
 /**
- * App.web.tsx — Web-specific root component for SimSoviet 1917.
+ * App.native.tsx — Native-specific root component for SimSoviet 1917.
  *
- * Screen flow: MainMenu → Loading (Engine mounts) → IntroModal → Game
+ * Screen flow: MainMenu → NewGameSetup → Loading (Engine mounts) → IntroModal → Game
  *
- * Uses R3F Canvas (creates an HTML canvas with WebGL)
- * instead of the native NativeEngine.
+ * Uses R3F Canvas from '@react-three/fiber/native' for native GL rendering.
+ * On native, Expo/Metro resolves App.native.tsx before App.tsx.
+ *
+ * Key differences from App.web.tsx:
+ * - No CSS injection (native doesn't need it)
+ * - No service worker registration
+ * - No WebGPURenderer — uses standard GL props via Canvas
+ * - No window.addEventListener — uses AppState for lifecycle
+ * - Database persistence via AppState instead of beforeunload
  */
 
-import { Canvas } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber/native';
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { AppState, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import AudioManager from './audio/AudioManager';
 import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
 import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitialized } from './bridge/GameInit';
-// Lazy-load Content — it transitively imports Three.js + all 22 scene
-// components (~5 MB). This keeps the menu/setup bundle small and fast.
-const Content = React.lazy(() => import('./Content'));
+import Content from './Content';
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import { initDatabase, persistToIndexedDB } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
@@ -96,7 +101,6 @@ import { Ticker } from './ui/Ticker';
 import { Toast } from './ui/Toast';
 import type { SovietTab } from './ui/Toolbar';
 import { Toolbar } from './ui/Toolbar';
-// UI components
 import { TopBar } from './ui/TopBar';
 import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
@@ -104,8 +108,8 @@ import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
 import { WorkerStatusBar } from './ui/WorkerStatusBar';
 
 /**
- * Error boundary to catch Engine/WebGL crashes and show a fallback
- * instead of a blank white screen.
+ * Error boundary to catch Engine/GL crashes and show a fallback
+ * instead of a blank screen.
  */
 class EngineErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: string | null }> {
   state = { error: null as string | null };
@@ -139,7 +143,7 @@ class EngineErrorBoundary extends React.Component<{ children: React.ReactNode },
             {this.state.error}
           </Text>
           <Text style={{ color: '#888', fontFamily: 'monospace', fontSize: 10, marginTop: 16, textAlign: 'center' }}>
-            Reload the page to try again. If this persists, your browser may not support WebGL.
+            Restart the app to try again. If this persists, your device may not support the required GL features.
           </Text>
         </View>
       );
@@ -225,22 +229,9 @@ const App: React.FC = () => {
     }
   }, [hasInteractiveModal]);
 
-  // Initialize SFXManager on first user interaction (autoplay policy)
+  // Initialize SFXManager eagerly on native (no autoplay policy restriction)
   useEffect(() => {
-    const initSFX = () => {
-      SFXManager.getInstance().init();
-      window.removeEventListener('click', initSFX);
-      window.removeEventListener('keydown', initSFX);
-      window.removeEventListener('touchstart', initSFX);
-    };
-    window.addEventListener('click', initSFX);
-    window.addEventListener('keydown', initSFX);
-    window.addEventListener('touchstart', initSFX);
-    return () => {
-      window.removeEventListener('click', initSFX);
-      window.removeEventListener('keydown', initSFX);
-      window.removeEventListener('touchstart', initSFX);
-    };
+    SFXManager.getInstance().init();
   }, []);
 
   // Start ECS game loop (replaces old flat-state game loop)
@@ -280,7 +271,7 @@ const App: React.FC = () => {
 
     // Async init: database first, then game engine
     (async () => {
-      // Initialize SQLite database (loads persisted saves from IndexedDB)
+      // Initialize SQLite database
       try {
         await initDatabase();
       } catch {
@@ -423,19 +414,16 @@ const App: React.FC = () => {
       }
     })();
 
-    // Persist database to IndexedDB before page unload
-    const handleBeforeUnload = () => {
-      persistToIndexedDB();
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    // Persist database when app goes to background (native equivalent of beforeunload)
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'background' || nextState === 'inactive') {
+        persistToIndexedDB();
+      }
+    });
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      subscription.remove();
     };
   }, [screen]);
-
-  // Ticker messages now come exclusively from PravdaSystem via
-  // the onPravda callback (event-reactive + ambient headlines).
-  // The old static setInterval fallback has been removed.
 
   // --- Loading callbacks ---
   const handleLoadProgress = useCallback((loaded: number, total: number, name: string) => {
@@ -690,8 +678,10 @@ const App: React.FC = () => {
   const handleRestart = useCallback(() => {
     setGameOver(null);
     setGameTally(null);
-    // Full restart requires clearing all module-level singletons — page reload
-    window.location.reload();
+    // On native, we cannot do window.location.reload().
+    // For now, reset to main menu. A full engine reset would require
+    // clearing all module-level singletons — future work.
+    setScreen('menu');
   }, []);
 
   // Read toast/advisor from side-channel
@@ -730,17 +720,8 @@ const App: React.FC = () => {
             <Canvas
               shadows
               camera={{ position: [30, 40, 30], fov: 45 }}
-              style={{ width: '100%', height: '100%' }}
-              gl={async (defaultProps) => {
-                const { WebGPURenderer } = await import('three/webgpu');
-                const renderer = new WebGPURenderer({
-                  canvas: defaultProps.canvas as HTMLCanvasElement,
-                  antialias: true,
-                  alpha: false,
-                });
-                await renderer.init();
-                return renderer;
-              }}
+              style={{ flex: 1 }}
+              gl={{ antialias: true, alpha: false }}
             >
               <Content onLoadProgress={handleLoadProgress} onLoadComplete={handleLoadComplete} />
             </Canvas>
@@ -977,10 +958,3 @@ const styles = StyleSheet.create({
 });
 
 export default App;
-
-// Service worker registration (production only)
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sim-soviet/sw.js').catch(() => {});
-  });
-}

@@ -13,7 +13,7 @@ import { Billboard, Text } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import type React from 'react';
 import { useRef } from 'react';
-import type * as THREE from 'three';
+import type * as THREE from 'three/webgpu';
 
 import { gameState } from '../engine/GameState';
 

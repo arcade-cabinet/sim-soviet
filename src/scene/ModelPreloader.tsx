@@ -5,8 +5,18 @@
  * Preloading happens at module evaluation time (import side-effect).
  */
 import { useGLTF } from '@react-three/drei';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import manifest from '../../assets/models/soviet/manifest.json';
 import { assetUrl } from '../utils/assetPath';
+
+// Configure Draco decoder for compressed GLBs
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+
+// drei's useGLTF uses a shared GLTFLoader — configure it with Draco support
+const loader = new GLTFLoader();
+loader.setDRACOLoader(dracoLoader);
 
 // ── Building model URLs (from manifest.json) ──
 
