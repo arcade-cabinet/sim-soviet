@@ -14,7 +14,7 @@
 
 import { useFrame } from '@react-three/fiber';
 import React, { useMemo, useRef } from 'react';
-import type * as THREE from 'three/webgpu';
+import type * as THREE from 'three';
 
 import { gameState, type WeatherType } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';

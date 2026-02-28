@@ -12,7 +12,7 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import type React from 'react';
 import { useMemo, useRef } from 'react';
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 import type { Season } from './TerrainGrid';
 
 interface LightingProps {

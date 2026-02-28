@@ -1,7 +1,7 @@
 import { useXRHitTest } from '@react-three/xr';
 import type React from 'react';
 import { useRef } from 'react';
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 
 const matrixHelper = new THREE.Matrix4();
 

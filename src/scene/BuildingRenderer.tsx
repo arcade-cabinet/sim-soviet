@@ -19,7 +19,7 @@
 import { Clone, useGLTF } from '@react-three/drei';
 import type React from 'react';
 import { Suspense, useEffect, useRef } from 'react';
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 import type { SettlementTier } from '../game/SettlementSystem';
 import { getModelName, getTierVariant } from './ModelMapping';
 import { getModelUrl } from './ModelPreloader';

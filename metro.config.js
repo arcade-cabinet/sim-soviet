@@ -3,22 +3,6 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-// Metro doesn't resolve package.json `exports` fields reliably.
-// Map three/webgpu and three/tsl to their actual source files so the
-// WebGPU-aware Three.js namespace is bundled correctly.
-config.resolver = {
-  ...config.resolver,
-  resolveRequest: (context, moduleName, platform) => {
-    if (moduleName === 'three/webgpu') {
-      return { type: 'sourceFile', filePath: require.resolve('three/src/Three.WebGPU.js') };
-    }
-    if (moduleName === 'three/tsl') {
-      return { type: 'sourceFile', filePath: require.resolve('three/src/Three.TSL.js') };
-    }
-    return context.resolveRequest(context, moduleName, platform);
-  },
-};
-
 // Enable async import() chunks for code splitting on web.
 // Three.js + scene components are loaded only when entering the game screen,
 // keeping the initial menu bundle small.

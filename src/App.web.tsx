@@ -730,7 +730,7 @@ const App: React.FC = () => {
         <View style={styles.sceneContainer}>
           <EngineErrorBoundary>
             <Canvas
-              shadows
+              shadows="percentage"
               camera={{ position: [30, 40, 30], fov: 45 }}
               style={{ width: '100%', height: '100%' }}
               gl={{ antialias: true, alpha: false }}

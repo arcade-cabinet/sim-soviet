@@ -11,11 +11,10 @@
  * HDRI credits: Poly Haven (CC0) — snowy_field, winter_sky, snowy_park_01
  */
 
-import { Environment as DreiEnvironment, useTexture } from '@react-three/drei';
+import { Environment as DreiEnvironment, Sky, useTexture } from '@react-three/drei';
 import type React from 'react';
-import { useEffect, useMemo, useRef } from 'react';
-import { SkyMesh } from 'three/examples/jsm/objects/SkyMesh.js';
-import * as THREE from 'three/webgpu';
+import { useMemo } from 'react';
+import * as THREE from 'three';
 import { GRID_SIZE } from '../engine/GridTypes';
 import { assetUrl } from '../utils/assetPath';
 import type { Season } from './TerrainGrid';
@@ -163,31 +162,6 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
   const hdriFile = getHdriFile(season);
   const hillColor = getHillColor(season);
 
-  // Compute sun position from inclination/azimuth (same model as BabylonJS SkyMaterial)
-  const sunPosition = useMemo((): [number, number, number] => {
-    const { inclination, azimuth } = skyParams;
-    const dist = 100;
-    return [
-      Math.cos(azimuth * 2 * Math.PI) * Math.cos(inclination * Math.PI) * dist,
-      Math.sin(inclination * Math.PI) * dist,
-      Math.sin(azimuth * 2 * Math.PI) * Math.cos(inclination * Math.PI) * dist,
-    ];
-  }, [skyParams.inclination, skyParams.azimuth, skyParams]);
-
-  // Create SkyMesh (TSL NodeMaterial — works with both WebGPU and WebGL2 fallback)
-  const skyMesh = useMemo(() => new SkyMesh(), []);
-  const skyMeshRef = useRef(skyMesh);
-
-  // Update sky uniforms when season changes
-  useEffect(() => {
-    const sky = skyMeshRef.current;
-    sky.turbidity.value = skyParams.turbidity;
-    sky.rayleigh.value = skyParams.rayleigh;
-    sky.mieCoefficient.value = skyParams.mieCoefficient;
-    sky.mieDirectionalG.value = skyParams.mieDirectionalG;
-    sky.sunPosition.value.set(...sunPosition);
-  }, [skyParams, sunPosition]);
-
   // Pre-compute hill positions (offset by grid center)
   const hillsData = useMemo(
     () =>
@@ -200,8 +174,15 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
 
   return (
     <>
-      {/* Procedural sky (Preetham model via TSL SkyMesh — WebGPU compatible) */}
-      <primitive object={skyMesh} scale={[10000, 10000, 10000]} />
+      {/* Procedural sky (Preetham model via drei Sky — GLSL ShaderMaterial) */}
+      <Sky
+        turbidity={skyParams.turbidity}
+        rayleigh={skyParams.rayleigh}
+        mieCoefficient={skyParams.mieCoefficient}
+        mieDirectionalG={skyParams.mieDirectionalG}
+        inclination={skyParams.inclination}
+        azimuth={skyParams.azimuth}
+      />
 
       {/* HDRI for image-based lighting (IBL) */}
       <DreiEnvironment files={hdriFile} />

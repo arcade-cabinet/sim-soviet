@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useRef } from 'react';
-import type * as THREE from 'three/webgpu';
+import type * as THREE from 'three';
 
 /**
  * VR Walkthrough — street-level view inside the city.
