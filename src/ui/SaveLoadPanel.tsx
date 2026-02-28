@@ -18,6 +18,8 @@ export interface SaveLoadPanelProps {
   onLoad?: (name: string) => Promise<boolean>;
   onDelete?: (name: string) => Promise<void>;
   onCheckSave?: (name: string) => Promise<boolean>;
+  onExport?: () => string | null;
+  onImport?: (json: string) => boolean;
   saveNames?: string[];
   autoSaveEnabled?: boolean;
   lastSaveTime?: number;
@@ -46,6 +48,8 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
   onSave,
   onLoad,
   onDelete,
+  onExport,
+  onImport,
   saveNames = [],
   autoSaveEnabled = false,
   lastSaveTime,
@@ -138,6 +142,124 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
     handleSave(trimmed);
     setCustomName('');
   }, [customName, handleSave, showStatus]);
+
+  const handleExport = useCallback(() => {
+    if (!onExport || busy) return;
+    setBusy(true);
+    try {
+      const json = onExport();
+      if (!json) {
+        showStatus('EXPORT FAILED — NO STATE DATA AVAILABLE', 'error');
+        setBusy(false);
+        return;
+      }
+
+      // Extract city name and year from save data for filename
+      let cityName = 'settlement';
+      let year = 1922;
+      try {
+        const parsed = JSON.parse(json);
+        if (parsed.gameConfig?.cityName) {
+          cityName = parsed.gameConfig.cityName.replace(/[^a-zA-Z0-9]/g, '-');
+        }
+        if (parsed.gameMeta?.date?.year) {
+          year = parsed.gameMeta.date.year;
+        }
+      } catch {
+        // Use defaults
+      }
+
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `simSoviet-${cityName}-${year}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+
+      showStatus('STATE ARCHIVE EXPORTED SUCCESSFULLY', 'success');
+    } catch {
+      showStatus('EXPORT ERROR — ARCHIVE CREATION FAILED', 'error');
+    } finally {
+      setBusy(false);
+    }
+  }, [onExport, busy, showStatus]);
+
+  const handleImport = useCallback(() => {
+    if (!onImport || busy) return;
+
+    // Create a hidden file input and trigger it
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.style.display = 'none';
+
+    input.onchange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (!file) return;
+
+      setBusy(true);
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const json = evt.target?.result as string;
+          if (!json) {
+            showStatus('DOCUMENT REJECTED. FILE IS EMPTY.', 'error');
+            setBusy(false);
+            return;
+          }
+
+          // Validate JSON parses
+          let parsed: Record<string, unknown>;
+          try {
+            parsed = JSON.parse(json);
+          } catch {
+            showStatus('DOCUMENT REJECTED. FORMAT INCOMPATIBLE WITH STATE ARCHIVES.', 'error');
+            setBusy(false);
+            return;
+          }
+
+          // Validate expected top-level keys
+          if (
+            !parsed.version ||
+            !parsed.resources ||
+            !parsed.gameMeta ||
+            !Array.isArray(parsed.buildings)
+          ) {
+            showStatus('DOCUMENT REJECTED. MISSING REQUIRED STATE RECORDS.', 'error');
+            setBusy(false);
+            return;
+          }
+
+          const ok = onImport(json);
+          showStatus(
+            ok
+              ? `STATE ARCHIVE IMPORTED: ${file.name}`
+              : 'IMPORT FAILED. ARCHIVE DATA CORRUPTED.',
+            ok ? 'success' : 'error',
+          );
+        } catch {
+          showStatus('IMPORT ERROR. DOCUMENT PROCESSING FAILED.', 'error');
+        } finally {
+          setBusy(false);
+        }
+      };
+      reader.onerror = () => {
+        showStatus('FILE READ ERROR. DOCUMENT INACCESSIBLE.', 'error');
+        setBusy(false);
+      };
+      reader.readAsText(file);
+
+      // Clean up
+      document.body.removeChild(input);
+    };
+
+    document.body.appendChild(input);
+    input.click();
+  }, [onImport, busy, showStatus]);
 
   if (!visible) return null;
 
@@ -263,6 +385,32 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
           activeOpacity={0.7}
         >
           <Text style={styles.slotBtnText}>SAVE</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.divider} />
+
+      {/* ---- SECTION: FILE I/O ---- */}
+      <Text style={styles.sectionHeader}>STATE ARCHIVE — CLASSIFIED</Text>
+      <Text style={styles.fileIoNote}>
+        EXPORT / IMPORT GAME STATE AS JSON DOCUMENT
+      </Text>
+      <View style={styles.fileIoRow}>
+        <TouchableOpacity
+          style={[styles.fileIoBtn, styles.exportBtn]}
+          onPress={handleExport}
+          disabled={busy || !onExport}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.fileIoBtnText}>EXPORT SAVE</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.fileIoBtn, styles.importBtn]}
+          onPress={handleImport}
+          disabled={busy || !onImport}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.fileIoBtnText}>IMPORT SAVE</Text>
         </TouchableOpacity>
       </View>
 
@@ -454,6 +602,43 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textPrimary,
     letterSpacing: 1,
+  },
+
+  // ---- File I/O section ----
+  fileIoNote: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    color: Colors.textMuted,
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  fileIoRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 8,
+  },
+  fileIoBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  exportBtn: {
+    backgroundColor: 'rgba(198, 40, 40, 0.2)',
+    borderColor: Colors.sovietRed,
+  },
+  importBtn: {
+    backgroundColor: 'rgba(251, 192, 45, 0.2)',
+    borderColor: Colors.sovietGold,
+  },
+  fileIoBtnText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    letterSpacing: 2,
   },
 
   // ---- Status bar ----

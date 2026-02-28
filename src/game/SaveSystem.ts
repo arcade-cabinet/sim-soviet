@@ -205,6 +205,49 @@ export class SaveSystem {
     }
   }
 
+  /**
+   * Export the current game state as a JSON string for file download.
+   * Returns null if no game state is available.
+   */
+  public exportSaveData(): string | null {
+    const data = this.collectExtendedState();
+    if (!data) return null;
+    return JSON.stringify(data, null, 2);
+  }
+
+  /**
+   * Import game state from a JSON string (e.g. from a file upload).
+   * Validates the structure before restoring. Returns true on success.
+   */
+  public importSaveData(json: string): boolean {
+    try {
+      const data: ExtendedSaveData = JSON.parse(json);
+
+      // Validate required top-level keys
+      if (
+        !data.version ||
+        !data.resources ||
+        !data.gameMeta ||
+        !Array.isArray(data.buildings)
+      ) {
+        return false;
+      }
+
+      // Validate gameMeta has required fields
+      if (
+        !data.gameMeta.date ||
+        typeof data.gameMeta.date.year !== 'number' ||
+        typeof data.gameMeta.date.month !== 'number'
+      ) {
+        return false;
+      }
+
+      return this.restoreExtendedState(data);
+    } catch {
+      return false;
+    }
+  }
+
   /** Start auto-saving every 60 seconds. Returns cleanup function. */
   public startAutoSave(): () => void {
     this.stopAutoSave();
