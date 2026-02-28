@@ -42,7 +42,7 @@ export const ENTITY_SCALING: Record<SettlementTier, Record<PoliticalRole, [min: 
 };
 
 /** Wartime eras double military presence. */
-export const WARTIME_ERAS = new Set(['war_communism', 'great_patriotic_war', 'cold_war']);
+export const WARTIME_ERAS = new Set(['revolution', 'great_patriotic']);
 
 /** Corruption threshold above which KGB presence increases. */
 export const HIGH_CORRUPTION_THRESHOLD = 50;

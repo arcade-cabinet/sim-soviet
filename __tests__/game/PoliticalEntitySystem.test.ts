@@ -120,7 +120,7 @@ describe('PoliticalEntitySystem', () => {
   // ── Politruk building effects ──────────────────────────
 
   describe('politruk building effects', () => {
-    it('politruk at building produces morale + production effects', () => {
+    it('politruk at building produces morale effects', () => {
       system.syncEntities('gorod', 'stagnation', 0);
       const entities = system.getVisibleEntities();
       const politruk = entities.find((e) => e.role === 'politruk');
@@ -129,7 +129,8 @@ describe('PoliticalEntitySystem', () => {
         const effects = system.getBuildingEffects(politruk.stationedAt.gridX, politruk.stationedAt.gridY);
         expect(effects.hasPolitruk).toBe(true);
         expect(effects.moraleModifier).toBeGreaterThan(0);
-        expect(effects.productionModifier).toBeLessThan(0);
+        // Production penalty now flows through PolitrukEffect (session-based), not flat modifier
+        expect(effects.productionModifier).toBe(0);
       }
     });
 
@@ -150,7 +151,9 @@ describe('PoliticalEntitySystem', () => {
       expect(result.politrukEffects.length).toBeGreaterThanOrEqual(0);
       for (const effect of result.politrukEffects) {
         expect(effect.moraleBoost).toBe(10);
-        expect(effect.productionPenalty).toBeCloseTo(0.15);
+        // Production penalty varies by personality (0.015-0.2 depending on session state)
+        expect(effect.productionPenalty).toBeGreaterThanOrEqual(0);
+        expect(effect.productionPenalty).toBeLessThanOrEqual(0.2);
         expect(effect.workerSlotConsumed).toBe(1);
       }
     });

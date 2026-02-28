@@ -71,7 +71,7 @@ const MARK_AMOUNTS: Record<MarkSource, number> = {
   stakhanovite_fraud: 1,
   blat_noticed: 1,
   suppressing_news: 1,
-  report_falsified: 2,
+  report_falsified: 3,
 };
 
 const COMMENDATION_AMOUNTS: Record<CommendationSource, number> = {

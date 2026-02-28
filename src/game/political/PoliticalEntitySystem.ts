@@ -8,6 +8,8 @@
  * this system creates actual entities (politruks, KGB agents, military
  * officers, conscription officers) that occupy grid positions, inspect
  * buildings, and produce gameplay effects each tick.
+ *
+ * Also manages the Raikom (district committee) and doctrine mechanics.
  */
 
 import type { DialogueContext } from '@/content/dialogue';
@@ -23,16 +25,26 @@ import {
   roleToDialogueCharacter,
   WARTIME_ERAS,
 } from './constants';
-import { createInvestigation, KGB_REASSIGNMENT_INTERVAL, tickInvestigations } from './kgb';
+import { type DoctrineContext, evaluateDoctrineMechanics } from './doctrine';
+import {
+  createInformant,
+  createInvestigation,
+  KGB_REASSIGNMENT_INTERVAL,
+  tickInformants,
+  tickInvestigations,
+} from './kgb';
 import { processConscriptionQueue, processOrgnaborQueue, processReturns, WARTIME_CASUALTY_RATE } from './military';
 import {
   applyPolitrukTick,
+  calcPolitrukCount,
   POLITRUK_MORALE_BOOST,
-  POLITRUK_PRODUCTION_PENALTY,
   POLITRUK_ROTATION_INTERVAL,
+  rollPolitrukPersonality,
 } from './politruks';
+import { generateRaikom, offerBlat, tickRaikom } from './raikom';
 import type {
   ConscriptionEvent,
+  KGBInformant,
   KGBInvestigation,
   OrgnaborEvent,
   PoliticalBuildingEffect,
@@ -40,14 +52,29 @@ import type {
   PoliticalEntityStats,
   PoliticalRole,
   PoliticalTickResult,
+  RaikomState,
 } from './types';
+
+/** How many workers are at a given building (estimated from building size). */
+function estimateBuildingWorkers(defId: string | undefined): number {
+  if (!defId) return 5;
+  // Rough estimates based on building type
+  if (defId.includes('factory') || defId.includes('bread')) return 15;
+  if (defId.includes('apartment') || defId.includes('house')) return 8;
+  if (defId.includes('power')) return 10;
+  if (defId.includes('farm') || defId.includes('collective')) return 12;
+  if (defId.includes('warehouse')) return 6;
+  return 5;
+}
 
 export class PoliticalEntitySystem {
   private entities: Map<string, PoliticalEntityStats> = new Map();
   private investigations: KGBInvestigation[] = [];
+  private informants: KGBInformant[] = [];
   private conscriptionQueue: ConscriptionEvent[] = [];
   private orgnaborQueue: OrgnaborEvent[] = [];
   private returnQueue: Array<{ returnTick: number; count: number }> = [];
+  private raikom: RaikomState | null = null;
   private rng: GameRng | null;
 
   constructor(rng?: GameRng) {
@@ -76,21 +103,41 @@ export class PoliticalEntitySystem {
       const targetCount = calcTargetCount(rng.int(min, max), max, role, isWartime, highCorruption);
       this.reconcileRole(role, targetCount);
     }
+
+    // Initialize Raikom if not yet created (once settlement is at least posyolok)
+    if (!this.raikom && tier !== 'selo') {
+      this.raikom = generateRaikom(rng, 0);
+    }
+  }
+
+  /**
+   * Synchronize politruk count based on population (1:20 ratio).
+   * Called separately from syncEntities because it depends on population,
+   * not just settlement tier.
+   */
+  syncPolitruksByPopulation(population: number, doctrineMult: number, difficultyMult: number): void {
+    const target = calcPolitrukCount(population, doctrineMult, difficultyMult);
+    this.reconcileRole('politruk', target);
   }
 
   /**
    * Process one simulation tick for all political entities.
    * @param totalTicks - Current total tick count from the simulation.
+   * @param doctrineCtx - Optional doctrine context for era mechanics.
    */
-  tick(totalTicks: number): PoliticalTickResult {
+  tick(totalTicks: number, doctrineCtx?: DoctrineContext): PoliticalTickResult {
     const result: PoliticalTickResult = {
       workersConscripted: 0,
       workersReturned: 0,
+      workersArrested: 0,
       newInvestigations: [],
       completedInvestigations: 0,
       blackMarksAdded: 0,
       politrukEffects: [],
+      ideologySessions: [],
       announcements: [],
+      raikomDirectives: [],
+      doctrineMechanicEffects: [],
     };
 
     // 1. Process returns
@@ -121,13 +168,27 @@ export class PoliticalEntitySystem {
     // 3. Process active investigations
     this.investigations = tickInvestigations(this.investigations, this.rng, result);
 
-    // 4. Process conscription queue
+    // 4. Tick informant network
+    tickInformants(this.informants, totalTicks, this.rng, result);
+
+    // 5. Process conscription queue
     const conscriptionReturns = processConscriptionQueue(this.conscriptionQueue, totalTicks, this.rng, result);
     this.returnQueue.push(...conscriptionReturns);
 
-    // 5. Process orgnabor queue
+    // 6. Process orgnabor queue
     const orgnaborReturns = processOrgnaborQueue(this.orgnaborQueue, totalTicks, result);
     this.returnQueue.push(...orgnaborReturns);
+
+    // 7. Tick Raikom
+    if (this.raikom && this.rng) {
+      tickRaikom(this.raikom, totalTicks, this.rng, result);
+    }
+
+    // 8. Evaluate doctrine mechanics
+    if (doctrineCtx) {
+      const doctrineEffects = evaluateDoctrineMechanics(doctrineCtx);
+      result.doctrineMechanicEffects.push(...doctrineEffects);
+    }
 
     return result;
   }
@@ -150,7 +211,8 @@ export class PoliticalEntitySystem {
       if (entity.role === 'politruk') {
         effect.hasPolitruk = true;
         effect.moraleModifier += POLITRUK_MORALE_BOOST;
-        effect.productionModifier -= POLITRUK_PRODUCTION_PENALTY;
+        // Production penalty now comes from session disruption via PolitrukEffect,
+        // not a flat modifier here
       }
 
       if (entity.role === 'kgb_agent') {
@@ -167,8 +229,9 @@ export class PoliticalEntitySystem {
    * Trigger a conscription event. Drafts workers from the settlement.
    * @param count - Number of workers to conscript.
    * @param permanent - If true, workers do not return (wartime).
+   * @param deadlineTicks - Optional deadline for player response (0 = immediate).
    */
-  triggerConscription(count: number, permanent: boolean): ConscriptionEvent {
+  triggerConscription(count: number, permanent: boolean, deadlineTicks?: number): ConscriptionEvent {
     const rng = this.rng;
     const officerName = rng ? generateOfficerName('conscription_officer', rng) : 'Conscription Officer';
 
@@ -182,10 +245,34 @@ export class PoliticalEntitySystem {
       returnTick,
       casualties,
       announcement: `The Motherland needs ${count} workers. This is not a request.`,
+      playerResponded: deadlineTicks === undefined || deadlineTicks === 0,
+      responseDedlineTick: deadlineTicks ? deadlineTicks : undefined,
     };
 
     this.conscriptionQueue.push(event);
     return event;
+  }
+
+  /**
+   * Player responds to a conscription order.
+   * @param accept - Whether the player accepts the conscription.
+   * @returns marks incurred if rejected.
+   */
+  respondToConscription(accept: boolean): number {
+    // Find the first pending conscription
+    const pending = this.conscriptionQueue.find((e) => !e.playerResponded);
+    if (!pending) return 0;
+
+    pending.playerResponded = true;
+
+    if (!accept) {
+      // Rejecting costs marks
+      pending.targetCount = 0;
+      pending.announcement = 'Conscription order rejected by the Mayor. Moscow has been notified.';
+      return 2; // 2 marks for rejecting
+    }
+
+    return 0;
   }
 
   /**
@@ -210,6 +297,17 @@ export class PoliticalEntitySystem {
     });
 
     return event;
+  }
+
+  /** Offer blat to the Raikom. Returns favor gained. */
+  offerBlatToRaikom(blatAmount: number): number {
+    if (!this.raikom) return 0;
+    return offerBlat(this.raikom, blatAmount);
+  }
+
+  /** Get the current Raikom state (for UI). */
+  getRaikom(): Readonly<RaikomState> | null {
+    return this.raikom;
   }
 
   /** Get all visible political entities for rendering. */
@@ -256,14 +354,21 @@ export class PoliticalEntitySystem {
     return this.returnQueue;
   }
 
+  /** Get all informants (for testing). */
+  getInformants(): readonly KGBInformant[] {
+    return this.informants;
+  }
+
   /** Serialize for save data. */
   serialize(): PoliticalEntitySaveData {
     return {
       entities: [...this.entities.values()],
       investigations: [...this.investigations],
+      informants: [...this.informants],
       conscriptionQueue: [...this.conscriptionQueue],
       orgnaborQueue: [...this.orgnaborQueue],
       returnQueue: [...this.returnQueue],
+      raikom: this.raikom ? { ...this.raikom, activeDirectives: [...this.raikom.activeDirectives] } : null,
     };
   }
 
@@ -274,9 +379,11 @@ export class PoliticalEntitySystem {
       system.entities.set(entity.id, { ...entity });
     }
     system.investigations = [...data.investigations];
+    system.informants = data.informants ? [...data.informants] : [];
     system.conscriptionQueue = [...data.conscriptionQueue];
     system.orgnaborQueue = [...data.orgnaborQueue];
     system.returnQueue = [...data.returnQueue];
+    system.raikom = data.raikom ? { ...data.raikom, activeDirectives: [...data.raikom.activeDirectives] } : null;
     return system;
   }
 
@@ -303,7 +410,17 @@ export class PoliticalEntitySystem {
       effectiveness: rng.int(40, 80),
     };
 
+    // Assign personality for politruks
+    if (role === 'politruk') {
+      entity.personality = rollPolitrukPersonality(rng);
+    }
+
     this.entities.set(id, entity);
+
+    // KGB agents spawn with an informant at their first building
+    if (role === 'kgb_agent' && buildingPos) {
+      this.informants.push(createInformant(buildingPos, rng));
+    }
   }
 
   /** Spawn or remove entities for a single role to match target count. */
@@ -339,7 +456,8 @@ export class PoliticalEntitySystem {
   // ── Private: per-role tick logic ──────────────────────────
 
   private tickPolitruk(entity: PoliticalEntityStats, result: PoliticalTickResult): void {
-    applyPolitrukTick(entity, result);
+    const buildingWorkers = estimateBuildingWorkers(entity.targetBuilding);
+    applyPolitrukTick(entity, result, this.rng, buildingWorkers);
 
     // Rotate to a new building when timer expires
     if (entity.ticksRemaining <= 0) {
@@ -352,10 +470,17 @@ export class PoliticalEntitySystem {
     if (entity.ticksRemaining <= 0 && entity.targetBuilding) {
       const rng = this.rng;
       if (rng) {
-        const investigation = createInvestigation(entity, rng);
+        // Pass prior marks for escalation (use flagged worker count as proxy)
+        const priorFlags = this.investigations.reduce((sum, inv) => sum + inv.flaggedWorkers, 0);
+        const investigation = createInvestigation(entity, rng, priorFlags);
         result.newInvestigations.push(investigation);
         result.announcements.push(`KGB ${entity.name} has begun a ${investigation.intensity} investigation.`);
         this.investigations.push(investigation);
+
+        // Plant a new informant at investigated buildings
+        if (rng.coinFlip(0.3)) {
+          this.informants.push(createInformant(entity.stationedAt, rng));
+        }
       }
       this.reassignToBuilding(entity, KGB_REASSIGNMENT_INTERVAL);
     }

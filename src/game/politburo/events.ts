@@ -326,4 +326,71 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     effects: { money: -50 },
     weight: 0.4,
   },
+
+  // ── Additional Events (25-29) ──
+
+  {
+    id: 'heavy_industry_quota_heroism',
+    ministry: Ministry.HEAVY_INDUSTRY,
+    title: 'FACTORY QUOTA HEROISM',
+    description: (m) =>
+      `Minister ${m.name} reports factory output exceeds targets by ${m.competence > 50 ? '15%' : '3% (after creative accounting)'}. Workers receive tin medals.`,
+    pravdaHeadline: 'INDUSTRIAL OUTPUT SMASHES ALL RECORDS (RECORDS BEING REDEFINED)',
+    severity: 'trivial',
+    category: 'economic',
+    effects: (m) => ({ money: Math.floor(m.competence / 4) }),
+  },
+  {
+    id: 'heavy_industry_accident',
+    ministry: Ministry.HEAVY_INDUSTRY,
+    title: 'INDUSTRIAL ACCIDENT',
+    description: (m, gs) => {
+      const casualties = Math.max(1, Math.floor(gs.pop * 0.02));
+      return `Accident at the factory. ${casualties} workers injured. Safety inspector was on mandatory vacation. The vacation was in Siberia.`;
+    },
+    pravdaHeadline: 'WORKERS DEMONSTRATE COMMITMENT BY VOLUNTEERING FOR HAZARDOUS DUTY',
+    severity: 'major',
+    category: 'disaster',
+    effects: (_, gs) => ({ pop: -Math.max(1, Math.floor(gs.pop * 0.02)), money: -20 }),
+    condition: (_, gs) => gs.pop > 15,
+    weight: 0.5,
+  },
+  {
+    id: 'gosplan_five_year_revision',
+    ministry: Ministry.GOSPLAN,
+    title: 'FIVE-YEAR PLAN REVISION',
+    description: (m) =>
+      `Gosplan Chairman ${m.name} announces the Five-Year Plan will now be completed in ${m.personality === PersonalityType.ZEALOT ? '3 years' : m.personality === PersonalityType.POPULIST ? '7 years' : '4 years'}. Mathematics has been adjusted accordingly.`,
+    pravdaHeadline: 'ACCELERATED PLAN DEMONSTRATES SUPERIORITY OF SOCIALIST ECONOMICS',
+    severity: 'minor',
+    category: 'economic',
+    effects: (m) => ({
+      money: m.personality === PersonalityType.ZEALOT ? -30 : 0,
+    }),
+  },
+  {
+    id: 'kgb_defector_panic',
+    ministry: Ministry.KGB,
+    title: 'DEFECTOR PANIC',
+    description: (m) =>
+      `Reports of a potential defector. KGB Chairman ${m.name} orders lockdown. ${m.personality === PersonalityType.ZEALOT ? 'Three innocent bystanders arrested.' : 'Investigation finds the "defector" was visiting their grandmother.'}`,
+    pravdaHeadline: 'WESTERN RECRUITMENT ATTEMPT FOILED BY VIGILANT CITIZENRY',
+    severity: 'minor',
+    category: 'political',
+    effects: (m) => ({
+      pop: m.personality === PersonalityType.ZEALOT ? -3 : 0,
+      money: -15,
+    }),
+  },
+  {
+    id: 'education_science_discovery',
+    ministry: Ministry.EDUCATION,
+    title: 'SCIENTIFIC BREAKTHROUGH',
+    description: (m) =>
+      `Scientists under Minister ${m.name}'s purview announce a breakthrough: ${pick(['a new type of concrete that is slightly less grey', 'a potato that grows 2% larger under ideal conditions', 'proof that the tractor was invented in Russia', 'a method to recycle propaganda posters into insulation'])}. The West trembles.`,
+    pravdaHeadline: 'SOVIET SCIENCE LEAPS AHEAD OF DECADENT WESTERN RESEARCH',
+    severity: 'trivial',
+    category: 'cultural',
+    effects: { money: -10 },
+  },
 ];

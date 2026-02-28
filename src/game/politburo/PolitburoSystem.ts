@@ -59,6 +59,13 @@ export interface PolitburoSaveData {
 export class PolitburoSystem {
   private state: PolitburoState;
   private corruptionMult = 1;
+  /** Ticks remaining in leadership transition phase (modifiers blend during this time). */
+  private transitionTicksRemaining = 0;
+  /** Modifiers from the previous leader (used during transition blend). */
+  private previousModifiers: MinistryModifiers | null = null;
+
+  /** How many months the transition phase lasts. */
+  private static readonly TRANSITION_DURATION_MONTHS = 3;
 
   /** Set an external corruption multiplier (from EraSystem). */
   public setCorruptionMult(mult: number): void {
@@ -100,6 +107,11 @@ export class PolitburoSystem {
   }
 
   public getModifiers(): Readonly<MinistryModifiers> {
+    // During leadership transition, blend old and new modifiers
+    if (this.transitionTicksRemaining > 0 && this.previousModifiers) {
+      const blend = this.transitionTicksRemaining / PolitburoSystem.TRANSITION_DURATION_MONTHS;
+      return this.blendModifiers(this.previousModifiers, this.state.activeModifiers, blend);
+    }
     return this.state.activeModifiers;
   }
 
@@ -123,6 +135,14 @@ export class PolitburoSystem {
       this.updateMinisterStats();
       this.checkMinistryEvents();
       this.applyCorruptionDrain();
+
+      // Tick the leadership transition phase
+      if (this.transitionTicksRemaining > 0) {
+        this.transitionTicksRemaining--;
+        if (this.transitionTicksRemaining <= 0) {
+          this.previousModifiers = null;
+        }
+      }
     }
 
     // Quarterly checks
@@ -160,6 +180,29 @@ export class PolitburoSystem {
       const competenceScale = 0.5 + minister.competence / 200;
       applyMinisterOverrides(mods, overrides, competenceScale);
     }
+
+    // Clamp all multiplier values to prevent extreme values
+    mods.foodProductionMult = clamp(mods.foodProductionMult, 0.2, 3.0);
+    mods.vodkaProductionMult = clamp(mods.vodkaProductionMult, 0.2, 3.0);
+    mods.factoryOutputMult = clamp(mods.factoryOutputMult, 0.2, 3.0);
+    mods.buildingCostMult = clamp(mods.buildingCostMult, 0.3, 3.0);
+    mods.techResearchMult = clamp(mods.techResearchMult, 0.2, 3.0);
+    mods.moraleModifier = clamp(mods.moraleModifier, -20, 20);
+    mods.purgeFrequencyMult = clamp(mods.purgeFrequencyMult, 0.1, 5.0);
+    mods.fearLevel = clamp(mods.fearLevel, 0, 100);
+    mods.surveillanceRate = clamp(mods.surveillanceRate, 0, 20);
+    mods.conscriptionRate = clamp(mods.conscriptionRate, 0, 50);
+    mods.crimeRate = clamp(mods.crimeRate, 0, 100);
+    mods.corruptionDrain = clamp(mods.corruptionDrain, 0, 200);
+    mods.quotaDifficultyMult = clamp(mods.quotaDifficultyMult, 0.3, 3.0);
+    mods.populationGrowthMult = clamp(mods.populationGrowthMult, 0.1, 3.0);
+    mods.supplyChainDelayMult = clamp(mods.supplyChainDelayMult, 0.3, 5.0);
+    mods.infrastructureDecayMult = clamp(mods.infrastructureDecayMult, 0.2, 5.0);
+    mods.pollutionMult = clamp(mods.pollutionMult, 0.1, 5.0);
+    mods.accidentRate = clamp(mods.accidentRate, 0, 0.5);
+    mods.hospitalEffectiveness = clamp(mods.hospitalEffectiveness, 0, 2.0);
+    mods.literacyRate = clamp(mods.literacyRate, 0, 100);
+    mods.propagandaIntensity = clamp(mods.propagandaIntensity, 0, 100);
 
     this.state.activeModifiers = mods;
   }
@@ -465,6 +508,9 @@ export class PolitburoSystem {
     const oldLeader = this.state.generalSecretary;
     if (!oldLeader.alive) return; // Prevent double-trigger
 
+    // De-[Name]-ization: Save old modifiers so we can blend during transition
+    this.previousModifiers = { ...this.state.activeModifiers };
+
     oldLeader.alive = false;
     oldLeader.causeOfDeath = cause;
     this.state.leaderHistory.push({ ...oldLeader });
@@ -481,7 +527,7 @@ export class PolitburoSystem {
     const event: GameEvent = {
       id: `succession_${oldLeader.id}`,
       title: 'LEADERSHIP TRANSITION',
-      description: `General Secretary ${oldLeader.name} has departed ${causeText}. New General Secretary ${newGS.name} (${newGS.personality}) takes the helm. The State endures.`,
+      description: `General Secretary ${oldLeader.name} has departed ${causeText}. New General Secretary ${newGS.name} (${newGS.personality}) takes the helm. De-${oldLeader.name.split(' ')[1] ?? oldLeader.name}-ization begins. The State endures.`,
       pravdaHeadline: `NEW ERA OF PROSPERITY BEGINS UNDER VISIONARY LEADERSHIP OF ${newGS.name.toUpperCase()}`,
       category: 'political',
       severity: 'catastrophic',
@@ -493,6 +539,9 @@ export class PolitburoSystem {
     this.state.generalSecretary = newGS;
     this.staffNewCabinet();
     this.recalculateModifiers();
+
+    // Start transition phase — modifiers gradually shift from old to new
+    this.transitionTicksRemaining = PolitburoSystem.TRANSITION_DURATION_MONTHS;
   }
 
   // ── Private: Cabinet Staffing ─────────────────────────────────────────
@@ -582,6 +631,35 @@ export class PolitburoSystem {
     for (const [_, minister] of this.state.ministers) {
       minister.tenure++;
     }
+  }
+
+  // ── Private: Transition Blending ────────────────────────────────────
+
+  /**
+   * Blend two modifier sets. `blend` is how much of the OLD modifiers
+   * to keep (1.0 = all old, 0.0 = all new).
+   * De-[Name]-ization gradually reverses old leader personality effects.
+   */
+  private blendModifiers(
+    oldMods: Readonly<MinistryModifiers>,
+    newMods: Readonly<MinistryModifiers>,
+    blend: number,
+  ): MinistryModifiers {
+    const result = { ...newMods };
+    const oldRecord = oldMods as Record<string, unknown>;
+    const newRecord = newMods as Record<string, unknown>;
+    const resultRecord = result as unknown as Record<string, number | boolean>;
+
+    for (const key of Object.keys(newMods)) {
+      const oldVal = oldRecord[key];
+      const newVal = newRecord[key];
+      if (typeof oldVal === 'number' && typeof newVal === 'number') {
+        resultRecord[key] = oldVal * blend + newVal * (1 - blend);
+      }
+      // Booleans snap immediately to new values (no blending)
+    }
+
+    return result;
   }
 
   // ── Serialization ─────────────────────────────────────────────────────
