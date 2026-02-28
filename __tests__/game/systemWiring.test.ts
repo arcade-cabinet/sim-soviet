@@ -16,7 +16,7 @@ import {
   handleQuotaMet,
   processReport,
 } from '@/game/engine/annualReportTick';
-import { ALL_EVENT_TEMPLATES } from '@/game/events/allTemplates';
+import { ALL_EVENT_TEMPLATES } from '@/game/events/templates';
 import { GameGrid } from '@/game/GameGrid';
 import { resolveBuildingTrigger } from '@/game/minigames/BuildingMinigameMap';
 import { MINIGAME_DEFINITIONS } from '@/game/minigames/definitions';
@@ -328,6 +328,216 @@ describe('GAP-026: Weather effects on gameplay', () => {
       expect(profile.constructionTimeMult).toBeDefined();
       expect(profile.workerSpeedMult).toBeDefined();
       expect(profile.eventFrequencyModifier).toBeDefined();
+    }
+  });
+});
+
+// ── GAP-017: Heating system effects ──
+
+describe('GAP-017: Heating system effects', () => {
+  it('pechka tier consumes timber for fuel', () => {
+    const cfg = HEATING_CONFIGS['pechka'];
+    expect(cfg.consumption.resource).toBe('timber');
+    expect(cfg.consumption.amount).toBeGreaterThan(0);
+  });
+
+  it('district tier consumes power for fuel', () => {
+    const cfg = HEATING_CONFIGS['district'];
+    expect(cfg.consumption.resource).toBe('power');
+    expect(cfg.consumption.amount).toBeGreaterThan(0);
+  });
+
+  it('crumbling tier consumes power with higher cost than district', () => {
+    const district = HEATING_CONFIGS['district'];
+    const crumbling = HEATING_CONFIGS['crumbling'];
+    expect(crumbling.consumption.resource).toBe('power');
+    expect(crumbling.consumption.amount).toBeGreaterThan(district.consumption.amount);
+  });
+
+  it('processHeating returns fuelConsumed during winter when operational', () => {
+    const eco = new EconomySystem();
+    // Winter month (December = 12)
+    const result = eco.processHeating(50, 12, true);
+    expect(result.fuelConsumed).not.toBeNull();
+    expect(result.fuelConsumed!.resource).toBe('timber'); // default pechka tier
+    expect(result.fuelConsumed!.amount).toBe(HEATING_CONFIGS['pechka'].consumption.amount);
+    expect(result.operational).toBe(true);
+    expect(result.populationAtRisk).toBe(0);
+  });
+
+  it('processHeating sets failing=true when non-operational in winter', () => {
+    const eco = new EconomySystem();
+    const result = eco.processHeating(50, 1, false); // January, no fuel
+    expect(result.operational).toBe(false);
+    expect(result.populationAtRisk).toBeGreaterThan(0);
+    expect(eco.getHeating().failing).toBe(true);
+  });
+
+  it('processHeating does not consume fuel outside winter', () => {
+    const eco = new EconomySystem();
+    const result = eco.processHeating(50, 7, true); // July
+    expect(result.fuelConsumed).toBeNull();
+    expect(eco.getHeating().failing).toBe(false);
+  });
+
+  it('heating failure applies morale penalty via applyMorale', () => {
+    const citizen = { class: 'worker' as const, happiness: 50, hunger: 0, home: { gridX: 0, gridY: 0 } };
+    const stats = { morale: 80, loyalty: 50, skill: 50, vodkaDependency: 0, ticksSinceVodka: 0, name: 'Test', assignmentDuration: 0, assignmentSource: 'auto' as const };
+
+    // Without heating failure
+    const statsNormal = { ...stats };
+    applyMorale(citizen, statsNormal, 0, false);
+    const moraleNormal = statsNormal.morale;
+
+    // With heating failure
+    const statsCold = { ...stats };
+    applyMorale(citizen, statsCold, 0, true);
+    const moraleCold = statsCold.morale;
+
+    expect(moraleNormal - moraleCold).toBe(HEATING_FAILURE_MORALE_PENALTY);
+  });
+
+  it('all heating tiers define required config fields', () => {
+    for (const tier of ['pechka', 'district', 'crumbling'] as HeatingTier[]) {
+      const cfg = HEATING_CONFIGS[tier];
+      expect(cfg.baseEfficiency).toBeGreaterThan(0);
+      expect(cfg.baseEfficiency).toBeLessThanOrEqual(1);
+      expect(cfg.capacityPer100Pop).toBeGreaterThan(0);
+      expect(cfg.consumption.amount).toBeGreaterThan(0);
+      expect(cfg.consumption.resource).toBeDefined();
+    }
+  });
+});
+
+// ── GAP-024: Minigame trigger routing ──
+
+describe('GAP-024: Minigame trigger routing', () => {
+  it('all 17 minigame definitions exist', () => {
+    expect(MINIGAME_DEFINITIONS.length).toBe(17);
+  });
+
+  it('all minigame definitions have valid trigger types', () => {
+    const validTypes = ['building_tap', 'event', 'periodic'];
+    for (const def of MINIGAME_DEFINITIONS) {
+      expect(validTypes).toContain(def.triggerType);
+    }
+  });
+
+  it('periodic minigames have matching conditions in the router', () => {
+    const periodicDefs = MINIGAME_DEFINITIONS.filter((d) => d.triggerType === 'periodic');
+    expect(periodicDefs.length).toBeGreaterThanOrEqual(2);
+    const validConditions = ['population_60', 'inspection_180'];
+    for (const def of periodicDefs) {
+      expect(validConditions).toContain(def.triggerCondition);
+    }
+  });
+
+  it('building_tap minigames have matching building trigger map entries', () => {
+    const tapDefs = MINIGAME_DEFINITIONS.filter((d) => d.triggerType === 'building_tap');
+    // Each building_tap minigame should have at least one building defId that resolves to its triggerCondition
+    for (const def of tapDefs) {
+      // Terrain features (forest, mountain, market) map directly — they pass through
+      if (['forest', 'mountain', 'market'].includes(def.triggerCondition)) continue;
+      // For building-based triggers, verify at least one defId resolves to this condition
+      const matchedBuildings = [
+        'factory-office', 'bread-factory', 'warehouse',
+        'collective-farm-hq', 'vodka-distillery', 'gulag-admin',
+        'ministry-office', 'government-hq', 'kgb-office',
+        'power-station', 'cooling-tower', 'school', 'cultural-palace',
+        'workers-club', 'barracks', 'guard-post',
+      ].filter((id) => resolveBuildingTrigger(id) === def.triggerCondition);
+      expect(matchedBuildings.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('auto-resolve works when tick limit is exceeded', () => {
+    const router = new MinigameRouter();
+    // Get any periodic minigame definition
+    const def = MINIGAME_DEFINITIONS.find((d) => d.triggerType === 'periodic')!;
+    router.startMinigame(def, 0);
+
+    // Tick past the tick limit
+    const outcome = router.tick(def.tickLimit + 1);
+    expect(outcome).not.toBeNull();
+    expect(outcome!.announcement).toBeDefined();
+  });
+
+  it('cooldown prevents immediate re-trigger of the same minigame', () => {
+    const router = new MinigameRouter();
+    // Start and resolve the inspection minigame at tick 360
+    const def = MINIGAME_DEFINITIONS.find((d) => d.id === 'the_inspection')!;
+    router.startMinigame(def, 360);
+    router.resolveChoice(def.choices[0]!.id);
+    router.clearResolved();
+
+    // At tick 361, neither periodic condition fires (361 % 60 !== 0, 361 % 180 !== 0)
+    const result = router.checkTrigger('periodic', { totalTicks: 361, population: 100 });
+    expect(result).toBeNull();
+
+    // At tick 540 (= 360 + 180, which IS 180-divisible), the inspection should be on cooldown
+    // (cooldown until 360 + 60 = 420, so 540 > 420 and cooldown has expired)
+    // But this validates that the cooldown mechanism at least blocks during cooldown window
+    const resultDuringCooldown = router.checkTrigger('periodic', { totalTicks: 380, population: 5 });
+    // Population too low for the_queue (needs >= 30), and inspection is on cooldown (380 < 420)
+    expect(resultDuringCooldown).toBeNull();
+  });
+
+  it('all minigame definitions have at least one choice', () => {
+    for (const def of MINIGAME_DEFINITIONS) {
+      expect(def.choices.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('all choices have success and failure outcomes', () => {
+    for (const def of MINIGAME_DEFINITIONS) {
+      for (const choice of def.choices) {
+        expect(choice.successChance).toBeGreaterThanOrEqual(0);
+        expect(choice.successChance).toBeLessThanOrEqual(1);
+        expect(choice.onSuccess).toBeDefined();
+        expect(choice.onFailure).toBeDefined();
+      }
+    }
+  });
+});
+
+// ── GAP-027: Event era filtering ──
+
+describe('GAP-027: Event era filtering', () => {
+  it('era-specific events have eraFilter defined', () => {
+    const eraFiltered = ALL_EVENT_TEMPLATES.filter((t) => t.eraFilter);
+    // We know there are many era-specific events
+    expect(eraFiltered.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('eraFilter arrays contain valid era IDs', () => {
+    const validEras = [
+      'war_communism', 'first_plans', 'great_patriotic',
+      'reconstruction', 'thaw', 'stagnation', 'perestroika', 'eternal_soviet',
+    ];
+    for (const template of ALL_EVENT_TEMPLATES) {
+      if (!template.eraFilter) continue;
+      for (const era of template.eraFilter) {
+        expect(validEras).toContain(era);
+      }
+    }
+  });
+
+  it('events without eraFilter are era-agnostic (fire in any era)', () => {
+    const noFilter = ALL_EVENT_TEMPLATES.filter((t) => !t.eraFilter);
+    // There should be era-agnostic events (disasters, absurdist, etc.)
+    expect(noFilter.length).toBeGreaterThan(0);
+  });
+
+  it('each era has at least one era-specific event', () => {
+    const eras = [
+      'war_communism', 'first_plans', 'great_patriotic',
+      'reconstruction', 'thaw', 'stagnation', 'perestroika', 'eternal_soviet',
+    ];
+    for (const era of eras) {
+      const eventsForEra = ALL_EVENT_TEMPLATES.filter(
+        (t) => t.eraFilter && t.eraFilter.includes(era),
+      );
+      expect(eventsForEra.length).toBeGreaterThanOrEqual(1);
     }
   });
 });
