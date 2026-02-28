@@ -16,6 +16,7 @@
 
 import * as THREE from 'three';
 import type { SettlementTier } from '../game/SettlementSystem';
+import type { Season } from './TerrainGrid';
 
 // ── Tier Tint Definitions ───────────────────────────────────────────────────
 
@@ -43,6 +44,19 @@ export const TIER_TINTS: Readonly<Record<SettlementTier, TierTint>> = {
     colorFactor: [0.7, 0.75, 0.8],
     label: 'Cool grey-blue (concrete)',
   },
+};
+
+// ── Season Tint Definitions ─────────────────────────────────────────────────
+
+/**
+ * Seasonal RGB multipliers applied on top of tier tinting.
+ * Winter is slightly blue/cold, summer slightly warm, spring/autumn subtle.
+ */
+export const SEASON_TINTS: Readonly<Record<Season, [number, number, number]>> = {
+  winter: [0.85, 0.9, 1.1],
+  spring: [0.95, 1.0, 0.95],
+  summer: [1.05, 1.0, 0.9],
+  autumn: [1.0, 0.95, 0.85],
 };
 
 // ── Helper: traverse all Mesh children ──────────────────────────────────────
@@ -118,6 +132,53 @@ export function applyTierTint(group: THREE.Object3D, tier: SettlementTier): void
     if (orig) {
       mat.color.setRGB(orig.r * fr, orig.g * fg, orig.b * fb);
     }
+  });
+}
+
+/**
+ * Apply seasonal tint to all Mesh children of a building group.
+ * Multiplies the current material color by the seasonal RGB factor.
+ * Must be called AFTER applyTierTint() so it layers on top of the tier base.
+ */
+export function applySeasonTint(group: THREE.Object3D, season: Season): void {
+  const [sr, sg, sb] = SEASON_TINTS[season];
+
+  forEachMeshChild(group, (mesh, mat) => {
+    const orig = getOriginalColor(mesh, mat);
+    if (!orig) return;
+
+    // Read the current tier-tinted color and multiply by season factor.
+    // Since applyTierTint already set color = original * tierFactor,
+    // we re-read the current color and apply the season multiplier.
+    mat.color.setRGB(mat.color.r * sr, mat.color.g * sg, mat.color.b * sb);
+  });
+}
+
+/**
+ * Apply construction-in-progress visual state to a building group.
+ *
+ * Foundation phase: semi-transparent (opacity 0.5), dim yellow emissive.
+ * Building phase: semi-transparent (opacity 0.7), brighter yellow emissive
+ * scaled by construction progress (0.0–1.0).
+ *
+ * Must be called AFTER applyTierTint() + applySeasonTint().
+ * Mutually exclusive with applyPoweredState() — buildings under
+ * construction are not yet connected to the power grid.
+ */
+export function applyConstructionState(
+  group: THREE.Object3D,
+  phase: 'foundation' | 'building',
+  progress: number,
+): void {
+  const opacity = phase === 'foundation' ? 0.5 : 0.5 + progress * 0.5;
+  // Yellow emissive glow intensifies with progress
+  const emissiveIntensity = 0.15 + progress * 0.35;
+
+  forEachMeshChild(group, (_mesh, mat) => {
+    mat.transparent = true;
+    mat.opacity = opacity;
+    mat.depthWrite = false; // prevent z-fighting for transparent meshes
+    mat.emissive.setRGB(emissiveIntensity, emissiveIntensity * 0.8, 0);
   });
 }
 

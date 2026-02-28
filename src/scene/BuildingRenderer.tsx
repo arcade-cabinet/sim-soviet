@@ -9,6 +9,9 @@
  * visually communicate the settlement's progression. On tier change, all
  * buildings are re-tinted with an optional flash celebration effect.
  *
+ * Buildings under construction are rendered semi-transparent with a yellow
+ * emissive glow that intensifies as construction progresses.
+ *
  * R3F migration: uses drei's useGLTF + Clone for model instancing.
  * Each building wrapped in Suspense since useGLTF suspends on first load.
  */
@@ -20,7 +23,15 @@ import * as THREE from 'three';
 import type { SettlementTier } from '../game/SettlementSystem';
 import { getModelName } from './ModelMapping';
 import { getModelUrl } from './ModelPreloader';
-import { applyFireTint, applyPoweredState, applyTierTint, clearTintData } from './TierTinting';
+import type { Season } from './TerrainGrid';
+import {
+  applyConstructionState,
+  applyFireTint,
+  applyPoweredState,
+  applySeasonTint,
+  applyTierTint,
+  clearTintData,
+} from './TierTinting';
 
 export interface BuildingState {
   id: string;
@@ -31,12 +42,18 @@ export interface BuildingState {
   elevation: number;
   powered: boolean;
   onFire: boolean;
+  /** Construction phase — undefined or 'complete' means operational */
+  constructionPhase?: 'foundation' | 'building' | 'complete';
+  /** Construction progress 0.0–1.0 (undefined means complete) */
+  constructionProgress?: number;
 }
 
 interface BuildingRendererProps {
   buildings: BuildingState[];
   /** Current settlement tier — drives material tinting */
   settlementTier?: SettlementTier;
+  /** Current season — drives seasonal color tinting */
+  season?: Season;
 }
 
 // ── Single Building Component ───────────────────────────────────────────────
@@ -45,17 +62,23 @@ interface BuildingMeshProps {
   building: BuildingState;
   modelUrl: string;
   settlementTier: SettlementTier;
+  season: Season;
+}
+
+/** Whether a building is still under construction. */
+function isUnderConstruction(building: BuildingState): boolean {
+  return building.constructionPhase != null && building.constructionPhase !== 'complete';
 }
 
 /**
  * Individual building — loads GLB via useGLTF, clones it, applies
- * tier tinting + powered/fire state, positions at grid cell.
+ * tier tinting + powered/fire/construction state, positions at grid cell.
  */
-const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlementTier }) => {
+const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlementTier, season }) => {
   const { scene } = useGLTF(modelUrl);
   const groupRef = useRef<THREE.Group>(null);
 
-  // Apply tier tinting + powered/fire state after clone mounts
+  // Apply tier tinting + powered/fire/construction state after clone mounts
   useEffect(() => {
     const group = groupRef.current;
     if (!group) return;
@@ -86,7 +109,12 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
 
     // Apply visual states
     applyTierTint(group, settlementTier);
-    applyPoweredState(group, building.powered);
+    applySeasonTint(group, season);
+    if (isUnderConstruction(building)) {
+      applyConstructionState(group, building.constructionPhase as 'foundation' | 'building', building.constructionProgress ?? 0);
+    } else {
+      applyPoweredState(group, building.powered);
+    }
     applyFireTint(group, building.onFire);
 
     // Enable shadow casting on all child meshes
@@ -100,7 +128,17 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     return () => {
       clearTintData(group);
     };
-  }, [settlementTier, building.elevation, building.gridX, building.gridY, building.onFire, building.powered]);
+  }, [
+    settlementTier,
+    season,
+    building.elevation,
+    building.gridX,
+    building.gridY,
+    building.onFire,
+    building.powered,
+    building.constructionPhase,
+    building.constructionProgress,
+  ]);
 
   // Update position and visual states when building data changes
   useEffect(() => {
@@ -110,11 +148,26 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     const yOffset = group.userData._yOffset ?? 0;
     group.position.set(building.gridX + 0.5, building.elevation * 0.5 + yOffset, building.gridY + 0.5);
 
-    // Re-apply tint from base (resets powered/fire modifications)
+    // Re-apply tint from base (resets powered/fire/construction modifications)
     applyTierTint(group, settlementTier);
-    applyPoweredState(group, building.powered);
+    applySeasonTint(group, season);
+    if (isUnderConstruction(building)) {
+      applyConstructionState(group, building.constructionPhase as 'foundation' | 'building', building.constructionProgress ?? 0);
+    } else {
+      applyPoweredState(group, building.powered);
+    }
     applyFireTint(group, building.onFire);
-  }, [building.gridX, building.gridY, building.elevation, building.powered, building.onFire, settlementTier]);
+  }, [
+    building.gridX,
+    building.gridY,
+    building.elevation,
+    building.powered,
+    building.onFire,
+    building.constructionPhase,
+    building.constructionProgress,
+    settlementTier,
+    season,
+  ]);
 
   return (
     <group ref={groupRef}>
@@ -125,7 +178,7 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
 
 // ── Main BuildingRenderer ───────────────────────────────────────────────────
 
-const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings, settlementTier = 'selo' }) => {
+const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings, settlementTier = 'selo', season = 'summer' }) => {
   const _lastTierRef = useRef<SettlementTier>(settlementTier);
 
   // Detect tier changes for flash effect
@@ -147,7 +200,7 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings, settleme
 
         return (
           <Suspense key={building.id} fallback={null}>
-            <BuildingMesh building={building} modelUrl={modelUrl} settlementTier={settlementTier} />
+            <BuildingMesh building={building} modelUrl={modelUrl} settlementTier={settlementTier} season={season} />
           </Suspense>
         );
       })}

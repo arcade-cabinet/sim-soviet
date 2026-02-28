@@ -7,7 +7,8 @@
  */
 
 import { type SettlementTier, TIER_ORDER } from '../../src/game/SettlementSystem';
-import { TIER_TINTS } from '../../src/scene/TierTinting';
+import type { Season } from '../../src/scene/TerrainGrid';
+import { SEASON_TINTS, TIER_TINTS } from '../../src/scene/TierTinting';
 
 describe('TierTinting', () => {
   // ── 1. All tiers have tint definitions ─────────────────────
@@ -137,5 +138,67 @@ describe('TierTinting', () => {
     expect(r).toBeCloseTo(0.7);
     expect(g).toBeCloseTo(0.75);
     expect(b).toBeCloseTo(0.8);
+  });
+});
+
+// ── Season Tinting ──────────────────────────────────────────────────────────
+
+describe('SeasonTinting', () => {
+  const ALL_SEASONS: Season[] = ['winter', 'spring', 'summer', 'autumn'];
+
+  it('defines tints for all four seasons', () => {
+    for (const season of ALL_SEASONS) {
+      expect(SEASON_TINTS[season]).toBeDefined();
+      expect(SEASON_TINTS[season]).toHaveLength(3);
+    }
+  });
+
+  it('winter has blue-shifted tint (blue > red)', () => {
+    const [r, , b] = SEASON_TINTS.winter;
+    expect(b).toBeGreaterThan(r);
+  });
+
+  it('summer has warm tint (red > blue)', () => {
+    const [r, , b] = SEASON_TINTS.summer;
+    expect(r).toBeGreaterThan(b);
+  });
+
+  it('autumn has warm-leaning tint (red >= blue)', () => {
+    const [r, , b] = SEASON_TINTS.autumn;
+    expect(r).toBeGreaterThanOrEqual(b);
+  });
+
+  it('spring is near-neutral', () => {
+    const [r, g, b] = SEASON_TINTS.spring;
+    // Spring should be close to 1.0 on all channels
+    expect(r).toBeGreaterThanOrEqual(0.9);
+    expect(g).toBeGreaterThanOrEqual(0.9);
+    expect(b).toBeGreaterThanOrEqual(0.9);
+    expect(r).toBeLessThanOrEqual(1.1);
+    expect(g).toBeLessThanOrEqual(1.1);
+    expect(b).toBeLessThanOrEqual(1.1);
+  });
+
+  it('all season factors are in valid range (0.5 to 1.5)', () => {
+    for (const season of ALL_SEASONS) {
+      const [r, g, b] = SEASON_TINTS[season];
+      for (const v of [r, g, b]) {
+        expect(v).toBeGreaterThanOrEqual(0.5);
+        expect(v).toBeLessThanOrEqual(1.5);
+      }
+    }
+  });
+
+  it('exact values match specification', () => {
+    expect(SEASON_TINTS.winter).toEqual([0.85, 0.9, 1.1]);
+    expect(SEASON_TINTS.spring).toEqual([0.95, 1.0, 0.95]);
+    expect(SEASON_TINTS.summer).toEqual([1.05, 1.0, 0.9]);
+    expect(SEASON_TINTS.autumn).toEqual([1.0, 0.95, 0.85]);
+  });
+
+  it('each season has a distinct tint', () => {
+    const tints = ALL_SEASONS.map((s) => SEASON_TINTS[s].join(','));
+    const unique = new Set(tints);
+    expect(unique.size).toBe(ALL_SEASONS.length);
   });
 });
