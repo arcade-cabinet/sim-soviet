@@ -24,14 +24,15 @@ jobs:
         with:
           lfs: true
 
-      - name: Setup Node + pnpm
+      - name: Setup Node + npm
         uses: ./.github/actions/setup-node-pnpm
-        with:
-          install-args: "--frozen-lockfile"
 
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm exec vite build --base /sim-soviet/
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx expo export --platform web
+      - name: Add base path for GitHub Pages
+        run: |
+          sed -i 's|<head>|<head><base href="/sim-soviet/">|' dist/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0

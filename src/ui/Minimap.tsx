@@ -25,6 +25,7 @@ const TERRAIN_COLORS: Record<TerrainType, string> = {
   irradiated: '#7a8a20',
   marsh: '#4a5a30',
   rail: '#5a4a3a',
+  path: '#7a6a50',
 };
 
 const BUILDING_COLOR = '#ddd';

@@ -9,6 +9,10 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "build": "expo export --platform web",
     "lint": "eslint ."
   },
   "dependencies": {

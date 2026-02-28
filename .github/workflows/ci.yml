@@ -22,15 +22,13 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup Node + pnpm
+      - name: Setup Node + npm
         uses: ./.github/actions/setup-node-pnpm
-        with:
-          install-args: "--frozen-lockfile"
 
-      - name: Run Biome linter
+      - name: Run linter
         run: |
-          echo "::group::Running Biome linter"
-          pnpm run lint 2>&1 | tee lint-output.log
+          echo "::group::Running linter"
+          npm run lint 2>&1 | tee lint-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -47,7 +45,7 @@ jobs:
       - name: Run TypeScript type checking
         run: |
           echo "::group::Running TypeScript type checking"
-          pnpm run typecheck 2>&1 | tee check-output.log
+          npm run typecheck 2>&1 | tee check-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -64,7 +62,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           echo "::group::Running tests with coverage"
-          pnpm run test:coverage 2>&1 | tee test-output.log
+          npm run test:coverage 2>&1 | tee test-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -94,7 +92,7 @@ jobs:
       - name: Build project
         run: |
           echo "::group::Building project"
-          pnpm run build 2>&1 | tee build-output.log
+          npm run build 2>&1 | tee build-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -130,21 +128,19 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup Node + pnpm
+      - name: Setup Node + npm
         uses: ./.github/actions/setup-node-pnpm
-        with:
-          install-args: "--frozen-lockfile"
 
       - name: Build for E2E
-        run: pnpm build
+        run: npm run build
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
         run: |
           echo "::group::Running E2E tests"
-          pnpm test:e2e --project='Desktop Chrome' --grep-invert 'Visual Regression' 2>&1 | tee e2e-output.log
+          npm run test:e2e -- --project='Desktop Chrome' --grep-invert 'Visual Regression' 2>&1 | tee e2e-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -183,12 +179,15 @@ jobs:
       contents: read
     steps:
       - name: Check all jobs
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
         run: |
-          if [ "${{ needs.quality.result }}" != "success" ]; then
+          if [ "$QUALITY_RESULT" != "success" ]; then
             echo "Quality checks failed"
             exit 1
           fi
-          if [ "${{ needs.e2e.result }}" != "success" ]; then
+          if [ "$E2E_RESULT" != "success" ]; then
             echo "E2E tests failed"
             exit 1
           fi
