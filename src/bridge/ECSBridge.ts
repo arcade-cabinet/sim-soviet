@@ -35,6 +35,8 @@ export function getBuildingStates(): BuildingState[] {
   return buildings.entities.map((entity) => {
     const { position, building } = entity;
     const key = `${position.gridX}_${position.gridY}`;
+    const phase = building.constructionPhase;
+    const isUnderConstruction = phase != null && phase !== 'complete';
     return {
       id: key,
       type: building.defId,
@@ -44,6 +46,10 @@ export function getBuildingStates(): BuildingState[] {
       elevation: elevationMap.get(key) ?? 0,
       powered: building.powered,
       onFire: entity.building.onFire === true,
+      ...(isUnderConstruction && {
+        constructionPhase: phase as 'foundation' | 'building',
+        constructionProgress: building.constructionProgress ?? 0,
+      }),
     };
   });
 }
