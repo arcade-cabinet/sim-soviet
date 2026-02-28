@@ -12,7 +12,7 @@ export {
   DEFAULT_STAFF_CAP,
   workerSpeedMult,
 } from './constructionSystem';
-export type { StarvationCallback } from './consumptionSystem';
+export type { ConsumptionResult, StarvationCallback } from './consumptionSystem';
 export { consumptionSystem, setStarvationCallback } from './consumptionSystem';
 export type { BuildingCollapsedCallback } from './decaySystem';
 export { decaySystem, setBuildingCollapsedCallback } from './decaySystem';

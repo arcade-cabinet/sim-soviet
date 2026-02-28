@@ -642,7 +642,13 @@ export class SimulationEngine {
       }
     }
 
-    consumptionSystem(eraMods.consumptionMult);
+    const consumptionResult = consumptionSystem(eraMods.consumptionMult);
+    // Route starvation deaths through WorkerSystem for proper entity cleanup
+    if (consumptionResult.starvationDeaths > 0) {
+      const currentPop = this.workerSystem.getPopulation();
+      const targetPop = Math.max(0, currentPop - consumptionResult.starvationDeaths);
+      this.workerSystem.syncPopulation(targetPop);
+    }
 
     // Disease System — outbreak checks (monthly) + disease progression (every tick)
     const diseaseResult = diseaseTick(this.chronology.getDate().totalTicks, this.chronology.getDate().month);
@@ -802,6 +808,11 @@ export class SimulationEngine {
 
     // Sync non-resource state to gameMeta for React snapshots
     this.syncSystemsToMeta();
+
+    // Final population sync — late-tick systems (gulag, political entities, disease)
+    // may add/remove citizen entities after WorkerSystem.tick(). Flush the
+    // authoritative entity count to the resource store before loss checks.
+    storeRef.resources.population = this.workerSystem.getPopulation();
 
     // Check loss: population wiped out (only after first year so starting at 0 doesn't auto-lose)
     if (
@@ -1091,7 +1102,9 @@ export class SimulationEngine {
           const deficit = demand.food - r.food;
           r.food = 0;
           const starvationLosses = Math.ceil(deficit * 0.1);
-          r.population = Math.max(0, r.population - starvationLosses);
+          // Route ration starvation through WorkerSystem for entity cleanup
+          const rationPop = this.workerSystem.getPopulation();
+          this.workerSystem.syncPopulation(Math.max(0, rationPop - starvationLosses));
           this.callbacks.onToast('RATION SHORTAGE: Insufficient food for card holders', 'critical');
         }
       }
@@ -1117,7 +1130,8 @@ export class SimulationEngine {
         const atRisk = result.heatingResult.populationAtRisk;
         if (atRisk > 0) {
           const losses = Math.ceil(atRisk * 0.01); // 1% of at-risk pop per tick
-          r.population = Math.max(0, r.population - losses);
+          const heatingPop = this.workerSystem.getPopulation();
+          this.workerSystem.syncPopulation(Math.max(0, heatingPop - losses));
         }
       }
     }
@@ -1276,20 +1290,25 @@ export class SimulationEngine {
 
     const result = this.politicalEntities.tick(totalTicks, doctrineCtx);
 
-    // Apply population drain from conscription
-    if (result.workersConscripted > 0 && store) {
-      store.resources.population = Math.max(0, store.resources.population - result.workersConscripted);
+    // Apply population drain from conscription — route through WorkerSystem
+    if (result.workersConscripted > 0) {
+      const prePop = this.workerSystem.getPopulation();
+      this.workerSystem.syncPopulation(Math.max(0, prePop - result.workersConscripted));
       this.scoring.onConscription(result.workersConscripted);
     }
 
-    // Apply population return from orgnabor/conscription
-    if (result.workersReturned > 0 && store) {
-      store.resources.population += result.workersReturned;
+    // Apply population return from orgnabor/conscription — spawn workers
+    if (result.workersReturned > 0) {
+      for (let i = 0; i < result.workersReturned; i++) {
+        this.workerSystem.spawnWorker();
+      }
     }
 
-    // Apply KGB worker arrests — actually REMOVE workers from population
-    if (result.workersArrested > 0 && store) {
-      store.resources.population = Math.max(0, store.resources.population - result.workersArrested);
+    // Apply KGB worker arrests — route through WorkerSystem
+    if (result.workersArrested > 0) {
+      for (let i = 0; i < result.workersArrested; i++) {
+        this.workerSystem.arrestWorker();
+      }
       this.scoring.onKGBLoss(result.workersArrested);
     }
 
@@ -1308,7 +1327,12 @@ export class SimulationEngine {
         store.resources.money = Math.max(0, store.resources.money + effect.moneyDelta);
         store.resources.vodka = Math.max(0, store.resources.vodka + effect.vodkaDelta);
         if (effect.popDelta !== 0) {
-          store.resources.population = Math.max(0, store.resources.population + effect.popDelta);
+          const curPop = this.workerSystem.getPopulation();
+          if (effect.popDelta > 0) {
+            for (let i = 0; i < effect.popDelta; i++) this.workerSystem.spawnWorker();
+          } else {
+            this.workerSystem.syncPopulation(Math.max(0, curPop + effect.popDelta));
+          }
         }
       }
       if (effect.description) {
@@ -1523,7 +1547,14 @@ export class SimulationEngine {
       if (fx.money) r.money = Math.max(0, r.money + fx.money);
       if (fx.food) r.food = Math.max(0, r.food + fx.food);
       if (fx.vodka) r.vodka = Math.max(0, r.vodka + fx.vodka);
-      if (fx.pop) r.population = Math.max(0, r.population + fx.pop);
+      if (fx.pop) {
+        const evtPop = this.workerSystem.getPopulation();
+        if (fx.pop > 0) {
+          for (let i = 0; i < fx.pop; i++) this.workerSystem.spawnWorker();
+        } else {
+          this.workerSystem.syncPopulation(Math.max(0, evtPop + fx.pop));
+        }
+      }
       if (fx.power) r.power = Math.max(0, r.power + fx.power);
     }
   }
