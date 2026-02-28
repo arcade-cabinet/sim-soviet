@@ -1,174 +1,187 @@
 /**
- * AuraRenderer — Propaganda and gulag aura effects.
+ * AuraRenderer — Propaganda tower pulsing rings + gulag rotating cones.
  *
- * Propaganda towers (powered): pulsing red translucent torus rings expanding
- * outward (radius 5 tiles), 3 rings at different phases.
- * Gulags (powered): rotating spotlight cone (sweeping searchlight, radius 7 tiles).
- * Both animate per frame via registerBeforeRender.
- * Only visible in 'aura' lens or 'default' lens.
+ * Propaganda towers (powered): 3 pulsing red translucent torus rings
+ * expanding outward (radius 5 tiles), cycling at different phases.
+ * Gulags (powered): rotating translucent yellow cone (sweeping searchlight).
+ * Only visible in 'aura' or 'default' lens mode.
+ *
+ * R3F migration: uses <mesh> with <torusGeometry>/<coneGeometry> and
+ * useFrame for pulsing/rotation animation.
  */
-import React, { useEffect, useRef } from 'react';
-import {
-  MeshBuilder,
-  StandardMaterial,
-  Color3,
-  Vector3,
-  type Mesh,
-  type Scene,
-} from '@babylonjs/core';
-import { useScene } from 'reactylon';
+import React, { useRef, useMemo } from 'react';
+import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 
 import { gameState } from '../engine/GameState';
-
-interface TowerAura {
-  rings: Mesh[];
-  key: string;
-}
-
-interface GulagAura {
-  cone: Mesh;
-  key: string;
-}
 
 const TOWER_RADIUS = 5;
 const GULAG_RADIUS = 7;
 const RING_COUNT = 3;
 
-const AuraRenderer: React.FC = () => {
-  const scene = useScene();
-  const towersRef = useRef<Map<string, TowerAura>>(new Map());
-  const gulagsRef = useRef<Map<string, GulagAura>>(new Map());
-  const frameRef = useRef(0);
+// ── Propaganda Ring ─────────────────────────────────────────────────────────
+
+interface PropagandaRingsProps {
+  x: number;
+  z: number;
+}
+
+const PropagandaRings: React.FC<PropagandaRingsProps> = ({ x, z }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const ringsRef = useRef<THREE.Mesh[]>([]);
+  const materialsRef = useRef<THREE.MeshBasicMaterial[]>([]);
+
+  // Create ring materials
+  const materials = useMemo(() => {
+    return Array.from({ length: RING_COUNT }, () =>
+      new THREE.MeshBasicMaterial({
+        color: new THREE.Color(1, 0.1, 0.1),
+        transparent: true,
+        opacity: 0.4,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    );
+  }, []);
 
   useEffect(() => {
-    // Shared materials
-    const ringMat = new StandardMaterial('auraPropRing', scene);
-    ringMat.emissiveColor = new Color3(1, 0.1, 0.1);
-    ringMat.disableLighting = true;
-    ringMat.alpha = 0.4;
-    ringMat.backFaceCulling = false;
+    materialsRef.current = materials;
+    return () => {
+      materials.forEach((m) => m.dispose());
+    };
+  }, [materials]);
 
-    const coneMat = new StandardMaterial('auraGulagCone', scene);
-    coneMat.emissiveColor = new Color3(1, 1, 0.8);
-    coneMat.disableLighting = true;
-    coneMat.alpha = 0.1;
-    coneMat.backFaceCulling = false;
+  // Animate rings: expand and fade
+  useFrame(({ clock }) => {
+    const time = clock.elapsedTime;
+    const rings = ringsRef.current;
+    const mats = materialsRef.current;
 
-    function update() {
-      frameRef.current++;
-      const lens = gameState.activeLens;
-      const visible = lens === 'default' || lens === 'aura';
+    for (let i = 0; i < RING_COUNT; i++) {
+      const ring = rings[i];
+      const mat = mats[i];
+      if (!ring || !mat) continue;
 
-      const towers = towersRef.current;
-      const gulags = gulagsRef.current;
-      const activeKeys = new Set<string>();
+      const t = ((time / 2) + (i * (1 / RING_COUNT))) % 1;
+      const radius = t * TOWER_RADIUS;
+      const alpha = (1 - t) * 0.6;
 
-      if (!visible) {
-        // Hide everything
-        for (const t of towers.values()) {
-          for (const r of t.rings) r.isVisible = false;
-        }
-        for (const g of gulags.values()) g.cone.isVisible = false;
-        return;
-      }
+      ring.scale.set(radius * 2, 1, radius * 2);
+      mat.opacity = alpha;
+    }
+  });
 
-      const time = frameRef.current * 0.016; // ~60fps => seconds
+  return (
+    <group ref={groupRef} position={[x, 0.1, z]}>
+      {materials.map((mat, i) => (
+        <mesh
+          key={i}
+          ref={(el) => { if (el) ringsRef.current[i] = el; }}
+          material={mat}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          <torusGeometry args={[0.5, 0.025, 8, 32]} />
+        </mesh>
+      ))}
+    </group>
+  );
+};
 
-      // Process buildings
-      for (const b of gameState.buildings) {
-        if (!b.powered) continue;
+// ── Gulag Cone ──────────────────────────────────────────────────────────────
 
-        if (b.type === 'tower' || b.type === 'radio-station') {
-          const key = `tower_${b.x}_${b.y}`;
-          activeKeys.add(key);
+interface GulagConeProps {
+  x: number;
+  z: number;
+}
 
-          if (!towers.has(key)) {
-            const rings: Mesh[] = [];
-            for (let i = 0; i < RING_COUNT; i++) {
-              const ring = MeshBuilder.CreateTorus(
-                `${key}_ring_${i}`,
-                { diameter: 0.1, thickness: 0.05, tessellation: 32 },
-                scene,
-              );
-              ring.material = ringMat;
-              ring.position = new Vector3(b.x, 0.1, b.y);
-              rings.push(ring);
-            }
-            towers.set(key, { rings, key });
-          }
+const GulagCone: React.FC<GulagConeProps> = ({ x, z }) => {
+  const coneRef = useRef<THREE.Mesh>(null);
 
-          const tower = towers.get(key)!;
-          for (let i = 0; i < RING_COUNT; i++) {
-            const ring = tower.rings[i];
-            const t = ((time / 2) + (i * (1 / RING_COUNT))) % 1;
-            const radius = t * TOWER_RADIUS;
-            const alpha = (1 - t) * 0.6;
+  // Rotate the cone like a sweeping searchlight
+  useFrame(({ clock }) => {
+    const cone = coneRef.current;
+    if (!cone) return;
+    const angle = (clock.elapsedTime * 0.8) % (Math.PI * 2);
+    cone.rotation.y = angle;
+    cone.rotation.z = 0.5; // lean to sweep
+  });
 
-            ring.scaling = new Vector3(radius * 2, 1, radius * 2);
-            ring.position.x = b.x;
-            ring.position.z = b.y;
-            ring.isVisible = true;
+  return (
+    <mesh ref={coneRef} position={[x, 1.5, z]}>
+      <coneGeometry args={[GULAG_RADIUS, 3, 16]} />
+      <meshBasicMaterial
+        color="#ffffe6"
+        transparent
+        opacity={0.08}
+        side={THREE.DoubleSide}
+        depthWrite={false}
+      />
+    </mesh>
+  );
+};
 
-            if (ring.material instanceof StandardMaterial) {
-              (ring.material as StandardMaterial).alpha = alpha;
-            }
-          }
-        } else if (b.type === 'gulag' || b.type === 'gulag-admin') {
-          const key = `gulag_${b.x}_${b.y}`;
-          activeKeys.add(key);
+// ── Main AuraRenderer ───────────────────────────────────────────────────────
 
-          if (!gulags.has(key)) {
-            const cone = MeshBuilder.CreateCylinder(
-              `${key}_cone`,
-              { diameterTop: 0, diameterBottom: GULAG_RADIUS * 2, height: 3, tessellation: 16 },
-              scene,
-            );
-            cone.material = coneMat;
-            cone.position = new Vector3(b.x, 1.5, b.y);
-            gulags.set(key, { cone, key });
-          }
+// Need useEffect for cleanup
+const { useEffect } = React;
 
-          const gulag = gulags.get(key)!;
-          const angle = (time * 0.8) % (Math.PI * 2);
-          gulag.cone.position.x = b.x;
-          gulag.cone.position.z = b.y;
-          gulag.cone.rotation.y = angle;
-          // Make the cone lean to sweep like a searchlight
-          gulag.cone.rotation.z = 0.5;
-          gulag.cone.isVisible = true;
-        }
-      }
+const AuraRenderer: React.FC = () => {
+  const [auras, setAuras] = React.useState<{
+    towers: { key: string; x: number; z: number }[];
+    gulags: { key: string; x: number; z: number }[];
+  }>({ towers: [], gulags: [] });
+  const [visible, setVisible] = React.useState(true);
 
-      // Cleanup removed buildings
-      for (const [key, tower] of towers) {
-        if (!activeKeys.has(key)) {
-          for (const r of tower.rings) r.dispose();
-          towers.delete(key);
-        }
-      }
-      for (const [key, gulag] of gulags) {
-        if (!activeKeys.has(key)) {
-          gulag.cone.dispose();
-          gulags.delete(key);
-        }
+  // Scan buildings for aura sources each frame
+  useFrame(() => {
+    const lens = gameState.activeLens;
+    const shouldBeVisible = lens === 'default' || lens === 'aura';
+
+    if (shouldBeVisible !== visible) {
+      setVisible(shouldBeVisible);
+    }
+
+    if (!shouldBeVisible) return;
+
+    const newTowers: { key: string; x: number; z: number }[] = [];
+    const newGulags: { key: string; x: number; z: number }[] = [];
+
+    for (const b of gameState.buildings) {
+      if (!b.powered) continue;
+
+      if (b.type === 'tower' || b.type === 'radio-station') {
+        newTowers.push({ key: `tower_${b.x}_${b.y}`, x: b.x, z: b.y });
+      } else if (b.type === 'gulag' || b.type === 'gulag-admin') {
+        newGulags.push({ key: `gulag_${b.x}_${b.y}`, x: b.x, z: b.y });
       }
     }
 
-    scene.registerBeforeRender(update);
-    return () => {
-      scene.unregisterBeforeRender(update);
-      for (const t of towersRef.current.values()) {
-        for (const r of t.rings) r.dispose();
+    // Only update state if something changed
+    setAuras((prev) => {
+      if (
+        prev.towers.length === newTowers.length &&
+        prev.gulags.length === newGulags.length &&
+        prev.towers.every((t, i) => t.key === newTowers[i]?.key) &&
+        prev.gulags.every((g, i) => g.key === newGulags[i]?.key)
+      ) {
+        return prev;
       }
-      for (const g of gulagsRef.current.values()) g.cone.dispose();
-      towersRef.current.clear();
-      gulagsRef.current.clear();
-      ringMat.dispose();
-      coneMat.dispose();
-    };
-  }, [scene]);
+      return { towers: newTowers, gulags: newGulags };
+    });
+  });
 
-  return null;
+  if (!visible) return null;
+
+  return (
+    <group>
+      {auras.towers.map((tower) => (
+        <PropagandaRings key={tower.key} x={tower.x} z={tower.z} />
+      ))}
+      {auras.gulags.map((gulag) => (
+        <GulagCone key={gulag.key} x={gulag.x} z={gulag.z} />
+      ))}
+    </group>
+  );
 };
 
 export default AuraRenderer;
