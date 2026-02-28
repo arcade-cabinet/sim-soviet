@@ -1,22 +1,19 @@
 /**
- * WeatherFX — BabylonJS ParticleSystem for weather effects.
+ * WeatherFX — Snow and rain particle effects using Three.js points.
  *
- * Snow (winter): white particles, slow fall, slight horizontal drift.
- * Rain (spring/fall): blue-gray thin particles, fast diagonal fall.
- * Storm: heavy rain + scene fog density increase.
+ * Snow (winter): 2000 white particles, slow fall, slight horizontal drift.
+ * Rain (spring/fall): 1500-4000 blue-gray particles, fast diagonal fall.
+ * Storm: heavy rain.
  * Clear: no particles.
  *
- * Reads currentWeather from gameState and swaps particle systems on change.
+ * Reads currentWeather from gameState and swaps particle configs on change.
+ *
+ * R3F migration: uses <points> with <bufferGeometry> + <pointsMaterial>
+ * and useFrame for per-frame animation (replaces scene.registerBeforeRender).
  */
-import React, { useEffect, useRef } from 'react';
-import {
-  ParticleSystem,
-  Texture,
-  Color4,
-  Vector3,
-  type Scene,
-} from '@babylonjs/core';
-import { useScene } from 'reactylon';
+import React, { useRef, useMemo, useEffect } from 'react';
+import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 
 import { gameState, type WeatherType } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
@@ -24,125 +21,159 @@ import { GRID_SIZE } from '../engine/GridTypes';
 const EMITTER_WIDTH = GRID_SIZE * 2;
 const EMITTER_DEPTH = GRID_SIZE * 2;
 const EMITTER_Y = 30;
+const CENTER_X = GRID_SIZE / 2;
+const CENTER_Z = GRID_SIZE / 2;
 
-function createSnowSystem(scene: Scene): ParticleSystem {
-  const ps = new ParticleSystem('snow', 2000, scene);
-  ps.createPointEmitter(
-    new Vector3(-0.3, -0.5, -0.3),
-    new Vector3(0.3, -0.5, 0.3),
-  );
-  ps.emitter = new Vector3(GRID_SIZE / 2, EMITTER_Y, GRID_SIZE / 2);
-  ps.minEmitBox = new Vector3(-EMITTER_WIDTH / 2, 0, -EMITTER_DEPTH / 2);
-  ps.maxEmitBox = new Vector3(EMITTER_WIDTH / 2, 0, EMITTER_DEPTH / 2);
+// ── Particle configs ────────────────────────────────────────────────────────
 
-  ps.color1 = new Color4(1, 1, 1, 0.9);
-  ps.color2 = new Color4(0.9, 0.95, 1, 0.7);
-  ps.colorDead = new Color4(1, 1, 1, 0);
-
-  ps.minSize = 0.05;
-  ps.maxSize = 0.12;
-  ps.minLifeTime = 3;
-  ps.maxLifeTime = 6;
-  ps.emitRate = 600;
-  ps.gravity = new Vector3(0.2, -0.5, 0.1);
-  ps.minEmitPower = 0.1;
-  ps.maxEmitPower = 0.3;
-  ps.updateSpeed = 0.01;
-
-  return ps;
+interface ParticleConfig {
+  count: number;
+  color: string;
+  size: number;
+  gravity: [number, number, number]; // velocity per second
+  opacity: number;
 }
 
-function createRainSystem(scene: Scene, heavy: boolean): ParticleSystem {
-  const count = heavy ? 4000 : 1500;
-  const ps = new ParticleSystem('rain', count, scene);
-  ps.createPointEmitter(
-    new Vector3(-0.5, -5, -0.3),
-    new Vector3(0.5, -5, 0.3),
-  );
-  ps.emitter = new Vector3(GRID_SIZE / 2, EMITTER_Y, GRID_SIZE / 2);
-  ps.minEmitBox = new Vector3(-EMITTER_WIDTH / 2, 0, -EMITTER_DEPTH / 2);
-  ps.maxEmitBox = new Vector3(EMITTER_WIDTH / 2, 0, EMITTER_DEPTH / 2);
+const SNOW_CONFIG: ParticleConfig = {
+  count: 2000,
+  color: '#ffffff',
+  size: 0.08,
+  gravity: [0.2, -0.5, 0.1], // slow fall + wind drift
+  opacity: 0.85,
+};
 
-  ps.color1 = new Color4(0.5, 0.55, 0.7, 0.6);
-  ps.color2 = new Color4(0.4, 0.45, 0.6, 0.4);
-  ps.colorDead = new Color4(0.3, 0.35, 0.5, 0);
+const RAIN_CONFIG: ParticleConfig = {
+  count: 1500,
+  color: '#8090b3',
+  size: 0.03,
+  gravity: [1.0, -5.0, 0.5], // fast diagonal fall
+  opacity: 0.5,
+};
 
-  ps.minSize = 0.01;
-  ps.maxSize = 0.03;
-  ps.minLifeTime = 0.4;
-  ps.maxLifeTime = 0.8;
-  ps.emitRate = heavy ? 3000 : 1000;
-  ps.gravity = new Vector3(1, -5, 0.5);
-  ps.minEmitPower = 2;
-  ps.maxEmitPower = 4;
-  ps.updateSpeed = 0.01;
+const STORM_CONFIG: ParticleConfig = {
+  count: 4000,
+  color: '#6673a6',
+  size: 0.03,
+  gravity: [1.5, -7.0, 0.8], // heavier rain
+  opacity: 0.6,
+};
 
-  return ps;
+function getConfig(weather: WeatherType): ParticleConfig | null {
+  switch (weather) {
+    case 'snow':
+      return SNOW_CONFIG;
+    case 'rain':
+      return RAIN_CONFIG;
+    case 'storm':
+      return STORM_CONFIG;
+    case 'clear':
+    default:
+      return null;
+  }
 }
 
-const WeatherFX: React.FC = () => {
-  const scene = useScene();
-  const systemRef = useRef<ParticleSystem | null>(null);
-  const prevWeatherRef = useRef<WeatherType | null>(null);
-  const baseFogDensity = useRef(0);
+// ── Particle System Component ───────────────────────────────────────────────
 
-  useEffect(() => {
-    baseFogDensity.current = scene.fogDensity;
+interface ParticleSystemProps {
+  config: ParticleConfig;
+}
 
-    function update() {
-      const weather = gameState.currentWeather;
-      if (weather === prevWeatherRef.current) return;
-      prevWeatherRef.current = weather;
+const ParticleSystem: React.FC<ParticleSystemProps> = ({ config }) => {
+  const pointsRef = useRef<THREE.Points>(null);
 
-      // Dispose previous system
-      if (systemRef.current) {
-        systemRef.current.stop();
-        systemRef.current.dispose();
-        systemRef.current = null;
+  // Initialize particle positions spread across the emitter volume
+  const positions = useMemo(() => {
+    const arr = new Float32Array(config.count * 3);
+    for (let i = 0; i < config.count; i++) {
+      arr[i * 3] = CENTER_X + (Math.random() - 0.5) * EMITTER_WIDTH;
+      arr[i * 3 + 1] = Math.random() * EMITTER_Y;
+      arr[i * 3 + 2] = CENTER_Z + (Math.random() - 0.5) * EMITTER_DEPTH;
+    }
+    return arr;
+  }, [config.count]);
+
+  // Animate particles each frame
+  useFrame((_, delta) => {
+    const pts = pointsRef.current;
+    if (!pts) return;
+
+    const geom = pts.geometry;
+    const posAttr = geom.getAttribute('position') as THREE.BufferAttribute;
+    const arr = posAttr.array as Float32Array;
+
+    const [gx, gy, gz] = config.gravity;
+
+    for (let i = 0; i < config.count; i++) {
+      const idx = i * 3;
+      arr[idx] += gx * delta;       // X drift
+      arr[idx + 1] += gy * delta;   // Y fall
+      arr[idx + 2] += gz * delta;   // Z drift
+
+      // Reset particle when it falls below ground
+      if (arr[idx + 1] < 0) {
+        arr[idx] = CENTER_X + (Math.random() - 0.5) * EMITTER_WIDTH;
+        arr[idx + 1] = EMITTER_Y + Math.random() * 5;
+        arr[idx + 2] = CENTER_Z + (Math.random() - 0.5) * EMITTER_DEPTH;
       }
 
-      // Reset fog
-      scene.fogDensity = baseFogDensity.current;
-
-      switch (weather) {
-        case 'snow': {
-          const ps = createSnowSystem(scene);
-          ps.start();
-          systemRef.current = ps;
-          break;
-        }
-        case 'rain': {
-          const ps = createRainSystem(scene, false);
-          ps.start();
-          systemRef.current = ps;
-          break;
-        }
-        case 'storm': {
-          const ps = createRainSystem(scene, true);
-          ps.start();
-          systemRef.current = ps;
-          scene.fogDensity = baseFogDensity.current + 0.02;
-          break;
-        }
-        case 'clear':
-        default:
-          break;
+      // Wrap X and Z to keep particles in the emitter volume
+      if (arr[idx] < CENTER_X - EMITTER_WIDTH / 2) {
+        arr[idx] += EMITTER_WIDTH;
+      } else if (arr[idx] > CENTER_X + EMITTER_WIDTH / 2) {
+        arr[idx] -= EMITTER_WIDTH;
+      }
+      if (arr[idx + 2] < CENTER_Z - EMITTER_DEPTH / 2) {
+        arr[idx + 2] += EMITTER_DEPTH;
+      } else if (arr[idx + 2] > CENTER_Z + EMITTER_DEPTH / 2) {
+        arr[idx + 2] -= EMITTER_DEPTH;
       }
     }
 
-    scene.registerBeforeRender(update);
-    return () => {
-      scene.unregisterBeforeRender(update);
-      if (systemRef.current) {
-        systemRef.current.stop();
-        systemRef.current.dispose();
-        systemRef.current = null;
-      }
-      scene.fogDensity = baseFogDensity.current;
-    };
-  }, [scene]);
+    posAttr.needsUpdate = true;
+  });
 
-  return null;
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={config.count}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        color={config.color}
+        size={config.size}
+        transparent
+        opacity={config.opacity}
+        sizeAttenuation
+        depthWrite={false}
+      />
+    </points>
+  );
+};
+
+// ── Main WeatherFX Component ────────────────────────────────────────────────
+
+const WeatherFX: React.FC = () => {
+  const weatherRef = useRef<WeatherType>(gameState.currentWeather);
+  const [config, setConfig] = React.useState<ParticleConfig | null>(
+    () => getConfig(gameState.currentWeather),
+  );
+
+  // Poll weather state each frame and update config when it changes
+  useFrame(() => {
+    const weather = gameState.currentWeather;
+    if (weather !== weatherRef.current) {
+      weatherRef.current = weather;
+      setConfig(getConfig(weather));
+    }
+  });
+
+  if (!config) return null;
+
+  return <ParticleSystem key={config.count} config={config} />;
 };
 
 export default WeatherFX;
