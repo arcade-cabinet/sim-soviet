@@ -34,6 +34,7 @@ import Content from './Content';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
 import AudioManager from './audio/AudioManager';
+import SFXManager from './audio/SFXManager';
 import { SEASON_CONTEXTS } from './audio/AudioManifest';
 import { gameState } from './engine/GameState';
 import { initGame, isGameInitialized, getEngine, getSaveSystem, type GameInitOptions } from './bridge/GameInit';
@@ -226,6 +227,24 @@ const App: React.FC = () => {
     }
   }, [hasInteractiveModal]);
 
+  // Initialize SFXManager on first user interaction (autoplay policy)
+  useEffect(() => {
+    const initSFX = () => {
+      SFXManager.getInstance().init();
+      window.removeEventListener('click', initSFX);
+      window.removeEventListener('keydown', initSFX);
+      window.removeEventListener('touchstart', initSFX);
+    };
+    window.addEventListener('click', initSFX);
+    window.addEventListener('keydown', initSFX);
+    window.addEventListener('touchstart', initSFX);
+    return () => {
+      window.removeEventListener('click', initSFX);
+      window.removeEventListener('keydown', initSFX);
+      window.removeEventListener('touchstart', initSFX);
+    };
+  }, []);
+
   // Start ECS game loop (replaces old flat-state game loop)
   useECSGameLoop();
 
@@ -269,9 +288,11 @@ const App: React.FC = () => {
       initGame({
         onToast: (msg) => {
           showToast(gameState, msg);
+          SFXManager.getInstance().play('toast_notification');
         },
         onAdvisor: (msg) => {
           showAdvisor(gameState, msg);
+          SFXManager.getInstance().play('advisor_message');
         },
         onPravda: (msg) => {
           setTickerText((prev) => prev + msg + '  ///  ');
@@ -304,18 +325,22 @@ const App: React.FC = () => {
         },
         onGameOver: (victory, reason) => {
           setGameOver({ victory, reason });
+          SFXManager.getInstance().play('game_over');
         },
         onAchievement: (name, description) => {
           showToast(gameState, `★ ${name}: ${description}`);
+          SFXManager.getInstance().play('achievement');
         },
         onSeasonChanged: (season) => {
           const ctx = SEASON_CONTEXTS[season];
           if (ctx) {
             AudioManager.getInstance().playContext(ctx);
           }
+          SFXManager.getInstance().play('season_change');
         },
         onBuildingCollapsed: (gridX, gridY, type) => {
           showToast(gameState, `BUILDING COLLAPSED: ${type} at (${gridX},${gridY})`);
+          SFXManager.getInstance().play('building_demolish');
         },
         onSettlementChange: (event) => {
           setSettlementEvent(event);
@@ -331,6 +356,7 @@ const App: React.FC = () => {
         },
         onEraChanged: (era) => {
           setEraTransition(era);
+          SFXManager.getInstance().play('era_transition');
         },
         onAnnualReport: (data, submitReport) => {
           setAnnualReport(data);
@@ -342,6 +368,8 @@ const App: React.FC = () => {
         },
         onTutorialMilestone: (milestone) => {
           showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
+          // Notify store so RadialBuildMenu re-renders with newly unlocked categories
+          notifyStateChange();
         },
         onGameTally: (tally) => {
           setGameTally(tally);
@@ -476,6 +504,7 @@ const App: React.FC = () => {
   const handleDismissIntro = useCallback(() => {
     setShowIntro(false);
     AudioManager.getInstance().startPlaylist();
+    SFXManager.getInstance().play('ui_modal_close');
   }, []);
 
   const handleThreatPress = useCallback(() => {

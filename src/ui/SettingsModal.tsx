@@ -10,6 +10,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 import AudioManager from '../audio/AudioManager';
+import SFXManager from '../audio/SFXManager';
 import { isColorBlindMode, setColorBlindMode } from '../stores/gameStore';
 
 export interface SettingsModalProps {
@@ -19,11 +20,17 @@ export interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss }) => {
   const [muted, setMuted] = useState(() => AudioManager.getInstance().isMuted);
+  const [sfxMuted, setSfxMuted] = useState(() => SFXManager.getInstance().isMuted);
   const [colorBlind, setColorBlind] = useState(() => isColorBlindMode());
 
   const handleToggleMusic = () => {
     const newMuted = AudioManager.getInstance().toggleMute();
     setMuted(newMuted);
+  };
+
+  const handleToggleSFX = () => {
+    const newMuted = SFXManager.getInstance().toggleMute();
+    setSfxMuted(newMuted);
   };
 
   const handleToggleColorBlind = () => {
@@ -52,6 +59,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
         description={muted ? 'The orchestra is silent.' : 'Soviet anthems fill the air.'}
         value={!muted}
         onToggle={handleToggleMusic}
+      />
+
+      <SettingToggle
+        label="SOUND EFFECTS"
+        description={sfxMuted ? 'The factory floor is silent.' : 'Industrial sounds of progress.'}
+        value={!sfxMuted}
+        onToggle={handleToggleSFX}
       />
 
       <SettingToggle

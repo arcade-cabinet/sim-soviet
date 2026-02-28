@@ -17,6 +17,7 @@ import { getEngine, getGameGrid } from './GameInit';
 import { notifyStateChange } from '@/stores/gameStore';
 import { GRID_SIZE } from '@/config';
 import { gameState } from '../engine/GameState';
+import SFXManager from '../audio/SFXManager';
 
 // ── Upgrade Chains ───────────────────────────────────────────────────────────
 
@@ -229,6 +230,9 @@ export function placeECSBuilding(
   // Reindex so archetypes pick up the new entity immediately
   world.reindex(entity);
 
+  // Play building placement sound effect
+  SFXManager.getInstance().play('building_place');
+
   // Notify React
   notifyStateChange();
 
@@ -260,6 +264,9 @@ export function bulldozeECSBuilding(gridX: number, gridZ: number): boolean {
         (b) => b.x === gridX && b.y === gridZ,
       );
       if (bIdx !== -1) gameState.buildings.splice(bIdx, 1);
+
+      // Play demolition sound effect
+      SFXManager.getInstance().play('building_demolish');
 
       notifyStateChange();
       return true;
