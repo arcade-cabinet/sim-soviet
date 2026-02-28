@@ -9,191 +9,205 @@
  *  - Pgt (tier 2):      Slight grey — early industrialization
  *  - Gorod (tier 3):    Cool grey-blue — concrete Soviet blocks
  *
- * Tinting works by multiplying the material's diffuseColor by a per-tier
- * RGB factor. Each building clone gets its own material instance so
- * tinting one does not affect others or the shared template.
+ * R3F migration: works with Three.js Object3D groups containing Mesh children.
+ * Tinting multiplies material.color by a per-tier RGB factor.
+ * Original colors are stored in mesh.userData.originalColor for restoration.
  */
 
-import {
-  Color3,
-  StandardMaterial,
-  PBRMaterial,
-  type TransformNode,
-  type AbstractMesh,
-} from '@babylonjs/core';
+import * as THREE from 'three';
 import type { SettlementTier } from '../game/SettlementSystem';
 
-// ─── Tier Tint Definitions ───────────────────────────────────────────────────
+// ── Tier Tint Definitions ───────────────────────────────────────────────────
 
 export interface TierTint {
-  /** RGB multiplier applied to diffuse/albedo color */
-  colorFactor: Color3;
+  /** RGB multiplier applied to material color */
+  colorFactor: [number, number, number];
   /** Human-readable label for debugging */
   label: string;
 }
 
 export const TIER_TINTS: Readonly<Record<SettlementTier, TierTint>> = {
   selo: {
-    colorFactor: new Color3(0.85, 0.7, 0.5),
+    colorFactor: [0.85, 0.7, 0.5],
     label: 'Warm brown (rustic wood)',
   },
   posyolok: {
-    colorFactor: new Color3(1.0, 1.0, 1.0),
+    colorFactor: [1.0, 1.0, 1.0],
     label: 'Neutral (no tint)',
   },
   pgt: {
-    colorFactor: new Color3(0.8, 0.8, 0.85),
+    colorFactor: [0.8, 0.8, 0.85],
     label: 'Slight grey (early industrial)',
   },
   gorod: {
-    colorFactor: new Color3(0.7, 0.75, 0.8),
+    colorFactor: [0.7, 0.75, 0.8],
     label: 'Cool grey-blue (concrete)',
   },
 };
 
-// ─── Material Helpers ────────────────────────────────────────────────────────
+// ── Helper: traverse all Mesh children ──────────────────────────────────────
 
-/**
- * Store each mesh's original diffuse/albedo color so tinting can be
- * re-applied from the original base when the tier changes.
- *
- * Key: mesh uniqueId, Value: original Color3.
- */
-const originalColors = new Map<number, Color3>();
-
-/**
- * Ensure a mesh has its own material instance (not shared with other clones).
- * BabylonJS `Mesh.clone()` shares the source material by default.
- */
-function ensureOwnMaterial(mesh: AbstractMesh): void {
-  if (!mesh.material) return;
-
-  // Check if this material is already unique to this mesh
-  // (name contains the mesh's unique suffix)
-  if (mesh.material.name.includes('_tint_')) return;
-
-  const clonedMat = mesh.material.clone(`${mesh.material.name}_tint_${mesh.uniqueId}`);
-  if (clonedMat) {
-    mesh.material = clonedMat;
-  }
+function forEachMeshChild(
+  group: THREE.Object3D,
+  fn: (mesh: THREE.Mesh, material: THREE.MeshStandardMaterial) => void,
+): void {
+  group.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+    // Handle both single material and material arrays
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    for (const mat of materials) {
+      if (mat instanceof THREE.MeshStandardMaterial) {
+        fn(child, mat);
+      }
+    }
+  });
 }
 
-/**
- * Store the original diffuse/albedo color for a mesh (before any tinting).
- * Only stores once — subsequent calls are no-ops.
- */
-function storeOriginalColor(mesh: AbstractMesh): void {
-  if (originalColors.has(mesh.uniqueId)) return;
+// ── Store / restore original colors via userData ────────────────────────────
 
-  if (mesh.material instanceof StandardMaterial) {
-    originalColors.set(mesh.uniqueId, mesh.material.diffuseColor.clone());
-  } else if (mesh.material instanceof PBRMaterial) {
-    originalColors.set(mesh.uniqueId, mesh.material.albedoColor.clone());
-  }
+function storeOriginalColor(mesh: THREE.Mesh, mat: THREE.MeshStandardMaterial): void {
+  // Store per-material using material.uuid as key, since one mesh can have
+  // multiple materials and we need to track each independently.
+  const key = `originalColor_${mat.uuid}`;
+  if (mesh.userData[key]) return; // already stored
+  mesh.userData[key] = mat.color.clone();
 }
 
-// ─── Public API ──────────────────────────────────────────────────────────────
+function getOriginalColor(mesh: THREE.Mesh, mat: THREE.MeshStandardMaterial): THREE.Color | null {
+  const key = `originalColor_${mat.uuid}`;
+  return mesh.userData[key] ?? null;
+}
+
+// ── Public API ──────────────────────────────────────────────────────────────
 
 /**
- * Apply settlement tier tinting to all child meshes of a building node.
+ * Apply settlement tier tinting to all Mesh children of a building group.
  *
- * Each mesh gets its own material instance (cloned from the shared template
- * material) so tinting one building does not affect others.
- *
- * The original color is preserved internally so that re-tinting on tier
- * change applies the new factor to the original base, not a previously
- * tinted value.
+ * Each mesh's material is cloned (if shared) so tinting one building
+ * does not affect others. The original color is preserved in userData
+ * so re-tinting on tier change applies the new factor to the original base.
  */
-export function applyTierTint(node: TransformNode, tier: SettlementTier): void {
+export function applyTierTint(group: THREE.Object3D, tier: SettlementTier): void {
   const tint = TIER_TINTS[tier];
   if (!tint) return;
 
-  const meshes = node.getChildMeshes() as AbstractMesh[];
-  for (const mesh of meshes) {
-    if (!mesh.material) continue;
+  const [fr, fg, fb] = tint.colorFactor;
 
-    // Ensure each mesh has its own material instance
-    ensureOwnMaterial(mesh);
-
-    // Store the original color before any tinting
-    storeOriginalColor(mesh);
-
-    const original = originalColors.get(mesh.uniqueId);
-    if (!original) continue;
-
-    // Apply tint as a multiply of original color by tier factor
-    const tinted = new Color3(
-      original.r * tint.colorFactor.r,
-      original.g * tint.colorFactor.g,
-      original.b * tint.colorFactor.b,
-    );
-
-    if (mesh.material instanceof StandardMaterial) {
-      mesh.material.diffuseColor = tinted;
-    } else if (mesh.material instanceof PBRMaterial) {
-      mesh.material.albedoColor = tinted;
-    }
-  }
-}
-
-/**
- * Apply a brief brightening flash to all child meshes of a building node,
- * then transition back to the tier tint over `durationMs` milliseconds.
- *
- * Used for the tier-up celebration effect.
- */
-export function flashTierTransition(
-  node: TransformNode,
-  newTier: SettlementTier,
-  durationMs: number = 500,
-): void {
-  const meshes = node.getChildMeshes() as AbstractMesh[];
-  const flashColor = new Color3(1.0, 0.95, 0.8); // Warm white flash
-
-  // Set emissive to flash color
-  for (const mesh of meshes) {
-    if (mesh.material instanceof StandardMaterial) {
-      mesh.material.emissiveColor = flashColor;
-    } else if (mesh.material instanceof PBRMaterial) {
-      mesh.material.emissiveColor = flashColor;
-    }
-  }
-
-  // Fade emissive back to black over durationMs
-  const startTime = performance.now();
-  const scene = node.getScene();
-
-  const observer = scene.onBeforeRenderObservable.add(() => {
-    const elapsed = performance.now() - startTime;
-    const t = Math.min(elapsed / durationMs, 1.0);
-
-    // Ease-out: fast start, slow finish
-    const eased = 1.0 - (1.0 - t) * (1.0 - t);
-
-    for (const mesh of meshes) {
-      if (mesh.material instanceof StandardMaterial) {
-        mesh.material.emissiveColor = Color3.Lerp(flashColor, Color3.Black(), eased);
-      } else if (mesh.material instanceof PBRMaterial) {
-        mesh.material.emissiveColor = Color3.Lerp(flashColor, Color3.Black(), eased);
+  forEachMeshChild(group, (mesh, mat) => {
+    // Ensure own material instance
+    if (!mesh.userData._ownMaterial) {
+      const cloned = mat.clone();
+      if (Array.isArray(mesh.material)) {
+        const idx = mesh.material.indexOf(mat);
+        if (idx >= 0) mesh.material[idx] = cloned;
+      } else {
+        mesh.material = cloned;
       }
+      mesh.userData._ownMaterial = true;
+      // Re-run with the cloned material
+      storeOriginalColor(mesh, cloned);
+      const orig = getOriginalColor(mesh, cloned);
+      if (orig) {
+        cloned.color.setRGB(orig.r * fr, orig.g * fg, orig.b * fb);
+      }
+      return;
     }
 
-    if (t >= 1.0) {
-      scene.onBeforeRenderObservable.remove(observer);
+    storeOriginalColor(mesh, mat);
+    const orig = getOriginalColor(mesh, mat);
+    if (orig) {
+      mat.color.setRGB(orig.r * fr, orig.g * fg, orig.b * fb);
     }
   });
-
-  // Apply the new tier tint immediately (the flash is additive via emissive)
-  applyTierTint(node, newTier);
 }
 
 /**
- * Clean up stored original colors for a disposed building node.
+ * Apply powered/unpowered visual state to a building group.
+ * Unpowered buildings are dimmed to 40% brightness.
+ */
+export function applyPoweredState(group: THREE.Object3D, powered: boolean): void {
+  forEachMeshChild(group, (_mesh, mat) => {
+    if (!powered) {
+      // Dim the current color (applied on top of tier tinting)
+      mat.color.multiplyScalar(0.4);
+    }
+  });
+}
+
+/**
+ * Apply fire visual state to a building group.
+ * On-fire buildings get a red emissive glow.
+ */
+export function applyFireTint(group: THREE.Object3D, onFire: boolean): void {
+  forEachMeshChild(group, (_mesh, mat) => {
+    if (onFire) {
+      mat.emissive.setRGB(0.6, 0.1, 0.0);
+    } else {
+      mat.emissive.setRGB(0, 0, 0);
+    }
+  });
+}
+
+/**
+ * Flash celebration effect for tier-up transitions.
+ * Sets emissive to warm white then fades back over durationMs.
+ * Returns a cleanup function to cancel the animation.
+ */
+export function flashTierTransition(
+  group: THREE.Object3D,
+  newTier: SettlementTier,
+  durationMs: number = 500,
+): () => void {
+  const flashColor = new THREE.Color(1.0, 0.95, 0.8);
+  const black = new THREE.Color(0, 0, 0);
+  const startTime = performance.now();
+  let cancelled = false;
+
+  // Set initial flash
+  forEachMeshChild(group, (_mesh, mat) => {
+    mat.emissive.copy(flashColor);
+  });
+
+  // Apply the new tier tint immediately (flash is additive via emissive)
+  applyTierTint(group, newTier);
+
+  // Animate the fade via requestAnimationFrame
+  function animate() {
+    if (cancelled) return;
+
+    const elapsed = performance.now() - startTime;
+    const t = Math.min(elapsed / durationMs, 1.0);
+    const eased = 1.0 - (1.0 - t) * (1.0 - t); // ease-out
+
+    forEachMeshChild(group, (_mesh, mat) => {
+      mat.emissive.lerpColors(flashColor, black, eased);
+    });
+
+    if (t < 1.0) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+
+  return () => {
+    cancelled = true;
+  };
+}
+
+/**
+ * Clean up stored original colors for a disposed building group.
  * Call this when a building is removed to prevent memory leaks.
  */
-export function clearTintData(node: TransformNode): void {
-  const meshes = node.getChildMeshes() as AbstractMesh[];
-  for (const mesh of meshes) {
-    originalColors.delete(mesh.uniqueId);
-  }
+export function clearTintData(group: THREE.Object3D): void {
+  group.traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      // Remove all originalColor_ keys from userData
+      for (const key of Object.keys(child.userData)) {
+        if (key.startsWith('originalColor_') || key === '_ownMaterial') {
+          delete child.userData[key];
+        }
+      }
+    }
+  });
 }
