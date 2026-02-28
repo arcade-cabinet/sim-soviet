@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/arcade-cabinet/sim-soviet/compare/v1.1.2...v1.1.3) (2026-02-28)
+
+
+### Bug Fixes
+
+* comprehensive docs-vs-code alignment audit (83 findings) ([3cd62f9](https://github.com/arcade-cabinet/sim-soviet/commit/3cd62f9095685d7367bba64e9565b1985533be32))
+
 ## [1.1.2](https://github.com/arcade-cabinet/sim-soviet/compare/v1.1.1...v1.1.2) (2026-02-28)
 
 
