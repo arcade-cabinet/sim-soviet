@@ -83,6 +83,7 @@ jobs:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           TAG: ${{ github.event.release.tag_name }}
         run: |
-          for apk in android/app/build/outputs/apk/debug/*.apk; do
-            gh release upload "$TAG" "$apk" --clobber
-          done
+          set -euo pipefail
+          apk="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$apk"
+          gh release upload "$TAG" "$apk" --clobber
