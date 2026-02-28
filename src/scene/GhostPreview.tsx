@@ -15,17 +15,20 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { bulldozeECSBuilding, placeECSBuilding } from '../bridge/BuildingPlacement';
+import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
 import type { Role } from '../data/buildingDefs.schema';
-import { buildingsLogic, citizens, getResourceEntity } from '../ecs/archetypes';
+import { buildingsLogic, citizens, getMetaEntity, getResourceEntity } from '../ecs/archetypes';
 import { BUILDING_TYPES, getBuildingHeight } from '../engine/BuildingTypes';
 import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
 import { showToast } from '../engine/helpers';
+import { getSeason } from '../engine/WeatherSystem';
 import {
   type InspectBuildingType,
   type InspectMenuOccupant,
   openInspectMenu,
+  openPoliticalPanel,
   setCursorTooltip,
 } from '../stores/gameStore';
 
@@ -113,6 +116,37 @@ function classifyBuildingType(role: Role, constructionPhase?: string): InspectBu
 }
 
 function openInspectAtCell(gridX: number, gridZ: number, screenX: number, screenY: number): void {
+  // Check for political entities at this cell — show dialogue toast + open panel
+  const engine = getEngine();
+  if (engine) {
+    const politicalSystem = engine.getPoliticalEntities();
+    const entitiesAtCell = politicalSystem.getVisibleEntities().filter(
+      (pe) => pe.stationedAt.gridX === gridX && pe.stationedAt.gridY === gridZ,
+    );
+    if (entitiesAtCell.length > 0) {
+      const pe = entitiesAtCell[0]!;
+      // Build dialogue context from live game state
+      const meta = getMetaEntity()?.gameMeta;
+      const seasonLabel = getSeason(gameState.date.month);
+      const dialogueSeason = seasonLabel === 'WINTER' ? 'winter' as const : seasonLabel === 'SUMMER' ? 'summer' as const : 'mud' as const;
+      const res = getResourceEntity()?.resources;
+      const food = res?.food ?? 0;
+      const resourceLevel = food < 50 ? 'starving' as const : food < 200 ? 'scarce' as const : food < 500 ? 'adequate' as const : 'surplus' as const;
+      const dialogue = politicalSystem.getEntityDialogue(gridX, gridZ, {
+        season: dialogueSeason,
+        resourceLevel,
+        era: meta?.currentEra ?? 'war_communism',
+        threatLevel: (meta?.threatLevel as 'safe' | 'watched' | 'endangered' | 'critical') ?? 'safe',
+        settlementTier: (meta?.settlementTier as 'selo' | 'posyolok' | 'pgt' | 'gorod') ?? 'selo',
+      });
+      if (dialogue) {
+        showToast(gameState, `${pe.name}: "${dialogue}"`);
+      }
+      openPoliticalPanel();
+      return;
+    }
+  }
+
   const entity = buildingsLogic.entities.find((e) => e.position.gridX === gridX && e.position.gridY === gridZ);
   if (!entity) return;
 
