@@ -3,7 +3,7 @@
  *
  * Screen flow: MainMenu → Loading (Engine mounts) → IntroModal → Game
  *
- * Uses reactylon/web Engine (creates an HTML canvas with WebGL)
+ * Uses R3F Canvas (creates an HTML canvas with WebGL)
  * instead of the native NativeEngine.
  */
 
@@ -34,7 +34,7 @@ import {
   usePoliticalPanel,
   closePoliticalPanel,
 } from './stores/gameStore';
-import { getTotalModelCount } from './scene/ModelCache';
+import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import {
   setSpeed,
@@ -151,7 +151,7 @@ const App: React.FC = () => {
   // Loading progress
   const [loadProgress, setLoadProgress] = useState({
     loaded: 0,
-    total: getTotalModelCount(),
+    total: TOTAL_MODEL_COUNT,
     name: '',
   });
 

@@ -1,7 +1,7 @@
 /**
  * Scene module barrel export.
  */
-export { preloadModels, cloneModel, disposeModel, hasModel, disposeAll } from './ModelCache';
+export { getModelUrl, TOTAL_MODEL_COUNT, MODEL_URLS } from './ModelPreloader';
 export { getModelName, BUILDING_TYPES } from './ModelMapping';
 export { default as TerrainGrid } from './TerrainGrid';
 export type { Season } from './TerrainGrid';
