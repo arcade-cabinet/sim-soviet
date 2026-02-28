@@ -408,15 +408,52 @@ const FiveYearPlanContent: React.FC<{
       </View>
       {directive.mandates && directive.mandates.length > 0 && (
         <View style={modalStyles.mandateSection}>
-          <Text style={modalStyles.parchmentHeading}>Building Mandates</Text>
-          {directive.mandates.map((m) => (
-            <View key={m.defId} style={modalStyles.statRow}>
-              <Text style={modalStyles.statLabel}>{m.label}:</Text>
-              <Text style={modalStyles.statValue}>
-                {m.fulfilled}/{m.required}
-              </Text>
-            </View>
-          ))}
+          <View style={modalStyles.mandateHeader}>
+            <Text style={modalStyles.mandateHeaderText}>CONSTRUCTION MANDATES</Text>
+            <Text style={modalStyles.mandateDeadline}>Deadline: {directive.endYear}</Text>
+          </View>
+          {directive.mandates.map((m) => {
+            const progress = Math.min(m.fulfilled / m.required, 1);
+            const isComplete = m.fulfilled >= m.required;
+            const isBehind = !isComplete && progress < 0.5;
+            const statusColor = isComplete
+              ? '#2e7d32'
+              : isBehind
+                ? Colors.sovietRed
+                : Colors.sovietGold;
+            const statusLabel = isComplete
+              ? 'COMPLETE'
+              : isBehind
+                ? 'BEHIND SCHEDULE'
+                : 'ON TRACK';
+
+            return (
+              <View key={m.defId} style={modalStyles.mandateRow}>
+                <View style={modalStyles.mandateInfo}>
+                  <Text style={modalStyles.mandateLabel}>{m.label}</Text>
+                  <View style={modalStyles.mandateCountRow}>
+                    <Text style={[modalStyles.mandateCount, { color: statusColor }]}>
+                      {m.fulfilled} / {m.required}
+                    </Text>
+                    <Text style={[modalStyles.mandateStatus, { color: statusColor }]}>
+                      {statusLabel}
+                    </Text>
+                  </View>
+                </View>
+                <View style={modalStyles.mandateProgressTrack}>
+                  <View
+                    style={[
+                      modalStyles.mandateProgressFill,
+                      {
+                        width: `${Math.round(progress * 100)}%`,
+                        backgroundColor: statusColor,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            );
+          })}
         </View>
       )}
       <Text style={modalStyles.parchmentNote}>
@@ -692,7 +729,69 @@ const modalStyles = StyleSheet.create({
 
   // Sections
   mandateSection: {
-    marginTop: 12,
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#bbb',
+  },
+  mandateHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  mandateHeaderText: {
+    fontSize: 13,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.sovietRed,
+    letterSpacing: 2,
+  },
+  mandateDeadline: {
+    fontSize: 11,
+    fontFamily: monoFont,
+    color: '#546e7a',
+  },
+  mandateRow: {
+    marginBottom: 10,
+  },
+  mandateInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  mandateLabel: {
+    fontSize: 13,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: '#263238',
+  },
+  mandateCountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  mandateCount: {
+    fontSize: 13,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+  },
+  mandateStatus: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  mandateProgressTrack: {
+    height: 6,
+    backgroundColor: '#cfd8dc',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  mandateProgressFill: {
+    height: '100%',
+    borderRadius: 3,
   },
   medalSection: {
     marginTop: 12,
