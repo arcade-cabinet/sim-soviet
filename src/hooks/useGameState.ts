@@ -13,7 +13,7 @@ import { getSeason } from '../engine/WeatherSystem';
 import { DIRECTIVES } from '../engine/Directives';
 import { TICKS_PER_MONTH } from '../engine/GridTypes';
 import type { Season } from '../scene/TerrainGrid';
-import { getResourceEntity, getMetaEntity, citizens, operationalBuildings } from '@/ecs/archetypes';
+import { getResourceEntity, getMetaEntity, citizens, operationalBuildings, dvory } from '@/ecs/archetypes';
 import { getGameSpeed } from '@/stores/gameStore';
 
 /** Immutable snapshot of derived values for UI consumption. */
@@ -62,6 +62,19 @@ export interface GameSnapshot {
   commendations: number;
   settlementTier: string;
   currentEra: string;
+
+  // Soviet economy (planned resources)
+  timber: number;
+  steel: number;
+  cement: number;
+  prefab: number;
+
+  // Workforce
+  assignedWorkers: number;
+  idleWorkers: number;
+  dvorCount: number;
+  avgMorale: number;
+  avgLoyalty: number;
 }
 
 const MONTH_NAMES = [
@@ -127,6 +140,29 @@ function createSnapshot(state: GameState): GameSnapshot {
 
   const seasonLabel = getSeason(month);
   const dir = DIRECTIVES[state.directiveIndex];
+
+  // Workforce breakdown
+  let assignedCount = 0;
+  for (const c of citizens.entities) {
+    if (c.citizen?.assignment) assignedCount++;
+  }
+
+  // Dvor loyalty average
+  let loyaltySum = 0;
+  for (const d of dvory.entities) {
+    loyaltySum += d.dvor.loyaltyToCollective;
+  }
+  const avgLoyalty = dvory.entities.length > 0
+    ? Math.round(loyaltySum / dvory.entities.length)
+    : 0;
+
+  // Morale average
+  let moraleSum = 0;
+  for (const c of citizens.entities) {
+    moraleSum += c.citizen?.happiness ?? 0;
+  }
+  const avgMorale = pop > 0 ? Math.round(moraleSum / pop) : 0;
+
   return {
     money,
     lastIncome: _lastIncome,
@@ -166,6 +202,19 @@ function createSnapshot(state: GameState): GameSnapshot {
     commendations: m?.commendations ?? 0,
     settlementTier: m?.settlementTier ?? 'selo',
     currentEra: m?.currentEra ?? 'war_communism',
+
+    // Soviet economy
+    timber: Math.round(res?.resources.timber ?? 0),
+    steel: Math.round(res?.resources.steel ?? 0),
+    cement: Math.round(res?.resources.cement ?? 0),
+    prefab: Math.round(res?.resources.prefab ?? 0),
+
+    // Workforce
+    assignedWorkers: assignedCount,
+    idleWorkers: pop - assignedCount,
+    dvorCount: dvory.entities.length,
+    avgMorale,
+    avgLoyalty,
   };
 }
 
