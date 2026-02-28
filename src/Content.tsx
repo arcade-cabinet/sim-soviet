@@ -34,6 +34,7 @@ import MeteorRenderer from './scene/MeteorRenderer';
 import GhostPreview from './scene/GhostPreview';
 import LensSystem from './scene/LensSystem';
 import FloatingText from './scene/FloatingText';
+import HeatingOverlay from './scene/HeatingOverlay';
 import Environment from './scene/Environment';
 import SceneProps from './scene/SceneProps';
 
@@ -111,6 +112,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
     <SmogOverlay />
     <FireRenderer />
     <AuraRenderer />
+    <HeatingOverlay />
     <LightningRenderer />
     <TrainRenderer />
     <VehicleRenderer />
