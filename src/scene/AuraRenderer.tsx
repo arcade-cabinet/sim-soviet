@@ -12,7 +12,7 @@
 
 import { useFrame } from '@react-three/fiber';
 import React, { useEffect, useMemo, useRef } from 'react';
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 

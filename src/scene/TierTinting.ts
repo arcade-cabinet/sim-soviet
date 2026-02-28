@@ -14,7 +14,7 @@
  * Original colors are stored in mesh.userData.originalColor for restoration.
  */
 
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 import type { SettlementTier } from '../game/SettlementSystem';
 import type { Season } from './TerrainGrid';
 

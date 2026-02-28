@@ -13,7 +13,7 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 import { bulldozeECSBuilding, placeECSBuilding } from '../bridge/BuildingPlacement';
 import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';

@@ -19,7 +19,7 @@ import { Clone, useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import type React from 'react';
 import { Suspense, useMemo, useRef } from 'react';
-import type * as THREE from 'three/webgpu';
+import type * as THREE from 'three';
 import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
 import { getPropUrl } from './ModelPreloader';
