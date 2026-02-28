@@ -15,7 +15,7 @@ import { preloadModels, getFailedModels, type ModelLoadProgress } from './scene/
 import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
-import { notifyStateChange } from './stores/gameStore';
+import { notifyStateChange, useTerrainVersion } from './stores/gameStore';
 
 // Scene components
 import TerrainGrid from './scene/TerrainGrid';
@@ -82,18 +82,21 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
   const buildings = getBuildingStates();
 
   // Cache the terrain grid — it only needs to rebuild when season changes
-  // (terrain features don't move). Without this, getGridCells() returns a new
-  // array every render, causing TerrainGrid to dispose and rebuild all meshes
-  // (terrain quads, tree cones, mountain peaks) on every tick.
+  // or when buildings are placed/demolished (path recalculation changes tiles).
+  // Without this, getGridCells() returns a new array every render, causing
+  // TerrainGrid to dispose and rebuild all meshes on every tick.
+  const terrainVersion = useTerrainVersion();
   const lastSeasonRef = useRef(snap.season);
+  const lastTerrainVersionRef = useRef(terrainVersion);
   const [ecsGrid, setEcsGrid] = useState(() => getGridCells());
 
   useEffect(() => {
-    if (lastSeasonRef.current !== snap.season) {
+    if (lastSeasonRef.current !== snap.season || lastTerrainVersionRef.current !== terrainVersion) {
       lastSeasonRef.current = snap.season;
+      lastTerrainVersionRef.current = terrainVersion;
       setEcsGrid(getGridCells());
     }
-  }, [snap.season]);
+  }, [snap.season, terrainVersion]);
 
   // Core scene + VFX layers + Interaction
   return (<>

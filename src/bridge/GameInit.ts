@@ -16,8 +16,9 @@ import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
 import { SaveSystem } from '@/game/SaveSystem';
 import { GRID_SIZE } from '@/config';
-import { notifyStateChange } from '@/stores/gameStore';
+import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 import type { DifficultyLevel, ConsequenceLevel } from '@/game/ScoringSystem';
+import { recalculatePaths } from '@/game/PathSystem';
 
 export interface GameInitOptions {
   difficulty?: DifficultyLevel;
@@ -118,9 +119,13 @@ export function initGame(
   saveSystem.setEngine(engine);
   stopAutoSave = saveSystem.startAutoSave();
 
+  // Generate initial dirt paths between starter buildings
+  recalculatePaths();
+
   initialized = true;
 
   // Initial notification to populate React snapshot
+  notifyTerrainDirty();
   notifyStateChange();
 
   return engine;

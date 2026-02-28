@@ -728,6 +728,36 @@ function subscribeCursorTooltip(listener: () => void): () => void {
   };
 }
 
+// ── Terrain Dirty Flag (signals Content.tsx to rebuild terrain grid) ─────
+
+let _terrainDirtyVersion = 0;
+const _terrainDirtyListeners = new Set<() => void>();
+
+/** Increment the terrain version counter — forces terrain grid refresh. */
+export function notifyTerrainDirty(): void {
+  _terrainDirtyVersion++;
+  for (const listener of _terrainDirtyListeners) {
+    listener();
+  }
+}
+
+/** Current terrain version (monotonically increasing). */
+export function getTerrainVersion(): number {
+  return _terrainDirtyVersion;
+}
+
+/** React hook — returns the terrain dirty version for useEffect dependencies. */
+export function useTerrainVersion(): number {
+  return useSyncExternalStore(subscribeTerrainDirty, getTerrainVersion, getTerrainVersion);
+}
+
+function subscribeTerrainDirty(listener: () => void): () => void {
+  _terrainDirtyListeners.add(listener);
+  return () => {
+    _terrainDirtyListeners.delete(listener);
+  };
+}
+
 // ── Placement Callback (bridges React → imperative CanvasGestureManager) ─
 
 type PlacementCallback = (gridX: number, gridY: number, defId: string) => boolean;

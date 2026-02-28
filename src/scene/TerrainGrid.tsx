@@ -87,6 +87,18 @@ function getTerrainColor(terrain: TerrainType, season: Season): Color4 {
         default:
           return new Color4(0.30, 0.38, 0.25, 1); // dark boggy green
       }
+    case 'path':
+      switch (season) {
+        case 'winter':
+          return new Color4(0.58, 0.55, 0.50, 1); // snow-dusted dirt
+        case 'autumn':
+          return new Color4(0.42, 0.35, 0.25, 1); // muddy brown
+        case 'spring':
+          return new Color4(0.45, 0.38, 0.28, 1); // wet earth
+        case 'summer':
+        default:
+          return new Color4(0.48, 0.40, 0.30, 1); // packed earth brown
+      }
     default:
       return new Color4(0.35, 0.50, 0.28, 1);
   }

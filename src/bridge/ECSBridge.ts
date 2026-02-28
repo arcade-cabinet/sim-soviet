@@ -130,6 +130,7 @@ function mapTerrain(ecsTerrain: string): TerrainType {
     case 'marsh':
       return 'marsh';
     case 'road':
+      return 'path';
     case 'foundation':
     default:
       return 'grass';

@@ -14,10 +14,11 @@ import { world } from '@/ecs/world';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { DEFAULT_MATERIAL_COST } from '@/ecs/systems/constructionSystem';
 import { getEngine, getGameGrid } from './GameInit';
-import { notifyStateChange } from '@/stores/gameStore';
+import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 import { GRID_SIZE } from '@/config';
 import { gameState } from '../engine/GameState';
 import SFXManager from '../audio/SFXManager';
+import { recalculatePaths } from '@/game/PathSystem';
 
 // ── Upgrade Chains ───────────────────────────────────────────────────────────
 
@@ -230,6 +231,10 @@ export function placeECSBuilding(
   // Reindex so archetypes pick up the new entity immediately
   world.reindex(entity);
 
+  // Recalculate dirt paths between buildings
+  recalculatePaths();
+  notifyTerrainDirty();
+
   // Play building placement sound effect
   SFXManager.getInstance().play('building_place');
 
@@ -264,6 +269,10 @@ export function bulldozeECSBuilding(gridX: number, gridZ: number): boolean {
         (b) => b.x === gridX && b.y === gridZ,
       );
       if (bIdx !== -1) gameState.buildings.splice(bIdx, 1);
+
+      // Recalculate dirt paths after demolition
+      recalculatePaths();
+      notifyTerrainDirty();
 
       // Play demolition sound effect
       SFXManager.getInstance().play('building_demolish');
