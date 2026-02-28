@@ -11,7 +11,7 @@ export { TabBar } from './TabBar';
 export type { TabBarProps } from './TabBar';
 
 export { Toolbar } from './Toolbar';
-export type { ToolbarProps } from './Toolbar';
+export type { ToolbarProps, SovietTab } from './Toolbar';
 
 export { QuotaHUD } from './QuotaHUD';
 export type { QuotaHUDProps } from './QuotaHUD';

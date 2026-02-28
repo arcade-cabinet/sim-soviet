@@ -1,121 +1,85 @@
 /**
- * Toolbar — Building tool buttons in a horizontal scrollable row.
- * Port of poc.html lines 440-474.
+ * Toolbar — 4-tab navigation: MANDATES / WORKERS / REPORTS / PURGE.
+ * Replaces the old building-type browser.
  */
 
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { BUILDING_TYPES, type BuildingTypeInfo } from '../engine/BuildingTypes';
-import type { TabType } from '../engine/GameState';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Colors, SharedStyles, monoFont } from './styles';
 
-export interface ToolbarProps {
-  activeTab: TabType;
-  selectedTool: string;
-  onSelectTool: (tool: string) => void;
+export type SovietTab = 'mandates' | 'workers' | 'reports' | 'purge';
+
+interface TabDef {
+  key: SovietTab;
+  label: string;
+  icon: string;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({ activeTab, selectedTool, onSelectTool }) => {
-  // Always show Inspect first, then filter by active tab category
-  const inspectDef = BUILDING_TYPES['none'];
-  const filteredKeys = Object.keys(BUILDING_TYPES).filter((key) => {
-    if (key === 'none') return false;
-    const def = BUILDING_TYPES[key];
-    return !def.hidden && def.category === activeTab;
-  });
+const TABS: TabDef[] = [
+  { key: 'mandates', label: 'MANDATES', icon: '\u{1F4CB}' },
+  { key: 'workers', label: 'WORKERS', icon: '\u2692' },
+  { key: 'reports', label: 'REPORTS', icon: '\u{1F4CA}' },
+  { key: 'purge', label: 'PURGE', icon: '\u{1F480}' },
+];
 
+export interface ToolbarProps {
+  activeTab: SovietTab;
+  onTabChange: (tab: SovietTab) => void;
+}
+
+export const Toolbar: React.FC<ToolbarProps> = ({ activeTab, onTabChange }) => {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
-      style={styles.scroll}
-    >
-      {/* Inspect button — always first */}
-      <ToolButton
-        toolKey="none"
-        def={inspectDef}
-        isActive={selectedTool === 'none'}
-        onPress={onSelectTool}
-      />
-
-      {filteredKeys.map((key) => (
-        <ToolButton
-          key={key}
-          toolKey={key}
-          def={BUILDING_TYPES[key]}
-          isActive={selectedTool === key}
-          onPress={onSelectTool}
-        />
-      ))}
-    </ScrollView>
+    <View style={[SharedStyles.panel, styles.container]}>
+      {TABS.map((tab) => {
+        const isActive = activeTab === tab.key;
+        return (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.tab, isActive && styles.tabActive]}
+            onPress={() => onTabChange(tab.key)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.tabIcon}>{tab.icon}</Text>
+            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
   );
 };
 
-// --- Sub-component ---
-
-interface ToolButtonProps {
-  toolKey: string;
-  def: BuildingTypeInfo;
-  isActive: boolean;
-  onPress: (key: string) => void;
-}
-
-const ToolButton: React.FC<ToolButtonProps> = ({ toolKey, def, isActive, onPress }) => (
-  <TouchableOpacity
-    onPress={() => onPress(toolKey)}
-    style={[
-      isActive ? SharedStyles.btnRetroActive : SharedStyles.btnRetro,
-      styles.btn,
-    ]}
-    activeOpacity={0.7}
-  >
-    <Text style={styles.icon}>{def.icon}</Text>
-    <Text style={[styles.name, isActive && { color: Colors.white }]}>{def.name}</Text>
-    {def.cost > 0 && (
-      <Text style={styles.cost}>{def.cost}₽</Text>
-    )}
-  </TouchableOpacity>
-);
-
-// --- Styles ---
-
 const styles = StyleSheet.create({
-  scroll: {
+  container: {
+    flexDirection: 'row',
+    height: 50,
+    alignItems: 'stretch',
+  },
+  tab: {
     flex: 1,
-  },
-  scrollContent: {
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  btn: {
-    minWidth: 80,
-    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 2,
+    borderRightWidth: 1,
+    borderRightColor: '#333',
   },
-  icon: {
-    fontSize: 22,
-    marginBottom: 4,
+  tabActive: {
+    backgroundColor: '#3a1a1a',
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.sovietRed,
   },
-  name: {
-    fontSize: 11,
-    fontWeight: 'bold',
+  tabIcon: {
+    fontSize: 18,
+    marginBottom: 2,
+  },
+  tabLabel: {
+    fontSize: 9,
     fontFamily: monoFont,
-    color: Colors.textPrimary,
-    textAlign: 'center',
-  },
-  cost: {
-    fontSize: 10,
     fontWeight: 'bold',
-    fontFamily: monoFont,
-    color: Colors.sovietGold,
-    letterSpacing: 1,
-    marginTop: 2,
+    color: '#888',
+    letterSpacing: 2,
+  },
+  tabLabelActive: {
+    color: Colors.white,
   },
 });

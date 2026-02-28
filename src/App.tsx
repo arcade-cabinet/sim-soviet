@@ -26,7 +26,6 @@ import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
 import {
   setSpeed,
-  setTab,
   selectTool,
   setLens,
   getToast,
@@ -35,12 +34,12 @@ import {
   dismissAdvisor,
   getRandomTickerMsg,
 } from './engine/helpers';
-import type { TabType, LensType } from './engine/GameState';
+import type { LensType } from './engine/GameState';
 
 // UI components
 import { TopBar } from './ui/TopBar';
-import { TabBar } from './ui/TabBar';
 import { Toolbar } from './ui/Toolbar';
+import type { SovietTab } from './ui/Toolbar';
 import { QuotaHUD } from './ui/QuotaHUD';
 import { DirectiveHUD } from './ui/DirectiveHUD';
 import { Advisor } from './ui/Advisor';
@@ -53,6 +52,7 @@ import { Colors } from './ui/styles';
 
 const App: React.FC = () => {
   const [showIntro, setShowIntro] = useState(true);
+  const [sovietTab, setSovietTab] = useState<SovietTab>('mandates');
   const [tickerText, setTickerText] = useState(
     'CITIZENS REMINDED THAT COMPLAINING IS A CRIME  ///  WEATHER FORECAST: PERPETUAL GRAY  ///  '
   );
@@ -86,12 +86,11 @@ const App: React.FC = () => {
     setSpeed(gameState, sp);
   }, []);
 
-  const handleTabPress = useCallback((tab: TabType) => {
-    setTab(gameState, tab);
-  }, []);
-
-  const handleSelectTool = useCallback((tool: string) => {
-    selectTool(gameState, tool);
+  const handleSovietTab = useCallback((tab: SovietTab) => {
+    setSovietTab(tab);
+    if (tab === 'purge') {
+      selectTool(gameState, 'bulldoze');
+    }
   }, []);
 
   const handleLensChange = useCallback((lens: LensType) => {
@@ -189,17 +188,12 @@ const App: React.FC = () => {
             onDismiss={handleDismissAdvisor}
           />
 
-          {/* Bottom panel: Ticker + Tabs + Toolbar */}
+          {/* Bottom panel: Ticker + Toolbar */}
           <View style={styles.bottomPanel}>
             <Ticker messages={tickerText} />
-            <TabBar
-              activeTab={snap.activeTab}
-              onTabPress={handleTabPress}
-            />
             <Toolbar
-              activeTab={snap.activeTab}
-              selectedTool={snap.selectedTool}
-              onSelectTool={handleSelectTool}
+              activeTab={sovietTab}
+              onTabChange={handleSovietTab}
             />
           </View>
         </View>

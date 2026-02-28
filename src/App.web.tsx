@@ -53,7 +53,6 @@ import { getTotalModelCount } from './scene/ModelCache';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import {
   setSpeed,
-  setTab,
   selectTool,
   setLens,
   getToast,
@@ -64,7 +63,7 @@ import {
   showToast,
   showAdvisor,
 } from './engine/helpers';
-import type { TabType, LensType } from './engine/GameState';
+import type { LensType } from './engine/GameState';
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import type { EraDefinition } from './game/era';
 import type { ActiveMinigame } from './game/minigames/MinigameTypes';
@@ -73,8 +72,8 @@ import type { TallyData } from './game/GameTally';
 
 // UI components
 import { TopBar } from './ui/TopBar';
-import { TabBar } from './ui/TabBar';
 import { Toolbar } from './ui/Toolbar';
+import type { SovietTab } from './ui/Toolbar';
 import { QuotaHUD } from './ui/QuotaHUD';
 import { DirectiveHUD } from './ui/DirectiveHUD';
 import { Advisor } from './ui/Advisor';
@@ -198,6 +197,9 @@ const App: React.FC = () => {
   const [showEconomyDetail, setShowEconomyDetail] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
   const [showMarket, setShowMarket] = useState(false);
+
+  // ── Soviet tab state ──
+  const [sovietTab, setSovietTab] = useState<SovietTab>('mandates');
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -457,10 +459,6 @@ const App: React.FC = () => {
     setSpeed(gameState, sp);
   }, []);
 
-  const handleTabPress = useCallback((tab: TabType) => {
-    setTab(gameState, tab);
-  }, []);
-
   const handleSelectTool = useCallback((tool: string) => {
     selectTool(gameState, tool);
   }, []);
@@ -506,6 +504,24 @@ const App: React.FC = () => {
   const handleShowMandates = useCallback(() => {
     setShowMandates(true);
   }, []);
+
+  const handleSovietTab = useCallback((tab: SovietTab) => {
+    setSovietTab(tab);
+    switch (tab) {
+      case 'mandates':
+        handleShowMandates();
+        break;
+      case 'workers':
+        handleShowWorkers();
+        break;
+      case 'reports':
+        handleShowEconomy();
+        break;
+      case 'purge':
+        selectTool(gameState, 'bulldoze');
+        break;
+    }
+  }, [handleShowMandates, handleShowWorkers, handleShowEconomy]);
 
   const handleShowDisease = useCallback(() => {
     setShowDisease(true);
@@ -749,14 +765,9 @@ const App: React.FC = () => {
 
             <View style={styles.bottomPanel}>
               <Ticker messages={tickerText} />
-              <TabBar
-                activeTab={snap.activeTab}
-                onTabPress={handleTabPress}
-              />
               <Toolbar
-                activeTab={snap.activeTab}
-                selectedTool={snap.selectedTool}
-                onSelectTool={handleSelectTool}
+                activeTab={sovietTab}
+                onTabChange={handleSovietTab}
               />
               <WorkerStatusBar onShowWorkers={handleShowWorkers} />
             </View>
