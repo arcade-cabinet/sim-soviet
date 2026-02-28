@@ -25,6 +25,7 @@ import Svg, {
 } from 'react-native-svg';
 import { BUILDING_DEFS, getBuildingsByRole } from '../data/buildingDefs';
 import type { BuildingDef, Role } from '../data/buildingDefs';
+import { DEFAULT_MATERIAL_COST } from '../ecs/systems/constructionSystem';
 import { getAvailableBuildingsForYear } from '../game/era';
 import type { SettlementTier } from '../game/SettlementSystem';
 import {
@@ -34,6 +35,31 @@ import {
 } from '../stores/gameStore';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { Colors, monoFont } from './styles';
+
+/** Check if the player can afford the material cost for a building. */
+function canAffordBuilding(
+  snap: { timber: number; steel: number; cement: number; prefab: number },
+  def: BuildingDef
+): boolean {
+  const cc = def.stats.constructionCost;
+  return (
+    snap.timber >= (cc?.timber ?? DEFAULT_MATERIAL_COST.timber) &&
+    snap.steel >= (cc?.steel ?? DEFAULT_MATERIAL_COST.steel) &&
+    snap.cement >= (cc?.cement ?? DEFAULT_MATERIAL_COST.cement) &&
+    snap.prefab >= (cc?.prefab ?? 0)
+  );
+}
+
+/** Format material cost as a compact string for the wedge label. */
+function formatMaterialCost(def: BuildingDef): string {
+  const cc = def.stats.constructionCost;
+  const t = cc?.timber ?? DEFAULT_MATERIAL_COST.timber;
+  const s = cc?.steel ?? DEFAULT_MATERIAL_COST.steel;
+  const parts: string[] = [];
+  if (t > 0) parts.push(`\u{1FAB5}${t}`);
+  if (s > 0) parts.push(`\u{1F529}${s}`);
+  return parts.join(' ') || 'FREE';
+}
 
 // ── Category Definitions ─────────────────────────────────────────────────
 
@@ -175,7 +201,7 @@ interface BuildingWedgeProps {
   buildingAngle: number;
   gap: number;
   availableSpace: number;
-  money: number;
+  snap: { timber: number; steel: number; cement: number; prefab: number };
   onSelect: (defId: string) => void;
 }
 
@@ -186,7 +212,7 @@ const BuildingWedge: React.FC<BuildingWedgeProps> = ({
   buildingAngle,
   gap,
   availableSpace,
-  money,
+  snap,
   onSelect,
 }) => {
   const startA = index * buildingAngle + gap / 2;
@@ -195,7 +221,7 @@ const BuildingWedge: React.FC<BuildingWedgeProps> = ({
   const labelPos = polarToXY(CENTER, CENTER, (BUILDING_INNER_R + BUILDING_OUTER_R) / 2, midA);
 
   const fits = def.footprint.tilesX <= availableSpace && def.footprint.tilesY <= availableSpace;
-  const canAfford = money >= def.presentation.cost;
+  const canAfford = canAffordBuilding(snap, def);
   const canBuild = fits && canAfford;
   const displayName =
     def.presentation.name.length > 14
@@ -243,7 +269,7 @@ const BuildingWedge: React.FC<BuildingWedgeProps> = ({
         fontFamily={monoFont}
         fontWeight="bold"
       >
-        {fits ? `\u20BD${def.presentation.cost}` : "WON'T FIT"}
+        {fits ? formatMaterialCost(def) : "WON'T FIT"}
       </SvgText>
     </G>
   );
@@ -342,7 +368,9 @@ export const RadialBuildMenu: React.FC = () => {
   buildingIds.sort((a, b) => {
     const defA = BUILDING_DEFS[a];
     const defB = BUILDING_DEFS[b];
-    return (defA?.presentation.cost ?? 0) - (defB?.presentation.cost ?? 0);
+    const tA = defA?.stats.constructionCost?.timber ?? DEFAULT_MATERIAL_COST.timber;
+    const tB = defB?.stats.constructionCost?.timber ?? DEFAULT_MATERIAL_COST.timber;
+    return tA - tB;
   });
   const buildingAngle = buildingIds.length > 0 ? 360 / buildingIds.length : 0;
 
@@ -424,7 +452,7 @@ export const RadialBuildMenu: React.FC = () => {
                     buildingAngle={buildingAngle}
                     gap={gap}
                     availableSpace={availableSpace}
-                    money={snap.money}
+                    snap={{ timber: snap.timber, steel: snap.steel, cement: snap.cement, prefab: snap.prefab }}
                     onSelect={handleSelect}
                   />
                 );
