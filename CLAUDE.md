@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**SimSoviet 1917** is a satirical 3D city-builder game set in the Soviet Union (starting 1917). Players build structures and manage resources (rubles, food, vodka, power, population) against 5-year plan quotas. Built with **Reactylon Native** (BabylonJS 8 + React Native).
+**SimSoviet 1917** is a satirical 3D city-builder game set in the Soviet Union (starting 1917). Players build structures and manage resources (rubles, food, vodka, power, population) against 5-year plan quotas. Built with **React Three Fiber** (R3F + Three.js r183 + React Native).
 
 The `archive/` directory contains the previous 2D Canvas version (SimSoviet 2000) for reference. The current codebase is a full 3D rewrite.
 
@@ -21,12 +21,14 @@ npm run lint               # ESLint
 
 ## Tech Stack
 
-- **3D Engine**: BabylonJS 8 via Reactylon (`reactylon ^3.5.4`, `reactylon/web` for web)
+- **3D Engine**: Three.js r183 via React Three Fiber (R3F v9.5) + drei helpers
 - **UI**: React Native 0.81 + Expo 54 overlay components (absolute-positioned on 3D canvas)
 - **State**: ECS world (`SimulationEngine`) + legacy `GameState` singleton, bridged via `useSyncExternalStore`
-- **Audio**: BabylonJS Sound for OGG music playback (52 Soviet-era public domain tracks)
-- **Build**: Expo, Metro bundler, Babel with `babel-plugin-reactylon`, TypeScript 5.7
+- **Audio**: Web Audio API via AudioManager (52 Soviet-era public domain OGG tracks)
+- **Build**: Expo, Metro bundler, TypeScript 5.7
+- **Database**: sql.js (Wasm-based SQLite) + Drizzle ORM, persisted to IndexedDB
 - **Models**: 55 GLB models in `assets/models/soviet/` with manifest.json
+- **XR**: @react-three/xr v6 (WebXR support for AR/VR)
 
 ## Architecture
 
@@ -38,10 +40,10 @@ MainMenu → NewGameSetup → Loading Screen → IntroModal → Game
 
 `App.web.tsx` manages screen state: `'menu' | 'setup' | 'game'`. On web, Expo resolves `.web.tsx` before `.tsx` — **always edit `App.web.tsx` for web changes**.
 
-### Two-layer rendering: BabylonJS 3D + React Native DOM
+### Two-layer rendering: R3F 3D Canvas + React Native DOM
 
 `App.web.tsx` hosts both:
-1. **3D Viewport** — `Engine` (reactylon/web, forceWebGL) + `Scene` + `Content.tsx` (composes all scene components)
+1. **3D Viewport** — R3F `<Canvas>` (WebGL2, PCFShadowMap) + `Content.tsx` (composes all scene components via drei/R3F)
 2. **React Native overlays** — TopBar, Toolbar, QuotaHUD, Toast, Advisor, Ticker, modals, panels, etc.
 
 ### Source structure
@@ -61,13 +63,13 @@ src/
 │   ├── MeteorSystem.ts    # Meteor descent + crater impact
 │   ├── Directives.ts      # 12 sequential tutorial objectives
 │   └── helpers.ts         # Toast, advisor, speed, lens, floating text utilities
-├── scene/         # BabylonJS 3D components (22 files — React FC returning null, imperative in useEffect)
-│   ├── ModelCache.ts      # GLB preloader + clone/dispose
+├── scene/         # R3F/drei 3D components (22 files — declarative JSX + useFrame/useEffect)
+│   ├── ModelPreloader.tsx  # useGLTF.preload for all 55 GLBs + DRACOLoader
 │   ├── ModelMapping.ts    # Building type → GLB model name mapping
 │   ├── TerrainGrid.tsx    # 30×30 merged mesh with vertex colors + tree geometry
-│   ├── CameraController.tsx  # UniversalCamera: pan/zoom/tilt, street-to-bird-eye
-│   ├── Environment.tsx    # Sky, IBL, ground PBR textures, perimeter hills
-│   ├── Lighting.tsx       # Sun + overcast + fog with day/night cycle
+│   ├── CameraController.tsx  # OrbitControls-style: pan/zoom/tilt
+│   ├── Environment.tsx    # drei Sky, HDRI IBL, PBR ground, perimeter hills
+│   ├── Lighting.tsx       # DirectionalLight + HemisphereLight + fog with day/night cycle
 │   ├── BuildingRenderer.tsx  # Manages 3D mesh clones from game state
 │   ├── WeatherFX.tsx      # Snow/rain/storm particle systems
 │   ├── SmogOverlay.tsx    # Per-tile smog visualization
@@ -110,7 +112,7 @@ src/
 │   └── useECSGameLoop.ts  # ECS world tick loop
 ├── audio/         # Audio system
 │   ├── AudioManifest.ts   # Track definitions, playlists, mood mapping
-│   └── AudioManager.ts    # BabylonJS Sound-based music player
+│   └── AudioManager.ts    # Web Audio API music player
 ├── bridge/        # ECS ↔ React bridge
 │   └── GameInit.ts        # initGame() with GameInitOptions + callback wiring
 ├── game/          # Game systems (ECS-based)
@@ -138,10 +140,12 @@ Toast/advisor messages use a module-level side-channel in `helpers.ts` (not on G
 
 ### Key patterns
 
-- Scene components are React FCs that return `null` and do all BabylonJS work imperatively in `useEffect` + `registerBeforeRender`
-- `useScene()` from `reactylon` provides the BabylonJS Scene inside `<Scene>` children
+- Scene components are declarative R3F JSX: `<mesh>`, `<meshStandardMaterial>`, etc.
+- `useFrame()` from R3F for per-frame animation logic
+- `useGLTF()` from drei for loading GLB models (preloaded via ModelPreloader)
+- `useProgress()` from drei for asset loading tracking
 - UI components use `pointerEvents="box-none"` to pass through touches to the 3D canvas
-- GLB models are preloaded as disabled templates, then cloned per-building
+- GLB models are preloaded via `useGLTF.preload()`, then cloned per-building
 - Modal/panel components access engine directly via `getEngine()?.getPersonnelFile()` etc. (read-once pattern)
 
 ## Assets
