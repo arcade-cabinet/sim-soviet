@@ -84,7 +84,6 @@ class AudioManager {
 
       // Create a gain node for this track's volume
       const trackGain = this.audioCtx.createGain();
-      this.currentTrackVolume = track.volume;
       trackGain.gain.value = this.muted ? 0 : track.volume;
       trackGain.connect(this.masterGain);
 
