@@ -21,7 +21,7 @@ import type React from 'react';
 import { Suspense, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import type { SettlementTier } from '../game/SettlementSystem';
-import { getModelName } from './ModelMapping';
+import { getModelName, getTierVariant } from './ModelMapping';
 import { getModelUrl } from './ModelPreloader';
 import type { Season } from './TerrainGrid';
 import {
@@ -192,9 +192,11 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings, settleme
       {buildings.map((building) => {
         // ECS defIds match GLB model names directly (e.g., "apartment-tower-a")
         // Fall back to getModelName for legacy building types
-        const modelName = getModelName(building.type, building.level) ?? building.type;
-        if (!modelName) return null;
+        const baseModel = getModelName(building.type, building.level) ?? building.type;
+        if (!baseModel) return null;
 
+        // Apply tier-based model variant (e.g., workers-house-a → workers-house-b at posyolok)
+        const modelName = getTierVariant(baseModel, settlementTier);
         const modelUrl = getModelUrl(modelName);
         if (!modelUrl) return null;
 

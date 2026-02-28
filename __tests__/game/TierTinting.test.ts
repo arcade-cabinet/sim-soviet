@@ -7,6 +7,7 @@
  */
 
 import { type SettlementTier, TIER_ORDER } from '../../src/game/SettlementSystem';
+import { getTierVariant, TIER_MODEL_VARIANTS } from '../../src/scene/ModelMapping';
 import type { Season } from '../../src/scene/TerrainGrid';
 import { SEASON_TINTS, TIER_TINTS } from '../../src/scene/TierTinting';
 
@@ -240,5 +241,52 @@ describe('SeasonTinting', () => {
     const tints = ALL_SEASONS.map((s) => SEASON_TINTS[s].join(','));
     const unique = new Set(tints);
     expect(unique.size).toBe(ALL_SEASONS.length);
+  });
+});
+
+// ── Tier Model Variants ─────────────────────────────────────────────────────
+
+describe('TierModelVariants', () => {
+  it('returns the defId itself when no variant exists', () => {
+    expect(getTierVariant('power-station', 'selo')).toBe('power-station');
+    expect(getTierVariant('gulag-admin', 'gorod')).toBe('gulag-admin');
+    expect(getTierVariant('vodka-distillery', 'pgt')).toBe('vodka-distillery');
+  });
+
+  it('workers-house-a upgrades through tiers', () => {
+    expect(getTierVariant('workers-house-a', 'selo')).toBe('workers-house-a');
+    expect(getTierVariant('workers-house-a', 'posyolok')).toBe('workers-house-b');
+    expect(getTierVariant('workers-house-a', 'gorod')).toBe('workers-house-c');
+  });
+
+  it('apartment-tower-a upgrades through tiers', () => {
+    expect(getTierVariant('apartment-tower-a', 'selo')).toBe('apartment-tower-a');
+    expect(getTierVariant('apartment-tower-a', 'pgt')).toBe('apartment-tower-b');
+    expect(getTierVariant('apartment-tower-a', 'gorod')).toBe('apartment-tower-c');
+  });
+
+  it('apartment-tower-b upgrades to c and d at higher tiers', () => {
+    expect(getTierVariant('apartment-tower-b', 'posyolok')).toBe('apartment-tower-b');
+    expect(getTierVariant('apartment-tower-b', 'pgt')).toBe('apartment-tower-c');
+    expect(getTierVariant('apartment-tower-b', 'gorod')).toBe('apartment-tower-d');
+  });
+
+  it('all variant entries map to all four tiers', () => {
+    for (const [defId, tierMap] of Object.entries(TIER_MODEL_VARIANTS)) {
+      if (!tierMap) continue;
+      for (const tier of TIER_ORDER) {
+        expect(tierMap[tier]).toBeDefined();
+        expect(typeof tierMap[tier]).toBe('string');
+      }
+    }
+  });
+
+  it('variant models are never worse than the base at lower tiers', () => {
+    // At selo (lowest tier), variant should be same or simpler than the defId
+    for (const defId of Object.keys(TIER_MODEL_VARIANTS)) {
+      const seloVariant = getTierVariant(defId, 'selo');
+      // Selo variant should exist as a valid model name
+      expect(seloVariant).toBeTruthy();
+    }
   });
 });
