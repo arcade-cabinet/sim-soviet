@@ -25,7 +25,7 @@ interface FloatingLabelProps {
 
 const FloatingLabel: React.FC<FloatingLabelProps> = ({ index }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const textRef = useRef<any>(null);
+  const textRef = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.Material>>(null);
 
   useFrame(() => {
     const texts = gameState.floatingTexts;

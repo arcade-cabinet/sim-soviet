@@ -29,7 +29,8 @@ function getHdriFile(season: Season): string {
       return assetUrl('assets/hdri/snowy_field_1k.hdr');
     case 'autumn':
       return assetUrl('assets/hdri/snowy_park_01_1k.hdr');
-    default:
+    case 'spring':
+    case 'summer':
       return assetUrl('assets/hdri/winter_sky_1k.hdr');
   }
 }

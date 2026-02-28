@@ -56,9 +56,12 @@ const PropagandaRings: React.FC<PropagandaRingsProps> = ({ x, z }) => {
     };
   }, [materials]);
 
+  const timeRef = useRef(0);
+
   // Animate rings: expand and fade
-  useFrame(({ clock }) => {
-    const time = clock.elapsedTime;
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+    const time = timeRef.current;
     const rings = ringsRef.current;
     const mats = materialsRef.current;
 
@@ -104,11 +107,14 @@ interface GulagConeProps {
 const GulagCone: React.FC<GulagConeProps> = ({ x, z }) => {
   const coneRef = useRef<THREE.Mesh>(null);
 
+  const timeRef = useRef(0);
+
   // Rotate the cone like a sweeping searchlight
-  useFrame(({ clock }) => {
+  useFrame((_, delta) => {
+    timeRef.current += delta;
     const cone = coneRef.current;
     if (!cone) return;
-    const angle = (clock.elapsedTime * 0.8) % (Math.PI * 2);
+    const angle = (timeRef.current * 0.8) % (Math.PI * 2);
     cone.rotation.y = angle;
     cone.rotation.z = 0.5; // lean to sweep
   });

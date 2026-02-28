@@ -34,8 +34,10 @@ const Zep: React.FC<ZepProps> = ({ index }) => {
 
   // Smoothed position (tracks toward zeppelin target)
   const smoothPos = useRef({ x: 15, z: 15 });
+  const timeRef = useRef(0);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
+    timeRef.current += delta;
     const zeppelins = gameState.zeppelins;
     const group = groupRef.current;
     if (!group) return;
@@ -54,7 +56,7 @@ const Zep: React.FC<ZepProps> = ({ index }) => {
 
     const posX = smoothPos.current.x;
     const posZ = smoothPos.current.z;
-    const posY = FLOAT_Y + Math.sin(Date.now() * 0.001 + index) * 0.2;
+    const posY = FLOAT_Y + Math.sin(timeRef.current + index) * 0.2;
 
     // Body
     if (bodyRef.current) {
