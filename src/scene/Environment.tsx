@@ -22,6 +22,7 @@ import {
 import { SkyMaterial } from '@babylonjs/materials';
 import { useScene } from 'reactylon';
 import { GRID_SIZE } from '../engine/GridTypes';
+import { assetUrl } from '../utils/assetPath';
 import type { Season } from './TerrainGrid';
 
 const GROUND_SIZE = 400;
@@ -31,11 +32,11 @@ const GROUND_Y = -0.05;
 function getHdriFile(season: Season): string {
   switch (season) {
     case 'winter':
-      return '/assets/hdri/snowy_field_1k.hdr';
+      return assetUrl('assets/hdri/snowy_field_1k.hdr');
     case 'autumn':
-      return '/assets/hdri/snowy_park_01_1k.hdr';
+      return assetUrl('assets/hdri/snowy_park_01_1k.hdr');
     default:
-      return '/assets/hdri/winter_sky_1k.hdr';
+      return assetUrl('assets/hdri/winter_sky_1k.hdr');
   }
 }
 
@@ -140,14 +141,14 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
     // Winter + autumn use snow; spring/summer use grass
     const useSnow = season === 'winter' || season === 'autumn';
     const colorFile = useSnow
-      ? '/assets/textures/snow/Snow003_1K-JPG_Color.jpg'
-      : '/assets/textures/grass/Grass001_1K-JPG_Color.jpg';
+      ? assetUrl('assets/textures/snow/Snow003_1K-JPG_Color.jpg')
+      : assetUrl('assets/textures/grass/Grass001_1K-JPG_Color.jpg');
     const normalFile = useSnow
-      ? '/assets/textures/snow/Snow003_1K-JPG_NormalGL.jpg'
-      : '/assets/textures/grass/Grass001_1K-JPG_NormalGL.jpg';
+      ? assetUrl('assets/textures/snow/Snow003_1K-JPG_NormalGL.jpg')
+      : assetUrl('assets/textures/grass/Grass001_1K-JPG_NormalGL.jpg');
     const roughFile = useSnow
-      ? '/assets/textures/snow/Snow003_1K-JPG_Roughness.jpg'
-      : '/assets/textures/grass/Grass001_1K-JPG_Roughness.jpg';
+      ? assetUrl('assets/textures/snow/Snow003_1K-JPG_Roughness.jpg')
+      : assetUrl('assets/textures/grass/Grass001_1K-JPG_Roughness.jpg');
 
     const tileScale = 20;
 
