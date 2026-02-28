@@ -14,6 +14,7 @@ import { useGameSnapshot } from './hooks/useGameState';
 import { preloadModels, getFailedModels, type ModelLoadProgress } from './scene/ModelCache';
 import AudioManager from './audio/AudioManager';
 import { gameState } from './engine/GameState';
+import { assetUrl } from './utils/assetPath';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
 import { notifyStateChange, useTerrainVersion } from './stores/gameStore';
 import type { SettlementTier } from './game/SettlementSystem';
@@ -52,7 +53,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
 
   // Preload all GLB models and initialize audio on mount
   useEffect(() => {
-    preloadModels(scene, 'assets', onLoadProgress)
+    preloadModels(scene, assetUrl('assets'), onLoadProgress)
       .then(() => {
         const failed = getFailedModels();
         if (failed.length > 0) {

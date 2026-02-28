@@ -12,8 +12,9 @@
 
 import { Sound, type Scene } from '@babylonjs/core';
 import { MUSIC_TRACKS, GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS, getTrack } from './AudioManifest';
+import { assetUrl } from '../utils/assetPath';
 
-const AUDIO_BASE_PATH = 'assets/audio/music/';
+const AUDIO_BASE_PATH = assetUrl('assets/audio/music') + '/';
 const CROSSFADE_MS = 2000;
 const MASTER_VOLUME = 0.5;
 

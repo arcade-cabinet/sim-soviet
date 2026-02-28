@@ -27,6 +27,7 @@ import { useScene } from 'reactylon';
 import { GRID_SIZE } from '../engine/GridTypes';
 import { gameState } from '../engine/GameState';
 import type { Season } from './TerrainGrid';
+import { assetUrl } from '../utils/assetPath';
 
 /** Seeded PRNG (mulberry32) for deterministic scatter */
 function mulberry32(seed: number) {
@@ -270,7 +271,7 @@ const SceneProps: React.FC<ScenePropsProps> = ({ season = 'winter' }) => {
 
         try {
           const result = await ImportMeshAsync(
-            `assets/models/props/${def.file}`,
+            assetUrl(`assets/models/props/${def.file}`),
             scene,
           );
 
