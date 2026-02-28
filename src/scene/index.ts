@@ -20,7 +20,14 @@ export { default as SmogOverlay } from './SmogOverlay';
 export type { Season } from './TerrainGrid';
 export { default as TerrainGrid } from './TerrainGrid';
 export type { TierTint } from './TierTinting';
-export { applySeasonTint, applyTierTint, clearTintData, flashTierTransition, SEASON_TINTS, TIER_TINTS } from './TierTinting';
+export {
+  applySeasonTint,
+  applyTierTint,
+  clearTintData,
+  flashTierTransition,
+  SEASON_TINTS,
+  TIER_TINTS,
+} from './TierTinting';
 export { default as TrainRenderer } from './TrainRenderer';
 export { default as VehicleRenderer } from './VehicleRenderer';
 // VFX components

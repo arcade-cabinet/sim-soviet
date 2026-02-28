@@ -1102,9 +1102,7 @@ export class SimulationEngine {
         const count = Math.min(Math.max(2, Math.floor(pop * 0.05)), 5);
         const duration = 60 + Math.floor(Math.random() * 60); // 60-120 ticks
         const purpose =
-          eraId === 'first_plans'
-            ? 'the Great Construction of Socialism'
-            : 'post-war reconstruction of the Motherland';
+          eraId === 'first_plans' ? 'the Great Construction of Socialism' : 'post-war reconstruction of the Motherland';
         this.politicalEntities.triggerOrgnabor(count, duration, purpose);
       }
     }

@@ -272,7 +272,7 @@ describe('TierModelVariants', () => {
   });
 
   it('all variant entries map to all four tiers', () => {
-    for (const [defId, tierMap] of Object.entries(TIER_MODEL_VARIANTS)) {
+    for (const [_defId, tierMap] of Object.entries(TIER_MODEL_VARIANTS)) {
       if (!tierMap) continue;
       for (const tier of TIER_ORDER) {
         expect(tierMap[tier]).toBeDefined();

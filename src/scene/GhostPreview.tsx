@@ -120,18 +120,30 @@ function openInspectAtCell(gridX: number, gridZ: number, screenX: number, screen
   const engine = getEngine();
   if (engine) {
     const politicalSystem = engine.getPoliticalEntities();
-    const entitiesAtCell = politicalSystem.getVisibleEntities().filter(
-      (pe) => pe.stationedAt.gridX === gridX && pe.stationedAt.gridY === gridZ,
-    );
+    const entitiesAtCell = politicalSystem
+      .getVisibleEntities()
+      .filter((pe) => pe.stationedAt.gridX === gridX && pe.stationedAt.gridY === gridZ);
     if (entitiesAtCell.length > 0) {
       const pe = entitiesAtCell[0]!;
       // Build dialogue context from live game state
       const meta = getMetaEntity()?.gameMeta;
       const seasonLabel = getSeason(gameState.date.month);
-      const dialogueSeason = seasonLabel === 'WINTER' ? 'winter' as const : seasonLabel === 'SUMMER' ? 'summer' as const : 'mud' as const;
+      const dialogueSeason =
+        seasonLabel === 'WINTER'
+          ? ('winter' as const)
+          : seasonLabel === 'SUMMER'
+            ? ('summer' as const)
+            : ('mud' as const);
       const res = getResourceEntity()?.resources;
       const food = res?.food ?? 0;
-      const resourceLevel = food < 50 ? 'starving' as const : food < 200 ? 'scarce' as const : food < 500 ? 'adequate' as const : 'surplus' as const;
+      const resourceLevel =
+        food < 50
+          ? ('starving' as const)
+          : food < 200
+            ? ('scarce' as const)
+            : food < 500
+              ? ('adequate' as const)
+              : ('surplus' as const);
       const dialogue = politicalSystem.getEntityDialogue(gridX, gridZ, {
         season: dialogueSeason,
         resourceLevel,

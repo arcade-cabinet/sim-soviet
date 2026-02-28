@@ -65,11 +65,6 @@ interface BuildingMeshProps {
   season: Season;
 }
 
-/** Whether a building is still under construction. */
-function isUnderConstruction(building: BuildingState): boolean {
-  return building.constructionPhase != null && building.constructionPhase !== 'complete';
-}
-
 /**
  * Individual building — loads GLB via useGLTF, clones it, applies
  * tier tinting + powered/fire/construction state, positions at grid cell.
@@ -110,8 +105,12 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     // Apply visual states
     applyTierTint(group, settlementTier);
     applySeasonTint(group, season);
-    if (isUnderConstruction(building)) {
-      applyConstructionState(group, building.constructionPhase as 'foundation' | 'building', building.constructionProgress ?? 0);
+    if (building.constructionPhase != null && building.constructionPhase !== 'complete') {
+      applyConstructionState(
+        group,
+        building.constructionPhase as 'foundation' | 'building',
+        building.constructionProgress ?? 0,
+      );
     } else {
       applyPoweredState(group, building.powered);
     }
@@ -151,8 +150,12 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     // Re-apply tint from base (resets powered/fire/construction modifications)
     applyTierTint(group, settlementTier);
     applySeasonTint(group, season);
-    if (isUnderConstruction(building)) {
-      applyConstructionState(group, building.constructionPhase as 'foundation' | 'building', building.constructionProgress ?? 0);
+    if (building.constructionPhase != null && building.constructionPhase !== 'complete') {
+      applyConstructionState(
+        group,
+        building.constructionPhase as 'foundation' | 'building',
+        building.constructionProgress ?? 0,
+      );
     } else {
       applyPoweredState(group, building.powered);
     }
@@ -178,7 +181,11 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
 
 // ── Main BuildingRenderer ───────────────────────────────────────────────────
 
-const BuildingRenderer: React.FC<BuildingRendererProps> = ({ buildings, settlementTier = 'selo', season = 'summer' }) => {
+const BuildingRenderer: React.FC<BuildingRendererProps> = ({
+  buildings,
+  settlementTier = 'selo',
+  season = 'summer',
+}) => {
   const _lastTierRef = useRef<SettlementTier>(settlementTier);
 
   // Detect tier changes for flash effect

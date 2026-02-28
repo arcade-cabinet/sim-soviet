@@ -12,7 +12,13 @@ import {
   producers,
   underConstruction,
 } from '../../src/ecs/archetypes';
-import { createBuilding, createCitizen, createResourceStore, isOperational, placeNewBuilding } from '../../src/ecs/factories';
+import {
+  createBuilding,
+  createCitizen,
+  createResourceStore,
+  isOperational,
+  placeNewBuilding,
+} from '../../src/ecs/factories';
 import {
   constructionSystem,
   DEFAULT_BASE_TICKS,

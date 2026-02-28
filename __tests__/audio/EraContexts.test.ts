@@ -23,11 +23,8 @@ describe('ERA_CONTEXTS', () => {
   });
 
   it('maps every era to a valid MUSIC_CONTEXTS key', () => {
-    for (const [eraId, context] of Object.entries(ERA_CONTEXTS)) {
-      expect(MUSIC_CONTEXTS).toHaveProperty(
-        context,
-        expect.any(String),
-      );
+    for (const [_eraId, context] of Object.entries(ERA_CONTEXTS)) {
+      expect(MUSIC_CONTEXTS).toHaveProperty(context, expect.any(String));
     }
   });
 });

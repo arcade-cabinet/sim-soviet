@@ -53,9 +53,7 @@ const MODEL_MAP: Record<BuildingType, readonly [string, string, string]> = {
  *   - pgt:      Low-rise towers (apartment-tower-a/b)
  *   - gorod:    Full apartment blocks (apartment-tower-c/d)
  */
-export const TIER_MODEL_VARIANTS: Readonly<
-  Partial<Record<string, Record<SettlementTier, string>>>
-> = {
+export const TIER_MODEL_VARIANTS: Readonly<Partial<Record<string, Record<SettlementTier, string>>>> = {
   // Small houses upgrade to larger houses, then apartment towers
   'workers-house-a': {
     selo: 'workers-house-a',

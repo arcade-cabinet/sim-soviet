@@ -1,42 +1,27 @@
-/**
- * Tests for game system wiring: GAP-013 (pripiski downstream), GAP-023 (difficulty),
- * GAP-026 (weather effects), GAP-017 (heating), GAP-024 (minigame triggers),
- * GAP-027 (event era filtering), GAP-018 (currency reform), GAP-019 (orgnabor),
- * GAP-020 (conscription), and GAP-022 (save/load).
- */
-import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
-import { getResourceEntity } from '@/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
-import type { QuotaState } from '@/ecs/systems';
 import { world } from '@/ecs/world';
 import {
+  applyCurrencyReform,
   CURRENCY_REFORMS,
   EconomySystem,
+  findPendingReform,
   HEATING_CONFIGS,
   type HeatingTier,
-  applyCurrencyReform,
-  findPendingReform,
 } from '@/game/economy';
-import {
-  type AnnualReportContext,
-  type AnnualReportEngineState,
-  falsificationRisk,
-  handleQuotaMet,
-  processReport,
-} from '@/game/engine/annualReportTick';
+import { type AnnualReportContext, type AnnualReportEngineState, processReport } from '@/game/engine/annualReportTick';
 import { ALL_EVENT_TEMPLATES } from '@/game/events/templates';
 import { GameGrid } from '@/game/GameGrid';
 import { resolveBuildingTrigger } from '@/game/minigames/BuildingMinigameMap';
 import { MINIGAME_DEFINITIONS } from '@/game/minigames/definitions';
 import { MinigameRouter } from '@/game/minigames/MinigameRouter';
-import { PoliticalEntitySystem } from '@/game/political/PoliticalEntitySystem';
 import { processConscriptionQueue, processOrgnaborQueue, processReturns } from '@/game/political/military';
+import { PoliticalEntitySystem } from '@/game/political/PoliticalEntitySystem';
 import type { ConscriptionEvent, OrgnaborEvent, PoliticalTickResult } from '@/game/political/types';
 import { DIFFICULTY_PRESETS } from '@/game/ScoringSystem';
 import { SimulationEngine } from '@/game/SimulationEngine';
 import { WEATHER_PROFILES, WeatherType } from '@/game/WeatherSystem';
+import { applyMorale } from '@/game/workers/classes';
 import { HEATING_FAILURE_MORALE_PENALTY } from '@/game/workers/constants';
-import { applyMorale, clamp } from '@/game/workers/classes';
 
 function createMockCallbacks() {
   return {
@@ -347,20 +332,20 @@ describe('GAP-026: Weather effects on gameplay', () => {
 
 describe('GAP-017: Heating system effects', () => {
   it('pechka tier consumes timber for fuel', () => {
-    const cfg = HEATING_CONFIGS['pechka'];
+    const cfg = HEATING_CONFIGS.pechka;
     expect(cfg.consumption.resource).toBe('timber');
     expect(cfg.consumption.amount).toBeGreaterThan(0);
   });
 
   it('district tier consumes power for fuel', () => {
-    const cfg = HEATING_CONFIGS['district'];
+    const cfg = HEATING_CONFIGS.district;
     expect(cfg.consumption.resource).toBe('power');
     expect(cfg.consumption.amount).toBeGreaterThan(0);
   });
 
   it('crumbling tier consumes power with higher cost than district', () => {
-    const district = HEATING_CONFIGS['district'];
-    const crumbling = HEATING_CONFIGS['crumbling'];
+    const district = HEATING_CONFIGS.district;
+    const crumbling = HEATING_CONFIGS.crumbling;
     expect(crumbling.consumption.resource).toBe('power');
     expect(crumbling.consumption.amount).toBeGreaterThan(district.consumption.amount);
   });
@@ -371,7 +356,7 @@ describe('GAP-017: Heating system effects', () => {
     const result = eco.processHeating(50, 12, true);
     expect(result.fuelConsumed).not.toBeNull();
     expect(result.fuelConsumed!.resource).toBe('timber'); // default pechka tier
-    expect(result.fuelConsumed!.amount).toBe(HEATING_CONFIGS['pechka'].consumption.amount);
+    expect(result.fuelConsumed!.amount).toBe(HEATING_CONFIGS.pechka.consumption.amount);
     expect(result.operational).toBe(true);
     expect(result.populationAtRisk).toBe(0);
   });
@@ -393,7 +378,16 @@ describe('GAP-017: Heating system effects', () => {
 
   it('heating failure applies morale penalty via applyMorale', () => {
     const citizen = { class: 'worker' as const, happiness: 50, hunger: 0, home: { gridX: 0, gridY: 0 } };
-    const stats = { morale: 80, loyalty: 50, skill: 50, vodkaDependency: 0, ticksSinceVodka: 0, name: 'Test', assignmentDuration: 0, assignmentSource: 'auto' as const };
+    const stats = {
+      morale: 80,
+      loyalty: 50,
+      skill: 50,
+      vodkaDependency: 0,
+      ticksSinceVodka: 0,
+      name: 'Test',
+      assignmentDuration: 0,
+      assignmentSource: 'auto' as const,
+    };
 
     // Without heating failure
     const statsNormal = { ...stats };
@@ -451,11 +445,22 @@ describe('GAP-024: Minigame trigger routing', () => {
       if (['forest', 'mountain', 'market'].includes(def.triggerCondition)) continue;
       // For building-based triggers, verify at least one defId resolves to this condition
       const matchedBuildings = [
-        'factory-office', 'bread-factory', 'warehouse',
-        'collective-farm-hq', 'vodka-distillery', 'gulag-admin',
-        'ministry-office', 'government-hq', 'kgb-office',
-        'power-station', 'cooling-tower', 'school', 'cultural-palace',
-        'workers-club', 'barracks', 'guard-post',
+        'factory-office',
+        'bread-factory',
+        'warehouse',
+        'collective-farm-hq',
+        'vodka-distillery',
+        'gulag-admin',
+        'ministry-office',
+        'government-hq',
+        'kgb-office',
+        'power-station',
+        'cooling-tower',
+        'school',
+        'cultural-palace',
+        'workers-club',
+        'barracks',
+        'guard-post',
       ].filter((id) => resolveBuildingTrigger(id) === def.triggerCondition);
       expect(matchedBuildings.length).toBeGreaterThanOrEqual(1);
     }
@@ -522,8 +527,14 @@ describe('GAP-027: Event era filtering', () => {
 
   it('eraFilter arrays contain valid era IDs', () => {
     const validEras = [
-      'war_communism', 'first_plans', 'great_patriotic',
-      'reconstruction', 'thaw', 'stagnation', 'perestroika', 'eternal_soviet',
+      'war_communism',
+      'first_plans',
+      'great_patriotic',
+      'reconstruction',
+      'thaw',
+      'stagnation',
+      'perestroika',
+      'eternal_soviet',
     ];
     for (const template of ALL_EVENT_TEMPLATES) {
       if (!template.eraFilter) continue;
@@ -541,13 +552,17 @@ describe('GAP-027: Event era filtering', () => {
 
   it('each era has at least one era-specific event', () => {
     const eras = [
-      'war_communism', 'first_plans', 'great_patriotic',
-      'reconstruction', 'thaw', 'stagnation', 'perestroika', 'eternal_soviet',
+      'war_communism',
+      'first_plans',
+      'great_patriotic',
+      'reconstruction',
+      'thaw',
+      'stagnation',
+      'perestroika',
+      'eternal_soviet',
     ];
     for (const era of eras) {
-      const eventsForEra = ALL_EVENT_TEMPLATES.filter(
-        (t) => t.eraFilter && t.eraFilter.includes(era),
-      );
+      const eventsForEra = ALL_EVENT_TEMPLATES.filter((t) => t.eraFilter?.includes(era));
       expect(eventsForEra.length).toBeGreaterThanOrEqual(1);
     }
   });

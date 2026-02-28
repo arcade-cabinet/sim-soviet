@@ -118,7 +118,11 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
       <Environment season={snap.season} />
       <Lighting timeOfDay={snap.timeOfDay} season={snap.season} isStorm={snap.weatherLabel === 'STORM'} />
       <TerrainGrid grid={ecsGrid} season={snap.season} />
-      <BuildingRenderer buildings={buildings} settlementTier={snap.settlementTier as SettlementTier} season={snap.season} />
+      <BuildingRenderer
+        buildings={buildings}
+        settlementTier={snap.settlementTier as SettlementTier}
+        season={snap.season}
+      />
       <SceneProps season={snap.season} />
 
       <WeatherFX />
