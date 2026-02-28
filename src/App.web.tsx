@@ -11,7 +11,7 @@ import { Canvas } from '@react-three/fiber';
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import AudioManager from './audio/AudioManager';
-import { SEASON_CONTEXTS } from './audio/AudioManifest';
+import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
 import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitialized } from './bridge/GameInit';
@@ -356,6 +356,10 @@ const App: React.FC = () => {
           onEraChanged: (era) => {
             setEraTransition(era);
             SFXManager.getInstance().play('era_transition');
+            const ctx = ERA_CONTEXTS[era.id];
+            if (ctx) {
+              AudioManager.getInstance().playContext(ctx);
+            }
           },
           onAnnualReport: (data, submitReport) => {
             setAnnualReport(data);
