@@ -733,16 +733,7 @@ const App: React.FC = () => {
               shadows
               camera={{ position: [30, 40, 30], fov: 45 }}
               style={{ width: '100%', height: '100%' }}
-              gl={async (defaultProps) => {
-                const { WebGPURenderer } = await import('three/webgpu');
-                const renderer = new WebGPURenderer({
-                  canvas: defaultProps.canvas as HTMLCanvasElement,
-                  antialias: true,
-                  alpha: false,
-                });
-                await renderer.init();
-                return renderer;
-              }}
+              gl={{ antialias: true, alpha: false }}
             >
               <Content onLoadProgress={handleLoadProgress} onLoadComplete={handleLoadComplete} />
             </Canvas>
