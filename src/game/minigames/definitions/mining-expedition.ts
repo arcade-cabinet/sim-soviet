@@ -10,7 +10,7 @@ export const MINING_EXPEDITION: MinigameDefinition = {
   description: 'The mountain holds iron and stone. It also holds grudges.',
   triggerType: 'building_tap',
   triggerCondition: 'mountain',
-  tickLimit: 30,
+  tickLimit: 75,
   choices: [
     {
       id: 'surface_mining',

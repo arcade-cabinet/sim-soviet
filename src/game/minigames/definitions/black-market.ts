@@ -10,7 +10,7 @@ export const BLACK_MARKET: MinigameDefinition = {
   description: 'A man in a long coat approaches. He has goods. You have needs. The State has opinions about both.',
   triggerType: 'building_tap',
   triggerCondition: 'market',
-  tickLimit: 15,
+  tickLimit: 35,
   choices: [
     {
       id: 'trade_cautiously',

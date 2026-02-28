@@ -26,7 +26,7 @@ export interface PravdaSaveData {
 export class PravdaSystem {
   private headlineHistory: PravdaHeadline[] = [];
   private lastHeadlineTime = 0;
-  private headlineCooldown = 90000; // 90 seconds between ambient headlines
+  private headlineCooldown = 45000; // 45 seconds between ambient headlines
   /** Track recent headline patterns to avoid repetition */
   private recentCategories: HeadlineCategory[] = [];
   private maxCategoryMemory = 6;

@@ -11,7 +11,7 @@ export const QUALITY_CONTROL: MinigameDefinition = {
   description: 'The latest batch smells like victory. Or possibly turpentine. The distinction is ideological.',
   triggerType: 'building_tap',
   triggerCondition: 'distillery_tap',
-  tickLimit: 15,
+  tickLimit: 40,
   choices: [
     {
       id: 'strict_standards',

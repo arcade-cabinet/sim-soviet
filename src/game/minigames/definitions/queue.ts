@@ -10,7 +10,7 @@ export const THE_QUEUE: MinigameDefinition = {
   description: '400 citizens. 200 loaves. Mathematics has never been crueler.',
   triggerType: 'periodic',
   triggerCondition: 'population_60',
-  tickLimit: 30,
+  tickLimit: 75,
   choices: [
     {
       id: 'fair_distribution',

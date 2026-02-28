@@ -10,7 +10,7 @@ export const THE_HUNT: MinigameDefinition = {
   description: 'The forest offers what the State cannot: food that was not planned, allocated, or redistributed.',
   triggerType: 'building_tap',
   triggerCondition: 'forest',
-  tickLimit: 25,
+  tickLimit: 60,
   choices: [
     {
       id: 'small_party',

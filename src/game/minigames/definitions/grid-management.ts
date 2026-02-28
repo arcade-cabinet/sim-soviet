@@ -12,7 +12,7 @@ export const GRID_MANAGEMENT: MinigameDefinition = {
     'The power grid is operating at 147% of rated capacity. The engineers say this is fine. The sparking wires disagree.',
   triggerType: 'building_tap',
   triggerCondition: 'power_tap',
-  tickLimit: 15,
+  tickLimit: 40,
   choices: [
     {
       id: 'rolling_blackouts',

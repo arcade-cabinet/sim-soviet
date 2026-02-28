@@ -12,7 +12,7 @@ export const IDEOLOGICAL_EDUCATION: MinigameDefinition = {
     'The curriculum must be updated. The children are asking questions. Some of these questions have no correct answers.',
   triggerType: 'building_tap',
   triggerCondition: 'school_tap',
-  tickLimit: 20,
+  tickLimit: 50,
   choices: [
     {
       id: 'orthodox_curriculum',

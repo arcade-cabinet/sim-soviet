@@ -10,7 +10,7 @@ export const THE_INSPECTION: MinigameDefinition = {
   description: 'The inspector from Moscow has arrived. He is taking notes. He has a very large notebook.',
   triggerType: 'periodic',
   triggerCondition: 'inspection_180',
-  tickLimit: 25,
+  tickLimit: 45,
   choices: [
     {
       id: 'show_honestly',
