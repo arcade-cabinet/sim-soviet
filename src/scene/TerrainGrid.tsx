@@ -1,25 +1,18 @@
 /**
- * TerrainGrid — renders a 30x30 isometric terrain grid using a single merged mesh
- * with vertex colors for performance.
+ * TerrainGrid — renders a 30x30 terrain grid using a single BufferGeometry
+ * with per-vertex colors, plus procedural tree/mountain/marsh scatter.
  *
- * Terrain types: grass, water, rail, tree, crater, irradiated, mountain, marsh.
- * Supports elevation offsets, season-dependent colors, procedural tree/mountain/marsh geometry.
+ * Terrain types: grass, water, rail, tree, crater, irradiated, mountain, marsh, path.
+ * Supports elevation offsets, season-dependent colors, procedural scatter geometry.
  *
  * All scatter placement uses a seeded PRNG (mulberry32) for deterministic results
  * across reloads with the same game seed.
+ *
+ * R3F migration: uses <mesh> with <bufferGeometry> + <meshStandardMaterial>
+ * with vertexColors. Trees/mountains/marshes rendered as grouped JSX meshes.
  */
-import React, { useEffect, useRef } from 'react';
-import {
-  Color3,
-  Color4,
-  Mesh,
-  MeshBuilder,
-  StandardMaterial,
-  VertexData,
-  Vector3,
-  type Scene,
-} from '@babylonjs/core';
-import { useScene } from 'reactylon';
+import React, { useMemo } from 'react';
+import * as THREE from 'three';
 import { GRID_SIZE, type TerrainType, type GridCell } from '../engine/GridTypes';
 
 /** Seeded PRNG (mulberry32) for deterministic scatter */
@@ -41,78 +34,79 @@ interface TerrainGridProps {
 }
 
 /** Color palette per terrain type, varying by season */
-function getTerrainColor(terrain: TerrainType, season: Season): Color4 {
+function getTerrainColor(terrain: TerrainType, season: Season): [number, number, number] {
   switch (terrain) {
     case 'grass':
       switch (season) {
         case 'winter':
-          return new Color4(0.75, 0.78, 0.82, 1); // snow-covered
+          return [0.75, 0.78, 0.82]; // snow-covered
         case 'autumn':
-          return new Color4(0.55, 0.50, 0.30, 1); // brown-yellow
+          return [0.55, 0.50, 0.30]; // brown-yellow
         case 'spring':
-          return new Color4(0.40, 0.55, 0.30, 1); // fresh green
+          return [0.40, 0.55, 0.30]; // fresh green
         case 'summer':
         default:
-          return new Color4(0.35, 0.50, 0.28, 1); // green-gray Soviet grass
+          return [0.35, 0.50, 0.28]; // green-gray Soviet grass
       }
     case 'water':
-      if (season === 'winter') return new Color4(0.65, 0.70, 0.75, 1); // frozen
-      return new Color4(0.20, 0.35, 0.55, 1); // dark blue
+      if (season === 'winter') return [0.65, 0.70, 0.75]; // frozen
+      return [0.20, 0.35, 0.55]; // dark blue
     case 'rail':
-      return new Color4(0.30, 0.30, 0.32, 1); // dark gray
+      return [0.30, 0.30, 0.32]; // dark gray
     case 'tree':
       switch (season) {
         case 'winter':
-          return new Color4(0.70, 0.73, 0.76, 1); // snow
+          return [0.70, 0.73, 0.76]; // snow
         case 'autumn':
-          return new Color4(0.60, 0.40, 0.20, 1); // orange-brown
+          return [0.60, 0.40, 0.20]; // orange-brown
         default:
-          return new Color4(0.25, 0.42, 0.20, 1); // dark green
+          return [0.25, 0.42, 0.20]; // dark green
       }
     case 'crater':
-      return new Color4(0.25, 0.10, 0.30, 1); // dark purple
+      return [0.25, 0.10, 0.30]; // dark purple
     case 'irradiated':
-      return new Color4(0.40, 0.55, 0.15, 1); // sickly green
+      return [0.40, 0.55, 0.15]; // sickly green
     case 'mountain':
       switch (season) {
         case 'winter':
-          return new Color4(0.80, 0.82, 0.85, 1); // snow-capped
+          return [0.80, 0.82, 0.85]; // snow-capped
         default:
-          return new Color4(0.42, 0.38, 0.35, 1); // rocky gray-brown
+          return [0.42, 0.38, 0.35]; // rocky gray-brown
       }
     case 'marsh':
       switch (season) {
         case 'winter':
-          return new Color4(0.60, 0.65, 0.68, 1); // frozen mud
+          return [0.60, 0.65, 0.68]; // frozen mud
         default:
-          return new Color4(0.30, 0.38, 0.25, 1); // dark boggy green
+          return [0.30, 0.38, 0.25]; // dark boggy green
       }
     case 'path':
       switch (season) {
         case 'winter':
-          return new Color4(0.58, 0.55, 0.50, 1); // snow-dusted dirt
+          return [0.58, 0.55, 0.50]; // snow-dusted dirt
         case 'autumn':
-          return new Color4(0.42, 0.35, 0.25, 1); // muddy brown
+          return [0.42, 0.35, 0.25]; // muddy brown
         case 'spring':
-          return new Color4(0.45, 0.38, 0.28, 1); // wet earth
+          return [0.45, 0.38, 0.28]; // wet earth
         case 'summer':
         default:
-          return new Color4(0.48, 0.40, 0.30, 1); // packed earth brown
+          return [0.48, 0.40, 0.30]; // packed earth brown
       }
     default:
-      return new Color4(0.35, 0.50, 0.28, 1);
+      return [0.35, 0.50, 0.28];
   }
 }
 
+// ── Terrain Mesh ────────────────────────────────────────────────────────────
+
 /**
- * Build a single merged ground mesh with per-vertex colors.
+ * Build a PlaneGeometry with per-vertex colors and elevation from grid data.
  * Each tile is a 1x1 quad on the XZ plane, offset by cell elevation.
  */
-function buildTerrainMesh(
-  scene: Scene,
+function buildTerrainGeometry(
   grid: GridCell[][],
   season: Season,
-): Mesh {
+): THREE.BufferGeometry {
   const positions: number[] = [];
   const indices: number[] = [];
   const colors: number[] = [];
@@ -126,7 +120,7 @@ function buildTerrainMesh(
       if (!cell) continue;
 
       const y = cell.z * 0.5; // elevation
-      const color = getTerrainColor(cell.terrain, season);
+      const [cr, cg, cb] = getTerrainColor(cell.terrain, season);
 
       // Quad corners (XZ plane, Y = elevation)
       // v0---v1
@@ -145,10 +139,10 @@ function buildTerrainMesh(
       // Up-facing normals
       for (let i = 0; i < 4; i++) {
         normals.push(0, 1, 0);
-        colors.push(color.r, color.g, color.b, color.a);
+        colors.push(cr, cg, cb);
       }
 
-      // Two triangles
+      // Two triangles (CCW winding for Three.js front face)
       indices.push(
         vertIdx, vertIdx + 2, vertIdx + 1,
         vertIdx + 1, vertIdx + 2, vertIdx + 3,
@@ -158,57 +152,26 @@ function buildTerrainMesh(
     }
   }
 
-  const mesh = new Mesh('terrain', scene);
-  const vertexData = new VertexData();
-  vertexData.positions = positions;
-  vertexData.indices = indices;
-  vertexData.normals = normals;
-  vertexData.colors = colors;
-  vertexData.applyToMesh(mesh);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setIndex(indices);
 
-  // Material that uses vertex colors
-  const mat = new StandardMaterial('terrainMat', scene);
-  mat.diffuseColor = Color3.White();
-  mat.specularColor = Color3.Black();
-  mat.backFaceCulling = true;
-  mesh.material = mat;
-  mesh.hasVertexAlpha = false;
-  mesh.receiveShadows = true;
-
-  return mesh;
+  return geometry;
 }
 
-/**
- * Build conical pine trees for tree tiles — the classic Russian/Soviet taiga look.
- * Each tree: cylinder trunk + two stacked cones (lower wider, upper narrower).
- * Scatters 1-3 trees per forest tile with slight random offset for natural look.
- * Uses seeded RNG for deterministic placement across reloads.
- * Returns array of all tree meshes for disposal tracking.
- */
-function buildTrees(
-  scene: Scene,
-  grid: GridCell[][],
-  season: Season,
-): Mesh[] {
-  const trees: Mesh[] = [];
-  const rng = mulberry32(0xF0_BE57); // fixed seed for tree scatter
+// ── Tree Data ───────────────────────────────────────────────────────────────
 
-  const trunkMat = new StandardMaterial('trunkMat', scene);
-  trunkMat.diffuseColor = new Color3(0.35, 0.25, 0.15);
-  trunkMat.specularColor = Color3.Black();
+interface TreeData {
+  position: [number, number, number];
+  scale: number;
+  yaw: number;
+}
 
-  const canopyMat = new StandardMaterial('canopyMat', scene);
-  canopyMat.specularColor = Color3.Black();
-  switch (season) {
-    case 'winter':
-      canopyMat.diffuseColor = new Color3(0.75, 0.78, 0.82); // snow-dusted
-      break;
-    case 'autumn':
-      canopyMat.diffuseColor = new Color3(0.25, 0.35, 0.15); // evergreen stays green
-      break;
-    default:
-      canopyMat.diffuseColor = new Color3(0.15, 0.35, 0.10); // dark conifer green
-  }
+function collectTrees(grid: GridCell[][]): TreeData[] {
+  const trees: TreeData[] = [];
+  const rng = mulberry32(0xF0_BE57);
 
   for (let row = 0; row < GRID_SIZE; row++) {
     for (let col = 0; col < GRID_SIZE; col++) {
@@ -216,51 +179,19 @@ function buildTrees(
       if (!cell || cell.terrain !== 'tree') continue;
 
       const y = cell.z * 0.5;
-
-      // Scatter 1-3 trees per forest tile for a natural clustered look
-      const treeCount = 1 + Math.floor(rng() * 3); // 1, 2, or 3
+      const treeCount = 1 + Math.floor(rng() * 3);
 
       for (let t = 0; t < treeCount; t++) {
-        // Random offset within the tile (keep 0.15 padding from edges)
         const ox = 0.15 + rng() * 0.7;
         const oz = 0.15 + rng() * 0.7;
-        const cx = col + ox;
-        const cz = row + oz;
-
-        // Slight random variation in size so trees don't look uniform
         const scale = 0.6 + rng() * 0.5;
         const yaw = rng() * Math.PI * 2;
 
-        // Trunk
-        const trunk = MeshBuilder.CreateCylinder(
-          `trunk_${row}_${col}_${t}`,
-          { height: 0.5 * scale, diameter: 0.12, tessellation: 5 },
-          scene,
-        );
-        trunk.position = new Vector3(cx, y + 0.25 * scale, cz);
-        trunk.material = trunkMat;
-
-        // Lower cone (wider)
-        const lowerCone = MeshBuilder.CreateCylinder(
-          `cone_lo_${row}_${col}_${t}`,
-          { height: 0.6 * scale, diameterTop: 0.05, diameterBottom: 0.65 * scale, tessellation: 6 },
-          scene,
-        );
-        lowerCone.position = new Vector3(cx, y + 0.55 * scale, cz);
-        lowerCone.rotation.y = yaw;
-        lowerCone.material = canopyMat;
-
-        // Upper cone (narrower, overlapping)
-        const upperCone = MeshBuilder.CreateCylinder(
-          `cone_hi_${row}_${col}_${t}`,
-          { height: 0.5 * scale, diameterTop: 0, diameterBottom: 0.45 * scale, tessellation: 6 },
-          scene,
-        );
-        upperCone.position = new Vector3(cx, y + 0.9 * scale, cz);
-        upperCone.rotation.y = yaw;
-        upperCone.material = canopyMat;
-
-        trees.push(trunk, lowerCone, upperCone);
+        trees.push({
+          position: [col + ox, y, row + oz],
+          scale,
+          yaw,
+        });
       }
     }
   }
@@ -268,26 +199,21 @@ function buildTrees(
   return trees;
 }
 
-/**
- * Build rocky mountain peaks for mountain tiles.
- * Each mountain: 2-3 irregular cones to look like a craggy peak.
- * Uses seeded RNG for deterministic placement.
- */
-function buildMountains(
-  scene: Scene,
-  grid: GridCell[][],
-  season: Season,
-): Mesh[] {
-  const rocks: Mesh[] = [];
-  const rng = mulberry32(0xD0C4_A1B5); // fixed seed for mountain scatter
+// ── Mountain Data ───────────────────────────────────────────────────────────
 
-  const rockMat = new StandardMaterial('rockMat', scene);
-  rockMat.specularColor = Color3.Black();
-  if (season === 'winter') {
-    rockMat.diffuseColor = new Color3(0.82, 0.84, 0.88); // snow-capped rock
-  } else {
-    rockMat.diffuseColor = new Color3(0.45, 0.40, 0.35); // gray-brown rock
-  }
+interface MountainPeak {
+  position: [number, number, number];
+  height: number;
+  bottomRadius: number;
+}
+
+interface MountainData {
+  peaks: MountainPeak[];
+}
+
+function collectMountains(grid: GridCell[][]): MountainData[] {
+  const mountains: MountainData[] = [];
+  const rng = mulberry32(0xD0C4_A1B5);
 
   for (let row = 0; row < GRID_SIZE; row++) {
     for (let col = 0; col < GRID_SIZE; col++) {
@@ -297,115 +223,67 @@ function buildMountains(
       const y = cell.z * 0.5;
       const cx = col + 0.5;
       const cz = row + 0.5;
-
       const scale = 0.7 + rng() * 0.3;
 
-      // Main peak — tall narrow cone
-      const peak = MeshBuilder.CreateCylinder(
-        `peak_${row}_${col}`,
-        {
-          height: 1.2 * scale,
-          diameterTop: 0.05,
-          diameterBottom: 0.7 * scale,
-          tessellation: 5,
-        },
-        scene,
-      );
-      peak.position = new Vector3(cx, y + 0.6 * scale, cz);
-      peak.material = rockMat;
+      const peaks: MountainPeak[] = [];
 
-      // Secondary shorter peak, offset
+      // Main peak
+      peaks.push({
+        position: [cx, y + 0.6 * scale, cz],
+        height: 1.2 * scale,
+        bottomRadius: 0.35 * scale,
+      });
+
+      // Secondary peak
       const offsetX = (rng() - 0.5) * 0.4;
       const offsetZ = (rng() - 0.5) * 0.3;
-      const peak2 = MeshBuilder.CreateCylinder(
-        `peak2_${row}_${col}`,
-        {
-          height: 0.7 * scale,
-          diameterTop: 0.03,
-          diameterBottom: 0.5 * scale,
-          tessellation: 5,
-        },
-        scene,
-      );
-      peak2.position = new Vector3(cx + 0.25 + offsetX, y + 0.35 * scale, cz + 0.2 + offsetZ);
-      peak2.material = rockMat;
+      peaks.push({
+        position: [cx + 0.25 + offsetX, y + 0.35 * scale, cz + 0.2 + offsetZ],
+        height: 0.7 * scale,
+        bottomRadius: 0.25 * scale,
+      });
 
-      rocks.push(peak, peak2);
-
-      // Optional third crag for visual variety (30% chance)
+      // Optional third peak (30% chance)
       if (rng() < 0.3) {
         const ox3 = (rng() - 0.5) * 0.5;
         const oz3 = (rng() - 0.5) * 0.5;
-        const peak3 = MeshBuilder.CreateCylinder(
-          `peak3_${row}_${col}`,
-          {
-            height: 0.5 * scale,
-            diameterTop: 0.02,
-            diameterBottom: 0.35 * scale,
-            tessellation: 5,
-          },
-          scene,
-        );
-        peak3.position = new Vector3(cx - 0.2 + ox3, y + 0.25 * scale, cz - 0.15 + oz3);
-        peak3.material = rockMat;
-        rocks.push(peak3);
+        peaks.push({
+          position: [cx - 0.2 + ox3, y + 0.25 * scale, cz - 0.15 + oz3],
+          height: 0.5 * scale,
+          bottomRadius: 0.175 * scale,
+        });
       }
+
+      mountains.push({ peaks });
     }
   }
 
-  return rocks;
+  return mountains;
 }
 
-/**
- * Build marsh features for marsh tiles — reed-like thin cylinders + tufts.
- * Each marsh tile gets 2-4 reed clusters scattered for a boggy, overgrown look.
- * Uses seeded RNG for deterministic placement.
- */
-function buildMarshes(
-  scene: Scene,
-  grid: GridCell[][],
-  season: Season,
-): Mesh[] {
-  const meshes: Mesh[] = [];
-  const rng = mulberry32(0xBA_D5EA); // fixed seed for marsh scatter
+// ── Marsh Data ──────────────────────────────────────────────────────────────
 
-  // Reed material — dark green-brown stalks
-  const reedMat = new StandardMaterial('reedMat', scene);
-  reedMat.specularColor = Color3.Black();
-  switch (season) {
-    case 'winter':
-      reedMat.diffuseColor = new Color3(0.55, 0.50, 0.42); // dried tan-brown
-      break;
-    case 'autumn':
-      reedMat.diffuseColor = new Color3(0.50, 0.42, 0.25); // golden-brown
-      break;
-    default:
-      reedMat.diffuseColor = new Color3(0.25, 0.40, 0.18); // dark marsh green
-  }
+interface ReedData {
+  position: [number, number, number];
+  height: number;
+  tiltX: number;
+  tiltZ: number;
+  tuftBottomRadius: number;
+}
 
-  // Tuft material — lighter leafy tops
-  const tuftMat = new StandardMaterial('tuftMat', scene);
-  tuftMat.specularColor = Color3.Black();
-  switch (season) {
-    case 'winter':
-      tuftMat.diffuseColor = new Color3(0.60, 0.58, 0.52); // faded tan
-      break;
-    case 'autumn':
-      tuftMat.diffuseColor = new Color3(0.55, 0.48, 0.30); // dry golden
-      break;
-    default:
-      tuftMat.diffuseColor = new Color3(0.30, 0.50, 0.22); // marsh green
-  }
+interface PuddleData {
+  position: [number, number, number];
+  radius: number;
+}
 
-  // Water puddle material — small dark patches on marsh ground
-  const puddleMat = new StandardMaterial('puddleMat', scene);
-  puddleMat.specularColor = Color3.Black();
-  puddleMat.alpha = 0.7;
-  if (season === 'winter') {
-    puddleMat.diffuseColor = new Color3(0.65, 0.70, 0.75); // frozen puddle
-  } else {
-    puddleMat.diffuseColor = new Color3(0.15, 0.25, 0.20); // dark murky water
-  }
+interface MarshTileData {
+  puddle: PuddleData;
+  reeds: ReedData[];
+}
+
+function collectMarshes(grid: GridCell[][]): MarshTileData[] {
+  const marshes: MarshTileData[] = [];
+  const rng = mulberry32(0xBA_D5EA);
 
   for (let row = 0; row < GRID_SIZE; row++) {
     for (let col = 0; col < GRID_SIZE; col++) {
@@ -414,109 +292,224 @@ function buildMarshes(
 
       const y = cell.z * 0.5;
 
-      // Small water puddle on the tile
-      const puddle = MeshBuilder.CreateDisc(
-        `puddle_${row}_${col}`,
-        { radius: 0.2 + rng() * 0.15, tessellation: 8 },
-        scene,
-      );
-      puddle.rotation.x = Math.PI / 2; // lay flat on XZ plane
-      const px = col + 0.3 + rng() * 0.4;
-      const pz = row + 0.3 + rng() * 0.4;
-      puddle.position = new Vector3(px, y + 0.01, pz);
-      puddle.material = puddleMat;
-      meshes.push(puddle);
+      const puddle: PuddleData = {
+        position: [col + 0.3 + rng() * 0.4, y + 0.01, row + 0.3 + rng() * 0.4],
+        radius: 0.2 + rng() * 0.15,
+      };
 
-      // Scatter 2-4 reed clusters per marsh tile
-      const reedCount = 2 + Math.floor(rng() * 3); // 2, 3, or 4
+      const reeds: ReedData[] = [];
+      const reedCount = 2 + Math.floor(rng() * 3);
 
       for (let r = 0; r < reedCount; r++) {
         const ox = 0.1 + rng() * 0.8;
         const oz = 0.1 + rng() * 0.8;
-        const cx = col + ox;
-        const cz = row + oz;
-
-        // Reed stalk — thin tall cylinder
         const height = 0.3 + rng() * 0.4;
-        const reed = MeshBuilder.CreateCylinder(
-          `reed_${row}_${col}_${r}`,
-          { height, diameter: 0.03, tessellation: 4 },
-          scene,
-        );
-        reed.position = new Vector3(cx, y + height / 2, cz);
-        // Slight tilt for natural look
-        reed.rotation.x = (rng() - 0.5) * 0.3;
-        reed.rotation.z = (rng() - 0.5) * 0.3;
-        reed.material = reedMat;
-        meshes.push(reed);
+        const tiltX = (rng() - 0.5) * 0.3;
+        const tiltZ = (rng() - 0.5) * 0.3;
+        const tuftBottomRadius = 0.06 + rng() * 0.04;
 
-        // Cattail / tuft on top — flattened sphere
-        const tuft = MeshBuilder.CreateCylinder(
-          `tuft_${row}_${col}_${r}`,
-          {
-            height: 0.08,
-            diameterTop: 0.01,
-            diameterBottom: 0.06 + rng() * 0.04,
-            tessellation: 5,
-          },
-          scene,
-        );
-        tuft.position = new Vector3(cx, y + height + 0.02, cz);
-        tuft.rotation.x = reed.rotation.x;
-        tuft.rotation.z = reed.rotation.z;
-        tuft.material = tuftMat;
-        meshes.push(tuft);
+        reeds.push({
+          position: [col + ox, y, row + oz],
+          height,
+          tiltX,
+          tiltZ,
+          tuftBottomRadius,
+        });
       }
+
+      marshes.push({ puddle, reeds });
     }
   }
 
-  return meshes;
+  return marshes;
 }
 
+// ── Rail Marker Data ────────────────────────────────────────────────────────
+
+interface RailMarker {
+  position: [number, number, number];
+}
+
+function collectRailMarkers(grid: GridCell[][]): RailMarker[] {
+  const markers: RailMarker[] = [];
+
+  for (let row = 0; row < GRID_SIZE; row++) {
+    for (let col = 0; col < GRID_SIZE; col++) {
+      const cell = grid[row]?.[col];
+      if (!cell || cell.terrain !== 'rail') continue;
+
+      markers.push({
+        position: [col + 0.5, cell.z * 0.5 + 0.025, row + 0.5],
+      });
+    }
+  }
+
+  return markers;
+}
+
+// ── Season-dependent material colors ────────────────────────────────────────
+
+function getCanopyColor(season: Season): string {
+  switch (season) {
+    case 'winter':
+      return '#c0c7d1'; // snow-dusted
+    case 'autumn':
+      return '#405926'; // evergreen stays green
+    default:
+      return '#26591a'; // dark conifer green
+  }
+}
+
+function getRockColor(season: Season): string {
+  return season === 'winter' ? '#d1d6e0' : '#736659'; // snow-capped vs gray-brown
+}
+
+function getReedColor(season: Season): string {
+  switch (season) {
+    case 'winter':
+      return '#8c806b'; // dried tan-brown
+    case 'autumn':
+      return '#806b40'; // golden-brown
+    default:
+      return '#40662e'; // dark marsh green
+  }
+}
+
+function getTuftColor(season: Season): string {
+  switch (season) {
+    case 'winter':
+      return '#999485'; // faded tan
+    case 'autumn':
+      return '#8c7a4d'; // dry golden
+    default:
+      return '#4d8038'; // marsh green
+  }
+}
+
+function getPuddleColor(season: Season): string {
+  return season === 'winter' ? '#a6b3bf' : '#264033'; // frozen vs dark murky
+}
+
+// ── Component ───────────────────────────────────────────────────────────────
+
 const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) => {
-  const scene = useScene();
-  const terrainRef = useRef<Mesh | null>(null);
-  const treesRef = useRef<Mesh[]>([]);
-  const mountainsRef = useRef<Mesh[]>([]);
-  const marshesRef = useRef<Mesh[]>([]);
+  // Build terrain geometry with per-vertex colors
+  const terrainGeometry = useMemo(
+    () => buildTerrainGeometry(grid, season),
+    [grid, season],
+  );
 
-  useEffect(() => {
-    // Clean up previous terrain
-    if (terrainRef.current) {
-      terrainRef.current.dispose();
-    }
-    for (const tree of treesRef.current) {
-      tree.dispose();
-    }
-    for (const rock of mountainsRef.current) {
-      rock.dispose();
-    }
-    for (const marsh of marshesRef.current) {
-      marsh.dispose();
-    }
+  // Collect scatter data
+  const trees = useMemo(() => collectTrees(grid), [grid]);
+  const mountains = useMemo(() => collectMountains(grid), [grid]);
+  const marshes = useMemo(() => collectMarshes(grid), [grid]);
+  const railMarkers = useMemo(() => collectRailMarkers(grid), [grid]);
 
-    // Build new terrain
-    terrainRef.current = buildTerrainMesh(scene, grid, season);
-    treesRef.current = buildTrees(scene, grid, season);
-    mountainsRef.current = buildMountains(scene, grid, season);
-    marshesRef.current = buildMarshes(scene, grid, season);
+  // Season-dependent colors
+  const canopyColor = getCanopyColor(season);
+  const rockColor = getRockColor(season);
+  const reedColor = getReedColor(season);
+  const tuftColor = getTuftColor(season);
+  const puddleColor = getPuddleColor(season);
 
-    return () => {
-      terrainRef.current?.dispose();
-      for (const tree of treesRef.current) {
-        tree.dispose();
-      }
-      for (const rock of mountainsRef.current) {
-        rock.dispose();
-      }
-      for (const marsh of marshesRef.current) {
-        marsh.dispose();
-      }
-    };
-  }, [scene, grid, season]);
+  return (
+    <group>
+      {/* Main terrain mesh with per-vertex colors */}
+      <mesh geometry={terrainGeometry} receiveShadow>
+        <meshStandardMaterial vertexColors side={THREE.FrontSide} roughness={0.9} metalness={0} />
+      </mesh>
 
-  // Imperative mesh creation — no JSX children needed
-  return null;
+      {/* Trees — conical pines (trunk + two stacked cones) */}
+      {trees.map((tree, i) => {
+        const [tx, ty, tz] = tree.position;
+        const s = tree.scale;
+        return (
+          <group key={`tree_${i}`} position={[tx, ty, tz]}>
+            {/* Trunk */}
+            <mesh position={[0, 0.25 * s, 0]}>
+              <cylinderGeometry args={[0.06, 0.06, 0.5 * s, 5]} />
+              <meshStandardMaterial color="#593f26" roughness={0.9} />
+            </mesh>
+            {/* Lower cone (wider) */}
+            <mesh position={[0, 0.55 * s, 0]} rotation={[0, tree.yaw, 0]}>
+              <coneGeometry args={[0.325 * s, 0.6 * s, 6]} />
+              <meshStandardMaterial color={canopyColor} roughness={0.85} />
+            </mesh>
+            {/* Upper cone (narrower) */}
+            <mesh position={[0, 0.9 * s, 0]} rotation={[0, tree.yaw, 0]}>
+              <coneGeometry args={[0.225 * s, 0.5 * s, 6]} />
+              <meshStandardMaterial color={canopyColor} roughness={0.85} />
+            </mesh>
+          </group>
+        );
+      })}
+
+      {/* Mountains — craggy cone peaks */}
+      {mountains.map((mountain, mi) =>
+        mountain.peaks.map((peak, pi) => (
+          <mesh
+            key={`mtn_${mi}_${pi}`}
+            position={peak.position}
+          >
+            <coneGeometry args={[peak.bottomRadius, peak.height, 5]} />
+            <meshStandardMaterial color={rockColor} roughness={0.95} />
+          </mesh>
+        )),
+      )}
+
+      {/* Marshes — puddles + reeds + tufts */}
+      {marshes.map((marsh, mi) => (
+        <group key={`marsh_${mi}`}>
+          {/* Puddle disc (flat circle on XZ plane) */}
+          <mesh
+            position={marsh.puddle.position}
+            rotation={[-Math.PI / 2, 0, 0]}
+          >
+            <circleGeometry args={[marsh.puddle.radius, 8]} />
+            <meshStandardMaterial
+              color={puddleColor}
+              transparent
+              opacity={0.7}
+              roughness={0.3}
+            />
+          </mesh>
+
+          {/* Reeds */}
+          {marsh.reeds.map((reed, ri) => {
+            const [rx, ry, rz] = reed.position;
+            return (
+              <group key={`reed_${mi}_${ri}`}>
+                {/* Reed stalk */}
+                <mesh
+                  position={[rx, ry + reed.height / 2, rz]}
+                  rotation={[reed.tiltX, 0, reed.tiltZ]}
+                >
+                  <cylinderGeometry args={[0.015, 0.015, reed.height, 4]} />
+                  <meshStandardMaterial color={reedColor} roughness={0.9} />
+                </mesh>
+                {/* Cattail tuft on top */}
+                <mesh
+                  position={[rx, ry + reed.height + 0.02, rz]}
+                  rotation={[reed.tiltX, 0, reed.tiltZ]}
+                >
+                  <coneGeometry args={[reed.tuftBottomRadius, 0.08, 5]} />
+                  <meshStandardMaterial color={tuftColor} roughness={0.9} />
+                </mesh>
+              </group>
+            );
+          })}
+        </group>
+      ))}
+
+      {/* Rail markers — small cubes on rail tiles */}
+      {railMarkers.map((marker, i) => (
+        <mesh key={`rail_${i}`} position={marker.position}>
+          <boxGeometry args={[0.9, 0.05, 0.9]} />
+          <meshStandardMaterial color="#4d4d52" roughness={0.7} metalness={0.3} />
+        </mesh>
+      ))}
+    </group>
+  );
 };
 
 export default TerrainGrid;
