@@ -8,27 +8,8 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { SafeAreaView, View, Text, StatusBar, StyleSheet, Platform } from 'react-native';
-import { Engine } from 'reactylon/web';
-import { Scene } from 'reactylon';
-
-// Inject global CSS to make the BabylonJS canvas fill its container.
-// The reactylon Engine creates <canvas id="reactylon-canvas"> with no sizing CSS.
-if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getElementById('reactylon-canvas-fix')) {
-  const style = document.createElement('style');
-  style.id = 'reactylon-canvas-fix';
-  style.textContent = `
-    #reactylon-canvas {
-      width: 100% !important;
-      height: 100% !important;
-      display: block;
-      outline: none;
-      position: relative;
-      z-index: 0;
-    }
-  `;
-  document.head.appendChild(style);
-}
+import { SafeAreaView, View, Text, StatusBar, StyleSheet } from 'react-native';
+import { Canvas } from '@react-three/fiber';
 
 import Content from './Content';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
@@ -733,14 +714,17 @@ const App: React.FC = () => {
       <SafeAreaView style={styles.root}>
         <View style={styles.sceneContainer}>
           <EngineErrorBoundary>
-            <Engine forceWebGL>
-              <Scene>
-                <Content
-                  onLoadProgress={handleLoadProgress}
-                  onLoadComplete={handleLoadComplete}
-                />
-              </Scene>
-            </Engine>
+            <Canvas
+              shadows
+              camera={{ position: [30, 40, 30], fov: 45 }}
+              style={{ width: '100%', height: '100%' }}
+              gl={{ antialias: true, alpha: false }}
+            >
+              <Content
+                onLoadProgress={handleLoadProgress}
+                onLoadComplete={handleLoadComplete}
+              />
+            </Canvas>
           </EngineErrorBoundary>
         </View>
 
