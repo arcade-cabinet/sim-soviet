@@ -1,22 +1,16 @@
 /**
- * LightningRenderer — Storm lightning bolt effect.
+ * LightningRenderer -- Storm lightning bolt effect.
  *
- * Triggered by gameState.activeLightning. White jagged line mesh from sky (y=50)
- * to strike point. Full-screen white flash (scene ambient spike for 2 frames).
- * Mesh and flash fade over ~15 frames then dispose. Lightning bolt has jagged
- * segments with random offsets along Y.
+ * Triggered by gameState.activeLightning. Jagged bolt from sky (y=50) to
+ * strike point using drei <Line> component. 12 segments with random X/Z
+ * offsets for jagged appearance. Bolt fades over ~15 frames then disappears.
+ *
+ * R3F migration: uses drei <Line> + useFrame for bolt animation and fade.
  */
-import React, { useEffect, useRef } from 'react';
-import {
-  MeshBuilder,
-  StandardMaterial,
-  Color3,
-  Vector3,
-  type Mesh,
-  type LinesMesh,
-  type Scene,
-} from '@babylonjs/core';
-import { useScene } from 'reactylon';
+import React, { useRef, useState, useCallback } from 'react';
+import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
+import { Line } from '@react-three/drei';
 
 import { gameState } from '../engine/GameState';
 
@@ -24,113 +18,84 @@ const BOLT_Y_START = 50;
 const BOLT_SEGMENTS = 12;
 const FADE_FRAMES = 15;
 
-interface BoltInstance {
-  mesh: LinesMesh;
-  framesLeft: number;
-  originalAmbient: Color3;
-  flashFrames: number;
+/** Generate jagged bolt points from sky to ground strike position */
+function generateBoltPoints(targetX: number, targetZ: number): [number, number, number][] {
+  const points: [number, number, number][] = [];
+  const startX = targetX + (Math.random() - 0.5) * 3;
+  const startZ = targetZ + (Math.random() - 0.5) * 3;
+
+  for (let i = 0; i <= BOLT_SEGMENTS; i++) {
+    const t = i / BOLT_SEGMENTS;
+    let px = THREE.MathUtils.lerp(startX, targetX, t);
+    let py = THREE.MathUtils.lerp(BOLT_Y_START, 0, t);
+    let pz = THREE.MathUtils.lerp(startZ, targetZ, t);
+
+    // Add jagged random offsets (not at start or end)
+    if (i > 0 && i < BOLT_SEGMENTS) {
+      px += (Math.random() - 0.5) * 2;
+      py += (Math.random() - 0.5) * 3;
+      pz += (Math.random() - 0.5) * 2;
+    }
+
+    points.push([px, py, pz]);
+  }
+
+  return points;
 }
 
 const LightningRenderer: React.FC = () => {
-  const scene = useScene();
-  const boltRef = useRef<BoltInstance | null>(null);
+  const [boltPoints, setBoltPoints] = useState<[number, number, number][] | null>(null);
   const prevLightningRef = useRef<{ x: number; y: number } | null>(null);
+  const framesLeftRef = useRef(0);
+  const opacityRef = useRef(1);
+  const lineRef = useRef<any>(null);
 
-  useEffect(() => {
-    function createBolt(targetX: number, targetY: number): LinesMesh {
-      const points: Vector3[] = [];
-      const startY = BOLT_Y_START;
-      const endPos = new Vector3(targetX, 0, targetY);
-      const startPos = new Vector3(targetX + (Math.random() - 0.5) * 3, startY, targetY + (Math.random() - 0.5) * 3);
+  useFrame(() => {
+    const lightning = gameState.activeLightning;
 
-      for (let i = 0; i <= BOLT_SEGMENTS; i++) {
-        const t = i / BOLT_SEGMENTS;
-        const pos = Vector3.Lerp(startPos, endPos, t);
+    // Detect new lightning strike
+    if (lightning) {
+      const prev = prevLightningRef.current;
+      const isNew = !prev || prev.x !== lightning.x || prev.y !== lightning.y;
 
-        // Add jagged random offsets (not at start or end)
-        if (i > 0 && i < BOLT_SEGMENTS) {
-          pos.x += (Math.random() - 0.5) * 2;
-          pos.z += (Math.random() - 0.5) * 2;
-          pos.y += (Math.random() - 0.5) * 3;
-        }
-
-        points.push(pos);
-      }
-
-      const bolt = MeshBuilder.CreateLines(
-        'lightning',
-        { points },
-        scene,
-      );
-      bolt.color = new Color3(1, 1, 1);
-      bolt.isPickable = false;
-      return bolt;
-    }
-
-    function update() {
-      const lightning = gameState.activeLightning;
-
-      // Detect new lightning
-      if (lightning) {
-        const prev = prevLightningRef.current;
-        const isNew = !prev || prev.x !== lightning.x || prev.y !== lightning.y;
-
-        if (isNew) {
-          // Dispose any existing bolt
-          if (boltRef.current) {
-            boltRef.current.mesh.dispose();
-          }
-
-          const mesh = createBolt(lightning.x, lightning.y);
-          boltRef.current = {
-            mesh,
-            framesLeft: FADE_FRAMES,
-            originalAmbient: scene.ambientColor.clone(),
-            flashFrames: 2,
-          };
-
-          prevLightningRef.current = { x: lightning.x, y: lightning.y };
-        }
-      }
-
-      // Animate active bolt
-      if (boltRef.current) {
-        const bolt = boltRef.current;
-
-        // Flash: spike scene ambient for 2 frames
-        if (bolt.flashFrames > 0) {
-          scene.ambientColor = new Color3(1, 1, 1);
-          bolt.flashFrames--;
-        } else {
-          scene.ambientColor = bolt.originalAmbient;
-        }
-
-        // Fade bolt
-        bolt.framesLeft--;
-        const alpha = bolt.framesLeft / FADE_FRAMES;
-        bolt.mesh.alpha = alpha;
-
-        if (bolt.framesLeft <= 0) {
-          bolt.mesh.dispose();
-          scene.ambientColor = bolt.originalAmbient;
-          boltRef.current = null;
-          prevLightningRef.current = null;
-        }
+      if (isNew) {
+        const points = generateBoltPoints(lightning.x, lightning.y);
+        setBoltPoints(points);
+        framesLeftRef.current = FADE_FRAMES;
+        opacityRef.current = 1;
+        prevLightningRef.current = { x: lightning.x, y: lightning.y };
       }
     }
 
-    scene.registerBeforeRender(update);
-    return () => {
-      scene.unregisterBeforeRender(update);
-      if (boltRef.current) {
-        scene.ambientColor = boltRef.current.originalAmbient;
-        boltRef.current.mesh.dispose();
-        boltRef.current = null;
-      }
-    };
-  }, [scene]);
+    // Animate active bolt fade
+    if (framesLeftRef.current > 0) {
+      framesLeftRef.current--;
+      opacityRef.current = framesLeftRef.current / FADE_FRAMES;
 
-  return null;
+      // Update line opacity if ref available
+      if (lineRef.current?.material) {
+        lineRef.current.material.opacity = opacityRef.current;
+      }
+
+      if (framesLeftRef.current <= 0) {
+        setBoltPoints(null);
+        prevLightningRef.current = null;
+      }
+    }
+  });
+
+  if (!boltPoints) return null;
+
+  return (
+    <Line
+      ref={lineRef}
+      points={boltPoints}
+      color="white"
+      lineWidth={3}
+      transparent
+      opacity={opacityRef.current}
+    />
+  );
 };
 
 export default LightningRenderer;
