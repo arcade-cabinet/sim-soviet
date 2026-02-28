@@ -9,6 +9,7 @@
  * DynamicTexture on plane meshes.
  */
 import React, { useRef } from 'react';
+import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Billboard, Text } from '@react-three/drei';
 
@@ -46,6 +47,7 @@ const FloatingLabel: React.FC<FloatingLabelProps> = ({ index }) => {
 
     // Fade out
     if (textRef.current?.material) {
+      textRef.current.material.transparent = true;
       textRef.current.material.opacity = t.life / t.maxLife;
     }
   });
@@ -67,7 +69,6 @@ const FloatingLabel: React.FC<FloatingLabelProps> = ({ index }) => {
           outlineWidth={0.02}
           outlineColor="black"
           font={undefined}
-          transparent
         >
           {t.text}
         </Text>

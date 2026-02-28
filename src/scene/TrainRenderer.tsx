@@ -21,7 +21,7 @@ const BASE_Y = 0.25;
 
 // ── Single trailing car ─────────────────────────────────────────────────────
 
-const TrainCar: React.FC<{ meshRef: React.RefObject<THREE.Mesh> }> = ({ meshRef }) => (
+const TrainCar: React.FC<{ meshRef: React.RefObject<THREE.Mesh | null> }> = ({ meshRef }) => (
   <mesh ref={meshRef} visible={false}>
     <boxGeometry args={[0.7, 0.3, 0.45]} />
     <meshStandardMaterial color="#40332e" />

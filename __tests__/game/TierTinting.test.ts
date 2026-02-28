@@ -3,7 +3,7 @@
  *
  * These tests validate the tier tint definitions and their relationships,
  * ensuring the visual progression from selo to gorod is correctly configured.
- * The actual BabylonJS material manipulation is tested via integration tests.
+ * The actual Three.js material manipulation is tested via integration tests.
  */
 
 import { TIER_TINTS, type TierTint } from '../../src/scene/TierTinting';
@@ -23,58 +23,59 @@ describe('TierTinting', () => {
   // ── 2. Posyolok is neutral (no tint) ──────────────────────
 
   it('posyolok has neutral tint (1.0, 1.0, 1.0)', () => {
-    const tint = TIER_TINTS.posyolok;
-    expect(tint.colorFactor.r).toBe(1.0);
-    expect(tint.colorFactor.g).toBe(1.0);
-    expect(tint.colorFactor.b).toBe(1.0);
+    const [r, g, b] = TIER_TINTS.posyolok.colorFactor;
+    expect(r).toBe(1.0);
+    expect(g).toBe(1.0);
+    expect(b).toBe(1.0);
   });
 
   // ── 3. Selo has warm brown tint ───────────────────────────
 
   it('selo has warm brown tint (darker than neutral)', () => {
-    const tint = TIER_TINTS.selo;
+    const [r, g, b] = TIER_TINTS.selo.colorFactor;
     // Red channel highest (warm), blue lowest (brown)
-    expect(tint.colorFactor.r).toBeGreaterThan(tint.colorFactor.b);
-    expect(tint.colorFactor.g).toBeGreaterThan(tint.colorFactor.b);
+    expect(r).toBeGreaterThan(b);
+    expect(g).toBeGreaterThan(b);
     // All channels below 1.0 (tinted, not neutral)
-    expect(tint.colorFactor.r).toBeLessThan(1.0);
-    expect(tint.colorFactor.g).toBeLessThan(1.0);
-    expect(tint.colorFactor.b).toBeLessThan(1.0);
+    expect(r).toBeLessThan(1.0);
+    expect(g).toBeLessThan(1.0);
+    expect(b).toBeLessThan(1.0);
   });
 
   // ── 4. Pgt has slight grey tint ──────────────────────────
 
   it('pgt has slight grey tint (blue channel slightly higher)', () => {
-    const tint = TIER_TINTS.pgt;
+    const [r, g, b] = TIER_TINTS.pgt.colorFactor;
     // Blue channel >= red and green (cool tint)
-    expect(tint.colorFactor.b).toBeGreaterThanOrEqual(tint.colorFactor.r);
-    expect(tint.colorFactor.b).toBeGreaterThanOrEqual(tint.colorFactor.g);
+    expect(b).toBeGreaterThanOrEqual(r);
+    expect(b).toBeGreaterThanOrEqual(g);
     // All channels below 1.0
-    expect(tint.colorFactor.r).toBeLessThan(1.0);
+    expect(r).toBeLessThan(1.0);
   });
 
   // ── 5. Gorod has cool grey-blue tint ──────────────────────
 
   it('gorod has cool grey-blue tint (most desaturated)', () => {
-    const tint = TIER_TINTS.gorod;
+    const [r, g, b] = TIER_TINTS.gorod.colorFactor;
+    const [pgtR] = TIER_TINTS.pgt.colorFactor;
     // Blue channel highest (cold/industrial)
-    expect(tint.colorFactor.b).toBeGreaterThanOrEqual(tint.colorFactor.r);
-    expect(tint.colorFactor.b).toBeGreaterThanOrEqual(tint.colorFactor.g);
+    expect(b).toBeGreaterThanOrEqual(r);
+    expect(b).toBeGreaterThanOrEqual(g);
     // Darker than pgt
-    expect(tint.colorFactor.r).toBeLessThanOrEqual(TIER_TINTS.pgt.colorFactor.r);
+    expect(r).toBeLessThanOrEqual(pgtR);
   });
 
   // ── 6. Tint factors are in valid range ─────────────────────
 
   it('all tint factors are between 0 and 1', () => {
     for (const tier of TIER_ORDER) {
-      const { colorFactor } = TIER_TINTS[tier];
-      expect(colorFactor.r).toBeGreaterThanOrEqual(0);
-      expect(colorFactor.r).toBeLessThanOrEqual(1);
-      expect(colorFactor.g).toBeGreaterThanOrEqual(0);
-      expect(colorFactor.g).toBeLessThanOrEqual(1);
-      expect(colorFactor.b).toBeGreaterThanOrEqual(0);
-      expect(colorFactor.b).toBeLessThanOrEqual(1);
+      const [r, g, b] = TIER_TINTS[tier].colorFactor;
+      expect(r).toBeGreaterThanOrEqual(0);
+      expect(r).toBeLessThanOrEqual(1);
+      expect(g).toBeGreaterThanOrEqual(0);
+      expect(g).toBeLessThanOrEqual(1);
+      expect(b).toBeGreaterThanOrEqual(0);
+      expect(b).toBeLessThanOrEqual(1);
     }
   });
 
@@ -83,8 +84,8 @@ describe('TierTinting', () => {
   it('visual progression: selo warmest → gorod coldest', () => {
     // "Warmth" = red channel minus blue channel
     const warmth = (tier: SettlementTier) => {
-      const f = TIER_TINTS[tier].colorFactor;
-      return f.r - f.b;
+      const [r, , b] = TIER_TINTS[tier].colorFactor;
+      return r - b;
     };
 
     // Selo should be warmest (highest R-B difference)
@@ -100,8 +101,8 @@ describe('TierTinting', () => {
 
   it('each tier has a distinct tint', () => {
     const tints = TIER_ORDER.map((tier) => {
-      const f = TIER_TINTS[tier].colorFactor;
-      return `${f.r},${f.g},${f.b}`;
+      const [r, g, b] = TIER_TINTS[tier].colorFactor;
+      return `${r},${g},${b}`;
     });
     const uniqueTints = new Set(tints);
     expect(uniqueTints.size).toBe(TIER_ORDER.length);
@@ -118,23 +119,23 @@ describe('TierTinting', () => {
   // ── 10. Exact tint values match specification ─────────────
 
   it('selo tint is (0.85, 0.7, 0.5)', () => {
-    const f = TIER_TINTS.selo.colorFactor;
-    expect(f.r).toBeCloseTo(0.85);
-    expect(f.g).toBeCloseTo(0.7);
-    expect(f.b).toBeCloseTo(0.5);
+    const [r, g, b] = TIER_TINTS.selo.colorFactor;
+    expect(r).toBeCloseTo(0.85);
+    expect(g).toBeCloseTo(0.7);
+    expect(b).toBeCloseTo(0.5);
   });
 
   it('pgt tint is (0.8, 0.8, 0.85)', () => {
-    const f = TIER_TINTS.pgt.colorFactor;
-    expect(f.r).toBeCloseTo(0.8);
-    expect(f.g).toBeCloseTo(0.8);
-    expect(f.b).toBeCloseTo(0.85);
+    const [r, g, b] = TIER_TINTS.pgt.colorFactor;
+    expect(r).toBeCloseTo(0.8);
+    expect(g).toBeCloseTo(0.8);
+    expect(b).toBeCloseTo(0.85);
   });
 
   it('gorod tint is (0.7, 0.75, 0.8)', () => {
-    const f = TIER_TINTS.gorod.colorFactor;
-    expect(f.r).toBeCloseTo(0.7);
-    expect(f.g).toBeCloseTo(0.75);
-    expect(f.b).toBeCloseTo(0.8);
+    const [r, g, b] = TIER_TINTS.gorod.colorFactor;
+    expect(r).toBeCloseTo(0.7);
+    expect(g).toBeCloseTo(0.75);
+    expect(b).toBeCloseTo(0.8);
   });
 });
