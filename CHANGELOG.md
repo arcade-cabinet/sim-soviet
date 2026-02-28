@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/arcade-cabinet/sim-soviet/compare/v1.1.0...v1.1.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* revert WebGPU renderer — use WebGL2 for R3F compat ([#29](https://github.com/arcade-cabinet/sim-soviet/issues/29)) ([b4eeade](https://github.com/arcade-cabinet/sim-soviet/commit/b4eeade9cea40e0331c8e3b7eef66758f9930b38))
+
 ## [1.1.0](https://github.com/arcade-cabinet/sim-soviet/compare/v1.0.0...v1.1.0) (2026-02-28)
 
 
