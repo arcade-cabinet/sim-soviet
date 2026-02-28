@@ -74,7 +74,7 @@
         "desc": "Taller concrete box.",
         "category": "res"
       },
-      "eraAvailable": "thaw"
+      "eraAvailable": "thaw_and_freeze"
     },
     "apartment-tower-c": {
       "id": "apartment-tower-c",
@@ -148,7 +148,7 @@
         "desc": "A monument to standardization.",
         "category": "res"
       },
-      "eraAvailable": "eternal_soviet"
+      "eraAvailable": "the_eternal"
     },
     "barracks": {
       "id": "barracks",
@@ -185,7 +185,7 @@
         "desc": "Soldiers sleep here. Allegedly.",
         "category": "mil"
       },
-      "eraAvailable": "first_plans"
+      "eraAvailable": "collectivization"
     },
     "bread-factory": {
       "id": "bread-factory",
@@ -226,7 +226,7 @@
         "desc": "Where flour becomes propaganda.",
         "category": "ind"
       },
-      "eraAvailable": "first_plans"
+      "eraAvailable": "collectivization"
     },
     "collective-farm-hq": {
       "id": "collective-farm-hq",
@@ -267,7 +267,7 @@
         "desc": "Potatoes for the motherland.",
         "category": "ind"
       },
-      "eraAvailable": "war_communism"
+      "eraAvailable": "revolution"
     },
     "concrete-block": {
       "id": "concrete-block",
@@ -304,7 +304,7 @@
         "desc": "The people's building material.",
         "category": "utility"
       },
-      "eraAvailable": "war_communism"
+      "eraAvailable": "revolution"
     },
     "cultural-palace": {
       "id": "cultural-palace",
@@ -341,7 +341,7 @@
         "desc": "Ballet, opera, and propaganda.",
         "category": "cul"
       },
-      "eraAvailable": "thaw"
+      "eraAvailable": "thaw_and_freeze"
     },
     "factory-office": {
       "id": "factory-office",
@@ -378,7 +378,7 @@
         "desc": "Paperwork division.",
         "category": "ind"
       },
-      "eraAvailable": "first_plans"
+      "eraAvailable": "collectivization"
     },
     "fence": {
       "id": "fence",
@@ -415,7 +415,7 @@
         "desc": "Keeps them in. Or out.",
         "category": "env"
       },
-      "eraAvailable": "war_communism"
+      "eraAvailable": "revolution"
     },
     "fence-low": {
       "id": "fence-low",
@@ -452,7 +452,7 @@
         "desc": "A suggestion of boundaries.",
         "category": "env"
       },
-      "eraAvailable": "war_communism"
+      "eraAvailable": "revolution"
     },
     "fire-station": {
       "id": "fire-station",
@@ -563,7 +563,7 @@
         "desc": "Watching the watchers.",
         "category": "mil"
       },
-      "eraAvailable": "war_communism"
+      "eraAvailable": "revolution"
     },
     "gulag-admin": {
       "id": "gulag-admin",
@@ -748,7 +748,7 @@
         "desc": "Aspirin cures everything.",
         "category": "svc"
       },
-      "eraAvailable": "thaw"
+      "eraAvailable": "thaw_and_freeze"
     },
     "post-office": {
       "id": "post-office",
@@ -785,7 +785,7 @@
         "desc": "Letters arrive. Eventually.",
         "category": "svc"
       },
-      "eraAvailable": "thaw"
+      "eraAvailable": "thaw_and_freeze"
     },
     "power-station": {
       "id": "power-station",
@@ -822,7 +822,7 @@
         "desc": "Creates smog & power.",
         "category": "utility"
       },
-      "eraAvailable": "war_communism"
+      "eraAvailable": "revolution"
     },
     "radio-station": {
       "id": "radio-station",
@@ -896,7 +896,7 @@
         "desc": "Teaching the party line since 1917.",
         "category": "svc"
       },
-      "eraAvailable": "first_plans"
+      "eraAvailable": "collectivization"
     },
     "train-station": {
       "id": "train-station",
@@ -1011,7 +1011,7 @@
         "desc": "Stores everything but hope.",
         "category": "ind"
       },
-      "eraAvailable": "first_plans"
+      "eraAvailable": "collectivization"
     },
     "workers-club": {
       "id": "workers-club",
@@ -1048,7 +1048,7 @@
         "desc": "Leisure in moderation.",
         "category": "cul"
       },
-      "eraAvailable": "thaw"
+      "eraAvailable": "thaw_and_freeze"
     },
     "workers-house-a": {
       "id": "workers-house-a",
@@ -1085,7 +1085,7 @@
         "desc": "Modest proletarian dwelling.",
         "category": "res"
       },
-      "eraAvailable": "war_communism"
+      "eraAvailable": "revolution"
     },
     "workers-house-b": {
       "id": "workers-house-b",
@@ -1122,7 +1122,7 @@
         "desc": "Double the concrete, double the joy.",
         "category": "res"
       },
-      "eraAvailable": "war_communism"
+      "eraAvailable": "revolution"
     },
     "workers-house-c": {
       "id": "workers-house-c",
@@ -1159,7 +1159,7 @@
         "desc": "A whole courtyard of happiness.",
         "category": "res"
       },
-      "eraAvailable": "first_plans"
+      "eraAvailable": "collectivization"
     },
     "cooling-tower": {
       "id": "cooling-tower",

@@ -91,56 +91,56 @@ describe('TransportSystem', () => {
 
   describe('computeTransportScore', () => {
     it('scores dirt-path as 1', () => {
-      expect(computeTransportScore(['dirt-path'], 'selo', 'war_communism')).toBe(1);
+      expect(computeTransportScore(['dirt-path'], 'selo', 'revolution')).toBe(1);
     });
 
     it('scores road-depot as 3', () => {
-      expect(computeTransportScore(['road-depot'], 'selo', 'war_communism')).toBe(3);
+      expect(computeTransportScore(['road-depot'], 'selo', 'revolution')).toBe(3);
     });
 
     it('scores train-station as 4', () => {
-      expect(computeTransportScore(['train-station'], 'selo', 'war_communism')).toBe(4);
+      expect(computeTransportScore(['train-station'], 'selo', 'revolution')).toBe(4);
     });
 
     it('scores motor-pool as 4', () => {
-      expect(computeTransportScore(['motor-pool'], 'selo', 'war_communism')).toBe(4);
+      expect(computeTransportScore(['motor-pool'], 'selo', 'revolution')).toBe(4);
     });
 
     it('scores rail-depot as 5', () => {
-      expect(computeTransportScore(['rail-depot'], 'selo', 'war_communism')).toBe(5);
+      expect(computeTransportScore(['rail-depot'], 'selo', 'revolution')).toBe(5);
     });
 
     it('returns 0 for unknown building IDs', () => {
-      expect(computeTransportScore(['unknown-building'], 'selo', 'war_communism')).toBe(0);
+      expect(computeTransportScore(['unknown-building'], 'selo', 'revolution')).toBe(0);
     });
 
     it('sums multiple building scores', () => {
-      // dirt-path(1) + road-depot(3) + selo(0) + war_communism(0) = 4
-      expect(computeTransportScore(['dirt-path', 'road-depot'], 'selo', 'war_communism')).toBe(4);
+      // dirt-path(1) + road-depot(3) + selo(0) + revolution(0) = 4
+      expect(computeTransportScore(['dirt-path', 'road-depot'], 'selo', 'revolution')).toBe(4);
     });
 
     // ── Tier Bonuses ──
 
     it('applies selo bonus of 0', () => {
-      expect(computeTransportScore([], 'selo', 'war_communism')).toBe(0);
+      expect(computeTransportScore([], 'selo', 'revolution')).toBe(0);
     });
 
     it('applies posyolok bonus of 2', () => {
-      expect(computeTransportScore([], 'posyolok', 'war_communism')).toBe(2);
+      expect(computeTransportScore([], 'posyolok', 'revolution')).toBe(2);
     });
 
     it('applies pgt bonus of 5', () => {
-      expect(computeTransportScore([], 'pgt', 'war_communism')).toBe(5);
+      expect(computeTransportScore([], 'pgt', 'revolution')).toBe(5);
     });
 
     it('applies gorod bonus of 8', () => {
-      expect(computeTransportScore([], 'gorod', 'war_communism')).toBe(8);
+      expect(computeTransportScore([], 'gorod', 'revolution')).toBe(8);
     });
 
     // ── Era Bonuses ──
 
-    it('applies thaw era bonus of 5', () => {
-      expect(computeTransportScore([], 'selo', 'thaw')).toBe(5);
+    it('applies thaw_and_freeze era bonus of 5', () => {
+      expect(computeTransportScore([], 'selo', 'thaw_and_freeze')).toBe(5);
     });
 
     it('applies reconstruction era bonus of 3', () => {
@@ -151,15 +151,15 @@ describe('TransportSystem', () => {
       expect(computeTransportScore([], 'selo', 'unknown_era')).toBe(0);
     });
 
-    it('returns 0 for empty array and selo + war_communism', () => {
-      expect(computeTransportScore([], 'selo', 'war_communism')).toBe(0);
+    it('returns 0 for empty array and selo + revolution', () => {
+      expect(computeTransportScore([], 'selo', 'revolution')).toBe(0);
     });
 
     // ── Combined ──
 
     it('sums buildings + tier + era correctly', () => {
-      // rail-depot(5) + motor-pool(4) + gorod(8) + thaw(5) = 22
-      expect(computeTransportScore(['rail-depot', 'motor-pool'], 'gorod', 'thaw')).toBe(22);
+      // rail-depot(5) + motor-pool(4) + gorod(8) + thaw_and_freeze(5) = 22
+      expect(computeTransportScore(['rail-depot', 'motor-pool'], 'gorod', 'thaw_and_freeze')).toBe(22);
     });
   });
 
@@ -255,16 +255,16 @@ describe('TransportSystem', () => {
       });
 
       it('setEra() updates internal era for next score recalc', () => {
-        const sys = new TransportSystem('war_communism');
-        // First tick with war_communism (era bonus 0)
+        const sys = new TransportSystem('revolution');
+        // First tick with revolution (era bonus 0)
         const summer = makeSeason(Season.SHORT_SUMMER);
         sys.tick([], 'selo', 0, summer);
-        expect(sys.getRawScore()).toBe(0); // selo(0) + war_communism(0)
+        expect(sys.getRawScore()).toBe(0); // selo(0) + revolution(0)
 
         // Change era and force recalc
-        sys.setEra('thaw');
+        sys.setEra('thaw_and_freeze');
         sys.tick([], 'selo', 30, summer);
-        expect(sys.getRawScore()).toBe(5); // selo(0) + thaw(5)
+        expect(sys.getRawScore()).toBe(5); // selo(0) + thaw_and_freeze(5)
       });
 
       it('setRng() accepts rng without error', () => {
@@ -298,13 +298,13 @@ describe('TransportSystem', () => {
       });
 
       it('recalculates on tick 30', () => {
-        const sys = new TransportSystem('thaw');
+        const sys = new TransportSystem('thaw_and_freeze');
         const summer = makeSeason(Season.SHORT_SUMMER);
         sys.tick([], 'selo', 0, summer); // Score = 5 (thaw)
 
         const result = sys.tick([makeEntity('rail-depot'), makeEntity('motor-pool')], 'gorod', 30, summer);
         expect(result.recalculated).toBe(true);
-        // rail-depot(5) + motor-pool(4) + gorod(8) + thaw(5) = 22 → HIGHWAY
+        // rail-depot(5) + motor-pool(4) + gorod(8) + thaw_and_freeze(5) = 22 → HIGHWAY
         expect(sys.getQuality()).toBe(RoadQuality.HIGHWAY);
       });
     });
@@ -408,7 +408,7 @@ describe('TransportSystem', () => {
 
     describe('condition-based quality downgrade', () => {
       it('downgrades quality 1 level when condition < 25', () => {
-        const sys = new TransportSystem('thaw');
+        const sys = new TransportSystem('thaw_and_freeze');
         const summer = makeSeason(Season.SHORT_SUMMER);
         // First tick to set quality to PAVED (thaw=5 + pgt=5 = 10 → PAVED)
         sys.tick([], 'pgt', 0, summer);
@@ -430,7 +430,7 @@ describe('TransportSystem', () => {
       });
 
       it('downgrades quality 2 levels when condition < 10', () => {
-        const sys = new TransportSystem('thaw');
+        const sys = new TransportSystem('thaw_and_freeze');
         const summer = makeSeason(Season.SHORT_SUMMER);
         sys.tick([], 'pgt', 0, summer); // PAVED
 
@@ -462,7 +462,7 @@ describe('TransportSystem', () => {
 
     describe('encapsulated seasonBuildMult', () => {
       it('applies mitigation during rasputitsa', () => {
-        const sys = new TransportSystem('thaw');
+        const sys = new TransportSystem('thaw_and_freeze');
         const rasputitsa = makeSeason(Season.RASPUTITSA_SPRING, 1.8);
         // First tick: thaw(5) + pgt(5) = 10 → PAVED → mitigation 0.6
         const result = sys.tick([], 'pgt', 0, rasputitsa);
@@ -471,7 +471,7 @@ describe('TransportSystem', () => {
       });
 
       it('returns raw buildCostMultiplier when no penalty', () => {
-        const sys = new TransportSystem('thaw');
+        const sys = new TransportSystem('thaw_and_freeze');
         const summer = makeSeason(Season.SHORT_SUMMER, 1.0);
         const result = sys.tick([], 'pgt', 0, summer);
         expect(result.seasonBuildMult).toBe(1.0);
@@ -502,10 +502,10 @@ describe('TransportSystem', () => {
         expect(sys.getQuality()).toBe(RoadQuality.NONE);
       });
 
-      it('returns GRAVEL for road-depot + posyolok + first_plans', () => {
-        const sys = new TransportSystem('first_plans');
+      it('returns GRAVEL for road-depot + posyolok + industrialization', () => {
+        const sys = new TransportSystem('industrialization');
         const summer = makeSeason(Season.SHORT_SUMMER);
-        // road-depot(3) + posyolok(2) + first_plans(1) = 6 → GRAVEL
+        // road-depot(3) + posyolok(2) + industrialization(1) = 6 → GRAVEL
         sys.tick([makeEntity('road-depot')], 'posyolok', 0, summer);
         expect(sys.getQuality()).toBe(RoadQuality.GRAVEL);
       });
@@ -519,9 +519,9 @@ describe('TransportSystem', () => {
       });
 
       it('reaches HIGHWAY with multiple buildings + gorod + thaw', () => {
-        const sys = new TransportSystem('thaw');
+        const sys = new TransportSystem('thaw_and_freeze');
         const summer = makeSeason(Season.SHORT_SUMMER);
-        // rail-depot(5) + motor-pool(4) + gorod(8) + thaw(5) = 22 → HIGHWAY
+        // rail-depot(5) + motor-pool(4) + gorod(8) + thaw_and_freeze(5) = 22 → HIGHWAY
         const entities = [makeEntity('rail-depot'), makeEntity('motor-pool')];
         sys.tick(entities, 'gorod', 0, summer);
         expect(sys.getQuality()).toBe(RoadQuality.HIGHWAY);
@@ -532,7 +532,7 @@ describe('TransportSystem', () => {
 
     describe('serialization', () => {
       it('round-trips quality, condition, rawScore, nextRecalcTick', () => {
-        const sys = new TransportSystem('thaw');
+        const sys = new TransportSystem('thaw_and_freeze');
         const summer = makeSeason(Season.SHORT_SUMMER);
         sys.tick([makeEntity('rail-depot')], 'gorod', 0, summer);
 

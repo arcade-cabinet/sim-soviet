@@ -189,19 +189,19 @@ describe('Dvor System', () => {
   // ── Starting settlement ─────────────────────────────────────────────
 
   describe('createStartingSettlement', () => {
-    it('creates 10 dvory for normal difficulty', () => {
+    it('creates 11 dvory for normal difficulty (10 + chairman Orlov)', () => {
       createStartingSettlement('comrade');
-      expect(dvory.entities.length).toBe(10);
+      expect(dvory.entities.length).toBe(11);
     });
 
-    it('creates 12 dvory for easy difficulty', () => {
+    it('creates 13 dvory for easy difficulty (12 + chairman Orlov)', () => {
       createStartingSettlement('worker');
-      expect(dvory.entities.length).toBe(12);
+      expect(dvory.entities.length).toBe(13);
     });
 
-    it('creates 7 dvory for hard difficulty', () => {
+    it('creates 8 dvory for hard difficulty (7 + chairman Orlov)', () => {
       createStartingSettlement('tovarish');
-      expect(dvory.entities.length).toBe(7);
+      expect(dvory.entities.length).toBe(8);
     });
 
     it('total population is approximately 55 for normal', () => {

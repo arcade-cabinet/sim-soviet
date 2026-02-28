@@ -360,4 +360,30 @@ export function createStartingSettlement(difficulty: Difficulty = 'comrade'): vo
 
     createDvor(`dvor-${i + 1}`, surname, memberSeeds);
   }
+
+  // Create the 11th dvor: Comrade Orlov, the Party-appointed chairman
+  createChairmanDvor();
+}
+
+/**
+ * Creates the chairman's dvor — Comrade Orlov, the Party-appointed authority figure.
+ * This is a special single-member household representing the settlement leader.
+ */
+function createChairmanDvor(): void {
+  const memberSeeds: DvorMemberSeed[] = [
+    {
+      name: 'Grigory Petrovich Orlov',
+      gender: 'male',
+      age: 42,
+    },
+  ];
+
+  const entity = createDvor('dvor-chairman', 'Orlov', memberSeeds);
+
+  // Mark the chairman's dvor with special status
+  if (entity.dvor) {
+    entity.dvor.loyaltyToCollective = 100;
+    entity.dvor.privatePlotSize = 0;
+    entity.dvor.privateLivestock = { cow: 0, pig: 0, sheep: 0, poultry: 0 };
+  }
 }

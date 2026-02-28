@@ -41,7 +41,7 @@ function makeMeta(overrides: Partial<GameMeta> = {}): GameMeta {
     blackMarks: 0,
     commendations: 0,
     threatLevel: 'safe',
-    currentEra: 'war_communism',
+    currentEra: 'revolution',
     roadQuality: 'none',
     roadCondition: 100,
     ...overrides,

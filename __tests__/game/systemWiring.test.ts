@@ -527,14 +527,14 @@ describe('GAP-027: Event era filtering', () => {
 
   it('eraFilter arrays contain valid era IDs', () => {
     const validEras = [
-      'war_communism',
-      'first_plans',
+      'revolution',
+      'collectivization',
+      'industrialization',
       'great_patriotic',
       'reconstruction',
-      'thaw',
+      'thaw_and_freeze',
       'stagnation',
-      'perestroika',
-      'eternal_soviet',
+      'the_eternal',
     ];
     for (const template of ALL_EVENT_TEMPLATES) {
       if (!template.eraFilter) continue;
@@ -552,14 +552,14 @@ describe('GAP-027: Event era filtering', () => {
 
   it('each era has at least one era-specific event', () => {
     const eras = [
-      'war_communism',
-      'first_plans',
+      'revolution',
+      'collectivization',
+      'industrialization',
       'great_patriotic',
       'reconstruction',
-      'thaw',
+      'thaw_and_freeze',
       'stagnation',
-      'perestroika',
-      'eternal_soviet',
+      'the_eternal',
     ];
     for (const era of eras) {
       const eventsForEra = ALL_EVENT_TEMPLATES.filter((t) => t.eraFilter?.includes(era));

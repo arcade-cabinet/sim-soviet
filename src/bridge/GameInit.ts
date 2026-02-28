@@ -7,11 +7,8 @@
  */
 
 import { GRID_SIZE } from '@/config';
-import { terrainFeatures } from '@/ecs/archetypes';
 import { createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
-import { createBuilding } from '@/ecs/factories/buildingFactories';
 import { createStartingSettlement } from '@/ecs/factories/settlementFactories';
-import { world } from '@/ecs/world';
 import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
 import { recalculatePaths } from '@/game/PathSystem';
@@ -24,6 +21,7 @@ export interface GameInitOptions {
   difficulty?: DifficultyLevel;
   consequence?: ConsequenceLevel;
   seed?: string;
+  mapSize?: 'small' | 'medium' | 'large';
 }
 
 let engine: SimulationEngine | null = null;
@@ -42,28 +40,32 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   const difficulty = options?.difficulty ?? 'comrade';
   const consequence = options?.consequence ?? 'permadeath';
   const seed = options?.seed ?? 'simsoviet-3d';
+  const mapSizeKey = options?.mapSize ?? 'medium';
+  const MAP_GRID_SIZES: Record<string, number> = { small: 20, medium: 30, large: 50 };
+  const gridSize = MAP_GRID_SIZES[mapSizeKey] ?? GRID_SIZE;
 
-  // Create singleton store entities with enough materials for early construction.
-  // Scale starting resources by difficulty multiplier (worker=1.5x, comrade=1.0x, tovarish=0.7x).
+  // Create singleton store entities with starting resources.
+  // Era 1 (Revolution/1917): Timber only. No steel, no power, no food stockpile.
+  // Scale starting resources by difficulty multiplier (worker=2.0x, comrade=1.0x, tovarish=0.5x).
   const resMult = DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
   createResourceStore({
-    food: Math.round(800 * resMult),
-    timber: Math.round(150 * resMult),
-    steel: Math.round(60 * resMult),
-    cement: Math.round(30 * resMult),
+    food: 0,
+    timber: Math.round(200 * resMult),
+    steel: 0,
+    cement: 0,
   });
   createMetaStore({
     seed,
-    date: { year: 1922, month: 10, tick: 0 },
+    date: { year: 1917, month: 10, tick: 0 },
   });
 
   // Create tile grid
-  createGrid(GRID_SIZE);
+  createGrid(gridSize);
 
   // Generate procedural terrain (mountains, forests, marshes, rivers)
   const mapSystem = new MapSystem({
     seed,
-    size: 'medium',
+    size: mapSizeKey,
     riverCount: 1,
     forestDensity: 0.12,
     marshDensity: 0.04,
@@ -71,33 +73,8 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   });
   mapSystem.generate();
 
-  // Clear terrain features that overlap the starter building area (2-10, 3-9)
-  for (const entity of [...terrainFeatures.entities]) {
-    const { gridX, gridY } = entity.position;
-    if (gridX >= 2 && gridX <= 10 && gridY >= 3 && gridY <= 9) {
-      world.remove(entity);
-    }
-  }
-
-  // Place starter buildings — use createBuilding() (operational immediately)
-  // NOT placeNewBuilding() which starts construction phase
-  const starters: { x: number; y: number; defId: string }[] = [
-    { x: 5, y: 4, defId: 'power-station' },
-    { x: 7, y: 4, defId: 'workers-house-a' },
-    { x: 9, y: 4, defId: 'apartment-tower-a' },
-    { x: 7, y: 6, defId: 'workers-house-b' },
-    { x: 9, y: 6, defId: 'apartment-tower-c' },
-    { x: 5, y: 6, defId: 'factory-office' },
-    { x: 5, y: 8, defId: 'vodka-distillery' },
-    { x: 9, y: 8, defId: 'collective-farm-hq' },
-    { x: 3, y: 8, defId: 'collective-farm-hq' },
-    { x: 7, y: 8, defId: 'radio-station' },
-    { x: 3, y: 6, defId: 'gulag-admin' },
-  ];
-
-  for (const s of starters) {
-    createBuilding(s.x, s.y, s.defId);
-  }
+  // No pre-placed starter buildings — the game starts with undeveloped land
+  // and 10 dvory (family households) + 1 chairman dvor.
 
   // Create starting settlement (citizens, dvory)
   createStartingSettlement(difficulty);
@@ -105,10 +82,6 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   // Create spatial index grid
   gameGrid = new GameGrid(GRID_SIZE);
   const grid = gameGrid;
-  // Mark starter building cells in the spatial grid
-  for (const s of starters) {
-    grid.setCell(s.x, s.y, s.defId);
-  }
 
   // Create and configure SimulationEngine
   engine = new SimulationEngine(grid, callbacks, undefined, difficulty, consequence);

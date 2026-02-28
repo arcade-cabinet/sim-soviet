@@ -32,27 +32,27 @@ describe('PlanMandates', () => {
   // ── createMandatesForEra ──────────────────────────────────────────────
 
   describe('createMandatesForEra', () => {
-    it('generates mandates for war_communism era', () => {
-      const mandates = createMandatesForEra('war_communism', 'comrade');
+    it('generates mandates for revolution era', () => {
+      const mandates = createMandatesForEra('revolution', 'comrade');
       expect(mandates.length).toBeGreaterThan(0);
       // War communism should mandate basic infrastructure
       const defIds = mandates.map((m) => m.defId);
       expect(defIds.some((id) => id.includes('house') || id.includes('farm'))).toBe(true);
     });
 
-    it('generates mandates for first_plans era', () => {
-      const mandates = createMandatesForEra('first_plans', 'comrade');
+    it('generates mandates for collectivization era', () => {
+      const mandates = createMandatesForEra('collectivization', 'comrade');
       expect(mandates.length).toBeGreaterThan(0);
-      // Industrialization era should mandate factories/industrial buildings
+      // Collectivization era should mandate housing and institutional buildings
       const defIds = mandates.map((m) => m.defId);
-      expect(defIds.some((id) => id.includes('factory') || id.includes('power') || id.includes('distillery'))).toBe(
+      expect(defIds.some((id) => id.includes('house') || id.includes('warehouse') || id.includes('school'))).toBe(
         true,
       );
     });
 
     it('generates more mandates on harder difficulty', () => {
-      const easy = createMandatesForEra('war_communism', 'worker');
-      const hard = createMandatesForEra('war_communism', 'tovarish');
+      const easy = createMandatesForEra('revolution', 'worker');
+      const hard = createMandatesForEra('revolution', 'tovarish');
       // Hard difficulty should have same or more total required buildings
       const easyTotal = easy.reduce((sum, m) => sum + m.required, 0);
       const hardTotal = hard.reduce((sum, m) => sum + m.required, 0);
@@ -60,7 +60,7 @@ describe('PlanMandates', () => {
     });
 
     it('each mandate has a defId, required count, and label', () => {
-      const mandates = createMandatesForEra('war_communism', 'comrade');
+      const mandates = createMandatesForEra('revolution', 'comrade');
       for (const m of mandates) {
         expect(m.defId).toBeTruthy();
         expect(m.required).toBeGreaterThan(0);
