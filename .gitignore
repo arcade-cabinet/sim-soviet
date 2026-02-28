@@ -162,6 +162,9 @@ initial-load.png
 loading-complete.png
 main-menu-*.png
 
+# Review screenshots (Claude reference only)
+glasnost-*.png
+
 # POC experiments
 poc/
 poc.html
