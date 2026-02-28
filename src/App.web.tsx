@@ -23,7 +23,7 @@ const Content = React.lazy(() => import('./Content'));
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import { initDatabase, persistToIndexedDB } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
-import type { LensType } from './engine/GameState';
+import type { LensType, TabType } from './engine/GameState';
 import { gameState } from './engine/GameState';
 import {
   clearToast,
@@ -65,6 +65,9 @@ import { ConsumerGoodsMarketPanel } from './ui/ConsumerGoodsMarketPanel';
 import { CursorTooltip } from './ui/CursorTooltip';
 import { DirectiveHUD } from './ui/DirectiveHUD';
 import { DiseasePanel } from './ui/DiseasePanel';
+import { CRTOverlay } from './ui/CRTOverlay';
+import { ViewportFrame } from './ui/ViewportFrame';
+import { EdgeIndicators } from './ui/EdgeIndicators';
 import { EconomyDetailPanel } from './ui/EconomyDetailPanel';
 import { EconomyPanel } from './ui/EconomyPanel';
 import { EraTechTreePanel } from './ui/EraTechTreePanel';
@@ -87,8 +90,7 @@ import { PolitburoPanel } from './ui/PolitburoPanel';
 import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
 import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
 import { QuotaHUD } from './ui/QuotaHUD';
-import { RadialBuildMenu } from './ui/RadialBuildMenu';
-import { RadialInspectMenu } from './ui/RadialInspectMenu';
+import { RadialMenu } from './ui/RadialMenu';
 import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { ScoringPanel } from './ui/ScoringPanel';
 import { SettingsModal } from './ui/SettingsModal';
@@ -201,7 +203,8 @@ const App: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   // ── Soviet tab state ──
-  const [sovietTab, setSovietTab] = useState<SovietTab>('mandates');
+  const [sovietTab, setSovietTab] = useState<SovietTab>('build');
+  const [buildTab, setBuildTab] = useState<TabType>('zone');
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -487,9 +490,14 @@ const App: React.FC = () => {
 
   // --- Game callbacks ---
   const handleSetSpeed = useCallback((sp: number) => {
-    // Update both ECS game loop speed and old GameState for UI display
-    setGameSpeed(sp as 1 | 2 | 3);
-    setSpeed(gameState, sp);
+    if (sp === 0) {
+      setPaused(true);
+      setSpeed(gameState, 0);
+    } else {
+      setPaused(false);
+      setGameSpeed(sp as 1 | 2 | 3);
+      setSpeed(gameState, sp);
+    }
   }, []);
 
   const handleLensChange = useCallback((lens: LensType) => {
@@ -539,6 +547,10 @@ const App: React.FC = () => {
     (tab: SovietTab) => {
       setSovietTab(tab);
       switch (tab) {
+        case 'build':
+          // Build mode — deselect any active tool, let sub-tabs handle category
+          selectTool(gameState, 'none');
+          break;
         case 'mandates':
           handleShowMandates();
           break;
@@ -555,6 +567,12 @@ const App: React.FC = () => {
     },
     [handleShowMandates, handleShowWorkers, handleShowEconomy],
   );
+
+  const handleBuildTabChange = useCallback((tab: TabType) => {
+    setBuildTab(tab);
+    gameState.activeTab = tab;
+    gameState.notify();
+  }, []);
 
   const handleShowDisease = useCallback(() => {
     setShowDisease(true);
@@ -740,6 +758,11 @@ const App: React.FC = () => {
           </EngineErrorBoundary>
         </View>
 
+        {/* Decorative overlays */}
+        <CRTOverlay />
+        <ViewportFrame />
+        <EdgeIndicators />
+
         {loadingFaded && (
           <View style={styles.uiOverlay} pointerEvents="box-none">
             <TopBar
@@ -756,7 +779,7 @@ const App: React.FC = () => {
               population={snap.pop}
               dateLabel={snap.dateLabel}
               monthProgress={snap.monthProgress}
-              speed={snap.speed}
+              speed={isPaused() ? 0 : snap.speed}
               onSetSpeed={handleSetSpeed}
               threatLevel={snap.threatLevel}
               blackMarks={snap.blackMarks}
@@ -809,7 +832,12 @@ const App: React.FC = () => {
 
             <View style={styles.bottomPanel}>
               <Ticker messages={tickerText} />
-              <Toolbar activeTab={sovietTab} onTabChange={handleSovietTab} />
+              <Toolbar
+                activeTab={sovietTab}
+                onTabChange={handleSovietTab}
+                activeBuildTab={buildTab}
+                onBuildTabChange={handleBuildTabChange}
+              />
               <WorkerStatusBar onShowWorkers={handleShowWorkers} />
             </View>
 
@@ -943,9 +971,8 @@ const App: React.FC = () => {
 
         <IntroModal visible={showIntro} onDismiss={handleDismissIntro} />
 
-        {/* Radial menus — topmost overlays */}
-        <RadialBuildMenu />
-        <RadialInspectMenu />
+        {/* Radial menu — unified build/inspect overlay */}
+        <RadialMenu />
       </SafeAreaView>
     </>
   );

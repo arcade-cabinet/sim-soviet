@@ -196,7 +196,7 @@ function createSnapshot(state: GameState): GameSnapshot {
     blackMarks: m?.blackMarks ?? 0,
     commendations: m?.commendations ?? 0,
     settlementTier: m?.settlementTier ?? 'selo',
-    currentEra: m?.currentEra ?? 'war_communism',
+    currentEra: m?.currentEra ?? 'revolution',
 
     // Soviet economy
     timber: Math.round(res?.resources.timber ?? 0),

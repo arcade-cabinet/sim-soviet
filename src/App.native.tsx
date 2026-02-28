@@ -26,7 +26,7 @@ import Content from './Content';
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import { initDatabase, persistToIndexedDB } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
-import type { LensType } from './engine/GameState';
+import type { LensType, TabType } from './engine/GameState';
 import { gameState } from './engine/GameState';
 import {
   clearToast,
@@ -90,8 +90,7 @@ import { PolitburoPanel } from './ui/PolitburoPanel';
 import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
 import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
 import { QuotaHUD } from './ui/QuotaHUD';
-import { RadialBuildMenu } from './ui/RadialBuildMenu';
-import { RadialInspectMenu } from './ui/RadialInspectMenu';
+import { RadialMenu } from './ui/RadialMenu';
 import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { ScoringPanel } from './ui/ScoringPanel';
 import { SettingsModal } from './ui/SettingsModal';
@@ -203,7 +202,8 @@ const App: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   // ── Soviet tab state ──
-  const [sovietTab, setSovietTab] = useState<SovietTab>('mandates');
+  const [sovietTab, setSovietTab] = useState<SovietTab>('build');
+  const [buildTab, setBuildTab] = useState<TabType>('zone');
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -525,6 +525,9 @@ const App: React.FC = () => {
     (tab: SovietTab) => {
       setSovietTab(tab);
       switch (tab) {
+        case 'build':
+          selectTool(gameState, 'none');
+          break;
         case 'mandates':
           handleShowMandates();
           break;
@@ -541,6 +544,12 @@ const App: React.FC = () => {
     },
     [handleShowMandates, handleShowWorkers, handleShowEconomy],
   );
+
+  const handleBuildTabChange = useCallback((tab: TabType) => {
+    setBuildTab(tab);
+    gameState.activeTab = tab;
+    gameState.notify();
+  }, []);
 
   const handleShowDisease = useCallback(() => {
     setShowDisease(true);
@@ -797,7 +806,12 @@ const App: React.FC = () => {
 
             <View style={styles.bottomPanel}>
               <Ticker messages={tickerText} />
-              <Toolbar activeTab={sovietTab} onTabChange={handleSovietTab} />
+              <Toolbar
+                activeTab={sovietTab}
+                onTabChange={handleSovietTab}
+                activeBuildTab={buildTab}
+                onBuildTabChange={handleBuildTabChange}
+              />
               <WorkerStatusBar onShowWorkers={handleShowWorkers} />
             </View>
 
@@ -931,9 +945,8 @@ const App: React.FC = () => {
 
         <IntroModal visible={showIntro} onDismiss={handleDismissIntro} />
 
-        {/* Radial menus — topmost overlays */}
-        <RadialBuildMenu />
-        <RadialInspectMenu />
+        {/* Radial menu — unified build/inspect overlay */}
+        <RadialMenu />
       </SafeAreaView>
     </>
   );

@@ -101,7 +101,7 @@ function createSnapshot(): GameSnapshot {
     blackMarks: m?.blackMarks ?? 0,
     commendations: m?.commendations ?? 0,
     threatLevel: m?.threatLevel ?? 'safe',
-    currentEra: m?.currentEra ?? 'war_communism',
+    currentEra: m?.currentEra ?? 'revolution',
     roadQuality: m?.roadQuality ?? 'none',
     roadCondition: m?.roadCondition ?? 100,
 

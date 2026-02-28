@@ -17,10 +17,19 @@ import {
 } from '../game/ScoringSystem';
 import { Colors, monoFont } from './styles';
 
+export type MapSize = 'small' | 'medium' | 'large';
+
+export const MAP_SIZE_CONFIG: Record<MapSize, { label: string; gridSize: number; desc: string }> = {
+  small: { label: 'Small', gridSize: 20, desc: 'A modest hamlet. 20x20 grid.' },
+  medium: { label: 'Medium', gridSize: 30, desc: 'Standard collective. 30x30 grid.' },
+  large: { label: 'Large', gridSize: 50, desc: 'Sprawling industrial zone. 50x50 grid.' },
+};
+
 export interface NewGameConfig {
   difficulty: DifficultyLevel;
   consequence: ConsequenceLevel;
   seed: string;
+  mapSize: MapSize;
 }
 
 export interface NewGameSetupProps {
@@ -44,6 +53,7 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('comrade');
   const [consequence, setConsequence] = useState<ConsequenceLevel>('permadeath');
   const [seed, setSeed] = useState('');
+  const [mapSize, setMapSize] = useState<MapSize>('medium');
 
   const diffConfig = DIFFICULTY_PRESETS[difficulty];
   const consConfig = CONSEQUENCE_PRESETS[consequence];
@@ -105,15 +115,38 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionLabel}>MAP SIZE</Text>
+          <View style={styles.optionRow}>
+            {(['small', 'medium', 'large'] as MapSize[]).map((s) => (
+              <TouchableOpacity
+                key={s}
+                style={[styles.optionBtn, mapSize === s && styles.optionBtnActive]}
+                onPress={() => setMapSize(s)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.optionLabel, mapSize === s && styles.optionLabelActive]}>
+                  {MAP_SIZE_CONFIG[s].label.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={styles.flavor}>{MAP_SIZE_CONFIG[mapSize].desc}</Text>
+          <View style={styles.statsRow}>
+            <Text style={styles.statText}>Grid: {MAP_SIZE_CONFIG[mapSize].gridSize}x{MAP_SIZE_CONFIG[mapSize].gridSize}</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionLabel}>MAP SEED (OPTIONAL)</Text>
           <TextInput
             style={styles.seedInput}
             value={seed}
-            onChangeText={setSeed}
+            onChangeText={(text) => setSeed(text.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 100))}
             placeholder="Leave blank for random"
             placeholderTextColor="#666"
             autoCapitalize="none"
             autoCorrect={false}
+            maxLength={100}
           />
         </View>
 
@@ -151,6 +184,7 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
                 difficulty,
                 consequence,
                 seed: seed.trim() || `simsoviet-${Date.now()}`,
+                mapSize,
               })
             }
             style={styles.btnStart}

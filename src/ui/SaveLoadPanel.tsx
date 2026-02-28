@@ -9,8 +9,49 @@
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { z } from 'zod/v4';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
+
+/** Schema for validating imported save JSON files. */
+const ImportSaveSchema = z.object({
+  version: z.string(),
+  timestamp: z.number(),
+  resources: z.object({
+    money: z.number().optional(),
+    food: z.number().optional(),
+    vodka: z.number().optional(),
+    power: z.number().optional(),
+    population: z.number().optional(),
+  }),
+  gameMeta: z.object({
+    seed: z.string(),
+    date: z.object({
+      year: z.number(),
+      month: z.number(),
+      tick: z.number(),
+    }),
+    quota: z.object({
+      type: z.string(),
+      target: z.number(),
+      current: z.number(),
+      deadlineYear: z.number(),
+    }),
+    settlementTier: z.string(),
+    blackMarks: z.number(),
+    commendations: z.number(),
+    threatLevel: z.string(),
+    currentEra: z.string(),
+  }),
+  buildings: z.array(
+    z.object({
+      x: z.number(),
+      y: z.number(),
+      defId: z.string(),
+      powered: z.boolean(),
+    }),
+  ),
+});
 
 export interface SaveLoadPanelProps {
   visible: boolean;
@@ -139,7 +180,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
   );
 
   const handleCustomSave = useCallback(() => {
-    const trimmed = customName.trim().replace(/[^a-zA-Z0-9_\- ]/g, '');
+    const trimmed = customName.trim().replace(/\s+/g, '-').replace(/[^a-z0-9_\-]/gi, '').slice(0, 50);
     if (!trimmed) {
       showStatus('ENTER A SAVE NAME, COMRADE', 'error');
       return;
@@ -222,8 +263,8 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
             return;
           }
 
-          // Validate JSON parses
-          let parsed: Record<string, unknown>;
+          // Validate JSON structure with Zod schema
+          let parsed: unknown;
           try {
             parsed = JSON.parse(json);
           } catch {
@@ -232,8 +273,8 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
             return;
           }
 
-          // Validate expected top-level keys
-          if (!parsed.version || !parsed.resources || !parsed.gameMeta || !Array.isArray(parsed.buildings)) {
+          const validation = ImportSaveSchema.safeParse(parsed);
+          if (!validation.success) {
             showStatus('DOCUMENT REJECTED. MISSING REQUIRED STATE RECORDS.', 'error');
             setBusy(false);
             return;
