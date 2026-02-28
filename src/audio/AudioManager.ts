@@ -1,17 +1,16 @@
 /**
- * AudioManager — BabylonJS-based music playback for React Native.
+ * AudioManager -- Web Audio API-based music playback.
  *
- * Uses BabylonJS Sound class for OGG music playback.
+ * Migrated from BabylonJS Sound class to native Web Audio API.
  * Manages playlist rotation, crossfading, and volume control.
  *
  * Usage:
  *   const manager = AudioManager.getInstance();
- *   manager.init(scene);
+ *   manager.init();
  *   manager.startPlaylist();
  */
 
-import { Sound, type Scene } from '@babylonjs/core';
-import { MUSIC_TRACKS, GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS, getTrack } from './AudioManifest';
+import { GAMEPLAY_PLAYLIST, MUSIC_CONTEXTS, getTrack } from './AudioManifest';
 import { assetUrl } from '../utils/assetPath';
 
 const AUDIO_BASE_PATH = assetUrl('assets/audio/music') + '/';
@@ -20,8 +19,13 @@ const MASTER_VOLUME = 0.5;
 
 class AudioManager {
   private static instance: AudioManager | null = null;
-  private scene: Scene | null = null;
-  private currentSound: Sound | null = null;
+
+  private audioCtx: AudioContext | null = null;
+  private masterGain: GainNode | null = null;
+  private currentSource: AudioBufferSourceNode | null = null;
+  private currentTrackVolume = 1;
+  private bufferCache: Map<string, AudioBuffer> = new Map();
+
   private playlist: string[] = [];
   private playlistIndex = 0;
   private masterVolume = MASTER_VOLUME;
@@ -34,8 +38,18 @@ class AudioManager {
     return AudioManager.instance;
   }
 
-  init(scene?: Scene): void {
-    if (scene) this.scene = scene;
+  /** Initialize the AudioContext and master gain node. No scene param needed. */
+  init(): void {
+    if (this.audioCtx) return;
+
+    try {
+      this.audioCtx = new AudioContext();
+      this.masterGain = this.audioCtx.createGain();
+      this.masterGain.gain.value = this.masterVolume;
+      this.masterGain.connect(this.audioCtx.destination);
+    } catch (err) {
+      console.warn('[AudioManager] Failed to create AudioContext:', err);
+    }
   }
 
   /** Start playing the gameplay playlist in shuffled order. */
@@ -46,32 +60,57 @@ class AudioManager {
   }
 
   /** Play a specific track by ID. */
-  playTrack(trackId: string): void {
-    if (!this.scene) return;
+  async playTrack(trackId: string): Promise<void> {
+    if (!this.audioCtx || !this.masterGain) return;
     const track = getTrack(trackId);
     if (!track) return;
 
-    // Fade out current
+    // Resume AudioContext if suspended (autoplay policy)
+    if (this.audioCtx.state === 'suspended') {
+      try {
+        await this.audioCtx.resume();
+      } catch {
+        // Ignore -- will retry on next user gesture
+      }
+    }
+
+    // Fade out current track
     this.fadeOutCurrent();
 
     const url = AUDIO_BASE_PATH + track.filename;
-    const sound = new Sound(track.id, url, this.scene, () => {
-      // Ready callback
-      sound.setVolume(this.muted ? 0 : track.volume * this.masterVolume);
-      sound.play();
-    }, {
-      loop: track.loop,
-      autoplay: false,
-    });
 
-    sound.onEndedObservable.add(() => {
-      // When a non-looping track ends, play next in playlist
-      if (!track.loop) {
-        this.playNext();
-      }
-    });
+    try {
+      const buffer = await this.loadBuffer(url);
+      if (!this.audioCtx || !this.masterGain) return;
 
-    this.currentSound = sound;
+      // Create a gain node for this track's volume
+      const trackGain = this.audioCtx.createGain();
+      this.currentTrackVolume = track.volume;
+      trackGain.gain.value = this.muted ? 0 : track.volume;
+      trackGain.connect(this.masterGain);
+
+      // Create source
+      const source = this.audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = track.loop;
+      source.connect(trackGain);
+
+      // On ended, advance playlist (for non-looping tracks)
+      source.onended = () => {
+        if (!track.loop && this.currentSource === source) {
+          this.currentSource = null;
+          this.playNext();
+        }
+      };
+
+      source.start(0);
+      this.currentSource = source;
+
+      // Store the track gain for later volume adjustments
+      (source as any)._trackGain = trackGain;
+    } catch (err) {
+      console.warn(`[AudioManager] Failed to play track "${trackId}":`, err);
+    }
   }
 
   /** Play a context-specific track (e.g., 'winter', 'victory'). */
@@ -93,25 +132,55 @@ class AudioManager {
     this.playTrack(trackId);
   }
 
-  /** Fade out the currently playing track. */
+  /** Fade out the currently playing track using Web Audio API ramp. */
   private fadeOutCurrent(): void {
-    if (this.currentSound) {
-      const sound = this.currentSound;
-      const startVol = sound.getVolume();
-      const steps = 20;
-      const stepMs = CROSSFADE_MS / steps;
-      let step = 0;
-      const interval = setInterval(() => {
-        step++;
-        sound.setVolume(startVol * (1 - step / steps));
-        if (step >= steps) {
-          clearInterval(interval);
-          sound.stop();
-          sound.dispose();
+    if (!this.currentSource || !this.audioCtx) return;
+
+    const source = this.currentSource;
+    const trackGain: GainNode | undefined = (source as any)._trackGain;
+    this.currentSource = null;
+
+    if (trackGain) {
+      const now = this.audioCtx.currentTime;
+      trackGain.gain.setValueAtTime(trackGain.gain.value, now);
+      trackGain.gain.linearRampToValueAtTime(0, now + CROSSFADE_MS / 1000);
+
+      // Stop and disconnect after fade completes
+      setTimeout(() => {
+        try {
+          source.stop();
+        } catch {
+          // Already stopped
         }
-      }, stepMs);
-      this.currentSound = null;
+        source.disconnect();
+        trackGain.disconnect();
+      }, CROSSFADE_MS + 100);
+    } else {
+      try {
+        source.stop();
+      } catch {
+        // Already stopped
+      }
+      source.disconnect();
     }
+  }
+
+  /** Fetch and decode an audio file, with caching. */
+  private async loadBuffer(url: string): Promise<AudioBuffer> {
+    const cached = this.bufferCache.get(url);
+    if (cached) return cached;
+
+    if (!this.audioCtx) throw new Error('AudioContext not initialized');
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} fetching ${url}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await this.audioCtx.decodeAudioData(arrayBuffer);
+    this.bufferCache.set(url, audioBuffer);
+    return audioBuffer;
   }
 
   /** Stop all music. */
@@ -122,16 +191,16 @@ class AudioManager {
   /** Set master volume (0-1). */
   setVolume(vol: number): void {
     this.masterVolume = Math.max(0, Math.min(1, vol));
-    if (this.currentSound && !this.muted) {
-      this.currentSound.setVolume(this.masterVolume);
+    if (this.masterGain && !this.muted) {
+      this.masterGain.gain.value = this.masterVolume;
     }
   }
 
   /** Toggle mute. */
   toggleMute(): boolean {
     this.muted = !this.muted;
-    if (this.currentSound) {
-      this.currentSound.setVolume(this.muted ? 0 : this.masterVolume);
+    if (this.masterGain) {
+      this.masterGain.gain.value = this.muted ? 0 : this.masterVolume;
     }
     return this.muted;
   }
@@ -140,9 +209,25 @@ class AudioManager {
     return this.muted;
   }
 
+  /** Close AudioContext and clear buffer cache. */
   dispose(): void {
-    this.stop();
-    this.scene = null;
+    this.fadeOutCurrent();
+
+    if (this.audioCtx) {
+      try {
+        this.audioCtx.close();
+      } catch {
+        // Ignore
+      }
+    }
+
+    this.audioCtx = null;
+    this.masterGain = null;
+    this.currentSource = null;
+    this.bufferCache.clear();
+    this.playlist = [];
+    this.playlistIndex = 0;
+
     AudioManager.instance = null;
   }
 }
