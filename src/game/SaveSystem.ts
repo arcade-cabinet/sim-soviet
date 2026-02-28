@@ -12,6 +12,7 @@
  */
 import { eq } from 'drizzle-orm';
 import type { SQLJsDatabase } from 'drizzle-orm/sql-js';
+import { z } from 'zod/v4';
 import { getDatabase, persistToIndexedDB } from '@/db/provider';
 import * as dbSchema from '@/db/schema';
 import { buildingsLogic, decayableBuildings, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
@@ -23,6 +24,77 @@ import type { GameGrid } from './GameGrid';
 import type { SimulationEngine, SubsystemSaveData } from './SimulationEngine';
 
 const LOCALSTORAGE_KEY = 'simsoviet_save_v2';
+
+/** Zod schema for validating save data on import / DB load. */
+const BuildingSaveEntrySchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  defId: z.string(),
+  powered: z.boolean(),
+  level: z.number().optional(),
+  durability: z
+    .object({
+      current: z.number(),
+      decayRate: z.number(),
+    })
+    .optional(),
+});
+
+const ExtendedSaveDataSchema = z.object({
+  version: z.string(),
+  timestamp: z.number(),
+  resources: z.object({
+    money: z.number().optional(),
+    food: z.number().optional(),
+    vodka: z.number().optional(),
+    power: z.number().optional(),
+    powerUsed: z.number().optional(),
+    population: z.number().optional(),
+    trudodni: z.number().optional(),
+    blat: z.number().optional(),
+    timber: z.number().optional(),
+    steel: z.number().optional(),
+    cement: z.number().optional(),
+    prefab: z.number().optional(),
+    seedFund: z.number().optional(),
+    emergencyReserve: z.number().optional(),
+    storageCapacity: z.number().optional(),
+  }),
+  gameMeta: z.object({
+    seed: z.string(),
+    date: z.object({
+      year: z.number(),
+      month: z.number(),
+      tick: z.number(),
+    }),
+    quota: z.object({
+      type: z.string(),
+      target: z.number(),
+      current: z.number(),
+      deadlineYear: z.number(),
+    }),
+    settlementTier: z.string(),
+    blackMarks: z.number(),
+    commendations: z.number(),
+    threatLevel: z.string(),
+    currentEra: z.string(),
+    leaderName: z.string().optional(),
+    leaderPersonality: z.string().optional(),
+  }),
+  buildings: z.array(BuildingSaveEntrySchema),
+  subsystems: z.record(z.string(), z.unknown()).optional(),
+  gameConfig: z
+    .object({
+      difficulty: z.string().optional(),
+      consequence: z.string().optional(),
+      seed: z.string().optional(),
+      mapSize: z.string().optional(),
+      playerName: z.string().optional(),
+      cityName: z.string().optional(),
+      startEra: z.string().optional(),
+    })
+    .optional(),
+});
 
 /** Module-level flag to log SQLite fallback warning only once. */
 let _sqliteWarningLogged = false;
@@ -216,23 +288,13 @@ export class SaveSystem {
    */
   public importSaveData(json: string): boolean {
     try {
-      const data: ExtendedSaveData = JSON.parse(json);
-
-      // Validate required top-level keys
-      if (!data.version || !data.resources || !data.gameMeta || !Array.isArray(data.buildings)) {
+      const raw: unknown = JSON.parse(json);
+      const result = ExtendedSaveDataSchema.safeParse(raw);
+      if (!result.success) {
+        console.warn('[SaveSystem] importSaveData validation failed:', result.error);
         return false;
       }
-
-      // Validate gameMeta has required fields
-      if (
-        !data.gameMeta.date ||
-        typeof data.gameMeta.date.year !== 'number' ||
-        typeof data.gameMeta.date.month !== 'number'
-      ) {
-        return false;
-      }
-
-      return this.restoreExtendedState(data);
+      return this.restoreExtendedState(result.data as ExtendedSaveData);
     } catch {
       return false;
     }
@@ -341,7 +403,9 @@ export class SaveSystem {
     meta.gameMeta.seed = gm.seed;
     meta.gameMeta.date = { ...gm.date };
     meta.gameMeta.quota = { ...gm.quota };
-    meta.gameMeta.settlementTier = gm.settlementTier as typeof meta.gameMeta.settlementTier;
+    meta.gameMeta.settlementTier = (['selo', 'posyolok', 'pgt', 'gorod'].includes(gm.settlementTier)
+      ? gm.settlementTier
+      : 'selo') as typeof meta.gameMeta.settlementTier;
     meta.gameMeta.blackMarks = gm.blackMarks;
     meta.gameMeta.commendations = gm.commendations;
     meta.gameMeta.threatLevel = gm.threatLevel;
@@ -492,8 +556,12 @@ export class SaveSystem {
     // Prefer the JSON blob if available (version 2.0.0+)
     if (save.gameState) {
       try {
-        const extendedState: ExtendedSaveData = JSON.parse(save.gameState);
-        return this.restoreExtendedState(extendedState);
+        const raw: unknown = JSON.parse(save.gameState);
+        const result = ExtendedSaveDataSchema.safeParse(raw);
+        if (result.success) {
+          return this.restoreExtendedState(result.data as ExtendedSaveData);
+        }
+        console.warn('game_state JSON failed validation, falling back to legacy tables:', result.error);
       } catch (error) {
         console.warn('Failed to parse game_state JSON, falling back to legacy tables:', error);
       }
@@ -576,8 +644,13 @@ export class SaveSystem {
     if (!savedData) return false;
 
     try {
-      const data: ExtendedSaveData = JSON.parse(savedData);
-      return this.restoreExtendedState(data);
+      const raw: unknown = JSON.parse(savedData);
+      const result = ExtendedSaveDataSchema.safeParse(raw);
+      if (!result.success) {
+        console.error('localStorage save data failed validation:', result.error);
+        return false;
+      }
+      return this.restoreExtendedState(result.data as ExtendedSaveData);
     } catch (error) {
       console.error('Failed to parse localStorage save data:', error);
       return false;

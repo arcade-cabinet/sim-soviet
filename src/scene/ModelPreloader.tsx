@@ -12,7 +12,7 @@ import { assetUrl } from '../utils/assetPath';
 
 // Configure Draco decoder for compressed GLBs
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+dracoLoader.setDecoderPath('/wasm/draco/');
 
 // drei's useGLTF uses a shared GLTFLoader — configure it with Draco support
 const loader = new GLTFLoader();

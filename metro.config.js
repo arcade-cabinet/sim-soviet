@@ -11,9 +11,12 @@ config.transformer = {
   unstable_allowRequireContext: true,
 };
 
-// Serve the `assets/` directory as static files during web development.
-// GLB models, audio files, and other binary assets are fetched at runtime
-// from paths like /assets/models/soviet/*.glb and can't be bundled by Metro.
+// DEV-ONLY: Serve the `assets/` and `public/` directories as static files
+// during local Metro development. The Access-Control-Allow-Origin: * header
+// is required because Metro dev-server and the web app may run on different
+// ports. This middleware is NEVER used in production builds — production
+// assets are served by the hosting platform's own static file configuration
+// with appropriate CORS policies.
 config.server = {
   ...config.server,
   enhanceMiddleware: (middleware) => {
@@ -22,11 +25,13 @@ config.server = {
     const publicDir = path.resolve(__dirname, 'public');
     const staticHandler = serveStatic(assetsDir, {
       setHeaders: (res) => {
+        // DEV-ONLY: permissive CORS for local Metro dev-server
         res.setHeader('Access-Control-Allow-Origin', '*');
       },
     });
     const publicHandler = serveStatic(publicDir, {
       setHeaders: (res) => {
+        // DEV-ONLY: permissive CORS for local Metro dev-server
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Content-Type', 'application/wasm');
       },
