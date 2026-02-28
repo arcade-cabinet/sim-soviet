@@ -129,7 +129,16 @@ const FireRenderer: React.FC = () => {
   // Scan grid for fires each frame
   useFrame(() => {
     const grid = gameState.grid;
-    if (!grid.length) return;
+    if (!grid.length) {
+      setFires((prev) => (prev.length === 0 ? prev : []));
+      return;
+    }
+
+    // Build building index once per frame for O(1) lookups
+    const buildingIndex = new Map<string, (typeof gameState.buildings)[number]>();
+    for (const b of gameState.buildings) {
+      buildingIndex.set(`${b.x},${b.y}`, b);
+    }
 
     const newFires: FireData[] = [];
 
@@ -140,7 +149,7 @@ const FireRenderer: React.FC = () => {
         const cell = row[x];
         if (!cell || cell.onFire <= 0 || !cell.type) continue;
 
-        const bRef = gameState.buildings.find((b) => b.x === x && b.y === y);
+        const bRef = buildingIndex.get(`${x},${y}`);
         const level = bRef?.level ?? 0;
         const buildingH = getBuildingHeight(cell.type, level) * 0.02 + cell.z;
         const intensity = Math.min(cell.onFire, 15);
@@ -155,12 +164,15 @@ const FireRenderer: React.FC = () => {
       }
     }
 
-    // Only update state if fires changed
+    // Only update state if fires changed (key, intensity, or height)
     setFires((prev) => {
       if (prev.length !== newFires.length) return newFires;
-      // Check if any fire changed position/intensity
       for (let i = 0; i < prev.length; i++) {
-        if (prev[i].key !== newFires[i]?.key || prev[i].intensity !== newFires[i]?.intensity) {
+        if (
+          prev[i].key !== newFires[i]?.key ||
+          prev[i].intensity !== newFires[i]?.intensity ||
+          prev[i].y !== newFires[i]?.y
+        ) {
           return newFires;
         }
       }

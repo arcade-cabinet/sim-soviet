@@ -11,7 +11,7 @@
  */
 
 import { useFrame } from '@react-three/fiber';
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
@@ -128,9 +128,6 @@ const GulagCone: React.FC<GulagConeProps> = ({ x, z }) => {
 };
 
 // ── Main AuraRenderer ───────────────────────────────────────────────────────
-
-// Need useEffect for cleanup
-const { useEffect } = React;
 
 const AuraRenderer: React.FC = () => {
   const [auras, setAuras] = React.useState<{

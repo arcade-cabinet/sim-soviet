@@ -267,9 +267,10 @@ const GhostPreview: React.FC = () => {
       if (!cell?.type) return;
       openInspectAtCell(pick.gridX, pick.gridZ, e.clientX, e.clientY);
     };
-    canvas.addEventListener('mousedown', (e: MouseEvent) => {
+    const onMouseDown = (e: MouseEvent) => {
       if (e.button === 2) onContextMenu(e);
-    });
+    };
+    canvas.addEventListener('mousedown', onMouseDown);
 
     // Tap to place
     const onClick = (e: MouseEvent) => {
@@ -341,6 +342,7 @@ const GhostPreview: React.FC = () => {
 
     return () => {
       canvas.removeEventListener('contextmenu', preventContextMenu);
+      canvas.removeEventListener('mousedown', onMouseDown);
       canvas.removeEventListener('click', onClick);
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointermove', onPointerMove);
