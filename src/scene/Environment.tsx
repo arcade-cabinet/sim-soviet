@@ -14,8 +14,8 @@
 import { Environment as DreiEnvironment, useTexture } from '@react-three/drei';
 import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
-import * as THREE from 'three/webgpu';
 import { SkyMesh } from 'three/examples/jsm/objects/SkyMesh.js';
+import * as THREE from 'three/webgpu';
 import { GRID_SIZE } from '../engine/GridTypes';
 import { assetUrl } from '../utils/assetPath';
 import type { Season } from './TerrainGrid';

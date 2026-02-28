@@ -1,6 +1,6 @@
+import { useXRHitTest } from '@react-three/xr';
 import type React from 'react';
 import { useRef } from 'react';
-import { useXRHitTest } from '@react-three/xr';
 import * as THREE from 'three/webgpu';
 
 const matrixHelper = new THREE.Matrix4();
@@ -26,11 +26,7 @@ const ARTabletop: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, 'viewer');
 
-  return (
-    <group ref={groupRef}>
-      {children}
-    </group>
-  );
+  return <group ref={groupRef}>{children}</group>;
 };
 
 export default ARTabletop;

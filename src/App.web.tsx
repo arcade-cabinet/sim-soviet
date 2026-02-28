@@ -15,9 +15,11 @@ import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
 import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitialized } from './bridge/GameInit';
+
 // Lazy-load Content — it transitively imports Three.js + all 22 scene
 // components (~5 MB). This keeps the menu/setup bundle small and fast.
 const Content = React.lazy(() => import('./Content'));
+
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import { initDatabase, persistToIndexedDB } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';

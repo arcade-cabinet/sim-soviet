@@ -1,4 +1,4 @@
-import { XR, createXRStore } from '@react-three/xr';
+import { createXRStore, XR } from '@react-three/xr';
 import type React from 'react';
 
 export const xrStore = createXRStore();

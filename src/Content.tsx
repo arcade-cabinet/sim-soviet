@@ -22,6 +22,7 @@ import * as THREE from 'three/webgpu';
 // the correct WebGPU-compatible classes.
 // @ts-expect-error three/webgpu namespace includes non-constructor re-exports (e.g. RendererUtils)
 extend(THREE);
+
 import AudioManager from './audio/AudioManager';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
