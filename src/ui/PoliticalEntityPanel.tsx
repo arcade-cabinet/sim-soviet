@@ -7,17 +7,12 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { ConscriptionEvent, KGBInvestigation, PoliticalEntityStats, PoliticalRole } from '../game/political/types';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { getEngine } from '../bridge/GameInit';
-import type {
-  PoliticalRole,
-  PoliticalEntityStats,
-  KGBInvestigation,
-  ConscriptionEvent,
-} from '../game/political/types';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -64,17 +59,11 @@ export interface PoliticalEntityPanelProps {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 const Divider: React.FC = () => <View style={styles.divider} />;
 
-const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({
-  ratio,
-  color,
-  height = 6,
-}) => {
+const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({ ratio, color, height = 6 }) => {
   const clamped = Math.max(0, Math.min(ratio, 1));
   return (
     <View style={[styles.barTrack, { height }]}>
@@ -141,101 +130,78 @@ const EntityRow: React.FC<{ entity: PoliticalEntityStats }> = React.memo(({ enti
         <View style={styles.statBarContainer}>
           <ProgressBar ratio={entity.effectiveness / 100} color={effColor} />
         </View>
-        <Text style={[styles.statValue, { color: effColor }]}>
-          {Math.round(entity.effectiveness)}%
-        </Text>
+        <Text style={[styles.statValue, { color: effColor }]}>{Math.round(entity.effectiveness)}%</Text>
       </View>
 
       {/* Ticks remaining */}
       <View style={styles.entityDetailsRow}>
         <Text style={styles.detailLabel}>REMAINING:</Text>
-        <Text style={[styles.detailValue, { color: Colors.termBlue }]}>
-          {entity.ticksRemaining} ticks
-        </Text>
+        <Text style={[styles.detailValue, { color: Colors.termBlue }]}>{entity.ticksRemaining} ticks</Text>
       </View>
     </View>
   );
 });
 
 /** Single investigation row. */
-const InvestigationRow: React.FC<{ inv: KGBInvestigation; index: number }> = React.memo(
-  ({ inv, index }) => {
-    const intColor = INTENSITY_COLORS[inv.intensity] ?? Colors.sovietGold;
+const InvestigationRow: React.FC<{ inv: KGBInvestigation; index: number }> = React.memo(({ inv, index }) => {
+  const intColor = INTENSITY_COLORS[inv.intensity] ?? Colors.sovietGold;
 
-    return (
-      <View style={styles.investigationRow}>
-        <View style={styles.invHeader}>
-          <Text style={styles.invIndex}>#{index + 1}</Text>
-          <Text style={styles.invTarget}>
-            TARGET: [{inv.targetBuilding.gridX},{inv.targetBuilding.gridY}]
-          </Text>
-          <Text style={[styles.invIntensity, { color: intColor }]}>
-            {inv.intensity.toUpperCase()}
-          </Text>
-        </View>
-
-        <View style={styles.entityDetailsRow}>
-          <Text style={styles.detailLabel}>REMAINING:</Text>
-          <Text style={[styles.detailValue, { color: Colors.termBlue }]}>
-            {inv.ticksRemaining} ticks
-          </Text>
-          {inv.flaggedWorkers > 0 && (
-            <>
-              <Text style={[styles.detailLabel, styles.detailLabelSpaced]}>FLAGGED:</Text>
-              <Text style={[styles.detailValue, { color: Colors.sovietRed }]}>
-                {inv.flaggedWorkers}
-              </Text>
-            </>
-          )}
-        </View>
+  return (
+    <View style={styles.investigationRow}>
+      <View style={styles.invHeader}>
+        <Text style={styles.invIndex}>#{index + 1}</Text>
+        <Text style={styles.invTarget}>
+          TARGET: [{inv.targetBuilding.gridX},{inv.targetBuilding.gridY}]
+        </Text>
+        <Text style={[styles.invIntensity, { color: intColor }]}>{inv.intensity.toUpperCase()}</Text>
       </View>
-    );
-  },
-);
+
+      <View style={styles.entityDetailsRow}>
+        <Text style={styles.detailLabel}>REMAINING:</Text>
+        <Text style={[styles.detailValue, { color: Colors.termBlue }]}>{inv.ticksRemaining} ticks</Text>
+        {inv.flaggedWorkers > 0 && (
+          <>
+            <Text style={[styles.detailLabel, styles.detailLabelSpaced]}>FLAGGED:</Text>
+            <Text style={[styles.detailValue, { color: Colors.sovietRed }]}>{inv.flaggedWorkers}</Text>
+          </>
+        )}
+      </View>
+    </View>
+  );
+});
 
 /** Single conscription event row. */
-const ConscriptionRow: React.FC<{ evt: ConscriptionEvent; index: number }> = React.memo(
-  ({ evt, index }) => (
-    <View style={styles.conscriptionRow}>
-      <View style={styles.conscriptionHeader}>
-        <Text style={styles.invIndex}>#{index + 1}</Text>
-        <Text style={[styles.conscriptionCount, { color: Colors.sovietRed }]}>
-          {evt.drafted}/{evt.targetCount} DRAFTED
-        </Text>
-      </View>
-      <View style={styles.entityDetailsRow}>
-        <Text style={styles.detailLabel}>OFFICER:</Text>
-        <Text style={styles.detailValue}>{evt.officerName.toUpperCase()}</Text>
-      </View>
-      {evt.casualties > 0 && (
-        <View style={styles.entityDetailsRow}>
-          <Text style={styles.detailLabel}>CASUALTIES:</Text>
-          <Text style={[styles.detailValue, { color: Colors.sovietRed }]}>
-            {evt.casualties}
-          </Text>
-        </View>
-      )}
-      {evt.returnTick >= 0 && (
-        <View style={styles.entityDetailsRow}>
-          <Text style={styles.detailLabel}>RETURN TICK:</Text>
-          <Text style={[styles.detailValue, { color: Colors.termGreen }]}>
-            {evt.returnTick}
-          </Text>
-        </View>
-      )}
-      {evt.returnTick < 0 && (
-        <Text style={styles.permanentText}>PERMANENT — WARTIME DEPLOYMENT</Text>
-      )}
+const ConscriptionRow: React.FC<{ evt: ConscriptionEvent; index: number }> = React.memo(({ evt, index }) => (
+  <View style={styles.conscriptionRow}>
+    <View style={styles.conscriptionHeader}>
+      <Text style={styles.invIndex}>#{index + 1}</Text>
+      <Text style={[styles.conscriptionCount, { color: Colors.sovietRed }]}>
+        {evt.drafted}/{evt.targetCount} DRAFTED
+      </Text>
     </View>
-  ),
-);
+    <View style={styles.entityDetailsRow}>
+      <Text style={styles.detailLabel}>OFFICER:</Text>
+      <Text style={styles.detailValue}>{evt.officerName.toUpperCase()}</Text>
+    </View>
+    {evt.casualties > 0 && (
+      <View style={styles.entityDetailsRow}>
+        <Text style={styles.detailLabel}>CASUALTIES:</Text>
+        <Text style={[styles.detailValue, { color: Colors.sovietRed }]}>{evt.casualties}</Text>
+      </View>
+    )}
+    {evt.returnTick >= 0 && (
+      <View style={styles.entityDetailsRow}>
+        <Text style={styles.detailLabel}>RETURN TICK:</Text>
+        <Text style={[styles.detailValue, { color: Colors.termGreen }]}>{evt.returnTick}</Text>
+      </View>
+    )}
+    {evt.returnTick < 0 && <Text style={styles.permanentText}>PERMANENT — WARTIME DEPLOYMENT</Text>}
+  </View>
+));
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({
-  visible,
-  onDismiss,
-}) => {
+export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({ visible, onDismiss }) => {
   useGameSnapshot();
 
   const engine = getEngine();
@@ -309,16 +275,9 @@ export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({
             const count = roleCounts[role] ?? 0;
             return (
               <View key={role} style={styles.summaryRow}>
-                <Text style={[styles.summaryIcon, { color: ROLE_COLORS[role] }]}>
-                  {ROLE_ICONS[role]}
-                </Text>
+                <Text style={[styles.summaryIcon, { color: ROLE_COLORS[role] }]}>{ROLE_ICONS[role]}</Text>
                 <Text style={styles.summaryLabel}>{ROLE_LABELS[role]}:</Text>
-                <Text
-                  style={[
-                    styles.summaryValue,
-                    { color: count > 0 ? ROLE_COLORS[role] : Colors.textMuted },
-                  ]}
-                >
+                <Text style={[styles.summaryValue, { color: count > 0 ? ROLE_COLORS[role] : Colors.textMuted }]}>
                   {count}
                 </Text>
               </View>
@@ -326,9 +285,7 @@ export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({
           })}
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>TOTAL:</Text>
-            <Text style={[styles.summaryValue, { color: Colors.sovietGold }]}>
-              {totalEntities}
-            </Text>
+            <Text style={[styles.summaryValue, { color: Colors.sovietGold }]}>{totalEntities}</Text>
           </View>
         </View>
       )}
@@ -354,9 +311,7 @@ export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({
       {investigations.length === 0 ? (
         <Text style={styles.emptyText}>No active investigations.</Text>
       ) : (
-        investigations.map((inv, i) => (
-          <InvestigationRow key={`inv-${i}`} inv={inv} index={i} />
-        ))
+        investigations.map((inv, i) => <InvestigationRow key={`inv-${i}`} inv={inv} index={i} />)
       )}
 
       <Divider />
@@ -367,9 +322,7 @@ export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({
       {conscriptionQueue.length === 0 ? (
         <Text style={styles.emptyText}>No pending conscriptions.</Text>
       ) : (
-        conscriptionQueue.map((evt, i) => (
-          <ConscriptionRow key={`conscr-${i}`} evt={evt} index={i} />
-        ))
+        conscriptionQueue.map((evt, i) => <ConscriptionRow key={`conscr-${i}`} evt={evt} index={i} />)
       )}
     </SovietModal>
   );

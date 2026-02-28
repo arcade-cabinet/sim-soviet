@@ -8,14 +8,14 @@
  * Uses SovietModal with terminal variant for dark-panel aesthetic.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import { getSeasonForMonth, SEASON_TABLE } from '../game/Chronology';
+import { WEATHER_PROFILES, WeatherType } from '../game/WeatherSystem';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { WEATHER_PROFILES, WeatherType } from '../game/WeatherSystem';
-import { SEASON_TABLE, getSeasonForMonth } from '../game/Chronology';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Props
@@ -47,8 +47,19 @@ const WEATHER_ICONS: Record<WeatherType, string> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MONTH_ABBREVS: readonly string[] = [
-  '', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+  '',
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -94,15 +105,13 @@ function resolveWeatherType(label: string): WeatherType {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
 
 /** Label + value row. */
-const StatRow: React.FC<{ label: string; value: string; color?: string }> = ({
+const _StatRow: React.FC<{ label: string; value: string; color?: string }> = ({
   label,
   value,
   color = Colors.white,
@@ -117,10 +126,7 @@ const StatRow: React.FC<{ label: string; value: string; color?: string }> = ({
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const WeatherForecastPanel: React.FC<WeatherForecastPanelProps> = ({
-  visible,
-  onDismiss,
-}) => {
+export const WeatherForecastPanel: React.FC<WeatherForecastPanelProps> = ({ visible, onDismiss }) => {
   const snap = useGameSnapshot();
 
   if (!visible) return null;
@@ -164,45 +170,25 @@ export const WeatherForecastPanel: React.FC<WeatherForecastPanelProps> = ({
       <View style={styles.modifierGrid}>
         <View style={styles.modifierItem}>
           <Text style={styles.modifierLabel}>FARM</Text>
-          <Text
-            style={[
-              styles.modifierValue,
-              { color: modColor(weatherProfile.farmModifier) },
-            ]}
-          >
+          <Text style={[styles.modifierValue, { color: modColor(weatherProfile.farmModifier) }]}>
             {fmtMult(weatherProfile.farmModifier)}
           </Text>
         </View>
         <View style={styles.modifierItem}>
           <Text style={styles.modifierLabel}>BUILD</Text>
-          <Text
-            style={[
-              styles.modifierValue,
-              { color: modColor(weatherProfile.constructionTimeMult, true) },
-            ]}
-          >
+          <Text style={[styles.modifierValue, { color: modColor(weatherProfile.constructionTimeMult, true) }]}>
             {fmtMult(weatherProfile.constructionTimeMult)}
           </Text>
         </View>
         <View style={styles.modifierItem}>
           <Text style={styles.modifierLabel}>SPEED</Text>
-          <Text
-            style={[
-              styles.modifierValue,
-              { color: modColor(weatherProfile.workerSpeedMult) },
-            ]}
-          >
+          <Text style={[styles.modifierValue, { color: modColor(weatherProfile.workerSpeedMult) }]}>
             {fmtMult(weatherProfile.workerSpeedMult)}
           </Text>
         </View>
         <View style={styles.modifierItem}>
           <Text style={styles.modifierLabel}>EVENTS</Text>
-          <Text
-            style={[
-              styles.modifierValue,
-              { color: modColor(weatherProfile.eventFrequencyModifier, true) },
-            ]}
-          >
+          <Text style={[styles.modifierValue, { color: modColor(weatherProfile.eventFrequencyModifier, true) }]}>
             {fmtMult(weatherProfile.eventFrequencyModifier)}
           </Text>
         </View>
@@ -224,9 +210,7 @@ export const WeatherForecastPanel: React.FC<WeatherForecastPanelProps> = ({
 
       <View style={styles.seasonHeader}>
         <Text style={styles.seasonName}>{currentSeasonProfile.label.toUpperCase()}</Text>
-        <Text style={styles.seasonMonths}>
-          {currentSeasonProfile.months.map((m) => MONTH_ABBREVS[m]).join(' ')}
-        </Text>
+        <Text style={styles.seasonMonths}>{currentSeasonProfile.months.map((m) => MONTH_ABBREVS[m]).join(' ')}</Text>
       </View>
 
       <Text style={styles.seasonDesc}>{currentSeasonProfile.description}</Text>
@@ -234,23 +218,13 @@ export const WeatherForecastPanel: React.FC<WeatherForecastPanelProps> = ({
       <View style={styles.modifierGrid}>
         <View style={styles.modifierItem}>
           <Text style={styles.modifierLabel}>FARM</Text>
-          <Text
-            style={[
-              styles.modifierValue,
-              { color: modColor(currentSeasonProfile.farmMultiplier) },
-            ]}
-          >
+          <Text style={[styles.modifierValue, { color: modColor(currentSeasonProfile.farmMultiplier) }]}>
             {fmtMult(currentSeasonProfile.farmMultiplier)}
           </Text>
         </View>
         <View style={styles.modifierItem}>
           <Text style={styles.modifierLabel}>BUILD</Text>
-          <Text
-            style={[
-              styles.modifierValue,
-              { color: modColor(currentSeasonProfile.buildCostMultiplier, true) },
-            ]}
-          >
+          <Text style={[styles.modifierValue, { color: modColor(currentSeasonProfile.buildCostMultiplier, true) }]}>
             {fmtMult(currentSeasonProfile.buildCostMultiplier)}
           </Text>
         </View>
@@ -295,9 +269,7 @@ export const WeatherForecastPanel: React.FC<WeatherForecastPanelProps> = ({
       {currentSeasonProfile.snowRate > 0 && (
         <View style={styles.snowRateRow}>
           <Text style={styles.sublabel}>SNOW RATE:</Text>
-          <Text style={[styles.snowRateValue, { color: Colors.termBlue }]}>
-            {currentSeasonProfile.snowRate}
-          </Text>
+          <Text style={[styles.snowRateValue, { color: Colors.termBlue }]}>{currentSeasonProfile.snowRate}</Text>
         </View>
       )}
 
@@ -309,42 +281,19 @@ export const WeatherForecastPanel: React.FC<WeatherForecastPanelProps> = ({
       {SEASON_TABLE.map((sp) => {
         const isCurrent = sp.season === currentSeasonProfile.season;
         return (
-          <View
-            key={sp.season}
-            style={[
-              styles.calendarRow,
-              isCurrent ? styles.calendarRowActive : undefined,
-            ]}
-          >
+          <View key={sp.season} style={[styles.calendarRow, isCurrent ? styles.calendarRowActive : undefined]}>
             <View style={styles.calendarNameCol}>
-              <Text
-                style={[
-                  styles.calendarName,
-                  isCurrent ? styles.calendarNameActive : undefined,
-                ]}
-              >
+              <Text style={[styles.calendarName, isCurrent ? styles.calendarNameActive : undefined]}>
                 {isCurrent ? '\u25B6 ' : '  '}
                 {sp.label.toUpperCase()}
               </Text>
-              <Text style={styles.calendarMonths}>
-                {sp.months.map((m) => MONTH_ABBREVS[m]).join(' ')}
-              </Text>
+              <Text style={styles.calendarMonths}>{sp.months.map((m) => MONTH_ABBREVS[m]).join(' ')}</Text>
             </View>
             <View style={styles.calendarModifiers}>
-              <Text
-                style={[
-                  styles.calendarModVal,
-                  { color: modColor(sp.farmMultiplier) },
-                ]}
-              >
+              <Text style={[styles.calendarModVal, { color: modColor(sp.farmMultiplier) }]}>
                 F:{fmtMult(sp.farmMultiplier)}
               </Text>
-              <Text
-                style={[
-                  styles.calendarModVal,
-                  { color: modColor(sp.buildCostMultiplier, true) },
-                ]}
-              >
+              <Text style={[styles.calendarModVal, { color: modColor(sp.buildCostMultiplier, true) }]}>
                 B:{fmtMult(sp.buildCostMultiplier)}
               </Text>
               <Text

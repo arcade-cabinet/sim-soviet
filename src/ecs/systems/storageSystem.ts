@@ -93,6 +93,22 @@ export function calculateStorageCapacity(): number {
 }
 
 /**
+ * Returns the storage capacity contribution for a single building defId.
+ * Returns 0 if the building does not contribute to storage.
+ */
+export function getBuildingStorageContribution(defId: string): number {
+  const defCapacity = STORAGE_BY_DEF[defId];
+  if (defCapacity !== undefined) return defCapacity;
+  const def = getBuildingDef(defId);
+  const role = def?.role;
+  if (role) {
+    const roleCapacity = STORAGE_BY_ROLE[role];
+    if (roleCapacity !== undefined) return roleCapacity;
+  }
+  return 0;
+}
+
+/**
  * Counts the number of operational, powered cold-storage buildings.
  *
  * Only buildings that have completed construction AND are receiving power
@@ -181,9 +197,7 @@ function getStandardElevatorRate(): number {
   const allCapacity = totalCapacity + elevatorCapacity;
   if (allCapacity <= 0) return STORED_SPOILAGE_RATE;
 
-  return (
-    (totalCapacity * STORED_SPOILAGE_RATE + elevatorCapacity * ELEVATOR_SPOILAGE_RATE) / allCapacity
-  );
+  return (totalCapacity * STORED_SPOILAGE_RATE + elevatorCapacity * ELEVATOR_SPOILAGE_RATE) / allCapacity;
 }
 
 /**

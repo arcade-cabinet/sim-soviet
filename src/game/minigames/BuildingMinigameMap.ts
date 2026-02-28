@@ -44,7 +44,7 @@ const BUILDING_TRIGGER_MAP: Record<string, string> = {
   // Factory / Industry → Production Quotas
   'factory-office': 'factory_tap',
   'bread-factory': 'factory_tap',
-  'warehouse': 'factory_tap',
+  warehouse: 'factory_tap',
 
   // Agriculture → Harvest Campaign
   'collective-farm-hq': 'farm_tap',
@@ -65,12 +65,12 @@ const BUILDING_TRIGGER_MAP: Record<string, string> = {
   'cooling-tower': 'power_tap',
 
   // School / Culture → Ideological Education
-  'school': 'school_tap',
+  school: 'school_tap',
   'cultural-palace': 'school_tap',
   'workers-club': 'school_tap',
 
   // Military → Military Inspection
-  'barracks': 'barracks_tap',
+  barracks: 'barracks_tap',
   'guard-post': 'barracks_tap',
 };
 
@@ -81,7 +81,7 @@ const BUILDING_MINIGAME_NAME: Record<string, string> = {
   // Factory / Industry → Production Quotas
   'factory-office': 'Production Quotas',
   'bread-factory': 'Production Quotas',
-  'warehouse': 'Production Quotas',
+  warehouse: 'Production Quotas',
 
   // Agriculture → Harvest Campaign
   'collective-farm-hq': 'Harvest Campaign',
@@ -102,11 +102,11 @@ const BUILDING_MINIGAME_NAME: Record<string, string> = {
   'cooling-tower': 'Grid Management',
 
   // School / Culture → Ideological Education
-  'school': 'Ideological Education',
+  school: 'Ideological Education',
   'cultural-palace': 'Ideological Education',
   'workers-club': 'Ideological Education',
 
   // Military → Military Inspection
-  'barracks': 'Military Inspection',
+  barracks: 'Military Inspection',
   'guard-post': 'Military Inspection',
 };

@@ -3,9 +3,10 @@
  * Port of poc.html lines 287-290.
  */
 
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet, useWindowDimensions } from 'react-native';
-import { Colors, SharedStyles, monoFont } from './styles';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Colors, monoFont } from './styles';
 
 export interface TickerProps {
   messages: string;
@@ -33,7 +34,7 @@ export const Ticker: React.FC<TickerProps> = ({ messages }) => {
     anim.start();
 
     return () => anim.stop();
-  }, [messages, screenWidth, translateX]);
+  }, [screenWidth, translateX]);
 
   return (
     <View style={styles.container}>

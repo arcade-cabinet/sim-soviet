@@ -33,12 +33,7 @@ function notify(): void {
 }
 
 /** Push a notification to the history log. Newest entries are at index 0. */
-export function pushNotification(
-  text: string,
-  category: NotificationCategory,
-  dateLabel: string,
-  icon?: string,
-): void {
+export function pushNotification(text: string, category: NotificationCategory, dateLabel: string, icon?: string): void {
   const entry: NotificationEntry = {
     id: _nextId++,
     text,

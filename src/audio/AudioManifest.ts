@@ -21,7 +21,7 @@ function track(
   filename: string,
   description: string,
   mood: MusicTrack['mood'],
-  opts?: { volume?: number; loop?: boolean }
+  opts?: { volume?: number; loop?: boolean },
 ): MusicTrack {
   return {
     id,
@@ -35,7 +35,10 @@ function track(
 
 export const MUSIC_TRACKS: MusicTrack[] = [
   // Core rotation
-  track('soviet_anthem_1944', 'soviet_anthem_1944.ogg', '1944 Soviet National Anthem', 'triumphant', { volume: 0.6, loop: false }),
+  track('soviet_anthem_1944', 'soviet_anthem_1944.ogg', '1944 Soviet National Anthem', 'triumphant', {
+    volume: 0.6,
+    loop: false,
+  }),
   track('internationale', 'internationale.ogg', 'The Internationale', 'patriotic'),
   track('red_army_march', 'red_army_march.ogg', 'Konarmeiskij March', 'intense', { volume: 0.6 }),
   track('tachanka', 'tachanka.ogg', 'Tachanka - Folk-military', 'upbeat', { volume: 0.55 }),
@@ -100,13 +103,28 @@ export const MUSIC_CONTEXTS: Record<string, string> = {
  * Falls back to 'gameplay' if a season has no specific context.
  */
 export const SEASON_CONTEXTS: Record<string, string> = {
-  winter: 'winter',               // melancholic winter hardship
+  winter: 'winter', // melancholic winter hardship
   rasputitsa_spring: 'melancholic', // mud season — bleak
-  short_summer: 'upbeat',          // brief warmth, hopeful
-  golden_week: 'upbeat',           // peak harvest, triumphant
-  stifling_heat: 'industrial',     // hot and dusty, labor
-  early_frost: 'melancholic',      // frost creeping in
+  short_summer: 'upbeat', // brief warmth, hopeful
+  golden_week: 'upbeat', // peak harvest, triumphant
+  stifling_heat: 'industrial', // hot and dusty, labor
+  early_frost: 'melancholic', // frost creeping in
   rasputitsa_autumn: 'melancholic', // mud returns, winter approaches
+};
+
+/**
+ * Era → music context mapping.
+ * Keys match the EraId values from game/era/types.ts.
+ */
+export const ERA_CONTEXTS: Record<string, string> = {
+  war_communism: 'intense', // revolutionary upheaval, civil war
+  first_plans: 'industrial', // rapid industrialization
+  great_patriotic: 'intense', // wartime struggle
+  reconstruction: 'melancholic', // rebuilding from ruins
+  thaw: 'upbeat', // cultural relaxation, optimism
+  stagnation: 'melancholic', // decline, disillusionment
+  perestroika: 'upbeat', // reform and hope
+  eternal_soviet: 'victory', // utopian endgame
 };
 
 export function getTrack(id: string): MusicTrack | undefined {

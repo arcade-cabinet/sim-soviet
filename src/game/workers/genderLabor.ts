@@ -69,7 +69,7 @@ const ERA_GENDER_CONFIGS: Record<string, GenderLaborConfig> = {
 };
 
 export function getGenderLaborConfig(eraId: string): GenderLaborConfig {
-  return ERA_GENDER_CONFIGS[eraId] ?? ERA_GENDER_CONFIGS['revolution']!;
+  return ERA_GENDER_CONFIGS[eraId] ?? ERA_GENDER_CONFIGS.revolution!;
 }
 
 /**
@@ -79,7 +79,7 @@ export function getGenderLaborConfig(eraId: string): GenderLaborConfig {
 export function getGenderLaborMultiplier(
   gender: 'male' | 'female' | undefined,
   buildingRole: string,
-  eraId: string
+  eraId: string,
 ): number {
   if (!gender || gender === 'male') return 1.0;
 

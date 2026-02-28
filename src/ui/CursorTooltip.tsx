@@ -3,8 +3,8 @@
  * Port of poc.html lines 108-145.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface TileData {
@@ -40,31 +40,21 @@ function buildWarning(tile: TileData): string | null {
   return null;
 }
 
-export const CursorTooltip: React.FC<CursorTooltipProps> = ({
-  visible,
-  tileData,
-  position,
-}) => {
+export const CursorTooltip: React.FC<CursorTooltipProps> = ({ visible, tileData, position }) => {
   if (!visible) return null;
 
   const status = statusInfo(tileData);
   const warning = buildWarning(tileData);
   const displayName =
-    tileData.type && tileData.type !== 'empty'
-      ? tileData.type.toUpperCase()
-      : tileData.terrain.toUpperCase();
+    tileData.type && tileData.type !== 'empty' ? tileData.type.toUpperCase() : tileData.terrain.toUpperCase();
 
   return (
     <View style={[styles.container, { left: position.x + 16, top: position.y + 16 }]}>
       <Text style={styles.title}>{displayName}</Text>
 
-      <Text style={styles.row}>
-        TERRAIN: {tileData.terrain.toUpperCase()}
-      </Text>
+      <Text style={styles.row}>TERRAIN: {tileData.terrain.toUpperCase()}</Text>
 
-      <Text style={[styles.row, { color: smogColor(tileData.smog) }]}>
-        SMOG: {Math.floor(tileData.smog)}
-      </Text>
+      <Text style={[styles.row, { color: smogColor(tileData.smog) }]}>SMOG: {Math.floor(tileData.smog)}</Text>
 
       <Text
         style={[
@@ -76,9 +66,7 @@ export const CursorTooltip: React.FC<CursorTooltipProps> = ({
         WATER: {tileData.watered ? 'CONNECTED' : 'DRY'}
       </Text>
 
-      <Text style={[styles.row, { color: status.color }]}>
-        STATUS: {status.label}
-      </Text>
+      <Text style={[styles.row, { color: status.color }]}>STATUS: {status.label}</Text>
 
       {warning ? (
         <View style={styles.warnBox}>

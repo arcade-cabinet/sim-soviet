@@ -8,11 +8,12 @@
  * Directive checks now query ECS building entities (via Miniplex),
  * so directive tests must add entities to the ECS world.
  */
-import { GameState, gameState } from '../../src/engine/GameState';
-import { simTick } from '../../src/engine/SimTick';
-import { GRID_SIZE, TICKS_PER_MONTH } from '../../src/engine/GridTypes';
-import { world } from '../../src/ecs/world';
+
 import { createBuilding } from '../../src/ecs/factories/buildingFactories';
+import { world } from '../../src/ecs/world';
+import { type GameState, gameState } from '../../src/engine/GameState';
+import { GRID_SIZE, TICKS_PER_MONTH } from '../../src/engine/GridTypes';
+import { simTick } from '../../src/engine/SimTick';
 
 /** Reset the singleton to a fresh state for each test. */
 function resetSingleton(): GameState {
@@ -53,20 +54,11 @@ function resetSingleton(): GameState {
 }
 
 /** Find a grass tile and place a building. */
-function placeBuilding(
-  s: GameState,
-  type: string,
-  opts?: { powered?: boolean },
-): { x: number; y: number } {
+function placeBuilding(s: GameState, type: string, opts?: { powered?: boolean }): { x: number; y: number } {
   for (let y = 0; y < GRID_SIZE; y++) {
     for (let x = 0; x < GRID_SIZE; x++) {
       const cell = s.grid[y][x];
-      if (
-        cell.terrain === 'grass' &&
-        !cell.isRail &&
-        !cell.type &&
-        cell.z === 0
-      ) {
+      if (cell.terrain === 'grass' && !cell.isRail && !cell.type && cell.z === 0) {
         cell.type = type;
         s.buildings.push({
           x,
@@ -190,7 +182,10 @@ describe('simTick', () => {
       s.grid[y][x].smog = 100;
       simTick(s);
       const adj = [
-        [x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1],
+        [x - 1, y],
+        [x + 1, y],
+        [x, y - 1],
+        [x, y + 1],
       ];
       let adjacentSmog = 0;
       for (const [ax, ay] of adj) {

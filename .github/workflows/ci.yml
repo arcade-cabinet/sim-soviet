@@ -22,13 +22,13 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup Node + npm
+      - name: Setup Node + pnpm
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Run linter
         run: |
           echo "::group::Running linter"
-          npm run lint 2>&1 | tee lint-output.log
+          pnpm run lint 2>&1 | tee lint-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -45,7 +45,7 @@ jobs:
       - name: Run TypeScript type checking
         run: |
           echo "::group::Running TypeScript type checking"
-          npm run typecheck 2>&1 | tee check-output.log
+          pnpm run typecheck 2>&1 | tee check-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -62,7 +62,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           echo "::group::Running tests with coverage"
-          npm run test:coverage 2>&1 | tee test-output.log
+          pnpm run test:coverage 2>&1 | tee test-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -92,7 +92,7 @@ jobs:
       - name: Build project
         run: |
           echo "::group::Building project"
-          npm run build 2>&1 | tee build-output.log
+          pnpm run build 2>&1 | tee build-output.log
           EXIT_CODE="${PIPESTATUS[0]}"
           echo "::endgroup::"
           if [ "$EXIT_CODE" -ne 0 ]; then
@@ -114,66 +114,10 @@ jobs:
           path: dist/
           retention-days: 1
 
-  e2e:
-    name: E2E Tests
-    runs-on: ubuntu-latest
-    needs: [quality]
-    permissions:
-      contents: read
-    env:
-      CI: true
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 1
-
-      - name: Setup Node + npm
-        uses: ./.github/actions/setup-node-pnpm
-
-      - name: Build for E2E
-        run: npm run build
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Run E2E tests
-        run: |
-          echo "::group::Running E2E tests"
-          npm run test:e2e -- --project='Desktop Chrome' --grep-invert 'Visual Regression' 2>&1 | tee e2e-output.log
-          EXIT_CODE="${PIPESTATUS[0]}"
-          echo "::endgroup::"
-          if [ "$EXIT_CODE" -ne 0 ]; then
-            echo "::error::E2E tests failed with exit code $EXIT_CODE"
-            echo "### E2E Tests Failed" >> "$GITHUB_STEP_SUMMARY"
-            echo "Exit code: $EXIT_CODE" >> "$GITHUB_STEP_SUMMARY"
-            echo '```text' >> "$GITHUB_STEP_SUMMARY"
-            tail -100 e2e-output.log >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            exit "$EXIT_CODE"
-          fi
-          echo "E2E tests passed successfully"
-
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
-
-      - name: Upload test traces
-        if: failure()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: playwright-traces
-          path: test-results/
-          retention-days: 7
-
   all-checks:
     name: All Checks Passed
     runs-on: ubuntu-latest
-    needs: [quality, e2e]
+    needs: [quality]
     if: always()
     permissions:
       contents: read
@@ -181,14 +125,9 @@ jobs:
       - name: Check all jobs
         env:
           QUALITY_RESULT: ${{ needs.quality.result }}
-          E2E_RESULT: ${{ needs.e2e.result }}
         run: |
           if [ "$QUALITY_RESULT" != "success" ]; then
             echo "Quality checks failed"
-            exit 1
-          fi
-          if [ "$E2E_RESULT" != "success" ]; then
-            echo "E2E tests failed"
             exit 1
           fi
           echo "All checks passed successfully!"

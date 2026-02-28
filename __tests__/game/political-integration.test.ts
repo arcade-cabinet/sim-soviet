@@ -1,16 +1,8 @@
 import { createBuilding } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { PersonnelFile } from '@/game/PersonnelFile';
-import {
-  calcTargetCount,
-  ENTITY_SCALING,
-  HIGH_CORRUPTION_THRESHOLD,
-} from '@/game/political/constants';
-import {
-  getBlackMarkChance,
-  KGB_BLACK_MARK_CHANCE_PURGE,
-  KGB_BLACK_MARK_CHANCE_THOROUGH,
-} from '@/game/political/kgb';
+import { calcTargetCount, ENTITY_SCALING, HIGH_CORRUPTION_THRESHOLD } from '@/game/political/constants';
+import { getBlackMarkChance, KGB_BLACK_MARK_CHANCE_PURGE, KGB_BLACK_MARK_CHANCE_THOROUGH } from '@/game/political/kgb';
 import { PoliticalEntitySystem } from '@/game/political/PoliticalEntitySystem';
 import { GameRng } from '@/game/SeedSystem';
 

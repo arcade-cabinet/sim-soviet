@@ -7,10 +7,9 @@ import type { MinigameDefinition } from '../MinigameTypes';
 export const IDEOLOGY_SESSION: MinigameDefinition = {
   id: 'ideology_session',
   name: 'Ideology Session',
-  description:
-    'The politruk has arrived. He has questions. The correct answers are the ones he already knows.',
+  description: 'The politruk has arrived. He has questions. The correct answers are the ones he already knows.',
   triggerType: 'event',
-  triggerCondition: 'politruk_visit',
+  triggerCondition: 'party_official_visit',
   tickLimit: 20,
   choices: [
     {
@@ -48,21 +47,18 @@ export const IDEOLOGY_SESSION: MinigameDefinition = {
       successChance: 0.2,
       onSuccess: {
         commendations: 1,
-        announcement:
-          'Your question impressed the politruk. He calls it "dialectical engagement." You are a hero.',
+        announcement: 'Your question impressed the politruk. He calls it "dialectical engagement." You are a hero.',
       },
       onFailure: {
         blackMarks: 2,
-        announcement:
-          'Your question did not impress the politruk. He calls it "counter-revolutionary thought."',
+        announcement: 'Your question did not impress the politruk. He calls it "counter-revolutionary thought."',
         severity: 'critical',
       },
     },
   ],
   autoResolve: {
     blackMarks: 1,
-    announcement:
-      'Workers skipped the ideology session. The politruk adds a black mark to your file.',
+    announcement: 'Workers skipped the ideology session. The politruk adds a black mark to your file.',
     severity: 'warning',
   },
 };

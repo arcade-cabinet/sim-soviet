@@ -6,27 +6,26 @@
  * focus selector and summary stats row.
  */
 
-import React, { useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { CitizenComponent } from '../ecs/world';
+import type { CollectiveFocus } from '../game/workers/governor';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import type { Entity, CitizenComponent } from '../ecs/world';
-import type { WorkerStats } from '../game/workers/types';
-import type { CollectiveFocus } from '../game/workers/governor';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const MAX_DISPLAYED_WORKERS = 50;
 
 const CLASS_ICONS: Record<CitizenComponent['class'], string> = {
-  worker: '\u2692',         // hammer and pick
+  worker: '\u2692', // hammer and pick
   party_official: '\u2605', // star
-  engineer: '\u2699',       // gear
-  farmer: '\u2E3D',         // wheat (palmyrene left-pointing fleuron, close to wheat glyph)
-  soldier: '\u26E8',        // shield
-  prisoner: '\u26D3',       // chains
+  engineer: '\u2699', // gear
+  farmer: '\u2E3D', // wheat (palmyrene left-pointing fleuron, close to wheat glyph)
+  soldier: '\u26E8', // shield
+  prisoner: '\u26D3', // chains
 };
 
 const CLASS_COLORS: Record<CitizenComponent['class'], string> = {
@@ -231,12 +230,8 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
               activeOpacity={0.7}
               onPress={() => handleFocusChange(opt.key)}
             >
-              <Text style={[styles.focusIcon, { color: isActive ? Colors.white : opt.iconColor }]}>
-                {opt.icon}
-              </Text>
-              <Text style={[styles.focusBtnLabel, isActive && styles.focusBtnLabelActive]}>
-                {opt.label}
-              </Text>
+              <Text style={[styles.focusIcon, { color: isActive ? Colors.white : opt.iconColor }]}>{opt.icon}</Text>
+              <Text style={[styles.focusBtnLabel, isActive && styles.focusBtnLabelActive]}>{opt.label}</Text>
             </TouchableOpacity>
           );
         })}
@@ -280,9 +275,7 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
           rows.map((row) => <WorkerRowItem key={row.key} row={row} />)
         )}
         {truncated && (
-          <Text style={styles.truncatedText}>
-            ... and {totalCount - MAX_DISPLAYED_WORKERS} more workers
-          </Text>
+          <Text style={styles.truncatedText}>... and {totalCount - MAX_DISPLAYED_WORKERS} more workers</Text>
         )}
       </ScrollView>
     </SovietModal>
@@ -291,11 +284,7 @@ export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, o
 
 // ── Sub-components ───────────────────────────────────────────────────────────
 
-const SummaryStat: React.FC<{ label: string; value: number; color: string }> = ({
-  label,
-  value,
-  color,
-}) => (
+const SummaryStat: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
   <View style={styles.summaryStatBox}>
     <Text style={[styles.summaryValue, { color }]}>{value}</Text>
     <Text style={styles.summaryLabel}>{label}</Text>
@@ -308,9 +297,9 @@ const WorkerRowItem: React.FC<{ row: WorkerRow }> = React.memo(({ row }) => {
 
   // Status indicators
   const indicators: string[] = [];
-  if (row.hasDiseaseFlag) indicators.push('\u{1F912}');         // sick face
-  if (row.vodkaDependency > 50) indicators.push('\u{1F37A}');   // beer mug (vodka proxy)
-  if (row.health < 20) indicators.push('\u{1F480}');            // skull
+  if (row.hasDiseaseFlag) indicators.push('\u{1F912}'); // sick face
+  if (row.vodkaDependency > 50) indicators.push('\u{1F37A}'); // beer mug (vodka proxy)
+  if (row.health < 20) indicators.push('\u{1F480}'); // skull
 
   return (
     <View style={styles.workerRow}>
@@ -338,11 +327,7 @@ const WorkerRowItem: React.FC<{ row: WorkerRow }> = React.memo(({ row }) => {
 
       {/* Assignment */}
       <Text
-        style={[
-          styles.cellText,
-          styles.colAssignment,
-          row.assignment === 'IDLE' && styles.idleText,
-        ]}
+        style={[styles.cellText, styles.colAssignment, row.assignment === 'IDLE' && styles.idleText]}
         numberOfLines={1}
         ellipsizeMode="tail"
       >

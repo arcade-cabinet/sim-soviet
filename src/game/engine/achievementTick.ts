@@ -36,7 +36,7 @@ export function tickAchievements(ctx: AchievementContext): void {
     buildingsLogic.entities.length,
     population,
     date.year,
-    10 / 30 // ~0.33 seconds per 10 ticks at 30 ticks/second
+    10 / 30, // ~0.33 seconds per 10 ticks at 30 ticks/second
   );
 
   for (const ach of newUnlocks) {
@@ -57,12 +57,7 @@ export function tickTutorial(ctx: AchievementContext): void {
   if (!meta || !res) return;
 
   const totalTicks = ctx.chronology.getDate().totalTicks;
-  const milestone = ctx.tutorial.tick(
-    totalTicks,
-    meta.gameMeta,
-    res.resources,
-    buildingsLogic.entities.length
-  );
+  const milestone = ctx.tutorial.tick(totalTicks, meta.gameMeta, res.resources, buildingsLogic.entities.length);
 
   if (milestone) {
     // Fire advisor callback with Krupnik's dialogue

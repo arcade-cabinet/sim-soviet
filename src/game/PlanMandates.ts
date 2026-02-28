@@ -104,10 +104,7 @@ const DIFFICULTY_MULTIPLIERS: Record<DifficultyLevel, number> = {
  * Generate building mandates for a given era and difficulty.
  * Returns an array of mandates with required counts scaled by difficulty.
  */
-export function createMandatesForEra(
-  eraId: string,
-  difficulty: DifficultyLevel
-): BuildingMandate[] {
+export function createMandatesForEra(eraId: string, difficulty: DifficultyLevel): BuildingMandate[] {
   const templates = ERA_MANDATE_TEMPLATES[eraId];
   if (!templates) {
     console.warn(`[PlanMandates] Unknown era ID "${eraId}", falling back to war_communism`);
@@ -136,14 +133,9 @@ export function createPlanMandateState(mandates: BuildingMandate[]): PlanMandate
  * Record that a building was placed. Increments fulfillment for matching mandates.
  * Returns a new state (immutable).
  */
-export function recordBuildingPlaced(
-  state: PlanMandateState,
-  buildingDefId: string
-): PlanMandateState {
+export function recordBuildingPlaced(state: PlanMandateState, buildingDefId: string): PlanMandateState {
   return {
-    mandates: state.mandates.map((m) =>
-      m.defId === buildingDefId ? { ...m, fulfilled: m.fulfilled + 1 } : m
-    ),
+    mandates: state.mandates.map((m) => (m.defId === buildingDefId ? { ...m, fulfilled: m.fulfilled + 1 } : m)),
   };
 }
 
@@ -157,10 +149,7 @@ export function getMandateFulfillment(state: PlanMandateState): number {
   const totalRequired = state.mandates.reduce((sum, m) => sum + m.required, 0);
   if (totalRequired === 0) return 1;
 
-  const totalFulfilled = state.mandates.reduce(
-    (sum, m) => sum + Math.min(m.fulfilled, m.required),
-    0
-  );
+  const totalFulfilled = state.mandates.reduce((sum, m) => sum + Math.min(m.fulfilled, m.required), 0);
   return totalFulfilled / totalRequired;
 }
 

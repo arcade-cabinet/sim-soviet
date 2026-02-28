@@ -5,8 +5,8 @@
  * AudioBufferSourceNode since Jest/jsdom does not provide Web Audio API.
  */
 
-import SFXManager from '../../src/audio/SFXManager';
 import type { SFXName } from '../../src/audio/SFXManager';
+import SFXManager from '../../src/audio/SFXManager';
 
 // ── Web Audio API mocks ──────────────────────────────────────────────────────
 
@@ -211,7 +211,7 @@ describe('SFXManager', () => {
     it('updates master gain node', () => {
       const sfx = SFXManager.getInstance();
       sfx.init();
-      const gainNode = mockCtx.createGain();
+      const _gainNode = mockCtx.createGain();
 
       sfx.setVolume(0.3);
 

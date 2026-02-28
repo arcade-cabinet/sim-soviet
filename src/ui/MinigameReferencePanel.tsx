@@ -8,19 +8,20 @@
  * Uses SovietModal with terminal variant for dark-panel aesthetic.
  */
 
-import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { SovietModal } from './SovietModal';
-import { Colors, monoFont } from './styles';
-import { useGameSnapshot } from '../hooks/useGameState';
+import type React from 'react';
+import { useMemo, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
 import { MINIGAME_DEFINITIONS } from '../game/minigames/definitions';
 import type {
-  MinigameDefinition,
-  MinigameChoice,
-  MinigameOutcome,
   ActiveMinigame,
+  MinigameChoice,
+  MinigameDefinition,
+  MinigameOutcome,
 } from '../game/minigames/MinigameTypes';
+import { useGameSnapshot } from '../hooks/useGameState';
+import { SovietModal } from './SovietModal';
+import { Colors, monoFont } from './styles';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Props
@@ -122,9 +123,7 @@ function formatChance(chance: number): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider. */
 const Divider: React.FC = () => <View style={styles.divider} />;
@@ -196,12 +195,7 @@ const ActiveMinigameSection: React.FC<{ active: ActiveMinigame }> = ({ active })
         {/* Status indicator */}
         <View style={styles.statusRow}>
           <Text style={styles.statusLabel}>STATUS:</Text>
-          <Text
-            style={[
-              styles.statusValue,
-              { color: resolved ? Colors.textMuted : Colors.sovietGold },
-            ]}
-          >
+          <Text style={[styles.statusValue, { color: resolved ? Colors.textMuted : Colors.sovietGold }]}>
             {resolved ? 'RESOLVED' : 'AWAITING DECISION'}
           </Text>
         </View>
@@ -305,9 +299,7 @@ const CompendiumCard: React.FC<{
 
           {/* Auto-resolve penalty */}
           <Divider />
-          <Text style={[styles.choicesSectionLabel, { color: Colors.sovietRed }]}>
-            AUTO-RESOLVE PENALTY (IGNORED):
-          </Text>
+          <Text style={[styles.choicesSectionLabel, { color: Colors.sovietRed }]}>AUTO-RESOLVE PENALTY (IGNORED):</Text>
           <View style={styles.autoResolveBox}>
             <Text style={styles.outcomeAnnouncement}>{definition.autoResolve.announcement}</Text>
             <OutcomeDeltas outcome={definition.autoResolve} />
@@ -322,10 +314,7 @@ const CompendiumCard: React.FC<{
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const MinigameReferencePanel: React.FC<MinigameReferencePanelProps> = ({
-  visible,
-  onDismiss,
-}) => {
+export const MinigameReferencePanel: React.FC<MinigameReferencePanelProps> = ({ visible, onDismiss }) => {
   // Subscribe so the panel re-renders on game ticks (for active minigame updates)
   useGameSnapshot();
 
@@ -337,7 +326,7 @@ export const MinigameReferencePanel: React.FC<MinigameReferencePanelProps> = ({
     const engine = getEngine();
     const router = engine?.getMinigameRouter() ?? null;
     return router?.getActive() ?? null;
-  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleCard = (id: string) => {
     setExpandedIds((prev) => {
@@ -370,9 +359,7 @@ export const MinigameReferencePanel: React.FC<MinigameReferencePanelProps> = ({
       {/* ── Section 2: Minigame Compendium ──────────────────────── */}
       <SectionHeader title="MINIGAME COMPENDIUM" />
 
-      <Text style={styles.compendiumSubtitle}>
-        {MINIGAME_DEFINITIONS.length} scenarios on file. Tap to expand.
-      </Text>
+      <Text style={styles.compendiumSubtitle}>{MINIGAME_DEFINITIONS.length} scenarios on file. Tap to expand.</Text>
 
       {MINIGAME_DEFINITIONS.map((def) => (
         <CompendiumCard

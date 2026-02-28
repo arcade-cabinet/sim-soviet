@@ -6,19 +6,19 @@
  * ready for tick().
  */
 
-import { createResourceStore, createMetaStore, createGrid } from '@/ecs/factories';
+import { GRID_SIZE } from '@/config';
+import { terrainFeatures } from '@/ecs/archetypes';
+import { createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { createBuilding } from '@/ecs/factories/buildingFactories';
 import { createStartingSettlement } from '@/ecs/factories/settlementFactories';
-import { terrainFeatures } from '@/ecs/archetypes';
 import { world } from '@/ecs/world';
-import { SimulationEngine, type SimCallbacks } from '@/game/SimulationEngine';
 import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
-import { SaveSystem } from '@/game/SaveSystem';
-import { GRID_SIZE } from '@/config';
-import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
-import type { DifficultyLevel, ConsequenceLevel } from '@/game/ScoringSystem';
 import { recalculatePaths } from '@/game/PathSystem';
+import { SaveSystem } from '@/game/SaveSystem';
+import { type ConsequenceLevel, DIFFICULTY_PRESETS, type DifficultyLevel } from '@/game/ScoringSystem';
+import { type SimCallbacks, SimulationEngine } from '@/game/SimulationEngine';
+import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 
 export interface GameInitOptions {
   difficulty?: DifficultyLevel;
@@ -36,22 +36,21 @@ let initialized = false;
  * Initialize the ECS world with all entities and return a SimulationEngine.
  * Safe to call multiple times — subsequent calls return the existing engine.
  */
-export function initGame(
-  callbacks: SimCallbacks,
-  options?: GameInitOptions
-): SimulationEngine {
+export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): SimulationEngine {
   if (engine && initialized) return engine;
 
   const difficulty = options?.difficulty ?? 'comrade';
   const consequence = options?.consequence ?? 'permadeath';
   const seed = options?.seed ?? 'simsoviet-3d';
 
-  // Create singleton store entities with enough materials for early construction
+  // Create singleton store entities with enough materials for early construction.
+  // Scale starting resources by difficulty multiplier (worker=1.5x, comrade=1.0x, tovarish=0.7x).
+  const resMult = DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
   createResourceStore({
-    food: 800,
-    timber: 150,
-    steel: 60,
-    cement: 30,
+    food: Math.round(800 * resMult),
+    timber: Math.round(150 * resMult),
+    steel: Math.round(60 * resMult),
+    cement: Math.round(30 * resMult),
   });
   createMetaStore({
     seed,

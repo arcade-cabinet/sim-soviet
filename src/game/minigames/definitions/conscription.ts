@@ -7,10 +7,9 @@ import type { MinigameDefinition } from '../MinigameTypes';
 export const CONSCRIPTION_SELECTION: MinigameDefinition = {
   id: 'conscription_selection',
   name: 'Conscription Selection',
-  description:
-    'The army needs bodies. Your city has bodies. The math is simple. The choice is not.',
+  description: 'The army needs bodies. Your city has bodies. The math is simple. The choice is not.',
   triggerType: 'event',
-  triggerCondition: 'conscription_order',
+  triggerCondition: 'conscription_wave',
   tickLimit: 20,
   choices: [
     {
@@ -35,8 +34,7 @@ export const CONSCRIPTION_SELECTION: MinigameDefinition = {
       successChance: 0.8,
       onSuccess: {
         resources: { population: -2 },
-        announcement:
-          'The troublemakers have been sent to defend the Motherland. Morale improves immediately.',
+        announcement: 'The troublemakers have been sent to defend the Motherland. Morale improves immediately.',
       },
       onFailure: {
         resources: { population: -2 },
@@ -52,8 +50,7 @@ export const CONSCRIPTION_SELECTION: MinigameDefinition = {
       successChance: 0.15,
       onSuccess: {
         commendations: 1,
-        announcement:
-          'Your argument was so compelling that the conscription order was waived. A bureaucratic miracle.',
+        announcement: 'Your argument was so compelling that the conscription order was waived. A bureaucratic miracle.',
       },
       onFailure: {
         resources: { population: -5 },
@@ -66,8 +63,7 @@ export const CONSCRIPTION_SELECTION: MinigameDefinition = {
   autoResolve: {
     resources: { population: -6 },
     blackMarks: 1,
-    announcement:
-      'Random citizens conscripted. Families separated. The army does not send thank-you notes.',
+    announcement: 'Random citizens conscripted. Families separated. The army does not send thank-you notes.',
     severity: 'warning',
   },
 };

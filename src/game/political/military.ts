@@ -22,7 +22,7 @@ export function processConscriptionQueue(
   queue: ConscriptionEvent[],
   totalTicks: number,
   rng: GameRng | null,
-  result: PoliticalTickResult
+  result: PoliticalTickResult,
 ): Array<{ returnTick: number; count: number }> {
   const newReturns: Array<{ returnTick: number; count: number }> = [];
 
@@ -64,7 +64,7 @@ export function processConscriptionQueue(
 export function processOrgnaborQueue(
   queue: OrgnaborEvent[],
   totalTicks: number,
-  result: PoliticalTickResult
+  result: PoliticalTickResult,
 ): Array<{ returnTick: number; count: number }> {
   const newReturns: Array<{ returnTick: number; count: number }> = [];
 
@@ -91,7 +91,7 @@ export function processOrgnaborQueue(
  */
 export function processReturns(
   returnQueue: Array<{ returnTick: number; count: number }>,
-  totalTicks: number
+  totalTicks: number,
 ): { returned: number; remaining: Array<{ returnTick: number; count: number }> } {
   let returned = 0;
   const remaining: Array<{ returnTick: number; count: number }> = [];

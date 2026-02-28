@@ -22,8 +22,7 @@ export const weatherFillerGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `SPRING PREDICTED FOR ${pick(['NEXT MONTH', 'SOMETIME THIS YEAR', 'THE FORESEEABLE FUTURE', 'EVENTUALLY', 'SOON (REDEFINED)'])}`,
     subtext: 'Citizens advised to remain patient. Patience supplies: adequate.',
-    reality:
-      'Last spring lasted 2 days. A citizen blinked and missed it. He was counseled for inattention.',
+    reality: 'Last spring lasted 2 days. A citizen blinked and missed it. He was counseled for inattention.',
     category: 'weather',
   }),
 
@@ -73,10 +72,8 @@ export const weatherFillerGenerators: HeadlineGenerator[] = [
       `SEEKING QUALIFIED PLUMBER. QUALIFICATIONS: ALIVE, WILLING`,
       `FOR TRADE: 1 POTATO FOR 3 POEMS ABOUT TRACTORS. SERIOUS OFFERS ONLY`,
     ])}`,
-    subtext:
-      'All classified ads reviewed and approved by the Ministry of Commerce (dissolved 1976).',
-    reality:
-      'The classified section is the only honest part of the newspaper. This concerns everyone.',
+    subtext: 'All classified ads reviewed and approved by the Ministry of Commerce (dissolved 1976).',
+    reality: 'The classified section is the only honest part of the newspaper. This concerns everyone.',
     category: 'editorial',
   }),
 
@@ -84,8 +81,7 @@ export const weatherFillerGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `DAILY HOROSCOPE: ALL SIGNS PREDICT ${pick(['INCREASED PRODUCTIVITY', 'FAVORABLE QUOTA FULFILLMENT', 'LOYALTY TO THE STATE', 'CONCRETE', 'ANOTHER DAY', 'THE SAME AS YESTERDAY'])}`,
     subtext: `Astrology is bourgeois superstition. This horoscope is scientific socialist prediction.`,
-    reality:
-      'Horoscope written by the same person who writes the weather forecast. He is also the janitor.',
+    reality: 'Horoscope written by the same person who writes the weather forecast. He is also the janitor.',
     category: 'editorial',
   }),
 

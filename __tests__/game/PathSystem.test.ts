@@ -1,5 +1,5 @@
 import { GRID_SIZE } from '@/config';
-import { buildings, tiles, terrainFeatures } from '@/ecs/archetypes';
+import { buildings, tiles } from '@/ecs/archetypes';
 import { createBuilding, createGrid } from '@/ecs/factories';
 import { createForest, createMountain, createRiver } from '@/ecs/factories/terrainFeatureFactories';
 import { world } from '@/ecs/world';
@@ -126,9 +126,7 @@ describe('PathSystem', () => {
     expect(roadsBefore).toBeGreaterThan(0);
 
     // Remove one building and recalculate
-    const toRemove = buildings.entities.find(
-      (e) => e.position.gridX === 10 && e.position.gridY === 13,
-    );
+    const toRemove = buildings.entities.find((e) => e.position.gridX === 10 && e.position.gridY === 13);
     if (toRemove) world.remove(toRemove);
     recalculatePaths();
 

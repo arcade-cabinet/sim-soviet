@@ -3,9 +3,9 @@
  * Port of poc.html lines 252-259.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Colors, SharedStyles, monoFont } from './styles';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Colors, monoFont, SharedStyles } from './styles';
 
 export interface DirectiveHUDProps {
   text: string;

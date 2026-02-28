@@ -39,7 +39,7 @@ const CLASS_TO_DIALOGUE_POOL: Record<string, CitizenRenderSlot['dialoguePool']> 
 export function computeRenderSlot(
   citizenClass: string,
   gender: 'male' | 'female' = 'male',
-  age: number = 25
+  age: number = 25,
 ): CitizenRenderSlot {
   return {
     gender,
@@ -71,7 +71,7 @@ export function createCitizen(
   homeY?: number,
   gender: 'male' | 'female' = 'male',
   age: number = 25,
-  dvorId?: string
+  dvorId?: string,
 ): Entity {
   const citizen: CitizenComponent = {
     class: citizenClass,

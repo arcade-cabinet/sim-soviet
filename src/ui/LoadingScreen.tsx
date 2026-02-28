@@ -6,14 +6,9 @@
  * and model count. Fades out when loading completes.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  Animated,
-  StyleSheet,
-  Platform,
-} from 'react-native';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface LoadingScreenProps {
@@ -69,7 +64,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   // Animate dots
   useEffect(() => {
     const interval = setInterval(() => {
-      setDots((d) => (d.length >= 3 ? '' : d + '.'));
+      setDots((d) => (d.length >= 3 ? '' : `${d}.`));
     }, 400);
     return () => clearInterval(interval);
   }, []);
@@ -128,7 +123,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
         {/* Rotating propaganda message */}
         <View style={styles.messageContainer}>
           <Text style={styles.message}>
-            {LOADING_MESSAGES[messageIdx]}{dots}
+            {LOADING_MESSAGES[messageIdx]}
+            {dots}
           </Text>
         </View>
 

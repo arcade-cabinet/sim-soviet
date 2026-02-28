@@ -16,12 +16,7 @@ import type { SettlementTier } from '../SettlementSystem';
  * Used for comparison: a building is available if the player's
  * current tier index >= the building's required tier index.
  */
-export const SETTLEMENT_TIER_ORDER: readonly SettlementTier[] = [
-  'selo',
-  'posyolok',
-  'pgt',
-  'gorod',
-];
+export const SETTLEMENT_TIER_ORDER: readonly SettlementTier[] = ['selo', 'posyolok', 'pgt', 'gorod'];
 
 /**
  * Maps building defIds to the minimum settlement tier required to build them.
@@ -89,9 +84,6 @@ export function getBuildingTierRequirement(defId: string): SettlementTier {
  * Check if a settlement tier meets the requirement for a building.
  * Returns true if `currentTier` >= the building's required tier.
  */
-export function tierMeetsRequirement(
-  currentTier: SettlementTier,
-  requiredTier: SettlementTier
-): boolean {
+export function tierMeetsRequirement(currentTier: SettlementTier, requiredTier: SettlementTier): boolean {
   return SETTLEMENT_TIER_ORDER.indexOf(currentTier) >= SETTLEMENT_TIER_ORDER.indexOf(requiredTier);
 }

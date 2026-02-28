@@ -20,8 +20,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'collapse_no_witness',
     name: 'Nothing To See Here',
     description: 'Have a building collapse with 0 witnesses.',
-    subtext:
-      'If a building falls and no one is around, did the State fail? No. The State never fails.',
+    subtext: 'If a building falls and no one is around, did the State fail? No. The State never fails.',
     hidden: false,
   },
   {
@@ -35,8 +34,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'ten_statues',
     name: 'Cult of Personality',
     description: 'Build 10 Lenin Statues.',
-    subtext:
-      'From every direction, Lenin watches. He is proud. Probably. His expression has not changed since 1924.',
+    subtext: 'From every direction, Lenin watches. He is proud. Probably. His expression has not changed since 1924.',
     hidden: false,
   },
   {
@@ -50,8 +48,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'max_vodka',
     name: 'Spirit of the Revolution',
     description: 'Reach maximum vodka reserves.',
-    subtext:
-      'The warehouse is full. The workers are full. Nobody is walking straight. Production continues.',
+    subtext: 'The warehouse is full. The workers are full. Nobody is walking straight. Production continues.',
     hidden: false,
   },
   {
@@ -65,8 +62,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'hundred_pop',
     name: 'Strength in Numbers',
     description: 'Reach 100 population.',
-    subtext:
-      '100 citizens. 100 mouths to feed. 100 potential dissidents. But also: 100 potential informants.',
+    subtext: '100 citizens. 100 mouths to feed. 100 potential dissidents. But also: 100 potential informants.',
     hidden: false,
   },
   {
@@ -129,8 +125,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'night_shift',
     name: 'Darkness Is a Feature',
     description: 'Have 0 power supply with 50+ population.',
-    subtext:
-      'Citizens learn to navigate by sound and collective memory. Some discover walls the hard way.',
+    subtext: 'Citizens learn to navigate by sound and collective memory. Some discover walls the hard way.',
     hidden: false,
   },
   {
@@ -152,32 +147,28 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'no_buildings_high_pop',
     name: 'Nomadic Socialism',
     description: 'Have 50+ population with 0 buildings.',
-    subtext:
-      'They live in the open. They are free. The freedom is cold and wet but ideologically sound.',
+    subtext: 'They live in the open. They are free. The freedom is cold and wet but ideologically sound.',
     hidden: true,
   },
   {
     id: 'bulldoze_everything',
     name: 'Clean Slate',
     description: 'Bulldoze every building in a city with 10+ buildings.',
-    subtext:
-      'Sometimes progress means starting over. The rubble will make excellent foundations. For more rubble.',
+    subtext: 'Sometimes progress means starting over. The rubble will make excellent foundations. For more rubble.',
     hidden: false,
   },
   {
     id: 'three_disasters',
     name: 'Disaster Magnet',
     description: 'Experience 3 disasters in a row.',
-    subtext:
-      'Statistically improbable. Ideologically inevitable. The State is testing you. You are failing the test.',
+    subtext: 'Statistically improbable. Ideologically inevitable. The State is testing you. You are failing the test.',
     hidden: false,
   },
   {
     id: 'propaganda_win',
     name: 'Ministry of Truth Employee of the Month',
     description: 'Have Pravda report 10 positive headlines while all indicators are negative.',
-    subtext:
-      'The news has never been better. Reality has never been worse. These are different departments.',
+    subtext: 'The news has never been better. Reality has never been worse. These are different departments.',
     hidden: false,
   },
   {
@@ -214,24 +205,21 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'perfect_quota',
     name: 'Exactly As Planned',
     description: 'Complete a quota at exactly 100%.',
-    subtext:
-      'Not 99%. Not 101%. Exactly 100%. The Plan is perfect. You are perfect. Do not get used to this.',
+    subtext: 'Not 99%. Not 101%. Exactly 100%. The Plan is perfect. You are perfect. Do not get used to this.',
     hidden: false,
   },
   {
     id: 'survive_purge',
     name: 'Still Here (For Now)',
     description: 'Survive a personnel optimization event.',
-    subtext:
-      'You remain. Others did not. Do not ask where they went. Where they went is where they were always going.',
+    subtext: 'You remain. Others did not. Do not ask where they went. Where they went is where they were always going.',
     hidden: false,
   },
   {
     id: 'reelected',
     name: 'Unanimous Approval',
     description: 'Win a re-election event with 100%+ of the vote.',
-    subtext:
-      'Democracy in action. The people have spoken. The people were given one option. The people are wise.',
+    subtext: 'Democracy in action. The people have spoken. The people were given one option. The people are wise.',
     hidden: false,
   },
 ];

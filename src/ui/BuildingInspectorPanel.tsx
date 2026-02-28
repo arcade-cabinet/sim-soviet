@@ -9,16 +9,17 @@
  * Reads the building entity directly from ECS by grid position.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { SovietModal } from './SovietModal';
-import { Colors, monoFont } from './styles';
-import { getBuildingDef } from '../data/buildingDefs';
-import { buildingsLogic, decayableBuildings } from '../ecs/archetypes';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
+import { getBuildingDef } from '../data/buildingDefs';
+import { buildingsLogic, decayableBuildings, getResourceEntity } from '../ecs/archetypes';
 import { effectiveWorkers } from '../ecs/systems/productionSystem';
+import { getBuildingStorageContribution } from '../ecs/systems/storageSystem';
 import type { BuildingComponent, CitizenComponent, Durability } from '../ecs/world';
 import type { WorkerDisplayInfo } from '../game/workers/types';
+import { SovietModal } from './SovietModal';
+import { Colors, monoFont } from './styles';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -61,10 +62,7 @@ function getWorkersAt(defId: string): AssignedWorkerInfo[] {
 /** Get durability for a building entity if it has the durability component. */
 function findDurability(gridX: number, gridY: number): Durability | null {
   for (const entity of decayableBuildings.entities) {
-    if (
-      entity.position?.gridX === gridX &&
-      entity.position?.gridY === gridY
-    ) {
+    if (entity.position?.gridX === gridX && entity.position?.gridY === gridY) {
       return entity.durability;
     }
   }
@@ -79,8 +77,7 @@ function getConstructionInfo(building: BuildingComponent): {
   if (!building.constructionPhase || building.constructionPhase === 'complete') {
     return null;
   }
-  const phaseLabel =
-    building.constructionPhase === 'foundation' ? 'FOUNDATION' : 'BUILDING';
+  const phaseLabel = building.constructionPhase === 'foundation' ? 'FOUNDATION' : 'BUILDING';
   const progress = building.constructionProgress ?? 0;
   return { label: phaseLabel, progress };
 }
@@ -106,9 +103,9 @@ function efficiencyColor(pct: number): string {
 
 /** Morale icon based on morale value (0-100). */
 function moraleIcon(morale: number): string {
-  if (morale >= 70) return '\u2605';   // star — happy
-  if (morale >= 40) return '\u25CF';   // circle — neutral
-  return '\u2717';                      // cross — unhappy
+  if (morale >= 70) return '\u2605'; // star — happy
+  if (morale >= 40) return '\u25CF'; // circle — neutral
+  return '\u2717'; // cross — unhappy
 }
 
 /** Color for morale value. */
@@ -121,22 +118,32 @@ function moraleColor(morale: number): string {
 /** Status label for worker display. */
 function statusLabel(status: WorkerDisplayInfo['status']): string {
   switch (status) {
-    case 'working': return 'WORKING';
-    case 'idle': return 'IDLE';
-    case 'hungry': return 'HUNGRY';
-    case 'drunk': return 'INTOXICATED';
-    case 'defecting': return 'DISLOYAL';
+    case 'working':
+      return 'WORKING';
+    case 'idle':
+      return 'IDLE';
+    case 'hungry':
+      return 'HUNGRY';
+    case 'drunk':
+      return 'INTOXICATED';
+    case 'defecting':
+      return 'DISLOYAL';
   }
 }
 
 /** Color for worker status. */
 function statusColor(status: WorkerDisplayInfo['status']): string {
   switch (status) {
-    case 'working': return Colors.termGreen;
-    case 'idle': return '#9e9e9e';
-    case 'hungry': return Colors.sovietGold;
-    case 'drunk': return '#ff9800';
-    case 'defecting': return '#ef4444';
+    case 'working':
+      return Colors.termGreen;
+    case 'idle':
+      return '#9e9e9e';
+    case 'hungry':
+      return Colors.sovietGold;
+    case 'drunk':
+      return '#ff9800';
+    case 'defecting':
+      return '#ef4444';
   }
 }
 
@@ -215,7 +222,7 @@ function calcEfficiency(
 
   // Morale factor (only if there are workers)
   if (workerCap > 0 && workerCount > 0 && avgMorale < 50) {
-    const moraleFactor = 0.5 + (avgMorale / 100);
+    const moraleFactor = 0.5 + avgMorale / 100;
     efficiency *= moraleFactor;
     reasons.push('Low morale');
   }
@@ -242,13 +249,13 @@ const StatBar: React.FC<{
       <View style={styles.barLabelRow}>
         <Text style={styles.barLabel}>{label}</Text>
         <Text style={[styles.barValue, { color }]}>
-          {Math.round(value)}{suffix ? suffix : ''}{max > 0 ? ` / ${max}` : ''}
+          {Math.round(value)}
+          {suffix ? suffix : ''}
+          {max > 0 ? ` / ${max}` : ''}
         </Text>
       </View>
       <View style={styles.barTrack}>
-        <View
-          style={[styles.barFill, { width: `${pct}%`, backgroundColor: color }]}
-        />
+        <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: color }]} />
       </View>
     </View>
   );
@@ -263,9 +270,7 @@ const InfoRow: React.FC<{
 }> = ({ label, value, valueColor }) => (
   <View style={styles.infoRow}>
     <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={[styles.infoValue, valueColor ? { color: valueColor } : null]}>
-      {value}
-    </Text>
+    <Text style={[styles.infoValue, valueColor ? { color: valueColor } : null]}>{value}</Text>
   </View>
 );
 
@@ -323,14 +328,11 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
   const workerCount = assignedWorkers.length;
 
   // Average morale across assigned workers
-  const avgMorale = workerCount > 0
-    ? assignedWorkers.reduce((sum, w) => sum + w.morale, 0) / workerCount
-    : 0;
+  const avgMorale = workerCount > 0 ? assignedWorkers.reduce((sum, w) => sum + w.morale, 0) / workerCount : 0;
 
   // Average production efficiency across assigned workers
-  const avgWorkerEfficiency = workerCount > 0
-    ? assignedWorkers.reduce((sum, w) => sum + w.productionEfficiency, 0) / workerCount
-    : 0;
+  const avgWorkerEfficiency =
+    workerCount > 0 ? assignedWorkers.reduce((sum, w) => sum + w.productionEfficiency, 0) / workerCount : 0;
 
   // Housing
   const housingCap = building?.housingCap ?? def?.stats.housingCap ?? 0;
@@ -348,6 +350,16 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
 
   // Fear
   const fear = building?.fear ?? def?.stats.fear ?? 0;
+
+  // Fire
+  const onFire = building?.onFire ?? false;
+  const fireTicksRemaining = building?.fireTicksRemaining ?? 0;
+
+  // Storage
+  const storageContribution = getBuildingStorageContribution(buildingDefId);
+  const resEntity = getResourceEntity();
+  const currentFood = Math.round(resEntity?.resources.food ?? 0);
+  const totalStorageCap = resEntity?.resources.storageCapacity ?? 200;
 
   // Footprint
   const footX = def?.footprint.tilesX ?? 1;
@@ -368,13 +380,13 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
   );
 
   // Effective production rate (base amount * efficiency factor)
-  const effectiveOutput = produces
-    ? +(produces.amount * (efficiency.pct / 100)).toFixed(1)
-    : 0;
+  const effectiveOutput = produces ? +(produces.amount * (efficiency.pct / 100)).toFixed(1) : 0;
 
-  // Determine stamp text based on construction / power state
+  // Determine stamp text based on construction / power / fire state
   let stampText: string;
-  if (constructionInfo) {
+  if (onFire) {
+    stampText = 'ON FIRE';
+  } else if (constructionInfo) {
     stampText = 'CONSTRUCTION';
   } else if (powered || powerReq === 0) {
     stampText = 'OPERATIONAL';
@@ -401,9 +413,7 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
       <InfoRow label="POSITION" value={`[${gridX}, ${gridY}]`} />
       <InfoRow label="TYPE" value={role.toUpperCase()} />
       <InfoRow label="FOOTPRINT" value={`${footX} x ${footY}`} />
-      {cost > 0 && (
-        <InfoRow label="COST" value={`${cost}`} valueColor={Colors.sovietGold} />
-      )}
+      {cost > 0 && <InfoRow label="COST" value={`${cost}`} valueColor={Colors.sovietGold} />}
 
       {/* Construction Progress */}
       {constructionInfo && (
@@ -432,9 +442,7 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
             suffix="%"
           />
           {efficiency.reasons.length > 0 && (
-            <Text style={styles.efficiencyReasons}>
-              {efficiency.reasons.join(' \u2022 ')}
-            </Text>
+            <Text style={styles.efficiencyReasons}>{efficiency.reasons.join(' \u2022 ')}</Text>
           )}
         </>
       )}
@@ -442,18 +450,10 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
       {/* Power Status */}
       <SectionDivider label="Power" />
       {powerOutput > 0 ? (
-        <InfoRow
-          label="POWER OUTPUT"
-          value={`${powerOutput}W`}
-          valueColor={Colors.termGreen}
-        />
+        <InfoRow label="POWER OUTPUT" value={`${powerOutput}W`} valueColor={Colors.termGreen} />
       ) : powerReq > 0 ? (
         <>
-          <InfoRow
-            label="POWER STATUS"
-            value={powered ? 'POWERED' : 'UNPOWERED'}
-            valueColor={powerColor(powered)}
-          />
+          <InfoRow label="POWER STATUS" value={powered ? 'POWERED' : 'UNPOWERED'} valueColor={powerColor(powered)} />
           <InfoRow label="POWER DEMAND" value={`${powerReq}W`} />
         </>
       ) : (
@@ -500,24 +500,18 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
             <View style={styles.workerList}>
               {assignedWorkers.slice(0, MAX_DISPLAYED_WORKERS).map((w, i) => (
                 <View key={i} style={styles.workerRow}>
-                  <Text style={[styles.workerClass, { color: CLASS_COLOR[w.class] }]}>
-                    {CLASS_ABBREV[w.class]}
-                  </Text>
+                  <Text style={[styles.workerClass, { color: CLASS_COLOR[w.class] }]}>{CLASS_ABBREV[w.class]}</Text>
                   <Text style={styles.workerName} numberOfLines={1}>
                     {w.name}
                   </Text>
                   <Text style={[styles.workerMorale, { color: moraleColor(w.morale) }]}>
                     {moraleIcon(w.morale)} {w.morale}
                   </Text>
-                  <Text style={[styles.workerStatus, { color: statusColor(w.status) }]}>
-                    {statusLabel(w.status)}
-                  </Text>
+                  <Text style={[styles.workerStatus, { color: statusColor(w.status) }]}>{statusLabel(w.status)}</Text>
                 </View>
               ))}
               {workerCount > MAX_DISPLAYED_WORKERS && (
-                <Text style={styles.workerOverflow}>
-                  +{workerCount - MAX_DISPLAYED_WORKERS} more workers
-                </Text>
+                <Text style={styles.workerOverflow}>+{workerCount - MAX_DISPLAYED_WORKERS} more workers</Text>
               )}
             </View>
           )}
@@ -532,54 +526,51 @@ export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
         </>
       )}
 
+      {/* Storage */}
+      {storageContribution > 0 && (
+        <>
+          <SectionDivider label="Storage" />
+          <InfoRow label="CONTRIBUTION" value={`+${storageContribution} units`} valueColor={Colors.termGreen} />
+          <StatBar
+            label="SETTLEMENT FOOD STORED"
+            value={currentFood}
+            max={totalStorageCap}
+            color={currentFood > totalStorageCap ? '#ef4444' : Colors.sovietGold}
+          />
+        </>
+      )}
+
+      {/* Fire */}
+      {onFire && (
+        <>
+          <SectionDivider label="Fire" />
+          <InfoRow label="STATUS" value="BURNING" valueColor="#ef4444" />
+          {fireTicksRemaining > 0 && (
+            <InfoRow label="EXTINGUISHES IN" value={`${fireTicksRemaining} ticks`} valueColor="#ff9800" />
+          )}
+        </>
+      )}
+
       {/* Health / Decay */}
       <SectionDivider label="Structural Integrity" />
-      <StatBar
-        label="HEALTH"
-        value={health}
-        max={100}
-        color={healthColor(health)}
-      />
-      {decayRate > 0 && (
-        <InfoRow
-          label="DECAY RATE"
-          value={`-${decayRate}/tick`}
-          valueColor="#ef4444"
-        />
-      )}
+      <StatBar label="HEALTH" value={health} max={100} color={healthColor(health)} />
+      {decayRate > 0 && <InfoRow label="DECAY RATE" value={`-${decayRate}/tick`} valueColor="#ef4444" />}
 
       {/* Environmental */}
       {(pollution > 0 || fear > 0) && (
         <>
           <SectionDivider label="Environmental Impact" />
-          {pollution > 0 && (
-            <InfoRow
-              label="SMOG OUTPUT"
-              value={`${pollution}/tick`}
-              valueColor="#9e9e9e"
-            />
-          )}
-          {fear > 0 && (
-            <InfoRow
-              label="FEAR OUTPUT"
-              value={`${fear}/tick`}
-              valueColor={Colors.sovietRed}
-            />
-          )}
+          {pollution > 0 && <InfoRow label="SMOG OUTPUT" value={`${pollution}/tick`} valueColor="#9e9e9e" />}
+          {fear > 0 && <InfoRow label="FEAR OUTPUT" value={`${fear}/tick`} valueColor={Colors.sovietRed} />}
         </>
       )}
 
       {/* Demolish Button */}
       <View style={styles.demolishContainer}>
-        <Text
-          style={styles.demolishBtn}
-          onPress={onDemolish}
-        >
+        <Text style={styles.demolishBtn} onPress={onDemolish}>
           DEMOLISH BUILDING
         </Text>
-        <Text style={styles.demolishNote}>
-          This action is irreversible. All workers will be unassigned.
-        </Text>
+        <Text style={styles.demolishNote}>This action is irreversible. All workers will be unassigned.</Text>
       </View>
     </SovietModal>
   );

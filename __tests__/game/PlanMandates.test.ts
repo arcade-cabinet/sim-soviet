@@ -45,11 +45,9 @@ describe('PlanMandates', () => {
       expect(mandates.length).toBeGreaterThan(0);
       // Industrialization era should mandate factories/industrial buildings
       const defIds = mandates.map((m) => m.defId);
-      expect(
-        defIds.some(
-          (id) => id.includes('factory') || id.includes('power') || id.includes('distillery')
-        )
-      ).toBe(true);
+      expect(defIds.some((id) => id.includes('factory') || id.includes('power') || id.includes('distillery'))).toBe(
+        true,
+      );
     });
 
     it('generates more mandates on harder difficulty', () => {
@@ -91,9 +89,7 @@ describe('PlanMandates', () => {
 
   describe('recordBuildingPlaced', () => {
     it('increments fulfillment when a mandated building is placed', () => {
-      const mandates: BuildingMandate[] = [
-        { defId: 'workers-house-a', required: 3, label: 'Workers Housing' },
-      ];
+      const mandates: BuildingMandate[] = [{ defId: 'workers-house-a', required: 3, label: 'Workers Housing' }];
       const state = createPlanMandateState(mandates);
 
       const updated = recordBuildingPlaced(state, 'workers-house-a');
@@ -101,9 +97,7 @@ describe('PlanMandates', () => {
     });
 
     it('does not exceed required count', () => {
-      const mandates: BuildingMandate[] = [
-        { defId: 'workers-house-a', required: 1, label: 'Workers Housing' },
-      ];
+      const mandates: BuildingMandate[] = [{ defId: 'workers-house-a', required: 1, label: 'Workers Housing' }];
       const state = createPlanMandateState(mandates);
 
       let updated = recordBuildingPlaced(state, 'workers-house-a');
@@ -113,9 +107,7 @@ describe('PlanMandates', () => {
     });
 
     it('ignores non-mandated buildings', () => {
-      const mandates: BuildingMandate[] = [
-        { defId: 'workers-house-a', required: 3, label: 'Workers Housing' },
-      ];
+      const mandates: BuildingMandate[] = [{ defId: 'workers-house-a', required: 3, label: 'Workers Housing' }];
       const state = createPlanMandateState(mandates);
 
       const updated = recordBuildingPlaced(state, 'vodka-distillery');
@@ -127,17 +119,13 @@ describe('PlanMandates', () => {
 
   describe('getMandateFulfillment', () => {
     it('returns 0 when nothing built', () => {
-      const mandates: BuildingMandate[] = [
-        { defId: 'workers-house-a', required: 3, label: 'Workers Housing' },
-      ];
+      const mandates: BuildingMandate[] = [{ defId: 'workers-house-a', required: 3, label: 'Workers Housing' }];
       const state = createPlanMandateState(mandates);
       expect(getMandateFulfillment(state)).toBe(0);
     });
 
     it('returns 1.0 when all mandates fully met', () => {
-      const mandates: BuildingMandate[] = [
-        { defId: 'workers-house-a', required: 2, label: 'Workers Housing' },
-      ];
+      const mandates: BuildingMandate[] = [{ defId: 'workers-house-a', required: 2, label: 'Workers Housing' }];
       let state = createPlanMandateState(mandates);
       state = recordBuildingPlaced(state, 'workers-house-a');
       state = recordBuildingPlaced(state, 'workers-house-a');

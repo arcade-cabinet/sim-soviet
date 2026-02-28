@@ -19,11 +19,7 @@ import { world } from '../world';
  * @param terrain - Terrain type for this tile
  * @returns The created entity, already added to the world
  */
-export function createTile(
-  gridX: number,
-  gridY: number,
-  terrain: TileComponent['terrain'] = 'grass'
-): Entity {
+export function createTile(gridX: number, gridY: number, terrain: TileComponent['terrain'] = 'grass'): Entity {
   const tile: TileComponent = {
     terrain,
     elevation: 0,
@@ -68,7 +64,6 @@ export function createGrid(size: number = GRID_SIZE): void {
  * @param initialValues - Optional partial override of starting resources
  * @returns The resource store entity
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: resource store has many fields with individual defaults
 export function createResourceStore(
   initialValues?: Partial<{
     money: number;
@@ -86,7 +81,7 @@ export function createResourceStore(
     seedFund: number;
     emergencyReserve: number;
     storageCapacity: number;
-  }>
+  }>,
 ): Entity {
   // Check for existing store
   const existing = world.with('resources', 'isResourceStore');

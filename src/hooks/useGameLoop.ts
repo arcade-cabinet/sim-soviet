@@ -9,11 +9,11 @@
 
 import { useEffect, useRef } from 'react';
 import { gameState } from '../engine/GameState';
-import { simTick } from '../engine/SimTick';
-import { updateTrain } from '../engine/TrainSystem';
-import { updateTraffic } from '../engine/TrafficSystem';
-import { updateMeteor } from '../engine/MeteorSystem';
 import { GRID_SIZE } from '../engine/GridTypes';
+import { updateMeteor } from '../engine/MeteorSystem';
+import { simTick } from '../engine/SimTick';
+import { updateTraffic } from '../engine/TrafficSystem';
+import { updateTrain } from '../engine/TrainSystem';
 
 export function useGameLoop(): void {
   const rafRef = useRef<number | null>(null);
@@ -53,9 +53,7 @@ export function useGameLoop(): void {
       });
 
       // Zeppelin AI: target nearest fire
-      const fireBuildings = state.buildings.filter(
-        (b) => state.grid[b.y]?.[b.x]?.onFire > 0
-      );
+      const fireBuildings = state.buildings.filter((b) => state.grid[b.y]?.[b.x]?.onFire > 0);
       state.zeppelins.forEach((z) => {
         if (fireBuildings.length > 0) {
           // Find nearest fire
@@ -72,10 +70,7 @@ export function useGameLoop(): void {
           z.ty = nearest.y;
         } else {
           // Patrol randomly
-          if (
-            Math.hypot(z.x - z.tx, z.y - z.ty) < 1 ||
-            Math.random() < 0.01
-          ) {
+          if (Math.hypot(z.x - z.tx, z.y - z.ty) < 1 || Math.random() < 0.01) {
             z.tx = Math.random() * GRID_SIZE;
             z.ty = Math.random() * GRID_SIZE;
           }
@@ -91,8 +86,7 @@ export function useGameLoop(): void {
         }
         // If over a fire, extinguish it
         if (dist < 1.5) {
-          const cell =
-            state.grid[Math.round(z.ty)]?.[Math.round(z.tx)];
+          const cell = state.grid[Math.round(z.ty)]?.[Math.round(z.tx)];
           if (cell && cell.onFire > 0) {
             cell.onFire = 0;
           }

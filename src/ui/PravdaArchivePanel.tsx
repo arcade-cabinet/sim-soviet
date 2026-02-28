@@ -6,13 +6,14 @@
  * Uses SovietModal with terminal variant for dark-panel aesthetic.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { SovietModal } from './SovietModal';
-import { Colors, monoFont } from './styles';
-import { useGameSnapshot } from '../hooks/useGameState';
+import type React from 'react';
+import { useMemo, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
 import type { PravdaHeadline } from '../game/pravda/types';
+import { useGameSnapshot } from '../hooks/useGameState';
+import { SovietModal } from './SovietModal';
+import { Colors, monoFont } from './styles';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -76,9 +77,7 @@ function formatRelativeTime(timestamp: number): string {
 // ── Sub-components ───────────────────────────────────────────────────────────
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
@@ -90,11 +89,7 @@ const HeadlineCard: React.FC<{ headline: PravdaHeadline }> = ({ headline }) => {
   const label = CATEGORY_LABEL[headline.category] ?? headline.category.toUpperCase();
 
   return (
-    <TouchableOpacity
-      style={styles.headlineCard}
-      activeOpacity={0.8}
-      onPress={() => setShowReality((prev) => !prev)}
-    >
+    <TouchableOpacity style={styles.headlineCard} activeOpacity={0.8} onPress={() => setShowReality((prev) => !prev)}>
       {/* Category badge + timestamp */}
       <View style={styles.headlineMeta}>
         <View style={styles.categoryBadge}>
@@ -119,19 +114,14 @@ const HeadlineCard: React.FC<{ headline: PravdaHeadline }> = ({ headline }) => {
       )}
 
       {/* Tap hint */}
-      {!showReality && (
-        <Text style={styles.tapHint}>[tap to reveal truth]</Text>
-      )}
+      {!showReality && <Text style={styles.tapHint}>[tap to reveal truth]</Text>}
     </TouchableOpacity>
   );
 };
 
 // ── Main Component ───────────────────────────────────────────────────────────
 
-export const PravdaArchivePanel: React.FC<PravdaArchivePanelProps> = ({
-  visible,
-  onDismiss,
-}) => {
+export const PravdaArchivePanel: React.FC<PravdaArchivePanelProps> = ({ visible, onDismiss }) => {
   // Subscribe so the panel re-renders on game ticks
   useGameSnapshot();
 
@@ -166,19 +156,13 @@ export const PravdaArchivePanel: React.FC<PravdaArchivePanelProps> = ({
       categoryCounts: counts,
       maxCount: max,
     };
-  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reverse chronological order (newest first)
-  const sortedHeadlines = useMemo(
-    () => [...headlines].sort((a, b) => b.timestamp - a.timestamp),
-    [headlines],
-  );
+  const sortedHeadlines = useMemo(() => [...headlines].sort((a, b) => b.timestamp - a.timestamp), [headlines]);
 
   // Split front page into lines for rendering
-  const frontPageLines = useMemo(
-    () => frontPage.split('\n').filter((line) => line.trim().length > 0),
-    [frontPage],
-  );
+  const frontPageLines = useMemo(() => frontPage.split('\n').filter((line) => line.trim().length > 0), [frontPage]);
 
   if (!visible) return null;
 
@@ -245,16 +229,11 @@ export const PravdaArchivePanel: React.FC<PravdaArchivePanelProps> = ({
 
       {sortedHeadlines.length > 0 ? (
         sortedHeadlines.map((headline, index) => (
-          <HeadlineCard
-            key={`${headline.timestamp}-${index}`}
-            headline={headline}
-          />
+          <HeadlineCard key={`${headline.timestamp}-${index}`} headline={headline} />
         ))
       ) : (
         <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>
-            No headlines on file. The presses are silent.
-          </Text>
+          <Text style={styles.emptyText}>No headlines on file. The presses are silent.</Text>
         </View>
       )}
 

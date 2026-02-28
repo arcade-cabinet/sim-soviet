@@ -5,11 +5,11 @@
  * unread count tracking, and subscribe/notify pattern.
  */
 import {
-  pushNotification,
+  clearNotificationHistory,
   getNotificationEntries,
   getUnreadCount,
   markAllRead,
-  clearNotificationHistory,
+  pushNotification,
   subscribeNotifications,
 } from '@/ui/NotificationStore';
 

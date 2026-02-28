@@ -55,7 +55,7 @@ export class MinigameRouter {
       eventId?: string;
       totalTicks: number;
       population: number;
-    }
+    },
   ): MinigameDefinition | null {
     if (this.active) return null; // only one at a time
 
@@ -209,7 +209,7 @@ export class MinigameRouter {
       eventId?: string;
       totalTicks: number;
       population: number;
-    }
+    },
   ): boolean {
     switch (trigger) {
       case 'building_tap':
@@ -228,7 +228,7 @@ export class MinigameRouter {
 
   private checkPeriodicCondition(
     def: MinigameDefinition,
-    context: { totalTicks: number; population: number }
+    context: { totalTicks: number; population: number },
   ): boolean {
     switch (def.triggerCondition) {
       case 'population_60':

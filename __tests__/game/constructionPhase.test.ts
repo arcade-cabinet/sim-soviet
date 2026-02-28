@@ -7,19 +7,8 @@
  * - completeConstruction() transitions to 'complete'
  * - Archetypes correctly distinguish operational vs under-construction
  */
-import {
-  buildingsLogic,
-  housing,
-  operationalBuildings,
-  producers,
-  underConstruction,
-} from '../../src/ecs/archetypes';
-import {
-  completeConstruction,
-  createBuilding,
-  isOperational,
-  placeNewBuilding,
-} from '../../src/ecs/factories';
+import { buildingsLogic, housing, operationalBuildings, producers, underConstruction } from '../../src/ecs/archetypes';
+import { completeConstruction, createBuilding, isOperational, placeNewBuilding } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
 
 describe('Construction Phases — ECS Schema', () => {
@@ -152,9 +141,7 @@ describe('Construction Phases — ECS Schema', () => {
 
     it('returns false for foundation buildings', () => {
       const entity = placeNewBuilding(5, 5, 'collective-farm-hq');
-      expect(isOperational(entity as { building: NonNullable<typeof entity.building> })).toBe(
-        false
-      );
+      expect(isOperational(entity as { building: NonNullable<typeof entity.building> })).toBe(false);
     });
 
     it('returns true for completed buildings', () => {

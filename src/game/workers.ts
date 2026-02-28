@@ -293,9 +293,7 @@ export class WorkerSystem {
    * Returns false if no building exists at that position.
    */
   assignWorker(entity: Entity, gridX: number, gridY: number): boolean {
-    const building = buildingsLogic.entities.find(
-      (b) => b.position.gridX === gridX && b.position.gridY === gridY
-    );
+    const building = buildingsLogic.entities.find((b) => b.position.gridX === gridX && b.position.gridY === gridY);
     if (!building) return false;
 
     entity.citizen!.assignment = building.building.defId;
@@ -345,7 +343,6 @@ export class WorkerSystem {
    * @param vodkaAvailable - Total vodka units available this tick
    * @param foodAvailable - Total food units available this tick
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: worker tick updates morale, loyalty, skill, vodka dependency across all citizens
   tick(vodkaAvailable: number, foodAvailable: number): WorkerTickResult {
     const allCitizens = [...citizens];
     const defections: Entity[] = [];
@@ -426,8 +423,7 @@ export class WorkerSystem {
       // ── Defection check ──
       if (workerStats.loyalty < DEFECTION_LOYALTY_THRESHOLD) {
         const defectChance =
-          ((DEFECTION_LOYALTY_THRESHOLD - workerStats.loyalty) / DEFECTION_LOYALTY_THRESHOLD) *
-          DEFECTION_MAX_CHANCE;
+          ((DEFECTION_LOYALTY_THRESHOLD - workerStats.loyalty) / DEFECTION_LOYALTY_THRESHOLD) * DEFECTION_MAX_CHANCE;
         if (this.rng.random() < defectChance) {
           defections.push(entity);
           continue; // Skip efficiency tracking for defecting workers
@@ -481,14 +477,13 @@ export class WorkerSystem {
    * @param drainMult - Difficulty multiplier for drain intensity (default 1.0)
    * @param birthMult - Difficulty multiplier for birth rate (default 1.0)
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: population dynamics handles emigration, death, births, and immigration with many conditions
   tickPopulationDynamics(
     _totalTicks: number,
     housingCap: number,
     foodSupply: number,
     populationCount: number,
     drainMult = 1.0,
-    birthMult = 1.0
+    birthMult = 1.0,
   ): PopulationDynamicsResult {
     const result: PopulationDynamicsResult = {
       attritionDeaths: 0,
@@ -679,7 +674,6 @@ export class WorkerSystem {
    * Only fills buildings up to their `jobs` capacity. Returns the number
    * of workers assigned.
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: auto-assignment matches idle workers to buildings with capacity checks
   autoAssign(): number {
     let assigned = 0;
 
@@ -749,7 +743,6 @@ export class WorkerSystem {
    * Workers are assigned to the nearest housing with capacity.
    * Returns the number of workers housed.
    */
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: housing assignment matches unhoused workers to buildings with capacity/distance checks
   assignHousing(): number {
     let housed = 0;
 

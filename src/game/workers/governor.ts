@@ -66,14 +66,13 @@ export function evaluateWorkerPriority(
   worker: Entity,
   _stats: WorkerStats,
   resources: Resources,
-  focus: CollectiveFocus
+  focus: CollectiveFocus,
 ): GovernorPriority {
   const hunger = worker.citizen?.hunger ?? 0;
   const foodPerCapita = resources.population > 0 ? resources.food / resources.population : 999;
 
   // Effective thresholds shift based on collective focus
-  const foodThreshold =
-    focus === 'food' ? FOOD_CRISIS_THRESHOLD * FOOD_FOCUS_MULTIPLIER : FOOD_CRISIS_THRESHOLD;
+  const foodThreshold = focus === 'food' ? FOOD_CRISIS_THRESHOLD * FOOD_FOCUS_MULTIPLIER : FOOD_CRISIS_THRESHOLD;
 
   // Level 1: Survive — individual starvation or collective food crisis
   if (hunger >= HUNGER_CRISIS_THRESHOLD || foodPerCapita < foodThreshold) {
@@ -111,10 +110,7 @@ export function evaluateWorkerPriority(
  * Find the best building to assign a worker to for a given priority.
  * Returns null if no suitable building exists.
  */
-export function findBestAssignment(
-  priority: GovernorPriority,
-  _citizenClass: string
-): GovernorRecommendation | null {
+export function findBestAssignment(priority: GovernorPriority, _citizenClass: string): GovernorRecommendation | null {
   switch (priority) {
     case 'survive':
       return findFoodBuilding();
@@ -146,7 +142,7 @@ export function runGovernor(
   worker: Entity,
   stats: WorkerStats,
   resources: Resources,
-  focus: CollectiveFocus
+  focus: CollectiveFocus,
 ): GovernorRecommendation | null {
   // Children don't work
   const age = worker.citizen?.age ?? 25;
@@ -233,11 +229,7 @@ function findConstructionSite(): GovernorRecommendation | null {
 function findProductionBuilding(): GovernorRecommendation | null {
   for (const entity of buildingsLogic) {
     const phase = entity.building.constructionPhase;
-    if (
-      (phase == null || phase === 'complete') &&
-      entity.building.produces != null &&
-      entity.building.powered
-    ) {
+    if ((phase == null || phase === 'complete') && entity.building.produces != null && entity.building.powered) {
       return {
         buildingDefId: entity.building.defId,
         gridX: entity.position.gridX,

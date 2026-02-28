@@ -7,15 +7,7 @@ import { PARTY_OFFICIAL_LINES } from './party';
 import { POLITRUK_LINES } from './politruk';
 import { WORKER_LINES } from './worker';
 
-export {
-  WORKER_LINES,
-  POLITRUK_LINES,
-  KGB_LINES,
-  MILITARY_LINES,
-  PARTY_OFFICIAL_LINES,
-  ADVISOR_LINES,
-  AMBIENT_LINES,
-};
+export { WORKER_LINES, POLITRUK_LINES, KGB_LINES, MILITARY_LINES, PARTY_OFFICIAL_LINES, ADVISOR_LINES, AMBIENT_LINES };
 
 /** All dialogue lines, indexed for fast lookup. */
 export const ALL_LINES: readonly DialogueLine[] = [

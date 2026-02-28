@@ -190,8 +190,7 @@ describe('DialoguePools', () => {
     it('kgb lines include threat-specific content', () => {
       const kgbLines = getAllLines('kgb');
       const threatLines = kgbLines.filter(
-        (l) =>
-          l.conditions?.threatLevel === 'endangered' || l.conditions?.threatLevel === 'critical'
+        (l) => l.conditions?.threatLevel === 'endangered' || l.conditions?.threatLevel === 'critical',
       );
       expect(threatLines.length).toBeGreaterThan(0);
     });

@@ -9,19 +9,15 @@
  * Uses SovietModal with terminal variant for dark-panel aesthetic.
  */
 
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet } from 'react-native';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { CurrencyReform, DifficultyLevel, HeatingTier, TransferableResource } from '../game/economy';
+import { HEATING_CONFIGS } from '../game/economy';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import type {
-  TransferableResource,
-  HeatingTier,
-  DifficultyLevel,
-  CurrencyReform,
-} from '../game/economy';
-import { HEATING_CONFIGS } from '../game/economy';
 
 // ---------------------------------------------------------------------------
 //  Props
@@ -81,19 +77,13 @@ function blatColor(level: number): string {
 // ---------------------------------------------------------------------------
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
 
 /** Progress bar with configurable color. */
-const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({
-  ratio,
-  color,
-  height = 10,
-}) => {
+const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> = ({ ratio, color, height = 10 }) => {
   const clamped = Math.max(0, Math.min(ratio, 1));
   return (
     <View style={[styles.barTrack, { height }]}>
@@ -137,7 +127,7 @@ const FailingWarning: React.FC = () => {
           duration: 500,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     loop.start();
     return () => loop.stop();
@@ -203,9 +193,7 @@ export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible,
       <View style={styles.difficultyRow}>
         <Text style={styles.sublabel}>DIFFICULTY:</Text>
         <View style={[styles.difficultyBadge, { borderColor: diffCfg.color }]}>
-          <Text style={[styles.difficultyBadgeText, { color: diffCfg.color }]}>
-            {diffCfg.label}
-          </Text>
+          <Text style={[styles.difficultyBadgeText, { color: diffCfg.color }]}>{diffCfg.label}</Text>
         </View>
       </View>
 
@@ -230,9 +218,7 @@ export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible,
         <Text style={[styles.barPercent, { color: trudodniClr }]}>{trudodniPct}%</Text>
       </View>
 
-      <Text style={styles.flavorText}>
-        Collective labor points. Meet the minimum or face consequences.
-      </Text>
+      <Text style={styles.flavorText}>Collective labor points. Meet the minimum or face consequences.</Text>
 
       <Divider />
 
@@ -255,12 +241,8 @@ export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible,
 
             return (
               <View key={key} style={styles.tableRow}>
-                <Text style={[styles.tableCell, styles.tableColResource]}>
-                  {RESOURCE_LABELS[key]}
-                </Text>
-                <Text style={[styles.tableCellValue, styles.tableColValue]}>
-                  {Math.round(allocated)}
-                </Text>
+                <Text style={[styles.tableCell, styles.tableColResource]}>{RESOURCE_LABELS[key]}</Text>
+                <Text style={[styles.tableCellValue, styles.tableColValue]}>{Math.round(allocated)}</Text>
               </View>
             );
           })}
@@ -269,27 +251,26 @@ export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible,
           <View style={styles.reliabilitySection}>
             <View style={styles.row}>
               <Text style={styles.sublabel}>RELIABILITY:</Text>
-              <Text
-                style={[
-                  styles.value,
-                  { color: fondy.reliability >= 0.7 ? Colors.termGreen : Colors.sovietRed },
-                ]}
-              >
+              <Text style={[styles.value, { color: fondy.reliability >= 0.7 ? Colors.termGreen : Colors.sovietRed }]}>
                 {Math.round(fondy.reliability * 100)}%
               </Text>
             </View>
             <ProgressBar
               ratio={fondy.reliability}
-              color={fondy.reliability >= 0.7 ? Colors.termGreen : fondy.reliability >= 0.4 ? Colors.sovietGold : Colors.sovietRed}
+              color={
+                fondy.reliability >= 0.7
+                  ? Colors.termGreen
+                  : fondy.reliability >= 0.4
+                    ? Colors.sovietGold
+                    : Colors.sovietRed
+              }
               height={6}
             />
           </View>
 
           {/* Next delivery countdown */}
           <View style={styles.deliveryCountdown}>
-            <Text style={styles.countdownText}>
-              NEXT DELIVERY IN: {fondy.nextDeliveryTick} TICKS
-            </Text>
+            <Text style={styles.countdownText}>NEXT DELIVERY IN: {fondy.nextDeliveryTick} TICKS</Text>
           </View>
         </>
       ) : (
@@ -330,15 +311,11 @@ export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible,
           {/* Earned / Spent */}
           <View style={styles.blatStatsRow}>
             <View style={styles.blatStatItem}>
-              <Text style={[styles.blatStatValue, { color: Colors.termGreen }]}>
-                {Math.round(blat.totalEarned)}
-              </Text>
+              <Text style={[styles.blatStatValue, { color: Colors.termGreen }]}>{Math.round(blat.totalEarned)}</Text>
               <Text style={styles.blatStatLabel}>EARNED</Text>
             </View>
             <View style={styles.blatStatItem}>
-              <Text style={[styles.blatStatValue, { color: Colors.sovietRed }]}>
-                {Math.round(blat.totalSpent)}
-              </Text>
+              <Text style={[styles.blatStatValue, { color: Colors.sovietRed }]}>{Math.round(blat.totalSpent)}</Text>
               <Text style={styles.blatStatLabel}>SPENT</Text>
             </View>
           </View>
@@ -360,12 +337,14 @@ export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible,
 
           {rations.active && (
             <View style={styles.rationGrid}>
-              {([
-                ['worker', rations.rations.worker],
-                ['employee', rations.rations.employee],
-                ['dependent', rations.rations.dependent],
-                ['children', rations.rations.children],
-              ] as const).map(([tier, r]) => (
+              {(
+                [
+                  ['worker', rations.rations.worker],
+                  ['employee', rations.rations.employee],
+                  ['dependent', rations.rations.dependent],
+                  ['children', rations.rations.children],
+                ] as const
+              ).map(([tier, r]) => (
                 <View key={tier} style={styles.rationCard}>
                   <Text style={styles.rationTierLabel}>{tier.toUpperCase()}</Text>
                   <View style={styles.rationAmounts}>
@@ -384,9 +363,7 @@ export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible,
           )}
 
           {!rations.active && (
-            <Text style={styles.flavorText}>
-              Ration cards are currently suspended. Citizens may purchase freely.
-            </Text>
+            <Text style={styles.flavorText}>Ration cards are currently suspended. Citizens may purchase freely.</Text>
           )}
         </>
       ) : (
@@ -410,9 +387,7 @@ export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible,
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>TOTAL RENTAL SPENT:</Text>
-            <Text style={[styles.value, { color: Colors.sovietRed }]}>
-              {Math.round(mts.totalRentalSpent)} RUB
-            </Text>
+            <Text style={[styles.value, { color: Colors.sovietRed }]}>{Math.round(mts.totalRentalSpent)} RUB</Text>
           </View>
         </>
       ) : (
@@ -431,9 +406,7 @@ export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible,
           {/* Tier */}
           <View style={styles.row}>
             <Text style={styles.label}>TIER:</Text>
-            <Text style={[styles.value, { color: heatingTierCfg.color }]}>
-              {heatingTierCfg.label}
-            </Text>
+            <Text style={[styles.value, { color: heatingTierCfg.color }]}>{heatingTierCfg.label}</Text>
           </View>
 
           {/* Efficiency bar */}
@@ -478,36 +451,15 @@ export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible,
 
       {reforms.length > 0 ? (
         reforms.map((reform: CurrencyReform, idx: number) => (
-          <View
-            key={reform.year}
-            style={[
-              styles.reformCard,
-              idx < reforms.length - 1 && styles.reformCardSpacing,
-            ]}
-          >
+          <View key={reform.year} style={[styles.reformCard, idx < reforms.length - 1 && styles.reformCardSpacing]}>
             <View style={styles.reformHeader}>
-              <Text
-                style={[
-                  styles.reformYear,
-                  { color: reform.applied ? Colors.textMuted : Colors.white },
-                ]}
-              >
+              <Text style={[styles.reformYear, { color: reform.applied ? Colors.textMuted : Colors.white }]}>
                 {reform.year}
               </Text>
-              <Text
-                style={[
-                  styles.reformName,
-                  { color: reform.applied ? Colors.textMuted : Colors.white },
-                ]}
-              >
+              <Text style={[styles.reformName, { color: reform.applied ? Colors.textMuted : Colors.white }]}>
                 {reform.name}
               </Text>
-              <Text
-                style={[
-                  styles.reformRate,
-                  { color: reform.applied ? Colors.textMuted : Colors.sovietRed },
-                ]}
-              >
+              <Text style={[styles.reformRate, { color: reform.applied ? Colors.textMuted : Colors.sovietRed }]}>
                 {reform.rate}:1
               </Text>
             </View>

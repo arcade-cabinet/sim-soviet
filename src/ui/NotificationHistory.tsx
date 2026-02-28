@@ -5,49 +5,33 @@
  * red/gold accents, and category color coding.
  */
 
-import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
-import { useSyncExternalStore } from 'react';
-import { Colors, monoFont } from './styles';
+import type React from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
   getNotificationEntries,
-  subscribeNotifications,
   markAllRead,
   type NotificationCategory,
+  subscribeNotifications,
 } from './NotificationStore';
+import { Colors, monoFont } from './styles';
 
 export interface NotificationHistoryProps {
   visible: boolean;
   onDismiss: () => void;
 }
 
-const CATEGORY_CONFIG: Record<
-  NotificationCategory,
-  { label: string; color: string; icon: string }
-> = {
+const CATEGORY_CONFIG: Record<NotificationCategory, { label: string; color: string; icon: string }> = {
   toast: { label: 'BULLETIN', color: Colors.white, icon: '\u25A0' },
   advisor: { label: 'ADVISOR', color: Colors.sovietGold, icon: '\u262D' },
   event: { label: 'EVENT', color: Colors.sovietRed, icon: '\u2605' },
 };
 
 function useNotificationEntries() {
-  return useSyncExternalStore(
-    subscribeNotifications,
-    getNotificationEntries,
-    getNotificationEntries,
-  );
+  return useSyncExternalStore(subscribeNotifications, getNotificationEntries, getNotificationEntries);
 }
 
-export const NotificationHistory: React.FC<NotificationHistoryProps> = ({
-  visible,
-  onDismiss,
-}) => {
+export const NotificationHistory: React.FC<NotificationHistoryProps> = ({ visible, onDismiss }) => {
   const entries = useNotificationEntries();
 
   // Mark all as read when the panel becomes visible
@@ -61,11 +45,7 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({
 
   return (
     <View style={styles.overlay}>
-      <TouchableOpacity
-        style={StyleSheet.absoluteFill}
-        activeOpacity={1}
-        onPress={onDismiss}
-      />
+      <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onDismiss} />
       <View style={styles.panel}>
         {/* Header */}
         <View style={styles.header}>
@@ -73,11 +53,7 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({
             <Text style={styles.headerIcon}>{'\u2638'}</Text>
             <Text style={styles.headerTitle}>COMMUNIQU{'\u00C9'} LOG</Text>
           </View>
-          <TouchableOpacity
-            onPress={onDismiss}
-            style={styles.closeBtn}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity onPress={onDismiss} style={styles.closeBtn} activeOpacity={0.7}>
             <Text style={styles.closeBtnText}>{'\u2716'}</Text>
           </TouchableOpacity>
         </View>
@@ -85,18 +61,11 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({
         <View style={styles.divider} />
 
         {/* Entries */}
-        <ScrollView
-          style={styles.scrollArea}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
           {entries.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>
-                NO COMMUNIQU{'\u00C9'}S RECORDED
-              </Text>
-              <Text style={styles.emptySubtext}>
-                Notifications will appear here as events unfold.
-              </Text>
+              <Text style={styles.emptyText}>NO COMMUNIQU{'\u00C9'}S RECORDED</Text>
+              <Text style={styles.emptySubtext}>Notifications will appear here as events unfold.</Text>
             </View>
           ) : (
             entries.map((entry) => {
@@ -104,16 +73,12 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({
               return (
                 <View key={entry.id} style={styles.entryRow}>
                   <View style={styles.entryMeta}>
-                    <Text style={[styles.entryIcon, { color: cfg.color }]}>
-                      {entry.icon ?? cfg.icon}
-                    </Text>
+                    <Text style={[styles.entryIcon, { color: cfg.color }]}>{entry.icon ?? cfg.icon}</Text>
                     <Text style={styles.entryDate}>{entry.dateLabel}</Text>
                   </View>
                   <View style={styles.entryBody}>
                     <Text style={styles.entryCategoryLabel}>
-                      <Text style={[styles.categoryTag, { color: cfg.color }]}>
-                        [{cfg.label}]
-                      </Text>
+                      <Text style={[styles.categoryTag, { color: cfg.color }]}>[{cfg.label}]</Text>
                     </Text>
                     <Text style={styles.entryText}>{entry.text}</Text>
                   </View>
@@ -125,9 +90,7 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            {entries.length} / 100 ENTRIES
-          </Text>
+          <Text style={styles.footerText}>{entries.length} / 100 ENTRIES</Text>
         </View>
       </View>
     </View>

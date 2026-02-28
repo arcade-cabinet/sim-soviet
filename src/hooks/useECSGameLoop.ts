@@ -10,8 +10,8 @@
 
 import { useEffect, useRef } from 'react';
 import { getEngine } from '../bridge/GameInit';
-import { notifyStateChange, isPaused, getGameSpeed } from '../stores/gameStore';
 import { gameState } from '../engine/GameState';
+import { getGameSpeed, isPaused, notifyStateChange } from '../stores/gameStore';
 
 export function useECSGameLoop(): void {
   const rafRef = useRef<number | null>(null);

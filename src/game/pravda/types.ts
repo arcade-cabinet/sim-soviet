@@ -10,15 +10,7 @@ export interface PravdaHeadline {
   subtext: string;
   /** The grim reality behind the headline */
   reality: string;
-  category:
-    | 'triumph'
-    | 'production'
-    | 'culture'
-    | 'weather'
-    | 'editorial'
-    | 'threat'
-    | 'leader'
-    | 'spin';
+  category: 'triumph' | 'production' | 'culture' | 'weather' | 'editorial' | 'threat' | 'leader' | 'spin';
   timestamp: number;
 }
 

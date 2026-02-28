@@ -1,86 +1,42 @@
 /**
- * GhostPreview — Building placement preview.
+ * GhostPreview -- Building placement preview + pointer interaction.
  *
- * When a tool is selected (not 'none', not 'bulldoze'): show translucent clone
- * of the building model at hovered grid cell. Green tint (alpha 0.4) if valid,
- * red tint (alpha 0.4) if invalid. Position tracks the grid cell under the pointer.
- * For zone tools: show colored ground overlay instead of building model.
+ * When a tool is selected (not 'none', not 'bulldoze'): show translucent box
+ * at hovered grid cell. Green if placement valid, red if invalid.
+ * Handles tap-to-place, right-click inspect, and long-press inspect.
+ *
+ * R3F migration: uses <mesh> with transparent material + useFrame for
+ * position tracking. Pointer events handled via canvas event listeners
+ * attached in useEffect (R3F's raycasting is used for grid picking).
  */
-import React, { useEffect, useRef } from 'react';
-import {
-  MeshBuilder,
-  StandardMaterial,
-  Color3,
-  Vector3,
-  PointerEventTypes,
-  type Mesh,
-  type Scene,
-  type Observer,
-  type PointerInfo,
-} from '@babylonjs/core';
-import { useScene } from 'reactylon';
 
-import { gameState } from '../engine/GameState';
-import { GRID_SIZE } from '../engine/GridTypes';
-import { BUILDING_TYPES, getBuildingHeight } from '../engine/BuildingTypes';
-import { placeECSBuilding, bulldozeECSBuilding } from '../bridge/BuildingPlacement';
-import { getResourceEntity, buildingsLogic, citizens } from '../ecs/archetypes';
+import { useFrame, useThree } from '@react-three/fiber';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import * as THREE from 'three';
+import { bulldozeECSBuilding, placeECSBuilding } from '../bridge/BuildingPlacement';
+import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
 import type { Role } from '../data/buildingDefs.schema';
+import { buildingsLogic, citizens, getMetaEntity, getResourceEntity } from '../ecs/archetypes';
+import { BUILDING_TYPES, getBuildingHeight } from '../engine/BuildingTypes';
+import { gameState } from '../engine/GameState';
+import { GRID_SIZE } from '../engine/GridTypes';
 import { showToast } from '../engine/helpers';
+import { getSeason } from '../engine/WeatherSystem';
 import {
-  openInspectMenu,
-  setCursorTooltip,
   type InspectBuildingType,
   type InspectMenuOccupant,
+  openInspectMenu,
+  openPoliticalPanel,
+  setCursorTooltip,
 } from '../stores/gameStore';
 
-const VALID_COLOR = new Color3(0, 1, 0);
-const INVALID_COLOR = new Color3(1, 0, 0);
+const VALID_COLOR = new THREE.Color(0, 1, 0);
+const INVALID_COLOR = new THREE.Color(1, 0, 0);
 const GHOST_ALPHA = 0.4;
 
-interface GhostMeshes {
-  box: Mesh;
-  zoneOverlay: Mesh;
-  boxMat: StandardMaterial;
-  zoneMat: StandardMaterial;
-}
-
-function createGhostMeshes(scene: Scene): GhostMeshes {
-  const boxMat = new StandardMaterial('ghostMat', scene);
-  boxMat.emissiveColor = VALID_COLOR;
-  boxMat.alpha = GHOST_ALPHA;
-  boxMat.disableLighting = true;
-  boxMat.backFaceCulling = false;
-
-  const box = MeshBuilder.CreateBox(
-    'ghostBox',
-    { width: 0.9, height: 1, depth: 0.9 },
-    scene,
-  );
-  box.material = boxMat;
-  box.isVisible = false;
-  box.isPickable = false;
-
-  const zoneMat = new StandardMaterial('ghostZoneMat', scene);
-  zoneMat.emissiveColor = new Color3(0.3, 0.7, 0.3);
-  zoneMat.alpha = 0.5;
-  zoneMat.disableLighting = true;
-  zoneMat.backFaceCulling = false;
-
-  const zoneOverlay = MeshBuilder.CreateGround(
-    'ghostZone',
-    { width: 1, height: 1 },
-    scene,
-  );
-  zoneOverlay.material = zoneMat;
-  zoneOverlay.isVisible = false;
-  zoneOverlay.isPickable = false;
-
-  return { box, zoneOverlay, boxMat, zoneMat };
-}
-
-/** Quick lookup for zone/tool → defId (mirrors BuildingPlacement.ts) */
+/** Quick lookup for zone/tool -> defId (mirrors BuildingPlacement.ts) */
 const TOOL_DEF_MAP: Record<string, string> = {
   'zone-res': 'workers-house-a',
   'zone-ind': 'factory-office',
@@ -116,7 +72,7 @@ function canPlace(tool: string, x: number, y: number): boolean {
     if (y < railY - 1 || y > railY + 1) return false;
   }
 
-  // Check ECS resources for actual cost (more accurate than old GameState)
+  // Check ECS resources for actual cost
   const defId = TOOL_DEF_MAP[tool];
   if (defId) {
     const def = getBuildingDef(defId);
@@ -131,9 +87,8 @@ function canPlace(tool: string, x: number, y: number): boolean {
   return true;
 }
 
-// ── Inspect helpers ───────────────────────────────────────────────────────
+// ── Inspect helpers ────────────────────────────────────────────────────────
 
-/** Map building def role → InspectBuildingType for the radial menu. */
 function classifyBuildingType(role: Role, constructionPhase?: string): InspectBuildingType {
   if (constructionPhase && constructionPhase !== 'complete') return 'construction';
   switch (role) {
@@ -160,12 +115,51 @@ function classifyBuildingType(role: Role, constructionPhase?: string): InspectBu
   }
 }
 
-/** Find the ECS building entity at a grid cell and open the inspect menu. */
 function openInspectAtCell(gridX: number, gridZ: number, screenX: number, screenY: number): void {
-  // Find the ECS building entity at this grid position
-  const entity = buildingsLogic.entities.find(
-    (e) => e.position.gridX === gridX && e.position.gridY === gridZ,
-  );
+  // Check for political entities at this cell — show dialogue toast + open panel
+  const engine = getEngine();
+  if (engine) {
+    const politicalSystem = engine.getPoliticalEntities();
+    const entitiesAtCell = politicalSystem
+      .getVisibleEntities()
+      .filter((pe) => pe.stationedAt.gridX === gridX && pe.stationedAt.gridY === gridZ);
+    if (entitiesAtCell.length > 0) {
+      const pe = entitiesAtCell[0]!;
+      // Build dialogue context from live game state
+      const meta = getMetaEntity()?.gameMeta;
+      const seasonLabel = getSeason(gameState.date.month);
+      const dialogueSeason =
+        seasonLabel === 'WINTER'
+          ? ('winter' as const)
+          : seasonLabel === 'SUMMER'
+            ? ('summer' as const)
+            : ('mud' as const);
+      const res = getResourceEntity()?.resources;
+      const food = res?.food ?? 0;
+      const resourceLevel =
+        food < 50
+          ? ('starving' as const)
+          : food < 200
+            ? ('scarce' as const)
+            : food < 500
+              ? ('adequate' as const)
+              : ('surplus' as const);
+      const dialogue = politicalSystem.getEntityDialogue(gridX, gridZ, {
+        season: dialogueSeason,
+        resourceLevel,
+        era: meta?.currentEra ?? 'war_communism',
+        threatLevel: (meta?.threatLevel as 'safe' | 'watched' | 'endangered' | 'critical') ?? 'safe',
+        settlementTier: (meta?.settlementTier as 'selo' | 'posyolok' | 'pgt' | 'gorod') ?? 'selo',
+      });
+      if (dialogue) {
+        showToast(gameState, `${pe.name}: "${dialogue}"`);
+      }
+      openPoliticalPanel();
+      return;
+    }
+  }
+
+  const entity = buildingsLogic.entities.find((e) => e.position.gridX === gridX && e.position.gridY === gridZ);
   if (!entity) return;
 
   const defId = entity.building.defId;
@@ -174,25 +168,16 @@ function openInspectAtCell(gridX: number, gridZ: number, screenX: number, screen
 
   const buildingType = classifyBuildingType(def.role, entity.building.constructionPhase);
 
-  // Count workers assigned to this building's defId at this position
-  const workerCount = citizens.entities.filter(
-    (c) => c.citizen.assignment === defId,
-  ).length;
+  const workerCount = citizens.entities.filter((c) => c.citizen.assignment === defId).length;
 
-  // Gather occupants for housing buildings
   let housingCap: number | undefined;
   let occupants: InspectMenuOccupant[] | undefined;
   if (buildingType === 'housing' && entity.building.housingCap > 0) {
     housingCap = entity.building.housingCap;
     occupants = citizens.entities
-      .filter(
-        (c) =>
-          c.citizen.home &&
-          c.citizen.home.gridX === gridX &&
-          c.citizen.home.gridY === gridZ,
-      )
+      .filter((c) => c.citizen.home && c.citizen.home.gridX === gridX && c.citizen.home.gridY === gridZ)
       .map((c) => ({
-        name: `Citizen`, // Citizens don't store display names on the component
+        name: 'Citizen',
         age: c.citizen.age ?? 30,
         role: c.citizen.memberRole ?? c.citizen.class,
         gender: c.citizen.gender ?? 'male',
@@ -212,248 +197,297 @@ function openInspectAtCell(gridX: number, gridZ: number, screenX: number, screen
   });
 }
 
-/** Long-press threshold in milliseconds. */
 const LONG_PRESS_MS = 500;
-/** Max pointer drift (pixels) before long-press is cancelled. */
 const LONG_PRESS_DRIFT = 10;
 
+// ── Component ──────────────────────────────────────────────────────────────
+
 const GhostPreview: React.FC = () => {
-  const scene = useScene();
-  const meshesRef = useRef<GhostMeshes | null>(null);
+  const boxRef = useRef<THREE.Mesh>(null);
+  const zonePlaneRef = useRef<THREE.Mesh>(null);
+  const boxMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const zoneMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const { raycaster, camera, gl } = useThree();
 
+  // Long-press state
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressStart = useRef({ x: 0, y: 0 });
+  const longPressFired = useRef(false);
+
+  // Materials (memoized to avoid re-creation)
+  const _boxMaterial = useMemo(() => {
+    const mat = new THREE.MeshBasicMaterial({
+      color: VALID_COLOR,
+      transparent: true,
+      opacity: GHOST_ALPHA,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    return mat;
+  }, []);
+
+  const _zoneMaterial = useMemo(() => {
+    const mat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(0.3, 0.7, 0.3),
+      transparent: true,
+      opacity: 0.5,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    return mat;
+  }, []);
+
+  // Pick grid position from pointer using R3F raycaster against ground plane
+  const pickGrid = useCallback(
+    (clientX: number, clientY: number): { gridX: number; gridZ: number } | null => {
+      const canvas = gl.domElement;
+      const rect = canvas.getBoundingClientRect();
+      const ndcX = ((clientX - rect.left) / rect.width) * 2 - 1;
+      const ndcY = -((clientY - rect.top) / rect.height) * 2 + 1;
+      const pointer = new THREE.Vector2(ndcX, ndcY);
+
+      raycaster.setFromCamera(pointer, camera);
+
+      // Intersect with y=0 ground plane
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+      const intersection = new THREE.Vector3();
+      const hit = raycaster.ray.intersectPlane(plane, intersection);
+      if (!hit) return null;
+
+      const gridX = Math.floor(intersection.x);
+      const gridZ = Math.floor(intersection.z);
+      if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) return null;
+
+      return { gridX, gridZ };
+    },
+    [raycaster, camera, gl],
+  );
+
+  // Canvas event handlers for tap, right-click, and long-press
   useEffect(() => {
-    const meshes = createGhostMeshes(scene);
-    meshesRef.current = meshes;
+    const canvas = gl.domElement;
 
-    function onPointerMove() {
-      const m = meshesRef.current!;
+    // Suppress browser context menu
+    const preventContextMenu = (e: Event) => e.preventDefault();
+    canvas.addEventListener('contextmenu', preventContextMenu);
+
+    // Right-click inspect
+    const onContextMenu = (e: MouseEvent) => {
+      const pick = pickGrid(e.clientX, e.clientY);
+      if (!pick) return;
+      const cell = gameState.grid[pick.gridZ]?.[pick.gridX];
+      if (!cell?.type) return;
+      openInspectAtCell(pick.gridX, pick.gridZ, e.clientX, e.clientY);
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button === 2) onContextMenu(e);
+    };
+    canvas.addEventListener('mousedown', onMouseDown);
+
+    // Tap to place
+    const onClick = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      if (longPressFired.current) {
+        longPressFired.current = false;
+        return;
+      }
+
       const tool = gameState.selectedTool;
+      if (tool === 'none') return;
 
-      // Pick the ground position from pointer (used by both ghost + tooltip)
-      const pickResult = scene.pick(scene.pointerX, scene.pointerY);
-      if (!pickResult?.hit || !pickResult.pickedPoint) {
-        m.box.isVisible = false;
-        m.zoneOverlay.isVisible = false;
-        setCursorTooltip(null);
-        return;
-      }
+      const pick = pickGrid(e.clientX, e.clientY);
+      if (!pick) return;
 
-      const worldPos = pickResult.pickedPoint;
-      const gridX = Math.floor(worldPos.x);
-      const gridZ = Math.floor(worldPos.z);
-
-      if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) {
-        m.box.isVisible = false;
-        m.zoneOverlay.isVisible = false;
-        setCursorTooltip(null);
-        return;
-      }
-
-      // ── Publish hovered tile data for CursorTooltip ──
-      const tooltipCell = gameState.grid[gridZ]?.[gridX];
-      if (tooltipCell) {
-        const canvas = scene.getEngine().getRenderingCanvas();
-        const rect = canvas?.getBoundingClientRect();
-        setCursorTooltip({
-          terrain: tooltipCell.terrain,
-          type: tooltipCell.type || undefined,
-          smog: tooltipCell.smog ?? 0,
-          watered: tooltipCell.watered ?? false,
-          onFire: !!(tooltipCell.onFire),
-          zone: tooltipCell.zone || undefined,
-          z: tooltipCell.z ?? 0,
-          screenX: (rect?.left ?? 0) + scene.pointerX,
-          screenY: (rect?.top ?? 0) + scene.pointerY,
-        });
+      if (tool === 'bulldoze') {
+        bulldozeECSBuilding(pick.gridX, pick.gridZ);
+      } else if (tool === 'road' || tool === 'pipe') {
+        showToast(gameState, 'INFRASTRUCTURE DEVELOPMENT PENDING APPROVAL');
       } else {
-        setCursorTooltip(null);
+        placeECSBuilding(tool, pick.gridX, pick.gridZ);
       }
+    };
+    canvas.addEventListener('click', onClick);
 
-      // Hide ghost if no tool selected, bulldoze, or unsupported tool
-      if (tool === 'none' || tool === 'bulldoze' || tool === 'road' || tool === 'pipe') {
-        m.box.isVisible = false;
-        m.zoneOverlay.isVisible = false;
-        return;
+    // Long-press (mobile fallback for inspect)
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      longPressFired.current = false;
+      longPressStart.current = { x: e.clientX, y: e.clientY };
+
+      const pick = pickGrid(e.clientX, e.clientY);
+      if (!pick) return;
+      const cell = gameState.grid[pick.gridZ]?.[pick.gridX];
+      if (!cell?.type) return;
+
+      const gx = pick.gridX;
+      const gz = pick.gridZ;
+      const cx = e.clientX;
+      const cy = e.clientY;
+
+      longPressTimer.current = setTimeout(() => {
+        longPressTimer.current = null;
+        longPressFired.current = true;
+        openInspectAtCell(gx, gz, cx, cy);
+      }, LONG_PRESS_MS);
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!longPressTimer.current) return;
+      const dx = e.clientX - longPressStart.current.x;
+      const dy = e.clientY - longPressStart.current.y;
+      if (dx * dx + dy * dy > LONG_PRESS_DRIFT * LONG_PRESS_DRIFT) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
       }
+    };
 
-      const valid = canPlace(tool, gridX, gridZ);
-      const color = valid ? VALID_COLOR : INVALID_COLOR;
-
-      const cellElev = (gameState.grid[gridZ]?.[gridX]?.z ?? 0) * 0.5;
-
-      if (tool.startsWith('zone-')) {
-        // Zone overlay
-        m.box.isVisible = false;
-        m.zoneOverlay.isVisible = true;
-        m.zoneOverlay.position = new Vector3(gridX + 0.5, cellElev + 0.02, gridZ + 0.5);
-        m.zoneMat.emissiveColor = color;
-
-        // Use zone color for tint
-        const bInfo = BUILDING_TYPES[tool];
-        if (bInfo) {
-          const hex = bInfo.color.replace('#', '');
-          const r = parseInt(hex.substring(0, 2), 16) / 255;
-          const g = parseInt(hex.substring(2, 4), 16) / 255;
-          const b = parseInt(hex.substring(4, 6), 16) / 255;
-          m.zoneMat.emissiveColor = new Color3(r, g, b);
-          m.zoneMat.alpha = valid ? 0.5 : 0.3;
-        }
-      } else {
-        // Building box ghost
-        m.zoneOverlay.isVisible = false;
-        m.box.isVisible = true;
-
-        // Scale box to building height
-        const height = getBuildingHeight(tool, 0) * 0.02 || 0.5;
-        m.box.scaling = new Vector3(1, height, 1);
-        m.box.position = new Vector3(gridX + 0.5, cellElev + height / 2, gridZ + 0.5);
-        m.boxMat.emissiveColor = color;
-        m.boxMat.alpha = GHOST_ALPHA;
+    const onPointerUp = () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
       }
+    };
+
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerup', onPointerUp);
+
+    return () => {
+      canvas.removeEventListener('contextmenu', preventContextMenu);
+      canvas.removeEventListener('mousedown', onMouseDown);
+      canvas.removeEventListener('click', onClick);
+      canvas.removeEventListener('pointerdown', onPointerDown);
+      canvas.removeEventListener('pointermove', onPointerMove);
+      canvas.removeEventListener('pointerup', onPointerUp);
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      setCursorTooltip(null);
+    };
+  }, [gl, pickGrid]);
+
+  // Per-frame ghost position update
+  useFrame((state) => {
+    const box = boxRef.current;
+    const zonePlane = zonePlaneRef.current;
+    if (!box || !zonePlane) return;
+
+    const tool = gameState.selectedTool;
+
+    // Use pointer from R3F state to pick ground
+    const pointer = state.pointer;
+    raycaster.setFromCamera(pointer, camera);
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const intersection = new THREE.Vector3();
+    const hit = raycaster.ray.intersectPlane(plane, intersection);
+
+    if (!hit) {
+      box.visible = false;
+      zonePlane.visible = false;
+      setCursorTooltip(null);
+      return;
     }
 
-    // ── Long-press state (hoisted so tapObs can check longPressFired) ────
-    let longPressTimer: ReturnType<typeof setTimeout> | null = null;
-    let longPressStartX = 0;
-    let longPressStartY = 0;
-    let longPressFired = false;
+    const gridX = Math.floor(intersection.x);
+    const gridZ = Math.floor(intersection.z);
 
-    // Handle taps (not drags) to place buildings.
-    // POINTERTAP only fires if the pointer didn't move much between down and up.
-    const tapObs: Observer<PointerInfo> = scene.onPointerObservable.add(
-      (info) => {
-        if (info.type !== PointerEventTypes.POINTERTAP) return;
-
-        // Skip if a long-press just triggered the inspect menu
-        if (longPressFired) {
-          longPressFired = false;
-          return;
-        }
-
-        const tool = gameState.selectedTool;
-        if (tool === 'none') return;
-
-        const pickResult = info.pickInfo;
-        if (!pickResult?.hit || !pickResult.pickedPoint) return;
-
-        const worldPos = pickResult.pickedPoint;
-        const gridX = Math.floor(worldPos.x);
-        const gridZ = Math.floor(worldPos.z);
-
-        if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) return;
-
-        // Handle building placement/demolition through ECS (sole authority)
-        if (tool === 'bulldoze') {
-          bulldozeECSBuilding(gridX, gridZ);
-        } else if (tool === 'road' || tool === 'pipe') {
-          showToast(gameState, 'INFRASTRUCTURE DEVELOPMENT PENDING APPROVAL');
-        } else {
-          placeECSBuilding(tool, gridX, gridZ);
-        }
-      },
-    )!;
-
-    // ── Right-click → inspect building ────────────────────────────────────
-    // Suppress browser context menu on the canvas so right-click fires normally.
-    const canvas = scene.getEngine().getRenderingCanvas();
-    const preventContextMenu = (e: Event) => e.preventDefault();
-    canvas?.addEventListener('contextmenu', preventContextMenu);
-
-    const rightClickObs: Observer<PointerInfo> = scene.onPointerObservable.add(
-      (info) => {
-        if (info.type !== PointerEventTypes.POINTERDOWN) return;
-        const evt = info.event as PointerEvent;
-        if (evt.button !== 2) return; // Only right-click
-
-        const pickResult = info.pickInfo;
-        if (!pickResult?.hit || !pickResult.pickedPoint) return;
-
-        const worldPos = pickResult.pickedPoint;
-        const gridX = Math.floor(worldPos.x);
-        const gridZ = Math.floor(worldPos.z);
-        if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) return;
-
-        // Only inspect if there's a building on this cell
-        const cell = gameState.grid[gridZ]?.[gridX];
-        if (!cell?.type) return;
-
-        openInspectAtCell(gridX, gridZ, evt.clientX, evt.clientY);
-      },
-    )!;
-
-    // ── Long-press → inspect building (mobile fallback) ───────────────────
-    const longPressDownObs: Observer<PointerInfo> = scene.onPointerObservable.add(
-      (info) => {
-        if (info.type !== PointerEventTypes.POINTERDOWN) return;
-        const evt = info.event as PointerEvent;
-        if (evt.button !== 0) return; // Only primary button for long-press
-
-        longPressFired = false;
-        longPressStartX = evt.clientX;
-        longPressStartY = evt.clientY;
-
-        // Capture pick info at press-time (before any pointer move)
-        const pickResult = info.pickInfo;
-        if (!pickResult?.hit || !pickResult.pickedPoint) return;
-        const worldPos = pickResult.pickedPoint;
-        const gridX = Math.floor(worldPos.x);
-        const gridZ = Math.floor(worldPos.z);
-        if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) return;
-        const cell = gameState.grid[gridZ]?.[gridX];
-        if (!cell?.type) return;
-
-        longPressTimer = setTimeout(() => {
-          longPressTimer = null;
-          longPressFired = true;
-          openInspectAtCell(gridX, gridZ, evt.clientX, evt.clientY);
-        }, LONG_PRESS_MS);
-      },
-    )!;
-
-    const longPressMoveObs: Observer<PointerInfo> = scene.onPointerObservable.add(
-      (info) => {
-        if (info.type !== PointerEventTypes.POINTERMOVE) return;
-        if (!longPressTimer) return;
-        const evt = info.event as PointerEvent;
-        const dx = evt.clientX - longPressStartX;
-        const dy = evt.clientY - longPressStartY;
-        if (dx * dx + dy * dy > LONG_PRESS_DRIFT * LONG_PRESS_DRIFT) {
-          clearTimeout(longPressTimer);
-          longPressTimer = null;
-        }
-      },
-    )!;
-
-    const longPressUpObs: Observer<PointerInfo> = scene.onPointerObservable.add(
-      (info) => {
-        if (info.type !== PointerEventTypes.POINTERUP) return;
-        if (longPressTimer) {
-          clearTimeout(longPressTimer);
-          longPressTimer = null;
-        }
-      },
-    )!;
-
-    scene.onPointerMove = onPointerMove;
-    return () => {
-      scene.onPointerMove = undefined as any;
-      scene.onPointerObservable.remove(tapObs);
-      scene.onPointerObservable.remove(rightClickObs);
-      scene.onPointerObservable.remove(longPressDownObs);
-      scene.onPointerObservable.remove(longPressMoveObs);
-      scene.onPointerObservable.remove(longPressUpObs);
-      canvas?.removeEventListener('contextmenu', preventContextMenu);
-      if (longPressTimer) clearTimeout(longPressTimer);
+    if (gridX < 0 || gridX >= GRID_SIZE || gridZ < 0 || gridZ >= GRID_SIZE) {
+      box.visible = false;
+      zonePlane.visible = false;
       setCursorTooltip(null);
-      const m = meshesRef.current!;
-      m.box.dispose();
-      m.zoneOverlay.dispose();
-      m.boxMat.dispose();
-      m.zoneMat.dispose();
-    };
-  }, [scene]);
+      return;
+    }
 
-  return null;
+    // Publish hovered tile data for CursorTooltip
+    const tooltipCell = gameState.grid[gridZ]?.[gridX];
+    if (tooltipCell) {
+      const rect = gl.domElement.getBoundingClientRect();
+      const screenX = ((pointer.x + 1) / 2) * rect.width + rect.left;
+      const screenY = ((-pointer.y + 1) / 2) * rect.height + rect.top;
+      setCursorTooltip({
+        terrain: tooltipCell.terrain,
+        type: tooltipCell.type || undefined,
+        smog: tooltipCell.smog ?? 0,
+        watered: tooltipCell.watered ?? false,
+        onFire: !!tooltipCell.onFire,
+        zone: tooltipCell.zone || undefined,
+        z: tooltipCell.z ?? 0,
+        screenX,
+        screenY,
+      });
+    } else {
+      setCursorTooltip(null);
+    }
+
+    // Hide ghost if no tool selected or unsupported tool
+    if (tool === 'none' || tool === 'bulldoze' || tool === 'road' || tool === 'pipe') {
+      box.visible = false;
+      zonePlane.visible = false;
+      return;
+    }
+
+    const valid = canPlace(tool, gridX, gridZ);
+    const color = valid ? VALID_COLOR : INVALID_COLOR;
+    const cellElev = (gameState.grid[gridZ]?.[gridX]?.z ?? 0) * 0.5;
+
+    if (tool.startsWith('zone-')) {
+      // Zone overlay
+      box.visible = false;
+      zonePlane.visible = true;
+      zonePlane.position.set(gridX + 0.5, cellElev + 0.02, gridZ + 0.5);
+
+      const bInfo = BUILDING_TYPES[tool];
+      if (bInfo && zoneMatRef.current) {
+        const hex = bInfo.color.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16) / 255;
+        const g = parseInt(hex.substring(2, 4), 16) / 255;
+        const b = parseInt(hex.substring(4, 6), 16) / 255;
+        zoneMatRef.current.color.setRGB(r, g, b);
+        zoneMatRef.current.opacity = valid ? 0.5 : 0.3;
+      }
+    } else {
+      // Building box ghost
+      zonePlane.visible = false;
+      box.visible = true;
+
+      const height = getBuildingHeight(tool, 0) * 0.02 || 0.5;
+      box.scale.set(1, height, 1);
+      box.position.set(gridX + 0.5, cellElev + height / 2, gridZ + 0.5);
+
+      if (boxMatRef.current) {
+        boxMatRef.current.color.copy(color);
+        boxMatRef.current.opacity = GHOST_ALPHA;
+      }
+    }
+  });
+
+  return (
+    <>
+      {/* Building ghost box */}
+      <mesh ref={boxRef} visible={false}>
+        <boxGeometry args={[0.9, 1, 0.9]} />
+        <meshBasicMaterial
+          ref={boxMatRef}
+          color={VALID_COLOR}
+          transparent
+          opacity={GHOST_ALPHA}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Zone overlay plane */}
+      <mesh ref={zonePlaneRef} visible={false} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          ref={zoneMatRef}
+          color={new THREE.Color(0.3, 0.7, 0.3)}
+          transparent
+          opacity={0.5}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    </>
+  );
 };
 
 export default GhostPreview;

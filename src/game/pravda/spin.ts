@@ -83,12 +83,7 @@ function spinKey(key: string): string {
 }
 
 /** Format a single effect value with propaganda spin. */
-function spinEffect(
-  value: number | undefined,
-  key: string,
-  lossUnit: string,
-  gainUnit: string
-): string | null {
+function spinEffect(value: number | undefined, key: string, lossUnit: string, gainUnit: string): string | null {
   if (!value) return null;
   if (value < 0) return `${spinKey(`${key}_loss`)} ${Math.abs(value)} ${lossUnit}`;
   return `${spinKey(`${key}_gain`)} +${value} ${gainUnit}`;
@@ -117,7 +112,7 @@ export function spinEventEffects(event: GameEvent): string {
 }
 
 export function categoryFromEvent(
-  eventCat: EventCategory
+  eventCat: EventCategory,
 ): 'triumph' | 'editorial' | 'production' | 'culture' | 'weather' {
   switch (eventCat) {
     case 'disaster':

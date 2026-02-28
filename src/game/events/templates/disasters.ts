@@ -4,8 +4,7 @@ export const DISASTER_EVENTS: EventTemplate[] = [
   {
     id: 'earthquake_bread',
     title: 'SEISMIC EVENT IN SECTOR 4',
-    description:
-      'An earthquake destroyed the bread line. Citizens report no change in bread availability.',
+    description: 'An earthquake destroyed the bread line. Citizens report no change in bread availability.',
     pravdaHeadline: 'GEOLOGICAL ACTIVITY PROVES STRENGTH OF SOVIET FOUNDATION',
     category: 'disaster',
     severity: 'major',
@@ -56,8 +55,7 @@ export const DISASTER_EVENTS: EventTemplate[] = [
   {
     id: 'sinkhole',
     title: 'GEOLOGICAL OPPORTUNITY',
-    description:
-      'A sinkhole swallowed the town square. On the bright side, the pothole complaints have stopped.',
+    description: 'A sinkhole swallowed the town square. On the bright side, the pothole complaints have stopped.',
     pravdaHeadline: 'NEW UNDERGROUND PARK OPENS SPONTANEOUSLY',
     category: 'disaster',
     severity: 'minor',
@@ -66,8 +64,7 @@ export const DISASTER_EVENTS: EventTemplate[] = [
   {
     id: 'roof_collapse',
     title: 'STRUCTURAL RECLASSIFICATION',
-    description:
-      'Tenement roof collapsed. Building reclassified from "housing" to "open-air housing." Rent unchanged.',
+    description: 'Tenement roof collapsed. Building reclassified from "housing" to "open-air housing." Rent unchanged.',
     pravdaHeadline: 'INNOVATIVE SKYLIGHT DESIGN IMPROVES WORKER MORALE',
     category: 'disaster',
     severity: 'major',

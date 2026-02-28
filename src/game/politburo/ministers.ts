@@ -54,9 +54,7 @@ function generateName(): string {
 }
 
 export function generateId(): string {
-  return _rng
-    ? `${Date.now()}_${_rng.id()}`
-    : `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  return _rng ? `${Date.now()}_${_rng.id()}` : `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function randomPersonality(): PersonalityType {
@@ -88,10 +86,7 @@ export function generateMinister(ministry: Ministry, personality?: PersonalityTy
   };
 }
 
-export function generateGeneralSecretary(
-  year: number,
-  personality?: PersonalityType
-): GeneralSecretary {
+export function generateGeneralSecretary(year: number, personality?: PersonalityType): GeneralSecretary {
   const p = personality ?? randomPersonality();
   return {
     id: generateId(),

@@ -65,8 +65,7 @@ export const contextualGenerators: ContextualGenerator[] = [
     weight: 3,
     generate: () => ({
       headline: 'MINIMALIST URBAN DESIGN WINS INTERNATIONAL ACCLAIM',
-      subtext:
-        'Zero buildings represent a bold architectural statement. "Less is more," says nobody.',
+      subtext: 'Zero buildings represent a bold architectural statement. "Less is more," says nobody.',
       reality: 'There are no buildings. The city is a field. The field is also struggling.',
       category: 'spin',
     }),
@@ -102,8 +101,7 @@ export const contextualGenerators: ContextualGenerator[] = [
     weight: 2.5,
     generate: () => ({
       headline: 'NATIONWIDE LIGHTS-OUT EVENT CELEBRATES EARTH HOUR (EXTENDED INDEFINITELY)',
-      subtext:
-        'Citizens report improved night vision. Some claim to see in the dark. KGB notes this ability.',
+      subtext: 'Citizens report improved night vision. Some claim to see in the dark. KGB notes this ability.',
       reality:
         'Power grid collapsed. Engineers "working on it" since last month. The engineers may also have collapsed.',
       category: 'spin',
@@ -157,8 +155,7 @@ export const contextualGenerators: ContextualGenerator[] = [
 
   // Quota almost due
   {
-    condition: (gs) =>
-      gs.quota.deadlineYear - gs.date.year <= 1 && gs.quota.current < gs.quota.target,
+    condition: (gs) => gs.quota.deadlineYear - gs.date.year <= 1 && gs.quota.current < gs.quota.target,
     weight: 3,
     generate: (gs) => {
       const pct = Math.floor((gs.quota.current / gs.quota.target) * 100);

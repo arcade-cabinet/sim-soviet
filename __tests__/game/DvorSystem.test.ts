@@ -6,12 +6,7 @@
  * scales starting population appropriately.
  */
 import { dvory } from '../../src/ecs/archetypes';
-import {
-  createDvor,
-  createStartingSettlement,
-  laborCapacityForAge,
-  memberRoleForAge,
-} from '../../src/ecs/factories';
+import { createDvor, createStartingSettlement, laborCapacityForAge, memberRoleForAge } from '../../src/ecs/factories';
 import type { DvorMember } from '../../src/ecs/world';
 import { world } from '../../src/ecs/world';
 
@@ -106,9 +101,7 @@ describe('Dvor System', () => {
     });
 
     it('assigns correct surname', () => {
-      const entity = createDvor('dvor-1', 'Volkov', [
-        { name: 'Ivan Volkov', gender: 'male', age: 42 },
-      ]);
+      const entity = createDvor('dvor-1', 'Volkov', [{ name: 'Ivan Volkov', gender: 'male', age: 42 }]);
       expect(entity.dvor!.surname).toBe('Volkov');
     });
 
@@ -232,9 +225,7 @@ describe('Dvor System', () => {
     it('each dvor has a head of household', () => {
       createStartingSettlement('comrade');
       for (const entity of dvory.entities) {
-        const head = entity.dvor.members.find(
-          (m: DvorMember) => m.id === entity.dvor.headOfHousehold
-        );
+        const head = entity.dvor.members.find((m: DvorMember) => m.id === entity.dvor.headOfHousehold);
         expect(head).toBeDefined();
         expect(head!.role).toBe('head');
       }
@@ -334,12 +325,10 @@ describe('Dvor System', () => {
       expect(maleHeadedDvory.length).toBeGreaterThan(0);
 
       for (const entity of maleHeadedDvory) {
-        const head = entity.dvor.members.find(
-          (m: DvorMember) => m.id === entity.dvor.headOfHousehold
-        )!;
+        const head = entity.dvor.members.find((m: DvorMember) => m.id === entity.dvor.headOfHousehold)!;
         // Children: younger than head by at least 10 years, not elder
         const children = entity.dvor.members.filter(
-          (m: DvorMember) => m.age < head.age - 10 && m.role !== 'elder' && m.role !== 'spouse'
+          (m: DvorMember) => m.age < head.age - 10 && m.role !== 'elder' && m.role !== 'spouse',
         );
         if (children.length < 2) continue;
 

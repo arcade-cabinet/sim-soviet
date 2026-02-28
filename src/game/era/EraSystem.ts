@@ -15,14 +15,7 @@ import type { Doctrine } from '../CompulsoryDeliveries';
 import type { SettlementTier } from '../SettlementSystem';
 import { ALL_BUILDING_IDS, ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from './definitions';
 import { getBuildingTierRequirement, tierMeetsRequirement } from './tiers';
-import type {
-  ConstructionMethod,
-  EraCheckpoint,
-  EraDefinition,
-  EraId,
-  EraModifiers,
-  EraSystemSaveData,
-} from './types';
+import type { ConstructionMethod, EraCheckpoint, EraDefinition, EraId, EraModifiers, EraSystemSaveData } from './types';
 
 /** Number of ticks over which modifiers blend from old era to new era. */
 const TRANSITION_TICKS = 10;
@@ -120,9 +113,7 @@ export class EraSystem {
 
     if (tier == null) return available;
 
-    return available.filter((defId) =>
-      tierMeetsRequirement(tier, getBuildingTierRequirement(defId))
-    );
+    return available.filter((defId) => tierMeetsRequirement(tier, getBuildingTierRequirement(defId)));
   }
 
   /**
@@ -257,10 +248,8 @@ export class EraSystem {
       productionMult: from.productionMult + (to.productionMult - from.productionMult) * t,
       consumptionMult: from.consumptionMult + (to.consumptionMult - from.consumptionMult) * t,
       decayMult: from.decayMult + (to.decayMult - from.decayMult) * t,
-      populationGrowthMult:
-        from.populationGrowthMult + (to.populationGrowthMult - from.populationGrowthMult) * t,
-      eventFrequencyMult:
-        from.eventFrequencyMult + (to.eventFrequencyMult - from.eventFrequencyMult) * t,
+      populationGrowthMult: from.populationGrowthMult + (to.populationGrowthMult - from.populationGrowthMult) * t,
+      eventFrequencyMult: from.eventFrequencyMult + (to.eventFrequencyMult - from.eventFrequencyMult) * t,
       corruptionMult: from.corruptionMult + (to.corruptionMult - from.corruptionMult) * t,
     };
   }

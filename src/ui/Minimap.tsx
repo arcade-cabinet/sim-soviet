@@ -7,14 +7,15 @@
  * Redraws every 500ms via setInterval (not per-frame — minimap is low priority).
  */
 
-import React, { useEffect, useRef } from 'react';
-import { View, Platform, StyleSheet } from 'react-native';
-import { SharedStyles } from './styles';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { getGridCells } from '../bridge/ECSBridge';
 import { GRID_SIZE, type TerrainType } from '../engine/GridTypes';
+import { SharedStyles } from './styles';
 
 const PIXEL_SIZE = Math.floor(120 / GRID_SIZE); // 4px per cell
-const CANVAS_SIZE = PIXEL_SIZE * GRID_SIZE;       // 120px
+const CANVAS_SIZE = PIXEL_SIZE * GRID_SIZE; // 120px
 
 const TERRAIN_COLORS: Record<TerrainType, string> = {
   grass: '#3a5a2c',
@@ -69,12 +70,7 @@ export const Minimap: React.FC = () => {
           // Building dot
           if (cell.type) {
             ctx.fillStyle = BUILDING_COLOR;
-            ctx.fillRect(
-              x * PIXEL_SIZE + 1,
-              y * PIXEL_SIZE + 1,
-              PIXEL_SIZE - 2,
-              PIXEL_SIZE - 2,
-            );
+            ctx.fillRect(x * PIXEL_SIZE + 1, y * PIXEL_SIZE + 1, PIXEL_SIZE - 2, PIXEL_SIZE - 2);
           }
         }
       }

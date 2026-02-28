@@ -8,8 +8,7 @@ import type { MinigameDefinition } from '../MinigameTypes';
 export const PRISONER_REFORM: MinigameDefinition = {
   id: 'prisoner_reform',
   name: 'Prisoner Reform',
-  description:
-    'The prisoners request better conditions. Through labor, salvation. Through paperwork, madness.',
+  description: 'The prisoners request better conditions. Through labor, salvation. Through paperwork, madness.',
   triggerType: 'building_tap',
   triggerCondition: 'gulag_tap',
   tickLimit: 20,
@@ -21,13 +20,11 @@ export const PRISONER_REFORM: MinigameDefinition = {
       successChance: 0.75,
       onSuccess: {
         resources: { food: -10, money: 25 },
-        announcement:
-          'Prisoner productivity increased 40%. The road to the mine is now paved. With good intentions.',
+        announcement: 'Prisoner productivity increased 40%. The road to the mine is now paved. With good intentions.',
       },
       onFailure: {
         resources: { food: -10 },
-        announcement:
-          'Prisoners ate better but worked the same. The economics of compassion remain theoretical.',
+        announcement: 'Prisoners ate better but worked the same. The economics of compassion remain theoretical.',
       },
     },
     {
@@ -37,14 +34,12 @@ export const PRISONER_REFORM: MinigameDefinition = {
       successChance: 0.65,
       onSuccess: {
         resources: { money: 30 },
-        announcement:
-          'Output increased through discipline. The prisoners\' morale is not measured in the reports.',
+        announcement: "Output increased through discipline. The prisoners' morale is not measured in the reports.",
       },
       onFailure: {
         resources: { population: -2 },
         blackMarks: 1,
-        announcement:
-          'Two prisoners did not survive the new regime. Moscow asks uncomfortable questions.',
+        announcement: 'Two prisoners did not survive the new regime. Moscow asks uncomfortable questions.',
         severity: 'critical',
       },
     },
@@ -62,8 +57,7 @@ export const PRISONER_REFORM: MinigameDefinition = {
       onFailure: {
         resources: { population: -1 },
         blackMarks: 1,
-        announcement:
-          'A released prisoner fled. Another caused trouble. The experiment is deemed a failure.',
+        announcement: 'A released prisoner fled. Another caused trouble. The experiment is deemed a failure.',
         severity: 'warning',
       },
     },
@@ -71,8 +65,7 @@ export const PRISONER_REFORM: MinigameDefinition = {
   autoResolve: {
     resources: { population: -1 },
     blackMarks: 1,
-    announcement:
-      'The gulag ran itself. A prisoner died. Nobody filed a report. The silence is noted.',
+    announcement: 'The gulag ran itself. A prisoner died. Nobody filed a report. The silence is noted.',
     severity: 'critical',
   },
 };

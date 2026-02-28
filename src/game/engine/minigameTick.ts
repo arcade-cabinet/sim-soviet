@@ -137,11 +137,7 @@ function applyMinigameResources(outcome: MinigameOutcome): void {
   if (res.population) r.population = Math.max(0, r.population + res.population);
 }
 
-function applyMinigameMarks(
-  ctx: MinigameContext,
-  outcome: MinigameOutcome,
-  totalTicks: number
-): void {
+function applyMinigameMarks(ctx: MinigameContext, outcome: MinigameOutcome, totalTicks: number): void {
   const marks = outcome.blackMarks ?? 0;
   for (let i = 0; i < marks; i++) {
     ctx.personnelFile.addMark('black_market', totalTicks, outcome.announcement);

@@ -131,7 +131,7 @@ describe('factories', () => {
 
       it('unknown building type throws', () => {
         expect(() => createBuilding(0, 0, 'unknown-building-xyz')).toThrow(
-          '[buildingFactories] Unknown building defId: "unknown-building-xyz"'
+          '[buildingFactories] Unknown building defId: "unknown-building-xyz"',
         );
       });
     });
@@ -147,7 +147,7 @@ describe('factories', () => {
 
       it('unknown building type throws', () => {
         expect(() => createBuilding(0, 0, 'unknown-nope')).toThrow(
-          '[buildingFactories] Unknown building defId: "unknown-nope"'
+          '[buildingFactories] Unknown building defId: "unknown-nope"',
         );
       });
     });
@@ -157,25 +157,25 @@ describe('factories', () => {
     describe('unknown building type throws', () => {
       it('unknown type throws for powerReq check', () => {
         expect(() => createBuilding(0, 0, 'fake-building')).toThrow(
-          '[buildingFactories] Unknown building defId: "fake-building"'
+          '[buildingFactories] Unknown building defId: "fake-building"',
         );
       });
 
       it('unknown type throws for powerOutput check', () => {
         expect(() => createBuilding(0, 0, 'fake-building')).toThrow(
-          '[buildingFactories] Unknown building defId: "fake-building"'
+          '[buildingFactories] Unknown building defId: "fake-building"',
         );
       });
 
       it('unknown type throws for housingCap check', () => {
         expect(() => createBuilding(0, 0, 'fake-building')).toThrow(
-          '[buildingFactories] Unknown building defId: "fake-building"'
+          '[buildingFactories] Unknown building defId: "fake-building"',
         );
       });
 
       it('unknown type throws for decayRate check', () => {
         expect(() => createBuilding(0, 0, 'fake-building')).toThrow(
-          '[buildingFactories] Unknown building defId: "fake-building"'
+          '[buildingFactories] Unknown building defId: "fake-building"',
         );
       });
 
@@ -254,9 +254,14 @@ describe('factories', () => {
     });
 
     it('supports all citizen classes', () => {
-      const classes: Array<
-        'worker' | 'party_official' | 'engineer' | 'farmer' | 'soldier' | 'prisoner'
-      > = ['worker', 'party_official', 'engineer', 'farmer', 'soldier', 'prisoner'];
+      const classes: Array<'worker' | 'party_official' | 'engineer' | 'farmer' | 'soldier' | 'prisoner'> = [
+        'worker',
+        'party_official',
+        'engineer',
+        'farmer',
+        'soldier',
+        'prisoner',
+      ];
       for (const cls of classes) {
         const entity = createCitizen(cls);
         expect(entity.citizen!.class).toBe(cls);
@@ -517,13 +522,7 @@ describe('factories', () => {
     });
 
     it('all buildings start unpowered', () => {
-      const types = [
-        'power-station',
-        'apartment-tower-a',
-        'collective-farm-hq',
-        'vodka-distillery',
-        'gulag-admin',
-      ];
+      const types = ['power-station', 'apartment-tower-a', 'collective-farm-hq', 'vodka-distillery', 'gulag-admin'];
       for (const type of types) {
         world.clear();
         const entity = createBuilding(0, 0, type);
@@ -532,13 +531,7 @@ describe('factories', () => {
     });
 
     it('all buildings start at full durability (100)', () => {
-      const types = [
-        'power-station',
-        'apartment-tower-a',
-        'collective-farm-hq',
-        'vodka-distillery',
-        'gulag-admin',
-      ];
+      const types = ['power-station', 'apartment-tower-a', 'collective-farm-hq', 'vodka-distillery', 'gulag-admin'];
       for (const type of types) {
         world.clear();
         const entity = createBuilding(0, 0, type);

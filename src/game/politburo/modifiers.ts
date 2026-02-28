@@ -11,7 +11,7 @@ import type { MinistryModifiers } from './types';
 export function applyMinisterOverrides(
   mods: MinistryModifiers,
   overrides: Record<string, unknown>,
-  competenceScale: number
+  competenceScale: number,
 ): void {
   const modsRecord = mods as unknown as Record<string, number | boolean>;
   for (const [key, value] of Object.entries(overrides)) {

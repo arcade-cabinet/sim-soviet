@@ -14,16 +14,11 @@
  *   - Tick 0 is skipped (no events before the game starts)
  */
 
-import {
-  FEMALE_GIVEN_NAMES,
-  MALE_GIVEN_NAMES,
-  PATRONYMIC_RULES,
-  SURNAMES_RAW,
-} from '@/ai/names';
+import { FEMALE_GIVEN_NAMES, MALE_GIVEN_NAMES, PATRONYMIC_RULES, SURNAMES_RAW } from '@/ai/names';
 import { dvory } from '@/ecs/archetypes';
 import { laborCapacityForAge, memberRoleForAge } from '@/ecs/factories';
-import { world } from '@/ecs/world';
 import type { DvorComponent } from '@/ecs/world';
+import { world } from '@/ecs/world';
 import { TICKS_PER_MONTH, TICKS_PER_YEAR } from '@/game/Chronology';
 import type { GameRng } from '@/game/SeedSystem';
 
@@ -106,19 +101,12 @@ export function ageAllMembers(): number {
  * Follows convention: Given + Patronymic (from father/head) + Gendered Surname.
  * The head of household's given name is used for the patronymic (Russian custom).
  */
-function generateInfantName(
-  dvor: DvorComponent,
-  infantGender: 'male' | 'female',
-  rng: GameRng | null
-): string {
+function generateInfantName(dvor: DvorComponent, infantGender: 'male' | 'female', rng: GameRng | null): string {
   const r = () => rng?.random() ?? Math.random();
-  const pickFrom = <T>(arr: readonly T[]): T =>
-    arr[Math.floor(r() * arr.length)]!;
+  const pickFrom = <T>(arr: readonly T[]): T => arr[Math.floor(r() * arr.length)]!;
 
   // Given name
-  const givenName = infantGender === 'male'
-    ? pickFrom(MALE_GIVEN_NAMES)
-    : pickFrom(FEMALE_GIVEN_NAMES);
+  const givenName = infantGender === 'male' ? pickFrom(MALE_GIVEN_NAMES) : pickFrom(FEMALE_GIVEN_NAMES);
 
   // Patronymic: derived from head of household's given name (first word of their full name)
   const head = dvor.members.find((m) => m.id === dvor.headOfHousehold);
@@ -129,9 +117,7 @@ function generateInfantName(
   const surnameEntry = SURNAMES_RAW.find((s) => s.male === dvor.surname);
   let surname: string;
   if (surnameEntry) {
-    surname = infantGender === 'female'
-      ? (surnameEntry.female ?? surnameEntry.male)
-      : surnameEntry.male;
+    surname = infantGender === 'female' ? (surnameEntry.female ?? surnameEntry.male) : surnameEntry.male;
   } else {
     // Fallback: apply common Russian gendering rules
     surname = dvor.surname;
@@ -154,12 +140,7 @@ function generateInfantName(
  * Base probability: 15% per year → ~1.25% per month.
  * Food modifier: foodLevel < 0.5 → ×0.5, foodLevel > 0.8 → ×1.2.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: birth eligibility + RNG + infant creation is inherently branchy
-export function birthCheck(
-  rng: GameRng | null,
-  foodLevel: number,
-  result: DemographicTickResult
-): void {
+export function birthCheck(rng: GameRng | null, foodLevel: number, result: DemographicTickResult): void {
   // Food modifier
   let foodMod = 1.0;
   if (foodLevel < 0.5) foodMod = 0.5;
@@ -182,8 +163,7 @@ export function birthCheck(
       const roll = rng?.random() ?? Math.random();
       if (roll < threshold) {
         // Birth! Add infant to this dvor
-        const infantGender: 'male' | 'female' =
-          (rng?.random() ?? Math.random()) < 0.5 ? 'male' : 'female';
+        const infantGender: 'male' | 'female' = (rng?.random() ?? Math.random()) < 0.5 ? 'male' : 'female';
         dvor.nextMemberId = (dvor.nextMemberId ?? dvor.members.length) + 1;
         const infantId = `${dvor.id}-m${dvor.nextMemberId}`;
         const infantName = generateInfantName(dvor, infantGender, rng);
@@ -214,11 +194,7 @@ export function birthCheck(
  * Starvation: additional 5% monthly when food = 0.
  * Removes dead members from their dvor. Removes empty dvory from the world.
  */
-export function deathCheck(
-  rng: GameRng | null,
-  foodLevel: number,
-  result: DemographicTickResult
-): void {
+export function deathCheck(rng: GameRng | null, foodLevel: number, result: DemographicTickResult): void {
   const starvationMod = foodLevel <= 0 ? STARVATION_MONTHLY_RATE : 0;
 
   // Collect dvory to potentially remove (empty after deaths)
@@ -273,11 +249,7 @@ export function deathCheck(
  * - Month boundary (every 30 ticks): births + deaths
  * - Tick 0 is always skipped.
  */
-export function demographicTick(
-  rng: GameRng | null,
-  totalTicks: number,
-  foodLevel: number
-): DemographicTickResult {
+export function demographicTick(rng: GameRng | null, totalTicks: number, foodLevel: number): DemographicTickResult {
   const result: DemographicTickResult = {
     births: 0,
     deaths: 0,

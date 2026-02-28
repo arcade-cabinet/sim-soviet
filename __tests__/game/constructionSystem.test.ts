@@ -14,6 +14,7 @@ import {
 } from '../../src/ecs/archetypes';
 import {
   createBuilding,
+  createCitizen,
   createResourceStore,
   isOperational,
   placeNewBuilding,
@@ -22,6 +23,8 @@ import {
   constructionSystem,
   DEFAULT_BASE_TICKS,
   DEFAULT_MATERIAL_COST,
+  DEFAULT_STAFF_CAP,
+  workerSpeedMult,
 } from '../../src/ecs/systems/constructionSystem';
 import { productionSystem } from '../../src/ecs/systems/productionSystem';
 import { world } from '../../src/ecs/world';
@@ -183,15 +186,9 @@ describe('constructionSystem', () => {
       constructionSystem();
 
       // Per-tick deduction = total / baseTicks (rounded up, min 1 if total > 0)
-      const perTickTimber = Math.max(
-        1,
-        Math.ceil(DEFAULT_MATERIAL_COST.timber / DEFAULT_BASE_TICKS)
-      );
+      const perTickTimber = Math.max(1, Math.ceil(DEFAULT_MATERIAL_COST.timber / DEFAULT_BASE_TICKS));
       const perTickSteel = Math.max(1, Math.ceil(DEFAULT_MATERIAL_COST.steel / DEFAULT_BASE_TICKS));
-      const perTickCement = Math.max(
-        1,
-        Math.ceil(DEFAULT_MATERIAL_COST.cement / DEFAULT_BASE_TICKS)
-      );
+      const perTickCement = Math.max(1, Math.ceil(DEFAULT_MATERIAL_COST.cement / DEFAULT_BASE_TICKS));
 
       expect(timberBefore - res.timber).toBe(perTickTimber);
       expect(steelBefore - res.steel).toBe(perTickSteel);
@@ -451,6 +448,60 @@ describe('constructionSystem', () => {
 
       for (let i = 0; i < effectiveTicks; i++) constructionSystem(1.0, weatherMult);
       expect(entity.building!.constructionPhase).toBe('complete');
+    });
+  });
+
+  // ── Worker speed bonus ──────────────────────────────────────
+
+  describe('workerSpeedMult (unit)', () => {
+    it('returns 1.0 with no workers', () => {
+      expect(workerSpeedMult(0, 1, DEFAULT_STAFF_CAP)).toBe(1.0);
+    });
+
+    it('returns 2.0 when workers equal staffCap', () => {
+      expect(workerSpeedMult(DEFAULT_STAFF_CAP, 1, DEFAULT_STAFF_CAP)).toBe(2.0);
+    });
+
+    it('caps at 2.0 when workers exceed staffCap', () => {
+      expect(workerSpeedMult(DEFAULT_STAFF_CAP * 3, 1, DEFAULT_STAFF_CAP)).toBe(2.0);
+    });
+
+    it('splits workers evenly across multiple construction sites', () => {
+      // 10 workers across 2 sites with staffCap 5 = 5 per site = fully staffed
+      expect(workerSpeedMult(10, 2, 5)).toBe(2.0);
+    });
+
+    it('returns 1.5 with half staffCap workers', () => {
+      // 5 workers / 2 sites = 2.5 per site, staffCap 5 → ratio 0.5 → 1.5x
+      expect(workerSpeedMult(5, 2, 5)).toBe(1.5);
+    });
+  });
+
+  describe('worker speed bonus (integration)', () => {
+    it('construction completes faster with assigned workers', () => {
+      const entity = placeNewBuilding(5, 5, 'collective-farm-hq');
+
+      // Create workers assigned to the building's defId
+      for (let i = 0; i < DEFAULT_STAFF_CAP; i++) {
+        const citizen = createCitizen('worker');
+        citizen.citizen!.assignment = 'collective-farm-hq';
+        world.reindex(citizen);
+      }
+
+      // With full staffing, workerSpeedMult=2.0 → floor(2.0)=2 ticks per sim tick
+      // So construction should complete in ~ceil(DEFAULT_BASE_TICKS / 2) sim ticks
+      const expectedTicks = Math.ceil(DEFAULT_BASE_TICKS / 2);
+      for (let i = 0; i < expectedTicks; i++) constructionSystem();
+
+      expect(entity.building!.constructionPhase).toBe('complete');
+    });
+
+    it('construction still advances at base speed with zero workers', () => {
+      const entity = placeNewBuilding(5, 5, 'collective-farm-hq');
+
+      // No workers assigned — should still advance at 1 tick per sim tick
+      constructionSystem();
+      expect(entity.building!.constructionTicks).toBe(1);
     });
   });
 });

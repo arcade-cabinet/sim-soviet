@@ -25,8 +25,7 @@ export const IDEOLOGICAL_EDUCATION: MinigameDefinition = {
           'Curriculum approved by the Education Ministry. Students can recite Marx in their sleep. They frequently do.',
       },
       onFailure: {
-        announcement:
-          'The students passed all exams but learned nothing useful. This is considered acceptable.',
+        announcement: 'The students passed all exams but learned nothing useful. This is considered acceptable.',
       },
     },
     {
@@ -36,13 +35,11 @@ export const IDEOLOGICAL_EDUCATION: MinigameDefinition = {
       successChance: 0.6,
       onSuccess: {
         resources: { money: 15 },
-        announcement:
-          'Graduates immediately productive in factories. The Party approves of this practical socialism.',
+        announcement: 'Graduates immediately productive in factories. The Party approves of this practical socialism.',
       },
       onFailure: {
         blackMarks: 1,
-        announcement:
-          'The inspectorate found the curriculum insufficiently ideological. Practical skills are suspect.',
+        announcement: 'The inspectorate found the curriculum insufficiently ideological. Practical skills are suspect.',
         severity: 'warning',
       },
     },
@@ -55,21 +52,18 @@ export const IDEOLOGICAL_EDUCATION: MinigameDefinition = {
         commendations: 1,
         resources: { money: 20 },
         blat: 1,
-        announcement:
-          'A student\'s essay impressed a visiting dignitary. Free thinking is temporarily fashionable.',
+        announcement: "A student's essay impressed a visiting dignitary. Free thinking is temporarily fashionable.",
       },
       onFailure: {
         blackMarks: 2,
-        announcement:
-          'A student asked why the Party is always right. The teacher had no answer. Neither did you.',
+        announcement: 'A student asked why the Party is always right. The teacher had no answer. Neither did you.',
         severity: 'critical',
       },
     },
   ],
   autoResolve: {
     blackMarks: 1,
-    announcement:
-      'The school taught nothing for a month. The students learned anyway. This terrifies the authorities.',
+    announcement: 'The school taught nothing for a month. The students learned anyway. This terrifies the authorities.',
     severity: 'warning',
   },
 };

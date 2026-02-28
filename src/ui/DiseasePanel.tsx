@@ -6,19 +6,25 @@
  * terminal-variant SovietModal with health status bar and disease cards.
  */
 
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { useMemo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { citizens } from '../ecs/archetypes';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { citizens } from '../ecs/archetypes';
 
 // ── Disease Definitions ──────────────────────────────────────────────────────
 
 const DISEASE_INFO: Record<string, { name: string; icon: string; color: string; desc: string }> = {
   typhus: { name: 'TYPHUS', icon: '\u2620', color: Colors.sovietRed, desc: 'High spread, moderate mortality' },
   cholera: { name: 'CHOLERA', icon: '\u2623', color: '#ff5722', desc: 'Moderate spread, high mortality' },
-  influenza: { name: 'INFLUENZA', icon: '\u{1F912}', color: Colors.sovietGold, desc: 'Very high spread, low mortality' },
+  influenza: {
+    name: 'INFLUENZA',
+    icon: '\u{1F912}',
+    color: Colors.sovietGold,
+    desc: 'Very high spread, low mortality',
+  },
   scurvy: { name: 'SCURVY', icon: '\u{1F34A}', color: '#ff9800', desc: 'Nutritional, no spread' },
 };
 
@@ -56,19 +62,13 @@ function severityColor(infected: number, total: number): string {
 // ── Sub-components ───────────────────────────────────────────────────────────
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
 
 /** Summary stat box. */
-const SummaryStat: React.FC<{ label: string; value: string; color: string }> = ({
-  label,
-  value,
-  color,
-}) => (
+const SummaryStat: React.FC<{ label: string; value: string; color: string }> = ({ label, value, color }) => (
   <View style={styles.summaryStatBox}>
     <Text style={[styles.summaryValue, { color }]}>{value}</Text>
     <Text style={styles.summaryLabel}>{label}</Text>
@@ -154,14 +154,13 @@ export const DiseasePanel: React.FC<DiseasePanelProps> = ({ visible, onDismiss }
       diseaseBreakdown,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [citizens.entities.length]);
+  }, []);
 
   if (!visible) return null;
 
   const hasOutbreaks = summary.diseaseBreakdown.length > 0;
-  const healthyPct = summary.totalCitizens > 0
-    ? Math.round((summary.healthyCitizens / summary.totalCitizens) * 100)
-    : 100;
+  const healthyPct =
+    summary.totalCitizens > 0 ? Math.round((summary.healthyCitizens / summary.totalCitizens) * 100) : 100;
   const sickPct = 100 - healthyPct;
 
   return (
@@ -179,16 +178,8 @@ export const DiseasePanel: React.FC<DiseasePanelProps> = ({ visible, onDismiss }
       <SectionHeader title="POPULATION HEALTH STATUS" />
 
       <View style={styles.summaryRow}>
-        <SummaryStat
-          label="TOTAL"
-          value={String(summary.totalCitizens)}
-          color={Colors.white}
-        />
-        <SummaryStat
-          label="HEALTHY"
-          value={String(summary.healthyCitizens)}
-          color={Colors.termGreen}
-        />
+        <SummaryStat label="TOTAL" value={String(summary.totalCitizens)} color={Colors.white} />
+        <SummaryStat label="HEALTHY" value={String(summary.healthyCitizens)} color={Colors.termGreen} />
         <SummaryStat
           label="SICK"
           value={String(summary.sickCitizens)}
@@ -255,18 +246,11 @@ export const DiseasePanel: React.FC<DiseasePanelProps> = ({ visible, onDismiss }
 
       {hasOutbreaks ? (
         summary.diseaseBreakdown.map((d) => (
-          <DiseaseCard
-            key={d.type}
-            type={d.type}
-            count={d.count}
-            total={summary.totalCitizens}
-          />
+          <DiseaseCard key={d.type} type={d.type} count={d.count} total={summary.totalCitizens} />
         ))
       ) : (
         <View style={styles.noOutbreakBox}>
-          <Text style={styles.noOutbreakText}>
-            No active outbreaks. Glory to Soviet medicine!
-          </Text>
+          <Text style={styles.noOutbreakText}>No active outbreaks. Glory to Soviet medicine!</Text>
         </View>
       )}
     </SovietModal>

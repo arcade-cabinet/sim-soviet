@@ -7,12 +7,7 @@
  * - RATE_LIMIT_MS = 3000ms (min gap between showing toasts)
  * - DEDUP_WINDOW_MS = 10000ms (skip duplicate messages)
  */
-import {
-  addSovietToast,
-  clearAllToasts,
-  dismissSovietToast,
-  getToastsSnapshot,
-} from '@/stores/toastStore';
+import { addSovietToast, clearAllToasts, dismissSovietToast, getToastsSnapshot } from '@/stores/toastStore';
 
 beforeEach(() => {
   jest.useFakeTimers();

@@ -6,22 +6,16 @@
  * Styled as an official Soviet assignment form.
  */
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
+import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-  Platform,
-} from 'react-native';
-import { Colors, monoFont } from './styles';
-import {
-  DIFFICULTY_PRESETS,
   CONSEQUENCE_PRESETS,
-  type DifficultyLevel,
   type ConsequenceLevel,
+  DIFFICULTY_PRESETS,
+  type DifficultyLevel,
 } from '../game/ScoringSystem';
+import { Colors, monoFont } from './styles';
 
 export interface NewGameConfig {
   difficulty: DifficultyLevel;
@@ -107,9 +101,7 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
             ))}
           </View>
           <Text style={styles.flavor}>{CONSEQUENCE_FLAVOR[consequence]}</Text>
-          <Text style={styles.flavorItalic}>
-            &quot;{consConfig.subtitle}&quot;
-          </Text>
+          <Text style={styles.flavorItalic}>&quot;{consConfig.subtitle}&quot;</Text>
         </View>
 
         <View style={styles.section}>
@@ -127,20 +119,30 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
 
         <View style={styles.scoreNote}>
           <Text style={styles.scoreLabel}>
-            SCORE MULTIPLIER: x{(
-              difficulty === 'worker' ? (consequence === 'forgiving' ? 0.5 : consequence === 'harsh' ? 0.7 : 1.0) :
-              difficulty === 'comrade' ? (consequence === 'forgiving' ? 0.8 : consequence === 'harsh' ? 1.2 : 1.5) :
-              (consequence === 'forgiving' ? 1.0 : consequence === 'harsh' ? 1.8 : 2.0)
+            SCORE MULTIPLIER: x
+            {(difficulty === 'worker'
+              ? consequence === 'forgiving'
+                ? 0.5
+                : consequence === 'harsh'
+                  ? 0.7
+                  : 1.0
+              : difficulty === 'comrade'
+                ? consequence === 'forgiving'
+                  ? 0.8
+                  : consequence === 'harsh'
+                    ? 1.2
+                    : 1.5
+                : consequence === 'forgiving'
+                  ? 1.0
+                  : consequence === 'harsh'
+                    ? 1.8
+                    : 2.0
             ).toFixed(1)}
           </Text>
         </View>
 
         <View style={styles.btnRow}>
-          <TouchableOpacity
-            onPress={onBack}
-            style={styles.btnBack}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity onPress={onBack} style={styles.btnBack} activeOpacity={0.8}>
             <Text style={styles.btnBackText}>RETURN</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -158,9 +160,7 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.footer}>
-          REFUSAL IS NOT AN OPTION /// GLORY TO THE CENTRAL COMMITTEE
-        </Text>
+        <Text style={styles.footer}>REFUSAL IS NOT AN OPTION /// GLORY TO THE CENTRAL COMMITTEE</Text>
       </View>
     </View>
   );

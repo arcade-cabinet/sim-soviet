@@ -6,18 +6,14 @@
  * history of past leaders. Accessible from the STATE tab or TopBar.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { GeneralSecretary, Minister, MinistryModifiers } from '../game/politburo/types';
+import { Ministry, PersonalityType } from '../game/politburo/types';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { Ministry, PersonalityType } from '../game/politburo/types';
-import type {
-  GeneralSecretary,
-  Minister,
-  MinistryModifiers,
-} from '../game/politburo/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONSTANTS
@@ -111,9 +107,7 @@ const PersonalityBadge: React.FC<{ personality: PersonalityType }> = ({ personal
   const color = PERSONALITY_COLORS[personality] ?? '#888';
   return (
     <View style={[styles.badge, { borderColor: color }]}>
-      <Text style={[styles.badgeText, { color }]}>
-        {personality.toUpperCase()}
-      </Text>
+      <Text style={[styles.badgeText, { color }]}>{personality.toUpperCase()}</Text>
     </View>
   );
 };
@@ -178,10 +172,7 @@ const GeneralSecretarySection: React.FC<{ gs: GeneralSecretary }> = ({ gs }) => 
 );
 
 /** Single minister row in the table. */
-const MinisterRow: React.FC<{ ministry: Ministry; minister: Minister }> = ({
-  ministry,
-  minister,
-}) => (
+const MinisterRow: React.FC<{ ministry: Ministry; minister: Minister }> = ({ ministry, minister }) => (
   <View style={styles.ministerRow}>
     {/* Ministry name */}
     <View style={styles.ministryCol}>
@@ -255,13 +246,7 @@ const MinistersSection: React.FC<{ ministers: Map<Ministry, Minister> }> = ({ mi
     {MINISTRY_ORDER.map((ministry) => {
       const minister = ministers.get(ministry);
       if (!minister) return null;
-      return (
-        <MinisterRow
-          key={ministry}
-          ministry={ministry}
-          minister={minister}
-        />
-      );
+      return <MinisterRow key={ministry} ministry={ministry} minister={minister} />;
     })}
   </View>
 );
@@ -352,9 +337,7 @@ const SuccessionSection: React.FC<{ history: GeneralSecretary[] }> = ({ history 
       <Text style={styles.sectionTitle}>SUCCESSION HISTORY</Text>
       {[...history].reverse().map((leader, i) => {
         const personalityColor = PERSONALITY_COLORS[leader.personality] ?? '#888';
-        const deathText = leader.causeOfDeath
-          ? DEATH_LABELS[leader.causeOfDeath] ?? 'Unknown'
-          : 'Unknown';
+        const deathText = leader.causeOfDeath ? (DEATH_LABELS[leader.causeOfDeath] ?? 'Unknown') : 'Unknown';
 
         return (
           <View key={`${leader.id}-${i}`} style={styles.historyRow}>

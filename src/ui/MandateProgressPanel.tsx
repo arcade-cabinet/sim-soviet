@@ -8,14 +8,14 @@
  * Uses SovietModal with terminal variant for dark-panel aesthetic.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { MandateWithFulfillment } from '../game/PlanMandates';
+import { getMandateFulfillment, isMandateComplete } from '../game/PlanMandates';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { getMandateFulfillment, isMandateComplete } from '../game/PlanMandates';
-import type { MandateWithFulfillment } from '../game/PlanMandates';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Props
@@ -31,9 +31,7 @@ export interface MandateProgressPanelProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
@@ -41,9 +39,7 @@ const Divider: React.FC = () => <View style={styles.divider} />;
 /** Single mandate row with label, progress bar, and status icon. */
 const MandateRow: React.FC<{ mandate: MandateWithFulfillment }> = ({ mandate }) => {
   const complete = isMandateComplete(mandate);
-  const ratio = mandate.required > 0
-    ? Math.min(mandate.fulfilled / mandate.required, 1)
-    : 0;
+  const ratio = mandate.required > 0 ? Math.min(mandate.fulfilled / mandate.required, 1) : 0;
   const barColor = complete ? Colors.termGreen : Colors.sovietGold;
   const statusIcon = complete ? '\u2713' : '\u2717';
   const statusColor = complete ? Colors.termGreen : Colors.sovietRed;
@@ -51,12 +47,8 @@ const MandateRow: React.FC<{ mandate: MandateWithFulfillment }> = ({ mandate }) 
   return (
     <View style={styles.mandateRow}>
       <View style={styles.mandateHeader}>
-        <Text style={[styles.mandateLabel, complete && styles.mandateLabelComplete]}>
-          {mandate.label}
-        </Text>
-        <Text style={[styles.statusIcon, { color: statusColor }]}>
-          {statusIcon}
-        </Text>
+        <Text style={[styles.mandateLabel, complete && styles.mandateLabelComplete]}>{mandate.label}</Text>
+        <Text style={[styles.statusIcon, { color: statusColor }]}>{statusIcon}</Text>
       </View>
 
       <View style={styles.barRow}>
@@ -83,12 +75,9 @@ const MandateRow: React.FC<{ mandate: MandateWithFulfillment }> = ({ mandate }) 
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const MandateProgressPanel: React.FC<MandateProgressPanelProps> = ({
-  visible,
-  onDismiss,
-}) => {
+export const MandateProgressPanel: React.FC<MandateProgressPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
-  const snap = useGameSnapshot();
+  const _snap = useGameSnapshot();
 
   // Access engine systems — may be null if game not initialized
   const engine = getEngine();
@@ -143,21 +132,12 @@ export const MandateProgressPanel: React.FC<MandateProgressPanelProps> = ({
                 ]}
               />
             </View>
-            <Text
-              style={[
-                styles.overallPercent,
-                { color: allComplete ? Colors.termGreen : Colors.sovietRed },
-              ]}
-            >
+            <Text style={[styles.overallPercent, { color: allComplete ? Colors.termGreen : Colors.sovietRed }]}>
               {fulfillmentPercent}%
             </Text>
           </View>
 
-          {allComplete && (
-            <Text style={styles.completeText}>
-              ALL MANDATES FULFILLED — GLORY TO THE WORKERS!
-            </Text>
-          )}
+          {allComplete && <Text style={styles.completeText}>ALL MANDATES FULFILLED — GLORY TO THE WORKERS!</Text>}
         </>
       ) : (
         <Text style={styles.noData}>No active mandates.</Text>
@@ -171,9 +151,7 @@ export const MandateProgressPanel: React.FC<MandateProgressPanelProps> = ({
           <SectionHeader title="PRODUCTION QUOTA" />
 
           <View style={styles.quotaRow}>
-            <Text style={styles.quotaLabel}>
-              {quota.type.toUpperCase()}:
-            </Text>
+            <Text style={styles.quotaLabel}>{quota.type.toUpperCase()}:</Text>
             <Text style={styles.quotaValue}>
               {Math.round(quota.current)}/{quota.target}
             </Text>
@@ -186,10 +164,7 @@ export const MandateProgressPanel: React.FC<MandateProgressPanelProps> = ({
                   styles.barFill,
                   {
                     width: `${Math.round(Math.min(quota.current / Math.max(quota.target, 1), 1) * 100)}%`,
-                    backgroundColor:
-                      quota.current >= quota.target
-                        ? Colors.termGreen
-                        : Colors.termBlue,
+                    backgroundColor: quota.current >= quota.target ? Colors.termGreen : Colors.termBlue,
                   },
                 ]}
               />
@@ -198,10 +173,7 @@ export const MandateProgressPanel: React.FC<MandateProgressPanelProps> = ({
               style={[
                 styles.barLabel,
                 {
-                  color:
-                    quota.current >= quota.target
-                      ? Colors.termGreen
-                      : Colors.textPrimary,
+                  color: quota.current >= quota.target ? Colors.termGreen : Colors.textPrimary,
                 },
               ]}
             >

@@ -7,23 +7,11 @@
  * building, and serialization for save/load.
  */
 
-import {
-  clearTerrainFeatures,
-  createForest,
-  createMarsh,
-  createMountain,
-  createRiver,
-} from '@/ecs/factories';
+import { clearTerrainFeatures, createForest, createMarsh, createMountain, createRiver } from '@/ecs/factories';
 import { GameRng } from '../SeedSystem';
 import { assignFeatures, checkConnectivity, fractalNoise } from './generation';
 import { generateRiverPath, rasterizeRiver } from './rivers';
-import type {
-  MapGenerationOptions,
-  SerializedCell,
-  SerializedMap,
-  TerrainCell,
-  TerrainType,
-} from './types';
+import type { MapGenerationOptions, SerializedCell, SerializedMap, TerrainCell, TerrainType } from './types';
 import { DEFAULT_MAP_OPTIONS, MAP_SIZES, TERRAIN_DEFAULTS } from './types';
 
 export class MapSystem {
@@ -192,8 +180,7 @@ export class MapSystem {
     for (let y = 0; y < this.size; y++) {
       for (let x = 0; x < this.size; x++) {
         if (this.terrain[y]![x]!.type !== 'grass') continue;
-        const distFromCenter =
-          Math.sqrt((x - center) ** 2 + (y - center) ** 2) / (center * Math.SQRT2);
+        const distFromCenter = Math.sqrt((x - center) ** 2 + (y - center) ** 2) / (center * Math.SQRT2);
         const edgeBias = 0.2 + 0.8 * distFromCenter;
         candidates.push({ x, y, score: noise[y]![x]! * edgeBias });
       }
@@ -219,8 +206,7 @@ export class MapSystem {
     for (let y = 0; y < this.size; y++) {
       for (let x = 0; x < this.size; x++) {
         if (this.terrain[y]![x]!.type !== 'grass') continue;
-        const distFromCenter =
-          Math.sqrt((x - center) ** 2 + (y - center) ** 2) / (center * Math.SQRT2);
+        const distFromCenter = Math.sqrt((x - center) ** 2 + (y - center) ** 2) / (center * Math.SQRT2);
         const edgeBias = 0.3 + 0.7 * distFromCenter;
         candidates.push({ x, y, score: noise[y]![x]! * edgeBias });
       }

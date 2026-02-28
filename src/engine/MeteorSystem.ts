@@ -3,8 +3,8 @@
  * Faithful port of poc.html lines 548-572 (from mainLoop).
  */
 
-import { GRID_SIZE } from './GridTypes';
 import type { GameState } from './GameState';
+import { GRID_SIZE } from './GridTypes';
 import { showAdvisor } from './helpers';
 
 export function updateMeteor(state: GameState, dt: number): void {
@@ -40,9 +40,7 @@ export function updateMeteor(state: GameState, dt: number): void {
             } else {
               if (cell.type && cell.type !== 'road') cell.onFire = 1;
             }
-            state.buildings = state.buildings.filter(
-              (ob) => !(ob.x === nx && ob.y === ny && dx === 0 && dy === 0)
-            );
+            state.buildings = state.buildings.filter((ob) => !(ob.x === nx && ob.y === ny && dx === 0 && dy === 0));
           }
         }
       }
@@ -51,7 +49,7 @@ export function updateMeteor(state: GameState, dt: number): void {
     showAdvisor(
       state,
       'Min. Defense: A cosmic body struck Sector 7G. The crater radiates energy. The Cosmic Tap has been authorized.',
-      'DEFENSE'
+      'DEFENSE',
     );
     // NOTE: In the POC, the Cosmic Tap button is revealed here.
     // The renderer/UI layer should check state.meteor.struck to show the tap tool.

@@ -28,8 +28,7 @@ export const MILITARY_INSPECTION: MinigameDefinition = {
       onFailure: {
         resources: { money: -10 },
         blackMarks: 1,
-        announcement:
-          'A soldier fainted during inspection. The commander was not impressed. Heat stroke is no excuse.',
+        announcement: 'A soldier fainted during inspection. The commander was not impressed. Heat stroke is no excuse.',
         severity: 'warning',
       },
     },
@@ -41,13 +40,11 @@ export const MILITARY_INSPECTION: MinigameDefinition = {
       onSuccess: {
         commendations: 1,
         resources: { money: 15 },
-        announcement:
-          'Combat exercise successful. All targets destroyed. No friendly casualties. A genuine miracle.',
+        announcement: 'Combat exercise successful. All targets destroyed. No friendly casualties. A genuine miracle.',
       },
       onFailure: {
         resources: { population: -1, money: -20 },
-        announcement:
-          'The exercise did not go to plan. One soldier forgot which end of the rifle to point away.',
+        announcement: 'The exercise did not go to plan. One soldier forgot which end of the rifle to point away.',
         severity: 'warning',
       },
     },
@@ -59,14 +56,12 @@ export const MILITARY_INSPECTION: MinigameDefinition = {
       onSuccess: {
         resources: { vodka: -5, money: -15 },
         blat: 2,
-        announcement:
-          'The commander wrote a glowing report. He also took the hunting rifle. Everyone wins.',
+        announcement: 'The commander wrote a glowing report. He also took the hunting rifle. Everyone wins.',
       },
       onFailure: {
         blackMarks: 2,
         resources: { vodka: -5, money: -15 },
-        announcement:
-          'The commander reported the bribe attempt. He kept the vodka as evidence.',
+        announcement: 'The commander reported the bribe attempt. He kept the vodka as evidence.',
         severity: 'critical',
       },
     },

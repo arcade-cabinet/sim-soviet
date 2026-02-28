@@ -18,6 +18,8 @@ import type { EraSystem } from '../era';
 import { EraSystem as EraSystemClass } from '../era';
 import type { EventSystem, GameEvent } from '../events';
 import { EventSystem as EventSystemClass } from '../events';
+import type { FireSystem } from '../FireSystem';
+import { FireSystem as FireSystemClass } from '../FireSystem';
 import type { MinigameRouter } from '../minigames/MinigameRouter';
 import { MinigameRouter as MinigameRouterClass } from '../minigames/MinigameRouter';
 import type { PersonnelFile } from '../PersonnelFile';
@@ -39,8 +41,6 @@ import type { TransportSystem } from '../TransportSystem';
 import { TransportSystem as TransportSystemClass } from '../TransportSystem';
 import type { TutorialSystem } from '../TutorialSystem';
 import { TutorialSystem as TutorialSystemClass } from '../TutorialSystem';
-import type { FireSystem } from '../FireSystem';
-import { FireSystem as FireSystemClass } from '../FireSystem';
 
 /** Maps game EraSystem IDs to EconomySystem EraIds (needed for fallback on restore). */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -75,6 +75,7 @@ export interface SerializableEngine {
   fireSystem: FireSystem;
   quota: QuotaState;
   consecutiveQuotaFailures: number;
+  pripiskiCount: number;
   lastSeason: string;
   lastWeather: string;
   lastDayPhase: string;
@@ -124,6 +125,7 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
       lastThreatLevel: engine.lastThreatLevel,
       pendingReport: engine.pendingReport,
       ended: engine.ended,
+      pripiskiCount: engine.pripiskiCount,
     },
   };
 }
@@ -132,7 +134,6 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
  * Restore all subsystem state from a deserialized save blob.
  * Replaces internal system instances with deserialized versions.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: restoring 15+ optional subsystem branches is inherently sequential
 export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSaveData): void {
   // Restore Era System
   engine.eraSystem = EraSystemClass.deserialize(data.era);
@@ -169,7 +170,7 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
           random: () => Math.random(),
           int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
           pick: <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!,
-        } as GameRng)
+        } as GameRng),
     );
   }
 
@@ -187,18 +188,11 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
   }
 
   if (data.politburo) {
-    engine.politburo = PolitburoSystemClass.deserialize(
-      data.politburo,
-      engine.politburoEventHandler,
-      engine.rng
-    );
+    engine.politburo = PolitburoSystemClass.deserialize(data.politburo, engine.politburoEventHandler, engine.rng);
   }
 
   if (data.politicalEntities) {
-    engine.politicalEntities = PoliticalEntitySystemClass.deserialize(
-      data.politicalEntities,
-      engine.rng
-    );
+    engine.politicalEntities = PoliticalEntitySystemClass.deserialize(data.politicalEntities, engine.rng);
   }
 
   if (data.minigames) {
@@ -233,6 +227,7 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
     engine.lastThreatLevel = data.engineState.lastThreatLevel;
     engine.pendingReport = data.engineState.pendingReport;
     engine.ended = data.engineState.ended;
+    engine.pripiskiCount = data.engineState.pripiskiCount ?? 0;
   }
 
   // Update economy system to match restored era (fallback for saves without economy data)

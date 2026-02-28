@@ -147,7 +147,7 @@ export class WorkerSystem {
     worker: Entity,
     buildingGridX: number,
     buildingGridY: number,
-    source: 'player' | 'forced' | 'auto' = 'player'
+    source: 'player' | 'forced' | 'auto' = 'player',
   ): boolean {
     if (!worker.citizen) return false;
 
@@ -197,7 +197,7 @@ export class WorkerSystem {
    * 6. Stakhanovite event check
    * 7. Skill growth for assigned workers
    */
-  tick(vodkaAvailable: number, foodAvailable: number): WorkerTickResult {
+  tick(vodkaAvailable: number, foodAvailable: number, heatingFailing = false): WorkerTickResult {
     const stakhanovites: WorkerTickResult['stakhanovites'] = [];
     const ctx: TickContext = {
       remainingVodka: vodkaAvailable,
@@ -206,6 +206,7 @@ export class WorkerSystem {
       foodConsumed: 0,
       partyOfficialCount: 0,
       rng: this.rng,
+      heatingFailing,
     };
 
     for (const c of citizens) {
@@ -243,20 +244,14 @@ export class WorkerSystem {
       const cls = entity.citizen.class;
       processVodka(stats, cls, ctx);
       processFood(entity.citizen, stats, ctx);
-      applyMorale(entity.citizen, stats, ctx.partyOfficialCount);
+      applyMorale(entity.citizen, stats, ctx.partyOfficialCount, ctx.heatingFailing);
 
       if (checkDefection(cls, stats, ctx.rng)) {
         toRemove.push({ entity, name: stats.name, cls });
         continue;
       }
 
-      const efficiency = processProductionAndGrowth(
-        stats,
-        entity.citizen.assignment,
-        cls,
-        ctx.rng,
-        stakhanovites
-      );
+      const efficiency = processProductionAndGrowth(stats, entity.citizen.assignment, cls, ctx.rng, stakhanovites);
       classEffSum[cls] += efficiency;
       classCount[cls]++;
     }
@@ -265,7 +260,7 @@ export class WorkerSystem {
 
   /** Remove defecting/escaping citizens and return defection records. */
   private processDefections(
-    toRemove: Array<{ entity: Entity; name: string; cls: CitizenComponent['class'] }>
+    toRemove: Array<{ entity: Entity; name: string; cls: CitizenComponent['class'] }>,
   ): WorkerTickResult['defections'] {
     return toRemove.map(({ entity, name, cls }) => {
       this.removeWorker(entity, cls === 'prisoner' ? 'escape' : 'defection');
@@ -352,10 +347,9 @@ export class WorkerSystem {
       assignment,
       status: resolveStatus(entity.citizen, stats),
       productionEfficiency: clamp(
-        calcBaseEfficiency(stats.morale, stats.skill) +
-          calcClassBonus(cls, assignment ?? undefined),
+        calcBaseEfficiency(stats.morale, stats.skill) + calcClassBonus(cls, assignment ?? undefined),
         0,
-        1.5
+        1.5,
       ),
     };
   }

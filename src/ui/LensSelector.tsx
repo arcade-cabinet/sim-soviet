@@ -3,8 +3,8 @@
  * Port of poc.html lines 277-283.
  */
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export type LensValue = 'default' | 'water' | 'power' | 'smog' | 'aura';
@@ -22,10 +22,7 @@ export interface LensSelectorProps {
   onLensChange: (lens: LensValue) => void;
 }
 
-export const LensSelector: React.FC<LensSelectorProps> = ({
-  activeLens,
-  onLensChange,
-}) => {
+export const LensSelector: React.FC<LensSelectorProps> = ({ activeLens, onLensChange }) => {
   return (
     <View style={styles.container}>
       {LENSES.map((lens) => {

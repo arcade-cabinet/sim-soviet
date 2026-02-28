@@ -3,8 +3,8 @@
  * Port of poc.html lines 293-299.
  */
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { TabType } from '../engine/GameState';
 import { Colors, monoFont } from './styles';
 

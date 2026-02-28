@@ -156,6 +156,8 @@ export interface HeatingResult {
   operational: boolean;
   populationAtRisk: number;
   tier: HeatingTier;
+  /** Fuel consumed this tick (only during winter months). */
+  fuelConsumed: { resource: string; amount: number } | null;
 }
 
 export interface CurrencyReform {
@@ -438,9 +440,7 @@ export const PRODUCTION_CHAINS: readonly ProductionChain[] = [
   },
   {
     id: 'steel_goods',
-    steps: [
-      { building: 'steel-mill', input: { steel: 3 }, output: { tools: 2 }, ticksRequired: 5 },
-    ],
+    steps: [{ building: 'steel-mill', input: { steel: 3 }, output: { tools: 2 }, ticksRequired: 5 }],
   },
   {
     id: 'paperwork',
@@ -680,7 +680,7 @@ export function calculateNextQuota(
   current: number,
   met: boolean,
   eraEscalation: number,
-  difficultyMult: number
+  difficultyMult: number,
 ): number {
   const base = met ? QUOTA_MET_ESCALATION : QUOTA_MISSED_REDUCTION;
   return Math.round(current * base * eraEscalation * difficultyMult);
@@ -707,7 +707,7 @@ export function calculateRationDemand(population: number, rations: RationConfig)
 export function calculateStartingResources(
   difficulty: DifficultyLevel,
   era: EraId,
-  mapSize: number
+  mapSize: number,
 ): StartingResources {
   const diffMult = DIFFICULTY_RESOURCE_MULT[difficulty];
   const eraMult = ERA_RESOURCE_MULT[era];
@@ -737,7 +737,7 @@ export function shouldMTSBeActive(year: number): boolean {
 export function determineHeatingTier(
   population: number,
   ticksSinceRepair: number,
-  currentTier: HeatingTier
+  currentTier: HeatingTier,
 ): HeatingTier {
   // Check crumbling degradation first (only from district)
   if (currentTier === 'district' && ticksSinceRepair >= DISTRICT_TO_CRUMBLING_TICKS) {
@@ -758,10 +758,7 @@ export function getDifficultyMultipliers(level: DifficultyLevel): DifficultyMult
 /**
  * Find the earliest unapplied currency reform whose year <= currentYear.
  */
-export function findPendingReform(
-  reforms: CurrencyReform[],
-  currentYear: number
-): CurrencyReform | null {
+export function findPendingReform(reforms: CurrencyReform[], currentYear: number): CurrencyReform | null {
   for (const reform of reforms) {
     if (!reform.applied && reform.year <= currentYear) {
       return reform;
@@ -776,7 +773,7 @@ export function findPendingReform(
  */
 export function applyCurrencyReform(
   money: number,
-  reform: CurrencyReform
+  reform: CurrencyReform,
 ): { moneyBefore: number; moneyAfter: number; amountLost: number } {
   const moneyBefore = money;
   let moneyAfter: number;
@@ -1178,11 +1175,7 @@ export class EconomySystem {
 
   processHeating(population: number, month: number, hasHeatingResource: boolean): HeatingResult {
     // Determine tier
-    const newTier = determineHeatingTier(
-      population,
-      this.heating.ticksSinceRepair,
-      this.heating.tier
-    );
+    const newTier = determineHeatingTier(population, this.heating.ticksSinceRepair, this.heating.tier);
     this.heating.tier = newTier;
     this.heating.efficiency = HEATING_CONFIGS[newTier].baseEfficiency;
 
@@ -1191,18 +1184,27 @@ export class EconomySystem {
       this.heating.ticksSinceRepair++;
     }
 
+    const isWinter = isWinterMonth(month);
     const operational = hasHeatingResource;
     let populationAtRisk = 0;
+    let fuelConsumed: HeatingResult['fuelConsumed'] = null;
 
-    if (!operational && isWinterMonth(month)) {
-      // Without heating in winter, population is at risk
-      populationAtRisk = Math.round(population * (1 - this.heating.efficiency));
-      this.heating.failing = true;
+    if (isWinter) {
+      if (operational) {
+        // Consume fuel during winter
+        const cfg = HEATING_CONFIGS[newTier];
+        fuelConsumed = { resource: cfg.consumption.resource, amount: cfg.consumption.amount };
+        this.heating.failing = false;
+      } else {
+        // Without heating in winter, population is at risk
+        populationAtRisk = Math.round(population * (1 - this.heating.efficiency));
+        this.heating.failing = true;
+      }
     } else {
       this.heating.failing = false;
     }
 
-    return { operational, populationAtRisk, tier: newTier };
+    return { operational, populationAtRisk, tier: newTier, fuelConsumed };
   }
 
   repairHeating(): void {
@@ -1254,7 +1256,7 @@ export class EconomySystem {
     // Satisfaction ratio (capped at 1.0)
     this.consumerGoods.satisfaction = Math.min(
       1.0,
-      this.consumerGoods.demand > 0 ? this.consumerGoods.available / this.consumerGoods.demand : 0
+      this.consumerGoods.demand > 0 ? this.consumerGoods.available / this.consumerGoods.demand : 0,
     );
   }
 
@@ -1273,7 +1275,7 @@ export class EconomySystem {
       money?: number;
       month?: number;
       hasHeatingResource?: boolean;
-    }
+    },
   ): EconomyTickResult {
     const money = options?.money ?? 0;
     const month = options?.month ?? 6;

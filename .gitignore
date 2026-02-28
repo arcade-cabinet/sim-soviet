@@ -50,6 +50,9 @@ web_modules/
 # Optional npm cache directory
 .npm
 
+# npm lockfile (using pnpm)
+package-lock.json
+
 # Optional eslint cache
 .eslintcache
 
@@ -185,6 +188,9 @@ app/public/audio/*.mp3
 app/public/audio/*.ogg
 app/public/audio/*.wav
 !app/public/audio/.gitkeep
+
+# Test results (Playwright, Vitest)
+test-results/
 
 # Expo
 .expo

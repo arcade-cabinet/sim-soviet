@@ -17,13 +17,7 @@ import type { TerrainFeature } from '@/rendering/FeatureTileRenderer';
 import type { GameRng } from './SeedSystem';
 
 /** Low-profile terrain for the border ring — no tall sprites. */
-const BORDER_TERRAIN = [
-  'sand-rocks',
-  'sand-desert',
-  'stone-rocks',
-  'dirt-lumber',
-  'water-rocks',
-] as const;
+const BORDER_TERRAIN = ['sand-rocks', 'sand-desert', 'stone-rocks', 'dirt-lumber', 'water-rocks'] as const;
 
 /** Prominent terrain for the interior fringe — forests, hills, mountains. */
 const INTERIOR_TERRAIN = [
@@ -55,7 +49,6 @@ const INTERIOR_FILL_CHANCE = 0.2;
  * @param rng       Seeded RNG for reproducibility.
  * @returns Array of terrain features to render.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: terrain generation branches on zones, noise thresholds, and feature placement
 export function generateTerrain(gridSize: number, rng: GameRng): TerrainFeature[] {
   const features: TerrainFeature[] = [];
   const totalDepth = BORDER_DEPTH + INTERIOR_FRINGE;

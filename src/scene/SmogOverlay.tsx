@@ -1,24 +1,18 @@
 /**
- * SmogOverlay — Per-tile smog visualization using thin instances.
+ * SmogOverlay — Per-tile smog visualization using instancedMesh.
  *
- * For each grid cell with smog > 0: renders a semi-transparent green-tinted plane.
- * Alpha = Math.min(1.0, cell.smog / 100).
- * Color transitions from green (low) to yellow-orange (high smog).
- * At street level, smog uses thin boxes with height for volumetric feel.
- * Performance: uses a single mesh with thin instances.
+ * For each grid cell with smog > threshold: renders a semi-transparent
+ * green-amber box. Color transitions from muted green (low smog) to
+ * warm amber (high smog). Alpha scales with smog intensity (quadratic).
+ *
+ * R3F migration: uses <instancedMesh> for GPU-batched smog tiles.
+ * Instance matrices and colors are updated via useEffect when smog data changes.
  */
-import React, { useEffect, useRef } from 'react';
-import {
-  MeshBuilder,
-  StandardMaterial,
-  Color3,
-  Color4,
-  Matrix,
-  Vector3,
-  type Mesh,
-  type Scene,
-} from '@babylonjs/core';
-import { useScene } from 'reactylon';
+
+import { useFrame } from '@react-three/fiber';
+import type React from 'react';
+import { useMemo, useRef } from 'react';
+import * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 import { GRID_SIZE } from '../engine/GridTypes';
@@ -26,103 +20,95 @@ import { GRID_SIZE } from '../engine/GridTypes';
 /** Minimum smog value to render (skip nearly-clean cells) */
 const SMOG_THRESHOLD = 8;
 
+/** Max possible smog tiles (GRID_SIZE * GRID_SIZE) */
+const MAX_INSTANCES = GRID_SIZE * GRID_SIZE;
+
 /** Lerp between muted green and warm amber based on smog ratio */
-function smogColor(ratio: number): Color3 {
+function smogColor(ratio: number): [number, number, number] {
   // Muted green (0.2,0.4,0.1) -> Warm yellow (0.6,0.5,0.1) -> Amber (0.7,0.3,0.05)
   if (ratio < 0.5) {
     const t = ratio * 2;
-    return new Color3(0.2 + t * 0.4, 0.4 + t * 0.1, 0.1);
+    return [0.2 + t * 0.4, 0.4 + t * 0.1, 0.1];
   }
   const t = (ratio - 0.5) * 2;
-  return new Color3(0.6 + t * 0.1, 0.5 - t * 0.2, 0.1 - t * 0.05);
+  return [0.6 + t * 0.1, 0.5 - t * 0.2, 0.1 - t * 0.05];
 }
 
 const SmogOverlay: React.FC = () => {
-  const scene = useScene();
-  const meshRef = useRef<Mesh | null>(null);
-  const matRef = useRef<StandardMaterial | null>(null);
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const prevCountRef = useRef(0);
 
-  useEffect(() => {
-    // Create a single thin box to use as smog volume
-    const box = MeshBuilder.CreateBox(
-      'smogTemplate',
-      { width: 1, height: 0.5, depth: 1 },
-      scene,
-    );
-    box.isVisible = false; // template mesh is hidden
+  // Shared geometry and material
+  const geometry = useMemo(() => new THREE.BoxGeometry(1, 0.5, 1), []);
+  const material = useMemo(() => {
+    const mat = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0.2,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    return mat;
+  }, []);
 
-    const mat = new StandardMaterial('smogMat', scene);
-    mat.disableLighting = true;
-    mat.alpha = 0.2;
-    mat.emissiveColor = new Color3(0.3, 0.5, 0.1);
-    mat.backFaceCulling = false;
-    box.material = mat;
+  // Temp objects for matrix composition
+  const tmpMatrix = useMemo(() => new THREE.Matrix4(), []);
+  const tmpColor = useMemo(() => new THREE.Color(), []);
+  const tmpPos = useMemo(() => new THREE.Vector3(), []);
+  const tmpScale = useMemo(() => new THREE.Vector3(), []);
+  const tmpQuat = useMemo(() => new THREE.Quaternion(), []);
 
-    meshRef.current = box;
-    matRef.current = mat;
+  // Update instances each frame by scanning the grid
+  useFrame(() => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
 
-    function update() {
-      const grid = gameState.grid;
-      if (!grid.length) return;
-
-      // Collect smog cells
-      const matrices: Matrix[] = [];
-      const colors: number[] = [];
-
-      for (let y = 0; y < GRID_SIZE; y++) {
-        const row = grid[y];
-        if (!row) continue;
-        for (let x = 0; x < GRID_SIZE; x++) {
-          const cell = row[x];
-          if (!cell || cell.smog < SMOG_THRESHOLD) continue;
-
-          const ratio = Math.min(1.0, cell.smog / 100);
-          // Quadratic falloff: low smog fades fast, high smog builds gradually
-          const intensity = ratio * ratio;
-          const height = 0.2 + intensity * 0.8;
-          // Shrink low-smog boxes to create natural gaps at the edge
-          const spread = 0.5 + ratio * 0.5;
-          const m = Matrix.Compose(
-            new Vector3(spread, height, spread),
-            Vector3.Zero().toQuaternion(),
-            new Vector3(x + 0.5, (cell.z ?? 0) * 0.5 + height / 2, y + 0.5),
-          );
-          matrices.push(m);
-
-          const c = smogColor(ratio);
-          const alpha = intensity * 0.5;
-          colors.push(c.r, c.g, c.b, alpha);
-        }
-      }
-
-      // Update thin instances
-      if (matrices.length === 0) {
-        box.isVisible = false;
-        box.thinInstanceCount = 0;
-        return;
-      }
-
-      box.isVisible = true;
-      const bufferData = new Float32Array(matrices.length * 16);
-      for (let i = 0; i < matrices.length; i++) {
-        matrices[i].copyToArray(bufferData, i * 16);
-      }
-      box.thinInstanceSetBuffer('matrix', bufferData, 16, false);
-
-      // Per-instance colors
-      const colorData = new Float32Array(colors);
-      box.thinInstanceSetBuffer('color', colorData, 4, false);
+    const grid = gameState.grid;
+    if (!grid.length) {
+      mesh.count = 0;
+      return;
     }
 
-    scene.registerBeforeRender(update);
-    return () => {
-      scene.unregisterBeforeRender(update);
-      box.dispose();
-      mat.dispose();
-    };
-  }, [scene]);
+    let instanceIdx = 0;
 
-  return null;
+    for (let y = 0; y < GRID_SIZE; y++) {
+      const row = grid[y];
+      if (!row) continue;
+      for (let x = 0; x < GRID_SIZE; x++) {
+        const cell = row[x];
+        if (!cell || cell.smog < SMOG_THRESHOLD) continue;
+
+        const ratio = Math.min(1.0, cell.smog / 100);
+        const intensity = ratio * ratio; // quadratic falloff
+        const height = 0.2 + intensity * 0.8;
+        const spread = 0.5 + ratio * 0.5;
+
+        tmpPos.set(x + 0.5, (cell.z ?? 0) * 0.5 + height / 2, y + 0.5);
+        tmpScale.set(spread, height, spread);
+        tmpMatrix.compose(tmpPos, tmpQuat, tmpScale);
+        mesh.setMatrixAt(instanceIdx, tmpMatrix);
+
+        // Per-instance color
+        const [cr, cg, cb] = smogColor(ratio);
+        tmpColor.setRGB(cr, cg, cb);
+        mesh.setColorAt(instanceIdx, tmpColor);
+
+        instanceIdx++;
+      }
+    }
+
+    mesh.count = instanceIdx;
+
+    if (instanceIdx > 0) {
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) {
+        mesh.instanceColor.needsUpdate = true;
+      }
+    }
+
+    prevCountRef.current = instanceIdx;
+  });
+
+  return <instancedMesh ref={meshRef} args={[geometry, material, MAX_INSTANCES]} frustumCulled={false} />;
 };
 
 export default SmogOverlay;

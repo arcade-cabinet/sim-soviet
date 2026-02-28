@@ -66,9 +66,7 @@ describe('PolitburoSystem serialization', () => {
     const restored = PolitburoSystem.deserialize(data, onEvent);
 
     expect(restored.getState().leaderHistory.length).toBe(system.getState().leaderHistory.length);
-    expect(restored.getState().leaderHistory[0]!.name).toBe(
-      system.getState().leaderHistory[0]!.name
-    );
+    expect(restored.getState().leaderHistory[0]!.name).toBe(system.getState().leaderHistory[0]!.name);
   });
 
   it('preserves corruptionMult', () => {
@@ -103,9 +101,7 @@ describe('PolitburoSystem serialization', () => {
     expect(restored.getState().factions.length).toBe(system.getState().factions.length);
     for (let i = 0; i < system.getState().factions.length; i++) {
       expect(restored.getState().factions[i]!.name).toBe(system.getState().factions[i]!.name);
-      expect(restored.getState().factions[i]!.memberIds).toEqual(
-        system.getState().factions[i]!.memberIds
-      );
+      expect(restored.getState().factions[i]!.memberIds).toEqual(system.getState().factions[i]!.memberIds);
     }
   });
 

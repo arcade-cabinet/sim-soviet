@@ -7,15 +7,15 @@
  * Uses SovietModal with terminal variant for dark-panel aesthetic.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import { BUILDING_DEFS } from '../data/buildingDefs';
+import type { EraId, EraModifiers } from '../game/era';
+import { ERA_DEFINITIONS, ERA_ORDER } from '../game/era';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { ERA_ORDER, ERA_DEFINITIONS } from '../game/era';
-import type { EraId, EraModifiers } from '../game/era';
-import { BUILDING_DEFS } from '../data/buildingDefs';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Props
@@ -82,10 +82,7 @@ function formatModifier(value: number): string {
 }
 
 /** Determine era status relative to current. */
-function getEraStatus(
-  eraId: EraId,
-  currentEraId: EraId,
-): 'past' | 'current' | 'future' {
+function getEraStatus(eraId: EraId, currentEraId: EraId): 'past' | 'current' | 'future' {
   const currentIdx = ERA_ORDER.indexOf(currentEraId);
   const eraIdx = ERA_ORDER.indexOf(eraId);
   if (eraIdx < currentIdx) return 'past';
@@ -98,9 +95,7 @@ function getEraStatus(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Section header with gold text and bottom border. */
-const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionHeader: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Horizontal divider between sections. */
 const Divider: React.FC = () => <View style={styles.divider} />;
@@ -150,9 +145,7 @@ export const EraTechTreePanel: React.FC<EraTechTreePanelProps> = ({ visible, onD
       <Text style={styles.eraName}>{currentEraDef.name}</Text>
       <View style={styles.row}>
         <Text style={styles.label}>YEARS:</Text>
-        <Text style={styles.value}>
-          {formatYearRange(currentEraDef.startYear, currentEraDef.endYear)}
-        </Text>
+        <Text style={styles.value}>{formatYearRange(currentEraDef.startYear, currentEraDef.endYear)}</Text>
       </View>
       <View style={styles.row}>
         <Text style={styles.label}>CURRENT YEAR:</Text>
@@ -160,18 +153,14 @@ export const EraTechTreePanel: React.FC<EraTechTreePanelProps> = ({ visible, onD
       </View>
       <View style={styles.row}>
         <Text style={styles.label}>DOCTRINE:</Text>
-        <Text style={[styles.value, { color: Colors.termBlue }]}>
-          {currentEraDef.doctrine.toUpperCase()}
-        </Text>
+        <Text style={[styles.value, { color: Colors.termBlue }]}>{currentEraDef.doctrine.toUpperCase()}</Text>
       </View>
 
       <Text style={styles.flavorText}>{currentEraDef.briefingFlavor}</Text>
 
       {/* Modifiers */}
       <Text style={styles.subHeading}>MODIFIERS</Text>
-      {transitioning && (
-        <Text style={styles.transitionNote}>TRANSITION IN PROGRESS — VALUES BLENDING</Text>
-      )}
+      {transitioning && <Text style={styles.transitionNote}>TRANSITION IN PROGRESS — VALUES BLENDING</Text>}
 
       {MODIFIER_CONFIGS.map((cfg) => {
         const val = modifiers[cfg.key];
@@ -234,14 +223,7 @@ export const EraTechTreePanel: React.FC<EraTechTreePanelProps> = ({ visible, onD
                   status === 'future' && styles.timelineDotFuture,
                 ]}
               />
-              {!isLast && (
-                <View
-                  style={[
-                    styles.timelineLine,
-                    status === 'future' && styles.timelineLineFuture,
-                  ]}
-                />
-              )}
+              {!isLast && <View style={[styles.timelineLine, status === 'future' && styles.timelineLineFuture]} />}
             </View>
 
             {/* Era card */}
@@ -261,7 +243,8 @@ export const EraTechTreePanel: React.FC<EraTechTreePanelProps> = ({ visible, onD
                     status === 'future' && styles.timelineTextLocked,
                   ]}
                 >
-                  {status === 'current' ? '\u25B6 ' : ''}{def.name}
+                  {status === 'current' ? '\u25B6 ' : ''}
+                  {def.name}
                 </Text>
                 <Text
                   style={[
@@ -281,7 +264,8 @@ export const EraTechTreePanel: React.FC<EraTechTreePanelProps> = ({ visible, onD
                     status === 'future' && styles.timelineTextLocked,
                   ]}
                 >
-                  {def.doctrine.toUpperCase()} | {def.unlockedBuildings.length} BUILDING{def.unlockedBuildings.length !== 1 ? 'S' : ''}
+                  {def.doctrine.toUpperCase()} | {def.unlockedBuildings.length} BUILDING
+                  {def.unlockedBuildings.length !== 1 ? 'S' : ''}
                 </Text>
               </View>
             </View>
@@ -296,22 +280,16 @@ export const EraTechTreePanel: React.FC<EraTechTreePanelProps> = ({ visible, onD
 
       <View style={styles.row}>
         <Text style={styles.label}>AVAILABLE:</Text>
-        <Text style={[styles.value, { color: Colors.termGreen }]}>
-          {availableBuildings.length}
-        </Text>
+        <Text style={[styles.value, { color: Colors.termGreen }]}>{availableBuildings.length}</Text>
       </View>
       <View style={styles.row}>
         <Text style={styles.label}>LOCKED:</Text>
-        <Text style={[styles.value, { color: Colors.sovietRed }]}>
-          {lockedBuildings.length}
-        </Text>
+        <Text style={[styles.value, { color: Colors.sovietRed }]}>{lockedBuildings.length}</Text>
       </View>
 
       {currentEraBuildings.length > 0 ? (
         <>
-          <Text style={styles.subHeading}>
-            UNLOCKED IN {currentEraDef.name.toUpperCase()}
-          </Text>
+          <Text style={styles.subHeading}>UNLOCKED IN {currentEraDef.name.toUpperCase()}</Text>
           {currentEraBuildings.map((defId) => {
             const bDef = BUILDING_DEFS[defId];
             const name = bDef?.presentation?.name ?? defId;
@@ -323,9 +301,7 @@ export const EraTechTreePanel: React.FC<EraTechTreePanelProps> = ({ visible, onD
                 <Text style={styles.buildingIcon}>{icon}</Text>
                 <View style={styles.buildingInfo}>
                   <Text style={styles.buildingName}>{name}</Text>
-                  {desc !== '' && (
-                    <Text style={styles.buildingDesc}>{desc}</Text>
-                  )}
+                  {desc !== '' && <Text style={styles.buildingDesc}>{desc}</Text>}
                 </View>
               </View>
             );

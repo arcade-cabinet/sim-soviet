@@ -25,11 +25,7 @@ import { Ministry } from './types';
  * └──────────────────┴──────────┴──────────┴──────────────────┘
  * (Base rates before KGB/faction/paranoia adjustments)
  */
-export function calculateCoupChance(
-  minister: Minister,
-  gs: GeneralSecretary,
-  factionSize: number
-): number {
+export function calculateCoupChance(minister: Minister, gs: GeneralSecretary, factionSize: number): number {
   const base = (minister.ambition * (100 - minister.loyalty)) / 10000;
   const kgbBonus = minister.ministry === Ministry.KGB ? 0.15 : 0;
   const factionBonus = Math.max(0, factionSize - 1) * 0.05;

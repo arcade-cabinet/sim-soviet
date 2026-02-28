@@ -6,18 +6,14 @@
  * Accessible from the STATE tab.
  */
 
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import type React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { getEngine } from '../bridge/GameInit';
+import type { Faction, GeneralSecretary, Minister } from '../game/politburo/types';
+import { Ministry, PersonalityType } from '../game/politburo/types';
+import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
-import { getEngine } from '../bridge/GameInit';
-import { useGameSnapshot } from '../hooks/useGameState';
-import { Ministry, PersonalityType } from '../game/politburo/types';
-import type {
-  GeneralSecretary,
-  Minister,
-  Faction,
-} from '../game/politburo/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONSTANTS
@@ -94,9 +90,7 @@ export interface PolitburoPanelProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Section divider with gold title. */
-const SectionTitle: React.FC<{ title: string }> = ({ title }) => (
-  <Text style={styles.sectionTitle}>{title}</Text>
-);
+const SectionTitle: React.FC<{ title: string }> = ({ title }) => <Text style={styles.sectionTitle}>{title}</Text>;
 
 /** Thin colored stat bar (height 4, width proportional to 0-100). */
 const StatStrip: React.FC<{
@@ -185,7 +179,9 @@ const MinisterCard: React.FC<{ minister: Minister }> = ({ minister }) => {
       </View>
 
       <View style={styles.mcNameRow}>
-        <Text style={styles.mcName} numberOfLines={1}>{minister.name}</Text>
+        <Text style={styles.mcName} numberOfLines={1}>
+          {minister.name}
+        </Text>
         <PersonalityLabel personality={minister.personality} />
       </View>
 
@@ -218,12 +214,7 @@ const MinisterCard: React.FC<{ minister: Minister }> = ({ minister }) => {
         <Text style={styles.mcFooterText}>
           TENURE: {minister.tenure} yr{minister.tenure !== 1 ? 's' : ''}
         </Text>
-        <Text
-          style={[
-            styles.mcFooterText,
-            { color: purgeHigh ? Colors.sovietRed : Colors.textMuted },
-          ]}
-        >
+        <Text style={[styles.mcFooterText, { color: purgeHigh ? Colors.sovietRed : Colors.textMuted }]}>
           PURGE RISK: {Math.round(minister.purgeRisk)}
         </Text>
       </View>
@@ -234,11 +225,7 @@ const MinisterCard: React.FC<{ minister: Minister }> = ({ minister }) => {
 const CabinetSection: React.FC<{ ministers: Map<Ministry, Minister> }> = ({ ministers }) => (
   <View style={styles.section}>
     <SectionTitle title={`CABINET (${ministers.size} MINISTERS)`} />
-    <ScrollView
-      horizontal={false}
-      showsVerticalScrollIndicator={false}
-      nestedScrollEnabled
-    >
+    <ScrollView horizontal={false} showsVerticalScrollIndicator={false} nestedScrollEnabled>
       {MINISTRY_ORDER.map((ministry) => {
         const minister = ministers.get(ministry);
         if (!minister) return null;
@@ -258,9 +245,7 @@ const FactionRow: React.FC<{ faction: Faction }> = ({ faction }) => {
     <View style={styles.factionRow}>
       <View style={styles.factionHeader}>
         <Text style={styles.factionName}>{faction.name}</Text>
-        <Text style={styles.factionSupport}>
-          {faction.supportsCurrent ? '\u2705' : '\u274C'}
-        </Text>
+        <Text style={styles.factionSupport}>{faction.supportsCurrent ? '\u2705' : '\u274C'}</Text>
       </View>
 
       <View style={styles.factionDetails}>
@@ -270,9 +255,7 @@ const FactionRow: React.FC<{ faction: Faction }> = ({ faction }) => {
         <Text style={styles.factionStat}>
           {faction.memberIds.length} MEMBER{faction.memberIds.length !== 1 ? 'S' : ''}
         </Text>
-        <Text style={styles.factionStat}>
-          INFLUENCE: {Math.round(faction.influence)}
-        </Text>
+        <Text style={styles.factionStat}>INFLUENCE: {Math.round(faction.influence)}</Text>
       </View>
     </View>
   );
@@ -319,9 +302,7 @@ const LeaderHistorySection: React.FC<{ history: GeneralSecretary[] }> = ({ histo
       {recent.map((leader, i) => {
         const personalityColor = PERSONALITY_COLORS[leader.personality] ?? '#888';
         const personalityIcon = PERSONALITY_ICONS[leader.personality] ?? '?';
-        const deathText = leader.causeOfDeath
-          ? DEATH_LABELS[leader.causeOfDeath] ?? 'Unknown'
-          : 'Unknown';
+        const deathText = leader.causeOfDeath ? (DEATH_LABELS[leader.causeOfDeath] ?? 'Unknown') : 'Unknown';
 
         return (
           <View key={`${leader.id}-${i}`} style={styles.historyRow}>
@@ -335,9 +316,7 @@ const LeaderHistorySection: React.FC<{ history: GeneralSecretary[] }> = ({ histo
               <Text style={styles.historyDetail}>
                 Appointed {leader.yearAppointed} {'\u00B7'} Age {leader.age}
               </Text>
-              <Text style={[styles.historyDeath, { color: Colors.sovietRed }]}>
-                {deathText}
-              </Text>
+              <Text style={[styles.historyDeath, { color: Colors.sovietRed }]}>{deathText}</Text>
             </View>
           </View>
         );

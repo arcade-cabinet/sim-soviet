@@ -57,8 +57,7 @@ function miningSuccess(rng: GameRng): MinigameOutcome {
   const money = rng.int(25, 45);
   return {
     resources: { money },
-    announcement:
-      'The miners struck a rich vein of iron ore. The mountain yielded its treasure willingly — for once.',
+    announcement: 'The miners struck a rich vein of iron ore. The mountain yielded its treasure willingly — for once.',
   };
 }
 

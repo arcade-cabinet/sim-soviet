@@ -3,19 +3,14 @@
  * Faithful port of poc.html lines 1413-1480.
  */
 
-import { GRID_SIZE } from './GridTypes';
-import type { GameState } from './GameState';
 import { BUILDING_TYPES } from './BuildingTypes';
-import { getSeason } from './WeatherSystem';
+import type { GameState } from './GameState';
+import { GRID_SIZE } from './GridTypes';
+import { addFloatingText, showAdvisor, showToast } from './helpers';
 import { updateWaterNetwork } from './WaterNetwork';
-import { addFloatingText, showToast, showAdvisor } from './helpers';
+import { getSeason } from './WeatherSystem';
 
-export function handleClick(
-  state: GameState,
-  x: number,
-  y: number,
-  isDrag: boolean = false
-): boolean {
+export function handleClick(state: GameState, x: number, y: number, isDrag: boolean = false): boolean {
   if (x < 0 || y < 0 || x >= GRID_SIZE || y >= GRID_SIZE) return false;
 
   const tool = state.selectedTool;
@@ -31,15 +26,12 @@ export function handleClick(
         cell.type = null;
         cell.onFire = 0;
         if (!cell.isRail) cell.bridge = false;
-        state.buildings = state.buildings.filter(
-          (b) => !(b.x === x && b.y === y)
-        );
+        state.buildings = state.buildings.filter((b) => !(b.x === x && b.y === y));
         addFloatingText(state, x, y, '-20₽', '#ff5252');
         state.notify();
         return true;
       } else {
-        if (!isDrag)
-          showAdvisor(state, 'Demolition requires 20 Rubles.', 'INDUSTRY');
+        if (!isDrag) showAdvisor(state, 'Demolition requires 20 Rubles.', 'INDUSTRY');
         return false;
       }
     } else if (cell.zone) {
@@ -53,12 +45,7 @@ export function handleClick(
         state.notify();
         return true;
       } else {
-        if (!isDrag)
-          showAdvisor(
-            state,
-            'Cannot afford 5 Rubles for an axe?',
-            'INDUSTRY'
-          );
+        if (!isDrag) showAdvisor(state, 'Cannot afford 5 Rubles for an axe?', 'INDUSTRY');
         return false;
       }
     } else if (cell.terrain === 'water') {
@@ -79,20 +66,10 @@ export function handleClick(
 
   // --- Special terrain checks ---
   if (tool === 'tap' && cell.terrain !== 'crater') {
-    if (!isDrag)
-      showAdvisor(
-        state,
-        'The Cosmic Tap can ONLY be built on a Meteor Crater.',
-        'INDUSTRY'
-      );
+    if (!isDrag) showAdvisor(state, 'The Cosmic Tap can ONLY be built on a Meteor Crater.', 'INDUSTRY');
     return false;
   }
-  if (
-    tool !== 'tap' &&
-    tool !== 'none' &&
-    tool !== 'bulldoze' &&
-    cell.terrain === 'crater'
-  ) {
+  if (tool !== 'tap' && tool !== 'none' && tool !== 'bulldoze' && cell.terrain === 'crater') {
     if (!isDrag) showToast(state, 'CANNOT BUILD ON CRATER');
     return false;
   }
@@ -117,8 +94,7 @@ export function handleClick(
         state.notify();
         return true;
       } else {
-        if (!isDrag)
-          showAdvisor(state, 'Not even 10 Rubles?', 'INDUSTRY');
+        if (!isDrag) showAdvisor(state, 'Not even 10 Rubles?', 'INDUSTRY');
         return false;
       }
     } else {
@@ -130,8 +106,7 @@ export function handleClick(
         state.notify();
         return true;
       } else {
-        if (!isDrag)
-          showAdvisor(state, 'A Bridge requires 50 Rubles.', 'INDUSTRY');
+        if (!isDrag) showAdvisor(state, 'A Bridge requires 50 Rubles.', 'INDUSTRY');
         return false;
       }
     }
@@ -157,12 +132,7 @@ export function handleClick(
 
   // --- Station must be near railway ---
   if (tool === 'station' && (y < state.train.y - 1 || y > state.train.y + 1)) {
-    if (!isDrag)
-      showAdvisor(
-        state,
-        'Stations must be adjacent to the Railway.',
-        'INDUSTRY'
-      );
+    if (!isDrag) showAdvisor(state, 'Stations must be adjacent to the Railway.', 'INDUSTRY');
     return false;
   }
 

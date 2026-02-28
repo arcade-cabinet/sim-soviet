@@ -6,8 +6,9 @@
  * Accessible from the STATE tab or pause menu.
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 
@@ -83,50 +84,59 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
     }, 3000);
   }, []);
 
-  const handleSave = useCallback(async (slotName: string) => {
-    if (!onSave || busy) return;
-    setBusy(true);
-    try {
-      const ok = await onSave(slotName);
-      showStatus(
-        ok ? `SAVE SUCCESSFUL: ${slotName.toUpperCase()}` : `SAVE FAILED: ${slotName.toUpperCase()}`,
-        ok ? 'success' : 'error',
-      );
-    } catch {
-      showStatus(`SAVE ERROR: ${slotName.toUpperCase()}`, 'error');
-    } finally {
-      setBusy(false);
-    }
-  }, [onSave, busy, showStatus]);
+  const handleSave = useCallback(
+    async (slotName: string) => {
+      if (!onSave || busy) return;
+      setBusy(true);
+      try {
+        const ok = await onSave(slotName);
+        showStatus(
+          ok ? `SAVE SUCCESSFUL: ${slotName.toUpperCase()}` : `SAVE FAILED: ${slotName.toUpperCase()}`,
+          ok ? 'success' : 'error',
+        );
+      } catch {
+        showStatus(`SAVE ERROR: ${slotName.toUpperCase()}`, 'error');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [onSave, busy, showStatus],
+  );
 
-  const handleLoad = useCallback(async (slotName: string) => {
-    if (!onLoad || busy) return;
-    setBusy(true);
-    try {
-      const ok = await onLoad(slotName);
-      showStatus(
-        ok ? `LOADED: ${slotName.toUpperCase()}` : `LOAD FAILED: ${slotName.toUpperCase()}`,
-        ok ? 'success' : 'error',
-      );
-    } catch {
-      showStatus(`LOAD ERROR: ${slotName.toUpperCase()}`, 'error');
-    } finally {
-      setBusy(false);
-    }
-  }, [onLoad, busy, showStatus]);
+  const handleLoad = useCallback(
+    async (slotName: string) => {
+      if (!onLoad || busy) return;
+      setBusy(true);
+      try {
+        const ok = await onLoad(slotName);
+        showStatus(
+          ok ? `LOADED: ${slotName.toUpperCase()}` : `LOAD FAILED: ${slotName.toUpperCase()}`,
+          ok ? 'success' : 'error',
+        );
+      } catch {
+        showStatus(`LOAD ERROR: ${slotName.toUpperCase()}`, 'error');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [onLoad, busy, showStatus],
+  );
 
-  const handleDelete = useCallback(async (slotName: string) => {
-    if (!onDelete || busy) return;
-    setBusy(true);
-    try {
-      await onDelete(slotName);
-      showStatus(`DELETED: ${slotName.toUpperCase()}`, 'success');
-    } catch {
-      showStatus(`DELETE ERROR: ${slotName.toUpperCase()}`, 'error');
-    } finally {
-      setBusy(false);
-    }
-  }, [onDelete, busy, showStatus]);
+  const handleDelete = useCallback(
+    async (slotName: string) => {
+      if (!onDelete || busy) return;
+      setBusy(true);
+      try {
+        await onDelete(slotName);
+        showStatus(`DELETED: ${slotName.toUpperCase()}`, 'success');
+      } catch {
+        showStatus(`DELETE ERROR: ${slotName.toUpperCase()}`, 'error');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [onDelete, busy, showStatus],
+  );
 
   const handleCustomSave = useCallback(() => {
     const trimmed = customName.trim().replace(/[^a-zA-Z0-9_\- ]/g, '');
@@ -223,12 +233,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
           }
 
           // Validate expected top-level keys
-          if (
-            !parsed.version ||
-            !parsed.resources ||
-            !parsed.gameMeta ||
-            !Array.isArray(parsed.buildings)
-          ) {
+          if (!parsed.version || !parsed.resources || !parsed.gameMeta || !Array.isArray(parsed.buildings)) {
             showStatus('DOCUMENT REJECTED. MISSING REQUIRED STATE RECORDS.', 'error');
             setBusy(false);
             return;
@@ -236,9 +241,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
 
           const ok = onImport(json);
           showStatus(
-            ok
-              ? `STATE ARCHIVE IMPORTED: ${file.name}`
-              : 'IMPORT FAILED. ARCHIVE DATA CORRUPTED.',
+            ok ? `STATE ARCHIVE IMPORTED: ${file.name}` : 'IMPORT FAILED. ARCHIVE DATA CORRUPTED.',
             ok ? 'success' : 'error',
           );
         } catch {
@@ -281,18 +284,12 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
       <View style={styles.autosaveRow}>
         <View style={styles.autosaveInfo}>
           <View style={[styles.badge, autoSaveEnabled ? styles.badgeEnabled : styles.badgeDisabled]}>
-            <Text style={styles.badgeText}>
-              {autoSaveEnabled ? 'ENABLED' : 'DISABLED'}
-            </Text>
+            <Text style={styles.badgeText}>{autoSaveEnabled ? 'ENABLED' : 'DISABLED'}</Text>
           </View>
           {lastSaveTime != null && (
-            <Text style={styles.lastSaveText}>
-              LAST SAVE: {formatRelativeTime(lastSaveTime)}
-            </Text>
+            <Text style={styles.lastSaveText}>LAST SAVE: {formatRelativeTime(lastSaveTime)}</Text>
           )}
-          {lastSaveTime == null && (
-            <Text style={styles.lastSaveTextMuted}>NO SAVES RECORDED</Text>
-          )}
+          {lastSaveTime == null && <Text style={styles.lastSaveTextMuted}>NO SAVES RECORDED</Text>}
         </View>
         <View style={styles.autosaveActions}>
           <TouchableOpacity
@@ -309,9 +306,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
             disabled={busy || !hasAutosave || !onLoad}
             activeOpacity={0.7}
           >
-            <Text style={[styles.slotBtnText, !hasAutosave && styles.slotBtnTextDisabled]}>
-              QUICK LOAD
-            </Text>
+            <Text style={[styles.slotBtnText, !hasAutosave && styles.slotBtnTextDisabled]}>QUICK LOAD</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -345,9 +340,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
                 disabled={busy || !isOccupied || !onLoad}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.slotBtnText, !isOccupied && styles.slotBtnTextDisabled]}>
-                  LOAD
-                </Text>
+                <Text style={[styles.slotBtnText, !isOccupied && styles.slotBtnTextDisabled]}>LOAD</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.deleteBtn, !isOccupied && styles.slotBtnDisabled]}
@@ -355,9 +348,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
                 disabled={busy || !isOccupied || !onDelete}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.deleteBtnText, !isOccupied && styles.slotBtnTextDisabled]}>
-                  X
-                </Text>
+                <Text style={[styles.deleteBtnText, !isOccupied && styles.slotBtnTextDisabled]}>X</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -392,9 +383,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
 
       {/* ---- SECTION: FILE I/O ---- */}
       <Text style={styles.sectionHeader}>STATE ARCHIVE — CLASSIFIED</Text>
-      <Text style={styles.fileIoNote}>
-        EXPORT / IMPORT GAME STATE AS JSON DOCUMENT
-      </Text>
+      <Text style={styles.fileIoNote}>EXPORT / IMPORT GAME STATE AS JSON DOCUMENT</Text>
       <View style={styles.fileIoRow}>
         <TouchableOpacity
           style={[styles.fileIoBtn, styles.exportBtn]}
@@ -416,18 +405,8 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
 
       {/* ---- SECTION 3: STATUS MESSAGE ---- */}
       {statusMessage != null && (
-        <View
-          style={[
-            styles.statusBar,
-            statusType === 'success' ? styles.statusSuccess : styles.statusError,
-          ]}
-        >
-          <Text
-            style={[
-              styles.statusText,
-              { color: statusType === 'success' ? Colors.termGreen : Colors.sovietRed },
-            ]}
-          >
+        <View style={[styles.statusBar, statusType === 'success' ? styles.statusSuccess : styles.statusError]}>
+          <Text style={[styles.statusText, { color: statusType === 'success' ? Colors.termGreen : Colors.sovietRed }]}>
             {statusMessage}
           </Text>
         </View>

@@ -227,12 +227,7 @@ function genderedSurname(maleSurname: string, gender: 'male' | 'female'): string
  * @param surname - The family surname (male form)
  * @param gender - The person's gender (for patronymic + surname gender forms)
  */
-function buildRussianName(
-  givenName: string,
-  fatherName: string,
-  surname: string,
-  gender: 'male' | 'female'
-): string {
+function buildRussianName(givenName: string, fatherName: string, surname: string, gender: 'male' | 'female'): string {
   const patronymic = PATRONYMIC_RULES.generate(fatherName, gender);
   const genSurname = genderedSurname(surname, gender);
   return `${givenName} ${patronymic} ${genSurname}`;
@@ -350,8 +345,7 @@ export function createStartingSettlement(difficulty: Difficulty = 'comrade'): vo
       let fatherNameForPatronymic: string;
       if (isChild && !isElder) {
         // Children get patronymic from the head (if head is male) or head's husband
-        fatherNameForPatronymic =
-          template.headGender === 'male' ? headGiven : pickFatherName(i * 7 + 50); // female-headed household: father is absent
+        fatherNameForPatronymic = template.headGender === 'male' ? headGiven : pickFatherName(i * 7 + 50); // female-headed household: father is absent
       } else {
         // Spouse, elderly parent, or other adult: own father
         fatherNameForPatronymic = pickFatherName(i * 7 + j + 20);

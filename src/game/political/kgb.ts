@@ -41,10 +41,7 @@ export function getBlackMarkChance(intensity: KGBInvestigation['intensity']): nu
 }
 
 /** Roll investigation intensity based on agent effectiveness. */
-export function rollInvestigationIntensity(
-  effectiveness: number,
-  rng: GameRng
-): KGBInvestigation['intensity'] {
+export function rollInvestigationIntensity(effectiveness: number, rng: GameRng): KGBInvestigation['intensity'] {
   const roll = rng.random() * 100;
   if (roll < effectiveness * 0.1) return 'purge';
   if (roll < effectiveness * 0.4) return 'thorough';
@@ -65,17 +62,13 @@ export function createInvestigation(entity: PoliticalEntityStats, rng: GameRng):
 }
 
 /** Resolve a completed investigation, possibly generating a black mark. */
-export function resolveInvestigation(
-  inv: KGBInvestigation,
-  rng: GameRng | null,
-  result: PoliticalTickResult
-): void {
+export function resolveInvestigation(inv: KGBInvestigation, rng: GameRng | null, result: PoliticalTickResult): void {
   const blackMarkChance = getBlackMarkChance(inv.intensity);
 
   if (rng && blackMarkChance > 0 && rng.coinFlip(blackMarkChance)) {
     result.blackMarksAdded++;
     result.announcements.push(
-      `KGB investigation at (${inv.targetBuilding.gridX},${inv.targetBuilding.gridY}) has uncovered irregularities.`
+      `KGB investigation at (${inv.targetBuilding.gridX},${inv.targetBuilding.gridY}) has uncovered irregularities.`,
     );
   }
 }
@@ -87,7 +80,7 @@ export function resolveInvestigation(
 export function tickInvestigations(
   investigations: KGBInvestigation[],
   rng: GameRng | null,
-  result: PoliticalTickResult
+  result: PoliticalTickResult,
 ): KGBInvestigation[] {
   const completed: number[] = [];
 

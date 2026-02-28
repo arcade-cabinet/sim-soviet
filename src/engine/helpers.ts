@@ -6,19 +6,13 @@
  * singleton or a test-injected instance.
  */
 
-import type { GameState, TabType, LensType } from './GameState';
-import { TICKER_MESSAGES } from './BuildingTypes';
 import { pushNotification } from '../ui/NotificationStore';
+import { TICKER_MESSAGES } from './BuildingTypes';
+import type { GameState, LensType, TabType } from './GameState';
 
 // --- Floating text ---
 
-export function addFloatingText(
-  state: GameState,
-  gridX: number,
-  gridY: number,
-  text: string,
-  color: string
-): void {
+export function addFloatingText(state: GameState, gridX: number, gridY: number, text: string, color: string): void {
   state.floatingTexts.push({
     x: gridX + (Math.random() - 0.5) * 0.5,
     y: gridY + (Math.random() - 0.5) * 0.5,
@@ -40,7 +34,7 @@ export function getRandomTickerMsg(): string {
  * Pushes a ticker message event. In the POC this directly mutated the DOM.
  * Here we store the latest message on state so the UI layer can consume it.
  */
-export function pushTickerMsg(state: GameState): void {
+export function pushTickerMsg(_state: GameState): void {
   // The UI layer should poll or subscribe to render ticker messages.
   // We store the message in floatingTexts as a convention-free side channel
   // is not available. Alternatively the UI can call getRandomTickerMsg() on a timer.
@@ -91,10 +85,7 @@ export interface AdvisorMessage {
 let _currentToast: ToastMessage | null = null;
 let _currentAdvisor: AdvisorMessage | null = null;
 
-const MONTH_NAMES = [
-  '', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
-];
+const MONTH_NAMES = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 function getDateLabel(state: GameState): string {
   const m = MONTH_NAMES[state.date.month] ?? '???';
@@ -115,11 +106,7 @@ export function clearToast(): void {
   _currentToast = null;
 }
 
-export function showAdvisor(
-  state: GameState,
-  text: string,
-  source?: string
-): void {
+export function showAdvisor(state: GameState, text: string, source?: string): void {
   _currentAdvisor = { text, source, timestamp: Date.now() };
   pushNotification(text, 'advisor', getDateLabel(state), '\u262D');
   state.notify();

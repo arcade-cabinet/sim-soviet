@@ -32,10 +32,7 @@ function matchesContext(line: DialogueLine, context: DialogueContext): boolean {
  * If no context-specific lines match, falls back to universal lines
  * (those with no conditions).
  */
-function filterByContext(
-  lines: readonly DialogueLine[],
-  context: DialogueContext
-): readonly DialogueLine[] {
+function filterByContext(lines: readonly DialogueLine[], context: DialogueContext): readonly DialogueLine[] {
   const matched = lines.filter((l) => matchesContext(l, context));
   if (matched.length > 0) return matched;
   // Fallback to universal lines

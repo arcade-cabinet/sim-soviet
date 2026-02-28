@@ -8,16 +8,7 @@ export const TILE_HEIGHT = 32;
 export const GRID_SIZE = 30;
 export const TICKS_PER_MONTH = 15;
 
-export type TerrainType =
-  | 'grass'
-  | 'water'
-  | 'rail'
-  | 'tree'
-  | 'crater'
-  | 'irradiated'
-  | 'mountain'
-  | 'marsh'
-  | 'path';
+export type TerrainType = 'grass' | 'water' | 'rail' | 'tree' | 'crater' | 'irradiated' | 'mountain' | 'marsh' | 'path';
 
 export interface GridCell {
   type: string | null;

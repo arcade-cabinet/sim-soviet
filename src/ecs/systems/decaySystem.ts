@@ -17,7 +17,7 @@ export type BuildingCollapsedCallback = (
   gridY: number,
   buildingType: string,
   footprintX: number,
-  footprintY: number
+  footprintY: number,
 ) => void;
 
 /** Stored callback for building collapse events */
@@ -39,7 +39,6 @@ export function setBuildingCollapsedCallback(cb: BuildingCollapsedCallback | und
  * their durability by their decay rate. Buildings that reach 0
  * durability are removed from the world.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: decay logic branches on building state, durability, and ruin conversion
 export function decaySystem(decayMult = 1.0): void {
   // Collect entities to remove (cannot modify during iteration)
   const toRemove: Array<{

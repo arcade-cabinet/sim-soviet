@@ -7,8 +7,7 @@ import type { MinigameDefinition } from '../MinigameTypes';
 export const THE_INSPECTION: MinigameDefinition = {
   id: 'the_inspection',
   name: 'The Inspection',
-  description:
-    'The inspector from Moscow has arrived. He is taking notes. He has a very large notebook.',
+  description: 'The inspector from Moscow has arrived. He is taking notes. He has a very large notebook.',
   triggerType: 'periodic',
   triggerCondition: 'inspection_180',
   tickLimit: 25,

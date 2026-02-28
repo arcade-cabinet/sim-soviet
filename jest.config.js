@@ -3,6 +3,6 @@ module.exports = {
   roots: ['<rootDir>/__tests__'],
   testPathIgnorePatterns: ['/node_modules/', '/archive/', 'App.test.tsx'],
   transformIgnorePatterns: [
-    'node_modules/(?!(@babylonjs|react-native|@react-native|reactylon|expo|@expo|expo-modules-core)/)',
+    'node_modules/(?!(@react-three|three|react-native|@react-native|expo|@expo|expo-modules-core)/)',
   ],
 };

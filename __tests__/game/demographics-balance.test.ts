@@ -8,12 +8,7 @@
  * 4. createResourceStore defaults align with BASE_STARTING in difficulty.ts
  */
 import { citizens, dvory, getResourceEntity } from '@/ecs/archetypes';
-import {
-  createCitizen,
-  createMetaStore,
-  createResourceStore,
-  createStartingSettlement,
-} from '@/ecs/factories';
+import { createCitizen, createMetaStore, createResourceStore, createStartingSettlement } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { notifyStateChange } from '@/stores/gameStore';
 

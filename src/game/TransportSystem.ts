@@ -96,7 +96,7 @@ const MITIGATION: Record<RoadQuality, number> = {
 export function computeTransportScore(
   transportBuildingIds: readonly string[],
   tier: SettlementTier,
-  eraId: string
+  eraId: string,
 ): number {
   let score = 0;
   for (const id of transportBuildingIds) {
@@ -213,13 +213,12 @@ export class TransportSystem {
 
   // ── Tick ──
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: tick has 5 sequential steps (recalc, decay, maintenance, downgrade, mitigation)
   tick(
     operationalEntities: readonly Entity[],
     tier: SettlementTier,
     totalTicks: number,
     season: SeasonProfile,
-    resources?: { timber: number }
+    resources?: { timber: number },
   ): TransportTickResult {
     // 1. THROTTLED SCORE RECALC
     let recalculated = false;
@@ -251,11 +250,7 @@ export class TransportSystem {
     this._condition = Math.max(0, this._condition - decayRate);
 
     // 3. MAINTENANCE (auto-repair when condition < 80 and timber available)
-    if (
-      this._condition < 80 &&
-      resources &&
-      resources.timber >= TransportSystem.MAINTENANCE_TIMBER_COST
-    ) {
+    if (this._condition < 80 && resources && resources.timber >= TransportSystem.MAINTENANCE_TIMBER_COST) {
       resources.timber -= TransportSystem.MAINTENANCE_TIMBER_COST;
       this._condition = Math.min(100, this._condition + TransportSystem.MAINTENANCE_RECOVERY);
     }

@@ -384,12 +384,12 @@ describe('AchievementTracker', () => {
         restored
           .getUnlocked()
           .map((a) => a.id)
-          .sort()
+          .sort(),
       ).toEqual(
         original
           .getUnlocked()
           .map((a) => a.id)
-          .sort()
+          .sort(),
       );
       expect(restored.getStats().buildingsPlaced).toBe(2);
       expect(restored.getStats().totalEvents).toBe(1);

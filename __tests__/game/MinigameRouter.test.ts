@@ -1,8 +1,5 @@
+import { getMinigameNameForBuilding, resolveBuildingTrigger } from '../../src/game/minigames/BuildingMinigameMap';
 import { getMinigameDefinition, MINIGAME_DEFINITIONS } from '../../src/game/minigames/definitions';
-import {
-  getMinigameNameForBuilding,
-  resolveBuildingTrigger,
-} from '../../src/game/minigames/BuildingMinigameMap';
 import { MinigameRouter } from '../../src/game/minigames/MinigameRouter';
 import type { MinigameId, MinigameOutcome } from '../../src/game/minigames/MinigameTypes';
 import { GameRng } from '../../src/game/SeedSystem';
@@ -214,7 +211,7 @@ describe('MinigameRouter', () => {
 
     it('matches event trigger for ideology_session', () => {
       const def = router.checkTrigger('event', {
-        eventId: 'politruk_visit',
+        eventId: 'party_official_visit',
         totalTicks: 100,
         population: 50,
       });
@@ -224,7 +221,7 @@ describe('MinigameRouter', () => {
 
     it('matches event trigger for factory_emergency', () => {
       const def = router.checkTrigger('event', {
-        eventId: 'factory_malfunction',
+        eventId: 'factory_collapse',
         totalTicks: 100,
         population: 50,
       });
@@ -234,7 +231,7 @@ describe('MinigameRouter', () => {
 
     it('matches event trigger for conscription_selection', () => {
       const def = router.checkTrigger('event', {
-        eventId: 'conscription_order',
+        eventId: 'conscription_wave',
         totalTicks: 100,
         population: 50,
       });
@@ -244,7 +241,7 @@ describe('MinigameRouter', () => {
 
     it('matches event trigger for interrogation', () => {
       const def = router.checkTrigger('event', {
-        eventId: 'kgb_investigation',
+        eventId: 'kgb_inspection',
         totalTicks: 100,
         population: 50,
       });
@@ -401,7 +398,7 @@ describe('MinigameRouter', () => {
       router.startMinigame(def, 100);
 
       const result = router.checkTrigger('event', {
-        eventId: 'politruk_visit',
+        eventId: 'party_official_visit',
         totalTicks: 100,
         population: 50,
       });
@@ -416,7 +413,7 @@ describe('MinigameRouter', () => {
 
       // Different minigame should now be available (not the_queue, it is on cooldown)
       const result = router.checkTrigger('event', {
-        eventId: 'politruk_visit',
+        eventId: 'party_official_visit',
         totalTicks: 200,
         population: 50,
       });
@@ -825,7 +822,7 @@ describe('BuildingMinigameMap', () => {
     });
 
     it('all 8 building-type mappings resolve to valid minigames', () => {
-      const router = new MinigameRouter(new GameRng('all-mappings'));
+      const _router = new MinigameRouter(new GameRng('all-mappings'));
       const mappings: [string, string][] = [
         ['factory-office', 'production_quotas'],
         ['collective-farm-hq', 'harvest_campaign'],

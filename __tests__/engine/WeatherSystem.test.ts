@@ -1,17 +1,18 @@
 /**
  * WeatherSystem + helpers tests.
  */
-import { getSeason, getSeasonColor } from '../../src/engine/WeatherSystem';
-import {
-  showToast,
-  getToast,
-  clearToast,
-  showAdvisor,
-  getAdvisor,
-  dismissAdvisor,
-  getRandomTickerMsg,
-} from '../../src/engine/helpers';
+
 import { GameState } from '../../src/engine/GameState';
+import {
+  clearToast,
+  dismissAdvisor,
+  getAdvisor,
+  getRandomTickerMsg,
+  getToast,
+  showAdvisor,
+  showToast,
+} from '../../src/engine/helpers';
+import { getSeason, getSeasonColor } from '../../src/engine/WeatherSystem';
 
 describe('getSeason', () => {
   it('returns WINTER for Dec, Jan, Feb, Mar', () => {

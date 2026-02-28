@@ -59,12 +59,7 @@ export function generateRiverPath(size: number, rng: GameRng): RiverPoint[] {
 /**
  * Recursive midpoint displacement for natural-looking river curves.
  */
-function midpointDisplace(
-  points: RiverPoint[],
-  size: number,
-  rng: GameRng,
-  depth: number
-): RiverPoint[] {
+function midpointDisplace(points: RiverPoint[], size: number, rng: GameRng, depth: number): RiverPoint[] {
   if (depth <= 0 || points.length < 2) return points;
 
   const result: RiverPoint[] = [points[0]!];

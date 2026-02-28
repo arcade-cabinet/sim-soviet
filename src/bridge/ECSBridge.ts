@@ -7,10 +7,10 @@
  * shapes the 3D components understand.
  */
 
-import { buildings, tiles, terrainFeatures } from '@/ecs/archetypes';
-import type { BuildingState } from '../scene/BuildingRenderer';
-import type { GridCell, TerrainType } from '../engine/GridTypes';
 import { GRID_SIZE } from '@/config';
+import { buildings, terrainFeatures, tiles } from '@/ecs/archetypes';
+import type { GridCell, TerrainType } from '../engine/GridTypes';
+import type { BuildingState } from '../scene/BuildingRenderer';
 
 /**
  * Read ECS building entities and produce BuildingState[] for the 3D renderer.
@@ -35,6 +35,8 @@ export function getBuildingStates(): BuildingState[] {
   return buildings.entities.map((entity) => {
     const { position, building } = entity;
     const key = `${position.gridX}_${position.gridY}`;
+    const phase = building.constructionPhase;
+    const isUnderConstruction = phase != null && phase !== 'complete';
     return {
       id: key,
       type: building.defId,
@@ -43,7 +45,11 @@ export function getBuildingStates(): BuildingState[] {
       gridY: position.gridY,
       elevation: elevationMap.get(key) ?? 0,
       powered: building.powered,
-      onFire: entity.building.onFire === true
+      onFire: entity.building.onFire === true,
+      ...(isUnderConstruction && {
+        constructionPhase: phase as 'foundation' | 'building',
+        constructionProgress: building.constructionProgress ?? 0,
+      }),
     };
   });
 }
@@ -131,7 +137,6 @@ function mapTerrain(ecsTerrain: string): TerrainType {
       return 'marsh';
     case 'road':
       return 'path';
-    case 'foundation':
     default:
       return 'grass';
   }

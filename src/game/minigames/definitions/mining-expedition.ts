@@ -49,8 +49,7 @@ export const MINING_EXPEDITION: MinigameDefinition = {
       onSuccess: {
         resources: { money: 60 },
         blat: 1,
-        announcement:
-          'Controlled blast reveals a rich deposit. The military does not ask where the dynamite went.',
+        announcement: 'Controlled blast reveals a rich deposit. The military does not ask where the dynamite went.',
       },
       onFailure: {
         resources: { population: -2 },
@@ -63,7 +62,6 @@ export const MINING_EXPEDITION: MinigameDefinition = {
   ],
   autoResolve: {
     resources: { money: -2 },
-    announcement:
-      'Nobody ventured into the mountains. The iron remains theoretical. The plan remains unfulfilled.',
+    announcement: 'Nobody ventured into the mountains. The iron remains theoretical. The plan remains unfulfilled.',
   },
 };

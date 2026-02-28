@@ -9,14 +9,14 @@
  * Reads citizen data from the ECS citizens archetype and WorkerSystem stats.
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { SovietModal } from './SovietModal';
-import { Colors, monoFont } from './styles';
-import { citizens, dvory } from '../ecs/archetypes';
+import type React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
+import { citizens, dvory } from '../ecs/archetypes';
 import type { CitizenComponent, DvorComponent, Entity } from '../ecs/world';
+import { SovietModal } from './SovietModal';
+import { Colors, monoFont } from './styles';
 
 // ── Class config ────────────────────────────────────────────────────────────
 
@@ -45,7 +45,7 @@ function generateCommissarNotes(
   morale: number,
   loyalty: number,
   vodkaDep: number,
-  assignment: string | null
+  assignment: string | null,
 ): string {
   if (cls === 'prisoner') {
     return 'FILE RESTRICTED -- SEE DISTRICT OFFICE';
@@ -72,11 +72,7 @@ function generateCommissarNotes(
 }
 
 /** Draft status based on citizen properties. */
-function getDraftStatus(
-  cls: string,
-  gender: string | undefined,
-  age: number | undefined
-): string {
+function getDraftStatus(cls: string, gender: string | undefined, age: number | undefined): string {
   if (cls === 'soldier') return 'ACTIVE DUTY';
   if (cls === 'prisoner') return 'INELIGIBLE';
   if (gender === 'female') return 'EXEMPT (female)';
@@ -138,9 +134,7 @@ const DossierBar: React.FC<{
         <Text style={[styles.barValue, { color }]}>{Math.round(pct)}%</Text>
       </View>
       <View style={styles.barTrack}>
-        <View
-          style={[styles.barFill, { width: `${pct}%`, backgroundColor: color }]}
-        />
+        <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: color }]} />
       </View>
     </View>
   );
@@ -165,9 +159,7 @@ const InfoRow: React.FC<{
 }> = ({ label, value, valueColor }) => (
   <View style={styles.infoRow}>
     <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={[styles.infoValue, valueColor ? { color: valueColor } : null]}>
-      {value}
-    </Text>
+    <Text style={[styles.infoValue, valueColor ? { color: valueColor } : null]}>{value}</Text>
   </View>
 );
 
@@ -179,11 +171,7 @@ export interface CitizenDossierModalProps {
   onDismiss: () => void;
 }
 
-export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
-  visible,
-  citizenIndex,
-  onDismiss,
-}) => {
+export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({ visible, citizenIndex, onDismiss }) => {
   if (!visible) return null;
 
   const entity = findCitizenByIndex(citizenIndex);
@@ -200,7 +188,10 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
   if (workerInfo == null && citizen.name == null) {
     console.warn(`[CitizenDossier] Citizen entity at index ${citizenIndex} has no name`);
   }
-  const name = workerInfo?.name ?? citizen.name ?? (workerInfo == null && citizen.name == null ? 'RECORDS MISSING' : 'Unknown Comrade');
+  const name =
+    workerInfo?.name ??
+    citizen.name ??
+    (workerInfo == null && citizen.name == null ? 'RECORDS MISSING' : 'Unknown Comrade');
   const cls = citizen.class;
   const classLabel = CLASS_LABELS[cls] ?? cls;
   const classIcon = CLASS_ICONS[cls] ?? '\u2638';
@@ -217,9 +208,7 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
 
   // Assignment
   const assignment = citizen.assignment ?? null;
-  const assignmentName = assignment
-    ? (getBuildingDef(assignment)?.presentation.name ?? assignment)
-    : null;
+  const assignmentName = assignment ? (getBuildingDef(assignment)?.presentation.name ?? assignment) : null;
 
   // Health — derive from hunger and disease
   const disease = citizen.disease;
@@ -246,18 +235,25 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
   const status = workerInfo?.status ?? (workerInfo == null ? 'UNREGISTERED' : 'idle');
   const statusLabel = status.toUpperCase();
   const statusColor =
-    status === 'working' ? Colors.termGreen :
-    status === 'idle' ? Colors.sovietGold :
-    status === 'hungry' ? '#ff9800' :
-    status === 'drunk' ? '#9c27b0' :
-    '#ef4444';
+    status === 'working'
+      ? Colors.termGreen
+      : status === 'idle'
+        ? Colors.sovietGold
+        : status === 'hungry'
+          ? '#ff9800'
+          : status === 'drunk'
+            ? '#9c27b0'
+            : '#ef4444';
 
   // Stamp text based on class
   const stampText =
-    cls === 'prisoner' ? 'CLASSIFIED' :
-    cls === 'party_official' ? 'NOMENKLATURA' :
-    cls === 'soldier' ? 'MILITARY' :
-    'PERSONNEL FILE';
+    cls === 'prisoner'
+      ? 'CLASSIFIED'
+      : cls === 'party_official'
+        ? 'NOMENKLATURA'
+        : cls === 'soldier'
+          ? 'MILITARY'
+          : 'PERSONNEL FILE';
 
   return (
     <SovietModal
@@ -277,18 +273,10 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
         </View>
         <View style={styles.identityInfo}>
           <InfoRow label="CLASS" value={classLabel} />
-          {gender && (
-            <InfoRow label="GENDER" value={gender === 'male' ? 'Male' : 'Female'} />
-          )}
-          {age != null && (
-            <InfoRow label="AGE" value={`${age}`} />
-          )}
-          {memberRole && (
-            <InfoRow label="ROLE" value={memberRole.toUpperCase()} />
-          )}
-          {dvorSurname && (
-            <InfoRow label="DVOR" value={`${dvorSurname} Household`} />
-          )}
+          {gender && <InfoRow label="GENDER" value={gender === 'male' ? 'Male' : 'Female'} />}
+          {age != null && <InfoRow label="AGE" value={`${age}`} />}
+          {memberRole && <InfoRow label="ROLE" value={memberRole.toUpperCase()} />}
+          {dvorSurname && <InfoRow label="DVOR" value={`${dvorSurname} Household`} />}
         </View>
       </View>
 
@@ -296,30 +284,17 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
       <SectionDivider label="Status" />
       <InfoRow label="STATUS" value={statusLabel} valueColor={statusColor} />
       <InfoRow label="HEALTH" value={healthLabel} valueColor={healthColor} />
-      {disease && (
-        <InfoRow
-          label="RECOVERY"
-          value={`${disease.ticksRemaining} ticks remaining`}
-          valueColor="#ff9800"
-        />
-      )}
+      {disease && <InfoRow label="RECOVERY" value={`${disease.ticksRemaining} ticks remaining`} valueColor="#ff9800" />}
 
       {/* Assignment */}
       <SectionDivider label="Assignment" />
       {assignmentName ? (
-        <InfoRow
-          label="WORKPLACE"
-          value={assignmentName}
-          valueColor={Colors.termGreen}
-        />
+        <InfoRow label="WORKPLACE" value={assignmentName} valueColor={Colors.termGreen} />
       ) : (
         <InfoRow label="WORKPLACE" value="UNASSIGNED" valueColor="#9e9e9e" />
       )}
       {workerStats?.assignmentSource && assignment && (
-        <InfoRow
-          label="ASSIGNED BY"
-          value={workerStats.assignmentSource.toUpperCase()}
-        />
+        <InfoRow label="ASSIGNED BY" value={workerStats.assignmentSource.toUpperCase()} />
       )}
 
       {/* Stats Bars */}
@@ -334,9 +309,7 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
         </>
       ) : (
         <View style={styles.commissarBox}>
-          <Text style={styles.warningNote}>
-            NO WORKER FILE {'\u2014'} UNREGISTERED CITIZEN
-          </Text>
+          <Text style={styles.warningNote}>NO WORKER FILE {'\u2014'} UNREGISTERED CITIZEN</Text>
         </View>
       )}
 
@@ -345,9 +318,7 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
         <>
           <SectionDivider label="Production" />
           <View style={styles.efficiencyBox}>
-            <Text style={styles.efficiencyNumber}>
-              {Math.round(workerInfo.productionEfficiency * 100)}%
-            </Text>
+            <Text style={styles.efficiencyNumber}>{Math.round(workerInfo.productionEfficiency * 100)}%</Text>
             <Text style={styles.efficiencyLabel}>PRODUCTION EFFICIENCY</Text>
           </View>
         </>
@@ -356,16 +327,13 @@ export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({
       {/* Political Record */}
       <SectionDivider label="Political Record" />
       <View style={styles.commissarBox}>
-        <Text style={styles.commissarQuote}>
-          &ldquo;{commissarNotes}&rdquo;
-        </Text>
+        <Text style={styles.commissarQuote}>&ldquo;{commissarNotes}&rdquo;</Text>
         <Text style={styles.commissarAttrib}>-- Commissar&apos;s Notes</Text>
       </View>
       <InfoRow label="DRAFT STATUS" value={draftStatus} />
       {vodkaDep > 50 && (
         <Text style={styles.warningNote}>
-          WARNING: Subject exhibits signs of vodka dependency above acceptable
-          threshold. Ration review recommended.
+          WARNING: Subject exhibits signs of vodka dependency above acceptable threshold. Ration review recommended.
         </Text>
       )}
     </SovietModal>

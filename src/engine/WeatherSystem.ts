@@ -3,7 +3,7 @@
  * Faithful port of poc.html lines 408-423.
  */
 
-import { gameState, type WeatherType } from './GameState';
+import { gameState } from './GameState';
 
 export function getSeason(month: number): string {
   if (month === 12 || month <= 3) return 'WINTER';
