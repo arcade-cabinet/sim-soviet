@@ -115,6 +115,7 @@ import { BuildingInspectorPanel } from './ui/BuildingInspectorPanel';
 import { CitizenDossierModal } from './ui/CitizenDossierModal';
 import { ConsumerGoodsMarketPanel } from './ui/ConsumerGoodsMarketPanel';
 import { CursorTooltip } from './ui/CursorTooltip';
+import { WorkerStatusBar } from './ui/WorkerStatusBar';
 import { Colors } from './ui/styles';
 
 /**
@@ -757,6 +758,7 @@ const App: React.FC = () => {
                 selectedTool={snap.selectedTool}
                 onSelectTool={handleSelectTool}
               />
+              <WorkerStatusBar onShowWorkers={handleShowWorkers} />
             </View>
 
             <CursorTooltip
