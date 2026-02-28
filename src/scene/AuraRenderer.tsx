@@ -104,7 +104,7 @@ const AuraRenderer: React.FC = () => {
             const radius = t * TOWER_RADIUS;
             const alpha = (1 - t) * 0.6;
 
-            ring.scaling = new Vector3(radius * 20, 1, radius * 20);
+            ring.scaling = new Vector3(radius * 2, 1, radius * 2);
             ring.position.x = b.x;
             ring.position.z = b.y;
             ring.isVisible = true;

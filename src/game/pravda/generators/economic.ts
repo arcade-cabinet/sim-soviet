@@ -107,24 +107,24 @@ export const resourceSpinGenerators: HeadlineGenerator[] = [
   // Food shortage spin
   (gs) => ({
     headline: pick(SHORTAGE_EUPHEMISMS.food),
-    subtext: `Current food reserves (${gs.food} units) represent a ${pick(['strategic minimum', 'calculated sufficiency', 'planned threshold', 'optimal level'])} per Ministry guidelines.`,
-    reality: `Food reserves at ${gs.food}. Citizens are eating wallpaper paste. The wallpaper is also running out.`,
+    subtext: `Current food reserves (${Math.round(gs.food)} units) represent a ${pick(['strategic minimum', 'calculated sufficiency', 'planned threshold', 'optimal level'])} per Ministry guidelines.`,
+    reality: `Food reserves at ${Math.round(gs.food)}. Citizens are eating wallpaper paste. The wallpaper is also running out.`,
     category: 'spin',
   }),
 
   // Money shortage spin
   (gs) => ({
     headline: pick(SHORTAGE_EUPHEMISMS.money),
-    subtext: `The treasury's ${gs.money} rubles prove that less is more. More is also more. Everything is more.`,
-    reality: `Treasury contains ${gs.money} rubles and an IOU from 1963.`,
+    subtext: `The treasury's ${Math.round(gs.money)} rubles prove that less is more. More is also more. Everything is more.`,
+    reality: `Treasury contains ${Math.round(gs.money)} rubles and an IOU from 1963.`,
     category: 'spin',
   }),
 
   // Vodka shortage spin
   (gs) => ({
     headline: pick(SHORTAGE_EUPHEMISMS.vodka),
-    subtext: `Current reserves of ${gs.vodka} units are ${pick(['"adequate"', '"sufficient"', '"more than enough"', '"not a crisis"'])}, says spokesperson.`,
-    reality: `Vodka at ${gs.vodka}. Workers have begun distilling boot polish. Morale: complicated.`,
+    subtext: `Current reserves of ${Math.round(gs.vodka)} units are ${pick(['"adequate"', '"sufficient"', '"more than enough"', '"not a crisis"'])}, says spokesperson.`,
+    reality: `Vodka at ${Math.round(gs.vodka)}. Workers have begun distilling boot polish. Morale: complicated.`,
     category: 'spin',
   }),
 
