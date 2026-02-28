@@ -53,6 +53,9 @@ export const HOUSING_MORALE_BOOST = 1;
 /** Morale penalty for being unhoused. */
 export const UNHOUSED_MORALE_PENALTY = 2;
 
+/** Morale penalty when heating fails in winter (-30% of max morale = -30 flat). */
+export const HEATING_FAILURE_MORALE_PENALTY = 30;
+
 /** Party official morale boost to others (per official, per tick). */
 export const PARTY_MORALE_BOOST = 0.5;
 

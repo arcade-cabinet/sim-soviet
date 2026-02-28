@@ -197,7 +197,7 @@ export class WorkerSystem {
    * 6. Stakhanovite event check
    * 7. Skill growth for assigned workers
    */
-  tick(vodkaAvailable: number, foodAvailable: number): WorkerTickResult {
+  tick(vodkaAvailable: number, foodAvailable: number, heatingFailing = false): WorkerTickResult {
     const stakhanovites: WorkerTickResult['stakhanovites'] = [];
     const ctx: TickContext = {
       remainingVodka: vodkaAvailable,
@@ -206,6 +206,7 @@ export class WorkerSystem {
       foodConsumed: 0,
       partyOfficialCount: 0,
       rng: this.rng,
+      heatingFailing,
     };
 
     for (const c of citizens) {
@@ -243,7 +244,7 @@ export class WorkerSystem {
       const cls = entity.citizen.class;
       processVodka(stats, cls, ctx);
       processFood(entity.citizen, stats, ctx);
-      applyMorale(entity.citizen, stats, ctx.partyOfficialCount);
+      applyMorale(entity.citizen, stats, ctx.partyOfficialCount, ctx.heatingFailing);
 
       if (checkDefection(cls, stats, ctx.rng)) {
         toRemove.push({ entity, name: stats.name, cls });

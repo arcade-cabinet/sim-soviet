@@ -75,6 +75,7 @@ export interface SerializableEngine {
   fireSystem: FireSystem;
   quota: QuotaState;
   consecutiveQuotaFailures: number;
+  pripiskiCount: number;
   lastSeason: string;
   lastWeather: string;
   lastDayPhase: string;
@@ -124,6 +125,7 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
       lastThreatLevel: engine.lastThreatLevel,
       pendingReport: engine.pendingReport,
       ended: engine.ended,
+      pripiskiCount: engine.pripiskiCount,
     },
   };
 }
@@ -225,6 +227,7 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
     engine.lastThreatLevel = data.engineState.lastThreatLevel;
     engine.pendingReport = data.engineState.pendingReport;
     engine.ended = data.engineState.ended;
+    engine.pripiskiCount = data.engineState.pripiskiCount ?? 0;
   }
 
   // Update economy system to match restored era (fallback for saves without economy data)

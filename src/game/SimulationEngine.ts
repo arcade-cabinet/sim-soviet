@@ -89,7 +89,7 @@ import { PoliticalEntitySystem } from './political';
 import type { PravdaSaveData } from './pravda';
 import { PravdaSystem } from './pravda';
 import type { ConsequenceLevel, DifficultyLevel, ScoringSystemSaveData } from './ScoringSystem';
-import { eraIdToIndex, ScoringSystem } from './ScoringSystem';
+import { DIFFICULTY_PRESETS, eraIdToIndex, ScoringSystem } from './ScoringSystem';
 import type { GameRng } from './SeedSystem';
 import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from './SettlementSystem';
 import { SettlementSystem } from './SettlementSystem';
@@ -168,6 +168,7 @@ export interface SubsystemSaveData {
     lastThreatLevel: string;
     pendingReport: boolean;
     ended: boolean;
+    pripiskiCount?: number;
   };
 }
 
@@ -215,6 +216,8 @@ export class SimulationEngine {
   private consecutiveQuotaFailures = 0;
   private pendingReport = false;
   private ended = false;
+  /** How many times the player got away with pripiski (falsified reports). */
+  private pripiskiCount = 0;
   /** Stored so restoreSubsystems can rewire EventSystem/PolitburoSystem. */
   private eventHandler!: (event: GameEvent) => void;
   private politburoEventHandler!: (event: GameEvent) => void;
@@ -229,6 +232,8 @@ export class SimulationEngine {
     this.rng = rng;
     this.difficulty = difficulty ?? 'comrade';
     this.quota = createDefaultQuota();
+    // Scale initial quota target by difficulty multiplier
+    this.quota.target = Math.round(this.quota.target * DIFFICULTY_PRESETS[this.difficulty].quotaMultiplier);
     const meta = getMetaEntity();
     const startYear = meta?.gameMeta.date.year ?? 1922;
     this.chronology = new ChronologySystem(
@@ -469,6 +474,7 @@ export class SimulationEngine {
     this.transport = se.transport;
     this.fireSystem = se.fireSystem;
     this.consecutiveQuotaFailures = se.consecutiveQuotaFailures;
+    this.pripiskiCount = se.pripiskiCount;
     this.lastSeason = se.lastSeason;
     this.lastWeather = se.lastWeather;
     this.lastDayPhase = se.lastDayPhase;
@@ -546,8 +552,11 @@ export class SimulationEngine {
     const weatherProfile = getWeatherProfile(tickResult.weather as WeatherType);
     const politburoMods = this.politburo.getModifiers();
     const eraMods = this.eraSystem.getModifiers();
-    const farmMod = weatherProfile.farmModifier * politburoMods.foodProductionMult * eraMods.productionMult;
-    const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult;
+    // Heating failure penalty: -50% production when heating is non-operational in winter
+    const heatingPenalty = this.economySystem.getHeating().failing ? 0.5 : 1.0;
+    const farmMod =
+      weatherProfile.farmModifier * politburoMods.foodProductionMult * eraMods.productionMult * heatingPenalty;
+    const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult * heatingPenalty;
 
     powerSystem();
 
@@ -616,9 +625,10 @@ export class SimulationEngine {
       }
     }
 
+    const diffConfig = DIFFICULTY_PRESETS[this.difficulty];
     populationSystem(
       this.rng,
-      politburoMods.populationGrowthMult * eraMods.populationGrowthMult,
+      politburoMods.populationGrowthMult * eraMods.populationGrowthMult * diffConfig.growthMultiplier,
       this.chronology.getDate().month,
     );
 
@@ -627,7 +637,7 @@ export class SimulationEngine {
     this.workerSystem.syncPopulation(pop);
     const vodkaAvail = storeRef.resources.vodka;
     const foodAvail = storeRef.resources.food;
-    this.workerSystem.tick(vodkaAvail, foodAvail);
+    this.workerSystem.tick(vodkaAvail, foodAvail, this.economySystem.getHeating().failing);
 
     // Demographic System — births, deaths, aging for dvor households
     const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, storeRef.resources.population * 2));
@@ -640,7 +650,7 @@ export class SimulationEngine {
       );
     }
 
-    decaySystem(politburoMods.infrastructureDecayMult * eraMods.decayMult);
+    decaySystem(politburoMods.infrastructureDecayMult * eraMods.decayMult * diffConfig.decayMultiplier);
     quotaSystem(this.quota);
 
     // Gulag effect: powered gulags have a 10% chance of reducing population
@@ -752,6 +762,8 @@ export class SimulationEngine {
         consecutiveQuotaFailures: this.consecutiveQuotaFailures,
         pendingReport: this.pendingReport,
         mandateState: this.mandateState,
+        pripiskiCount: this.pripiskiCount,
+        quotaMultiplier: DIFFICULTY_PRESETS[this.difficulty].quotaMultiplier,
       },
       endGame: (victory: boolean, reason: string) => this.endGame(victory, reason),
     };
@@ -778,6 +790,7 @@ export class SimulationEngine {
       fireSystem: this.fireSystem,
       quota: this.quota,
       consecutiveQuotaFailures: this.consecutiveQuotaFailures,
+      pripiskiCount: this.pripiskiCount,
       lastSeason: this.lastSeason,
       lastWeather: this.lastWeather,
       lastDayPhase: this.lastDayPhase,
@@ -798,6 +811,7 @@ export class SimulationEngine {
     this.consecutiveQuotaFailures = state.consecutiveQuotaFailures;
     this.pendingReport = state.pendingReport;
     this.mandateState = state.mandateState;
+    this.pripiskiCount = state.pripiskiCount;
   }
 
   // ── Private methods that remain in the orchestrator ──
@@ -942,13 +956,24 @@ export class SimulationEngine {
       r.money = Math.max(0, r.money - result.mtsResult.cost);
     }
 
-    // Heating — at-risk population affects decay or population loss
-    if (result.heatingResult && !result.heatingResult.operational) {
+    // Heating — fuel consumption + at-risk population
+    if (result.heatingResult) {
+      // Deduct fuel consumed by the heating system (timber for pechka, power for district/crumbling)
+      const fuel = result.heatingResult.fuelConsumed;
+      if (fuel) {
+        if (fuel.resource === 'timber') {
+          r.timber = Math.max(0, r.timber - fuel.amount);
+        }
+        // Power is consumed implicitly via powerUsed; no deduction needed here
+      }
+
       // Non-operational heating in winter causes population attrition
-      const atRisk = result.heatingResult.populationAtRisk;
-      if (atRisk > 0) {
-        const losses = Math.ceil(atRisk * 0.01); // 1% of at-risk pop per tick
-        r.population = Math.max(0, r.population - losses);
+      if (!result.heatingResult.operational) {
+        const atRisk = result.heatingResult.populationAtRisk;
+        if (atRisk > 0) {
+          const losses = Math.ceil(atRisk * 0.01); // 1% of at-risk pop per tick
+          r.population = Math.max(0, r.population - losses);
+        }
       }
     }
 

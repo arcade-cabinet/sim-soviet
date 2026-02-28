@@ -62,4 +62,6 @@ export interface TickContext {
   foodConsumed: number;
   partyOfficialCount: number;
   rng: import('@/game/SeedSystem').GameRng | null;
+  /** Whether heating is non-operational during winter (morale penalty). */
+  heatingFailing: boolean;
 }

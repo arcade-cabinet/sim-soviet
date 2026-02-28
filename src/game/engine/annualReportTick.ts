@@ -21,12 +21,22 @@ import type { SimCallbacks } from '../SimulationEngine';
 /** Consecutive quota failures that trigger game over. */
 const MAX_QUOTA_FAILURES = 3;
 
+/** Pripiski inflation applied to next quota when falsification succeeds. */
+const PRIPISKI_QUOTA_INFLATION = 0.2;
+
+/** Additional investigation probability from prior pripiski history. */
+const PRIPISKI_HISTORY_INSPECTION_BONUS = 0.15;
+
 /** Mutable engine state that the annual report helpers read and write. */
 export interface AnnualReportEngineState {
   quota: QuotaState;
   consecutiveQuotaFailures: number;
   pendingReport: boolean;
   mandateState: PlanMandateState | null;
+  /** Number of times the player successfully falsified reports (undetected). */
+  pripiskiCount: number;
+  /** Difficulty-based quota target multiplier. */
+  quotaMultiplier: number;
 }
 
 /** Subset of SimulationEngine state needed by annual report helpers. */
@@ -116,8 +126,10 @@ export function processReport(ctx: AnnualReportContext, submission: ReportSubmis
   const popRisk = falsificationRisk(res?.resources.population ?? 0, submission.reportedPop);
   const maxRisk = Math.max(quotaRisk, secRisk, popRisk);
 
-  // Investigation probability scales with risk (capped at 80%)
-  const investigationProb = Math.min(0.8, maxRisk / 100);
+  // Investigation probability scales with risk (capped at 80%).
+  // Prior successful pripiski increase baseline inspection probability by +15% each.
+  const historyBonus = engineState.pripiskiCount * PRIPISKI_HISTORY_INSPECTION_BONUS;
+  const investigationProb = Math.min(0.8, maxRisk / 100 + historyBonus);
   const roll = ctx.rng?.random() ?? Math.random();
 
   if (roll < investigationProb) {
@@ -137,11 +149,12 @@ export function processReport(ctx: AnnualReportContext, submission: ReportSubmis
       handleQuotaMissed(ctx);
     }
   } else {
-    // Got away with it -- evaluate with REPORTED quota value
+    // Got away with it -- record successful pripiski
+    engineState.pripiskiCount++;
     ctx.callbacks.onToast('Report accepted by Gosplan', 'warning');
 
     if (submission.reportedQuota >= engineState.quota.target) {
-      handleQuotaMet(ctx);
+      handleQuotaMet(ctx, true);
     } else {
       handleQuotaMissed(ctx);
     }
@@ -200,7 +213,7 @@ function evaluateMandates(ctx: AnnualReportContext): void {
   }
 }
 
-export function handleQuotaMet(ctx: AnnualReportContext): void {
+export function handleQuotaMet(ctx: AnnualReportContext, falsified = false): void {
   const { engineState } = ctx;
   const totalTicks = ctx.chronology.getDate().totalTicks;
   engineState.consecutiveQuotaFailures = 0;
@@ -223,7 +236,14 @@ export function handleQuotaMet(ctx: AnnualReportContext): void {
 
   ctx.callbacks.onAdvisor('Quota met. Accept this medal made of tin. Now, produce VODKA.');
   engineState.quota.type = 'vodka';
-  engineState.quota.target = 500;
+  // Base target scaled by difficulty quota multiplier
+  let nextTarget = Math.round(500 * engineState.quotaMultiplier);
+  // Successful pripiski inflates the next quota target by +20%
+  // (Gosplan raises expectations based on the inflated numbers you reported)
+  if (falsified) {
+    nextTarget = Math.round(nextTarget * (1 + PRIPISKI_QUOTA_INFLATION));
+  }
+  engineState.quota.target = nextTarget;
   const metaYear = getMetaEntity()?.gameMeta.date.year ?? 1922;
   engineState.quota.deadlineYear = metaYear + 5;
   engineState.quota.current = 0;

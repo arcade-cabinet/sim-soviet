@@ -16,7 +16,7 @@ import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
 import { recalculatePaths } from '@/game/PathSystem';
 import { SaveSystem } from '@/game/SaveSystem';
-import type { ConsequenceLevel, DifficultyLevel } from '@/game/ScoringSystem';
+import { DIFFICULTY_PRESETS, type ConsequenceLevel, type DifficultyLevel } from '@/game/ScoringSystem';
 import { type SimCallbacks, SimulationEngine } from '@/game/SimulationEngine';
 import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 
@@ -43,12 +43,14 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   const consequence = options?.consequence ?? 'permadeath';
   const seed = options?.seed ?? 'simsoviet-3d';
 
-  // Create singleton store entities with enough materials for early construction
+  // Create singleton store entities with enough materials for early construction.
+  // Scale starting resources by difficulty multiplier (worker=1.5x, comrade=1.0x, tovarish=0.7x).
+  const resMult = DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
   createResourceStore({
-    food: 800,
-    timber: 150,
-    steel: 60,
-    cement: 30,
+    food: Math.round(800 * resMult),
+    timber: Math.round(150 * resMult),
+    steel: Math.round(60 * resMult),
+    cement: Math.round(30 * resMult),
   });
   createMetaStore({
     seed,

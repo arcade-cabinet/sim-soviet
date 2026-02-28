@@ -20,6 +20,7 @@ import {
   FACTORY_PREFIXES,
   FARM_PREFIXES,
   FOOD_PER_WORKER,
+  HEATING_FAILURE_MORALE_PENALTY,
   HOUSING_MORALE_BOOST,
   HUNGER_MORALE_PENALTY,
   PARTY_MORALE_BOOST,
@@ -123,8 +124,13 @@ export function processFood(citizen: CitizenComponent, stats: WorkerStats, ctx: 
   }
 }
 
-/** Apply morale adjustments for housing and party officials. */
-export function applyMorale(citizen: CitizenComponent, stats: WorkerStats, partyOfficialCount: number): void {
+/** Apply morale adjustments for housing, party officials, and heating. */
+export function applyMorale(
+  citizen: CitizenComponent,
+  stats: WorkerStats,
+  partyOfficialCount: number,
+  heatingFailing = false,
+): void {
   if (citizen.home) {
     stats.morale = Math.min(100, stats.morale + HOUSING_MORALE_BOOST);
   } else {
@@ -132,6 +138,10 @@ export function applyMorale(citizen: CitizenComponent, stats: WorkerStats, party
   }
   if (partyOfficialCount > 0 && citizen.class !== 'party_official') {
     stats.morale = Math.min(100, stats.morale + partyOfficialCount * PARTY_MORALE_BOOST);
+  }
+  // Heating failure in winter: severe morale penalty
+  if (heatingFailing) {
+    stats.morale = Math.max(0, stats.morale - HEATING_FAILURE_MORALE_PENALTY);
   }
   stats.morale = clamp(stats.morale, 0, 100);
   citizen.happiness = Math.round(stats.morale);

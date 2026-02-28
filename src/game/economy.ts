@@ -156,6 +156,8 @@ export interface HeatingResult {
   operational: boolean;
   populationAtRisk: number;
   tier: HeatingTier;
+  /** Fuel consumed this tick (only during winter months). */
+  fuelConsumed: { resource: string; amount: number } | null;
 }
 
 export interface CurrencyReform {
@@ -1182,18 +1184,27 @@ export class EconomySystem {
       this.heating.ticksSinceRepair++;
     }
 
+    const isWinter = isWinterMonth(month);
     const operational = hasHeatingResource;
     let populationAtRisk = 0;
+    let fuelConsumed: HeatingResult['fuelConsumed'] = null;
 
-    if (!operational && isWinterMonth(month)) {
-      // Without heating in winter, population is at risk
-      populationAtRisk = Math.round(population * (1 - this.heating.efficiency));
-      this.heating.failing = true;
+    if (isWinter) {
+      if (operational) {
+        // Consume fuel during winter
+        const cfg = HEATING_CONFIGS[newTier];
+        fuelConsumed = { resource: cfg.consumption.resource, amount: cfg.consumption.amount };
+        this.heating.failing = false;
+      } else {
+        // Without heating in winter, population is at risk
+        populationAtRisk = Math.round(population * (1 - this.heating.efficiency));
+        this.heating.failing = true;
+      }
     } else {
       this.heating.failing = false;
     }
 
-    return { operational, populationAtRisk, tier: newTier };
+    return { operational, populationAtRisk, tier: newTier, fuelConsumed };
   }
 
   repairHeating(): void {
