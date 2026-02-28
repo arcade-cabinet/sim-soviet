@@ -488,10 +488,6 @@ const App: React.FC = () => {
     setSpeed(gameState, sp);
   }, []);
 
-  const _handleSelectTool = useCallback((tool: string) => {
-    selectTool(gameState, tool);
-  }, []);
-
   const handleLensChange = useCallback((lens: LensType) => {
     setLens(gameState, lens);
   }, []);
