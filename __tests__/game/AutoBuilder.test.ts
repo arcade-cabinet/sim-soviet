@@ -9,7 +9,7 @@
  */
 
 import { GRID_SIZE } from '@/config';
-import { buildings, tiles } from '@/ecs/archetypes';
+import { buildings } from '@/ecs/archetypes';
 import { createBuilding, createGrid, createResourceStore, createMetaStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { autoPlaceBuilding, findPlacementCell } from '@/game/workers/autoBuilder';
@@ -37,7 +37,7 @@ describe('AutoBuilder', () => {
       expect(cell).not.toBeNull();
       const dist = Math.abs(cell!.gridX - 15) + Math.abs(cell!.gridY - 15);
       expect(dist).toBeGreaterThan(0);
-      expect(dist).toBeLessThanOrEqual(5);
+      expect(dist).toBeLessThanOrEqual(4);
     });
 
     it('returns null when no buildings exist', () => {
