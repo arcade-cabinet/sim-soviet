@@ -1,19 +1,11 @@
-import {
-  filterBuildingsForMenu,
-  type MenuBuildingFilter,
-} from '@/game/menuFilter';
+import { filterBuildingsForMenu, type MenuBuildingFilter } from '@/game/menuFilter';
 
 describe('Mandate-Filtered Build Menu', () => {
   it('returns only buildings from unfulfilled mandates', () => {
     const filter: MenuBuildingFilter = {
       mandatedDefIds: ['workers-house-a', 'power-station'],
       demandedDefIds: [],
-      eraAvailableDefIds: [
-        'workers-house-a',
-        'power-station',
-        'factory-office',
-        'gulag-admin',
-      ],
+      eraAvailableDefIds: ['workers-house-a', 'power-station', 'factory-office', 'gulag-admin'],
     };
 
     const result = filterBuildingsForMenu(filter);
@@ -27,11 +19,7 @@ describe('Mandate-Filtered Build Menu', () => {
     const filter: MenuBuildingFilter = {
       mandatedDefIds: ['power-station'],
       demandedDefIds: ['collective-farm-hq'],
-      eraAvailableDefIds: [
-        'workers-house-a',
-        'power-station',
-        'collective-farm-hq',
-      ],
+      eraAvailableDefIds: ['workers-house-a', 'power-station', 'collective-farm-hq'],
     };
 
     const result = filterBuildingsForMenu(filter);
