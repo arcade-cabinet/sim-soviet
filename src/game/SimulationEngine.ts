@@ -63,7 +63,12 @@ import {
   tickAchievements as tickAchievementsHelper,
   tickTutorial as tickTutorialHelper,
 } from './engine/achievementTick';
-import { type AnnualReportEngineState, checkQuota as checkQuotaHelper } from './engine/annualReportTick';
+import {
+  type AnnualReportEngineState,
+  checkQuota as checkQuotaHelper,
+  handleQuotaMet as handleQuotaMetHelper,
+  handleQuotaMissed as handleQuotaMissedHelper,
+} from './engine/annualReportTick';
 import { tickDirectives as tickDirectivesHelper } from './engine/directiveTick';
 import {
   checkBuildingTapMinigame as checkBuildingTapMinigameHelper,
@@ -177,6 +182,7 @@ export interface SubsystemSaveData {
     lastDayPhase: string;
     lastThreatLevel: string;
     pendingReport: boolean;
+    pendingReportSinceTick?: number;
     ended: boolean;
     pripiskiCount?: number;
   };
@@ -232,6 +238,8 @@ export class SimulationEngine {
   /** Stakhanovite production boost active this tick (building defId → multiplier) */
   private stakhanoviteBoosts: Map<string, number> = new Map();
   private pendingReport = false;
+  /** Tick at which pendingReport was set — used for auto-resolve timeout. */
+  private pendingReportSinceTick = 0;
   private ended = false;
   /** How many times the player got away with pripiski (falsified reports). */
   private pripiskiCount = 0;
@@ -310,7 +318,7 @@ export class SimulationEngine {
     this.politburo = new PolitburoSystem(this.politburoEventHandler, rng, startYear);
 
     // Personnel File — tracks black marks and commendations (game-over mechanic)
-    this.personnelFile = new PersonnelFile();
+    this.personnelFile = new PersonnelFile(this.difficulty);
 
     // Wire EventSystem → PersonnelFile so events generate marks/commendations
     this.eventSystem.setPersonnelFile(this.personnelFile);
@@ -505,6 +513,7 @@ export class SimulationEngine {
     this.lastDayPhase = se.lastDayPhase;
     this.lastThreatLevel = se.lastThreatLevel;
     this.pendingReport = se.pendingReport;
+    this.pendingReportSinceTick = se.pendingReportSinceTick;
     this.ended = se.ended;
 
     // Re-wire EventSystem → PersonnelFile after deserialization replaces instances
@@ -566,7 +575,28 @@ export class SimulationEngine {
       this.checkEraTransition();
       const reportCtx = this.getAnnualReportContext();
       checkQuotaHelper(reportCtx);
+      // Track when pendingReport was first set for auto-resolve timeout
+      if (reportCtx.engineState.pendingReport && !this.pendingReport) {
+        this.pendingReportSinceTick = this.chronology.getDate().totalTicks;
+      }
       this.syncAnnualReportState(reportCtx.engineState);
+    }
+
+    // Auto-resolve pending annual report after 90 ticks (1 month) — prevents
+    // indefinite deferral when UI callback doesn't respond (or in headless mode).
+    if (this.pendingReport) {
+      const elapsed = this.chronology.getDate().totalTicks - this.pendingReportSinceTick;
+      if (elapsed >= 90) {
+        this.pendingReport = false;
+        // Re-evaluate honestly (no pripiski)
+        const reportCtx = this.getAnnualReportContext();
+        if (reportCtx.engineState.quota.current >= reportCtx.engineState.quota.target) {
+          handleQuotaMetHelper(reportCtx);
+        } else {
+          handleQuotaMissedHelper(reportCtx);
+        }
+        this.syncAnnualReportState(reportCtx.engineState);
+      }
     }
 
     // Advance gradual modifier transition blend (if in progress)
@@ -920,6 +950,7 @@ export class SimulationEngine {
       lastDayPhase: this.lastDayPhase,
       lastThreatLevel: this.lastThreatLevel,
       pendingReport: this.pendingReport,
+      pendingReportSinceTick: this.pendingReportSinceTick,
       ended: this.ended,
       rng: this.rng,
       eventHandler: this.eventHandler,
