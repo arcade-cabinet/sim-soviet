@@ -193,6 +193,9 @@ app/public/audio/*.wav
 test-results/
 playwright-report/
 
+# TypeDoc generated API docs
+docs/api/
+
 # Expo
 .expo
 dist/
