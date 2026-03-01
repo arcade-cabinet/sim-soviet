@@ -698,8 +698,8 @@ describe('ERA_BIRTH_RATE_MULTIPLIER', () => {
   });
 
   it('wartime era has lowest non-fantasy multiplier', () => {
-    expect(ERA_BIRTH_RATE_MULTIPLIER['great_patriotic']).toBe(0.4);
-    expect(ERA_BIRTH_RATE_MULTIPLIER['great_patriotic']).toBeLessThan(ERA_BIRTH_RATE_MULTIPLIER['revolution']!);
+    expect(ERA_BIRTH_RATE_MULTIPLIER.great_patriotic).toBe(0.4);
+    expect(ERA_BIRTH_RATE_MULTIPLIER.great_patriotic).toBeLessThan(ERA_BIRTH_RATE_MULTIPLIER.revolution!);
   });
 });
 

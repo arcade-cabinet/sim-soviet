@@ -17,7 +17,16 @@ export { consumptionSystem, setStarvationCallback } from './consumptionSystem';
 export type { BuildingCollapsedCallback } from './decaySystem';
 export { decaySystem, setBuildingCollapsedCallback } from './decaySystem';
 export type { AgedIntoWorkingRef, DeadMemberRef, DemographicTickResult } from './demographicSystem';
-export { ageAllMembers, birthCheck, deathCheck, demographicTick, ERA_BIRTH_RATE_MULTIPLIER, getWorkingMotherPenalty, householdFormation, pregnancyTick } from './demographicSystem';
+export {
+  ageAllMembers,
+  birthCheck,
+  deathCheck,
+  demographicTick,
+  ERA_BIRTH_RATE_MULTIPLIER,
+  getWorkingMotherPenalty,
+  householdFormation,
+  pregnancyTick,
+} from './demographicSystem';
 export type { PopulationGrowthResult } from './populationSystem';
 export { populationSystem } from './populationSystem';
 export { powerSystem } from './powerSystem';

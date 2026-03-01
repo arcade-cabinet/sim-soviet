@@ -273,7 +273,7 @@ export function birthCheck(
  * When a pregnancy completes (pregnant <= 0), create the infant in the dvor.
  * Called on monthly boundaries before or after birthCheck.
  */
-export function pregnancyTick(rng: GameRng | null, result: DemographicTickResult): void {
+export function pregnancyTick(rng: GameRng | null, _result: DemographicTickResult): void {
   for (const entity of dvory) {
     const dvor = entity.dvor;
 

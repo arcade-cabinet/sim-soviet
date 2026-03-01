@@ -77,9 +77,7 @@ export interface PlaythroughEngine {
  */
 export function createTestDvory(count: number): void {
   for (let i = 0; i < count; i++) {
-    createDvor(`test-dvor-${i}`, `TestSurname${i}`, [
-      { name: `Test Worker ${i}`, gender: 'male', age: 30 },
-    ]);
+    createDvor(`test-dvor-${i}`, `TestSurname${i}`, [{ name: `Test Worker ${i}`, gender: 'male', age: 30 }]);
   }
 }
 

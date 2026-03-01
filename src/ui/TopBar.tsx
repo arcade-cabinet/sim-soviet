@@ -202,18 +202,38 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Right: resources, calendar, speed */}
         <View style={styles.rightGroup}>
-          <ResourceStat label="TIMBER" emoji={'\u{1FAB5}'} value={String(timber)} color="#a1887f" testID="timber-value" />
+          <ResourceStat
+            label="TIMBER"
+            emoji={'\u{1FAB5}'}
+            value={String(timber)}
+            color="#a1887f"
+            testID="timber-value"
+          />
           <ResourceStat label="STEEL" emoji={'\u{1F529}'} value={String(steel)} color="#90a4ae" testID="steel-value" />
           <ResourceStat label="CEMENT" value={String(cement)} color="#bdbdbd" testID="cement-value" />
-          <ResourceStat label="POWER" emoji={'\u26A1'} value={`${powerUsed}/${powerGen}`} color={Colors.sovietGold} testID="power-value" />
+          <ResourceStat
+            label="POWER"
+            emoji={'\u26A1'}
+            value={`${powerUsed}/${powerGen}`}
+            color={Colors.sovietGold}
+            testID="power-value"
+          />
           <ResourceStat label="FOOD" emoji={'\u{1F954}'} value={String(food)} color="#fdba74" testID="food-value" />
-          <ResourceStat label="VODKA" emoji={'\u{1F37E}'} value={String(vodka)} color={Colors.termBlue} testID="vodka-value" />
+          <ResourceStat
+            label="VODKA"
+            emoji={'\u{1F37E}'}
+            value={String(vodka)}
+            color={Colors.termBlue}
+            testID="vodka-value"
+          />
           <ResourceStat label="POP" value={String(population)} color={Colors.white} borderRight testID="pop-value" />
 
           {/* Calendar */}
           <View style={styles.calendarBox}>
             <Text style={styles.statLabel}>CALENDAR</Text>
-            <Text testID="date-label" style={styles.dateText}>{dateLabel}</Text>
+            <Text testID="date-label" style={styles.dateText}>
+              {dateLabel}
+            </Text>
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${Math.round(monthProgress * 100)}%` }]} />
             </View>
@@ -311,7 +331,9 @@ const ResourceStat: React.FC<ResourceStatProps> = ({ label, emoji, value, color,
       {label} {emoji}
     </Text>
     <View style={styles.statValueRow}>
-      <Text testID={testID} style={[styles.statValue, { color }]}>{value}</Text>
+      <Text testID={testID} style={[styles.statValue, { color }]}>
+        {value}
+      </Text>
       {children}
     </View>
   </View>

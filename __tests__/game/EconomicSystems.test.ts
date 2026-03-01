@@ -1,7 +1,3 @@
-/**
- * Tests for Private Plot, Loyalty, and Trudodni economic systems.
- */
-import { citizens, dvory } from '../../src/ecs/archetypes';
 import { createCitizen, createDvor } from '../../src/ecs/factories';
 import type { DvorComponent } from '../../src/ecs/world';
 import { world } from '../../src/ecs/world';

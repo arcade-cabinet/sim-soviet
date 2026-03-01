@@ -1,6 +1,5 @@
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
-import { createTestDvory } from '../playthrough/helpers';
 import {
   applyCurrencyReform,
   CURRENCY_REFORMS,
@@ -23,6 +22,7 @@ import { SimulationEngine } from '@/game/SimulationEngine';
 import { WEATHER_PROFILES, WeatherType } from '@/game/WeatherSystem';
 import { applyMorale } from '@/game/workers/classes';
 import { HEATING_FAILURE_MORALE_PENALTY } from '@/game/workers/constants';
+import { createTestDvory } from '../playthrough/helpers';
 
 function createMockCallbacks() {
   return {

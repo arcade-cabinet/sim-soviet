@@ -161,7 +161,7 @@ describe('removeWorkersByCountMaleFirst', () => {
     assigned.citizen.assignment = 'factory-l1';
     world.reindex(assigned);
 
-    const idle = spawnCitizen('male', 30);
+    const _idle = spawnCitizen('male', 30);
     // idle has no assignment
 
     // Conscript 1 — should take idle male first
