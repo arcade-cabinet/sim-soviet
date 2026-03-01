@@ -191,6 +191,7 @@ app/public/audio/*.wav
 
 # Test results (Playwright, Vitest)
 test-results/
+playwright-report/
 
 # Expo
 .expo
