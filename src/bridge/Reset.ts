@@ -11,6 +11,8 @@ import SFXManager from '../audio/SFXManager';
 import { world } from '../ecs/world';
 import { gameState } from '../engine/GameState';
 import { clearToast, dismissAdvisor } from '../engine/helpers';
+import { resetPaperwork, resetThawFreezeState } from '../game/political/doctrine';
+import { resetBuildingTrudodni } from '../game/TrudodniSystem';
 import {
   closeBuildingInspector,
   closeCitizenDossier,
@@ -28,8 +30,6 @@ import {
   setPaused,
 } from '../stores/gameStore';
 import { clearNotificationHistory } from '../ui/NotificationStore';
-import { resetThawFreezeState, resetPaperwork } from '../game/political/doctrine';
-import { resetBuildingTrudodni } from '../game/TrudodniSystem';
 import { resetGameInit } from './GameInit';
 
 /**

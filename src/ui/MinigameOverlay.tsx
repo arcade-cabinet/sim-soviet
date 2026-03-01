@@ -82,7 +82,7 @@ export const MinigameOverlay: React.FC<MinigameOverlayProps> = ({
   useEffect(() => {
     setCompleted(false);
     setLastOutcome(null);
-  }, [activeMinigame]);
+  }, []);
 
   const interactiveType = activeMinigame?.definition.interactiveType;
 

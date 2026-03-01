@@ -78,9 +78,7 @@ describe('Era Doctrine Mechanics', () => {
 
   describe('thaw_freeze_oscillation', () => {
     it('starts in thaw phase with production bonus', () => {
-      const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'thaw_and_freeze', totalTicks: 30 }),
-      );
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'thaw_and_freeze', totalTicks: 30 }));
       const osc = effects.find((e) => e.mechanicId === 'thaw_freeze_oscillation');
       expect(osc).toBeDefined();
       expect(osc!.productionMult).toBeGreaterThan(1.0);
@@ -92,9 +90,7 @@ describe('Era Doctrine Mechanics', () => {
       // Set the thaw phase to have started long ago
       setThawFreezeState({ phase: 'thaw', phaseStartTick: 0 });
 
-      const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'thaw_and_freeze', totalTicks: 720 }),
-      );
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'thaw_and_freeze', totalTicks: 720 }));
       const osc = effects.find((e) => e.mechanicId === 'thaw_freeze_oscillation');
       expect(osc).toBeDefined();
       expect(getThawFreezeState().phase).toBe('freeze');
@@ -105,9 +101,7 @@ describe('Era Doctrine Mechanics', () => {
     it('oscillates back to thaw after another 720 ticks', () => {
       setThawFreezeState({ phase: 'freeze', phaseStartTick: 720 });
 
-      const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'thaw_and_freeze', totalTicks: 1440 }),
-      );
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'thaw_and_freeze', totalTicks: 1440 }));
       const osc = effects.find((e) => e.mechanicId === 'thaw_freeze_oscillation');
       expect(osc).toBeDefined();
       expect(getThawFreezeState().phase).toBe('thaw');
@@ -115,9 +109,7 @@ describe('Era Doctrine Mechanics', () => {
     });
 
     it('does not fire outside thaw_and_freeze era', () => {
-      const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'revolution', totalTicks: 30 }),
-      );
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'revolution', totalTicks: 30 }));
       const osc = effects.find((e) => e.mechanicId === 'thaw_freeze_oscillation');
       expect(osc).toBeUndefined();
     });
@@ -175,9 +167,7 @@ describe('Era Doctrine Mechanics', () => {
     });
 
     it('does not fire outside stagnation era', () => {
-      const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'revolution', totalTicks: 30 }),
-      );
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'revolution', totalTicks: 30 }));
       const rot = effects.find((e) => e.mechanicId === 'stagnation_rot');
       expect(rot).toBeUndefined();
     });
@@ -187,9 +177,7 @@ describe('Era Doctrine Mechanics', () => {
 
   describe('eternal_bureaucracy', () => {
     it('fires during the_eternal era', () => {
-      const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 10 }),
-      );
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'the_eternal', totalTicks: 10 }));
       const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
       expect(bureau).toBeDefined();
     });
@@ -255,9 +243,7 @@ describe('Era Doctrine Mechanics', () => {
     });
 
     it('does not fire outside the_eternal era', () => {
-      const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'stagnation', totalTicks: 10 }),
-      );
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'stagnation', totalTicks: 10 }));
       const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
       expect(bureau).toBeUndefined();
     });

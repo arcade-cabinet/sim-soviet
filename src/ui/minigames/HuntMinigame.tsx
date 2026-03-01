@@ -106,7 +106,9 @@ export const HuntMinigame: React.FC<HuntMinigameProps> = ({ onComplete }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>THE HUNT</Text>
-      <Text style={styles.subtitle}>Tap the target! Need {REQUIRED_HITS}/{TOTAL_SHOTS} hits.</Text>
+      <Text style={styles.subtitle}>
+        Tap the target! Need {REQUIRED_HITS}/{TOTAL_SHOTS} hits.
+      </Text>
 
       {/* Timer bar */}
       <View style={styles.timerTrack}>
