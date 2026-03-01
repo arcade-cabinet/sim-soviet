@@ -58,6 +58,9 @@ import { CollectivePlanner } from './CollectivePlanner';
 import type { CompulsoryDeliverySaveData } from './CompulsoryDeliveries';
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
 import { DISEASE_PRAVDA_HEADLINES, diseaseTick, initDiseaseSystem } from './DiseaseSystem';
+import { tickLoyalty } from './LoyaltySystem';
+import { calculatePrivatePlotProduction } from './PrivatePlotSystem';
+import { accrueTrudodni } from './TrudodniSystem';
 import { type EraId as EconomyEraId, type EconomySaveData, EconomySystem } from './economy';
 // ── Extracted helpers ──
 import {
@@ -804,9 +807,55 @@ export class SimulationEngine {
       this.workerSystem.spawnWorkerFromDvor(ref.member, ref.dvorId);
     }
 
+    // Household formation: update citizen entities for newly formed dvory.
+    // householdFormation() moved members to new dvory — sync citizen dvorId.
+    if (demoResult.newDvory > 0) {
+      this.workerSystem.syncCitizenDvorIds();
+    }
+
     // Reset annual trudodni at year boundary
     if (tickResult.newYear) {
       this.workerSystem.resetAnnualTrudodni();
+    }
+
+    // ── Monthly economic systems: private plots, loyalty, trudodni ──
+    if (tickResult.newMonth) {
+      const currentEraId = this.eraSystem.getCurrentEraId();
+
+      // Private Plot Food — dvor plots and livestock produce food
+      const plotFood = calculatePrivatePlotProduction(currentEraId);
+      if (plotFood > 0) {
+        storeRef.resources.food += plotFood;
+      }
+
+      // Loyalty — adjust dvor loyalty based on food supply
+      const pop = storeRef.resources.population;
+      const foodLevel = pop > 0 ? Math.min(1, storeRef.resources.food / (pop * 2)) : 1;
+      const quotaMet = this.quota.current >= this.quota.target;
+      const loyaltyResult = tickLoyalty(currentEraId, foodLevel, quotaMet, this.rng);
+
+      // Sabotage reduces food/vodka by 5% per sabotaging dvor
+      if (loyaltyResult.sabotageCount > 0) {
+        const sabotagePenalty = 1 - loyaltyResult.sabotageCount * 0.05;
+        const penalty = Math.max(0.5, sabotagePenalty); // Cap at 50% loss
+        storeRef.resources.food *= penalty;
+        storeRef.resources.vodka *= penalty;
+        if (loyaltyResult.sabotageCount >= 2) {
+          this.callbacks.onToast('SABOTAGE: Disloyal elements are destroying collective property!', 'warning');
+        }
+      }
+
+      // Flight — remove workers for fleeing dvory
+      if (loyaltyResult.flightCount > 0) {
+        this.workerSystem.removeWorkersByCount(loyaltyResult.flightCount, 'loyalty_flight');
+        this.callbacks.onToast(
+          `${loyaltyResult.flightCount} worker(s) fled the collective due to disloyalty`,
+          'warning',
+        );
+      }
+
+      // Trudodni accrual — update dvor member trudodni based on gender categories
+      accrueTrudodni();
     }
 
     // Collective Autonomy — demand detection + auto-build
