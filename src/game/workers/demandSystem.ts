@@ -14,7 +14,10 @@ import { buildingsLogic } from '@/ecs/archetypes';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+/** Categories of construction demand. 'vodka_production' reserved for future detection. */
 export type DemandCategory = 'housing' | 'food_production' | 'power' | 'vodka_production';
+
+/** Priority levels. 'normal' used by CollectivePlanner for low-priority improvement demands. */
 export type DemandPriority = 'critical' | 'urgent' | 'normal';
 
 export interface ConstructionDemand {
@@ -142,7 +145,11 @@ function detectPowerDemand(): ConstructionDemand | null {
   let unpoweredCount = 0;
 
   for (const entity of buildingsLogic) {
-    if (entity.building.powerReq > 0 && !entity.building.powered) {
+    // Only count operational buildings — under-construction buildings aren't
+    // expected to be powered yet and would create false demands.
+    const phase = entity.building.constructionPhase;
+    const isOperational = phase == null || phase === 'complete';
+    if (isOperational && entity.building.powerReq > 0 && entity.building.powered === false) {
       unpoweredCount++;
     }
   }
