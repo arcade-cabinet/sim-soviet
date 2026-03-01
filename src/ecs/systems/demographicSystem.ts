@@ -168,8 +168,8 @@ export function ageAllMembers(result: DemographicTickResult): number {
         result.agedIntoWorking.push({ dvorId: entity.dvor.id, memberId: member.id, member });
       }
 
-      // Update labor capacity
-      member.laborCapacity = laborCapacityForAge(member.age, member.gender);
+      // Update labor capacity (with working mother penalty)
+      member.laborCapacity = laborCapacityForAge(member.age, member.gender) * getWorkingMotherPenalty(entity.dvor, member);
 
       // Only transition non-leadership roles
       if (member.role !== 'head' && member.role !== 'spouse') {
@@ -355,6 +355,138 @@ export function deathCheck(rng: GameRng | null, foodLevel: number, result: Demog
   }
 }
 
+// ── Household Formation ─────────────────────────────────────────────────────
+
+/** Minimum age for household formation eligibility. */
+const FORMATION_MIN_AGE = 20;
+
+/** Maximum age for household formation eligibility. */
+const FORMATION_MAX_AGE = 35;
+
+/** Annual probability that an eligible pair forms a new household. */
+const FORMATION_PROBABILITY = 0.1;
+
+/**
+ * Household formation from unrelated adults.
+ *
+ * Historical: young couples separated from parents' dvory to form
+ * independent households after marriage.
+ *
+ * Runs on yearly boundaries. Scans all dvory for eligible singles
+ * (working-age 20-35, not head or spouse), pairs male from one dvor
+ * with female from another dvor. Each eligible pair has ~10% annual
+ * probability of forming a new household.
+ */
+export function householdFormation(rng: GameRng | null, result: DemographicTickResult): void {
+  // Collect eligible singles: males and females from different dvory
+  const eligibleMales: Array<{ member: DvorMember; dvorEntity: (typeof dvory.entities)[number] }> = [];
+  const eligibleFemales: Array<{ member: DvorMember; dvorEntity: (typeof dvory.entities)[number] }> = [];
+
+  for (const entity of dvory) {
+    for (const member of entity.dvor.members) {
+      // Must be working age 20-35, NOT head or spouse
+      if (member.age < FORMATION_MIN_AGE || member.age > FORMATION_MAX_AGE) continue;
+      if (member.role === 'head' || member.role === 'spouse') continue;
+
+      if (member.gender === 'male') {
+        eligibleMales.push({ member, dvorEntity: entity });
+      } else {
+        eligibleFemales.push({ member, dvorEntity: entity });
+      }
+    }
+  }
+
+  // Try to pair males and females from different dvory
+  const usedMales = new Set<string>();
+  const usedFemales = new Set<string>();
+
+  for (const male of eligibleMales) {
+    if (usedMales.has(male.member.id)) continue;
+
+    for (const female of eligibleFemales) {
+      if (usedFemales.has(female.member.id)) continue;
+      // Must be from different dvory
+      if (male.dvorEntity.dvor.id === female.dvorEntity.dvor.id) continue;
+
+      // 10% probability
+      const roll = rng?.random() ?? Math.random();
+      if (roll >= FORMATION_PROBABILITY) continue;
+
+      usedMales.add(male.member.id);
+      usedFemales.add(female.member.id);
+
+      // Extract surname from the male's name (last word)
+      const nameParts = male.member.name.split(' ');
+      const surname = nameParts[nameParts.length - 1] ?? 'Unknown';
+
+      // Remove both from their original dvory
+      removeMemberFromDvor(male.dvorEntity, male.member.id, result);
+      removeMemberFromDvor(female.dvorEntity, female.member.id, result);
+
+      // Create new dvor
+      const timestamp = Date.now();
+      const newDvorId = `formed-${timestamp}-${male.member.id}`;
+
+      const newMembers: DvorMember[] = [
+        {
+          ...male.member,
+          id: `${newDvorId}-m0`,
+          role: 'head',
+        },
+        {
+          ...female.member,
+          id: `${newDvorId}-m1`,
+          role: 'spouse',
+        },
+      ];
+
+      const dvor: DvorComponent = {
+        id: newDvorId,
+        members: newMembers,
+        headOfHousehold: newMembers[0]!.id,
+        privatePlotSize: 0.25,
+        privateLivestock: { cow: 0, pig: 0, sheep: 0, poultry: 0 },
+        joinedTick: 0,
+        loyaltyToCollective: 50,
+        surname,
+        nextMemberId: 2,
+      };
+
+      world.add({ dvor, isDvor: true });
+      result.newDvory++;
+
+      break; // This male is paired, move to next
+    }
+  }
+}
+
+/**
+ * Remove a member from a dvor, handling head succession and empty dvor cleanup.
+ */
+function removeMemberFromDvor(
+  dvorEntity: (typeof dvory.entities)[number],
+  memberId: string,
+  _result: DemographicTickResult,
+): void {
+  const dvor = dvorEntity.dvor;
+  dvor.members = dvor.members.filter((m) => m.id !== memberId);
+
+  if (dvor.members.length === 0) {
+    // Empty dvor — remove it
+    world.remove(dvorEntity);
+    return;
+  }
+
+  // If head was removed, trigger succession
+  if (dvor.headOfHousehold === memberId) {
+    const newHead = dvor.members.filter((m) => m.age >= 16).sort((a, b) => b.age - a.age)[0];
+    if (newHead) {
+      dvor.headOfHousehold = newHead.id;
+      newHead.role = 'head';
+    }
+  }
+}
+
 // ── Main Tick ────────────────────────────────────────────────────────────────
 
 /**
@@ -377,9 +509,10 @@ export function demographicTick(rng: GameRng | null, totalTicks: number, foodLev
 
   if (totalTicks <= 0) return result;
 
-  // Year boundary: age all members
+  // Year boundary: age all members, then check household formation
   if (totalTicks % TICKS_PER_YEAR === 0) {
     result.aged = ageAllMembers(result);
+    householdFormation(rng, result);
   }
 
   // Month boundary: advance pregnancies, then check new conceptions, then deaths

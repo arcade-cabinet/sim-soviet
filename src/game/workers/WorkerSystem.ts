@@ -446,6 +446,45 @@ export class WorkerSystem {
   }
 
   /**
+   * Sync citizen entity dvorId/dvorMemberId to match current dvor membership.
+   *
+   * Called after householdFormation() moves members between dvory.
+   * Scans all citizen entities with a dvorMemberId and checks if they still
+   * exist in their original dvor. If not, finds the new dvor containing
+   * a member with a matching name and updates the citizen's links.
+   */
+  syncCitizenDvorIds(): void {
+    for (const entity of citizens) {
+      const c = entity.citizen;
+      if (!c.dvorId || !c.dvorMemberId) continue;
+
+      // Check if member still exists in the original dvor
+      let found = false;
+      for (const d of dvory) {
+        if (d.dvor.id === c.dvorId) {
+          if (d.dvor.members.some((m) => m.id === c.dvorMemberId)) {
+            found = true;
+          }
+          break;
+        }
+      }
+      if (found) continue;
+
+      // Member was moved — find them by name in all dvory
+      const name = c.name;
+      if (!name) continue;
+      for (const d of dvory) {
+        const member = d.dvor.members.find((m) => m.name === name);
+        if (member) {
+          c.dvorId = d.dvor.id;
+          c.dvorMemberId = member.id;
+          break;
+        }
+      }
+    }
+  }
+
+  /**
    * Remove a worker from the world and clean up stats.
    * Also removes the corresponding dvor member if linked.
    * @param entity - The citizen entity to remove
