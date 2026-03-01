@@ -28,6 +28,7 @@ import { getBuildingDef } from '@/data/buildingDefs';
 import {
   buildingsLogic,
   decayableBuildings,
+  dvory,
   getMetaEntity,
   getResourceEntity,
   operationalBuildings,
@@ -150,6 +151,27 @@ export interface SimCallbacks {
   onGameTally?: (tally: TallyData) => void;
 }
 
+/** Serialized dvor household for save persistence. */
+export interface DvorSaveEntry {
+  id: string;
+  surname: string;
+  members: import('@/ecs/world').DvorMember[];
+  headOfHousehold: string;
+  privatePlotSize: number;
+  privateLivestock: { cow: number; pig: number; sheep: number; poultry: number };
+  joinedTick: number;
+  loyaltyToCollective: number;
+  nextMemberId?: number;
+}
+
+/** Serialized per-worker stats keyed by dvor member linkage. */
+export interface WorkerStatSaveEntry {
+  dvorId: string;
+  dvorMemberId: string;
+  citizenClass: import('@/ecs/world').CitizenComponent['class'];
+  stats: import('./workers/types').WorkerStats;
+}
+
 /**
  * Serialized state for all subsystems managed by SimulationEngine.
  * Stored as a JSON blob in the database for save/load persistence.
@@ -186,6 +208,10 @@ export interface SubsystemSaveData {
     ended: boolean;
     pripiskiCount?: number;
   };
+  /** Dvor households — canonical population source */
+  dvory?: DvorSaveEntry[];
+  /** Per-worker stats keyed by dvor linkage */
+  workers?: WorkerStatSaveEntry[];
 }
 
 /** Maps game EraSystem IDs → EconomySystem EraIds. */
@@ -337,11 +363,17 @@ export class SimulationEngine {
     this.minigameRouter = new MinigameRouter(rng);
 
     // Worker System — AUTHORITATIVE population manager
+    // Population is always derived from dvory. No dvory = no population.
     this.workerSystem = new WorkerSystem(rng);
-    // Sync initial citizen entities from resource store population count
     const initialStore = getResourceEntity();
-    if (initialStore && initialStore.resources.population > 0) {
-      this.workerSystem.syncPopulation(initialStore.resources.population);
+    const dvorCount = [...dvory].length;
+    if (dvorCount > 0) {
+      const count = this.workerSystem.syncPopulationFromDvory();
+      if (initialStore) {
+        initialStore.resources.population = count;
+      }
+    } else if (initialStore) {
+      initialStore.resources.population = 0;
     }
 
     // Scoring System — accumulates score at era boundaries
@@ -680,11 +712,9 @@ export class SimulationEngine {
     }
 
     const consumptionResult = consumptionSystem(eraMods.consumptionMult);
-    // Route starvation deaths through WorkerSystem for proper entity cleanup
+    // Route starvation deaths through WorkerSystem for proper entity + dvor cleanup
     if (consumptionResult.starvationDeaths > 0) {
-      const currentPop = this.workerSystem.getPopulation();
-      const targetPop = Math.max(0, currentPop - consumptionResult.starvationDeaths);
-      this.workerSystem.syncPopulation(targetPop);
+      this.workerSystem.removeWorkersByCount(consumptionResult.starvationDeaths, 'starvation');
     }
 
     // Disease System — outbreak checks (monthly) + disease progression (every tick)
@@ -716,11 +746,9 @@ export class SimulationEngine {
       this.chronology.getDate().month,
     );
 
-    // Spawn new workers based on housing growth check
+    // Spawn new workers based on housing growth check — creates dvor-linked citizens
     if (growthResult.growthCount > 0) {
-      for (let i = 0; i < growthResult.growthCount; i++) {
-        this.workerSystem.spawnWorker();
-      }
+      this.workerSystem.spawnInflowDvor(growthResult.growthCount, 'growth');
     }
 
     // Worker System — AUTHORITATIVE population tick
@@ -761,18 +789,19 @@ export class SimulationEngine {
 
     // Demographic System — births, deaths, aging for dvor households
     const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, workerResult.population * 2));
-    const demoResult = demographicTick(this.rng ?? null, this.chronology.getDate().totalTicks, normalizedFood);
-    // Sync dvor demographic births/deaths through WorkerSystem
-    if (demoResult.births > 0) {
-      for (let i = 0; i < demoResult.births; i++) {
-        this.workerSystem.spawnWorker();
-      }
+    const demoResult = demographicTick(this.rng ?? null, this.chronology.getDate().totalTicks, normalizedFood, this.eraSystem.getCurrentEraId());
+    // Births: birthCheck() sets pregnancies; pregnancyTick() delivers infants.
+    // Infants (age 0) don't get citizen entities — they age into entities at 5.
+
+    // Deaths: remove the specific citizen entities whose dvor members died.
+    // deathCheck() already removed the members from their dvory.
+    for (const dead of demoResult.deadMembers) {
+      this.workerSystem.removeWorkerByDvorMember(dead.dvorId, dead.memberId);
     }
-    if (demoResult.deaths > 0) {
-      // Remove workers for demographic deaths (oldest first via syncPopulation trim)
-      const currentPop = this.workerSystem.getPopulation();
-      const targetPop = Math.max(0, currentPop - demoResult.deaths);
-      this.workerSystem.syncPopulation(targetPop);
+
+    // Age-5 spawning: dvor members who just aged from 4→5 need citizen entities.
+    for (const ref of demoResult.agedIntoWorking) {
+      this.workerSystem.spawnWorkerFromDvor(ref.member, ref.dvorId);
     }
 
     // Reset annual trudodni at year boundary
@@ -942,6 +971,7 @@ export class SimulationEngine {
       mandateState: this.mandateState,
       transport: this.transport,
       fireSystem: this.fireSystem,
+      workerSystem: this.workerSystem,
       quota: this.quota,
       consecutiveQuotaFailures: this.consecutiveQuotaFailures,
       pripiskiCount: this.pripiskiCount,
@@ -1159,9 +1189,8 @@ export class SimulationEngine {
           const deficit = demand.food - r.food;
           r.food = 0;
           const starvationLosses = Math.ceil(deficit * 0.1);
-          // Route ration starvation through WorkerSystem for entity cleanup
-          const rationPop = this.workerSystem.getPopulation();
-          this.workerSystem.syncPopulation(Math.max(0, rationPop - starvationLosses));
+          // Route ration starvation through WorkerSystem with dvor cleanup
+          this.workerSystem.removeWorkersByCount(starvationLosses, 'ration_starvation');
           this.callbacks.onToast('RATION SHORTAGE: Insufficient food for card holders', 'critical');
         }
       }
@@ -1187,8 +1216,7 @@ export class SimulationEngine {
         const atRisk = result.heatingResult.populationAtRisk;
         if (atRisk > 0) {
           const losses = Math.ceil(atRisk * 0.01); // 1% of at-risk pop per tick
-          const heatingPop = this.workerSystem.getPopulation();
-          this.workerSystem.syncPopulation(Math.max(0, heatingPop - losses));
+          this.workerSystem.removeWorkersByCount(losses, 'heating_failure');
         }
       }
     }
@@ -1432,18 +1460,15 @@ export class SimulationEngine {
 
     const result = this.politicalEntities.tick(totalTicks, doctrineCtx);
 
-    // Apply population drain from conscription — route through WorkerSystem
+    // Apply population drain from conscription — males 18-51 first (historical accuracy)
     if (result.workersConscripted > 0) {
-      const prePop = this.workerSystem.getPopulation();
-      this.workerSystem.syncPopulation(Math.max(0, prePop - result.workersConscripted));
+      this.workerSystem.removeWorkersByCountMaleFirst(result.workersConscripted, 'conscription');
       this.scoring.onConscription(result.workersConscripted);
     }
 
-    // Apply population return from orgnabor/conscription — spawn workers
+    // Apply population return from orgnabor/conscription — creates dvor-linked citizens
     if (result.workersReturned > 0) {
-      for (let i = 0; i < result.workersReturned; i++) {
-        this.workerSystem.spawnWorker();
-      }
+      this.workerSystem.spawnInflowDvor(result.workersReturned, 'returned');
     }
 
     // Apply KGB worker arrests — route through WorkerSystem
@@ -1469,11 +1494,10 @@ export class SimulationEngine {
         store.resources.money = Math.max(0, store.resources.money + effect.moneyDelta);
         store.resources.vodka = Math.max(0, store.resources.vodka + effect.vodkaDelta);
         if (effect.popDelta !== 0) {
-          const curPop = this.workerSystem.getPopulation();
           if (effect.popDelta > 0) {
-            for (let i = 0; i < effect.popDelta; i++) this.workerSystem.spawnWorker();
+            this.workerSystem.spawnInflowDvor(effect.popDelta, 'doctrine');
           } else {
-            this.workerSystem.syncPopulation(Math.max(0, curPop + effect.popDelta));
+            this.workerSystem.removeWorkersByCount(-effect.popDelta, 'doctrine');
           }
         }
       }
@@ -1691,11 +1715,10 @@ export class SimulationEngine {
       if (fx.food) r.food = Math.max(0, r.food + fx.food);
       if (fx.vodka) r.vodka = Math.max(0, r.vodka + fx.vodka);
       if (fx.pop) {
-        const evtPop = this.workerSystem.getPopulation();
         if (fx.pop > 0) {
-          for (let i = 0; i < fx.pop; i++) this.workerSystem.spawnWorker();
+          this.workerSystem.spawnInflowDvor(fx.pop, 'event');
         } else {
-          this.workerSystem.syncPopulation(Math.max(0, evtPop + fx.pop));
+          this.workerSystem.removeWorkersByCount(-fx.pop, 'event');
         }
       }
       if (fx.power) r.power = Math.max(0, r.power + fx.power);

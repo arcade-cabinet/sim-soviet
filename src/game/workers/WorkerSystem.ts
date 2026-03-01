@@ -13,9 +13,10 @@
  *   - Behavioral governor
  */
 
-import { buildingsLogic, citizens, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
-import { createCitizen } from '@/ecs/factories';
-import type { CitizenComponent, Entity } from '@/ecs/world';
+import { buildingsLogic, citizens, dvory, getResourceEntity, maleCitizens, operationalBuildings } from '@/ecs/archetypes';
+import { createCitizen, createDvor } from '@/ecs/factories';
+import { laborCapacityForAge } from '@/ecs/factories/demographics';
+import type { CitizenComponent, DvorMember, Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';
 import {
@@ -123,6 +124,27 @@ export class WorkerSystem {
     return this.stats;
   }
 
+  /**
+   * Remove all citizen entities from the world and clear all stats.
+   * Used during save-load restoration to reset before re-creating from saved dvory.
+   */
+  clearAllWorkers(): void {
+    for (const entity of [...citizens]) {
+      world.remove(entity);
+    }
+    this.stats.clear();
+    this.trudodniTracker.clear();
+  }
+
+  /**
+   * Restore previously-saved stats for a citizen entity.
+   * Used during save-load restoration to overwrite the defaults
+   * created by syncPopulationFromDvory().
+   */
+  restoreWorkerStats(entity: Entity, stats: WorkerStats): void {
+    this.stats.set(entity, { ...stats });
+  }
+
   /** Authoritative population count — the number of citizen entities. */
   getPopulation(): number {
     return [...citizens].length;
@@ -150,8 +172,165 @@ export class WorkerSystem {
   }
 
   /**
+   * Create a new dvor for incoming population (inflow events) and spawn linked citizens.
+   *
+   * Every population inflow (housing growth, Moscow transfer, resettlement, events)
+   * goes through this method to ensure all citizens are dvor-linked.
+   *
+   * @param count - Number of adults to add
+   * @param reason - Descriptive tag for the dvor ID (e.g. 'moscow', 'growth')
+   * @param overrides - Optional stat overrides per worker (morale, loyalty, skill)
+   * @returns Array of spawned citizen entities
+   */
+  spawnInflowDvor(
+    count: number,
+    reason: string,
+    overrides?: Partial<Pick<WorkerStats, 'morale' | 'loyalty' | 'skill'>>,
+  ): Entity[] {
+    if (count <= 0) return [];
+
+    const rng = this.rng;
+    const timestamp = Date.now();
+    const dvorId = `${reason}-${timestamp}-${rng ? rng.int(0, 9999) : 0}`;
+
+    // Generate member seeds with proper Russian names
+    const memberSeeds: Array<{ name: string; gender: 'male' | 'female'; age: number }> = [];
+    let surname = 'Unknown';
+    for (let i = 0; i < count; i++) {
+      const generated = rng ? generateWorkerName(rng) : { name: 'Unnamed Worker', gender: 'male' as const };
+      // Extract surname from the full name (last word)
+      const parts = generated.name.split(' ');
+      if (i === 0) surname = parts[parts.length - 1] ?? 'Unknown';
+      const age = rng ? rng.int(18, 45) : 30;
+      memberSeeds.push({ name: generated.name, gender: generated.gender, age });
+    }
+
+    // Create the dvor entity with all members
+    const dvorEntity = createDvor(dvorId, surname, memberSeeds);
+    if (!dvorEntity.dvor) return [];
+
+    // Spawn citizen entities linked to each dvor member
+    const spawned: Entity[] = [];
+    for (const member of dvorEntity.dvor.members) {
+      const entity = this.spawnWorkerFromDvor(member, dvorId);
+      if (entity) {
+        // Apply stat overrides if provided
+        if (overrides) {
+          const stats = this.stats.get(entity);
+          if (stats) {
+            if (overrides.morale !== undefined) stats.morale = overrides.morale;
+            if (overrides.loyalty !== undefined) stats.loyalty = overrides.loyalty;
+            if (overrides.skill !== undefined) stats.skill = overrides.skill;
+          }
+        }
+        spawned.push(entity);
+      }
+    }
+
+    return spawned;
+  }
+
+  /**
+   * Remove N citizens by priority (idle/unassigned first, lowest morale).
+   * Uses removeWorker() which handles dvor member cleanup automatically.
+   *
+   * @param count - Number of citizens to remove
+   * @param reason - Reason for removal (logged on each removeWorker call)
+   */
+  removeWorkersByCount(count: number, reason: string): void {
+    if (count <= 0) return;
+
+    const currentCitizens = [...citizens];
+    // Prefer idle/unassigned, then lowest morale
+    const sorted = currentCitizens.sort((a, b) => {
+      const aAssigned = a.citizen.assignment != null ? 1 : 0;
+      const bAssigned = b.citizen.assignment != null ? 1 : 0;
+      if (aAssigned !== bAssigned) return aAssigned - bAssigned;
+      // Among same assignment status, remove lowest morale first
+      const aMorale = this.stats.get(a)?.morale ?? 50;
+      const bMorale = this.stats.get(b)?.morale ?? 50;
+      return aMorale - bMorale;
+    });
+
+    const toRemove = Math.min(count, sorted.length);
+    for (let i = 0; i < toRemove; i++) {
+      this.removeWorker(sorted[i]!, reason);
+    }
+
+    // Sync resource store
+    const store = getResourceEntity();
+    if (store) {
+      store.resources.population = this.getPopulation();
+    }
+  }
+
+  /**
+   * Remove N citizens, preferring males aged 18-51 (conscription-age).
+   * Falls back to females (any working-age) if insufficient males in range.
+   * Used for military conscription only — other drains use removeWorkersByCount().
+   *
+   * @param count - Number of citizens to conscript
+   * @param reason - Reason for removal (e.g. 'conscription')
+   * @returns Actual number of citizens removed
+   */
+  removeWorkersByCountMaleFirst(count: number, reason: string): number {
+    if (count <= 0) return 0;
+
+    // Phase 1: males aged 18-51, sorted idle-first then lowest morale
+    const eligibleMales = [...maleCitizens]
+      .filter((e) => {
+        const age = e.citizen.age ?? 25;
+        return age >= 18 && age <= 51;
+      })
+      .sort((a, b) => {
+        const aAssigned = a.citizen.assignment != null ? 1 : 0;
+        const bAssigned = b.citizen.assignment != null ? 1 : 0;
+        if (aAssigned !== bAssigned) return aAssigned - bAssigned;
+        const aMorale = this.stats.get(a)?.morale ?? 50;
+        const bMorale = this.stats.get(b)?.morale ?? 50;
+        return aMorale - bMorale;
+      });
+
+    let removed = 0;
+    const toRemoveMale = Math.min(count, eligibleMales.length);
+    for (let i = 0; i < toRemoveMale; i++) {
+      this.removeWorker(eligibleMales[i]!, reason);
+      removed++;
+    }
+
+    // Phase 2: fallback to any remaining citizens (females, out-of-range males)
+    const remaining = count - removed;
+    if (remaining > 0) {
+      const fallback = [...citizens]
+        .sort((a, b) => {
+          const aAssigned = a.citizen.assignment != null ? 1 : 0;
+          const bAssigned = b.citizen.assignment != null ? 1 : 0;
+          if (aAssigned !== bAssigned) return aAssigned - bAssigned;
+          const aMorale = this.stats.get(a)?.morale ?? 50;
+          const bMorale = this.stats.get(b)?.morale ?? 50;
+          return aMorale - bMorale;
+        });
+
+      const toRemoveFallback = Math.min(remaining, fallback.length);
+      for (let i = 0; i < toRemoveFallback; i++) {
+        this.removeWorker(fallback[i]!, reason);
+        removed++;
+      }
+    }
+
+    // Sync resource store
+    const store = getResourceEntity();
+    if (store) {
+      store.resources.population = this.getPopulation();
+    }
+
+    return removed;
+  }
+
+  /**
    * Spawn or remove citizen entities to match the target population count.
    * Spawns workers when below target, removes excess when above.
+   * @deprecated Use spawnInflowDvor() for inflows and removeWorkersByCount() for outflows.
    */
   syncPopulation(targetPopulation: number): void {
     const currentCitizens = [...citizens];
@@ -183,6 +362,7 @@ export class WorkerSystem {
   /**
    * Spawn a single worker with random class distribution.
    * Uses weighted random selection from CLASS_WEIGHTS.
+   * @deprecated Use spawnInflowDvor() for production code. This creates anonymous (non-dvor-linked) citizens.
    */
   spawnWorker(
     homeX?: number,
@@ -217,14 +397,92 @@ export class WorkerSystem {
   }
 
   /**
+   * Spawn a citizen entity from a dvor member, using the member's real
+   * demographic data (gender, age, household link).
+   * Skips infants/toddlers under age 5 — they're tracked in dvor members
+   * but don't need citizen entities.
+   */
+  spawnWorkerFromDvor(member: DvorMember, dvorId: string, homeX?: number, homeY?: number): Entity | null {
+    if (member.age < 5) return null;
+
+    const capacity = laborCapacityForAge(member.age, member.gender);
+    const citizenClass: CitizenComponent['class'] = capacity >= 0.3 ? 'worker' : 'farmer';
+
+    const entity = createCitizen(citizenClass, homeX, homeY, member.gender, member.age, dvorId);
+    if (entity.citizen) {
+      entity.citizen.name = member.name;
+      entity.citizen.dvorMemberId = member.id;
+    }
+
+    const rng = this.rng;
+    const stats: WorkerStats = {
+      morale: 50,
+      loyalty: rng ? rng.int(40, 80) : 60,
+      skill: rng ? rng.int(10, 40) : 25,
+      vodkaDependency: rng ? rng.int(5, 30) : 15,
+      ticksSinceVodka: 0,
+      name: member.name,
+      assignmentDuration: 0,
+      assignmentSource: 'auto',
+    };
+
+    this.stats.set(entity, stats);
+    return entity;
+  }
+
+  /**
+   * Spawn citizen entities for all members across all dvory in the ECS world.
+   * Returns the total number of citizen entities created.
+   */
+  syncPopulationFromDvory(): number {
+    let count = 0;
+    for (const entity of dvory) {
+      for (const member of entity.dvor.members) {
+        const spawned = this.spawnWorkerFromDvor(member, entity.dvor.id);
+        if (spawned) count++;
+      }
+    }
+    return count;
+  }
+
+  /**
    * Remove a worker from the world and clean up stats.
+   * Also removes the corresponding dvor member if linked.
    * @param entity - The citizen entity to remove
    * @param _reason - Reason for removal (for logging/events)
+   * @param skipDvorCleanup - True when deathCheck already removed the dvor member
    */
-  removeWorker(entity: Entity, _reason: string): void {
+  removeWorker(entity: Entity, _reason: string, skipDvorCleanup = false): void {
+    // Clean up dvor member linkage
+    if (!skipDvorCleanup && entity.citizen?.dvorId && entity.citizen?.dvorMemberId) {
+      const targetDvorId = entity.citizen.dvorId;
+      const targetMemberId = entity.citizen.dvorMemberId;
+      for (const d of dvory) {
+        if (d.dvor.id === targetDvorId) {
+          d.dvor.members = d.dvor.members.filter((m) => m.id !== targetMemberId);
+          break;
+        }
+      }
+    }
+
     this.stats.delete(entity);
     this.trudodniTracker.delete(entity);
     world.remove(entity);
+  }
+
+  /**
+   * Remove the citizen entity corresponding to a specific dvor member.
+   * Called when deathCheck removes a member — the dvor side is already cleaned up.
+   * Returns true if a matching citizen was found and removed.
+   */
+  removeWorkerByDvorMember(dvorId: string, memberId: string): boolean {
+    for (const entity of citizens) {
+      if (entity.citizen.dvorId === dvorId && entity.citizen.dvorMemberId === memberId) {
+        this.removeWorker(entity, 'demographic_death', true);
+        return true;
+      }
+    }
+    return false; // No entity — member was under age 5 (infant/toddler)
   }
 
   /**
@@ -326,9 +584,7 @@ export class WorkerSystem {
     const rng = this.rng;
     const count = rng ? rng.int(MOSCOW_ASSIGNMENT_COUNT[0], MOSCOW_ASSIGNMENT_COUNT[1]) : MOSCOW_ASSIGNMENT_COUNT[0];
 
-    for (let i = 0; i < count; i++) {
-      this.spawnWorker();
-    }
+    this.spawnInflowDvor(count, 'moscow');
 
     return { count, reason: 'moscow_assignment', averageMorale: 50 };
   }
@@ -342,20 +598,16 @@ export class WorkerSystem {
       ? rng.int(FORCED_RESETTLEMENT_COUNT[0], FORCED_RESETTLEMENT_COUNT[1])
       : FORCED_RESETTLEMENT_COUNT[0];
 
-    let moraleSum = 0;
-    for (let i = 0; i < count; i++) {
-      const morale = rng
-        ? rng.int(FORCED_RESETTLEMENT_MORALE[0], FORCED_RESETTLEMENT_MORALE[1])
-        : FORCED_RESETTLEMENT_MORALE[0];
-      const loyalty = rng ? rng.int(5, 25) : 10;
-      this.spawnWorker(undefined, undefined, { morale, loyalty });
-      moraleSum += morale;
-    }
+    const morale = rng
+      ? rng.int(FORCED_RESETTLEMENT_MORALE[0], FORCED_RESETTLEMENT_MORALE[1])
+      : FORCED_RESETTLEMENT_MORALE[0];
+    const loyalty = rng ? rng.int(5, 25) : 10;
+    this.spawnInflowDvor(count, 'resettlement', { morale, loyalty });
 
     return {
       count,
       reason: 'forced_resettlement',
-      averageMorale: count > 0 ? moraleSum / count : 0,
+      averageMorale: morale,
     };
   }
 
@@ -368,18 +620,14 @@ export class WorkerSystem {
       ? rng.int(KOLKHOZ_AMALGAMATION_COUNT[0], KOLKHOZ_AMALGAMATION_COUNT[1])
       : KOLKHOZ_AMALGAMATION_COUNT[0];
 
-    let moraleSum = 0;
-    for (let i = 0; i < count; i++) {
-      const morale = rng ? rng.int(30, 60) : 45;
-      const skill = rng ? rng.int(15, 50) : 30;
-      this.spawnWorker(undefined, undefined, { morale, skill });
-      moraleSum += morale;
-    }
+    const morale = rng ? rng.int(30, 60) : 45;
+    const skill = rng ? rng.int(15, 50) : 30;
+    this.spawnInflowDvor(count, 'kolkhoz', { morale, skill });
 
     return {
       count,
       reason: 'kolkhoz_amalgamation',
-      averageMorale: count > 0 ? moraleSum / count : 0,
+      averageMorale: morale,
     };
   }
 
