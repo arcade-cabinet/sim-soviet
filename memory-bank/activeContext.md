@@ -2,22 +2,35 @@
 
 ## Current Development Focus
 
-Documentation and tooling infrastructure overhaul:
-- Standardized YAML frontmatter on all 41 docs
-- AGENTS.md index hierarchy for agent navigation
-- Cline-style memory bank (this directory)
-- JSDoc completion across ~283 source files
-- TypeDoc generation pipeline
-- Bespoke .claude architecture (agents, commands, hooks)
+Game completion sprint — implementing all remaining features across 5 workstreams:
+- W1: Scene rendering (dynamic grid, new renderers)
+- W2: Game systems (consequence modes, trudodni, vodka, leaders)
+- W3: Era doctrines + interactive minigame system
+- W4: Platform fixes (native restart, minimap, XR entry, iOS CI)
+- W5: E2E tests + documentation updates
 
 ## Recent Changes
 
-### Demographics Overhaul (PR #39 — completed)
+### Demographics Overhaul (PR #39 — merged)
 - 9 features implemented, 82 new tests added
 - Dvory (household) system, births/deaths/aging, gender retirement
 - Private plots, loyalty/sabotage, trudodni labor accounting
 - Male-first conscription, era birth rates
 - Full save/load serialization
+
+### Documentation Overhaul (PR #39 — merged)
+- 41 docs with standardized YAML frontmatter
+- 273/283 source files with JSDoc
+- AGENTS.md hierarchy, memory-bank, .claude architecture
+- TypeDoc pipeline
+
+### Game Completion Sprint (in progress)
+- Consequence mode rehabilitation flow
+- Era doctrine mechanics (thaw/freeze, stagnation rot, eternal bureaucracy)
+- Interactive minigame UI framework
+- Dynamic grid size system
+- New scene renderers (CitizenRenderer, PoliticalEntityRenderer, HeatingOverlay)
+- E2E Playwright test expansion (6 spec files)
 
 ### Previous Major Work
 - R3F migration from BabylonJS/Reactylon (completed)
@@ -29,10 +42,11 @@ Documentation and tooling infrastructure overhaul:
 
 | Branch | Purpose | Status |
 |--------|---------|--------|
-| `feat/demographics-overhaul` | Demographics PR #39 | PR open |
-| `feat/docs-jsdoc-claude-overhaul` | This documentation overhaul | In progress |
+| `main` | Release branch | Current |
+| `feat/game-completion` | Game completion sprint | In progress |
+| Release Please v1.2.0 | PR #37 | Open |
 
 ## Known Issues
 
 - tsconfig: `module: "commonjs"` conflicts with `moduleResolution: "bundler"` — pre-existing, doesn't block builds
-- 3D rendering needs live verification on deployed v1.1.2
+- Branch protection: main requires PRs — cannot push directly

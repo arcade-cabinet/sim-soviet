@@ -271,22 +271,16 @@ Survive all 8 eras → **"Medal of the Order of the Soviet Union, Third Class"**
 
 ## Aspirational Systems (Not Yet Implemented)
 
-These systems are fully designed in the `docs/design/` subdirectory but not yet built:
+These systems are fully designed but not yet built:
 
 | System | Design Doc | Description |
 |--------|-----------|-------------|
-| **Dual economy** | `economy.md` | Trudodni, fondy, compulsory deliveries, remainder principle, blat |
-| **Worker AI** | `workers.md` | 5-level behavioral governor, autonomous self-organization, morale/loyalty/skill |
-| **Dvor (household)** | `demographics.md` | Family structures, gendered labor, birth/death, private plots |
-| **Full political apparatus** | `political.md` | Procedural politruks, KGB with informant networks, military conscription |
-| **Era-gated buildings** | `eras.md` | Unlock progression tied to era, doctrine, and leader decisions |
 | **Construction phases** | `economy.md` | Material gathering → foundation → construction → completion |
-| **Reporting & pripiski** | `political.md` | Annual report falsification with compounding risk |
-| **Leadership system** | `design/leadership-architecture.md` | Procedural leaders with 11 archetypes, 8 doctrines, succession mechanics |
-| **Politburo simulation** | `reference/politburo-system.md` | 10 ministries, 80-cell interaction matrix, coups, purges |
 | **Interactive minigames** | `minigames.md` | Timing, dialog, and management mini-sequences (currently text-choice only) |
 | **Heating system** | `economy.md` | Pechka → district heating → crumbling infrastructure |
 | **Storage & spoilage** | `economy.md` | Capacity limits, seasonal spoilage, winter preparation cycle |
+| **Per-building trudodni** | `demographics.md` | Individual building worker assignment with trudodni categories |
+| **Leader archetypes** | `design/leader-archetypes.md` | 11 procedural leader personality types with behavioral modifiers |
 
 ### Currently Implemented
 
@@ -296,17 +290,28 @@ These systems are fully designed in the `docs/design/` subdirectory but not yet 
 | Building placement | Working — 16 building types, 3 levels |
 | Resource tracking | Working — food, vodka, power, water, money, population |
 | Five-year plan quotas | Working — targets, annual reviews, pripiski |
-| Era progression | Working — 8 eras with transitions and timeline events |
+| Era progression | Working — 8 eras with transitions, doctrines, and timeline events |
 | Personnel file | Working — black marks, commendations, threat levels, decay |
 | Settlement tiers | Working — selo → posyolok → PGT → gorod with upgrade events |
 | Achievements | Working — 31 achievements with tracking |
 | Minigames | Working — 9 text-choice events with success probabilities |
-| Difficulty/consequence | Working — 3×3 matrix with score multipliers |
+| Difficulty/consequence | Working — 3x3 matrix with score multipliers, rehabilitation flow |
 | Scoring & game tally | Working — medals, statistics, final score |
 | Audio | Working — 52 Soviet-era tracks, mood playlists |
 | Tutorial (directives) | Working — 12 sequential objectives |
-| Save/load | Working — full serialization |
-| All UI panels | Working — 22 overlay components |
+| Save/load | Working — full serialization to IndexedDB |
+| All UI panels | Working — 22+ overlay components |
+| Demographics (dvor) | Working — households, births/deaths/aging, gender roles, private plots |
+| Worker AI | Working — 6 behavior classes, autonomous self-organization, morale/loyalty/skill |
+| Political apparatus | Working — politruks, KGB, military, politburo (10 ministries), coups/purges |
+| Dual economy | Working — trudodni (7 categories), compulsory deliveries, pripiski |
+| Era-gated buildings | Working — unlock progression tied to era and doctrine |
+| Reporting & pripiski | Working — annual report falsification with compounding risk |
+| Leadership system | Working — procedural leaders, 8 doctrines, succession mechanics |
+| Politburo simulation | Working — 10 ministries, interaction matrix, coups, purges |
+| Disease events | Working — seasonal epidemics via DiseaseSystem |
+| Workplace accidents | Working — production building accident risk |
+| WebXR | Working — AR tabletop, VR walkthrough via @react-three/xr v6 |
 
 ---
 

@@ -101,3 +101,43 @@ export function showToast(msg: string) { toastCallback?.(msg); }
 - Gender-differentiated retirement: 55F/60M
 - Male-first conscription via `removeWorkersByCountMaleFirst()`, age 18-51
 - Era birth rates modulated by `ERA_BIRTH_RATE_MULTIPLIER`
+
+## Consequence Mode System
+
+Three consequence modes determine what happens at 7+ black marks:
+
+| Mode | Effect | Score Multiplier |
+|------|--------|-----------------|
+| Forgiving | Return after 1 year, 90% buildings survive | x0.8 |
+| Permadeath | Game over. Restart era. | x1.5 |
+| Harsh | Return after 3 years, 40% buildings, 25% workers | x1.0 |
+
+Rehabilitation flow (non-permadeath modes):
+1. `SimulationEngine.handleRehabilitation()` triggers on arrest
+2. `ChronologySystem.advanceYears()` skips forward
+3. Workers/buildings removed proportionally
+4. `PersonnelFile.resetAfterRehabilitation()` clears marks
+5. `onRehabilitation` callback fires to show modal in App.web.tsx
+
+## Interactive Minigame Framework
+
+Minigames are triggered by game events via `MinigameRouter`:
+1. `SimulationEngine` detects trigger condition
+2. `MinigameRouter.route(trigger)` selects appropriate minigame definition
+3. `onMinigame(def)` callback fires to App.web.tsx
+4. Simulation auto-pauses while minigame is active
+5. Player makes choices; results apply via `MinigameRouter.resolve()`
+
+9 minigame definitions in `src/game/minigames/definitions/`:
+- Text-choice format with success probabilities and risk tiers
+- Each choice shows consequence preview
+
+## Dynamic Grid Size
+
+Grid size is configurable per-game via `GameGrid` constructor:
+```typescript
+// src/game/GameGrid.ts
+constructor(size: number = GRID_SIZE) // GRID_SIZE = 30 (default)
+```
+
+`GameInitOptions.gridSize` passes through to `GameGrid`, `TerrainGenerator`, and scene components. Affects terrain mesh size, building placement bounds, and pathfinding grid.

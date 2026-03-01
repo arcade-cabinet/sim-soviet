@@ -145,3 +145,104 @@ export async function getTimber(page: Page): Promise<number> {
   const text = await timberValue(page).innerText();
   return Number.parseInt(text.replace(/,/g, ''), 10);
 }
+
+// ── Resource Helpers ────────────────────────────────────────────────────────
+
+/** Vodka value from the TopBar. */
+export const vodkaValue = (page: Page) => page.getByTestId('vodka-value');
+
+/** Steel value from the TopBar. */
+export const steelValue = (page: Page) => page.getByTestId('steel-value');
+
+/** Power value from the TopBar. */
+export const powerValue = (page: Page) => page.getByTestId('power-value');
+
+/**
+ * Read a specific resource value from the TopBar by testID suffix.
+ * Supported: pop, food, timber, vodka, steel, cement, power.
+ */
+export async function getResourceValue(page: Page, resource: string): Promise<string> {
+  const el = page.getByTestId(`${resource}-value`);
+  return (await el.innerText()).trim();
+}
+
+// ── Navigation Helpers ──────────────────────────────────────────────────────
+
+/**
+ * Open the build toolbar by clicking the BUILD primary tab.
+ * Waits for the ZONING sub-tab to appear as confirmation.
+ */
+export async function openToolbar(page: Page): Promise<void> {
+  await page.getByText('BUILD').click();
+  await page.getByText('ZONING').waitFor({ state: 'visible', timeout: 5_000 });
+}
+
+/**
+ * Open the settings modal. Works from both MainMenu and in-game overflow.
+ */
+export async function openSettings(page: Page): Promise<void> {
+  // Try the MainMenu SETTINGS button first
+  const menuSettings = page.getByText('SETTINGS');
+  if (await menuSettings.first().isVisible().catch(() => false)) {
+    await menuSettings.first().click();
+  }
+  // Wait for the settings modal to appear
+  await page.getByText('CENTRAL CONFIGURATION BUREAU').waitFor({
+    state: 'visible',
+    timeout: 5_000,
+  });
+}
+
+/**
+ * Open the save/load panel via the TopBar overflow menu.
+ */
+export async function openSavePanel(page: Page): Promise<void> {
+  // Click the overflow menu button (hamburger ≡)
+  const overflowBtn = page.getByText('\u2261');
+  await overflowBtn.first().click();
+  await page.waitForTimeout(300);
+
+  // Click SAVE / LOAD in the overflow menu
+  await page.getByText('SAVE / LOAD').click();
+  await page.waitForTimeout(500);
+}
+
+/**
+ * Advance game time by waiting for multiple date changes.
+ * Sets speed to 3x and waits for the specified number of date transitions.
+ */
+export async function advanceGameTime(page: Page, ticks = 3): Promise<void> {
+  // Dismiss overlays
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+
+  // Speed up simulation to 3x
+  const speed3x = page.getByText('\u25B6\u25B6\u25B6');
+  if (await speed3x.first().isVisible().catch(() => false)) {
+    await speed3x.first().click();
+  }
+
+  for (let i = 0; i < ticks; i++) {
+    const currentDate = await getDateText(page);
+    await page.waitForFunction(
+      (prev) => {
+        const el = document.querySelector('[data-testid="date-label"]');
+        if (!el) return false;
+        const current = el.textContent?.trim() ?? '';
+        return current !== prev && current.length > 0;
+      },
+      currentDate,
+      { timeout: 30_000 },
+    );
+  }
+}
+
+/**
+ * Navigate to main menu from any screen.
+ */
+export async function goToMainMenu(page: Page): Promise<void> {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  // Wait for "NEW GAME" to be visible as confirmation we're on the menu
+  await page.getByText('NEW GAME').waitFor({ state: 'visible', timeout: 10_000 });
+}
