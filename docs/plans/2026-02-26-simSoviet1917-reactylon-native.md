@@ -1,8 +1,8 @@
 # SimSoviet1917 — Reactylon Native 3D Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **STATUS: SUPERSEDED** — This Reactylon/BabylonJS plan was replaced by React Three Fiber. See [2026-02-27-r3f-migration-plan.md](2026-02-27-r3f-migration-plan.md) for the final implementation plan.
 
-**Goal:** Replace the 2D Canvas SimSoviet game with a full 3D BabylonJS city-builder via Reactylon Native, fully translating the POC (poc.html) into a polished, playable native app called SimSoviet1917.
+**Goal:** ~~Replace the 2D Canvas SimSoviet game with a full 3D BabylonJS city-builder via Reactylon Native, fully translating the POC (poc.html) into a polished, playable native app called SimSoviet1917.~~
 
 **Architecture:** Reactylon Native (React Native 0.74 + BabylonJS 8 via `@babylonjs/react-native`) with `NativeEngine` for native GL, declarative JSX scene graph, and React Native overlay UI. Game engine is a direct TypeScript port of poc.html's simulation logic. 55 existing Soviet GLB models loaded via `ImportMeshAsync` and cloned per grid cell.
 

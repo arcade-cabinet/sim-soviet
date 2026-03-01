@@ -1,8 +1,10 @@
 # SimSoviet 3000: Reactylon Native 3D — Design Document
 
+> **STATUS: SUPERSEDED** — This Reactylon/BabylonJS approach was replaced by React Three Fiber. See [2026-02-27-r3f-migration-design.md](2026-02-27-r3f-migration-design.md) for the final architecture.
+
 **Date**: 2026-02-26
-**Status**: Approved
-**Goal**: Replace 2D Canvas game with full 3D BabylonJS city-builder via Reactylon Native
+**Status**: Rejected — superseded by R3F migration
+**Goal**: ~~Replace 2D Canvas game with full 3D BabylonJS city-builder via Reactylon Native~~
 
 ## Summary
 

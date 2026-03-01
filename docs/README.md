@@ -2,7 +2,7 @@
 
 > *"All documentation is accurate. Discrepancies are the reader's fault."*
 
-This directory contains the design specifications, reference documents, and development logs for **SimSoviet 1917** — a satirical 3D city-builder set in an alternate-history Soviet Union that never collapses. Built with Reactylon (BabylonJS 8 + React Native).
+This directory contains the design specifications, reference documents, and development logs for **SimSoviet 1917** — a satirical 3D city-builder set in an alternate-history Soviet Union that never collapses. Built with React Three Fiber (Three.js r183 + React Native + Expo).
 
 ---
 
