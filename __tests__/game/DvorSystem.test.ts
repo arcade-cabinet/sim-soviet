@@ -49,9 +49,19 @@ describe('Dvor System', () => {
       expect(laborCapacityForAge(54, 'female')).toBe(0.8);
     });
 
-    it('returns 0.5 for elder workers (55-65)', () => {
-      expect(laborCapacityForAge(55, 'male')).toBe(0.5);
+    it('returns 0.7 for males 55-59 (still working before retirement)', () => {
+      expect(laborCapacityForAge(55, 'male')).toBe(0.7);
+      expect(laborCapacityForAge(59, 'male')).toBe(0.7);
+    });
+
+    it('returns 0.5 for females 55-65 (retired)', () => {
+      expect(laborCapacityForAge(55, 'female')).toBe(0.5);
       expect(laborCapacityForAge(65, 'female')).toBe(0.5);
+    });
+
+    it('returns 0.5 for males 60-65 (retired)', () => {
+      expect(laborCapacityForAge(60, 'male')).toBe(0.5);
+      expect(laborCapacityForAge(65, 'male')).toBe(0.5);
     });
 
     it('returns 0.2 for elderly (66+)', () => {
@@ -64,28 +74,48 @@ describe('Dvor System', () => {
 
   describe('memberRoleForAge', () => {
     it('returns infant for age 0', () => {
-      expect(memberRoleForAge(0)).toBe('infant');
+      expect(memberRoleForAge(0, 'male')).toBe('infant');
+      expect(memberRoleForAge(0, 'female')).toBe('infant');
     });
 
     it('returns child for age 1-11', () => {
-      expect(memberRoleForAge(1)).toBe('child');
-      expect(memberRoleForAge(11)).toBe('child');
+      expect(memberRoleForAge(1, 'male')).toBe('child');
+      expect(memberRoleForAge(11, 'female')).toBe('child');
     });
 
     it('returns adolescent for age 12-15', () => {
-      expect(memberRoleForAge(12)).toBe('adolescent');
-      expect(memberRoleForAge(15)).toBe('adolescent');
+      expect(memberRoleForAge(12, 'male')).toBe('adolescent');
+      expect(memberRoleForAge(15, 'female')).toBe('adolescent');
     });
 
-    it('returns worker for age 16-59', () => {
-      expect(memberRoleForAge(16)).toBe('worker');
-      expect(memberRoleForAge(45)).toBe('worker');
-      expect(memberRoleForAge(59)).toBe('worker');
+    it('returns worker for males 16-59', () => {
+      expect(memberRoleForAge(16, 'male')).toBe('worker');
+      expect(memberRoleForAge(45, 'male')).toBe('worker');
+      expect(memberRoleForAge(59, 'male')).toBe('worker');
     });
 
-    it('returns elder for age 60+', () => {
-      expect(memberRoleForAge(60)).toBe('elder');
-      expect(memberRoleForAge(80)).toBe('elder');
+    it('returns worker for females 16-54', () => {
+      expect(memberRoleForAge(16, 'female')).toBe('worker');
+      expect(memberRoleForAge(45, 'female')).toBe('worker');
+      expect(memberRoleForAge(54, 'female')).toBe('worker');
+    });
+
+    it('returns elder for females at 55 (Soviet pension law)', () => {
+      expect(memberRoleForAge(55, 'female')).toBe('elder');
+      expect(memberRoleForAge(60, 'female')).toBe('elder');
+      expect(memberRoleForAge(80, 'female')).toBe('elder');
+    });
+
+    it('returns elder for males at 60 (Soviet pension law)', () => {
+      expect(memberRoleForAge(60, 'male')).toBe('elder');
+      expect(memberRoleForAge(80, 'male')).toBe('elder');
+    });
+
+    it('male 55-59 is still worker, female 55+ is elder', () => {
+      expect(memberRoleForAge(55, 'male')).toBe('worker');
+      expect(memberRoleForAge(55, 'female')).toBe('elder');
+      expect(memberRoleForAge(59, 'male')).toBe('worker');
+      expect(memberRoleForAge(59, 'female')).toBe('elder');
     });
   });
 

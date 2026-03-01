@@ -81,9 +81,9 @@ describe('demographics & resource balance', () => {
 
       // There are 3 citizens in the ECS
       expect(citizens.entities.length).toBe(3);
-      // The resource store still has its default population value (12)
+      // The resource store still has its default population value (0)
       // but snapshot.pop should reflect ECS citizen count (3), not resources.population
-      expect(getResourceEntity()!.resources!.population).toBe(12);
+      expect(getResourceEntity()!.resources!.population).toBe(0);
     });
   });
 

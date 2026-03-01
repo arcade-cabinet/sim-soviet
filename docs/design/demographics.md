@@ -1,9 +1,29 @@
 ---
 title: Demographics & Household System
-status: draft
-coverage: 0%
-last_updated: 2026-02-10
+status: implemented
+coverage: 90%
+last_updated: 2026-03-01
 depends_on: [workers.md, economy.md, eras.md, overview.md, political.md]
+implementation:
+  - src/ecs/systems/demographicSystem.ts
+  - src/ecs/factories/demographics.ts
+  - src/game/workers/WorkerSystem.ts
+  - src/game/PrivatePlotSystem.ts
+  - src/game/LoyaltySystem.ts
+  - src/game/TrudodniSystem.ts
+tests:
+  - __tests__/game/demographicSystem.test.ts
+  - __tests__/game/DvorSystem.test.ts
+  - __tests__/game/conscriptionMaleFirst.test.ts
+  - __tests__/game/EconomicSystems.test.ts
+  - __tests__/playthrough/08-save-load-continuity.test.ts
+notes: |
+  Implemented: dvory, births, deaths, aging, gender retirement (55F/60M),
+  era birth rates, pregnancy tracking, working mothers penalty, household
+  formation, male-only conscription (18-51), private plots, dvor loyalty,
+  trudodni categories, save/load persistence.
+  Remaining: disease events, workplace accidents, per-building trudodni
+  assignment, chairman election gender probability.
 ---
 
 # Demographics & Household System

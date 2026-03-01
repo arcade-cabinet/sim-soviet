@@ -1,6 +1,14 @@
+import { dvory } from '../../src/ecs/archetypes';
 import { placeNewBuilding } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import { advanceTicks, buildBasicSettlement, createPlaythroughEngine, getDate, isGameOver } from './helpers';
+import {
+  advanceTicks,
+  buildBasicSettlement,
+  createPlaythroughEngine,
+  getDate,
+  getResources,
+  isGameOver,
+} from './helpers';
 
 describe('Playthrough: Save/Load Continuity', () => {
   afterEach(() => {
@@ -185,5 +193,64 @@ describe('Playthrough: Save/Load Continuity', () => {
     // The game should have progressed past the deadline
     const finalDate = getDate();
     expect(finalDate.year).toBeGreaterThanOrEqual(1927);
+  });
+
+  // ── Scenario 5: Dvory + worker stats survive save/load ──────────────────
+
+  it('preserves dvory households and worker stats across save/load', () => {
+    const { engine } = createPlaythroughEngine({
+      resources: { food: 5000, money: 10000, population: 20, power: 100 },
+    });
+    buildBasicSettlement();
+
+    // Run 100 ticks so workers accumulate divergent stats
+    advanceTicks(engine, 100);
+
+    // Record dvory state before save
+    const dvorySaved = [...dvory];
+    const dvorCountBefore = dvorySaved.length;
+    expect(dvorCountBefore).toBeGreaterThan(0);
+
+    const populationBefore = getResources().population;
+    expect(populationBefore).toBeGreaterThan(0);
+
+    // Record individual dvor details
+    const dvorIdsBefore = dvorySaved.map((d) => d.dvor.id).sort();
+    const totalMembersBefore = dvorySaved.reduce((sum, d) => sum + d.dvor.members.length, 0);
+
+    // Serialize
+    const savedData = engine.serializeSubsystems();
+    expect(savedData.dvory).toBeDefined();
+    expect(savedData.dvory!.length).toBe(dvorCountBefore);
+    expect(savedData.workers).toBeDefined();
+    expect(savedData.workers!.length).toBeGreaterThan(0);
+
+    // Create a FRESH engine with different initial population (to prove restore overwrites it)
+    const { engine: restoredEngine } = createPlaythroughEngine({
+      resources: { food: 5000, money: 10000, population: 5, power: 100 },
+    });
+    buildBasicSettlement();
+
+    // Restore
+    restoredEngine.restoreSubsystems(savedData);
+
+    // Verify: dvor count matches
+    const dvoryRestored = [...dvory];
+    expect(dvoryRestored.length).toBe(dvorCountBefore);
+
+    // Verify: dvor IDs match
+    const dvorIdsAfter = dvoryRestored.map((d) => d.dvor.id).sort();
+    expect(dvorIdsAfter).toEqual(dvorIdsBefore);
+
+    // Verify: total members match
+    const totalMembersAfter = dvoryRestored.reduce((sum, d) => sum + d.dvor.members.length, 0);
+    expect(totalMembersAfter).toBe(totalMembersBefore);
+
+    // Verify: population resource count matches
+    expect(getResources().population).toBe(populationBefore);
+
+    // Verify: engine continues ticking without errors
+    expect(() => advanceTicks(restoredEngine, 100)).not.toThrow();
+    expect(isGameOver()).toBe(false);
   });
 });

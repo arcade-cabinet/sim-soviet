@@ -5,7 +5,9 @@
  * a SubsystemSaveData blob for save/load persistence.
  */
 
+import { citizens, dvory, getResourceEntity } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
+import { world } from '@/ecs/world';
 import type { AchievementTracker } from '../AchievementTracker';
 import { AchievementTracker as AchievementTrackerClass } from '../AchievementTracker';
 import type { ChronologySystem } from '../ChronologySystem';
@@ -36,11 +38,12 @@ import { ScoringSystem as ScoringSystemClass } from '../ScoringSystem';
 import type { GameRng } from '../SeedSystem';
 import type { SettlementSystem } from '../SettlementSystem';
 import { SettlementSystem as SettlementSystemClass } from '../SettlementSystem';
-import type { SubsystemSaveData } from '../SimulationEngine';
+import type { DvorSaveEntry, SubsystemSaveData, WorkerStatSaveEntry } from '../SimulationEngine';
 import type { TransportSystem } from '../TransportSystem';
 import { TransportSystem as TransportSystemClass } from '../TransportSystem';
 import type { TutorialSystem } from '../TutorialSystem';
 import { TutorialSystem as TutorialSystemClass } from '../TutorialSystem';
+import type { WorkerSystem } from '../workers/WorkerSystem';
 
 /** Maps game EraSystem IDs to EconomySystem EraIds (needed for fallback on restore). */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -73,6 +76,7 @@ export interface SerializableEngine {
   mandateState: PlanMandateState | null;
   transport: TransportSystem;
   fireSystem: FireSystem;
+  workerSystem: WorkerSystem;
   quota: QuotaState;
   consecutiveQuotaFailures: number;
   pripiskiCount: number;
@@ -129,6 +133,32 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
       ended: engine.ended,
       pripiskiCount: engine.pripiskiCount,
     },
+    // Dvor households — canonical population source
+    dvory: [...dvory].map(
+      (entity): DvorSaveEntry => ({
+        id: entity.dvor.id,
+        surname: entity.dvor.surname,
+        members: entity.dvor.members.map((m) => ({ ...m })),
+        headOfHousehold: entity.dvor.headOfHousehold,
+        privatePlotSize: entity.dvor.privatePlotSize,
+        privateLivestock: { ...entity.dvor.privateLivestock },
+        joinedTick: entity.dvor.joinedTick,
+        loyaltyToCollective: entity.dvor.loyaltyToCollective,
+        nextMemberId: entity.dvor.nextMemberId,
+      }),
+    ),
+    // Per-worker stats keyed by dvor linkage
+    workers: [...citizens]
+      .filter((c) => c.citizen.dvorId && c.citizen.dvorMemberId)
+      .map(
+        (c): WorkerStatSaveEntry => ({
+          dvorId: c.citizen.dvorId!,
+          dvorMemberId: c.citizen.dvorMemberId!,
+          citizenClass: c.citizen.class,
+          stats: { ...engine.workerSystem.getStatsMap().get(c)! },
+        }),
+      )
+      .filter((w) => w.stats != null),
   };
 }
 
@@ -237,6 +267,57 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
   if (!data.economy) {
     const economyEra = GAME_ERA_TO_ECONOMY_ERA[engine.eraSystem.getCurrentEraId()] ?? 'revolution';
     engine.economySystem.setEra(economyEra);
+  }
+
+  // ── Restore dvory + citizens ──
+  if (data.dvory && data.dvory.length > 0) {
+    // 1. Clear all existing citizen entities and worker stats
+    engine.workerSystem.clearAllWorkers();
+
+    // 2. Clear all existing dvor entities
+    for (const d of [...dvory]) {
+      world.remove(d);
+    }
+
+    // 3. Re-create dvor entities from saved data
+    for (const saved of data.dvory) {
+      world.add({
+        isDvor: true as const,
+        dvor: {
+          id: saved.id,
+          surname: saved.surname,
+          members: saved.members.map((m) => ({ ...m })),
+          headOfHousehold: saved.headOfHousehold,
+          privatePlotSize: saved.privatePlotSize,
+          privateLivestock: { ...saved.privateLivestock },
+          joinedTick: saved.joinedTick,
+          loyaltyToCollective: saved.loyaltyToCollective,
+          nextMemberId: saved.nextMemberId,
+        },
+      });
+    }
+
+    // 4. Re-create citizen entities from restored dvory
+    engine.workerSystem.syncPopulationFromDvory();
+
+    // 5. Restore per-worker stats from save (overwrite defaults)
+    if (data.workers) {
+      const allCitizens = [...citizens];
+      for (const saved of data.workers) {
+        const match = allCitizens.find(
+          (c) => c.citizen.dvorId === saved.dvorId && c.citizen.dvorMemberId === saved.dvorMemberId,
+        );
+        if (match) {
+          engine.workerSystem.restoreWorkerStats(match, saved.stats);
+        }
+      }
+    }
+
+    // 6. Sync resource store population count to match actual citizens
+    const store = getResourceEntity();
+    if (store) {
+      store.resources.population = engine.workerSystem.getPopulation();
+    }
   }
 
   // Sync restored state to ECS gameMeta

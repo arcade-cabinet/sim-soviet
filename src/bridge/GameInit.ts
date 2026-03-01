@@ -53,6 +53,7 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
     timber: Math.round(200 * resMult),
     steel: 0,
     cement: 0,
+    population: 0,
   });
   createMetaStore({
     seed,

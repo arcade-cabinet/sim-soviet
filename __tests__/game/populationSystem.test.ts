@@ -4,6 +4,7 @@ import { populationSystem } from '../../src/ecs/systems/populationSystem';
 import { powerSystem } from '../../src/ecs/systems/powerSystem';
 import { world } from '../../src/ecs/world';
 import type { GameRng } from '../../src/game/SeedSystem';
+import { createTestDvory } from '../playthrough/helpers';
 
 /**
  * Creates a deterministic mock RNG for testing.
@@ -19,7 +20,8 @@ function createMockRng(intReturn: number): GameRng {
 describe('populationSystem', () => {
   beforeEach(() => {
     world.clear();
-    createResourceStore({ food: 1000, population: 10 });
+    createResourceStore({ food: 1000, population: 0 });
+    createTestDvory(10);
   });
 
   afterEach(() => {

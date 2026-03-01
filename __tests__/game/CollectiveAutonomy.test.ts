@@ -7,6 +7,7 @@ import { createPlanMandateState } from '@/game/PlanMandates';
 import { GameRng } from '@/game/SeedSystem';
 import { autoPlaceBuilding } from '@/game/workers/autoBuilder';
 import { detectConstructionDemands } from '@/game/workers/demandSystem';
+import { createTestDvory } from '../playthrough/helpers';
 
 describe('Collective Autonomy Integration', () => {
   let planner: CollectivePlanner;
@@ -15,7 +16,8 @@ describe('Collective Autonomy Integration', () => {
   beforeEach(() => {
     world.clear();
     createGrid(GRID_SIZE);
-    createResourceStore({ food: 50, population: 30, timber: 500, steel: 100, cement: 50 });
+    createResourceStore({ food: 50, population: 0, timber: 500, steel: 100, cement: 50 });
+    createTestDvory(30);
     createMetaStore();
     // Use power-station as seed building (powerReq: 0) so it doesn't
     // trigger spurious power demands in the "no demands" test case.

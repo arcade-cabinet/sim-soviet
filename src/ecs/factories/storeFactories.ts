@@ -96,7 +96,7 @@ export function createResourceStore(
       vodka: initialValues?.vodka ?? 50,
       power: initialValues?.power ?? 0,
       powerUsed: initialValues?.powerUsed ?? 0,
-      population: initialValues?.population ?? 12,
+      population: initialValues?.population ?? 0,
       trudodni: initialValues?.trudodni ?? 0,
       blat: initialValues?.blat ?? 10,
       timber: initialValues?.timber ?? 30,

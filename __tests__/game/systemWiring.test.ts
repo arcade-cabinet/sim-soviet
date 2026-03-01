@@ -1,5 +1,6 @@
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
+import { createTestDvory } from '../playthrough/helpers';
 import {
   applyCurrencyReform,
   CURRENCY_REFORMS,
@@ -812,7 +813,8 @@ describe('GAP-022: Save/Load serialization', () => {
   });
 
   it('SubsystemSaveData includes politicalEntities field', () => {
-    createResourceStore({ food: 100, vodka: 50, population: 50 });
+    createResourceStore({ food: 100, vodka: 50, population: 0 });
+    createTestDvory(50);
     createMetaStore({ date: { year: 1930, month: 1, tick: 0 } });
 
     const engine = new SimulationEngine({
@@ -829,7 +831,8 @@ describe('GAP-022: Save/Load serialization', () => {
   });
 
   it('serializeSubsystems includes all critical subsystems', () => {
-    createResourceStore({ food: 100, vodka: 50, population: 50 });
+    createResourceStore({ food: 100, vodka: 50, population: 0 });
+    createTestDvory(50);
     createMetaStore({ date: { year: 1930, month: 1, tick: 0 } });
 
     const engine = new SimulationEngine({

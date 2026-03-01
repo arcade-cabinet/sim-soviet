@@ -254,14 +254,15 @@ export function createDvor(id: string, surname: string, memberSeeds: DvorMemberS
     name: seed.name,
     gender: seed.gender,
     age: seed.age,
-    role: memberRoleForAge(seed.age),
+    role: memberRoleForAge(seed.age, seed.gender),
     laborCapacity: laborCapacityForAge(seed.age, seed.gender),
     trudodniEarned: 0,
     health: 100,
   }));
 
   // Designate head: first working-age male, or first working-age member
-  const workingAge = members.filter((m) => m.age >= 16 && m.age < 60);
+  const retireAge = (g: 'male' | 'female') => (g === 'male' ? 60 : 55);
+  const workingAge = members.filter((m) => m.age >= 16 && m.age < retireAge(m.gender));
   const headCandidate = workingAge.find((m) => m.gender === 'male') ?? workingAge[0] ?? members[0]!;
   headCandidate.role = 'head';
 
