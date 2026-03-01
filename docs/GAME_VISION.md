@@ -11,7 +11,7 @@ You are the **predsedatel** — the chairman of a Soviet collective. You take or
 **Genre**: Worker-management survival sim with 3D city-building
 **Setting**: Alternate history — the Soviet Union never collapses, from 1917 through eternity
 **Tone**: Dark satirical comedy. *Krokodil* magazine meets Papers, Please meets Banished
-**Engine**: BabylonJS 8 via Reactylon (React Native + 3D), mobile-first
+**Engine**: React Three Fiber (Three.js r183 + React Native + Expo), cross-platform + WebXR
 
 **What This Is NOT**:
 - Not a power fantasy — you have no upward mobility
@@ -284,7 +284,7 @@ These systems are fully designed in the `docs/design/` subdirectory but not yet 
 
 | System | Status |
 |--------|--------|
-| 3D rendering (BabylonJS 8) | Working — 55 GLB models, terrain, weather FX, lighting |
+| 3D rendering (R3F + Three.js) | Working — 55 GLB models, terrain, weather FX, lighting |
 | Building placement | Working — 16 building types, 3 levels |
 | Resource tracking | Working — food, vodka, power, water, money, population |
 | Five-year plan quotas | Working — targets, annual reviews, pripiski |

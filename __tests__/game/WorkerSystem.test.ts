@@ -647,6 +647,53 @@ describe('WorkerSystem', () => {
     it.skip('handles empty worker list', () => {});
   });
 
+  // ── Political cost for override ────────────────────────
+
+  describe('Political cost for override', () => {
+    it('assignWorker with source=player increments override count', () => {
+      system.syncPopulation(5);
+      createBuilding(0, 0, 'power-station');
+      const worker = [...citizens][0]!;
+
+      system.assignWorker(worker, 0, 0, 'player');
+      expect(system.getOverrideCount()).toBe(1);
+    });
+
+    it('assignWorker with source=auto does not increment override count', () => {
+      system.syncPopulation(5);
+      createBuilding(0, 0, 'power-station');
+      const worker = [...citizens][0]!;
+
+      system.assignWorker(worker, 0, 0, 'auto');
+      expect(system.getOverrideCount()).toBe(0);
+    });
+
+    it('5+ overrides per era triggers chairman meddling flag', () => {
+      system.syncPopulation(10);
+      createBuilding(0, 0, 'power-station');
+
+      for (let i = 0; i < 5; i++) {
+        const worker = [...citizens][i]!;
+        system.assignWorker(worker, 0, 0, 'player');
+      }
+
+      expect(system.isChairmanMeddling()).toBe(true);
+    });
+
+    it('resetOverrideCount resets the counter to zero', () => {
+      system.syncPopulation(5);
+      createBuilding(0, 0, 'power-station');
+      const worker = [...citizens][0]!;
+
+      system.assignWorker(worker, 0, 0, 'player');
+      expect(system.getOverrideCount()).toBe(1);
+
+      system.resetOverrideCount();
+      expect(system.getOverrideCount()).toBe(0);
+      expect(system.isChairmanMeddling()).toBe(false);
+    });
+  });
+
   // ── Party official morale boost ─────────────────────────
 
   describe('party official morale boost', () => {

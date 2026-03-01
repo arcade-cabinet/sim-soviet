@@ -31,6 +31,7 @@ import {
   getMetaEntity,
   getResourceEntity,
   operationalBuildings,
+  underConstruction,
 } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import {
@@ -52,6 +53,7 @@ import { AchievementTracker } from './AchievementTracker';
 import { TICKS_PER_YEAR } from './Chronology';
 import type { ChronologyState, TickResult } from './ChronologySystem';
 import { ChronologySystem } from './ChronologySystem';
+import { CollectivePlanner } from './CollectivePlanner';
 import type { CompulsoryDeliverySaveData } from './CompulsoryDeliveries';
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
 import { DISEASE_PRAVDA_HEADLINES, diseaseTick, initDiseaseSystem } from './DiseaseSystem';
@@ -103,6 +105,8 @@ import { type TransportSaveData, TransportSystem } from './TransportSystem';
 import type { TutorialMilestone, TutorialSaveData } from './TutorialSystem';
 import { TutorialSystem } from './TutorialSystem';
 import { getWeatherProfile, type WeatherType } from './WeatherSystem';
+import { autoPlaceBuilding } from './workers/autoBuilder';
+import { detectConstructionDemands } from './workers/demandSystem';
 import { WorkerSystem } from './workers/WorkerSystem';
 
 /**
@@ -193,6 +197,8 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
 /** Event IDs that should ignite a building when triggered. */
 const FIRE_EVENT_IDS = new Set(['cultural_palace_fire', 'power_station_explosion']);
 
+const COLLECTIVE_CHECK_INTERVAL = 30;
+
 export class SimulationEngine {
   private chronology: ChronologySystem;
   private eraSystem: EraSystem;
@@ -210,6 +216,7 @@ export class SimulationEngine {
   private tutorial: TutorialSystem;
   private achievements: AchievementTracker;
   private mandateState: PlanMandateState | null = null;
+  private collectivePlanner = new CollectivePlanner();
   private transport: TransportSystem;
   private fireSystem: FireSystem;
   private difficulty: DifficultyLevel;
@@ -743,6 +750,25 @@ export class SimulationEngine {
       this.workerSystem.resetAnnualTrudodni();
     }
 
+    // Collective Autonomy — demand detection + auto-build
+    this.tickCollective(this.chronology.getDate().totalTicks);
+
+    // Chairman meddling — political cost for excessive player overrides
+    if (this.workerSystem.isChairmanMeddling() && this.chronology.getDate().totalTicks % 60 === 0) {
+      this.callbacks.onAdvisor(
+        'Comrade, the workers notice your constant meddling. They whisper that the chairman does not trust the collective.',
+      );
+      // 5% chance per check of a black mark when meddling
+      if ((this.rng?.random() ?? Math.random()) < 0.05) {
+        this.personnelFile.addMark(
+          'excessive_intervention',
+          this.chronology.getDate().totalTicks,
+          'Chairman interfered excessively with collective operations',
+        );
+        this.callbacks.onToast('BLACK MARK: Excessive interference with collective operations', 'warning');
+      }
+    }
+
     decaySystem(politburoMods.infrastructureDecayMult * eraMods.decayMult * diffConfig.decayMultiplier);
     quotaSystem(this.quota);
 
@@ -1167,6 +1193,82 @@ export class SimulationEngine {
   }
 
   /**
+   * Tick the collective autonomy system.
+   * Detects demands, merges with mandates, and auto-places buildings.
+   *
+   * GDD: "Watch the settlement breathe — workers auto-assign to jobs,
+   *        paths form between buildings, production ticks"
+   */
+  private tickCollective(totalTicks: number): void {
+    if (totalTicks % COLLECTIVE_CHECK_INTERVAL !== 0) return;
+
+    // Don't auto-build during first 60 ticks (let player orient)
+    if (totalTicks < 60) return;
+
+    // Don't auto-build if there are already 3+ buildings under construction
+    if (underConstruction.entities.length >= 3) return;
+
+    const storeRef = getResourceEntity();
+    if (!storeRef) return;
+
+    const housingCap = this.getHousingCapacity();
+    const demands = detectConstructionDemands(storeRef.resources.population, housingCap, {
+      food: storeRef.resources.food,
+      vodka: storeRef.resources.vodka,
+      power: storeRef.resources.power,
+    });
+
+    const queue = this.collectivePlanner.generateQueue(this.mandateState, demands);
+    if (queue.length === 0) return;
+
+    // Auto-place the highest priority building
+    const request = queue[0]!;
+
+    // Check material availability before placing
+    const res = storeRef.resources;
+    if (res.timber < 10 || res.steel < 5) {
+      // Can't build — notify player (but don't spam)
+      if (totalTicks % 120 === 0) {
+        this.callbacks.onAdvisor(
+          `Comrade, the collective wishes to build ${request.label}, but we lack materials. We need timber and steel.`,
+        );
+      }
+      return;
+    }
+
+    const rng =
+      this.rng ??
+      ({
+        random: () => Math.random(),
+        int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
+        pick: <T>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!,
+        pickIndex: (len: number) => Math.floor(Math.random() * len),
+      } as GameRng);
+
+    const entity = autoPlaceBuilding(request.defId, rng);
+    if (entity) {
+      // Track mandate fulfillment
+      this.recordBuildingForMandates(request.defId);
+
+      // Notify the player with source-appropriate message
+      if (request.source === 'mandate') {
+        this.callbacks.onToast(`DECREE FULFILLED: Construction of ${request.label} has begun`);
+      } else {
+        this.callbacks.onToast(`WORKERS' INITIATIVE: The collective begins ${request.label}`);
+        this.callbacks.onAdvisor(`The workers have started building on their own, Comrade. ${request.reason}.`);
+      }
+    }
+  }
+
+  private getHousingCapacity(): number {
+    let cap = 0;
+    for (const entity of operationalBuildings.entities) {
+      cap += Math.max(0, entity.building.housingCap);
+    }
+    return cap;
+  }
+
+  /**
    * Gulag effect — powered gulags have a 10% chance per tick
    * of "disappearing" a citizen.
    */
@@ -1459,6 +1561,7 @@ export class SimulationEngine {
 
       // Reset personnel file marks to 2 (design: fresh-ish start per era)
       this.personnelFile.resetForNewEra();
+      this.workerSystem.resetOverrideCount();
 
       // Fire callback for UI (era assignment briefing modal)
       this.callbacks.onEraChanged?.(newEra);
