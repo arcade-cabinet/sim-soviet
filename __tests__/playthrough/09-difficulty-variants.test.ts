@@ -1,15 +1,7 @@
 import { world } from '../../src/ecs/world';
 import { PersonnelFile } from '../../src/game/PersonnelFile';
 import { DIFFICULTY_PRESETS } from '../../src/game/ScoringSystem';
-import {
-  createPlaythroughEngine,
-  advanceTicks,
-  advanceYears,
-  getResources,
-  isGameOver,
-  buildBasicSettlement,
-  TICKS_PER_YEAR,
-} from './helpers';
+import { advanceYears, buildBasicSettlement, createPlaythroughEngine, getResources, isGameOver } from './helpers';
 
 describe('Playthrough: Difficulty Variants', () => {
   afterEach(() => {
@@ -106,7 +98,7 @@ describe('Playthrough: Difficulty Variants', () => {
     });
     buildBasicSettlement({ housing: 2, farms: 2, power: 1 });
     advanceYears(workerEngine, 1);
-    const workerFood = getResources().food;
+    const _workerFood = getResources().food;
     const workerPop = getResources().population;
     const workerGameOver = isGameOver();
 
@@ -117,8 +109,8 @@ describe('Playthrough: Difficulty Variants', () => {
     });
     buildBasicSettlement({ housing: 2, farms: 2, power: 1 });
     advanceYears(comradeEngine, 1);
-    const comradeFood = getResources().food;
-    const comradePop = getResources().population;
+    const _comradeFood = getResources().food;
+    const _comradePop = getResources().population;
 
     // Run tovarish difficulty for 1 year (same setup)
     const { engine: tovarishEngine } = createPlaythroughEngine({
@@ -127,7 +119,7 @@ describe('Playthrough: Difficulty Variants', () => {
     });
     buildBasicSettlement({ housing: 2, farms: 2, power: 1 });
     advanceYears(tovarishEngine, 1);
-    const tovarishFood = getResources().food;
+    const _tovarishFood = getResources().food;
     const tovarishPop = getResources().population;
 
     // Worker should have at least as much food or population as tovarish

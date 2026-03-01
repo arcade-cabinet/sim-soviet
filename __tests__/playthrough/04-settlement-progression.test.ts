@@ -1,12 +1,7 @@
-import { world } from '../../src/ecs/world';
+import { getMetaEntity } from '../../src/ecs/archetypes';
 import { createBuilding } from '../../src/ecs/factories';
-import { getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
-import {
-  createPlaythroughEngine,
-  advanceTicks,
-  getResources,
-  TICKS_PER_MONTH,
-} from './helpers';
+import { world } from '../../src/ecs/world';
+import { advanceTicks, createPlaythroughEngine } from './helpers';
 
 describe('Playthrough: Settlement Progression', () => {
   afterEach(() => {
@@ -90,10 +85,7 @@ describe('Playthrough: Settlement Progression', () => {
 
     // Downgrades fire onAdvisor + onToast (NOT onSettlementChange)
     expect(callbacks.onAdvisor).toHaveBeenCalled();
-    expect(callbacks.onToast).toHaveBeenCalledWith(
-      expect.stringContaining('DOWNGRADED'),
-      'critical',
-    );
+    expect(callbacks.onToast).toHaveBeenCalledWith(expect.stringContaining('DOWNGRADED'), 'critical');
   });
 
   // ── Scenario 4: Settlement tier persists in gameMeta ───────────────────────

@@ -1,13 +1,13 @@
-import { world } from '../../src/ecs/world';
-import { createBuilding } from '../../src/ecs/factories';
 import { getResourceEntity } from '../../src/ecs/archetypes';
+import { createBuilding } from '../../src/ecs/factories';
+import { world } from '../../src/ecs/world';
 import {
-  createPlaythroughEngine,
   advanceTicks,
   advanceYears,
+  buildBasicSettlement,
+  createPlaythroughEngine,
   getResources,
   isGameOver,
-  buildBasicSettlement,
   TICKS_PER_YEAR,
 } from './helpers';
 

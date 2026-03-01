@@ -1,12 +1,6 @@
-import { world } from '../../src/ecs/world';
 import { createBuilding } from '../../src/ecs/factories';
-import { getResourceEntity } from '../../src/ecs/archetypes';
-import {
-  createPlaythroughEngine,
-  advanceTicks,
-  getResources,
-  buildBasicSettlement,
-} from './helpers';
+import { world } from '../../src/ecs/world';
+import { advanceTicks, buildBasicSettlement, createPlaythroughEngine, getResources } from './helpers';
 
 describe('Playthrough: Achievement Unlocks', () => {
   afterEach(() => {
@@ -135,7 +129,7 @@ describe('Playthrough: Achievement Unlocks', () => {
   // ── Scenario 4: Achievement persists through serialize/restore ────────────
 
   it('achievement persists through serialize and restore', () => {
-    const { engine, callbacks } = createPlaythroughEngine();
+    const { engine } = createPlaythroughEngine();
 
     // Trigger first_building achievement
     createBuilding(0, 0, 'power-station');

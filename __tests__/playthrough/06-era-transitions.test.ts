@@ -7,11 +7,7 @@
  */
 
 import { world } from '../../src/ecs/world';
-import {
-  createPlaythroughEngine,
-  advanceTicks,
-  TICKS_PER_YEAR,
-} from './helpers';
+import { advanceTicks, createPlaythroughEngine, TICKS_PER_YEAR } from './helpers';
 
 describe('Playthrough: Era Transitions', () => {
   afterEach(() => {

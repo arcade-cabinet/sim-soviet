@@ -1,11 +1,6 @@
-import { world } from '../../src/ecs/world';
 import { getResourceEntity } from '../../src/ecs/archetypes';
-import {
-  createPlaythroughEngine,
-  advanceTicks,
-  advanceYears,
-  isGameOver,
-} from './helpers';
+import { world } from '../../src/ecs/world';
+import { advanceTicks, advanceYears, createPlaythroughEngine, isGameOver } from './helpers';
 
 /**
  * Disables callbacks that interfere with pure quota testing:
@@ -41,9 +36,7 @@ describe('Playthrough: Quota Cycle Economy', () => {
     advanceTicks(engine, 90);
 
     // Advisor should announce quota met
-    expect(callbacks.onAdvisor).toHaveBeenCalledWith(
-      expect.stringContaining('Quota met'),
-    );
+    expect(callbacks.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('Quota met'));
 
     // Quota type should switch to vodka
     expect(engine.getQuota().type).toBe('vodka');
@@ -63,9 +56,7 @@ describe('Playthrough: Quota Cycle Economy', () => {
 
     // Failure 1: tick to 1927
     advanceTicks(engine, 90);
-    expect(callbacks.onAdvisor).toHaveBeenCalledWith(
-      expect.stringContaining('failed'),
-    );
+    expect(callbacks.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed'));
     expect(isGameOver()).toBe(false);
 
     // Failure 2: advance 5 years to 1932
@@ -74,10 +65,7 @@ describe('Playthrough: Quota Cycle Economy', () => {
 
     // Failure 3: advance 5 years to 1937
     advanceYears(engine, 5);
-    expect(callbacks.onGameOver).toHaveBeenCalledWith(
-      false,
-      expect.stringContaining('Politburo'),
-    );
+    expect(callbacks.onGameOver).toHaveBeenCalledWith(false, expect.stringContaining('Politburo'));
     expect(isGameOver()).toBe(true);
   });
 
@@ -93,9 +81,7 @@ describe('Playthrough: Quota Cycle Economy', () => {
 
     // Meet first quota → cross into 1927
     advanceTicks(engine, 90);
-    expect(callbacks.onAdvisor).toHaveBeenCalledWith(
-      expect.stringContaining('Quota met'),
-    );
+    expect(callbacks.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('Quota met'));
 
     // Set vodka to 460 (8% miss) so quotas fail without heavy marks.
     const store = getResourceEntity()!;
@@ -112,10 +98,7 @@ describe('Playthrough: Quota Cycle Economy', () => {
 
     // Failure 3: advance to 1942
     advanceYears(engine, 5);
-    expect(callbacks.onGameOver).toHaveBeenCalledWith(
-      false,
-      expect.stringContaining('Politburo'),
-    );
+    expect(callbacks.onGameOver).toHaveBeenCalledWith(false, expect.stringContaining('Politburo'));
     expect(isGameOver()).toBe(true);
   });
 

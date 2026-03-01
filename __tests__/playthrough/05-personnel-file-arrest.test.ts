@@ -1,10 +1,5 @@
 import { world } from '../../src/ecs/world';
-import {
-  createPlaythroughEngine,
-  advanceTicks,
-  isGameOver,
-  TICKS_PER_YEAR,
-} from './helpers';
+import { advanceTicks, createPlaythroughEngine, isGameOver } from './helpers';
 
 describe('Playthrough: Personnel File & Arrest', () => {
   afterEach(() => {
@@ -57,19 +52,16 @@ describe('Playthrough: Personnel File & Arrest', () => {
 
     // Accumulate 7 effective marks (3+2+1+1 = 7)
     pf.addMark('quota_missed_catastrophic', 0); // +3
-    pf.addMark('black_market', 0);              // +2
-    pf.addMark('worker_arrested', 0);           // +1
-    pf.addMark('worker_arrested', 0);           // +1
+    pf.addMark('black_market', 0); // +2
+    pf.addMark('worker_arrested', 0); // +1
+    pf.addMark('worker_arrested', 0); // +1
     expect(pf.getEffectiveMarks()).toBe(7);
     expect(pf.isArrested()).toBe(true);
 
     // One engine tick triggers the arrest check → endGame
     engine.tick();
 
-    expect(callbacks.onGameOver).toHaveBeenCalledWith(
-      false,
-      expect.stringContaining('Enemy'),
-    );
+    expect(callbacks.onGameOver).toHaveBeenCalledWith(false, expect.stringContaining('Enemy'));
     expect(isGameOver()).toBe(true);
   });
 
@@ -160,8 +152,8 @@ describe('Playthrough: Personnel File & Arrest', () => {
 
     // Accumulate marks and commendations
     pf.addMark('quota_missed_catastrophic', 0); // +3
-    pf.addMark('black_market', 0);              // +2
-    pf.addCommendation('quota_exceeded', 0);    // +1 commendation
+    pf.addMark('black_market', 0); // +2
+    pf.addCommendation('quota_exceeded', 0); // +1 commendation
     expect(pf.getBlackMarks()).toBe(5);
     expect(pf.getCommendations()).toBe(1);
     expect(pf.getEffectiveMarks()).toBe(4);
@@ -237,10 +229,10 @@ describe('Playthrough: Personnel File & Arrest', () => {
     const pf = engine.getPersonnelFile();
 
     // Add more commendations than marks
-    pf.addMark('worker_arrested', 0);           // +1 mark
-    pf.addCommendation('quota_exceeded', 0);     // +1 commendation
-    pf.addCommendation('quota_exceeded', 0);     // +1 commendation
-    pf.addCommendation('quota_exceeded', 0);     // +1 commendation
+    pf.addMark('worker_arrested', 0); // +1 mark
+    pf.addCommendation('quota_exceeded', 0); // +1 commendation
+    pf.addCommendation('quota_exceeded', 0); // +1 commendation
+    pf.addCommendation('quota_exceeded', 0); // +1 commendation
 
     // Raw: 1 mark, 3 commendations → effective = max(0, 1-3) = 0
     expect(pf.getBlackMarks()).toBe(1);

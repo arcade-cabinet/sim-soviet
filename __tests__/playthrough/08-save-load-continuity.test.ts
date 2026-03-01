@@ -1,14 +1,6 @@
-import { world } from '../../src/ecs/world';
 import { placeNewBuilding } from '../../src/ecs/factories';
-import {
-  createPlaythroughEngine,
-  advanceTicks,
-  getResources,
-  getDate,
-  isGameOver,
-  buildBasicSettlement,
-  buildFullEconomy,
-} from './helpers';
+import { world } from '../../src/ecs/world';
+import { advanceTicks, buildBasicSettlement, createPlaythroughEngine, getDate, isGameOver } from './helpers';
 
 describe('Playthrough: Save/Load Continuity', () => {
   afterEach(() => {
@@ -119,8 +111,7 @@ describe('Playthrough: Save/Load Continuity', () => {
 
   it('subsystem state survives serialize/restore with active construction', () => {
     const { engine } = createPlaythroughEngine({
-      resources: { food: 5000, money: 10000, population: 50, power: 100,
-        timber: 500, steel: 500, cement: 500 },
+      resources: { food: 5000, money: 10000, population: 50, power: 100, timber: 500, steel: 500, cement: 500 },
     });
 
     // Place buildings that start in foundation phase
@@ -145,8 +136,7 @@ describe('Playthrough: Save/Load Continuity', () => {
 
     // Create fresh engine and restore
     const { engine: restoredEngine } = createPlaythroughEngine({
-      resources: { food: 5000, money: 10000, population: 50, power: 100,
-        timber: 500, steel: 500, cement: 500 },
+      resources: { food: 5000, money: 10000, population: 50, power: 100, timber: 500, steel: 500, cement: 500 },
     });
     restoredEngine.restoreSubsystems(savedData);
 

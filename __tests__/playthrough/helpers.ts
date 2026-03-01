@@ -7,16 +7,11 @@
  */
 
 import { getMetaEntity, getResourceEntity, operationalBuildings } from '../../src/ecs/archetypes';
-import {
-  createBuilding,
-  createMetaStore,
-  createResourceStore,
-  placeNewBuilding,
-} from '../../src/ecs/factories';
+import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import type { Entity, GameMeta, Resources } from '../../src/ecs/world';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
-import type { DifficultyLevel, ConsequenceLevel } from '../../src/game/ScoringSystem';
+import type { ConsequenceLevel, DifficultyLevel } from '../../src/game/ScoringSystem';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
 
@@ -87,13 +82,7 @@ export function createPlaythroughEngine(options: PlaythroughOptions = {}): Playt
   createResourceStore(options.resources);
   createMetaStore(options.meta);
 
-  const engine = new SimulationEngine(
-    grid,
-    callbacks,
-    undefined,
-    options.difficulty,
-    options.consequence,
-  );
+  const engine = new SimulationEngine(grid, callbacks, undefined, options.difficulty, options.consequence);
 
   if (options.deterministicRandom !== false) {
     jest.spyOn(Math, 'random').mockReturnValue(0.99);
@@ -207,9 +196,11 @@ interface BasicSettlementOptions {
  *
  * Returns arrays of placed building entities.
  */
-export function buildBasicSettlement(
-  options: BasicSettlementOptions = {},
-): { housing: Entity[]; farms: Entity[]; power: Entity[] } {
+export function buildBasicSettlement(options: BasicSettlementOptions = {}): {
+  housing: Entity[];
+  farms: Entity[];
+  power: Entity[];
+} {
   const { housing = 1, farms = 1, power = 1 } = options;
   const result = { housing: [] as Entity[], farms: [] as Entity[], power: [] as Entity[] };
   let nextX = 0;

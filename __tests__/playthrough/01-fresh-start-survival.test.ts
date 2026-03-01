@@ -1,18 +1,15 @@
-import { world } from '../../src/ecs/world';
 import { createBuilding, placeNewBuilding } from '../../src/ecs/factories';
+import { world } from '../../src/ecs/world';
 import {
-  createPlaythroughEngine,
   advanceTicks,
-  advanceMonths,
-  getResources,
-  getDate,
-  isGameOver,
-  getGameOverReason,
-  getBuildingCount,
   assertResourceInvariants,
   buildBasicSettlement,
+  createPlaythroughEngine,
+  getBuildingCount,
+  getGameOverReason,
+  getResources,
+  isGameOver,
   TICKS_PER_YEAR,
-  TICKS_PER_MONTH,
 } from './helpers';
 
 describe('Playthrough: First Year Survival', () => {

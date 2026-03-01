@@ -6,16 +6,10 @@
  * chairman meddling feedback.
  */
 
-import { world } from '../../src/ecs/world';
-import { createBuilding, placeNewBuilding } from '../../src/ecs/factories';
 import { underConstruction } from '../../src/ecs/archetypes';
-import {
-  createPlaythroughEngine,
-  advanceTicks,
-  getResources,
-  getBuildingCount,
-  TICKS_PER_MONTH,
-} from './helpers';
+import { createBuilding, placeNewBuilding } from '../../src/ecs/factories';
+import { world } from '../../src/ecs/world';
+import { advanceTicks, createPlaythroughEngine, getBuildingCount } from './helpers';
 
 describe('Playthrough: Autonomous Collective', () => {
   afterEach(() => {
@@ -129,7 +123,7 @@ describe('Playthrough: Autonomous Collective', () => {
 
     expect(underConstruction.entities.length).toBe(3);
 
-    const initialCount = getBuildingCount();
+    const _initialCount = getBuildingCount();
 
     // Advance past collective check interval
     advanceTicks(engine, 90);
