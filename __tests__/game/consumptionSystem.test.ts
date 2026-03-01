@@ -2,11 +2,13 @@ import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createResourceStore } from '../../src/ecs/factories';
 import { consumptionSystem, setStarvationCallback } from '../../src/ecs/systems/consumptionSystem';
 import { world } from '../../src/ecs/world';
+import { createTestDvory } from '../playthrough/helpers';
 
 describe('consumptionSystem', () => {
   beforeEach(() => {
     world.clear();
-    createResourceStore({ food: 1000, vodka: 500, population: 100 });
+    createResourceStore({ food: 1000, vodka: 500, population: 0 });
+    createTestDvory(100);
     setStarvationCallback(undefined); // Clear any previous callback
   });
 

@@ -15,7 +15,10 @@
     "lint": "biome check .",
     "lint:fix": "biome check --fix .",
     "format": "biome format --write .",
-    "optimize-assets": "node scripts/optimize-assets.mjs"
+    "optimize-assets": "node scripts/optimize-assets.mjs",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "docs:api": "typedoc"
   },
   "packageManager": "pnpm@10.28.2",
   "dependencies": {
@@ -47,6 +50,7 @@
     "@gltf-transform/core": "^4.3.0",
     "@gltf-transform/extensions": "^4.3.0",
     "@gltf-transform/functions": "^4.3.0",
+    "@playwright/test": "^1.58.2",
     "@types/react": "~19.2.14",
     "@types/sql.js": "^1.4.9",
     "@types/three": "^0.183.1",
@@ -57,6 +61,8 @@
     "jest-expo": "~55.0.9",
     "ktx-parse": "^1.1.0",
     "sharp": "^0.34.5",
+    "typedoc": "^0.28.17",
+    "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "^5.9.3"
   },
   "pnpm": {

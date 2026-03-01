@@ -9,18 +9,22 @@ import type { GameRng } from '../SeedSystem';
 /** Module-level RNG reference, set by PravdaSystem constructor */
 let _rng: GameRng | null = null;
 
+/** Set the module-level seeded RNG for deterministic headline generation. */
 export function setPravdaRng(rng: GameRng): void {
   _rng = rng;
 }
 
+/** Get the current module-level seeded RNG (may be null if not initialized). */
 export function getPravdaRng(): GameRng | null {
   return _rng;
 }
 
+/** Pick a random element from an array using the seeded RNG (falls back to Math.random). */
 export function pick<T>(arr: readonly T[]): T {
   return _rng ? _rng.pick(arr) : arr[Math.floor(Math.random() * arr.length)]!;
 }
 
+/** Generate a random integer in [min, max] using the seeded RNG. */
 export function randInt(min: number, max: number): number {
   return _rng ? _rng.int(min, max) : Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -28,6 +32,7 @@ export function randInt(min: number, max: number): number {
 /** A building is a "gulag" if it has negative housing capacity (drains population). */
 export const isGulag = (b: Building): boolean => (getBuildingDef(b.defId)?.stats.housingCap ?? 0) < 0;
 
+/** Return true with the given probability using the seeded RNG. */
 export function coinFlip(probability = 0.5): boolean {
   return _rng ? _rng.coinFlip(probability) : Math.random() < probability;
 }

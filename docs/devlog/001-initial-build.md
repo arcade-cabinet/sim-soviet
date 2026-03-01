@@ -1,9 +1,12 @@
 ---
-title: Initial Build -- Canvas 2D Migration & Core Systems
+title: Initial Build — Canvas 2D Migration & Core Systems
+type: devlog
+status: archived
 date: 2026-02-09
-status: Complete
-category: devlog
-commits: 6ca2bce..e39929f
+category: feature
+last_verified: 2026-03-01
+commits:
+  - 6ca2bce..e39929f
 ---
 
 # 001: Initial Build -- Canvas 2D Migration & Core Systems

@@ -149,6 +149,7 @@ function computeAnalytics(workers: WorkerDisplayInfo[], focus: CollectiveFocus):
 
 // ── Component ────────────────────────────────────────────────────────────────
 
+/** Worker demographics terminal with class composition, status breakdown, and top performers. */
 export const WorkerAnalyticsPanel: React.FC<WorkerAnalyticsPanelProps> = ({ visible, onDismiss }) => {
   // Pull game snapshot to trigger re-renders on state change
   useGameSnapshot();

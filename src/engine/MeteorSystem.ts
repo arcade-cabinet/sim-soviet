@@ -7,6 +7,16 @@ import type { GameState } from './GameState';
 import { GRID_SIZE } from './GridTypes';
 import { showAdvisor } from './helpers';
 
+/**
+ * Updates the meteor descent animation and handles ground impact.
+ *
+ * The meteor descends toward its target cell each frame. On impact (z <= 0),
+ * it creates a crater at the center, sets surrounding buildings on fire,
+ * triggers a screen shake, and unlocks the Cosmic Tap building.
+ *
+ * @param state - GameState containing meteor, grid, and buildings
+ * @param dt    - Frame delta time in milliseconds
+ */
 export function updateMeteor(state: GameState, dt: number): void {
   if (!state.meteor.active) return;
 

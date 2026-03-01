@@ -13,6 +13,11 @@ export function getRng(): GameRng | null {
   return _rng;
 }
 
+/**
+ * Picks a random element from an array using the seeded RNG if available.
+ * @param arr - Array to pick from.
+ * @returns A randomly selected element.
+ */
 export function pick<T>(arr: readonly T[]): T {
   return _rng ? _rng.pick(arr) : arr[Math.floor(Math.random() * arr.length)]!;
 }

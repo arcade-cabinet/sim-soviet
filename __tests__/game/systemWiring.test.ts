@@ -22,6 +22,7 @@ import { SimulationEngine } from '@/game/SimulationEngine';
 import { WEATHER_PROFILES, WeatherType } from '@/game/WeatherSystem';
 import { applyMorale } from '@/game/workers/classes';
 import { HEATING_FAILURE_MORALE_PENALTY } from '@/game/workers/constants';
+import { createTestDvory } from '../playthrough/helpers';
 
 function createMockCallbacks() {
   return {
@@ -812,7 +813,8 @@ describe('GAP-022: Save/Load serialization', () => {
   });
 
   it('SubsystemSaveData includes politicalEntities field', () => {
-    createResourceStore({ food: 100, vodka: 50, population: 50 });
+    createResourceStore({ food: 100, vodka: 50, population: 0 });
+    createTestDvory(50);
     createMetaStore({ date: { year: 1930, month: 1, tick: 0 } });
 
     const engine = new SimulationEngine({
@@ -829,7 +831,8 @@ describe('GAP-022: Save/Load serialization', () => {
   });
 
   it('serializeSubsystems includes all critical subsystems', () => {
-    createResourceStore({ food: 100, vodka: 50, population: 50 });
+    createResourceStore({ food: 100, vodka: 50, population: 0 });
+    createTestDvory(50);
     createMetaStore({ date: { year: 1930, month: 1, tick: 0 } });
 
     const engine = new SimulationEngine({

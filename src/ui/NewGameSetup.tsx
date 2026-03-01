@@ -17,14 +17,17 @@ import {
 } from '../game/ScoringSystem';
 import { Colors, monoFont } from './styles';
 
+/** Available map size options for new game configuration. */
 export type MapSize = 'small' | 'medium' | 'large';
 
+/** Grid dimensions and display labels for each map size option. */
 export const MAP_SIZE_CONFIG: Record<MapSize, { label: string; gridSize: number; desc: string }> = {
   small: { label: 'Small', gridSize: 20, desc: 'A modest hamlet. 20x20 grid.' },
   medium: { label: 'Medium', gridSize: 30, desc: 'Standard collective. 30x30 grid.' },
   large: { label: 'Large', gridSize: 50, desc: 'Sprawling industrial zone. 50x50 grid.' },
 };
 
+/** Player-selected options for starting a new game session. */
 export interface NewGameConfig {
   difficulty: DifficultyLevel;
   consequence: ConsequenceLevel;
@@ -49,6 +52,7 @@ const CONSEQUENCE_FLAVOR: Record<ConsequenceLevel, string> = {
   harsh: 'The Village Is Evacuated. Return after 3 years. 40% buildings survive. Despair is permanent.',
 };
 
+/** Soviet dossier-styled game configuration screen for difficulty, consequence, seed, and map size. */
 export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) => {
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('comrade');
   const [consequence, setConsequence] = useState<ConsequenceLevel>('permadeath');

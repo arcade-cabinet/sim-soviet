@@ -1,5 +1,6 @@
 import type { DialogueLine } from '../types';
 
+/** Overheard conversations and atmospheric vignettes from ordinary citizens. */
 export const AMBIENT_LINES: DialogueLine[] = [
   {
     text: '\u2014Did you hear about Petrov? \u2014Which Petrov? \u2014Exactly.',

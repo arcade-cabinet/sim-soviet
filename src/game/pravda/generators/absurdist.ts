@@ -10,6 +10,7 @@ import type { ContextualGenerator } from '../types';
 //  ALWAYS spinning the situation positively.
 // ─────────────────────────────────────────────────────────
 
+/** Game-state-reactive headline generators that fire when specific conditions are met. */
 export const contextualGenerators: ContextualGenerator[] = [
   // Population declining (pop < 20)
   {

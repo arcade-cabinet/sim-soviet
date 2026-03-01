@@ -16,8 +16,10 @@ import { ERA_ORDER } from './era';
 //  TYPES
 // ─────────────────────────────────────────────────────────
 
+/** Game difficulty level affecting simulation parameters and score multipliers. */
 export type DifficultyLevel = 'worker' | 'comrade' | 'tovarish';
 
+/** Arrest consequence level affecting survival rates and score multiplier. */
 export type ConsequenceLevel = 'forgiving' | 'permadeath' | 'harsh';
 
 /**
@@ -153,6 +155,7 @@ export interface ScoringSystemSaveData {
 //  CONSTANTS: DIFFICULTY PRESETS
 // ─────────────────────────────────────────────────────────
 
+/** Preset difficulty configurations for worker/comrade/tovarish levels. */
 export const DIFFICULTY_PRESETS: Record<DifficultyLevel, DifficultyConfig> = {
   worker: {
     label: 'Worker',
@@ -193,6 +196,7 @@ export const DIFFICULTY_PRESETS: Record<DifficultyLevel, DifficultyConfig> = {
 //  CONSTANTS: CONSEQUENCE PRESETS
 // ─────────────────────────────────────────────────────────
 
+/** Preset consequence configurations for forgiving/permadeath/harsh levels. */
 export const CONSEQUENCE_PRESETS: Record<ConsequenceLevel, ConsequenceConfig> = {
   forgiving: {
     label: 'Forgiving',
@@ -278,6 +282,7 @@ const POINTS = {
 //  CONSTANTS: MEDALS
 // ─────────────────────────────────────────────────────────
 
+/** Satirical Soviet medals awarded at score milestones and special conditions. */
 export const MEDALS: Medal[] = [
   {
     id: 'red_potato',
@@ -396,6 +401,10 @@ export function getSettingsMultiplier(difficulty: DifficultyLevel, consequence: 
 //  SCORING SYSTEM
 // ─────────────────────────────────────────────────────────
 
+/**
+ * Civ-style score accumulation system: records per-era breakdowns,
+ * applies difficulty/consequence multipliers, and awards satirical medals.
+ */
 export class ScoringSystem {
   private difficulty: DifficultyLevel;
   private consequence: ConsequenceLevel;

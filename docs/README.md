@@ -1,3 +1,10 @@
+---
+title: Documentation Index
+type: index
+status: active
+last_verified: 2026-03-01
+---
+
 # SimSoviet 1917 — Documentation
 
 > *"All documentation is accurate. Discrepancies are the reader's fault."*
@@ -40,11 +47,11 @@ Deep reference documents for complex subsystems.
 
 | Document | Description |
 |----------|-------------|
-| [ECS Architecture](design-ecs-architecture.md) | Miniplex 2.0 — components, archetypes, system pipeline |
-| [Leadership Architecture](design-leadership-architecture.md) | Political ECS components, modifier pipeline |
-| [Era Doctrines](design-era-doctrines.md) | 8 composable policy modifier sets |
-| [Power Transitions](design-power-transitions.md) | 7 leadership succession types, probability engine |
-| [Leader Archetypes](design-leader-archetypes.md) | 11 procedural leader personalities |
+| [ECS Architecture](design/ecs-architecture.md) | Miniplex 2.0 — components, archetypes, system pipeline |
+| [Leadership Architecture](design/leadership-architecture.md) | Political ECS components, modifier pipeline |
+| [Era Doctrines](design/era-doctrines.md) | 8 composable policy modifier sets |
+| [Power Transitions](design/power-transitions.md) | 7 leadership succession types, probability engine |
+| [Leader Archetypes](design/leader-archetypes.md) | 11 procedural leader personalities |
 
 ---
 
@@ -52,10 +59,10 @@ Deep reference documents for complex subsystems.
 
 | Document | Description |
 |----------|-------------|
-| [Dialog Bible](design-dialog-bible.md) | Trilingual voice guide, advisor monologues, leader decrees |
-| [Pravda System](reference-pravda-system.md) | Procedural headline generator — 145K+ combinations |
-| [World-Building](reference-world-building.md) | Timeline events, achievements, building flavor, loading quotes |
-| [Name Generator](reference-name-generator.md) | Russian name generator — 1.1M+ combinations |
+| [Dialog Bible](design/dialog-bible.md) | Trilingual voice guide, advisor monologues, leader decrees |
+| [Pravda System](reference/pravda-system.md) | Procedural headline generator — 145K+ combinations |
+| [World-Building](reference/world-building.md) | Timeline events, achievements, building flavor, loading quotes |
+| [Name Generator](reference/name-generator.md) | Russian name generator — 1.1M+ combinations |
 
 ---
 
@@ -63,9 +70,9 @@ Deep reference documents for complex subsystems.
 
 | Document | Description |
 |----------|-------------|
-| [Politburo System](reference-politburo-system.md) | Ministry simulation — 10 ministries, 80-cell matrix, 29 events |
-| [Yuka AI Research](research-yuka-ai.md) | AI library capabilities mapping |
-| [Audio Assets](AUDIO_ASSETS.md) | 52 Soviet-era music tracks inventory |
+| [Politburo System](reference/politburo-system.md) | Ministry simulation — 10 ministries, 80-cell matrix, 29 events |
+| [Yuka AI Research](reference/research-yuka-ai.md) | AI library capabilities mapping |
+| [Audio Assets](reference/audio-assets.md) | 52 Soviet-era music tracks inventory |
 
 ---
 
@@ -90,7 +97,7 @@ Deep reference documents for complex subsystems.
 5. design/political.md — personnel file and political apparatus
 6. design/eras.md — 8 era campaigns
 7. GDD-master.md — full reference for all mechanics
-8. design-ecs-architecture.md — technical architecture
+8. design/ecs-architecture.md — technical architecture
 
 ---
 

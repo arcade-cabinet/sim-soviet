@@ -228,6 +228,7 @@ const DimmingPlane: React.FC = () => {
 
 // ── Main LensSystem ─────────────────────────────────────────────────────────
 
+/** Composes all lens mode overlays: dimming plane, water overlay, and power overlay. */
 const LensSystem: React.FC = () => {
   return (
     <>

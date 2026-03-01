@@ -31,6 +31,7 @@ const TrainCar: React.FC<{ meshRef: React.RefObject<THREE.Mesh | null> }> = ({ m
 
 // ── TrainRenderer ───────────────────────────────────────────────────────────
 
+/** Renders an animated train (locomotive + trailing cars) on the rail line with smooth lerp movement. */
 const TrainRenderer: React.FC = () => {
   const locoRef = useRef<THREE.Mesh>(null);
   const chimneyRef = useRef<THREE.Mesh>(null);

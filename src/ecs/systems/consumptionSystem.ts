@@ -42,6 +42,9 @@ export interface ConsumptionResult {
  *
  * NOTE: Starvation deaths are RETURNED, not applied here.
  * The caller (SimulationEngine) routes them through WorkerSystem.
+ *
+ * @param consumptionMult - Era/difficulty multiplier on consumption rates (default 1)
+ * @returns Result containing the number of starvation deaths to process
  */
 export function consumptionSystem(consumptionMult = 1): ConsumptionResult {
   const result: ConsumptionResult = { starvationDeaths: 0 };

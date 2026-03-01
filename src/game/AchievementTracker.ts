@@ -126,6 +126,10 @@ const CONDITIONS: Record<string, ConditionFn> = {
 //  TRACKER
 // ─────────────────────────────────────────────────────────
 
+/**
+ * Tracks progress toward 28 achievements, evaluating unlock conditions
+ * each tick and queuing newly unlocked achievements for UI display.
+ */
 export class AchievementTracker {
   private unlockedIds: Set<string>;
   private stats: AchievementStats;

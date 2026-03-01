@@ -16,6 +16,7 @@ import { Colors, monoFont, SharedStyles } from './styles';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
+/** Primary navigation tab in the unified command bar. */
 export type SovietTab = 'build' | 'mandates' | 'workers' | 'reports' | 'purge';
 
 // ── Tab Definitions ─────────────────────────────────────────────────────────
@@ -58,6 +59,7 @@ export interface ToolbarProps {
   onBuildTabChange?: (tab: TabType) => void;
 }
 
+/** Unified command bar with primary navigation tabs and secondary building category tabs. */
 export const Toolbar: React.FC<ToolbarProps> = ({
   activeTab,
   onTabChange,

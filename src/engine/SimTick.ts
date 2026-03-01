@@ -11,6 +11,15 @@ import { addFloatingText, setSpeed, showAdvisor, showToast } from './helpers';
 import { updateWaterNetwork } from './WaterNetwork';
 import { getSeason, updateWeatherSystem } from './WeatherSystem';
 
+/**
+ * Runs one complete simulation tick on the legacy GameState.
+ *
+ * Handles directive checks, storm lightning, meteor spawns, month/year transitions,
+ * zoning growth, water network, power/production tallies, smog diffusion, fires,
+ * food/vodka consumption, population growth, and quota tracking.
+ *
+ * @param state - Mutable GameState to advance by one tick
+ */
 export function simTick(state: GameState): void {
   state.date.tick++;
   let isMonthPassed = false;

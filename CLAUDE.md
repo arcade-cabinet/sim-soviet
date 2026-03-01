@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Agent Navigation
+
+For comprehensive documentation index, see `AGENTS.md` (root) → `docs/AGENTS.md`.
+For agentic memory bank, see `memory-bank/AGENTS.md`.
+
 ## Project Overview
 
 **SimSoviet 1917** is a satirical 3D city-builder game set in the Soviet Union (starting 1917). Players build structures and manage resources (rubles, food, vodka, power, population) against 5-year plan quotas. Built with **React Three Fiber** (R3F + Three.js r183 + React Native).

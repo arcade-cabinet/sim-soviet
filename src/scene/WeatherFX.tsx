@@ -151,6 +151,7 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ config }) => {
 
 // ── Main WeatherFX Component ────────────────────────────────────────────────
 
+/** Renders weather particle effects (snow, rain, storm) based on the current gameState weather. */
 const WeatherFX: React.FC = () => {
   const weatherRef = useRef<WeatherType>(gameState.currentWeather);
   const [config, setConfig] = React.useState<ParticleConfig | null>(() => getConfig(gameState.currentWeather));

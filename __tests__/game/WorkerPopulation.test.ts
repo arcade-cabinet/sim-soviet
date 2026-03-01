@@ -4,6 +4,7 @@ import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
 import type { WorkerTickContext } from '@/game/workers';
 import { WorkerSystem } from '@/game/workers';
+import { createTestDvory } from '../playthrough/helpers';
 
 /** Build a default tick context with overrides. */
 function makeCtx(overrides: Partial<WorkerTickContext> = {}): WorkerTickContext {
@@ -24,7 +25,8 @@ describe('WorkerSystem — Population Drains via tick()', () => {
 
   beforeEach(() => {
     world.clear();
-    createResourceStore({ food: 1000, population: 10 });
+    createResourceStore({ food: 1000, population: 0 });
+    createTestDvory(10);
     createMetaStore();
     rng = new GameRng('test-pop-dynamics');
     system = new WorkerSystem(rng);

@@ -1,9 +1,12 @@
 ---
 title: Game Systems Integration
+type: devlog
+status: archived
 date: 2026-02-09
-status: Complete
-category: devlog
-commits: a18fc65..d292f98
+category: feature
+last_verified: 2026-03-01
+commits:
+  - a18fc65..d292f98
 ---
 
 # 002: Game Systems Integration

@@ -15,7 +15,13 @@ import { Platform } from 'react-native';
 
 const BASE_URL = Platform.OS === 'web' ? (process.env.NODE_ENV === 'production' ? '/sim-soviet' : '') : '';
 
-/** Resolve a path like "assets/models/foo.glb" or "/assets/hdri/bar.hdr" */
+/**
+ * Resolve a path like "assets/models/foo.glb" or "/assets/hdri/bar.hdr"
+ * to the correct URL for the current platform and environment.
+ *
+ * @param path - Relative asset path (leading slash is stripped)
+ * @returns Fully resolved URL string for the current platform
+ */
 export function assetUrl(path: string): string {
   // Strip leading slash if present for consistency
   const clean = path.startsWith('/') ? path.slice(1) : path;

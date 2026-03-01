@@ -1,5 +1,6 @@
 import type { DialogueLine } from '../types';
 
+/** Dialogue lines from military officers — barked orders and absurd discipline. */
 export const MILITARY_LINES: DialogueLine[] = [
   {
     text: 'The Motherland needs you. Not you specifically. But someone shaped like you.',

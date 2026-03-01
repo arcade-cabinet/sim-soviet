@@ -41,6 +41,7 @@ import { Ministry, PersonalityType } from './types';
 //  SAVE DATA
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Serializable snapshot of the entire Politburo for save/load persistence. */
 export interface PolitburoSaveData {
   generalSecretary: GeneralSecretary;
   ministers: Array<[Ministry, Minister]>;
@@ -56,6 +57,10 @@ export interface PolitburoSaveData {
 //  THE POLITBURO SYSTEM
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Orchestrates the Politburo simulation: General Secretary succession,
+ * minister appointments/purges, faction dynamics, and ministry events.
+ */
 export class PolitburoSystem {
   private state: PolitburoState;
   private corruptionMult = 1;

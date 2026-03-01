@@ -6,15 +6,19 @@
  * SovietModal with terminal variant for the classified dossier aesthetic.
  */
 
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
+import type { DialogueContext } from '../content/dialogue/types';
 import type { ConscriptionEvent, KGBInvestigation, PoliticalEntityStats, PoliticalRole } from '../game/political/types';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
+
+const VALID_THREAT_LEVELS = new Set(['safe', 'watched', 'endangered', 'critical']);
+const VALID_SETTLEMENT_TIERS = new Set(['selo', 'posyolok', 'pgt', 'gorod']);
 
 const ROLE_ICONS: Record<PoliticalRole, string> = {
   politruk: '\u262D',
@@ -88,15 +92,41 @@ function effectColor(value: number): string {
   return Colors.termGreen;
 }
 
-/** Single entity row in the agent roster. */
-const EntityRow: React.FC<{ entity: PoliticalEntityStats }> = React.memo(({ entity }) => {
+/** Role-specific flavor text shown in expanded detail. */
+const ROLE_DESCRIPTIONS: Record<PoliticalRole, string> = {
+  politruk: 'Conducts ideology sessions and loyalty checks on your workers. Cannot be removed.',
+  kgb_agent: 'Investigates disloyalty. Workers may disappear without warning.',
+  military_officer: 'Oversees military readiness. Reports to Moscow.',
+  conscription_officer: 'Enforces conscription quotas. Drafts your workers.',
+};
+
+/** Personality descriptions for politruks. */
+const PERSONALITY_DESCRIPTIONS: Record<string, string> = {
+  zealous: 'ZEALOUS — Checks often, low tolerance. Hard to satisfy.',
+  lazy: 'LAZY — Checks rarely, high tolerance. Susceptible to blat.',
+  paranoid: 'PARANOID — Random checks on everyone. Nobody is safe.',
+  corrupt: 'CORRUPT — Will accept bribes. But if caught...',
+};
+
+/** Single entity row in the agent roster — tap to expand with dialogue. */
+const EntityRow: React.FC<{
+  entity: PoliticalEntityStats;
+  isExpanded: boolean;
+  onTap: (id: string) => void;
+  dialogue: string | null;
+}> = React.memo(({ entity, isExpanded, onTap, dialogue }) => {
   const icon = ROLE_ICONS[entity.role];
   const roleColor = ROLE_COLORS[entity.role];
   const roleLabel = ROLE_LABEL_SINGULAR[entity.role];
   const effColor = effectColor(entity.effectiveness);
 
   return (
-    <View style={styles.entityRow}>
+    <Pressable
+      onPress={() => onTap(entity.id)}
+      style={({ pressed }) => [styles.entityRow, pressed && styles.entityRowPressed]}
+      accessibilityRole="button"
+      accessibilityLabel={`${ROLE_LABEL_SINGULAR[entity.role]}: ${entity.name}`}
+    >
       {/* Icon + name + role */}
       <View style={styles.entityHeader}>
         <Text style={[styles.entityIcon, { color: roleColor }]}>{icon}</Text>
@@ -106,6 +136,7 @@ const EntityRow: React.FC<{ entity: PoliticalEntityStats }> = React.memo(({ enti
           </Text>
           <Text style={[styles.entityRole, { color: roleColor }]}>{roleLabel}</Text>
         </View>
+        <Text style={styles.expandIndicator}>{isExpanded ? '\u25BC' : '\u25B6'}</Text>
       </View>
 
       {/* Position + target building */}
@@ -138,7 +169,34 @@ const EntityRow: React.FC<{ entity: PoliticalEntityStats }> = React.memo(({ enti
         <Text style={styles.detailLabel}>REMAINING:</Text>
         <Text style={[styles.detailValue, { color: Colors.termBlue }]}>{entity.ticksRemaining} ticks</Text>
       </View>
-    </View>
+
+      {/* ── Expanded detail section ── */}
+      {isExpanded && (
+        <View style={styles.expandedSection}>
+          <View style={[styles.expandedDivider, { borderColor: roleColor }]} />
+
+          {/* Role description */}
+          <Text style={styles.expandedDesc}>{ROLE_DESCRIPTIONS[entity.role]}</Text>
+
+          {/* Personality (politruks only) */}
+          {entity.personality && (
+            <Text style={[styles.expandedPersonality, { color: roleColor }]}>
+              {PERSONALITY_DESCRIPTIONS[entity.personality] ?? entity.personality.toUpperCase()}
+            </Text>
+          )}
+
+          {/* Dialogue */}
+          {dialogue && (
+            <View style={styles.dialogueBubble}>
+              <Text style={[styles.dialogueSpeaker, { color: roleColor }]}>
+                {icon} {entity.name.toUpperCase()}:
+              </Text>
+              <Text style={styles.dialogueText}>"{dialogue}"</Text>
+            </View>
+          )}
+        </View>
+      )}
+    </Pressable>
   );
 });
 
@@ -201,11 +259,50 @@ const ConscriptionRow: React.FC<{ evt: ConscriptionEvent; index: number }> = Rea
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
+/** Map season label to dialogue season. */
+function toDialogueSeason(season: string): DialogueContext['season'] {
+  if (season === 'winter') return 'winter';
+  if (season === 'spring' || season === 'autumn') return 'mud';
+  return 'summer';
+}
+
+/** Map food level to dialogue resource level. */
+function toResourceLevel(food: number, pop: number): DialogueContext['resourceLevel'] {
+  if (pop === 0) return 'adequate';
+  const perCapita = food / pop;
+  if (perCapita <= 0) return 'starving';
+  if (perCapita < 3) return 'scarce';
+  if (perCapita < 10) return 'adequate';
+  return 'surplus';
+}
+
+/** Political entities panel showing KGB agents, politruks, military officers, and conscription queue. */
 export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({ visible, onDismiss }) => {
-  useGameSnapshot();
+  const snap = useGameSnapshot();
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
 
   const engine = getEngine();
   const politicalSystem = engine?.getPoliticalEntities() ?? null;
+
+  const handleEntityTap = useCallback((id: string) => {
+    setSelectedEntityId((prev) => (prev === id ? null : id));
+  }, []);
+
+  // Build dialogue context from game snapshot
+  const dialogueContext = useMemo<DialogueContext>(
+    () => ({
+      season: toDialogueSeason(snap.seasonLabel),
+      resourceLevel: toResourceLevel(snap.food, snap.pop),
+      era: snap.currentEra,
+      threatLevel: VALID_THREAT_LEVELS.has(snap.threatLevel)
+        ? (snap.threatLevel as DialogueContext['threatLevel'])
+        : 'safe',
+      settlementTier: VALID_SETTLEMENT_TIERS.has(snap.settlementTier)
+        ? (snap.settlementTier as DialogueContext['settlementTier'])
+        : 'selo',
+    }),
+    [snap.seasonLabel, snap.food, snap.pop, snap.currentEra, snap.threatLevel, snap.settlementTier],
+  );
 
   const { entityList, roleCounts, investigations, conscriptionQueue } = useMemo(() => {
     if (!politicalSystem) {
@@ -299,7 +396,23 @@ export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({ visi
         {entityList.length === 0 ? (
           <Text style={styles.emptyText}>No agents in the field.</Text>
         ) : (
-          entityList.map((entity) => <EntityRow key={entity.id} entity={entity} />)
+          entityList.map((entity) => (
+            <EntityRow
+              key={entity.id}
+              entity={entity}
+              isExpanded={selectedEntityId === entity.id}
+              onTap={handleEntityTap}
+              dialogue={
+                selectedEntityId === entity.id
+                  ? (politicalSystem?.getEntityDialogue(
+                      entity.stationedAt.gridX,
+                      entity.stationedAt.gridY,
+                      dialogueContext,
+                    ) ?? null)
+                  : null
+              }
+            />
+          ))
         )}
       </ScrollView>
 
@@ -398,6 +511,10 @@ const styles = StyleSheet.create({
     padding: 8,
     marginBottom: 6,
   },
+  entityRowPressed: {
+    backgroundColor: '#252525',
+    borderColor: '#555',
+  },
   entityHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -405,6 +522,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   entityIcon: { fontSize: 16 },
+  expandIndicator: {
+    fontSize: 10,
+    color: '#555',
+    fontFamily: monoFont,
+  },
   entityNameBlock: { flex: 1 },
   entityName: {
     fontSize: 11,
@@ -529,5 +651,50 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: monoFont,
     fontWeight: 'bold',
+  },
+
+  // ── Expanded detail section ──
+  expandedSection: {
+    marginTop: 8,
+  },
+  expandedDivider: {
+    borderTopWidth: 1,
+    marginBottom: 8,
+  },
+  expandedDesc: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    color: Colors.textSecondary,
+    lineHeight: 14,
+    marginBottom: 6,
+  },
+  expandedPersonality: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  dialogueBubble: {
+    backgroundColor: '#111',
+    borderWidth: 1,
+    borderColor: '#333',
+    borderLeftWidth: 3,
+    padding: 8,
+    marginTop: 4,
+  },
+  dialogueSpeaker: {
+    fontSize: 8,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  dialogueText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    color: Colors.textPrimary,
+    fontStyle: 'italic',
+    lineHeight: 15,
   },
 });

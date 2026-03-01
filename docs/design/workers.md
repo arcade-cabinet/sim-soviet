@@ -1,10 +1,14 @@
 ---
 title: Workers — The Central Resource
-status: Complete
-implementation: src/game/workers/WorkerSystem.ts
-tests: archive-only (src/__tests__/WorkerSystem.test.ts, src/__tests__/WorkerPopulation.test.ts)
-last_verified: 2026-02-10
-coverage: "Full — 6 AI classes, morale/loyalty/skill, vodka dependency, autonomous collective, sprites, tap interaction"
+type: design
+status: implemented
+implementation:
+  - src/game/workers/WorkerSystem.ts
+tests:
+  - src/__tests__/WorkerSystem.test.ts
+  - src/__tests__/WorkerPopulation.test.ts
+last_verified: 2026-03-01
+coverage: full
 depends_on: [overview.md, demographics.md, economy.md]
 ---
 

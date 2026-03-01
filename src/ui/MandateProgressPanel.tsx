@@ -75,6 +75,7 @@ const MandateRow: React.FC<{ mandate: MandateWithFulfillment }> = ({ mandate }) 
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Five-Year Plan building mandates with per-type progress bars and overall fulfillment. */
 export const MandateProgressPanel: React.FC<MandateProgressPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
   const _snap = useGameSnapshot();

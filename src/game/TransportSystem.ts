@@ -21,6 +21,7 @@ import type { SettlementTier } from './SettlementSystem';
 
 // ── Road Quality Enum ────────────────────────────────────────────────────
 
+/** Road infrastructure quality level affecting rasputitsa mitigation. */
 export enum RoadQuality {
   NONE = 'none',
   DIRT = 'dirt',
@@ -29,6 +30,7 @@ export enum RoadQuality {
   HIGHWAY = 'highway',
 }
 
+/** Human-readable display labels for each road quality level. */
 export const ROAD_QUALITY_LABELS: Record<RoadQuality, string> = {
   [RoadQuality.NONE]: 'No Roads',
   [RoadQuality.DIRT]: 'Dirt Tracks',
@@ -138,6 +140,7 @@ export function applyMitigation(rawMult: number, quality: RoadQuality): number {
 
 // ── Tick Result ──────────────────────────────────────────────────────────
 
+/** Result of a transport system tick: quality, condition, and build cost multiplier. */
 export interface TransportTickResult {
   /** Current effective road quality level (may be downgraded by poor condition). */
   quality: RoadQuality;
@@ -151,6 +154,7 @@ export interface TransportTickResult {
 
 // ── Save Data ────────────────────────────────────────────────────────────
 
+/** Serializable snapshot of transport system state for save/load. */
 export interface TransportSaveData {
   quality: RoadQuality;
   rawScore?: number;
@@ -161,10 +165,12 @@ export interface TransportSaveData {
 
 // ── Legacy compat (old saves with just { quality }) ──────────────────────
 
+/** Legacy serialization helper for old saves that only stored quality. */
 export function serializeTransport(quality: RoadQuality): TransportSaveData {
   return { quality };
 }
 
+/** Legacy deserialization helper: extracts quality with validation fallback. */
 export function deserializeTransport(data: TransportSaveData): RoadQuality {
   const valid = Object.values(RoadQuality) as string[];
   return valid.includes(data.quality) ? data.quality : RoadQuality.NONE;
@@ -176,6 +182,10 @@ const RASPUTITSA_SEASONS: Set<string> = new Set(['rasputitsa_spring', 'rasputits
 
 // ── Class ────────────────────────────────────────────────────────────────
 
+/**
+ * Road quality progression with condition degradation, seasonal rasputitsa
+ * mitigation, and throttled score recalculation from transport buildings.
+ */
 export class TransportSystem {
   // ── Private state ──
   private quality: RoadQuality = RoadQuality.NONE;

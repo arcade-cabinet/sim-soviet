@@ -4,6 +4,7 @@ import { FAKE_DISCOVERIES, SOVIET_SPORTS } from '../wordPools';
 
 // ── CULTURAL VICTORY generators ──
 
+/** Headlines celebrating Soviet cultural and sporting achievements. */
 export const culturalVictoryGenerators: HeadlineGenerator[] = [
   // Pattern: Soviet wins competition
   () => ({

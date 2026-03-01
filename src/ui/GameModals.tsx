@@ -21,6 +21,7 @@ import { Colors, monoFont } from './styles';
 
 // ── Types ──
 
+/** Five-Year Plan directive with quota targets and building mandates. */
 export interface PlanDirective {
   quotaType: 'food' | 'vodka';
   quotaTarget: number;
@@ -29,6 +30,7 @@ export interface PlanDirective {
   mandates?: { defId: string; label: string; required: number; fulfilled: number }[];
 }
 
+/** Game-over payload with victory flag and descriptive reason. */
 export interface GameOverInfo {
   victory: boolean;
   reason: string;
@@ -62,6 +64,7 @@ export interface GameModalsProps {
   onRestart: () => void;
 }
 
+/** Container for all in-game modal overlays: era transition, minigame, annual report, plan, and game-over. */
 export const GameModals: React.FC<GameModalsProps> = ({
   eraTransition,
   onDismissEra,

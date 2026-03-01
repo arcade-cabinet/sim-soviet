@@ -32,6 +32,7 @@ const TERRAIN_COLORS: Record<TerrainType, string> = {
 const BUILDING_COLOR = '#ddd';
 const SMOG_TINT = '#c04000';
 
+/** Canvas-based minimap rendering real grid data with terrain, buildings, and smog tints. */
 export const Minimap: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 

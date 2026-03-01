@@ -5,6 +5,7 @@ import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
+import { createTestDvory } from '../playthrough/helpers';
 
 /**
  * Creates mock callbacks that satisfy the SimulationEngine constructor.
@@ -59,7 +60,8 @@ describe('SimulationEngine edge cases', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 9999, vodka: 9999, population: 100 });
+      createResourceStore({ food: 9999, vodka: 9999, population: 0 });
+      createTestDvory(100);
       createMetaStore({ date: { year: 1990, month: 12, tick: 0 } });
       const engine2 = new SimulationEngine(grid2, cb2);
 
@@ -136,7 +138,8 @@ describe('SimulationEngine edge cases', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 9999, vodka: 9999, population: 3 });
+      createResourceStore({ food: 9999, vodka: 9999, population: 0 });
+      createTestDvory(3);
       createMetaStore();
       const engine2 = new SimulationEngine(grid2, cb2);
       createBuilding(0, 0, 'apartment-tower-a');
@@ -209,7 +212,8 @@ describe('SimulationEngine edge cases', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 9999, vodka: 9999, population: 3 });
+      createResourceStore({ food: 9999, vodka: 9999, population: 0 });
+      createTestDvory(3);
       createMetaStore();
       const engine2 = new SimulationEngine(grid2, cb2);
       createBuilding(0, 0, 'apartment-tower-a');
@@ -245,7 +249,8 @@ describe('SimulationEngine edge cases', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 9999, vodka: 9999, population: 2 });
+      createResourceStore({ food: 9999, vodka: 9999, population: 0 });
+      createTestDvory(2);
       createMetaStore();
       const engine2 = new SimulationEngine(grid2, cb2);
       createBuilding(0, 0, 'apartment-tower-a');
@@ -369,7 +374,8 @@ describe('SimulationEngine edge cases', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 9999, vodka: 9999, population: 100 });
+      createResourceStore({ food: 9999, vodka: 9999, population: 0 });
+      createTestDvory(100);
       createMetaStore();
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'gulag-admin');
@@ -388,7 +394,8 @@ describe('SimulationEngine edge cases', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 9999, vodka: 9999, population: 100 });
+      createResourceStore({ food: 9999, vodka: 9999, population: 0 });
+      createTestDvory(100);
       createMetaStore();
       createBuilding(1, 1, 'gulag-admin'); // No power plant
 

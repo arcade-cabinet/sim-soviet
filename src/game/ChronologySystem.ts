@@ -56,6 +56,10 @@ export interface TickResult {
 //  CHRONOLOGY SYSTEM
 // ─────────────────────────────────────────────────────────
 
+/**
+ * Advances the game clock each tick, resolving day/month/year boundaries,
+ * season transitions, weather rolls, and day/night phase changes.
+ */
 export class ChronologySystem {
   private date: GameDate;
   private season: SeasonProfile;

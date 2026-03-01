@@ -8,6 +8,7 @@
 import { pick } from './ministers';
 import { type Minister, Ministry, type MinistryEventTemplate, PersonalityType } from './types';
 
+/** Pool of ministry-specific events that fire based on cabinet composition. */
 export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
   // ── KGB Events ──
   {

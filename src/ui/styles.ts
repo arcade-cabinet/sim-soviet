@@ -7,6 +7,7 @@ import { Platform, StyleSheet } from 'react-native';
 
 // --- Color palette ---
 
+/** Soviet-themed color palette used across all UI components. */
 export const Colors = {
   bgColor: '#121010',
   panelBg: '#2a2e33',
@@ -41,6 +42,7 @@ export const Colors = {
 
 // --- Monospace font family ---
 
+/** Platform-specific monospace font family (Menlo on iOS, monospace elsewhere). */
 export const monoFont = Platform.select({
   ios: 'Menlo',
   android: 'monospace',
@@ -49,6 +51,7 @@ export const monoFont = Platform.select({
 
 // --- Reusable shared styles ---
 
+/** Reusable StyleSheet with retro panel, button, and typography styles. */
 export const SharedStyles = StyleSheet.create({
   panel: {
     backgroundColor: Colors.panelBg,

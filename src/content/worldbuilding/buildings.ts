@@ -1,5 +1,6 @@
 import type { BuildingFlavorText } from './types';
 
+/** Satirical flavor text for each building type (placement, inspection, decay, destruction). */
 export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
   // -- Coal Plant ---
   power: {

@@ -40,6 +40,7 @@ export const TICKS_PER_YEAR = TICKS_PER_MONTH * MONTHS_PER_YEAR; // 360
 //  GAME DATE
 // ─────────────────────────────────────────────────────────
 
+/** In-game calendar date with tick counter (Soviet dekada calendar: 10-day months). */
 export interface GameDate {
   /** Calendar year (starts 1922 — founding of the USSR). */
   year: number;
@@ -68,6 +69,7 @@ export function createGameDate(startYear = 1922): GameDate {
 //  SEASONS
 // ─────────────────────────────────────────────────────────
 
+/** The 7 Russian seasons: 5-month winter, two rasputitsa mud seasons, and brief warmth. */
 export enum Season {
   WINTER = 'winter',
   RASPUTITSA_SPRING = 'rasputitsa_spring',
@@ -78,6 +80,7 @@ export enum Season {
   RASPUTITSA_AUTUMN = 'rasputitsa_autumn',
 }
 
+/** Static profile for a season: farming/construction multipliers, heating cost, visual settings. */
 export interface SeasonProfile {
   readonly season: Season;
   readonly label: string;
@@ -205,6 +208,7 @@ export function getSeasonForMonth(month: number): SeasonProfile {
 //  DAY/NIGHT PHASES
 // ─────────────────────────────────────────────────────────
 
+/** Time-of-day phases for lighting and visual effects. */
 export enum DayPhase {
   NIGHT = 'night',
   DAWN = 'dawn',

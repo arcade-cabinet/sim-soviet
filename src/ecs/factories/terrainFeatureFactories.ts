@@ -19,7 +19,13 @@ const FEATURE_SPRITES: Record<TerrainFeatureType, string> = {
   water: 'water',
 };
 
-/** Create a mountain terrain feature entity. */
+/**
+ * Creates a mountain terrain feature entity (impassable, non-harvestable).
+ *
+ * @param gridX     - Column index on the grid
+ * @param gridY     - Row index on the grid
+ * @param elevation - Mountain elevation level (default 2)
+ */
 export function createMountain(gridX: number, gridY: number, elevation = 2): void {
   world.add({
     position: { gridX, gridY },
@@ -34,7 +40,12 @@ export function createMountain(gridX: number, gridY: number, elevation = 2): voi
   });
 }
 
-/** Create a forest terrain feature entity. */
+/**
+ * Creates a forest terrain feature entity (passable, harvestable for timber).
+ *
+ * @param gridX - Column index on the grid
+ * @param gridY - Row index on the grid
+ */
 export function createForest(gridX: number, gridY: number): void {
   world.add({
     position: { gridX, gridY },
@@ -49,7 +60,12 @@ export function createForest(gridX: number, gridY: number): void {
   });
 }
 
-/** Create a marsh terrain feature entity. */
+/**
+ * Creates a marsh terrain feature entity (passable, non-harvestable).
+ *
+ * @param gridX - Column index on the grid
+ * @param gridY - Row index on the grid
+ */
 export function createMarsh(gridX: number, gridY: number): void {
   world.add({
     position: { gridX, gridY },
@@ -64,7 +80,12 @@ export function createMarsh(gridX: number, gridY: number): void {
   });
 }
 
-/** Create a river terrain feature entity. */
+/**
+ * Creates a river terrain feature entity (impassable, non-harvestable).
+ *
+ * @param gridX - Column index on the grid
+ * @param gridY - Row index on the grid
+ */
 export function createRiver(gridX: number, gridY: number): void {
   world.add({
     position: { gridX, gridY },
@@ -79,7 +100,7 @@ export function createRiver(gridX: number, gridY: number): void {
   });
 }
 
-/** Remove all terrain feature entities from the world. */
+/** Removes all terrain feature entities from the ECS world. */
 export function clearTerrainFeatures(): void {
   for (const entity of [...terrainFeatures]) {
     world.remove(entity);

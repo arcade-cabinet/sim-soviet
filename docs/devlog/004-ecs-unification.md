@@ -1,9 +1,12 @@
 ---
-title: ECS Unification -- GameState Eliminated
+title: ECS Unification — GameState Eliminated
+type: devlog
+status: archived
 date: 2026-02-09
-status: Complete
-category: devlog
-commits: af54f48..5cbceee
+category: refactor
+last_verified: 2026-03-01
+commits:
+  - af54f48..5cbceee
 ---
 
 # 004: ECS Unification -- GameState Eliminated

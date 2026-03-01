@@ -27,13 +27,13 @@ export interface Position {
   gridY: number;
 }
 
+/** Construction phase for buildings being built. */
+export type ConstructionPhase = 'foundation' | 'building' | 'complete';
+
 /**
  * Building component — stores the def ID, power state, production info,
  * housing capacity, and environmental stats.
  */
-/** Construction phase for buildings being built. */
-export type ConstructionPhase = 'foundation' | 'building' | 'complete';
-
 export interface BuildingComponent {
   /** Building definition ID (sprite ID key into BUILDING_DEFS) */
   defId: string;
@@ -65,10 +65,6 @@ export interface BuildingComponent {
   fireTicksRemaining?: number;
 }
 
-/**
- * Citizen component for individual NPC entities.
- * Each citizen has a class, mood stats, and optional assignments.
- */
 /** Active disease state for a citizen. */
 export interface CitizenDisease {
   /** Disease type identifier */
@@ -77,6 +73,10 @@ export interface CitizenDisease {
   ticksRemaining: number;
 }
 
+/**
+ * Citizen component for individual NPC entities.
+ * Each citizen has a class, mood stats, and optional assignments.
+ */
 export interface CitizenComponent {
   /** Social class / occupation */
   class: 'worker' | 'party_official' | 'engineer' | 'farmer' | 'soldier' | 'prisoner';
@@ -90,6 +90,8 @@ export interface CitizenComponent {
   home?: { gridX: number; gridY: number };
   /** Dvor (household) this citizen belongs to */
   dvorId?: string;
+  /** Specific dvor member ID this citizen represents */
+  dvorMemberId?: string;
   /** Gender */
   gender?: 'male' | 'female';
   /** Age in years */

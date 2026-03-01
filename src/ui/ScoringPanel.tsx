@@ -120,6 +120,7 @@ const MedalCard: React.FC<{ medal: Medal }> = ({ medal }) => {
 //  Main Component
 // ---------------------------------------------------------------------------
 
+/** Live scoring tracker with per-era breakdown, difficulty multipliers, and earned medals. */
 export const ScoringPanel: React.FC<ScoringPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
   useGameSnapshot();

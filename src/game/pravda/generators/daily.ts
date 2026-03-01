@@ -4,6 +4,7 @@ import { GENERIC_REALITIES } from '../wordPools';
 
 // ── WEATHER/FILLER generators ──
 
+/** Low-priority filler headlines about weather, time, and Soviet daily life. */
 export const weatherFillerGenerators: HeadlineGenerator[] = [
   () => ({
     headline: `WEATHER FORECAST: ${pick(['GREY', 'OVERCAST', 'CONCRETE-COLORED', 'IDEOLOGICALLY NEUTRAL'])} WITH ${pick(['PERIODIC GREY', 'SCATTERED GREYNESS', 'A CHANCE OF DARKER GREY', 'CONTINUED ABSENCE OF SUN'])}`,

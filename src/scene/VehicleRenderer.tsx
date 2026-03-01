@@ -24,6 +24,7 @@ function _hexToColor(hex: string): THREE.Color {
   return new THREE.Color(hex);
 }
 
+/** Renders vehicles on roads as GPU-batched colored boxes using instancedMesh. */
 const VehicleRenderer: React.FC = () => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
 

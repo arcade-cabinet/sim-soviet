@@ -18,6 +18,13 @@ const CROSSFADE_MS = 2000;
 const MASTER_VOLUME = 0.5;
 const MAX_BUFFER_CACHE_SIZE = 50;
 
+/**
+ * Web Audio API-based music playback manager (singleton).
+ *
+ * Manages playlist rotation with shuffle, crossfading between tracks,
+ * master volume control, and mute toggling. Uses the GAMEPLAY_PLAYLIST
+ * from AudioManifest for automatic track cycling.
+ */
 class AudioManager {
   private static instance: AudioManager | null = null;
 
@@ -31,6 +38,7 @@ class AudioManager {
   private masterVolume = MASTER_VOLUME;
   private muted = false;
 
+  /** Get or create the singleton AudioManager instance. */
   static getInstance(): AudioManager {
     if (!AudioManager.instance) {
       AudioManager.instance = new AudioManager();

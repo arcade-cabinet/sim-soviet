@@ -44,11 +44,13 @@ const DETAIL_OUTER_R = 185;
 const CENTER = 200;
 const VIEW_SIZE = CENTER * 2;
 
+/** Converts polar coordinates (angle in degrees) to SVG x/y coordinates. */
 function polarToXY(cx: number, cy: number, radius: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
   return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
 }
 
+/** Generates an SVG path `d` string for an annular wedge (pie sector) between two radii and angles. */
 function describeWedge(
   cx: number,
   cy: number,
@@ -641,6 +643,7 @@ const InspectModeContent: React.FC<{
 // Main Unified Component
 // ══════════════════════════════════════════════════════════════════════════
 
+/** SVG pie menu root that switches between build-mode and inspect-mode radial displays. */
 export const RadialMenu: React.FC = () => {
   const buildMenu = useRadialMenu();
   const inspectMenu = useInspectMenu();

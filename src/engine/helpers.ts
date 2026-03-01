@@ -12,6 +12,16 @@ import type { GameState, LensType, TabType } from './GameState';
 
 // --- Floating text ---
 
+/**
+ * Adds a floating text label above a grid cell (e.g. "+200₽", "BUILT").
+ * Text floats upward and fades out over 60 frames.
+ *
+ * @param state - GameState to add the floating text to
+ * @param gridX - Grid column
+ * @param gridY - Grid row
+ * @param text  - Display text
+ * @param color - CSS color string
+ */
 export function addFloatingText(state: GameState, gridX: number, gridY: number, text: string, color: string): void {
   state.floatingTexts.push({
     x: gridX + (Math.random() - 0.5) * 0.5,
@@ -25,14 +35,22 @@ export function addFloatingText(state: GameState, gridX: number, gridY: number, 
 
 // --- Ticker ---
 
-/** Returns a random ticker message. The UI layer appends it to the crawl. */
+/**
+ * Returns a random Pravda news ticker message.
+ * The UI layer appends it to the scrolling crawl.
+ *
+ * @returns A random propaganda message string
+ */
 export function getRandomTickerMsg(): string {
   return TICKER_MESSAGES[Math.floor(Math.random() * TICKER_MESSAGES.length)];
 }
 
 /**
- * Pushes a ticker message event. In the POC this directly mutated the DOM.
- * Here we store the latest message on state so the UI layer can consume it.
+ * Pushes a ticker message event (no-op in current architecture).
+ * In the POC this directly mutated the DOM. The UI layer now calls
+ * `getRandomTickerMsg()` on a timer instead.
+ *
+ * @param _state - Unused GameState (retained for API compatibility)
  */
 export function pushTickerMsg(_state: GameState): void {
   // The UI layer should poll or subscribe to render ticker messages.
@@ -42,19 +60,43 @@ export function pushTickerMsg(_state: GameState): void {
 
 // --- Speed / Lens / Tab ---
 
+/**
+ * Sets the simulation speed multiplier.
+ *
+ * @param state - GameState to modify
+ * @param sp    - Speed multiplier (1 = normal, 2 = fast, 3 = fastest)
+ */
 export function setSpeed(state: GameState, sp: number): void {
   state.speed = sp;
 }
 
+/**
+ * Sets the active visual overlay lens mode.
+ *
+ * @param state - GameState to modify
+ * @param lens  - Lens mode to activate
+ */
 export function setLens(state: GameState, lens: LensType): void {
   state.activeLens = lens;
 }
 
+/**
+ * Switches the active toolbar tab and resets the selected tool.
+ *
+ * @param state - GameState to modify
+ * @param tab   - Tab to activate
+ */
 export function setTab(state: GameState, tab: TabType): void {
   state.activeTab = tab;
   state.selectedTool = 'none';
 }
 
+/**
+ * Selects a building placement tool.
+ *
+ * @param state - GameState to modify
+ * @param tool  - Tool key to select (e.g. 'housing', 'road', 'bulldoze', 'none')
+ */
 export function selectTool(state: GameState, tool: string): void {
   state.selectedTool = tool;
 }
@@ -67,14 +109,21 @@ export function selectTool(state: GameState, tool: string): void {
  * and renders / auto-hides it.
  */
 
+/** A toast notification displayed as a banner across the top of the screen. */
 export interface ToastMessage {
+  /** Notification text */
   text: string;
+  /** Creation timestamp (Date.now()) for auto-dismiss timing */
   timestamp: number;
 }
 
+/** An advisor message from Comrade Vanya displayed in the advisor panel. */
 export interface AdvisorMessage {
+  /** Advisor message text */
   text: string;
+  /** Ministry source label (e.g. 'INDUSTRY', 'DEFENSE', 'PLANNING') */
   source?: string;
+  /** Creation timestamp (Date.now()) */
   timestamp: number;
 }
 
@@ -92,30 +141,55 @@ function getDateLabel(state: GameState): string {
   return `${m} ${state.date.year}`;
 }
 
+/**
+ * Displays a toast notification banner and pushes it to the notification store.
+ *
+ * @param state - GameState (used for date label and notify trigger)
+ * @param text  - Message text to display
+ */
 export function showToast(state: GameState, text: string): void {
   _currentToast = { text, timestamp: Date.now() };
   pushNotification(text, 'toast', getDateLabel(state));
   state.notify();
 }
 
+/**
+ * Returns the current toast message, or null if none is active.
+ *
+ * @returns Current toast or null
+ */
 export function getToast(): ToastMessage | null {
   return _currentToast;
 }
 
+/** Clears the current toast message. */
 export function clearToast(): void {
   _currentToast = null;
 }
 
+/**
+ * Displays a Comrade Vanya advisor notification and pushes it to the notification store.
+ *
+ * @param state  - GameState (used for date label and notify trigger)
+ * @param text   - Advisor message text
+ * @param source - Optional ministry source label (e.g. 'INDUSTRY', 'DEFENSE')
+ */
 export function showAdvisor(state: GameState, text: string, source?: string): void {
   _currentAdvisor = { text, source, timestamp: Date.now() };
   pushNotification(text, 'advisor', getDateLabel(state), '\u262D');
   state.notify();
 }
 
+/**
+ * Returns the current advisor message, or null if none is active.
+ *
+ * @returns Current advisor message or null
+ */
 export function getAdvisor(): AdvisorMessage | null {
   return _currentAdvisor;
 }
 
+/** Dismisses the current advisor message. */
 export function dismissAdvisor(): void {
   _currentAdvisor = null;
 }

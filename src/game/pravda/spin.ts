@@ -89,6 +89,7 @@ function spinEffect(value: number | undefined, key: string, lossUnit: string, ga
   return `${spinKey(`${key}_gain`)} +${value} ${gainUnit}`;
 }
 
+/** Convert a game event's resource effects into propaganda-spun subtext. */
 export function spinEventEffects(event: GameEvent): string {
   const fx = event.effects;
   const parts = [
@@ -111,6 +112,7 @@ export function spinEventEffects(event: GameEvent): string {
   return parts.join(' | ');
 }
 
+/** Map an EventSystem category to a Pravda headline category. */
 export function categoryFromEvent(
   eventCat: EventCategory,
 ): 'triumph' | 'editorial' | 'production' | 'culture' | 'weather' {

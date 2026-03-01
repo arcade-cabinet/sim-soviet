@@ -15,6 +15,7 @@ import type * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
 
+/** Renders a descending meteor as a glowing white sphere with an orange point light. */
 const MeteorRenderer: React.FC = () => {
   const groupRef = useRef<THREE.Group>(null);
   const sphereRef = useRef<THREE.Mesh>(null);

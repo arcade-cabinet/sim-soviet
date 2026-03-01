@@ -14,6 +14,7 @@ export interface QuotaHUDProps {
   deadlineYear: number;
 }
 
+/** Five-Year Plan quota progress display with resource target and deadline year. */
 export const QuotaHUD: React.FC<QuotaHUDProps> = ({ targetType, targetAmount, current, deadlineYear }) => {
   const progress = targetAmount > 0 ? Math.min(current / targetAmount, 1) : 0;
 

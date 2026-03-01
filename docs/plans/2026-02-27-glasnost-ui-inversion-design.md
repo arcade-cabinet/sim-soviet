@@ -1,3 +1,13 @@
+---
+title: The Glasnost — UI Inversion Design
+type: plan
+status: implemented
+plan_status: completed
+date: 2026-02-27
+last_verified: 2026-03-01
+coverage: full
+---
+
 # "The Glasnost" — UI Inversion Design
 
 > **Date**: 2026-02-27

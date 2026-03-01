@@ -28,6 +28,7 @@ export interface PersonnelFilePanelProps {
   onDismiss: () => void;
 }
 
+/** KGB personnel dossier showing threat level, black marks, commendations, and history. */
 export const PersonnelFilePanel: React.FC<PersonnelFilePanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for real-time threat level updates
   useGameSnapshot();

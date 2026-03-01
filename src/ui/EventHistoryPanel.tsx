@@ -125,6 +125,7 @@ const EventCard: React.FC<{ event: GameEvent }> = ({ event }) => {
 
 // ── Main Component ──────────────────────────────────────────────────────────
 
+/** Scrollable log of recent game events with category icons, severity, and Pravda headlines. */
 export const EventHistoryPanel: React.FC<EventHistoryPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe so the panel re-renders on game ticks
   useGameSnapshot();

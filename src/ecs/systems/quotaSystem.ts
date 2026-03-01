@@ -41,7 +41,9 @@ export interface QuotaState {
 }
 
 /**
- * Default initial quota state.
+ * Creates the default initial quota state for the first 5-year plan.
+ *
+ * @returns A new QuotaState with food as primary target and multi-resource quotas
  */
 export function createDefaultQuota(): QuotaState {
   return {
@@ -95,8 +97,11 @@ export function quotaSystem(quota: QuotaState): void {
 }
 
 /**
- * Check if all multi-resource quotas are met.
- * Returns true if resourceQuotas is undefined (legacy mode — use primary quota).
+ * Checks if all multi-resource quotas are met.
+ * Returns true if resourceQuotas is undefined (legacy mode -- uses primary quota).
+ *
+ * @param quota - Quota state to check
+ * @returns true if all quota targets are met or exceeded
  */
 export function areAllQuotasMet(quota: QuotaState): boolean {
   if (!quota.resourceQuotas) return quota.current >= quota.target;

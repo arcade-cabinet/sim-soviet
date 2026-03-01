@@ -79,6 +79,7 @@ const Badge: React.FC<{ building: BuildingState; badge: BadgeDef }> = ({ buildin
   );
 };
 
+/** Renders billboard status icons (fire, unpowered, construction) floating above buildings. */
 const BuildingStatusBadges: React.FC<BuildingStatusBadgesProps> = ({ buildings }) => {
   // Compute badges for all buildings that need one
   const badgedBuildings = useMemo(() => {

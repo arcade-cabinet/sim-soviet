@@ -6,6 +6,7 @@
 
 // ─── Core Types ─────────────────────────────────────────────────────────────
 
+/** Roles for political entities stationed on the game map. */
 export type PoliticalRole = 'politruk' | 'kgb_agent' | 'military_officer' | 'conscription_officer';
 
 // ─── Politruk Personality ───────────────────────────────────────────────────

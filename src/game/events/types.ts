@@ -4,10 +4,13 @@ import type { GameView } from '../GameView';
 //  TYPES
 // ─────────────────────────────────────────────────────────
 
+/** Escalating severity levels for game events. */
 export type EventSeverity = 'trivial' | 'minor' | 'major' | 'catastrophic';
 
+/** Thematic category for game events, affecting Pravda headline style. */
 export type EventCategory = 'disaster' | 'political' | 'economic' | 'cultural' | 'absurdist';
 
+/** Partial resource changes applied when an event fires. */
 export interface ResourceDelta {
   money?: number;
   food?: number;
@@ -16,6 +19,7 @@ export interface ResourceDelta {
   power?: number;
 }
 
+/** A resolved game event with concrete text, effects, and category. */
 export interface GameEvent {
   id: string;
   title: string;

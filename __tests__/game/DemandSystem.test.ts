@@ -14,11 +14,13 @@
 import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { detectConstructionDemands } from '@/game/workers/demandSystem';
+import { createTestDvory } from '../playthrough/helpers';
 
 describe('DemandSystem', () => {
   beforeEach(() => {
     world.clear();
-    createResourceStore({ food: 500, population: 50 });
+    createResourceStore({ food: 500, population: 0 });
+    createTestDvory(50);
     createMetaStore();
   });
 

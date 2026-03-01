@@ -62,6 +62,7 @@ const EVENT_COMMENDATION_MAP: Partial<Record<string, CommendationSource>> = {
 //  SAVE DATA
 // ─────────────────────────────────────────────────────────
 
+/** Serializable snapshot of the event system for save/load persistence. */
 export interface EventSystemSaveData {
   lastEventTick: number;
   recentEventIds: string[];
@@ -72,6 +73,10 @@ export interface EventSystemSaveData {
 //  EVENT SYSTEM CLASS
 // ─────────────────────────────────────────────────────────
 
+/**
+ * Probabilistic event system: rolls for random events each tick with
+ * cooldown, deduplication, era filtering, and personnel file integration.
+ */
 export class EventSystem {
   private lastEventTick = 0;
   private eventCooldownTicks = EVENT_COOLDOWN_TICKS;

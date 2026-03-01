@@ -12,6 +12,7 @@ export interface DirectiveHUDProps {
   reward: string; // e.g. "+50₽"
 }
 
+/** Active tutorial directive display showing objective text and reward. */
 export const DirectiveHUD: React.FC<DirectiveHUDProps> = ({ text, reward }) => {
   return (
     <View style={[SharedStyles.panel, styles.container]}>

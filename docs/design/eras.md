@@ -1,10 +1,14 @@
 ---
 title: Era-Based Campaigns
-status: Complete
-implementation: src/game/era/EraSystem.ts
-tests: src/__tests__/EraSystem.test.ts, src/__tests__/era-integration.test.ts
-last_verified: 2026-02-10
-coverage: "Full — 8 eras, transitions, building gates, victory/failure conditions, doctrine integration"
+type: design
+status: implemented
+implementation:
+  - src/game/era/EraSystem.ts
+tests:
+  - src/__tests__/EraSystem.test.ts
+  - src/__tests__/era-integration.test.ts
+last_verified: 2026-03-01
+coverage: full
 ---
 
 # Era-Based Campaigns
@@ -78,7 +82,7 @@ Each era has a default doctrine. Leaders can adopt doctrines independently of ca
 | Stagnation | Stagnation | Freeze (reactionary) |
 | The Eternal | Eternal | Revolutionary (system reboot, 70%) |
 
-See `../design-era-doctrines.md` for full doctrine definitions.
+See `era-doctrines.md` for full doctrine definitions.
 
 ---
 

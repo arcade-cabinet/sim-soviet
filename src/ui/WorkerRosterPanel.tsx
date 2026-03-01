@@ -172,6 +172,7 @@ function sortRows(rows: WorkerRow[], sortKey: SortKey, ascending: boolean): Work
 
 // ── Component ────────────────────────────────────────────────────────────────
 
+/** Population browser with filters, sorting, search, bulk actions, and tap-to-dossier. */
 export const WorkerRosterPanel: React.FC<WorkerRosterPanelProps> = ({ visible, onDismiss }) => {
   useGameSnapshot();
 

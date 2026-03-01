@@ -1,3 +1,16 @@
+---
+title: Pravda Headline Generator — 145K+ Combinations
+type: reference
+status: active
+implementation:
+  - src/game/pravda/PravdaSystem.ts
+  - src/game/pravda/
+tests:
+  - src/__tests__/PravdaSystem.test.ts
+last_verified: 2026-03-01
+coverage: full
+---
+
 # Pravda Headline Generator -- Reference
 
 > Source: `src/game/pravda/PravdaSystem.ts` (1,458 lines)

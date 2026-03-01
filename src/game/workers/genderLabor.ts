@@ -6,6 +6,7 @@
  * War: women do everything. Stagnation: return to traditional roles on paper.
  */
 
+/** Era-specific multipliers controlling female labor participation by sector. */
 export interface GenderLaborConfig {
   /** Multiplier for female workers in heavy industry */
   femaleHeavyIndustry: number;
@@ -68,6 +69,12 @@ const ERA_GENDER_CONFIGS: Record<string, GenderLaborConfig> = {
   },
 };
 
+/**
+ * Look up the gender labor configuration for a given era.
+ *
+ * @param eraId - Era identifier (e.g. 'wartime', 'stagnation')
+ * @returns The GenderLaborConfig for the era, defaulting to 'revolution' if not found
+ */
 export function getGenderLaborConfig(eraId: string): GenderLaborConfig {
   return ERA_GENDER_CONFIGS[eraId] ?? ERA_GENDER_CONFIGS.revolution!;
 }

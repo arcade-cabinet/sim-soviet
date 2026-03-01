@@ -363,6 +363,7 @@ const SuccessionSection: React.FC<{ history: GeneralSecretary[] }> = ({ history 
 //  MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Politburo dossier with General Secretary, ministers, active modifiers, and succession history. */
 export const LeadershipPanel: React.FC<LeadershipPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game ticks so the panel re-renders with fresh data
   useGameSnapshot();

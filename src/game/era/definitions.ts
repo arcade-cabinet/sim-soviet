@@ -66,6 +66,7 @@ export const ALL_BUILDING_IDS: readonly string[] = [
 
 // ─── ERA DEFINITIONS ────────────────────────────────────────────────────────
 
+/** Complete definitions for all 8 historical eras: modifiers, buildings, doctrine, and flavor. */
 export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
   // ── REVOLUTION (1917-1922) ──────────────────────────────
   revolution: {

@@ -32,9 +32,14 @@ const CLASS_TO_DIALOGUE_POOL: Record<string, CitizenRenderSlot['dialoguePool']> 
 };
 
 /**
- * Build a CitizenRenderSlot from citizen data.
+ * Builds a CitizenRenderSlot from citizen data.
  * Pre-computes all visual + dialogue fields so the renderer and dialogue
  * system can read them directly without runtime lookups.
+ *
+ * @param citizenClass - Citizen class key (e.g. 'worker', 'party_official')
+ * @param gender       - Gender for sprite variant selection (default 'male')
+ * @param age          - Age in years for age category bracket (default 25)
+ * @returns Pre-computed render slot with dot color, dialogue pool, and age category
  */
 export function computeRenderSlot(
   citizenClass: string,
@@ -43,7 +48,7 @@ export function computeRenderSlot(
 ): CitizenRenderSlot {
   return {
     gender,
-    ageCategory: ageCategoryFromAge(age),
+    ageCategory: ageCategoryFromAge(age, gender),
     citizenClass,
     dotColor: CITIZEN_DOT_COLORS[citizenClass] ?? '#757575',
     dialoguePool: CLASS_TO_DIALOGUE_POOL[citizenClass] ?? 'worker',
@@ -81,7 +86,7 @@ export function createCitizen(
     gender,
     age,
     dvorId,
-    memberRole: memberRoleForAge(age),
+    memberRole: memberRoleForAge(age, gender),
   };
 
   const entity: Entity = {

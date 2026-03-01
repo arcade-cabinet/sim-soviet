@@ -17,8 +17,10 @@ import type { ConstructionDemand, DemandPriority } from './workers/demandSystem'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+/** Origin of a construction request: state mandate or worker demand. */
 export type RequestSource = 'mandate' | 'demand';
 
+/** A prioritized entry in the construction queue with source and reason. */
 export interface ConstructionRequest {
   defId: string;
   source: RequestSource;
@@ -39,6 +41,10 @@ const MANDATE_WEIGHT = 10; // Between critical demands and urgent demands
 
 // ── CollectivePlanner ─────────────────────────────────────────────────────────
 
+/**
+ * Merges state-mandated buildings with worker-generated demands into
+ * a single deduplicated, priority-sorted construction queue.
+ */
 export class CollectivePlanner {
   /**
    * Generate a prioritized construction queue by merging mandates and demands.

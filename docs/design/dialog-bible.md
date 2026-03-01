@@ -1,3 +1,14 @@
+---
+title: Dialog Bible — In-Game Voice Guide
+type: design
+status: active
+implementation:
+  - src/content/dialogue/
+tests: []
+last_verified: 2026-03-01
+coverage: partial
+---
+
 # Dialog Bible — SimSoviet 1917
 
 ---

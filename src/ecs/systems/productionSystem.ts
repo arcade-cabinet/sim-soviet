@@ -18,18 +18,22 @@ import { citizens, getResourceEntity, producers } from '@/ecs/archetypes';
 const OVERSTAFFING_MIN_CONTRIBUTION = 0.015625; // 0.5^6
 
 /**
- * Calculate effective worker count with overstaffing diminishing returns.
+ * Calculates effective worker count with overstaffing diminishing returns.
  *
  * The first `staffCap` workers contribute 100% productivity each.
  * Each additional worker beyond staffCap contributes 50% less than the
  * previous extra worker (geometric decay):
- *   extra worker 1 → 50%, extra worker 2 → 25%, extra worker 3 → 12.5%, ...
+ *   extra worker 1 = 50%, extra worker 2 = 25%, extra worker 3 = 12.5%, ...
  *
  * Contributions below ~1.5% are capped at 0 (after ~6 extra workers).
  *
  * This reflects the real Soviet problem of throwing bodies at production
  * targets: the first few extras help, but packing a factory floor with
  * twice the workers mostly generates queues for the single wrench.
+ *
+ * @param workers  - Total workers assigned to this building type
+ * @param staffCap - Optimal worker count (full productivity threshold)
+ * @returns Effective worker count (always <= workers, with diminishing returns applied)
  */
 export function effectiveWorkers(workers: number, staffCap: number): number {
   if (staffCap <= 0 || workers <= staffCap) return workers;

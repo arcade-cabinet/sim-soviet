@@ -10,6 +10,19 @@ import { addFloatingText, showAdvisor, showToast } from './helpers';
 import { updateWaterNetwork } from './WaterNetwork';
 import { getSeason } from './WeatherSystem';
 
+/**
+ * Handles a player click/tap on the grid for building placement, bulldozing,
+ * zoning, road/pipe laying, and special terrain interactions.
+ *
+ * Performs validation (terrain checks, affordability, obstruction) and applies
+ * the action if valid. Shows toast/advisor messages on failure.
+ *
+ * @param state  - Mutable GameState to modify
+ * @param x      - Grid column clicked
+ * @param y      - Grid row clicked
+ * @param isDrag - Whether this click is part of a drag (suppresses repeated toast messages)
+ * @returns true if the action was applied, false otherwise
+ */
 export function handleClick(state: GameState, x: number, y: number, isDrag: boolean = false): boolean {
   if (x < 0 || y < 0 || x >= GRID_SIZE || y >= GRID_SIZE) return false;
 

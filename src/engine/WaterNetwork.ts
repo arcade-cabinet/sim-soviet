@@ -6,6 +6,15 @@
 import type { GameState } from './GameState';
 import { GRID_SIZE } from './GridTypes';
 
+/**
+ * Recalculates the water distribution network using BFS.
+ *
+ * Starting from all working pump buildings, flood-fills along pipe cells,
+ * then expands the watered area to a radius of 3 tiles around each pipe.
+ * All grid cells have their `watered` flag updated in-place.
+ *
+ * @param state - GameState containing the grid and building list
+ */
 export function updateWaterNetwork(state: GameState): void {
   // Reset all watered flags
   for (let y = 0; y < GRID_SIZE; y++) {

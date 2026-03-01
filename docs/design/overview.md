@@ -1,8 +1,9 @@
 ---
 title: Overview — Game Identity & Core Loop
-status: Complete
-last_verified: 2026-02-10
-coverage: "Full — core loop, ECS architecture, Canvas 2D rendering, all subsystems wired"
+type: design
+status: implemented
+last_verified: 2026-03-01
+coverage: full
 ---
 
 # Overview — Game Identity & Core Loop

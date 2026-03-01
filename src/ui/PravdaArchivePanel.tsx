@@ -121,6 +121,7 @@ const HeadlineCard: React.FC<{ headline: PravdaHeadline }> = ({ headline }) => {
 
 // ── Main Component ───────────────────────────────────────────────────────────
 
+/** Pravda newspaper archive with front page, category distribution, and tap-to-reveal headlines. */
 export const PravdaArchivePanel: React.FC<PravdaArchivePanelProps> = ({ visible, onDismiss }) => {
   // Subscribe so the panel re-renders on game ticks
   useGameSnapshot();

@@ -13,6 +13,7 @@ import {
 
 // ── INTERNAL TRIUMPH generators (always overstated) ──
 
+/** Headline generators celebrating (always overstated) domestic production triumphs. */
 export const internalTriumphGenerators: HeadlineGenerator[] = [
   // Pattern: HEROES VERB OBJECT QUALIFIER
   () => ({
@@ -102,6 +103,7 @@ export const internalTriumphGenerators: HeadlineGenerator[] = [
 
 // ── RESOURCE SPIN generators (react to game state) ──
 
+/** Headline generators that spin resource shortages as positive developments. */
 export const resourceSpinGenerators: HeadlineGenerator[] = [
   // Food shortage spin
   (gs) => ({

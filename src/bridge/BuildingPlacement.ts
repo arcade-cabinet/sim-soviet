@@ -54,6 +54,9 @@ const UPGRADE_COST_MULTIPLIER: Record<number, number> = {
 /**
  * Get upgrade info for a building at the given defId.
  * Returns null if the building cannot be upgraded (not in a chain or already max level).
+ *
+ * @param defId - Building definition ID to check
+ * @returns Upgrade info (next defId, cost, levels) or null if not upgradeable
  */
 export function getUpgradeInfo(defId: string): {
   nextDefId: string;
@@ -89,7 +92,10 @@ export function getUpgradeInfo(defId: string): {
 }
 
 /**
- * Check if a building defId is part of an upgrade chain.
+ * Check if a building defId is part of an upgrade chain and not at max level.
+ *
+ * @param defId - Building definition ID to check
+ * @returns true if the building can be upgraded
  */
 export function isUpgradeable(defId: string): boolean {
   const entry = UPGRADE_LOOKUP.get(defId);
@@ -100,6 +106,9 @@ export function isUpgradeable(defId: string): boolean {
 /**
  * Get the current upgrade level for a defId (0-based).
  * Returns 0 if the defId is not in any upgrade chain.
+ *
+ * @param defId - Building definition ID
+ * @returns Zero-based upgrade level
  */
 export function getUpgradeLevel(defId: string): number {
   return UPGRADE_LOOKUP.get(defId)?.level ?? 0;
@@ -154,8 +163,14 @@ function canAffordMaterials(
 /**
  * Attempt to place a building via ECS.
  *
- * Returns true if the building was placed, false if placement was invalid
- * or the tool doesn't map to an ECS building.
+ * Validates grid bounds, spatial occupancy, material affordability, then
+ * creates the ECS entity, updates spatial grid and legacy state, and
+ * triggers terrain/React notifications.
+ *
+ * @param toolKey - Toolbar tool key (e.g. 'zone-res', 'power')
+ * @param gridX - Grid X coordinate
+ * @param gridZ - Grid Z coordinate
+ * @returns true if the building was placed, false if invalid or unaffordable
  */
 export function placeECSBuilding(toolKey: string, gridX: number, gridZ: number): boolean {
   // Skip non-building tools
@@ -234,7 +249,13 @@ export function placeECSBuilding(toolKey: string, gridX: number, gridZ: number):
 
 /**
  * Remove a building from ECS at the given grid position.
- * Returns true if a building was found and removed.
+ *
+ * Clears spatial grid, syncs legacy GameState, recalculates paths,
+ * and plays the demolition sound effect.
+ *
+ * @param gridX - Grid X coordinate
+ * @param gridZ - Grid Z coordinate
+ * @returns true if a building was found and removed
  */
 export function bulldozeECSBuilding(gridX: number, gridZ: number): boolean {
   for (const entity of buildingsArchetype.entities) {
@@ -274,9 +295,13 @@ export function bulldozeECSBuilding(gridX: number, gridZ: number): boolean {
 /**
  * Attempt to upgrade a building at the given grid position.
  *
- * Returns an object with `success` and a human-readable `reason` on failure.
- * On success, the ECS entity's defId and level are updated, the model will
- * automatically swap because BuildingRenderer detects type changes.
+ * Validates construction state, upgrade availability, and affordability.
+ * On success, updates the ECS entity's defId, level, and stats; the 3D model
+ * automatically swaps because BuildingRenderer detects type changes.
+ *
+ * @param gridX - Grid X coordinate
+ * @param gridZ - Grid Z coordinate
+ * @returns Object with `success` flag and human-readable `reason` on failure
  */
 export function upgradeECSBuilding(gridX: number, gridZ: number): { success: boolean; reason?: string } {
   // Find the ECS building entity at this position

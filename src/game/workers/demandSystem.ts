@@ -20,6 +20,7 @@ export type DemandCategory = 'housing' | 'food_production' | 'power' | 'vodka_pr
 /** Priority levels. 'normal' used by CollectivePlanner for low-priority improvement demands. */
 export type DemandPriority = 'critical' | 'urgent' | 'normal';
 
+/** A detected construction need with priority and suggested building types. */
 export interface ConstructionDemand {
   category: DemandCategory;
   priority: DemandPriority;
@@ -27,6 +28,7 @@ export interface ConstructionDemand {
   reason: string;
 }
 
+/** Snapshot of current resource levels for demand detection. */
 export interface ResourceSnapshot {
   food: number;
   vodka: number;

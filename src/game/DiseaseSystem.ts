@@ -25,8 +25,10 @@ import type { GameRng } from '@/game/SeedSystem';
 
 // ── Disease Definitions ──────────────────────────────────────────────────────
 
+/** Discriminated disease type identifier derived from the ECS CitizenDisease component. */
 export type DiseaseType = CitizenDisease['type'];
 
+/** Static definition of a disease: spread/mortality rates, duration, and prevention. */
 export interface DiseaseDefinition {
   /** Disease identifier */
   type: DiseaseType;
@@ -46,6 +48,7 @@ export interface DiseaseDefinition {
   nutritional: boolean;
 }
 
+/** All four disease types: typhus, cholera, influenza, and scurvy. */
 export const DISEASE_DEFINITIONS: readonly DiseaseDefinition[] = [
   {
     type: 'typhus',
@@ -126,6 +129,7 @@ export function initDiseaseSystem(rng: GameRng | null): void {
 
 // ── Result type ──────────────────────────────────────────────────────────────
 
+/** Aggregate result of a single disease system tick: infections, recoveries, deaths. */
 export interface DiseaseTickResult {
   /** Number of new infections this tick */
   newInfections: number;

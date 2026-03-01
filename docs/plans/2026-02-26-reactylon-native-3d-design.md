@@ -1,3 +1,14 @@
+---
+title: Reactylon Native 3D — Design Document
+type: plan
+status: superseded
+plan_status: abandoned
+date: 2026-02-26
+superseded_by: plans/2026-02-27-r3f-migration-design.md
+last_verified: 2026-03-01
+coverage: none
+---
+
 # SimSoviet 3000: Reactylon Native 3D — Design Document
 
 > **STATUS: SUPERSEDED** — This Reactylon/BabylonJS approach was replaced by React Three Fiber. See [2026-02-27-r3f-migration-design.md](2026-02-27-r3f-migration-design.md) for the final architecture.

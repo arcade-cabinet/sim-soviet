@@ -1,6 +1,7 @@
 import { pick } from './_rng';
 import type { RadioAnnouncement, RadioCategory } from './types';
 
+/** All radio announcements organized by time-of-day and thematic category. */
 export const RADIO_ANNOUNCEMENTS: RadioAnnouncement[] = [
   // -- Morning ---
   {

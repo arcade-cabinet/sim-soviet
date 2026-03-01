@@ -11,16 +11,23 @@ import type { Role } from '@/data/buildingDefs.schema';
 import { buildingsLogic, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 import { gameState } from './GameState';
 
+/** A sequential tutorial objective with a completion check and ruble reward. */
 export interface Directive {
+  /** Description text displayed in the directive HUD */
   text: string;
+  /** Numeric target (for display purposes — check() does the actual validation) */
   target: number;
+  /** Ruble reward granted on completion */
   reward: number;
+  /** Returns true when the directive condition is satisfied */
   check: () => boolean;
 }
 
 /**
- * Count ECS buildings whose defId matches, or whose role matches the given value.
- * Falls back to checking the old flat grid for non-ECS types (road, pipe).
+ * Counts ECS buildings whose definition has the specified role.
+ *
+ * @param role - Building role to match (e.g. 'housing', 'power', 'industry')
+ * @returns Number of matching buildings in the world
  */
 export function countBuildingsByRole(role: Role): number {
   return buildingsLogic.entities.filter((e) => {
@@ -29,12 +36,23 @@ export function countBuildingsByRole(role: Role): number {
   }).length;
 }
 
-/** Count ECS buildings with a specific defId. */
+/**
+ * Counts ECS buildings with a specific definition ID.
+ *
+ * @param defId - Building definition ID to match
+ * @returns Number of matching buildings in the world
+ */
 export function countBuildingsByDefId(defId: string): number {
   return buildingsLogic.entities.filter((e) => e.building.defId === defId).length;
 }
 
-/** Count flat-grid cells with a given type (for non-ECS placements like roads). */
+/**
+ * Counts legacy flat-grid cells with the given building type.
+ * Used for non-ECS placements like roads and pipes.
+ *
+ * @param type - Cell type string to match
+ * @returns Number of matching cells
+ */
 export function countGridCellType(type: string): number {
   if (gameState.grid.length === 0) return 0;
   return gameState.grid.flat().filter((c) => c.type === type).length;
@@ -45,6 +63,7 @@ function hasWaterDemand(): boolean {
   return operationalBuildings.entities.some((e) => e.building.powered && e.building.powerReq > 0);
 }
 
+/** The 12 sequential tutorial directives that guide early gameplay. */
 export const DIRECTIVES: Directive[] = [
   {
     text: 'Housing: Build 4 Residential buildings.',

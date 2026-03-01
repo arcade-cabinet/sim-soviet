@@ -1,5 +1,6 @@
 import type { DialogueLine } from '../types';
 
+/** Dialogue lines delivered by KGB agents — veiled threats and surveillance humor. */
 export const KGB_LINES: DialogueLine[] = [
   {
     text: 'Your records are... interesting. I am sure there is a perfectly good explanation. Take your time. We have your time.',

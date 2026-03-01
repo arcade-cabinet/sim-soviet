@@ -1,8 +1,9 @@
 ---
-title: Development Log
+title: Development Log Index
+type: index
+status: active
 date: 2026-02-09
-status: Active
-category: devlog
+last_verified: 2026-03-01
 ---
 
 # Development Log

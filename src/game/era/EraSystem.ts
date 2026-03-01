@@ -20,6 +20,11 @@ import type { ConstructionMethod, EraCheckpoint, EraDefinition, EraId, EraModifi
 /** Number of ticks over which modifiers blend from old era to new era. */
 const TRANSITION_TICKS = 10;
 
+/**
+ * Manages era progression and provides era-based gameplay parameters.
+ * Pure query system: reads modifiers, building gates, and doctrine
+ * without mutating ECS state. Blends modifiers during era transitions.
+ */
 export class EraSystem {
   private currentYear: number;
   private previousEraId: EraId | null;

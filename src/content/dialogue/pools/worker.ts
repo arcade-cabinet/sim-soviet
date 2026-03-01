@@ -1,5 +1,6 @@
 import type { DialogueLine } from '../types';
 
+/** Dialogue lines from laborers — gallows humor about quotas, conditions, and survival. */
 export const WORKER_LINES: DialogueLine[] = [
   // Universal
   {

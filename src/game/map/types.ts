@@ -79,6 +79,7 @@ export const DEFAULT_MAP_OPTIONS: MapGenerationOptions = {
 
 // ─── Serialization Types ────────────────────────────────────────────────────
 
+/** Compact serialization format for a single terrain cell. */
 export interface SerializedCell {
   t: TerrainType;
   e: number;
@@ -86,6 +87,7 @@ export interface SerializedCell {
   ty?: number;
 }
 
+/** Full serialized map state for save/load persistence. */
 export interface SerializedMap {
   version: 1;
   size: number;

@@ -10,6 +10,7 @@ import type { GameMeta } from '@/ecs/world';
 
 // ── Snapshot type (immutable view for React) ──────────────────────────────
 
+/** Immutable snapshot of the full game state for React consumption. */
 export interface GameSnapshot {
   seed: string;
   money: number;
@@ -151,6 +152,7 @@ export function selectTool(tool: string): void {
 
 // ── Drag State (for drag-to-place from toolbar) ─────────────────────────
 
+/** State for an active drag-to-place building interaction. */
 export interface DragState {
   buildingType: string;
   /** Screen position of the dragged ghost. */
@@ -161,10 +163,12 @@ export interface DragState {
 let _dragState: DragState | null = null;
 const _dragListeners = new Set<() => void>();
 
+/** Get the current drag-to-place state (null if no drag in progress). */
 export function getDragState(): DragState | null {
   return _dragState;
 }
 
+/** Update the drag-to-place state and notify listeners. */
 export function setDragState(state: DragState | null): void {
   _dragState = state;
   for (const listener of _dragListeners) {
@@ -189,32 +193,47 @@ function subscribeDrag(listener: () => void): () => void {
 let _paused = false;
 let _gameSpeed: 1 | 2 | 3 = 1;
 
+/** Whether the game simulation is currently paused. */
 export function isPaused(): boolean {
   return _paused;
 }
 
+/**
+ * Toggle the pause state and notify React.
+ *
+ * @returns The new paused state
+ */
 export function togglePause(): boolean {
   _paused = !_paused;
   notifyStateChange();
   return _paused;
 }
 
+/** Explicitly set the pause state and notify React. */
 export function setPaused(paused: boolean): void {
   _paused = paused;
   notifyStateChange();
 }
 
+/** Simulation speed multiplier: 1 = normal, 2 = double, 3 = triple. */
 export type GameSpeed = 1 | 2 | 3;
 
+/** Get the current game simulation speed. */
 export function getGameSpeed(): GameSpeed {
   return _gameSpeed;
 }
 
+/** Set the game simulation speed and notify React. */
 export function setGameSpeed(speed: GameSpeed): void {
   _gameSpeed = speed;
   notifyStateChange();
 }
 
+/**
+ * Cycle through game speeds: 1 -> 2 -> 3 -> 1.
+ *
+ * @returns The new game speed after cycling
+ */
 export function cycleGameSpeed(): GameSpeed {
   _gameSpeed = (_gameSpeed === 3 ? 1 : _gameSpeed + 1) as GameSpeed;
   notifyStateChange();
@@ -223,6 +242,7 @@ export function cycleGameSpeed(): GameSpeed {
 
 // ── Inspected Building ──────────────────────────────────────────────────
 
+/** Data for the currently inspected building in the inspector panel. */
 export interface InspectedBuilding {
   gridX: number;
   gridY: number;
@@ -238,10 +258,12 @@ export interface InspectedBuilding {
 let _inspected: InspectedBuilding | null = null;
 const _inspectListeners = new Set<() => void>();
 
+/** Get the currently inspected building (null if none selected). */
 export function getInspected(): InspectedBuilding | null {
   return _inspected;
 }
 
+/** Set the inspected building. Clears any inspected worker when a building is selected. */
 export function setInspected(info: InspectedBuilding | null): void {
   _inspected = info;
   // Clear worker inspection when selecting a building
@@ -256,6 +278,7 @@ export function setInspected(info: InspectedBuilding | null): void {
   }
 }
 
+/** React hook — subscribe to the inspected building state. */
 export function useInspected(): InspectedBuilding | null {
   return useSyncExternalStore(subscribeInspect, getInspected, getInspected);
 }
@@ -269,6 +292,7 @@ function subscribeInspect(listener: () => void): () => void {
 
 // ── Inspected Worker ──────────────────────────────────────────────────
 
+/** Data for the currently inspected worker in the inspector panel. */
 export interface InspectedWorker {
   name: string;
   class: 'worker' | 'party_official' | 'engineer' | 'farmer' | 'soldier' | 'prisoner';
@@ -282,10 +306,12 @@ export interface InspectedWorker {
 let _inspectedWorker: InspectedWorker | null = null;
 const _inspectWorkerListeners = new Set<() => void>();
 
+/** Get the currently inspected worker (null if none selected). */
 export function getInspectedWorker(): InspectedWorker | null {
   return _inspectedWorker;
 }
 
+/** Set the inspected worker. Clears any inspected building when a worker is selected. */
 export function setInspectedWorker(info: InspectedWorker | null): void {
   _inspectedWorker = info;
   // Clear building inspection when selecting a worker (and vice versa)
@@ -300,6 +326,7 @@ export function setInspectedWorker(info: InspectedWorker | null): void {
   }
 }
 
+/** React hook — subscribe to the inspected worker state. */
 export function useInspectedWorker(): InspectedWorker | null {
   return useSyncExternalStore(subscribeInspectWorker, getInspectedWorker, getInspectedWorker);
 }
@@ -313,6 +340,7 @@ function subscribeInspectWorker(listener: () => void): () => void {
 
 // ── Worker Assignment Mode ───────────────────────────────────────────────
 
+/** State for worker-to-building assignment mode (tap a building to assign). */
 export interface AssignmentMode {
   /** Name of the worker being assigned (used to find the entity). */
   workerName: string;
@@ -323,10 +351,12 @@ export interface AssignmentMode {
 let _assignmentMode: AssignmentMode | null = null;
 const _assignmentListeners = new Set<() => void>();
 
+/** Get the current worker assignment mode (null if not in assignment mode). */
 export function getAssignmentMode(): AssignmentMode | null {
   return _assignmentMode;
 }
 
+/** Enter or exit worker assignment mode. Clears inspected panels when entering. */
 export function setAssignmentMode(mode: AssignmentMode | null): void {
   _assignmentMode = mode;
   // Clear inspected panels when entering assignment mode
@@ -339,6 +369,7 @@ export function setAssignmentMode(mode: AssignmentMode | null): void {
   for (const listener of _assignmentListeners) listener();
 }
 
+/** React hook — subscribe to the worker assignment mode state. */
 export function useAssignmentMode(): AssignmentMode | null {
   return useSyncExternalStore(subscribeAssignment, getAssignmentMode, getAssignmentMode);
 }
@@ -355,10 +386,12 @@ function subscribeAssignment(listener: () => void): () => void {
 let _colorBlindMode = false;
 const _colorBlindListeners = new Set<() => void>();
 
+/** Whether color-blind mode is currently enabled. */
 export function isColorBlindMode(): boolean {
   return _colorBlindMode;
 }
 
+/** Enable or disable color-blind mode. Toggles a CSS class on document body. */
 export function setColorBlindMode(enabled: boolean): void {
   _colorBlindMode = enabled;
   // Toggle CSS class on body for DOM-level color-blind overrides
@@ -370,6 +403,7 @@ export function setColorBlindMode(enabled: boolean): void {
   }
 }
 
+/** React hook — subscribe to the color-blind mode state. */
 export function useColorBlindMode(): boolean {
   return useSyncExternalStore(subscribeColorBlind, isColorBlindMode, isColorBlindMode);
 }
@@ -383,6 +417,7 @@ function subscribeColorBlind(listener: () => void): () => void {
 
 // ── Notification Log ─────────────────────────────────────────────────────
 
+/** A single notification log entry with severity and optional grid location. */
 export interface NotificationEntry {
   id: number;
   message: string;
@@ -403,6 +438,15 @@ function notifyNotificationListeners(): void {
   }
 }
 
+/**
+ * Add a notification to the log (capped at 50 entries).
+ *
+ * @param message - Notification text
+ * @param severity - Alert level
+ * @param timestamp - Game tick timestamp
+ * @param gridX - Optional grid X coordinate for location-based notifications
+ * @param gridY - Optional grid Y coordinate for location-based notifications
+ */
 export function addNotification(
   message: string,
   severity: 'warning' | 'critical' | 'evacuation',
@@ -423,10 +467,12 @@ export function addNotification(
   notifyNotificationListeners();
 }
 
+/** Get the current notification log (most recent first). */
 export function getNotifications(): NotificationEntry[] {
   return _notifications;
 }
 
+/** React hook — subscribe to the notification log. */
 export function useNotifications(): NotificationEntry[] {
   return useSyncExternalStore(subscribeNotifications, getNotifications, getNotifications);
 }
@@ -440,6 +486,7 @@ function subscribeNotifications(listener: () => void): () => void {
 
 // ── Citizen Dossier Modal ─────────────────────────────────────────────────
 
+/** Data payload for the citizen dossier modal, including citizen and household info. */
 export interface CitizenDossierData {
   citizen: {
     name: string;
@@ -463,10 +510,12 @@ export interface CitizenDossierData {
 let _selectedCitizen: CitizenDossierData | null = null;
 const _citizenDossierListeners = new Set<() => void>();
 
+/** Get the currently selected citizen for the dossier modal (null if closed). */
 export function getSelectedCitizen(): CitizenDossierData | null {
   return _selectedCitizen;
 }
 
+/** Open the citizen dossier modal with the given citizen data. */
 export function openCitizenDossier(data: CitizenDossierData): void {
   _selectedCitizen = data;
   for (const listener of _citizenDossierListeners) {
@@ -474,6 +523,7 @@ export function openCitizenDossier(data: CitizenDossierData): void {
   }
 }
 
+/** Close the citizen dossier modal. */
 export function closeCitizenDossier(): void {
   _selectedCitizen = null;
   for (const listener of _citizenDossierListeners) {
@@ -481,6 +531,7 @@ export function closeCitizenDossier(): void {
   }
 }
 
+/** React hook — subscribe to the citizen dossier modal state. */
 export function useCitizenDossier(): CitizenDossierData | null {
   return useSyncExternalStore(subscribeCitizenDossier, getSelectedCitizen, getSelectedCitizen);
 }
@@ -494,6 +545,7 @@ function subscribeCitizenDossier(listener: () => void): () => void {
 
 // ── Radial Build Menu ────────────────────────────────────────────────────
 
+/** State for the radial build menu opened by tapping an empty grid cell. */
 export interface RadialMenuState {
   /** Screen position of the tap that opened the menu. */
   screenX: number;
@@ -508,10 +560,12 @@ export interface RadialMenuState {
 let _radialMenu: RadialMenuState | null = null;
 const _radialListeners = new Set<() => void>();
 
+/** Get the current radial build menu state (null if closed). */
 export function getRadialMenu(): RadialMenuState | null {
   return _radialMenu;
 }
 
+/** Open the radial build menu at the given screen/grid position. */
 export function openRadialMenu(state: RadialMenuState): void {
   _radialMenu = state;
   for (const listener of _radialListeners) {
@@ -519,6 +573,7 @@ export function openRadialMenu(state: RadialMenuState): void {
   }
 }
 
+/** Close the radial build menu. */
 export function closeRadialMenu(): void {
   _radialMenu = null;
   for (const listener of _radialListeners) {
@@ -526,6 +581,7 @@ export function closeRadialMenu(): void {
   }
 }
 
+/** React hook — subscribe to the radial build menu state. */
 export function useRadialMenu(): RadialMenuState | null {
   return useSyncExternalStore(subscribeRadial, getRadialMenu, getRadialMenu);
 }
@@ -539,6 +595,7 @@ function subscribeRadial(listener: () => void): () => void {
 
 // ── Radial Inspect Menu ───────────────────────────────────────────────────
 
+/** Categorized building type for the radial inspect menu ring display. */
 export type InspectBuildingType =
   | 'production'
   | 'housing'
@@ -548,6 +605,7 @@ export type InspectBuildingType =
   | 'construction'
   | 'general';
 
+/** A building occupant entry shown in the inspect menu (housing buildings only). */
 export interface InspectMenuOccupant {
   name: string;
   age: number;
@@ -555,6 +613,7 @@ export interface InspectMenuOccupant {
   gender: string;
 }
 
+/** State for the radial inspect menu opened by right-clicking/long-pressing a building. */
 export interface InspectMenuState {
   /** Screen position of the tap that opened the menu. */
   screenX: number;
@@ -577,10 +636,12 @@ export interface InspectMenuState {
 let _inspectMenu: InspectMenuState | null = null;
 const _inspectMenuListeners = new Set<() => void>();
 
+/** Get the current radial inspect menu state (null if closed). */
 export function getInspectMenu(): InspectMenuState | null {
   return _inspectMenu;
 }
 
+/** Open the radial inspect menu for a building at the given position. */
 export function openInspectMenu(state: InspectMenuState): void {
   _inspectMenu = state;
   for (const listener of _inspectMenuListeners) {
@@ -588,6 +649,7 @@ export function openInspectMenu(state: InspectMenuState): void {
   }
 }
 
+/** Close the radial inspect menu. */
 export function closeInspectMenu(): void {
   _inspectMenu = null;
   for (const listener of _inspectMenuListeners) {
@@ -595,6 +657,7 @@ export function closeInspectMenu(): void {
   }
 }
 
+/** React hook — subscribe to the radial inspect menu state. */
 export function useInspectMenu(): InspectMenuState | null {
   return useSyncExternalStore(subscribeInspectMenu, getInspectMenu, getInspectMenu);
 }
@@ -608,6 +671,7 @@ function subscribeInspectMenu(listener: () => void): () => void {
 
 // ── Building Inspector Panel ──────────────────────────────────────────────
 
+/** State for the full building inspector side panel. */
 export interface BuildingInspectorState {
   buildingDefId: string;
   gridX: number;
@@ -617,10 +681,12 @@ export interface BuildingInspectorState {
 let _buildingInspector: BuildingInspectorState | null = null;
 const _buildingInspectorListeners = new Set<() => void>();
 
+/** Get the current building inspector panel state (null if closed). */
 export function getBuildingInspector(): BuildingInspectorState | null {
   return _buildingInspector;
 }
 
+/** Open the building inspector panel for a building at the given position. */
 export function openBuildingInspector(state: BuildingInspectorState): void {
   _buildingInspector = state;
   for (const listener of _buildingInspectorListeners) {
@@ -628,6 +694,7 @@ export function openBuildingInspector(state: BuildingInspectorState): void {
   }
 }
 
+/** Close the building inspector panel. */
 export function closeBuildingInspector(): void {
   _buildingInspector = null;
   for (const listener of _buildingInspectorListeners) {
@@ -635,6 +702,7 @@ export function closeBuildingInspector(): void {
   }
 }
 
+/** React hook — subscribe to the building inspector panel state. */
 export function useBuildingInspector(): BuildingInspectorState | null {
   return useSyncExternalStore(subscribeBuildingInspector, getBuildingInspector, getBuildingInspector);
 }
@@ -651,10 +719,12 @@ function subscribeBuildingInspector(listener: () => void): () => void {
 let _citizenDossierIndex: number | null = null;
 const _citizenDossierIndexListeners = new Set<() => void>();
 
+/** Get the index of the citizen dossier currently viewed (null if closed). */
 export function getCitizenDossierIndex(): number | null {
   return _citizenDossierIndex;
 }
 
+/** Open a citizen dossier by ECS entity index. */
 export function openCitizenDossierByIndex(index: number): void {
   _citizenDossierIndex = index;
   for (const listener of _citizenDossierIndexListeners) {
@@ -662,6 +732,7 @@ export function openCitizenDossierByIndex(index: number): void {
   }
 }
 
+/** Close the index-based citizen dossier. */
 export function closeCitizenDossierByIndex(): void {
   _citizenDossierIndex = null;
   for (const listener of _citizenDossierIndexListeners) {
@@ -669,6 +740,7 @@ export function closeCitizenDossierByIndex(): void {
   }
 }
 
+/** React hook — subscribe to the citizen dossier index state. */
 export function useCitizenDossierIndex(): number | null {
   return useSyncExternalStore(subscribeCitizenDossierIndex, getCitizenDossierIndex, getCitizenDossierIndex);
 }
@@ -682,6 +754,7 @@ function subscribeCitizenDossierIndex(listener: () => void): () => void {
 
 // ── Cursor Tooltip ────────────────────────────────────────────────────────
 
+/** Data for the cursor tooltip showing tile info on hover. */
 export interface CursorTooltipState {
   terrain: string;
   type?: string;
@@ -697,10 +770,12 @@ export interface CursorTooltipState {
 let _cursorTooltip: CursorTooltipState | null = null;
 const _cursorTooltipListeners = new Set<() => void>();
 
+/** Get the current cursor tooltip state (null if no tile hovered). */
 export function getCursorTooltip(): CursorTooltipState | null {
   return _cursorTooltip;
 }
 
+/** Update the cursor tooltip with tile data for the hovered cell. */
 export function setCursorTooltip(state: CursorTooltipState | null): void {
   _cursorTooltip = state;
   for (const listener of _cursorTooltipListeners) {
@@ -708,6 +783,7 @@ export function setCursorTooltip(state: CursorTooltipState | null): void {
   }
 }
 
+/** React hook — subscribe to the cursor tooltip state. */
 export function useCursorTooltip(): CursorTooltipState | null {
   return useSyncExternalStore(subscribeCursorTooltip, getCursorTooltip, getCursorTooltip);
 }
@@ -760,7 +836,14 @@ export function setPlacementCallback(cb: PlacementCallback | null): void {
   _placementCallback = cb;
 }
 
-/** Called by RadialBuildMenu to place a building at a grid position. */
+/**
+ * Called by RadialBuildMenu to place a building at a grid position.
+ *
+ * @param gridX - Grid X coordinate
+ * @param gridY - Grid Y coordinate
+ * @param defId - Building definition ID to place
+ * @returns true if placement succeeded, false otherwise
+ */
 export function requestPlacement(gridX: number, gridY: number, defId: string): boolean {
   return _placementCallback?.(gridX, gridY, defId) ?? false;
 }
@@ -770,6 +853,7 @@ export function requestPlacement(gridX: number, gridY: number, defId: string): b
 let _showPoliticalPanel = false;
 const _politicalPanelListeners = new Set<() => void>();
 
+/** Whether the political entity panel is currently visible. */
 export function getPoliticalPanelVisible(): boolean {
   return _showPoliticalPanel;
 }
@@ -782,6 +866,7 @@ export function openPoliticalPanel(): void {
   }
 }
 
+/** Close the political entity panel. */
 export function closePoliticalPanel(): void {
   _showPoliticalPanel = false;
   for (const listener of _politicalPanelListeners) {
@@ -789,6 +874,7 @@ export function closePoliticalPanel(): void {
   }
 }
 
+/** React hook — subscribe to the political entity panel visibility. */
 export function usePoliticalPanel(): boolean {
   return useSyncExternalStore(subscribePoliticalPanel, getPoliticalPanelVisible, getPoliticalPanelVisible);
 }

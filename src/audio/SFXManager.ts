@@ -74,6 +74,13 @@ interface ActiveNode {
   startedAt: number;
 }
 
+/**
+ * Procedural sound effects manager (singleton).
+ *
+ * Synthesizes all game sounds in-memory using OscillatorNode + GainNode chains.
+ * Manages an active oscillator pool with automatic eviction. Supports master
+ * volume, mute toggle, and per-effect volume scaling.
+ */
 class SFXManager {
   private static instance: SFXManager | null = null;
 
@@ -83,6 +90,7 @@ class SFXManager {
   private muted = false;
   private activeNodes: ActiveNode[] = [];
 
+  /** Get or create the singleton SFXManager instance. */
   static getInstance(): SFXManager {
     if (!SFXManager.instance) {
       SFXManager.instance = new SFXManager();

@@ -197,6 +197,7 @@ export interface CitizenDossierModalProps {
   onDismiss: () => void;
 }
 
+/** Full citizen dossier modal showing personal details, stats, assignment, and history. */
 export const CitizenDossierModal: React.FC<CitizenDossierModalProps> = ({ visible, citizenIndex, onDismiss }) => {
   if (!visible) return null;
 

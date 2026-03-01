@@ -1,5 +1,6 @@
 import { pick } from './_rng';
 
+/** Satirical propaganda quotes displayed on the loading screen. */
 export const LOADING_QUOTES: string[] = [
   // -- Work & Labor ---
   'Work hard and you shall receive what you deserve. What you deserve has been pre-determined.',

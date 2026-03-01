@@ -25,6 +25,7 @@ export interface SovietModalProps {
   onDismiss?: () => void;
 }
 
+/** Reusable Soviet-styled modal with parchment or terminal dark-panel variant. */
 export const SovietModal: React.FC<SovietModalProps> = ({
   visible,
   variant = 'parchment',

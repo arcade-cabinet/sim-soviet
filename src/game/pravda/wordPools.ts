@@ -1,13 +1,14 @@
-// ─────────────────────────────────────────────────────────
-//  WORD POOLS
-//
-//  Each pool is a set of interchangeable fragments that
-//  plug into template slots. Combinatorial explosion
-//  ensures near-infinite unique headlines.
-// ─────────────────────────────────────────────────────────
+/**
+ * @module pravda/wordPools
+ *
+ * Interchangeable word/phrase pools for procedural headline generation.
+ * Each exported array is a slot that combines with template patterns
+ * to produce near-infinite unique Pravda headlines.
+ */
 
 // -- SUBJECTS: who the headline is about --
 
+/** Heroic citizen labels used as headline subjects. */
 export const HERO_SUBJECTS = [
   'HEROIC WORKERS',
   'TIRELESS LABORERS',
@@ -26,6 +27,7 @@ export const HERO_SUBJECTS = [
   'SOCIALIST HEROES',
 ] as const;
 
+/** Enemy/villain labels for threat-category headlines. */
 export const ENEMY_SUBJECTS = [
   'CIA OPERATIVES',
   'NATO PROVOCATEURS',
@@ -280,6 +282,7 @@ export const SOVIET_SPORTS = [
 
 // -- EUPHEMISMS (for spinning bad situations) --
 
+/** Soviet-style euphemisms for resource shortages, keyed by resource type. */
 export const SHORTAGE_EUPHEMISMS = {
   food: [
     'VOLUNTARY CALORIC CONSERVATION PROGRAM',

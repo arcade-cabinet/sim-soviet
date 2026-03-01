@@ -30,6 +30,7 @@ import type { GameRng } from './SeedSystem';
 //  TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Historical era identifier for the economy system's internal era tracking. */
 export type EraId =
   | 'revolution'
   | 'industrialization'
@@ -40,22 +41,26 @@ export type EraId =
   | 'perestroika'
   | 'eternal';
 
+/** Difficulty level affecting economic parameters (quota targets, fondy reliability, etc.). */
 export type DifficultyLevel = 'worker' | 'comrade' | 'tovarish';
 
 /** Resources that can be transferred between entities / allocated via fondy. */
 export type TransferableResource = 'food' | 'vodka' | 'money' | 'steel' | 'timber';
 
+/** Configuration for fondy (material allocations) delivery from the center. */
 export interface FondyConfig {
   reliability: number;
   interval: number;
   allocated: Record<TransferableResource, number>;
 }
 
+/** Runtime state for fondy deliveries, extending config with scheduling. */
 export interface FondyState extends FondyConfig {
   nextDeliveryTick: number;
   deliveryInterval: number;
 }
 
+/** Result of a fondy delivery attempt (may fail due to reliability). */
 export interface FondyDeliveryResult {
   delivered: boolean;
   allocated: Record<TransferableResource, number>;
@@ -63,12 +68,14 @@ export interface FondyDeliveryResult {
   reason: string;
 }
 
+/** Trudodni (labor-day) accounting state for the collective. */
 export interface TrudodniState {
   totalContributed: number;
   perBuilding: Map<string, number>;
   minimumRequired: number;
 }
 
+/** Blat (personal connections) state tracking. */
 export interface BlatState {
   connections: number;
   totalSpent: number;
@@ -85,12 +92,14 @@ export interface BlatEffect {
   value: number;
 }
 
+/** Per-tier ration allocation: population share and per-capita food/vodka amounts. */
 export interface RationTier {
   share: number;
   food: number;
   vodka: number;
 }
 
+/** Ration card configuration with four population tiers (worker, employee, dependent, children). */
 export interface RationConfig {
   worker: RationTier;
   employee: RationTier;
@@ -98,16 +107,19 @@ export interface RationConfig {
   children: RationTier;
 }
 
+/** Runtime state for the ration card system (active flag + current tier config). */
 export interface RationState {
   active: boolean;
   rations: RationConfig;
 }
 
+/** Aggregate food and vodka demand from the ration system for a given population. */
 export interface RationDemand {
   food: number;
   vodka: number;
 }
 
+/** A Stakhanovite movement event: a worker exceeds quota, boosting production and propaganda. */
 export interface StakhanoviteEvent {
   workerName: string;
   building: string;
@@ -117,6 +129,7 @@ export interface StakhanoviteEvent {
   announcement: string;
 }
 
+/** A single step in a multi-step production chain (building + inputs -> outputs). */
 export interface ProductionStep {
   building: string;
   input: Record<string, number>;
@@ -124,30 +137,36 @@ export interface ProductionStep {
   ticksRequired: number;
 }
 
+/** Named sequence of production steps converting raw materials into finished goods. */
 export interface ProductionChain {
   id: string;
   steps: ProductionStep[];
 }
 
+/** Result of distributing post-delivery surplus: 70% distributed, 30% reserved. */
 export interface RemainderAllocation {
   distributed: Record<TransferableResource, number>;
   reserved: Record<TransferableResource, number>;
 }
 
+/** Result of MTS (Machine-Tractor Station) equipment rental for the current tick. */
 export interface MTSResult {
   applied: boolean;
   cost: number;
   grainMultiplier: number;
 }
 
+/** Persistent state for the MTS (Machine-Tractor Station) system. */
 export interface MTSState {
   active: boolean;
   totalRentalSpent: number;
   tractorUnits: number;
 }
 
+/** Heating infrastructure tier: pechka (wood stove) -> district -> crumbling (degraded). */
 export type HeatingTier = 'pechka' | 'district' | 'crumbling';
 
+/** Static configuration for a heating tier: fuel consumption, efficiency, and capacity. */
 export interface HeatingConfig {
   consumption: { amount: number; resource: string };
   baseEfficiency: number;
@@ -155,6 +174,7 @@ export interface HeatingConfig {
   repairThreshold: number;
 }
 
+/** Runtime state for the heating subsystem (current tier, repair status, efficiency). */
 export interface HeatingState {
   tier: HeatingTier;
   ticksSinceRepair: number;
@@ -170,6 +190,7 @@ export interface HeatingResult {
   fuelConsumed: { resource: string; amount: number } | null;
 }
 
+/** A historical Soviet currency reform with redenomination rate and optional confiscation. */
 export interface CurrencyReform {
   year: number;
   name: string;
@@ -179,6 +200,7 @@ export interface CurrencyReform {
   confiscation?: { threshold: number; rate: number };
 }
 
+/** Result of applying a currency reform: before/after balance and amount lost. */
 export interface CurrencyReformResult {
   reform: CurrencyReform;
   moneyBefore: number;
@@ -186,6 +208,7 @@ export interface CurrencyReformResult {
   amountLost: number;
 }
 
+/** Full set of gameplay multipliers affected by difficulty level. */
 export interface DifficultyMultipliers {
   quotaTarget: number;
   startingResources: number;
@@ -224,6 +247,7 @@ export const BLAT_ARREST_THRESHOLD = 30;
 /** KGB investigation probability per excess blat point per tick. */
 export const KGB_INVESTIGATION_CHANCE_PER_POINT = 0.01;
 
+/** Aggregate result of a single economy system tick. */
 export interface EconomyTickResult {
   trudodniEarned: number;
   fondyDelivered: FondyDeliveryResult | null;
@@ -238,12 +262,14 @@ export interface EconomyTickResult {
   blatKgbResult: BlatKgbResult | null;
 }
 
+/** Consumer goods availability and satisfaction state (unlocks at PGT tier). */
 export interface ConsumerGoodsState {
   available: number;
   demand: number;
   satisfaction: number;
 }
 
+/** Serialized snapshot of the entire economy system for save/load persistence. */
 export interface EconomySaveData {
   trudodni: {
     totalContributed: number;
@@ -367,6 +393,7 @@ const ZERO_RESOURCES: Record<TransferableResource, number> = {
   timber: 0,
 };
 
+/** Fondy delivery configuration per historical era (reliability, interval, allocated amounts). */
 export const FONDY_BY_ERA: Record<EraId, FondyConfig> = {
   revolution: {
     reliability: 0.4,
@@ -433,6 +460,7 @@ export const DEFAULT_RATIONS: RationConfig = {
 //  CONSTANTS — Production Chains
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Multi-step production chains: bread, vodka, steel goods, and paperwork. */
 export const PRODUCTION_CHAINS: readonly ProductionChain[] = [
   {
     id: 'bread',
@@ -535,6 +563,7 @@ export type StartingResources = { [K in keyof typeof BASE_STARTING_RESOURCES]: n
 //  CONSTANTS — Difficulty Multipliers
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Full difficulty multiplier presets for worker/comrade/tovarish levels. */
 export const DIFFICULTY_MULTIPLIERS: Record<DifficultyLevel, DifficultyMultipliers> = {
   worker: {
     quotaTarget: 0.8,
@@ -612,8 +641,10 @@ const STAKHANOVITE_LAST_NAMES = [
 
 /** MTS operated from 1928 to 1958. */
 export const MTS_START_YEAR = 1928;
+/** MTS disbanded in 1958 when equipment was sold to kolkhozy. */
 export const MTS_END_YEAR = 1958;
 
+/** Default MTS parameters: tractor units available, rental cost, and grain production boost. */
 export const MTS_DEFAULTS = {
   tractorUnits: 5,
   rentalCostPerUnit: 10,
@@ -630,6 +661,7 @@ export const DISTRICT_HEATING_POPULATION = 100;
 /** Ticks at district tier before infrastructure crumbles. */
 export const DISTRICT_TO_CRUMBLING_TICKS = 1000;
 
+/** Heating configuration for each infrastructure tier (fuel type, efficiency, capacity). */
 export const HEATING_CONFIGS: Record<HeatingTier, HeatingConfig> = {
   pechka: {
     consumption: { amount: 2, resource: 'timber' },
@@ -822,6 +854,10 @@ function isWinterMonth(month: number): boolean {
 //  ECONOMY SYSTEM CLASS
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Central planned economy simulation managing trudodni, fondy, blat, rations,
+ * MTS, heating, currency reforms, production chains, and consumer goods.
+ */
 export class EconomySystem {
   private era: EraId;
   private difficulty: DifficultyLevel;

@@ -1,10 +1,13 @@
 ---
 title: Minigames — Building & Tile Triggered
-status: Complete
-implementation: src/game/minigames/MinigameRouter.ts
-tests: src/__tests__/MinigameRouter.test.ts
-last_verified: 2026-02-10
-coverage: "Full — 8 minigames, trigger routing, auto-resolve fallback"
+type: design
+status: implemented
+implementation:
+  - src/game/minigames/MinigameRouter.ts
+tests:
+  - src/__tests__/MinigameRouter.test.ts
+last_verified: 2026-03-01
+coverage: full
 ---
 
 # Minigames — Building & Tile Triggered
