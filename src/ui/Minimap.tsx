@@ -1,5 +1,8 @@
 /**
- * Minimap — 120×120 canvas rendering the 30×30 grid as colored pixels.
+ * Minimap — 120x120 rendering of the grid as colored pixels.
+ *
+ * Web: uses a `<canvas>` element for fast pixel drawing.
+ * Native: uses a grid of tiny colored `<View>` cells (no canvas available).
  *
  * Terrain colors: grass=green, water=blue, tree=dark green, mountain=gray,
  * irradiated=yellow-green, marsh=olive, rail=brown.
@@ -8,9 +11,10 @@
  */
 
 import type React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { getGridCells } from '../bridge/ECSBridge';
+import type { GridCell } from '../engine/GridTypes';
 import { GRID_SIZE, type TerrainType } from '../engine/GridTypes';
 import { SharedStyles } from './styles';
 
@@ -30,15 +34,71 @@ const TERRAIN_COLORS: Record<TerrainType, string> = {
 };
 
 const BUILDING_COLOR = '#ddd';
-const SMOG_TINT = '#c04000';
 
-/** Canvas-based minimap rendering real grid data with terrain, buildings, and smog tints. */
-export const Minimap: React.FC = () => {
+/**
+ * Determine the display color for a grid cell.
+ * Buildings override terrain color; smog tints orange.
+ */
+function getCellColor(cell: GridCell): string {
+  if (cell.type) return BUILDING_COLOR;
+  if (cell.smog > 10) return '#c04000';
+  return TERRAIN_COLORS[cell.terrain] || '#3a5a2c';
+}
+
+/** Native minimap using a grid of tiny colored View cells. */
+const NativeMinimap: React.FC = () => {
+  const [gridSnapshot, setGridSnapshot] = useState<GridCell[][] | null>(null);
+
+  useEffect(() => {
+    function refresh() {
+      const grid = getGridCells();
+      if (grid.length > 0) setGridSnapshot(grid);
+    }
+    refresh();
+    const interval = setInterval(refresh, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const cells = useMemo(() => {
+    if (!gridSnapshot) return null;
+    const views: React.ReactElement[] = [];
+    const size = Math.min(gridSnapshot.length, GRID_SIZE);
+    for (let y = 0; y < size; y++) {
+      const row = gridSnapshot[y];
+      if (!row) continue;
+      for (let x = 0; x < size; x++) {
+        const cell = row[x];
+        if (!cell) continue;
+        views.push(
+          <View
+            key={`${x}_${y}`}
+            style={{
+              position: 'absolute',
+              left: x * PIXEL_SIZE,
+              top: y * PIXEL_SIZE,
+              width: PIXEL_SIZE,
+              height: PIXEL_SIZE,
+              backgroundColor: getCellColor(cell),
+            }}
+          />,
+        );
+      }
+    }
+    return views;
+  }, [gridSnapshot]);
+
+  return (
+    <View style={[SharedStyles.panel, styles.container]}>
+      <View style={styles.nativeGrid}>{cells}</View>
+    </View>
+  );
+};
+
+/** Web minimap using a canvas element for fast pixel drawing. */
+const WebMinimap: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    if (Platform.OS !== 'web') return;
-
     function draw() {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -62,7 +122,7 @@ export const Minimap: React.FC = () => {
           // Smog tint overlay
           if (cell.smog > 10) {
             const smogAlpha = Math.min(0.5, cell.smog / 200);
-            ctx.fillStyle = SMOG_TINT;
+            ctx.fillStyle = '#c04000';
             ctx.globalAlpha = smogAlpha;
             ctx.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
             ctx.globalAlpha = 1;
@@ -83,15 +143,6 @@ export const Minimap: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  if (Platform.OS !== 'web') {
-    // Fallback for native — still a placeholder
-    return (
-      <View style={[SharedStyles.panel, styles.container]}>
-        <View style={styles.placeholder} />
-      </View>
-    );
-  }
-
   return (
     <View style={[SharedStyles.panel, styles.container]}>
       <canvas
@@ -104,6 +155,14 @@ export const Minimap: React.FC = () => {
   );
 };
 
+/** Canvas-based minimap (web) or View-based minimap (native) rendering real grid data. */
+export const Minimap: React.FC = () => {
+  if (Platform.OS !== 'web') {
+    return <NativeMinimap />;
+  }
+  return <WebMinimap />;
+};
+
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
@@ -114,8 +173,8 @@ const styles = StyleSheet.create({
     zIndex: 50,
     overflow: 'hidden',
   },
-  placeholder: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
+  nativeGrid: {
+    width: CANVAS_SIZE,
+    height: CANVAS_SIZE,
   },
 });

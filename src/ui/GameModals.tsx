@@ -141,6 +141,9 @@ const MinigameContent: React.FC<{
 }> = ({ minigame, onChoice, onClose }) => {
   if (!minigame || minigame.resolved) return null;
 
+  // Interactive minigames are handled by MinigameOverlay, not this text-choice modal
+  if (minigame.definition.interactiveType) return null;
+
   const def = minigame.definition;
 
   return (

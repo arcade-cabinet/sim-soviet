@@ -11,6 +11,7 @@ export const THE_INSPECTION: MinigameDefinition = {
   triggerType: 'periodic',
   triggerCondition: 'inspection_180',
   tickLimit: 45,
+  interactiveType: 'inspection',
   choices: [
     {
       id: 'show_honestly',

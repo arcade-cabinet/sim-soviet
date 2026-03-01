@@ -87,3 +87,48 @@ jobs:
           apk="android/app/build/outputs/apk/debug/app-debug.apk"
           test -f "$apk"
           gh release upload "$TAG" "$apk" --clobber
+
+  # iOS simulator build — verifies the project compiles for iOS without
+  # requiring code signing certificates. Production App Store builds would
+  # need signing certificates + provisioning profiles added as GitHub secrets
+  # (APPLE_CERTIFICATE_P12, APPLE_CERTIFICATE_PASSWORD, PROVISIONING_PROFILE,
+  # APPLE_TEAM_ID) and an additional xcodebuild archive + export step.
+  ios-simulator:
+    name: Build iOS Simulator
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Prebuild iOS
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Install CocoaPods dependencies
+        working-directory: ios
+        run: pod install
+
+      - name: Build for iOS Simulator
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -workspace SimSoviet.xcworkspace \
+            -scheme SimSoviet \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Upload .app artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ios-simulator-app
+          path: ios/build/Build/Products/Debug-iphonesimulator/*.app
+          retention-days: 7
+          if-no-files-found: warn

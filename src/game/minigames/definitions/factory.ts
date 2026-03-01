@@ -11,6 +11,7 @@ export const FACTORY_EMERGENCY: MinigameDefinition = {
   triggerType: 'event',
   triggerCondition: 'factory_collapse',
   tickLimit: 30,
+  interactiveType: 'factory_emergency',
   choices: [
     {
       id: 'rush_repair',

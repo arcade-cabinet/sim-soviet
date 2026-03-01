@@ -22,6 +22,7 @@ import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
 import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitialized } from './bridge/GameInit';
+import { resetAllSingletons } from './bridge/Reset';
 import Content from './Content';
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import { initDatabase, persistToIndexedDB } from './db/provider';
@@ -687,9 +688,14 @@ const App: React.FC = () => {
   const handleRestart = useCallback(() => {
     setGameOver(null);
     setGameTally(null);
-    // On native, we cannot do window.location.reload().
-    // For now, reset to main menu. A full engine reset would require
-    // clearing all module-level singletons — future work.
+    // Reset all module-level singletons so a fresh game can be initialized
+    resetAllSingletons();
+    // Reset local component state for a clean game screen
+    setAssetsReady(false);
+    setLoadingFaded(false);
+    setShowIntro(false);
+    setLoadProgress({ loaded: 0, total: TOTAL_MODEL_COUNT, name: '' });
+    loadStartRef.current = 0;
     setScreen('menu');
   }, []);
 

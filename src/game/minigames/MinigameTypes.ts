@@ -73,6 +73,9 @@ export interface MinigameChoice {
 //  DEFINITION
 // ─────────────────────────────────────────────────────────
 
+/** Interactive minigame types that use real-time gameplay instead of text choices. */
+export type InteractiveMinigameType = 'hunt' | 'factory_emergency' | 'inspection';
+
 /** Static definition of a minigame template. */
 export interface MinigameDefinition {
   /** Unique minigame identifier. */
@@ -85,12 +88,14 @@ export interface MinigameDefinition {
   triggerType: 'building_tap' | 'event' | 'periodic';
   /** Context string: building defId, event ID, or periodic qualifier. */
   triggerCondition: string;
-  /** Choices the player can make. */
+  /** Choices the player can make (used when interactiveType is not set). */
   choices: MinigameChoice[];
   /** Outcome when the player ignores the minigame (always worse). */
   autoResolve: MinigameOutcome;
   /** Ticks before auto-resolve fires (-1 = no time limit). */
   tickLimit: number;
+  /** When set, renders an interactive real-time minigame instead of text choices. */
+  interactiveType?: InteractiveMinigameType;
 }
 
 // ─────────────────────────────────────────────────────────

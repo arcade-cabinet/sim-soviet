@@ -188,7 +188,10 @@ export type DoctrineMechanicId =
   | 'grain_requisitioning'
   | 'collectivization_seizure'
   | 'stakhanovite_bonus'
-  | 'wartime_conscription';
+  | 'wartime_conscription'
+  | 'thaw_freeze_oscillation'
+  | 'stagnation_rot'
+  | 'eternal_bureaucracy';
 
 /** Effect produced by a doctrine mechanic this tick. */
 export interface DoctrineMechanicEffect {
@@ -201,6 +204,14 @@ export interface DoctrineMechanicEffect {
   popDelta: number;
   /** Production multiplier override (1.0 = no change). */
   productionMult: number;
+  /** Morale delta (positive = boost, negative = penalty). Defaults to 0. */
+  moraleDelta?: number;
+  /** Decay rate multiplier (2.0 = buildings decay twice as fast). Defaults to 1.0. */
+  decayMult?: number;
+  /** Paperwork accumulation delta (bureaucracy resource). Defaults to 0. */
+  paperworkDelta?: number;
+  /** Corruption rate multiplier (1.5 = 50% faster corruption). Defaults to 1.0. */
+  corruptionMult?: number;
 }
 
 /** Configuration for a doctrine mechanic. */

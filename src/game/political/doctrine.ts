@@ -47,6 +47,21 @@ export const DOCTRINE_MECHANICS: Record<DoctrineMechanicId, DoctrineMechanicConf
     activeEras: ['great_patriotic'],
     intervalTicks: 60, // Bi-monthly
   },
+  thaw_freeze_oscillation: {
+    id: 'thaw_freeze_oscillation',
+    activeEras: ['thaw_and_freeze'],
+    intervalTicks: 30, // Monthly check (phase changes every ~720 ticks / 2 years)
+  },
+  stagnation_rot: {
+    id: 'stagnation_rot',
+    activeEras: ['stagnation'],
+    intervalTicks: 30, // Monthly decay check
+  },
+  eternal_bureaucracy: {
+    id: 'eternal_bureaucracy',
+    activeEras: ['the_eternal'],
+    intervalTicks: 10, // Frequent paperwork accumulation
+  },
 };
 
 // ─── Mechanic Constants ─────────────────────────────────────────────────────
@@ -71,6 +86,105 @@ const WARTIME_CONSCRIPTION_RATE = 0.05;
 
 /** Production bonus during wartime (patriotic fervor). */
 const WARTIME_PRODUCTION_BONUS = 0.1;
+
+// ── Thaw/Freeze Constants ─────────────────────────────────────────────────
+
+/** Ticks per thaw/freeze phase (720 ticks ~ 2 in-game years at 30 ticks/month). */
+const THAW_FREEZE_PHASE_TICKS = 720;
+
+/** Morale boost during thaw phase. */
+const THAW_MORALE_BOOST = 5;
+
+/** Morale penalty during freeze phase. */
+const FREEZE_MORALE_PENALTY = -5;
+
+/** Production bonus during thaw phase (relaxed policies). */
+const THAW_PRODUCTION_BONUS = 0.1;
+
+/** Production penalty during freeze phase (crackdowns). */
+const FREEZE_PRODUCTION_PENALTY = 0.1;
+
+// ── Stagnation Constants ──────────────────────────────────────────────────
+
+/** Building decay rate multiplier during stagnation. */
+const STAGNATION_DECAY_MULT = 2.0;
+
+/** Base paperwork accumulation per tick during stagnation. */
+const STAGNATION_PAPERWORK_PER_TICK = 3;
+
+/** Productivity decrease per year of stagnation (cumulative). */
+const STAGNATION_PRODUCTIVITY_LOSS_PER_YEAR = 0.01;
+
+/** Corruption rate multiplier during stagnation. */
+const STAGNATION_CORRUPTION_MULT = 1.5;
+
+// ── Eternal Bureaucracy Constants ─────────────────────────────────────────
+
+/** Paperwork victory threshold — reaching this wins the "bureaucratic singularity". */
+export const ETERNAL_PAPERWORK_THRESHOLD = 5000;
+
+/** Base paperwork accumulation per tick in the eternal era. */
+const ETERNAL_PAPERWORK_BASE = 5;
+
+/** Exponential growth factor for paperwork (per 1000 existing paperwork). */
+const ETERNAL_PAPERWORK_GROWTH_FACTOR = 0.001;
+
+/** Production slowdown per 1000 paperwork accumulated. */
+const ETERNAL_BUREAUCRACY_SLOWDOWN_PER_1000 = 0.05;
+
+// ─── Thaw/Freeze State ─────────────────────────────────────────────────────
+
+/** Tracked oscillation state for the thaw/freeze mechanic. */
+export interface ThawFreezeState {
+  /** Current phase: 'thaw' or 'freeze'. */
+  phase: 'thaw' | 'freeze';
+  /** Tick when the current phase started. */
+  phaseStartTick: number;
+}
+
+/** Module-level thaw/freeze state. Persisted via serialize/deserialize. */
+let _thawFreezeState: ThawFreezeState = { phase: 'thaw', phaseStartTick: 0 };
+
+/** Get the current thaw/freeze state (for serialization and UI). */
+export function getThawFreezeState(): ThawFreezeState {
+  return { ..._thawFreezeState };
+}
+
+/** Set the thaw/freeze state (for deserialization). */
+export function setThawFreezeState(state: ThawFreezeState): void {
+  _thawFreezeState = { ...state };
+}
+
+/** Reset the thaw/freeze state (for new games). */
+export function resetThawFreezeState(): void {
+  _thawFreezeState = { phase: 'thaw', phaseStartTick: 0 };
+}
+
+// ─── Paperwork State ──────────────────────────────────────────────────────
+
+/** Module-level accumulated paperwork for stagnation/eternal mechanics. */
+let _paperwork = 0;
+
+/** Get the current paperwork accumulation. */
+export function getPaperwork(): number {
+  return _paperwork;
+}
+
+/** Set the paperwork value (for deserialization). */
+export function setPaperwork(value: number): void {
+  _paperwork = value;
+}
+
+/** Reset paperwork (for new games). */
+export function resetPaperwork(): void {
+  _paperwork = 0;
+}
+
+/** Add paperwork from doctrine effects. Returns new total. */
+export function addPaperwork(delta: number): number {
+  _paperwork = Math.max(0, _paperwork + delta);
+  return _paperwork;
+}
 
 // ─── Mechanic Implementations ───────────────────────────────────────────────
 
@@ -170,6 +284,115 @@ function applyWartimeConscription(currentPop: number, _rng: GameRng): DoctrineMe
   };
 }
 
+/**
+ * Thaw & Freeze: Oscillation between relaxed and tightened policies.
+ * Alternates every ~2 in-game years. Thaw = bonus morale + production,
+ * Freeze = penalty morale + crackdowns.
+ */
+function applyThawFreezeOscillation(totalTicks: number, _rng: GameRng): DoctrineMechanicEffect {
+  // Check if it's time to toggle phase
+  const ticksInPhase = totalTicks - _thawFreezeState.phaseStartTick;
+  if (ticksInPhase >= THAW_FREEZE_PHASE_TICKS) {
+    _thawFreezeState = {
+      phase: _thawFreezeState.phase === 'thaw' ? 'freeze' : 'thaw',
+      phaseStartTick: totalTicks,
+    };
+  }
+
+  const isThaw = _thawFreezeState.phase === 'thaw';
+
+  if (isThaw) {
+    return {
+      mechanicId: 'thaw_freeze_oscillation',
+      description: 'The Thaw: Policies relaxed. Private plots expanded. Citizens breathe easier. Temporarily.',
+      foodDelta: 0,
+      moneyDelta: 0,
+      vodkaDelta: 0,
+      popDelta: 0,
+      productionMult: 1.0 + THAW_PRODUCTION_BONUS,
+      moraleDelta: THAW_MORALE_BOOST,
+    };
+  }
+
+  return {
+    mechanicId: 'thaw_freeze_oscillation',
+    description: 'The Freeze: Policies tightened. Crackdowns resume. The thaw was, as always, temporary.',
+    foodDelta: 0,
+    moneyDelta: 0,
+    vodkaDelta: 0,
+    popDelta: 0,
+    productionMult: 1.0 - FREEZE_PRODUCTION_PENALTY,
+    moraleDelta: FREEZE_MORALE_PENALTY,
+  };
+}
+
+/**
+ * Stagnation: Buildings decay faster, paperwork accumulates,
+ * productivity decreases over time, corruption accelerates.
+ */
+function applyStagnationRot(totalTicks: number, eraStartTick: number, _rng: GameRng): DoctrineMechanicEffect {
+  // Calculate years of stagnation (360 ticks per year)
+  const ticksInStagnation = totalTicks - eraStartTick;
+  const yearsOfStagnation = Math.floor(ticksInStagnation / 360);
+
+  // Productivity loss is cumulative per year
+  const productivityLoss = Math.min(yearsOfStagnation * STAGNATION_PRODUCTIVITY_LOSS_PER_YEAR, 0.3);
+
+  return {
+    mechanicId: 'stagnation_rot',
+    description:
+      yearsOfStagnation > 5
+        ? `Year ${yearsOfStagnation} of stagnation. Productivity down ${Math.round(productivityLoss * 100)}%. The rust is structural.`
+        : `Stagnation deepens. Bureaucracy accumulates. Buildings crumble. Vodka consumption rises.`,
+    foodDelta: 0,
+    moneyDelta: 0,
+    vodkaDelta: 0,
+    popDelta: 0,
+    productionMult: 1.0 - productivityLoss,
+    decayMult: STAGNATION_DECAY_MULT,
+    paperworkDelta: STAGNATION_PAPERWORK_PER_TICK,
+    corruptionMult: STAGNATION_CORRUPTION_MULT,
+  };
+}
+
+/**
+ * The Eternal Soviet: Paperwork accumulates exponentially.
+ * All systems slow as bureaucracy overwhelms everything.
+ * Victory condition: reach the paperwork singularity threshold.
+ */
+function applyEternalBureaucracy(currentPaperwork: number, _rng: GameRng): DoctrineMechanicEffect {
+  // Exponential growth: more paperwork = faster accumulation
+  const growthBonus = Math.floor(currentPaperwork * ETERNAL_PAPERWORK_GROWTH_FACTOR);
+  const paperworkGain = ETERNAL_PAPERWORK_BASE + growthBonus;
+
+  // Systems slow down based on paperwork accumulation
+  const slowdown = Math.min(
+    Math.floor(currentPaperwork / 1000) * ETERNAL_BUREAUCRACY_SLOWDOWN_PER_1000,
+    0.5, // Cap at 50% slowdown
+  );
+
+  const nearSingularity = currentPaperwork + paperworkGain >= ETERNAL_PAPERWORK_THRESHOLD;
+
+  const desc = nearSingularity
+    ? `BUREAUCRATIC SINGULARITY IMMINENT: ${currentPaperwork + paperworkGain}/${ETERNAL_PAPERWORK_THRESHOLD} paperwork. The forms are filling themselves.`
+    : currentPaperwork > 3000
+      ? `Paperwork: ${currentPaperwork}. The city is a filing cabinet. Citizens are appendices.`
+      : currentPaperwork > 1000
+        ? `Paperwork: ${currentPaperwork}. Buildings exist only as references in other documents.`
+        : `Paperwork: ${currentPaperwork}. The bureaucracy grows. It does not know why. It does not need to.`;
+
+  return {
+    mechanicId: 'eternal_bureaucracy',
+    description: desc,
+    foodDelta: 0,
+    moneyDelta: 0,
+    vodkaDelta: 0,
+    popDelta: 0,
+    productionMult: 1.0 - slowdown,
+    paperworkDelta: paperworkGain,
+  };
+}
+
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /** Context needed to evaluate doctrine mechanics. */
@@ -182,6 +405,10 @@ export interface DoctrineContext {
   /** Quota progress as a fraction (0-1). */
   quotaProgress: number;
   rng: GameRng;
+  /** Tick when the current era started (for stagnation year tracking). */
+  eraStartTick?: number;
+  /** Current accumulated paperwork (for eternal bureaucracy). */
+  currentPaperwork?: number;
 }
 
 /**
@@ -218,6 +445,12 @@ function applyMechanic(mechanicId: DoctrineMechanicId, ctx: DoctrineContext): Do
       return applyStakhanoviteBonus(ctx.quotaProgress, ctx.rng);
     case 'wartime_conscription':
       return ctx.currentPop > 10 ? applyWartimeConscription(ctx.currentPop, ctx.rng) : null;
+    case 'thaw_freeze_oscillation':
+      return applyThawFreezeOscillation(ctx.totalTicks, ctx.rng);
+    case 'stagnation_rot':
+      return applyStagnationRot(ctx.totalTicks, ctx.eraStartTick ?? 0, ctx.rng);
+    case 'eternal_bureaucracy':
+      return applyEternalBureaucracy(ctx.currentPaperwork ?? 0, ctx.rng);
     default:
       return null;
   }

@@ -11,6 +11,7 @@ export const THE_HUNT: MinigameDefinition = {
   triggerType: 'building_tap',
   triggerCondition: 'forest',
   tickLimit: 60,
+  interactiveType: 'hunt',
   choices: [
     {
       id: 'small_party',

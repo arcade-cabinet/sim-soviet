@@ -5,8 +5,19 @@
  * entities on the game map. Also includes Raikom and doctrine mechanics.
  */
 
-export type { DoctrineContext, DoctrinePolicy } from './doctrine';
-export { evaluateDoctrineMechanics, getDoctrinePolicyForEra } from './doctrine';
+export type { DoctrineContext, DoctrinePolicy, ThawFreezeState } from './doctrine';
+export {
+  addPaperwork,
+  ETERNAL_PAPERWORK_THRESHOLD,
+  evaluateDoctrineMechanics,
+  getDoctrinePolicyForEra,
+  getPaperwork,
+  getThawFreezeState,
+  resetPaperwork,
+  resetThawFreezeState,
+  setPaperwork,
+  setThawFreezeState,
+} from './doctrine';
 export { PoliticalEntitySystem } from './PoliticalEntitySystem';
 // Public API — matches original PoliticalEntitySystem.ts exports
 export type {
