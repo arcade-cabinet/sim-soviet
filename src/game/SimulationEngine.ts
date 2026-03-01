@@ -31,6 +31,7 @@ import {
   getMetaEntity,
   getResourceEntity,
   operationalBuildings,
+  underConstruction,
 } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import {
@@ -104,6 +105,9 @@ import type { TutorialMilestone, TutorialSaveData } from './TutorialSystem';
 import { TutorialSystem } from './TutorialSystem';
 import { getWeatherProfile, type WeatherType } from './WeatherSystem';
 import { WorkerSystem } from './workers/WorkerSystem';
+import { CollectivePlanner } from './CollectivePlanner';
+import { detectConstructionDemands } from './workers/demandSystem';
+import { autoPlaceBuilding } from './workers/autoBuilder';
 
 /**
  * Callback interface for SimulationEngine → React communication.
@@ -193,6 +197,8 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
 /** Event IDs that should ignite a building when triggered. */
 const FIRE_EVENT_IDS = new Set(['cultural_palace_fire', 'power_station_explosion']);
 
+const COLLECTIVE_CHECK_INTERVAL = 30;
+
 export class SimulationEngine {
   private chronology: ChronologySystem;
   private eraSystem: EraSystem;
@@ -210,6 +216,7 @@ export class SimulationEngine {
   private tutorial: TutorialSystem;
   private achievements: AchievementTracker;
   private mandateState: PlanMandateState | null = null;
+  private collectivePlanner = new CollectivePlanner();
   private transport: TransportSystem;
   private fireSystem: FireSystem;
   private difficulty: DifficultyLevel;
@@ -743,6 +750,9 @@ export class SimulationEngine {
       this.workerSystem.resetAnnualTrudodni();
     }
 
+    // Collective Autonomy — demand detection + auto-build
+    this.tickCollective(this.chronology.getDate().totalTicks);
+
     decaySystem(politburoMods.infrastructureDecayMult * eraMods.decayMult * diffConfig.decayMultiplier);
     quotaSystem(this.quota);
 
@@ -1164,6 +1174,85 @@ export class SimulationEngine {
     // Consumer goods — satisfaction from blat + settlement tier
     const settlementTier = this.settlement.getCurrentTier();
     this.economySystem.tickConsumerGoods(r.population, settlementTier);
+  }
+
+  /**
+   * Tick the collective autonomy system.
+   * Detects demands, merges with mandates, and auto-places buildings.
+   *
+   * GDD: "Watch the settlement breathe — workers auto-assign to jobs,
+   *        paths form between buildings, production ticks"
+   */
+  private tickCollective(totalTicks: number): void {
+    if (totalTicks % COLLECTIVE_CHECK_INTERVAL !== 0) return;
+
+    // Don't auto-build during first 60 ticks (let player orient)
+    if (totalTicks < 60) return;
+
+    // Don't auto-build if there are already 3+ buildings under construction
+    if (underConstruction.entities.length >= 3) return;
+
+    const storeRef = getResourceEntity();
+    if (!storeRef) return;
+
+    const housingCap = this.getHousingCapacity();
+    const demands = detectConstructionDemands(
+      storeRef.resources.population,
+      housingCap,
+      {
+        food: storeRef.resources.food,
+        vodka: storeRef.resources.vodka,
+        power: storeRef.resources.power,
+      },
+    );
+
+    const queue = this.collectivePlanner.generateQueue(this.mandateState, demands);
+    if (queue.length === 0) return;
+
+    // Auto-place the highest priority building
+    const request = queue[0]!;
+
+    // Check material availability before placing
+    const res = storeRef.resources;
+    if (res.timber < 10 && res.steel < 5) {
+      // Can't build — notify player (but don't spam)
+      if (totalTicks % 120 === 0) {
+        this.callbacks.onAdvisor(
+          `Comrade, the collective wishes to build ${request.label}, but we lack materials. We need timber and steel.`,
+        );
+      }
+      return;
+    }
+
+    if (!this.rng) return;
+
+    const entity = autoPlaceBuilding(request.defId, this.rng);
+    if (entity) {
+      // Track mandate fulfillment
+      this.recordBuildingForMandates(request.defId);
+
+      // Notify the player with source-appropriate message
+      if (request.source === 'mandate') {
+        this.callbacks.onToast(
+          `DECREE FULFILLED: Construction of ${request.label} has begun`,
+        );
+      } else {
+        this.callbacks.onToast(
+          `WORKERS' INITIATIVE: The collective begins ${request.label}`,
+        );
+        this.callbacks.onAdvisor(
+          `The workers have started building on their own, Comrade. ${request.reason}.`,
+        );
+      }
+    }
+  }
+
+  private getHousingCapacity(): number {
+    let cap = 0;
+    for (const entity of operationalBuildings.entities) {
+      cap += entity.building.housingCap;
+    }
+    return cap;
   }
 
   /**
