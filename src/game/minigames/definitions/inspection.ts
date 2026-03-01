@@ -62,9 +62,9 @@ export const THE_INSPECTION: MinigameDefinition = {
     },
   ],
   autoResolve: {
-    blackMarks: 2,
+    blackMarks: 1,
     resources: { money: -30 },
-    announcement: 'The inspector found everything. He filled his very large notebook. Twice.',
-    severity: 'critical',
+    announcement: 'The inspector found everything. He filled his very large notebook.',
+    severity: 'warning',
   },
 };

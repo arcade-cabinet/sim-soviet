@@ -81,6 +81,7 @@ export interface SerializableEngine {
   lastDayPhase: string;
   lastThreatLevel: string;
   pendingReport: boolean;
+  pendingReportSinceTick: number;
   ended: boolean;
   rng: GameRng | undefined;
   eventHandler: (event: GameEvent) => void;
@@ -124,6 +125,7 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
       lastDayPhase: engine.lastDayPhase,
       lastThreatLevel: engine.lastThreatLevel,
       pendingReport: engine.pendingReport,
+      pendingReportSinceTick: engine.pendingReportSinceTick,
       ended: engine.ended,
       pripiskiCount: engine.pripiskiCount,
     },
@@ -226,6 +228,7 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
     engine.lastDayPhase = data.engineState.lastDayPhase;
     engine.lastThreatLevel = data.engineState.lastThreatLevel;
     engine.pendingReport = data.engineState.pendingReport;
+    engine.pendingReportSinceTick = data.engineState.pendingReportSinceTick ?? 0;
     engine.ended = data.engineState.ended;
     engine.pripiskiCount = data.engineState.pripiskiCount ?? 0;
   }

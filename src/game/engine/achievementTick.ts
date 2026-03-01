@@ -21,12 +21,9 @@ export interface AchievementContext {
 
 /**
  * Tick the achievement tracker -- update running stats and check conditions.
- * Achievement checks run every 10 ticks (not every tick) to limit overhead.
+ * Runs every tick so transient conditions (food=0, money=0) are never missed.
  */
 export function tickAchievements(ctx: AchievementContext): void {
-  const totalTicks = ctx.chronology.getDate().totalTicks;
-  if (totalTicks % 10 !== 0) return;
-
   const res = getResourceEntity();
   const date = ctx.chronology.getDate();
   const population = res?.resources.population ?? 0;
@@ -36,7 +33,7 @@ export function tickAchievements(ctx: AchievementContext): void {
     buildingsLogic.entities.length,
     population,
     date.year,
-    10 / 30, // ~0.33 seconds per 10 ticks at 30 ticks/second
+    1 / 30, // ~0.033 seconds per tick at 30 ticks/second
   );
 
   for (const ach of newUnlocks) {
