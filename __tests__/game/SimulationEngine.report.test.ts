@@ -10,6 +10,7 @@ import type { QuotaState } from '@/ecs/systems';
 import { world } from '@/ecs/world';
 import { GameGrid } from '@/game/GameGrid';
 import { SimulationEngine } from '@/game/SimulationEngine';
+import { createTestDvory } from '../playthrough/helpers';
 
 function createMockCallbacks() {
   return {
@@ -44,7 +45,8 @@ describe('SimulationEngine — Annual Report', () => {
   });
 
   it('fires onAnnualReport at quota deadline', () => {
-    createResourceStore({ food: 300, vodka: 50, population: 10 });
+    createResourceStore({ food: 300, vodka: 50, population: 0 });
+    createTestDvory(10);
     createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
     const engine = new SimulationEngine(grid, cb);
 
@@ -107,7 +109,8 @@ describe('SimulationEngine — Annual Report', () => {
     // to survive until the annual report deadline despite aggressive events
     jest.spyOn(Math, 'random').mockReturnValue(0.01);
 
-    createResourceStore({ food: 5000, vodka: 500, population: 100 });
+    createResourceStore({ food: 5000, vodka: 500, population: 0 });
+    createTestDvory(100);
     createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
     const engine = new SimulationEngine(grid, cb);
 
@@ -191,7 +194,8 @@ describe('SimulationEngine — Settlement integration', () => {
   it('syncs settlement tier to meta entity after tick', () => {
     const grid = new GameGrid();
     const cb = createMockCallbacks();
-    createResourceStore({ population: 50 });
+    createResourceStore({ population: 0 });
+    createTestDvory(50);
     createMetaStore();
     const engine = new SimulationEngine(grid, cb);
 

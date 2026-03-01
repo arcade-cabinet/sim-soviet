@@ -325,7 +325,7 @@ describe('factories', () => {
       expect(entity.resources!.vodka).toBe(50);
       expect(entity.resources!.power).toBe(0);
       expect(entity.resources!.powerUsed).toBe(0);
-      expect(entity.resources!.population).toBe(12);
+      expect(entity.resources!.population).toBe(0);
     });
 
     it('has isResourceStore tag', () => {

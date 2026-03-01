@@ -16,6 +16,7 @@ import {
   SICK_LABOR_MULT,
 } from '@/game/DiseaseSystem';
 import type { GameRng } from '@/game/SeedSystem';
+import { createTestDvory } from '../playthrough/helpers';
 
 // ── Deterministic RNG ────────────────────────────────────────────────────────
 
@@ -46,7 +47,8 @@ function emptyResult(): DiseaseTickResult {
 describe('DiseaseSystem', () => {
   beforeEach(() => {
     world.clear();
-    createResourceStore({ food: 1000, population: 10 });
+    createResourceStore({ food: 1000, population: 0 });
+    createTestDvory(10);
   });
 
   afterEach(() => {

@@ -90,6 +90,8 @@ export interface CitizenComponent {
   home?: { gridX: number; gridY: number };
   /** Dvor (household) this citizen belongs to */
   dvorId?: string;
+  /** Specific dvor member ID this citizen represents */
+  dvorMemberId?: string;
   /** Gender */
   gender?: 'male' | 'female';
   /** Age in years */

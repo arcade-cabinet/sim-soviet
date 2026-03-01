@@ -8,6 +8,7 @@
 
 import { getMetaEntity, getResourceEntity, operationalBuildings } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
+import { createDvor } from '../../src/ecs/factories/settlementFactories';
 import type { Entity, GameMeta, Resources } from '../../src/ecs/world';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
@@ -67,10 +68,28 @@ export interface PlaythroughEngine {
 }
 
 /**
+ * Create test dvory (households) with working-age adults.
+ * Each dvor gets 1 adult member (age 30, male). The population count
+ * equals the number of dvory created.
+ *
+ * Use this whenever tests need population — dvory are the canonical
+ * population source, not resources.population.
+ */
+export function createTestDvory(count: number): void {
+  for (let i = 0; i < count; i++) {
+    createDvor(`test-dvor-${i}`, `TestSurname${i}`, [
+      { name: `Test Worker ${i}`, gender: 'male', age: 30 },
+    ]);
+  }
+}
+
+/**
  * Creates a fully wired SimulationEngine for playthrough tests.
  *
  * Calls world.clear(), creates resource + meta stores, and constructs
- * the engine. If deterministicRandom is true (default), mocks Math.random
+ * the engine. If population is specified in resources, creates dvory
+ * with that many working-age adults (dvory are the canonical population
+ * source). If deterministicRandom is true (default), mocks Math.random
  * to 0.99 to suppress random events.
  */
 export function createPlaythroughEngine(options: PlaythroughOptions = {}): PlaythroughEngine {
@@ -79,8 +98,17 @@ export function createPlaythroughEngine(options: PlaythroughOptions = {}): Playt
   const grid = new GameGrid();
   const callbacks = createMockCallbacks();
 
-  createResourceStore(options.resources);
+  // Extract population from resources — it drives dvory creation, not the store default
+  const requestedPop = options.resources?.population;
+  const resourcesWithoutPop = { ...options.resources, population: 0 };
+
+  createResourceStore(resourcesWithoutPop);
   createMetaStore(options.meta);
+
+  // Create dvory for the requested population (canonical population source)
+  if (requestedPop != null && requestedPop > 0) {
+    createTestDvory(requestedPop);
+  }
 
   const engine = new SimulationEngine(grid, callbacks, undefined, options.difficulty, options.consequence);
 
