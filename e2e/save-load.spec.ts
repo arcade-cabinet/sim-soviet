@@ -14,6 +14,9 @@ import {
 } from './helpers';
 
 test.describe('Save/Load Panel', () => {
+  // Each test loads a full game (55 GLB models) — CI runners need extra time
+  test.slow();
+
   test('save panel opens from overflow menu', async ({ page }) => {
     await startGameAndDismiss(page);
 

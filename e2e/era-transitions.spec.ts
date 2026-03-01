@@ -19,6 +19,9 @@ const VALID_ERAS = [
 ];
 
 test.describe('Era System', () => {
+  // Each test loads a full game (55 GLB models) — CI runners need extra time
+  test.slow();
+
   test('starting era is REVOLUTION', async ({ page }) => {
     await startGameAndDismiss(page);
 

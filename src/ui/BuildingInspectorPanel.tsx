@@ -339,7 +339,7 @@ const ProductionRing: React.FC<{
   workerCap,
   powerOutput,
   storageContribution,
-  role,
+  role: _role,
 }) => {
   // Only show for buildings that produce something
   const hasProduction = produces || powerOutput > 0 || storageContribution > 0;

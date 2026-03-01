@@ -17,6 +17,9 @@ import {
 } from './helpers';
 
 test.describe('Game Over & Restart', () => {
+  // Each test loads a full game (55 GLB models) — CI runners need extra time
+  test.slow();
+
   test('game state remains valid under extended play', async ({ page }) => {
     await startGameAndDismiss(page);
 

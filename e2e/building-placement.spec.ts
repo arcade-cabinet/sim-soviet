@@ -8,6 +8,9 @@ import { expect, test } from '@playwright/test';
 import { getPopulation, openToolbar, startGameAndDismiss } from './helpers';
 
 test.describe('Build Toolbar', () => {
+  // Each test loads a full game (55 GLB models) — CI runners need extra time
+  test.slow();
+
   test('BUILD tab opens with ZONING sub-tab visible', async ({ page }) => {
     await startGameAndDismiss(page);
 

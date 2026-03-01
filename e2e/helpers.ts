@@ -173,7 +173,7 @@ export async function getResourceValue(page: Page, resource: string): Promise<st
  * Waits for the ZONING sub-tab to appear as confirmation.
  */
 export async function openToolbar(page: Page): Promise<void> {
-  await page.getByText('BUILD').click();
+  await page.getByText('BUILD').first().click();
   await page.getByText('ZONING').waitFor({ state: 'visible', timeout: 5_000 });
 }
 
