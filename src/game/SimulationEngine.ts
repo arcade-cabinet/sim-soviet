@@ -753,6 +753,25 @@ export class SimulationEngine {
     // Collective Autonomy — demand detection + auto-build
     this.tickCollective(this.chronology.getDate().totalTicks);
 
+    // Chairman meddling — political cost for excessive player overrides
+    if (
+      this.workerSystem.isChairmanMeddling() &&
+      this.chronology.getDate().totalTicks % 60 === 0
+    ) {
+      this.callbacks.onAdvisor(
+        'Comrade, the workers notice your constant meddling. They whisper that the chairman does not trust the collective.',
+      );
+      // 5% chance per check of a black mark when meddling
+      if (this.rng && this.rng.next() < 0.05) {
+        this.personnelFile.addMark(
+          'excessive_intervention',
+          this.chronology.getDate().totalTicks,
+          'Chairman interfered excessively with collective operations',
+        );
+        this.callbacks.onToast('BLACK MARK: Excessive interference with collective operations', 'warning');
+      }
+    }
+
     decaySystem(politburoMods.infrastructureDecayMult * eraMods.decayMult * diffConfig.decayMultiplier);
     quotaSystem(this.quota);
 
