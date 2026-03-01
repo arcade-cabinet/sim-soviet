@@ -13,6 +13,8 @@ import {
   type DemographicTickResult,
   deathCheck,
   demographicTick,
+  ERA_BIRTH_RATE_MULTIPLIER,
+  pregnancyTick,
 } from '@/ecs/systems/demographicSystem';
 import type { CitizenRenderSlot, DvorMember } from '@/ecs/world';
 import { world } from '@/ecs/world';
@@ -88,25 +90,43 @@ afterEach(() => {
 
 describe('ageCategoryFromAge', () => {
   it('returns child for age 0-11', () => {
-    expect(ageCategoryFromAge(0)).toBe('child');
-    expect(ageCategoryFromAge(5)).toBe('child');
-    expect(ageCategoryFromAge(11)).toBe('child');
+    expect(ageCategoryFromAge(0, 'male')).toBe('child');
+    expect(ageCategoryFromAge(5, 'female')).toBe('child');
+    expect(ageCategoryFromAge(11, 'male')).toBe('child');
   });
 
   it('returns adolescent for age 12-15', () => {
-    expect(ageCategoryFromAge(12)).toBe('adolescent');
-    expect(ageCategoryFromAge(15)).toBe('adolescent');
+    expect(ageCategoryFromAge(12, 'male')).toBe('adolescent');
+    expect(ageCategoryFromAge(15, 'female')).toBe('adolescent');
   });
 
-  it('returns adult for age 16-59', () => {
-    expect(ageCategoryFromAge(16)).toBe('adult');
-    expect(ageCategoryFromAge(35)).toBe('adult');
-    expect(ageCategoryFromAge(59)).toBe('adult');
+  it('returns adult for males 16-59', () => {
+    expect(ageCategoryFromAge(16, 'male')).toBe('adult');
+    expect(ageCategoryFromAge(35, 'male')).toBe('adult');
+    expect(ageCategoryFromAge(59, 'male')).toBe('adult');
   });
 
-  it('returns elder for age 60+', () => {
-    expect(ageCategoryFromAge(60)).toBe('elder');
-    expect(ageCategoryFromAge(75)).toBe('elder');
+  it('returns adult for females 16-54', () => {
+    expect(ageCategoryFromAge(16, 'female')).toBe('adult');
+    expect(ageCategoryFromAge(35, 'female')).toBe('adult');
+    expect(ageCategoryFromAge(54, 'female')).toBe('adult');
+  });
+
+  it('returns elder for females at 55 (Soviet pension law)', () => {
+    expect(ageCategoryFromAge(55, 'female')).toBe('elder');
+    expect(ageCategoryFromAge(75, 'female')).toBe('elder');
+  });
+
+  it('returns elder for males at 60', () => {
+    expect(ageCategoryFromAge(60, 'male')).toBe('elder');
+    expect(ageCategoryFromAge(75, 'male')).toBe('elder');
+  });
+
+  it('male 55-59 is adult, female 55+ is elder', () => {
+    expect(ageCategoryFromAge(55, 'male')).toBe('adult');
+    expect(ageCategoryFromAge(55, 'female')).toBe('elder');
+    expect(ageCategoryFromAge(59, 'male')).toBe('adult');
+    expect(ageCategoryFromAge(59, 'female')).toBe('elder');
   });
 });
 
@@ -207,6 +227,11 @@ describe('gender archetypes', () => {
 // Part 2: Demographic System — Aging
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** Create an empty DemographicTickResult for direct ageAllMembers() calls. */
+function emptyDemoResult(): DemographicTickResult {
+  return { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
+}
+
 describe('ageAllMembers', () => {
   it('increments every member age by 1', () => {
     createTestDvor('dvor-1', [
@@ -215,7 +240,7 @@ describe('ageAllMembers', () => {
       { name: 'Kolya', gender: 'male', age: 5 },
     ]);
 
-    ageAllMembers();
+    ageAllMembers(emptyDemoResult());
 
     const members = allMembers();
     expect(members.find((m) => m.name === 'Pyotr')!.age).toBe(31);
@@ -229,7 +254,7 @@ describe('ageAllMembers', () => {
       { name: 'Baby', gender: 'female', age: 0 },
     ]);
 
-    ageAllMembers();
+    ageAllMembers(emptyDemoResult());
 
     const baby = allMembers().find((m) => m.name === 'Baby')!;
     expect(baby.age).toBe(1);
@@ -242,7 +267,7 @@ describe('ageAllMembers', () => {
       { name: 'Kid', gender: 'male', age: 11 },
     ]);
 
-    ageAllMembers();
+    ageAllMembers(emptyDemoResult());
 
     const kid = allMembers().find((m) => m.name === 'Kid')!;
     expect(kid.age).toBe(12);
@@ -256,7 +281,7 @@ describe('ageAllMembers', () => {
       { name: 'Teen', gender: 'female', age: 15 },
     ]);
 
-    ageAllMembers();
+    ageAllMembers(emptyDemoResult());
 
     const teen = allMembers().find((m) => m.name === 'Teen')!;
     expect(teen.age).toBe(16);
@@ -264,14 +289,14 @@ describe('ageAllMembers', () => {
     expect(teen.laborCapacity).toBe(0.7);
   });
 
-  it('transitions worker to elder at age 60', () => {
+  it('transitions male worker to elder at age 60', () => {
     // Need a younger head so 'Old' gets 'worker' role, not 'head'
     createTestDvor('dvor-1', [
       { name: 'Head', gender: 'male', age: 35 },
       { name: 'Old', gender: 'male', age: 59 },
     ]);
 
-    ageAllMembers();
+    ageAllMembers(emptyDemoResult());
 
     const old = allMembers().find((m) => m.name === 'Old')!;
     expect(old.age).toBe(60);
@@ -279,10 +304,40 @@ describe('ageAllMembers', () => {
     expect(old.laborCapacity).toBe(0.5);
   });
 
+  it('transitions female worker to elder at age 55 (Soviet pension law)', () => {
+    // Use three members so the female is a plain 'worker', not 'spouse'
+    createTestDvor('dvor-1', [
+      { name: 'Head', gender: 'male', age: 35 },
+      { name: 'Spouse', gender: 'female', age: 33 },
+      { name: 'OldWoman', gender: 'female', age: 54 },
+    ]);
+
+    ageAllMembers(emptyDemoResult());
+
+    const woman = allMembers().find((m) => m.name === 'OldWoman')!;
+    expect(woman.age).toBe(55);
+    expect(woman.role).toBe('elder');
+    expect(woman.laborCapacity).toBe(0.5);
+  });
+
+  it('male at 55 remains worker with 0.7 labor capacity', () => {
+    createTestDvor('dvor-1', [
+      { name: 'Head', gender: 'male', age: 30 },
+      { name: 'MiddleAgedMan', gender: 'male', age: 54 },
+    ]);
+
+    ageAllMembers(emptyDemoResult());
+
+    const man = allMembers().find((m) => m.name === 'MiddleAgedMan')!;
+    expect(man.age).toBe(55);
+    expect(man.role).toBe('worker');
+    expect(man.laborCapacity).toBe(0.7);
+  });
+
   it('updates labor capacity with age', () => {
     createTestDvor('dvor-1', [{ name: 'Young', gender: 'male', age: 20 }]);
 
-    ageAllMembers(); // now 21 → prime working age 1.0
+    ageAllMembers(emptyDemoResult()); // now 21 → prime working age 1.0
 
     const young = allMembers().find((m) => m.name === 'Young')!;
     expect(young.laborCapacity).toBe(1.0);
@@ -294,7 +349,7 @@ describe('ageAllMembers', () => {
       { name: 'Spouse', gender: 'female', age: 42 },
     ]);
 
-    ageAllMembers();
+    ageAllMembers(emptyDemoResult());
 
     const head = allMembers().find((m) => m.name === 'Head')!;
     const spouse = allMembers().find((m) => m.name === 'Spouse')!;
@@ -343,7 +398,7 @@ describe('birthCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001; // always produce birth
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0 };
+    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
     birthCheck(lowRng, 1.0, result);
 
     if (result.births > 0) {
@@ -363,7 +418,7 @@ describe('birthCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001;
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0 };
+    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
     birthCheck(lowRng, 1.0, result);
 
     expect(result.births).toBe(0);
@@ -378,7 +433,7 @@ describe('birthCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001;
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0 };
+    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
     birthCheck(lowRng, 1.0, result);
 
     expect(result.births).toBe(0);
@@ -395,7 +450,7 @@ describe('birthCheck', () => {
     const borderRng = createTestRng();
     borderRng.random = () => 0.008; // just above 15%/12 * 0.5 ≈ 0.00625
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0 };
+    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
     birthCheck(borderRng, 0.0, result); // food level 0 → ×0.5
 
     expect(result.births).toBe(0);
@@ -417,7 +472,7 @@ describe('birthCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001;
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0 };
+    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
     birthCheck(lowRng, 1.0, result);
 
     expect(result.births).toBe(0);
@@ -438,7 +493,7 @@ describe('deathCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001; // always die
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0 };
+    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
     deathCheck(lowRng, 1.0, result);
 
     expect(result.deaths).toBeGreaterThan(0);
@@ -458,7 +513,7 @@ describe('deathCheck', () => {
     const rng = createTestRng();
     rng.random = () => 0.005;
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0 };
+    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
     deathCheck(rng, 1.0, result);
 
     // The infant should be at higher risk than the adult
@@ -481,7 +536,7 @@ describe('deathCheck', () => {
     const rng = createTestRng();
     rng.random = () => 0.03; // 3% — should survive normally but die when starving
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0 };
+    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
     deathCheck(rng, 0.0, result); // food level 0 → starvation modifier
 
     // With starvation, a 30-year-old's death chance should be higher
@@ -497,7 +552,7 @@ describe('deathCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001;
 
-    deathCheck(lowRng, 1.0, { births: 0, deaths: 0, aged: 0, newDvory: 0 });
+    deathCheck(lowRng, 1.0, { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] });
 
     const members = allMembers();
     expect(members.find((m) => m.name === 'Dying')).toBeUndefined();
@@ -512,7 +567,7 @@ describe('deathCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001;
 
-    deathCheck(lowRng, 1.0, { births: 0, deaths: 0, aged: 0, newDvory: 0 });
+    deathCheck(lowRng, 1.0, { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] });
 
     // The dvor should be removed from the world
     expect(dvory.entities.length).toBe(beforeDvory - 1);

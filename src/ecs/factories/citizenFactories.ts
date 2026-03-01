@@ -43,7 +43,7 @@ export function computeRenderSlot(
 ): CitizenRenderSlot {
   return {
     gender,
-    ageCategory: ageCategoryFromAge(age),
+    ageCategory: ageCategoryFromAge(age, gender),
     citizenClass,
     dotColor: CITIZEN_DOT_COLORS[citizenClass] ?? '#757575',
     dialoguePool: CLASS_TO_DIALOGUE_POOL[citizenClass] ?? 'worker',
@@ -81,7 +81,7 @@ export function createCitizen(
     gender,
     age,
     dvorId,
-    memberRole: memberRoleForAge(age),
+    memberRole: memberRoleForAge(age, gender),
   };
 
   const entity: Entity = {
