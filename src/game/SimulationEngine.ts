@@ -1226,7 +1226,7 @@ export class SimulationEngine {
 
     // Check material availability before placing
     const res = storeRef.resources;
-    if (res.timber < 10 && res.steel < 5) {
+    if (res.timber < 10 || res.steel < 5) {
       // Can't build — notify player (but don't spam)
       if (totalTicks % 120 === 0) {
         this.callbacks.onAdvisor(
@@ -1554,6 +1554,7 @@ export class SimulationEngine {
 
       // Reset personnel file marks to 2 (design: fresh-ish start per era)
       this.personnelFile.resetForNewEra();
+      this.workerSystem.resetOverrideCount();
 
       // Fire callback for UI (era assignment briefing modal)
       this.callbacks.onEraChanged?.(newEra);
