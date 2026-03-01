@@ -43,6 +43,12 @@ export const FOOD_CRITICAL_THRESHOLD = 1.5;
 /** Food per capita below this triggers urgent farm demand. */
 export const FOOD_DEMAND_THRESHOLD = 3.0;
 
+/** Vodka per capita below this triggers urgent distillery demand. */
+export const VODKA_DEMAND_THRESHOLD = 1.0;
+
+/** Vodka per capita below this is a critical shortage. */
+export const VODKA_CRITICAL_THRESHOLD = 0.3;
+
 /** Housing occupancy ratio at or above this triggers urgent demand. */
 export const HOUSING_OCCUPANCY_THRESHOLD = 0.8;
 
@@ -51,6 +57,7 @@ export const HOUSING_OCCUPANCY_THRESHOLD = 0.8;
 const HOUSING_SUGGESTIONS = ['workers-house-a', 'workers-house-b'];
 const FOOD_SUGGESTIONS = ['collective-farm-hq'];
 const POWER_SUGGESTIONS = ['power-station'];
+const VODKA_SUGGESTIONS = ['vodka-distillery'];
 
 // ── Detection ─────────────────────────────────────────────────────────────────
 
@@ -80,6 +87,10 @@ export function detectConstructionDemands(
   // ── Power demand ────────────────────────────────────────────────────────
   const powerDemand = detectPowerDemand();
   if (powerDemand) demands.push(powerDemand);
+
+  // ── Vodka production demand ──────────────────────────────────────────
+  const vodkaDemand = detectVodkaDemand(population, resources.vodka);
+  if (vodkaDemand) demands.push(vodkaDemand);
 
   return demands;
 }
@@ -156,4 +167,30 @@ function detectPowerDemand(): ConstructionDemand | null {
     suggestedDefIds: POWER_SUGGESTIONS,
     reason: `${unpoweredCount} building${unpoweredCount > 1 ? 's' : ''} without power — construct a power station`,
   };
+}
+
+function detectVodkaDemand(population: number, vodka: number): ConstructionDemand | null {
+  if (population <= 0) return null;
+
+  const vodkaPerCapita = vodka / population;
+
+  if (vodkaPerCapita < VODKA_CRITICAL_THRESHOLD) {
+    return {
+      category: 'vodka_production',
+      priority: 'critical',
+      suggestedDefIds: VODKA_SUGGESTIONS,
+      reason: `Vodka per capita (${vodkaPerCapita.toFixed(1)}) is critically low — morale plummeting`,
+    };
+  }
+
+  if (vodkaPerCapita < VODKA_DEMAND_THRESHOLD) {
+    return {
+      category: 'vodka_production',
+      priority: 'urgent',
+      suggestedDefIds: VODKA_SUGGESTIONS,
+      reason: `Vodka per capita (${vodkaPerCapita.toFixed(1)}) is below safe levels — build a distillery`,
+    };
+  }
+
+  return null;
 }

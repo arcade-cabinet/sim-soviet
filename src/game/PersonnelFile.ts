@@ -228,6 +228,22 @@ export class PersonnelFile {
     return this.history;
   }
 
+  /** Reset marks after rehabilitation (gulag return). */
+  resetForRehabilitation(marksReset: number, tick: number): void {
+    this.blackMarks = marksReset;
+    this.commendations = 0;
+    this.lastMarkAddedTick = -Infinity;
+    this.lastDecayTick = tick;
+
+    this.history.push({
+      tick,
+      type: 'commendation',
+      source: 'rehabilitation',
+      amount: 0,
+      description: `Comrade Chairman rehabilitated after corrective labor. Marks reset to ${marksReset}.`,
+    });
+  }
+
   /** Reset marks to 2 (era transition) */
   resetForNewEra(): void {
     this.blackMarks = 2;

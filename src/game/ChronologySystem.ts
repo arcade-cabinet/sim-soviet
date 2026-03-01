@@ -20,6 +20,7 @@ import {
   MONTHS_PER_YEAR,
   type Season,
   type SeasonProfile,
+  TICKS_PER_YEAR,
 } from './Chronology';
 import type { GameRng } from './SeedSystem';
 import {
@@ -107,6 +108,17 @@ export class ChronologySystem {
    */
   getDayProgress(): number {
     return (this.tickWithinDay * HOURS_PER_TICK + (this.date.hour % HOURS_PER_TICK)) / 24;
+  }
+
+  /**
+   * Advance the calendar by a number of years (for rehabilitation time skip).
+   * Updates totalTicks accordingly but does not fire per-tick systems.
+   */
+  advanceYears(years: number): void {
+    this.date.year += years;
+    this.date.totalTicks += years * TICKS_PER_YEAR;
+    this.season = getSeasonForMonth(this.date.month);
+    this.weather = rollWeather(this.season.season, this.rng);
   }
 
   // ── Core tick ──────────────────────────────────────────

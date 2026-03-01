@@ -63,11 +63,32 @@ export interface TrudodniAccrualResult {
   memberCount: number;
 }
 
+// ── Per-Building Trudodni Tracking ──────────────────────────────────────────
+
+/** Accumulated trudodni per building (keyed by building assignment string, typically "gridX,gridY"). */
+const buildingTrudodniMap = new Map<string, number>();
+
+/** Get the accumulated trudodni for a specific building. */
+export function getBuildingTrudodni(buildingId: string): number {
+  return buildingTrudodniMap.get(buildingId) ?? 0;
+}
+
+/** Get the full per-building trudodni map (read-only snapshot). */
+export function getAllBuildingTrudodni(): ReadonlyMap<string, number> {
+  return buildingTrudodniMap;
+}
+
+/** Reset all per-building trudodni tracking (e.g., on new game or annual reset). */
+export function resetBuildingTrudodni(): void {
+  buildingTrudodniMap.clear();
+}
+
 /**
  * Accrue monthly trudodni for all dvor members with citizen entities.
  *
  * For each citizen entity linked to a dvor, calculates trudodni earned
  * based on their category and updates the corresponding DvorMember.trudodniEarned.
+ * Also accumulates trudodni per building assignment.
  */
 export function accrueTrudodni(): TrudodniAccrualResult {
   let totalTrudodni = 0;
@@ -102,6 +123,10 @@ export function accrueTrudodni(): TrudodniAccrualResult {
       member.trudodniEarned += monthlyTrudodni;
       totalTrudodni += monthlyTrudodni;
       memberCount++;
+
+      // Per-building accrual: assignment is the building identifier
+      const buildingId = citizenInfo.assignment;
+      buildingTrudodniMap.set(buildingId, (buildingTrudodniMap.get(buildingId) ?? 0) + monthlyTrudodni);
     }
   }
 

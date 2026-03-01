@@ -49,6 +49,7 @@ import {
   setStarvationCallback,
   storageSystem,
 } from '@/ecs/systems';
+import { world } from '@/ecs/world';
 import type { AchievementTrackerSaveData } from './AchievementTracker';
 import { AchievementTracker } from './AchievementTracker';
 import { TICKS_PER_YEAR } from './Chronology';
@@ -101,11 +102,11 @@ import { calculatePrivatePlotProduction } from './PrivatePlotSystem';
 import type { PolitburoSaveData } from './politburo';
 import { PolitburoSystem } from './politburo';
 import type { PoliticalEntitySaveData } from './political';
-import { PoliticalEntitySystem } from './political';
+import { addPaperwork, getPaperwork, PoliticalEntitySystem } from './political';
 import type { PravdaSaveData } from './pravda';
 import { PravdaSystem } from './pravda';
-import type { ConsequenceLevel, DifficultyLevel, ScoringSystemSaveData } from './ScoringSystem';
-import { DIFFICULTY_PRESETS, eraIdToIndex, ScoringSystem } from './ScoringSystem';
+import type { ConsequenceConfig, ConsequenceLevel, DifficultyLevel, ScoringSystemSaveData } from './ScoringSystem';
+import { CONSEQUENCE_PRESETS, DIFFICULTY_PRESETS, eraIdToIndex, ScoringSystem } from './ScoringSystem';
 import type { GameRng } from './SeedSystem';
 import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from './SettlementSystem';
 import { SettlementSystem } from './SettlementSystem';
@@ -152,6 +153,18 @@ export interface SimCallbacks {
   onAchievement?: (name: string, description: string) => void;
   /** Fired on game over with complete tally data for the summary screen. */
   onGameTally?: (tally: TallyData) => void;
+  /** Fired when player is rehabilitated (non-permadeath consequence modes). */
+  onRehabilitation?: (data: RehabilitationData) => void;
+}
+
+/** Data passed to the rehabilitation modal after gulag return. */
+export interface RehabilitationData {
+  yearsAway: number;
+  buildingsLost: number;
+  workersLost: number;
+  resourcesLost: { money: number; food: number; vodka: number };
+  marksReset: number;
+  consequenceLevel: ConsequenceLevel;
 }
 
 /** Serialized dvor household for save persistence. */
@@ -935,10 +948,15 @@ export class SimulationEngine {
     this.lastThreatLevel = currentThreat;
 
     if (this.personnelFile.isArrested()) {
-      this.endGame(
-        false,
-        'Your personnel file has been reviewed. You have been declared an Enemy of the People. No further correspondence is expected.',
-      );
+      const consequenceConfig = CONSEQUENCE_PRESETS[this.scoring.getConsequence()];
+      if (consequenceConfig.permadeath) {
+        this.endGame(
+          false,
+          'Your personnel file has been reviewed. You have been declared an Enemy of the People. No further correspondence is expected.',
+        );
+      } else {
+        this.applyRehabilitation(consequenceConfig);
+      }
     }
 
     // Tutorial System — check milestones for progressive disclosure (Era 1)
@@ -1504,6 +1522,9 @@ export class SimulationEngine {
     }
 
     // Build doctrine context for era-specific mechanics
+    const currentEraDef = this.eraSystem.getCurrentEra();
+    const gameStartYear = 1917; // Game always starts at 1917
+    const eraStartTick = (currentEraDef.startYear - gameStartYear) * TICKS_PER_YEAR;
     const doctrineCtx =
       this.rng && store
         ? {
@@ -1514,6 +1535,8 @@ export class SimulationEngine {
             currentMoney: store.resources.money,
             quotaProgress: this.quota.target > 0 ? this.quota.current / this.quota.target : 0,
             rng: this.rng,
+            eraStartTick,
+            currentPaperwork: getPaperwork(),
           }
         : undefined;
 
@@ -1559,6 +1582,10 @@ export class SimulationEngine {
             this.workerSystem.removeWorkersByCount(-effect.popDelta, 'doctrine');
           }
         }
+      }
+      // Track paperwork accumulation from doctrine effects
+      if (effect.paperworkDelta && effect.paperworkDelta > 0) {
+        addPaperwork(effect.paperworkDelta);
       }
       if (effect.description) {
         this.callbacks.onToast(effect.description, 'warning');
@@ -1759,6 +1786,80 @@ export class SimulationEngine {
       });
       this.callbacks.onGameTally(tally);
     }
+  }
+
+  /**
+   * Rehabilitation flow: non-permadeath consequence modes.
+   * Destroys buildings, removes workers, skips time, resets marks, resumes play.
+   */
+  private applyRehabilitation(config: ConsequenceConfig): void {
+    const store = getResourceEntity();
+    const rng = this.rng;
+
+    // 1. Destroy buildings based on survival rate
+    const allBuildings = [...buildingsLogic.entities];
+    let buildingsLost = 0;
+    for (const entity of allBuildings) {
+      const roll = rng ? rng.random() : Math.random();
+      if (roll > config.buildingSurvival) {
+        this.grid.setCell(entity.position.gridX, entity.position.gridY, null);
+        world.remove(entity);
+        buildingsLost++;
+      }
+    }
+
+    // 2. Remove workers based on survival rate
+    const totalPop = store?.resources.population ?? 0;
+    const workersToRemove = Math.floor(totalPop * (1 - config.workerSurvival));
+    const workersLost = workersToRemove;
+    if (workersToRemove > 0) {
+      this.workerSystem.removeWorkersByCount(workersToRemove, 'gulag rehabilitation losses');
+    }
+
+    // 3. Reduce resources based on survival rate
+    const resourcesLost = { money: 0, food: 0, vodka: 0 };
+    if (store) {
+      const r = store.resources;
+      const moneyLost = Math.floor(r.money * (1 - config.resourceSurvival));
+      const foodLost = Math.floor(r.food * (1 - config.resourceSurvival));
+      const vodkaLost = Math.floor(r.vodka * (1 - config.resourceSurvival));
+      resourcesLost.money = moneyLost;
+      resourcesLost.food = foodLost;
+      resourcesLost.vodka = vodkaLost;
+      r.money -= moneyLost;
+      r.food -= foodLost;
+      r.vodka -= vodkaLost;
+    }
+
+    // 4. Skip time forward
+    this.chronology.advanceYears(config.returnDelayYears);
+
+    // 5. Reset personnel file marks
+    const newTick = this.chronology.getDate().totalTicks;
+    this.personnelFile.resetForRehabilitation(config.marksReset, newTick);
+
+    // 6. Apply score penalty
+    this.scoring.onKGBLoss(workersLost);
+
+    // 7. Sync population from remaining dvory
+    if (store) {
+      store.resources.population = this.workerSystem.syncPopulationFromDvory();
+    }
+
+    // 8. Notify UI
+    this.callbacks.onRehabilitation?.({
+      yearsAway: config.returnDelayYears,
+      buildingsLost,
+      workersLost,
+      resourcesLost,
+      marksReset: config.marksReset,
+      consequenceLevel: this.scoring.getConsequence(),
+    });
+
+    this.callbacks.onToast(
+      `You have been rehabilitated after ${config.returnDelayYears} year${config.returnDelayYears > 1 ? 's' : ''} in the gulag.`,
+      'warning',
+    );
   }
 
   /**

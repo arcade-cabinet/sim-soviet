@@ -22,6 +22,7 @@ import {
 } from './constants';
 import { calculateCoupChance, calculatePurgeChance } from './coups';
 import { MINISTRY_EVENTS } from './events';
+import { LEADER_MODIFIERS } from './leaderModifiers';
 import {
   clamp,
   generateGeneralSecretary,
@@ -179,6 +180,13 @@ export class PolitburoSystem {
   private recalculateModifiers(): void {
     const mods: MinistryModifiers = { ...DEFAULT_MODIFIERS };
 
+    // Apply General Secretary personality modifiers first (full strength)
+    const gsOverrides = LEADER_MODIFIERS[this.state.generalSecretary.personality];
+    if (gsOverrides) {
+      applyMinisterOverrides(mods, gsOverrides, 1.0);
+    }
+
+    // Then layer minister personality x ministry modifiers (scaled by competence)
     for (const [ministry, minister] of this.state.ministers) {
       const overrides = PERSONALITY_MINISTRY_MATRIX[ministry]?.[minister.personality];
       if (!overrides) continue;
