@@ -1,13 +1,12 @@
-// __tests__/game/CollectiveAutonomy.test.ts
 import { GRID_SIZE } from '@/config';
 import { underConstruction } from '@/ecs/archetypes';
-import { createBuilding, createGrid, createResourceStore, createMetaStore } from '@/ecs/factories';
+import { createBuilding, createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { CollectivePlanner } from '@/game/CollectivePlanner';
-import { detectConstructionDemands } from '@/game/workers/demandSystem';
-import { autoPlaceBuilding } from '@/game/workers/autoBuilder';
 import { createPlanMandateState } from '@/game/PlanMandates';
 import { GameRng } from '@/game/SeedSystem';
+import { autoPlaceBuilding } from '@/game/workers/autoBuilder';
+import { detectConstructionDemands } from '@/game/workers/demandSystem';
 
 describe('Collective Autonomy Integration', () => {
   let planner: CollectivePlanner;
@@ -44,9 +43,7 @@ describe('Collective Autonomy Integration', () => {
   });
 
   it('mandate-driven: unfulfilled mandate triggers auto-placement', () => {
-    const mandateState = createPlanMandateState([
-      { defId: 'power-station', required: 1, label: 'Power Station' },
-    ]);
+    const mandateState = createPlanMandateState([{ defId: 'power-station', required: 1, label: 'Power Station' }]);
 
     const queue = planner.generateQueue(mandateState, []);
     expect(queue.length).toBe(1);
@@ -57,9 +54,7 @@ describe('Collective Autonomy Integration', () => {
   });
 
   it('does not auto-place when queue is empty (all fulfilled, no demands)', () => {
-    const mandateState = createPlanMandateState([
-      { defId: 'power-station', required: 1, label: 'Power Station' },
-    ]);
+    const mandateState = createPlanMandateState([{ defId: 'power-station', required: 1, label: 'Power Station' }]);
     mandateState.mandates[0]!.fulfilled = 1;
 
     const demands = detectConstructionDemands(30, 100, { food: 500, vodka: 50, power: 100 });
