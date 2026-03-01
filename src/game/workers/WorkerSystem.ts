@@ -100,6 +100,7 @@ export class WorkerSystem {
   private collectiveFocus: CollectiveFocus = 'balanced';
   private tickCounter = 0;
   private trudodniTracker: Map<Entity, number> = new Map();
+  private overrideCount = 0;
 
   constructor(rng?: GameRng) {
     this.rng = rng ?? null;
@@ -256,6 +257,11 @@ export class WorkerSystem {
       stats.assignmentSource = source;
     }
 
+    // Track player overrides for political cost
+    if (source === 'player') {
+      this.overrideCount++;
+    }
+
     return true;
   }
 
@@ -269,6 +275,21 @@ export class WorkerSystem {
     if (stats) {
       stats.assignmentDuration = 0;
     }
+  }
+
+  /** Get the number of player overrides this era. */
+  getOverrideCount(): number {
+    return this.overrideCount;
+  }
+
+  /** Returns true if the chairman has been meddling (5+ overrides). */
+  isChairmanMeddling(): boolean {
+    return this.overrideCount >= 5;
+  }
+
+  /** Reset override count (called on era transitions). */
+  resetOverrideCount(): void {
+    this.overrideCount = 0;
   }
 
   // ── KGB Arrest (called externally) ─────────────────────
