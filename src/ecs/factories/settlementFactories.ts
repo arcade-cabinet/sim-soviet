@@ -15,7 +15,7 @@ import {
 } from '@/ai/names';
 import type { DvorComponent, DvorMember, Entity } from '../world';
 import { world } from '../world';
-import { laborCapacityForAge, memberRoleForAge } from './demographics';
+import { laborCapacityForAge, memberRoleForAge, RETIREMENT_AGE } from './demographics';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -261,8 +261,7 @@ export function createDvor(id: string, surname: string, memberSeeds: DvorMemberS
   }));
 
   // Designate head: first working-age male, or first working-age member
-  const retireAge = (g: 'male' | 'female') => (g === 'male' ? 60 : 55);
-  const workingAge = members.filter((m) => m.age >= 16 && m.age < retireAge(m.gender));
+  const workingAge = members.filter((m) => m.age >= 16 && m.age < RETIREMENT_AGE[m.gender]);
   const headCandidate = workingAge.find((m) => m.gender === 'male') ?? workingAge[0] ?? members[0]!;
   headCandidate.role = 'head';
 

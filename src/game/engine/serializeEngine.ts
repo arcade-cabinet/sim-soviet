@@ -150,15 +150,18 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
     // Per-worker stats keyed by dvor linkage
     workers: [...citizens]
       .filter((c) => c.citizen.dvorId && c.citizen.dvorMemberId)
-      .map(
-        (c): WorkerStatSaveEntry => ({
-          dvorId: c.citizen.dvorId!,
-          dvorMemberId: c.citizen.dvorMemberId!,
-          citizenClass: c.citizen.class,
-          stats: { ...engine.workerSystem.getStatsMap().get(c)! },
-        }),
-      )
-      .filter((w) => w.stats != null),
+      .reduce<WorkerStatSaveEntry[]>((acc, c) => {
+        const stats = engine.workerSystem.getStatsMap().get(c);
+        if (stats) {
+          acc.push({
+            dvorId: c.citizen.dvorId!,
+            dvorMemberId: c.citizen.dvorMemberId!,
+            citizenClass: c.citizen.class,
+            stats: { ...stats },
+          });
+        }
+        return acc;
+      }, []),
   };
 }
 

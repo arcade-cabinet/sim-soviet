@@ -140,6 +140,7 @@ test.describe('Game Flow', () => {
 
     // Date should not advance while paused
     const pausedDate = await getDateText(page);
+    expect(pausedDate).toBe(initialDate);
 
     // Resume
     await page.keyboard.press('Space');

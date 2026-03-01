@@ -1,4 +1,4 @@
-import { citizens, maleCitizens } from '@/ecs/archetypes';
+import { citizens, getResourceEntity, maleCitizens } from '@/ecs/archetypes';
 import { createCitizen, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
@@ -221,8 +221,7 @@ describe('removeWorkersByCountMaleFirst', () => {
 
     system.removeWorkersByCountMaleFirst(3, 'conscription');
 
-    const { getResourceEntity } = require('@/ecs/archetypes');
-    const store = getResourceEntity();
+    const store = getResourceEntity()!;
     expect(store.resources.population).toBe(2);
   });
 });

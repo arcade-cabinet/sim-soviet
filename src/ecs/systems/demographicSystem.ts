@@ -37,6 +37,7 @@ export interface AgedIntoWorkingRef {
 
 /** Result of a single demographic tick. */
 export interface DemographicTickResult {
+  /** Number of conceptions this tick (pregnancy starts; actual births occur later in pregnancyTick). */
   births: number;
   deaths: number;
   aged: number;
@@ -137,7 +138,7 @@ export function getWorkingMotherPenalty(dvor: DvorComponent, member: DvorMember)
   if (member.age < 16 || member.age >= FEMALE_ELDER_AGE) return 1.0;
 
   // Check for young children (age 0-3) in the dvor
-  const hasYoungChild = dvor.members.some((m) => m.age >= 0 && m.age <= YOUNG_CHILD_MAX_AGE);
+  const hasYoungChild = dvor.members.some((m) => m.age <= YOUNG_CHILD_MAX_AGE);
   if (!hasYoungChild) return 1.0;
 
   // Check for elder available for childcare
@@ -404,10 +405,11 @@ const FORMATION_PROBABILITY = 0.1;
  * with female from another dvor. Each eligible pair has ~10% annual
  * probability of forming a new household.
  *
- * @param rng    - Seeded RNG for pairing probability, or null for Math.random
- * @param result - Mutable result object to record new dvor count
+ * @param rng        - Seeded RNG for pairing probability, or null for Math.random
+ * @param result     - Mutable result object to record new dvor count
+ * @param totalTicks - Current simulation tick for deterministic ID generation
  */
-export function householdFormation(rng: GameRng | null, result: DemographicTickResult): void {
+export function householdFormation(rng: GameRng | null, result: DemographicTickResult, totalTicks = 0): void {
   // Collect eligible singles: males and females from different dvory
   const eligibleMales: Array<{ member: DvorMember; dvorEntity: (typeof dvory.entities)[number] }> = [];
   const eligibleFemales: Array<{ member: DvorMember; dvorEntity: (typeof dvory.entities)[number] }> = [];
@@ -453,9 +455,8 @@ export function householdFormation(rng: GameRng | null, result: DemographicTickR
       removeMemberFromDvor(male.dvorEntity, male.member.id, result);
       removeMemberFromDvor(female.dvorEntity, female.member.id, result);
 
-      // Create new dvor
-      const timestamp = Date.now();
-      const newDvorId = `formed-${timestamp}-${male.member.id}`;
+      // Create new dvor — use tick for deterministic IDs
+      const newDvorId = `formed-${totalTicks}-${male.member.id}`;
 
       const newMembers: DvorMember[] = [
         {
@@ -476,7 +477,7 @@ export function householdFormation(rng: GameRng | null, result: DemographicTickR
         headOfHousehold: newMembers[0]!.id,
         privatePlotSize: 0.25,
         privateLivestock: { cow: 0, pig: 0, sheep: 0, poultry: 0 },
-        joinedTick: 0,
+        joinedTick: totalTicks,
         loyaltyToCollective: 50,
         surname,
         nextMemberId: 2,
@@ -507,9 +508,14 @@ function removeMemberFromDvor(
     return;
   }
 
-  // If head was removed, trigger succession
+  // If head was removed, trigger succession — prefer working-age adults
   if (dvor.headOfHousehold === memberId) {
-    const newHead = dvor.members.filter((m) => m.age >= 16).sort((a, b) => b.age - a.age)[0];
+    const adults = dvor.members.filter((m) => m.age >= 16);
+    // Prefer working-age adults (under retirement age) over elders
+    const retireAge = (g: 'male' | 'female') => (g === 'male' ? MALE_ELDER_AGE : FEMALE_ELDER_AGE);
+    const workingAge = adults.filter((m) => m.age < retireAge(m.gender));
+    const candidates = workingAge.length > 0 ? workingAge : adults;
+    const newHead = candidates.sort((a, b) => b.age - a.age)[0];
     if (newHead) {
       dvor.headOfHousehold = newHead.id;
       newHead.role = 'head';
@@ -553,7 +559,7 @@ export function demographicTick(
   // Year boundary: age all members, then check household formation
   if (totalTicks % TICKS_PER_YEAR === 0) {
     result.aged = ageAllMembers(result);
-    householdFormation(rng, result);
+    householdFormation(rng, result, totalTicks);
   }
 
   // Month boundary: advance pregnancies, then check new conceptions, then deaths

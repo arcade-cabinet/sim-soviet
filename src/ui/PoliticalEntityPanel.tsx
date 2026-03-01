@@ -17,6 +17,9 @@ import { Colors, monoFont } from './styles';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
+const VALID_THREAT_LEVELS = new Set(['safe', 'watched', 'endangered', 'critical']);
+const VALID_SETTLEMENT_TIERS = new Set(['selo', 'posyolok', 'pgt', 'gorod']);
+
 const ROLE_ICONS: Record<PoliticalRole, string> = {
   politruk: '\u262D',
   kgb_agent: '\u{1F50D}',
@@ -121,6 +124,8 @@ const EntityRow: React.FC<{
     <Pressable
       onPress={() => onTap(entity.id)}
       style={({ pressed }) => [styles.entityRow, pressed && styles.entityRowPressed]}
+      accessibilityRole="button"
+      accessibilityLabel={`${ROLE_LABEL_SINGULAR[entity.role]}: ${entity.name}`}
     >
       {/* Icon + name + role */}
       <View style={styles.entityHeader}>
@@ -289,8 +294,12 @@ export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({ visi
       season: toDialogueSeason(snap.seasonLabel),
       resourceLevel: toResourceLevel(snap.food, snap.pop),
       era: snap.currentEra,
-      threatLevel: (snap.threatLevel as DialogueContext['threatLevel']) || 'safe',
-      settlementTier: (snap.settlementTier as DialogueContext['settlementTier']) || 'selo',
+      threatLevel: VALID_THREAT_LEVELS.has(snap.threatLevel)
+        ? (snap.threatLevel as DialogueContext['threatLevel'])
+        : 'safe',
+      settlementTier: VALID_SETTLEMENT_TIERS.has(snap.settlementTier)
+        ? (snap.settlementTier as DialogueContext['settlementTier'])
+        : 'selo',
     }),
     [snap.seasonLabel, snap.food, snap.pop, snap.currentEra, snap.threatLevel, snap.settlementTier],
   );

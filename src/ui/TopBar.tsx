@@ -164,11 +164,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Text style={{ color: Colors.white }}>SOVIET</Text> <Text style={styles.titleYear}>1917</Text>
           </Text>
           <View style={styles.seasonBox}>
-            <Text style={[styles.seasonText, { color: Colors.white }]}>{season}</Text>
-            <Text style={[styles.seasonText, { color: Colors.termBlue }]}>{weather}</Text>
+            <Text style={styles.seasonLabel}>{season}</Text>
+            <Text style={styles.weatherLabel}>{weather}</Text>
           </View>
           <View style={styles.eraBox}>
-            <Text testID="era-label" style={[styles.seasonText, { color: Colors.sovietGold }]}>
+            <Text testID="era-label" style={styles.eraLabel}>
               {ERA_LABELS[currentEra] ?? currentEra.toUpperCase()}
             </Text>
           </View>
@@ -402,6 +402,27 @@ const styles = StyleSheet.create({
     fontFamily: monoFont,
     fontWeight: 'bold',
     letterSpacing: 2,
+  },
+  seasonLabel: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    color: Colors.white,
+  },
+  weatherLabel: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    color: Colors.termBlue,
+  },
+  eraLabel: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    color: Colors.sovietGold,
   },
   threatBox: {
     borderLeftWidth: 1,

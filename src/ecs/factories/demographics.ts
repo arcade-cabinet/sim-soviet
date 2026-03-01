@@ -8,7 +8,7 @@
 import type { AgeCategory, MemberRole } from '../world';
 
 /** Soviet retirement age: 55 for women, 60 for men. */
-const RETIREMENT_AGE = { male: 60, female: 55 } as const;
+export const RETIREMENT_AGE = { male: 60, female: 55 } as const;
 
 /**
  * Computes labor capacity from age, following the historical curve.

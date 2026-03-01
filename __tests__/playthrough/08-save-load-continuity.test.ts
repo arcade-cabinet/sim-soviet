@@ -249,6 +249,21 @@ describe('Playthrough: Save/Load Continuity', () => {
     // Verify: population resource count matches
     expect(getResources().population).toBe(populationBefore);
 
+    // Verify: restored worker stats round-trip via re-serialization
+    if (savedData.workers && savedData.workers.length > 0) {
+      const restoredWorkers = restoredEngine.serializeSubsystems().workers ?? [];
+      expect(restoredWorkers.length).toBe(savedData.workers.length);
+      for (const saved of savedData.workers) {
+        const restored = restoredWorkers.find(
+          (w) => w.dvorId === saved.dvorId && w.dvorMemberId === saved.dvorMemberId,
+        );
+        expect(restored).toBeDefined();
+        if (restored) {
+          expect(restored.citizenClass).toBe(saved.citizenClass);
+        }
+      }
+    }
+
     // Verify: engine continues ticking without errors
     expect(() => advanceTicks(restoredEngine, 100)).not.toThrow();
     expect(isGameOver()).toBe(false);

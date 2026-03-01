@@ -77,7 +77,7 @@ describe('PrivatePlotSystem', () => {
     expect(stagFood).toBeCloseTo(normalFood * 0.8, 1);
   });
 
-  it('does not produce if no working-age member (16-60)', () => {
+  it('does not produce if no working-age member (16 to retirement)', () => {
     makeDvor('d1', { privatePlotSize: 0.5 }, [{ name: 'Old Petrov', gender: 'male', age: 70 }]);
 
     const food = calculatePrivatePlotProduction('collectivization');
@@ -247,7 +247,7 @@ describe('TrudodniSystem', () => {
 
       const result = accrueTrudodni();
 
-      // Male head → category 6 → 2.0/day × 26 days = 52
+      // Assigned male head → trudodni category from role → 2.0/day × 26 days = 52
       expect(result.memberCount).toBe(1);
       expect(result.totalTrudodni).toBeCloseTo(52, 0);
       expect(member.trudodniEarned).toBeCloseTo(52, 0);

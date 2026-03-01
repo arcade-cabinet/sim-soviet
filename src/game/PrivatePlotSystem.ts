@@ -7,6 +7,7 @@
  */
 
 import { dvory } from '@/ecs/archetypes';
+import { RETIREMENT_AGE } from '@/ecs/factories/demographics';
 import type { EraId } from './era';
 
 /** Base food per hectare per year from private plot cultivation. */
@@ -34,7 +35,7 @@ const DEFAULT_ERA_MULTIPLIER = 1.0;
 /**
  * Calculate total monthly food production from all private plots.
  *
- * Only dvory with at least one working-age member (16-60) produce food.
+ * Only dvory with at least one working-age member (16 to retirement age) produce food.
  * Production scales with plot size, livestock counts, and era modifiers.
  */
 export function calculatePrivatePlotProduction(eraId: string): number {
@@ -46,8 +47,8 @@ export function calculatePrivatePlotProduction(eraId: string): number {
   for (const entity of dvory) {
     const dvor = entity.dvor;
 
-    // Check for at least one working-age member (16-60)
-    const hasWorker = dvor.members.some((m) => m.age >= 16 && m.age <= 60);
+    // Check for at least one working-age member (16 to retirement age)
+    const hasWorker = dvor.members.some((m) => m.age >= 16 && m.age < RETIREMENT_AGE[m.gender]);
     if (!hasWorker) continue;
 
     // Base plot food production (annual → monthly)
