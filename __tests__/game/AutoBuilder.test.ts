@@ -9,11 +9,10 @@
  */
 
 import { GRID_SIZE } from '@/config';
-import { buildings } from '@/ecs/archetypes';
-import { createBuilding, createGrid, createResourceStore, createMetaStore } from '@/ecs/factories';
+import { createBuilding, createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
-import { autoPlaceBuilding, findPlacementCell } from '@/game/workers/autoBuilder';
 import { GameRng } from '@/game/SeedSystem';
+import { autoPlaceBuilding, findPlacementCell } from '@/game/workers/autoBuilder';
 
 describe('AutoBuilder', () => {
   let rng: GameRng;

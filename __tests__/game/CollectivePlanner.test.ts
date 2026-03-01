@@ -13,9 +13,9 @@
  * Deduplication: if a mandate already covers a defId, the demand is skipped.
  */
 
+import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
-import { createResourceStore, createMetaStore } from '@/ecs/factories';
-import { CollectivePlanner, type ConstructionRequest } from '@/game/CollectivePlanner';
+import { CollectivePlanner } from '@/game/CollectivePlanner';
 import { createPlanMandateState, type PlanMandateState } from '@/game/PlanMandates';
 import type { ConstructionDemand } from '@/game/workers/demandSystem';
 
