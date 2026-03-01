@@ -1,9 +1,12 @@
 ---
 title: UI Design System & Prototype Wiring
+type: devlog
+status: archived
 date: 2026-02-09
-status: Complete
-category: devlog
-commits: 98bce2d..43ce8cf
+category: feature
+last_verified: 2026-03-01
+commits:
+  - 98bce2d..43ce8cf
 ---
 
 # 003: UI Design System & Prototype Wiring

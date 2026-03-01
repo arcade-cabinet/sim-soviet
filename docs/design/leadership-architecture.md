@@ -1,3 +1,16 @@
+---
+title: Leadership System Architecture — ECS Components & Modifier Pipeline
+type: design
+status: draft
+implementation:
+  - src/game/political/PoliticalEntitySystem.ts
+  - src/game/politburo/PolitburoSystem.ts
+tests:
+  - src/__tests__/PoliticalEntitySystem.test.ts
+last_verified: 2026-03-01
+coverage: partial
+---
+
 # Leadership System Architecture — Implementation Blueprint
 
 ## Core Design: Modifier Pipeline with ECS Components

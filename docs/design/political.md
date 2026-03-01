@@ -1,10 +1,15 @@
 ---
 title: Political Apparatus — What You're Surviving
-status: Complete
-implementation: src/game/political/PoliticalEntitySystem.ts, src/game/politburo/PolitburoSystem.ts
-tests: archive-only (src/__tests__/PoliticalEntitySystem.test.ts, src/__tests__/political-integration.test.ts)
-last_verified: 2026-02-10
-coverage: "Full — politruks, KGB, military entities, personnel file, black marks, badge rendering"
+type: design
+status: implemented
+implementation:
+  - src/game/political/PoliticalEntitySystem.ts
+  - src/game/politburo/PolitburoSystem.ts
+tests:
+  - src/__tests__/PoliticalEntitySystem.test.ts
+  - src/__tests__/political-integration.test.ts
+last_verified: 2026-03-01
+coverage: full
 ---
 
 # Political Apparatus — What You're Surviving

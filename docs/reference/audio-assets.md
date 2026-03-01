@@ -1,3 +1,14 @@
+---
+title: Audio Assets — 52 Soviet-Era Music Tracks
+type: reference
+status: active
+implementation:
+  - src/audio/AudioManifest.ts
+  - src/audio/AudioManager.ts
+last_verified: 2026-03-01
+coverage: full
+---
+
 # Audio Assets for SimSoviet 1917
 
 ## Authentic Soviet Audio Sources

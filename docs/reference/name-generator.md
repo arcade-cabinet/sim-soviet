@@ -1,3 +1,13 @@
+---
+title: Procedural Name Generator — 1.1M+ Combinations
+type: reference
+status: active
+implementation:
+  - src/content/worldbuilding/names.ts
+last_verified: 2026-03-01
+coverage: full
+---
+
 # Procedural Name Generator -- Reference
 
 > Source: `src/ai/NameGenerator.ts`

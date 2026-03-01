@@ -1,3 +1,13 @@
+---
+title: World-Building Content — Timeline, Achievements, Flavor
+type: reference
+status: active
+implementation:
+  - src/content/worldbuilding/
+last_verified: 2026-03-01
+coverage: full
+---
+
 # World-Building Content -- Reference
 
 Source: `src/content/WorldBuilding.ts`

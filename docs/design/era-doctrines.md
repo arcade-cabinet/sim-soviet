@@ -1,3 +1,14 @@
+---
+title: Era Doctrine System — 8 Composable Policy Modifier Sets
+type: design
+status: draft
+implementation:
+  - src/game/political/doctrine.ts
+tests: []
+last_verified: 2026-03-01
+coverage: partial
+---
+
 # Era Doctrine System — Design Spec
 
 ## Overview

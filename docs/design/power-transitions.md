@@ -1,3 +1,14 @@
+---
+title: Power Transition Mechanics — 7 Succession Types
+type: design
+status: draft
+implementation:
+  - src/game/politburo/coups.ts
+tests: []
+last_verified: 2026-03-01
+coverage: partial
+---
+
 # Power Transition Mechanics -- Game Design Spec
 
 ---

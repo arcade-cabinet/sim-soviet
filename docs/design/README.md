@@ -1,3 +1,10 @@
+---
+title: Design Documents Index
+type: index
+status: active
+last_verified: 2026-03-01
+---
+
 # SimSoviet 1917 — Game Design Documents
 
 ## Alternate History. The Soviet State Endures.
@@ -24,19 +31,19 @@ Each file covers a single design domain. Together they form the complete game de
 | buildings.md | Construction flow, unlock progression, categories by era | Pending |
 | audio.md | Music, SFX, era-specific audio | Pending |
 
-### Reference Docs (in parent `docs/`)
+### Deep Architecture & Reference Docs
 
-Deep architecture and content documents that complement the domain docs above:
+Documents that complement the domain docs above:
 
-- `design-ecs-architecture.md` — Miniplex 2.0 ECS specification
-- `design-leadership-architecture.md` — Political ECS components, modifier pipeline
-- `design-era-doctrines.md` — 8 composable policy modifier sets
-- `design-leader-archetypes.md` — 11 procedural leader personalities
-- `design-power-transitions.md` — 7 succession mechanics
-- `design-dialog-bible.md` — Complete in-game voice guide
-- `reference-politburo-system.md` — Ministry simulation engine
-- `reference-pravda-system.md` — Procedural headline generator
-- `reference-world-building.md` — Timeline events, achievements, flavor
+- `ecs-architecture.md` — Miniplex 2.0 ECS specification
+- `leadership-architecture.md` — Political ECS components, modifier pipeline
+- `era-doctrines.md` — 8 composable policy modifier sets
+- `leader-archetypes.md` — 11 procedural leader personalities
+- `power-transitions.md` — 7 succession mechanics
+- `dialog-bible.md` — Complete in-game voice guide
+- [`politburo-system.md`](../reference/politburo-system.md) — Ministry simulation engine
+- [`pravda-system.md`](../reference/pravda-system.md) — Procedural headline generator
+- [`world-building.md`](../reference/world-building.md) — Timeline events, achievements, flavor
 
 ### Design Principles
 

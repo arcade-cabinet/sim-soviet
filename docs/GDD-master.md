@@ -1,8 +1,10 @@
 ---
 title: Master Game Design Document
+type: design
+status: active
 date: 2026-02-09
-status: Active
-category: design
+last_verified: 2026-03-01
+coverage: full
 ---
 
 # SimSoviet 1917 — Master Game Design Document
@@ -111,7 +113,7 @@ Each era is a self-contained campaign with distinct mechanics, buildings, threat
 
 ### Era Doctrine Integration
 
-Each era maps to one or more Doctrines from the Era Doctrine System (see `design-era-doctrines.md`). Leaders can adopt doctrines independently of calendar year — a Zealot in 2030 can still force Industrialization. But each era has a *default* doctrine that shapes the campaign.
+Each era maps to one or more Doctrines from the Era Doctrine System (see `design/era-doctrines.md`). Leaders can adopt doctrines independently of calendar year — a Zealot in 2030 can still force Industrialization. But each era has a *default* doctrine that shapes the campaign.
 
 | Era | Default Doctrine | Can Also Trigger |
 |-----|-----------------|------------------|
@@ -737,11 +739,11 @@ Phase G: Polish (balance, playtesting, sound, juice)
 
 ## 14. Reference Documents
 
-- `design-era-doctrines.md` — 8 doctrine definitions with modifiers, policies, signature mechanics
-- `design-leader-archetypes.md` — 6 leader archetypes with behavioral loops and power transitions
-- `design-leadership-architecture.md` — ECS components, modifier pipeline, TypeScript interfaces
-- `design-power-transitions.md` — Succession mechanics, coup/purge/death systems
-- `design-dialog-bible.md` — Advisor dialog, event text, era-specific writing
-- `reference-politburo-system.md` — Existing PolitburoSystem documentation
-- `reference-pravda-system.md` — Headline generation system
-- `reference-world-building.md` — Timeline events, radio, loading quotes, achievements
+- `design/era-doctrines.md` — 8 doctrine definitions with modifiers, policies, signature mechanics
+- `design/leader-archetypes.md` — 6 leader archetypes with behavioral loops and power transitions
+- `design/leadership-architecture.md` — ECS components, modifier pipeline, TypeScript interfaces
+- `design/power-transitions.md` — Succession mechanics, coup/purge/death systems
+- `design/dialog-bible.md` — Advisor dialog, event text, era-specific writing
+- `reference/politburo-system.md` — Existing PolitburoSystem documentation
+- `reference/pravda-system.md` — Headline generation system
+- `reference/world-building.md` — Timeline events, radio, loading quotes, achievements

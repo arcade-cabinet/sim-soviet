@@ -1,3 +1,11 @@
+---
+title: Yuka AI Library — Capabilities Research
+type: research
+status: archived
+last_verified: 2026-03-01
+coverage: none
+---
+
 # Yuka AI Library — Capabilities Research
 
 ## Summary

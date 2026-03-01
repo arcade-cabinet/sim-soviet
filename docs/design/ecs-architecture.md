@@ -1,3 +1,18 @@
+---
+title: ECS Architecture — Miniplex 2.0 Specification
+type: design
+status: implemented
+implementation:
+  - src/ecs/world.ts
+  - src/ecs/archetypes.ts
+  - src/ecs/systems/
+  - src/ecs/factories/
+tests:
+  - __tests__/ecs/
+last_verified: 2026-03-01
+coverage: full
+---
+
 # ECS Architecture -- Design Document
 
 > Sources: `src/ecs/world.ts`, `src/ecs/archetypes.ts`, `src/ecs/systems/*.ts`

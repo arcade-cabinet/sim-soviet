@@ -1,3 +1,12 @@
+---
+title: Comprehensive Docs-vs-Code Alignment Audit
+type: audit
+status: active
+date: 2026-02-28
+last_verified: 2026-03-01
+coverage: full
+---
+
 # SimSoviet 1917 — Comprehensive Docs-vs-Code Alignment Audit
 
 **Date:** 2026-02-28

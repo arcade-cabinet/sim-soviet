@@ -1,3 +1,14 @@
+---
+title: Reactylon Native 3D — Implementation Plan
+type: plan
+status: superseded
+plan_status: abandoned
+date: 2026-02-26
+superseded_by: plans/2026-02-27-r3f-migration-plan.md
+last_verified: 2026-03-01
+coverage: none
+---
+
 # SimSoviet1917 — Reactylon Native 3D Implementation Plan
 
 > **STATUS: SUPERSEDED** — This Reactylon/BabylonJS plan was replaced by React Three Fiber. See [2026-02-27-r3f-migration-plan.md](2026-02-27-r3f-migration-plan.md) for the final implementation plan.

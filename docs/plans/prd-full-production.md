@@ -1,3 +1,13 @@
+---
+title: Full Production Gap Closure — PRD
+type: plan
+status: implemented
+plan_status: completed
+date: 2026-02-10
+last_verified: 2026-03-01
+coverage: full
+---
+
 # PRD: SimSoviet 1917 — Full Production Gap Closure
 
 > **Date**: 2026-02-10

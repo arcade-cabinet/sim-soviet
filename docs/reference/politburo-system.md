@@ -1,3 +1,16 @@
+---
+title: Politburo & Ministry System — 10 Ministries, 80-Cell Matrix
+type: reference
+status: active
+implementation:
+  - src/game/politburo/PolitburoSystem.ts
+  - src/game/politburo/
+tests:
+  - src/__tests__/PolitburoSystem.test.ts
+last_verified: 2026-03-01
+coverage: full
+---
+
 # Politburo & Ministry System -- Reference
 
 > Source: `src/game/politburo/PolitburoSystem.ts` (2,196 lines)

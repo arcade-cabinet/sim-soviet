@@ -1,8 +1,9 @@
 ---
 title: Demographics & Household System
+type: design
 status: implemented
-coverage: 90%
-last_updated: 2026-03-01
+coverage: partial
+last_verified: 2026-03-01
 depends_on: [workers.md, economy.md, eras.md, overview.md, political.md]
 implementation:
   - src/ecs/systems/demographicSystem.ts

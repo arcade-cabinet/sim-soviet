@@ -1,3 +1,14 @@
+---
+title: Leader Archetypes — 11 Procedural Personalities
+type: design
+status: draft
+implementation:
+  - src/game/political/PoliticalEntitySystem.ts
+tests: []
+last_verified: 2026-03-01
+coverage: partial
+---
+
 # Leader Archetypes — Game Design Spec
 
 ## Overview

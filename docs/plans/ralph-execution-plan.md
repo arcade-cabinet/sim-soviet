@@ -1,3 +1,13 @@
+---
+title: Ralph Execution Plan — Full Production Gap Closure v2
+type: plan
+status: implemented
+plan_status: completed
+date: 2026-02-28
+last_verified: 2026-03-01
+coverage: full
+---
+
 # Ralph Execution Plan: Full Production Gap Closure (v2)
 
 > **PRD Reference**: `docs/plans/prd-full-production.md`

@@ -1,3 +1,13 @@
+---
+title: Glasnost UI Inversion — Implementation Plan
+type: plan
+status: implemented
+plan_status: completed
+date: 2026-02-27
+last_verified: 2026-03-01
+coverage: full
+---
+
 # Glasnost UI Inversion — Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.

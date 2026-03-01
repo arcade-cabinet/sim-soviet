@@ -1,3 +1,11 @@
+---
+title: SimSoviet 1917 — Game Vision
+type: vision
+status: active
+last_verified: 2026-03-01
+coverage: full
+---
+
 # SimSoviet 1917 — Game Vision
 
 > *Alternate History. The Soviet State Endures.*
@@ -274,8 +282,8 @@ These systems are fully designed in the `docs/design/` subdirectory but not yet 
 | **Era-gated buildings** | `eras.md` | Unlock progression tied to era, doctrine, and leader decisions |
 | **Construction phases** | `economy.md` | Material gathering → foundation → construction → completion |
 | **Reporting & pripiski** | `political.md` | Annual report falsification with compounding risk |
-| **Leadership system** | `design-leadership-architecture.md` | Procedural leaders with 11 archetypes, 8 doctrines, succession mechanics |
-| **Politburo simulation** | `reference-politburo-system.md` | 10 ministries, 80-cell interaction matrix, coups, purges |
+| **Leadership system** | `design/leadership-architecture.md` | Procedural leaders with 11 archetypes, 8 doctrines, succession mechanics |
+| **Politburo simulation** | `reference/politburo-system.md` | 10 ministries, 80-cell interaction matrix, coups, purges |
 | **Interactive minigames** | `minigames.md` | Timing, dialog, and management mini-sequences (currently text-choice only) |
 | **Heating system** | `economy.md` | Pechka → district heating → crumbling infrastructure |
 | **Storage & spoilage** | `economy.md` | Capacity limits, seasonal spoilage, winter preparation cycle |
@@ -318,13 +326,13 @@ These systems are fully designed in the `docs/design/` subdirectory but not yet 
 
 ### Architecture & Reference (in `docs/`)
 - `GDD-master.md` — Complete master game design document
-- `design-ecs-architecture.md` — Miniplex 2.0 ECS specification
-- `design-leadership-architecture.md` — Political ECS components
-- `design-era-doctrines.md` — 8 composable policy modifier sets
-- `design-power-transitions.md` — Leadership succession mechanics
-- `design-leader-archetypes.md` — 11 procedural leader personality types
-- `design-dialog-bible.md` — Complete in-game voice guide
-- `reference-politburo-system.md` — Ministry simulation (10 ministries, 29 events)
-- `reference-pravda-system.md` — Procedural headline generator (145K+ combinations)
-- `reference-name-generator.md` — Russian name generator (1.1M+ combinations)
-- `reference-world-building.md` — Timeline, achievements, flavor text
+- `design/ecs-architecture.md` — Miniplex 2.0 ECS specification
+- `design/leadership-architecture.md` — Political ECS components
+- `design/era-doctrines.md` — 8 composable policy modifier sets
+- `design/power-transitions.md` — Leadership succession mechanics
+- `design/leader-archetypes.md` — 11 procedural leader personality types
+- `design/dialog-bible.md` — Complete in-game voice guide
+- `reference/politburo-system.md` — Ministry simulation (10 ministries, 29 events)
+- `reference/pravda-system.md` — Procedural headline generator (145K+ combinations)
+- `reference/name-generator.md` — Russian name generator (1.1M+ combinations)
+- `reference/world-building.md` — Timeline, achievements, flavor text
