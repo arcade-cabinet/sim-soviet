@@ -13,7 +13,14 @@
  *   - Behavioral governor
  */
 
-import { buildingsLogic, citizens, dvory, getResourceEntity, maleCitizens, operationalBuildings } from '@/ecs/archetypes';
+import {
+  buildingsLogic,
+  citizens,
+  dvory,
+  getResourceEntity,
+  maleCitizens,
+  operationalBuildings,
+} from '@/ecs/archetypes';
 import { createCitizen, createDvor } from '@/ecs/factories';
 import { laborCapacityForAge } from '@/ecs/factories/demographics';
 import type { CitizenComponent, DvorMember, Entity } from '@/ecs/world';
@@ -301,15 +308,14 @@ export class WorkerSystem {
     // Phase 2: fallback to any remaining citizens (females, out-of-range males)
     const remaining = count - removed;
     if (remaining > 0) {
-      const fallback = [...citizens]
-        .sort((a, b) => {
-          const aAssigned = a.citizen.assignment != null ? 1 : 0;
-          const bAssigned = b.citizen.assignment != null ? 1 : 0;
-          if (aAssigned !== bAssigned) return aAssigned - bAssigned;
-          const aMorale = this.stats.get(a)?.morale ?? 50;
-          const bMorale = this.stats.get(b)?.morale ?? 50;
-          return aMorale - bMorale;
-        });
+      const fallback = [...citizens].sort((a, b) => {
+        const aAssigned = a.citizen.assignment != null ? 1 : 0;
+        const bAssigned = b.citizen.assignment != null ? 1 : 0;
+        if (aAssigned !== bAssigned) return aAssigned - bAssigned;
+        const aMorale = this.stats.get(a)?.morale ?? 50;
+        const bMorale = this.stats.get(b)?.morale ?? 50;
+        return aMorale - bMorale;
+      });
 
       const toRemoveFallback = Math.min(remaining, fallback.length);
       for (let i = 0; i < toRemoveFallback; i++) {

@@ -134,26 +134,30 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
       pripiskiCount: engine.pripiskiCount,
     },
     // Dvor households — canonical population source
-    dvory: [...dvory].map((entity): DvorSaveEntry => ({
-      id: entity.dvor.id,
-      surname: entity.dvor.surname,
-      members: entity.dvor.members.map((m) => ({ ...m })),
-      headOfHousehold: entity.dvor.headOfHousehold,
-      privatePlotSize: entity.dvor.privatePlotSize,
-      privateLivestock: { ...entity.dvor.privateLivestock },
-      joinedTick: entity.dvor.joinedTick,
-      loyaltyToCollective: entity.dvor.loyaltyToCollective,
-      nextMemberId: entity.dvor.nextMemberId,
-    })),
+    dvory: [...dvory].map(
+      (entity): DvorSaveEntry => ({
+        id: entity.dvor.id,
+        surname: entity.dvor.surname,
+        members: entity.dvor.members.map((m) => ({ ...m })),
+        headOfHousehold: entity.dvor.headOfHousehold,
+        privatePlotSize: entity.dvor.privatePlotSize,
+        privateLivestock: { ...entity.dvor.privateLivestock },
+        joinedTick: entity.dvor.joinedTick,
+        loyaltyToCollective: entity.dvor.loyaltyToCollective,
+        nextMemberId: entity.dvor.nextMemberId,
+      }),
+    ),
     // Per-worker stats keyed by dvor linkage
     workers: [...citizens]
       .filter((c) => c.citizen.dvorId && c.citizen.dvorMemberId)
-      .map((c): WorkerStatSaveEntry => ({
-        dvorId: c.citizen.dvorId!,
-        dvorMemberId: c.citizen.dvorMemberId!,
-        citizenClass: c.citizen.class,
-        stats: { ...engine.workerSystem.getStatsMap().get(c)! },
-      }))
+      .map(
+        (c): WorkerStatSaveEntry => ({
+          dvorId: c.citizen.dvorId!,
+          dvorMemberId: c.citizen.dvorMemberId!,
+          citizenClass: c.citizen.class,
+          stats: { ...engine.workerSystem.getStatsMap().get(c)! },
+        }),
+      )
       .filter((w) => w.stats != null),
   };
 }

@@ -169,7 +169,8 @@ export function ageAllMembers(result: DemographicTickResult): number {
       }
 
       // Update labor capacity (with working mother penalty)
-      member.laborCapacity = laborCapacityForAge(member.age, member.gender) * getWorkingMotherPenalty(entity.dvor, member);
+      member.laborCapacity =
+        laborCapacityForAge(member.age, member.gender) * getWorkingMotherPenalty(entity.dvor, member);
 
       // Only transition non-leadership roles
       if (member.role !== 'head' && member.role !== 'spouse') {
@@ -229,7 +230,12 @@ function generateInfantName(dvor: DvorComponent, infantGender: 'male' | 'female'
  * On success, sets member.pregnant = 90 (3-month gestation).
  * Actual infant creation happens in pregnancyTick().
  */
-export function birthCheck(rng: GameRng | null, foodLevel: number, result: DemographicTickResult, eraId?: string): void {
+export function birthCheck(
+  rng: GameRng | null,
+  foodLevel: number,
+  result: DemographicTickResult,
+  eraId?: string,
+): void {
   // Food modifier
   let foodMod = 1.0;
   if (foodLevel < 0.5) foodMod = 0.5;
@@ -497,7 +503,12 @@ function removeMemberFromDvor(
  * - Month boundary (every 30 ticks): pregnancies, births, deaths
  * - Tick 0 is always skipped.
  */
-export function demographicTick(rng: GameRng | null, totalTicks: number, foodLevel: number, eraId?: string): DemographicTickResult {
+export function demographicTick(
+  rng: GameRng | null,
+  totalTicks: number,
+  foodLevel: number,
+  eraId?: string,
+): DemographicTickResult {
   const result: DemographicTickResult = {
     births: 0,
     deaths: 0,

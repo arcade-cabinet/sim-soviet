@@ -416,7 +416,14 @@ describe('birthCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001;
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
+    const result: DemographicTickResult = {
+      births: 0,
+      deaths: 0,
+      aged: 0,
+      newDvory: 0,
+      deadMembers: [],
+      agedIntoWorking: [],
+    };
     birthCheck(lowRng, 1.0, result);
 
     expect(result.births).toBe(0);
@@ -431,7 +438,14 @@ describe('birthCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001;
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
+    const result: DemographicTickResult = {
+      births: 0,
+      deaths: 0,
+      aged: 0,
+      newDvory: 0,
+      deadMembers: [],
+      agedIntoWorking: [],
+    };
     birthCheck(lowRng, 1.0, result);
 
     expect(result.births).toBe(0);
@@ -448,7 +462,14 @@ describe('birthCheck', () => {
     const borderRng = createTestRng();
     borderRng.random = () => 0.008; // just above 15%/12 * 0.5 ≈ 0.00625
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
+    const result: DemographicTickResult = {
+      births: 0,
+      deaths: 0,
+      aged: 0,
+      newDvory: 0,
+      deadMembers: [],
+      agedIntoWorking: [],
+    };
     birthCheck(borderRng, 0.0, result); // food level 0 → ×0.5
 
     expect(result.births).toBe(0);
@@ -470,7 +491,14 @@ describe('birthCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001;
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
+    const result: DemographicTickResult = {
+      births: 0,
+      deaths: 0,
+      aged: 0,
+      newDvory: 0,
+      deadMembers: [],
+      agedIntoWorking: [],
+    };
     birthCheck(lowRng, 1.0, result);
 
     expect(result.births).toBe(0);
@@ -491,7 +519,14 @@ describe('deathCheck', () => {
     const lowRng = createTestRng();
     lowRng.random = () => 0.001; // always die
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
+    const result: DemographicTickResult = {
+      births: 0,
+      deaths: 0,
+      aged: 0,
+      newDvory: 0,
+      deadMembers: [],
+      agedIntoWorking: [],
+    };
     deathCheck(lowRng, 1.0, result);
 
     expect(result.deaths).toBeGreaterThan(0);
@@ -511,7 +546,14 @@ describe('deathCheck', () => {
     const rng = createTestRng();
     rng.random = () => 0.005;
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
+    const result: DemographicTickResult = {
+      births: 0,
+      deaths: 0,
+      aged: 0,
+      newDvory: 0,
+      deadMembers: [],
+      agedIntoWorking: [],
+    };
     deathCheck(rng, 1.0, result);
 
     // The infant should be at higher risk than the adult
@@ -534,7 +576,14 @@ describe('deathCheck', () => {
     const rng = createTestRng();
     rng.random = () => 0.03; // 3% — should survive normally but die when starving
 
-    const result: DemographicTickResult = { births: 0, deaths: 0, aged: 0, newDvory: 0, deadMembers: [], agedIntoWorking: [] };
+    const result: DemographicTickResult = {
+      births: 0,
+      deaths: 0,
+      aged: 0,
+      newDvory: 0,
+      deadMembers: [],
+      agedIntoWorking: [],
+    };
     deathCheck(rng, 0.0, result); // food level 0 → starvation modifier
 
     // With starvation, a 30-year-old's death chance should be higher
@@ -632,9 +681,14 @@ describe('demographicTick', () => {
 describe('ERA_BIRTH_RATE_MULTIPLIER', () => {
   it('defines multipliers for all 8 eras', () => {
     const eras = [
-      'revolution', 'collectivization', 'industrialization',
-      'great_patriotic', 'reconstruction', 'thaw_and_freeze',
-      'stagnation', 'the_eternal',
+      'revolution',
+      'collectivization',
+      'industrialization',
+      'great_patriotic',
+      'reconstruction',
+      'thaw_and_freeze',
+      'stagnation',
+      'the_eternal',
     ];
     for (const era of eras) {
       expect(ERA_BIRTH_RATE_MULTIPLIER[era]).toBeDefined();

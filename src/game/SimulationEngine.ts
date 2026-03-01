@@ -58,9 +58,6 @@ import { CollectivePlanner } from './CollectivePlanner';
 import type { CompulsoryDeliverySaveData } from './CompulsoryDeliveries';
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
 import { DISEASE_PRAVDA_HEADLINES, diseaseTick, initDiseaseSystem } from './DiseaseSystem';
-import { tickLoyalty } from './LoyaltySystem';
-import { calculatePrivatePlotProduction } from './PrivatePlotSystem';
-import { accrueTrudodni } from './TrudodniSystem';
 import { type EraId as EconomyEraId, type EconomySaveData, EconomySystem } from './economy';
 // ── Extracted helpers ──
 import {
@@ -93,12 +90,14 @@ import type { FireSystemSaveData } from './FireSystem';
 import { FireSystem } from './FireSystem';
 import type { GameGrid } from './GameGrid';
 import { createGameTally, type TallyData } from './GameTally';
+import { tickLoyalty } from './LoyaltySystem';
 import { MinigameRouter } from './minigames/MinigameRouter';
 import type { ActiveMinigame, MinigameRouterSaveData } from './minigames/MinigameTypes';
 import type { PersonnelFileSaveData } from './PersonnelFile';
 import { PersonnelFile } from './PersonnelFile';
 import type { MandateWithFulfillment, PlanMandateState } from './PlanMandates';
 import { createMandatesForEra, createPlanMandateState, recordBuildingPlaced } from './PlanMandates';
+import { calculatePrivatePlotProduction } from './PrivatePlotSystem';
 import type { PolitburoSaveData } from './politburo';
 import { PolitburoSystem } from './politburo';
 import type { PoliticalEntitySaveData } from './political';
@@ -111,6 +110,7 @@ import type { GameRng } from './SeedSystem';
 import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from './SettlementSystem';
 import { SettlementSystem } from './SettlementSystem';
 import { type TransportSaveData, TransportSystem } from './TransportSystem';
+import { accrueTrudodni } from './TrudodniSystem';
 import type { TutorialMilestone, TutorialSaveData } from './TutorialSystem';
 import { TutorialSystem } from './TutorialSystem';
 import { getWeatherProfile, type WeatherType } from './WeatherSystem';
@@ -792,7 +792,12 @@ export class SimulationEngine {
 
     // Demographic System — births, deaths, aging for dvor households
     const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, workerResult.population * 2));
-    const demoResult = demographicTick(this.rng ?? null, this.chronology.getDate().totalTicks, normalizedFood, this.eraSystem.getCurrentEraId());
+    const demoResult = demographicTick(
+      this.rng ?? null,
+      this.chronology.getDate().totalTicks,
+      normalizedFood,
+      this.eraSystem.getCurrentEraId(),
+    );
     // Births: birthCheck() sets pregnancies; pregnancyTick() delivers infants.
     // Infants (age 0) don't get citizen entities — they age into entities at 5.
 

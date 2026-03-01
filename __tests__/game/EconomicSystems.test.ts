@@ -21,8 +21,7 @@ function makeDvor(
   if (entity.dvor) {
     if (overrides.privatePlotSize !== undefined) entity.dvor.privatePlotSize = overrides.privatePlotSize;
     if (overrides.privateLivestock) entity.dvor.privateLivestock = overrides.privateLivestock;
-    if (overrides.loyaltyToCollective !== undefined)
-      entity.dvor.loyaltyToCollective = overrides.loyaltyToCollective;
+    if (overrides.loyaltyToCollective !== undefined) entity.dvor.loyaltyToCollective = overrides.loyaltyToCollective;
   }
   return entity;
 }
@@ -91,14 +90,10 @@ describe('PrivatePlotSystem', () => {
   });
 
   it('produces if at least one member is working age', () => {
-    makeDvor(
-      'd1',
-      { privatePlotSize: 0.5 },
-      [
-        { name: 'Old Petrov', gender: 'male', age: 70 },
-        { name: 'Young Petrov', gender: 'male', age: 25 },
-      ],
-    );
+    makeDvor('d1', { privatePlotSize: 0.5 }, [
+      { name: 'Old Petrov', gender: 'male', age: 70 },
+      { name: 'Young Petrov', gender: 'male', age: 25 },
+    ]);
 
     const food = calculatePrivatePlotProduction('collectivization');
 
