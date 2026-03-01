@@ -160,7 +160,8 @@ export function autoPlaceBuilding(defId: string, rng: GameRng): Entity | null {
 
   try {
     return placeNewBuilding(cell.gridX, cell.gridY, defId);
-  } catch {
+  } catch (e) {
+    console.warn(`[autoBuilder] Failed to place ${defId} at (${cell.gridX}, ${cell.gridY}):`, e);
     return null;
   }
 }

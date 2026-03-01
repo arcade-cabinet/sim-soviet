@@ -759,7 +759,7 @@ export class SimulationEngine {
         'Comrade, the workers notice your constant meddling. They whisper that the chairman does not trust the collective.',
       );
       // 5% chance per check of a black mark when meddling
-      if (this.rng && this.rng.random() < 0.05) {
+      if ((this.rng?.random() ?? Math.random()) < 0.05) {
         this.personnelFile.addMark(
           'excessive_intervention',
           this.chronology.getDate().totalTicks,
@@ -1236,9 +1236,16 @@ export class SimulationEngine {
       return;
     }
 
-    if (!this.rng) return;
+    const rng =
+      this.rng ??
+      ({
+        random: () => Math.random(),
+        int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
+        pick: <T>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!,
+        pickIndex: (len: number) => Math.floor(Math.random() * len),
+      } as GameRng);
 
-    const entity = autoPlaceBuilding(request.defId, this.rng);
+    const entity = autoPlaceBuilding(request.defId, rng);
     if (entity) {
       // Track mandate fulfillment
       this.recordBuildingForMandates(request.defId);
@@ -1256,7 +1263,7 @@ export class SimulationEngine {
   private getHousingCapacity(): number {
     let cap = 0;
     for (const entity of operationalBuildings.entities) {
-      cap += entity.building.housingCap;
+      cap += Math.max(0, entity.building.housingCap);
     }
     return cap;
   }

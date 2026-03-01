@@ -10,7 +10,7 @@
  * demand entries with priority levels and suggested building defIds.
  */
 
-import { buildingsLogic } from '@/ecs/archetypes';
+import { operationalBuildings } from '@/ecs/archetypes';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -138,12 +138,8 @@ function detectFoodDemand(population: number, food: number): ConstructionDemand 
 function detectPowerDemand(): ConstructionDemand | null {
   let unpoweredCount = 0;
 
-  for (const entity of buildingsLogic) {
-    // Only count operational buildings — under-construction buildings aren't
-    // expected to be powered yet and would create false demands.
-    const phase = entity.building.constructionPhase;
-    const isOperational = phase == null || phase === 'complete';
-    if (isOperational && entity.building.powerReq > 0 && entity.building.powered === false) {
+  for (const entity of operationalBuildings.entities) {
+    if (entity.building.powerReq > 0 && entity.building.powered === false) {
       unpoweredCount++;
     }
   }
