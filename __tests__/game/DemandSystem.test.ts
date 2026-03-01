@@ -11,8 +11,8 @@
  * Priority levels: critical, urgent, normal
  */
 
+import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
-import { createBuilding, createResourceStore, createMetaStore } from '@/ecs/factories';
 import { detectConstructionDemands } from '@/game/workers/demandSystem';
 
 describe('DemandSystem', () => {
