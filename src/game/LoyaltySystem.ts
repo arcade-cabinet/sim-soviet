@@ -56,20 +56,18 @@ export function tickLoyalty(
       dvor.loyaltyToCollective = Math.max(0, dvor.loyaltyToCollective + LOYALTY_LOSS_STARVATION);
     }
 
-    const roll = rng ? rng.random() : Math.random;
+    const random = rng ? () => rng.random() : Math.random;
 
     // Sabotage check — disloyal dvory damage production
     if (dvor.loyaltyToCollective < 20) {
-      const r = typeof roll === 'function' ? roll() : roll;
-      if (r < SABOTAGE_CHANCE) {
+      if (random() < SABOTAGE_CHANCE) {
         sabotageCount++;
       }
     }
 
     // Flight check — extremely disloyal members flee
     if (dvor.loyaltyToCollective < 10) {
-      const r = typeof roll === 'function' ? roll() : roll;
-      if (r < FLIGHT_CHANCE) {
+      if (random() < FLIGHT_CHANCE) {
         flightCount++;
       }
     }
