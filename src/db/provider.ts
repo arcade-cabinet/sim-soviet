@@ -24,6 +24,9 @@ let _sqlDb: InstanceType<Awaited<ReturnType<typeof initSqlJs>>['Database']> | nu
 /**
  * Initialize the database, loading any persisted data from IndexedDB.
  * Safe to call multiple times — returns cached instance after first init.
+ *
+ * @returns Drizzle ORM database instance with the SimSoviet schema
+ * @throws If sql.js WASM binary fails to load (no WebAssembly support)
  */
 export async function initDatabase(): Promise<SQLJsDatabase<typeof schema>> {
   if (_db) return _db;
@@ -116,7 +119,12 @@ export async function initDatabase(): Promise<SQLJsDatabase<typeof schema>> {
   return _db;
 }
 
-/** Get the initialized database instance (throws if not initialized). */
+/**
+ * Get the initialized database instance.
+ *
+ * @returns Drizzle ORM database instance
+ * @throws If initDatabase() has not been called
+ */
 export function getDatabase(): SQLJsDatabase<typeof schema> {
   if (!_db) throw new Error('Database not initialized. Call initDatabase() first.');
   return _db;
@@ -189,7 +197,11 @@ export function closeDatabase(): void {
   _db = null;
 }
 
-/** Export the entire SQLite database as a Uint8Array (for .db file download). */
+/**
+ * Export the entire SQLite database as a Uint8Array (for .db file download).
+ *
+ * @returns Raw SQLite database bytes, or null if database not initialized
+ */
 export function exportDatabaseFile(): Uint8Array | null {
   if (!_sqlDb) return null;
   return new Uint8Array(_sqlDb.export());
@@ -198,6 +210,9 @@ export function exportDatabaseFile(): Uint8Array | null {
 /**
  * Import a SQLite database from a Uint8Array (uploaded .db file).
  * Replaces the current in-memory database and persists to IndexedDB.
+ *
+ * @param data - Raw SQLite database bytes
+ * @returns New Drizzle ORM database instance wrapping the imported data
  */
 export async function importDatabaseFile(data: Uint8Array): Promise<SQLJsDatabase<typeof schema>> {
   const SQL = await initSqlJs({

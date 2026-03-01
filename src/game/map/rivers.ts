@@ -9,6 +9,7 @@ import type { GameRng } from '../SeedSystem';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
+/** A 2D point along a river path used for generation and rasterization. */
 export interface RiverPoint {
   x: number;
   y: number;

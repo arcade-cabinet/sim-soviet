@@ -74,6 +74,7 @@ const OFFICER_RANKS: Record<PoliticalRole, readonly string[]> = {
   conscription_officer: ['Recruiting Officer', 'Mobilization Commissar'],
 };
 
+/** Generate a random rank + surname for a political officer entity. */
 export function generateOfficerName(role: PoliticalRole, rng: GameRng): string {
   const rank = rng.pick(OFFICER_RANKS[role]);
   const surname = rng.pick(OFFICER_SURNAMES);

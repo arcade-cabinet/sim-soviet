@@ -10,8 +10,10 @@ import type { CollectiveFocus } from './governor';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+/** Risk level of a collective directive affecting gameplay penalties. */
 export type RiskLevel = 'none' | 'low' | 'medium';
 
+/** A named collective focus preset with risk level and advisor flavor text. */
 export interface CollectiveDirective {
   name: string;
   description: string;
@@ -22,6 +24,7 @@ export interface CollectiveDirective {
 
 // ── Directive Presets ────────────────────────────────────────────────────────
 
+/** All available collective directives: balanced, food, construction, production. */
 export const COLLECTIVE_DIRECTIVES: CollectiveDirective[] = [
   {
     name: 'Balanced Operations',
@@ -55,6 +58,7 @@ export const COLLECTIVE_DIRECTIVES: CollectiveDirective[] = [
 
 // ── Lookup ───────────────────────────────────────────────────────────────────
 
+/** Look up a collective directive by its focus type. */
 export function getDirectiveByFocus(focus: CollectiveFocus): CollectiveDirective | undefined {
   return COLLECTIVE_DIRECTIVES.find((d) => d.focus === focus);
 }

@@ -144,6 +144,7 @@ const FailingWarning: React.FC = () => {
 //  Main Component
 // ---------------------------------------------------------------------------
 
+/** Granular economy subsystem breakdown: trudodni, fondy, blat, rations, MTS, heating, and reforms. */
 export const EconomyDetailPanel: React.FC<EconomyDetailPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
   useGameSnapshot();

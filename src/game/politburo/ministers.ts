@@ -53,6 +53,7 @@ function generateName(): string {
   return `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
 }
 
+/** Generate a unique ID combining timestamp and RNG for minister/GS entities. */
 export function generateId(): string {
   return _rng ? `${Date.now()}_${_rng.id()}` : `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -66,6 +67,7 @@ function randomPersonality(): PersonalityType {
 //  MINISTER GENERATION
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Generate a minister with randomized stats based on personality stat ranges. */
 export function generateMinister(ministry: Ministry, personality?: PersonalityType): Minister {
   const p = personality ?? randomPersonality();
   const ranges = PERSONALITY_STAT_RANGES[p];
@@ -86,6 +88,7 @@ export function generateMinister(ministry: Ministry, personality?: PersonalityTy
   };
 }
 
+/** Generate a General Secretary with personality-dependent paranoia and health. */
 export function generateGeneralSecretary(year: number, personality?: PersonalityType): GeneralSecretary {
   const p = personality ?? randomPersonality();
   return {

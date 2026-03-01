@@ -15,6 +15,13 @@ import { simTick } from '../engine/SimTick';
 import { updateTraffic } from '../engine/TrafficSystem';
 import { updateTrain } from '../engine/TrainSystem';
 
+/**
+ * Legacy simulation loop hook for the pre-ECS game engine.
+ *
+ * Runs simTick(), updateTrain(), updateTraffic(), updateMeteor() at
+ * speed-adjusted intervals. Also advances timeOfDay, floating text lifetimes,
+ * and zeppelin AI targeting. Superseded by useECSGameLoop in the ECS version.
+ */
 export function useGameLoop(): void {
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef(0);

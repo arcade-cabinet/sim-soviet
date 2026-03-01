@@ -642,6 +642,7 @@ export const PERSONALITY_MINISTRY_MATRIX: Record<Ministry, Record<PersonalityTyp
 //  INTER-MINISTRY TENSION MATRIX
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Inter-ministry personality conflicts that generate tension points each year. */
 export const TENSION_RULES: TensionRule[] = [
   // ── Classic conflicts ──
   {
@@ -750,6 +751,7 @@ export const TENSION_RULES: TensionRule[] = [
 //  APPOINTMENT LOGIC
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** How each GS personality type fills the cabinet on succession. */
 export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy> = {
   [PersonalityType.ZEALOT]: {
     retentionRate: 0.0,
@@ -902,6 +904,7 @@ export const PERSONALITY_STAT_RANGES: Record<
 //  NAME GENERATION DATA
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Russian first names for procedural minister/GS name generation. */
 export const FIRST_NAMES = [
   'Ivan',
   'Dmitri',
@@ -932,6 +935,7 @@ export const FIRST_NAMES = [
   'Yegor',
 ];
 
+/** Russian last names for procedural minister/GS name generation. */
 export const LAST_NAMES = [
   'Volkov',
   'Petrov',

@@ -155,6 +155,7 @@ const ReqRow: React.FC<{ label: string; met: boolean; value: string }> = ({ labe
 //  Main Component
 // ---------------------------------------------------------------------------
 
+/** Settlement tier progression roadmap (selo -> posyolok -> pgt -> gorod) with requirements checklist. */
 export const SettlementProgressPanel: React.FC<SettlementProgressPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
   const snap = useGameSnapshot();

@@ -18,6 +18,7 @@ export interface AchievementsPanelProps {
   onDismiss: () => void;
 }
 
+/** Achievement gallery showing all 31 achievements with unlock status and satirical subtexts. */
 export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for real-time achievement unlock updates
   useGameSnapshot();

@@ -34,6 +34,7 @@ function smogColor(ratio: number): [number, number, number] {
   return [0.6 + t * 0.1, 0.5 - t * 0.2, 0.1 - t * 0.05];
 }
 
+/** Renders per-tile smog visualization using GPU-batched instancedMesh with intensity-scaled color and opacity. */
 const SmogOverlay: React.FC = () => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const prevCountRef = useRef(0);

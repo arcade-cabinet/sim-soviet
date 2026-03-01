@@ -97,6 +97,7 @@ const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> =
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Transport, settlement tier, and utility (water/power) capacity panel. */
 export const InfrastructurePanel: React.FC<InfrastructurePanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
   const snap = useGameSnapshot();

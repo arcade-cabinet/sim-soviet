@@ -123,6 +123,7 @@ const Divider: React.FC = () => <View style={styles.divider} />;
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Consumer goods marketplace showing available goods, prices, and purchase options. */
 export const ConsumerGoodsMarketPanel: React.FC<ConsumerGoodsMarketPanelProps> = ({ visible, onDismiss }) => {
   const snap = useGameSnapshot();
   const engine = getEngine();

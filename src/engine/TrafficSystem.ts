@@ -7,6 +7,17 @@ import type { GameState } from './GameState';
 import { GRID_SIZE } from './GridTypes';
 import { getSeason } from './WeatherSystem';
 
+/**
+ * Updates all vehicles on the road network each frame.
+ *
+ * Spawns new vehicles on random road cells (up to 20 max), then moves
+ * existing vehicles toward their targets. Vehicle speed varies by season
+ * (slowest during mud/spring). Vehicles that run out of valid road neighbors
+ * are despawned.
+ *
+ * @param state - GameState containing traffic array and grid
+ * @param dt    - Frame delta time in milliseconds
+ */
 export function updateTraffic(state: GameState, dt: number): void {
   const season = getSeason(state.date.month);
   const speedMult = season === 'MUD (SPRING)' ? 0.015 : season === 'WINTER' ? 0.025 : 0.04;

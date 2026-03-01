@@ -9,6 +9,7 @@
  */
 import type React from 'react';
 
+/** Stub renderer for political entities on the game map. Returns null pending ECS integration. */
 const PoliticalEntityRenderer: React.FC = () => {
   // TODO: Read political entities from ECS and render procedural figures
   // with capsule body + sphere head + floating badge disc per entity.

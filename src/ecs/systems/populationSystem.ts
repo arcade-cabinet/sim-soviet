@@ -31,8 +31,10 @@ export interface PopulationGrowthResult {
  * Returns a growth hint — the caller (SimulationEngine) decides whether
  * to actually spawn workers via WorkerSystem.
  *
- * @param rng        Seeded RNG for deterministic behavior.
- * @param growthMult Multiplier on population growth rate.
+ * @param rng        - Seeded RNG for deterministic growth rolls
+ * @param growthMult - Multiplier on population growth rate (default 1.0)
+ * @param _month     - Current month (reserved for future seasonal modifiers)
+ * @returns Growth hint with spawn count, housing capacity, and overcrowding flag
  */
 export function populationSystem(rng?: GameRng, growthMult = 1.0, _month = 1): PopulationGrowthResult {
   const store = getResourceEntity();

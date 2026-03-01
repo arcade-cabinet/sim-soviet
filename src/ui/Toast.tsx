@@ -87,6 +87,7 @@ export interface ToastProps {
 
 let _nextToastId = 0;
 
+/** Stacking notification banners (top-right, up to 3 visible, auto-dismiss independently). */
 export const Toast: React.FC<ToastProps> = ({ message, onDismiss, duration = DEFAULT_DURATION }) => {
   const [stack, setStack] = useState<ToastItem[]>([]);
   const lastMsg = useRef<string | null>(null);

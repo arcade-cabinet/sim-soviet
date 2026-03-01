@@ -11,13 +11,17 @@ import type { AgeCategory, MemberRole } from '../world';
 const RETIREMENT_AGE = { male: 60, female: 55 } as const;
 
 /**
- * Compute labor capacity from age, following the historical curve.
+ * Computes labor capacity from age, following the historical curve.
  * Gender-differentiated: women retire at 55, men at 60 (Soviet pension law).
  *
  * ```
  * Female: 0-11:0.0, 12-15:0.3, 16-20:0.7, 21-45:1.0, 46-54:0.8, 55-65:0.5, 66+:0.2
  * Male:   0-11:0.0, 12-15:0.3, 16-20:0.7, 21-45:1.0, 46-54:0.8, 55-59:0.7, 60-65:0.5, 66+:0.2
  * ```
+ *
+ * @param age    - Age in years
+ * @param gender - Gender (affects retirement threshold)
+ * @returns Labor capacity from 0.0 (none) to 1.0 (peak)
  */
 export function laborCapacityForAge(age: number, gender: 'male' | 'female'): number {
   if (age < 12) return 0;
@@ -36,9 +40,13 @@ export function laborCapacityForAge(age: number, gender: 'male' | 'female'): num
 }
 
 /**
- * Derive the default member role from age.
+ * Derives the default member role from age.
  * Head/spouse roles are assigned separately during dvor creation.
  * Gender-differentiated: women become elder at 55, men at 60.
+ *
+ * @param age    - Age in years
+ * @param gender - Gender (affects elder threshold)
+ * @returns Member role ('infant', 'child', 'adolescent', 'worker', or 'elder')
  */
 export function memberRoleForAge(age: number, gender: 'male' | 'female'): MemberRole {
   if (age < 1) return 'infant';
@@ -49,9 +57,13 @@ export function memberRoleForAge(age: number, gender: 'male' | 'female'): Member
 }
 
 /**
- * Compute the age category bracket from a numeric age.
+ * Computes the age category bracket from a numeric age.
  * Used for render slot sprite variant selection and role transitions.
  * Gender-differentiated: women become elder at 55, men at 60.
+ *
+ * @param age    - Age in years
+ * @param gender - Gender (affects elder threshold)
+ * @returns Age category ('child', 'adolescent', 'adult', or 'elder')
  */
 export function ageCategoryFromAge(age: number, gender: 'male' | 'female'): AgeCategory {
   if (age < 12) return 'child';

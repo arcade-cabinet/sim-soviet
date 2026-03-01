@@ -111,6 +111,7 @@ const ProgressBar: React.FC<{ ratio: number; color: string; height?: number }> =
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Planned economy overview showing trudodni, fondy, blat, deliveries, and heating status. */
 export const EconomyPanel: React.FC<EconomyPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
   const snap = useGameSnapshot();

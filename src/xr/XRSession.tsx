@@ -1,6 +1,7 @@
 import { createXRStore, XR } from '@react-three/xr';
 import type React from 'react';
 
+/** Shared XR store instance for managing WebXR session state. */
 export const xrStore = createXRStore();
 
 interface XRSessionProps {

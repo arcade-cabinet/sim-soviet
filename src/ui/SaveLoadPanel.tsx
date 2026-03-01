@@ -84,6 +84,7 @@ function formatRelativeTime(timestamp: number): string {
   return `${days} DAY${days !== 1 ? 'S' : ''} AGO`;
 }
 
+/** Save/load game panel with slot management, auto-save status, and export/import. */
 export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({
   visible,
   onDismiss,

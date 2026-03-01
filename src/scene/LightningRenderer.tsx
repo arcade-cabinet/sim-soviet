@@ -45,6 +45,7 @@ function generateBoltPoints(targetX: number, targetZ: number): [number, number, 
   return points;
 }
 
+/** Renders a jagged lightning bolt from sky to strike point with a fade-out animation. */
 const LightningRenderer: React.FC = () => {
   const [boltPoints, setBoltPoints] = useState<[number, number, number][] | null>(null);
   const prevLightningRef = useRef<{ x: number; y: number } | null>(null);

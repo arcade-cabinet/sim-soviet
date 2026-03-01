@@ -8,8 +8,10 @@
  */
 import { useSyncExternalStore } from 'react';
 
+/** Severity levels for toast notifications. */
 export type ToastSeverity = 'warning' | 'critical' | 'evacuation';
 
+/** A single toast notification with unique ID, severity, and message. */
 export interface SovietToast {
   id: string;
   severity: ToastSeverity;

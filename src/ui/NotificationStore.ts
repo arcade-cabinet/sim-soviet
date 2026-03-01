@@ -6,8 +6,10 @@
  * and tracks an unread count that resets when the log is opened.
  */
 
+/** Source category for a notification entry. */
 export type NotificationCategory = 'toast' | 'advisor' | 'event';
 
+/** A single notification record stored in the FIFO ring buffer. */
 export interface NotificationEntry {
   id: number;
   text: string;

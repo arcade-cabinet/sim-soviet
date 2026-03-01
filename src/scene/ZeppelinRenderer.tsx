@@ -99,6 +99,7 @@ const Zep: React.FC<ZepProps> = ({ index }) => {
 
 // ── Main Renderer ───────────────────────────────────────────────────────────
 
+/** Renders a pool of firefighting airships (ellipsoid body + gondola + ground shadow) with smooth movement. */
 const ZeppelinRenderer: React.FC = () => {
   // Pre-allocate a fixed pool of zeppelin slots
   const slots = useMemo(() => Array.from({ length: MAX_ZEPPELINS }, (_, i) => i), []);

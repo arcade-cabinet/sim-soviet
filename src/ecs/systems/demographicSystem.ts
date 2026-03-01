@@ -115,7 +115,7 @@ function getAnnualMortality(age: number): number {
 // ── Working Mother Penalty ───────────────────────────────────────────────────
 
 /**
- * Compute the labor penalty for a working mother with young children.
+ * Computes the labor penalty for a working mother with young children.
  *
  * Historical: the "double burden" (двойная нагрузка) meant women with
  * small children worked fewer hours. No formal childcare in early kolkhozes.
@@ -126,6 +126,10 @@ function getAnnualMortality(age: number): number {
  * - no elder (55+F or 60+M) exists in the dvor for childcare
  *
  * Returns 1.0 (no penalty) otherwise.
+ *
+ * @param dvor   - The household to check for young children and elders
+ * @param member - The specific member to compute the penalty for
+ * @returns Labor multiplier (0.7 with penalty, 1.0 without)
  */
 export function getWorkingMotherPenalty(dvor: DvorComponent, member: DvorMember): number {
   // Only applies to working-age females
@@ -150,10 +154,13 @@ export function getWorkingMotherPenalty(dvor: DvorComponent, member: DvorMember)
 // ── Aging ────────────────────────────────────────────────────────────────────
 
 /**
- * Age all dvor members by 1 year.
+ * Ages all dvor members by 1 year.
  * Updates roles and labor capacity based on new age.
  * Preserves 'head' and 'spouse' roles — only non-leadership roles transition.
  * Tracks members who just crossed the age-5 threshold (need citizen entities).
+ *
+ * @param result - Mutable result object to record aged-into-working members
+ * @returns Total number of members aged
  */
 export function ageAllMembers(result: DemographicTickResult): number {
   let totalAged = 0;
@@ -223,12 +230,17 @@ function generateInfantName(dvor: DvorComponent, infantGender: 'male' | 'female'
 // ── Births ───────────────────────────────────────────────────────────────────
 
 /**
- * Check for conception among eligible women in all dvory.
+ * Checks for conception among eligible women in all dvory.
  *
  * Eligible: female, age 16-45, not currently pregnant.
- * Base probability: 15% per year → ~1.25% per month, modified by era and food.
+ * Base probability: 15% per year, ~1.25% per month, modified by era and food.
  * On success, sets member.pregnant = 90 (3-month gestation).
  * Actual infant creation happens in pregnancyTick().
+ *
+ * @param rng       - Seeded RNG for deterministic rolls, or null for Math.random
+ * @param foodLevel - Current food level (0.0-1.0) affecting birth rate
+ * @param result    - Mutable result object to record birth count
+ * @param eraId     - Optional era identifier for birth rate multiplier
  */
 export function birthCheck(
   rng: GameRng | null,
@@ -268,10 +280,14 @@ export function birthCheck(
 }
 
 /**
- * Advance pregnancies by one month (30 ticks).
+ * Advances pregnancies by one month (30 ticks).
  *
- * When a pregnancy completes (pregnant <= 0), create the infant in the dvor.
+ * When a pregnancy completes (pregnant <= 0), creates the infant in the dvor
+ * with a proper Russian name (patronymic from head of household).
  * Called on monthly boundaries before or after birthCheck.
+ *
+ * @param rng     - Seeded RNG for gender determination and naming
+ * @param _result - Demographic tick result (currently unused, reserved)
  */
 export function pregnancyTick(rng: GameRng | null, _result: DemographicTickResult): void {
   for (const entity of dvory) {
@@ -309,11 +325,16 @@ export function pregnancyTick(rng: GameRng | null, _result: DemographicTickResul
 // ── Deaths ───────────────────────────────────────────────────────────────────
 
 /**
- * Check for deaths among all dvor members.
+ * Checks for deaths among all dvor members.
  *
  * Age-based mortality: converted from annual to monthly.
  * Starvation: additional 5% monthly when food = 0.
  * Removes dead members from their dvor. Removes empty dvory from the world.
+ * Promotes new head of household if the current head dies.
+ *
+ * @param rng       - Seeded RNG for mortality rolls, or null for Math.random
+ * @param foodLevel - Current food level (0 triggers starvation bonus deaths)
+ * @param result    - Mutable result object to record deaths and dead member refs
  */
 export function deathCheck(rng: GameRng | null, foodLevel: number, result: DemographicTickResult): void {
   const starvationMod = foodLevel <= 0 ? STARVATION_MONTHLY_RATE : 0;
@@ -382,6 +403,9 @@ const FORMATION_PROBABILITY = 0.1;
  * (working-age 20-35, not head or spouse), pairs male from one dvor
  * with female from another dvor. Each eligible pair has ~10% annual
  * probability of forming a new household.
+ *
+ * @param rng    - Seeded RNG for pairing probability, or null for Math.random
+ * @param result - Mutable result object to record new dvor count
  */
 export function householdFormation(rng: GameRng | null, result: DemographicTickResult): void {
   // Collect eligible singles: males and females from different dvory
@@ -499,9 +523,15 @@ function removeMemberFromDvor(
  * Main demographic tick — called every simulation tick.
  *
  * Only processes on time boundaries:
- * - Year boundary (every 360 ticks): aging
+ * - Year boundary (every 360 ticks): aging + household formation
  * - Month boundary (every 30 ticks): pregnancies, births, deaths
  * - Tick 0 is always skipped.
+ *
+ * @param rng        - Seeded RNG for all demographic rolls
+ * @param totalTicks - Total simulation ticks elapsed (for boundary detection)
+ * @param foodLevel  - Current food level (affects birth rate and starvation)
+ * @param eraId      - Optional era identifier for birth rate multiplier
+ * @returns Demographic tick result with birth, death, and aging counts
  */
 export function demographicTick(
   rng: GameRng | null,

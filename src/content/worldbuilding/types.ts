@@ -1,3 +1,4 @@
+/** A historical event displayed on the satirical Soviet timeline. */
 export interface TimelineEvent {
   /** The year this event occurs */
   year: number;
@@ -9,6 +10,7 @@ export interface TimelineEvent {
   classified?: string;
 }
 
+/** Category tag for radio announcements (determines when they play). */
 export type RadioCategory =
   | 'morning'
   | 'shift_change'
@@ -19,11 +21,13 @@ export type RadioCategory =
   | 'public_service'
   | 'evening';
 
+/** A single radio broadcast with text and category. */
 export interface RadioAnnouncement {
   text: string;
   category: RadioCategory;
 }
 
+/** Satirical flavor text shown at each stage of a building's lifecycle. */
 export interface BuildingFlavorText {
   /** Shown when the building is placed on the grid */
   placement: string;
@@ -35,6 +39,7 @@ export interface BuildingFlavorText {
   destruction: string;
 }
 
+/** An unlockable achievement with satirical subtext. */
 export interface Achievement {
   id: string;
   name: string;
@@ -45,6 +50,7 @@ export interface Achievement {
   hidden: boolean;
 }
 
+/** Result of a city renaming event, including propaganda messaging and ruble cost. */
 export interface CityRenaming {
   oldName: string;
   newName: string;

@@ -8,6 +8,7 @@
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+/** Decorative inset border frame surrounding the 3D viewport. */
 export const ViewportFrame: React.FC = () => {
   return (
     <View style={styles.frame} pointerEvents="none">

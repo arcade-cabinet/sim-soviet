@@ -17,6 +17,7 @@ import { type ConsequenceLevel, DIFFICULTY_PRESETS, type DifficultyLevel } from 
 import { type SimCallbacks, SimulationEngine } from '@/game/SimulationEngine';
 import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 
+/** Configuration options for game initialization (difficulty, map size, seed). */
 export interface GameInitOptions {
   difficulty?: DifficultyLevel;
   consequence?: ConsequenceLevel;
@@ -33,6 +34,10 @@ let initialized = false;
 /**
  * Initialize the ECS world with all entities and return a SimulationEngine.
  * Safe to call multiple times — subsequent calls return the existing engine.
+ *
+ * @param callbacks - Event callbacks wired from App.web.tsx (toasts, era changes, etc.)
+ * @param options - Difficulty, consequence, seed, and map size configuration
+ * @returns Configured SimulationEngine ready for tick()
  */
 export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): SimulationEngine {
   if (engine && initialized) return engine;

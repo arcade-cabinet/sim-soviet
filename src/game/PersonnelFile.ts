@@ -13,8 +13,10 @@
 //  TYPES
 // ─────────────────────────────────────────────────────────
 
+/** Difficulty level for personnel file mark decay rates. */
 export type Difficulty = 'worker' | 'comrade' | 'tovarish';
 
+/** Categorized source of a black mark entry in the personnel file. */
 export type MarkSource =
   | 'worker_arrested'
   | 'quota_missed_minor'
@@ -30,6 +32,7 @@ export type MarkSource =
   | 'report_falsified'
   | 'excessive_intervention';
 
+/** Categorized source of a commendation entry in the personnel file. */
 export type CommendationSource =
   | 'quota_exceeded'
   | 'stakhanovite_celebrated'
@@ -37,6 +40,7 @@ export type CommendationSource =
   | 'ideology_session_passed'
   | 'mandates_fulfilled';
 
+/** A single mark or commendation entry in the personnel file history. */
 export interface FileEntry {
   tick: number;
   type: 'mark' | 'commendation';
@@ -45,8 +49,10 @@ export interface FileEntry {
   description: string;
 }
 
+/** Escalating KGB threat level derived from effective marks (safe=0 through arrested=7+). */
 export type ThreatLevel = 'safe' | 'watched' | 'warned' | 'investigated' | 'reviewed' | 'arrested';
 
+/** Serializable snapshot of the personnel file for save/load persistence. */
 export interface PersonnelFileSaveData {
   difficulty: Difficulty;
   blackMarks: number;
@@ -120,6 +126,10 @@ const ARREST_THRESHOLD = 7;
 //  PERSONNEL FILE
 // ─────────────────────────────────────────────────────────
 
+/**
+ * KGB personnel file tracking black marks, commendations, and arrest threshold.
+ * The central game-over mechanic: 7+ effective marks triggers arrest.
+ */
 export class PersonnelFile {
   private difficulty: Difficulty;
   private blackMarks: number;

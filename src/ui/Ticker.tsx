@@ -12,6 +12,7 @@ export interface TickerProps {
   messages: string;
 }
 
+/** Horizontally scrolling Pravda news ticker along the bottom of the screen. */
 export const Ticker: React.FC<TickerProps> = ({ messages }) => {
   const { width: screenWidth } = useWindowDimensions();
   const translateX = useRef(new Animated.Value(0)).current;

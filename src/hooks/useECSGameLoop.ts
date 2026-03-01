@@ -13,6 +13,13 @@ import { getEngine } from '../bridge/GameInit';
 import { gameState } from '../engine/GameState';
 import { getGameSpeed, isPaused, notifyStateChange } from '../stores/gameStore';
 
+/**
+ * Runs the ECS SimulationEngine tick loop via requestAnimationFrame.
+ *
+ * Accumulates real time, fires engine.tick() at intervals determined by game speed,
+ * advances timeOfDay for 3D lighting, and notifies React of state changes.
+ * Replaces useGameLoop for the ECS-based game version.
+ */
 export function useECSGameLoop(): void {
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef(0);

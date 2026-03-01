@@ -9,6 +9,7 @@
 import type React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
+/** CRT scan-line overlay effect applied on web to give a retro monitor look. */
 export const CRTOverlay: React.FC = () => {
   if (Platform.OS !== 'web') return null;
 

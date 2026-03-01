@@ -84,6 +84,7 @@ const FloatingLabel: React.FC<FloatingLabelProps> = ({ index }) => {
 /** Maximum concurrent floating texts to render */
 const MAX_LABELS = 20;
 
+/** Renders billboard text labels that float upward and fade out above buildings/tiles. */
 const FloatingText: React.FC = () => {
   // Pre-allocate slots and let each one check if its index is valid
   const slots = Array.from({ length: MAX_LABELS }, (_, i) => i);

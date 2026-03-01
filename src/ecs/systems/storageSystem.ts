@@ -64,6 +64,9 @@ const STORAGE_BY_DEF: Record<string, number> = {
 /**
  * Calculates total storage capacity from all buildings in the world.
  * Each storage building contributes a fixed amount based on its role/defId.
+ * Includes a base 200-unit communal root cellar capacity.
+ *
+ * @returns Total food storage capacity in units
  */
 export function calculateStorageCapacity(): number {
   let capacity = 200; // base storage (communal root cellars)
@@ -94,7 +97,9 @@ export function calculateStorageCapacity(): number {
 
 /**
  * Returns the storage capacity contribution for a single building defId.
- * Returns 0 if the building does not contribute to storage.
+ *
+ * @param defId - Building definition ID to check
+ * @returns Storage units contributed, or 0 if the building has no storage
  */
 export function getBuildingStorageContribution(defId: string): number {
   const defCapacity = STORAGE_BY_DEF[defId];
@@ -114,6 +119,8 @@ export function getBuildingStorageContribution(defId: string): number {
  * Only buildings that have completed construction AND are receiving power
  * contribute to spoilage reduction. Uses the `operationalBuildings` archetype
  * so that buildings under construction are excluded.
+ *
+ * @returns Number of active cold-storage buildings
  */
 export function countOperationalColdStorage(): number {
   let count = 0;
@@ -126,8 +133,10 @@ export function countOperationalColdStorage(): number {
 }
 
 /**
- * Returns true if at least one operational, powered cold-storage building
+ * Checks whether at least one operational, powered cold-storage building
  * exists in the settlement.
+ *
+ * @returns true if cold storage is available
  */
 export function isColdStoragePresent(): boolean {
   return countOperationalColdStorage() > 0;
@@ -221,14 +230,16 @@ function getEffectiveSpoilageRate(): number {
 }
 
 /**
- * Runs the storage & spoilage system for one tick.
+ * Runs the storage and spoilage system for one tick.
  *
  * 1. Recalculates total storage capacity from buildings.
- * 2. Applies spoilage to food exceeding capacity.
+ * 2. Applies overflow spoilage to food exceeding capacity (5% per tick).
  * 3. Applies baseline decay to stored food (rate reduced by cold storage/elevators).
  * 4. Updates the storageCapacity field on the resource store.
  *
- * @param month - Current game month (1-12) for seasonal spoilage modifier.
+ * Vodka, timber, steel, and cement never spoil.
+ *
+ * @param month - Current game month (1-12) for seasonal spoilage modifier
  */
 export function storageSystem(month: number): void {
   const store = getResourceEntity();

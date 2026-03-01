@@ -669,6 +669,7 @@ export interface BuildingInspectorPanelProps {
   onDemolish: () => void;
 }
 
+/** Detailed building inspector showing stats, flavor text, workers, and upgrade options. */
 export const BuildingInspectorPanel: React.FC<BuildingInspectorPanelProps> = ({
   visible,
   buildingDefId,

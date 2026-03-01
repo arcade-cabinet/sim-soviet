@@ -64,6 +64,7 @@ const FOG_COLOR = '#a6b8d1'; // (0.65, 0.72, 0.82)
 const SHADOW_MAP_SIZE = 1024;
 const SHADOW_CAMERA_SIZE = 50;
 
+/** Renders directional sun light with day/night cycle, hemispheric ambient fill, and distance fog. */
 const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer', isStorm = false }) => {
   const sunRef = useRef<THREE.DirectionalLight>(null);
   const hemiRef = useRef<THREE.HemisphereLight>(null);

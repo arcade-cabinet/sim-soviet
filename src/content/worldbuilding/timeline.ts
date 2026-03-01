@@ -1,5 +1,6 @@
 import type { TimelineEvent } from './types';
 
+/** Satirical alternate-history timeline spanning 1922-2100. */
 export const ETERNAL_TIMELINE: TimelineEvent[] = [
   {
     year: 1922,

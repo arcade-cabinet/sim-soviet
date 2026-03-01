@@ -7,8 +7,10 @@ export interface DialogueContext {
   settlementTier: 'selo' | 'posyolok' | 'pgt' | 'gorod';
 }
 
+/** Character archetype that can deliver dialogue lines. */
 export type DialogueCharacter = 'worker' | 'politruk' | 'kgb' | 'military' | 'party_official' | 'advisor' | 'ambient';
 
+/** A single line of dialogue with character, optional conditions, and selection weight. */
 export interface DialogueLine {
   text: string;
   character: DialogueCharacter;

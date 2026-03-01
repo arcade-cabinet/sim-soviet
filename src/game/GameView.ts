@@ -8,6 +8,7 @@
 import { getBuildingDef } from '@/data/buildingDefs';
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 
+/** Minimal building snapshot for event/headline system lambdas. */
 export interface Building {
   x: number;
   y: number;
@@ -17,6 +18,7 @@ export interface Building {
   constructionProgress?: number;
 }
 
+/** Read-only snapshot of game state for event/headline system evaluation. */
 export interface GameView {
   readonly money: number;
   readonly pop: number;

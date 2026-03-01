@@ -329,6 +329,7 @@ const LeaderHistorySection: React.FC<{ history: GeneralSecretary[] }> = ({ histo
 //  MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Politburo cabinet overview with General Secretary, ministers, factions, and succession history. */
 export const PolitburoPanel: React.FC<PolitburoPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game ticks so the panel re-renders with fresh data
   useGameSnapshot();

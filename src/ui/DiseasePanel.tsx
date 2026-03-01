@@ -118,6 +118,7 @@ const DiseaseCard: React.FC<{
 
 // ── Main Component ───────────────────────────────────────────────────────────
 
+/** Disease outbreak tracker showing active diseases, mortality rates, and hospital effectiveness. */
 export const DiseasePanel: React.FC<DiseasePanelProps> = ({ visible, onDismiss }) => {
   // Subscribe so the panel re-renders on game ticks
   useGameSnapshot();

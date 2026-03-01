@@ -7,6 +7,7 @@ import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
+/** Grid cell information displayed in the cursor tooltip on hover/long-press. */
 export interface TileData {
   terrain: string;
   type?: string;
@@ -23,23 +24,27 @@ export interface CursorTooltipProps {
   position: { x: number; y: number };
 }
 
+/** Returns a severity color (green/gold/red) based on smog level thresholds. */
 function smogColor(level: number): string {
   if (level < 30) return Colors.termGreen;
   if (level < 60) return Colors.sovietGold;
   return Colors.sovietRed;
 }
 
+/** Returns a status label and color for tile conditions (fire, normal). */
 function statusInfo(tile: TileData): { label: string; color: string } {
   if (tile.onFire) return { label: 'FIRE', color: '#ef5350' };
   return { label: 'NORMAL', color: Colors.textSecondary };
 }
 
+/** Returns a build-obstruction warning message, or null if tile is buildable. */
 function buildWarning(tile: TileData): string | null {
   if (tile.terrain === 'river' || tile.terrain === 'water') return 'CANNOT BUILD ON RIVER';
   if (tile.type && tile.type !== 'empty') return 'OBSTRUCTED';
   return null;
 }
 
+/** Floating tooltip showing grid tile info on long-press or hover. */
 export const CursorTooltip: React.FC<CursorTooltipProps> = ({ visible, tileData, position }) => {
   if (!visible) return null;
 

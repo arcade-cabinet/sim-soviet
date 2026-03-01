@@ -1,5 +1,6 @@
 import type { DialogueLine } from '../types';
 
+/** Dialogue lines spoken by the veteran advisor character (Comrade Vanya). */
 export const ADVISOR_LINES: DialogueLine[] = [
   // Universal wisdom
   {

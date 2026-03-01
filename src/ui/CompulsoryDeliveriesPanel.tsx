@@ -75,6 +75,7 @@ const RESOURCE_KEYS: Array<{ key: 'food' | 'vodka' | 'money'; label: string }> =
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** State compulsory delivery tracker showing extraction rates and delivered totals. */
 export const CompulsoryDeliveriesPanel: React.FC<CompulsoryDeliveriesPanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
   const snap = useGameSnapshot();

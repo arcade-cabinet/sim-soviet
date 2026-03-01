@@ -156,6 +156,7 @@ interface EnvironmentProps {
   season?: Season;
 }
 
+/** Renders the procedural sky, HDRI image-based lighting, PBR ground plane, and perimeter hills. */
 const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
   const center = GRID_SIZE / 2;
   const skyParams = getSkyParams(season);

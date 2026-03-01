@@ -19,6 +19,7 @@ export interface SettingsModalProps {
   onDismiss: () => void;
 }
 
+/** Settings panel with music volume, SFX toggle, and color-blind mode options. */
 export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss }) => {
   const [muted, setMuted] = useState(() => AudioManager.getInstance().isMuted);
   const [sfxMuted, setSfxMuted] = useState(() => SFXManager.getInstance().isMuted);

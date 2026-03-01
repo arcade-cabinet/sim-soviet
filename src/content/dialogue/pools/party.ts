@@ -1,5 +1,6 @@
 import type { DialogueLine } from '../types';
 
+/** Dialogue lines from Party officials — bureaucratic double-speak and credit-taking. */
 export const PARTY_OFFICIAL_LINES: DialogueLine[] = [
   {
     text: 'The shortage is temporary. The explanation for the shortage is permanent.',

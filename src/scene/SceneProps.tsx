@@ -332,6 +332,7 @@ interface ScenePropsProps {
   season?: Season;
 }
 
+/** Renders environmental detail props (rocks, bushes, grass, mushrooms, animals) scattered across the map. */
 const SceneProps: React.FC<ScenePropsProps> = ({ season = 'winter' }) => {
   // Memoize placements based on season (deterministic via seeded RNG)
   const placements = useMemo(() => computePlacements(season), [season]);

@@ -20,6 +20,7 @@ const BULLET_POINTS = [
   'Fulfill state quotas',
 ];
 
+/** Dossier briefing overlay shown once after asset loading, before gameplay begins. */
 export const IntroModal: React.FC<IntroModalProps> = ({ visible, onDismiss }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 

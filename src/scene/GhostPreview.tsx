@@ -202,6 +202,7 @@ const LONG_PRESS_DRIFT = 10;
 
 // ── Component ──────────────────────────────────────────────────────────────
 
+/** Renders a translucent building placement preview at the hovered grid cell and handles tap-to-place/inspect interactions. */
 const GhostPreview: React.FC = () => {
   const boxRef = useRef<THREE.Mesh>(null);
   const zonePlaneRef = useRef<THREE.Mesh>(null);

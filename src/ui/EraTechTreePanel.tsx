@@ -104,6 +104,7 @@ const Divider: React.FC = () => <View style={styles.divider} />;
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Era progression timeline with modifiers, building unlock tree, and construction method info. */
 export const EraTechTreePanel: React.FC<EraTechTreePanelProps> = ({ visible, onDismiss }) => {
   // Subscribe to game state for re-renders
   const snap = useGameSnapshot();

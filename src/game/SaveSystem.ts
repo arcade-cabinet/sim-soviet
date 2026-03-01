@@ -139,6 +139,10 @@ export interface ExtendedSaveData {
   };
 }
 
+/**
+ * Game persistence via Drizzle ORM + sql.js (SQLite in Wasm).
+ * Handles save/load/autosave with fallback to localStorage.
+ */
 export class SaveSystem {
   private autoSaveTimer: ReturnType<typeof setInterval> | null = null;
   private engine: SimulationEngine | null = null;

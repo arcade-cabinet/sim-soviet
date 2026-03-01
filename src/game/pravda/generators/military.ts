@@ -14,6 +14,7 @@ import {
 
 // ── EXTERNAL THREAT generators (never real, always propaganda) ──
 
+/** External threat headline generators (fictitious enemies foiled by Soviet heroes). */
 export const externalThreatGenerators: HeadlineGenerator[] = [
   // Pattern: ENEMY PLOT foiled by HERO
   (gs) => ({

@@ -240,7 +240,12 @@ export function useGameSnapshot(): GameSnapshot {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-/** Direct access to the mutable state for imperative operations. */
+/**
+ * Direct access to the mutable GameState singleton for imperative operations.
+ * Use sparingly — prefer useGameSnapshot() for reactive reads.
+ *
+ * @returns The mutable GameState singleton
+ */
 export function useGameStateRef(): GameState {
   return gameState;
 }

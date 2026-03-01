@@ -65,6 +65,7 @@ function isInBounds(gridX: number, gridY: number): boolean {
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
+/** A candidate grid cell for autonomous building placement with its Manhattan distance. */
 interface CandidateCell {
   gridX: number;
   gridY: number;

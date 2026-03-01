@@ -25,6 +25,7 @@ import type { DoctrineMechanicConfig, DoctrineMechanicEffect, DoctrineMechanicId
 
 // ─── Mechanic Configurations ────────────────────────────────────────────────
 
+/** Configuration for each doctrine signature mechanic keyed by mechanic ID. */
 export const DOCTRINE_MECHANICS: Record<DoctrineMechanicId, DoctrineMechanicConfig> = {
   grain_requisitioning: {
     id: 'grain_requisitioning',

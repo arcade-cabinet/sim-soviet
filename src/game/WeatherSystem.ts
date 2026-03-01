@@ -15,6 +15,7 @@ import type { GameRng } from './SeedSystem';
 //  WEATHER TYPES
 // ─────────────────────────────────────────────────────────
 
+/** Weather conditions affecting farming, construction, movement, and visuals. */
 export enum WeatherType {
   CLEAR = 'clear',
   OVERCAST = 'overcast',
@@ -27,6 +28,7 @@ export enum WeatherType {
   FOG = 'fog',
 }
 
+/** Static profile for a weather type: gameplay modifiers, duration range, and visual settings. */
 export interface WeatherProfile {
   readonly type: WeatherType;
   readonly label: string;
@@ -50,6 +52,7 @@ export interface WeatherProfile {
   readonly description: string;
 }
 
+/** Complete weather profile definitions for all 9 weather types. */
 export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
   [WeatherType.CLEAR]: {
     type: WeatherType.CLEAR,
@@ -237,11 +240,13 @@ const SEASON_WEATHER: Readonly<Record<Season, WeatherWeights>> = {
 //  WEATHER STATE
 // ─────────────────────────────────────────────────────────
 
+/** Current weather type and remaining duration in game days. */
 export interface WeatherState {
   current: WeatherType;
   daysRemaining: number;
 }
 
+/** Creates a default weather state (overcast, 1 day remaining). */
 export function createWeatherState(): WeatherState {
   return {
     current: WeatherType.OVERCAST,

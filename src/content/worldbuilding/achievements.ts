@@ -1,6 +1,7 @@
 import { pick } from './_rng';
 import type { Achievement } from './types';
 
+/** All 31 achievement definitions with satirical subtexts and unlock conditions. */
 export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first_building',

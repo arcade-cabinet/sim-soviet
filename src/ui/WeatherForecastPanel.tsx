@@ -126,6 +126,7 @@ const _StatRow: React.FC<{ label: string; value: string; color?: string }> = ({
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Weather conditions and season calendar with gameplay modifier indicators. */
 export const WeatherForecastPanel: React.FC<WeatherForecastPanelProps> = ({ visible, onDismiss }) => {
   const snap = useGameSnapshot();
 

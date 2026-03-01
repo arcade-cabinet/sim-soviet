@@ -27,6 +27,7 @@ const PROPAGANDA_LINES = [
   'COMRADE, YOUR CITY AWAITS.',
 ];
 
+/** Soviet-themed landing page with animated title, propaganda quotes, and game start buttons. */
 export const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onContinue, hasSaveData = false, onSettings }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const titleSlide = useRef(new Animated.Value(-30)).current;

@@ -91,6 +91,10 @@ export const TIER_MODEL_VARIANTS: Readonly<Partial<Record<string, Record<Settlem
 /**
  * Get the visual model variant for a building defId at the given tier.
  * Returns the defId itself if no tier variant exists.
+ *
+ * @param defId - Building definition ID
+ * @param tier - Current settlement tier
+ * @returns GLB model name to use for rendering
  */
 export function getTierVariant(defId: string, tier: SettlementTier): string {
   return TIER_MODEL_VARIANTS[defId]?.[tier] ?? defId;
@@ -98,7 +102,10 @@ export function getTierVariant(defId: string, tier: SettlementTier): string {
 
 /**
  * Get the GLB model name for a building type and density level.
- * Returns null if the building type is not recognized.
+ *
+ * @param type - Building type string (e.g. 'housing', 'factory')
+ * @param level - Density level 0-2 (default 0)
+ * @returns GLB model name, or null if the building type is not recognized
  */
 export function getModelName(type: string, level: number = 0): string | null {
   const entry = MODEL_MAP[type as BuildingType];

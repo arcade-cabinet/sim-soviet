@@ -67,6 +67,10 @@ function estimateBuildingWorkers(defId: string | undefined): number {
   return 5;
 }
 
+/**
+ * Manages visible political entities (politruks, KGB agents, military officers)
+ * on the game map, including Raikom directives and doctrine mechanics.
+ */
 export class PoliticalEntitySystem {
   private entities: Map<string, PoliticalEntityStats> = new Map();
   private investigations: KGBInvestigation[] = [];

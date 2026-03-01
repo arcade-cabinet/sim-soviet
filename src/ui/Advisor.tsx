@@ -14,6 +14,7 @@ export interface AdvisorProps {
   onDismiss: () => void;
 }
 
+/** Comrade advisor notification popup with character name and dismissible message. */
 export const Advisor: React.FC<AdvisorProps> = ({ visible, name = 'COMRADE KRUPNIK', message, onDismiss }) => {
   if (!visible) return null;
 

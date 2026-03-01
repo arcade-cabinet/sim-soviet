@@ -41,6 +41,7 @@ const LOADING_MESSAGES = [
   'FILING BUREAUCRATIC PAPERWORK...',
 ];
 
+/** Asset loading progress overlay with propaganda quotes and animated progress bar. */
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   progress,
   total,

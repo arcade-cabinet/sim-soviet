@@ -17,6 +17,8 @@ import type { BuildingState } from '../scene/BuildingRenderer';
  *
  * The archive's building defIds (e.g. "apartment-tower-a", "vodka-distillery")
  * match the GLB model names directly, so `type` is the defId.
+ *
+ * @returns Array of BuildingState objects with position, type, and visual state
  */
 export function getBuildingStates(): BuildingState[] {
   // Build a quick elevation lookup from terrain features
@@ -58,7 +60,9 @@ export function getBuildingStates(): BuildingState[] {
  * Read ECS tile entities and produce a 2D GridCell[][] for the terrain renderer.
  *
  * The 3D TerrainGrid expects the flat-array grid format from the old GameState.
- * This bridges ECS tiles to that format.
+ * This bridges ECS tiles to that format, overlaying terrain features and building data.
+ *
+ * @returns 2D array of GridCell objects indexed by [row][col]
  */
 export function getGridCells(): GridCell[][] {
   const grid: GridCell[][] = [];

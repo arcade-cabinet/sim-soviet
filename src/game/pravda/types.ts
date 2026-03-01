@@ -14,8 +14,10 @@ export interface PravdaHeadline {
   timestamp: number;
 }
 
+/** Union of valid headline categories for repetition avoidance. */
 export type HeadlineCategory = PravdaHeadline['category'];
 
+/** Raw headline output from a generator (before timestamp assignment). */
 export interface GeneratedHeadline {
   headline: string;
   subtext: string;
@@ -23,8 +25,10 @@ export interface GeneratedHeadline {
   category: HeadlineCategory;
 }
 
+/** Function that produces a headline from the current game view. */
 export type HeadlineGenerator = (gs: GameView) => GeneratedHeadline;
 
+/** A weighted headline generator that only fires when its condition is met. */
 export interface ContextualGenerator {
   condition: (gs: GameView) => boolean;
   weight: number;

@@ -352,6 +352,7 @@ const DetailRing: React.FC<{ text: string }> = ({ text }) => {
 
 // ── Main Component ───────────────────────────────────────────────────────
 
+/** SVG pie menu for building inspection — actions on inner ring, details on outer ring. */
 export const RadialInspectMenu: React.FC = () => {
   const menu = useInspectMenu();
   const [selectedAction, setSelectedAction] = useState<string | null>(null);

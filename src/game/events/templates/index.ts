@@ -10,6 +10,7 @@ import { POLITICAL_EVENTS } from './political';
 //  ALL TEMPLATES  (aggregated from category files)
 // ─────────────────────────────────────────────────────────
 
+/** Aggregated array of all event templates from all category files. */
 export const ALL_EVENT_TEMPLATES: EventTemplate[] = [
   ...DISASTER_EVENTS,
   ...POLITICAL_EVENTS,

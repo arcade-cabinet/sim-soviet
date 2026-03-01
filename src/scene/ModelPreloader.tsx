@@ -27,7 +27,12 @@ for (const [name, asset] of Object.entries(manifest.assets)) {
   MODEL_URLS[name] = assetUrl(`assets/${asset.file}`);
 }
 
-/** Get the resolved URL for a building model by name */
+/**
+ * Get the resolved URL for a building model by name.
+ *
+ * @param modelName - Model name matching a key in manifest.json
+ * @returns Resolved asset URL, or empty string if not found
+ */
 export function getModelUrl(modelName: string): string {
   const url = MODEL_URLS[modelName];
   if (!url) {
@@ -67,7 +72,12 @@ for (const file of PROP_FILES) {
   PROP_URLS[file] = assetUrl(`assets/models/props/${file}`);
 }
 
-/** Get the resolved URL for a prop model by file name */
+/**
+ * Get the resolved URL for a prop model by file name.
+ *
+ * @param fileName - Prop GLB file name (e.g. 'Rock_Medium_1.glb')
+ * @returns Resolved asset URL, or empty string if not found
+ */
 export function getPropUrl(fileName: string): string {
   const url = PROP_URLS[fileName];
   if (!url) {

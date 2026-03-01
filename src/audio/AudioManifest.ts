@@ -7,6 +7,7 @@
  * Sources: marxists.org (public domain Soviet-era recordings).
  */
 
+/** Metadata for a single music track in the audio system. */
 export interface MusicTrack {
   id: string;
   filename: string;
@@ -33,6 +34,7 @@ function track(
   };
 }
 
+/** Complete catalog of Soviet-era music tracks available for playback. */
 export const MUSIC_TRACKS: MusicTrack[] = [
   // Core rotation
   track('soviet_anthem_1944', 'soviet_anthem_1944.ogg', '1944 Soviet National Anthem', 'triumphant', {
@@ -165,10 +167,22 @@ export const ERA_CONTEXTS: Record<string, string> = {
   the_eternal: 'triumphant', // utopian endgame
 };
 
+/**
+ * Look up a music track by its unique ID.
+ *
+ * @param id - Track identifier (e.g. 'katyusha', 'soviet_anthem_1944')
+ * @returns The matching MusicTrack, or undefined if not found
+ */
 export function getTrack(id: string): MusicTrack | undefined {
   return MUSIC_TRACKS.find((t) => t.id === id);
 }
 
+/**
+ * Get all music tracks matching a given mood.
+ *
+ * @param mood - Mood category to filter by
+ * @returns Array of matching MusicTrack objects
+ */
 export function getTracksByMood(mood: MusicTrack['mood']): MusicTrack[] {
   return MUSIC_TRACKS.filter((t) => t.mood === mood);
 }

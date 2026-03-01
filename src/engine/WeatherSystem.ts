@@ -5,6 +5,12 @@
 
 import { gameState } from './GameState';
 
+/**
+ * Returns the season name for a given month.
+ *
+ * @param month - Month number (1-12)
+ * @returns Season string ('WINTER', 'MUD (SPRING)', 'SUMMER', or 'AUTUMN')
+ */
 export function getSeason(month: number): string {
   if (month === 12 || month <= 3) return 'WINTER';
   if (month >= 4 && month <= 5) return 'MUD (SPRING)';
@@ -12,6 +18,12 @@ export function getSeason(month: number): string {
   return 'AUTUMN';
 }
 
+/**
+ * Returns a representative CSS color for a given season.
+ *
+ * @param season - Season name string
+ * @returns Hex color string
+ */
 export function getSeasonColor(season: string): string {
   if (season === 'WINTER') return '#eceff1';
   if (season === 'MUD (SPRING)') return '#4e342e';
@@ -19,6 +31,12 @@ export function getSeasonColor(season: string): string {
   return '#5d4037';
 }
 
+/**
+ * Updates the global weather type based on the current season.
+ * Called on month transitions. Randomly selects weather appropriate for the season.
+ *
+ * @param season - Current season name string
+ */
 export function updateWeatherSystem(season: string): void {
   if (season === 'WINTER') {
     gameState.currentWeather = 'snow';

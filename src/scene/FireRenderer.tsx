@@ -123,6 +123,7 @@ const FireEffect: React.FC<FireEffectProps> = ({ x, z, y, intensity }) => {
 
 // ── Main FireRenderer ───────────────────────────────────────────────────────
 
+/** Scans the grid for fires and renders rising flame particles with flickering point lights per fire. */
 const FireRenderer: React.FC = () => {
   const [fires, setFires] = React.useState<FireData[]>([]);
 

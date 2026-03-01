@@ -271,6 +271,7 @@ function toResourceLevel(food: number, pop: number): DialogueContext['resourceLe
   return 'surplus';
 }
 
+/** Political entities panel showing KGB agents, politruks, military officers, and conscription queue. */
 export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({ visible, onDismiss }) => {
   const snap = useGameSnapshot();
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);

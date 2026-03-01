@@ -9,6 +9,7 @@
 import type { Footprint } from '@/data/buildingDefs';
 import { BUILDING_DEFS, getFootprint as getFootprintFromDefs } from '@/data/buildingDefs';
 
+/** Building sprite name and grid footprint dimensions. */
 export interface FootprintDef {
   spriteName: string;
   /** Grid width (cells in X). */

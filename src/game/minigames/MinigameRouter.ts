@@ -34,6 +34,10 @@ let _rng: GameRng | null = null;
 //  ROUTER
 // ─────────────────────────────────────────────────────────
 
+/**
+ * Manages active minigames, trigger checks, choice resolution, cooldowns,
+ * and auto-resolve on timeout. Only one minigame can be active at a time.
+ */
 export class MinigameRouter {
   private active: ActiveMinigame | null = null;
   private cooldowns: Map<MinigameId, number> = new Map();

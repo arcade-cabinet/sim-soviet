@@ -96,6 +96,10 @@ const CORRUPTION_MAX = 0.15;
 //  COMPULSORY DELIVERIES CLASS
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Extracts compulsory state deliveries from production each tick.
+ * Rates vary by political doctrine; stagnation adds corruption losses.
+ */
 export class CompulsoryDeliveries {
   private doctrine: Doctrine;
   private totalDelivered = { food: 0, vodka: 0, money: 0 };

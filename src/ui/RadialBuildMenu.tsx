@@ -273,6 +273,7 @@ const BuildingWedge: React.FC<BuildingWedgeProps> = ({
 
 // ── Main Component ───────────────────────────────────────────────────────
 
+/** SVG pie menu for building placement — categories on inner ring, buildings on outer ring. */
 export const RadialBuildMenu: React.FC = () => {
   const menu = useRadialMenu();
   const snap = useGameSnapshot();

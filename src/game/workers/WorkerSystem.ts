@@ -102,6 +102,11 @@ export interface WorkerTickContext {
 /** Governor runs every N ticks to avoid per-tick array copy overhead. */
 const GOVERNOR_INTERVAL = 10;
 
+/**
+ * Authoritative population manager: spawns/removes citizen entities,
+ * processes per-worker consumption/production/morale each tick,
+ * handles population drains/inflows, and runs the behavioral governor.
+ */
 export class WorkerSystem {
   private stats: Map<Entity, WorkerStats> = new Map();
   private rng: GameRng | null;

@@ -3,34 +3,62 @@
  * Faithful port of poc.html lines 315-371.
  */
 
+/** Static definition for a placeable building type (toolbar entry). */
 export interface BuildingTypeInfo {
+  /** Display name */
   name: string;
+  /** Toolbar category (zone, infra, state, purge) */
   category: string;
+  /** Ruble cost to place */
   cost: number;
+  /** Emoji icon for toolbar button */
   icon: string;
+  /** Render color (legacy 2D canvas) */
   color: string;
+  /** Functional type (zone, infra, utility, gov, tool) */
   type: string;
+  /** Short description for tooltip */
   desc?: string;
+  /** Power units generated (power plants only) */
   power?: number;
+  /** Water units generated (pumps only) */
   water?: number;
+  /** Pollution output per tick */
   pollution?: number;
+  /** Power units required to operate */
   powerReq?: number;
+  /** Population capacity (negative for gulags) */
   cap?: number;
+  /** Whether this building is hidden until unlocked */
   hidden?: boolean;
 }
 
+/** Stats for one upgrade level of a zone-grown building (housing, factory, distillery, farm). */
 export interface GrownLevel {
+  /** Display name for this level */
   name: string;
+  /** Render color (legacy 2D canvas) */
   color: string;
+  /** Visual height in pixels (legacy 2D canvas) */
   h: number;
+  /** Population capacity (housing only) */
   cap?: number;
+  /** Power units required to operate */
   powerReq: number;
+  /** Water units required to operate */
   waterReq: number;
+  /** Resource type produced ('food', 'vodka', 'money') */
   prod?: string;
+  /** Amount produced per month */
   amt?: number;
+  /** Pollution output per tick */
   pollution?: number;
 }
 
+/**
+ * Registry of all placeable building types keyed by tool ID.
+ * Includes zones, infrastructure, state buildings, and the bulldoze tool.
+ */
 export const BUILDING_TYPES: Record<string, BuildingTypeInfo> = {
   none: { name: 'Inspect', category: 'all', cost: 0, icon: '🔍', color: '#000', type: 'tool' },
   'zone-res': {
@@ -184,6 +212,10 @@ export const BUILDING_TYPES: Record<string, BuildingTypeInfo> = {
   },
 };
 
+/**
+ * Upgrade level definitions for zone-grown buildings.
+ * Each building type has an array of 3 levels (0, 1, 2) with escalating stats.
+ */
 export const GROWN_TYPES: Record<string, GrownLevel[]> = {
   housing: [
     { name: 'Worker Shacks', cap: 15, powerReq: 0, waterReq: 2, color: '#5d4037', h: 15 },
@@ -234,6 +266,7 @@ export const GROWN_TYPES: Record<string, GrownLevel[]> = {
   ],
 };
 
+/** Pravda news ticker messages displayed in the scrolling banner. */
 export const TICKER_MESSAGES: string[] = [
   'CITIZENS REMINDED THAT COMPLAINING IS A CRIME',
   'POTATO YIELDS UP 0.01% - DIRECTOR PRAISED',
@@ -245,6 +278,14 @@ export const TICKER_MESSAGES: string[] = [
   'SMOG IS MERELY THE FRAGRANCE OF PROGRESS',
 ];
 
+/**
+ * Returns the visual height (in pixels) for a building type at a given level.
+ * Used by the legacy 2D canvas renderer for isometric projection.
+ *
+ * @param type  - Building type key
+ * @param level - Upgrade level (0-2, default 0)
+ * @returns Height in pixels
+ */
 export function getBuildingHeight(type: string, level: number = 0): number {
   if (GROWN_TYPES[type]) return GROWN_TYPES[type][level].h;
   if (type === 'power') return 40;

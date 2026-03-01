@@ -11,11 +11,13 @@
 import { GRID_SIZE } from '../config';
 import type { MapSystem } from './map';
 
+/** A single cell in the game grid: its building type (or null) and elevation. */
 export interface GridCell {
   type: string | null;
   z: number;
 }
 
+/** Spatial index for the NxN isometric grid, tracking cell occupancy and terrain passability. */
 export class GameGrid {
   private grid: GridCell[][] = [];
   private size: number;

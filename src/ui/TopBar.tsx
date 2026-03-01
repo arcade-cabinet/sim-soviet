@@ -73,6 +73,7 @@ interface OverflowItem {
   handler?: () => void;
 }
 
+/** Top resource bar displaying money, food, vodka, power, population, calendar, speed, and threat. */
 export const TopBar: React.FC<TopBarProps> = ({
   season,
   weather,

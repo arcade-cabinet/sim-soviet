@@ -7,6 +7,16 @@ import type { GameState } from './GameState';
 import { GRID_SIZE } from './GridTypes';
 import { addFloatingText, showToast } from './helpers';
 
+/**
+ * Updates the supply train each frame.
+ *
+ * The Vanguard train spawns every 30 seconds, crosses the map on the rail row,
+ * and drops supplies (rubles + vodka) at adjacent powered stations. Also adds
+ * smog to the rail cells it passes through and destroys vehicles on the tracks.
+ *
+ * @param state - GameState containing train, buildings, and grid
+ * @param dt    - Frame delta time in milliseconds
+ */
 export function updateTrain(state: GameState, dt: number): void {
   state.train.timer += dt;
 

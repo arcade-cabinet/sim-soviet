@@ -14,8 +14,10 @@
 //  TYPES
 // ─────────────────────────────────────────────────────────
 
+/** Soviet settlement classification: selo -> posyolok -> pgt -> gorod. */
 export type SettlementTier = 'selo' | 'posyolok' | 'pgt' | 'gorod';
 
+/** Definition of a settlement tier: population, building, and worker requirements. */
 export interface TierDefinition {
   tier: SettlementTier;
   /** Russian name: село, рабочий посёлок, посёлок городского типа, город */
@@ -34,6 +36,7 @@ export interface TierDefinition {
   downgradeTicks: number;
 }
 
+/** Input metrics evaluated each tick to determine settlement tier eligibility. */
 export interface SettlementMetrics {
   population: number;
   buildings: Array<{ defId: string; role: string }>;
@@ -42,8 +45,10 @@ export interface SettlementMetrics {
   nonAgriculturalWorkers: number;
 }
 
+/** Direction of a settlement tier change. */
 export type SettlementEventType = 'upgrade' | 'downgrade';
 
+/** Emitted when the settlement upgrades or downgrades tier. */
 export interface SettlementEvent {
   type: SettlementEventType;
   fromTier: SettlementTier;
@@ -54,6 +59,7 @@ export interface SettlementEvent {
   description: string;
 }
 
+/** Serializable snapshot of settlement tier and transition counters. */
 export interface SettlementSaveData {
   currentTier: SettlementTier;
   consecutiveUpgradeTicks: number;
@@ -67,8 +73,10 @@ export interface SettlementSaveData {
 /** Minimum distinct building roles required for gorod tier. */
 export const GOROD_MIN_DISTINCT_ROLES = 5;
 
+/** Settlement tiers in ascending order from village to city. */
 export const TIER_ORDER: readonly SettlementTier[] = ['selo', 'posyolok', 'pgt', 'gorod'];
 
+/** Full tier definitions with population, building, and timing requirements. */
 export const TIER_DEFINITIONS: Readonly<Record<SettlementTier, TierDefinition>> = {
   selo: {
     tier: 'selo',
@@ -156,6 +164,10 @@ const DOWNGRADE_FLAVOR: Record<string, { title: string; description: string }> =
 //  SYSTEM
 // ─────────────────────────────────────────────────────────
 
+/**
+ * Evaluates settlement tier transitions (selo -> posyolok -> pgt -> gorod)
+ * based on population, building composition, and sustained qualification.
+ */
 export class SettlementSystem {
   private currentTier: SettlementTier;
   private consecutiveUpgradeTicks = 0;

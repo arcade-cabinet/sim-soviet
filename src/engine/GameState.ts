@@ -7,17 +7,27 @@ import { GRID_SIZE, type GridCell, type TerrainType } from './GridTypes';
 
 // --- Interfaces ---
 
+/** Calendar date within the game simulation. */
 export interface GameDate {
+  /** Current year (e.g. 1917) */
   year: number;
+  /** Current month (1-12) */
   month: number;
+  /** Tick within the current month (0 to TICKS_PER_MONTH-1) */
   tick: number;
 }
 
+/** A placed building on the legacy grid. */
 export interface BuildingInstance {
+  /** Grid column */
   x: number;
+  /** Grid row */
   y: number;
+  /** Building type key (e.g. 'housing', 'factory', 'power') */
   type: string;
+  /** Whether this building currently receives power */
   powered: boolean;
+  /** Upgrade level (0-2 for grown buildings) */
   level: number;
   /** Cosmodrome launch progress (ticks toward 60) */
   progress?: number;
@@ -25,73 +35,128 @@ export interface BuildingInstance {
   launched?: boolean;
 }
 
+/** A vehicle moving along roads on the grid. */
 export interface Vehicle {
+  /** Current X position (fractional during movement) */
   x: number;
+  /** Current Y position (fractional during movement) */
   y: number;
+  /** Target X position */
   tx: number;
+  /** Target Y position */
   ty: number;
+  /** Last X position (to avoid reversing direction) */
   lx: number;
+  /** Last Y position (to avoid reversing direction) */
   ly: number;
+  /** Movement state */
   state: 'idle' | 'moving';
+  /** Vehicle color for rendering */
   color: string;
 }
 
+/** A fire-fighting zeppelin patrolling the sky. */
 export interface Zeppelin {
+  /** Current X position */
   x: number;
+  /** Current Y position */
   y: number;
+  /** Target X position */
   tx: number;
+  /** Target Y position */
   ty: number;
+  /** Last X position */
   lx: number;
+  /** Last Y position */
   ly: number;
 }
 
+/** A floating text label that animates above the grid. */
 export interface FloatingTextItem {
+  /** Grid X position (with jitter) */
   x: number;
+  /** Grid Y position (with jitter) */
   y: number;
+  /** Display text */
   text: string;
+  /** Text color (CSS hex) */
   color: string;
+  /** Remaining lifetime in frames */
   life: number;
+  /** Initial lifetime in frames (for fade calculation) */
   maxLife: number;
 }
 
+/** State of the supply train that crosses the map. */
 export interface Train {
+  /** Whether the train is currently crossing */
   active: boolean;
+  /** Current X position (fractional) */
   x: number;
+  /** Fixed Y row the train travels on */
   y: number;
+  /** Timer for spawn interval (ms) */
   timer: number;
 }
 
+/** State of the meteor event (late-game cosmic event). */
 export interface Meteor {
+  /** Whether the meteor is currently descending */
   active: boolean;
+  /** Whether the meteor has already struck the ground */
   struck: boolean;
+  /** Current X position */
   x: number;
+  /** Current Y position */
   y: number;
+  /** Current altitude (reaches 0 on impact) */
   z: number;
+  /** Target X cell on impact */
   tx: number;
+  /** Target Y cell on impact */
   ty: number;
 }
 
+/** 5-year plan quota tracking state. */
 export interface Quota {
+  /** Resource type being tracked ('food' or 'vodka') */
   type: string;
+  /** Target amount to reach */
   target: number;
+  /** Current progress toward target */
   current: number;
+  /** Year the quota must be met by */
   deadlineYear: number;
 }
 
+/** Weather types that affect gameplay (smog, fires, construction). */
 export type WeatherType = 'snow' | 'rain' | 'storm' | 'clear';
+
+/** Visual overlay lens modes for inspecting infrastructure. */
 export type LensType = 'default' | 'water' | 'power' | 'smog' | 'aura';
+
+/** Toolbar tab categories for building placement. */
 export type TabType = 'zone' | 'infra' | 'state' | 'purge';
 
+/** Lightning strike visual effect state. */
 export interface Lightning {
+  /** Grid X of the strike */
   x: number;
+  /** Grid Y of the strike */
   y: number;
+  /** Remaining visual lifetime in frames */
   life: number;
 }
 
+/** Cosmodrome rocket launch visual effect state. */
 export interface Launch {
+  /** Launch pad grid X */
   x: number;
+  /** Launch pad grid Y */
   y: number;
+  /** Current altitude of the rocket */
   alt: number;
+  /** Current velocity of the rocket */
   vel: number;
 }
 
@@ -101,6 +166,16 @@ type Listener = () => void;
 
 // --- GameState class ---
 
+/**
+ * Mutable game state singleton for the legacy (non-ECS) engine layer.
+ *
+ * Holds the canonical grid, building list, resource tallies, weather,
+ * and all visual effect state (train, meteor, zeppelins, floating text).
+ * UI components subscribe via `useSyncExternalStore` through `useGameSnapshot()`.
+ *
+ * NOTE: The ECS `SimulationEngine` is the authoritative state source in the
+ * current architecture. GameState is synced from ECS for scene rendering.
+ */
 export class GameState {
   speed: number = 1;
   lastTime: number = 0;
@@ -147,6 +222,12 @@ export class GameState {
   // --- Subscribers ---
   private listeners: Listener[] = [];
 
+  /**
+   * Registers a listener that is called whenever game state changes.
+   *
+   * @param listener - Callback to invoke on state change
+   * @returns Unsubscribe function
+   */
   subscribe(listener: Listener): () => void {
     this.listeners.push(listener);
     return () => {
@@ -154,13 +235,17 @@ export class GameState {
     };
   }
 
+  /** Notifies all subscribed listeners that state has changed. */
   notify(): void {
     for (const listener of this.listeners) {
       listener();
     }
   }
 
-  // --- Grid initialization (port of lines 480-502) ---
+  /**
+   * Initializes the 30x30 grid with terrain (river, trees, hills, rail).
+   * Must be called once before any simulation ticks.
+   */
   initGrid(): void {
     this.grid = [];
     for (let y = 0; y < GRID_SIZE; y++) {
@@ -236,5 +321,5 @@ export class GameState {
   }
 }
 
-// Export singleton
+/** Global singleton GameState instance shared across the legacy engine. */
 export const gameState = new GameState();

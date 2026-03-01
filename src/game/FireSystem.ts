@@ -67,6 +67,7 @@ const ZEPPELIN_ARRIVAL_DIST = 1.0;
 
 type BuildingEntity = With<Entity, 'position' | 'building'>;
 
+/** State of a firefighting zeppelin: position, target, and mission phase. */
 export interface ZeppelinState {
   /** Current grid X position */
   x: number;
@@ -82,12 +83,14 @@ export interface ZeppelinState {
   extinguishTicks: number;
 }
 
+/** Serializable snapshot of fire system state for save/load persistence. */
 export interface FireSystemSaveData {
   zeppelins: ZeppelinState[];
 }
 
 // ─── Callbacks ───────────────────────────────────────────────────────────────
 
+/** Optional callbacks for fire lifecycle events (collapse, start, extinguish). */
 export interface FireSystemCallbacks {
   onBuildingCollapsed?: (gridX: number, gridY: number, defId: string) => void;
   onFireStarted?: (gridX: number, gridY: number) => void;
@@ -96,6 +99,10 @@ export interface FireSystemCallbacks {
 
 // ─── System ──────────────────────────────────────────────────────────────────
 
+/**
+ * Manages fire spread, damage, self-extinguishing, fire-station suppression,
+ * weather effects, building collapse, and zeppelin firefighting AI.
+ */
 export class FireSystem {
   private zeppelins: ZeppelinState[] = [];
   private rng: GameRng | null = null;

@@ -7,6 +7,7 @@ import type React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
+/** Visual overlay lens mode for the 3D viewport. */
 export type LensValue = 'default' | 'water' | 'power' | 'smog' | 'aura';
 
 const LENSES: { label: string; value: LensValue }[] = [
@@ -22,6 +23,7 @@ export interface LensSelectorProps {
   onLensChange: (lens: LensValue) => void;
 }
 
+/** Vertical column of lens toggle buttons (bottom-right of viewport). */
 export const LensSelector: React.FC<LensSelectorProps> = ({ activeLens, onLensChange }) => {
   return (
     <View style={styles.container}>

@@ -23,6 +23,10 @@ export interface PravdaSaveData {
 //  generated headlines instead of fixed templates.
 // ─────────────────────────────────────────────────────────
 
+/**
+ * Procedural Pravda newspaper headline generator: produces event-reactive
+ * and ambient headlines with Soviet propaganda spin and category diversity.
+ */
 export class PravdaSystem {
   private headlineHistory: PravdaHeadline[] = [];
   private lastHeadlineTime = 0;

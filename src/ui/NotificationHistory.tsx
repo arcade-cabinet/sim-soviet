@@ -27,10 +27,12 @@ const CATEGORY_CONFIG: Record<NotificationCategory, { label: string; color: stri
   event: { label: 'EVENT', color: Colors.sovietRed, icon: '\u2605' },
 };
 
+/** Hook that subscribes to the notification store and returns the current entries. */
 function useNotificationEntries() {
   return useSyncExternalStore(subscribeNotifications, getNotificationEntries, getNotificationEntries);
 }
 
+/** Scrollable communique log of past toasts, advisor messages, and events. */
 export const NotificationHistory: React.FC<NotificationHistoryProps> = ({ visible, onDismiss }) => {
   const entries = useNotificationEntries();
 

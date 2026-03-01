@@ -314,6 +314,7 @@ const CompendiumCard: React.FC<{
 //  Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Minigame reference panel showing active minigame status and expandable compendium of all 9 definitions. */
 export const MinigameReferencePanel: React.FC<MinigameReferencePanelProps> = ({ visible, onDismiss }) => {
   // Subscribe so the panel re-renders on game ticks (for active minigame updates)
   useGameSnapshot();

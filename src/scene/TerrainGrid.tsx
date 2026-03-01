@@ -27,6 +27,7 @@ function mulberry32(seed: number) {
   };
 }
 
+/** Game season affecting terrain colors, tree canopy, and weather effects. */
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
 interface TerrainGridProps {
@@ -393,6 +394,7 @@ function getPuddleColor(season: Season): string {
 
 // ── Component ───────────────────────────────────────────────────────────────
 
+/** Renders the 30x30 terrain grid with per-vertex colors and procedural tree/mountain/marsh scatter. */
 const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) => {
   // Build terrain geometry with per-vertex colors
   const terrainGeometry = useMemo(() => buildTerrainGeometry(grid, season), [grid, season]);

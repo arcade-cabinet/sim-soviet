@@ -1,5 +1,6 @@
 import type { DialogueLine } from '../types';
 
+/** Dialogue lines from politruks (political commissars) — ideological enforcement. */
 export const POLITRUK_LINES: DialogueLine[] = [
   {
     text: 'Your productivity numbers are... aspirational. Let us discuss your aspirations. In my office.',

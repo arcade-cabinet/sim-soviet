@@ -27,6 +27,7 @@ export interface WorkerStatusBarProps {
   onShowWorkers?: () => void;
 }
 
+/** Compact worker summary bar showing total workers, morale, and efficiency at a glance. */
 export const WorkerStatusBar: React.FC<WorkerStatusBarProps> = ({ onShowWorkers }) => {
   const snap = useGameSnapshot();
   const engine = getEngine();

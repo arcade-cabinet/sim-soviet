@@ -234,6 +234,11 @@ const FIRE_EVENT_IDS = new Set(['cultural_palace_fire', 'power_station_explosion
 
 const COLLECTIVE_CHECK_INTERVAL = 30;
 
+/**
+ * Central ECS tick orchestrator: advances all game subsystems each tick
+ * (chronology, economy, events, political, personnel, settlement, etc.)
+ * and bridges results to UI via callback hooks.
+ */
 export class SimulationEngine {
   private chronology: ChronologySystem;
   private eraSystem: EraSystem;

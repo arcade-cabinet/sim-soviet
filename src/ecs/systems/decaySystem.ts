@@ -37,7 +37,9 @@ export function setBuildingCollapsedCallback(cb: BuildingCollapsedCallback | und
  *
  * Iterates all buildings with a durability component and reduces
  * their durability by their decay rate. Buildings that reach 0
- * durability are removed from the world.
+ * durability are removed from the world and trigger the collapse callback.
+ *
+ * @param decayMult - Multiplier on decay rate (default 1.0, higher = faster decay)
  */
 export function decaySystem(decayMult = 1.0): void {
   // Collect entities to remove (cannot modify during iteration)

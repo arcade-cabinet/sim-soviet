@@ -31,6 +31,7 @@ export interface TierTint {
   label: string;
 }
 
+/** Tier-to-tint lookup: maps each settlement tier to its visual color/PBR definition. */
 export const TIER_TINTS: Readonly<Record<SettlementTier, TierTint>> = {
   selo: {
     colorFactor: [0.85, 0.7, 0.5],
@@ -131,6 +132,9 @@ function getOriginalMetalness(mesh: THREE.Mesh, mat: THREE.MeshStandardMaterial)
  * Each mesh's material is cloned (if shared) so tinting one building
  * does not affect others. The original color is preserved in userData
  * so re-tinting on tier change applies the new factor to the original base.
+ *
+ * @param group - Three.js Object3D containing the building's mesh children
+ * @param tier - Current settlement tier determining the color palette
  */
 /**
  * Blend weight for PBR property overrides (roughness/metalness).
@@ -187,6 +191,9 @@ export function applyTierTint(group: THREE.Object3D, tier: SettlementTier): void
  * Apply seasonal tint to all Mesh children of a building group.
  * Multiplies the current material color by the seasonal RGB factor.
  * Must be called AFTER applyTierTint() so it layers on top of the tier base.
+ *
+ * @param group - Three.js Object3D containing the building's mesh children
+ * @param season - Current season determining the color multiplier
  */
 export function applySeasonTint(group: THREE.Object3D, season: Season): void {
   const [sr, sg, sb] = SEASON_TINTS[season];
@@ -207,11 +214,14 @@ export function applySeasonTint(group: THREE.Object3D, season: Season): void {
  *
  * Foundation phase: semi-transparent (opacity 0.5), dim yellow emissive.
  * Building phase: semi-transparent (opacity 0.7), brighter yellow emissive
- * scaled by construction progress (0.0–1.0).
+ * scaled by construction progress (0.0-1.0).
  *
  * Must be called AFTER applyTierTint() + applySeasonTint().
- * Mutually exclusive with applyPoweredState() — buildings under
- * construction are not yet connected to the power grid.
+ * Mutually exclusive with applyPoweredState().
+ *
+ * @param group - Three.js Object3D containing the building's mesh children
+ * @param phase - Current construction phase ('foundation' or 'building')
+ * @param progress - Construction progress from 0.0 (just started) to 1.0 (nearly complete)
  */
 export function applyConstructionState(
   group: THREE.Object3D,
@@ -233,6 +243,9 @@ export function applyConstructionState(
 /**
  * Apply powered/unpowered visual state to a building group.
  * Unpowered buildings are dimmed to 40% brightness.
+ *
+ * @param group - Three.js Object3D containing the building's mesh children
+ * @param powered - Whether the building is connected to power
  */
 export function applyPoweredState(group: THREE.Object3D, powered: boolean): void {
   forEachMeshChild(group, (_mesh, mat) => {
@@ -246,6 +259,9 @@ export function applyPoweredState(group: THREE.Object3D, powered: boolean): void
 /**
  * Apply fire visual state to a building group.
  * On-fire buildings get a red emissive glow.
+ *
+ * @param group - Three.js Object3D containing the building's mesh children
+ * @param onFire - Whether the building is currently on fire
  */
 export function applyFireTint(group: THREE.Object3D, onFire: boolean): void {
   forEachMeshChild(group, (_mesh, mat) => {
@@ -260,7 +276,11 @@ export function applyFireTint(group: THREE.Object3D, onFire: boolean): void {
 /**
  * Flash celebration effect for tier-up transitions.
  * Sets emissive to warm white then fades back over durationMs.
- * Returns a cleanup function to cancel the animation.
+ *
+ * @param group - Three.js Object3D containing the building's mesh children
+ * @param newTier - The new settlement tier to apply after the flash
+ * @param durationMs - Flash fade duration in milliseconds (default 500)
+ * @returns Cleanup function to cancel the animation
  */
 export function flashTierTransition(
   group: THREE.Object3D,
@@ -307,6 +327,8 @@ export function flashTierTransition(
 /**
  * Clean up stored original colors for a disposed building group.
  * Call this when a building is removed to prevent memory leaks.
+ *
+ * @param group - Three.js Object3D to clean userData from
  */
 export function clearTintData(group: THREE.Object3D): void {
   group.traverse((child) => {

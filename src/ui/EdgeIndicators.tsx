@@ -90,6 +90,7 @@ function computeIndicators(
   return indicators;
 }
 
+/** Edge-of-screen notification indicators showing unread counts by category. */
 export const EdgeIndicators: React.FC = () => {
   const notifications = useNotifications();
 

@@ -19,6 +19,7 @@ import { leaderPraiseGenerators } from './political';
 //  interesting. Falls back to generic generators otherwise.
 // ─────────────────────────────────────────────────────────
 
+/** Weighted pool of all generic (non-contextual) headline generator categories. */
 export const ALL_GENERIC_GENERATORS: { generators: HeadlineGenerator[]; weight: number }[] = [
   { generators: externalThreatGenerators, weight: 2.5 },
   { generators: internalTriumphGenerators, weight: 2.0 },
@@ -28,6 +29,7 @@ export const ALL_GENERIC_GENERATORS: { generators: HeadlineGenerator[]; weight: 
   { generators: weatherFillerGenerators, weight: 1.5 },
 ];
 
+/** Generate an ambient headline using weighted selection from contextual and generic pools. */
 export function generateHeadline(gs: GameView): GeneratedHeadline {
   const rng = getPravdaRng();
 
@@ -71,6 +73,7 @@ export function generateHeadline(gs: GameView): GeneratedHeadline {
 //  system can also generate a FRESH spin on any event.
 // ─────────────────────────────────────────────────────────
 
+/** Generate a propaganda headline in response to a game event, with distraction/spin logic. */
 export function generateEventReactiveHeadline(event: GameEvent, gs: GameView): GeneratedHeadline {
   // For bad events, sometimes generate an external threat headline
   // to distract from internal problems (the classic Pravda move)

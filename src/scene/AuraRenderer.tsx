@@ -129,6 +129,7 @@ const GulagCone: React.FC<GulagConeProps> = ({ x, z }) => {
 
 // ── Main AuraRenderer ───────────────────────────────────────────────────────
 
+/** Renders propaganda tower pulsing rings and gulag searchlight cones for powered aura buildings. */
 const AuraRenderer: React.FC = () => {
   const [auras, setAuras] = React.useState<{
     towers: { key: string; x: number; z: number }[];

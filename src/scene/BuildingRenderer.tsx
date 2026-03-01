@@ -33,6 +33,7 @@ import {
   clearTintData,
 } from './TierTinting';
 
+/** State snapshot for a single building, consumed by the 3D renderer. */
 export interface BuildingState {
   id: string;
   type: string;
@@ -181,6 +182,7 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
 
 // ── Main BuildingRenderer ───────────────────────────────────────────────────
 
+/** Renders all buildings as GLB model clones with tier tinting, season colors, and status effects. */
 const BuildingRenderer: React.FC<BuildingRendererProps> = ({
   buildings,
   settlementTier = 'selo',

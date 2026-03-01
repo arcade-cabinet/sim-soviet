@@ -117,6 +117,8 @@ export function placeNewBuilding(gridX: number, gridY: number, defId: string): E
  * After calling this, the building participates in power/production/housing.
  * You MUST call `world.reindex(entity)` after this for archetype queries
  * to pick up the change.
+ *
+ * @param entity - Building entity to mark as complete
  */
 export function completeConstruction(entity: Entity): void {
   if (entity.building) {
@@ -128,6 +130,9 @@ export function completeConstruction(entity: Entity): void {
 /**
  * Returns true if a building entity is operational (not under construction).
  * Buildings without a constructionPhase are treated as operational (backward compat).
+ *
+ * @param entity - Entity with a building component to check
+ * @returns true if the building is operational
  */
 export function isOperational(entity: { building: BuildingComponent }): boolean {
   const phase = entity.building.constructionPhase;

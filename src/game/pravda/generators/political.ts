@@ -4,6 +4,7 @@ import { LEADER_ACHIEVEMENTS, LEADER_QUALITIES, LEADER_TITLES, NATURE_CREDITS, W
 
 // ── LEADERSHIP PRAISE generators (sycophantic) ──
 
+/** Sycophantic headline generators praising the Dear Leader's personal achievements. */
 export const leaderPraiseGenerators: HeadlineGenerator[] = [
   // Pattern: Leader achieves personal feat
   () => ({

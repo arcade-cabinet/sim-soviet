@@ -14,6 +14,10 @@ import { generateRiverPath, rasterizeRiver } from './rivers';
 import type { MapGenerationOptions, SerializedCell, SerializedMap, TerrainCell, TerrainType } from './types';
 import { DEFAULT_MAP_OPTIONS, MAP_SIZES, TERRAIN_DEFAULTS } from './types';
 
+/**
+ * Manages the procedurally generated terrain grid, providing terrain queries,
+ * buildability checks, forest clearing, bridge building, and serialization.
+ */
 export class MapSystem {
   private terrain: TerrainCell[][] = [];
   private size: number;
