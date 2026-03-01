@@ -84,10 +84,7 @@ export function detectConstructionDemands(
 
 // ── Internal Helpers ──────────────────────────────────────────────────────────
 
-function detectHousingDemand(
-  population: number,
-  housingCapacity: number,
-): ConstructionDemand | null {
+function detectHousingDemand(population: number, housingCapacity: number): ConstructionDemand | null {
   if (population <= 0) return null;
 
   if (population > housingCapacity) {
@@ -112,10 +109,7 @@ function detectHousingDemand(
   return null;
 }
 
-function detectFoodDemand(
-  population: number,
-  food: number,
-): ConstructionDemand | null {
+function detectFoodDemand(population: number, food: number): ConstructionDemand | null {
   if (population <= 0) return null;
 
   const foodPerCapita = food / population;

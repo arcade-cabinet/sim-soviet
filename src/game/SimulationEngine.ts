@@ -53,6 +53,7 @@ import { AchievementTracker } from './AchievementTracker';
 import { TICKS_PER_YEAR } from './Chronology';
 import type { ChronologyState, TickResult } from './ChronologySystem';
 import { ChronologySystem } from './ChronologySystem';
+import { CollectivePlanner } from './CollectivePlanner';
 import type { CompulsoryDeliverySaveData } from './CompulsoryDeliveries';
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
 import { DISEASE_PRAVDA_HEADLINES, diseaseTick, initDiseaseSystem } from './DiseaseSystem';
@@ -104,10 +105,9 @@ import { type TransportSaveData, TransportSystem } from './TransportSystem';
 import type { TutorialMilestone, TutorialSaveData } from './TutorialSystem';
 import { TutorialSystem } from './TutorialSystem';
 import { getWeatherProfile, type WeatherType } from './WeatherSystem';
-import { WorkerSystem } from './workers/WorkerSystem';
-import { CollectivePlanner } from './CollectivePlanner';
-import { detectConstructionDemands } from './workers/demandSystem';
 import { autoPlaceBuilding } from './workers/autoBuilder';
+import { detectConstructionDemands } from './workers/demandSystem';
+import { WorkerSystem } from './workers/WorkerSystem';
 
 /**
  * Callback interface for SimulationEngine → React communication.
@@ -754,15 +754,12 @@ export class SimulationEngine {
     this.tickCollective(this.chronology.getDate().totalTicks);
 
     // Chairman meddling — political cost for excessive player overrides
-    if (
-      this.workerSystem.isChairmanMeddling() &&
-      this.chronology.getDate().totalTicks % 60 === 0
-    ) {
+    if (this.workerSystem.isChairmanMeddling() && this.chronology.getDate().totalTicks % 60 === 0) {
       this.callbacks.onAdvisor(
         'Comrade, the workers notice your constant meddling. They whisper that the chairman does not trust the collective.',
       );
       // 5% chance per check of a black mark when meddling
-      if (this.rng && this.rng.next() < 0.05) {
+      if (this.rng && this.rng.random() < 0.05) {
         this.personnelFile.addMark(
           'excessive_intervention',
           this.chronology.getDate().totalTicks,
@@ -1215,15 +1212,11 @@ export class SimulationEngine {
     if (!storeRef) return;
 
     const housingCap = this.getHousingCapacity();
-    const demands = detectConstructionDemands(
-      storeRef.resources.population,
-      housingCap,
-      {
-        food: storeRef.resources.food,
-        vodka: storeRef.resources.vodka,
-        power: storeRef.resources.power,
-      },
-    );
+    const demands = detectConstructionDemands(storeRef.resources.population, housingCap, {
+      food: storeRef.resources.food,
+      vodka: storeRef.resources.vodka,
+      power: storeRef.resources.power,
+    });
 
     const queue = this.collectivePlanner.generateQueue(this.mandateState, demands);
     if (queue.length === 0) return;
@@ -1252,16 +1245,10 @@ export class SimulationEngine {
 
       // Notify the player with source-appropriate message
       if (request.source === 'mandate') {
-        this.callbacks.onToast(
-          `DECREE FULFILLED: Construction of ${request.label} has begun`,
-        );
+        this.callbacks.onToast(`DECREE FULFILLED: Construction of ${request.label} has begun`);
       } else {
-        this.callbacks.onToast(
-          `WORKERS' INITIATIVE: The collective begins ${request.label}`,
-        );
-        this.callbacks.onAdvisor(
-          `The workers have started building on their own, Comrade. ${request.reason}.`,
-        );
+        this.callbacks.onToast(`WORKERS' INITIATIVE: The collective begins ${request.label}`);
+        this.callbacks.onAdvisor(`The workers have started building on their own, Comrade. ${request.reason}.`);
       }
     }
   }

@@ -48,10 +48,7 @@ export class CollectivePlanner {
    * 3. Deduplicate: if a mandate already covers a defId, skip the demand
    * 4. Sort by sortPriority ascending (lower = higher priority)
    */
-  generateQueue(
-    mandateState: PlanMandateState | null,
-    demands: ConstructionDemand[],
-  ): ConstructionRequest[] {
+  generateQueue(mandateState: PlanMandateState | null, demands: ConstructionDemand[]): ConstructionRequest[] {
     const requests: ConstructionRequest[] = [];
     const mandateDefIds = new Set<string>();
 

@@ -27,7 +27,8 @@ export type MarkSource =
   | 'stakhanovite_fraud'
   | 'blat_noticed'
   | 'suppressing_news'
-  | 'report_falsified';
+  | 'report_falsified'
+  | 'excessive_intervention';
 
 export type CommendationSource =
   | 'quota_exceeded'
@@ -72,6 +73,7 @@ const MARK_AMOUNTS: Record<MarkSource, number> = {
   blat_noticed: 1,
   suppressing_news: 1,
   report_falsified: 3,
+  excessive_intervention: 1,
 };
 
 const COMMENDATION_AMOUNTS: Record<CommendationSource, number> = {
@@ -101,6 +103,7 @@ const DEFAULT_MARK_DESCRIPTIONS: Record<MarkSource, string> = {
   blat_noticed: 'Unauthorized blat transaction noticed',
   suppressing_news: 'Suppressing news from central committee',
   report_falsified: 'Falsification of production report (pripiski) detected',
+  excessive_intervention: 'Chairman interfered excessively with collective operations',
 };
 
 const DEFAULT_COMMENDATION_DESCRIPTIONS: Record<CommendationSource, string> = {
