@@ -688,6 +688,9 @@ const App: React.FC = () => {
   const handleRestart = useCallback(() => {
     setGameOver(null);
     setGameTally(null);
+    setActiveMinigame(null);
+    resolveMinigameRef.current = null;
+    submitReportRef.current = null;
     // Reset all module-level singletons so a fresh game can be initialized
     resetAllSingletons();
     // Reset local component state for a clean game screen

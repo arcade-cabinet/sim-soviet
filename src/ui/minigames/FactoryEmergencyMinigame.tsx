@@ -69,7 +69,7 @@ export const FactoryEmergencyMinigame: React.FC<FactoryEmergencyMinigameProps> =
       const nextRound = round + 1;
       if (nextRound >= TOTAL_ROUNDS) {
         setFinished(true);
-        const finalSuccesses = successes + (roundResult === 'hit' ? 0 : 0); // already counted
+        const finalSuccesses = successes;
         onComplete(finalSuccesses >= REQUIRED_SUCCESSES, finalSuccesses);
       } else {
         setRound(nextRound);

@@ -32,6 +32,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
 
   // Check WebXR availability on mount (web only)
   useEffect(() => {
+    let cancelled = false;
     if (Platform.OS !== 'web') return;
     if (typeof navigator !== 'undefined' && 'xr' in navigator) {
       const xr = (navigator as any).xr;
@@ -40,10 +41,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
           xr.isSessionSupported('immersive-ar').catch(() => false),
           xr.isSessionSupported('immersive-vr').catch(() => false),
         ]).then(([ar, vr]: [boolean, boolean]) => {
-          setXrSupported(ar || vr);
+          if (!cancelled) setXrSupported(ar || vr);
         });
       }
     }
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleToggleMusic = () => {

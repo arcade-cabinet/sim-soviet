@@ -77,7 +77,7 @@ describe('ConsequenceModes', () => {
       const history = file.getHistory();
       const rehabEntry = history.find((e) => e.source === 'rehabilitation');
       expect(rehabEntry).toBeDefined();
-      expect(rehabEntry!.type).toBe('commendation');
+      expect(rehabEntry!.type).toBe('reset');
       expect(rehabEntry!.tick).toBe(1000);
       expect(rehabEntry!.description).toContain('rehabilitated');
     });

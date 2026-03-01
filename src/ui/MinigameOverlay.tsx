@@ -7,7 +7,7 @@
  */
 
 import type React from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ActiveMinigame, InteractiveMinigameType, MinigameOutcome } from '../game/minigames/MinigameTypes';
 import { FactoryEmergencyMinigame } from './minigames/FactoryEmergencyMinigame';
@@ -77,6 +77,12 @@ export const MinigameOverlay: React.FC<MinigameOverlayProps> = ({
 }) => {
   const [completed, setCompleted] = useState(false);
   const [lastOutcome, setLastOutcome] = useState<MinigameOutcome | null>(null);
+
+  // Reset stale state when a new minigame starts
+  useEffect(() => {
+    setCompleted(false);
+    setLastOutcome(null);
+  }, [activeMinigame]);
 
   const interactiveType = activeMinigame?.definition.interactiveType;
 
@@ -161,7 +167,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#444',
+    borderBottomColor: Colors.panelBg,
     paddingBottom: 8,
   },
   headerTitle: {
@@ -185,7 +191,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 12,
     fontFamily: monoFont,
-    color: '#90a4ae',
+    color: Colors.textSecondary,
     lineHeight: 18,
     marginBottom: 12,
   },
@@ -193,13 +199,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: '#444',
+    borderTopColor: Colors.panelBg,
     alignItems: 'center',
   },
   outcomeText: {
     fontSize: 13,
     fontFamily: monoFont,
-    color: '#b0bec5',
+    color: Colors.textPrimary,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 12,

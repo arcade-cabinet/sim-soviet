@@ -231,7 +231,7 @@ const App: React.FC = () => {
   const [rehabilitation, setRehabilitation] = useState<RehabilitationData | null>(null);
 
   // Auto-pause when interactive modals are open (restore prior state on close)
-  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver;
+  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver || !!rehabilitation;
   const wasPausedBeforeModal = useRef(false);
   useEffect(() => {
     if (hasInteractiveModal) {
@@ -730,6 +730,11 @@ const App: React.FC = () => {
   const handleRestart = useCallback(() => {
     setGameOver(null);
     setGameTally(null);
+    setXrMode(null);
+    setRehabilitation(null);
+    setActiveMinigame(null);
+    resolveMinigameRef.current = null;
+    submitReportRef.current = null;
     // Reset all module-level singletons so a fresh game can be initialized
     resetAllSingletons();
     // Reset local component state for a clean game screen

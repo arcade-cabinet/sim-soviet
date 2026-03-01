@@ -1797,12 +1797,21 @@ export class SimulationEngine {
     const rng = this.rng;
 
     // 1. Destroy buildings based on survival rate
+    //    Clear ALL footprint tiles for multi-tile buildings (e.g. KGB office is 2×1).
     const allBuildings = [...buildingsLogic.entities];
     let buildingsLost = 0;
     for (const entity of allBuildings) {
       const roll = rng ? rng.random() : Math.random();
       if (roll > config.buildingSurvival) {
-        this.grid.setCell(entity.position.gridX, entity.position.gridY, null);
+        const { gridX, gridY } = entity.position;
+        const def = getBuildingDef(entity.building.defId);
+        const fpX = def?.footprint.tilesX ?? 1;
+        const fpY = def?.footprint.tilesY ?? 1;
+        for (let dx = 0; dx < fpX; dx++) {
+          for (let dy = 0; dy < fpY; dy++) {
+            this.grid.setCell(gridX + dx, gridY + dy, null);
+          }
+        }
         world.remove(entity);
         buildingsLost++;
       }
@@ -1832,6 +1841,10 @@ export class SimulationEngine {
     }
 
     // 4. Skip time forward
+    //    Note: advanceYears() jumps the clock but does not tick through each year.
+    //    Era transitions are detected by checkEraTransition() on the next newYear
+    //    tick boundary, so any era change caused by the time skip is handled
+    //    automatically once normal simulation resumes.
     this.chronology.advanceYears(config.returnDelayYears);
 
     // 5. Reset personnel file marks

@@ -13,7 +13,7 @@ import { GRID_SIZE, getCurrentGridSize, setCurrentGridSize } from '../../src/eng
 describe('Dynamic grid size', () => {
   afterEach(() => {
     // Reset to default after each test
-    setCurrentGridSize(30);
+    setCurrentGridSize(GRID_SIZE);
   });
 
   it('GRID_SIZE constant remains 30 (backward compatibility)', () => {
@@ -22,7 +22,7 @@ describe('Dynamic grid size', () => {
 
   it('getCurrentGridSize() defaults to GRID_SIZE (30)', () => {
     setCurrentGridSize(GRID_SIZE);
-    expect(getCurrentGridSize()).toBe(30);
+    expect(getCurrentGridSize()).toBe(GRID_SIZE);
   });
 
   it('setCurrentGridSize() changes the runtime value', () => {
@@ -48,6 +48,6 @@ describe('Dynamic grid size', () => {
     const config = require('../../src/config');
     expect(typeof config.getCurrentGridSize).toBe('function');
     expect(typeof config.setCurrentGridSize).toBe('function');
-    expect(config.getCurrentGridSize()).toBe(30);
+    expect(config.getCurrentGridSize()).toBe(GRID_SIZE);
   });
 });

@@ -34,7 +34,7 @@ function isColdSeason(season: string): boolean {
 const HeatingOverlay: React.FC = () => {
   const snap = useGameSnapshot();
   const [visuals, setVisuals] = useState<HeatingVisual[]>([]);
-  const prevVersionRef = useRef(0);
+  const prevVersionRef = useRef('');
 
   // Only render during cold seasons
   const cold = isColdSeason(snap.season);
@@ -50,13 +50,13 @@ const HeatingOverlay: React.FC = () => {
     if (!engine) return;
 
     const buildings = getBuildingStates();
-    const buildingCount = buildings.length;
-
-    // Simple version check — only rebuild when building count changes
-    if (buildingCount === prevVersionRef.current) return;
-    prevVersionRef.current = buildingCount;
-
     const heating = engine.getEconomySystem().getHeating();
+    const versionKey = `${buildings.length}:${heating.failing}`;
+
+    // Version check — rebuild when building count or heating.failing changes
+    if (versionKey === prevVersionRef.current) return;
+    prevVersionRef.current = versionKey;
+
     const isHeated = !heating.failing;
 
     setVisuals(

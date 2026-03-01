@@ -23,8 +23,12 @@ export function getCurrentGridSize(): number {
   return _currentGridSize;
 }
 
-/** Set the runtime grid size. Called by GameInit before creating the grid. */
+/**
+ * Set the runtime grid size. Called by GameInit before creating the grid.
+ * @param size - The new grid dimension (must be a positive integer)
+ */
 export function setCurrentGridSize(size: number): void {
+  if (!Number.isInteger(size) || size <= 0) return;
   _currentGridSize = size;
 }
 

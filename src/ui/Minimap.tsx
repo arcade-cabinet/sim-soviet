@@ -15,11 +15,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { getGridCells } from '../bridge/ECSBridge';
 import type { GridCell } from '../engine/GridTypes';
-import { GRID_SIZE, type TerrainType } from '../engine/GridTypes';
+import { getCurrentGridSize, type TerrainType } from '../engine/GridTypes';
 import { SharedStyles } from './styles';
-
-const PIXEL_SIZE = Math.floor(120 / GRID_SIZE); // 4px per cell
-const CANVAS_SIZE = PIXEL_SIZE * GRID_SIZE; // 120px
 
 const TERRAIN_COLORS: Record<TerrainType, string> = {
   grass: '#3a5a2c',
@@ -62,7 +59,9 @@ const NativeMinimap: React.FC = () => {
   const cells = useMemo(() => {
     if (!gridSnapshot) return null;
     const views: React.ReactElement[] = [];
-    const size = Math.min(gridSnapshot.length, GRID_SIZE);
+    const gridSize = getCurrentGridSize();
+    const pixelSize = Math.floor(120 / gridSize);
+    const size = Math.min(gridSnapshot.length, gridSize);
     for (let y = 0; y < size; y++) {
       const row = gridSnapshot[y];
       if (!row) continue;
@@ -74,10 +73,10 @@ const NativeMinimap: React.FC = () => {
             key={`${x}_${y}`}
             style={{
               position: 'absolute',
-              left: x * PIXEL_SIZE,
-              top: y * PIXEL_SIZE,
-              width: PIXEL_SIZE,
-              height: PIXEL_SIZE,
+              left: x * pixelSize,
+              top: y * pixelSize,
+              width: pixelSize,
+              height: pixelSize,
               backgroundColor: getCellColor(cell),
             }}
           />,
@@ -87,9 +86,15 @@ const NativeMinimap: React.FC = () => {
     return views;
   }, [gridSnapshot]);
 
+  const nativeGridSize = useMemo(() => {
+    const gs = getCurrentGridSize();
+    const ps = Math.floor(120 / gs);
+    return ps * gs;
+  }, []);
+
   return (
     <View style={[SharedStyles.panel, styles.container]}>
-      <View style={styles.nativeGrid}>{cells}</View>
+      <View style={{ width: nativeGridSize, height: nativeGridSize }}>{cells}</View>
     </View>
   );
 };
@@ -97,6 +102,9 @@ const NativeMinimap: React.FC = () => {
 /** Web minimap using a canvas element for fast pixel drawing. */
 const WebMinimap: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const gridSize = getCurrentGridSize();
+  const pixelSize = Math.floor(120 / gridSize);
+  const canvasSize = pixelSize * gridSize;
 
   useEffect(() => {
     function draw() {
@@ -108,30 +116,30 @@ const WebMinimap: React.FC = () => {
       const grid = getGridCells();
       if (!grid.length) return;
 
-      for (let y = 0; y < GRID_SIZE; y++) {
+      for (let y = 0; y < gridSize; y++) {
         const row = grid[y];
         if (!row) continue;
-        for (let x = 0; x < GRID_SIZE; x++) {
+        for (let x = 0; x < gridSize; x++) {
           const cell = row[x];
           if (!cell) continue;
 
           // Base terrain color
           ctx.fillStyle = TERRAIN_COLORS[cell.terrain] || '#3a5a2c';
-          ctx.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+          ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
 
           // Smog tint overlay
           if (cell.smog > 10) {
             const smogAlpha = Math.min(0.5, cell.smog / 200);
             ctx.fillStyle = '#c04000';
             ctx.globalAlpha = smogAlpha;
-            ctx.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
             ctx.globalAlpha = 1;
           }
 
           // Building dot
           if (cell.type) {
             ctx.fillStyle = BUILDING_COLOR;
-            ctx.fillRect(x * PIXEL_SIZE + 1, y * PIXEL_SIZE + 1, PIXEL_SIZE - 2, PIXEL_SIZE - 2);
+            ctx.fillRect(x * pixelSize + 1, y * pixelSize + 1, pixelSize - 2, pixelSize - 2);
           }
         }
       }
@@ -141,14 +149,14 @@ const WebMinimap: React.FC = () => {
     draw();
     const interval = setInterval(draw, 500);
     return () => clearInterval(interval);
-  }, []);
+  }, [gridSize, pixelSize]);
 
   return (
     <View style={[SharedStyles.panel, styles.container]}>
       <canvas
         ref={canvasRef as any}
-        width={CANVAS_SIZE}
-        height={CANVAS_SIZE}
+        width={canvasSize}
+        height={canvasSize}
         style={{ width: '100%', height: '100%', imageRendering: 'pixelated' } as any}
       />
     </View>
@@ -172,9 +180,5 @@ const styles = StyleSheet.create({
     height: 120,
     zIndex: 50,
     overflow: 'hidden',
-  },
-  nativeGrid: {
-    width: CANVAS_SIZE,
-    height: CANVAS_SIZE,
   },
 });

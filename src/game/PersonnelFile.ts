@@ -40,10 +40,10 @@ export type CommendationSource =
   | 'ideology_session_passed'
   | 'mandates_fulfilled';
 
-/** A single mark or commendation entry in the personnel file history. */
+/** A single mark, commendation, or reset entry in the personnel file history. */
 export interface FileEntry {
   tick: number;
-  type: 'mark' | 'commendation';
+  type: 'mark' | 'commendation' | 'reset';
   source: string;
   amount: number;
   description: string;
@@ -237,7 +237,7 @@ export class PersonnelFile {
 
     this.history.push({
       tick,
-      type: 'commendation',
+      type: 'reset',
       source: 'rehabilitation',
       amount: 0,
       description: `Comrade Chairman rehabilitated after corrective labor. Marks reset to ${marksReset}.`,

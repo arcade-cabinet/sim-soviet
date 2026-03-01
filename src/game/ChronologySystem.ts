@@ -113,8 +113,10 @@ export class ChronologySystem {
   /**
    * Advance the calendar by a number of years (for rehabilitation time skip).
    * Updates totalTicks accordingly but does not fire per-tick systems.
+   * @param years - Number of years to advance the calendar
    */
   advanceYears(years: number): void {
+    if (!Number.isFinite(years) || years < 0) return;
     this.date.year += years;
     this.date.totalTicks += years * TICKS_PER_YEAR;
     this.season = getSeasonForMonth(this.date.month);

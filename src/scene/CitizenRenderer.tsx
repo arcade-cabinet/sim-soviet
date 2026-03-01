@@ -3,7 +3,7 @@
  *
  * Reads renderable citizens from the ECS (position + citizen + renderSlot)
  * and renders each as a small colored sphere. Color is based on citizen class:
- *   worker = brown, farmer = green, miner/engineer = gray, party_official = red,
+ *   worker = brown, farmer = green, engineer = gray, party_official = red,
  *   soldier = dark brown, prisoner = gray.
  *
  * Uses instancedMesh for GPU-batched rendering (could be 100+ citizens).

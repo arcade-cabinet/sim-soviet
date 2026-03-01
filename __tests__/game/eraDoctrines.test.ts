@@ -213,6 +213,10 @@ describe('Era Doctrine Mechanics', () => {
       );
       const bureauHigh = effectsHigh.find((e) => e.mechanicId === 'eternal_bureaucracy');
 
+      expect(bureauLow).toBeDefined();
+      expect(bureauLow!.paperworkDelta).toBeDefined();
+      expect(bureauHigh).toBeDefined();
+      expect(bureauHigh!.paperworkDelta).toBeDefined();
       expect(bureauHigh!.paperworkDelta).toBeGreaterThan(bureauLow!.paperworkDelta!);
     });
 

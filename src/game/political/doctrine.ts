@@ -172,7 +172,7 @@ export function getPaperwork(): number {
 
 /** Set the paperwork value (for deserialization). */
 export function setPaperwork(value: number): void {
-  _paperwork = value;
+  _paperwork = Math.max(0, value);
 }
 
 /** Reset paperwork (for new games). */
@@ -332,7 +332,7 @@ function applyThawFreezeOscillation(totalTicks: number, _rng: GameRng): Doctrine
  */
 function applyStagnationRot(totalTicks: number, eraStartTick: number, _rng: GameRng): DoctrineMechanicEffect {
   // Calculate years of stagnation (360 ticks per year)
-  const ticksInStagnation = totalTicks - eraStartTick;
+  const ticksInStagnation = Math.max(totalTicks - eraStartTick, 0);
   const yearsOfStagnation = Math.floor(ticksInStagnation / 360);
 
   // Productivity loss is cumulative per year

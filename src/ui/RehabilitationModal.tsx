@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontFamily: monoFont,
     fontSize: 11,
-    color: '#bbb',
+    color: Colors.textSecondary,
   },
   statValue: {
     fontFamily: monoFont,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   flavor: {
     fontFamily: monoFont,
     fontSize: 10,
-    color: '#888',
+    color: Colors.textMuted,
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 4,

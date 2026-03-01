@@ -7,8 +7,8 @@
  * Color by role:
  *   politruk = #c62828 (red)
  *   kgb_agent = #fbc02d (gold)
- *   military_officer = #ff5722 (orange)
- *   conscription_officer = #2196f3 (blue)
+ *   military_officer = #00e676 (terminal green)
+ *   conscription_officer = #2a2e33 (dark panel)
  *
  * Uses regular meshes (not instanced) since there are only ~5-10 entities max.
  * Subtle idle bob animation via useFrame.
@@ -26,8 +26,8 @@ import type { PoliticalRole } from '../game/political/types';
 const ROLE_COLORS: Record<PoliticalRole, string> = {
   politruk: '#c62828',
   kgb_agent: '#fbc02d',
-  military_officer: '#ff5722',
-  conscription_officer: '#2196f3',
+  military_officer: '#00e676',
+  conscription_officer: '#2a2e33',
 };
 
 /** Data for a single political entity to render. */
@@ -78,22 +78,23 @@ const PoliticalEntityMesh: React.FC<{
 /** Renders political entities (politruks, KGB agents, etc.) as capsule figures on the map. */
 const PoliticalEntityRenderer: React.FC = () => {
   const [entities, setEntities] = useState<PoliticalEntityData[]>([]);
-  const prevCountRef = useRef(0);
+  const prevKeyRef = useRef('');
 
-  // Poll political entity data each frame (low frequency: only update on count change)
+  // Poll political entity data each frame (low frequency: only update on content change)
   useFrame(() => {
     const engine = getEngine();
     if (!engine) {
-      if (prevCountRef.current !== 0) {
+      if (prevKeyRef.current !== '') {
         setEntities([]);
-        prevCountRef.current = 0;
+        prevKeyRef.current = '';
       }
       return;
     }
 
     const visible = engine.getPoliticalEntities().getVisibleEntities();
-    if (visible.length !== prevCountRef.current) {
-      prevCountRef.current = visible.length;
+    const key = visible.map((e) => `${e.id}:${e.role}:${e.stationedAt.gridX}:${e.stationedAt.gridY}`).join(',');
+    if (key !== prevKeyRef.current) {
+      prevKeyRef.current = key;
       setEntities(
         visible.map((e) => ({
           id: e.id,

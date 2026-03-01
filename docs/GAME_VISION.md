@@ -279,8 +279,6 @@ These systems are fully designed but not yet built:
 | **Interactive minigames** | `minigames.md` | Timing, dialog, and management mini-sequences (currently text-choice only) |
 | **Heating system** | `economy.md` | Pechka → district heating → crumbling infrastructure |
 | **Storage & spoilage** | `economy.md` | Capacity limits, seasonal spoilage, winter preparation cycle |
-| **Per-building trudodni** | `demographics.md` | Individual building worker assignment with trudodni categories |
-| **Leader archetypes** | `design/leader-archetypes.md` | 11 procedural leader personality types with behavioral modifiers |
 
 ### Currently Implemented
 
@@ -312,6 +310,8 @@ These systems are fully designed but not yet built:
 | Disease events | Working — seasonal epidemics via DiseaseSystem |
 | Workplace accidents | Working — production building accident risk |
 | WebXR | Working — AR tabletop, VR walkthrough via @react-three/xr v6 |
+| Per-building trudodni | Working — individual building worker assignment with trudodni categories |
+| Leader archetypes | Working — 11 procedural leader personality types with behavioral modifiers |
 
 ---
 

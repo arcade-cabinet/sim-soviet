@@ -28,6 +28,8 @@ import {
   setPaused,
 } from '../stores/gameStore';
 import { clearNotificationHistory } from '../ui/NotificationStore';
+import { resetThawFreezeState, resetPaperwork } from '../game/political/doctrine';
+import { resetBuildingTrudodni } from '../game/TrudodniSystem';
 import { resetGameInit } from './GameInit';
 
 /**
@@ -99,10 +101,17 @@ export function resetAllSingletons(): void {
   closeInspectMenu();
   closePoliticalPanel();
 
-  // 7. Reset GameInit module-level state so initGame() can run again
+  // 7. Reset doctrine module-level state (thaw/freeze + paperwork)
+  resetThawFreezeState();
+  resetPaperwork();
+
+  // 8. Reset per-building trudodni tracking
+  resetBuildingTrudodni();
+
+  // 9. Reset GameInit module-level state so initGame() can run again
   resetGameInit();
 
-  // 8. Final notification to clear React snapshots
+  // 10. Final notification to clear React snapshots
   notifyStateChange();
   gameState.notify();
 }
