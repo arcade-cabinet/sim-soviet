@@ -16,13 +16,13 @@ import { MapControls } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import type React from 'react';
 import { useEffect, useRef } from 'react';
-import { GRID_SIZE } from '../engine/GridTypes';
+import { getCurrentGridSize } from '../engine/GridTypes';
 
 /** R3F camera controller using drei MapControls for orbit/pan/zoom around the Soviet city. */
 const CameraController: React.FC = () => {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
-  const center = GRID_SIZE / 2;
+  const center = getCurrentGridSize() / 2;
 
   // Set initial camera position on mount
   useEffect(() => {

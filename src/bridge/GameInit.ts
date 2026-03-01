@@ -6,7 +6,7 @@
  * ready for tick().
  */
 
-import { GRID_SIZE } from '@/config';
+import { GRID_SIZE, setCurrentGridSize } from '@/config';
 import { createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { createStartingSettlement } from '@/ecs/factories/settlementFactories';
 import { GameGrid } from '@/game/GameGrid';
@@ -49,6 +49,9 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   const MAP_GRID_SIZES: Record<string, number> = { small: 20, medium: 30, large: 50 };
   const gridSize = MAP_GRID_SIZES[mapSizeKey] ?? GRID_SIZE;
 
+  // Set runtime grid size so scene components use the correct value
+  setCurrentGridSize(gridSize);
+
   // Create singleton store entities with starting resources.
   // Era 1 (Revolution/1917): Timber only. No steel, no power, no food stockpile.
   // Scale starting resources by difficulty multiplier (worker=2.0x, comrade=1.0x, tovarish=0.5x).
@@ -86,7 +89,7 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   createStartingSettlement(difficulty);
 
   // Create spatial index grid
-  gameGrid = new GameGrid(GRID_SIZE);
+  gameGrid = new GameGrid(gridSize);
   const grid = gameGrid;
 
   // Create and configure SimulationEngine
@@ -135,4 +138,16 @@ export function shutdownSaveSystem(): void {
     stopAutoSave();
     stopAutoSave = null;
   }
+}
+
+/**
+ * Reset all module-level state so initGame() can be called again for a new game.
+ * Called by resetAllSingletons() during game restart.
+ */
+export function resetGameInit(): void {
+  shutdownSaveSystem();
+  engine = null;
+  gameGrid = null;
+  saveSystem = null;
+  initialized = false;
 }

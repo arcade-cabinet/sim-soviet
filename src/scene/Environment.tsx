@@ -15,7 +15,7 @@ import { Environment as DreiEnvironment, Sky, useTexture } from '@react-three/dr
 import type React from 'react';
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import { GRID_SIZE } from '../engine/GridTypes';
+import { getCurrentGridSize } from '../engine/GridTypes';
 import { assetUrl } from '../utils/assetPath';
 import type { Season } from './TerrainGrid';
 
@@ -113,7 +113,7 @@ const HILLS = [
 
 /** PBR Ground plane with tiled snow/grass textures */
 const Ground: React.FC<{ season: Season }> = ({ season }) => {
-  const center = GRID_SIZE / 2;
+  const center = getCurrentGridSize() / 2;
   const useSnow = season === 'winter' || season === 'autumn';
 
   const colorFile = useSnow
@@ -158,7 +158,7 @@ interface EnvironmentProps {
 
 /** Renders the procedural sky, HDRI image-based lighting, PBR ground plane, and perimeter hills. */
 const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
-  const center = GRID_SIZE / 2;
+  const center = getCurrentGridSize() / 2;
   const skyParams = getSkyParams(season);
   const hdriFile = getHdriFile(season);
   const hillColor = getHillColor(season);

@@ -17,13 +17,21 @@ import React, { useMemo, useRef } from 'react';
 import type * as THREE from 'three';
 
 import { gameState, type WeatherType } from '../engine/GameState';
-import { GRID_SIZE } from '../engine/GridTypes';
+import { getCurrentGridSize } from '../engine/GridTypes';
 
-const EMITTER_WIDTH = GRID_SIZE * 2;
-const EMITTER_DEPTH = GRID_SIZE * 2;
+function getEmitterWidth(): number {
+  return getCurrentGridSize() * 2;
+}
+function getEmitterDepth(): number {
+  return getCurrentGridSize() * 2;
+}
 const EMITTER_Y = 30;
-const CENTER_X = GRID_SIZE / 2;
-const CENTER_Z = GRID_SIZE / 2;
+function getCenterX(): number {
+  return getCurrentGridSize() / 2;
+}
+function getCenterZ(): number {
+  return getCurrentGridSize() / 2;
+}
 
 // ── Particle configs ────────────────────────────────────────────────────────
 
@@ -83,11 +91,15 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ config }) => {
 
   // Initialize particle positions spread across the emitter volume
   const positions = useMemo(() => {
+    const centerX = getCenterX();
+    const centerZ = getCenterZ();
+    const emitterW = getEmitterWidth();
+    const emitterD = getEmitterDepth();
     const arr = new Float32Array(config.count * 3);
     for (let i = 0; i < config.count; i++) {
-      arr[i * 3] = CENTER_X + (Math.random() - 0.5) * EMITTER_WIDTH;
+      arr[i * 3] = centerX + (Math.random() - 0.5) * emitterW;
       arr[i * 3 + 1] = Math.random() * EMITTER_Y;
-      arr[i * 3 + 2] = CENTER_Z + (Math.random() - 0.5) * EMITTER_DEPTH;
+      arr[i * 3 + 2] = centerZ + (Math.random() - 0.5) * emitterD;
     }
     return arr;
   }, [config.count]);
@@ -102,6 +114,10 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ config }) => {
     const arr = posAttr.array as Float32Array;
 
     const [gx, gy, gz] = config.gravity;
+    const centerX = getCenterX();
+    const centerZ = getCenterZ();
+    const emitterW = getEmitterWidth();
+    const emitterD = getEmitterDepth();
 
     for (let i = 0; i < config.count; i++) {
       const idx = i * 3;
@@ -111,21 +127,21 @@ const ParticleSystem: React.FC<ParticleSystemProps> = ({ config }) => {
 
       // Reset particle when it falls below ground
       if (arr[idx + 1] < 0) {
-        arr[idx] = CENTER_X + (Math.random() - 0.5) * EMITTER_WIDTH;
+        arr[idx] = centerX + (Math.random() - 0.5) * emitterW;
         arr[idx + 1] = EMITTER_Y + Math.random() * 5;
-        arr[idx + 2] = CENTER_Z + (Math.random() - 0.5) * EMITTER_DEPTH;
+        arr[idx + 2] = centerZ + (Math.random() - 0.5) * emitterD;
       }
 
       // Wrap X and Z to keep particles in the emitter volume
-      if (arr[idx] < CENTER_X - EMITTER_WIDTH / 2) {
-        arr[idx] += EMITTER_WIDTH;
-      } else if (arr[idx] > CENTER_X + EMITTER_WIDTH / 2) {
-        arr[idx] -= EMITTER_WIDTH;
+      if (arr[idx] < centerX - emitterW / 2) {
+        arr[idx] += emitterW;
+      } else if (arr[idx] > centerX + emitterW / 2) {
+        arr[idx] -= emitterW;
       }
-      if (arr[idx + 2] < CENTER_Z - EMITTER_DEPTH / 2) {
-        arr[idx + 2] += EMITTER_DEPTH;
-      } else if (arr[idx + 2] > CENTER_Z + EMITTER_DEPTH / 2) {
-        arr[idx + 2] -= EMITTER_DEPTH;
+      if (arr[idx + 2] < centerZ - emitterD / 2) {
+        arr[idx + 2] += emitterD;
+      } else if (arr[idx + 2] > centerZ + emitterD / 2) {
+        arr[idx + 2] -= emitterD;
       }
     }
 

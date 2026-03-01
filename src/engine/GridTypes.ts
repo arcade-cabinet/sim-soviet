@@ -9,8 +9,24 @@ export const TILE_WIDTH = 64;
 /** Isometric tile height in pixels (legacy 2D canvas). */
 export const TILE_HEIGHT = 32;
 
-/** Grid dimension (30x30 square grid). */
+/** Grid dimension (30x30 square grid). Default value — use currentGridSize for runtime. */
 export const GRID_SIZE = 30;
+
+/**
+ * Mutable runtime grid size — set during game init based on map size selection.
+ * Scene components should read this instead of the constant GRID_SIZE.
+ */
+let _currentGridSize = GRID_SIZE;
+
+/** Get the current runtime grid size (set during game init). */
+export function getCurrentGridSize(): number {
+  return _currentGridSize;
+}
+
+/** Set the runtime grid size. Called by GameInit before creating the grid. */
+export function setCurrentGridSize(size: number): void {
+  _currentGridSize = size;
+}
 
 /** Number of simulation ticks per in-game month. */
 export const TICKS_PER_MONTH = 15;

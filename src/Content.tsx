@@ -28,6 +28,7 @@ import AuraRenderer from './scene/AuraRenderer';
 import BuildingRenderer from './scene/BuildingRenderer';
 import BuildingStatusBadges from './scene/BuildingStatusBadges';
 import CameraController from './scene/CameraController';
+import CitizenRenderer from './scene/CitizenRenderer';
 import Environment from './scene/Environment';
 import FireRenderer from './scene/FireRenderer';
 import FloatingText from './scene/FloatingText';
@@ -139,6 +140,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
       <ZeppelinRenderer />
       <MeteorRenderer />
       <FloatingText />
+      <CitizenRenderer />
       <PoliticalEntityRenderer />
       <GhostPreview />
       <LensSystem />

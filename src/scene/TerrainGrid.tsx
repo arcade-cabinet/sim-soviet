@@ -14,7 +14,7 @@
 import type React from 'react';
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import { GRID_SIZE, type GridCell, type TerrainType } from '../engine/GridTypes';
+import type { GridCell, TerrainType } from '../engine/GridTypes';
 
 /** Seeded PRNG (mulberry32) for deterministic scatter */
 function mulberry32(seed: number) {
@@ -108,11 +108,12 @@ function buildTerrainGeometry(grid: GridCell[][], season: Season): THREE.BufferG
   const indices: number[] = [];
   const colors: number[] = [];
   const normals: number[] = [];
+  const gridSize = grid.length;
 
   let vertIdx = 0;
 
-  for (let row = 0; row < GRID_SIZE; row++) {
-    for (let col = 0; col < GRID_SIZE; col++) {
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
       const cell = grid[row]?.[col];
       if (!cell) continue;
 
@@ -174,9 +175,10 @@ interface TreeData {
 function collectTrees(grid: GridCell[][]): TreeData[] {
   const trees: TreeData[] = [];
   const rng = mulberry32(0xf0_be57);
+  const gridSize = grid.length;
 
-  for (let row = 0; row < GRID_SIZE; row++) {
-    for (let col = 0; col < GRID_SIZE; col++) {
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
       const cell = grid[row]?.[col];
       if (!cell || cell.terrain !== 'tree') continue;
 
@@ -216,9 +218,10 @@ interface MountainData {
 function collectMountains(grid: GridCell[][]): MountainData[] {
   const mountains: MountainData[] = [];
   const rng = mulberry32(0xd0c4_a1b5);
+  const gridSize = grid.length;
 
-  for (let row = 0; row < GRID_SIZE; row++) {
-    for (let col = 0; col < GRID_SIZE; col++) {
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
       const cell = grid[row]?.[col];
       if (!cell || cell.terrain !== 'mountain') continue;
 
@@ -286,9 +289,10 @@ interface MarshTileData {
 function collectMarshes(grid: GridCell[][]): MarshTileData[] {
   const marshes: MarshTileData[] = [];
   const rng = mulberry32(0xba_d5ea);
+  const gridSize = grid.length;
 
-  for (let row = 0; row < GRID_SIZE; row++) {
-    for (let col = 0; col < GRID_SIZE; col++) {
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
       const cell = grid[row]?.[col];
       if (!cell || cell.terrain !== 'marsh') continue;
 
@@ -334,9 +338,10 @@ interface RailMarker {
 
 function collectRailMarkers(grid: GridCell[][]): RailMarker[] {
   const markers: RailMarker[] = [];
+  const gridSize = grid.length;
 
-  for (let row = 0; row < GRID_SIZE; row++) {
-    for (let col = 0; col < GRID_SIZE; col++) {
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
       const cell = grid[row]?.[col];
       if (!cell || cell.terrain !== 'rail') continue;
 
