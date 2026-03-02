@@ -3,6 +3,7 @@ import { createBuilding, createMetaStore, createResourceStore } from '../../src/
 import type { QuotaState } from '../../src/ai/agents/political/PoliticalAgent';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
+import { TICKS_PER_MONTH } from '../../src/game/Chronology';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
 
@@ -654,6 +655,61 @@ describe('SimulationEngine', () => {
         'Autopilot: blat exchanged to reduce KGB suspicion',
         'warning',
       );
+    });
+  });
+
+  // ── Seasonal farm multiplier ──────────────────────────────
+
+  describe('seasonal farm multiplier', () => {
+    it('passes farmModifier === 0 to FoodAgent during winter months', () => {
+      // Game starts at month 10 (Oct). Advance 1 month (30 ticks) to reach month 11 (Winter).
+      // Winter months (11,12,1,2,3) have farmMultiplier = 0.0
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
+
+      for (let i = 0; i < TICKS_PER_MONTH; i++) engine.tick(); // Now at month 11 (Winter)
+
+      // Spy on FoodAgent.produce to capture the farmModifier passed in
+      const foodAgent = engine.getFoodAgent();
+      const produceSpy = jest.spyOn(foodAgent, 'produce');
+
+      engine.tick(); // One tick in month 11 (Winter)
+
+      expect(produceSpy).toHaveBeenCalled();
+      const callArgs = produceSpy.mock.calls[0]![0]!;
+      // farmModifier should be 0 because seasonFarmMult (0.0) * anything = 0
+      expect(callArgs.farmModifier).toBe(0);
+    });
+
+    it('passes amplified farmModifier (> 1.0) to FoodAgent during Golden Week (month 6)', () => {
+      // Game starts at month 10 (Oct). Advance 8 months to reach month 6 (Golden Week).
+      // Month: 10 -> 11 -> 12 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
+
+      // Prevent game-over from KGB arrests / quota failures during the 240-tick advance.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      jest.spyOn(engine as any, 'endGame').mockImplementation(() => {});
+
+      // Spy on FoodAgent.produce BEFORE advancing
+      const foodAgent = engine.getFoodAgent();
+      const produceSpy = jest.spyOn(foodAgent, 'produce');
+
+      // Advance 8 months (240 ticks) to reach month 6
+      for (let i = 0; i < 8 * TICKS_PER_MONTH; i++) engine.tick();
+
+      produceSpy.mockClear();
+      engine.tick(); // One tick in month 6 (Golden Week)
+
+      expect(produceSpy).toHaveBeenCalled();
+      const callArgs = produceSpy.mock.calls[0]![0]!;
+      // Golden Week farmMultiplier = 3.0
+      // farmMod = 3.0 * weatherProfile.farmModifier * politburoMods * eraMods * heatingPenalty * mts
+      // Weather modifier varies (0.15-2.0) so farmMod ranges widely, but must be > 1.0
+      // since seasonFarmMult alone is 3.0 (even worst weather 0.15 * 3.0 = 0.45 won't apply
+      // here because Golden Week weather is favorable). With typical weather: ~1.5 - 6.0
+      // Without the seasonal fix, this value would be <= 1.0 (just weather * other mods).
+      expect(callArgs.farmModifier).toBeGreaterThan(1.0);
     });
   });
 });

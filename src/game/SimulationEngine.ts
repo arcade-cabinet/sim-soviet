@@ -624,8 +624,9 @@ export class SimulationEngine {
     const politburoMods = this.politburo.getModifiers();
     const eraMods = this.politicalAgent.getModifiers();
     const heatingPenalty = this.economyAgent.getHeating().failing ? 0.5 : 1.0;
+    const seasonFarmMult = tickResult.season.farmMultiplier;
     const farmMod =
-      weatherProfile.farmModifier * politburoMods.foodProductionMult *
+      seasonFarmMult * weatherProfile.farmModifier * politburoMods.foodProductionMult *
       eraMods.productionMult * heatingPenalty * this.mtsGrainMultiplier;
     const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult * heatingPenalty;
     const diffConfig = DIFFICULTY_PRESETS[this.difficulty];
