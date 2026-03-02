@@ -22,8 +22,8 @@ test.describe('Save/Load Panel', () => {
 
     await openSavePanel(page);
 
-    // Save panel should show slot buttons
-    await expect(page.getByText('SAVE')).toBeVisible();
+    // Save panel should show — use exact match to avoid ambiguity with "SAVE / LOAD"
+    await expect(page.getByText('SAVE / LOAD').first()).toBeVisible();
   });
 
   test('save panel shows slot options', async ({ page }) => {
@@ -31,11 +31,8 @@ test.describe('Save/Load Panel', () => {
 
     await openSavePanel(page);
 
-    // The panel should have save slot elements visible
-    // SaveLoadPanel shows SLOT 1-5 buttons
-    const panelContent = await page.locator('[role="dialog"], [data-testid]').first().isVisible().catch(() => false);
     // At minimum, the save modal should be open
-    expect(panelContent || await page.getByText('SAVE').isVisible()).toBeTruthy();
+    await expect(page.getByText('SAVE / LOAD').first()).toBeVisible();
   });
 
   test('game state is consistent after advancing time', async ({ page }) => {

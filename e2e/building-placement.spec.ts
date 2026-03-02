@@ -17,9 +17,9 @@ test.describe('Build Toolbar', () => {
     await openToolbar(page);
 
     // ZONING sub-tab should be visible when BUILD is active
-    await expect(page.getByText('ZONING')).toBeVisible();
-    await expect(page.getByText('INFRASTRUCTURE')).toBeVisible();
-    await expect(page.getByText('STATE')).toBeVisible();
+    await expect(page.getByText('ZONING').first()).toBeVisible();
+    await expect(page.getByText('INFRASTRUCTURE').first()).toBeVisible();
+    await expect(page.getByText('STATE').first()).toBeVisible();
   });
 
   test('switching build sub-tabs works', async ({ page }) => {
@@ -28,30 +28,30 @@ test.describe('Build Toolbar', () => {
     await openToolbar(page);
 
     // Switch to INFRASTRUCTURE sub-tab
-    await page.getByText('INFRASTRUCTURE').click();
+    await page.getByText('INFRASTRUCTURE').first().click();
     await page.waitForTimeout(300);
 
-    // Switch to STATE sub-tab
-    await page.getByText('STATE').click();
+    // Switch to STATE sub-tab — use first() to avoid matching STATE QUOTA
+    await page.getByText('STATE', { exact: true }).first().click();
     await page.waitForTimeout(300);
 
     // Switch back to ZONING
-    await page.getByText('ZONING').click();
+    await page.getByText('ZONING').first().click();
     await page.waitForTimeout(300);
 
     // All sub-tabs should still be visible (BUILD is still active)
-    await expect(page.getByText('ZONING')).toBeVisible();
+    await expect(page.getByText('ZONING').first()).toBeVisible();
   });
 
   test('primary navigation tabs are all visible', async ({ page }) => {
     await startGameAndDismiss(page);
 
-    // All 5 primary tabs should be visible
-    await expect(page.getByText('BUILD')).toBeVisible();
-    await expect(page.getByText('MANDATES')).toBeVisible();
-    await expect(page.getByText('WORKERS')).toBeVisible();
-    await expect(page.getByText('REPORTS')).toBeVisible();
-    await expect(page.getByText('PURGE')).toBeVisible();
+    // All 5 primary tabs should be visible (use first() for ambiguous matches)
+    await expect(page.getByText('BUILD').first()).toBeVisible();
+    await expect(page.getByText('MANDATES').first()).toBeVisible();
+    await expect(page.getByText('WORKERS').first()).toBeVisible();
+    await expect(page.getByText('REPORTS').first()).toBeVisible();
+    await expect(page.getByText('PURGE').first()).toBeVisible();
   });
 
   test('switching to non-build tab hides sub-tabs', async ({ page }) => {
@@ -59,10 +59,10 @@ test.describe('Build Toolbar', () => {
 
     // Open BUILD first to confirm sub-tabs appear
     await openToolbar(page);
-    await expect(page.getByText('ZONING')).toBeVisible();
+    await expect(page.getByText('ZONING').first()).toBeVisible();
 
     // Switch to MANDATES — sub-tabs should disappear
-    await page.getByText('MANDATES').click();
+    await page.getByText('MANDATES').first().click();
     await page.waitForTimeout(300);
 
     // ZONING sub-tab should no longer be visible

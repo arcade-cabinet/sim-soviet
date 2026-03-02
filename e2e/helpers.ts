@@ -203,7 +203,7 @@ export async function openSavePanel(page: Page): Promise<void> {
   await page.waitForTimeout(300);
 
   // Click SAVE / LOAD in the overflow menu
-  await page.getByText('SAVE / LOAD').click();
+  await page.getByText('SAVE / LOAD').first().click();
   await page.waitForTimeout(500);
 }
 
