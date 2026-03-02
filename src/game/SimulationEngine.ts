@@ -182,6 +182,7 @@ export class SimulationEngine {
   private lastWeather = '';
   private lastDayPhase = '';
   private lastThreatLevel = '';
+  private startYear: number;
   private consecutiveQuotaFailures = 0;
   private mtsGrainMultiplier = 1.0;
   private stakhanoviteBoosts: Map<string, number> = new Map();
@@ -207,7 +208,8 @@ export class SimulationEngine {
     this.quota = createDefaultQuota();
     this.quota.target = Math.round(this.quota.target * DIFFICULTY_PRESETS[this.difficulty].quotaMultiplier);
     const meta = getMetaEntity();
-    const startYear = meta?.gameMeta.date.year ?? 1922;
+    const startYear = meta?.gameMeta.date.year ?? 1917;
+    this.startYear = startYear;
     const fallbackRng = rng ?? ({
       random: () => Math.random(),
       int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -1109,7 +1111,7 @@ export class SimulationEngine {
         victory,
         reason,
         currentYear: date.year,
-        startYear: 1922,
+        startYear: this.startYear,
         population: res?.resources.population ?? 0,
         buildingCount: buildingsLogic.entities.length,
         money: res?.resources.money ?? 0,
