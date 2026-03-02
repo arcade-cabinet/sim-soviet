@@ -27,6 +27,12 @@ jest.mock('@/audio/SFXManager', () => ({
   },
 }));
 
+// Mock expo-sqlite (native module not available in Jest)
+jest.mock('expo-sqlite', () => ({
+  openDatabaseSync: jest.fn(),
+  deserializeDatabaseSync: jest.fn(),
+}));
+
 import { isGameInitialized } from '@/bridge/GameInit';
 import { resetAllSingletons } from '@/bridge/Reset';
 import { world } from '@/ecs/world';
