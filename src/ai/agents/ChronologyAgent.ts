@@ -1,19 +1,15 @@
 /**
- * @module game/ChronologySystem
+ * @fileoverview ChronologyAgent — Game clock as a Yuka agent.
  *
- * @deprecated Logic moved to ChronologyAgent (`src/ai/agents/ChronologyAgent.ts`).
- * This file is kept for compatibility while callers are migrated.
+ * Absorbs all tick logic from ChronologySystem: advances totalTicks,
+ * computes hour/day/month/year boundaries, cycles seasons, updates
+ * weather, and returns a TickResult each update call.
  *
- * Advances the game clock each simulation tick and resolves
- * season transitions, weather changes, and day/night phases.
- *
- * The tick() method returns a TickResult describing what boundaries
- * were crossed (new day, new month, new year) so that other systems
- * can react accordingly.
+ * The constants file (Chronology.ts) is kept as-is; only the mutable
+ * clock logic moves here.
  */
 
-// DEPRECATED: logic moved to ChronologyAgent
-
+import { Vehicle } from 'yuka';
 import {
   createGameDate,
   DAYS_PER_MONTH,
@@ -26,15 +22,15 @@ import {
   type Season,
   type SeasonProfile,
   TICKS_PER_YEAR,
-} from './Chronology';
-import type { GameRng } from './SeedSystem';
+} from '../../game/Chronology';
+import type { GameRng } from '../../game/SeedSystem';
 import {
   createWeatherState,
   getWeatherProfile,
   rollWeather,
   type WeatherState,
   type WeatherType,
-} from './WeatherSystem';
+} from '../../game/WeatherSystem';
 
 // ─────────────────────────────────────────────────────────
 //  TICK RESULT
@@ -59,23 +55,49 @@ export interface TickResult {
 }
 
 // ─────────────────────────────────────────────────────────
-//  CHRONOLOGY SYSTEM
+//  SERIALIZATION
+// ─────────────────────────────────────────────────────────
+
+/** Serializable snapshot of the chronology agent state. */
+export interface ChronologyState {
+  date: GameDate;
+  season: Season;
+  weather: WeatherState;
+  tickWithinDay: number;
+}
+
+// ─────────────────────────────────────────────────────────
+//  CHRONOLOGY AGENT
 // ─────────────────────────────────────────────────────────
 
 /**
- * Advances the game clock each tick, resolving day/month/year boundaries,
- * season transitions, weather rolls, and day/night phase changes.
+ * Yuka Vehicle that owns the game clock.
+ *
+ * Each call to tick() advances totalTicks by 1 and resolves
+ * day/month/year boundaries, season transitions, weather rolls,
+ * and day/night phase changes, returning a TickResult.
+ *
+ * @example
+ * const clock = new ChronologyAgent(rng, 1922);
+ * const result = clock.tick();
+ * if (result.newYear) { ... }
  */
-export class ChronologySystem {
+export class ChronologyAgent extends Vehicle {
   private date: GameDate;
   private season: SeasonProfile;
   private weather: WeatherState;
   private tickWithinDay: number;
 
+  /**
+   * @param rng - Seeded RNG for weather rolls
+   * @param startYear - Calendar year for the new game (default 1922)
+   */
   constructor(
     private rng: GameRng,
     startYear = 1922,
   ) {
+    super();
+    this.name = 'ChronologyAgent';
     this.date = createGameDate(startYear);
     this.season = getSeasonForMonth(this.date.month);
     this.weather = createWeatherState();
@@ -85,24 +107,29 @@ export class ChronologySystem {
     this.weather = rollWeather(this.season.season, this.rng);
   }
 
-  // ── Public accessors ───────────────────────────────────
+  // ── Public accessors ─────────────────────────────────
 
+  /** Returns the current in-game date (read-only). */
   getDate(): Readonly<GameDate> {
     return this.date;
   }
 
+  /** Returns the current season profile. */
   getSeason(): SeasonProfile {
     return this.season;
   }
 
+  /** Returns a copy of the current weather state. */
   getWeather(): WeatherState {
     return { ...this.weather };
   }
 
+  /** Returns the static profile for the current weather type. */
   getWeatherProfile() {
     return getWeatherProfile(this.weather.current);
   }
 
+  /** Returns the current day phase based on hour and season daylight hours. */
   getDayPhase(): DayPhase {
     return getDayPhase(this.date.hour, this.season.daylightHours);
   }
@@ -112,12 +139,13 @@ export class ChronologySystem {
    * 0 = start of day, 1 = end of day.
    */
   getDayProgress(): number {
-    return (this.tickWithinDay * HOURS_PER_TICK + (this.date.hour % HOURS_PER_TICK)) / 24;
+    return this.date.hour / 24;
   }
 
   /**
    * Advance the calendar by a number of years (for rehabilitation time skip).
    * Updates totalTicks accordingly but does not fire per-tick systems.
+   *
    * @param years - Number of years to advance the calendar
    */
   advanceYears(years: number): void {
@@ -128,11 +156,13 @@ export class ChronologySystem {
     this.weather = rollWeather(this.season.season, this.rng);
   }
 
-  // ── Core tick ──────────────────────────────────────────
+  // ── Core tick ────────────────────────────────────────
 
   /**
    * Advances the clock by one tick and returns a TickResult
    * describing which boundaries were crossed.
+   *
+   * @returns TickResult with boundary flags, season, weather, and lighting info
    */
   tick(): TickResult {
     let newDay = false;
@@ -178,7 +208,7 @@ export class ChronologySystem {
     }
 
     const dayPhase = this.getDayPhase();
-    const dayProgress = this.date.hour / 24;
+    const dayProgress = this.getDayProgress();
 
     return {
       newDay,
@@ -191,7 +221,7 @@ export class ChronologySystem {
     };
   }
 
-  // ── Serialization (for save/load) ─────────────────────
+  // ── Serialization (for save/load) ────────────────────
 
   /** Exports the full chronology state for persistence. */
   serialize(): ChronologyState {
@@ -204,20 +234,12 @@ export class ChronologySystem {
   }
 
   /** Restores chronology state from a persisted snapshot. */
-  static deserialize(state: ChronologyState, rng: GameRng): ChronologySystem {
-    const system = new ChronologySystem(rng, state.date.year);
-    system.date = { ...state.date };
-    system.season = getSeasonForMonth(state.date.month);
-    system.weather = { ...state.weather };
-    system.tickWithinDay = state.tickWithinDay;
-    return system;
+  static deserialize(state: ChronologyState, rng: GameRng): ChronologyAgent {
+    const agent = new ChronologyAgent(rng, state.date.year);
+    agent.date = { ...state.date };
+    agent.season = getSeasonForMonth(state.date.month);
+    agent.weather = { ...state.weather };
+    agent.tickWithinDay = state.tickWithinDay;
+    return agent;
   }
-}
-
-/** Serializable snapshot of the chronology system. */
-export interface ChronologyState {
-  date: GameDate;
-  season: Season;
-  weather: WeatherState;
-  tickWithinDay: number;
 }
