@@ -3,7 +3,7 @@ import {
   type CompulsoryDeliverySaveData,
   type DeliveryRates,
   type Doctrine,
-} from '../../src/game/CompulsoryDeliveries';
+} from '../../src/ai/agents/political/CompulsoryDeliveries';
 import { GameRng } from '../../src/game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -11,7 +11,7 @@
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
-import type { Doctrine } from '../game/CompulsoryDeliveries';
+import type { Doctrine } from '../ai/agents/political/CompulsoryDeliveries';
 import { ERA_DEFINITIONS, ERA_ORDER } from '../game/era/definitions';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';

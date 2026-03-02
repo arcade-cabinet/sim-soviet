@@ -1,6 +1,6 @@
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding } from '../../src/ecs/factories';
-import { resetStarvationCounter } from '../../src/ecs/systems/consumptionSystem';
+import { resetStarvationCounter } from '../../src/ai/agents/economy/consumptionSystem';
 import { world } from '../../src/ecs/world';
 import {
   advanceTicks,

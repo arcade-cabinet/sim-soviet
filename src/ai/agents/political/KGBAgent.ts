@@ -648,6 +648,18 @@ export class KGBAgent extends Vehicle {
     };
   }
 
+  /** Serialize the personnel file state. Alias: serializePersonnelFile(). */
+  serialize(): PersonnelFileSaveData {
+    return this.serializePersonnelFile();
+  }
+
+  /** Deserialize a PersonnelFileSaveData into a new KGBAgent. */
+  static deserialize(data: PersonnelFileSaveData): KGBAgent {
+    const agent = new KGBAgent(data.difficulty);
+    agent.loadPersonnelFile(data);
+    return agent;
+  }
+
   /** Serialize the personnel file portion only (for backward compatibility). */
   serializePersonnelFile(): PersonnelFileSaveData {
     return {

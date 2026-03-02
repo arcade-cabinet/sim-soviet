@@ -5,7 +5,7 @@ import {
   countOperationalColdStorage,
   isColdStoragePresent,
   storageSystem,
-} from '../../src/ecs/systems/storageSystem';
+} from '../../src/ai/agents/economy/storageSystem';
 import { world } from '../../src/ecs/world';
 
 describe('storageSystem', () => {

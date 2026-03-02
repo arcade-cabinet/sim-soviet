@@ -11,7 +11,7 @@ import {
   scoreToQuality,
   serializeTransport,
   TransportSystem,
-} from '@/game/TransportSystem';
+} from '@/ai/agents/infrastructure/TransportSystem';
 
 // Mock getBuildingDef to return role for known transport buildings
 jest.mock('@/data/buildingDefs', () => ({

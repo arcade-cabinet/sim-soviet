@@ -21,10 +21,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
 import { buildingsLogic, decayableBuildings } from '../ecs/archetypes';
-import { effectiveWorkers } from '../ecs/systems/productionSystem';
-import { getBuildingStorageContribution } from '../ecs/systems/storageSystem';
+import { effectiveWorkers } from '../ai/agents/economy/productionSystem';
+import { getBuildingStorageContribution } from '../ai/agents/economy/storageSystem';
 import type { BuildingComponent, CitizenComponent, Durability } from '../ecs/world';
-import type { WorkerDisplayInfo } from '../game/workers/types';
+import type { WorkerDisplayInfo } from '../ai/agents/workforce/types';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 

@@ -8,7 +8,7 @@ import type { DialogueContext } from '@/content/dialogue';
 import { getDialogue } from '@/content/dialogue';
 import { buildingsLogic } from '@/ecs/archetypes';
 import type { GameRng } from '@/game/SeedSystem';
-import type { SettlementTier } from '@/game/SettlementSystem';
+import type { SettlementTier } from '@/ai/agents/infrastructure/SettlementSystem';
 import type { PoliticalRole } from './types';
 
 // ─── Entity Scaling ─────────────────────────────────────────────────────────

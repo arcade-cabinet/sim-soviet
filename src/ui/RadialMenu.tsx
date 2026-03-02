@@ -16,12 +16,12 @@ import { getUpgradeInfo, isUpgradeable, upgradeECSBuilding } from '../bridge/Bui
 import { getEngine } from '../bridge/GameInit';
 import type { BuildingDef, Role } from '../data/buildingDefs';
 import { BUILDING_DEFS, getBuildingDef, getBuildingsByRole } from '../data/buildingDefs';
-import { DEFAULT_MATERIAL_COST } from '../ecs/systems/constructionSystem';
+import { DEFAULT_MATERIAL_COST } from '../ai/agents/infrastructure/constructionSystem';
 import { getAvailableBuildingsForYear } from '../game/era';
-import { getMinigameNameForBuilding } from '../game/minigames/BuildingMinigameMap';
-import type { SettlementTier } from '../game/SettlementSystem';
-import type { TutorialSystem } from '../game/TutorialSystem';
-import { MILESTONE_LABELS } from '../game/TutorialSystem';
+import { getMinigameNameForBuilding } from '../ai/agents/meta/minigames/BuildingMinigameMap';
+import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
+import type { TutorialSystem } from '../ai/agents/meta/TutorialSystem';
+import { MILESTONE_LABELS } from '../ai/agents/meta/TutorialSystem';
 import { useGameSnapshot } from '../hooks/useGameState';
 import {
   closeInspectMenu,

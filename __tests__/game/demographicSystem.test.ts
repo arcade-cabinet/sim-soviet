@@ -17,7 +17,7 @@ import {
   getWorkingMotherPenalty,
   householdFormation,
   pregnancyTick,
-} from '@/ecs/systems/demographicSystem';
+} from '@/ai/agents/social/demographicSystem';
 import type { CitizenRenderSlot, DvorMember } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';

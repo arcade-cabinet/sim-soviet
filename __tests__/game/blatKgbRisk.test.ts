@@ -3,8 +3,8 @@ import {
   BLAT_SAFE_THRESHOLD,
   EconomySystem,
   KGB_INVESTIGATION_CHANCE_PER_POINT,
-} from '@/game/economy';
-import { PersonnelFile } from '@/game/PersonnelFile';
+} from '../../src/ai/agents/economy/economy-core';
+import { PersonnelFile } from '../../src/ai/agents/political/KGBAgent';
 import { GameRng } from '@/game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { world } from '../../src/ecs/world';
-import { PersonnelFile } from '../../src/game/PersonnelFile';
-import { DIFFICULTY_PRESETS } from '../../src/game/ScoringSystem';
+import { PersonnelFile } from '../../src/ai/agents/political/KGBAgent';
+import { DIFFICULTY_PRESETS } from '../../src/ai/agents/political/ScoringSystem';
 import { advanceYears, buildBasicSettlement, createPlaythroughEngine, getResources, isGameOver } from './helpers';
 
 describe('Playthrough: Difficulty Variants', () => {

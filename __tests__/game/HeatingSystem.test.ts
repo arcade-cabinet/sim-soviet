@@ -10,7 +10,7 @@
  */
 
 import type { CitizenComponent } from '../../src/ecs/world';
-import { DISTRICT_HEATING_POPULATION, EconomySystem, HEATING_CONFIGS } from '../../src/game/economy';
+import { DISTRICT_HEATING_POPULATION, EconomySystem, HEATING_CONFIGS } from '../../src/ai/agents/economy/economy-core';
 import { applyMorale } from '../../src/game/workers/classes';
 import { HEATING_FAILURE_MORALE_PENALTY } from '../../src/game/workers/constants';
 import type { WorkerStats } from '../../src/game/workers/types';

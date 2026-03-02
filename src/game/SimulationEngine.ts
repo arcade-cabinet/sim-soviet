@@ -34,84 +34,83 @@ import {
   operationalBuildings,
   underConstruction,
 } from '@/ecs/archetypes';
-import type { QuotaState } from '@/ecs/systems';
 import {
   constructionSystem,
-  createDefaultQuota,
   decaySystem,
   populationSystem,
-  quotaSystem,
   setBuildingCollapsedCallback,
   setStarvationCallback,
 } from '@/ecs/systems';
+import type { QuotaState } from '../ai/agents/political/PoliticalAgent';
+import { createDefaultQuota, quotaSystem } from '../ai/agents/political/PoliticalAgent';
 import { world } from '@/ecs/world';
-import type { AchievementTrackerSaveData } from './AchievementTracker';
-import { AchievementTracker } from './AchievementTracker';
+import type { AchievementTrackerSaveData } from '../ai/agents/meta/AchievementTracker';
+import { AchievementTracker } from '../ai/agents/meta/AchievementTracker';
 import { TICKS_PER_YEAR } from './Chronology';
 import type { ChronologyState, TickResult } from '../ai/agents/core/ChronologyAgent';
 import { ChronologySystem } from '../ai/agents/core/ChronologyAgent';
 // CollectivePlanner removed — using CollectiveAgent.generateQueue() directly
-import type { CompulsoryDeliverySaveData } from './CompulsoryDeliveries';
-import { CompulsoryDeliveries } from './CompulsoryDeliveries';
+import type { CompulsoryDeliverySaveData } from '../ai/agents/political/CompulsoryDeliveries';
+import { CompulsoryDeliveries } from '../ai/agents/political/CompulsoryDeliveries';
 import { DISEASE_PRAVDA_HEADLINES, diseaseTick, initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
 import { type EraId as EconomyEraId, type EconomySaveData, EconomySystem } from '../ai/agents/economy/EconomyAgent';
 // ── Extracted helpers ──
 import {
   tickAchievements as tickAchievementsHelper,
   tickTutorial as tickTutorialHelper,
-} from './engine/achievementTick';
+} from '../ai/agents/meta/achievementTick';
 import {
   type AnnualReportEngineState,
   checkQuota as checkQuotaHelper,
   handleQuotaMet as handleQuotaMetHelper,
   handleQuotaMissed as handleQuotaMissedHelper,
-} from './engine/annualReportTick';
-import { tickDirectives as tickDirectivesHelper } from './engine/directiveTick';
+} from '../ai/agents/political/annualReportTick';
+import { tickDirectives as tickDirectivesHelper } from '../ai/agents/meta/directiveTick';
 import {
   checkBuildingTapMinigame as checkBuildingTapMinigameHelper,
   checkEventMinigame as checkEventMinigameHelper,
   isMinigameAvailable as isMinigameAvailableHelper,
   resolveMinigameChoice as resolveMinigameChoiceHelper,
   tickMinigames as tickMinigamesHelper,
-} from './engine/minigameTick';
+} from '../ai/agents/meta/minigameTick';
 import {
   restoreSubsystems as restoreSubsystemsHelper,
   serializeSubsystems as serializeSubsystemsHelper,
 } from './engine/serializeEngine';
 import type { EraDefinition, EraSystemSaveData } from './era';
 import { ERA_DEFINITIONS, EraSystem } from './era';
-import type { EventSystemSaveData, GameEvent } from './events';
-import { EventSystem } from './events';
+import type { EventSystemSaveData, GameEvent } from '../ai/agents/narrative/events';
+import { EventSystem } from '../ai/agents/narrative/events';
 import type { FireSystemSaveData } from '../ai/agents/social/DefenseAgent';
 import { FireSystem } from '../ai/agents/social/DefenseAgent';
 import type { GameGrid } from './GameGrid';
 import { createGameTally, type TallyData } from './GameTally';
 // tickLoyalty standalone removed — LoyaltyAgent.tickLoyalty() called directly
-import { MinigameRouter } from './minigames/MinigameRouter';
-import type { ActiveMinigame, MinigameRouterSaveData } from './minigames/MinigameTypes';
+import { MinigameRouter } from '../ai/agents/meta/minigames/MinigameRouter';
+import type { ActiveMinigame, MinigameRouterSaveData } from '../ai/agents/meta/minigames/MinigameTypes';
 import type { PersonnelFileSaveData } from '../ai/agents/political/KGBAgent';
 import { PersonnelFile } from '../ai/agents/political/KGBAgent';
 import type { MandateWithFulfillment, PlanMandateState } from '../ai/agents/political/PoliticalAgent';
 import { createMandatesForEra, createPlanMandateState, recordBuildingPlaced } from '../ai/agents/political/PoliticalAgent';
 // calculatePrivatePlotProduction standalone removed — FoodAgent._runPrivatePlots() called internally
-import type { PolitburoSaveData } from './politburo';
-import { PolitburoSystem } from './politburo';
+import type { PolitburoSaveData } from '../ai/agents/narrative/politburo';
+import { PolitburoSystem } from '../ai/agents/narrative/politburo';
 import type { PoliticalEntitySaveData } from './political';
 import { addPaperwork, getPaperwork, PoliticalEntitySystem } from './political';
-import type { PravdaSaveData } from './pravda';
-import { PravdaSystem } from './pravda';
-import type { ConsequenceConfig, ConsequenceLevel, DifficultyLevel, ScoringSystemSaveData } from './ScoringSystem';
-import { CONSEQUENCE_PRESETS, DIFFICULTY_PRESETS, eraIdToIndex, ScoringSystem } from './ScoringSystem';
+import type { PravdaSaveData } from '../ai/agents/narrative/pravda';
+import { PravdaSystem } from '../ai/agents/narrative/pravda';
+import type { ConsequenceConfig, ConsequenceLevel, DifficultyLevel, ScoringSystemSaveData } from '../ai/agents/political/ScoringSystem';
+import { CONSEQUENCE_PRESETS, DIFFICULTY_PRESETS, eraIdToIndex, ScoringSystem } from '../ai/agents/political/ScoringSystem';
 import type { GameRng } from './SeedSystem';
-import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from './SettlementSystem';
-import { SettlementSystem } from './SettlementSystem';
-import { type TransportSaveData, TransportSystem } from './TransportSystem';
+import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from '../ai/agents/infrastructure/SettlementSystem';
+import { SettlementSystem } from '../ai/agents/infrastructure/SettlementSystem';
+import { type TransportSaveData, TransportSystem } from '../ai/agents/infrastructure/TransportSystem';
 import { accrueTrudodni } from '../ai/agents/economy/EconomyAgent';
-import type { TutorialMilestone, TutorialSaveData } from './TutorialSystem';
-import { TutorialSystem } from './TutorialSystem';
+import type { TutorialMilestone, TutorialSaveData } from '../ai/agents/meta/TutorialSystem';
+import { TutorialSystem } from '../ai/agents/meta/TutorialSystem';
 import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
 // autoPlaceBuilding/detectConstructionDemands standalone removed — CollectiveAgent methods called directly
-import { WorkerSystem } from './workers/WorkerSystem';
+import { WorkerSystem } from '../ai/agents/workforce/WorkerSystem';
 import { AgentManager } from '../ai/AgentManager';
 // ── Yuka agents (Phase 4) ──
 import { ChronologyAgent } from '../ai/agents/core/ChronologyAgent';
@@ -194,7 +193,7 @@ export interface WorkerStatSaveEntry {
   dvorId: string;
   dvorMemberId: string;
   citizenClass: import('@/ecs/world').CitizenComponent['class'];
-  stats: import('./workers/types').WorkerStats;
+  stats: import('../ai/agents/workforce/types').WorkerStats;
 }
 
 /**

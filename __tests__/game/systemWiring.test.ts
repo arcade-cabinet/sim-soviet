@@ -7,17 +7,17 @@ import {
   findPendingReform,
   HEATING_CONFIGS,
   type HeatingTier,
-} from '@/game/economy';
-import { type AnnualReportContext, type AnnualReportEngineState, processReport } from '@/game/engine/annualReportTick';
-import { ALL_EVENT_TEMPLATES } from '@/game/events/templates';
+} from '../../src/ai/agents/economy/economy-core';
+import { type AnnualReportContext, type AnnualReportEngineState, processReport } from '@/ai/agents/political/annualReportTick';
+import { ALL_EVENT_TEMPLATES } from '@/ai/agents/narrative/events/templates';
 import { GameGrid } from '@/game/GameGrid';
-import { resolveBuildingTrigger } from '@/game/minigames/BuildingMinigameMap';
-import { MINIGAME_DEFINITIONS } from '@/game/minigames/definitions';
-import { MinigameRouter } from '@/game/minigames/MinigameRouter';
+import { resolveBuildingTrigger } from '@/ai/agents/meta/minigames/BuildingMinigameMap';
+import { MINIGAME_DEFINITIONS } from '@/ai/agents/meta/minigames/definitions';
+import { MinigameRouter } from '@/ai/agents/meta/minigames/MinigameRouter';
 import { processConscriptionQueue, processOrgnaborQueue, processReturns } from '@/game/political/military';
 import { PoliticalEntitySystem } from '@/game/political/PoliticalEntitySystem';
 import type { ConscriptionEvent, OrgnaborEvent, PoliticalTickResult } from '@/game/political/types';
-import { DIFFICULTY_PRESETS } from '@/game/ScoringSystem';
+import { DIFFICULTY_PRESETS } from '@/ai/agents/political/ScoringSystem';
 import { SimulationEngine } from '@/game/SimulationEngine';
 import { WEATHER_PROFILES, WeatherType } from '@/ai/agents/core/weather-types';
 import { applyMorale } from '@/game/workers/classes';

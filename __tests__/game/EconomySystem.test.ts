@@ -36,7 +36,7 @@ import {
   shouldRationsBeActive,
   TRUDODNI_PER_BUILDING,
   type TransferableResource,
-} from '../../src/game/economy';
+} from '../../src/ai/agents/economy/economy-core';
 import { GameRng } from '../../src/game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -759,6 +759,20 @@ export class DefenseAgent extends Vehicle {
   restore(snapshot: DefenseAgentSnapshot): void {
     this.zeppelins = snapshot.zeppelins.map((z) => ({ ...z }));
   }
+
+  /**
+   * Deserialize a DefenseAgent from saved data.
+   * Backward-compat with old FireSystem.deserialize() call sites.
+   *
+   * @param data - Serialized snapshot
+   * @param rng - Optional RNG for fire spread randomness
+   * @param callbacks - Optional callbacks for fire events
+   */
+  static deserialize(data: DefenseAgentSnapshot, rng?: GameRng, callbacks?: DefenseAgentCallbacks): DefenseAgent {
+    const agent = new DefenseAgent(rng, callbacks);
+    agent.restore(data);
+    return agent;
+  }
 }
 
 /** Backward-compat alias: FireSystem is now DefenseAgent. */

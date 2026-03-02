@@ -5,7 +5,7 @@
  * used by the building inspector panel.
  */
 
-import { getBuildingStorageContribution } from '../../src/ecs/systems/storageSystem';
+import { getBuildingStorageContribution } from '../../src/ai/agents/economy/storageSystem';
 
 describe('getBuildingStorageContribution', () => {
   it('returns storage for warehouse', () => {

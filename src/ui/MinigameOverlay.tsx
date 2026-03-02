@@ -9,7 +9,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { ActiveMinigame, InteractiveMinigameType, MinigameOutcome } from '../game/minigames/MinigameTypes';
+import type { ActiveMinigame, InteractiveMinigameType, MinigameOutcome } from '../ai/agents/meta/minigames/MinigameTypes';
 import { FactoryEmergencyMinigame } from './minigames/FactoryEmergencyMinigame';
 import { HuntMinigame } from './minigames/HuntMinigame';
 import { InspectionMinigame } from './minigames/InspectionMinigame';

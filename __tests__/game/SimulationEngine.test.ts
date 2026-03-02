@@ -1,7 +1,7 @@
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
-import type { QuotaState } from '../../src/ecs/systems';
-import { resetStarvationCounter } from '../../src/ecs/systems/consumptionSystem';
+import type { QuotaState } from '../../src/ai/agents/political/PoliticalAgent';
+import { resetStarvationCounter } from '../../src/ai/agents/economy/consumptionSystem';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';

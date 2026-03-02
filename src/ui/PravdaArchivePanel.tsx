@@ -10,7 +10,7 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
-import type { PravdaHeadline } from '../game/pravda/types';
+import type { PravdaHeadline } from '../ai/agents/narrative/pravda/types';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

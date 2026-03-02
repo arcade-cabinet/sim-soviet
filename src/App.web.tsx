@@ -44,8 +44,8 @@ import {
 } from './engine/helpers';
 import type { EraDefinition } from './game/era';
 import type { TallyData } from './game/GameTally';
-import type { ActiveMinigame, MinigameOutcome } from './game/minigames/MinigameTypes';
-import type { SettlementEvent } from './game/SettlementSystem';
+import type { ActiveMinigame, MinigameOutcome } from './ai/agents/meta/minigames/MinigameTypes';
+import type { SettlementEvent } from './ai/agents/infrastructure/SettlementSystem';
 import type { RehabilitationData } from './game/SimulationEngine';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';

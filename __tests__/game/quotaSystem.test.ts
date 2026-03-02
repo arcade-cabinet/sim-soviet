@@ -1,7 +1,7 @@
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createResourceStore } from '../../src/ecs/factories';
-import type { QuotaState } from '../../src/ecs/systems/quotaSystem';
-import { createDefaultQuota, quotaSystem } from '../../src/ecs/systems/quotaSystem';
+import type { QuotaState } from '../../src/ai/agents/political/PoliticalAgent';
+import { createDefaultQuota, quotaSystem } from '../../src/ai/agents/political/PoliticalAgent';
 import { world } from '../../src/ecs/world';
 
 describe('quotaSystem', () => {

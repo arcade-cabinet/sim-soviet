@@ -22,8 +22,8 @@ import { buildingsLogic, buildings, operationalBuildings, terrainFeatures, under
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
-import type { PlanMandateState } from '../../../game/PlanMandates';
-import type { WorkerStats } from '../../../game/workers/types';
+import type { PlanMandateState } from '../political/PoliticalAgent';
+import type { WorkerStats } from '../workforce/types';
 import type { GameRng } from '../../../game/SeedSystem';
 
 // ── Re-exported types (absorbed from governor.ts) ─────────────────────────────

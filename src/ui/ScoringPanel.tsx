@@ -9,7 +9,7 @@
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
-import type { ConsequenceLevel, DifficultyLevel, EraScoreBreakdown, Medal } from '../game/ScoringSystem';
+import type { ConsequenceLevel, DifficultyLevel, EraScoreBreakdown, Medal } from '../ai/agents/political/ScoringSystem';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

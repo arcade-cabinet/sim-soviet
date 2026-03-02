@@ -10,7 +10,7 @@ import type React from 'react';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
-import type { EventCategory, EventSeverity, GameEvent, ResourceDelta } from '../game/events/types';
+import type { EventCategory, EventSeverity, GameEvent, ResourceDelta } from '../ai/agents/narrative/events/types';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

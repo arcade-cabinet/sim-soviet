@@ -7,7 +7,7 @@ import {
   TICKS_PER_MONTH,
   TICKS_PER_YEAR,
 } from '@/game/Chronology';
-import { ChronologySystem, type TickResult } from '@/game/ChronologySystem';
+import { ChronologySystem, type TickResult } from '../../src/ai/agents/core/ChronologyAgent';
 import { GameRng } from '@/game/SeedSystem';
 
 describe('ChronologySystem', () => {

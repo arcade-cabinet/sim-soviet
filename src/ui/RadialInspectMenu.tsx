@@ -15,7 +15,7 @@ import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
 import { getUpgradeInfo, isUpgradeable, upgradeECSBuilding } from '../bridge/BuildingPlacement';
 import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
-import { getMinigameNameForBuilding } from '../game/minigames/BuildingMinigameMap';
+import { getMinigameNameForBuilding } from '../ai/agents/meta/minigames/BuildingMinigameMap';
 import {
   closeInspectMenu,
   type InspectBuildingType,

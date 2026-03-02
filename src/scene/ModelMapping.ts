@@ -7,7 +7,7 @@
  * without changing the underlying game entity.
  */
 
-import type { SettlementTier } from '../game/SettlementSystem';
+import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
 
 type BuildingType =
   | 'housing'

@@ -6,11 +6,11 @@
  * - GameModals skips rendering when interactiveType is set
  */
 
-import { MINIGAME_DEFINITIONS } from '@/game/minigames/definitions';
-import { FACTORY_EMERGENCY } from '@/game/minigames/definitions/factory';
-import { THE_HUNT } from '@/game/minigames/definitions/hunt';
-import { THE_INSPECTION } from '@/game/minigames/definitions/inspection';
-import type { InteractiveMinigameType, MinigameDefinition } from '@/game/minigames/MinigameTypes';
+import { MINIGAME_DEFINITIONS } from '@/ai/agents/meta/minigames/definitions';
+import { FACTORY_EMERGENCY } from '@/ai/agents/meta/minigames/definitions/factory';
+import { THE_HUNT } from '@/ai/agents/meta/minigames/definitions/hunt';
+import { THE_INSPECTION } from '@/ai/agents/meta/minigames/definitions/inspection';
+import type { InteractiveMinigameType, MinigameDefinition } from '@/ai/agents/meta/minigames/MinigameTypes';
 
 describe('MinigameOverlay system', () => {
   describe('interactiveType field on definitions', () => {

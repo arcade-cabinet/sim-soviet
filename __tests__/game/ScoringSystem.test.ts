@@ -8,7 +8,7 @@ import {
   MEDALS,
   SCORE_MULTIPLIER_MATRIX,
   ScoringSystem,
-} from '../../src/game/ScoringSystem';
+} from '../../src/ai/agents/political/ScoringSystem';
 
 describe('ScoringSystem', () => {
   // ── Difficulty Presets ───────────────────────────────

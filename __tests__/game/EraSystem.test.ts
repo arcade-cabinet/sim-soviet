@@ -10,7 +10,7 @@ import {
   tierMeetsRequirement,
 } from '@/game/era';
 import { ALL_BUILDING_IDS } from '@/game/era/definitions';
-import { ERA_SPECIFIC_EVENTS } from '@/game/events/templates/era_specific';
+import { ERA_SPECIFIC_EVENTS } from '@/ai/agents/narrative/events/templates/era_specific';
 
 // ─────────────────────────────────────────────────────────
 //  Era Definition Integrity

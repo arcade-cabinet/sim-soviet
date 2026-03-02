@@ -1,7 +1,7 @@
-import { getMinigameDefinition } from '../../src/game/minigames/definitions';
-import { MinigameRouter } from '../../src/game/minigames/MinigameRouter';
-import type { MinigameOutcome } from '../../src/game/minigames/MinigameTypes';
-import { autoResolveMiningExpedition } from '../../src/game/minigames/MiningExpedition';
+import { getMinigameDefinition } from '../../src/ai/agents/meta/minigames/definitions';
+import { MinigameRouter } from '../../src/ai/agents/meta/minigames/MinigameRouter';
+import type { MinigameOutcome } from '../../src/ai/agents/meta/minigames/MinigameTypes';
+import { autoResolveMiningExpedition } from '../../src/ai/agents/meta/minigames/MiningExpedition';
 import { GameRng } from '../../src/game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────

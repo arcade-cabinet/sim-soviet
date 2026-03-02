@@ -1,4 +1,4 @@
-import { type CommendationSource, type MarkSource, PersonnelFile } from '../../src/game/PersonnelFile';
+import { type CommendationSource, type MarkSource, PersonnelFile } from '../../src/ai/agents/political/KGBAgent';
 
 describe('PersonnelFile', () => {
   // ── Initial state ─────────────────────────────────────

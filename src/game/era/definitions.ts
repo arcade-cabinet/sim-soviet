@@ -5,7 +5,7 @@
  * 8 historical eras of the Soviet campaign.
  */
 
-import type { SettlementTier } from '../SettlementSystem';
+import type { SettlementTier } from '../../ai/agents/infrastructure/SettlementSystem';
 import { getBuildingTierRequirement, tierMeetsRequirement } from './tiers';
 import type { EraDefinition, EraId } from './types';
 

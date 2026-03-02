@@ -12,7 +12,7 @@ import { createDvor } from '../../src/ecs/factories/settlementFactories';
 import type { Entity, GameMeta, Resources } from '../../src/ecs/world';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
-import type { ConsequenceLevel, DifficultyLevel } from '../../src/game/ScoringSystem';
+import type { ConsequenceLevel, DifficultyLevel } from '../../src/ai/agents/political/ScoringSystem';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
 

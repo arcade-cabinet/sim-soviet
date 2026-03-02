@@ -20,6 +20,14 @@ import { KGBAgent } from './agents/political/KGBAgent';
 import { PoliticalAgent } from './agents/political/PoliticalAgent';
 import { DefenseAgent } from './agents/social/DefenseAgent';
 import { LoyaltyAgent } from './agents/political/LoyaltyAgent';
+import { ConstructionAgent } from './agents/infrastructure/ConstructionAgent';
+import { DecayAgent } from './agents/infrastructure/DecayAgent';
+import { TransportAgent } from './agents/infrastructure/TransportAgent';
+import { SettlementAgent } from './agents/infrastructure/SettlementAgent';
+import { WorkerAgent } from './agents/workforce/WorkerAgent';
+import { NarrativeAgent } from './agents/narrative/NarrativeAgent';
+import { QuotaAgent } from './agents/political/QuotaAgent';
+import { MetaAgent } from './agents/meta/MetaAgent';
 
 /** Serialized AgentManager state for save/load. */
 export interface AgentManagerSaveData {
@@ -54,6 +62,14 @@ export class AgentManager {
   private _political: PoliticalAgent | null = null;
   private _defense: DefenseAgent | null = null;
   private _loyalty: LoyaltyAgent | null = null;
+  private _construction: ConstructionAgent | null = null;
+  private _decay: DecayAgent | null = null;
+  private _transport: TransportAgent | null = null;
+  private _settlement: SettlementAgent | null = null;
+  private _worker: WorkerAgent | null = null;
+  private _narrative: NarrativeAgent | null = null;
+  private _quota: QuotaAgent | null = null;
+  private _meta: MetaAgent | null = null;
 
   constructor() {
     this.entityManager = new EntityManager();
@@ -121,6 +137,38 @@ export class AgentManager {
     this._loyalty = agent;
   }
 
+  registerConstruction(agent: ConstructionAgent): void {
+    this._construction = agent;
+  }
+
+  registerDecay(agent: DecayAgent): void {
+    this._decay = agent;
+  }
+
+  registerTransport(agent: TransportAgent): void {
+    this._transport = agent;
+  }
+
+  registerSettlement(agent: SettlementAgent): void {
+    this._settlement = agent;
+  }
+
+  registerWorker(agent: WorkerAgent): void {
+    this._worker = agent;
+  }
+
+  registerNarrative(agent: NarrativeAgent): void {
+    this._narrative = agent;
+  }
+
+  registerQuota(agent: QuotaAgent): void {
+    this._quota = agent;
+  }
+
+  registerMeta(agent: MetaAgent): void {
+    this._meta = agent;
+  }
+
   // ── System agent getters ─────────────────────────────────
 
   getChronology(): ChronologyAgent | null {
@@ -173,6 +221,38 @@ export class AgentManager {
 
   getLoyalty(): LoyaltyAgent | null {
     return this._loyalty;
+  }
+
+  getConstruction(): ConstructionAgent | null {
+    return this._construction;
+  }
+
+  getDecay(): DecayAgent | null {
+    return this._decay;
+  }
+
+  getTransport(): TransportAgent | null {
+    return this._transport;
+  }
+
+  getSettlement(): SettlementAgent | null {
+    return this._settlement;
+  }
+
+  getWorker(): WorkerAgent | null {
+    return this._worker;
+  }
+
+  getNarrative(): NarrativeAgent | null {
+    return this._narrative;
+  }
+
+  getMeta(): MetaAgent | null {
+    return this._meta;
+  }
+
+  getQuota(): QuotaAgent | null {
+    return this._quota;
   }
 
   // ── Autopilot (ChairmanAgent) ────────────────────────────

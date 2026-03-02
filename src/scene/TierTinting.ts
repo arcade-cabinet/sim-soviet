@@ -15,7 +15,7 @@
  */
 
 import * as THREE from 'three';
-import type { SettlementTier } from '../game/SettlementSystem';
+import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
 import type { Season } from './TerrainGrid';
 
 // ── Tier Tint Definitions ───────────────────────────────────────────────────

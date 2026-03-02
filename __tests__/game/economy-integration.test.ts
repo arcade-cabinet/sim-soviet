@@ -1,5 +1,5 @@
-import { CompulsoryDeliveries } from '@/game/CompulsoryDeliveries';
-import { calculateBuildingTrudodni, DEFAULT_TRUDODNI, DIFFICULTY_MULTIPLIERS, EconomySystem } from '@/game/economy';
+import { CompulsoryDeliveries } from '@/ai/agents/political/CompulsoryDeliveries';
+import { calculateBuildingTrudodni, DEFAULT_TRUDODNI, DIFFICULTY_MULTIPLIERS, EconomySystem } from '../../src/ai/agents/economy/economy-core';
 import { GameRng } from '@/game/SeedSystem';
 
 describe('Economy Integration', () => {

@@ -4,7 +4,7 @@ import {
   consumptionSystem,
   resetStarvationCounter,
   setStarvationCallback,
-} from '../../src/ecs/systems/consumptionSystem';
+} from '../../src/ai/agents/economy/consumptionSystem';
 import { world } from '../../src/ecs/world';
 import { createTestDvory } from '../playthrough/helpers';
 

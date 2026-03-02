@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from 'react';
 import AudioManager from './audio/AudioManager';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
-import type { SettlementTier } from './game/SettlementSystem';
+import type { SettlementTier } from './ai/agents/infrastructure/SettlementSystem';
 import { useGameSnapshot } from './hooks/useGameState';
 import { notifyStateChange, useTerrainVersion } from './stores/gameStore';
 

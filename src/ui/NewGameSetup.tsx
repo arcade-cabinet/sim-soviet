@@ -14,7 +14,7 @@ import {
   type ConsequenceLevel,
   DIFFICULTY_PRESETS,
   type DifficultyLevel,
-} from '../game/ScoringSystem';
+} from '../ai/agents/political/ScoringSystem';
 import { Colors, monoFont } from './styles';
 
 /** Available map size options for new game configuration. */

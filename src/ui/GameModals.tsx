@@ -14,8 +14,8 @@ import type { AnnualReportData, ReportSubmission } from '../components/ui/Annual
 import { getTimelineEvent } from '../content/worldbuilding/timeline';
 import type { EraDefinition } from '../game/era';
 import type { TallyData } from '../game/GameTally';
-import type { ActiveMinigame } from '../game/minigames/MinigameTypes';
-import type { SettlementEvent } from '../game/SettlementSystem';
+import type { ActiveMinigame } from '../ai/agents/meta/minigames/MinigameTypes';
+import type { SettlementEvent } from '../ai/agents/infrastructure/SettlementSystem';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 

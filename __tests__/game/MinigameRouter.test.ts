@@ -1,7 +1,7 @@
-import { getMinigameNameForBuilding, resolveBuildingTrigger } from '../../src/game/minigames/BuildingMinigameMap';
-import { getMinigameDefinition, MINIGAME_DEFINITIONS } from '../../src/game/minigames/definitions';
-import { MinigameRouter } from '../../src/game/minigames/MinigameRouter';
-import type { MinigameId, MinigameOutcome } from '../../src/game/minigames/MinigameTypes';
+import { getMinigameNameForBuilding, resolveBuildingTrigger } from '../../src/ai/agents/meta/minigames/BuildingMinigameMap';
+import { getMinigameDefinition, MINIGAME_DEFINITIONS } from '../../src/ai/agents/meta/minigames/definitions';
+import { MinigameRouter } from '../../src/ai/agents/meta/minigames/MinigameRouter';
+import type { MinigameId, MinigameOutcome } from '../../src/ai/agents/meta/minigames/MinigameTypes';
 import { GameRng } from '../../src/game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────

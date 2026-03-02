@@ -30,26 +30,242 @@ import { MSG } from '../../telegrams';
 // Re-export canonical types and definitions so callers can import from one place
 export type { EraId, EraModifiers, EraDefinition, EraSystemSaveData, EraCheckpoint, ConstructionMethod } from '../../../game/era/types';
 export { ERA_ORDER, ERA_DEFINITIONS, ALL_BUILDING_IDS, eraIndexForYear } from '../../../game/era/definitions';
-export type { QuotaResourceType, ResourceQuota, QuotaState } from '../../../ecs/systems/quotaSystem';
-export type {
-  BuildingMandate,
-  MandateWithFulfillment,
-  PlanMandateState,
-} from '../../../game/PlanMandates';
 
 import { ERA_ORDER, ERA_DEFINITIONS, eraIndexForYear } from '../../../game/era/definitions';
 import type { EraId, EraModifiers, EraDefinition } from '../../../game/era/types';
-import type { QuotaState } from '../../../ecs/systems/quotaSystem';
-import { createDefaultQuota, areAllQuotasMet } from '../../../ecs/systems/quotaSystem';
-import type { BuildingMandate, MandateWithFulfillment, PlanMandateState } from '../../../game/PlanMandates';
-import {
-  createMandatesForEra,
-  createPlanMandateState,
-  getMandateFulfillment,
-  allMandatesComplete,
-  recordBuildingPlaced,
-} from '../../../game/PlanMandates';
-import type { DifficultyLevel } from '../../../game/ScoringSystem';
+import { getResourceEntity } from '../../../ecs/archetypes';
+import type { DifficultyLevel } from './ScoringSystem';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quota types + logic (absorbed from ecs/systems/quotaSystem.ts)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Trackable resource types for the multi-resource quota system. */
+export type QuotaResourceType = 'food' | 'vodka' | 'steel' | 'timber' | 'power';
+
+/** Per-resource quota target and current progress. */
+export interface ResourceQuota {
+  target: number;
+  current: number;
+}
+
+/**
+ * Quota state — tracks the current 5-year plan goals.
+ */
+export interface QuotaState {
+  /** Primary resource type being tracked (legacy single-resource quota) */
+  type: 'food' | 'vodka';
+  /** Primary target amount to reach */
+  target: number;
+  /** Primary current progress */
+  current: number;
+  /** Year the quota must be met by */
+  deadlineYear: number;
+  /** Multi-resource quota targets. If present, all must be met. */
+  resourceQuotas?: Partial<Record<QuotaResourceType, ResourceQuota>>;
+}
+
+/**
+ * Creates the default initial quota state for the first 5-year plan.
+ */
+export function createDefaultQuota(): QuotaState {
+  return {
+    type: 'food',
+    target: 500,
+    current: 0,
+    deadlineYear: 1927,
+    resourceQuotas: {
+      food: { target: 500, current: 0 },
+      vodka: { target: 100, current: 0 },
+      steel: { target: 50, current: 0 },
+      timber: { target: 100, current: 0 },
+      power: { target: 20, current: 0 },
+    },
+  };
+}
+
+/**
+ * Runs the quota tracking system for one simulation tick.
+ */
+export function quotaSystem(quota: QuotaState): void {
+  const store = getResourceEntity();
+  if (!store) return;
+
+  switch (quota.type) {
+    case 'food':
+      quota.current = store.resources.food;
+      break;
+    case 'vodka':
+      quota.current = store.resources.vodka;
+      break;
+  }
+
+  if (quota.resourceQuotas) {
+    const r = store.resources;
+    const rq = quota.resourceQuotas;
+    if (rq.food) rq.food.current = r.food;
+    if (rq.vodka) rq.vodka.current = r.vodka;
+    if (rq.steel) rq.steel.current = r.steel;
+    if (rq.timber) rq.timber.current = r.timber;
+    if (rq.power) rq.power.current = r.power;
+  }
+}
+
+/**
+ * Checks if all multi-resource quotas are met.
+ */
+export function areAllQuotasMet(quota: QuotaState): boolean {
+  if (!quota.resourceQuotas) return quota.current >= quota.target;
+  for (const rq of Object.values(quota.resourceQuotas)) {
+    if (rq && rq.current < rq.target) return false;
+  }
+  return true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PlanMandates types + logic (absorbed from game/PlanMandates.ts)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A single building construction mandate from the 5-Year Plan. */
+export interface BuildingMandate {
+  /** Building definition ID */
+  defId: string;
+  /** Number of this building required */
+  required: number;
+  /** Display label */
+  label: string;
+}
+
+/** A mandate with fulfillment tracking. */
+export interface MandateWithFulfillment extends BuildingMandate {
+  /** Number of this building placed so far */
+  fulfilled: number;
+}
+
+/** State for the current plan's mandates. */
+export interface PlanMandateState {
+  mandates: MandateWithFulfillment[];
+}
+
+interface MandateTemplate {
+  defId: string;
+  label: string;
+  baseRequired: number;
+}
+
+const ERA_MANDATE_TEMPLATES: Record<string, MandateTemplate[]> = {
+  revolution: [
+    { defId: 'workers-house-a', label: 'Workers Housing', baseRequired: 2 },
+    { defId: 'collective-farm-hq', label: 'Collective Farm HQ', baseRequired: 1 },
+    { defId: 'guard-post', label: 'Guard Post', baseRequired: 1 },
+  ],
+  collectivization: [
+    { defId: 'workers-house-b', label: 'Workers Housing B', baseRequired: 2 },
+    { defId: 'warehouse', label: 'Warehouse', baseRequired: 1 },
+    { defId: 'school', label: 'School', baseRequired: 1 },
+  ],
+  industrialization: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 1 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 1 },
+    { defId: 'vodka-distillery', label: 'Vodka Distillery', baseRequired: 1 },
+  ],
+  great_patriotic: [
+    { defId: 'barracks', label: 'Military Barracks', baseRequired: 2 },
+    { defId: 'hospital', label: 'Field Hospital', baseRequired: 1 },
+    { defId: 'guard-post', label: 'Guard Post', baseRequired: 2 },
+  ],
+  reconstruction: [
+    { defId: 'workers-house-a', label: 'Workers Housing', baseRequired: 3 },
+    { defId: 'power-station', label: 'Power Station', baseRequired: 1 },
+    { defId: 'bread-factory', label: 'Bread Factory', baseRequired: 1 },
+  ],
+  thaw_and_freeze: [
+    { defId: 'apartment-tower-a', label: 'Apartment Tower', baseRequired: 2 },
+    { defId: 'cultural-palace', label: 'Cultural Palace', baseRequired: 1 },
+    { defId: 'polyclinic', label: 'Polyclinic', baseRequired: 1 },
+  ],
+  stagnation: [
+    { defId: 'apartment-tower-b', label: 'Apartment Tower B', baseRequired: 3 },
+    { defId: 'ministry-office', label: 'Ministry Office', baseRequired: 1 },
+    { defId: 'workers-club', label: 'Workers Club', baseRequired: 1 },
+  ],
+  the_eternal: [
+    { defId: 'apartment-tower-d', label: 'Apartment Tower D', baseRequired: 3 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 1 },
+    { defId: 'kgb-office', label: 'KGB Office', baseRequired: 1 },
+    { defId: 'train-station', label: 'Train Station', baseRequired: 1 },
+  ],
+};
+
+/** Mandate difficulty scaling. */
+const MANDATE_DIFFICULTY_MULTIPLIERS: Record<DifficultyLevel, number> = {
+  worker: 0.75,
+  comrade: 1.0,
+  tovarish: 1.5,
+};
+
+/**
+ * Generate building mandates for a given era and difficulty.
+ * Returns an array of mandates with required counts scaled by difficulty.
+ */
+export function createMandatesForEra(eraId: string, difficulty: DifficultyLevel): BuildingMandate[] {
+  const templates = ERA_MANDATE_TEMPLATES[eraId];
+  if (!templates) {
+    console.warn(`[PlanMandates] Unknown era ID "${eraId}", falling back to revolution`);
+  }
+  const resolved = templates ?? ERA_MANDATE_TEMPLATES.revolution!;
+  const mult = MANDATE_DIFFICULTY_MULTIPLIERS[difficulty];
+
+  return resolved.map((t) => ({
+    defId: t.defId,
+    label: t.label,
+    required: Math.max(1, Math.round(t.baseRequired * mult)),
+  }));
+}
+
+/**
+ * Create a fresh mandate tracking state from a list of mandates.
+ * All fulfillment counts start at 0.
+ */
+export function createPlanMandateState(mandates: BuildingMandate[]): PlanMandateState {
+  return {
+    mandates: mandates.map((m) => ({ ...m, fulfilled: 0 })),
+  };
+}
+
+/**
+ * Record that a building was placed. Increments fulfillment for matching mandates.
+ * Returns a new state (immutable).
+ */
+export function recordBuildingPlaced(state: PlanMandateState, buildingDefId: string): PlanMandateState {
+  return {
+    mandates: state.mandates.map((m) => (m.defId === buildingDefId ? { ...m, fulfilled: m.fulfilled + 1 } : m)),
+  };
+}
+
+/**
+ * Get the overall mandate fulfillment ratio (0.0 - 1.0).
+ * Calculated as total fulfilled / total required (capped at 1.0 per mandate).
+ */
+export function getMandateFulfillment(state: PlanMandateState): number {
+  if (state.mandates.length === 0) return 1;
+
+  const totalRequired = state.mandates.reduce((sum, m) => sum + m.required, 0);
+  if (totalRequired === 0) return 1;
+
+  const totalFulfilled = state.mandates.reduce((sum, m) => sum + Math.min(m.fulfilled, m.required), 0);
+  return totalFulfilled / totalRequired;
+}
+
+/** Check if a single mandate is complete (fulfilled >= required). */
+export function isMandateComplete(mandate: MandateWithFulfillment): boolean {
+  return mandate.fulfilled >= mandate.required;
+}
+
+/** Check if all mandates in the state are complete. */
+export function allMandatesComplete(state: PlanMandateState): boolean {
+  return state.mandates.every(isMandateComplete);
+}
 
 // ---------------------------------------------------------------------------
 // Constants (absorbed from annualReportTick.ts)
@@ -741,15 +957,3 @@ export class PoliticalAgent extends Vehicle {
 /** Backward-compat alias: EraSystem is now PoliticalAgent. */
 export { PoliticalAgent as EraSystem };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Re-exports from PlanMandates (so consumers import from one place)
-// ─────────────────────────────────────────────────────────────────────────────
-
-export {
-  createMandatesForEra,
-  createPlanMandateState,
-  getMandateFulfillment,
-  isMandateComplete,
-  allMandatesComplete,
-  recordBuildingPlaced,
-} from '../../../game/PlanMandates';

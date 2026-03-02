@@ -6,11 +6,11 @@
  * LEADER_MODIFIERS. These are layered on top of minister-level modifiers.
  */
 
-import { DEFAULT_MODIFIERS } from '@/game/politburo/constants';
-import { LEADER_MODIFIERS } from '@/game/politburo/leaderModifiers';
-import { applyMinisterOverrides } from '@/game/politburo/modifiers';
-import type { MinistryModifiers } from '@/game/politburo/types';
-import { PersonalityType } from '@/game/politburo/types';
+import { DEFAULT_MODIFIERS } from '@/ai/agents/narrative/politburo/constants';
+import { LEADER_MODIFIERS } from '@/ai/agents/narrative/politburo/leaderModifiers';
+import { applyMinisterOverrides } from '@/ai/agents/narrative/politburo/modifiers';
+import type { MinistryModifiers } from '@/ai/agents/narrative/politburo/types';
+import { PersonalityType } from '@/ai/agents/narrative/politburo/types';
 
 describe('LeaderArchetypes', () => {
   // ── LEADER_MODIFIERS coverage ──

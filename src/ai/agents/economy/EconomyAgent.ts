@@ -53,7 +53,7 @@ export type {
   EconomyTickResult,
   ConsumerGoodsState,
   EconomySaveData,
-} from '../../../game/economy';
+} from './economy-core';
 
 import {
   // Constants
@@ -119,7 +119,7 @@ import {
   type ConsumerGoodsState,
   type EconomySaveData,
   type RemainderAllocation,
-} from '../../../game/economy';
+} from './economy-core';
 
 import { defaultCategory, TRUDODNI_VALUES } from './trudodni';
 import type { MemberRole } from '../../../ecs/world';

@@ -11,7 +11,7 @@
 
 import { underConstruction } from '@/ecs/archetypes';
 import { createMetaStore, createResourceStore, placeNewBuilding } from '@/ecs/factories';
-import { constructionSystem, DEFAULT_BASE_TICKS } from '@/ecs/systems/constructionSystem';
+import { constructionSystem, DEFAULT_BASE_TICKS } from '@/ai/agents/infrastructure/constructionSystem';
 import { world } from '@/ecs/world';
 import { getWeatherProfile, WeatherType } from '@/ai/agents/core/weather-types';
 

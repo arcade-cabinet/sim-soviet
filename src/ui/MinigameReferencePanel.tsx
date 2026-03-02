@@ -12,13 +12,13 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
-import { MINIGAME_DEFINITIONS } from '../game/minigames/definitions';
+import { MINIGAME_DEFINITIONS } from '../ai/agents/meta/minigames/definitions';
 import type {
   ActiveMinigame,
   MinigameChoice,
   MinigameDefinition,
   MinigameOutcome,
-} from '../game/minigames/MinigameTypes';
+} from '../ai/agents/meta/minigames/MinigameTypes';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

@@ -14,7 +14,7 @@
 
 import type { DialogueContext } from '@/content/dialogue';
 import type { GameRng } from '@/game/SeedSystem';
-import type { SettlementTier } from '@/game/SettlementSystem';
+import type { SettlementTier } from '@/ai/agents/infrastructure/SettlementSystem';
 import {
   calcTargetCount,
   ENTITY_SCALING,

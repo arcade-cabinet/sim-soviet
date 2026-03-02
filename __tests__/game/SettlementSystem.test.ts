@@ -4,7 +4,7 @@ import {
   SettlementSystem,
   TIER_DEFINITIONS,
   TIER_ORDER,
-} from '../../src/game/SettlementSystem';
+} from '../../src/ai/agents/infrastructure/SettlementSystem';
 
 // ── Helpers ──────────────────────────────────────────────────
 

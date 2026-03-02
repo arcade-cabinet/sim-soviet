@@ -20,7 +20,7 @@ import { Clone, useGLTF } from '@react-three/drei';
 import type React from 'react';
 import { Suspense, useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import type { SettlementTier } from '../game/SettlementSystem';
+import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
 import { getModelName, getTierVariant } from './ModelMapping';
 import { getModelUrl } from './ModelPreloader';
 import type { Season } from './TerrainGrid';

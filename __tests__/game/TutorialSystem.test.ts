@@ -5,7 +5,7 @@ import {
   type TutorialSaveData,
   TutorialSystem,
   type UIElement,
-} from '@/game/TutorialSystem';
+} from '@/ai/agents/meta/TutorialSystem';
 
 // ─── Test Helpers ────────────────────────────────────────
 

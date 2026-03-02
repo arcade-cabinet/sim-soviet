@@ -25,8 +25,8 @@ import {
   DEFAULT_MATERIAL_COST,
   DEFAULT_STAFF_CAP,
   workerSpeedMult,
-} from '../../src/ecs/systems/constructionSystem';
-import { productionSystem } from '../../src/ecs/systems/productionSystem';
+} from '../../src/ai/agents/infrastructure/constructionSystem';
+import { productionSystem } from '../../src/ai/agents/economy/productionSystem';
 import { world } from '../../src/ecs/world';
 
 describe('constructionSystem', () => {

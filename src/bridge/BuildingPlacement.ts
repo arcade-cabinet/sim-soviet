@@ -12,7 +12,7 @@ import { GRID_SIZE } from '@/config';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { buildings as buildingsArchetype, getResourceEntity } from '@/ecs/archetypes';
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
-import { DEFAULT_MATERIAL_COST } from '@/ecs/systems/constructionSystem';
+import { DEFAULT_MATERIAL_COST } from '@/ai/agents/infrastructure/constructionSystem';
 import { world } from '@/ecs/world';
 import { recalculatePaths } from '@/game/PathSystem';
 import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
