@@ -300,7 +300,11 @@ const App: React.FC = () => {
     // Async init: database first, then game engine
     (async () => {
       // Initialize SQLite database (expo-sqlite handles persistence automatically)
-      await initDatabase();
+      try {
+        await initDatabase();
+      } catch (err) {
+        console.error('[DB] Failed to open SQLite database:', err);
+      }
 
       initGame(
         {

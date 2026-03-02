@@ -12,7 +12,7 @@
  */
 
 import { type ExpoSQLiteDatabase, drizzle } from 'drizzle-orm/expo-sqlite';
-import { openDatabaseSync } from 'expo-sqlite';
+import { deserializeDatabaseSync, openDatabaseSync } from 'expo-sqlite';
 import * as schema from './schema';
 
 let _db: ExpoSQLiteDatabase<typeof schema> | null = null;
@@ -134,8 +134,7 @@ export async function importDatabaseFile(data: Uint8Array): Promise<ExpoSQLiteDa
     _sqliteDb.closeSync();
   }
 
-  _sqliteDb = openDatabaseSync('simsoviet.db');
-  _sqliteDb.deserializeSync(data);
+  _sqliteDb = deserializeDatabaseSync(data);
   _db = drizzle(_sqliteDb, { schema });
 
   return _db;
