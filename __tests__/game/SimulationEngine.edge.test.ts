@@ -380,13 +380,16 @@ describe('SimulationEngine edge cases', () => {
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'gulag-admin');
 
-      // Mock random to always trigger gulag effect (< 0.1)
+      // Math.random mock must be set BEFORE engine construction for seed
+      // generation. Gulag uses GameRng (10% per tick), so run 30 ticks
+      // for 96% probability of at least one arrest.
       jest.spyOn(Math, 'random').mockReturnValue(0.05);
-      const engine2 = new SimulationEngine(grid2, cb2);
-      engine2.tick();
+      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'worker', 'forgiving');
+      cb2.onMinigame = undefined as never;
+      cb2.onAnnualReport = undefined as never;
+      for (let i = 0; i < 30; i++) engine2.tick();
 
       // Population should have decreased by at least 1 (gulag effect)
-      // Note: consumption also runs, but food is abundant
       expect(getResourceEntity()!.resources.population).toBeLessThan(100);
     });
 
