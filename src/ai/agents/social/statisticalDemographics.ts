@@ -110,16 +110,17 @@ export function statisticalBirthTick(
   const foodMod = foodModifier(foodLevel);
   const eraMod = ERA_BIRTH_MULTIPLIER[eraId] ?? 1.0;
   const conceptionRate = BASE_MONTHLY_CONCEPTION_RATE * foodMod * eraMod;
-  if (!Number.isFinite(conceptionRate) || conceptionRate < 0) return 0;
 
-  // Sample conceptions
-  const conceptions = poissonSample(eligibleWomen * conceptionRate, rng);
-
-  // Pregnancy shift register: deliver → mid → newly conceived
+  // Pregnancy shift register ALWAYS executes — existing pregnancies deliver regardless
   const births = pool.pregnancyWaves[0]!;
   pool.pregnancyWaves[0] = pool.pregnancyWaves[1]!;
   pool.pregnancyWaves[1] = pool.pregnancyWaves[2]!;
-  pool.pregnancyWaves[2] = conceptions;
+
+  // Only gate NEW conceptions on valid rate
+  pool.pregnancyWaves[2] =
+    Number.isFinite(conceptionRate) && conceptionRate >= 0
+      ? poissonSample(eligibleWomen * conceptionRate, rng)
+      : 0;
 
   // Distribute births 50/50 male/female
   if (births > 0) {

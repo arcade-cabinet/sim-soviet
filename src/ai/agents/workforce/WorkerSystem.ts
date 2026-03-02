@@ -455,7 +455,7 @@ export class WorkerSystem {
         const bld = entity.building;
         const take = Math.min(remaining, bld.workerCount);
         bld.workerCount -= take;
-        raion.assignedWorkers -= take;
+        raion.assignedWorkers = Math.max(0, raion.assignedWorkers - take);
         remaining -= take;
       }
     }
@@ -648,7 +648,7 @@ export class WorkerSystem {
         const bld = entity.building;
         const take = Math.min(remaining, bld.workerCount);
         bld.workerCount -= take;
-        raion.assignedWorkers -= take;
+        raion.assignedWorkers = Math.max(0, raion.assignedWorkers - take);
         remaining -= take;
       }
     }
@@ -1469,8 +1469,8 @@ export class WorkerSystem {
           : factoryBuildings[0]!;
 
         target.building.workerCount--;
-        raion.totalPopulation--;
-        raion.assignedWorkers--;
+        raion.totalPopulation = Math.max(0, raion.totalPopulation - 1);
+        raion.assignedWorkers = Math.max(0, raion.assignedWorkers - 1);
         raion.laborForce = Math.max(0, raion.laborForce - 1);
         raion.deathsThisYear++;
         raion.totalDeaths++;
