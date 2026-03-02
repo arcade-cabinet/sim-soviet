@@ -231,6 +231,10 @@ export function calcOutbreakModifier(
  * recovery or death when the timer expires.
  */
 export function progressDiseases(result: DiseaseTickResult): void {
+  // Skip in aggregate mode (no citizen entities)
+  const resources = getResourceEntity()?.resources;
+  if (resources?.raion) return;
+
   const rng = _rng;
 
   const snapshot = [...citizens];
@@ -268,6 +272,9 @@ export function checkOutbreaks(month: number, result: DiseaseTickResult): void {
   const rng = _rng;
   const store = getResourceEntity();
   if (!store) return;
+
+  // Skip in aggregate mode (no citizen entities)
+  if (store.resources.raion) return;
 
   const population = store.resources.population;
   if (population <= 0) return;
@@ -335,6 +342,10 @@ export function diseaseTick(totalTicks: number, month: number): DiseaseTickResul
     deadEntities: [],
     outbreakTypes: [],
   };
+
+  // Skip entity-based disease logic in aggregate mode (no citizen entities)
+  const resources = getResourceEntity()?.resources;
+  if (resources?.raion) return result;
 
   if (totalTicks <= 0) return result;
 

@@ -510,6 +510,10 @@ export class DefenseAgent extends Vehicle {
    * Returns array of disease types that broke out this tick.
    */
   private tickDisease(totalTicks: number, month: number): DiseaseType[] {
+    // Skip entity-based disease logic in aggregate mode (no citizen entities)
+    const resources = getResourceEntity()?.resources;
+    if (resources?.raion) return [];
+
     const result = {
       newInfections: 0,
       recoveries: 0,
@@ -823,6 +827,10 @@ export class DefenseAgent extends Vehicle {
     callbacks: { onPravda: (msg: string) => void };
     rng: GameRng | undefined;
   }): void {
+    // Skip entity-based disease logic in aggregate mode (no citizen entities)
+    const resources = getResourceEntity()?.resources;
+    if (resources?.raion) return;
+
     const diseaseResult = diseaseTick(deps.totalTicks, deps.month);
 
     // Route disease deaths through WorkerSystem for proper stats cleanup
