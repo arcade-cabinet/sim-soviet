@@ -32,6 +32,7 @@ import {
   applyTierTint,
   clearTintData,
 } from './TierTinting';
+import { GROWN_TYPES, BUILDING_TYPES } from '../engine/BuildingTypes';
 
 /** State snapshot for a single building, consumed by the 3D renderer. */
 export interface BuildingState {
@@ -47,6 +48,10 @@ export interface BuildingState {
   constructionPhase?: 'foundation' | 'building' | 'complete';
   /** Construction progress 0.0–1.0 (undefined means complete) */
   constructionProgress?: number;
+  /** Housing capacity — used for brutalist scaling (aggregate mode mega-blocks) */
+  housingCap?: number;
+  /** Worker count — used for brutalist scaling (aggregate mode factories) */
+  workerCount?: number;
 }
 
 interface BuildingRendererProps {
@@ -55,6 +60,41 @@ interface BuildingRendererProps {
   settlementTier?: SettlementTier;
   /** Current season — drives seasonal color tinting */
   season?: Season;
+}
+
+// ── Brutalist Scaling ───────────────────────────────────────────────────────
+
+/**
+ * Compute brutalist capacity-based scale multiplier.
+ * Mega-blocks use the SAME GLB model — just bigger. Same depressing geometry.
+ *
+ * Returns 1.0 for normal buildings, up to ~8.0 for arcology-scale structures.
+ */
+function getBrutalistScale(buildingType: string, housingCap?: number, workerCount?: number): number {
+  // Determine base capacity from building defs
+  let baseCap = 10;
+  // Check GROWN_TYPES first (housing, factory, distillery, farm)
+  const grownKey = buildingType.includes('house') || buildingType.includes('apartment') || buildingType.includes('khrushch')
+    ? 'housing'
+    : buildingType.includes('factory') || buildingType.includes('mill') || buildingType.includes('workshop')
+      ? 'factory'
+      : buildingType.includes('distill') || buildingType.includes('vodka') || buildingType.includes('brewery')
+        ? 'distillery'
+        : buildingType.includes('farm') || buildingType.includes('kolkhoz') || buildingType.includes('sovkhoz')
+          ? 'farm'
+          : null;
+  if (grownKey && GROWN_TYPES[grownKey]) {
+    baseCap = GROWN_TYPES[grownKey][0].cap ?? GROWN_TYPES[grownKey][0].amt ?? 10;
+  } else {
+    const btDef = BUILDING_TYPES[buildingType];
+    baseCap = Math.abs(btDef?.cap ?? 10);
+  }
+
+  const actualCap = housingCap || workerCount || baseCap;
+  if (actualCap <= baseCap) return 1.0;
+
+  const scaleTier = Math.max(1, Math.log2(actualCap / baseCap) + 1);
+  return 1 + (scaleTier - 1) * 0.5;
 }
 
 // ── Single Building Component ───────────────────────────────────────────────
@@ -88,7 +128,10 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     const maxFootprint = Math.max(size.x, size.z);
 
     if (maxFootprint > 0) {
-      const scale = 0.85 / maxFootprint;
+      const tileScale = 0.85 / maxFootprint;
+      // Apply brutalist capacity-based scaling on top of tile-fit
+      const brutalist = getBrutalistScale(building.type, building.housingCap, building.workerCount);
+      const scale = tileScale * brutalist;
       group.scale.setScalar(scale);
 
       // Recompute after scaling
@@ -138,6 +181,8 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     building.powered,
     building.constructionPhase,
     building.constructionProgress,
+    building.housingCap,
+    building.workerCount,
   ]);
 
   // Update position and visual states when building data changes
@@ -169,6 +214,8 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     building.onFire,
     building.constructionPhase,
     building.constructionProgress,
+    building.housingCap,
+    building.workerCount,
     settlementTier,
     season,
   ]);

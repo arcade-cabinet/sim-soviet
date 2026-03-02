@@ -48,6 +48,8 @@ export function getBuildingStates(): BuildingState[] {
       elevation: elevationMap.get(key) ?? 0,
       powered: building.powered,
       onFire: entity.building.onFire === true,
+      housingCap: building.housingCap,
+      workerCount: building.workerCount,
       ...(isUnderConstruction && {
         constructionPhase: phase as 'foundation' | 'building',
         constructionProgress: building.constructionProgress ?? 0,
