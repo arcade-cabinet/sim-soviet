@@ -10,6 +10,7 @@
 
 import type { BuildingComponent } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';
+import { poissonSample } from '@/math/poissonSampling';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -56,36 +57,6 @@ export interface BuildingDefForProduction {
     housingCap?: number;
     produces?: { resource: string; amount: number };
   };
-}
-
-// ─── Poisson Sampling ────────────────────────────────────────────────────────
-
-/**
- * Sample from a Poisson distribution with the given lambda.
- * Uses the Knuth algorithm for small lambda, normal approximation for large.
- *
- * @param lambda - Expected number of events (rate parameter)
- * @param rng - Seeded RNG instance
- * @returns Non-negative integer sample
- */
-export function poissonSample(lambda: number, rng: GameRng): number {
-  if (lambda <= 0) return 0;
-  if (lambda < 30) {
-    // Knuth algorithm
-    const L = Math.exp(-lambda);
-    let k = 0;
-    let p = 1;
-    do {
-      k++;
-      p *= rng.random();
-    } while (p > L);
-    return k - 1;
-  }
-  // Normal approximation for large lambda
-  const u1 = rng.random();
-  const u2 = rng.random();
-  const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-  return Math.max(0, Math.round(lambda + Math.sqrt(lambda) * z));
 }
 
 // ─── Core Production Function ────────────────────────────────────────────────

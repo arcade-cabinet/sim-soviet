@@ -14,6 +14,10 @@
 
 import type { RaionPool } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';
+import { poissonSample } from '@/math/poissonSampling';
+
+// Re-export for external consumers
+export { poissonSample } from '@/math/poissonSampling';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -79,42 +83,6 @@ const ANNUAL_MORTALITY_BY_BUCKET: readonly number[] = [
   0.20,  // 18: ages 90-94
   0.35,  // 19: ages 95-99
 ];
-
-// ── Poisson Sampling ─────────────────────────────────────────────────────────
-
-/**
- * Sample from a Poisson distribution.
- *
- * Replaces N individual Bernoulli trials with a single Poisson draw.
- * For lambda < 30: Knuth inverse-CDF algorithm (exact).
- * For lambda >= 30: Normal approximation via Box-Muller (fast, accurate).
- *
- * @param lambda - Expected number of events (must be >= 0)
- * @param rng    - Seeded RNG instance
- * @returns Non-negative integer sample
- */
-export function poissonSample(lambda: number, rng: GameRng): number {
-  if (lambda <= 0) return 0;
-
-  if (lambda < 30) {
-    // Knuth algorithm
-    const L = Math.exp(-lambda);
-    let k = 0;
-    let p = 1;
-    do {
-      k++;
-      p *= rng.random();
-    } while (p > L);
-    return k - 1;
-  }
-
-  // Normal approximation (Box-Muller)
-  const u1 = rng.random();
-  const u2 = rng.random();
-  const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-  const result = Math.round(lambda + Math.sqrt(lambda) * z);
-  return Math.max(0, result);
-}
 
 // ── Food Modifier ────────────────────────────────────────────────────────────
 

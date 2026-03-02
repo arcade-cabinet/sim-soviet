@@ -8,10 +8,10 @@
 
 import {
   computeBuildingProduction,
-  poissonSample,
   type ProductionContext,
   type BuildingDefForProduction,
 } from '../../src/ai/agents/economy/buildingProduction';
+import { poissonSample } from '../../src/math/poissonSampling';
 import type { BuildingComponent } from '../../src/ecs/world';
 import { GameRng } from '../../src/game/SeedSystem';
 
