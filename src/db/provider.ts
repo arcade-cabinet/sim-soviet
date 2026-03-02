@@ -86,5 +86,8 @@ export async function importDatabaseFile(data: Uint8Array): Promise<ExpoSQLiteDa
   _sqliteDb = deserializeDatabaseSync(data);
   _db = drizzle(_sqliteDb, { schema });
 
+  // Run migrations on imported data to handle older schema versions
+  await migrate(_db, migrations);
+
   return _db;
 }
