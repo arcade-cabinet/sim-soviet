@@ -701,6 +701,35 @@ export class DemographicAgent extends Vehicle {
     }
   }
 
+  // ── Entity GC Sweep ──────────────────────────────────────────────────────────
+
+  /**
+   * Annual safety-net sweep: remove empty dvory from the world.
+   *
+   * An empty dvor has 0 members — all died but the dvor entity was not
+   * cleaned up (race condition between death checks and household formation).
+   *
+   * Only meaningful in entity mode (aggregate mode does not use dvory).
+   * Returns the number of empty dvory removed.
+   */
+  sweepEmptyDvory(): number {
+    const storeRef = getResourceEntity();
+    if (storeRef?.resources?.raion != null) return 0;
+
+    const toRemove: (typeof dvory.entities)[number][] = [];
+    for (const entity of dvory) {
+      if (entity.dvor.members.length === 0) {
+        toRemove.push(entity);
+      }
+    }
+
+    for (const entity of toRemove) {
+      world.remove(entity);
+    }
+
+    return toRemove.length;
+  }
+
   // ── Population trend analytics ─────────────────────────────────────────────
 
   /**

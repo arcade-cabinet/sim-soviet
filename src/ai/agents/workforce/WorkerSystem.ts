@@ -1457,6 +1457,59 @@ export class WorkerSystem {
     raion.idleWorkers = Math.max(0, raion.laborForce - assignedWorkers);
   }
 
+  // ── Entity GC Sweep ─────────────────────────────────────
+
+  /**
+   * Annual safety-net sweep: remove orphan citizen entities.
+   *
+   * An "orphan" is a citizen entity whose dvorId references a dvor that
+   * no longer exists in the world, or whose dvorMemberId no longer exists
+   * within the referenced dvor. This can happen from race conditions
+   * between demographic death checks and worker system removal.
+   *
+   * Only runs in entity mode (aggregate mode has no citizen entities).
+   * Returns the number of orphans removed.
+   */
+  sweepOrphanCitizens(): number {
+    if (this.isAggregateMode()) return 0;
+
+    // Build a set of valid dvor IDs and member IDs for O(1) lookup
+    const validMembers = new Set<string>();
+    const validDvorIds = new Set<string>();
+    for (const d of dvory) {
+      validDvorIds.add(d.dvor.id);
+      for (const m of d.dvor.members) {
+        validMembers.add(`${d.dvor.id}:${m.id}`);
+      }
+    }
+
+    const orphans: Entity[] = [];
+    for (const entity of citizens) {
+      const c = entity.citizen;
+
+      // Citizens without dvor linkage are not orphans — they may be
+      // early-game workers spawned before the dvor system existed
+      if (!c.dvorId) continue;
+
+      // Check if the dvor itself still exists
+      if (!validDvorIds.has(c.dvorId)) {
+        orphans.push(entity);
+        continue;
+      }
+
+      // Check if the member still exists within the dvor
+      if (c.dvorMemberId && !validMembers.has(`${c.dvorId}:${c.dvorMemberId}`)) {
+        orphans.push(entity);
+      }
+    }
+
+    for (const entity of orphans) {
+      this.removeWorker(entity, 'gc_orphan', true);
+    }
+
+    return orphans.length;
+  }
+
   // ── Trudodni Tracking ───────────────────────────────────
 
   /** Track trudodni earned per tick for assigned workers. */

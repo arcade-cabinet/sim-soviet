@@ -727,4 +727,93 @@ describe('DemographicAgent', () => {
       world.remove(housingEntity);
     });
   });
+
+  // ── Entity GC Sweep ─────────────────────────────────────────────────────
+
+  describe('sweepEmptyDvory', () => {
+    it('removes dvory with zero members', () => {
+      const agent = new DemographicAgent();
+
+      // Create a normal dvor and an empty one
+      createTestDvor('dvor-normal', [seed('male', 30)]);
+      const emptyDvor = world.add({
+        dvor: {
+          id: 'dvor-empty',
+          members: [],
+          headOfHousehold: '',
+          privatePlotSize: 0.25,
+          privateLivestock: { cow: 0, pig: 0, sheep: 0, poultry: 0 },
+          joinedTick: 0,
+          loyaltyToCollective: 50,
+          surname: 'Testov',
+          nextMemberId: 0,
+        },
+        isDvor: true,
+      });
+
+      expect(dvory.entities.length).toBe(2);
+
+      const removed = agent.sweepEmptyDvory();
+
+      expect(removed).toBe(1);
+      expect(dvory.entities.length).toBe(1);
+      // The remaining dvor should be the one with a member
+      expect(dvory.entities[0]!.dvor.id).toBe('dvor-normal');
+    });
+
+    it('returns 0 when no empty dvory exist', () => {
+      const agent = new DemographicAgent();
+      createTestDvor('dvor-ok', [seed('female', 25)]);
+
+      const removed = agent.sweepEmptyDvory();
+      expect(removed).toBe(0);
+      expect(dvory.entities.length).toBe(1);
+    });
+
+    it('skips sweep in aggregate mode', () => {
+      const agent = new DemographicAgent();
+
+      // Create an empty dvor
+      world.add({
+        dvor: {
+          id: 'dvor-empty-agg',
+          members: [],
+          headOfHousehold: '',
+          privatePlotSize: 0.25,
+          privateLivestock: { cow: 0, pig: 0, sheep: 0, poultry: 0 },
+          joinedTick: 0,
+          loyaltyToCollective: 50,
+          surname: 'Testov',
+          nextMemberId: 0,
+        },
+        isDvor: true,
+      });
+
+      // Set up aggregate mode
+      const storeEntity = world.add({
+        resources: {
+          money: 0, food: 0, vodka: 0, power: 0, powerUsed: 0,
+          population: 500, trudodni: 0, blat: 0, timber: 0, steel: 0,
+          cement: 0, prefab: 0, seedFund: 0, emergencyReserve: 0,
+          storageCapacity: 0,
+          raion: {
+            totalPopulation: 500, totalHouseholds: 50,
+            maleAgeBuckets: new Array(20).fill(0),
+            femaleAgeBuckets: new Array(20).fill(0),
+            classCounts: {}, birthsThisYear: 0, deathsThisYear: 0,
+            totalBirths: 0, totalDeaths: 0, pregnancyWaves: [0, 0, 0],
+            laborForce: 0, assignedWorkers: 0, idleWorkers: 0,
+            avgMorale: 50, avgLoyalty: 50, avgSkill: 50,
+          },
+        },
+        isResourceStore: true,
+      });
+
+      const removed = agent.sweepEmptyDvory();
+      expect(removed).toBe(0); // Should skip in aggregate mode
+
+      // Cleanup
+      world.remove(storeEntity);
+    });
+  });
 });
