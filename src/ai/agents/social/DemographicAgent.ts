@@ -362,7 +362,7 @@ export class DemographicAgent extends Vehicle {
     result: DemographicTickResult,
   ): DemographicTickResult {
     if (totalTicks % TICKS_PER_YEAR === 0) {
-      const agingDeaths = statisticalAgingTick(raion);
+      const agingDeaths = statisticalAgingTick(raion, rng);
       result.aged = raion.totalPopulation; // all buckets shifted
       result.deaths += agingDeaths;
       this.statisticalHouseholdFormation(raion, rng);

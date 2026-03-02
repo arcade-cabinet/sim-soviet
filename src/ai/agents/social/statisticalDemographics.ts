@@ -206,36 +206,64 @@ export function statisticalDeathTick(
 /**
  * Annual statistical aging tick for aggregate mode.
  *
- * Called on year boundaries. Shifts all age buckets up by one position.
- * Population in bucket 19 (ages 95-99) overflows into death.
+ * Called on year boundaries. Each bucket spans 5 years, so each year only
+ * 1/5 (agingFraction = 0.2) of each bucket's population advances to the
+ * next bucket, sampled via Poisson for stochastic variation.
  *
- * Note: this is a simplified model. In reality, only 1/5 of each bucket
- * would advance per year (since buckets span 5 years). However, for game
- * pacing, we treat each bucket as a single cohort that advances annually.
- * The mortality rates in statisticalDeathTick compensate for this
- * simplification by being tuned to produce realistic net population curves.
+ * Uses a two-phase approach to prevent cascading advancement:
+ *   Phase 1: Calculate all advancements without modifying buckets
+ *   Phase 2: Apply all advancements atomically
+ *
+ * Population advancing out of bucket 19 (ages 95-99) counts as overflow deaths.
  *
  * @param pool - Mutable RaionPool to update
+ * @param rng  - Seeded RNG instance for Poisson sampling
  * @returns Number of overflow deaths (population aged out of bucket 19)
  */
-export function statisticalAgingTick(pool: RaionPool): number {
-  // Overflow deaths: bucket 19 ages out
-  const maleOverflow = pool.maleAgeBuckets[NUM_BUCKETS - 1]!;
-  const femaleOverflow = pool.femaleAgeBuckets[NUM_BUCKETS - 1]!;
-  const overflowDeaths = maleOverflow + femaleOverflow;
+export function statisticalAgingTick(pool: RaionPool, rng: GameRng): number {
+  const agingFraction = cfg.agingFraction;
 
-  // Shift buckets up by 1 (oldest → death, youngest ← 0)
-  for (let i = NUM_BUCKETS - 1; i > 0; i--) {
-    pool.maleAgeBuckets[i] = pool.maleAgeBuckets[i - 1]!;
-    pool.femaleAgeBuckets[i] = pool.femaleAgeBuckets[i - 1]!;
+  // Phase 1: Calculate all advancements (do NOT modify buckets yet)
+  const maleAdvancers = new Array<number>(NUM_BUCKETS).fill(0);
+  const femaleAdvancers = new Array<number>(NUM_BUCKETS).fill(0);
+
+  for (let i = 0; i < NUM_BUCKETS; i++) {
+    maleAdvancers[i] = Math.min(
+      poissonSample(pool.maleAgeBuckets[i]! * agingFraction, rng),
+      pool.maleAgeBuckets[i]!,
+    );
+    femaleAdvancers[i] = Math.min(
+      poissonSample(pool.femaleAgeBuckets[i]! * agingFraction, rng),
+      pool.femaleAgeBuckets[i]!,
+    );
   }
-  pool.maleAgeBuckets[0] = 0;
-  pool.femaleAgeBuckets[0] = 0;
 
-  // Update pool totals (clamp to 0)
+  // Phase 2: Apply all advancements atomically
+  let overflowDeaths = 0;
+
+  for (let i = 0; i < NUM_BUCKETS; i++) {
+    pool.maleAgeBuckets[i]! -= maleAdvancers[i]!;
+    pool.femaleAgeBuckets[i]! -= femaleAdvancers[i]!;
+
+    if (i < NUM_BUCKETS - 1) {
+      pool.maleAgeBuckets[i + 1]! += maleAdvancers[i]!;
+      pool.femaleAgeBuckets[i + 1]! += femaleAdvancers[i]!;
+    } else {
+      overflowDeaths += maleAdvancers[i]! + femaleAdvancers[i]!;
+    }
+  }
+
+  // Update pool totals
   pool.totalPopulation = Math.max(0, pool.totalPopulation - overflowDeaths);
   pool.deathsThisYear += overflowDeaths;
   pool.totalDeaths += overflowDeaths;
+
+  // Recalculate labor force
+  let laborForce = 0;
+  for (let i = LABOR_BUCKET_MIN; i <= LABOR_BUCKET_MAX; i++) {
+    laborForce += pool.maleAgeBuckets[i]! + pool.femaleAgeBuckets[i]!;
+  }
+  pool.laborForce = laborForce;
 
   return overflowDeaths;
 }
