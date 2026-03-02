@@ -84,7 +84,7 @@ describe('SimulationEngine edge cases', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      // Start with food=0. Use comrade difficulty (quotaMultiplier=0.6 → target=300).
+      // Start with food=0. Use worker difficulty (quotaMultiplier=0.4 → target=200).
       // forgiving consequence to survive KGB marks from missed quotas.
       // Zero food each year boundary to ensure quotas are always missed.
       createResourceStore({ food: 0, vodka: 0, population: 0 });
@@ -181,8 +181,9 @@ describe('SimulationEngine edge cases', () => {
         return originalConsume(mult);
       });
 
-      // Starve through grace period (180 ticks) + 1 to trigger deaths
-      for (let i = 0; i < 200; i++) {
+      // Starve through grace period (180 ticks) + enough kill ticks to deplete population.
+      // maxStarvationDeathsPerTick=2, so need (graceTicks + pop/2 + margin) iterations.
+      for (let i = 0; i < 400; i++) {
         const store = getResourceEntity()!;
         store.resources.food = 0;
         store.resources.vodka = 0;

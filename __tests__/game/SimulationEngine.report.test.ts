@@ -58,7 +58,7 @@ describe('SimulationEngine — Annual Report', () => {
     const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [AnnualReportData, (s: ReportSubmission) => void];
     expect(data.year).toBe(1927);
     expect(data.quotaType).toBe('food');
-    expect(data.quotaTarget).toBe(300);
+    expect(data.quotaTarget).toBe(400);
     expect(typeof submitFn).toBe('function');
   });
 

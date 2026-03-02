@@ -743,25 +743,25 @@ export class SimulationEngine {
     }
 
     // ── 11. Food consumption + starvation ──
+    const totalConsumptionMult = eraMods.consumptionMult * diffConfig.consumptionMultiplier;
     if (this.raion) {
       // Aggregate mode: consumption scales with raion population
       const pop = this.raion.totalPopulation;
-      const consumeRate = eraMods.consumptionMult;
       // Each citizen consumes ~0.5 food per tick (same as entity mode FoodAgent)
-      const foodConsumed = pop * 0.5 * consumeRate;
-      const vodkaConsumed = pop * 0.1 * consumeRate;
+      const foodConsumed = pop * 0.5 * totalConsumptionMult;
+      const vodkaConsumed = pop * 0.1 * totalConsumptionMult;
       storeRef.resources.food = Math.max(0, storeRef.resources.food - foodConsumed);
       storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - vodkaConsumed);
 
       // Starvation check: delegate to FoodAgent for consistency
-      const foodResult = this.foodAgent.consume(eraMods.consumptionMult);
+      const foodResult = this.foodAgent.consume(totalConsumptionMult);
       if (foodResult.starvationDeaths > 0) {
         this.callbacks.onToast('STARVATION DETECTED', 'critical');
         this.workerSystem.removeWorkersByCount(foodResult.starvationDeaths, 'starvation');
       }
     } else {
       // Entity mode: existing consumption path
-      const foodResult = this.foodAgent.consume(eraMods.consumptionMult);
+      const foodResult = this.foodAgent.consume(totalConsumptionMult);
       if (foodResult.starvationDeaths > 0) {
         this.callbacks.onToast('STARVATION DETECTED', 'critical');
         this.workerSystem.removeWorkersByCount(foodResult.starvationDeaths, 'starvation');

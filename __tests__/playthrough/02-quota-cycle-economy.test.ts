@@ -140,8 +140,8 @@ describe('Playthrough: Quota Cycle Economy', () => {
     const quota = engine.getQuota();
     expect(quota.type).toBe('vodka');
     expect(quota.target).toBeGreaterThan(0);
-    // At comrade difficulty (quotaMultiplier = 0.6), target is 300
-    expect(quota.target).toBe(300);
+    // At comrade difficulty (quotaMultiplier = 0.8), target is 400
+    expect(quota.target).toBe(400);
     // Deadline should be 5 years from current year
     expect(quota.deadlineYear).toBe(1927 + 5);
   });
@@ -164,7 +164,7 @@ describe('Playthrough: Quota Cycle Economy', () => {
       expect.objectContaining({
         year: 1927,
         quotaType: 'food',
-        quotaTarget: 300,
+        quotaTarget: 400,
       }),
       expect.any(Function), // submitReport callback
     );

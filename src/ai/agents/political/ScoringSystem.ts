@@ -49,6 +49,8 @@ export interface DifficultyConfig {
   decayMultiplier: number;
   /** Starting resources multiplier */
   resourceMultiplier: number;
+  /** Food/vodka consumption rate multiplier (higher = hungrier citizens = harder) */
+  consumptionMultiplier: number;
 }
 
 /**
@@ -164,32 +166,35 @@ export const DIFFICULTY_PRESETS: Record<DifficultyLevel, DifficultyConfig> = {
     markDecayTicks: 180, // every 6 months
     politrukRatio: 50, // 1:50
     kgbAggression: 'low',
-    growthMultiplier: 2.5,
+    growthMultiplier: 2.0,
     winterModifier: 'shorter',
     decayMultiplier: 0.3,
-    resourceMultiplier: 2.5,
+    resourceMultiplier: 2.0,
+    consumptionMultiplier: 0.7,
   },
   comrade: {
     label: 'Comrade',
-    quotaMultiplier: 0.6,
-    markDecayTicks: 360, // 1 year
-    politrukRatio: 30, // 1:30
+    quotaMultiplier: 0.8,
+    markDecayTicks: 540, // 1.5 years
+    politrukRatio: 25, // 1:25
     kgbAggression: 'medium',
-    growthMultiplier: 2.0,
+    growthMultiplier: 1.2,
     winterModifier: 'standard',
-    decayMultiplier: 0.5,
-    resourceMultiplier: 1.5,
+    decayMultiplier: 0.7,
+    resourceMultiplier: 1.0,
+    consumptionMultiplier: 1.0,
   },
   tovarish: {
     label: 'Tovarish',
-    quotaMultiplier: 1.3,
-    markDecayTicks: 1440, // 1/4 years
+    quotaMultiplier: 1.5,
+    markDecayTicks: 1800, // 5 years
     politrukRatio: 10, // 1:10
     kgbAggression: 'high',
-    growthMultiplier: 1.0,
+    growthMultiplier: 0.8,
     winterModifier: 'longer',
-    decayMultiplier: 1.0,
-    resourceMultiplier: 0.7,
+    decayMultiplier: 1.5,
+    resourceMultiplier: 0.6,
+    consumptionMultiplier: 2.0,
   },
 };
 

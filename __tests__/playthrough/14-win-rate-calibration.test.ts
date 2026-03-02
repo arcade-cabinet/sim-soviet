@@ -32,7 +32,7 @@ import { GameGrid } from '../../src/game/GameGrid';
 import { GameRng } from '../../src/game/SeedSystem';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
-import type { DifficultyLevel, ConsequenceLevel } from '../../src/ai/agents/political/ScoringSystem';
+import { DIFFICULTY_PRESETS, type DifficultyLevel, type ConsequenceLevel } from '../../src/ai/agents/political/ScoringSystem';
 import {
   buildFullEconomy,
   createMockCallbacks,
@@ -60,6 +60,7 @@ interface RunResult {
 
 interface DifficultyConfig {
   difficulty: DifficultyLevel;
+  consequence: ConsequenceLevel;
   seedCount: number;
   aspirationalWinRate: number; // For logging only
   label: string;
@@ -68,9 +69,9 @@ interface DifficultyConfig {
 // ── Constants ─────────────────────────────────────────────────────────────
 
 const DIFFICULTY_CONFIGS: DifficultyConfig[] = [
-  { difficulty: 'worker', seedCount: 5, aspirationalWinRate: 0.8, label: 'Worker' },
-  { difficulty: 'comrade', seedCount: 10, aspirationalWinRate: 0.5, label: 'Comrade' },
-  { difficulty: 'tovarish', seedCount: 10, aspirationalWinRate: 0.2, label: 'Tovarish' },
+  { difficulty: 'worker', consequence: 'forgiving', seedCount: 5, aspirationalWinRate: 0.8, label: 'Worker' },
+  { difficulty: 'comrade', consequence: 'forgiving', seedCount: 10, aspirationalWinRate: 0.5, label: 'Comrade' },
+  { difficulty: 'tovarish', consequence: 'forgiving', seedCount: 10, aspirationalWinRate: 0.2, label: 'Tovarish' },
 ];
 
 const TARGET_YEARS = 200;
@@ -78,8 +79,10 @@ const START_YEAR = 1917;
 const END_YEAR = START_YEAR + TARGET_YEARS;
 const MAX_TICKS = TARGET_YEARS * TICKS_PER_YEAR;
 
-// Starting resources: generous initial allotment (same as test 13)
-const STARTING_RESOURCES = {
+// Base starting resources — scaled by difficulty's resourceMultiplier (same as GameInit.ts).
+// These are generous base amounts; resourceMultiplier brings them in line:
+// Worker (2.5x): food=125k  Comrade (1.2x): food=60k  Tovarish (0.2x): food=10k
+const BASE_RESOURCES = {
   population: 50,
   food: 50000,
   vodka: 10000,
@@ -96,9 +99,17 @@ const STARTING_RESOURCES = {
  */
 function createCalibrationDvory(count: number, seed: string): void {
   for (let i = 0; i < count; i++) {
-    createDvor(`${seed}-dvor-${i}`, `Family${i}`, [
-      { name: `Worker ${i}`, gender: 'male', age: 30 },
-    ]);
+    // Mixed-gender households for demographic reproduction over 200 years.
+    // Alternating: even dvory = married couple (male+female), odd = single male.
+    // This gives ~67% married pairs, enabling natural population growth.
+    const members =
+      i % 3 !== 2
+        ? [
+            { name: `Husband ${i}`, gender: 'male' as const, age: 25 + (i % 10) },
+            { name: `Wife ${i}`, gender: 'female' as const, age: 23 + (i % 8) },
+          ]
+        : [{ name: `Worker ${i}`, gender: 'male' as const, age: 30 }];
+    createDvor(`${seed}-dvor-${i}`, `Family${i}`, members);
   }
 }
 
@@ -152,12 +163,21 @@ function runCalibrationRun(
     const grid = new GameGrid();
     const callbacks = createMockCallbacks();
 
-    // Create resource + meta stores (population 0 — dvory are canonical)
-    createResourceStore({ ...STARTING_RESOURCES, population: 0 });
+    // Scale starting resources by difficulty's resourceMultiplier (matches GameInit.ts)
+    const resMult = DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
+    createResourceStore({
+      food: Math.round(BASE_RESOURCES.food * resMult),
+      vodka: Math.round(BASE_RESOURCES.vodka * resMult),
+      money: Math.round(BASE_RESOURCES.money * resMult),
+      timber: Math.round(BASE_RESOURCES.timber * resMult),
+      steel: Math.round(BASE_RESOURCES.steel * resMult),
+      cement: Math.round(BASE_RESOURCES.cement * resMult),
+      population: 0,
+    });
     createMetaStore({ date: { year: START_YEAR, month: 10, tick: 0 } });
 
     // Create dvory for the requested population
-    createCalibrationDvory(STARTING_RESOURCES.population, seed);
+    createCalibrationDvory(BASE_RESOURCES.population, seed);
 
     // Create engine with a deterministic seed-specific RNG
     const rng = new GameRng(seed);
@@ -223,6 +243,10 @@ function runCalibrationRun(
       result.finalYear = date.year;
       result.finalPopulation = finalPop;
       result.peakPopulation = peakPop;
+      // Survived = reached 200 years without triggering a game-over condition.
+      // Note: pop may be 0 at snapshot time if the settlement oscillates between
+      // extinction and immigration — the key test is that the engine didn't force
+      // a loss (arrest, Politburo dissolution, or explicit starvation game-over).
       result.survived = !isGameOver() && date.year >= END_YEAR;
       result.gameOverReason = getGameOverReason();
     } catch {
@@ -319,7 +343,7 @@ describe('Playthrough: Win Rate Calibration', () => {
         // Restore mocks between runs so each gets a clean Math.random
         jest.restoreAllMocks();
 
-        const result = runCalibrationRun(seed, config.difficulty);
+        const result = runCalibrationRun(seed, config.difficulty, config.consequence);
         results.push(result);
       }
 

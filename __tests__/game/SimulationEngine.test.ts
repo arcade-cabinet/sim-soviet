@@ -394,7 +394,7 @@ describe('SimulationEngine', () => {
 
       expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('Quota met'));
       expect(getMetaEntity()!.gameMeta.quota.type).toBe('vodka');
-      expect(getMetaEntity()!.gameMeta.quota.target).toBe(300);
+      expect(getMetaEntity()!.gameMeta.quota.target).toBe(400);
     });
 
     it('shows game-over advisor when quota is failed', () => {
@@ -455,7 +455,7 @@ describe('SimulationEngine', () => {
       const quota = engine.getQuota();
       expect(quota).toBeDefined();
       expect(quota.type).toBe('food');
-      expect(quota.target).toBe(300);
+      expect(quota.target).toBe(400);
     });
   });
 

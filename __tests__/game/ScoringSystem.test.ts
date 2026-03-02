@@ -27,26 +27,26 @@ describe('ScoringSystem', () => {
     });
 
     it('comrade has 0.8x quota multiplier', () => {
-      expect(DIFFICULTY_PRESETS.comrade.quotaMultiplier).toBe(0.6);
+      expect(DIFFICULTY_PRESETS.comrade.quotaMultiplier).toBe(0.8);
     });
 
-    it('tovarish has 1.3x quota multiplier per design doc', () => {
-      expect(DIFFICULTY_PRESETS.tovarish.quotaMultiplier).toBe(1.3);
+    it('tovarish has 1.5x quota multiplier per design doc', () => {
+      expect(DIFFICULTY_PRESETS.tovarish.quotaMultiplier).toBe(1.5);
     });
 
-    it('worker mark decay is 360 ticks (1/year)', () => {
+    it('worker mark decay is 180 ticks (6 months)', () => {
       expect(DIFFICULTY_PRESETS.worker.markDecayTicks).toBe(180);
     });
 
     it('comrade mark decay is 540 ticks (~1.5 years)', () => {
-      expect(DIFFICULTY_PRESETS.comrade.markDecayTicks).toBe(360);
+      expect(DIFFICULTY_PRESETS.comrade.markDecayTicks).toBe(540);
     });
 
-    it('tovarish mark decay is 1440 ticks (1/4 years)', () => {
-      expect(DIFFICULTY_PRESETS.tovarish.markDecayTicks).toBe(1440);
+    it('tovarish mark decay is 1800 ticks (5 years)', () => {
+      expect(DIFFICULTY_PRESETS.tovarish.markDecayTicks).toBe(1800);
     });
 
-    it('worker has 1:40 politruk ratio', () => {
+    it('worker has 1:50 politruk ratio', () => {
       expect(DIFFICULTY_PRESETS.worker.politrukRatio).toBe(50);
     });
 

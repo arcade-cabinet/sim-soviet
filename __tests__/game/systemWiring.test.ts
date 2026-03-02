@@ -228,7 +228,7 @@ describe('GAP-023: Difficulty multipliers', () => {
     expect(quota.target).toBe(200);
   });
 
-  it('tovarish difficulty starts with quotaMultiplier=1.3 applied to initial quota', () => {
+  it('tovarish difficulty starts with quotaMultiplier=1.5 applied to initial quota', () => {
     createResourceStore();
     createMetaStore();
     const grid = new GameGrid();
@@ -236,11 +236,11 @@ describe('GAP-023: Difficulty multipliers', () => {
     const engine = new SimulationEngine(grid, cb, undefined, 'tovarish');
 
     const quota = engine.getQuota();
-    // Default target is 500 * 1.3 = 650
-    expect(quota.target).toBe(650);
+    // Default target is 500 * 1.5 = 750
+    expect(quota.target).toBe(750);
   });
 
-  it('comrade difficulty starts with quotaMultiplier=0.6 (default)', () => {
+  it('comrade difficulty starts with quotaMultiplier=0.8 (default)', () => {
     createResourceStore();
     createMetaStore();
     const grid = new GameGrid();
@@ -248,8 +248,8 @@ describe('GAP-023: Difficulty multipliers', () => {
     const engine = new SimulationEngine(grid, cb, undefined, 'comrade');
 
     const quota = engine.getQuota();
-    // Default target is 500 * 0.6 = 300
-    expect(quota.target).toBe(300);
+    // Default target is 500 * 0.8 = 400
+    expect(quota.target).toBe(400);
   });
 
   it('difficulty quotaMultiplier is applied to next quota after annual report', () => {
