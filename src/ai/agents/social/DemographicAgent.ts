@@ -12,6 +12,7 @@
  */
 
 import { Vehicle } from 'yuka';
+import { demographics } from '@/config';
 import { FEMALE_GIVEN_NAMES, MALE_GIVEN_NAMES, PATRONYMIC_RULES, SURNAMES_RAW } from '../../names';
 import { dvory, housing } from '../../../ecs/archetypes';
 import { laborCapacityForAge, memberRoleForAge } from '../../../ecs/factories';
@@ -54,85 +55,76 @@ export interface DemographicTickResult {
   agedIntoWorking: AgedIntoWorkingRef[];
 }
 
-// ── Birth Constants ──────────────────────────────────────────────────────────
+// ── Constants (loaded from config) ───────────────────────────────────────────
+
+const entityCfg = demographics.entity;
 
 /** Base annual birth probability per eligible woman. */
-const BASE_ANNUAL_BIRTH_RATE = 0.15;
+const BASE_ANNUAL_BIRTH_RATE = entityCfg.birthRates.baseAnnualRate;
 
 /** Monthly birth probability = annual / 12. */
 const MONTHLY_BIRTH_RATE = BASE_ANNUAL_BIRTH_RATE / 12;
 
 /** Minimum age for fertility. */
-const FERTILITY_MIN_AGE = 16;
+const FERTILITY_MIN_AGE = entityCfg.birthRates.fertilityMinAge;
 
 /** Maximum age for fertility. */
-const FERTILITY_MAX_AGE = 45;
+const FERTILITY_MAX_AGE = entityCfg.birthRates.fertilityMaxAge;
 
-/** Pregnancy duration in ticks (3 months × 30 ticks/month). */
-const PREGNANCY_DURATION_TICKS = 90;
+/** Pregnancy duration in ticks (3 months x 30 ticks/month). */
+const PREGNANCY_DURATION_TICKS = entityCfg.birthRates.pregnancyDurationTicks;
 
 /**
  * Historical birth-rate multipliers by era.
  * Applied on top of BASE_ANNUAL_BIRTH_RATE to reflect demographic reality.
  */
-export const ERA_BIRTH_RATE_MULTIPLIER: Record<string, number> = {
-  revolution: 1.0,
-  collectivization: 0.8,
-  industrialization: 0.75,
-  great_patriotic: 0.4,
-  reconstruction: 0.6,
-  thaw_and_freeze: 0.5,
-  stagnation: 0.4,
-  the_eternal: 0.3,
-};
+export const ERA_BIRTH_RATE_MULTIPLIER: Record<string, number> = entityCfg.eraBirthRateMultiplier;
 
-// ── Death Constants ──────────────────────────────────────────────────────────
+// ── Death Constants (from config) ────────────────────────────────────────────
 
 /** Annual mortality rates by age bracket. */
-const ANNUAL_MORTALITY: Array<{ maxAge: number; rate: number }> = [
-  { maxAge: 1, rate: 0.15 }, // infant: 15%/year
-  { maxAge: 12, rate: 0.02 }, // child: 2%/year
-  { maxAge: 55, rate: 0.005 }, // adult: 0.5%/year
-  { maxAge: 70, rate: 0.03 }, // elder: 3%/year
-  { maxAge: Infinity, rate: 0.08 }, // very old: 8%/year
-];
+const ANNUAL_MORTALITY: Array<{ maxAge: number; rate: number }> = entityCfg.annualMortality;
 
 /** Maximum age of children that impose the working mother penalty. */
-const YOUNG_CHILD_MAX_AGE = 3;
+const YOUNG_CHILD_MAX_AGE = entityCfg.youngChildMaxAge;
 
 /** Female retirement/elder threshold. */
-const FEMALE_ELDER_AGE = 55;
+const FEMALE_ELDER_AGE = entityCfg.femaleElderAge;
 
 /** Male retirement/elder threshold. */
-const MALE_ELDER_AGE = 60;
+const MALE_ELDER_AGE = entityCfg.maleElderAge;
 
 /** Working mother labor penalty multiplier (30% reduction). */
-const WORKING_MOTHER_PENALTY = 0.7;
+const WORKING_MOTHER_PENALTY = entityCfg.workingMotherPenalty;
 
 /** Additional monthly death rate from starvation (food = 0). */
-const STARVATION_MONTHLY_RATE = 0.05;
+const STARVATION_MONTHLY_RATE = entityCfg.starvationMonthlyRate;
 
-// ── Household Formation Constants ────────────────────────────────────────────
+// ── Household Formation Constants (from config) ─────────────────────────────
+
+const formationCfg = demographics.householdFormation;
 
 /** Minimum age for household formation eligibility. */
-const FORMATION_MIN_AGE = 20;
+const FORMATION_MIN_AGE = formationCfg.minAge;
 
 /** Maximum age for household formation eligibility. */
-const FORMATION_MAX_AGE = 35;
+const FORMATION_MAX_AGE = formationCfg.maxAge;
 
 /** Annual probability that an eligible pair forms a new household. */
-const FORMATION_PROBABILITY = 0.1;
+const FORMATION_PROBABILITY = formationCfg.probability;
 
-// ── Population trend thresholds ──────────────────────────────────────────────
+// ── Population trend thresholds (from config) ────────────────────────────────
+
+const trendsCfg = demographics.trends;
 
 /** Labor shortage telegram threshold — growth rate below this triggers warning. */
-const LABOR_SHORTAGE_THRESHOLD = -0.02;
+const LABOR_SHORTAGE_THRESHOLD = trendsCfg.laborShortageThreshold;
 
 /** Labor surplus telegram threshold — growth rate above this triggers notice. */
-const LABOR_SURPLUS_THRESHOLD = 0.05;
+const LABOR_SURPLUS_THRESHOLD = trendsCfg.laborSurplusThreshold;
 
 /** Population milestone: every N citizens reached emits a milestone telegram. */
-const POPULATION_MILESTONE_STEP = 100;
+const POPULATION_MILESTONE_STEP = trendsCfg.populationMilestoneStep;
 
 // ── Serialization ────────────────────────────────────────────────────────────
 

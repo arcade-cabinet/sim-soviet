@@ -1,0 +1,105 @@
+{
+  "aggregate": {
+    "numBuckets": 20,
+    "agingFraction": 0.2,
+    "birthRates": {
+      "baseMonthlyConceptionRate": 0.030,
+      "fertileBucketMin": 3,
+      "fertileBucketMax": 9
+    },
+    "laborForce": {
+      "bucketMin": 3,
+      "bucketMax": 12
+    },
+    "eraBirthMultiplier": {
+      "revolution": 1.0,
+      "civil_war": 0.6,
+      "nep": 0.95,
+      "collectivization": 0.7,
+      "industrialization": 0.75,
+      "great_patriotic_war": 0.25,
+      "great_patriotic": 0.25,
+      "reconstruction": 1.1,
+      "thaw": 0.85,
+      "thaw_and_freeze": 0.8,
+      "stagnation": 0.6,
+      "perestroika": 0.5,
+      "collapse": 0.35,
+      "the_eternal": 0.4,
+      "eternal": 0.4
+    },
+    "eraDeathMultiplier": {
+      "revolution": 1.3,
+      "civil_war": 1.5,
+      "nep": 0.9,
+      "collectivization": 1.6,
+      "industrialization": 1.1,
+      "great_patriotic_war": 2.5,
+      "great_patriotic": 2.5,
+      "reconstruction": 0.8,
+      "thaw": 0.7,
+      "thaw_and_freeze": 0.7,
+      "stagnation": 0.85,
+      "perestroika": 1.0,
+      "collapse": 1.3,
+      "the_eternal": 1.0,
+      "eternal": 1.0
+    },
+    "annualMortalityByBucket": [
+      0.150, 0.008, 0.004, 0.005, 0.006, 0.006, 0.007, 0.008,
+      0.010, 0.014, 0.020, 0.030, 0.045, 0.065, 0.100, 0.150,
+      0.220, 0.320, 0.450, 0.600
+    ],
+    "foodModifier": {
+      "lowThreshold": 0.5,
+      "highThreshold": 0.8,
+      "minMultiplier": 0.5,
+      "maxMultiplier": 1.2
+    },
+    "starvation": {
+      "maxMultiplier": 3.0,
+      "threshold": 0.5,
+      "scale": 4
+    }
+  },
+  "entity": {
+    "birthRates": {
+      "baseAnnualRate": 0.15,
+      "fertilityMinAge": 16,
+      "fertilityMaxAge": 45,
+      "pregnancyDurationTicks": 90
+    },
+    "eraBirthRateMultiplier": {
+      "revolution": 1.0,
+      "collectivization": 0.8,
+      "industrialization": 0.75,
+      "great_patriotic": 0.4,
+      "reconstruction": 0.6,
+      "thaw_and_freeze": 0.5,
+      "stagnation": 0.4,
+      "the_eternal": 0.3
+    },
+    "annualMortality": [
+      { "maxAge": 1, "rate": 0.15 },
+      { "maxAge": 12, "rate": 0.02 },
+      { "maxAge": 55, "rate": 0.005 },
+      { "maxAge": 70, "rate": 0.03 },
+      { "maxAge": 999, "rate": 0.08 }
+    ],
+    "starvationMonthlyRate": 0.05,
+    "youngChildMaxAge": 3,
+    "femaleElderAge": 55,
+    "maleElderAge": 60,
+    "workingMotherPenalty": 0.7
+  },
+  "householdFormation": {
+    "minAge": 20,
+    "maxAge": 35,
+    "probability": 0.1
+  },
+  "trends": {
+    "laborShortageThreshold": -0.02,
+    "laborSurplusThreshold": 0.05,
+    "populationMilestoneStep": 100
+  }
+}

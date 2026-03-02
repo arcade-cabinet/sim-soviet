@@ -12,6 +12,7 @@
  * of one per citizen.
  */
 
+import { demographics } from '@/config';
 import type { RaionPool } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';
 import { poissonSample } from '@/math/poissonSampling';
@@ -19,82 +20,49 @@ import { poissonSample } from '@/math/poissonSampling';
 // Re-export for external consumers
 export { poissonSample } from '@/math/poissonSampling';
 
-// ── Constants ────────────────────────────────────────────────────────────────
+// ── Constants (loaded from config) ───────────────────────────────────────────
+
+const cfg = demographics.aggregate;
 
 /** Number of 5-year age buckets (0-4, 5-9, ..., 95-99). */
-const NUM_BUCKETS = 20;
+const NUM_BUCKETS = cfg.numBuckets;
 
-/** Base monthly conception rate per eligible woman (1.25%). */
-const BASE_MONTHLY_CONCEPTION_RATE = 0.0125;
+/** Base monthly conception rate per eligible woman. */
+const BASE_MONTHLY_CONCEPTION_RATE = cfg.birthRates.baseMonthlyConceptionRate;
 
 /** Female fertile age bucket range: buckets 3-9 = ages 15-49. */
-const FERTILE_BUCKET_MIN = 3;
-const FERTILE_BUCKET_MAX = 9;
+const FERTILE_BUCKET_MIN = cfg.birthRates.fertileBucketMin;
+const FERTILE_BUCKET_MAX = cfg.birthRates.fertileBucketMax;
 
 /** Labor force age bucket range: buckets 3-12 = ages 15-64. */
-const LABOR_BUCKET_MIN = 3;
-const LABOR_BUCKET_MAX = 12;
+const LABOR_BUCKET_MIN = cfg.laborForce.bucketMin;
+const LABOR_BUCKET_MAX = cfg.laborForce.bucketMax;
 
 /**
  * Era birth-rate multipliers (statistical mode).
  * Keys match era IDs from the EraSystem / Chronology.
  */
-const ERA_BIRTH_MULTIPLIER: Record<string, number> = {
-  revolution: 1.0,
-  civil_war: 0.6,
-  nep: 0.9,
-  collectivization: 0.5,
-  industrialization: 0.7,
-  great_patriotic_war: 0.3,
-  great_patriotic: 0.3,
-  reconstruction: 0.8,
-  thaw: 0.9,
-  thaw_and_freeze: 0.9,
-  stagnation: 0.7,
-  perestroika: 0.5,
-  collapse: 0.3,
-  the_eternal: 0.3,
-  eternal: 0.3,
-};
+const ERA_BIRTH_MULTIPLIER: Record<string, number> = cfg.eraBirthMultiplier;
 
 /**
  * Annual mortality rates by 5-year age bucket (Soviet historical approximation).
  * Index = bucket number (0 = ages 0-4, 19 = ages 95-99).
  */
-const ANNUAL_MORTALITY_BY_BUCKET: readonly number[] = [
-  0.08,  // 0: ages 0-4
-  0.005, // 1: ages 5-9
-  0.003, // 2: ages 10-14
-  0.003, // 3: ages 15-19
-  0.005, // 4: ages 20-24
-  0.005, // 5: ages 25-29
-  0.005, // 6: ages 30-34
-  0.005, // 7: ages 35-39
-  0.008, // 8: ages 40-44
-  0.008, // 9: ages 45-49
-  0.015, // 10: ages 50-54
-  0.015, // 11: ages 55-59
-  0.03,  // 12: ages 60-64
-  0.03,  // 13: ages 65-69
-  0.06,  // 14: ages 70-74
-  0.06,  // 15: ages 75-79
-  0.12,  // 16: ages 80-84
-  0.12,  // 17: ages 85-89
-  0.20,  // 18: ages 90-94
-  0.35,  // 19: ages 95-99
-];
+const ANNUAL_MORTALITY_BY_BUCKET: readonly number[] = cfg.annualMortalityByBucket;
 
 // ── Food Modifier ────────────────────────────────────────────────────────────
 
 /**
  * Compute food modifier for birth rate.
- * Maps food level to a 0.5-1.2 multiplier.
+ * Maps food level to a configurable multiplier range.
  */
 function foodModifier(foodLevel: number): number {
-  if (foodLevel < 0.5) return 0.5;
-  if (foodLevel > 0.8) return 1.2;
-  // Linear interpolation between 0.5 and 0.8 → modifier 0.5 to 1.0
-  return 0.5 + ((foodLevel - 0.5) / 0.3) * 0.5;
+  const { lowThreshold, highThreshold, minMultiplier, maxMultiplier } = cfg.foodModifier;
+  if (foodLevel < lowThreshold) return minMultiplier;
+  if (foodLevel > highThreshold) return maxMultiplier;
+  // Linear interpolation between thresholds → minMultiplier to 1.0
+  const range = highThreshold - lowThreshold;
+  return minMultiplier + ((foodLevel - lowThreshold) / range) * (1.0 - minMultiplier);
 }
 
 // ── Statistical Birth Tick ───────────────────────────────────────────────────
@@ -184,9 +152,10 @@ export function statisticalDeathTick(
   foodLevel: number,
   rng: GameRng,
 ): number {
-  // Starvation modifier: up to 3x at zero food
-  const starvationMod = foodLevel < 0.5
-    ? 1 + (0.5 - foodLevel) * 4
+  // Starvation modifier: up to maxMultiplier at zero food
+  const { threshold: starvThreshold, scale: starvScale } = cfg.starvation;
+  const starvationMod = foodLevel < starvThreshold
+    ? 1 + (starvThreshold - foodLevel) * starvScale
     : 1.0;
 
   let totalDeaths = 0;
