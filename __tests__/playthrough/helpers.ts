@@ -108,11 +108,13 @@ export function createPlaythroughEngine(options: PlaythroughOptions = {}): Playt
     createTestDvory(requestedPop);
   }
 
-  const engine = new SimulationEngine(grid, callbacks, undefined, options.difficulty, options.consequence);
-
+  // Mock Math.random BEFORE engine construction so GameRng seed generation
+  // is deterministic (generateSeedPhrase uses Math.random internally)
   if (options.deterministicRandom !== false) {
     jest.spyOn(Math, 'random').mockReturnValue(0.99);
   }
+
+  const engine = new SimulationEngine(grid, callbacks, undefined, options.difficulty, options.consequence);
 
   return { engine, callbacks, grid };
 }

@@ -738,6 +738,9 @@ export class SimulationEngine {
     }
     if (tickResult.newYear) {
       this.workerSystem.resetAnnualTrudodni();
+      // Annual entity GC sweeps — remove orphan citizens and empty dvory
+      this.workerSystem.sweepOrphanCitizens();
+      this.demographicAgent.sweepEmptyDvory();
     }
 
     // ── 16. Monthly: loyalty + trudodni ──
