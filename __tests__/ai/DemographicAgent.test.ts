@@ -616,10 +616,10 @@ describe('DemographicAgent', () => {
 
     it('runs aging on year boundary in aggregate mode', () => {
       const raion = makeRaionPool();
-      raion.maleAgeBuckets[0] = 20; // 20 infants
-      raion.maleAgeBuckets[19] = 5;  // 5 very old (will die from overflow)
-      raion.femaleAgeBuckets[19] = 3; // 3 very old
-      raion.totalPopulation = 28;
+      raion.maleAgeBuckets[0] = 100; // 100 infants (large enough for Poisson to reliably advance some)
+      raion.maleAgeBuckets[19] = 50;  // 50 very old (will partially overflow)
+      raion.femaleAgeBuckets[19] = 30; // 30 very old
+      raion.totalPopulation = 180;
       raion.pregnancyWaves = [0, 0, 0];
 
       cleanup = setupAggregateMode(raion);
@@ -629,11 +629,14 @@ describe('DemographicAgent', () => {
 
       const result = agent.onTick(360, rng, 0.8, 'revolution');
 
-      // 8 overflow deaths (bucket 19)
-      expect(result.deaths).toBeGreaterThanOrEqual(8);
-      // Bucket 0 should now be 0 (shifted to bucket 1)
-      expect(raion.maleAgeBuckets[0]).toBe(0);
-      expect(raion.maleAgeBuckets[1]).toBe(20);
+      // Fractional aging: ~20% of bucket 19 overflows (not 100%)
+      // result.deaths includes both aging overflow AND monthly death tick
+      expect(result.deaths).toBeGreaterThan(0);
+      // Bucket 0 should still have most of its population (fractional advancement)
+      expect(raion.maleAgeBuckets[0]).toBeGreaterThan(50);
+      expect(raion.maleAgeBuckets[0]).toBeLessThan(100);
+      // Some infants should have advanced to bucket 1
+      expect(raion.maleAgeBuckets[1]).toBeGreaterThan(0);
     });
 
     it('resets yearly counters on year boundary', () => {

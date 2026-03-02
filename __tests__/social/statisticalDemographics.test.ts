@@ -6,6 +6,7 @@
  */
 
 import type { RaionPool } from '@/ecs/world';
+import { demographics } from '@/config';
 import { GameRng } from '@/game/SeedSystem';
 import {
   poissonSample,
@@ -13,6 +14,14 @@ import {
   statisticalBirthTick,
   statisticalDeathTick,
 } from '@/ai/agents/social/statisticalDemographics';
+
+// ── Config-derived constants ─────────────────────────────────────────────────
+
+const cfg = demographics.aggregate;
+const FERTILE_BUCKET_MIN = cfg.birthRates.fertileBucketMin;
+const FERTILE_BUCKET_MAX = cfg.birthRates.fertileBucketMax;
+const LABOR_BUCKET_MIN = cfg.laborForce.bucketMin;
+const LABOR_BUCKET_MAX = cfg.laborForce.bucketMax;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -290,7 +299,7 @@ describe('statisticalDeathTick', () => {
     // Labor force should be recalculated (may or may not have changed,
     // but it should equal the sum of working-age buckets)
     let expectedLabor = 0;
-    for (let i = 3; i <= 12; i++) {
+    for (let i = LABOR_BUCKET_MIN; i <= LABOR_BUCKET_MAX; i++) {
       expectedLabor += pool.maleAgeBuckets[i]! + pool.femaleAgeBuckets[i]!;
     }
     expect(pool.laborForce).toBe(expectedLabor);
@@ -339,64 +348,87 @@ describe('statisticalDeathTick', () => {
 // ── Statistical Aging Tick ───────────────────────────────────────────────────
 
 describe('statisticalAgingTick', () => {
-  it('shifts buckets correctly', () => {
+  it('advances fraction of each bucket per year', () => {
+    const rng = new GameRng('test-aging-fraction');
     const pool = makePool();
-    pool.maleAgeBuckets[0] = 10;
-    pool.maleAgeBuckets[5] = 20;
-    pool.femaleAgeBuckets[3] = 15;
-    pool.totalPopulation = 45;
+    pool.maleAgeBuckets[0] = 100;
+    pool.maleAgeBuckets[5] = 200;
+    pool.femaleAgeBuckets[3] = 150;
+    pool.totalPopulation = 450;
 
-    statisticalAgingTick(pool);
+    statisticalAgingTick(pool, rng);
 
-    // Bucket 0 should now be empty (shifted to bucket 1)
-    expect(pool.maleAgeBuckets[0]).toBe(0);
-    expect(pool.maleAgeBuckets[1]).toBe(10);
-    expect(pool.maleAgeBuckets[6]).toBe(20);
-    expect(pool.femaleAgeBuckets[4]).toBe(15);
-    // No overflow — no one was in bucket 19
-    expect(pool.totalPopulation).toBe(45);
+    // ~20% of each bucket should advance, not 100%
+    // Bucket 0 should still have ~80 (not 0)
+    expect(pool.maleAgeBuckets[0]).toBeGreaterThan(50);
+    expect(pool.maleAgeBuckets[0]).toBeLessThan(100);
+    // Bucket 1 should have some (from bucket 0 advancement)
+    expect(pool.maleAgeBuckets[1]).toBeGreaterThan(0);
+    expect(pool.maleAgeBuckets[1]).toBeLessThan(50);
+    // Bucket 5 should still have most of its population
+    expect(pool.maleAgeBuckets[5]).toBeGreaterThan(120);
+    // Population preserved (minus any overflow from bucket 19)
+    expect(pool.totalPopulation).toBe(450); // no overflow since buckets 0,3,5 don't reach 19
   });
 
-  it('overflow from bucket 19 causes death', () => {
+  it('overflow from bucket 19 only advances fraction', () => {
+    const rng = new GameRng('test-aging-overflow');
     const pool = makePool();
-    pool.maleAgeBuckets[19] = 5;
-    pool.femaleAgeBuckets[19] = 3;
-    pool.totalPopulation = 8;
+    pool.maleAgeBuckets[19] = 50;
+    pool.femaleAgeBuckets[19] = 30;
+    pool.totalPopulation = 80;
 
-    const overflowDeaths = statisticalAgingTick(pool);
+    const overflowDeaths = statisticalAgingTick(pool, rng);
 
-    expect(overflowDeaths).toBe(8);
-    expect(pool.totalPopulation).toBe(0);
-    expect(pool.deathsThisYear).toBe(8);
-    expect(pool.totalDeaths).toBe(8);
+    // Only ~20% should overflow (not 100%)
+    expect(overflowDeaths).toBeGreaterThan(5);
+    expect(overflowDeaths).toBeLessThan(30);
+    expect(pool.totalPopulation).toBe(80 - overflowDeaths);
+    expect(pool.deathsThisYear).toBe(overflowDeaths);
   });
 
-  it('bucket 0 is zeroed after aging', () => {
+  it('bucket 0 retains most population after aging', () => {
+    const rng = new GameRng('test-aging-retain');
     const pool = makePool();
-    pool.maleAgeBuckets[0] = 10;
-    pool.femaleAgeBuckets[0] = 5;
-    pool.totalPopulation = 15;
+    pool.maleAgeBuckets[0] = 100;
+    pool.femaleAgeBuckets[0] = 50;
+    pool.totalPopulation = 150;
 
-    statisticalAgingTick(pool);
+    statisticalAgingTick(pool, rng);
 
-    expect(pool.maleAgeBuckets[0]).toBe(0);
-    expect(pool.femaleAgeBuckets[0]).toBe(0);
-    // Shifted to bucket 1
-    expect(pool.maleAgeBuckets[1]).toBe(10);
-    expect(pool.femaleAgeBuckets[1]).toBe(5);
+    // Bucket 0 should retain ~80% (not be zeroed)
+    expect(pool.maleAgeBuckets[0]).toBeGreaterThan(60);
+    expect(pool.femaleAgeBuckets[0]).toBeGreaterThan(30);
+    // Some advanced to bucket 1
+    expect(pool.maleAgeBuckets[1]).toBeGreaterThan(0);
+    expect(pool.femaleAgeBuckets[1]).toBeGreaterThan(0);
   });
 
   it('preserves total population when no overflow', () => {
+    const rng = new GameRng('test-aging-preserve');
     const pool = makePopulatedPool(300);
-    // Ensure bucket 19 is empty
     pool.maleAgeBuckets[19] = 0;
     pool.femaleAgeBuckets[19] = 0;
 
     const popBefore = pool.totalPopulation;
-    const overflowDeaths = statisticalAgingTick(pool);
+    const overflowDeaths = statisticalAgingTick(pool, rng);
 
     expect(overflowDeaths).toBe(0);
     expect(pool.totalPopulation).toBe(popBefore);
+  });
+
+  it('recalculates labor force after aging', () => {
+    const rng = new GameRng('test-aging-labor');
+    const pool = makePopulatedPool(500);
+
+    statisticalAgingTick(pool, rng);
+
+    // Labor force should match sum of working-age buckets
+    let expectedLabor = 0;
+    for (let i = LABOR_BUCKET_MIN; i <= LABOR_BUCKET_MAX; i++) {
+      expectedLabor += pool.maleAgeBuckets[i]! + pool.femaleAgeBuckets[i]!;
+    }
+    expect(pool.laborForce).toBe(expectedLabor);
   });
 });
 
@@ -431,11 +463,76 @@ describe('performance', () => {
 
       statisticalBirthTick(p, 0.8, 'stagnation', rng);
       statisticalDeathTick(p, 0.8, 'stagnation', rng);
-      statisticalAgingTick(p);
+      statisticalAgingTick(p, rng);
     }
 
     const elapsed = performance.now() - start;
     // 1000 iterations of all 3 functions on 1M pop should take < 1 second
     expect(elapsed).toBeLessThan(1000);
+  });
+});
+
+// ── Calibration ─────────────────────────────────────────────────────────────
+
+describe('calibration', () => {
+  it('crude birth rate ~40-50/1000 in revolution era', () => {
+    const rng = new GameRng('test-cbr-calibration');
+    const pool = makePopulatedPool(10000);
+    // Ensure women in fertile buckets
+    for (let i = FERTILE_BUCKET_MIN; i <= FERTILE_BUCKET_MAX; i++) {
+      pool.femaleAgeBuckets[i] = Math.floor(10000 / 20 * 0.52); // ~52% female
+    }
+    pool.pregnancyWaves = [0, 0, 0];
+
+    let totalBirths = 0;
+    for (let month = 0; month < 12; month++) {
+      totalBirths += statisticalBirthTick(pool, 1.0, 'revolution', rng);
+    }
+
+    const cbr = totalBirths / (pool.totalPopulation / 1000);
+    // Soviet historical CBR: 44/1000 in 1920s
+    // Allow 20-80 range for stochastic variation
+    expect(cbr).toBeGreaterThan(20);
+    expect(cbr).toBeLessThan(80);
+  });
+
+  it('wartime causes significantly more deaths than peacetime', () => {
+    let peaceDeaths = 0;
+    let warDeaths = 0;
+
+    for (let trial = 0; trial < 50; trial++) {
+      const peaceRng = new GameRng(`peace-death-${trial}`);
+      const warRng = new GameRng(`war-death-${trial}`);
+
+      const peacePool = makePopulatedPool(1000);
+      const warPool = makePopulatedPool(1000);
+
+      peaceDeaths += statisticalDeathTick(peacePool, 1.0, 'nep', peaceRng);       // nep = 0.9x
+      warDeaths += statisticalDeathTick(warPool, 1.0, 'great_patriotic_war', warRng); // gpw = 2.5x
+    }
+
+    // War deaths should be significantly higher
+    expect(warDeaths).toBeGreaterThan(peaceDeaths * 1.5);
+  });
+
+  it('population grows steadily over 40 years in peacetime', () => {
+    const rng = new GameRng('test-doubling-time');
+    const pool = makePopulatedPool(10000);
+    pool.pregnancyWaves = [0, 0, 0];
+
+    const startPop = pool.totalPopulation;
+
+    for (let year = 0; year < 40; year++) {
+      // Monthly ticks for births and deaths
+      for (let month = 0; month < 12; month++) {
+        statisticalBirthTick(pool, 1.0, 'nep', rng);
+        statisticalDeathTick(pool, 1.0, 'nep', rng);
+      }
+      // Yearly aging
+      statisticalAgingTick(pool, rng);
+    }
+
+    // Should have grown significantly (at least 50%)
+    expect(pool.totalPopulation).toBeGreaterThan(startPop * 1.5);
   });
 });

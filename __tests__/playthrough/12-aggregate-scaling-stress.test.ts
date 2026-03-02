@@ -317,13 +317,8 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
     expect(finalRaion.totalBirths).toBeGreaterThan(0);
     expect(finalRaion.totalDeaths).toBeGreaterThan(0);
 
-    // 4. Population accounting: log negative pop as known issue
-    //    The aging model shifts entire 5-year buckets per year (intentional
-    //    simplification), causing faster-than-real aging. Combined with
-    //    aggregate consumption, small starting pop can go negative.
-    if (finalRaion.totalPopulation < 0) {
-      console.log(`  WARNING: population went negative (${finalRaion.totalPopulation}) — aging/death accounting bug`);
-    }
+    // 4. Population should be non-negative (no accounting underflow)
+    expect(finalRaion.totalPopulation).toBeGreaterThanOrEqual(0);
   }, 120000);
 
   // ── Large population scaling: 10K → growth over 100 years ─────────────
@@ -408,6 +403,9 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
       // Zero citizen entities
       expect(getEntityCounts().citizens).toBe(0);
 
+      // Population should be non-negative after 20 years
+      expect(finalPop).toBeGreaterThanOrEqual(0);
+
       console.log(
         `  [${difficulty}/${consequence}] maxPop=${maxPop} finalPop=${finalPop}` +
         ` entities=${world.entities.length}`,
@@ -454,6 +452,47 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
       `  Determinism: pop=${run1.finalPop} births=${run1.births} deaths=${run1.deaths}`,
     );
   }, 120000);
+
+  // ── 200-year timeline ──────────────────────────────────────────────
+
+  it('200-year timeline shows growth curve with era-appropriate dynamics', () => {
+    const { engine, raion: initialRaion } = createAggregateEngine({ population: 10_000 });
+
+    const snapshots: { year: number; pop: number; births: number; deaths: number }[] = [];
+
+    for (let year = 0; year < 200; year++) {
+      const res = getResourceEntity()!.resources;
+      res.food = Math.max(res.food, 99_999_999);
+      res.vodka = Math.max(res.vodka, 99_999_999);
+      res.money = Math.max(res.money, 99_999_999);
+
+      for (let tick = 0; tick < TICKS_PER_YEAR; tick++) {
+        engine.tick();
+      }
+
+      const raion = getRaion()!;
+      if (year % 10 === 0 || year === 199) {
+        snapshots.push({
+          year: 1917 + year,
+          pop: raion.totalPopulation,
+          births: raion.totalBirths,
+          deaths: raion.totalDeaths,
+        });
+      }
+    }
+
+    console.log('\n  === 200-Year Timeline (start=10K) ===');
+    for (const s of snapshots) {
+      console.log(`  year=${s.year} pop=${s.pop.toLocaleString()} births=${s.births.toLocaleString()} deaths=${s.deaths.toLocaleString()}`);
+    }
+
+    const finalRaion = getRaion()!;
+    // Aggregate mode should persist for the entire 200-year run
+    expect(finalRaion).toBeDefined();
+    // Demographics ran throughout (total births/deaths accumulate even if pop drops)
+    expect(finalRaion.totalBirths).toBeGreaterThan(0);
+    expect(finalRaion.totalDeaths).toBeGreaterThan(0);
+  }, 600000);
 
   // ── Collapse transition ──────────────────────────────────────────────
 
