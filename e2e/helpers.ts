@@ -76,7 +76,45 @@ export async function waitForSimTick(page: Page, maxMs = 30_000): Promise<void> 
 // ── Action Helpers ───────────────────────────────────────────────────────────
 
 /**
- * Navigate to the app and start a new game.
+ * Navigate to the app, select a difficulty, and start a new game.
+ * Flow: MainMenu → NewGameSetup (select difficulty) → Game Loading → IntroModal → Playing
+ *
+ * @param page - Playwright page instance
+ * @param difficulty - One of 'worker', 'comrade', or 'tovarish'
+ */
+export async function startGameWithDifficulty(
+  page: Page,
+  difficulty: 'worker' | 'comrade' | 'tovarish',
+): Promise<void> {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  // MainMenu → click "NEW GAME"
+  await page.getByText('NEW GAME').click();
+
+  // NewGameSetup → select difficulty, then start
+  await page.getByText('BEGIN ASSIGNMENT').waitFor({ timeout: 5_000 });
+  await page.getByText(difficulty.toUpperCase()).first().click();
+  await page.waitForTimeout(300);
+  await page.getByText('BEGIN ASSIGNMENT').click();
+
+  // Wait for game canvas + TopBar to be ready (loading screen fades)
+  await waitForGameReady(page);
+
+  // IntroModal → click "ASSUME MAYORAL AUTHORITY"
+  const ctaButton = page.getByText('ASSUME MAYORAL AUTHORITY');
+  try {
+    await ctaButton.waitFor({ state: 'visible', timeout: 10_000 });
+    await ctaButton.click();
+    // Wait for intro modal to fade
+    await page.waitForTimeout(800);
+  } catch {
+    // IntroModal may not appear in all scenarios
+  }
+}
+
+/**
+ * Navigate to the app and start a new game with default settings.
  * Flow: MainMenu → NewGameSetup → Game Loading → IntroModal → Playing
  */
 export async function startGame(page: Page): Promise<void> {
