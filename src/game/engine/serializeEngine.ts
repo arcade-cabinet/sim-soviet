@@ -38,7 +38,7 @@ import { ScoringSystem as ScoringSystemClass } from '../../ai/agents/political/S
 import type { GameRng } from '../SeedSystem';
 import type { SettlementSystem } from '../../ai/agents/infrastructure/SettlementSystem';
 import { SettlementSystem as SettlementSystemClass } from '../../ai/agents/infrastructure/SettlementSystem';
-import type { DvorSaveEntry, SubsystemSaveData, WorkerStatSaveEntry } from '../SimulationEngine';
+import type { DvorSaveEntry, SubsystemSaveData, WorkerStatSaveEntry } from './types';
 import type { TransportSystem } from '../../ai/agents/infrastructure/TransportSystem';
 import { TransportSystem as TransportSystemClass } from '../../ai/agents/infrastructure/TransportSystem';
 import type { TutorialSystem } from '../../ai/agents/meta/TutorialSystem';

@@ -33,6 +33,7 @@ import type { GameGrid } from '../../../game/GameGrid';
 import type { GameRng } from '../../../game/SeedSystem';
 import { WeatherType } from '../core/weather-types';
 import { MSG } from '../../telegrams';
+import { diseaseTick, DISEASE_PRAVDA_HEADLINES } from './disease';
 
 // ─── Fire Constants ───────────────────────────────────────────────────────────
 
@@ -772,6 +773,76 @@ export class DefenseAgent extends Vehicle {
     const agent = new DefenseAgent(rng, callbacks);
     agent.restore(data);
     return agent;
+  }
+
+  // ── Absorbed SimulationEngine Methods ─────────────────────────────────────
+
+  /**
+   * Powered gulags have a 10% chance per tick of arresting a citizen.
+   * Absorbs SimulationEngine.processGulagEffect().
+   */
+  public processGulagEffect(deps: {
+    population: number;
+    rng: GameRng | undefined;
+    workers: { arrestWorker(): any; getPopulation(): number };
+    scoring: { onKGBLoss(count: number): void };
+    kgb: { addMark(reason: string, tick: number, desc: string): void };
+    callbacks: { onPravda: (msg: string) => void };
+    totalTicks: number;
+  }): void {
+    if (deps.workers.getPopulation() <= 0) return;
+
+    for (const entity of buildingsLogic) {
+      if (entity.building.housingCap < 0) {
+        if (entity.building.powered && deps.workers.getPopulation() > 0) {
+          if ((deps.rng?.random() ?? Math.random()) < 0.1) {
+            const arrest = deps.workers.arrestWorker();
+            if (arrest) {
+              deps.scoring.onKGBLoss(1);
+              deps.kgb.addMark(
+                'worker_arrested',
+                deps.totalTicks,
+                'Gulag processing of enemy of the people',
+              );
+              deps.callbacks.onPravda('ENEMY OF THE PEOPLE SENTENCED TO CORRECTIVE LABOR');
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Run disease tick and handle deaths + outbreak headlines.
+   * Absorbs SimulationEngine disease tick orchestration.
+   */
+  public tickDiseaseFull(deps: {
+    totalTicks: number;
+    month: number;
+    workers: { removeWorker(entity: any, reason: string): void };
+    callbacks: { onPravda: (msg: string) => void };
+    rng: GameRng | undefined;
+  }): void {
+    const diseaseResult = diseaseTick(deps.totalTicks, deps.month);
+
+    // Route disease deaths through WorkerSystem for proper stats cleanup
+    for (const deadEntity of diseaseResult.deadEntities) {
+      deps.workers.removeWorker(deadEntity, 'disease_death');
+    }
+
+    // Emit Pravda headlines for outbreaks
+    if (diseaseResult.outbreakTypes.length > 0) {
+      const rngLocal = deps.rng;
+      for (const diseaseType of diseaseResult.outbreakTypes) {
+        const headlines = DISEASE_PRAVDA_HEADLINES[diseaseType];
+        if (headlines && headlines.length > 0) {
+          const headline = rngLocal
+            ? rngLocal.pick(headlines)
+            : headlines[Math.floor(Math.random() * headlines.length)]!;
+          deps.callbacks.onPravda(headline);
+        }
+      }
+    }
   }
 }
 

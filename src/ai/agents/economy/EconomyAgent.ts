@@ -123,7 +123,7 @@ import {
 
 import { defaultCategory, TRUDODNI_VALUES } from './trudodni';
 import type { MemberRole } from '../../../ecs/world';
-import { citizens, dvory } from '../../../ecs/archetypes';
+import { buildingsLogic, citizens, dvory, getResourceEntity } from '../../../ecs/archetypes';
 
 // ---------------------------------------------------------------------------
 // Constants (re-exported for consumers)
@@ -948,6 +948,220 @@ export class EconomyAgent extends Vehicle {
       currencyReform,
       blatKgbResult,
     };
+  }
+
+  // ── Apply Tick Results (absorbs SimulationEngine.tickEconomySystem) ───────
+
+  /**
+   * Run full economy tick and apply all side effects.
+   * Absorbs SimulationEngine.tickEconomySystem() orchestration logic.
+   *
+   * Performs the complete economy cycle:
+   * 1. Reads ECS resource store and building state
+   * 2. Runs economyTick() internally
+   * 3. Applies fondy material deliveries to ECS resources
+   * 4. Applies remainder allocation (70/30 split)
+   * 5. Syncs trudodni/blat to ECS
+   * 6. Handles currency reform (callbacks)
+   * 7. Handles stakhanovite events (callbacks, quota modification, KGB commendation)
+   * 8. Handles MTS farm productivity (store multiplier, deduct cost)
+   * 9. Handles ration card deductions (food/vodka consumption, worker deaths)
+   * 10. Handles heating (fuel deduction, population attrition)
+   * 11. Handles blat KGB risk (investigation/arrest marks)
+   * 12. Handles consumer goods tick
+   *
+   * @param deps - External dependencies injected from SimulationEngine
+   * @returns Object containing mtsGrainMultiplier for next tick's farm modifier
+   */
+  public applyTickResults(deps: {
+    chronology: { getDate(): { totalTicks: number; year: number; month: number } };
+    workers: { removeWorkersByCount(count: number, reason: string): void };
+    kgb: {
+      addMark(reason: string, tick: number, desc: string): void;
+      addCommendation(reason: string, tick: number, desc: string): void;
+    };
+    callbacks: {
+      onToast: (msg: string, severity?: string) => void;
+      onAdvisor: (msg: string) => void;
+      onPravda: (msg: string) => void;
+    };
+    quota: { target: number };
+    settlement: { getCurrentTier(): string };
+    stakhanoviteBoosts: Map<string, number>;
+  }): { mtsGrainMultiplier: number } {
+    const store = getResourceEntity();
+    if (!store) return { mtsGrainMultiplier: 1.0 };
+
+    const r = store.resources;
+    const date = deps.chronology.getDate();
+    const totalTicks = date.totalTicks;
+    const year = date.year;
+    const month = date.month;
+
+    // Gather building defIds from ECS
+    const buildingDefIds: string[] = [];
+    for (const entity of buildingsLogic) {
+      buildingDefIds.push(entity.building.defId);
+    }
+
+    // Determine whether the settlement has heating fuel (timber > 0 or power surplus)
+    const hasHeatingResource = r.timber > 0 || r.power > r.powerUsed;
+
+    // Run the core economy tick
+    const result = this.economyTick(totalTicks, year, r.population, buildingDefIds, {
+      money: r.money,
+      month,
+      hasHeatingResource,
+    });
+
+    // Apply fondy material deliveries to ECS resources
+    if (result.fondyDelivered?.delivered) {
+      const delivered = result.fondyDelivered.actualDelivered;
+      r.timber += delivered.timber;
+      r.steel += delivered.steel;
+      r.money += delivered.money;
+      r.food += delivered.food;
+      r.vodka += delivered.vodka;
+    }
+
+    // Remainder allocation — distribute surplus after compulsory deliveries
+    // 70% goes to local distribution, 30% reserved for next tick
+    if (result.fondyDelivered?.delivered) {
+      const delivered = result.fondyDelivered.actualDelivered;
+      const surplus = {
+        food: Math.max(0, delivered.food * 0.3),
+        vodka: Math.max(0, delivered.vodka * 0.3),
+        money: Math.max(0, delivered.money * 0.3),
+        steel: Math.max(0, delivered.steel * 0.3),
+        timber: Math.max(0, delivered.timber * 0.3),
+      };
+      const remainder = this.allocateRemainder(surplus);
+      // Apply distributed portion directly to resources
+      r.food += remainder.distributed.food;
+      r.vodka += remainder.distributed.vodka;
+      r.money += remainder.distributed.money;
+      r.steel += remainder.distributed.steel;
+      r.timber += remainder.distributed.timber;
+    }
+
+    // Sync trudodni and blat to ECS
+    r.trudodni += result.trudodniEarned;
+    r.blat = result.blatLevel;
+
+    // Apply currency reform (money transformation)
+    if (result.currencyReform) {
+      r.money = result.currencyReform.moneyAfter;
+      const reformName = result.currencyReform.reform.name;
+      deps.callbacks.onToast(`CURRENCY REFORM: ${reformName}`, 'critical');
+      deps.callbacks.onAdvisor(
+        `Comrade, the State has enacted the ${reformName}. ` +
+          `Your treasury has been adjusted from ${Math.round(result.currencyReform.moneyBefore)} ` +
+          `to ${Math.round(result.currencyReform.moneyAfter)} rubles.`,
+      );
+    }
+
+    // Stakhanovite event — apply all effects
+    let mtsGrainMultiplier = 1.0;
+    if (result.stakhanovite) {
+      const s = result.stakhanovite;
+      deps.callbacks.onPravda(
+        `HERO OF LABOR: Comrade ${s.workerName} at ${s.building} exceeds quota by ${Math.round((s.productionBoost - 1) * 100)}%!`,
+      );
+
+      // Apply production boost — store for next tick's production calculation
+      deps.stakhanoviteBoosts.set(s.building, s.productionBoost);
+
+      // Apply quota increase — raise current plan targets
+      deps.quota.target = Math.round(deps.quota.target * (1 + s.quotaIncrease));
+
+      // Apply propaganda value — grant commendation for high propaganda
+      if (s.propagandaValue >= 30) {
+        deps.kgb.addCommendation('stakhanovite_celebrated', totalTicks, s.announcement);
+      }
+    } else {
+      // Clear stakhanovite boosts when no event active
+      deps.stakhanoviteBoosts.clear();
+    }
+
+    // MTS farm productivity — store grain multiplier for next tick's farmMod
+    if (result.mtsResult?.applied) {
+      r.money = Math.max(0, r.money - result.mtsResult.cost);
+      mtsGrainMultiplier = result.mtsResult.grainMultiplier;
+    }
+
+    // Ration card deductions — consume food/vodka based on ration demand
+    if (result.rationDemand && result.rationsActive) {
+      const demand = result.rationDemand;
+      if (demand.food > 0) {
+        if (r.food >= demand.food) {
+          r.food -= demand.food;
+        } else {
+          // Insufficient food for rations — starvation penalty
+          const deficit = demand.food - r.food;
+          r.food = 0;
+          const starvationLosses = Math.ceil(deficit * 0.1);
+          // Route ration starvation through WorkerSystem with dvor cleanup
+          deps.workers.removeWorkersByCount(starvationLosses, 'ration_starvation');
+          deps.callbacks.onToast('RATION SHORTAGE: Insufficient food for card holders', 'critical');
+        }
+      }
+      if (demand.vodka > 0) {
+        r.vodka = Math.max(0, r.vodka - demand.vodka);
+        // No death from vodka shortage — citizens merely suffer
+      }
+    }
+
+    // Heating — fuel consumption + at-risk population
+    if (result.heatingResult) {
+      // Deduct fuel consumed by the heating system (timber for pechka, power for district/crumbling)
+      const fuel = result.heatingResult.fuelConsumed;
+      if (fuel) {
+        if (fuel.resource === 'timber') {
+          r.timber = Math.max(0, r.timber - fuel.amount);
+        }
+        // Power is consumed implicitly via powerUsed; no deduction needed here
+      }
+
+      // Non-operational heating in winter causes population attrition
+      if (!result.heatingResult.operational) {
+        const atRisk = result.heatingResult.populationAtRisk;
+        if (atRisk > 0) {
+          const losses = Math.ceil(atRisk * 0.01); // 1% of at-risk pop per tick
+          deps.workers.removeWorkersByCount(losses, 'heating_failure');
+        }
+      }
+    }
+
+    // Blat KGB risk — passive investigation/arrest from high connections
+    if (result.blatKgbResult) {
+      const kgb = result.blatKgbResult;
+      if (kgb.investigated) {
+        deps.kgb.addMark(
+          'blat_noticed',
+          totalTicks,
+          kgb.announcement ?? 'KGB investigation into blat connections',
+        );
+        deps.callbacks.onToast('KGB INVESTIGATION: Blat connections noticed', 'critical');
+      }
+      if (kgb.arrested) {
+        deps.kgb.addMark(
+          'blat_noticed',
+          totalTicks,
+          kgb.announcement ?? 'Arrested for anti-Soviet networking activities',
+        );
+        deps.callbacks.onAdvisor(
+          'Comrade, your extensive network of personal favors has attracted ' +
+            'unwelcome attention from the organs of state security. ' +
+            'Perhaps fewer friends would be safer.',
+        );
+      }
+    }
+
+    // Consumer goods — satisfaction from blat + settlement tier
+    const settlementTier = deps.settlement.getCurrentTier();
+    this.tickConsumerGoods(r.population, settlementTier);
+
+    return { mtsGrainMultiplier };
   }
 
   // ── Serialization ──────────────────────────────────────────────────────────

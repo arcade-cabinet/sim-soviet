@@ -10,6 +10,9 @@
  * multiple consecutive ticks.
  */
 
+import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
+import { getBuildingDef } from '@/data/buildingDefs';
+
 // ─────────────────────────────────────────────────────────
 //  TYPES
 // ─────────────────────────────────────────────────────────
@@ -262,6 +265,58 @@ export class SettlementSystem {
     system.consecutiveUpgradeTicks = data.consecutiveUpgradeTicks;
     system.consecutiveDowngradeTicks = data.consecutiveDowngradeTicks;
     return system;
+  }
+
+  // ── Absorbed SimulationEngine Methods ──────────────────────
+
+  /**
+   * Evaluate settlement tier and fire callbacks on changes.
+   * Absorbs SimulationEngine.tickSettlement().
+   */
+  public tickWithCallbacks(callbacks: {
+    onSettlementChange?: (event: SettlementEvent) => void;
+    onAdvisor: (msg: string) => void;
+    onToast: (msg: string, severity?: string) => void;
+  }): void {
+    const store = getResourceEntity();
+    const population = store?.resources.population ?? 0;
+
+    // Build metrics from ECS entities
+    const buildingList: SettlementMetrics['buildings'] = [];
+    let totalCapacity = 0;
+    let nonAgriCapacity = 0;
+
+    for (const entity of buildingsLogic) {
+      const def = getBuildingDef(entity.building.defId);
+      const role = def?.role ?? 'unknown';
+      buildingList.push({ defId: entity.building.defId, role });
+
+      // Approximate workforce composition from housing capacity
+      const cap = Math.max(0, entity.building.housingCap);
+      totalCapacity += cap;
+      if (role !== 'agriculture') {
+        nonAgriCapacity += cap;
+      }
+    }
+
+    const metrics: SettlementMetrics = {
+      population,
+      buildings: buildingList,
+      totalWorkers: population,
+      nonAgriculturalWorkers: totalCapacity > 0 ? Math.round((nonAgriCapacity / totalCapacity) * population) : 0,
+    };
+
+    const event = this.tick(metrics);
+    if (event) {
+      if (event.type === 'upgrade') {
+        // Fire the modal callback for upgrades
+        callbacks.onSettlementChange?.(event);
+      } else {
+        // Downgrades get a critical toast + advisor
+        callbacks.onAdvisor(`${event.title}\n\n${event.description}`);
+        callbacks.onToast(`DOWNGRADED: ${event.toTier.toUpperCase()}`, 'critical');
+      }
+    }
   }
 
   // ── Private helpers ──────────────────────────────────────

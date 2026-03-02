@@ -18,7 +18,7 @@
 
 import { Vehicle } from 'yuka';
 import { GRID_SIZE } from '@/config';
-import { buildingsLogic, buildings, operationalBuildings, terrainFeatures, underConstruction } from '@/ecs/archetypes';
+import { buildingsLogic, buildings, operationalBuildings, terrainFeatures, underConstruction, getResourceEntity } from '@/ecs/archetypes';
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
@@ -130,6 +130,9 @@ export const MAX_PLACEMENT_DISTANCE = 4;
 
 /** Maximum number of candidates to keep before random selection. */
 export const CANDIDATE_LIMIT = 20;
+
+/** How often (in ticks) the autonomous collective checks for construction needs. */
+const COLLECTIVE_CHECK_INTERVAL = 30;
 
 /** Terrain feature types that block building placement. */
 const IMPASSABLE_FEATURES = new Set(['mountain', 'river', 'forest']);
@@ -519,6 +522,83 @@ export class CollectiveAgent extends Vehicle {
 
     requests.sort((a, b) => a.sortPriority - b.sortPriority);
     return requests;
+  }
+
+  // ── Absorbed SimulationEngine Methods ──────────────────────────────────────
+
+  /**
+   * Full autonomous construction pipeline: detect demands, merge mandates, auto-place.
+   * Absorbs SimulationEngine.tickCollectiveViaAgent().
+   */
+  public tickAutonomous(deps: {
+    totalTicks: number;
+    rng: GameRng | undefined;
+    mandateState: PlanMandateState | null;
+    callbacks: { onToast: (msg: string, severity?: string) => void; onAdvisor: (msg: string) => void };
+    recordBuildingForMandates: (defId: string) => void;
+  }): void {
+    if (deps.totalTicks % COLLECTIVE_CHECK_INTERVAL !== 0) return;
+    if (deps.totalTicks < 60) return;
+    if (underConstruction.entities.length >= 3) return;
+
+    const storeRef = getResourceEntity();
+    if (!storeRef) return;
+
+    const res = storeRef.resources;
+    const housingCap = this.getHousingCapacity();
+
+    // Step 1-2: CollectiveAgent detects demands and generates queue
+    const demands = this.detectConstructionDemands(res.population, housingCap, {
+      food: res.food,
+      vodka: res.vodka,
+      power: res.power,
+    });
+    const queue = this.generateQueue(deps.mandateState, demands);
+    if (queue.length === 0) return;
+
+    const request = queue[0]!;
+
+    // Material availability gate
+    if (res.timber < 10 || res.steel < 5) {
+      if (deps.totalTicks % 120 === 0) {
+        deps.callbacks.onAdvisor(
+          `Comrade, the collective wishes to build ${request.label}, but we lack materials. We need timber and steel.`,
+        );
+      }
+      return;
+    }
+
+    // Step 3: Auto-place via CollectiveAgent
+    const rng =
+      deps.rng ??
+      ({
+        random: () => Math.random(),
+        int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
+        pick: <T>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!,
+        pickIndex: (len: number) => Math.floor(Math.random() * len),
+      } as GameRng);
+
+    const entity = this.autoPlaceBuilding(request.defId, rng);
+    if (entity) {
+      deps.recordBuildingForMandates(request.defId);
+
+      if (request.source === 'mandate') {
+        deps.callbacks.onToast(`DECREE FULFILLED: Construction of ${request.label} has begun`);
+      } else {
+        deps.callbacks.onToast(`WORKERS' INITIATIVE: The collective begins ${request.label}`);
+        deps.callbacks.onAdvisor(`The workers have started building on their own, Comrade. ${request.reason}.`);
+      }
+    }
+  }
+
+  // ── Private Helpers: Housing Capacity ──────────────────────────────────────
+
+  private getHousingCapacity(): number {
+    let cap = 0;
+    for (const entity of operationalBuildings.entities) {
+      cap += Math.max(0, entity.building.housingCap);
+    }
+    return cap;
   }
 
   // ── Serialization ───────────────────────────────────────────────────────────

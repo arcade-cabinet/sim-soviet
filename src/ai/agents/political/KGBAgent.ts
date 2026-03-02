@@ -18,6 +18,16 @@ import type {
   PoliticalEntityStats,
   PoliticalTickResult,
 } from '../../../game/political/types';
+import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
+import { getBuildingDef } from '@/data/buildingDefs';
+import { world } from '@/ecs/world';
+import type { ConsequenceConfig } from './ScoringSystem';
+import type { ScoringSystem } from './ScoringSystem';
+import type { GameGrid } from '../../../game/GameGrid';
+import type { GameRng } from '../../../game/SeedSystem';
+import type { SimCallbacks } from '../../../game/engine/types';
+import type { WorkerSystem } from '../workforce/WorkerSystem';
+import type { ChronologyAgent } from '../core/ChronologyAgent';
 
 // ─────────────────────────────────────────────────────────
 //  Re-export types from PersonnelFile so callers can migrate
@@ -682,6 +692,104 @@ export class KGBAgent extends Vehicle {
     this.state.history = [...data.history];
     this.state.markCount = data.blackMarks;
     this.state.aggression = DIFFICULTY_AGGRESSION[data.difficulty] ?? 'medium';
+  }
+
+  // ─────────────────────────────────────────────────────
+  //  Absorbed SimulationEngine Methods
+  // ─────────────────────────────────────────────────────
+
+  /**
+   * Non-permadeath consequence: destroy buildings, remove workers, skip time, reset marks.
+   * Absorbs SimulationEngine.applyRehabilitation().
+   */
+  public applyRehabilitation(config: ConsequenceConfig, deps: {
+    grid: GameGrid;
+    rng: GameRng | undefined;
+    workers: WorkerSystem;
+    scoring: ScoringSystem;
+    chronology: ChronologyAgent;
+    callbacks: SimCallbacks;
+  }): void {
+    const store = getResourceEntity();
+    const rng = deps.rng;
+
+    // 1. Destroy buildings based on survival rate
+    //    Clear ALL footprint tiles for multi-tile buildings (e.g. KGB office is 2×1).
+    const allBuildings = [...buildingsLogic.entities];
+    let buildingsLost = 0;
+    for (const entity of allBuildings) {
+      const roll = rng ? rng.random() : Math.random();
+      if (roll > config.buildingSurvival) {
+        const { gridX, gridY } = entity.position;
+        const def = getBuildingDef(entity.building.defId);
+        const fpX = def?.footprint.tilesX ?? 1;
+        const fpY = def?.footprint.tilesY ?? 1;
+        for (let dx = 0; dx < fpX; dx++) {
+          for (let dy = 0; dy < fpY; dy++) {
+            deps.grid.setCell(gridX + dx, gridY + dy, null);
+          }
+        }
+        world.remove(entity);
+        buildingsLost++;
+      }
+    }
+
+    // 2. Remove workers based on survival rate
+    const totalPop = store?.resources.population ?? 0;
+    const workersToRemove = Math.floor(totalPop * (1 - config.workerSurvival));
+    const workersLost = workersToRemove;
+    if (workersToRemove > 0) {
+      deps.workers.removeWorkersByCount(workersToRemove, 'gulag rehabilitation losses');
+    }
+
+    // 3. Reduce resources based on survival rate
+    const resourcesLost = { money: 0, food: 0, vodka: 0 };
+    if (store) {
+      const r = store.resources;
+      const moneyLost = Math.floor(r.money * (1 - config.resourceSurvival));
+      const foodLost = Math.floor(r.food * (1 - config.resourceSurvival));
+      const vodkaLost = Math.floor(r.vodka * (1 - config.resourceSurvival));
+      resourcesLost.money = moneyLost;
+      resourcesLost.food = foodLost;
+      resourcesLost.vodka = vodkaLost;
+      r.money -= moneyLost;
+      r.food -= foodLost;
+      r.vodka -= vodkaLost;
+    }
+
+    // 4. Skip time forward
+    //    Note: advanceYears() jumps the clock but does not tick through each year.
+    //    Era transitions are detected by checkEraTransition() on the next newYear
+    //    tick boundary, so any era change caused by the time skip is handled
+    //    automatically once normal simulation resumes.
+    deps.chronology.advanceYears(config.returnDelayYears);
+
+    // 5. Reset personnel file marks
+    const newTick = deps.chronology.getDate().totalTicks;
+    this.resetForRehabilitation(config.marksReset, newTick);
+
+    // 6. Apply score penalty
+    deps.scoring.onKGBLoss(workersLost);
+
+    // 7. Sync population from remaining dvory
+    if (store) {
+      store.resources.population = deps.workers.syncPopulationFromDvory();
+    }
+
+    // 8. Notify UI
+    deps.callbacks.onRehabilitation?.({
+      yearsAway: config.returnDelayYears,
+      buildingsLost,
+      workersLost,
+      resourcesLost,
+      marksReset: config.marksReset,
+      consequenceLevel: deps.scoring.getConsequence(),
+    });
+
+    deps.callbacks.onToast(
+      `You have been rehabilitated after ${config.returnDelayYears} year${config.returnDelayYears > 1 ? 's' : ''} in the gulag.`,
+      'warning',
+    );
   }
 
   // ─────────────────────────────────────────────────────

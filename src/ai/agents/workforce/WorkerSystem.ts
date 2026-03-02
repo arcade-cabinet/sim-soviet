@@ -173,6 +173,28 @@ export class WorkerSystem {
     return count > 0 ? sum / count : 50;
   }
 
+  /**
+   * Calculate average skill across all workers, mapped to a multiplier.
+   *
+   * Raw skill values are in [0..100]. This maps to [0.5..1.5]:
+   * - skill 0   -> 0.5  (half efficiency)
+   * - skill 50  -> 1.0  (baseline)
+   * - skill 100 -> 1.5  (50% bonus)
+   *
+   * @returns Skill multiplier in [0.5..1.5], defaults to 1.0 if no workers
+   */
+  getAverageSkill(): number {
+    let sum = 0;
+    let count = 0;
+    for (const stats of this.stats.values()) {
+      sum += stats.skill;
+      count++;
+    }
+    if (count === 0) return 1.0;
+    const avgSkill = sum / count; // [0..100]
+    return 0.5 + (avgSkill / 100);  // [0.5..1.5]
+  }
+
   /** Get trudodni earned this year for a worker. */
   getTrudodni(entity: Entity): number {
     return this.trudodniTracker.get(entity) ?? 0;

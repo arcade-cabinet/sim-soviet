@@ -34,10 +34,38 @@ export { ERA_ORDER, ERA_DEFINITIONS, ALL_BUILDING_IDS, eraIndexForYear } from '.
 import { ERA_ORDER, ERA_DEFINITIONS, ALL_BUILDING_IDS, eraIndexForYear } from '../../../game/era/definitions';
 import type { EraId, EraModifiers, EraDefinition, ConstructionMethod, EraCheckpoint, EraSystemSaveData } from '../../../game/era/types';
 import type { Doctrine } from './CompulsoryDeliveries';
+import type { CompulsoryDeliveries } from './CompulsoryDeliveries';
 import type { SettlementTier } from '../infrastructure/SettlementSystem';
+import type { SettlementSystem } from '../infrastructure/SettlementSystem';
 import { tierMeetsRequirement, getBuildingTierRequirement } from '../../../game/era/tiers';
-import { getResourceEntity } from '../../../ecs/archetypes';
+import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../../ecs/archetypes';
 import type { DifficultyLevel } from './ScoringSystem';
+import { eraIdToIndex } from './ScoringSystem';
+import type { ScoringSystem } from './ScoringSystem';
+import type { SimCallbacks } from '../../../game/engine/types';
+import type { PoliticalEntitySystem } from '../../../game/political';
+import { addPaperwork, getPaperwork } from '../../../game/political';
+import type { WorkerSystem } from '../workforce/WorkerSystem';
+import type { KGBAgent } from './KGBAgent';
+import type { PolitburoSystem } from '../narrative/politburo';
+import type { GameRng } from '../../../game/SeedSystem';
+import { TICKS_PER_YEAR } from '../../../game/Chronology';
+import type { EraId as EconomyEraId } from '../economy/EconomyAgent';
+import type { EconomyAgent } from '../economy/EconomyAgent';
+import type { TransportSystem } from '../infrastructure/TransportSystem';
+import type { ChronologyAgent } from '../core/ChronologyAgent';
+
+/** Maps game EraSystem IDs → EconomySystem EraIds. */
+const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
+  revolution: 'revolution',
+  collectivization: 'industrialization',
+  industrialization: 'industrialization',
+  great_patriotic: 'wartime',
+  reconstruction: 'reconstruction',
+  thaw_and_freeze: 'thaw',
+  stagnation: 'stagnation',
+  the_eternal: 'eternal',
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Quota types + logic (absorbed from ecs/systems/quotaSystem.ts)
@@ -1079,8 +1107,289 @@ export class PoliticalAgent extends Vehicle {
   }
 
   // =========================================================================
+  // Absorbed SimulationEngine methods
+  // =========================================================================
+
+  /**
+   * Tick political entities — sync counts, conscription, orgnabor, doctrine effects.
+   * Absorbs SimulationEngine.tickPoliticalEntities().
+   *
+   * @param deps - All dependencies previously accessed via `this` in SimulationEngine
+   */
+  public tickEntitiesFull(deps: {
+    politicalEntities: PoliticalEntitySystem;
+    workers: WorkerSystem;
+    kgb: KGBAgent;
+    scoring: ScoringSystem;
+    callbacks: SimCallbacks;
+    settlement: SettlementSystem;
+    politburo: PolitburoSystem;
+    quota: { target: number; current: number };
+    rng: GameRng | undefined;
+    chronologyTotalTicks: number;
+  }): void {
+    const totalTicks = deps.chronologyTotalTicks;
+    const store = getResourceEntity();
+    const meta = getMetaEntity();
+    const tier = deps.settlement.getCurrentTier();
+    const eraId = this.getCurrentEraId();
+
+    // Sync entity counts every 30 ticks (roughly every 10 days)
+    if (totalTicks % 30 === 0) {
+      const avgCorruption = this._getAveragePolitburoCorruption(deps.politburo);
+      deps.politicalEntities.syncEntities(tier, eraId, avgCorruption);
+
+      // Threshold effects → entity spawning: higher threat = more KGB/politruks
+      const threatLevel = deps.kgb.getThreatLevel();
+      if (threatLevel === 'investigated' || threatLevel === 'reviewed') {
+        // Extra KGB and politruk presence when under investigation
+        deps.politicalEntities.syncEntities(tier, eraId, avgCorruption + 30);
+      }
+    }
+
+    // Orgnabor — periodic organized labor recruitment during industrialization eras
+    // Fires every ~180 ticks (half a year) during collectivization/industrialization and reconstruction
+    if (
+      totalTicks % 180 === 0 &&
+      (eraId === 'collectivization' || eraId === 'industrialization' || eraId === 'reconstruction') &&
+      store
+    ) {
+      const pop = store.resources.population;
+      if (pop >= 15) {
+        const count = Math.min(Math.max(2, Math.floor(pop * 0.05)), 5);
+        const duration = 60 + Math.floor(Math.random() * 60); // 60-120 ticks
+        const purpose =
+          eraId === 'reconstruction'
+            ? 'post-war reconstruction of the Motherland'
+            : 'the Great Construction of Socialism';
+        deps.politicalEntities.triggerOrgnabor(count, duration, purpose);
+      }
+    }
+
+    // Build doctrine context for era-specific mechanics
+    const currentEraDef = this.getCurrentEra();
+    const gameStartYear = 1917; // Game always starts at 1917
+    const eraStartTick = (currentEraDef.startYear - gameStartYear) * TICKS_PER_YEAR;
+    const doctrineCtx =
+      deps.rng && store
+        ? {
+            currentEraId: eraId,
+            totalTicks,
+            currentFood: store.resources.food,
+            currentPop: store.resources.population,
+            currentMoney: store.resources.money,
+            quotaProgress: deps.quota.target > 0 ? deps.quota.current / deps.quota.target : 0,
+            rng: deps.rng,
+            eraStartTick,
+            currentPaperwork: getPaperwork(),
+          }
+        : undefined;
+
+    const result = deps.politicalEntities.tick(totalTicks, doctrineCtx);
+
+    // Apply population drain from conscription — males 18-51 first (historical accuracy)
+    if (result.workersConscripted > 0) {
+      deps.workers.removeWorkersByCountMaleFirst(result.workersConscripted, 'conscription');
+      deps.scoring.onConscription(result.workersConscripted);
+    }
+
+    // Apply population return from orgnabor/conscription — creates dvor-linked citizens
+    if (result.workersReturned > 0) {
+      deps.workers.spawnInflowDvor(result.workersReturned, 'returned');
+    }
+
+    // Apply KGB worker arrests — route through WorkerSystem
+    if (result.workersArrested > 0) {
+      for (let i = 0; i < result.workersArrested; i++) {
+        deps.workers.arrestWorker();
+      }
+      deps.scoring.onKGBLoss(result.workersArrested);
+    }
+
+    // Apply KGB black marks to personnel file
+    if (result.blackMarksAdded > 0) {
+      deps.scoring.onKGBLoss(result.blackMarksAdded);
+    }
+    for (let i = 0; i < result.blackMarksAdded; i++) {
+      deps.kgb.addMark('lying_to_kgb', totalTicks, 'KGB investigation uncovered irregularities');
+    }
+
+    // Apply doctrine mechanic effects to resources
+    for (const effect of result.doctrineMechanicEffects) {
+      if (store) {
+        store.resources.food = Math.max(0, store.resources.food + effect.foodDelta);
+        store.resources.money = Math.max(0, store.resources.money + effect.moneyDelta);
+        store.resources.vodka = Math.max(0, store.resources.vodka + effect.vodkaDelta);
+        if (effect.popDelta !== 0) {
+          if (effect.popDelta > 0) {
+            deps.workers.spawnInflowDvor(effect.popDelta, 'doctrine');
+          } else {
+            deps.workers.removeWorkersByCount(-effect.popDelta, 'doctrine');
+          }
+        }
+      }
+      // Track paperwork accumulation from doctrine effects
+      if (effect.paperworkDelta && effect.paperworkDelta > 0) {
+        addPaperwork(effect.paperworkDelta);
+      }
+      if (effect.description) {
+        deps.callbacks.onToast(effect.description, 'warning');
+      }
+    }
+
+    // Emit announcements
+    for (const announcement of result.announcements) {
+      deps.callbacks.onToast(announcement, 'warning');
+    }
+
+    // Sync to meta for React
+    if (meta) {
+      meta.gameMeta.blackMarks = deps.kgb.getBlackMarks();
+      meta.gameMeta.commendations = deps.kgb.getCommendations();
+      meta.gameMeta.threatLevel = deps.kgb.getThreatLevel();
+    }
+  }
+
+  /**
+   * Handle era transition with ALL downstream effects.
+   * Absorbs SimulationEngine.checkEraTransition().
+   *
+   * @param deps - All dependencies previously accessed via `this` in SimulationEngine
+   */
+  public handleEraTransitionFull(deps: {
+    year: number;
+    deliveries: CompulsoryDeliveries;
+    economy: EconomyAgent;
+    transport: TransportSystem;
+    workers: WorkerSystem;
+    kgb: KGBAgent;
+    scoring: ScoringSystem;
+    callbacks: SimCallbacks;
+    difficulty: DifficultyLevel;
+    chronology: ChronologyAgent;
+  }): void {
+    const meta = getMetaEntity();
+    const currentYear = meta?.gameMeta.date.year ?? 1922;
+    const newEra = this.checkEraTransition(currentYear);
+
+    if (newEra) {
+      // Score the completed era before transitioning
+      const prevEraId = this.getPreviousEraId();
+      if (prevEraId) {
+        const prevEraIdx = eraIdToIndex(prevEraId);
+        const store = getResourceEntity();
+        const prevEraDef = ERA_DEFINITIONS[prevEraId];
+        deps.scoring.onEraEnd(
+          prevEraIdx,
+          prevEraDef?.name ?? prevEraId,
+          store?.resources.population ?? 0,
+          buildingsLogic.entities.length,
+          deps.kgb.getCommendations(),
+          deps.kgb.getBlackMarks(),
+        );
+      }
+
+      // Save checkpoint for the new era (snapshot before changes)
+      // PoliticalAgent IS the EraSystem now, so call this.saveCheckpoint()
+      this.saveCheckpoint(
+        JSON.stringify({
+          year: currentYear,
+          eraId: newEra.id,
+        }),
+      );
+
+      // Update CompulsoryDeliveries doctrine to match the new era
+      deps.deliveries.setDoctrine(newEra.doctrine);
+
+      // EconomyAgent era setting
+      const economyEra = GAME_ERA_TO_ECONOMY_ERA[newEra.id] ?? 'revolution';
+      deps.economy.setEra(economyEra);
+
+      // Update TransportSystem era (score bonuses vary by era)
+      deps.transport.setEra(newEra.id);
+
+      // Generate mandates for the new era
+      this.generateMandatesForCurrentEra(deps.difficulty);
+
+      // KGBAgent mark reset for new era
+      deps.kgb.resetForNewEra();
+      deps.workers.resetOverrideCount();
+
+      // Fire callback for UI (era assignment briefing modal)
+      deps.callbacks.onEraChanged?.(newEra);
+
+      // Advisor notification
+      deps.callbacks.onAdvisor(`${newEra.introTitle}\n\n${newEra.introText}`);
+
+      // Toast for era transition
+      deps.callbacks.onToast(`NEW ERA: ${newEra.name.toUpperCase()}`, 'warning');
+    }
+  }
+
+  /**
+   * Check per-era victory/failure conditions.
+   * Absorbs SimulationEngine.checkEraConditions().
+   *
+   * @param deps - Dependencies for condition checking
+   */
+  public checkConditions(deps: {
+    totalTicks: number;
+    callbacks: SimCallbacks;
+    endGame: (victory: boolean, reason: string) => void;
+  }): void {
+    const meta = getMetaEntity();
+    const res = getResourceEntity();
+    if (!meta || !res) return;
+
+    // Grace period: skip era conditions during the first year so the player
+    // isn't immediately eliminated before they have a chance to act.
+    // Also skip if there are no buildings (game hasn't really started).
+    if (deps.totalTicks <= TICKS_PER_YEAR || buildingsLogic.entities.length === 0) {
+      return;
+    }
+
+    const era = this.getCurrentEra();
+
+    // Check failure condition
+    if (era.failureCondition) {
+      const failed = era.failureCondition.check(meta.gameMeta, res.resources);
+      if (failed) {
+        deps.endGame(false, `ERA FAILURE: ${era.name} — ${era.failureCondition.description}`);
+        return;
+      }
+    }
+
+    // Check victory condition
+    if (era.victoryCondition) {
+      const won = era.victoryCondition.check(meta.gameMeta, res.resources);
+      if (won) {
+        deps.callbacks.onToast(`ERA VICTORY: ${era.name.toUpperCase()}`, 'warning');
+        deps.callbacks.onAdvisor(
+          `Congratulations, Comrade Director. You have completed the objectives for ${era.name}. ` +
+            `The Politburo acknowledges your adequate performance. Do not let it go to your head.`,
+        );
+      }
+    }
+  }
+
+  // =========================================================================
   // Private helpers
   // =========================================================================
+
+  /**
+   * Compute average corruption across all Politburo ministers.
+   * Used to scale KGB agent presence in PoliticalEntitySystem.
+   *
+   * @param politburo - The PolitburoSystem instance
+   * @returns Average corruption value across all ministers
+   */
+  private _getAveragePolitburoCorruption(politburo: PolitburoSystem): number {
+    const state = politburo.getState();
+    const ministers = [...state.ministers.values()];
+    if (ministers.length === 0) return 0;
+    const total = ministers.reduce((sum, m) => sum + m.corruption, 0);
+    return total / ministers.length;
+  }
 
   /** Linearly interpolate between two modifier sets. t in [0, 1]. */
   private _lerpModifiers(from: EraModifiers, to: EraModifiers, t: number): EraModifiers {
