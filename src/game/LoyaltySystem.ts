@@ -3,6 +3,9 @@
  *
  * Historical: Resistance to collectivization was widespread — 14 million
  * peasant protests in 1930. Loyalty determines sabotage and flight risk.
+ *
+ * @deprecated Logic moved to LoyaltyAgent (src/ai/agents/LoyaltyAgent.ts).
+ * This file is retained for backward compatibility. Use LoyaltyAgent.tickLoyalty() instead.
  */
 
 import { dvory } from '@/ecs/archetypes';
