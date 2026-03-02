@@ -221,7 +221,8 @@ describe('SimulationEngine', () => {
 
     it('causes starvation when food is insufficient (after grace period)', () => {
       const store = getResourceEntity()!;
-      store.resources.population = 100;
+      // Must create actual citizen entities — tick() syncs population from entity count
+      engine.getWorkerSystem().syncPopulation(100);
       store.resources.food = 0;
       store.resources.vodka = 100;
       // Exhaust grace period (90 ticks) — force food=0 each tick to prevent

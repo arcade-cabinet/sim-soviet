@@ -68,7 +68,9 @@ describe('Playthrough: Population Growth & Collapse', () => {
     // Disable onAnnualReport so quota evaluation doesn't defer
     callbacks.onAnnualReport = undefined as never;
 
-    buildBasicSettlement();
+    // No farms — farms produce food each tick, preventing sustained starvation.
+    // Still need buildings (power + housing) for the game-over check.
+    buildBasicSettlement({ farms: 0 });
 
     // Advance past the grace period (360 ticks).
     // If the game ended during warmup (e.g., from political marks), the
@@ -91,6 +93,9 @@ describe('Playthrough: Population Growth & Collapse', () => {
     store.resources.vodka = 0;
     // Reset starvation counter so grace period starts fresh from food cutoff
     engine.getFoodAgent().reset();
+    // Suppress food production — private plots produce food during tick,
+    // which resets the starvation counter. Mock produce() as a no-op.
+    jest.spyOn(engine.getFoodAgent(), 'produce').mockImplementation(() => {});
 
     // Tick enough times for grace period (90) + starvation to kill everyone.
     // Keep food at 0 each tick to prevent private plot production from resetting counter.
