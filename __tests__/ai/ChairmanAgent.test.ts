@@ -123,4 +123,61 @@ describe('ChairmanAgent', () => {
     expect(scores).toHaveProperty('growth');
     expect(scores).toHaveProperty('defense');
   });
+
+  // ── shouldAttemptBribe ──
+
+  it('recommends bribe when blackMarks >= 4 and blat >= 2', () => {
+    const chairman = new ChairmanAgent();
+    chairman.assessGameState(
+      { food: 500, population: 50 },
+      { blackMarks: 4, commendations: 0, blat: 5 },
+    );
+    const result = chairman.shouldAttemptBribe();
+    expect(result.shouldBribe).toBe(true);
+    expect(result.amount).toBe(0.5);
+  });
+
+  it('does not recommend bribe when blackMarks < 4', () => {
+    const chairman = new ChairmanAgent();
+    chairman.assessGameState(
+      { food: 500, population: 50 },
+      { blackMarks: 3, commendations: 0, blat: 5 },
+    );
+    const result = chairman.shouldAttemptBribe();
+    expect(result.shouldBribe).toBe(false);
+    expect(result.amount).toBe(0);
+  });
+
+  it('does not recommend bribe when blat < 2', () => {
+    const chairman = new ChairmanAgent();
+    chairman.assessGameState(
+      { food: 500, population: 50 },
+      { blackMarks: 5, commendations: 0, blat: 1 },
+    );
+    const result = chairman.shouldAttemptBribe();
+    expect(result.shouldBribe).toBe(false);
+    expect(result.amount).toBe(0);
+  });
+
+  it('recommends bribe at exact threshold (marks=4, blat=2)', () => {
+    const chairman = new ChairmanAgent();
+    chairman.assessGameState(
+      { food: 500, population: 50 },
+      { blackMarks: 4, commendations: 0, blat: 2 },
+    );
+    const result = chairman.shouldAttemptBribe();
+    expect(result.shouldBribe).toBe(true);
+    expect(result.amount).toBe(0.5);
+  });
+
+  it('does not recommend bribe with no blat (undefined)', () => {
+    const chairman = new ChairmanAgent();
+    chairman.assessGameState(
+      { food: 500, population: 50 },
+      { blackMarks: 5, commendations: 0 },
+    );
+    const result = chairman.shouldAttemptBribe();
+    expect(result.shouldBribe).toBe(false);
+    expect(result.amount).toBe(0);
+  });
 });

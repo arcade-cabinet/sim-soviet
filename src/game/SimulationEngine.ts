@@ -427,12 +427,27 @@ export class SimulationEngine {
     };
 
     this.callbacks.onAnnualReport = (data, submitReport) => {
-      // Autopilot submits honest values (no falsification)
-      submitReport({
-        reportedQuota: data.quotaCurrent,
-        reportedSecondary: data.quotaType === 'food' ? data.actualVodka : data.actualFood,
-        reportedPop: data.actualPop,
-      });
+      const chairman = this.agentManager.getChairman();
+      const quotaPercent = data.quotaTarget > 0 ? data.quotaCurrent / data.quotaTarget : 1;
+      const isHonest = chairman ? chairman.resolveAnnualReport(quotaPercent) : true;
+
+      if (isHonest) {
+        // Submit actual values
+        submitReport({
+          reportedQuota: data.quotaCurrent,
+          reportedSecondary: data.quotaType === 'food' ? data.actualVodka : data.actualFood,
+          reportedPop: data.actualPop,
+        });
+      } else {
+        // Falsify: inflate quota to target, secondary by same ratio, keep pop honest
+        const inflationRatio = data.quotaCurrent > 0 ? data.quotaTarget / data.quotaCurrent : 1;
+        const actualSecondary = data.quotaType === 'food' ? data.actualVodka : data.actualFood;
+        submitReport({
+          reportedQuota: data.quotaTarget,
+          reportedSecondary: Math.round(actualSecondary * inflationRatio),
+          reportedPop: data.actualPop,
+        });
+      }
     };
   }
 
@@ -956,6 +971,22 @@ export class SimulationEngine {
       this.scoring.onInvestigation();
     }
     this.lastThreatLevel = currentThreat;
+
+    // Autopilot bribery: when KGB threat escalates, attempt bribe if chairman recommends it
+    if (this.agentManager.isAutopilot()) {
+      const chairman = this.agentManager.getChairman();
+      if (chairman) {
+        const bribeDecision = chairman.shouldAttemptBribe();
+        if (bribeDecision.shouldBribe) {
+          const res = getResourceEntity();
+          if (res && res.resources.blat >= 2) {
+            this.kgbAgent.handleBribeOffer(bribeDecision.amount);
+            res.resources.blat = Math.max(0, res.resources.blat - 2);
+            this.callbacks.onToast('Autopilot: blat exchanged to reduce KGB suspicion', 'warning');
+          }
+        }
+      }
+    }
 
     // Arrest check
     if (this.kgbAgent.isArrested()) {

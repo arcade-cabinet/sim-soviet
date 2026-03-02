@@ -191,6 +191,21 @@ export class ChairmanAgent extends Vehicle {
     return true;
   }
 
+  /**
+   * Decide whether to attempt a bribe during a KGB inspection.
+   *
+   * Bribes when black marks are dangerously high (>= 4) and the chairman
+   * has enough blat (>= 2) to grease the wheels.
+   *
+   * @returns Object with bribe decision and amount (0-1 normalised)
+   */
+  shouldAttemptBribe(): { shouldBribe: boolean; amount: number } {
+    if (this.politicalState.blackMarks >= 4 && (this.politicalState.blat ?? 0) >= 2) {
+      return { shouldBribe: true, amount: 0.5 };
+    }
+    return { shouldBribe: false, amount: 0 };
+  }
+
   /** Get current goal scores for debugging/UI. */
   getScores(): typeof this.scores {
     return { ...this.scores };

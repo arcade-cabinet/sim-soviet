@@ -441,4 +441,202 @@ describe('SimulationEngine', () => {
       expect(quota.target).toBe(500);
     });
   });
+
+  // ── Autopilot falsification ─────────────────────────────────
+
+  describe('autopilot annual report falsification', () => {
+    it('submits honest report when quota is fully met', () => {
+      engine.enableAutopilot();
+      let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
+
+      // Trigger the autopilot onAnnualReport callback directly
+      const reportCallback = (engine as unknown as { callbacks: SimCallbacks }).callbacks.onAnnualReport!;
+      reportCallback(
+        {
+          year: 1922,
+          quotaType: 'food',
+          quotaTarget: 500,
+          quotaCurrent: 600, // Quota exceeded
+          actualPop: 80,
+          actualFood: 600,
+          actualVodka: 30,
+        },
+        (submission) => { captured = submission; },
+      );
+
+      expect(captured).not.toBeNull();
+      expect(captured!.reportedQuota).toBe(600); // Honest: actual value
+      expect(captured!.reportedSecondary).toBe(30); // Honest: actual vodka
+      expect(captured!.reportedPop).toBe(80);
+    });
+
+    it('falsifies report for moderate shortfall when marks are low', () => {
+      engine.enableAutopilot();
+
+      // Set up low marks via assessGameState — tick the autopilot section
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState(
+        { food: 500, population: 50 },
+        { blackMarks: 0, commendations: 0, blat: 0 },
+      );
+
+      let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
+
+      const reportCallback = (engine as unknown as { callbacks: SimCallbacks }).callbacks.onAnnualReport!;
+      reportCallback(
+        {
+          year: 1922,
+          quotaType: 'food',
+          quotaTarget: 500,
+          quotaCurrent: 350, // 70% met — moderate shortfall
+          actualPop: 80,
+          actualFood: 350,
+          actualVodka: 20,
+        },
+        (submission) => { captured = submission; },
+      );
+
+      expect(captured).not.toBeNull();
+      // Falsified: quota inflated to target
+      expect(captured!.reportedQuota).toBe(500);
+      // Secondary inflated by same ratio: 20 * (500/350) ≈ 29
+      expect(captured!.reportedSecondary).toBe(Math.round(20 * (500 / 350)));
+      // Population always honest
+      expect(captured!.reportedPop).toBe(80);
+    });
+
+    it('submits honest report for moderate shortfall when marks are high', () => {
+      engine.enableAutopilot();
+
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState(
+        { food: 500, population: 50 },
+        { blackMarks: 4, commendations: 0, blat: 0 },
+      );
+
+      let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
+
+      const reportCallback = (engine as unknown as { callbacks: SimCallbacks }).callbacks.onAnnualReport!;
+      reportCallback(
+        {
+          year: 1922,
+          quotaType: 'food',
+          quotaTarget: 500,
+          quotaCurrent: 350, // 70% met
+          actualPop: 80,
+          actualFood: 350,
+          actualVodka: 20,
+        },
+        (submission) => { captured = submission; },
+      );
+
+      expect(captured).not.toBeNull();
+      // Honest: too risky to falsify with 4 marks
+      expect(captured!.reportedQuota).toBe(350);
+      expect(captured!.reportedSecondary).toBe(20);
+      expect(captured!.reportedPop).toBe(80);
+    });
+
+    it('submits honest report for large shortfall regardless of marks', () => {
+      engine.enableAutopilot();
+
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState(
+        { food: 500, population: 50 },
+        { blackMarks: 0, commendations: 0, blat: 0 },
+      );
+
+      let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
+
+      const reportCallback = (engine as unknown as { callbacks: SimCallbacks }).callbacks.onAnnualReport!;
+      reportCallback(
+        {
+          year: 1922,
+          quotaType: 'food',
+          quotaTarget: 500,
+          quotaCurrent: 200, // 40% met — large shortfall
+          actualPop: 80,
+          actualFood: 200,
+          actualVodka: 10,
+        },
+        (submission) => { captured = submission; },
+      );
+
+      expect(captured).not.toBeNull();
+      // Honest: gap too obvious to falsify
+      expect(captured!.reportedQuota).toBe(200);
+      expect(captured!.reportedSecondary).toBe(10);
+      expect(captured!.reportedPop).toBe(80);
+    });
+  });
+
+  // ── Autopilot bribery ───────────────────────────────────────
+
+  describe('autopilot bribery', () => {
+    it('fires bribe toast and calls handleBribeOffer when chairman recommends bribe', () => {
+      engine.enableAutopilot();
+      const store = getResourceEntity()!;
+      store.resources.blat = 10;
+
+      // Give the chairman high marks + blat context
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState(
+        { food: 500, population: 50 },
+        { blackMarks: 5, commendations: 0, blat: 10 },
+      );
+
+      // Spy on KGBAgent.handleBribeOffer to verify it's called
+      const kgb = engine.getKGBAgent();
+      const bribeSpy = jest.spyOn(kgb, 'handleBribeOffer');
+
+      engine.tick();
+
+      // Bribe should have been attempted
+      expect(cb.onToast).toHaveBeenCalledWith(
+        'Autopilot: blat exchanged to reduce KGB suspicion',
+        'warning',
+      );
+      expect(bribeSpy).toHaveBeenCalledWith(0.5);
+    });
+
+    it('does not bribe when marks are low', () => {
+      engine.enableAutopilot();
+      const store = getResourceEntity()!;
+      store.resources.blat = 10;
+
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState(
+        { food: 500, population: 50 },
+        { blackMarks: 2, commendations: 0, blat: 10 },
+      );
+
+      engine.tick();
+
+      // The bribery toast should NOT have fired — marks too low
+      expect(cb.onToast).not.toHaveBeenCalledWith(
+        'Autopilot: blat exchanged to reduce KGB suspicion',
+        'warning',
+      );
+    });
+
+    it('does not bribe when blat is insufficient', () => {
+      engine.enableAutopilot();
+      const store = getResourceEntity()!;
+      store.resources.blat = 1;
+
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState(
+        { food: 500, population: 50 },
+        { blackMarks: 5, commendations: 0, blat: 1 },
+      );
+
+      engine.tick();
+
+      // The bribery toast should NOT have fired — blat too low
+      expect(cb.onToast).not.toHaveBeenCalledWith(
+        'Autopilot: blat exchanged to reduce KGB suspicion',
+        'warning',
+      );
+    });
+  });
 });
