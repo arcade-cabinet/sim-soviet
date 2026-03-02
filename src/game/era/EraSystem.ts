@@ -1,3 +1,9 @@
+// DEPRECATED: logic moved to PoliticalAgent (src/ai/agents/PoliticalAgent.ts)
+// Era progression, modifier blending, transition tracking, building gates
+// are now handled by PoliticalAgent.checkEraTransition(), .tickTransition(),
+// .getModifiers(), and .getAvailableBuildings().
+// This file is kept for import compatibility; remove when all callers are migrated.
+
 /**
  * @module game/era/EraSystem
  *

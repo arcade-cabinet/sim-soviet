@@ -1,3 +1,11 @@
+// DEPRECATED: logic moved to PoliticalAgent (src/ai/agents/PoliticalAgent.ts)
+// Annual report strategy, pripiski risk calculation, consecutive failure tracking,
+// and report processing are now handled by PoliticalAgent.evaluateReportStrategy(),
+// .computeFalsificationRisk(), .computeInvestigationProbability(), .recordPripiski(),
+// .recordQuotaFailure(), and .resetConsecutiveFailures().
+// Constants MAX_QUOTA_FAILURES, PRIPISKI_QUOTA_INFLATION are re-exported from PoliticalAgent.
+// This file is kept for import compatibility; remove when all callers are migrated.
+
 /**
  * Annual report / quota tick helpers -- extracted from SimulationEngine.
  *

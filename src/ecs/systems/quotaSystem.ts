@@ -1,3 +1,11 @@
+// DEPRECATED: logic moved to PoliticalAgent (src/ai/agents/PoliticalAgent.ts)
+// Quota tracking, multi-resource quota sync, and quota advancement are now
+// handled by PoliticalAgent.syncResourceQuotas(), .updateQuota(), .advancePlan(),
+// and .areAllQuotasMet().
+// Types (QuotaState, QuotaResourceType, ResourceQuota) and utility functions
+// (createDefaultQuota, areAllQuotasMet) are still re-exported from PoliticalAgent.
+// This file is kept for import compatibility; remove when all callers are migrated.
+
 /**
  * @module ecs/systems/quotaSystem
  *

@@ -1,3 +1,11 @@
+// DEPRECATED: logic moved to PoliticalAgent (src/ai/agents/PoliticalAgent.ts)
+// Mandate generation, fulfillment tracking, and plan state management are now
+// handled by PoliticalAgent.generateMandatesForCurrentEra(), .recordBuildingPlaced(),
+// .getMandateFulfillment(), and .allMandatesComplete().
+// Types (BuildingMandate, MandateWithFulfillment, PlanMandateState) and utility
+// functions are still re-exported from PoliticalAgent.
+// This file is kept for import compatibility; remove when all callers are migrated.
+
 /**
  * @module game/PlanMandates
  *
