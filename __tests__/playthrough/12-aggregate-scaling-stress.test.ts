@@ -220,8 +220,8 @@ function createAggregateEngine(options: {
 
   const grid = new GameGrid();
   const callbacks = createMockCallbacks();
-  callbacks.onMinigame = undefined as never;
-  callbacks.onAnnualReport = undefined as never;
+  callbacks.onMinigame = jest.fn();
+  callbacks.onAnnualReport = jest.fn();
 
   buildSettlement(raion);
 
@@ -564,8 +564,8 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
 
     const grid = new GameGrid();
     const callbacks = createMockCallbacks();
-    callbacks.onMinigame = undefined as never;
-    callbacks.onAnnualReport = undefined as never;
+    callbacks.onMinigame = jest.fn();
+    callbacks.onAnnualReport = jest.fn();
     const engine = new SimulationEngine(grid, callbacks, undefined, 'worker', 'forgiving');
 
     // Before collapse

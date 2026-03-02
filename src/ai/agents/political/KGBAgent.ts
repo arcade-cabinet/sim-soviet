@@ -595,6 +595,7 @@ export class KGBAgent extends Vehicle {
    * @param bribeAmount - Magnitude of bribe (0-1 normalised value)
    */
   handleBribeOffer(bribeAmount: number): void {
+    if (!Number.isFinite(bribeAmount) || bribeAmount <= 0) return;
     const reduction = Math.min(bribeAmount * 0.3, 0.3);
     this.state.suspicionLevel = Math.max(0, this.state.suspicionLevel - reduction);
     this.state.investigationIntensity = this._computeIntensity();

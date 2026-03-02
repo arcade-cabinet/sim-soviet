@@ -112,7 +112,8 @@ export function statisticalBirthTick(
   const conceptionRate = BASE_MONTHLY_CONCEPTION_RATE * foodMod * eraMod;
 
   // Pregnancy shift register ALWAYS executes — existing pregnancies deliver regardless
-  const births = pool.pregnancyWaves[0]!;
+  const rawBirths = pool.pregnancyWaves[0]!;
+  const births = Number.isFinite(rawBirths) && rawBirths >= 0 ? rawBirths : 0;
   pool.pregnancyWaves[0] = pool.pregnancyWaves[1]!;
   pool.pregnancyWaves[1] = pool.pregnancyWaves[2]!;
 
