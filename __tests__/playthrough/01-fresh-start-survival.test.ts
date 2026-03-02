@@ -21,9 +21,15 @@ describe('Playthrough: First Year Survival', () => {
   // ── Scenario 1: Basic settlement survives a full year ─────────────────────
 
   it('basic settlement with adequate food survives a full year', () => {
-    const { engine } = createPlaythroughEngine({
-      resources: { food: 5000 },
+    const { engine, callbacks } = createPlaythroughEngine({
+      resources: { food: 5000, vodka: 5000, population: 20 },
+      difficulty: 'worker',
+      consequence: 'forgiving',
     });
+
+    // Disable interactive callbacks that can cause mark accumulation or defer evaluation
+    callbacks.onMinigame = undefined as never;
+    callbacks.onAnnualReport = undefined as never;
 
     buildBasicSettlement();
 
@@ -54,9 +60,12 @@ describe('Playthrough: First Year Survival', () => {
   // ── Scenario 3: Construction lifecycle completes ──────────────────────────
 
   it('building construction progresses through phases to completion', () => {
-    const { engine } = createPlaythroughEngine({
+    const { engine, callbacks } = createPlaythroughEngine({
       resources: { timber: 500, steel: 200, cement: 200, prefab: 100 },
+      consequence: 'forgiving',
     });
+    callbacks.onMinigame = undefined as never;
+    callbacks.onAnnualReport = undefined as never;
 
     // Need power for construction to proceed (constructionSystem needs resources + power grid)
     createBuilding(2, 0, 'power-station');
@@ -85,10 +94,13 @@ describe('Playthrough: First Year Survival', () => {
 
   it('winter prevents farm food production', () => {
     // Start in month 1 (winter: farmMultiplier = 0.0)
-    const { engine } = createPlaythroughEngine({
+    const { engine, callbacks } = createPlaythroughEngine({
       meta: { date: { year: 1922, month: 1, tick: 0 } },
       resources: { food: 1000, population: 12 },
+      consequence: 'forgiving',
     });
+    callbacks.onMinigame = undefined as never;
+    callbacks.onAnnualReport = undefined as never;
 
     // Place powered farm (both instantly operational)
     createBuilding(0, 0, 'power-station');

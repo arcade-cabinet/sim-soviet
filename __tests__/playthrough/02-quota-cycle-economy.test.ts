@@ -76,6 +76,7 @@ describe('Playthrough: Quota Cycle Economy', () => {
     const { engine, callbacks } = createPlaythroughEngine({
       meta: { date: { year: 1926, month: 10, tick: 0 } },
       resources: { food: 5000, population: 0 },
+      consequence: 'forgiving',
     });
     disableNonQuotaCallbacks(callbacks as Record<string, unknown>);
 
@@ -83,20 +84,23 @@ describe('Playthrough: Quota Cycle Economy', () => {
     advanceTicks(engine, 90);
     expect(callbacks.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('Quota met'));
 
-    // Set vodka to 460 (8% miss) so quotas fail without heavy marks.
+    // Drain all resources to ensure quota failure — economy may produce
+    // vodka/food during tick, so zero resources each year boundary.
     const store = getResourceEntity()!;
-    store.resources.food = 0;
-    store.resources.vodka = 460;
 
-    // Failure 1: advance to 1932
+    // Failure 1: advance to 1932 (vodka quota, zero production)
+    store.resources.food = 0;
+    store.resources.vodka = 0;
     advanceYears(engine, 5);
     expect(isGameOver()).toBe(false);
 
     // Failure 2: advance to 1937
+    store.resources.vodka = 0;
     advanceYears(engine, 5);
     expect(isGameOver()).toBe(false); // Only 2 consecutive — not game over yet
 
     // Failure 3: advance to 1942
+    store.resources.vodka = 0;
     advanceYears(engine, 5);
     expect(callbacks.onGameOver).toHaveBeenCalledWith(false, expect.stringContaining('Politburo'));
     expect(isGameOver()).toBe(true);

@@ -91,43 +91,35 @@ describe('Playthrough: Difficulty Variants', () => {
     const startFood = 2000;
     const startPop = 30;
 
-    // Run worker difficulty for 1 year
-    const { engine: workerEngine } = createPlaythroughEngine({
-      difficulty: 'worker',
-      resources: { food: startFood, population: startPop, power: 100 },
-    });
-    buildBasicSettlement({ housing: 2, farms: 2, power: 1 });
-    advanceYears(workerEngine, 1);
-    const _workerFood = getResources().food;
-    const workerPop = getResources().population;
-    const workerGameOver = isGameOver();
+    // Use forgiving consequence so KGB arrest doesn't end game prematurely.
+    // Disable interactive callbacks that accumulate marks or defer evaluation.
+    const runDifficulty = (diff: 'worker' | 'comrade' | 'tovarish') => {
+      const { engine, callbacks } = createPlaythroughEngine({
+        difficulty: diff,
+        consequence: 'forgiving',
+        resources: { food: startFood, population: startPop, power: 100, vodka: 5000 },
+      });
+      callbacks.onMinigame = undefined as never;
+      callbacks.onAnnualReport = undefined as never;
+      buildBasicSettlement({ housing: 2, farms: 2, power: 1 });
+      advanceYears(engine, 1);
+      return {
+        food: getResources().food,
+        pop: getResources().population,
+        gameOver: isGameOver(),
+      };
+    };
 
-    // Run comrade difficulty for 1 year (same setup)
-    const { engine: comradeEngine } = createPlaythroughEngine({
-      difficulty: 'comrade',
-      resources: { food: startFood, population: startPop, power: 100 },
-    });
-    buildBasicSettlement({ housing: 2, farms: 2, power: 1 });
-    advanceYears(comradeEngine, 1);
-    const _comradeFood = getResources().food;
-    const _comradePop = getResources().population;
-
-    // Run tovarish difficulty for 1 year (same setup)
-    const { engine: tovarishEngine } = createPlaythroughEngine({
-      difficulty: 'tovarish',
-      resources: { food: startFood, population: startPop, power: 100 },
-    });
-    buildBasicSettlement({ housing: 2, farms: 2, power: 1 });
-    advanceYears(tovarishEngine, 1);
-    const _tovarishFood = getResources().food;
-    const tovarishPop = getResources().population;
+    const worker = runDifficulty('worker');
+    const _comrade = runDifficulty('comrade');
+    const tovarish = runDifficulty('tovarish');
 
     // Worker should have roughly as much or more population as tovarish.
     // Allow small margin (5) for demographic stochasticity (births, deaths,
     // household formation, working mother penalties).
-    expect(workerPop).toBeGreaterThanOrEqual(tovarishPop - 5);
+    expect(worker.pop).toBeGreaterThanOrEqual(tovarish.pop - 5);
 
     // Worker should not be game over
-    expect(workerGameOver).toBe(false);
+    expect(worker.gameOver).toBe(false);
   });
 });
