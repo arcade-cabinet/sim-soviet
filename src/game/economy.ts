@@ -1,3 +1,7 @@
+// DEPRECATED: core decision logic moved to EconomyAgent (src/ai/agents/EconomyAgent.ts)
+// Types, constants, and pure functions remain here for backward compatibility.
+// The EconomySystem class is superseded by EconomyAgent which extends Yuka Vehicle.
+
 /**
  * @module game/economy
  *

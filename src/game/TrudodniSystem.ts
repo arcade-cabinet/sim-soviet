@@ -1,3 +1,7 @@
+// DEPRECATED: core logic moved to EconomyAgent (src/ai/agents/EconomyAgent.ts)
+// accrueTrudodni() is replicated in EconomyAgent.accrueTrudodniFromDvory().
+// defaultCategory(), TRUDODNI_VALUES, and DAYS_PER_MONTH remain here for compatibility.
+
 /**
  * TrudodniSystem — gender-based trudodni (work-day) categories.
  *
