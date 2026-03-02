@@ -164,6 +164,7 @@ screenshot-*.png
 initial-load.png
 loading-complete.png
 main-menu-*.png
+e2e/screenshots/
 
 # Review screenshots (Claude reference only)
 glasnost-*.png

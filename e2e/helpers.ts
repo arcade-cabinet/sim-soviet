@@ -246,3 +246,43 @@ export async function goToMainMenu(page: Page): Promise<void> {
   // Wait for "NEW GAME" to be visible as confirmation we're on the menu
   await page.getByText('NEW GAME').waitFor({ state: 'visible', timeout: 10_000 });
 }
+
+// ── Autopilot / Turbo Helpers ─────────────────────────────────────────────────
+
+/** Enable autopilot via the settings modal. */
+export async function enableAutopilot(page: Page): Promise<void> {
+  await openSettings(page);
+  const toggle = page.getByText('COMRADE ADVISOR');
+  await toggle.click();
+  await page.keyboard.press('Escape'); // close settings
+  await page.waitForTimeout(300);
+}
+
+/** Set turbo speed (100x). */
+export async function setTurboSpeed(page: Page): Promise<void> {
+  const turboBtn = page.getByText('⏩⏩');
+  if (await turboBtn.first().isVisible().catch(() => false)) {
+    await turboBtn.first().click();
+  }
+}
+
+/** Get the current game year from the date label. */
+export async function getGameYear(page: Page): Promise<number> {
+  const dateText = await getDateText(page);
+  const match = dateText.match(/(\d{4})/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+/** Wait for the game year to reach a target. */
+export async function waitForYear(page: Page, targetYear: number, timeoutMs = 120_000): Promise<void> {
+  await page.waitForFunction(
+    (target) => {
+      const el = document.querySelector('[data-testid="date-label"]');
+      if (!el) return false;
+      const match = el.textContent?.match(/(\d{4})/);
+      return match ? parseInt(match[1], 10) >= target : false;
+    },
+    targetYear,
+    { timeout: timeoutMs },
+  );
+}
