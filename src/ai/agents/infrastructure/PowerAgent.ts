@@ -15,11 +15,11 @@
  */
 
 import { Vehicle } from 'yuka';
-import { buildingsLogic, getResourceEntity } from '../../ecs/archetypes';
-import { world } from '../../ecs/world';
-import { MSG } from '../telegrams';
+import { buildingsLogic, getResourceEntity } from '../../../ecs/archetypes';
+import { world } from '../../../ecs/world';
+import { MSG } from '../../telegrams';
 import type { With } from 'miniplex';
-import type { Entity } from '../../ecs/world';
+import type { Entity } from '../../../ecs/world';
 
 // ---------------------------------------------------------------------------
 // Priority classification

@@ -1,4 +1,4 @@
-import { CollectiveAgent } from '../../src/ai/agents/CollectiveAgent';
+import { CollectiveAgent } from '../../src/ai/agents/infrastructure/CollectiveAgent';
 import {
   FOOD_CRISIS_THRESHOLD,
   FOOD_FOCUS_MULTIPLIER,
@@ -9,7 +9,7 @@ import {
   MAX_PLACEMENT_DISTANCE,
   CANDIDATE_LIMIT,
   type CollectiveAgentState,
-} from '../../src/ai/agents/CollectiveAgent';
+} from '../../src/ai/agents/infrastructure/CollectiveAgent';
 
 describe('CollectiveAgent', () => {
   // ── Instantiation ──────────────────────────────────────────────────────────

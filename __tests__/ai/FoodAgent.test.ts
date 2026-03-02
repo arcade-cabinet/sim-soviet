@@ -1,5 +1,5 @@
-import { FoodAgent } from '../../src/ai/agents/FoodAgent';
-import type { FoodAgentSaveData } from '../../src/ai/agents/FoodAgent';
+import { FoodAgent } from '../../src/ai/agents/economy/FoodAgent';
+import type { FoodAgentSaveData } from '../../src/ai/agents/economy/FoodAgent';
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createResourceStore } from '../../src/ecs/factories';
 import { createDvor } from '../../src/ecs/factories/settlementFactories';

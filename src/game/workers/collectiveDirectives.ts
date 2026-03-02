@@ -6,7 +6,7 @@
  * meaningful choices about how the collective prioritizes work.
  */
 
-import type { CollectiveFocus } from './governor';
+import type { CollectiveFocus } from '../../ai/agents/infrastructure/CollectiveAgent';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

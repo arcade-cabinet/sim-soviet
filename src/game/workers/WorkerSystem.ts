@@ -60,8 +60,8 @@ import {
   YOUTH_MIN_AGE,
   YOUTH_RETENTION_BUILDINGS,
 } from './constants';
-import type { CollectiveFocus } from './governor';
-import { runGovernor } from './governor';
+import type { CollectiveFocus } from '../../ai/agents/infrastructure/CollectiveAgent';
+import { runGovernor } from '../../ai/agents/infrastructure/CollectiveAgent';
 import type {
   PopulationDrainEvent,
   PopulationInflowEvent,

@@ -12,7 +12,7 @@ import {
   detectConstructionDemands,
   VODKA_CRITICAL_THRESHOLD,
   VODKA_DEMAND_THRESHOLD,
-} from '@/game/workers/demandSystem';
+} from '@/ai/agents/infrastructure/CollectiveAgent';
 
 describe('VodkaDemand', () => {
   beforeEach(() => {

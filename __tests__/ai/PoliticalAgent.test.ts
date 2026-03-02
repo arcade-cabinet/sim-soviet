@@ -6,7 +6,7 @@ import {
   STAKHANOVITE_THRESHOLD,
   ERA_ORDER,
   ERA_DEFINITIONS,
-} from '../../src/ai/agents/PoliticalAgent';
+} from '../../src/ai/agents/political/PoliticalAgent';
 
 // ---------------------------------------------------------------------------
 // Helpers

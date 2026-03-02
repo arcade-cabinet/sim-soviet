@@ -22,12 +22,14 @@ import { buildingsLogic, buildings, operationalBuildings, terrainFeatures, under
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
-import type { PlanMandateState } from '../../game/PlanMandates';
-import type { WorkerStats } from '../../game/workers/types';
-import type { CollectiveFocus } from '../../game/workers/governor';
-import type { GameRng } from '../../game/SeedSystem';
+import type { PlanMandateState } from '../../../game/PlanMandates';
+import type { WorkerStats } from '../../../game/workers/types';
+import type { GameRng } from '../../../game/SeedSystem';
 
 // ── Re-exported types (absorbed from governor.ts) ─────────────────────────────
+
+/** Collective operational focus (from governor.ts). */
+export type CollectiveFocus = 'food' | 'construction' | 'production' | 'balanced';
 
 /** The 5-level priority stack, evaluated top-to-bottom. */
 export type GovernorPriority = 'survive' | 'state_demand' | 'trudodni' | 'improve' | 'private';
@@ -749,5 +751,101 @@ export class CollectiveAgent extends Vehicle {
 
   private isInBounds(gridX: number, gridY: number): boolean {
     return gridX >= 1 && gridX < GRID_SIZE - 1 && gridY >= 1 && gridY < GRID_SIZE - 1;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Standalone governor functions (formerly in workers/governor.ts)
+// Used by WorkerSystem.runGovernorTick() and BehavioralGovernor tests.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const _sharedAgent = new CollectiveAgent();
+
+/**
+ * Evaluate the highest-priority need for a worker given current state.
+ * Standalone wrapper around CollectiveAgent.evaluateWorkerPriority().
+ */
+export function evaluateWorkerPriority(
+  worker: Entity,
+  stats: WorkerStats,
+  resources: Resources,
+  focus: CollectiveFocus,
+): GovernorPriority {
+  return _sharedAgent.evaluateWorkerPriority(worker, stats, resources, focus);
+}
+
+/**
+ * Find the best building to assign a worker to for a given priority.
+ * Standalone wrapper around CollectiveAgent.findBestAssignment().
+ */
+export function findBestAssignment(
+  priority: GovernorPriority,
+  citizenClass: string,
+): GovernorRecommendation | null {
+  return _sharedAgent.findBestAssignment(priority, citizenClass);
+}
+
+/**
+ * Run the full governor pipeline for a single worker.
+ * Standalone wrapper around CollectiveAgent.runGovernor().
+ *
+ * @param focus - Collective focus override (the standalone version accepts it as param)
+ */
+export function runGovernor(
+  worker: Entity,
+  stats: WorkerStats,
+  resources: Resources,
+  focus: CollectiveFocus,
+): GovernorRecommendation | null {
+  _sharedAgent.setFocus(focus);
+  return _sharedAgent.runGovernor(worker, stats, resources);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Standalone demand/build functions (formerly in workers/demandSystem.ts, autoBuilder.ts)
+// Used by SimulationEngine's autonomous collective tick.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Detect construction demands based on current population and resource state.
+ * Standalone wrapper around CollectiveAgent.detectConstructionDemands().
+ */
+export function detectConstructionDemands(
+  population: number,
+  housingCapacity: number,
+  resources: ResourceSnapshot,
+): ConstructionDemand[] {
+  return _sharedAgent.detectConstructionDemands(population, housingCapacity, resources);
+}
+
+/**
+ * Autonomously place a building near existing buildings.
+ * Standalone wrapper around CollectiveAgent.autoPlaceBuilding().
+ */
+export function autoPlaceBuilding(defId: string, rng: GameRng): Entity | null {
+  return _sharedAgent.autoPlaceBuilding(defId, rng);
+}
+
+/**
+ * Find a placement cell near existing buildings.
+ * Standalone wrapper around CollectiveAgent.findPlacementCell().
+ */
+export function findPlacementCell(rng: GameRng): { gridX: number; gridY: number } | null {
+  return _sharedAgent.findPlacementCell(rng);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Backward-compat class: CollectivePlanner
+// Lightweight wrapper that delegates to a shared CollectiveAgent instance.
+// Formerly in game/CollectivePlanner.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lightweight planner that merges mandates and demands into a build queue.
+ * @deprecated Use CollectiveAgent.generateQueue() directly.
+ */
+export class CollectivePlanner {
+  generateQueue(mandateState: PlanMandateState | null, demands: ConstructionDemand[]): ConstructionRequest[] {
+    return _sharedAgent.generateQueue(mandateState, demands);
   }
 }

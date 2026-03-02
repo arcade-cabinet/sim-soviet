@@ -1,5 +1,5 @@
-import { WeatherAgent } from '../../src/ai/agents/WeatherAgent';
-import { WeatherType } from '../../src/game/WeatherSystem';
+import { WeatherAgent } from '../../src/ai/agents/core/WeatherAgent';
+import { WeatherType } from '../../src/ai/agents/core/weather-types';
 import { GameRng } from '../../src/game/SeedSystem';
 import { Season } from '../../src/game/Chronology';
 

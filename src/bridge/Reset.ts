@@ -13,7 +13,7 @@ import { world } from '../ecs/world';
 import { gameState } from '../engine/GameState';
 import { clearToast, dismissAdvisor } from '../engine/helpers';
 import { resetPaperwork, resetThawFreezeState } from '../game/political/doctrine';
-import { resetBuildingTrudodni } from '../game/TrudodniSystem';
+import { resetBuildingTrudodni } from '../ai/agents/economy/EconomyAgent';
 import {
   closeBuildingInspector,
   closeCitizenDossier,

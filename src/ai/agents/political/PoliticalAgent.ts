@@ -25,31 +25,31 @@
  */
 
 import { Vehicle } from 'yuka';
-import { MSG } from '../telegrams';
+import { MSG } from '../../telegrams';
 
 // Re-export canonical types and definitions so callers can import from one place
-export type { EraId, EraModifiers, EraDefinition, EraSystemSaveData, EraCheckpoint, ConstructionMethod } from '../../game/era/types';
-export { ERA_ORDER, ERA_DEFINITIONS, ALL_BUILDING_IDS, eraIndexForYear } from '../../game/era/definitions';
-export type { QuotaResourceType, ResourceQuota, QuotaState } from '../../ecs/systems/quotaSystem';
+export type { EraId, EraModifiers, EraDefinition, EraSystemSaveData, EraCheckpoint, ConstructionMethod } from '../../../game/era/types';
+export { ERA_ORDER, ERA_DEFINITIONS, ALL_BUILDING_IDS, eraIndexForYear } from '../../../game/era/definitions';
+export type { QuotaResourceType, ResourceQuota, QuotaState } from '../../../ecs/systems/quotaSystem';
 export type {
   BuildingMandate,
   MandateWithFulfillment,
   PlanMandateState,
-} from '../../game/PlanMandates';
+} from '../../../game/PlanMandates';
 
-import { ERA_ORDER, ERA_DEFINITIONS, eraIndexForYear } from '../../game/era/definitions';
-import type { EraId, EraModifiers, EraDefinition } from '../../game/era/types';
-import type { QuotaState } from '../../ecs/systems/quotaSystem';
-import { createDefaultQuota, areAllQuotasMet } from '../../ecs/systems/quotaSystem';
-import type { BuildingMandate, MandateWithFulfillment, PlanMandateState } from '../../game/PlanMandates';
+import { ERA_ORDER, ERA_DEFINITIONS, eraIndexForYear } from '../../../game/era/definitions';
+import type { EraId, EraModifiers, EraDefinition } from '../../../game/era/types';
+import type { QuotaState } from '../../../ecs/systems/quotaSystem';
+import { createDefaultQuota, areAllQuotasMet } from '../../../ecs/systems/quotaSystem';
+import type { BuildingMandate, MandateWithFulfillment, PlanMandateState } from '../../../game/PlanMandates';
 import {
   createMandatesForEra,
   createPlanMandateState,
   getMandateFulfillment,
   allMandatesComplete,
   recordBuildingPlaced,
-} from '../../game/PlanMandates';
-import type { DifficultyLevel } from '../../game/ScoringSystem';
+} from '../../../game/PlanMandates';
+import type { DifficultyLevel } from '../../../game/ScoringSystem';
 
 // ---------------------------------------------------------------------------
 // Constants (absorbed from annualReportTick.ts)
@@ -737,3 +737,19 @@ export class PoliticalAgent extends Vehicle {
     };
   }
 }
+
+/** Backward-compat alias: EraSystem is now PoliticalAgent. */
+export { PoliticalAgent as EraSystem };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Re-exports from PlanMandates (so consumers import from one place)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  createMandatesForEra,
+  createPlanMandateState,
+  getMandateFulfillment,
+  isMandateComplete,
+  allMandatesComplete,
+  recordBuildingPlaced,
+} from '../../../game/PlanMandates';

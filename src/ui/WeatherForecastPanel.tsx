@@ -12,7 +12,7 @@ import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
 import { getSeasonForMonth, SEASON_TABLE } from '../game/Chronology';
-import { WEATHER_PROFILES, WeatherType } from '../game/WeatherSystem';
+import { WEATHER_PROFILES, WeatherType } from '../ai/agents/core/weather-types';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

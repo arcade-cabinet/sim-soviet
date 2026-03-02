@@ -1,5 +1,5 @@
-import { ChronologyAgent } from '../../src/ai/agents/ChronologyAgent';
-import type { ChronologyState } from '../../src/ai/agents/ChronologyAgent';
+import { ChronologyAgent } from '../../src/ai/agents/core/ChronologyAgent';
+import type { ChronologyState } from '../../src/ai/agents/core/ChronologyAgent';
 import { GameRng } from '../../src/game/SeedSystem';
 import { Season, DayPhase, TICKS_PER_DAY, TICKS_PER_MONTH, TICKS_PER_YEAR } from '../../src/game/Chronology';
 

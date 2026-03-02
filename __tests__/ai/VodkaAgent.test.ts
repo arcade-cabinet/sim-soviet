@@ -1,5 +1,5 @@
-import { VodkaAgent, GRAIN_TO_VODKA_RATIO, VODKA_MORALE_BONUS } from '../../src/ai/agents/VodkaAgent';
-import type { VodkaResourceView, VodkaAgentSnapshot } from '../../src/ai/agents/VodkaAgent';
+import { VodkaAgent, GRAIN_TO_VODKA_RATIO, VODKA_MORALE_BONUS } from '../../src/ai/agents/economy/VodkaAgent';
+import type { VodkaResourceView, VodkaAgentSnapshot } from '../../src/ai/agents/economy/VodkaAgent';
 
 function makeResources(overrides: Partial<VodkaResourceView> = {}): VodkaResourceView {
   return { food: 200, vodka: 0, population: 100, ...overrides };

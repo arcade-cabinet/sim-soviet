@@ -18,7 +18,7 @@ import {
   isMandateComplete,
   type PlanMandateState,
   recordBuildingPlaced,
-} from '@/game/PlanMandates';
+} from '@/ai/agents/political/PoliticalAgent';
 
 describe('PlanMandates', () => {
   beforeEach(() => {

@@ -14,7 +14,7 @@ import {
   initDiseaseSystem,
   progressDiseases,
   SICK_LABOR_MULT,
-} from '@/game/DiseaseSystem';
+} from '@/ai/agents/social/DefenseAgent';
 import type { GameRng } from '@/game/SeedSystem';
 import { createTestDvory } from '../playthrough/helpers';
 

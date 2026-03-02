@@ -53,13 +53,13 @@ import { world } from '@/ecs/world';
 import type { AchievementTrackerSaveData } from './AchievementTracker';
 import { AchievementTracker } from './AchievementTracker';
 import { TICKS_PER_YEAR } from './Chronology';
-import type { ChronologyState, TickResult } from './ChronologySystem';
-import { ChronologySystem } from './ChronologySystem';
-import { CollectivePlanner } from './CollectivePlanner';
+import type { ChronologyState, TickResult } from '../ai/agents/core/ChronologyAgent';
+import { ChronologySystem } from '../ai/agents/core/ChronologyAgent';
+import { CollectivePlanner } from '../ai/agents/infrastructure/CollectiveAgent';
 import type { CompulsoryDeliverySaveData } from './CompulsoryDeliveries';
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
-import { DISEASE_PRAVDA_HEADLINES, diseaseTick, initDiseaseSystem } from './DiseaseSystem';
-import { type EraId as EconomyEraId, type EconomySaveData, EconomySystem } from './economy';
+import { DISEASE_PRAVDA_HEADLINES, diseaseTick, initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
+import { type EraId as EconomyEraId, type EconomySaveData, EconomySystem } from '../ai/agents/economy/EconomyAgent';
 // ── Extracted helpers ──
 import {
   tickAchievements as tickAchievementsHelper,
@@ -91,14 +91,14 @@ import type { FireSystemSaveData } from './FireSystem';
 import { FireSystem } from './FireSystem';
 import type { GameGrid } from './GameGrid';
 import { createGameTally, type TallyData } from './GameTally';
-import { tickLoyalty } from './LoyaltySystem';
+import { tickLoyalty } from '../ai/agents/political/LoyaltyAgent';
 import { MinigameRouter } from './minigames/MinigameRouter';
 import type { ActiveMinigame, MinigameRouterSaveData } from './minigames/MinigameTypes';
 import type { PersonnelFileSaveData } from './PersonnelFile';
 import { PersonnelFile } from './PersonnelFile';
-import type { MandateWithFulfillment, PlanMandateState } from './PlanMandates';
-import { createMandatesForEra, createPlanMandateState, recordBuildingPlaced } from './PlanMandates';
-import { calculatePrivatePlotProduction } from './PrivatePlotSystem';
+import type { MandateWithFulfillment, PlanMandateState } from '../ai/agents/political/PoliticalAgent';
+import { createMandatesForEra, createPlanMandateState, recordBuildingPlaced } from '../ai/agents/political/PoliticalAgent';
+import { calculatePrivatePlotProduction } from '../ai/agents/economy/FoodAgent';
 import type { PolitburoSaveData } from './politburo';
 import { PolitburoSystem } from './politburo';
 import type { PoliticalEntitySaveData } from './political';
@@ -111,28 +111,28 @@ import type { GameRng } from './SeedSystem';
 import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from './SettlementSystem';
 import { SettlementSystem } from './SettlementSystem';
 import { type TransportSaveData, TransportSystem } from './TransportSystem';
-import { accrueTrudodni } from './TrudodniSystem';
+import { accrueTrudodni } from '../ai/agents/economy/EconomyAgent';
 import type { TutorialMilestone, TutorialSaveData } from './TutorialSystem';
 import { TutorialSystem } from './TutorialSystem';
-import { getWeatherProfile, type WeatherType } from './WeatherSystem';
-import { autoPlaceBuilding } from './workers/autoBuilder';
-import { detectConstructionDemands } from './workers/demandSystem';
+import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
+import { autoPlaceBuilding } from '../ai/agents/infrastructure/CollectiveAgent';
+import { detectConstructionDemands } from '../ai/agents/infrastructure/CollectiveAgent';
 import { WorkerSystem } from './workers/WorkerSystem';
 import { AgentManager } from '../ai/AgentManager';
 // ── Yuka agents (Phase 4) ──
-import { ChronologyAgent } from '../ai/agents/ChronologyAgent';
-import { WeatherAgent } from '../ai/agents/WeatherAgent';
-import { PowerAgent } from '../ai/agents/PowerAgent';
-import { FoodAgent } from '../ai/agents/FoodAgent';
-import { VodkaAgent } from '../ai/agents/VodkaAgent';
-import { StorageAgent } from '../ai/agents/StorageAgent';
-import { EconomyAgent } from '../ai/agents/EconomyAgent';
-import { CollectiveAgent } from '../ai/agents/CollectiveAgent';
-import { DemographicAgent } from '../ai/agents/DemographicAgent';
-import { KGBAgent } from '../ai/agents/KGBAgent';
-import { PoliticalAgent } from '../ai/agents/PoliticalAgent';
-import { DefenseAgent } from '../ai/agents/DefenseAgent';
-import { LoyaltyAgent } from '../ai/agents/LoyaltyAgent';
+import { ChronologyAgent } from '../ai/agents/core/ChronologyAgent';
+import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
+import { PowerAgent } from '../ai/agents/infrastructure/PowerAgent';
+import { FoodAgent } from '../ai/agents/economy/FoodAgent';
+import { VodkaAgent } from '../ai/agents/economy/VodkaAgent';
+import { StorageAgent } from '../ai/agents/economy/StorageAgent';
+import { EconomyAgent } from '../ai/agents/economy/EconomyAgent';
+import { CollectiveAgent } from '../ai/agents/infrastructure/CollectiveAgent';
+import { DemographicAgent } from '../ai/agents/social/DemographicAgent';
+import { KGBAgent } from '../ai/agents/political/KGBAgent';
+import { PoliticalAgent } from '../ai/agents/political/PoliticalAgent';
+import { DefenseAgent } from '../ai/agents/social/DefenseAgent';
+import { LoyaltyAgent } from '../ai/agents/political/LoyaltyAgent';
 
 /**
  * Callback interface for SimulationEngine → React communication.
@@ -1281,8 +1281,9 @@ export class SimulationEngine {
   // ── Context builders for extracted helpers ──
 
   private getMinigameContext() {
-    // Phase 4: Pass agents — structurally compatible with old system types.
-    // The 'as any' casts are temporary glue until extracted helpers accept agent types.
+    // TODO(cleanup): Remove 'as any' casts by updating extracted helpers to accept
+    // agent types (ChronologyAgent, KGBAgent) instead of legacy system types.
+    // Tracked as: Phase 5 — full agent-type migration for helper contexts.
     return {
       chronology: this.chronologyAgent as any,
       minigameRouter: this.minigameRouter,

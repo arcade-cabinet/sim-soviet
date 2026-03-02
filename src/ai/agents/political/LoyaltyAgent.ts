@@ -11,8 +11,8 @@
  */
 
 import { Vehicle } from 'yuka';
-import { dvory } from '../../ecs/archetypes';
-import { MSG } from '../telegrams';
+import { dvory } from '../../../ecs/archetypes';
+import { MSG } from '../../telegrams';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -242,4 +242,57 @@ export class LoyaltyAgent extends Vehicle {
   fromJSON(data: LoyaltyState): void {
     this.state = { ...data };
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Standalone function (backward-compat with deprecated LoyaltySystem.ts)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Standalone loyalty tick — operates on all dvory directly.
+ * Originally in LoyaltySystem.ts.
+ */
+export function tickLoyalty(
+  _eraId: string,
+  foodLevel: number,
+  _quotaMet: boolean,
+  rng?: { random(): number },
+): LoyaltyResult {
+  let sabotageCount = 0;
+  let flightCount = 0;
+  let loyaltySum = 0;
+  let dvorCount = 0;
+
+  for (const entity of dvory) {
+    const dvor = entity.dvor;
+    dvorCount++;
+
+    if (foodLevel > 0.7) {
+      dvor.loyaltyToCollective = Math.min(100, dvor.loyaltyToCollective + LOYALTY_GAIN_GOOD_FOOD);
+    } else if (foodLevel <= 0) {
+      dvor.loyaltyToCollective = Math.max(0, dvor.loyaltyToCollective + LOYALTY_LOSS_STARVATION);
+    }
+
+    const random = rng ? () => rng.random() : Math.random;
+
+    if (dvor.loyaltyToCollective < 20) {
+      if (random() < SABOTAGE_CHANCE) {
+        sabotageCount++;
+      }
+    }
+
+    if (dvor.loyaltyToCollective < 10) {
+      if (random() < FLIGHT_CHANCE) {
+        flightCount++;
+      }
+    }
+
+    loyaltySum += dvor.loyaltyToCollective;
+  }
+
+  return {
+    sabotageCount,
+    flightCount,
+    avgLoyalty: dvorCount > 0 ? loyaltySum / dvorCount : 50,
+  };
 }

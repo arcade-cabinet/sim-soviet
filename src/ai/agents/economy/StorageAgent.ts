@@ -11,7 +11,7 @@
 import { Vehicle } from 'yuka';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { buildingsLogic, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
-import { MSG } from '../telegrams';
+import { MSG } from '../../telegrams';
 
 // ---------------------------------------------------------------------------
 // Constants

@@ -11,8 +11,8 @@
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
-import type { HeatingTier, TransferableResource } from '../game/economy';
-import { HEATING_CONFIGS } from '../game/economy';
+import type { HeatingTier, TransferableResource } from '../ai/agents/economy/EconomyAgent';
+import { HEATING_CONFIGS } from '../ai/agents/economy/EconomyAgent';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

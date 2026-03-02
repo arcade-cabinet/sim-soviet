@@ -13,7 +13,7 @@
 
 import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
-import { detectConstructionDemands } from '@/game/workers/demandSystem';
+import { detectConstructionDemands } from '@/ai/agents/infrastructure/CollectiveAgent';
 import { createTestDvory } from '../playthrough/helpers';
 
 describe('DemandSystem', () => {

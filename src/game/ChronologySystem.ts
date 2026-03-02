@@ -34,7 +34,7 @@ import {
   rollWeather,
   type WeatherState,
   type WeatherType,
-} from './WeatherSystem';
+} from '../ai/agents/core/weather-types';
 
 // ─────────────────────────────────────────────────────────
 //  TICK RESULT

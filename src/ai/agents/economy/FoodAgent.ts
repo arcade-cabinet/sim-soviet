@@ -16,7 +16,7 @@ import { Vehicle } from 'yuka';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { citizens, dvory, getResourceEntity, producers } from '@/ecs/archetypes';
 import { RETIREMENT_AGE } from '@/ecs/factories/demographics';
-import { MSG } from '../telegrams';
+import { MSG } from '../../telegrams';
 import type { EraId } from '@/game/era/types';
 
 // ---------------------------------------------------------------------------
@@ -482,4 +482,35 @@ export class FoodAgent extends Vehicle {
 
     return effective;
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Standalone function exports (backward-compat with deprecated files)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const _sharedFoodAgent = new FoodAgent();
+
+/**
+ * Calculate private plot food output for a given era.
+ * Standalone wrapper (was in PrivatePlotSystem.ts).
+ */
+export function calculatePrivatePlotProduction(eraId: string): number {
+  return _sharedFoodAgent.calculatePrivatePlotProduction(eraId);
+}
+
+/**
+ * Effective workers with overstaffing diminishing returns.
+ * Standalone export (was in productionSystem.ts).
+ */
+export function effectiveWorkers(workers: number, staffCap: number): number {
+  if (staffCap <= 0 || workers <= staffCap) return workers;
+  let effective = staffCap;
+  const extra = workers - staffCap;
+  let contribution = 0.5;
+  for (let i = 0; i < extra; i++) {
+    if (contribution < OVERSTAFFING_MIN_CONTRIBUTION) break;
+    effective += contribution;
+    contribution *= 0.5;
+  }
+  return effective;
 }

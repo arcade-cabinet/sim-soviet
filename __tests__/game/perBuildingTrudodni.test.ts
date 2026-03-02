@@ -13,7 +13,7 @@ import {
   getBuildingTrudodni,
   resetBuildingTrudodni,
   TRUDODNI_VALUES,
-} from '@/game/TrudodniSystem';
+} from '@/ai/agents/economy/EconomyAgent';
 
 describe('PerBuildingTrudodni', () => {
   beforeEach(() => {

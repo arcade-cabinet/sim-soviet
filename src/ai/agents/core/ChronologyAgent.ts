@@ -22,15 +22,15 @@ import {
   type Season,
   type SeasonProfile,
   TICKS_PER_YEAR,
-} from '../../game/Chronology';
-import type { GameRng } from '../../game/SeedSystem';
+} from '../../../game/Chronology';
+import type { GameRng } from '../../../game/SeedSystem';
 import {
   createWeatherState,
   getWeatherProfile,
   rollWeather,
   type WeatherState,
   type WeatherType,
-} from '../../game/WeatherSystem';
+} from './weather-types';
 
 // ─────────────────────────────────────────────────────────
 //  TICK RESULT
@@ -243,3 +243,6 @@ export class ChronologyAgent extends Vehicle {
     return agent;
   }
 }
+
+/** Backward-compat alias: ChronologySystem is now ChronologyAgent. */
+export { ChronologyAgent as ChronologySystem };

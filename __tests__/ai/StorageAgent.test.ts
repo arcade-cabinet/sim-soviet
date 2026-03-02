@@ -1,5 +1,5 @@
-import { StorageAgent } from '../../src/ai/agents/StorageAgent';
-import type { StorageState } from '../../src/ai/agents/StorageAgent';
+import { StorageAgent } from '../../src/ai/agents/economy/StorageAgent';
+import type { StorageState } from '../../src/ai/agents/economy/StorageAgent';
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';

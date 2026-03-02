@@ -5,8 +5,8 @@
  * The world module is mocked to inject controlled building entities.
  */
 
-import { PowerAgent } from '../../src/ai/agents/PowerAgent';
-import type { PowerAgentState } from '../../src/ai/agents/PowerAgent';
+import { PowerAgent } from '../../src/ai/agents/infrastructure/PowerAgent';
+import type { PowerAgentState } from '../../src/ai/agents/infrastructure/PowerAgent';
 import { MSG } from '../../src/ai/telegrams';
 
 // ---------------------------------------------------------------------------

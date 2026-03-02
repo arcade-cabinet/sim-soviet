@@ -12,7 +12,7 @@ import { evaluateQuota } from '../goals/QuotaGoal';
 import { evaluatePolitical, type PoliticalInputs } from '../goals/PoliticalGoal';
 import { evaluateGrowth } from '../goals/GrowthGoal';
 import { evaluateDefense } from '../goals/DefenseGoal';
-import type { CollectiveFocus } from '../../game/workers/governor';
+import type { CollectiveFocus } from './infrastructure/CollectiveAgent';
 
 /** Simplified minigame choice for AI evaluation. */
 interface AIMinigameChoice {

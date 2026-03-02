@@ -11,13 +11,13 @@
  */
 
 import { Vehicle } from 'yuka';
-import { MSG } from '../telegrams';
+import { MSG } from '../../telegrams';
 import type {
   KGBInformant,
   KGBInvestigation,
   PoliticalEntityStats,
   PoliticalTickResult,
-} from '../../game/political/types';
+} from '../../../game/political/types';
 
 // ─────────────────────────────────────────────────────────
 //  Re-export types from PersonnelFile so callers can migrate
@@ -777,3 +777,6 @@ export class KGBAgent extends Vehicle {
     };
   }
 }
+
+/** Backward-compat alias: PersonnelFile is now KGBAgent. */
+export { KGBAgent as PersonnelFile };

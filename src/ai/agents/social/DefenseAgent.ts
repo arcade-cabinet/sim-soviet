@@ -24,15 +24,15 @@
 
 import { Vehicle } from 'yuka';
 import type { With } from 'miniplex';
-import { GRID_SIZE } from '../../config';
-import { buildingsLogic, operationalBuildings, citizens, getResourceEntity, housing as housingArchetype } from '../../ecs/archetypes';
-import type { Entity, CitizenDisease } from '../../ecs/world';
-import { world } from '../../ecs/world';
-import { TICKS_PER_MONTH } from '../../game/Chronology';
-import type { GameGrid } from '../../game/GameGrid';
-import type { GameRng } from '../../game/SeedSystem';
-import { WeatherType } from '../../game/WeatherSystem';
-import { MSG } from '../telegrams';
+import { GRID_SIZE } from '../../../config';
+import { buildingsLogic, operationalBuildings, citizens, getResourceEntity, housing as housingArchetype } from '../../../ecs/archetypes';
+import type { Entity, CitizenDisease } from '../../../ecs/world';
+import { world } from '../../../ecs/world';
+import { TICKS_PER_MONTH } from '../../../game/Chronology';
+import type { GameGrid } from '../../../game/GameGrid';
+import type { GameRng } from '../../../game/SeedSystem';
+import { WeatherType } from '../core/weather-types';
+import { MSG } from '../../telegrams';
 
 // ─── Fire Constants ───────────────────────────────────────────────────────────
 
@@ -760,3 +760,21 @@ export class DefenseAgent extends Vehicle {
     this.zeppelins = snapshot.zeppelins.map((z) => ({ ...z }));
   }
 }
+
+/** Backward-compat alias: FireSystem is now DefenseAgent. */
+export { DefenseAgent as FireSystem };
+/** Backward-compat type alias for FireSystem save data. */
+export type FireSystemSaveData = DefenseAgentSnapshot;
+
+// Re-export disease system functions (from disease.ts, originally DiseaseSystem.ts)
+export {
+  diseaseTick,
+  initDiseaseSystem,
+  DISEASE_PRAVDA_HEADLINES,
+  calcOutbreakModifier,
+  checkOutbreaks,
+  clinicPreventionFactor,
+  progressDiseases,
+  SICK_LABOR_MULT,
+  type DiseaseTickResult,
+} from './disease';

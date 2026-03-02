@@ -25,7 +25,7 @@ import { world } from '@/ecs/world';
 
 import type { GameGrid } from './GameGrid';
 import type { GameRng } from './SeedSystem';
-import { WeatherType } from './WeatherSystem';
+import { WeatherType } from '../ai/agents/core/weather-types';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 

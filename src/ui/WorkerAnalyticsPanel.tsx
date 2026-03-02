@@ -15,7 +15,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
 import { citizens } from '../ecs/archetypes';
 import { CLASS_ORDER } from '../game/workers/constants';
-import type { CollectiveFocus } from '../game/workers/governor';
+import type { CollectiveFocus } from '../ai/agents/infrastructure/CollectiveAgent';
 import type { WorkerDisplayInfo } from '../game/workers/types';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';

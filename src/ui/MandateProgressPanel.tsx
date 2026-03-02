@@ -11,8 +11,8 @@
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
-import type { MandateWithFulfillment } from '../game/PlanMandates';
-import { getMandateFulfillment, isMandateComplete } from '../game/PlanMandates';
+import type { MandateWithFulfillment } from '../ai/agents/political/PoliticalAgent';
+import { getMandateFulfillment, isMandateComplete } from '../ai/agents/political/PoliticalAgent';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

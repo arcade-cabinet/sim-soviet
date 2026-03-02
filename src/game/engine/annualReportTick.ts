@@ -17,11 +17,11 @@
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
 import { getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
-import type { ChronologySystem } from '../ChronologySystem';
+import type { ChronologySystem } from '../../ai/agents/core/ChronologyAgent';
 import type { CompulsoryDeliveries } from '../CompulsoryDeliveries';
-import type { PersonnelFile } from '../PersonnelFile';
-import type { MandateWithFulfillment, PlanMandateState } from '../PlanMandates';
-import { allMandatesComplete, getMandateFulfillment } from '../PlanMandates';
+import type { PersonnelFile } from '../../ai/agents/political/KGBAgent';
+import type { MandateWithFulfillment, PlanMandateState } from '../../ai/agents/political/PoliticalAgent';
+import { allMandatesComplete, getMandateFulfillment } from '../../ai/agents/political/PoliticalAgent';
 import type { ScoringSystem } from '../ScoringSystem';
 import type { GameRng } from '../SeedSystem';
 import type { SimCallbacks } from '../SimulationEngine';

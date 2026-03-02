@@ -23,7 +23,7 @@ import {
   findBestAssignment,
   HUNGER_CRISIS_THRESHOLD,
   runGovernor,
-} from '@/game/workers/governor';
+} from '@/ai/agents/infrastructure/CollectiveAgent';
 import type { WorkerStats } from '@/game/workers/types';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@
  * - Non-cold seasons don't trigger heating overlay
  */
 
-import { EconomySystem } from '../../src/game/economy';
+import { EconomySystem } from '../../src/ai/agents/economy/EconomyAgent';
 
 /** Mirrors the isColdSeason logic from HeatingOverlay.tsx. */
 function isColdSeason(season: string): boolean {

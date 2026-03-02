@@ -7,8 +7,8 @@ import {
   DemographicAgent,
   ERA_BIRTH_RATE_MULTIPLIER,
   getWorkingMotherPenalty,
-} from '../../src/ai/agents/DemographicAgent';
-import type { DemographicAgentSnapshot } from '../../src/ai/agents/DemographicAgent';
+} from '../../src/ai/agents/social/DemographicAgent';
+import type { DemographicAgentSnapshot } from '../../src/ai/agents/social/DemographicAgent';
 
 // ── Deterministic RNG ────────────────────────────────────────────────────────
 

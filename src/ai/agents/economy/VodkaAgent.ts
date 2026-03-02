@@ -12,7 +12,7 @@
  */
 
 import { Vehicle } from 'yuka';
-import { MSG } from '../telegrams';
+import { MSG } from '../../telegrams';
 
 // ─────────────────────────────────────────────────────────
 //  Constants

@@ -12,13 +12,13 @@
  */
 
 import { Vehicle } from 'yuka';
-import { FEMALE_GIVEN_NAMES, MALE_GIVEN_NAMES, PATRONYMIC_RULES, SURNAMES_RAW } from '../names';
-import { dvory } from '../../ecs/archetypes';
-import { laborCapacityForAge, memberRoleForAge } from '../../ecs/factories';
-import type { DvorComponent, DvorMember } from '../../ecs/world';
-import { world } from '../../ecs/world';
-import { TICKS_PER_MONTH, TICKS_PER_YEAR } from '../../game/Chronology';
-import type { GameRng } from '../../game/SeedSystem';
+import { FEMALE_GIVEN_NAMES, MALE_GIVEN_NAMES, PATRONYMIC_RULES, SURNAMES_RAW } from '../../names';
+import { dvory } from '../../../ecs/archetypes';
+import { laborCapacityForAge, memberRoleForAge } from '../../../ecs/factories';
+import type { DvorComponent, DvorMember } from '../../../ecs/world';
+import { world } from '../../../ecs/world';
+import { TICKS_PER_MONTH, TICKS_PER_YEAR } from '../../../game/Chronology';
+import type { GameRng } from '../../../game/SeedSystem';
 
 // ── Re-exported types ──────────────────────────────────────────────────────
 

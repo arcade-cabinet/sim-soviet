@@ -9,7 +9,7 @@
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
-import type { FileEntry } from '../game/PersonnelFile';
+import type { FileEntry } from '../ai/agents/political/KGBAgent';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

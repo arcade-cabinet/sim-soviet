@@ -6,11 +6,11 @@
  */
 
 import { getResourceEntity } from '@/ecs/archetypes';
-import type { ChronologySystem } from '../ChronologySystem';
+import type { ChronologySystem } from '../../ai/agents/core/ChronologyAgent';
 import { resolveBuildingTrigger } from '../minigames/BuildingMinigameMap';
 import type { MinigameRouter } from '../minigames/MinigameRouter';
 import type { MinigameOutcome } from '../minigames/MinigameTypes';
-import type { PersonnelFile } from '../PersonnelFile';
+import type { PersonnelFile } from '../../ai/agents/political/KGBAgent';
 import type { SimCallbacks } from '../SimulationEngine';
 
 /** Subset of SimulationEngine state needed by minigame helpers. */

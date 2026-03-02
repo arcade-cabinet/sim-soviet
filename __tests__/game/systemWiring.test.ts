@@ -19,7 +19,7 @@ import { PoliticalEntitySystem } from '@/game/political/PoliticalEntitySystem';
 import type { ConscriptionEvent, OrgnaborEvent, PoliticalTickResult } from '@/game/political/types';
 import { DIFFICULTY_PRESETS } from '@/game/ScoringSystem';
 import { SimulationEngine } from '@/game/SimulationEngine';
-import { WEATHER_PROFILES, WeatherType } from '@/game/WeatherSystem';
+import { WEATHER_PROFILES, WeatherType } from '@/ai/agents/core/weather-types';
 import { applyMorale } from '@/game/workers/classes';
 import { HEATING_FAILURE_MORALE_PENALTY } from '@/game/workers/constants';
 import { createTestDvory } from '../playthrough/helpers';

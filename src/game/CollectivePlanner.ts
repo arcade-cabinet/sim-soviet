@@ -13,8 +13,8 @@
  * defId is skipped (mandates take precedence as they are state-mandated).
  */
 
-import type { PlanMandateState } from './PlanMandates';
-import type { ConstructionDemand, DemandPriority } from './workers/demandSystem';
+import type { PlanMandateState } from '../ai/agents/political/PoliticalAgent';
+import type { ConstructionDemand, DemandPriority } from '../ai/agents/infrastructure/CollectiveAgent';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

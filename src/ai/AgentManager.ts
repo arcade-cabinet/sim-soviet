@@ -7,19 +7,19 @@
 
 import { EntityManager } from 'yuka';
 import { ChairmanAgent } from './agents/ChairmanAgent';
-import { ChronologyAgent } from './agents/ChronologyAgent';
-import { WeatherAgent } from './agents/WeatherAgent';
-import { PowerAgent } from './agents/PowerAgent';
-import { FoodAgent } from './agents/FoodAgent';
-import { VodkaAgent } from './agents/VodkaAgent';
-import { StorageAgent } from './agents/StorageAgent';
-import { EconomyAgent } from './agents/EconomyAgent';
-import { CollectiveAgent } from './agents/CollectiveAgent';
-import { DemographicAgent } from './agents/DemographicAgent';
-import { KGBAgent } from './agents/KGBAgent';
-import { PoliticalAgent } from './agents/PoliticalAgent';
-import { DefenseAgent } from './agents/DefenseAgent';
-import { LoyaltyAgent } from './agents/LoyaltyAgent';
+import { ChronologyAgent } from './agents/core/ChronologyAgent';
+import { WeatherAgent } from './agents/core/WeatherAgent';
+import { PowerAgent } from './agents/infrastructure/PowerAgent';
+import { FoodAgent } from './agents/economy/FoodAgent';
+import { VodkaAgent } from './agents/economy/VodkaAgent';
+import { StorageAgent } from './agents/economy/StorageAgent';
+import { EconomyAgent } from './agents/economy/EconomyAgent';
+import { CollectiveAgent } from './agents/infrastructure/CollectiveAgent';
+import { DemographicAgent } from './agents/social/DemographicAgent';
+import { KGBAgent } from './agents/political/KGBAgent';
+import { PoliticalAgent } from './agents/political/PoliticalAgent';
+import { DefenseAgent } from './agents/social/DefenseAgent';
+import { LoyaltyAgent } from './agents/political/LoyaltyAgent';
 
 /** Serialized AgentManager state for save/load. */
 export interface AgentManagerSaveData {

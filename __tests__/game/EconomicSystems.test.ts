@@ -1,9 +1,9 @@
 import { createCitizen, createDvor } from '../../src/ecs/factories';
 import type { DvorComponent } from '../../src/ecs/world';
 import { world } from '../../src/ecs/world';
-import { tickLoyalty } from '../../src/game/LoyaltySystem';
-import { calculatePrivatePlotProduction } from '../../src/game/PrivatePlotSystem';
-import { accrueTrudodni, defaultCategory, TRUDODNI_VALUES } from '../../src/game/TrudodniSystem';
+import { tickLoyalty } from '../../src/ai/agents/political/LoyaltyAgent';
+import { calculatePrivatePlotProduction } from '../../src/ai/agents/economy/FoodAgent';
+import { accrueTrudodni, defaultCategory, TRUDODNI_VALUES } from '../../src/ai/agents/economy/EconomyAgent';
 
 /** Helper to create a dvor entity with specified parameters. */
 function makeDvor(

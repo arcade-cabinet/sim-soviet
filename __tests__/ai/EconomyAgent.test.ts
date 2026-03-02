@@ -7,7 +7,7 @@
  * machine transitions, and serialization round-trip.
  */
 
-import { EconomyAgent } from '../../src/ai/agents/EconomyAgent';
+import { EconomyAgent } from '../../src/ai/agents/economy/EconomyAgent';
 import {
   BLAT_SAFE_THRESHOLD,
   BLAT_ARREST_THRESHOLD,
@@ -15,7 +15,7 @@ import {
   MINIMUM_TRUDODNI_BY_DIFFICULTY,
   FONDY_BY_ERA,
   RATION_PERIODS,
-} from '../../src/ai/agents/EconomyAgent';
+} from '../../src/ai/agents/economy/EconomyAgent';
 
 // ---------------------------------------------------------------------------
 // Helpers

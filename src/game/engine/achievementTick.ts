@@ -7,7 +7,7 @@
 
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import type { AchievementTracker } from '../AchievementTracker';
-import type { ChronologySystem } from '../ChronologySystem';
+import type { ChronologySystem } from '../../ai/agents/core/ChronologyAgent';
 import type { SimCallbacks } from '../SimulationEngine';
 import type { TutorialSystem } from '../TutorialSystem';
 

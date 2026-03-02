@@ -17,8 +17,8 @@
  */
 
 import { Vehicle } from 'yuka';
-import { MSG } from '../telegrams';
-import type { GameRng } from '../../game/SeedSystem';
+import { MSG } from '../../telegrams';
+import type { GameRng } from '../../../game/SeedSystem';
 
 // Re-export key types from economy.ts for consumers
 export type {
@@ -53,14 +53,13 @@ export type {
   EconomyTickResult,
   ConsumerGoodsState,
   EconomySaveData,
-} from '../../game/economy';
+} from '../../../game/economy';
 
 import {
   // Constants
   BLAT_SAFE_THRESHOLD,
   BLAT_ARREST_THRESHOLD,
   KGB_INVESTIGATION_CHANCE_PER_POINT,
-  TRUDODNI_VALUES,
   MINIMUM_TRUDODNI_BY_DIFFICULTY,
   TRUDODNI_PER_BUILDING,
   DEFAULT_TRUDODNI,
@@ -120,11 +119,11 @@ import {
   type ConsumerGoodsState,
   type EconomySaveData,
   type RemainderAllocation,
-} from '../../game/economy';
+} from '../../../game/economy';
 
-import { defaultCategory } from '../../game/TrudodniSystem';
-import type { MemberRole } from '../../ecs/world';
-import { citizens, dvory } from '../../ecs/archetypes';
+import { defaultCategory, TRUDODNI_VALUES } from './trudodni';
+import type { MemberRole } from '../../../ecs/world';
+import { citizens, dvory } from '../../../ecs/archetypes';
 
 // ---------------------------------------------------------------------------
 // Constants (re-exported for consumers)
@@ -133,7 +132,6 @@ import { citizens, dvory } from '../../ecs/archetypes';
 export {
   BLAT_SAFE_THRESHOLD,
   BLAT_ARREST_THRESHOLD,
-  TRUDODNI_VALUES,
   MINIMUM_TRUDODNI_BY_DIFFICULTY,
   FONDY_BY_ERA,
   RATION_PERIODS,
@@ -1086,7 +1084,6 @@ export {
   getDifficultyMultipliers,
   findPendingReform,
   applyCurrencyReform,
-  defaultCategory,
   TRUDODNI_PER_BUILDING,
   DEFAULT_TRUDODNI,
   QUOTA_MET_ESCALATION,
@@ -1097,3 +1094,17 @@ export {
   DEFAULT_RATIONS,
   PRODUCTION_CHAINS,
 };
+
+/** Backward-compat alias: EconomySystem is now EconomyAgent. */
+export { EconomyAgent as EconomySystem };
+
+// Re-export trudodni tracking functions (from trudodni.ts, originally TrudodniSystem.ts)
+export { TRUDODNI_VALUES, defaultCategory };
+export {
+  accrueTrudodni,
+  resetBuildingTrudodni,
+  getBuildingTrudodni,
+  getAllBuildingTrudodni,
+  type TrudodniCategory,
+  type TrudodniAccrualResult,
+} from './trudodni';
