@@ -25,7 +25,7 @@ export interface GameSnapshot {
   buildingCount: number;
   gameOver: GameMeta['gameOver'];
   paused: boolean;
-  gameSpeed: 1 | 2 | 3;
+  gameSpeed: GameSpeed;
   leaderName?: string;
   leaderPersonality?: string;
   settlementTier: 'selo' | 'posyolok' | 'pgt' | 'gorod';
@@ -190,8 +190,11 @@ function subscribeDrag(listener: () => void): () => void {
 
 // ── Pause & Speed State ──────────────────────────────────────────────────
 
+/** Simulation speed multiplier: 1 = normal, 2 = double, 3 = triple, 10 = fast-forward, 100 = turbo. */
+export type GameSpeed = 1 | 2 | 3 | 10 | 100;
+
 let _paused = false;
-let _gameSpeed: 1 | 2 | 3 = 1;
+let _gameSpeed: GameSpeed = 1;
 
 /** Whether the game simulation is currently paused. */
 export function isPaused(): boolean {
@@ -215,9 +218,6 @@ export function setPaused(paused: boolean): void {
   notifyStateChange();
 }
 
-/** Simulation speed multiplier: 1 = normal, 2 = double, 3 = triple. */
-export type GameSpeed = 1 | 2 | 3;
-
 /** Get the current game simulation speed. */
 export function getGameSpeed(): GameSpeed {
   return _gameSpeed;
@@ -230,12 +230,14 @@ export function setGameSpeed(speed: GameSpeed): void {
 }
 
 /**
- * Cycle through game speeds: 1 -> 2 -> 3 -> 1.
+ * Cycle through game speeds: 1 -> 2 -> 3 -> 10 -> 100 -> 1.
  *
  * @returns The new game speed after cycling
  */
 export function cycleGameSpeed(): GameSpeed {
-  _gameSpeed = (_gameSpeed === 3 ? 1 : _gameSpeed + 1) as GameSpeed;
+  const cycle: GameSpeed[] = [1, 2, 3, 10, 100];
+  const idx = cycle.indexOf(_gameSpeed);
+  _gameSpeed = cycle[(idx + 1) % cycle.length];
   notifyStateChange();
   return _gameSpeed;
 }

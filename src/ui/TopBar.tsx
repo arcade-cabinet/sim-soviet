@@ -246,6 +246,8 @@ export const TopBar: React.FC<TopBarProps> = ({
             <SpeedButton label={'\u25B6'} value={1} active={speed === 1} onPress={onSetSpeed} />
             <SpeedButton label={'\u25B6\u25B6'} value={2} active={speed === 2} onPress={onSetSpeed} />
             <SpeedButton label={'\u25B6\u25B6\u25B6'} value={3} active={speed === 3} onPress={onSetSpeed} />
+            <SpeedButton label={'\u23E9'} value={10} active={speed === 10} onPress={onSetSpeed} />
+            <SpeedButton label={'\u23E9\u23E9'} value={100} active={speed === 100} onPress={onSetSpeed} />
           </View>
         </View>
       </View>

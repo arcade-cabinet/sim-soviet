@@ -78,10 +78,12 @@ describe('gameStore — extended', () => {
       expect(getGameSpeed()).toBe(3);
     });
 
-    it('cycleGameSpeed cycles 1 → 2 → 3 → 1', () => {
+    it('cycleGameSpeed cycles 1 → 2 → 3 → 10 → 100 → 1', () => {
       expect(getGameSpeed()).toBe(1);
       expect(cycleGameSpeed()).toBe(2);
       expect(cycleGameSpeed()).toBe(3);
+      expect(cycleGameSpeed()).toBe(10);
+      expect(cycleGameSpeed()).toBe(100);
       expect(cycleGameSpeed()).toBe(1);
     });
 
