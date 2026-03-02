@@ -119,6 +119,20 @@ import { autoPlaceBuilding } from './workers/autoBuilder';
 import { detectConstructionDemands } from './workers/demandSystem';
 import { WorkerSystem } from './workers/WorkerSystem';
 import { AgentManager } from '../ai/AgentManager';
+// ── Yuka agents (Phase 4) ──
+import { ChronologyAgent } from '../ai/agents/ChronologyAgent';
+import { WeatherAgent } from '../ai/agents/WeatherAgent';
+import { PowerAgent } from '../ai/agents/PowerAgent';
+import { FoodAgent } from '../ai/agents/FoodAgent';
+import { VodkaAgent } from '../ai/agents/VodkaAgent';
+import { StorageAgent } from '../ai/agents/StorageAgent';
+import { EconomyAgent } from '../ai/agents/EconomyAgent';
+import { CollectiveAgent } from '../ai/agents/CollectiveAgent';
+import { DemographicAgent } from '../ai/agents/DemographicAgent';
+import { KGBAgent } from '../ai/agents/KGBAgent';
+import { PoliticalAgent } from '../ai/agents/PoliticalAgent';
+import { DefenseAgent } from '../ai/agents/DefenseAgent';
+import { LoyaltyAgent } from '../ai/agents/LoyaltyAgent';
 
 /**
  * Callback interface for SimulationEngine → React communication.
@@ -254,6 +268,7 @@ const COLLECTIVE_CHECK_INTERVAL = 30;
  * and bridges results to UI via callback hooks.
  */
 export class SimulationEngine {
+  // ── Old systems (kept — no agent yet) ───────────────────
   private chronology: ChronologySystem;
   private eraSystem: EraSystem;
   private economySystem: EconomySystem;
@@ -273,6 +288,23 @@ export class SimulationEngine {
   private collectivePlanner = new CollectivePlanner();
   private transport: TransportSystem;
   private fireSystem: FireSystem;
+
+  // ── Yuka agents (Phase 4 — registered in AgentManager) ──
+  private chronologyAgent!: ChronologyAgent;
+  private weatherAgent!: WeatherAgent;
+  private powerAgent!: PowerAgent;
+  private foodAgent!: FoodAgent;
+  private vodkaAgent!: VodkaAgent;
+  private storageAgent!: StorageAgent;
+  private economyAgent!: EconomyAgent;
+  private collectiveAgent!: CollectiveAgent;
+  private demographicAgent!: DemographicAgent;
+  private kgbAgent!: KGBAgent;
+  private politicalAgent!: PoliticalAgent;
+  private defenseAgent!: DefenseAgent;
+  private loyaltyAgent!: LoyaltyAgent;
+
+  // ── Engine state ────────────────────────────────────────
   private difficulty: DifficultyLevel;
   private quota: QuotaState;
   private rng: GameRng | undefined;
@@ -324,7 +356,7 @@ export class SimulationEngine {
     // Era System — determines historical period, modifiers, building gates
     this.eraSystem = new EraSystem(startYear);
 
-    // Economy System — trudodni, fondy, blat, rations, stakhanovite, MTS, heating, reforms
+    // Economy System — trudodni, fondy, blat, rations, stakhanovite, MTS, heating, reforms (legacy)
     const economyEra = GAME_ERA_TO_ECONOMY_ERA[this.eraSystem.getCurrentEraId()] ?? 'revolution';
     this.economySystem = new EconomySystem(economyEra, difficulty ?? 'comrade');
     if (rng) this.economySystem.setRng(rng);
@@ -349,8 +381,9 @@ export class SimulationEngine {
       }
 
       // Fire-triggering events ignite a random building
+      // Phase 4: DefenseAgent replaces FireSystem
       if (FIRE_EVENT_IDS.has(event.id)) {
-        this.fireSystem.igniteRandom();
+        this.defenseAgent.igniteRandom();
       }
 
       // Route events to minigame system — event-triggered minigames
@@ -436,6 +469,67 @@ export class SimulationEngine {
     // AgentManager — Yuka EntityManager wrapper for autopilot AI
     this.agentManager = new AgentManager();
 
+    // ── Instantiate and register Yuka agents (Phase 4) ──
+    this.chronologyAgent = new ChronologyAgent(
+      rng ??
+        ({
+          random: () => Math.random(),
+          int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
+          pick: <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!,
+        } as GameRng),
+      startYear,
+    );
+    this.agentManager.registerChronology(this.chronologyAgent);
+
+    this.weatherAgent = new WeatherAgent();
+    this.agentManager.registerWeather(this.weatherAgent);
+
+    this.powerAgent = new PowerAgent();
+    this.agentManager.registerPower(this.powerAgent);
+
+    this.foodAgent = new FoodAgent();
+    this.agentManager.registerFood(this.foodAgent);
+
+    this.vodkaAgent = new VodkaAgent();
+    this.agentManager.registerVodka(this.vodkaAgent);
+
+    this.storageAgent = new StorageAgent();
+    this.agentManager.registerStorage(this.storageAgent);
+
+    this.economyAgent = new EconomyAgent(economyEra, difficulty ?? 'comrade');
+    if (rng) this.economyAgent.setRng(rng);
+    this.economyAgent.markReformsBeforeYear(startYear);
+    this.agentManager.registerEconomy(this.economyAgent);
+
+    this.collectiveAgent = new CollectiveAgent();
+    this.agentManager.registerCollective(this.collectiveAgent);
+
+    this.demographicAgent = new DemographicAgent();
+    this.agentManager.registerDemographic(this.demographicAgent);
+
+    this.kgbAgent = new KGBAgent(this.difficulty);
+    if (rng) this.kgbAgent.setRng(rng);
+    this.agentManager.registerKGB(this.kgbAgent);
+
+    this.politicalAgent = new PoliticalAgent(startYear);
+    this.politicalAgent.generateMandatesForCurrentEra(this.difficulty);
+    this.agentManager.registerPolitical(this.politicalAgent);
+
+    this.defenseAgent = new DefenseAgent(rng, {
+      onBuildingCollapsed: (gridX, gridY, defId) => {
+        this.callbacks.onToast(`FIRE DESTROYED: ${defId} at (${gridX}, ${gridY})`, 'critical');
+        this.callbacks.onBuildingCollapsed?.(gridX, gridY, defId);
+      },
+      onFireStarted: (gridX, gridY) => {
+        this.callbacks.onToast(`FIRE AT (${gridX}, ${gridY})`, 'warning');
+      },
+    });
+    this.agentManager.registerDefense(this.defenseAgent);
+
+    this.loyaltyAgent = new LoyaltyAgent();
+    if (rng) this.loyaltyAgent.setRng(rng);
+    this.agentManager.registerLoyalty(this.loyaltyAgent);
+
     // Wire ECS callbacks to UI
     setStarvationCallback(() => {
       this.callbacks.onToast('STARVATION DETECTED', 'critical');
@@ -466,11 +560,13 @@ export class SimulationEngine {
   }
 
   public getChronology(): ChronologySystem {
-    return this.chronology;
+    // Phase 4: Return ChronologyAgent — structurally compatible with ChronologySystem
+    return this.chronologyAgent as any;
   }
 
   public getPersonnelFile(): PersonnelFile {
-    return this.personnelFile;
+    // Phase 4: Return KGBAgent — structurally compatible with PersonnelFile
+    return this.kgbAgent as any;
   }
 
   public getDeliveries(): CompulsoryDeliveries {
@@ -482,11 +578,13 @@ export class SimulationEngine {
   }
 
   public getEraSystem(): EraSystem {
-    return this.eraSystem;
+    // Phase 4: Return PoliticalAgent — structurally compatible with EraSystem
+    return this.politicalAgent as any;
   }
 
   public getEconomySystem(): EconomySystem {
-    return this.economySystem;
+    // Phase 4: Return EconomyAgent — structurally compatible with EconomySystem
+    return this.economyAgent as any;
   }
 
   public getPoliticalEntities(): PoliticalEntitySystem {
@@ -516,7 +614,8 @@ export class SimulationEngine {
   }
 
   public getFireSystem(): FireSystem {
-    return this.fireSystem;
+    // Phase 4: Return DefenseAgent — structurally compatible with FireSystem
+    return this.defenseAgent as any;
   }
 
   public getAchievements(): AchievementTracker {
@@ -525,6 +624,60 @@ export class SimulationEngine {
 
   public getQuota(): Readonly<QuotaState> {
     return this.quota;
+  }
+
+  // ── Agent getters (Phase 4) ─────────────────────────────
+
+  public getChronologyAgent(): ChronologyAgent {
+    return this.chronologyAgent;
+  }
+
+  public getWeatherAgent(): WeatherAgent {
+    return this.weatherAgent;
+  }
+
+  public getPowerAgent(): PowerAgent {
+    return this.powerAgent;
+  }
+
+  public getFoodAgent(): FoodAgent {
+    return this.foodAgent;
+  }
+
+  public getVodkaAgent(): VodkaAgent {
+    return this.vodkaAgent;
+  }
+
+  public getStorageAgent(): StorageAgent {
+    return this.storageAgent;
+  }
+
+  public getEconomyAgent(): EconomyAgent {
+    return this.economyAgent;
+  }
+
+  public getCollectiveAgent(): CollectiveAgent {
+    return this.collectiveAgent;
+  }
+
+  public getDemographicAgent(): DemographicAgent {
+    return this.demographicAgent;
+  }
+
+  public getKGBAgent(): KGBAgent {
+    return this.kgbAgent;
+  }
+
+  public getPoliticalAgent(): PoliticalAgent {
+    return this.politicalAgent;
+  }
+
+  public getDefenseAgent(): DefenseAgent {
+    return this.defenseAgent;
+  }
+
+  public getLoyaltyAgent(): LoyaltyAgent {
+    return this.loyaltyAgent;
   }
 
   /**
@@ -645,6 +798,33 @@ export class SimulationEngine {
 
     // Re-wire EventSystem → PersonnelFile after deserialization replaces instances
     this.eventSystem.setPersonnelFile(this.personnelFile);
+
+    // ── Phase 4: Sync agents from restored old system state ──
+    // ChronologyAgent — restore from ChronologySystem save data
+    if (data.chronology) {
+      const rng = this.rng ?? ({
+        random: () => Math.random(),
+        int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
+        pick: <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!,
+      } as GameRng);
+      this.chronologyAgent = ChronologyAgent.deserialize(data.chronology, rng);
+      this.agentManager.registerChronology(this.chronologyAgent);
+    }
+
+    // KGBAgent — restore personnel file state
+    if (data.personnel) {
+      this.kgbAgent.loadPersonnelFile(data.personnel);
+    }
+
+    // EconomyAgent — restore economy state
+    if (data.economy) {
+      this.economyAgent = EconomyAgent.deserialize(data.economy);
+      if (this.rng) this.economyAgent.setRng(this.rng);
+      this.agentManager.registerEconomy(this.economyAgent);
+    }
+
+    // PoliticalAgent — sync era year from restored EraSystem
+    this.politicalAgent.checkEraTransition(this.eraSystem.getYear());
   }
 
   /**
@@ -692,8 +872,8 @@ export class SimulationEngine {
       return;
     }
 
-    // 1. Advance time via ChronologySystem
-    const tickResult = this.chronology.tick();
+    // 1. Advance time via ChronologyAgent (Phase 4: replaces ChronologySystem)
+    const tickResult = this.chronologyAgent.tick();
     this.syncChronologyToMeta(tickResult);
     this.emitChronologyChanges(tickResult);
 
@@ -704,7 +884,7 @@ export class SimulationEngine {
       checkQuotaHelper(reportCtx);
       // Track when pendingReport was first set for auto-resolve timeout
       if (reportCtx.engineState.pendingReport && !this.pendingReport) {
-        this.pendingReportSinceTick = this.chronology.getDate().totalTicks;
+        this.pendingReportSinceTick = this.chronologyAgent.getDate().totalTicks;
       }
       this.syncAnnualReportState(reportCtx.engineState);
     }
@@ -712,7 +892,7 @@ export class SimulationEngine {
     // Auto-resolve pending annual report after 90 ticks (1 month) — prevents
     // indefinite deferral when UI callback doesn't respond (or in headless mode).
     if (this.pendingReport) {
-      const elapsed = this.chronology.getDate().totalTicks - this.pendingReportSinceTick;
+      const elapsed = this.chronologyAgent.getDate().totalTicks - this.pendingReportSinceTick;
       if (elapsed >= 90) {
         this.pendingReport = false;
         // Re-evaluate honestly (no pripiski)
@@ -727,15 +907,18 @@ export class SimulationEngine {
     }
 
     // Advance gradual modifier transition blend (if in progress)
-    this.eraSystem.tickTransition();
+    // Phase 4: PoliticalAgent absorbs EraSystem transition blending
+    this.politicalAgent.tickTransition();
 
     // 2-7. Run ECS systems
     // Get weather + politburo + era modifiers for production
     const weatherProfile = getWeatherProfile(tickResult.weather as WeatherType);
     const politburoMods = this.politburo.getModifiers();
-    const eraMods = this.eraSystem.getModifiers();
+    // Phase 4: PoliticalAgent provides era modifiers (replaces EraSystem)
+    const eraMods = this.politicalAgent.getModifiers();
     // Heating failure penalty: -50% production when heating is non-operational in winter
-    const heatingPenalty = this.economySystem.getHeating().failing ? 0.5 : 1.0;
+    // Phase 4: EconomyAgent provides heating state (replaces EconomySystem)
+    const heatingPenalty = this.economyAgent.getHeating().failing ? 0.5 : 1.0;
     // FIX-03: MTS grain multiplier applied to farm production (was calculated but ignored)
     const farmMod =
       weatherProfile.farmModifier *
@@ -745,19 +928,21 @@ export class SimulationEngine {
       this.mtsGrainMultiplier;
     const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult * heatingPenalty;
 
-    powerSystem();
+    // Phase 4: PowerAgent replaces powerSystem() ECS function
+    this.powerAgent.distributePower();
 
-    // Transport System — road quality, condition decay, maintenance, mitigation
+    // Transport System — road quality, condition decay, maintenance, mitigation (no agent yet)
     const transportResult = this.transport.tick(
       operationalBuildings.entities,
       this.settlement.getCurrentTier(),
-      this.chronology.getDate().totalTicks,
+      this.chronologyAgent.getDate().totalTicks,
       tickResult.season,
       storeRef.resources,
     );
 
+    // Construction system (no agent yet) — uses PoliticalAgent for era construction time mult
     constructionSystem(
-      this.eraSystem.getConstructionTimeMult(),
+      this.politicalAgent.getCurrentEra().constructionTimeMult,
       weatherProfile.constructionTimeMult,
       transportResult.seasonBuildMult,
     );
@@ -770,6 +955,7 @@ export class SimulationEngine {
     // FIX-07: Compute expanded production modifiers (skill, condition)
     const avgSkill = this.getAverageWorkerSkill();
     const avgCondition = this.getAverageBuildingCondition();
+    // Phase 4: still calling old productionSystem — FoodAgent will fully replace in Phase 5
     productionSystem(farmMod, vodkaMod, {
       skillFactor: avgSkill,
       conditionFactor: avgCondition,
@@ -777,18 +963,19 @@ export class SimulationEngine {
     });
 
     // FIX-10: Production chains — multi-step resource conversion (grain→bread, grain→vodka, etc.)
+    // Phase 4: EconomyAgent handles production chains (replaces EconomySystem)
     {
       const chainBuildingIds: string[] = [];
       for (const entity of buildingsLogic) {
         chainBuildingIds.push(entity.building.defId);
       }
-      this.economySystem.tickProductionChains(chainBuildingIds, storeRef.resources);
+      this.economyAgent.tickProductionChains(chainBuildingIds, storeRef.resources);
     }
 
-    // Storage & spoilage — capacity from buildings, seasonal food decay
-    storageSystem(this.chronology.getDate().month);
+    // Phase 4: StorageAgent replaces storageSystem() ECS function
+    this.storageAgent.update(this.chronologyAgent.getDate().month);
 
-    // Economy System — trudodni, fondy, blat, stakhanovite, MTS, heating, reforms
+    // Phase 4: EconomyAgent replaces EconomySystem tick
     this.tickEconomySystem();
 
     // Apply CompulsoryDeliveries — state extraction of new production + income
@@ -813,7 +1000,8 @@ export class SimulationEngine {
     }
 
     // Disease System — outbreak checks (monthly) + disease progression (every tick)
-    const diseaseResult = diseaseTick(this.chronology.getDate().totalTicks, this.chronology.getDate().month);
+    // Phase 4: DefenseAgent absorbs disease logic but diseaseTick still called directly for now
+    const diseaseResult = diseaseTick(this.chronologyAgent.getDate().totalTicks, this.chronologyAgent.getDate().month);
     // Route disease deaths through WorkerSystem for proper stats cleanup
     for (const deadEntity of diseaseResult.deadEntities) {
       this.workerSystem.removeWorker(deadEntity, 'disease_death');
@@ -834,11 +1022,11 @@ export class SimulationEngine {
 
     const diffConfig = DIFFICULTY_PRESETS[this.difficulty];
 
-    // Population growth gate — housing + food check (no longer modifies population directly)
+    // Population growth gate — housing + food check (no agent yet)
     const growthResult = populationSystem(
       this.rng,
       politburoMods.populationGrowthMult * eraMods.populationGrowthMult * diffConfig.growthMultiplier,
-      this.chronology.getDate().month,
+      this.chronologyAgent.getDate().month,
     );
 
     // Spawn new workers based on housing growth check — creates dvor-linked citizens
@@ -846,18 +1034,18 @@ export class SimulationEngine {
       this.workerSystem.spawnInflowDvor(growthResult.growthCount, 'growth');
     }
 
-    // Worker System — AUTHORITATIVE population tick
+    // Worker System — AUTHORITATIVE population tick (no agent yet)
     // Handles: vodka/food consumption, morale, defection, migration flight,
     // youth flight, workplace accidents, trudodni, governor, and population sync.
     const workerResult = this.workerSystem.tick({
       vodkaAvailable: storeRef.resources.vodka,
       foodAvailable: storeRef.resources.food,
-      heatingFailing: this.economySystem.getHeating().failing,
-      month: this.chronology.getDate().month,
-      eraId: this.eraSystem.getCurrentEra().id,
-      totalTicks: this.chronology.getDate().totalTicks,
+      heatingFailing: this.economyAgent.getHeating().failing,
+      month: this.chronologyAgent.getDate().month,
+      eraId: this.politicalAgent.getCurrentEra().id,
+      totalTicks: this.chronologyAgent.getDate().totalTicks,
       // FIX-08: Trudodni -> morale: pass ratio so workers know if collective is meeting labor targets
-      trudodniRatio: this.economySystem.getTrudodniRatio(),
+      trudodniRatio: this.economyAgent.getTrudodniRatio(),
     });
 
     // Emit drain events to UI
@@ -876,19 +1064,20 @@ export class SimulationEngine {
     }
 
     // Critical morale warning
-    if (workerResult.averageMorale < 30 && this.chronology.getDate().totalTicks % 60 === 0) {
+    if (workerResult.averageMorale < 30 && this.chronologyAgent.getDate().totalTicks % 60 === 0) {
       this.callbacks.onAdvisor(
         'Comrade Mayor! Workers are deeply unhappy. If conditions do not improve, they WILL flee!',
       );
     }
 
     // Demographic System — births, deaths, aging for dvor households
+    // Phase 4: DemographicAgent absorbs this but demographicTick still called directly
     const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, workerResult.population * 2));
     const demoResult = demographicTick(
       this.rng ?? null,
-      this.chronology.getDate().totalTicks,
+      this.chronologyAgent.getDate().totalTicks,
       normalizedFood,
-      this.eraSystem.getCurrentEraId(),
+      this.politicalAgent.getCurrentEraId(),
     );
     // Births: birthCheck() sets pregnancies; pregnancyTick() delivers infants.
     // Infants (age 0) don't get citizen entities — they age into entities at 5.
@@ -917,7 +1106,8 @@ export class SimulationEngine {
 
     // ── Monthly economic systems: private plots, loyalty, trudodni ──
     if (tickResult.newMonth) {
-      const currentEraId = this.eraSystem.getCurrentEraId();
+      // Phase 4: PoliticalAgent provides current era (replaces EraSystem)
+      const currentEraId = this.politicalAgent.getCurrentEraId();
 
       // Private Plot Food — dvor plots and livestock produce food
       const plotFood = calculatePrivatePlotProduction(currentEraId);
@@ -925,11 +1115,12 @@ export class SimulationEngine {
         storeRef.resources.food += plotFood;
       }
 
-      // Loyalty — adjust dvor loyalty based on food supply
+      // Phase 4: LoyaltyAgent replaces tickLoyalty() function
       const pop = storeRef.resources.population;
       const foodLevel = pop > 0 ? Math.min(1, storeRef.resources.food / (pop * 2)) : 1;
       const quotaMet = this.quota.current >= this.quota.target;
-      const loyaltyResult = tickLoyalty(currentEraId, foodLevel, quotaMet, this.rng);
+      this.loyaltyAgent.setFoodLevel(foodLevel);
+      const loyaltyResult = this.loyaltyAgent.tickLoyalty(currentEraId, quotaMet);
 
       // Sabotage reduces food/vodka by 5% per sabotaging dvor
       if (loyaltyResult.sabotageCount > 0) {
@@ -956,18 +1147,19 @@ export class SimulationEngine {
     }
 
     // Collective Autonomy — demand detection + auto-build
-    this.tickCollective(this.chronology.getDate().totalTicks);
+    this.tickCollective(this.chronologyAgent.getDate().totalTicks);
 
     // Chairman meddling — political cost for excessive player overrides
-    if (this.workerSystem.isChairmanMeddling() && this.chronology.getDate().totalTicks % 60 === 0) {
+    if (this.workerSystem.isChairmanMeddling() && this.chronologyAgent.getDate().totalTicks % 60 === 0) {
       this.callbacks.onAdvisor(
         'Comrade, the workers notice your constant meddling. They whisper that the chairman does not trust the collective.',
       );
       // 5% chance per check of a black mark when meddling
       if ((this.rng?.random() ?? Math.random()) < 0.05) {
-        this.personnelFile.addMark(
+        // Phase 4: KGBAgent replaces PersonnelFile for mark tracking
+        this.kgbAgent.addMark(
           'excessive_intervention',
-          this.chronology.getDate().totalTicks,
+          this.chronologyAgent.getDate().totalTicks,
           'Chairman interfered excessively with collective operations',
         );
         this.callbacks.onToast('BLACK MARK: Excessive interference with collective operations', 'warning');
@@ -992,11 +1184,11 @@ export class SimulationEngine {
     // Minigame Router — check periodic triggers and auto-resolve timeouts
     tickMinigamesHelper(this.getMinigameContext());
 
-    // 8-10. Events, Politburo, and Pravda
-    this.eventSystem.tick(this.chronology.getDate().totalTicks, eraMods.eventFrequencyMult);
+    // 8-10. Events, Politburo, and Pravda (no agent yet for EventSystem)
+    this.eventSystem.tick(this.chronologyAgent.getDate().totalTicks, eraMods.eventFrequencyMult);
 
-    // Fire System — spread, damage, zeppelin AI (after events so new fires are processed)
-    this.fireSystem.tick(tickResult.weather, this.grid);
+    // Phase 4: DefenseAgent replaces FireSystem tick
+    this.defenseAgent.update(1, tickResult.weather as WeatherType, this.grid, this.chronologyAgent.getDate().totalTicks, this.chronologyAgent.getDate().month);
 
     // PolitburoSystem now writes ECS directly — no delta-capture hack needed
     this.politburo.setCorruptionMult(eraMods.corruptionMult);
@@ -1004,12 +1196,12 @@ export class SimulationEngine {
 
     this.tickPravda();
 
-    // Personnel file — tick for mark decay + check arrest
-    const totalTicks = this.chronology.getDate().totalTicks;
-    this.personnelFile.tick(totalTicks);
+    // Phase 4: KGBAgent replaces PersonnelFile for mark decay + arrest check
+    const totalTicks = this.chronologyAgent.getDate().totalTicks;
+    this.kgbAgent.tickPersonnelFile(totalTicks);
 
     // Track threat level escalation for scoring (investigation = no clean era bonus)
-    const currentThreat = this.personnelFile.getThreatLevel();
+    const currentThreat = this.kgbAgent.getThreatLevel();
     if (currentThreat === 'investigated' || currentThreat === 'reviewed' || currentThreat === 'arrested') {
       if (
         this.lastThreatLevel !== 'investigated' &&
@@ -1021,7 +1213,7 @@ export class SimulationEngine {
     }
     this.lastThreatLevel = currentThreat;
 
-    if (this.personnelFile.isArrested()) {
+    if (this.kgbAgent.isArrested()) {
       const consequenceConfig = CONSEQUENCE_PRESETS[this.scoring.getConsequence()];
       if (consequenceConfig.permadeath) {
         this.endGame(
@@ -1055,8 +1247,8 @@ export class SimulationEngine {
           {
             quotaProgress: this.quota.target > 0 ? this.quota.current / this.quota.target : 1,
             quotaDeadlineMonths: (this.quota.deadlineYear - (meta?.gameMeta.date.year ?? 1917)) * 12,
-            blackMarks: this.personnelFile.getBlackMarks(),
-            commendations: this.personnelFile.getCommendations(),
+            blackMarks: this.kgbAgent.getBlackMarks(),
+            commendations: this.kgbAgent.getCommendations(),
             blat: res?.resources.blat ?? 0,
           },
         );
@@ -1076,7 +1268,7 @@ export class SimulationEngine {
     // Check loss: population wiped out (only after first year so starting at 0 doesn't auto-lose)
     if (
       storeRef.resources.population <= 0 &&
-      this.chronology.getDate().totalTicks > TICKS_PER_YEAR &&
+      this.chronologyAgent.getDate().totalTicks > TICKS_PER_YEAR &&
       buildingsLogic.entities.length > 0
     ) {
       this.endGame(false, 'All citizens have perished. The settlement is abandoned.');
@@ -1089,17 +1281,19 @@ export class SimulationEngine {
   // ── Context builders for extracted helpers ──
 
   private getMinigameContext() {
+    // Phase 4: Pass agents — structurally compatible with old system types.
+    // The 'as any' casts are temporary glue until extracted helpers accept agent types.
     return {
-      chronology: this.chronology,
+      chronology: this.chronologyAgent as any,
       minigameRouter: this.minigameRouter,
-      personnelFile: this.personnelFile,
+      personnelFile: this.kgbAgent as any,
       callbacks: this.callbacks,
     };
   }
 
   private getAchievementContext() {
     return {
-      chronology: this.chronology,
+      chronology: this.chronologyAgent as any,
       achievements: this.achievements,
       tutorial: this.tutorial,
       callbacks: this.callbacks,
@@ -1108,8 +1302,8 @@ export class SimulationEngine {
 
   private getAnnualReportContext() {
     return {
-      chronology: this.chronology,
-      personnelFile: this.personnelFile,
+      chronology: this.chronologyAgent as any,
+      personnelFile: this.kgbAgent as any,
       scoring: this.scoring,
       callbacks: this.callbacks,
       rng: this.rng,
@@ -1127,14 +1321,40 @@ export class SimulationEngine {
   }
 
   private getSerializableEngine() {
+    // Phase 4: Agents are the active systems during tick(); old system instances
+    // are stale. Create shim objects that delegate serialize() to agents so that
+    // serializeSubsystems() captures live state. The restoreSubsystemsHelper
+    // replaces these entries with freshly-deserialized system instances, which
+    // get written back to the old system fields AND synced into agents.
+    const chronologyShim = {
+      serialize: () => this.chronologyAgent.serialize(),
+    } as typeof this.chronology;
+    const personnelShim = {
+      serialize: () => this.kgbAgent.serializePersonnelFile(),
+    } as typeof this.personnelFile;
+    const economyShim = {
+      serialize: () => this.economyAgent.serialize(),
+    } as typeof this.economySystem;
+    const eraShim = {
+      ...this.eraSystem,
+      serialize: () => ({
+        currentYear: this.chronologyAgent.getDate().year,
+        previousEraId: this.politicalAgent.getPreviousEraId(),
+        transitionTicksRemaining: 0,
+      }),
+    } as typeof this.eraSystem;
+    const fireShim = {
+      serialize: () => this.defenseAgent.serialize(),
+    } as typeof this.fireSystem;
+
     return {
-      chronology: this.chronology,
-      eraSystem: this.eraSystem,
-      economySystem: this.economySystem,
+      chronology: chronologyShim,
+      eraSystem: eraShim,
+      economySystem: economyShim,
       eventSystem: this.eventSystem,
       pravdaSystem: this.pravdaSystem,
       politburo: this.politburo,
-      personnelFile: this.personnelFile,
+      personnelFile: personnelShim,
       deliveries: this.deliveries,
       settlement: this.settlement,
       politicalEntities: this.politicalEntities,
@@ -1144,7 +1364,7 @@ export class SimulationEngine {
       achievements: this.achievements,
       mandateState: this.mandateState,
       transport: this.transport,
-      fireSystem: this.fireSystem,
+      fireSystem: fireShim,
       workerSystem: this.workerSystem,
       quota: this.quota,
       consecutiveQuotaFailures: this.consecutiveQuotaFailures,
@@ -1179,7 +1399,7 @@ export class SimulationEngine {
    * Syncs the chronology tick result to gameMeta date fields.
    */
   private syncChronologyToMeta(_tick: TickResult): void {
-    const date = this.chronology.getDate();
+    const date = this.chronologyAgent.getDate();
     const meta = getMetaEntity();
     if (meta) {
       meta.gameMeta.date.year = date.year;
@@ -1230,16 +1450,16 @@ export class SimulationEngine {
     meta.gameMeta.leaderName = gs.name;
     meta.gameMeta.leaderPersonality = gs.personality;
 
-    // Sync personnel file
-    meta.gameMeta.blackMarks = this.personnelFile.getBlackMarks();
-    meta.gameMeta.commendations = this.personnelFile.getCommendations();
-    meta.gameMeta.threatLevel = this.personnelFile.getThreatLevel();
+    // Phase 4: KGBAgent provides personnel file data
+    meta.gameMeta.blackMarks = this.kgbAgent.getBlackMarks();
+    meta.gameMeta.commendations = this.kgbAgent.getCommendations();
+    meta.gameMeta.threatLevel = this.kgbAgent.getThreatLevel();
 
     // Sync settlement tier
     meta.gameMeta.settlementTier = this.settlement.getCurrentTier();
 
-    // Sync era
-    meta.gameMeta.currentEra = this.eraSystem.getCurrentEraId();
+    // Phase 4: PoliticalAgent provides era (replaces EraSystem)
+    meta.gameMeta.currentEra = this.politicalAgent.getCurrentEraId();
 
     // Sync road quality + condition
     meta.gameMeta.roadQuality = this.transport.getQuality();
@@ -1256,7 +1476,8 @@ export class SimulationEngine {
     if (!store) return;
 
     const r = store.resources;
-    const date = this.chronology.getDate();
+    // Phase 4: ChronologyAgent provides date (replaces ChronologySystem)
+    const date = this.chronologyAgent.getDate();
     const totalTicks = date.totalTicks;
     const year = date.year;
     const month = date.month;
@@ -1270,7 +1491,8 @@ export class SimulationEngine {
     // Determine whether the settlement has heating fuel (timber > 0 or power surplus)
     const hasHeatingResource = r.timber > 0 || r.power > r.powerUsed;
 
-    const result = this.economySystem.tick(totalTicks, year, r.population, buildingDefIds, {
+    // Phase 4: EconomyAgent replaces EconomySystem tick
+    const result = this.economyAgent.economyTick(totalTicks, year, r.population, buildingDefIds, {
       money: r.money,
       month,
       hasHeatingResource,
@@ -1297,7 +1519,7 @@ export class SimulationEngine {
         steel: Math.max(0, delivered.steel * 0.3),
         timber: Math.max(0, delivered.timber * 0.3),
       };
-      const remainder = this.economySystem.allocateRemainder(surplus);
+      const remainder = this.economyAgent.allocateRemainder(surplus);
       // Apply distributed portion directly to resources
       r.food += remainder.distributed.food;
       r.vodka += remainder.distributed.vodka;
@@ -1336,8 +1558,9 @@ export class SimulationEngine {
       this.quota.target = Math.round(this.quota.target * (1 + s.quotaIncrease));
 
       // Apply propaganda value — grant commendation for high propaganda
+      // Phase 4: KGBAgent replaces PersonnelFile
       if (s.propagandaValue >= 30) {
-        this.personnelFile.addCommendation('stakhanovite_celebrated', totalTicks, s.announcement);
+        this.kgbAgent.addCommendation('stakhanovite_celebrated', totalTicks, s.announcement);
       }
     } else {
       // Clear stakhanovite boosts when no event active
@@ -1399,7 +1622,8 @@ export class SimulationEngine {
     if (result.blatKgbResult) {
       const kgb = result.blatKgbResult;
       if (kgb.investigated) {
-        this.personnelFile.addMark(
+        // Phase 4: KGBAgent replaces PersonnelFile
+        this.kgbAgent.addMark(
           'blat_noticed',
           totalTicks,
           kgb.announcement ?? 'KGB investigation into blat connections',
@@ -1407,7 +1631,7 @@ export class SimulationEngine {
         this.callbacks.onToast('KGB INVESTIGATION: Blat connections noticed', 'critical');
       }
       if (kgb.arrested) {
-        this.personnelFile.addMark(
+        this.kgbAgent.addMark(
           'blat_noticed',
           totalTicks,
           kgb.announcement ?? 'Arrested for anti-Soviet networking activities',
@@ -1422,7 +1646,7 @@ export class SimulationEngine {
 
     // Consumer goods — satisfaction from blat + settlement tier
     const settlementTier = this.settlement.getCurrentTier();
-    this.economySystem.tickConsumerGoods(r.population, settlementTier);
+    this.economyAgent.tickConsumerGoods(r.population, settlementTier);
   }
 
   /**
@@ -1515,9 +1739,10 @@ export class SimulationEngine {
             const arrest = this.workerSystem.arrestWorker();
             if (arrest) {
               this.scoring.onKGBLoss(1);
-              this.personnelFile.addMark(
+              // Phase 4: KGBAgent replaces PersonnelFile
+              this.kgbAgent.addMark(
                 'worker_arrested',
-                this.chronology.getDate().totalTicks,
+                this.chronologyAgent.getDate().totalTicks,
                 'Gulag processing of enemy of the people',
               );
               this.callbacks.onPravda('ENEMY OF THE PEOPLE SENTENCED TO CORRECTIVE LABOR');
@@ -1580,11 +1805,12 @@ export class SimulationEngine {
    * population drain from conscription, and emits announcements.
    */
   private tickPoliticalEntities(): void {
-    const totalTicks = this.chronology.getDate().totalTicks;
+    // Phase 4: ChronologyAgent, PoliticalAgent, KGBAgent replace old systems
+    const totalTicks = this.chronologyAgent.getDate().totalTicks;
     const store = getResourceEntity();
     const meta = getMetaEntity();
     const tier = this.settlement.getCurrentTier();
-    const eraId = this.eraSystem.getCurrentEraId();
+    const eraId = this.politicalAgent.getCurrentEraId();
 
     // Sync entity counts every 30 ticks (roughly every 10 days)
     if (totalTicks % 30 === 0) {
@@ -1592,7 +1818,7 @@ export class SimulationEngine {
       this.politicalEntities.syncEntities(tier, eraId, avgCorruption);
 
       // Threshold effects → entity spawning: higher threat = more KGB/politruks
-      const threatLevel = this.personnelFile.getThreatLevel();
+      const threatLevel = this.kgbAgent.getThreatLevel();
       if (threatLevel === 'investigated' || threatLevel === 'reviewed') {
         // Extra KGB and politruk presence when under investigation
         this.politicalEntities.syncEntities(tier, eraId, avgCorruption + 30);
@@ -1619,7 +1845,8 @@ export class SimulationEngine {
     }
 
     // Build doctrine context for era-specific mechanics
-    const currentEraDef = this.eraSystem.getCurrentEra();
+    // Phase 4: PoliticalAgent provides era definition (replaces EraSystem)
+    const currentEraDef = this.politicalAgent.getCurrentEra();
     const gameStartYear = 1917; // Game always starts at 1917
     const eraStartTick = (currentEraDef.startYear - gameStartYear) * TICKS_PER_YEAR;
     const doctrineCtx =
@@ -1663,7 +1890,7 @@ export class SimulationEngine {
       this.scoring.onKGBLoss(result.blackMarksAdded);
     }
     for (let i = 0; i < result.blackMarksAdded; i++) {
-      this.personnelFile.addMark('lying_to_kgb', totalTicks, 'KGB investigation uncovered irregularities');
+      this.kgbAgent.addMark('lying_to_kgb', totalTicks, 'KGB investigation uncovered irregularities');
     }
 
     // Apply doctrine mechanic effects to resources
@@ -1696,9 +1923,9 @@ export class SimulationEngine {
 
     // Sync to meta for React
     if (meta) {
-      meta.gameMeta.blackMarks = this.personnelFile.getBlackMarks();
-      meta.gameMeta.commendations = this.personnelFile.getCommendations();
-      meta.gameMeta.threatLevel = this.personnelFile.getThreatLevel();
+      meta.gameMeta.blackMarks = this.kgbAgent.getBlackMarks();
+      meta.gameMeta.commendations = this.kgbAgent.getCommendations();
+      meta.gameMeta.threatLevel = this.kgbAgent.getThreatLevel();
     }
   }
 
@@ -1756,11 +1983,12 @@ export class SimulationEngine {
   private checkEraTransition(): void {
     const meta = getMetaEntity();
     const currentYear = meta?.gameMeta.date.year ?? 1922;
-    const newEra = this.eraSystem.checkTransition(currentYear);
+    // Phase 4: PoliticalAgent replaces EraSystem for era transitions
+    const newEra = this.politicalAgent.checkEraTransition(currentYear);
 
     if (newEra) {
       // Score the completed era before transitioning
-      const prevEraId = this.eraSystem.getPreviousEraId();
+      const prevEraId = this.politicalAgent.getPreviousEraId();
       if (prevEraId) {
         const prevEraIdx = eraIdToIndex(prevEraId);
         const store = getResourceEntity();
@@ -1770,12 +1998,13 @@ export class SimulationEngine {
           prevEraDef?.name ?? prevEraId,
           store?.resources.population ?? 0,
           buildingsLogic.entities.length,
-          this.personnelFile.getCommendations(),
-          this.personnelFile.getBlackMarks(),
+          this.kgbAgent.getCommendations(),
+          this.kgbAgent.getBlackMarks(),
         );
       }
 
       // Save checkpoint for the new era (snapshot before changes)
+      // Note: PoliticalAgent doesn't have saveCheckpoint — keep using EraSystem for this
       this.eraSystem.saveCheckpoint(
         JSON.stringify({
           year: currentYear,
@@ -1786,19 +2015,18 @@ export class SimulationEngine {
       // Update CompulsoryDeliveries doctrine to match the new era
       this.deliveries.setDoctrine(newEra.doctrine);
 
-      // Update EconomySystem era (fondy reliability, rates, etc.)
+      // Phase 4: EconomyAgent replaces EconomySystem for era setting
       const economyEra = GAME_ERA_TO_ECONOMY_ERA[newEra.id] ?? 'revolution';
-      this.economySystem.setEra(economyEra);
+      this.economyAgent.setEra(economyEra);
 
       // Update TransportSystem era (score bonuses vary by era)
       this.transport.setEra(newEra.id);
 
-      // Generate new building mandates for the new era
-      const newMandates = createMandatesForEra(newEra.id, this.difficulty);
-      this.mandateState = createPlanMandateState(newMandates);
+      // Phase 4: PoliticalAgent generates mandates for the new era
+      this.politicalAgent.generateMandatesForCurrentEra(this.difficulty);
 
-      // Reset personnel file marks to 2 (design: fresh-ish start per era)
-      this.personnelFile.resetForNewEra();
+      // Phase 4: KGBAgent replaces PersonnelFile for mark reset
+      this.kgbAgent.resetForNewEra();
       this.workerSystem.resetOverrideCount();
 
       // Fire callback for UI (era assignment briefing modal)
@@ -1825,11 +2053,12 @@ export class SimulationEngine {
     // Grace period: skip era conditions during the first year so the player
     // isn't immediately eliminated before they have a chance to act.
     // Also skip if there are no buildings (game hasn't really started).
-    if (this.chronology.getDate().totalTicks <= TICKS_PER_YEAR || buildingsLogic.entities.length === 0) {
+    if (this.chronologyAgent.getDate().totalTicks <= TICKS_PER_YEAR || buildingsLogic.entities.length === 0) {
       return;
     }
 
-    const era = this.eraSystem.getCurrentEra();
+    // Phase 4: PoliticalAgent provides era (replaces EraSystem)
+    const era = this.politicalAgent.getCurrentEra();
 
     // Check failure condition
     if (era.failureCondition) {
@@ -1865,7 +2094,7 @@ export class SimulationEngine {
     // Generate and emit the end-game tally
     if (this.callbacks.onGameTally) {
       const res = getResourceEntity();
-      const date = this.chronology.getDate();
+      const date = this.chronologyAgent.getDate();
       const tally = createGameTally(this.scoring, this.achievements, {
         victory,
         reason,
@@ -1876,8 +2105,8 @@ export class SimulationEngine {
         money: res?.resources.money ?? 0,
         food: res?.resources.food ?? 0,
         vodka: res?.resources.vodka ?? 0,
-        blackMarks: this.personnelFile.getBlackMarks(),
-        commendations: this.personnelFile.getCommendations(),
+        blackMarks: this.kgbAgent.getBlackMarks(),
+        commendations: this.kgbAgent.getCommendations(),
         settlementTier: this.settlement.getCurrentTier(),
         quotaFailures: this.consecutiveQuotaFailures,
       });
@@ -1942,11 +2171,13 @@ export class SimulationEngine {
     //    Era transitions are detected by checkEraTransition() on the next newYear
     //    tick boundary, so any era change caused by the time skip is handled
     //    automatically once normal simulation resumes.
-    this.chronology.advanceYears(config.returnDelayYears);
+    // Phase 4: ChronologyAgent replaces ChronologySystem
+    this.chronologyAgent.advanceYears(config.returnDelayYears);
 
     // 5. Reset personnel file marks
-    const newTick = this.chronology.getDate().totalTicks;
-    this.personnelFile.resetForRehabilitation(config.marksReset, newTick);
+    // Phase 4: KGBAgent replaces PersonnelFile
+    const newTick = this.chronologyAgent.getDate().totalTicks;
+    this.kgbAgent.resetForRehabilitation(config.marksReset, newTick);
 
     // 6. Apply score penalty
     this.scoring.onKGBLoss(workersLost);

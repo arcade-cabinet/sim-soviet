@@ -342,6 +342,14 @@ export class KGBAgent extends Vehicle {
   }
 
   /**
+   * Alias for tickPersonnelFile — backward compat with PersonnelFile.tick() API.
+   * @param currentTick - Current simulation tick number
+   */
+  tick(currentTick: number): void {
+    this.tickPersonnelFile(currentTick);
+  }
+
+  /**
    * Tick the personnel file for mark decay.
    * Call once per simulation tick.
    */
