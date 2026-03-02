@@ -1,3 +1,5 @@
+// DEPRECATED: logic moved to DemographicAgent (src/ai/agents/DemographicAgent.ts)
+
 /**
  * @module ecs/systems/demographicSystem
  *
