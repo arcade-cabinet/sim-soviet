@@ -63,6 +63,24 @@ export interface BuildingComponent {
   onFire?: boolean;
   /** Ticks remaining until fire self-extinguishes (0 = not burning) */
   fireTicksRemaining?: number;
+
+  // ── Workforce Container (aggregate mode) ──
+  /** Workers assigned to this building (production) */
+  workerCount: number;
+  /** Residents housed (housing buildings) */
+  residentCount: number;
+  /** Population-weighted average morale 0-100 */
+  avgMorale: number;
+  /** Population-weighted average skill 0-100 */
+  avgSkill: number;
+  /** Population-weighted average loyalty 0-100 */
+  avgLoyalty: number;
+  /** Population-weighted average vodka dependency 0-100 */
+  avgVodkaDep: number;
+  /** Trudodni (work credits) accrued this period */
+  trudodniAccrued: number;
+  /** Dvor (household) count — housing buildings only */
+  householdCount: number;
 }
 
 /** Active disease state for a citizen. */
@@ -184,6 +202,46 @@ export interface Renderable {
 }
 
 /**
+ * District-level population pool for aggregate mode.
+ * Tracks demographics as statistical buckets instead of individual entities.
+ * When defined on the resource store, the game is in aggregate population mode.
+ */
+export interface RaionPool {
+  /** Total population count */
+  totalPopulation: number;
+  /** Total household count */
+  totalHouseholds: number;
+  /** Male population by 5-year age bucket (0-4, 5-9, ..., 95-99) — 20 entries */
+  maleAgeBuckets: number[];
+  /** Female population by 5-year age bucket — 20 entries */
+  femaleAgeBuckets: number[];
+  /** Population count per citizen class */
+  classCounts: Record<string, number>;
+  /** Births this calendar year */
+  birthsThisYear: number;
+  /** Deaths this calendar year */
+  deathsThisYear: number;
+  /** Cumulative births since game start */
+  totalBirths: number;
+  /** Cumulative deaths since game start */
+  totalDeaths: number;
+  /** Pregnancy shift register: [delivering, mid-term, newly conceived] */
+  pregnancyWaves: number[];
+  /** Total labor force (working-age population) */
+  laborForce: number;
+  /** Workers currently assigned to buildings */
+  assignedWorkers: number;
+  /** Workers in idle pool (unassigned) */
+  idleWorkers: number;
+  /** District-wide average morale 0-100 */
+  avgMorale: number;
+  /** District-wide average loyalty 0-100 */
+  avgLoyalty: number;
+  /** District-wide average skill 0-100 */
+  avgSkill: number;
+}
+
+/**
  * Resource stockpile — held by a singleton entity.
  * All global economic values live here.
  */
@@ -221,6 +279,9 @@ export interface Resources {
   emergencyReserve: number;
   /** Storage capacity — total food storage across all buildings */
   storageCapacity: number;
+
+  /** District population pool — undefined means entity mode, defined means aggregate mode */
+  raion?: RaionPool;
 }
 
 /**
