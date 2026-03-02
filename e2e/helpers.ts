@@ -75,6 +75,15 @@ export async function waitForSimTick(page: Page, maxMs = 30_000): Promise<void> 
 
 // ── Action Helpers ───────────────────────────────────────────────────────────
 
+/** Dismiss the IntroModal if it appears. */
+async function dismissIntroModal(page: Page): Promise<void> {
+  const ctaButton = page.getByText('ASSUME MAYORAL AUTHORITY');
+  if (await ctaButton.isVisible().catch(() => false)) {
+    await ctaButton.click();
+    await page.waitForTimeout(800);
+  }
+}
+
 /**
  * Navigate to the app, select a difficulty, and start a new game.
  * Flow: MainMenu → NewGameSetup (select difficulty) → Game Loading → IntroModal → Playing
@@ -95,22 +104,14 @@ export async function startGameWithDifficulty(
   // NewGameSetup → select difficulty, then start
   await page.getByText('BEGIN ASSIGNMENT').waitFor({ timeout: 5_000 });
   await page.getByText(difficulty.toUpperCase()).first().click();
+  // Brief pause for difficulty selection UI state to settle
   await page.waitForTimeout(300);
   await page.getByText('BEGIN ASSIGNMENT').click();
 
   // Wait for game canvas + TopBar to be ready (loading screen fades)
   await waitForGameReady(page);
 
-  // IntroModal → click "ASSUME MAYORAL AUTHORITY"
-  const ctaButton = page.getByText('ASSUME MAYORAL AUTHORITY');
-  try {
-    await ctaButton.waitFor({ state: 'visible', timeout: 10_000 });
-    await ctaButton.click();
-    // Wait for intro modal to fade
-    await page.waitForTimeout(800);
-  } catch {
-    // IntroModal may not appear in all scenarios
-  }
+  await dismissIntroModal(page);
 }
 
 /**
@@ -126,22 +127,14 @@ export async function startGame(page: Page): Promise<void> {
 
   // NewGameSetup → click "BEGIN ASSIGNMENT"
   await page.getByText('BEGIN ASSIGNMENT').waitFor({ timeout: 5_000 });
+  // Brief pause for difficulty selection UI state to settle
   await page.waitForTimeout(300);
   await page.getByText('BEGIN ASSIGNMENT').click();
 
   // Wait for game canvas + TopBar to be ready (loading screen fades)
   await waitForGameReady(page);
 
-  // IntroModal → click "ASSUME MAYORAL AUTHORITY"
-  const ctaButton = page.getByText('ASSUME MAYORAL AUTHORITY');
-  try {
-    await ctaButton.waitFor({ state: 'visible', timeout: 10_000 });
-    await ctaButton.click();
-    // Wait for intro modal to fade
-    await page.waitForTimeout(800);
-  } catch {
-    // IntroModal may not appear in all scenarios
-  }
+  await dismissIntroModal(page);
 }
 
 /**
