@@ -38,7 +38,13 @@ import { ScoringSystem as ScoringSystemClass } from '../../ai/agents/political/S
 import type { GameRng } from '../SeedSystem';
 import type { SettlementSystem } from '../../ai/agents/infrastructure/SettlementSystem';
 import { SettlementSystem as SettlementSystemClass } from '../../ai/agents/infrastructure/SettlementSystem';
-import type { DvorSaveEntry, SubsystemSaveData, WorkerStatSaveEntry } from './types';
+import type {
+  BuildingWorkforceSaveEntry,
+  DvorSaveEntry,
+  RaionPoolSaveData,
+  SubsystemSaveData,
+  WorkerStatSaveEntry,
+} from './types';
 import type { TransportSystem } from '../../ai/agents/infrastructure/TransportSystem';
 import { TransportSystem as TransportSystemClass } from '../../ai/agents/infrastructure/TransportSystem';
 import type { TutorialSystem } from '../../ai/agents/meta/TutorialSystem';
@@ -97,7 +103,11 @@ export interface SerializableEngine {
  * Serialize all subsystem state into a single blob for save persistence.
  */
 export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveData {
-  return {
+  // Determine population mode from resource store
+  const store = getResourceEntity();
+  const isAggregate = store?.resources.raion != null;
+
+  const base: SubsystemSaveData = {
     era: engine.eraSystem.serialize(),
     personnel: engine.personnelFile.serialize(),
     settlement: engine.settlement.serialize(),
@@ -133,8 +143,17 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
       ended: engine.ended,
       pripiskiCount: engine.pripiskiCount,
     },
-    // Dvor households — canonical population source
-    dvory: [...dvory].map(
+    populationMode: isAggregate ? 'aggregate' : 'entity',
+  };
+
+  if (isAggregate) {
+    // ── Aggregate mode: save RaionPool + per-building workforce ──
+    const raion = store!.resources.raion!;
+    base.raionPool = serializeRaionPool(raion);
+    base.buildingWorkforce = serializeBuildingWorkforce();
+  } else {
+    // ── Entity mode: save dvor households + per-worker stats ──
+    base.dvory = [...dvory].map(
       (entity): DvorSaveEntry => ({
         id: entity.dvor.id,
         surname: entity.dvor.surname,
@@ -146,9 +165,8 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
         loyaltyToCollective: entity.dvor.loyaltyToCollective,
         nextMemberId: entity.dvor.nextMemberId,
       }),
-    ),
-    // Per-worker stats keyed by dvor linkage
-    workers: [...citizens]
+    );
+    base.workers = [...citizens]
       .filter((c) => c.citizen.dvorId && c.citizen.dvorMemberId)
       .reduce<WorkerStatSaveEntry[]>((acc, c) => {
         const stats = engine.workerSystem.getStatsMap().get(c);
@@ -161,8 +179,51 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
           });
         }
         return acc;
-      }, []),
+      }, []);
+  }
+
+  return base;
+}
+
+/** Serialize RaionPool into a plain-object snapshot. */
+function serializeRaionPool(raion: import('@/ecs/world').RaionPool): RaionPoolSaveData {
+  return {
+    totalPopulation: raion.totalPopulation,
+    totalHouseholds: raion.totalHouseholds,
+    maleAgeBuckets: [...raion.maleAgeBuckets],
+    femaleAgeBuckets: [...raion.femaleAgeBuckets],
+    classCounts: { ...raion.classCounts },
+    birthsThisYear: raion.birthsThisYear,
+    deathsThisYear: raion.deathsThisYear,
+    totalBirths: raion.totalBirths,
+    totalDeaths: raion.totalDeaths,
+    pregnancyWaves: [...raion.pregnancyWaves],
+    laborForce: raion.laborForce,
+    assignedWorkers: raion.assignedWorkers,
+    idleWorkers: raion.idleWorkers,
+    avgMorale: raion.avgMorale,
+    avgLoyalty: raion.avgLoyalty,
+    avgSkill: raion.avgSkill,
   };
+}
+
+/** Serialize per-building workforce data from all building entities. */
+function serializeBuildingWorkforce(): BuildingWorkforceSaveEntry[] {
+  return [...buildingsLogic].map(
+    (entity): BuildingWorkforceSaveEntry => ({
+      gridX: entity.position.gridX,
+      gridY: entity.position.gridY,
+      defId: entity.building.defId,
+      workerCount: entity.building.workerCount,
+      residentCount: entity.building.residentCount,
+      avgMorale: entity.building.avgMorale,
+      avgSkill: entity.building.avgSkill,
+      avgLoyalty: entity.building.avgLoyalty,
+      avgVodkaDep: entity.building.avgVodkaDep,
+      trudodniAccrued: entity.building.trudodniAccrued,
+      householdCount: entity.building.householdCount,
+    }),
+  );
 }
 
 /**
@@ -264,57 +325,116 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
     engine.economySystem.setEra(economyEra);
   }
 
-  // ── Restore dvory + citizens ──
-  if (data.dvory && data.dvory.length > 0) {
-    // 1. Clear all existing citizen entities and worker stats
-    engine.workerSystem.clearAllWorkers();
+  // ── Population mode detection (default to 'entity' for backward compat) ──
+  const populationMode = data.populationMode ?? 'entity';
 
-    // 2. Clear all existing dvor entities
-    for (const d of [...dvory]) {
-      world.remove(d);
-    }
-
-    // 3. Re-create dvor entities from saved data
-    for (const saved of data.dvory) {
-      world.add({
-        isDvor: true as const,
-        dvor: {
-          id: saved.id,
-          surname: saved.surname,
-          members: saved.members.map((m) => ({ ...m })),
-          headOfHousehold: saved.headOfHousehold,
-          privatePlotSize: saved.privatePlotSize,
-          privateLivestock: { ...saved.privateLivestock },
-          joinedTick: saved.joinedTick,
-          loyaltyToCollective: saved.loyaltyToCollective,
-          nextMemberId: saved.nextMemberId,
-        },
-      });
-    }
-
-    // 4. Re-create citizen entities from restored dvory
-    engine.workerSystem.syncPopulationFromDvory();
-
-    // 5. Restore per-worker stats from save (overwrite defaults)
-    if (data.workers) {
-      const allCitizens = [...citizens];
-      for (const saved of data.workers) {
-        const match = allCitizens.find(
-          (c) => c.citizen.dvorId === saved.dvorId && c.citizen.dvorMemberId === saved.dvorMemberId,
-        );
-        if (match) {
-          engine.workerSystem.restoreWorkerStats(match, saved.stats);
-        }
-      }
-    }
-
-    // 6. Sync resource store population count to match actual citizens
+  if (populationMode === 'aggregate' && data.raionPool) {
+    // ── Restore aggregate population mode ──
     const store = getResourceEntity();
     if (store) {
-      store.resources.population = engine.workerSystem.getPopulation();
+      store.resources.raion = restoreRaionPool(data.raionPool);
+      store.resources.population = data.raionPool.totalPopulation;
+    }
+
+    // Restore per-building workforce data
+    if (data.buildingWorkforce) {
+      restoreBuildingWorkforce(data.buildingWorkforce);
+    }
+  } else {
+    // ── Restore entity population mode (existing behavior) ──
+    if (data.dvory && data.dvory.length > 0) {
+      // 1. Clear all existing citizen entities and worker stats
+      engine.workerSystem.clearAllWorkers();
+
+      // 2. Clear all existing dvor entities
+      for (const d of [...dvory]) {
+        world.remove(d);
+      }
+
+      // 3. Re-create dvor entities from saved data
+      for (const saved of data.dvory) {
+        world.add({
+          isDvor: true as const,
+          dvor: {
+            id: saved.id,
+            surname: saved.surname,
+            members: saved.members.map((m) => ({ ...m })),
+            headOfHousehold: saved.headOfHousehold,
+            privatePlotSize: saved.privatePlotSize,
+            privateLivestock: { ...saved.privateLivestock },
+            joinedTick: saved.joinedTick,
+            loyaltyToCollective: saved.loyaltyToCollective,
+            nextMemberId: saved.nextMemberId,
+          },
+        });
+      }
+
+      // 4. Re-create citizen entities from restored dvory
+      engine.workerSystem.syncPopulationFromDvory();
+
+      // 5. Restore per-worker stats from save (overwrite defaults)
+      if (data.workers) {
+        const allCitizens = [...citizens];
+        for (const saved of data.workers) {
+          const match = allCitizens.find(
+            (c) => c.citizen.dvorId === saved.dvorId && c.citizen.dvorMemberId === saved.dvorMemberId,
+          );
+          if (match) {
+            engine.workerSystem.restoreWorkerStats(match, saved.stats);
+          }
+        }
+      }
+
+      // 6. Sync resource store population count to match actual citizens
+      const store = getResourceEntity();
+      if (store) {
+        store.resources.population = engine.workerSystem.getPopulation();
+      }
     }
   }
 
   // Sync restored state to ECS gameMeta
   engine.syncSystemsToMeta();
+}
+
+/** Restore a RaionPool from serialized data. */
+function restoreRaionPool(saved: RaionPoolSaveData): import('@/ecs/world').RaionPool {
+  return {
+    totalPopulation: saved.totalPopulation,
+    totalHouseholds: saved.totalHouseholds,
+    maleAgeBuckets: [...saved.maleAgeBuckets],
+    femaleAgeBuckets: [...saved.femaleAgeBuckets],
+    classCounts: { ...saved.classCounts },
+    birthsThisYear: saved.birthsThisYear,
+    deathsThisYear: saved.deathsThisYear,
+    totalBirths: saved.totalBirths,
+    totalDeaths: saved.totalDeaths,
+    pregnancyWaves: [...saved.pregnancyWaves],
+    laborForce: saved.laborForce,
+    assignedWorkers: saved.assignedWorkers,
+    idleWorkers: saved.idleWorkers,
+    avgMorale: saved.avgMorale,
+    avgLoyalty: saved.avgLoyalty,
+    avgSkill: saved.avgSkill,
+  };
+}
+
+/** Restore per-building workforce fields from serialized entries. */
+function restoreBuildingWorkforce(entries: BuildingWorkforceSaveEntry[]): void {
+  const allBuildings = [...buildingsLogic];
+  for (const entry of entries) {
+    const match = allBuildings.find(
+      (b) => b.position.gridX === entry.gridX && b.position.gridY === entry.gridY,
+    );
+    if (match) {
+      match.building.workerCount = entry.workerCount;
+      match.building.residentCount = entry.residentCount;
+      match.building.avgMorale = entry.avgMorale;
+      match.building.avgSkill = entry.avgSkill;
+      match.building.avgLoyalty = entry.avgLoyalty;
+      match.building.avgVodkaDep = entry.avgVodkaDep;
+      match.building.trudodniAccrued = entry.trudodniAccrued;
+      match.building.householdCount = entry.householdCount;
+    }
+  }
 }

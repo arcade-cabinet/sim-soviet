@@ -102,6 +102,41 @@ export interface WorkerStatSaveEntry {
   stats: import('../../ai/agents/workforce/types').WorkerStats;
 }
 
+/** Serialized RaionPool for aggregate population mode. */
+export interface RaionPoolSaveData {
+  totalPopulation: number;
+  totalHouseholds: number;
+  maleAgeBuckets: number[];
+  femaleAgeBuckets: number[];
+  classCounts: Record<string, number>;
+  birthsThisYear: number;
+  deathsThisYear: number;
+  totalBirths: number;
+  totalDeaths: number;
+  pregnancyWaves: number[];
+  laborForce: number;
+  assignedWorkers: number;
+  idleWorkers: number;
+  avgMorale: number;
+  avgLoyalty: number;
+  avgSkill: number;
+}
+
+/** Serialized per-building workforce entry for aggregate population mode. */
+export interface BuildingWorkforceSaveEntry {
+  gridX: number;
+  gridY: number;
+  defId: string;
+  workerCount: number;
+  residentCount: number;
+  avgMorale: number;
+  avgSkill: number;
+  avgLoyalty: number;
+  avgVodkaDep: number;
+  trudodniAccrued: number;
+  householdCount: number;
+}
+
 /**
  * Serialized state for all subsystems managed by SimulationEngine.
  * Stored as a JSON blob in the database for save/load persistence.
@@ -138,8 +173,14 @@ export interface SubsystemSaveData {
     ended: boolean;
     pripiskiCount?: number;
   };
-  /** Dvor households — canonical population source */
+  /** Dvor households — canonical population source (entity mode only) */
   dvory?: DvorSaveEntry[];
-  /** Per-worker stats keyed by dvor linkage */
+  /** Per-worker stats keyed by dvor linkage (entity mode only) */
   workers?: WorkerStatSaveEntry[];
+  /** Population mode — 'entity' (default for old saves) or 'aggregate' */
+  populationMode?: 'entity' | 'aggregate';
+  /** RaionPool snapshot (aggregate mode only) */
+  raionPool?: RaionPoolSaveData;
+  /** Per-building workforce data (aggregate mode only) */
+  buildingWorkforce?: BuildingWorkforceSaveEntry[];
 }
