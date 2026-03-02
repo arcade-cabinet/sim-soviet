@@ -762,11 +762,11 @@ export class SimulationEngine {
       rng: this.rng,
     });
 
-    // ── 13. Population growth (yearly immigration only) ──
-    // In aggregate mode, births are handled by DemographicAgent statistical
-    // tick (statisticalBirthTick on month boundaries). Skip entity-mode
-    // housing-gated immigration to avoid double-counting.
-    if (tickResult.newYear && !this.raion) {
+    // ── 13. Population growth (yearly immigration) ──
+    // Housing-gated immigration for both entity and aggregate modes.
+    // In aggregate mode, spawnInflowDvor routes to spawnInflowAggregate
+    // which adds working-age adults to raion pool + building workforces.
+    if (tickResult.newYear) {
       const growthResult = populationSystem(
         this.rng,
         politburoMods.populationGrowthMult * eraMods.populationGrowthMult * diffConfig.growthMultiplier,
