@@ -47,6 +47,7 @@ import TerrainGrid from './scene/TerrainGrid';
 import TrainRenderer from './scene/TrainRenderer';
 import VehicleRenderer from './scene/VehicleRenderer';
 import WeatherFX from './scene/WeatherFX';
+import PostProcessing from './scene/PostProcessing';
 import ZeppelinRenderer from './scene/ZeppelinRenderer';
 
 /** Progress callback: (loaded, total, currentModelName) */
@@ -144,6 +145,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
       <PoliticalEntityRenderer />
       <GhostPreview />
       <LensSystem />
+      <PostProcessing />
     </>
   );
 };
