@@ -394,6 +394,9 @@ export class PoliticalAgent extends Vehicle {
   /** Snapshot of old modifiers during a blend transition. */
   private transitionFromModifiers: EraModifiers | null = null;
 
+  /** Seeded RNG (set via setRng). */
+  private rng?: GameRng;
+
   constructor(startYear = 1917) {
     super();
     this.name = 'PoliticalAgent';
@@ -411,6 +414,11 @@ export class PoliticalAgent extends Vehicle {
       mandates: [],
       checkpoints: new Map(),
     };
+  }
+
+  /** Set the seeded RNG for deterministic political rolls. */
+  setRng(rng: GameRng): void {
+    this.rng = rng;
   }
 
   // =========================================================================

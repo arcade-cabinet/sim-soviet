@@ -13,12 +13,18 @@
 
 import { Vehicle } from 'yuka';
 import { FEMALE_GIVEN_NAMES, MALE_GIVEN_NAMES, PATRONYMIC_RULES, SURNAMES_RAW } from '../../names';
-import { dvory } from '../../../ecs/archetypes';
+import { dvory, housing } from '../../../ecs/archetypes';
 import { laborCapacityForAge, memberRoleForAge } from '../../../ecs/factories';
-import type { DvorComponent, DvorMember } from '../../../ecs/world';
+import type { DvorComponent, DvorMember, RaionPool } from '../../../ecs/world';
 import { world } from '../../../ecs/world';
+import { getResourceEntity } from '../../../ecs/archetypes';
 import { TICKS_PER_MONTH, TICKS_PER_YEAR } from '../../../game/Chronology';
 import type { GameRng } from '../../../game/SeedSystem';
+import {
+  statisticalAgingTick,
+  statisticalBirthTick,
+  statisticalDeathTick,
+} from './statisticalDemographics';
 
 // ── Re-exported types ──────────────────────────────────────────────────────
 
@@ -264,9 +270,17 @@ export class DemographicAgent extends Vehicle {
   /** Last population milestone reached (multiple of POPULATION_MILESTONE_STEP). */
   private lastMilestone = 0;
 
+  /** Seeded RNG (set via setRng). */
+  private rng?: GameRng;
+
   constructor() {
     super();
     this.name = 'DemographicAgent';
+  }
+
+  /** Set the seeded RNG for deterministic demographic rolls. */
+  setRng(rng: GameRng): void {
+    this.rng = rng;
   }
 
   // ── Core tick ──────────────────────────────────────────────────────────────

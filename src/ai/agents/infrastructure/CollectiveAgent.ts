@@ -182,9 +182,17 @@ export class CollectiveAgent extends Vehicle {
   /** Latest detected construction demands. */
   private pendingDemands: ConstructionDemand[] = [];
 
+  /** Seeded RNG (set via setRng). */
+  private rng?: GameRng;
+
   constructor() {
     super();
     this.name = 'CollectiveAgent';
+  }
+
+  /** Set the seeded RNG for deterministic collective rolls. */
+  setRng(rng: GameRng): void {
+    this.rng = rng;
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────
@@ -569,14 +577,8 @@ export class CollectiveAgent extends Vehicle {
     }
 
     // Step 3: Auto-place via CollectiveAgent
-    const rng =
-      deps.rng ??
-      ({
-        random: () => Math.random(),
-        int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
-        pick: <T>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)]!,
-        pickIndex: (len: number) => Math.floor(Math.random() * len),
-      } as GameRng);
+    const rng = this.rng ?? deps.rng;
+    if (!rng) return;
 
     const entity = this.autoPlaceBuilding(request.defId, rng);
     if (entity) {

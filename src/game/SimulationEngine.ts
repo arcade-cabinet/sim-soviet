@@ -315,9 +315,11 @@ export class SimulationEngine {
     this.agentManager.registerEconomy(this.economyAgent);
 
     this.collectiveAgent = new CollectiveAgent();
+    this.collectiveAgent.setRng(this.rng);
     this.agentManager.registerCollective(this.collectiveAgent);
 
     this.demographicAgent = new DemographicAgent();
+    this.demographicAgent.setRng(this.rng);
     this.agentManager.registerDemographic(this.demographicAgent);
 
     this.kgbAgent = new KGBAgent(this.difficulty);
@@ -325,6 +327,7 @@ export class SimulationEngine {
     this.agentManager.registerKGB(this.kgbAgent);
 
     this.politicalAgent = new PoliticalAgent(startYear);
+    this.politicalAgent.setRng(this.rng);
     this.politicalAgent.generateMandatesForCurrentEra(this.difficulty);
     this.agentManager.registerPolitical(this.politicalAgent);
 
@@ -717,7 +720,7 @@ export class SimulationEngine {
     const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, workerResult.population * 2));
     const demoResult = this.demographicAgent.onTick(
       this.chronologyAgent.getDate().totalTicks,
-      this.rng ?? null,
+      this.rng,
       normalizedFood,
       this.politicalAgent.getCurrentEraId(),
     );
