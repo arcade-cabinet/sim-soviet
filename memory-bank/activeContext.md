@@ -2,56 +2,49 @@
 
 ## Current Development Focus
 
-Game completion sprint — implementing all remaining features across 5 workstreams:
+Yuka agent architecture migration — decomposing SimulationEngine into domain agents:
 
-- W1: Scene rendering (dynamic grid, new renderers)
-- W2: Game systems (consequence modes, trudodni, vodka, leaders)
-- W3: Era doctrines + interactive minigame system
-- W4: Platform fixes (native restart, minimap, XR entry, iOS CI)
-- W5: E2E tests + documentation updates
+- **Phase 1 COMPLETE**: Created 8 agent subpackages under `src/ai/agents/` (123 files, 28k lines)
+- **Phase 2 COMPLETE**: SimulationEngine decomposed from 2207 → 1126 lines (12 methods moved to agents)
+- **Phase 3 COMPLETE**: Import rewiring — agents import from `engine/types`, not SimulationEngine
+- **Phase 4 COMPLETE**: `src/game/political/` absorbed into `src/ai/agents/political/` (8 files moved)
 
 ## Recent Changes
 
-### Demographics Overhaul (PR #39 — merged)
+### Yuka Agent Architecture (feat/game-completion branch)
 
-- 9 features implemented, 82 new tests added
-- Dvory (household) system, births/deaths/aging, gender retirement
-- Private plots, loyalty/sabotage, trudodni labor accounting
-- Male-first conscription, era birth rates
-- Full save/load serialization
+- 8 agent subpackages: core, economy, political, infrastructure, social, workforce, narrative, meta
+- 12 private methods MOVED from SimEngine to agents (delete-from-source, not copy)
+- Types extracted to `src/game/engine/types.ts` (SimCallbacks, RehabilitationData, SubsystemSaveData)
+- `src/game/political/` fully absorbed into `src/ai/agents/political/`
+- All 3,277 tests passing, 0 regressions
 
-### Documentation Overhaul (PR #39 — merged)
+### Key Agent Methods Added
 
-- 41 docs with standardized YAML frontmatter
-- 273/283 source files with JSDoc
-- AGENTS.md hierarchy, memory-bank, .claude architecture
-- TypeDoc pipeline
-
-### Game Completion Sprint (in progress)
-
-- Consequence mode rehabilitation flow
-- Era doctrine mechanics (thaw/freeze, stagnation rot, eternal bureaucracy)
-- Interactive minigame UI framework
-- Dynamic grid size system
-- New scene renderers (CitizenRenderer, PoliticalEntityRenderer, HeatingOverlay)
-- E2E Playwright test expansion (6 spec files)
+- `EconomyAgent.applyTickResults()` — fondy, trudodni, currency reform, rations
+- `PoliticalAgent.tickEntitiesFull/handleEraTransitionFull/checkConditions`
+- `DefenseAgent.processGulagEffect/tickDiseaseFull`
+- `CollectiveAgent.tickAutonomous/getHousingCapacity`
+- `KGBAgent.applyRehabilitation`
+- `SettlementSystem.tickWithCallbacks`
+- `WorkerSystem.getAverageSkill`
 
 ### Previous Major Work
 
+- Demographics overhaul (PR #39 — merged)
+- Documentation/JSDoc/.claude overhaul (PR #39 — merged)
+- Game completion sprint (PR #40 — 22 features)
 - R3F migration from BabylonJS/Reactylon (completed)
-- WebGPU migration (reverted — dual-instance problem)
-- All GDD gap closure (28/28 PRD gaps done)
-- Political entity system with tap interaction
 
 ## Active Branches
 
 | Branch | Purpose | Status |
 |--------|---------|--------|
 | `main` | Release branch | Current |
-| `feat/game-completion` | Game completion sprint | In progress |
-| Release Please v1.2.0 | PR #37 | Open |
+| `feat/game-completion` | Agent architecture + game completion | In progress (32 commits ahead) |
 
 ## Known Issues
 
 - tsconfig: `module: "commonjs"` conflicts with `moduleResolution: "bundler"` — pre-existing, doesn't block builds
+- 27 pre-existing TypeScript errors from yuka type declarations (`.name` property, `override` modifier) — tests pass because Jest doesn't check types
 - Branch protection: main requires PRs — cannot push directly
