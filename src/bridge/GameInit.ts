@@ -56,8 +56,10 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   // Era 1 (Revolution/1917): Timber only. No steel, no power, no food stockpile.
   // Scale starting resources by difficulty multiplier (worker=2.0x, comrade=1.0x, tovarish=0.5x).
   const resMult = DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
+  // Starting resources — generous enough for ~2 seasons of survival without farms.
+  // This is a city-builder, not a survival game: players need time to explore and build.
   createResourceStore({
-    food: 0,
+    food: Math.round(500 * resMult),
     timber: Math.round(200 * resMult),
     steel: 0,
     cement: 0,

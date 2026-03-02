@@ -1,6 +1,10 @@
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createResourceStore } from '../../src/ecs/factories';
-import { consumptionSystem, setStarvationCallback } from '../../src/ecs/systems/consumptionSystem';
+import {
+  consumptionSystem,
+  resetStarvationCounter,
+  setStarvationCallback,
+} from '../../src/ecs/systems/consumptionSystem';
 import { world } from '../../src/ecs/world';
 import { createTestDvory } from '../playthrough/helpers';
 
@@ -10,10 +14,12 @@ describe('consumptionSystem', () => {
     createResourceStore({ food: 1000, vodka: 500, population: 0 });
     createTestDvory(100);
     setStarvationCallback(undefined); // Clear any previous callback
+    resetStarvationCounter(); // Reset grace period counter
   });
 
   afterEach(() => {
     setStarvationCallback(undefined);
+    resetStarvationCounter();
     world.clear();
   });
 
@@ -69,44 +75,62 @@ describe('consumptionSystem', () => {
   // ── Starvation ────────────────────────────────────────────
 
   describe('starvation', () => {
-    it('returns 5 starvation deaths when food is insufficient', () => {
+    /** Run starvation ticks to exhaust the grace period (90 ticks). */
+    function exhaustGracePeriod(store: ReturnType<typeof getResourceEntity>) {
+      for (let i = 0; i < 90; i++) {
+        consumptionSystem();
+      }
+    }
+
+    it('does NOT return starvation deaths during grace period', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 0;
       const result = consumptionSystem();
-      // starvationDeaths = min(5, pop) = 5
+      // Within grace period — no deaths yet
+      expect(result.starvationDeaths).toBe(0);
+    });
+
+    it('returns 5 starvation deaths after grace period expires', () => {
+      const store = getResourceEntity()!;
+      store.resources.population = 100;
+      store.resources.food = 0;
+      exhaustGracePeriod(store);
+      // Grace period exhausted — next tick should cause deaths
+      const result = consumptionSystem();
       expect(result.starvationDeaths).toBe(5);
       // Population is NOT modified — caller (SimulationEngine) routes through WorkerSystem
       expect(store.resources.population).toBe(100);
     });
 
-    it('does not reduce food below 0 during starvation (food stays the same)', () => {
+    it('sets food to 0 during starvation (consumes whatever is available)', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 5; // need ceil(100/10)=10, have only 5
-      const result = consumptionSystem();
-      // Starvation path: food is NOT consumed, deaths are returned
-      expect(result.starvationDeaths).toBe(5);
-      expect(store.resources.food).toBe(5); // food unchanged in starvation
+      consumptionSystem();
+      // Food is consumed (set to 0) even during starvation
+      expect(store.resources.food).toBe(0);
     });
 
     it('clamps starvation deaths at population size when pop < 5', () => {
       const store = getResourceEntity()!;
       store.resources.population = 3;
       store.resources.food = 0;
+      exhaustGracePeriod(store);
       const result = consumptionSystem();
       expect(result.starvationDeaths).toBe(3);
     });
 
-    it('returns 1 starvation death when pop is 1', () => {
+    it('returns 1 starvation death when pop is 1 after grace period', () => {
       const store = getResourceEntity()!;
       store.resources.population = 1;
       store.resources.food = 0;
+      exhaustGracePeriod(store);
       const result = consumptionSystem();
       expect(result.starvationDeaths).toBe(1);
     });
 
-    it('fires starvation callback when starvation occurs', () => {
+    it('fires starvation callback on each tick with insufficient food', () => {
       const cb = jest.fn();
       setStarvationCallback(cb);
 
@@ -128,6 +152,26 @@ describe('consumptionSystem', () => {
       consumptionSystem();
 
       expect(cb).not.toHaveBeenCalled();
+    });
+
+    it('resets grace period when food becomes available', () => {
+      const store = getResourceEntity()!;
+      store.resources.population = 100;
+      store.resources.food = 0;
+
+      // Starve for 25 ticks (within grace period)
+      for (let i = 0; i < 25; i++) {
+        consumptionSystem();
+      }
+
+      // Feed the population — resets counter
+      store.resources.food = 1000;
+      consumptionSystem();
+
+      // Starve again — grace period restarted
+      store.resources.food = 0;
+      const result = consumptionSystem();
+      expect(result.starvationDeaths).toBe(0);
     });
   });
 

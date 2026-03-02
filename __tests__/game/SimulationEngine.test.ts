@@ -1,6 +1,7 @@
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import type { QuotaState } from '../../src/ecs/systems';
+import { resetStarvationCounter } from '../../src/ecs/systems/consumptionSystem';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
@@ -219,23 +220,40 @@ describe('SimulationEngine', () => {
       expect(getResourceEntity()!.resources.food).toBeGreaterThan(99);
     });
 
-    it('causes starvation when food is insufficient', () => {
+    it('causes starvation when food is insufficient (after grace period)', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 0;
       store.resources.vodka = 100;
-      engine.tick();
-      expect(getResourceEntity()!.resources.population).toBeLessThanOrEqual(95);
+      // Exhaust grace period (90 ticks) — force food=0 each tick to prevent
+      // PrivatePlotSystem food production from resetting the starvation counter
+      resetStarvationCounter();
+      for (let i = 0; i < 91; i++) {
+        store.resources.food = 0;
+        store.resources.vodka = 100;
+        engine.tick();
+      }
+      expect(getResourceEntity()!.resources.population).toBeLessThan(100);
       expect(cb.onToast).toHaveBeenCalledWith('STARVATION DETECTED', 'critical');
     });
 
-    it('reduces population by 5 during starvation (clamped at 0)', () => {
+    it('reduces population during starvation (up to 5 per tick)', () => {
       const store = getResourceEntity()!;
-      store.resources.food = 0;
-      // Sync citizen entities to match desired population
-      engine.getWorkerSystem().syncPopulation(3);
-      engine.tick();
-      expect(getResourceEntity()!.resources.population).toBe(0);
+      // Use enough population that starvation deaths are clearly visible
+      engine.getWorkerSystem().syncPopulation(100);
+      const popBefore = getResourceEntity()!.resources.population;
+      // Exhaust grace period (90 ticks) + sustain starvation for 20 more ticks.
+      // Force food=0 each tick to prevent any food production from resetting the counter.
+      resetStarvationCounter();
+      for (let i = 0; i < 120; i++) {
+        store.resources.food = 0;
+        store.resources.vodka = 100;
+        engine.tick();
+      }
+      // After 120 ticks (90 grace + 30 death ticks at 5/tick), population
+      // should be significantly reduced from the starting 100
+      const popAfter = getResourceEntity()!.resources.population;
+      expect(popAfter).toBeLessThan(popBefore);
     });
   });
 

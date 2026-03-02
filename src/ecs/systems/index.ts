@@ -13,7 +13,7 @@ export {
   workerSpeedMult,
 } from './constructionSystem';
 export type { ConsumptionResult, StarvationCallback } from './consumptionSystem';
-export { consumptionSystem, setStarvationCallback } from './consumptionSystem';
+export { consumptionSystem, resetStarvationCounter, setStarvationCallback } from './consumptionSystem';
 export type { BuildingCollapsedCallback } from './decaySystem';
 export { decaySystem, setBuildingCollapsedCallback } from './decaySystem';
 export type { AgedIntoWorkingRef, DeadMemberRef, DemographicTickResult } from './demographicSystem';

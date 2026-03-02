@@ -1,5 +1,6 @@
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding } from '../../src/ecs/factories';
+import { resetStarvationCounter } from '../../src/ecs/systems/consumptionSystem';
 import { world } from '../../src/ecs/world';
 import {
   advanceTicks,
@@ -88,16 +89,29 @@ describe('Playthrough: Population Growth & Collapse', () => {
     const store = getResourceEntity()!;
     store.resources.food = 0;
     store.resources.vodka = 0;
+    // Reset starvation counter so grace period starts fresh from food cutoff
+    resetStarvationCounter();
 
-    // Tick enough times for starvation to kill everyone.
-    advanceTicks(engine, 100);
+    // Tick enough times for grace period (90) + starvation to kill everyone.
+    // Keep food at 0 each tick to prevent private plot production from resetting counter.
+    for (let i = 0; i < 500; i++) {
+      store.resources.food = 0;
+      store.resources.vodka = 0;
+      engine.tick();
+      if (isGameOver()) break;
+    }
 
     const popAfter = getResources().population;
     expect(popAfter).toBeLessThan(popBefore);
 
     // Should eventually reach game over (pop=0 + buildings exist + past grace period)
     if (!isGameOver()) {
-      advanceTicks(engine, 200);
+      for (let i = 0; i < 500; i++) {
+        store.resources.food = 0;
+        store.resources.vodka = 0;
+        engine.tick();
+        if (isGameOver()) break;
+      }
     }
     expect(isGameOver()).toBe(true);
   });

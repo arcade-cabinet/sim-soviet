@@ -36,7 +36,8 @@ export interface ConsumptionResult {
  * Runs the consumption system for one simulation tick.
  *
  * - Food consumption: 1 unit per 10 citizens (rounded up).
- *   If insufficient food, returns 5 starvation deaths.
+ *   If insufficient food, starvation counter increments. After a grace
+ *   period of continuous starvation (STARVATION_GRACE_TICKS), deaths begin.
  * - Vodka consumption: 1 unit per 20 citizens (rounded up).
  *   If insufficient vodka, citizens are merely unhappy (no death).
  *
@@ -46,6 +47,18 @@ export interface ConsumptionResult {
  * @param consumptionMult - Era/difficulty multiplier on consumption rates (default 1)
  * @returns Result containing the number of starvation deaths to process
  */
+
+/** Number of consecutive starvation ticks before deaths begin (~1 season at 1x speed). */
+const STARVATION_GRACE_TICKS = 90;
+
+/** Tracks consecutive ticks without food. Resets when food is available. */
+let _starvationCounter = 0;
+
+/** Reset starvation counter (called on new game). */
+export function resetStarvationCounter(): void {
+  _starvationCounter = 0;
+}
+
 export function consumptionSystem(consumptionMult = 1): ConsumptionResult {
   const result: ConsumptionResult = { starvationDeaths: 0 };
   const store = getResourceEntity();
@@ -58,10 +71,17 @@ export function consumptionSystem(consumptionMult = 1): ConsumptionResult {
   const foodNeed = Math.ceil((pop / 10) * consumptionMult);
   if (store.resources.food >= foodNeed) {
     store.resources.food -= foodNeed;
+    _starvationCounter = 0;
   } else {
-    // Starvation — return death count, don't modify population directly
-    result.starvationDeaths = Math.min(5, pop);
+    // Consume whatever food is available
+    store.resources.food = 0;
+    _starvationCounter++;
     _onStarvation?.();
+
+    // Grace period: deaths only after sustained starvation
+    if (_starvationCounter > STARVATION_GRACE_TICKS) {
+      result.starvationDeaths = Math.min(5, pop);
+    }
   }
 
   // Vodka consumption (scaled by era/difficulty multiplier)

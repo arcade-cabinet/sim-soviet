@@ -8,6 +8,7 @@
 
 import AudioManager from '../audio/AudioManager';
 import SFXManager from '../audio/SFXManager';
+import { resetStarvationCounter } from '../ecs/systems';
 import { world } from '../ecs/world';
 import { gameState } from '../engine/GameState';
 import { clearToast, dismissAdvisor } from '../engine/helpers';
@@ -107,6 +108,9 @@ export function resetAllSingletons(): void {
 
   // 8. Reset per-building trudodni tracking
   resetBuildingTrudodni();
+
+  // 8b. Reset starvation counter
+  resetStarvationCounter();
 
   // 9. Reset GameInit module-level state so initGame() can run again
   resetGameInit();
