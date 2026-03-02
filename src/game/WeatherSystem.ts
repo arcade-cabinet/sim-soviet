@@ -6,6 +6,10 @@
  * Weather is rolled at the start of each new game day using the seeded RNG.
  * Each weather type has gameplay modifiers that affect farm output,
  * snow/rain particle rates, and event frequency.
+ *
+ * DEPRECATED: Rolling logic and profile access moved to WeatherAgent (src/ai/agents/WeatherAgent.ts).
+ * This file is retained for WeatherType enum, WeatherProfile interface, and WEATHER_PROFILES constant
+ * which are re-exported and used by WeatherAgent.
  */
 
 import { Season } from './Chronology';
