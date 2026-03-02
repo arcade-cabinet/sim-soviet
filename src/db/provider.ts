@@ -12,7 +12,9 @@
  */
 
 import { type ExpoSQLiteDatabase, drizzle } from 'drizzle-orm/expo-sqlite';
+import { migrate } from 'drizzle-orm/expo-sqlite/migrator';
 import { deserializeDatabaseSync, openDatabaseSync } from 'expo-sqlite';
+import migrations from './drizzle/migrations';
 import * as schema from './schema';
 
 let _db: ExpoSQLiteDatabase<typeof schema> | null = null;
@@ -22,6 +24,8 @@ let _sqliteDb: ReturnType<typeof openDatabaseSync> | null = null;
  * Initialize the database. expo-sqlite handles persistence automatically.
  * Safe to call multiple times — returns cached instance after first init.
  *
+ * Runs Drizzle migrations on first init to create/update tables.
+ *
  * @returns Drizzle ORM database instance with the SimSoviet schema
  */
 export async function initDatabase(): Promise<ExpoSQLiteDatabase<typeof schema>> {
@@ -30,63 +34,8 @@ export async function initDatabase(): Promise<ExpoSQLiteDatabase<typeof schema>>
   _sqliteDb = openDatabaseSync('simsoviet.db');
   _db = drizzle(_sqliteDb, { schema });
 
-  // Create tables if they don't exist (idempotent)
-  _sqliteDb.execSync(`
-    CREATE TABLE IF NOT EXISTS saves (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL DEFAULT 'autosave',
-      timestamp INTEGER NOT NULL,
-      version TEXT NOT NULL DEFAULT '1.0.0',
-      game_state TEXT
-    )
-  `);
-  _sqliteDb.execSync(`
-    CREATE TABLE IF NOT EXISTS resources (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      save_id INTEGER NOT NULL REFERENCES saves(id),
-      money INTEGER NOT NULL DEFAULT 2000,
-      food INTEGER NOT NULL DEFAULT 200,
-      vodka INTEGER NOT NULL DEFAULT 50,
-      power INTEGER NOT NULL DEFAULT 0,
-      power_used INTEGER NOT NULL DEFAULT 0,
-      population INTEGER NOT NULL DEFAULT 0
-    )
-  `);
-  _sqliteDb.execSync(`
-    CREATE TABLE IF NOT EXISTS chronology (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      save_id INTEGER NOT NULL REFERENCES saves(id),
-      year INTEGER NOT NULL DEFAULT 1980,
-      month INTEGER NOT NULL DEFAULT 1,
-      tick INTEGER NOT NULL DEFAULT 0
-    )
-  `);
-  _sqliteDb.execSync(`
-    CREATE TABLE IF NOT EXISTS quotas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      save_id INTEGER NOT NULL REFERENCES saves(id),
-      type TEXT NOT NULL DEFAULT 'food',
-      target INTEGER NOT NULL DEFAULT 500,
-      current INTEGER NOT NULL DEFAULT 0,
-      deadline_year INTEGER NOT NULL DEFAULT 1985
-    )
-  `);
-  _sqliteDb.execSync(`
-    CREATE TABLE IF NOT EXISTS buildings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      save_id INTEGER NOT NULL REFERENCES saves(id),
-      grid_x INTEGER NOT NULL,
-      grid_y INTEGER NOT NULL,
-      type TEXT NOT NULL,
-      powered INTEGER NOT NULL DEFAULT 0
-    )
-  `);
-  _sqliteDb.execSync(`
-    CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    )
-  `);
+  // Run Drizzle migrations (idempotent — tracks applied migrations internally)
+  await migrate(_db, migrations);
 
   return _db;
 }
