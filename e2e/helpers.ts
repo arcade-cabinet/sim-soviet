@@ -317,3 +317,202 @@ export async function waitForYear(page: Page, targetYear: number, timeoutMs = 12
     { timeout: timeoutMs },
   );
 }
+
+// ── Rich Snapshot Helpers ───────────────────────────────────────────────────
+
+/** Structured game state captured for screenshot context. */
+export interface GameSnapshotData {
+  year: number;
+  month: string;
+  population: number;
+  food: number;
+  vodka: number;
+  era: string;
+  buildingCount: number;
+  settlementTier: string;
+  threatLevel: string;
+  blackMarks: number;
+  isGameOver: boolean;
+}
+
+/**
+ * Extract the current game state from DOM testIDs and window.__simEngine.
+ *
+ * Reads visible values from DOM (pop, food, vodka, era, date) and deep state
+ * from the simulation engine (buildingCount, settlementTier, threatLevel,
+ * blackMarks, isGameOver).
+ */
+export async function extractGameState(page: Page): Promise<GameSnapshotData> {
+  return page.evaluate(() => {
+    // ── DOM reads ──
+    const getText = (testId: string): string =>
+      document.querySelector(`[data-testid="${testId}"]`)?.textContent?.trim() ?? '';
+
+    const parseNum = (testId: string): number => {
+      const raw = getText(testId).replace(/,/g, '');
+      const n = parseInt(raw, 10);
+      return isNaN(n) ? 0 : n;
+    };
+
+    const dateText = getText('date-label');
+    const yearMatch = dateText.match(/(\d{4})/);
+    const year = yearMatch ? parseInt(yearMatch[1], 10) : 0;
+    const month = dateText.replace(/\d{4}/, '').trim();
+
+    const population = parseNum('pop-value');
+    const food = parseNum('food-value');
+    const vodka = parseNum('vodka-value');
+    const era = getText('era-label');
+
+    // ── Engine reads (runtime access to TypeScript private fields) ──
+    const engine = (window as any).__simEngine;
+    let buildingCount = 0;
+    let settlementTier = 'unknown';
+    let threatLevel = 'unknown';
+    let blackMarks = 0;
+    let isGameOver = false;
+
+    if (engine) {
+      try {
+        // Count occupied grid cells (buildings + infrastructure)
+        const grid = engine.grid;
+        if (grid && grid.grid) {
+          for (const row of grid.grid) {
+            for (const cell of row) {
+              if (cell && cell.type !== null) buildingCount++;
+            }
+          }
+        }
+      } catch { /* grid unavailable */ }
+
+      try {
+        const settlement = engine.getSettlement?.();
+        settlementTier = settlement?.getCurrentTier?.() ?? 'unknown';
+      } catch { /* settlement unavailable */ }
+
+      try {
+        const kgb = engine.getPersonnelFile?.();
+        threatLevel = kgb?.getThreatLevel?.() ?? 'unknown';
+        blackMarks = kgb?.getBlackMarks?.() ?? 0;
+      } catch { /* kgb unavailable */ }
+
+      try {
+        isGameOver = !!engine.ended;
+      } catch { /* ended unavailable */ }
+    }
+
+    return {
+      year,
+      month,
+      population,
+      food,
+      vodka,
+      era,
+      buildingCount,
+      settlementTier,
+      threatLevel,
+      blackMarks,
+      isGameOver,
+    };
+  });
+}
+
+/**
+ * Inject a temporary debug overlay showing all game state values.
+ *
+ * The overlay is a fixed-position panel at top-left with green monospace text
+ * on a black background. Element ID: 'e2e-debug-overlay'.
+ */
+export async function injectDebugOverlay(page: Page, data: GameSnapshotData): Promise<void> {
+  await page.evaluate((d) => {
+    // Remove existing overlay if present
+    document.getElementById('e2e-debug-overlay')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'e2e-debug-overlay';
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      zIndex: '10000',
+      background: '#000000',
+      color: '#00ff00',
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      padding: '8px',
+      lineHeight: '1.4',
+      whiteSpace: 'pre',
+      pointerEvents: 'none',
+    });
+    overlay.textContent = [
+      `Year: ${d.year}  Month: ${d.month}`,
+      `Pop: ${d.population}  Food: ${d.food}  Vodka: ${d.vodka}`,
+      `Era: ${d.era}`,
+      `Buildings: ${d.buildingCount}`,
+      `Settlement: ${d.settlementTier}`,
+      `Threat: ${d.threatLevel}  Marks: ${d.blackMarks}`,
+      `Game Over: ${d.isGameOver}`,
+    ].join('\n');
+    document.body.appendChild(overlay);
+  }, data);
+}
+
+/** Remove the debug overlay injected by injectDebugOverlay. */
+export async function removeDebugOverlay(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    document.getElementById('e2e-debug-overlay')?.remove();
+  });
+}
+
+/**
+ * Capture a rich game snapshot: extract state, inject debug overlay,
+ * take screenshot, then clean up.
+ *
+ * @param page - Playwright page instance
+ * @param dir - Directory to save the screenshot in
+ * @param label - Descriptive label for the screenshot filename
+ * @param seq - Sequence number for ordered filenames
+ * @returns The captured game state and screenshot filename
+ */
+export async function captureGameSnapshot(
+  page: Page,
+  dir: string,
+  label: string,
+  seq: number,
+): Promise<{ data: GameSnapshotData; filename: string }> {
+  const data = await extractGameState(page);
+
+  // Build descriptive filename: {seq}-{label}-year-{YYYY}-pop{N}-era-{slug}.png
+  const eraSlug = data.era.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const seqStr = String(seq).padStart(3, '0');
+  const filename = `${seqStr}-${label}-year-${data.year}-pop${data.population}-era-${eraSlug}.png`;
+  const filepath = `${dir}/${filename}`;
+
+  await injectDebugOverlay(page, data);
+  await page.screenshot({ path: filepath });
+  await removeDebugOverlay(page);
+
+  return { data, filename };
+}
+
+/**
+ * Check if the game is over by querying the engine and falling back to DOM text.
+ *
+ * First checks window.__simEngine.ended (runtime access to private field).
+ * If the engine is unavailable, searches the DOM for "GAME OVER" or "DISMISSED" text.
+ */
+export async function isGameOverVisible(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    // Primary: check engine state
+    const engine = (window as any).__simEngine;
+    if (engine) {
+      try {
+        if (engine.ended) return true;
+      } catch { /* ignore */ }
+    }
+
+    // Fallback: search DOM for game-over text
+    const bodyText = document.body.innerText?.toUpperCase() ?? '';
+    return bodyText.includes('GAME OVER') || bodyText.includes('DISMISSED');
+  });
+}
