@@ -317,8 +317,15 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
     expect(finalRaion.totalBirths).toBeGreaterThan(0);
     expect(finalRaion.totalDeaths).toBeGreaterThan(0);
 
-    // 4. Population should be non-negative (no accounting underflow)
+    // 4. Population must never be NaN at any snapshot
+    expect(finalRaion.totalPopulation).not.toBeNaN();
+    expect(snapshots.every(s => !Number.isNaN(s.pop))).toBe(true);
+
+    // 5. Population should be non-negative (no accounting underflow)
     expect(finalRaion.totalPopulation).toBeGreaterThanOrEqual(0);
+
+    // 6. With infinite resources, 50 years should produce significant growth (> 50%)
+    expect(finalRaion.totalPopulation).toBeGreaterThan(initialRaion.totalPopulation * 1.5);
   }, 120000);
 
   // ── Large population scaling: 10K → growth over 100 years ─────────────
@@ -362,9 +369,16 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
     console.log(`  maxPop=${maxPop} finalPop=${finalRaion.totalPopulation}`);
     console.log(`  totalBirths=${finalRaion.totalBirths} totalDeaths=${finalRaion.totalDeaths}`);
 
+    // Population must never be NaN at any snapshot
+    expect(finalRaion.totalPopulation).not.toBeNaN();
+    expect(snapshots.every(s => !Number.isNaN(s.pop))).toBe(true);
+
     // Demographics should have produced significant numbers
     expect(finalRaion.totalBirths).toBeGreaterThan(100);
     expect(finalRaion.totalDeaths).toBeGreaterThan(100);
+
+    // 10K starting pop with infinite resources should grow to > 15K over 100 years
+    expect(finalRaion.totalPopulation).toBeGreaterThan(15_000);
   }, 300000);
 
   // ── All difficulty levels ─────────────────────────────────────────────
@@ -374,8 +388,9 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
 
   describe.each(difficulties)('difficulty=%s', (difficulty) => {
     it.each(consequences)('consequence=%s — aggregate mode survives 20 years', (consequence) => {
+      const initialPop = 500;
       const { engine } = createAggregateEngine({
-        population: 500,
+        population: initialPop,
         difficulty,
         consequence,
       });
@@ -403,8 +418,17 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
       // Zero citizen entities
       expect(getEntityCounts().citizens).toBe(0);
 
+      // Population must not be NaN (explicit check — NaN >= 0 is false but subtle)
+      expect(finalPop).not.toBeNaN();
+      // Population must be finite (no Infinity from division errors)
+      expect(Number.isFinite(finalPop)).toBe(true);
       // Population should be non-negative after 20 years
       expect(finalPop).toBeGreaterThanOrEqual(0);
+
+      // With infinite resources, worker difficulty should always show growth
+      if (difficulty === 'worker') {
+        expect(finalPop).toBeGreaterThan(initialPop);
+      }
 
       console.log(
         `  [${difficulty}/${consequence}] maxPop=${maxPop} finalPop=${finalPop}` +
@@ -489,9 +513,17 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
     const finalRaion = getRaion()!;
     // Aggregate mode should persist for the entire 200-year run
     expect(finalRaion).toBeDefined();
+
+    // Population must never be NaN — at final or at any decade snapshot
+    expect(finalRaion.totalPopulation).not.toBeNaN();
+    expect(snapshots.every(s => !Number.isNaN(s.pop))).toBe(true);
+
     // Demographics ran throughout (total births/deaths accumulate even if pop drops)
     expect(finalRaion.totalBirths).toBeGreaterThan(0);
     expect(finalRaion.totalDeaths).toBeGreaterThan(0);
+
+    // With infinite resources and 10K start, 200 years should show growth
+    expect(finalRaion.totalPopulation).toBeGreaterThan(initialRaion.totalPopulation);
   }, 600000);
 
   // ── Collapse transition ──────────────────────────────────────────────
