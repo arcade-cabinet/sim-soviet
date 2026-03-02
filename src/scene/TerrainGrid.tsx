@@ -1,6 +1,6 @@
 /**
- * TerrainGrid — renders a 30x30 terrain grid using a single BufferGeometry
- * with per-vertex colors, plus procedural tree/mountain/marsh scatter.
+ * TerrainGrid — renders a terrain grid using a single BufferGeometry
+ * with per-vertex colors, plus GPU-instanced procedural scatter.
  *
  * Terrain types: grass, water, rail, tree, crater, irradiated, mountain, marsh, path.
  * Supports elevation offsets, season-dependent colors, procedural scatter geometry.
@@ -8,11 +8,12 @@
  * All scatter placement uses a seeded PRNG (mulberry32) for deterministic results
  * across reloads with the same game seed.
  *
- * R3F migration: uses <mesh> with <bufferGeometry> + <meshStandardMaterial>
- * with vertexColors. Trees/mountains/marshes rendered as grouped JSX meshes.
+ * Performance: scatter geometry (trees, mountains, marshes, rail markers) is rendered
+ * via InstancedMesh — each shape type is a single draw call regardless of count.
+ * Total scatter draw calls: ~8 (down from ~2600+ individual meshes).
  */
 import type React from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { GridCell, TerrainType } from '../engine/GridTypes';
 
@@ -164,16 +165,31 @@ function buildTerrainGeometry(grid: GridCell[][], season: Season): THREE.BufferG
   return geometry;
 }
 
-// ── Tree Data ───────────────────────────────────────────────────────────────
+// ── Instanced Scatter Data ─────────────────────────────────────────────────
 
-interface TreeData {
-  position: [number, number, number];
-  scale: number;
-  yaw: number;
+/** Per-instance data: matrix + color for InstancedMesh */
+interface InstanceBatch {
+  matrices: THREE.Matrix4[];
+  color: THREE.Color;
 }
 
-function collectTrees(grid: GridCell[][]): TreeData[] {
-  const trees: TreeData[] = [];
+const _tmpPos = new THREE.Vector3();
+const _tmpQuat = new THREE.Quaternion();
+const _tmpScale = new THREE.Vector3();
+const _tmpEuler = new THREE.Euler();
+
+/**
+ * Collect all tree scatter into 3 instance batches:
+ * trunks (cylinders), lower cones, upper cones.
+ */
+function buildTreeInstances(
+  grid: GridCell[][],
+  trunkColor: THREE.Color,
+  canopyColor: THREE.Color,
+): { trunks: InstanceBatch; lowerCones: InstanceBatch; upperCones: InstanceBatch } {
+  const trunks: THREE.Matrix4[] = [];
+  const lowerCones: THREE.Matrix4[] = [];
+  const upperCones: THREE.Matrix4[] = [];
   const rng = mulberry32(0xf0_be57);
   const gridSize = grid.length;
 
@@ -188,35 +204,51 @@ function collectTrees(grid: GridCell[][]): TreeData[] {
       for (let t = 0; t < treeCount; t++) {
         const ox = 0.15 + rng() * 0.7;
         const oz = 0.15 + rng() * 0.7;
-        const scale = 0.6 + rng() * 0.5;
+        const s = 0.6 + rng() * 0.5;
         const yaw = rng() * Math.PI * 2;
 
-        trees.push({
-          position: [col + ox, y, row + oz],
-          scale,
-          yaw,
-        });
+        const tx = col + ox;
+        const tz = row + oz;
+
+        // Trunk: cylinder at (tx, y + 0.25*s, tz), scale (0.06, 0.5*s, 0.06)
+        // Unit cylinder is height=1, radius=1 → scale by (0.06, 0.25*s, 0.06)
+        _tmpPos.set(tx, y + 0.25 * s, tz);
+        _tmpQuat.identity();
+        _tmpScale.set(0.06, 0.25 * s, 0.06);
+        const trunkMat = new THREE.Matrix4();
+        trunkMat.compose(_tmpPos, _tmpQuat, _tmpScale);
+        trunks.push(trunkMat);
+
+        // Lower cone: at (tx, y + 0.55*s, tz), radius=0.325*s, height=0.6*s
+        // Unit cone is height=1, radius=1 → scale by (0.325*s, 0.6*s, 0.325*s)
+        _tmpPos.set(tx, y + 0.55 * s, tz);
+        _tmpEuler.set(0, yaw, 0);
+        _tmpQuat.setFromEuler(_tmpEuler);
+        _tmpScale.set(0.325 * s, 0.6 * s, 0.325 * s);
+        const lowerMat = new THREE.Matrix4();
+        lowerMat.compose(_tmpPos, _tmpQuat, _tmpScale);
+        lowerCones.push(lowerMat);
+
+        // Upper cone: at (tx, y + 0.9*s, tz), radius=0.225*s, height=0.5*s
+        _tmpPos.set(tx, y + 0.9 * s, tz);
+        _tmpScale.set(0.225 * s, 0.5 * s, 0.225 * s);
+        const upperMat = new THREE.Matrix4();
+        upperMat.compose(_tmpPos, _tmpQuat, _tmpScale);
+        upperCones.push(upperMat);
       }
     }
   }
 
-  return trees;
+  return {
+    trunks: { matrices: trunks, color: trunkColor },
+    lowerCones: { matrices: lowerCones, color: canopyColor },
+    upperCones: { matrices: upperCones, color: canopyColor },
+  };
 }
 
-// ── Mountain Data ───────────────────────────────────────────────────────────
-
-interface MountainPeak {
-  position: [number, number, number];
-  height: number;
-  bottomRadius: number;
-}
-
-interface MountainData {
-  peaks: MountainPeak[];
-}
-
-function collectMountains(grid: GridCell[][]): MountainData[] {
-  const mountains: MountainData[] = [];
+/** Collect all mountain peaks into a single cone instance batch. */
+function buildMountainInstances(grid: GridCell[][], rockColor: THREE.Color): InstanceBatch {
+  const matrices: THREE.Matrix4[] = [];
   const rng = mulberry32(0xd0c4_a1b5);
   const gridSize = grid.length;
 
@@ -230,66 +262,55 @@ function collectMountains(grid: GridCell[][]): MountainData[] {
       const cz = row + 0.5;
       const scale = 0.7 + rng() * 0.3;
 
-      const peaks: MountainPeak[] = [];
-
       // Main peak
-      peaks.push({
-        position: [cx, y + 0.6 * scale, cz],
-        height: 1.2 * scale,
-        bottomRadius: 0.35 * scale,
-      });
+      _tmpPos.set(cx, y + 0.6 * scale, cz);
+      _tmpQuat.identity();
+      _tmpScale.set(0.35 * scale, 1.2 * scale, 0.35 * scale);
+      const m1 = new THREE.Matrix4();
+      m1.compose(_tmpPos, _tmpQuat, _tmpScale);
+      matrices.push(m1);
 
       // Secondary peak
       const offsetX = (rng() - 0.5) * 0.4;
       const offsetZ = (rng() - 0.5) * 0.3;
-      peaks.push({
-        position: [cx + 0.25 + offsetX, y + 0.35 * scale, cz + 0.2 + offsetZ],
-        height: 0.7 * scale,
-        bottomRadius: 0.25 * scale,
-      });
+      _tmpPos.set(cx + 0.25 + offsetX, y + 0.35 * scale, cz + 0.2 + offsetZ);
+      _tmpScale.set(0.25 * scale, 0.7 * scale, 0.25 * scale);
+      const m2 = new THREE.Matrix4();
+      m2.compose(_tmpPos, _tmpQuat, _tmpScale);
+      matrices.push(m2);
 
       // Optional third peak (30% chance)
       if (rng() < 0.3) {
         const ox3 = (rng() - 0.5) * 0.5;
         const oz3 = (rng() - 0.5) * 0.5;
-        peaks.push({
-          position: [cx - 0.2 + ox3, y + 0.25 * scale, cz - 0.15 + oz3],
-          height: 0.5 * scale,
-          bottomRadius: 0.175 * scale,
-        });
+        _tmpPos.set(cx - 0.2 + ox3, y + 0.25 * scale, cz - 0.15 + oz3);
+        _tmpScale.set(0.175 * scale, 0.5 * scale, 0.175 * scale);
+        const m3 = new THREE.Matrix4();
+        m3.compose(_tmpPos, _tmpQuat, _tmpScale);
+        matrices.push(m3);
       }
-
-      mountains.push({ peaks });
     }
   }
 
-  return mountains;
+  return { matrices, color: rockColor };
 }
 
-// ── Marsh Data ──────────────────────────────────────────────────────────────
-
-interface ReedData {
-  position: [number, number, number];
-  height: number;
-  tiltX: number;
-  tiltZ: number;
-  tuftBottomRadius: number;
-}
-
-interface PuddleData {
-  position: [number, number, number];
-  radius: number;
-}
-
-interface MarshTileData {
-  puddle: PuddleData;
-  reeds: ReedData[];
-}
-
-function collectMarshes(grid: GridCell[][]): MarshTileData[] {
-  const marshes: MarshTileData[] = [];
+/** Build marsh scatter: puddle discs, reed stalks, cattail tufts. */
+function buildMarshInstances(
+  grid: GridCell[][],
+  puddleColor: THREE.Color,
+  reedColor: THREE.Color,
+  tuftColor: THREE.Color,
+): { puddles: InstanceBatch; reeds: InstanceBatch; tufts: InstanceBatch } {
+  const puddles: THREE.Matrix4[] = [];
+  const reeds: THREE.Matrix4[] = [];
+  const tufts: THREE.Matrix4[] = [];
   const rng = mulberry32(0xba_d5ea);
   const gridSize = grid.length;
+
+  // Pre-compute puddle rotation (flat on XZ)
+  const puddleQuat = new THREE.Quaternion();
+  puddleQuat.setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
 
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
@@ -298,60 +319,73 @@ function collectMarshes(grid: GridCell[][]): MarshTileData[] {
 
       const y = cell.z * 0.5;
 
-      const puddle: PuddleData = {
-        position: [col + 0.3 + rng() * 0.4, y + 0.01, row + 0.3 + rng() * 0.4],
-        radius: 0.2 + rng() * 0.15,
-      };
+      // Puddle disc
+      const px = col + 0.3 + rng() * 0.4;
+      const pz = row + 0.3 + rng() * 0.4;
+      const pr = 0.2 + rng() * 0.15;
+      _tmpPos.set(px, y + 0.01, pz);
+      _tmpScale.set(pr, pr, pr);
+      const pm = new THREE.Matrix4();
+      pm.compose(_tmpPos, puddleQuat, _tmpScale);
+      puddles.push(pm);
 
-      const reeds: ReedData[] = [];
+      // Reeds + tufts
       const reedCount = 2 + Math.floor(rng() * 3);
-
       for (let r = 0; r < reedCount; r++) {
-        const ox = 0.1 + rng() * 0.8;
-        const oz = 0.1 + rng() * 0.8;
+        const rx = col + 0.1 + rng() * 0.8;
+        const rz = row + 0.1 + rng() * 0.8;
         const height = 0.3 + rng() * 0.4;
         const tiltX = (rng() - 0.5) * 0.3;
         const tiltZ = (rng() - 0.5) * 0.3;
-        const tuftBottomRadius = 0.06 + rng() * 0.04;
+        const tuftRadius = 0.06 + rng() * 0.04;
 
-        reeds.push({
-          position: [col + ox, y, row + oz],
-          height,
-          tiltX,
-          tiltZ,
-          tuftBottomRadius,
-        });
+        // Reed stalk
+        _tmpPos.set(rx, y + height / 2, rz);
+        _tmpEuler.set(tiltX, 0, tiltZ);
+        _tmpQuat.setFromEuler(_tmpEuler);
+        _tmpScale.set(0.015, height / 2, 0.015);
+        const rm = new THREE.Matrix4();
+        rm.compose(_tmpPos, _tmpQuat, _tmpScale);
+        reeds.push(rm);
+
+        // Cattail tuft
+        _tmpPos.set(rx, y + height + 0.02, rz);
+        _tmpScale.set(tuftRadius, 0.08, tuftRadius);
+        const tm = new THREE.Matrix4();
+        tm.compose(_tmpPos, _tmpQuat, _tmpScale);
+        tufts.push(tm);
       }
-
-      marshes.push({ puddle, reeds });
     }
   }
 
-  return marshes;
+  return {
+    puddles: { matrices: puddles, color: puddleColor },
+    reeds: { matrices: reeds, color: reedColor },
+    tufts: { matrices: tufts, color: tuftColor },
+  };
 }
 
-// ── Rail Marker Data ────────────────────────────────────────────────────────
-
-interface RailMarker {
-  position: [number, number, number];
-}
-
-function collectRailMarkers(grid: GridCell[][]): RailMarker[] {
-  const markers: RailMarker[] = [];
+/** Build rail marker instances. */
+function buildRailInstances(grid: GridCell[][]): InstanceBatch {
+  const matrices: THREE.Matrix4[] = [];
   const gridSize = grid.length;
+
+  _tmpQuat.identity();
 
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
       const cell = grid[row]?.[col];
       if (!cell || cell.terrain !== 'rail') continue;
 
-      markers.push({
-        position: [col + 0.5, cell.z * 0.5 + 0.025, row + 0.5],
-      });
+      _tmpPos.set(col + 0.5, cell.z * 0.5 + 0.025, row + 0.5);
+      _tmpScale.set(1, 1, 1); // box geometry is pre-sized
+      const m = new THREE.Matrix4();
+      m.compose(_tmpPos, _tmpQuat, _tmpScale);
+      matrices.push(m);
     }
   }
 
-  return markers;
+  return { matrices, color: new THREE.Color('#4d4d52') };
 }
 
 // ── Season-dependent material colors ────────────────────────────────────────
@@ -397,25 +431,93 @@ function getPuddleColor(season: Season): string {
   return season === 'winter' ? '#a6b3bf' : '#264033'; // frozen vs dark murky
 }
 
+// ── Shared geometries (created once, reused across renders) ────────────────
+
+const UNIT_CYLINDER = new THREE.CylinderGeometry(1, 1, 2, 5);
+const UNIT_CONE = new THREE.ConeGeometry(1, 1, 6);
+const UNIT_CIRCLE = new THREE.CircleGeometry(1, 8);
+const UNIT_CONE_5 = new THREE.ConeGeometry(1, 1, 5);
+const RAIL_BOX = new THREE.BoxGeometry(0.9, 0.05, 0.9);
+
+// ── InstancedMesh helper component ─────────────────────────────────────────
+
+interface ScatterInstanceProps {
+  geometry: THREE.BufferGeometry;
+  batch: InstanceBatch;
+  roughness?: number;
+  metalness?: number;
+  transparent?: boolean;
+  opacity?: number;
+  depthWrite?: boolean;
+}
+
+/** GPU-instanced scatter mesh — single draw call for all instances of one shape. */
+const ScatterInstance: React.FC<ScatterInstanceProps> = ({
+  geometry,
+  batch,
+  roughness = 0.9,
+  metalness = 0,
+  transparent = false,
+  opacity = 1,
+  depthWrite = true,
+}) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const count = batch.matrices.length;
+
+  // Apply instance matrices and colors
+  useEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh || count === 0) return;
+
+    for (let i = 0; i < count; i++) {
+      mesh.setMatrixAt(i, batch.matrices[i]);
+      mesh.setColorAt(i, batch.color);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  }, [batch, count]);
+
+  if (count === 0) return null;
+
+  return (
+    <instancedMesh ref={meshRef} args={[geometry, undefined, count]} frustumCulled={false}>
+      <meshStandardMaterial
+        roughness={roughness}
+        metalness={metalness}
+        transparent={transparent}
+        opacity={opacity}
+        depthWrite={depthWrite}
+      />
+    </instancedMesh>
+  );
+};
+
 // ── Component ───────────────────────────────────────────────────────────────
 
-/** Renders the 30x30 terrain grid with per-vertex colors and procedural tree/mountain/marsh scatter. */
+/** Renders the terrain grid with per-vertex colors and GPU-instanced procedural scatter. */
 const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) => {
   // Build terrain geometry with per-vertex colors
   const terrainGeometry = useMemo(() => buildTerrainGeometry(grid, season), [grid, season]);
 
-  // Collect scatter data
-  const trees = useMemo(() => collectTrees(grid), [grid]);
-  const mountains = useMemo(() => collectMountains(grid), [grid]);
-  const marshes = useMemo(() => collectMarshes(grid), [grid]);
-  const railMarkers = useMemo(() => collectRailMarkers(grid), [grid]);
+  // Season-dependent colors as THREE.Color objects
+  const canopyColor = useMemo(() => new THREE.Color(getCanopyColor(season)), [season]);
+  const trunkColor = useMemo(() => new THREE.Color('#593f26'), []);
+  const rockColor = useMemo(() => new THREE.Color(getRockColor(season)), [season]);
+  const reedColor = useMemo(() => new THREE.Color(getReedColor(season)), [season]);
+  const tuftColor = useMemo(() => new THREE.Color(getTuftColor(season)), [season]);
+  const puddleColor = useMemo(() => new THREE.Color(getPuddleColor(season)), [season]);
 
-  // Season-dependent colors
-  const canopyColor = getCanopyColor(season);
-  const rockColor = getRockColor(season);
-  const reedColor = getReedColor(season);
-  const tuftColor = getTuftColor(season);
-  const puddleColor = getPuddleColor(season);
+  // Build instanced scatter data
+  const treeInstances = useMemo(
+    () => buildTreeInstances(grid, trunkColor, canopyColor),
+    [grid, trunkColor, canopyColor],
+  );
+  const mountainInstances = useMemo(() => buildMountainInstances(grid, rockColor), [grid, rockColor]);
+  const marshInstances = useMemo(
+    () => buildMarshInstances(grid, puddleColor, reedColor, tuftColor),
+    [grid, puddleColor, reedColor, tuftColor],
+  );
+  const railInstances = useMemo(() => buildRailInstances(grid), [grid]);
 
   return (
     <group>
@@ -424,78 +526,28 @@ const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) =>
         <meshStandardMaterial vertexColors side={THREE.FrontSide} roughness={0.9} metalness={0} />
       </mesh>
 
-      {/* Trees — conical pines (trunk + two stacked cones) */}
-      {trees.map((tree, i) => {
-        const [tx, ty, tz] = tree.position;
-        const s = tree.scale;
-        return (
-          <group key={`tree_${i}`} position={[tx, ty, tz]}>
-            {/* Trunk */}
-            <mesh position={[0, 0.25 * s, 0]}>
-              <cylinderGeometry args={[0.06, 0.06, 0.5 * s, 5]} />
-              <meshStandardMaterial color="#593f26" roughness={0.9} />
-            </mesh>
-            {/* Lower cone (wider) */}
-            <mesh position={[0, 0.55 * s, 0]} rotation={[0, tree.yaw, 0]}>
-              <coneGeometry args={[0.325 * s, 0.6 * s, 6]} />
-              <meshStandardMaterial color={canopyColor} roughness={0.85} />
-            </mesh>
-            {/* Upper cone (narrower) */}
-            <mesh position={[0, 0.9 * s, 0]} rotation={[0, tree.yaw, 0]}>
-              <coneGeometry args={[0.225 * s, 0.5 * s, 6]} />
-              <meshStandardMaterial color={canopyColor} roughness={0.85} />
-            </mesh>
-          </group>
-        );
-      })}
+      {/* Trees — 3 instanced batches: trunks, lower cones, upper cones */}
+      <ScatterInstance geometry={UNIT_CYLINDER} batch={treeInstances.trunks} />
+      <ScatterInstance geometry={UNIT_CONE} batch={treeInstances.lowerCones} roughness={0.85} />
+      <ScatterInstance geometry={UNIT_CONE} batch={treeInstances.upperCones} roughness={0.85} />
 
-      {/* Mountains — craggy cone peaks */}
-      {mountains.map((mountain, mi) =>
-        mountain.peaks.map((peak, pi) => (
-          <mesh key={`mtn_${mi}_${pi}`} position={peak.position}>
-            <coneGeometry args={[peak.bottomRadius, peak.height, 5]} />
-            <meshStandardMaterial color={rockColor} roughness={0.95} />
-          </mesh>
-        )),
-      )}
+      {/* Mountains — instanced cone peaks */}
+      <ScatterInstance geometry={UNIT_CONE_5} batch={mountainInstances} roughness={0.95} />
 
-      {/* Marshes — puddles + reeds + tufts */}
-      {marshes.map((marsh, mi) => (
-        <group key={`marsh_${mi}`}>
-          {/* Puddle disc (flat circle on XZ plane) */}
-          <mesh position={marsh.puddle.position} rotation={[-Math.PI / 2, 0, 0]}>
-            <circleGeometry args={[marsh.puddle.radius, 8]} />
-            <meshStandardMaterial color={puddleColor} transparent opacity={0.7} roughness={0.3} />
-          </mesh>
+      {/* Marshes — puddles, reed stalks, cattail tufts */}
+      <ScatterInstance
+        geometry={UNIT_CIRCLE}
+        batch={marshInstances.puddles}
+        roughness={0.3}
+        transparent
+        opacity={0.7}
+        depthWrite={false}
+      />
+      <ScatterInstance geometry={UNIT_CYLINDER} batch={marshInstances.reeds} />
+      <ScatterInstance geometry={UNIT_CONE_5} batch={marshInstances.tufts} />
 
-          {/* Reeds */}
-          {marsh.reeds.map((reed, ri) => {
-            const [rx, ry, rz] = reed.position;
-            return (
-              <group key={`reed_${mi}_${ri}`}>
-                {/* Reed stalk */}
-                <mesh position={[rx, ry + reed.height / 2, rz]} rotation={[reed.tiltX, 0, reed.tiltZ]}>
-                  <cylinderGeometry args={[0.015, 0.015, reed.height, 4]} />
-                  <meshStandardMaterial color={reedColor} roughness={0.9} />
-                </mesh>
-                {/* Cattail tuft on top */}
-                <mesh position={[rx, ry + reed.height + 0.02, rz]} rotation={[reed.tiltX, 0, reed.tiltZ]}>
-                  <coneGeometry args={[reed.tuftBottomRadius, 0.08, 5]} />
-                  <meshStandardMaterial color={tuftColor} roughness={0.9} />
-                </mesh>
-              </group>
-            );
-          })}
-        </group>
-      ))}
-
-      {/* Rail markers — small cubes on rail tiles */}
-      {railMarkers.map((marker, i) => (
-        <mesh key={`rail_${i}`} position={marker.position}>
-          <boxGeometry args={[0.9, 0.05, 0.9]} />
-          <meshStandardMaterial color="#4d4d52" roughness={0.7} metalness={0.3} />
-        </mesh>
-      ))}
+      {/* Rail markers */}
+      <ScatterInstance geometry={RAIL_BOX} batch={railInstances} roughness={0.7} metalness={0.3} />
     </group>
   );
 };
