@@ -147,11 +147,11 @@ describe('WeatherAgent', () => {
     expect(agent.getDaysRemaining()).toBeGreaterThanOrEqual(1);
   });
 
-  it('BLIZZARD profile has farmModifier=0', () => {
+  it('BLIZZARD profile has farmModifier=0.2', () => {
     const agent = new WeatherAgent();
     agent.restore({ currentWeather: WeatherType.BLIZZARD, daysRemaining: 1 });
     const profile = agent.getWeatherProfile();
-    expect(profile.farmModifier).toBe(0);
+    expect(profile.farmModifier).toBe(0.2);
   });
 
   it('MIRACULOUS_SUN profile has farmModifier=2.0', () => {

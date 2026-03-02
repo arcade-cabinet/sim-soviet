@@ -14,22 +14,38 @@
     "zeppelinArrivalDist": 1.0
   },
   "disease": {
-    "baseOutbreakChance": 0.02,
-    "overcrowdingMult": 2.0,
-    "winterMult": 1.5,
+    "baseOutbreakChance": 0.002,
+    "overcrowdingMult": 1.3,
+    "winterMult": 1.1,
     "foodShortageThreshold": 0.3,
-    "foodShortageScurvyMult": 3.0,
-    "clinicReductionPerBuilding": 0.4,
-    "maxClinicReduction": 0.1,
+    "foodShortageScurvyMult": 1.3,
+    "clinicReductionPerBuilding": 0.5,
+    "maxClinicReduction": 0.05,
     "sickLaborMult": 0.5,
     "definitions": {
-      "typhus": { "spreadRate": 0.04, "mortalityRate": 0.15, "durationTicks": 90 },
-      "cholera": { "spreadRate": 0.03, "mortalityRate": 0.25, "durationTicks": 60 },
-      "influenza": { "spreadRate": 0.08, "mortalityRate": 0.05, "durationTicks": 30 },
-      "scurvy": { "spreadRate": 0.06, "mortalityRate": 0.03, "durationTicks": 60 }
+      "typhus": {
+        "spreadRate": 0.01,
+        "mortalityRate": 0.02,
+        "durationTicks": 90
+      },
+      "cholera": {
+        "spreadRate": 0.008,
+        "mortalityRate": 0.03,
+        "durationTicks": 60
+      },
+      "influenza": {
+        "spreadRate": 0.02,
+        "mortalityRate": 0.005,
+        "durationTicks": 30
+      },
+      "scurvy": {
+        "spreadRate": 0.03,
+        "mortalityRate": 0.003,
+        "durationTicks": 60
+      }
     }
   },
   "gulag": {
-    "arrestChance": 0.1
+    "arrestChance": 0.03
   }
 }

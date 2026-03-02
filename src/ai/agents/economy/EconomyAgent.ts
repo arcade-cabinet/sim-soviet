@@ -1131,7 +1131,7 @@ export class EconomyAgent extends Vehicle {
           // Insufficient food for rations — starvation penalty
           const deficit = demand.food - r.food;
           r.food = 0;
-          const starvationLosses = Math.ceil(deficit * 0.1);
+          const starvationLosses = Math.ceil(deficit * 0.02);
           // Route ration starvation through WorkerSystem with dvor cleanup
           deps.workers.removeWorkersByCount(starvationLosses, 'ration_starvation');
           deps.callbacks.onToast('RATION SHORTAGE: Insufficient food for card holders', 'critical');
@@ -1158,7 +1158,7 @@ export class EconomyAgent extends Vehicle {
       if (!result.heatingResult.operational) {
         const atRisk = result.heatingResult.populationAtRisk;
         if (atRisk > 0) {
-          const losses = Math.ceil(atRisk * 0.01); // 1% of at-risk pop per tick
+          const losses = Math.ceil(atRisk * 0.002); // 0.2% of at-risk pop per tick
           deps.workers.removeWorkersByCount(losses, 'heating_failure');
         }
       }

@@ -41,7 +41,7 @@ describe('WorkerSystem — Population Drains via tick()', () => {
   describe('migration flight (low morale)', () => {
     it('drains workers when collective morale is very low', () => {
       system.syncPopulation(30);
-      // Set all workers to very low morale (below FLIGHT_MORALE_THRESHOLD of 30)
+      // Set all workers to very low morale (below FLIGHT_MORALE_THRESHOLD of 15)
       for (const s of system.getStatsMap().values()) {
         (s as { morale: number }).morale = 10;
       }
@@ -77,9 +77,9 @@ describe('WorkerSystem — Population Drains via tick()', () => {
   describe('youth flight', () => {
     it('removes workers over many ticks when morale is low', () => {
       system.syncPopulation(30);
-      // Set low morale to increase flight chance (below YOUTH_FLIGHT_MORALE_THRESHOLD of 40)
+      // Set low morale to increase flight chance (below YOUTH_FLIGHT_MORALE_THRESHOLD of 20)
       for (const s of system.getStatsMap().values()) {
-        (s as { morale: number }).morale = 20;
+        (s as { morale: number }).morale = 15;
       }
 
       let totalFlight = 0;

@@ -54,24 +54,24 @@ describe('FoodAgent', () => {
   // ── Food consumption calculation ─────────────────────────────────────────
 
   describe('food consumption calculation', () => {
-    it('calculateFoodNeed returns ceil(pop/10) for default multiplier', () => {
-      expect(agent.calculateFoodNeed(100)).toBe(10);
-      expect(agent.calculateFoodNeed(101)).toBe(11);
+    it('calculateFoodNeed returns ceil(pop/25) for default multiplier', () => {
+      expect(agent.calculateFoodNeed(100)).toBe(4); // ceil(100/25)
+      expect(agent.calculateFoodNeed(101)).toBe(5); // ceil(101/25)
       expect(agent.calculateFoodNeed(1)).toBe(1);
       expect(agent.calculateFoodNeed(10)).toBe(1);
     });
 
     it('calculateFoodNeed scales with consumptionMult', () => {
-      expect(agent.calculateFoodNeed(100, 2)).toBe(20);
-      expect(agent.calculateFoodNeed(100, 0.5)).toBe(5);
+      expect(agent.calculateFoodNeed(100, 2)).toBe(8); // ceil(100/25*2)
+      expect(agent.calculateFoodNeed(100, 0.5)).toBe(2); // ceil(100/25*0.5)
     });
 
-    it('consumes ceil(pop/10) food per tick', () => {
+    it('consumes ceil(pop/25) food per tick', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 500;
       agent.update(1);
-      expect(store.resources.food).toBe(490);
+      expect(store.resources.food).toBe(496); // 500 - ceil(100/25)
     });
 
     it('consumes correct food for population of 11', () => {
@@ -79,8 +79,8 @@ describe('FoodAgent', () => {
       store.resources.population = 11;
       store.resources.food = 100;
       agent.update(1);
-      // ceil(11/10) = 2
-      expect(store.resources.food).toBe(98);
+      // ceil(11/25) = 1
+      expect(store.resources.food).toBe(99);
     });
 
     it('consumptionMult doubles food need', () => {
@@ -88,8 +88,8 @@ describe('FoodAgent', () => {
       store.resources.population = 100;
       store.resources.food = 500;
       agent.update(1, { consumptionMult: 2 });
-      // ceil(100/10 * 2) = 20
-      expect(store.resources.food).toBe(480);
+      // ceil(100/25 * 2) = 8
+      expect(store.resources.food).toBe(492);
     });
 
     it('consumes nothing when population is 0', () => {
@@ -139,27 +139,27 @@ describe('FoodAgent', () => {
       expect(result.starvationDeaths).toBe(0);
     });
 
-    it('returns starvation deaths after grace period expires (>90 ticks)', () => {
+    it('returns starvation deaths after grace period expires (>180 ticks)', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
 
-      // Exhaust grace period
-      starve(agent, 90, 100);
-      expect(agent.getStarvationCounter()).toBe(90);
+      // Exhaust grace period (180 ticks)
+      starve(agent, 180, 100);
+      expect(agent.getStarvationCounter()).toBe(180);
 
-      // Tick 91 — should cause deaths
+      // Tick 181 — should cause deaths
       store.resources.food = 0;
       store.resources.population = 100;
       const result = agent.update(1);
-      expect(result.starvationDeaths).toBe(5);
+      expect(result.starvationDeaths).toBe(2);
     });
 
-    it('clamps starvation deaths at population size when pop < 5', () => {
+    it('clamps starvation deaths at population size when pop < 2', () => {
       const store = getResourceEntity()!;
-      store.resources.population = 3;
-      starve(agent, 91, 3);
+      store.resources.population = 1;
+      starve(agent, 181, 1);
       const result = agent.update(1);
-      expect(result.starvationDeaths).toBe(3);
+      expect(result.starvationDeaths).toBe(1);
     });
 
     it('grace period resets after food restored mid-starvation', () => {
@@ -182,20 +182,20 @@ describe('FoodAgent', () => {
     });
 
     it('getTicksUntilStarvation returns full grace at start', () => {
-      expect(agent.getTicksUntilStarvation()).toBe(90);
+      expect(agent.getTicksUntilStarvation()).toBe(180);
     });
 
     it('getTicksUntilStarvation decreases as starvation counter rises', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       starve(agent, 10, 100);
-      expect(agent.getTicksUntilStarvation()).toBe(80);
+      expect(agent.getTicksUntilStarvation()).toBe(170);
     });
 
     it('getTicksUntilStarvation returns 0 once deaths begin', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
-      starve(agent, 91, 100);
+      starve(agent, 181, 100);
       expect(agent.getTicksUntilStarvation()).toBe(0);
     });
   });
@@ -226,7 +226,7 @@ describe('FoodAgent', () => {
     it('transitions to starvation after grace period', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
-      starve(agent, 91, 100);
+      starve(agent, 181, 100);
       expect(agent.getFoodState()).toBe('starvation');
     });
 
@@ -263,7 +263,7 @@ describe('FoodAgent', () => {
     it('shouldEmitFoodShortage is true in starvation state', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
-      starve(agent, 91, 100);
+      starve(agent, 181, 100);
       expect(agent.shouldEmitFoodShortage()).toBe(true);
     });
 
@@ -277,7 +277,7 @@ describe('FoodAgent', () => {
     it('shouldEmitStarvationWarning is true after grace expires', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
-      starve(agent, 91, 100);
+      starve(agent, 181, 100);
       expect(agent.shouldEmitStarvationWarning()).toBe(true);
     });
 
@@ -292,7 +292,7 @@ describe('FoodAgent', () => {
     it('shouldEmitFoodSurplus is false in stable state', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
-      store.resources.food = 15; // need=10, threshold=20; 15<20 → stable not surplus
+      store.resources.food = 5; // need=4, threshold=8; 5<8 → stable not surplus
       agent.update(1);
       expect(agent.shouldEmitFoodSurplus()).toBe(false);
     });
@@ -410,7 +410,7 @@ describe('FoodAgent', () => {
       expect(store.resources.food).toBe(0);
     });
 
-    it('vodka distillery grain diversion: consumes 2 food per vodka produced', () => {
+    it('vodka distillery grain diversion: consumes 1 food per vodka produced', () => {
       const store = getResourceEntity()!;
       store.resources.food = 1000;
       createBuilding(0, 0, 'power-station');
@@ -418,17 +418,17 @@ describe('FoodAgent', () => {
       powerSystem();
       agent.update(1);
       expect(store.resources.vodka).toBe(10);
-      expect(store.resources.food).toBe(980);
+      expect(store.resources.food).toBe(990);
     });
 
     it('vodka production limited by available grain', () => {
       const store = getResourceEntity()!;
-      store.resources.food = 10; // only 5 vodka worth
+      store.resources.food = 10; // 10 vodka worth (1:1 ratio)
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
       agent.update(1);
-      expect(store.resources.vodka).toBe(5);
+      expect(store.resources.vodka).toBe(10);
       expect(store.resources.food).toBe(0);
     });
   });
@@ -462,7 +462,7 @@ describe('FoodAgent', () => {
     it('fromJSON with starvation state preserves warning emission', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
-      starve(agent, 91, 100);
+      starve(agent, 181, 100);
 
       const saved = agent.toJSON();
       const agent2 = new FoodAgent();

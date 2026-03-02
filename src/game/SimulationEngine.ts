@@ -792,6 +792,19 @@ export class SimulationEngine {
       }
     }
 
+    // Monthly emergency immigration — the Party sends reinforcements
+    // when the settlement is at risk of complete collapse
+    if (tickResult.newMonth && !tickResult.newYear) {
+      const emergencyPop = storeRef.resources.population;
+      if (emergencyPop > 0 && emergencyPop < 20) {
+        const reinforcements = this.rng.int(5, 12);
+        this.workerSystem.spawnInflowDvor(reinforcements, 'emergency_resettlement');
+      } else if (emergencyPop >= 20 && emergencyPop < 40) {
+        const reinforcements = this.rng.int(3, 8);
+        this.workerSystem.spawnInflowDvor(reinforcements, 'emergency_resettlement');
+      }
+    }
+
     // ── 14. Worker system tick ──
     const workerResult = this.workerSystem.tick({
       vodkaAvailable: storeRef.resources.vodka,

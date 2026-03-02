@@ -54,17 +54,17 @@ describe('StorageAgent', () => {
   // ---------------------------------------------------------------------------
 
   describe('getCapacity / _calculateStorageCapacity', () => {
-    it('returns base 200 capacity with no buildings', () => {
+    it('returns base 10000 capacity with no buildings', () => {
       createResourceStore({ food: 0 });
       agent.update(5);
-      expect(agent.getCapacity()).toBe(200);
+      expect(agent.getCapacity()).toBe(10000);
     });
 
-    it('agriculture buildings add 50 capacity each', () => {
+    it('agriculture buildings add 500 capacity each', () => {
       createResourceStore({ food: 0 });
       createBuilding(0, 0, 'collective-farm-hq');
       agent.update(5);
-      expect(agent.getCapacity()).toBe(250);
+      expect(agent.getCapacity()).toBe(10500);
     });
 
     it('stacks capacity from multiple buildings', () => {
@@ -72,34 +72,34 @@ describe('StorageAgent', () => {
       createBuilding(0, 0, 'collective-farm-hq');
       createBuilding(1, 1, 'collective-farm-hq');
       agent.update(5);
-      expect(agent.getCapacity()).toBe(300);
+      expect(agent.getCapacity()).toBe(11000);
     });
 
     it('specific storage buildings (warehouse) add their defined capacity', () => {
       createResourceStore({ food: 0 });
-      // warehouse = 300 capacity per STORAGE_BY_DEF
+      // warehouse = 5000 capacity per STORAGE_BY_DEF
       const warehouseContrib = agent.getBuildingStorageContribution('warehouse');
-      expect(warehouseContrib).toBe(300);
+      expect(warehouseContrib).toBe(5000);
     });
 
-    it('grain-elevator contributes 2000 capacity', () => {
-      expect(agent.getBuildingStorageContribution('grain-elevator')).toBe(2000);
+    it('grain-elevator contributes 5000 capacity', () => {
+      expect(agent.getBuildingStorageContribution('grain-elevator')).toBe(5000);
     });
 
-    it('cold-storage contributes 400 capacity', () => {
-      expect(agent.getBuildingStorageContribution('cold-storage')).toBe(400);
+    it('cold-storage contributes 1000 capacity', () => {
+      expect(agent.getBuildingStorageContribution('cold-storage')).toBe(1000);
     });
 
-    it('fuel-depot contributes 500 capacity', () => {
-      expect(agent.getBuildingStorageContribution('fuel-depot')).toBe(500);
+    it('fuel-depot contributes 1000 capacity', () => {
+      expect(agent.getBuildingStorageContribution('fuel-depot')).toBe(1000);
     });
 
-    it('granary contributes 500 capacity', () => {
-      expect(agent.getBuildingStorageContribution('granary')).toBe(500);
+    it('granary contributes 2000 capacity', () => {
+      expect(agent.getBuildingStorageContribution('granary')).toBe(2000);
     });
 
-    it('root-cellar contributes 200 capacity', () => {
-      expect(agent.getBuildingStorageContribution('root-cellar')).toBe(200);
+    it('root-cellar contributes 500 capacity', () => {
+      expect(agent.getBuildingStorageContribution('root-cellar')).toBe(500);
     });
 
     it('unknown building defId returns 0 contribution', () => {
@@ -108,41 +108,41 @@ describe('StorageAgent', () => {
 
     it('updates storageCapacity on resource store after update()', () => {
       createResourceStore({ food: 0 });
-      createBuilding(0, 0, 'collective-farm-hq'); // +50
+      createBuilding(0, 0, 'collective-farm-hq'); // +500
       agent.update(5);
       const store = getResourceEntity()!;
-      expect(store.resources.storageCapacity).toBe(250);
+      expect(store.resources.storageCapacity).toBe(10500);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // Overflow spoilage rate (5%/tick)
+  // Overflow spoilage rate (0.5%/tick)
   // ---------------------------------------------------------------------------
 
   describe('overflow spoilage', () => {
-    it('food exceeding capacity decays at 5% per tick (spring)', () => {
-      createResourceStore({ food: 300 });
-      // base capacity = 200, overflow = 100
+    it('food exceeding capacity decays at 0.5% per tick (spring)', () => {
+      createResourceStore({ food: 12000 });
+      // base capacity = 10000, overflow = 2000
       // Month 5 = spring, seasonal mult = 1.0
-      // spoiled = 100 * 0.05 * 1.0 = 5
+      // spoiled = 2000 * 0.005 * 1.0 = 10
       agent.update(5);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(295);
+      expect(store.resources.food).toBeCloseTo(11990);
     });
 
     it('tracks spoilage amount for last tick', () => {
-      createResourceStore({ food: 300 });
+      createResourceStore({ food: 12000 });
       agent.update(5);
-      expect(agent.getLastSpoilageAmount()).toBeCloseTo(5);
+      expect(agent.getLastSpoilageAmount()).toBeCloseTo(10);
     });
 
     it('food within capacity does not trigger overflow spoilage', () => {
       createResourceStore({ food: 100 });
-      // 100 < 200 (base capacity) → standard decay rate applies (0.5% per tick)
+      // 100 < 10000 (base capacity) → standard decay rate applies (0.1% per tick)
       agent.update(5);
       const store = getResourceEntity()!;
-      // 100 * 0.005 * 1.0 = 0.5 decay
-      expect(store.resources.food).toBeCloseTo(99.5);
+      // 100 * 0.001 * 1.0 = 0.1 decay
+      expect(store.resources.food).toBeCloseTo(99.9);
     });
   });
 
@@ -152,61 +152,63 @@ describe('StorageAgent', () => {
 
   describe('seasonal multipliers', () => {
     it('summer (month 7) doubles overflow spoilage rate', () => {
-      createResourceStore({ food: 300 });
-      // overflow = 100, spoiled = 100 * 0.05 * 2.0 = 10
+      createResourceStore({ food: 12000 });
+      // overflow = 2000, spoiled = 2000 * 0.005 * 2.0 = 20
       agent.update(7);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(290);
+      expect(store.resources.food).toBeCloseTo(11980);
     });
 
     it('winter (month 1) reduces spoilage to 30%', () => {
-      createResourceStore({ food: 300 });
-      // overflow = 100, spoiled = 100 * 0.05 * 0.3 = 1.5
+      createResourceStore({ food: 12000 });
+      // overflow = 2000, spoiled = 2000 * 0.005 * 0.3 = 3
       agent.update(1);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(298.5);
+      expect(store.resources.food).toBeCloseTo(11997);
     });
 
     it('month 6 (early summer) still uses 2.0 multiplier', () => {
-      createResourceStore({ food: 300 });
+      createResourceStore({ food: 12000 });
       agent.update(6);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(290);
+      expect(store.resources.food).toBeCloseTo(11980);
     });
 
     it('month 8 (late summer) still uses 2.0 multiplier', () => {
-      createResourceStore({ food: 300 });
+      createResourceStore({ food: 12000 });
       agent.update(8);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(290);
+      expect(store.resources.food).toBeCloseTo(11980);
     });
 
     it('month 11 (early winter) uses 0.3 multiplier', () => {
-      createResourceStore({ food: 300 });
+      createResourceStore({ food: 12000 });
       agent.update(11);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(298.5);
+      expect(store.resources.food).toBeCloseTo(11997);
     });
 
     it('month 3 (late winter) uses 0.3 multiplier', () => {
-      createResourceStore({ food: 300 });
+      createResourceStore({ food: 12000 });
       agent.update(3);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(298.5);
+      expect(store.resources.food).toBeCloseTo(11997);
     });
 
     it('month 5 (spring) uses 1.0 multiplier', () => {
       createResourceStore({ food: 100 });
       agent.update(5);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(99.5);
+      // 100 * 0.001 * 1.0 = 0.1 (stored spoilage)
+      expect(store.resources.food).toBeCloseTo(99.9);
     });
 
     it('month 10 (autumn) uses 1.0 multiplier', () => {
       createResourceStore({ food: 100 });
       agent.update(10);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(99.5);
+      // 100 * 0.001 * 1.0 = 0.1 (stored spoilage)
+      expect(store.resources.food).toBeCloseTo(99.9);
     });
   });
 
@@ -239,10 +241,10 @@ describe('StorageAgent', () => {
       expect(agent.getColdStorageCount()).toBe(2);
     });
 
-    it('one powered cold-storage reduces baseline spoilage from 0.5% to 0.1% per tick', () => {
+    it('one powered cold-storage preserves food at single cold storage rate', () => {
       createResourceStore({ food: 100 });
       createColdStorage(0, 0, true);
-      // rate = 0.001 (single cold storage rate)
+      // single cold storage rate = 0.001 (same as stored rate now)
       // decay = 100 * 0.001 * 1.0 = 0.1
       agent.update(5);
       const store = getResourceEntity()!;
@@ -276,12 +278,12 @@ describe('StorageAgent', () => {
     it('unpowered cold-storage does NOT reduce baseline spoilage', () => {
       createResourceStore({ food: 100 });
       createColdStorage(0, 0, false);
-      // No cold storage effect → standard rate 0.005
-      // cold-storage adds 400 capacity → total = 600, food within capacity
-      // decay = 100 * 0.005 * 1.0 = 0.5
+      // No cold storage effect → standard rate 0.001
+      // cold-storage adds 1000 capacity → total = 11000, food within capacity
+      // decay = 100 * 0.001 * 1.0 = 0.1
       agent.update(5);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(99.5);
+      expect(store.resources.food).toBeCloseTo(99.9);
     });
 
     it('cold storage reduction stacks with seasonal multiplier', () => {
@@ -294,15 +296,15 @@ describe('StorageAgent', () => {
       expect(store.resources.food).toBeCloseTo(99.8);
     });
 
-    it('overflow spoilage is NOT affected by cold storage (uses fixed 5%)', () => {
-      createResourceStore({ food: 1000 });
+    it('overflow spoilage is NOT affected by cold storage (uses fixed 0.5%)', () => {
+      createResourceStore({ food: 15000 });
       createColdStorage(0, 0, true);
-      // Capacity = 200 (base) + 400 (cold-storage) = 600
-      // Overflow = 1000 - 600 = 400
-      // Overflow spoilage = 400 * 0.05 * 1.0 = 20
+      // Capacity = 10000 (base) + 1000 (cold-storage) = 11000
+      // Overflow = 15000 - 11000 = 4000
+      // Overflow spoilage = 4000 * 0.005 * 1.0 = 20
       agent.update(5);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(980);
+      expect(store.resources.food).toBeCloseTo(14980);
     });
   });
 
@@ -345,17 +347,18 @@ describe('StorageAgent', () => {
 
   describe('serialization round-trip', () => {
     it('toJSON returns a snapshot of internal state', () => {
-      createResourceStore({ food: 300 });
+      createResourceStore({ food: 12000 });
       agent.update(5);
 
       const snapshot: StorageState = agent.toJSON();
-      expect(snapshot.capacity).toBe(200);
-      expect(snapshot.lastSpoilageAmount).toBeCloseTo(5);
+      expect(snapshot.capacity).toBe(10000);
+      // overflow = 2000, spoilage = 2000 * 0.005 * 1.0 = 10
+      expect(snapshot.lastSpoilageAmount).toBeCloseTo(10);
       expect(snapshot.coldStorageCount).toBe(0);
     });
 
     it('fromJSON restores state correctly', () => {
-      createResourceStore({ food: 300 });
+      createResourceStore({ food: 12000 });
       agent.update(5);
 
       const saved = agent.toJSON();

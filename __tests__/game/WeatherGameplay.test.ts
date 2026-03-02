@@ -38,9 +38,9 @@ describe('WeatherProfile modifiers', () => {
   });
 
   describe('blizzard reduces farm output and slows construction', () => {
-    it('farmModifier is 0 (no farm production in blizzard)', () => {
+    it('farmModifier is 0.2 (minimal farm production in blizzard)', () => {
       const profile = getWeatherProfile(WeatherType.BLIZZARD);
-      expect(profile.farmModifier).toBe(0.0);
+      expect(profile.farmModifier).toBe(0.2);
     });
 
     it('constructionTimeMult is 1.25 (+25% construction time)', () => {

@@ -55,6 +55,12 @@ export interface ConsumptionResult {
 /** Number of consecutive starvation ticks before deaths begin (~1 season at 1x speed). */
 const STARVATION_GRACE_TICKS = economy.consumption.starvationGraceTicks;
 
+/** Food consumed per citizen per tick = 1 / FOOD_PER_POP_DIVISOR. */
+const FOOD_PER_POP_DIVISOR = economy.consumption.foodPerPopDivisor;
+
+/** Maximum starvation deaths per tick. */
+const MAX_STARVATION_DEATHS = economy.consumption.maxStarvationDeathsPerTick;
+
 /** Tracks consecutive ticks without food. Resets when food is available. */
 let _starvationCounter = 0;
 
@@ -72,7 +78,7 @@ export function consumptionSystem(consumptionMult = 1): ConsumptionResult {
   if (pop <= 0) return result;
 
   // Food consumption (scaled by era/difficulty multiplier)
-  const foodNeed = Math.ceil((pop / 10) * consumptionMult);
+  const foodNeed = Math.ceil((pop / FOOD_PER_POP_DIVISOR) * consumptionMult);
   if (store.resources.food >= foodNeed) {
     store.resources.food -= foodNeed;
     _starvationCounter = 0;
@@ -84,7 +90,7 @@ export function consumptionSystem(consumptionMult = 1): ConsumptionResult {
 
     // Grace period: deaths only after sustained starvation
     if (_starvationCounter > STARVATION_GRACE_TICKS) {
-      result.starvationDeaths = Math.min(5, pop);
+      result.starvationDeaths = Math.min(MAX_STARVATION_DEATHS, pop);
     }
   }
 

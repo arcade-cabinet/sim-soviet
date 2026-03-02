@@ -258,8 +258,8 @@ describe('PoliticalEntitySystem', () => {
 
     it('permanent conscription has wartime casualty rate', () => {
       const event = system.triggerConscription(10, true);
-      // 20% casualty rate = 2 casualties out of 10
-      expect(event.casualties).toBe(2);
+      // 8% casualty rate = 0 casualties out of 10 (Math.floor(10 * 0.08) = 0)
+      expect(event.casualties).toBe(0);
       expect(event.returnTick).toBe(-1);
     });
 
@@ -277,10 +277,10 @@ describe('PoliticalEntitySystem', () => {
       system.tick(100); // Process
 
       const returnQueue = system.getReturnQueue();
-      // Survivors (10 - 2 = 8) should still be queued for return
+      // Survivors (10 - 0 = 10) should still be queued for return
       expect(returnQueue.length).toBeGreaterThan(0);
       const totalReturning = returnQueue.reduce((sum, e) => sum + e.count, 0);
-      expect(totalReturning).toBe(8); // 10 - 2 casualties
+      expect(totalReturning).toBe(10); // 10 - 0 casualties (Math.floor(10 * 0.08) = 0)
     });
 
     it('return queue processes at correct tick', () => {

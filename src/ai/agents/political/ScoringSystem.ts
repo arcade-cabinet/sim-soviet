@@ -160,36 +160,36 @@ export interface ScoringSystemSaveData {
 export const DIFFICULTY_PRESETS: Record<DifficultyLevel, DifficultyConfig> = {
   worker: {
     label: 'Worker',
-    quotaMultiplier: 0.6,
-    markDecayTicks: 360, // 1/year
-    politrukRatio: 40, // 1:40
+    quotaMultiplier: 0.4,
+    markDecayTicks: 180, // every 6 months
+    politrukRatio: 50, // 1:50
     kgbAggression: 'low',
-    growthMultiplier: 1.5,
+    growthMultiplier: 2.5,
     winterModifier: 'shorter',
-    decayMultiplier: 0.7,
-    resourceMultiplier: 2.0,
+    decayMultiplier: 0.3,
+    resourceMultiplier: 2.5,
   },
   comrade: {
     label: 'Comrade',
-    quotaMultiplier: 1.0,
-    markDecayTicks: 720, // 1/2 years
-    politrukRatio: 20, // 1:20
+    quotaMultiplier: 0.6,
+    markDecayTicks: 360, // 1 year
+    politrukRatio: 30, // 1:30
     kgbAggression: 'medium',
-    growthMultiplier: 1.0,
+    growthMultiplier: 2.0,
     winterModifier: 'standard',
-    decayMultiplier: 1.0,
-    resourceMultiplier: 1.0,
+    decayMultiplier: 0.5,
+    resourceMultiplier: 1.5,
   },
   tovarish: {
     label: 'Tovarish',
-    quotaMultiplier: 1.5,
+    quotaMultiplier: 1.3,
     markDecayTicks: 1440, // 1/4 years
-    politrukRatio: 8, // 1:8
+    politrukRatio: 10, // 1:10
     kgbAggression: 'high',
-    growthMultiplier: 0.7,
+    growthMultiplier: 1.0,
     winterModifier: 'longer',
-    decayMultiplier: 1.5,
-    resourceMultiplier: 0.5,
+    decayMultiplier: 1.0,
+    resourceMultiplier: 0.7,
   },
 };
 

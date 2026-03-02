@@ -41,15 +41,15 @@ describe('Era Doctrine Mechanics', () => {
   // ── Original mechanics (regression) ─────────────────────────────
 
   describe('grain_requisitioning (revolution)', () => {
-    it('fires every 30 ticks during revolution', () => {
-      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'revolution', totalTicks: 30 }));
+    it('fires every 60 ticks during revolution', () => {
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'revolution', totalTicks: 60 }));
       const grain = effects.find((e) => e.mechanicId === 'grain_requisitioning');
       expect(grain).toBeDefined();
       expect(grain!.foodDelta).toBeLessThan(0);
     });
 
     it('does not fire outside revolution era', () => {
-      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'stagnation', totalTicks: 30 }));
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'stagnation', totalTicks: 60 }));
       const grain = effects.find((e) => e.mechanicId === 'grain_requisitioning');
       expect(grain).toBeUndefined();
     });
@@ -58,7 +58,7 @@ describe('Era Doctrine Mechanics', () => {
   describe('wartime_conscription (great_patriotic)', () => {
     it('fires during great_patriotic with sufficient population', () => {
       const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'great_patriotic', totalTicks: 60, currentPop: 50 }),
+        makeCtx({ currentEraId: 'great_patriotic', totalTicks: 120, currentPop: 50 }),
       );
       const conscription = effects.find((e) => e.mechanicId === 'wartime_conscription');
       expect(conscription).toBeDefined();
@@ -67,7 +67,7 @@ describe('Era Doctrine Mechanics', () => {
 
     it('does not fire with low population', () => {
       const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'great_patriotic', totalTicks: 60, currentPop: 5 }),
+        makeCtx({ currentEraId: 'great_patriotic', totalTicks: 120, currentPop: 5 }),
       );
       const conscription = effects.find((e) => e.mechanicId === 'wartime_conscription');
       expect(conscription).toBeUndefined();
@@ -120,23 +120,23 @@ describe('Era Doctrine Mechanics', () => {
   describe('stagnation_rot', () => {
     it('fires during stagnation era', () => {
       const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'stagnation', totalTicks: 30, eraStartTick: 0 }),
+        makeCtx({ currentEraId: 'stagnation', totalTicks: 60, eraStartTick: 0 }),
       );
       const rot = effects.find((e) => e.mechanicId === 'stagnation_rot');
       expect(rot).toBeDefined();
     });
 
-    it('applies 2x decay multiplier', () => {
+    it('applies 1.3x decay multiplier', () => {
       const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'stagnation', totalTicks: 30, eraStartTick: 0 }),
+        makeCtx({ currentEraId: 'stagnation', totalTicks: 60, eraStartTick: 0 }),
       );
       const rot = effects.find((e) => e.mechanicId === 'stagnation_rot');
-      expect(rot!.decayMult).toBe(2.0);
+      expect(rot!.decayMult).toBe(1.3);
     });
 
     it('accumulates paperwork', () => {
       const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'stagnation', totalTicks: 30, eraStartTick: 0 }),
+        makeCtx({ currentEraId: 'stagnation', totalTicks: 60, eraStartTick: 0 }),
       );
       const rot = effects.find((e) => e.mechanicId === 'stagnation_rot');
       expect(rot!.paperworkDelta).toBeGreaterThan(0);
@@ -144,10 +144,10 @@ describe('Era Doctrine Mechanics', () => {
 
     it('increases corruption multiplier', () => {
       const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'stagnation', totalTicks: 30, eraStartTick: 0 }),
+        makeCtx({ currentEraId: 'stagnation', totalTicks: 60, eraStartTick: 0 }),
       );
       const rot = effects.find((e) => e.mechanicId === 'stagnation_rot');
-      expect(rot!.corruptionMult).toBe(1.5);
+      expect(rot!.corruptionMult).toBe(1.2);
     });
 
     it('productivity decreases over years of stagnation', () => {
@@ -167,7 +167,7 @@ describe('Era Doctrine Mechanics', () => {
     });
 
     it('does not fire outside stagnation era', () => {
-      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'revolution', totalTicks: 30 }));
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'revolution', totalTicks: 60 }));
       const rot = effects.find((e) => e.mechanicId === 'stagnation_rot');
       expect(rot).toBeUndefined();
     });
@@ -177,14 +177,14 @@ describe('Era Doctrine Mechanics', () => {
 
   describe('eternal_bureaucracy', () => {
     it('fires during the_eternal era', () => {
-      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'the_eternal', totalTicks: 10 }));
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'the_eternal', totalTicks: 20 }));
       const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
       expect(bureau).toBeDefined();
     });
 
     it('generates base paperwork', () => {
       const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 10, currentPaperwork: 0 }),
+        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 0 }),
       );
       const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
       expect(bureau!.paperworkDelta).toBeGreaterThan(0);
@@ -192,12 +192,12 @@ describe('Era Doctrine Mechanics', () => {
 
     it('paperwork grows exponentially with accumulation', () => {
       const effectsLow = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 10, currentPaperwork: 0 }),
+        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 0 }),
       );
       const bureauLow = effectsLow.find((e) => e.mechanicId === 'eternal_bureaucracy');
 
       const effectsHigh = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 10, currentPaperwork: 3000 }),
+        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 3000 }),
       );
       const bureauHigh = effectsHigh.find((e) => e.mechanicId === 'eternal_bureaucracy');
 
@@ -210,12 +210,12 @@ describe('Era Doctrine Mechanics', () => {
 
     it('systems slow down as paperwork accumulates', () => {
       const effectsLow = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 10, currentPaperwork: 100 }),
+        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 100 }),
       );
       const bureauLow = effectsLow.find((e) => e.mechanicId === 'eternal_bureaucracy');
 
       const effectsHigh = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 10, currentPaperwork: 4000 }),
+        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 4000 }),
       );
       const bureauHigh = effectsHigh.find((e) => e.mechanicId === 'eternal_bureaucracy');
 
@@ -226,7 +226,7 @@ describe('Era Doctrine Mechanics', () => {
       const effects = evaluateDoctrineMechanics(
         makeCtx({
           currentEraId: 'the_eternal',
-          totalTicks: 10,
+          totalTicks: 20,
           currentPaperwork: ETERNAL_PAPERWORK_THRESHOLD - 1,
         }),
       );
@@ -236,14 +236,14 @@ describe('Era Doctrine Mechanics', () => {
 
     it('production slowdown caps at 50%', () => {
       const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 10, currentPaperwork: 100000 }),
+        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 100000 }),
       );
       const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
       expect(bureau!.productionMult).toBeGreaterThanOrEqual(0.5);
     });
 
     it('does not fire outside the_eternal era', () => {
-      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'stagnation', totalTicks: 10 }));
+      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'stagnation', totalTicks: 20 }));
       const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
       expect(bureau).toBeUndefined();
     });

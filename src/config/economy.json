@@ -112,16 +112,16 @@
   },
   "difficulty": {
     "worker": {
-      "quotaTarget": 0.8,
-      "startingResources": 1.5,
-      "birthRate": 1.2,
-      "decayRate": 0.7,
-      "politruksPer100": 0.5,
-      "fondyReliability": 1.2,
-      "deliveryRate": 0.8,
-      "eventSeverity": 0.7,
-      "markDecayRate": 1.2,
-      "starvationRate": 0.7
+      "quotaTarget": 0.6,
+      "startingResources": 2.0,
+      "birthRate": 1.5,
+      "decayRate": 0.5,
+      "politruksPer100": 0.3,
+      "fondyReliability": 1.5,
+      "deliveryRate": 0.5,
+      "eventSeverity": 0.5,
+      "markDecayRate": 1.5,
+      "starvationRate": 0.5
     },
     "comrade": {
       "quotaTarget": 1.0,
@@ -190,38 +190,147 @@
     }
   },
   "fondy": {
-    "revolution": { "reliability": 0.4, "interval": 30, "food": 0, "vodka": 0, "money": 0, "steel": 0, "timber": 10 },
-    "industrialization": { "reliability": 0.6, "interval": 20, "food": 5, "vodka": 0, "money": 10, "steel": 20, "timber": 15 },
-    "wartime": { "reliability": 0.3, "interval": 40, "food": 5, "vodka": 0, "money": 5, "steel": 10, "timber": 5 },
-    "reconstruction": { "reliability": 0.5, "interval": 25, "food": 5, "vodka": 0, "money": 10, "steel": 15, "timber": 10 },
-    "thaw": { "reliability": 0.8, "interval": 15, "food": 10, "vodka": 5, "money": 20, "steel": 25, "timber": 20 },
-    "stagnation": { "reliability": 0.4, "interval": 30, "food": 5, "vodka": 5, "money": 15, "steel": 15, "timber": 10 },
-    "perestroika": { "reliability": 0.3, "interval": 35, "food": 3, "vodka": 3, "money": 10, "steel": 10, "timber": 8 },
-    "eternal": { "reliability": 0.2, "interval": 40, "food": 2, "vodka": 2, "money": 5, "steel": 5, "timber": 5 }
+    "revolution": {
+      "reliability": 0.9,
+      "interval": 15,
+      "food": 30,
+      "vodka": 5,
+      "money": 10,
+      "steel": 5,
+      "timber": 20
+    },
+    "industrialization": {
+      "reliability": 0.8,
+      "interval": 15,
+      "food": 25,
+      "vodka": 5,
+      "money": 15,
+      "steel": 25,
+      "timber": 20
+    },
+    "wartime": {
+      "reliability": 0.7,
+      "interval": 20,
+      "food": 20,
+      "vodka": 5,
+      "money": 10,
+      "steel": 15,
+      "timber": 10
+    },
+    "reconstruction": {
+      "reliability": 0.7,
+      "interval": 20,
+      "food": 15,
+      "vodka": 5,
+      "money": 15,
+      "steel": 20,
+      "timber": 15
+    },
+    "thaw": {
+      "reliability": 0.8,
+      "interval": 15,
+      "food": 10,
+      "vodka": 5,
+      "money": 20,
+      "steel": 25,
+      "timber": 20
+    },
+    "stagnation": {
+      "reliability": 0.4,
+      "interval": 30,
+      "food": 5,
+      "vodka": 5,
+      "money": 15,
+      "steel": 15,
+      "timber": 10
+    },
+    "perestroika": {
+      "reliability": 0.3,
+      "interval": 35,
+      "food": 3,
+      "vodka": 3,
+      "money": 10,
+      "steel": 10,
+      "timber": 8
+    },
+    "eternal": {
+      "reliability": 0.2,
+      "interval": 40,
+      "food": 2,
+      "vodka": 2,
+      "money": 5,
+      "steel": 5,
+      "timber": 5
+    }
   },
   "rations": {
     "periods": [
-      { "start": 1929, "end": 1935 },
-      { "start": 1941, "end": 1947 },
-      { "start": 1983, "end": 9999 }
+      {
+        "start": 1929,
+        "end": 1935
+      },
+      {
+        "start": 1941,
+        "end": 1947
+      },
+      {
+        "start": 1983,
+        "end": 9999
+      }
     ],
     "defaultTiers": {
-      "worker": { "share": 0.5, "food": 1.0, "vodka": 0.3 },
-      "employee": { "share": 0.2, "food": 0.7, "vodka": 0.2 },
-      "dependent": { "share": 0.2, "food": 0.5, "vodka": 0.1 },
-      "children": { "share": 0.1, "food": 0.4, "vodka": 0.0 }
+      "worker": {
+        "share": 0.5,
+        "food": 0.05,
+        "vodka": 0.02
+      },
+      "employee": {
+        "share": 0.2,
+        "food": 0.04,
+        "vodka": 0.01
+      },
+      "dependent": {
+        "share": 0.2,
+        "food": 0.03,
+        "vodka": 0.005
+      },
+      "children": {
+        "share": 0.1,
+        "food": 0.02,
+        "vodka": 0.0
+      }
     }
   },
   "currencyReforms": [
-    { "year": 1924, "name": "Chervonets Reform", "rate": 50000 },
-    { "year": 1947, "name": "Post-War Reform", "rate": 10 },
-    { "year": 1961, "name": "Khrushchev Reform", "rate": 10 },
-    { "year": 1991, "name": "Pavlov Reform", "rate": 1, "confiscation": { "threshold": 1000, "rate": 0.5 } }
+    {
+      "year": 1924,
+      "name": "Chervonets Reform",
+      "rate": 50000
+    },
+    {
+      "year": 1947,
+      "name": "Post-War Reform",
+      "rate": 10
+    },
+    {
+      "year": 1961,
+      "name": "Khrushchev Reform",
+      "rate": 10
+    },
+    {
+      "year": 1991,
+      "name": "Pavlov Reform",
+      "rate": 1,
+      "confiscation": {
+        "threshold": 1000,
+        "rate": 0.5
+      }
+    }
   ],
   "storage": {
-    "baseCapacity": 200,
-    "overflowSpoilageRate": 0.05,
-    "storedSpoilageRate": 0.005,
+    "baseCapacity": 10000,
+    "overflowSpoilageRate": 0.005,
+    "storedSpoilageRate": 0.001,
     "coldStorageSpoilageRate": 0.0005,
     "elevatorSpoilageRate": 0.001,
     "singleColdStorageRate": 0.001,
@@ -234,28 +343,28 @@
       "winterMultiplier": 0.3
     },
     "byRole": {
-      "agriculture": 50,
-      "industry": 30
+      "agriculture": 500,
+      "industry": 100
     },
     "byDef": {
-      "warehouse": 300,
-      "grain-elevator": 2000,
-      "cold-storage": 400,
-      "fuel-depot": 500,
-      "granary": 500,
-      "root-cellar": 200
+      "warehouse": 5000,
+      "grain-elevator": 5000,
+      "cold-storage": 1000,
+      "fuel-depot": 1000,
+      "granary": 2000,
+      "root-cellar": 500
     }
   },
   "consumption": {
-    "starvationGraceTicks": 90,
-    "maxStarvationDeathsPerTick": 5,
-    "foodPerPopDivisor": 10,
+    "starvationGraceTicks": 180,
+    "maxStarvationDeathsPerTick": 2,
+    "foodPerPopDivisor": 25,
     "vodkaPerPopDivisor": 20
   },
   "production": {
     "overstaffingMinContribution": 0.015625,
     "overstaffingDecayRate": 0.5,
-    "grainToVodkaRatio": 2,
+    "grainToVodkaRatio": 1,
     "vodkaMoraleBonus": 20,
     "foodCrisisThreshold": 0.5
   },

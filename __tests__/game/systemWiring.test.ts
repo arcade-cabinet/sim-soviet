@@ -131,8 +131,8 @@ describe('GAP-013: Pripiski downstream effects', () => {
     // Submit falsified report that passes quota check (reported >= target)
     processReport(ctx, { reportedQuota: 600, reportedSecondary: 60, reportedPop: 10 });
 
-    // After successful pripiski + quota met → next quota target should be 500 * 1.2 = 600
-    expect(ctx.engineState.quota.target).toBe(600);
+    // After successful pripiski + quota met → next quota target should be 500 * 1.15 = 575
+    expect(ctx.engineState.quota.target).toBe(575);
   });
 
   it('honest report does not inflate next quota target', () => {
@@ -224,11 +224,11 @@ describe('GAP-023: Difficulty multipliers', () => {
     const engine = new SimulationEngine(grid, cb, undefined, 'worker');
 
     const quota = engine.getQuota();
-    // Default target is 500 * 0.6 = 300
-    expect(quota.target).toBe(300);
+    // Default target is 500 * 0.4 = 200
+    expect(quota.target).toBe(200);
   });
 
-  it('tovarish difficulty starts with quotaMultiplier=1.5 applied to initial quota', () => {
+  it('tovarish difficulty starts with quotaMultiplier=1.3 applied to initial quota', () => {
     createResourceStore();
     createMetaStore();
     const grid = new GameGrid();
@@ -236,11 +236,11 @@ describe('GAP-023: Difficulty multipliers', () => {
     const engine = new SimulationEngine(grid, cb, undefined, 'tovarish');
 
     const quota = engine.getQuota();
-    // Default target is 500 * 1.5 = 750
-    expect(quota.target).toBe(750);
+    // Default target is 500 * 1.3 = 650
+    expect(quota.target).toBe(650);
   });
 
-  it('comrade difficulty starts with quotaMultiplier=1.0 (default)', () => {
+  it('comrade difficulty starts with quotaMultiplier=0.6 (default)', () => {
     createResourceStore();
     createMetaStore();
     const grid = new GameGrid();
@@ -248,26 +248,27 @@ describe('GAP-023: Difficulty multipliers', () => {
     const engine = new SimulationEngine(grid, cb, undefined, 'comrade');
 
     const quota = engine.getQuota();
-    expect(quota.target).toBe(500);
+    // Default target is 500 * 0.6 = 300
+    expect(quota.target).toBe(300);
   });
 
   it('difficulty quotaMultiplier is applied to next quota after annual report', () => {
     createResourceStore({ food: 600, vodka: 50, population: 10 });
     createMetaStore({ date: { year: 1927, month: 10, tick: 0 } });
 
-    // Simulate with worker difficulty quotaMultiplier = 0.6
+    // Simulate with worker difficulty quotaMultiplier = 0.4
     const ctx = createMockContext({
       engineState: createMockEngineState({
-        quota: { type: 'food', target: 300, current: 600, deadlineYear: 1927 },
-        quotaMultiplier: 0.6,
+        quota: { type: 'food', target: 200, current: 600, deadlineYear: 1927 },
+        quotaMultiplier: 0.4,
       }),
     });
 
     // Honest report, quota met
     processReport(ctx, { reportedQuota: 600, reportedSecondary: 50, reportedPop: 10 });
 
-    // Next quota should be 500 * 0.6 = 300
-    expect(ctx.engineState.quota.target).toBe(300);
+    // Next quota should be 500 * 0.4 = 200
+    expect(ctx.engineState.quota.target).toBe(200);
   });
 
   it('difficulty presets define all expected fields', () => {
@@ -286,9 +287,9 @@ describe('GAP-023: Difficulty multipliers', () => {
 // ── GAP-026: Weather effects on gameplay ──
 
 describe('GAP-026: Weather effects on gameplay', () => {
-  it('blizzard has farmModifier=0.0 (no farm production)', () => {
+  it('blizzard has farmModifier=0.2 (minimal farm production)', () => {
     const profile = WEATHER_PROFILES[WeatherType.BLIZZARD];
-    expect(profile.farmModifier).toBe(0.0);
+    expect(profile.farmModifier).toBe(0.2);
   });
 
   it('blizzard slows construction (+25%)', () => {

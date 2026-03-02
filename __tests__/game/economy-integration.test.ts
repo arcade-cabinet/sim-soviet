@@ -11,11 +11,11 @@ describe('Economy Integration', () => {
 
       const result = cd.applyDeliveries(100, 50, 200);
 
-      // revolutionary doctrine: food=0.4, vodka=0.3, money=0.2
-      expect(result.foodTaken).toBe(40);
-      expect(result.vodkaTaken).toBe(15);
-      expect(result.moneyTaken).toBe(40);
-      expect(result.totalFoodRemaining).toBe(60);
+      // revolutionary doctrine: food=0.05, vodka=0.03, money=0.05
+      expect(result.foodTaken).toBe(5);
+      expect(result.vodkaTaken).toBeCloseTo(1.5);
+      expect(result.moneyTaken).toBe(10);
+      expect(result.totalFoodRemaining).toBe(95);
       expect(result.corruptionLoss).toBe(0); // no corruption outside stagnation
     });
 
@@ -24,11 +24,11 @@ describe('Economy Integration', () => {
 
       const result = cd.applyDeliveries(100, 100, 100);
 
-      // wartime: food=0.7, vodka=0.6, money=0.7
-      expect(result.foodTaken).toBe(70);
-      expect(result.vodkaTaken).toBe(60);
-      expect(result.moneyTaken).toBe(70);
-      expect(result.totalFoodRemaining).toBe(30);
+      // wartime: food=0.10, vodka=0.08, money=0.15
+      expect(result.foodTaken).toBe(10);
+      expect(result.vodkaTaken).toBe(8);
+      expect(result.moneyTaken).toBe(15);
+      expect(result.totalFoodRemaining).toBe(90);
     });
 
     it('adds corruption losses during stagnation doctrine', () => {
@@ -38,10 +38,10 @@ describe('Economy Integration', () => {
 
       const result = cd.applyDeliveries(100, 100, 100);
 
-      // stagnation: food=0.45, vodka=0.4, money=0.5, plus corruption 5-15%
+      // stagnation: food=0.08, vodka=0.05, money=0.10, plus corruption 3-8%
       expect(result.corruptionLoss).toBeGreaterThan(0);
-      // Total food taken should exceed base 0.45 rate due to corruption
-      expect(result.foodTaken).toBeGreaterThan(45);
+      // Total food taken should exceed base 0.08 rate due to corruption
+      expect(result.foodTaken).toBeGreaterThan(8);
     });
 
     it('accumulates delivery totals across multiple ticks', () => {
@@ -51,10 +51,10 @@ describe('Economy Integration', () => {
       cd.applyDeliveries(100, 100, 100);
 
       const totals = cd.getTotalDelivered();
-      // thaw: food=0.3, vodka=0.2, money=0.25 — applied twice
-      expect(totals.food).toBe(60);
-      expect(totals.vodka).toBe(40);
-      expect(totals.money).toBe(50);
+      // thaw: food=0.05, vodka=0.03, money=0.05 — applied twice
+      expect(totals.food).toBe(10);
+      expect(totals.vodka).toBe(6);
+      expect(totals.money).toBe(10);
     });
 
     it('resets totals correctly for annual report', () => {
@@ -74,10 +74,10 @@ describe('Economy Integration', () => {
 
       const result = cd.applyDeliveries(100, 100, 100);
 
-      // industrialization: food=0.5, vodka=0.4, money=0.6
-      expect(result.foodTaken).toBe(50);
-      expect(result.vodkaTaken).toBe(40);
-      expect(result.moneyTaken).toBe(60);
+      // industrialization: food=0.08, vodka=0.05, money=0.10
+      expect(result.foodTaken).toBe(8);
+      expect(result.vodkaTaken).toBe(5);
+      expect(result.moneyTaken).toBe(10);
     });
   });
 

@@ -42,29 +42,47 @@ describe('Playthrough: Quota Cycle Economy', () => {
     expect(engine.getQuota().type).toBe('vodka');
   });
 
-  // ── Scenario 2: Three consecutive failures → game over ─────────────
+  // ── Scenario 2: Five consecutive failures → game over ─────────────
 
-  it('triggers game over after 3 consecutive quota failures', () => {
-    // Use food=460 so miss is only 8% — no quota black marks (threshold
-    // is >10%). Only mandate marks (1/failure) accumulate, staying well
-    // below the arrest threshold of 7.
+  it('triggers game over after 8 consecutive quota failures', () => {
+    // Start with food=0. Zero food+vodka each tick to prevent fondy
+    // from accumulating enough to meet the 300 quota target.
     const { engine, callbacks } = createPlaythroughEngine({
       meta: { date: { year: 1926, month: 10, tick: 0 } },
-      resources: { food: 460, population: 0 },
+      resources: { food: 0, population: 0 },
+      consequence: 'forgiving',
     });
     disableNonQuotaCallbacks(callbacks as Record<string, unknown>);
 
-    // Failure 1: tick to 1927
-    advanceTicks(engine, 90);
+    const store = getResourceEntity()!;
+
+    // Failure 1: tick to 1927 with food zeroed each tick
+    for (let i = 0; i < 90; i++) {
+      store.resources.food = 0;
+      store.resources.vodka = 0;
+      engine.tick();
+    }
     expect(callbacks.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed'));
     expect(isGameOver()).toBe(false);
 
-    // Failure 2: advance 5 years to 1932
-    advanceYears(engine, 5);
-    expect(isGameOver()).toBe(false);
+    // Failures 2-7: advance 5 years each with food zeroed
+    for (let f = 2; f <= 7; f++) {
+      for (let i = 0; i < 5 * 360; i++) {
+        store.resources.food = 0;
+        store.resources.vodka = 0;
+        engine.tick();
+        if (isGameOver()) break;
+      }
+      if (f <= 7) expect(isGameOver()).toBe(false);
+    }
 
-    // Failure 3: advance 5 years to 1937
-    advanceYears(engine, 5);
+    // Failure 8: advance 5 years — game over
+    for (let i = 0; i < 5 * 360; i++) {
+      store.resources.food = 0;
+      store.resources.vodka = 0;
+      engine.tick();
+      if (isGameOver()) break;
+    }
     expect(callbacks.onGameOver).toHaveBeenCalledWith(false, expect.stringContaining('Politburo'));
     expect(isGameOver()).toBe(true);
   });
@@ -84,24 +102,26 @@ describe('Playthrough: Quota Cycle Economy', () => {
     advanceTicks(engine, 90);
     expect(callbacks.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('Quota met'));
 
-    // Drain all resources to ensure quota failure — economy may produce
-    // vodka/food during tick, so zero resources each year boundary.
     const store = getResourceEntity()!;
 
-    // Failure 1: advance to 1932 (vodka quota, zero production)
-    store.resources.food = 0;
-    store.resources.vodka = 0;
-    advanceYears(engine, 5);
-    expect(isGameOver()).toBe(false);
+    // Failures 1-7: advance 5 years each, zeroing food+vodka to prevent accumulation
+    for (let f = 1; f <= 7; f++) {
+      for (let i = 0; i < 5 * 360; i++) {
+        store.resources.food = 0;
+        store.resources.vodka = 0;
+        engine.tick();
+        if (isGameOver()) break;
+      }
+      expect(isGameOver()).toBe(false);
+    }
 
-    // Failure 2: advance to 1937
-    store.resources.vodka = 0;
-    advanceYears(engine, 5);
-    expect(isGameOver()).toBe(false); // Only 2 consecutive — not game over yet
-
-    // Failure 3: advance to 1942
-    store.resources.vodka = 0;
-    advanceYears(engine, 5);
+    // Failure 8: advance 5 years — game over
+    for (let i = 0; i < 5 * 360; i++) {
+      store.resources.food = 0;
+      store.resources.vodka = 0;
+      engine.tick();
+      if (isGameOver()) break;
+    }
     expect(callbacks.onGameOver).toHaveBeenCalledWith(false, expect.stringContaining('Politburo'));
     expect(isGameOver()).toBe(true);
   });
@@ -120,8 +140,8 @@ describe('Playthrough: Quota Cycle Economy', () => {
     const quota = engine.getQuota();
     expect(quota.type).toBe('vodka');
     expect(quota.target).toBeGreaterThan(0);
-    // At comrade difficulty (quotaMultiplier = 1.0), target is 500
-    expect(quota.target).toBe(500);
+    // At comrade difficulty (quotaMultiplier = 0.6), target is 300
+    expect(quota.target).toBe(300);
     // Deadline should be 5 years from current year
     expect(quota.deadlineYear).toBe(1927 + 5);
   });
@@ -144,7 +164,7 @@ describe('Playthrough: Quota Cycle Economy', () => {
       expect.objectContaining({
         year: 1927,
         quotaType: 'food',
-        quotaTarget: 500,
+        quotaTarget: 300,
       }),
       expect.any(Function), // submitReport callback
     );

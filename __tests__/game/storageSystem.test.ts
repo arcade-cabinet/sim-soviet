@@ -19,18 +19,18 @@ describe('storageSystem', () => {
 
   describe('calculateStorageCapacity', () => {
     it('returns base capacity with no buildings', () => {
-      expect(calculateStorageCapacity()).toBe(200);
+      expect(calculateStorageCapacity()).toBe(10000);
     });
 
-    it('agriculture buildings add 50 capacity', () => {
+    it('agriculture buildings add 500 capacity', () => {
       createBuilding(0, 0, 'collective-farm-hq');
-      expect(calculateStorageCapacity()).toBe(250);
+      expect(calculateStorageCapacity()).toBe(10500);
     });
 
     it('multiple buildings stack capacity', () => {
       createBuilding(0, 0, 'collective-farm-hq');
       createBuilding(1, 1, 'collective-farm-hq');
-      expect(calculateStorageCapacity()).toBe(300);
+      expect(calculateStorageCapacity()).toBe(11000);
     });
   });
 
@@ -40,36 +40,36 @@ describe('storageSystem', () => {
       // Month 5 = spring, seasonal mult = 1.0
       storageSystem(5);
       const store = getResourceEntity()!;
-      // 100 * 0.005 * 1.0 = 0.5 decay
-      expect(store.resources.food).toBeCloseTo(99.5);
+      // 100 * 0.001 * 1.0 = 0.1 decay (stored spoilage rate)
+      expect(store.resources.food).toBeCloseTo(99.9);
     });
 
     it('food exceeding capacity decays faster', () => {
-      createResourceStore({ food: 300 });
-      // No buildings → base capacity 200, overflow = 100
+      createResourceStore({ food: 12000 });
+      // No buildings → base capacity 10000, overflow = 2000
       // Month 5 = spring, seasonal mult = 1.0
       storageSystem(5);
       const store = getResourceEntity()!;
-      // overflow = 100, spoiled = 100 * 0.05 * 1.0 = 5
-      expect(store.resources.food).toBeCloseTo(295);
+      // overflow = 2000, spoiled = 2000 * 0.005 * 1.0 = 10
+      expect(store.resources.food).toBeCloseTo(11990);
     });
 
     it('summer doubles spoilage rate', () => {
-      createResourceStore({ food: 300 });
+      createResourceStore({ food: 12000 });
       // Month 7 = summer, seasonal mult = 2.0
       storageSystem(7);
       const store = getResourceEntity()!;
-      // overflow = 100, spoiled = 100 * 0.05 * 2.0 = 10
-      expect(store.resources.food).toBeCloseTo(290);
+      // overflow = 2000, spoiled = 2000 * 0.005 * 2.0 = 20
+      expect(store.resources.food).toBeCloseTo(11980);
     });
 
     it('winter reduces spoilage to 30%', () => {
-      createResourceStore({ food: 300 });
+      createResourceStore({ food: 12000 });
       // Month 1 = winter, seasonal mult = 0.3
       storageSystem(1);
       const store = getResourceEntity()!;
-      // overflow = 100, spoiled = 100 * 0.05 * 0.3 = 1.5
-      expect(store.resources.food).toBeCloseTo(298.5);
+      // overflow = 2000, spoiled = 2000 * 0.005 * 0.3 = 3
+      expect(store.resources.food).toBeCloseTo(11997);
     });
 
     it('zero food has no effect', () => {
@@ -90,10 +90,10 @@ describe('storageSystem', () => {
   describe('storageCapacity sync', () => {
     it('updates storageCapacity on resource store', () => {
       createResourceStore({ food: 0 });
-      createBuilding(0, 0, 'collective-farm-hq'); // +50
+      createBuilding(0, 0, 'collective-farm-hq'); // +500
       storageSystem(5);
       const store = getResourceEntity()!;
-      expect(store.resources.storageCapacity).toBe(250);
+      expect(store.resources.storageCapacity).toBe(10500);
     });
   });
 
@@ -166,7 +166,7 @@ describe('storageSystem', () => {
       createResourceStore({ food: 100 });
       createColdStorage(0, 0, true);
       // Month 5 = spring, seasonal mult = 1.0
-      // With cold storage: rate = 0.001 (0.1%)
+      // With cold storage: rate = 0.001 (single cold storage rate, same as stored rate)
       // decay = 100 * 0.001 * 1.0 = 0.1
       storageSystem(5);
       const store = getResourceEntity()!;
@@ -204,23 +204,23 @@ describe('storageSystem', () => {
       createResourceStore({ food: 100 });
       createColdStorage(0, 0, false); // unpowered
       // Month 5 = spring, seasonal mult = 1.0
-      // No cold storage effect → standard rate 0.005
-      // But cold-storage building adds 400 to capacity (total = 600)
-      // 100 < 600, so baseline spoilage applies: 100 * 0.005 * 1.0 = 0.5
+      // No cold storage effect → standard rate 0.001
+      // cold-storage building adds 1000 to capacity (total = 11000)
+      // 100 < 11000, so baseline spoilage applies: 100 * 0.001 * 1.0 = 0.1
       storageSystem(5);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(99.5);
+      expect(store.resources.food).toBeCloseTo(99.9);
     });
 
     it('overflow spoilage is NOT affected by cold storage', () => {
-      createResourceStore({ food: 1000 });
+      createResourceStore({ food: 15000 });
       createColdStorage(0, 0, true);
-      // Capacity = 200 (base) + 400 (cold-storage) = 600
-      // Overflow = 1000 - 600 = 400
-      // Overflow spoilage = 400 * 0.05 * 1.0 = 20 (same rate regardless of cold storage)
+      // Capacity = 10000 (base) + 1000 (cold-storage) = 11000
+      // Overflow = 15000 - 11000 = 4000
+      // Overflow spoilage = 4000 * 0.005 * 1.0 = 20 (same rate regardless of cold storage)
       storageSystem(5);
       const store = getResourceEntity()!;
-      expect(store.resources.food).toBeCloseTo(980);
+      expect(store.resources.food).toBeCloseTo(14980);
     });
 
     it('cold storage reduction stacks with seasonal multiplier', () => {

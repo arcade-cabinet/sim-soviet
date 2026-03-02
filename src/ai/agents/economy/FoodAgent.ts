@@ -30,6 +30,9 @@ const STARVATION_GRACE_TICKS = economy.consumption.starvationGraceTicks;
 /** Maximum starvation deaths applied per tick. */
 const MAX_STARVATION_DEATHS_PER_TICK = economy.consumption.maxStarvationDeathsPerTick;
 
+/** Food consumed per citizen per tick = 1 / FOOD_PER_POP_DIVISOR. */
+const FOOD_PER_POP_DIVISOR = economy.consumption.foodPerPopDivisor;
+
 /** Minimum overstaffing contribution before truncating decay series. */
 const OVERSTAFFING_MIN_CONTRIBUTION = economy.production.overstaffingMinContribution;
 
@@ -41,6 +44,9 @@ const MONTHS_PER_YEAR = economy.privatePlots.monthsPerYear;
 
 /** Monthly food bonus per livestock type. */
 const LIVESTOCK_FOOD: Record<string, number> = economy.privatePlots.livestockFood;
+
+/** Grain-to-vodka conversion ratio (food units per vodka unit). */
+const GRAIN_TO_VODKA_RATIO = economy.production.grainToVodkaRatio;
 
 /** Era-specific multipliers for private plot production. */
 const ERA_PLOT_MULTIPLIER: Partial<Record<EraId, number>> =
@@ -248,7 +254,7 @@ export class FoodAgent extends Vehicle {
           break;
         case 'vodka': {
           const vodkaOutput = prod.amount * vodkaModifier * expandedMult;
-          const grainCost = vodkaOutput * 2;
+          const grainCost = vodkaOutput * GRAIN_TO_VODKA_RATIO;
           if (store.resources.food >= grainCost) {
             store.resources.food -= grainCost;
             store.resources.vodka += vodkaOutput;
@@ -324,7 +330,7 @@ export class FoodAgent extends Vehicle {
     const pop = store.resources.population;
     if (pop <= 0) return 0;
 
-    const foodNeed = Math.ceil((pop / 10) * consumptionMult);
+    const foodNeed = Math.ceil((pop / FOOD_PER_POP_DIVISOR) * consumptionMult);
     let starvationDeaths = 0;
 
     if (store.resources.food >= foodNeed) {
@@ -434,7 +440,7 @@ export class FoodAgent extends Vehicle {
    * @returns Food units needed this tick
    */
   calculateFoodNeed(population: number, consumptionMult = 1): number {
-    return Math.ceil((population / 10) * consumptionMult);
+    return Math.ceil((population / FOOD_PER_POP_DIVISOR) * consumptionMult);
   }
 
   /**

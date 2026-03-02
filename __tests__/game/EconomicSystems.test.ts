@@ -108,7 +108,7 @@ describe('LoyaltySystem', () => {
 
     tickLoyalty('collectivization', 0.8, false, fixedRng);
 
-    expect(entity.dvor!.loyaltyToCollective).toBeCloseTo(50.15, 2);
+    expect(entity.dvor!.loyaltyToCollective).toBeCloseTo(50.3, 2);
   });
 
   it('decreases loyalty during starvation (foodLevel <= 0)', () => {
@@ -116,7 +116,7 @@ describe('LoyaltySystem', () => {
 
     tickLoyalty('collectivization', 0, false, fixedRng);
 
-    expect(entity.dvor!.loyaltyToCollective).toBeCloseTo(49.2, 2);
+    expect(entity.dvor!.loyaltyToCollective).toBeCloseTo(49.7, 2);
   });
 
   it('does not change loyalty for moderate food level (0 < food <= 0.7)', () => {
@@ -127,31 +127,31 @@ describe('LoyaltySystem', () => {
     expect(entity.dvor!.loyaltyToCollective).toBe(50);
   });
 
-  it('triggers sabotage when loyalty < 20 and roll succeeds', () => {
-    makeDvor('d1', { loyaltyToCollective: 15 });
+  it('triggers sabotage when loyalty < 15 and roll succeeds', () => {
+    makeDvor('d1', { loyaltyToCollective: 10 });
 
-    // Roll below 0.1 triggers sabotage
-    const result = tickLoyalty('collectivization', 0.5, false, { random: () => 0.05 });
+    // Roll below 0.005 triggers sabotage (sabotageChance = 0.005)
+    const result = tickLoyalty('collectivization', 0.5, false, { random: () => 0.004 });
 
     expect(result.sabotageCount).toBe(1);
   });
 
-  it('does not trigger sabotage when loyalty >= 20', () => {
-    makeDvor('d1', { loyaltyToCollective: 25 });
+  it('does not trigger sabotage when loyalty >= 15', () => {
+    makeDvor('d1', { loyaltyToCollective: 20 });
 
-    const result = tickLoyalty('collectivization', 0.5, false, { random: () => 0.01 });
+    const result = tickLoyalty('collectivization', 0.5, false, { random: () => 0.001 });
 
     expect(result.sabotageCount).toBe(0);
   });
 
-  it('triggers flight when loyalty < 10 and roll succeeds', () => {
-    makeDvor('d1', { loyaltyToCollective: 5 });
+  it('triggers flight when loyalty < 5 and roll succeeds', () => {
+    makeDvor('d1', { loyaltyToCollective: 3 });
 
-    // Roll below 0.05 triggers flight (and below 0.1 triggers sabotage too)
-    const result = tickLoyalty('collectivization', 0.5, false, { random: () => 0.03 });
+    // Roll below 0.003 triggers flight (and below 0.005 triggers sabotage too)
+    const result = tickLoyalty('collectivization', 0.5, false, { random: () => 0.002 });
 
     expect(result.flightCount).toBe(1);
-    expect(result.sabotageCount).toBe(1); // Also sabotages since loyalty < 20
+    expect(result.sabotageCount).toBe(1); // Also sabotages since loyalty < 15
   });
 
   it('caps loyalty at 100', () => {
@@ -163,7 +163,7 @@ describe('LoyaltySystem', () => {
   });
 
   it('caps loyalty at 0', () => {
-    const entity = makeDvor('d1', { loyaltyToCollective: 0.5 });
+    const entity = makeDvor('d1', { loyaltyToCollective: 0.2 });
 
     tickLoyalty('collectivization', 0, false, fixedRng);
 

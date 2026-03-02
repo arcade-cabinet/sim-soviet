@@ -76,7 +76,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1922,
 
     doctrine: 'revolutionary',
-    deliveryRates: { food: 0.4, vodka: 0.3, money: 0.2 },
+    deliveryRates: { food: 0.1, vodka: 0.05, money: 0.1 },
     quotaEscalation: 1.0,
 
     unlockedBuildings: [
@@ -91,11 +91,11 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     ],
 
     modifiers: {
-      productionMult: 0.8,
-      consumptionMult: 1.2,
-      decayMult: 1.3,
-      populationGrowthMult: 0.6,
-      eventFrequencyMult: 1.5,
+      productionMult: 0.9,
+      consumptionMult: 1.0,
+      decayMult: 1.1,
+      populationGrowthMult: 0.8,
+      eventFrequencyMult: 1.2,
       corruptionMult: 0.5,
     },
 
@@ -125,17 +125,17 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1932,
 
     doctrine: 'industrialization',
-    deliveryRates: { food: 0.5, vodka: 0.4, money: 0.6 },
-    quotaEscalation: 1.3,
+    deliveryRates: { food: 0.15, vodka: 0.1, money: 0.15 },
+    quotaEscalation: 1.2,
 
     unlockedBuildings: ['workers-house-c', 'bread-factory', 'warehouse', 'school', 'barracks', 'road-depot'],
 
     modifiers: {
-      productionMult: 1.0,
-      consumptionMult: 1.0,
-      decayMult: 1.1,
-      populationGrowthMult: 0.8,
-      eventFrequencyMult: 1.2,
+      productionMult: 1.1,
+      consumptionMult: 0.9,
+      decayMult: 1.0,
+      populationGrowthMult: 1.0,
+      eventFrequencyMult: 1.0,
       corruptionMult: 0.7,
     },
 
@@ -148,8 +148,8 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     },
 
     failureCondition: {
-      description: 'Population drops below 10 during collectivization',
-      check: (_meta, resources) => resources.population > 0 && resources.population < 10,
+      description: 'Settlement abandoned during collectivization',
+      check: (_meta, resources) => resources.population <= 0,
     },
 
     introTitle: 'Assignment: Collectivization',
@@ -170,7 +170,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1941,
 
     doctrine: 'industrialization',
-    deliveryRates: { food: 0.5, vodka: 0.4, money: 0.6 },
+    deliveryRates: { food: 0.2, vodka: 0.15, money: 0.25 },
     quotaEscalation: 1.3,
 
     unlockedBuildings: [
@@ -200,8 +200,8 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     },
 
     failureCondition: {
-      description: 'Population drops below 10 during industrialization',
-      check: (_meta, resources) => resources.population > 0 && resources.population < 10,
+      description: 'Settlement abandoned during industrialization',
+      check: (_meta, resources) => resources.population <= 0,
     },
 
     introTitle: 'Assignment: First Five-Year Plan',
@@ -223,17 +223,17 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1945,
 
     doctrine: 'wartime',
-    deliveryRates: { food: 0.7, vodka: 0.6, money: 0.7 },
-    quotaEscalation: 1.5,
+    deliveryRates: { food: 0.15, vodka: 0.1, money: 0.2 },
+    quotaEscalation: 1.15,
 
     unlockedBuildings: [],
 
     modifiers: {
-      productionMult: 0.6,
-      consumptionMult: 1.5,
-      decayMult: 1.5,
-      populationGrowthMult: 0.3,
-      eventFrequencyMult: 2.0,
+      productionMult: 0.8,
+      consumptionMult: 1.1,
+      decayMult: 1.1,
+      populationGrowthMult: 0.6,
+      eventFrequencyMult: 1.2,
       corruptionMult: 0.3,
     },
 
@@ -268,7 +268,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1956,
 
     doctrine: 'reconstruction',
-    deliveryRates: { food: 0.35, vodka: 0.25, money: 0.3 },
+    deliveryRates: { food: 0.15, vodka: 0.1, money: 0.15 },
     quotaEscalation: 1.2,
 
     unlockedBuildings: [
@@ -316,7 +316,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1982,
 
     doctrine: 'thaw',
-    deliveryRates: { food: 0.3, vodka: 0.2, money: 0.25 },
+    deliveryRates: { food: 0.1, vodka: 0.08, money: 0.1 },
     quotaEscalation: 1.1,
 
     unlockedBuildings: [
@@ -366,18 +366,18 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 2000,
 
     doctrine: 'stagnation',
-    deliveryRates: { food: 0.45, vodka: 0.4, money: 0.5 },
-    quotaEscalation: 1.15,
+    deliveryRates: { food: 0.12, vodka: 0.1, money: 0.15 },
+    quotaEscalation: 1.05,
 
     unlockedBuildings: ['apartment-tower-d'],
 
     modifiers: {
-      productionMult: 0.9,
-      consumptionMult: 1.1,
-      decayMult: 1.4,
-      populationGrowthMult: 0.7,
-      eventFrequencyMult: 1.0,
-      corruptionMult: 1.5,
+      productionMult: 1.0,
+      consumptionMult: 0.95,
+      decayMult: 1.0,
+      populationGrowthMult: 0.9,
+      eventFrequencyMult: 0.9,
+      corruptionMult: 1.1,
     },
 
     constructionMethod: 'industrial',
@@ -406,7 +406,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: -1,
 
     doctrine: 'eternal',
-    deliveryRates: { food: 0.4, vodka: 0.35, money: 0.4 },
+    deliveryRates: { food: 0.15, vodka: 0.1, money: 0.2 },
     quotaEscalation: 1.25,
 
     unlockedBuildings: [],

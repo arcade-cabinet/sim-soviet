@@ -7,7 +7,7 @@ import { world } from '../../src/ecs/world';
 
 // Deterministic RNG helpers
 const alwaysHigh = { random: () => 0.99 }; // never triggers chance events
-const alwaysLow = { random: () => 0.01 };  // always triggers chance events
+const alwaysLow = { random: () => 0.001 }; // always triggers chance events
 
 function makeDvor(loyalty: number) {
   const entity = createDvor(`dvor-${Math.random()}`, 'Ivanov', [
@@ -50,7 +50,7 @@ describe('LoyaltyAgent', () => {
     agent.tickLoyalty('revolution', false);
 
     const dvor = dvory.entities[0]!.dvor!;
-    expect(dvor.loyaltyToCollective).toBeCloseTo(50.15, 5);
+    expect(dvor.loyaltyToCollective).toBeCloseTo(50.3, 5);
   });
 
   it('decreases loyalty during starvation (food = 0)', () => {
@@ -62,7 +62,7 @@ describe('LoyaltyAgent', () => {
     agent.tickLoyalty('revolution', false);
 
     const dvor = dvory.entities[0]!.dvor!;
-    expect(dvor.loyaltyToCollective).toBeCloseTo(49.2, 5);
+    expect(dvor.loyaltyToCollective).toBeCloseTo(49.7, 5);
   });
 
   it('does not change loyalty at mid-range food (0 < food <= 0.7)', () => {
@@ -103,8 +103,8 @@ describe('LoyaltyAgent', () => {
 
   // ── Sabotage ─────────────────────────────────────────────────────────────
 
-  it('triggers sabotage when loyalty < 20 and RNG fires', () => {
-    makeDvor(10); // loyalty 10 < 20 threshold
+  it('triggers sabotage when loyalty < 15 and RNG fires', () => {
+    makeDvor(10); // loyalty 10 < 15 threshold
     const agent = new LoyaltyAgent();
     agent.setFoodLevel(0.5);
     agent.setRng(alwaysLow); // always triggers
@@ -113,8 +113,8 @@ describe('LoyaltyAgent', () => {
     expect(result.sabotageCount).toBe(1);
   });
 
-  it('does not trigger sabotage when loyalty >= 20', () => {
-    makeDvor(25); // loyalty above sabotage threshold
+  it('does not trigger sabotage when loyalty >= 15', () => {
+    makeDvor(25); // loyalty above sabotage threshold (15)
     const agent = new LoyaltyAgent();
     agent.setFoodLevel(0.5);
     agent.setRng(alwaysLow);
@@ -135,8 +135,8 @@ describe('LoyaltyAgent', () => {
 
   // ── Flight ────────────────────────────────────────────────────────────────
 
-  it('triggers flight when loyalty < 10 and RNG fires', () => {
-    makeDvor(5); // loyalty 5 < 10 threshold
+  it('triggers flight when loyalty < 5 and RNG fires', () => {
+    makeDvor(4); // loyalty 4 < 5 threshold
     const agent = new LoyaltyAgent();
     agent.setFoodLevel(0.5);
     agent.setRng(alwaysLow);
@@ -145,7 +145,7 @@ describe('LoyaltyAgent', () => {
     expect(result.flightCount).toBe(1);
   });
 
-  it('does not trigger flight when loyalty >= 10', () => {
+  it('does not trigger flight when loyalty >= 5', () => {
     makeDvor(15);
     const agent = new LoyaltyAgent();
     agent.setFoodLevel(0.5);
@@ -156,7 +156,7 @@ describe('LoyaltyAgent', () => {
   });
 
   it('does not trigger flight when RNG does not fire', () => {
-    makeDvor(5);
+    makeDvor(4);
     const agent = new LoyaltyAgent();
     agent.setFoodLevel(0.5);
     agent.setRng(alwaysHigh);

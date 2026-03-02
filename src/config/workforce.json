@@ -9,22 +9,22 @@
     "prisoner": 0.1
   },
   "consumption": {
-    "foodPerWorker": 0.1,
-    "vodkaPerWorker": 0.05
+    "foodPerWorker": 0.02,
+    "vodkaPerWorker": 0.02
   },
   "morale": {
-    "hungerPenalty": 5,
-    "vodkaWithdrawalPenalty": 3,
+    "hungerPenalty": 3,
+    "vodkaWithdrawalPenalty": 1,
     "vodkaBoost": 2,
-    "housingBoost": 1,
-    "unhousedPenalty": 2,
-    "heatingFailurePenalty": 30,
-    "partyBoostPerTick": 0.5
+    "housingBoost": 2,
+    "unhousedPenalty": 1,
+    "heatingFailurePenalty": 10,
+    "partyBoostPerTick": 1.0
   },
   "loyalty": {
-    "defectionThreshold": 20,
-    "defectionBaseChance": 0.02,
-    "prisonerEscapeChance": 0.005
+    "defectionThreshold": 10,
+    "defectionBaseChance": 0.005,
+    "prisonerEscapeChance": 0.002
   },
   "skills": {
     "stakhanoviteChance": 0.003,
@@ -33,21 +33,21 @@
     "vodkaDependencyGrowth": 0.1
   },
   "flight": {
-    "moraleThreshold": 30,
-    "moraleCritical": 15,
-    "checkInterval": 60,
+    "moraleThreshold": 15,
+    "moraleCritical": 5,
+    "checkInterval": 120,
     "countNormalMin": 1,
-    "countNormalMax": 2,
-    "countCriticalMin": 3,
-    "countCriticalMax": 5,
-    "youthInterval": 120,
+    "countNormalMax": 1,
+    "countCriticalMin": 1,
+    "countCriticalMax": 3,
+    "youthInterval": 360,
     "youthMaxAge": 25,
     "youthMinAge": 16,
-    "youthMoraleThreshold": 40
+    "youthMoraleThreshold": 20
   },
   "accidents": {
-    "ratePerFactory": 0.002,
-    "lowSkillMultiplier": 2.0
+    "ratePerFactory": 0.0005,
+    "lowSkillMultiplier": 1.5
   },
   "inflow": {
     "moscowAssignmentMin": 3,

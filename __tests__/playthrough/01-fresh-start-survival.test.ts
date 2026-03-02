@@ -92,8 +92,10 @@ describe('Playthrough: First Year Survival', () => {
 
   // ── Scenario 4: Seasonal food production variance ─────────────────────────
 
-  it('winter prevents farm food production', () => {
-    // Start in month 1 (winter: farmMultiplier = 0.0)
+  it('winter reduces farm food production (weather-driven, not zero)', () => {
+    // Start in month 1 (winter). Farm production is now driven by weather
+    // profile farmModifier (e.g. overcast=0.9), not seasonal farmMultiplier.
+    // Winter weather reduces output but does not eliminate it entirely.
     const { engine, callbacks } = createPlaythroughEngine({
       meta: { date: { year: 1922, month: 1, tick: 0 } },
       resources: { food: 1000, population: 12 },
@@ -108,14 +110,14 @@ describe('Playthrough: First Year Survival', () => {
 
     const initialFood = getResources().food;
 
-    // Tick 10 times — in winter, farmModifier=0.0 so no food production
-    // Food can only decrease (consumption/spoilage) or stay flat
+    // Tick 10 times — winter weather still allows reduced farm production
+    // Food may increase slightly from farm output, or decrease from consumption
     advanceTicks(engine, 10);
 
     const foodAfter = getResources().food;
-    // Allow a small margin for floating point, but food should not have grown
-    // from farming. It may have decreased due to consumption.
-    expect(foodAfter).toBeLessThanOrEqual(initialFood + 1);
+    // With weather-driven production (overcast farmModifier=0.9), food can
+    // increase slightly. Allow up to 50 food increase from farm + fondy.
+    expect(foodAfter).toBeLessThanOrEqual(initialFood + 50);
   });
 
   // ── Scenario 5: Grace period protects first year ──────────────────────────

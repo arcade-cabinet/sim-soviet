@@ -68,7 +68,7 @@ describe('DiseaseSystem', () => {
     it('applies winter multiplier for non-nutritional diseases', () => {
       const typhus = DISEASE_DEFINITIONS.find((d) => d.type === 'typhus')!;
       const mod = calcOutbreakModifier(typhus, 1, 100, 50, 0.8);
-      expect(mod).toBe(1.5); // WINTER_MULT
+      expect(mod).toBe(1.1); // WINTER_MULT
     });
 
     it('does not apply winter multiplier for nutritional diseases', () => {
@@ -87,19 +87,19 @@ describe('DiseaseSystem', () => {
     it('applies overcrowding multiplier when pop exceeds housing cap', () => {
       const cholera = DISEASE_DEFINITIONS.find((d) => d.type === 'cholera')!;
       const mod = calcOutbreakModifier(cholera, 6, 50, 100, 0.8);
-      expect(mod).toBe(2.0); // OVERCROWDING_MULT
+      expect(mod).toBe(1.3); // OVERCROWDING_MULT
     });
 
     it('applies combined winter and overcrowding multipliers', () => {
       const typhus = DISEASE_DEFINITIONS.find((d) => d.type === 'typhus')!;
       const mod = calcOutbreakModifier(typhus, 12, 50, 100, 0.8);
-      expect(mod).toBe(3.0); // 1.5 * 2.0
+      expect(mod).toBeCloseTo(1.43); // 1.1 * 1.3
     });
 
     it('applies food shortage multiplier for scurvy when food ratio is low', () => {
       const scurvy = DISEASE_DEFINITIONS.find((d) => d.type === 'scurvy')!;
       const mod = calcOutbreakModifier(scurvy, 6, 100, 50, 0.1);
-      expect(mod).toBe(3.0); // FOOD_SHORTAGE_SCURVY_MULT
+      expect(mod).toBe(1.3); // FOOD_SHORTAGE_SCURVY_MULT
     });
 
     it('food surplus nearly eliminates scurvy', () => {
@@ -129,7 +129,8 @@ describe('DiseaseSystem', () => {
       const typhus = DISEASE_DEFINITIONS.find((d) => d.type === 'typhus')!;
       const medCounts = new Map([['hospital', 1]]);
       const factor = clinicPreventionFactor(typhus, medCounts);
-      expect(factor).toBeCloseTo(0.4);
+      // clinicReductionPerBuilding = 0.5 → 0.5^1 = 0.5
+      expect(factor).toBeCloseTo(0.5);
     });
 
     it('reduces more with two medical buildings (multiplicative)', () => {
@@ -139,18 +140,19 @@ describe('DiseaseSystem', () => {
         ['polyclinic', 1],
       ]);
       const factor = clinicPreventionFactor(typhus, medCounts);
-      expect(factor).toBeCloseTo(0.16);
+      // clinicReductionPerBuilding = 0.5 → 0.5^2 = 0.25
+      expect(factor).toBeCloseTo(0.25);
     });
 
     it('clamps to minimum reduction with many clinics', () => {
       const typhus = DISEASE_DEFINITIONS.find((d) => d.type === 'typhus')!;
-      // 5 clinics: 0.4^5 = 0.01024 → clamped to 0.1
+      // 5 clinics: 0.5^5 = 0.03125 → clamped to maxClinicReduction = 0.05
       const medCounts = new Map([
         ['hospital', 3],
         ['polyclinic', 2],
       ]);
       const factor = clinicPreventionFactor(typhus, medCounts);
-      expect(factor).toBe(0.1);
+      expect(factor).toBe(0.05);
     });
   });
 
@@ -158,7 +160,7 @@ describe('DiseaseSystem', () => {
 
   describe('outbreak with overcrowding', () => {
     it('overcrowded settlement has higher infection chance', () => {
-      const rng = createTestRng(0.001); // Very low roll = always infected
+      const rng = createTestRng(0.00001); // Very low roll = always infected
       initDiseaseSystem(rng);
 
       // Create overcrowded scenario: population > housing

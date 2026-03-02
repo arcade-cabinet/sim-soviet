@@ -56,8 +56,8 @@ export const DISEASE_DEFINITIONS: readonly DiseaseDefinition[] = [
   {
     type: 'typhus',
     name: 'Typhus',
-    spreadRate: 0.04,
-    mortalityRate: 0.15,
+    spreadRate: 0.02,
+    mortalityRate: 0.02,
     durationTicks: 90, // 3 months
     preventedBy: ['hospital', 'polyclinic'],
     winterOnly: false,
@@ -66,8 +66,8 @@ export const DISEASE_DEFINITIONS: readonly DiseaseDefinition[] = [
   {
     type: 'cholera',
     name: 'Cholera',
-    spreadRate: 0.03,
-    mortalityRate: 0.25,
+    spreadRate: 0.01,
+    mortalityRate: 0.03,
     durationTicks: 60, // 2 months
     preventedBy: ['hospital', 'polyclinic'],
     winterOnly: false,
@@ -76,8 +76,8 @@ export const DISEASE_DEFINITIONS: readonly DiseaseDefinition[] = [
   {
     type: 'influenza',
     name: 'Influenza',
-    spreadRate: 0.08,
-    mortalityRate: 0.05,
+    spreadRate: 0.03,
+    mortalityRate: 0.005,
     durationTicks: 30, // 1 month
     preventedBy: ['hospital', 'polyclinic'],
     winterOnly: true,
@@ -86,8 +86,8 @@ export const DISEASE_DEFINITIONS: readonly DiseaseDefinition[] = [
   {
     type: 'scurvy',
     name: 'Scurvy',
-    spreadRate: 0.06,
-    mortalityRate: 0.03,
+    spreadRate: 0.02,
+    mortalityRate: 0.003,
     durationTicks: 60, // 2 months
     preventedBy: [],
     winterOnly: false,

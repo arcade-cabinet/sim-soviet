@@ -199,14 +199,15 @@ describe('SimulationEngine', () => {
   // ── Food consumption ────────────────────────────────────
 
   describe('food consumption', () => {
-    it('consumes food based on population (pop/10 rounded up)', () => {
+    it('consumes food based on population (pop/25 rounded up)', () => {
       const store = getResourceEntity()!;
       store.resources.population = 15;
       store.resources.food = 100;
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
       engine.tick();
-      // 100 - ceil(15/10) = 98 consumption, minus ~0.5 spoilage from storageSystem
-      expect(getResourceEntity()!.resources.food).toBeCloseTo(97.5, 0);
+      // ceil(15/25 * consumptionMult) where revolution consumptionMult=0.9 → ceil(0.54) = 1
+      // 100 - 1 = 99, minus ~0.1 spoilage from storageSystem
+      expect(getResourceEntity()!.resources.food).toBeCloseTo(98.9, 0);
     });
 
     it('consumes 0 food when population is 0', () => {
@@ -225,10 +226,19 @@ describe('SimulationEngine', () => {
       engine.getWorkerSystem().syncPopulation(100);
       store.resources.food = 0;
       store.resources.vodka = 100;
-      // Exhaust grace period (90 ticks) — force food=0 each tick to prevent
-      // PrivatePlotSystem food production from resetting the starvation counter
+      // Exhaust grace period (180 ticks) — force food=0 each tick to prevent
+      // any food source (fondy, private plots, production) from resetting
+      // the starvation counter. Mock FoodAgent.produce AND intercept consume
+      // to zero food just before the starvation check.
       engine.getFoodAgent().reset();
-      for (let i = 0; i < 91; i++) {
+      jest.spyOn(engine.getFoodAgent(), 'produce').mockImplementation(() => {});
+      const originalConsume = engine.getFoodAgent().consume.bind(engine.getFoodAgent());
+      jest.spyOn(engine.getFoodAgent(), 'consume').mockImplementation((mult?: number) => {
+        // Zero food right before consumption so starvation counter increments
+        store.resources.food = 0;
+        return originalConsume(mult);
+      });
+      for (let i = 0; i < 181; i++) {
         store.resources.food = 0;
         store.resources.vodka = 100;
         engine.tick();
@@ -237,20 +247,27 @@ describe('SimulationEngine', () => {
       expect(cb.onToast).toHaveBeenCalledWith('STARVATION DETECTED', 'critical');
     });
 
-    it('reduces population during starvation (up to 5 per tick)', () => {
+    it('reduces population during starvation (up to 3 per tick)', () => {
       const store = getResourceEntity()!;
       // Use enough population that starvation deaths are clearly visible
       engine.getWorkerSystem().syncPopulation(100);
       const popBefore = getResourceEntity()!.resources.population;
-      // Exhaust grace period (90 ticks) + sustain starvation for 20 more ticks.
-      // Force food=0 each tick to prevent any food production from resetting the counter.
+      // Exhaust grace period (120 ticks) + sustain starvation for 30 more ticks.
+      // Mock FoodAgent.produce and intercept consume to zero food before
+      // starvation check, preventing any food source from resetting the counter.
       engine.getFoodAgent().reset();
-      for (let i = 0; i < 120; i++) {
+      jest.spyOn(engine.getFoodAgent(), 'produce').mockImplementation(() => {});
+      const originalConsume2 = engine.getFoodAgent().consume.bind(engine.getFoodAgent());
+      jest.spyOn(engine.getFoodAgent(), 'consume').mockImplementation((mult?: number) => {
+        store.resources.food = 0;
+        return originalConsume2(mult);
+      });
+      for (let i = 0; i < 150; i++) {
         store.resources.food = 0;
         store.resources.vodka = 100;
         engine.tick();
       }
-      // After 120 ticks (90 grace + 30 death ticks at 5/tick), population
+      // After 150 ticks (120 grace + 30 death ticks at 3/tick), population
       // should be significantly reduced from the starting 100
       const popAfter = getResourceEntity()!.resources.population;
       expect(popAfter).toBeLessThan(popBefore);
@@ -268,7 +285,7 @@ describe('SimulationEngine', () => {
       engine.getWorkerSystem().syncPopulation(20);
       engine.tick();
       // Vodka consumed: ceil((20/20) * consumptionMult) where consumptionMult varies by era
-      // Revolution era consumptionMult=1.2 → ceil(1.2)=2 → 48
+      // Revolution era consumptionMult=0.9 → ceil(0.9)=1 → 49
       // Default consumptionMult=1.0 → ceil(1.0)=1 → 49
       expect(getResourceEntity()!.resources.vodka).toBeLessThan(50);
       expect(getResourceEntity()!.resources.vodka).toBeGreaterThanOrEqual(48);
@@ -329,7 +346,7 @@ describe('SimulationEngine', () => {
       // Sync citizen entities to match desired population
       engine.getWorkerSystem().syncPopulation(1);
       engine.tick();
-      // After consumption: food = 5 - ceil(1/10) = 4
+      // After consumption: food = 5 - ceil(1/12) = 4
       // populationSystem: food(4) > 10? No → no growth even at year boundary
       expect(getResourceEntity()!.resources.population).toBeLessThanOrEqual(1);
     });
@@ -377,7 +394,7 @@ describe('SimulationEngine', () => {
 
       expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('Quota met'));
       expect(getMetaEntity()!.gameMeta.quota.type).toBe('vodka');
-      expect(getMetaEntity()!.gameMeta.quota.target).toBe(500);
+      expect(getMetaEntity()!.gameMeta.quota.target).toBe(300);
     });
 
     it('shows game-over advisor when quota is failed', () => {
@@ -438,7 +455,7 @@ describe('SimulationEngine', () => {
       const quota = engine.getQuota();
       expect(quota).toBeDefined();
       expect(quota.type).toBe('food');
-      expect(quota.target).toBe(500);
+      expect(quota.target).toBe(300);
     });
   });
 

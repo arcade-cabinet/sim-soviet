@@ -692,24 +692,24 @@ describe('DefenseAgent', () => {
       expect(DISEASE_DEFINITIONS).toHaveLength(4);
     });
 
-    it('typhus has 15% mortality', () => {
+    it('typhus has 2% mortality', () => {
       const typhus = DISEASE_DEFINITIONS.find((d) => d.type === 'typhus')!;
-      expect(typhus.mortalityRate).toBeCloseTo(0.15, 5);
+      expect(typhus.mortalityRate).toBeCloseTo(0.02, 5);
     });
 
-    it('cholera has 25% mortality', () => {
+    it('cholera has 3% mortality', () => {
       const cholera = DISEASE_DEFINITIONS.find((d) => d.type === 'cholera')!;
-      expect(cholera.mortalityRate).toBeCloseTo(0.25, 5);
+      expect(cholera.mortalityRate).toBeCloseTo(0.03, 5);
     });
 
-    it('influenza has 5% mortality', () => {
+    it('influenza has 0.5% mortality', () => {
       const influenza = DISEASE_DEFINITIONS.find((d) => d.type === 'influenza')!;
-      expect(influenza.mortalityRate).toBeCloseTo(0.05, 5);
+      expect(influenza.mortalityRate).toBeCloseTo(0.005, 5);
     });
 
-    it('scurvy has 3% mortality', () => {
+    it('scurvy has 0.3% mortality', () => {
       const scurvy = DISEASE_DEFINITIONS.find((d) => d.type === 'scurvy')!;
-      expect(scurvy.mortalityRate).toBeCloseTo(0.03, 5);
+      expect(scurvy.mortalityRate).toBeCloseTo(0.003, 5);
     });
 
     it('influenza is winterOnly = true', () => {

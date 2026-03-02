@@ -107,7 +107,7 @@ export function processVodka(stats: WorkerStats, cls: CitizenComponent['class'],
   } else {
     stats.ticksSinceVodka++;
     stats.morale = Math.max(0, stats.morale - VODKA_WITHDRAWAL_PENALTY);
-    stats.loyalty = Math.max(0, stats.loyalty - 0.5);
+    stats.loyalty = Math.max(0, stats.loyalty - 0.1);
   }
 }
 
@@ -118,9 +118,9 @@ export function processFood(citizen: CitizenComponent, stats: WorkerStats, ctx: 
     ctx.foodConsumed += FOOD_PER_WORKER;
     citizen.hunger = Math.max(0, citizen.hunger - 5);
   } else {
-    citizen.hunger = Math.min(100, citizen.hunger + 10);
+    citizen.hunger = Math.min(100, citizen.hunger + 5);
     stats.morale = Math.max(0, stats.morale - HUNGER_MORALE_PENALTY);
-    stats.loyalty = Math.max(0, stats.loyalty - 1);
+    stats.loyalty = Math.max(0, stats.loyalty - 0.2);
   }
 }
 

@@ -57,11 +57,21 @@ export function populationSystem(rng: GameRng, growthMult = 1.0, _month = 1): Po
   result.housingCapacity = housingCap;
   result.overcrowded = store.resources.population > housingCap;
 
-  // Yearly immigration: cap at 3% of housing capacity (min 1)
+  // Yearly immigration: cap at 8% of housing capacity (min 3)
   if (store.resources.population < housingCap && store.resources.food > 10) {
-    const immigrationCap = Math.max(1, Math.floor(housingCap * 0.03));
-    const baseGrowth = rng.int(0, immigrationCap);
-    result.growthCount = Math.round(baseGrowth * Math.max(0, growthMult));
+    const immigrationCap = Math.max(3, Math.floor(housingCap * 0.08));
+    const baseGrowth = rng.int(1, immigrationCap);
+    let growth = Math.round(baseGrowth * Math.max(0, growthMult));
+
+    // Emergency immigration boost when population is critically low
+    // The Party dispatches reinforcements to save the settlement
+    if (store.resources.population < 20 && store.resources.population > 0) {
+      growth = Math.max(growth, 5); // At least 5 new settlers
+    } else if (store.resources.population < 40) {
+      growth = Math.max(growth, 3); // At least 3 new settlers
+    }
+
+    result.growthCount = growth;
   }
 
   return result;

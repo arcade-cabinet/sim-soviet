@@ -91,8 +91,8 @@ describe('Heating morale penalty', () => {
     expect(s1.morale - s2.morale).toBe(HEATING_FAILURE_MORALE_PENALTY);
   });
 
-  it('morale penalty is exactly 30', () => {
-    expect(HEATING_FAILURE_MORALE_PENALTY).toBe(30);
+  it('morale penalty is exactly 10', () => {
+    expect(HEATING_FAILURE_MORALE_PENALTY).toBe(10);
   });
 
   it('morale does not go below 0 with heating penalty', () => {

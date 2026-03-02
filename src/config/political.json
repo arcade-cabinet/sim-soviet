@@ -107,12 +107,12 @@
     }
   },
   "loyalty": {
-    "gainGoodFood": 0.15,
-    "lossStarvation": -0.8,
-    "sabotageChance": 0.1,
-    "flightChance": 0.05,
-    "disloyalThreshold": 20,
-    "flightThreshold": 10
+    "gainGoodFood": 0.3,
+    "lossStarvation": -0.3,
+    "sabotageChance": 0.005,
+    "flightChance": 0.003,
+    "disloyalThreshold": 15,
+    "flightThreshold": 5
   },
   "scoring": {
     "points": {
@@ -161,65 +161,65 @@
   "highCorruptionThreshold": 50,
   "compulsoryDeliveries": {
     "rates": {
-      "revolutionary": { "food": 0.4, "vodka": 0.3, "money": 0.2 },
-      "industrialization": { "food": 0.5, "vodka": 0.4, "money": 0.6 },
-      "wartime": { "food": 0.7, "vodka": 0.6, "money": 0.7 },
-      "reconstruction": { "food": 0.35, "vodka": 0.25, "money": 0.3 },
-      "thaw": { "food": 0.3, "vodka": 0.2, "money": 0.25 },
-      "freeze": { "food": 0.45, "vodka": 0.35, "money": 0.5 },
-      "stagnation": { "food": 0.45, "vodka": 0.4, "money": 0.5 },
-      "eternal": { "food": 0.4, "vodka": 0.35, "money": 0.4 }
+      "revolutionary": { "food": 0.05, "vodka": 0.03, "money": 0.05 },
+      "industrialization": { "food": 0.08, "vodka": 0.05, "money": 0.1 },
+      "wartime": { "food": 0.1, "vodka": 0.08, "money": 0.15 },
+      "reconstruction": { "food": 0.06, "vodka": 0.04, "money": 0.08 },
+      "thaw": { "food": 0.05, "vodka": 0.03, "money": 0.05 },
+      "freeze": { "food": 0.08, "vodka": 0.05, "money": 0.1 },
+      "stagnation": { "food": 0.08, "vodka": 0.05, "money": 0.1 },
+      "eternal": { "food": 0.06, "vodka": 0.04, "money": 0.08 }
     },
-    "corruptionMin": 0.05,
-    "corruptionMax": 0.15
+    "corruptionMin": 0.03,
+    "corruptionMax": 0.08
   },
   "annualReport": {
-    "maxQuotaFailures": 3,
-    "pripiskiQuotaInflation": 0.2,
-    "pripiskiHistoryInspectionBonus": 0.15
+    "maxQuotaFailures": 8,
+    "pripiskiQuotaInflation": 0.15,
+    "pripiskiHistoryInspectionBonus": 0.1
   },
   "military": {
-    "wartimeCasualtyRate": 0.2,
+    "wartimeCasualtyRate": 0.08,
     "conscriptionDeadlineTicks": 30
   },
   "doctrine": {
     "mechanicIntervals": {
-      "grain_requisitioning": 30,
-      "collectivization_seizure": 90,
+      "grain_requisitioning": 60,
+      "collectivization_seizure": 180,
       "stakhanovite_bonus": 30,
-      "wartime_conscription": 60,
+      "wartime_conscription": 120,
       "thaw_freeze_oscillation": 30,
-      "stagnation_rot": 30,
-      "eternal_bureaucracy": 10
+      "stagnation_rot": 60,
+      "eternal_bureaucracy": 20
     },
-    "grainRequisitionRate": 0.3,
-    "collectivizationSeizureRate": 0.15,
-    "collectivizationResistanceChance": 0.2,
-    "stakhanoviteProductionBonus": 0.15,
-    "stakhanovitePressurePenalty": 0.05,
-    "wartimeConscriptionRate": 0.05,
-    "wartimeProductionBonus": 0.1,
+    "grainRequisitionRate": 0.03,
+    "collectivizationSeizureRate": 0.02,
+    "collectivizationResistanceChance": 0.05,
+    "stakhanoviteProductionBonus": 0.2,
+    "stakhanovitePressurePenalty": 0.03,
+    "wartimeConscriptionRate": 0.02,
+    "wartimeProductionBonus": 0.2,
     "thawFreezePhaseTicks": 720,
     "thawMoraleBoost": 5,
     "freezeMoralePenalty": -5,
     "thawProductionBonus": 0.1,
     "freezeProductionPenalty": 0.1,
-    "stagnationDecayMult": 2.0,
-    "stagnationPaperworkPerTick": 3,
-    "stagnationProductivityLossPerYear": 0.01,
-    "stagnationCorruptionMult": 1.5,
+    "stagnationDecayMult": 1.3,
+    "stagnationPaperworkPerTick": 2,
+    "stagnationProductivityLossPerYear": 0.005,
+    "stagnationCorruptionMult": 1.2,
     "eternalPaperworkThreshold": 5000,
     "eternalPaperworkBase": 5,
     "eternalPaperworkGrowthFactor": 0.001,
     "eternalBureaucracySlowdownPer1000": 0.05,
     "policies": {
-      "revolution": { "productionMult": 0.8, "consumptionMult": 1.2 },
-      "collectivization": { "productionMult": 0.9, "consumptionMult": 1.0 },
-      "industrialization": { "productionMult": 1.1, "consumptionMult": 1.0 },
-      "great_patriotic": { "productionMult": 0.7, "consumptionMult": 1.5 },
-      "reconstruction": { "productionMult": 1.0, "consumptionMult": 0.9 },
-      "thaw_and_freeze": { "productionMult": 1.1, "consumptionMult": 0.9 },
-      "stagnation": { "productionMult": 0.9, "consumptionMult": 1.1 },
+      "revolution": { "productionMult": 1.0, "consumptionMult": 0.9 },
+      "collectivization": { "productionMult": 1.1, "consumptionMult": 0.9 },
+      "industrialization": { "productionMult": 1.2, "consumptionMult": 0.95 },
+      "great_patriotic": { "productionMult": 0.85, "consumptionMult": 1.2 },
+      "reconstruction": { "productionMult": 1.1, "consumptionMult": 0.85 },
+      "thaw_and_freeze": { "productionMult": 1.2, "consumptionMult": 0.85 },
+      "stagnation": { "productionMult": 1.0, "consumptionMult": 1.0 },
       "the_eternal": { "productionMult": 1.0, "consumptionMult": 1.0 }
     }
   }

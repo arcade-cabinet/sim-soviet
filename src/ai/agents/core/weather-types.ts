@@ -78,7 +78,7 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
   [WeatherType.SNOW]: {
     type: WeatherType.SNOW,
     label: 'Snow',
-    farmModifier: 0.0,
+    farmModifier: 0.4,
     constructionTimeMult: 1.1,
     workerSpeedMult: 0.9,
     snowRateModifier: 50,
@@ -91,7 +91,7 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
   [WeatherType.BLIZZARD]: {
     type: WeatherType.BLIZZARD,
     label: 'Blizzard',
-    farmModifier: 0.0,
+    farmModifier: 0.2,
     constructionTimeMult: 1.25,
     workerSpeedMult: 0.7,
     snowRateModifier: 200,
@@ -117,7 +117,7 @@ export const WEATHER_PROFILES: Readonly<Record<WeatherType, WeatherProfile>> = {
   [WeatherType.MUD_STORM]: {
     type: WeatherType.MUD_STORM,
     label: 'Mud Storm',
-    farmModifier: 0.0,
+    farmModifier: 0.15,
     constructionTimeMult: 1.5,
     workerSpeedMult: 0.8,
     snowRateModifier: 0,

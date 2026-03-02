@@ -134,12 +134,12 @@ describe('ERA modifiers', () => {
     }
   });
 
-  it('wartime era has highest delivery rates', () => {
-    const wartime = ERA_DEFINITIONS.great_patriotic;
+  it('industrialization era has highest food delivery rate', () => {
+    const industrial = ERA_DEFINITIONS.industrialization;
     for (const eraId of ERA_ORDER) {
-      if (eraId === 'great_patriotic') continue;
+      if (eraId === 'industrialization') continue;
       const other = ERA_DEFINITIONS[eraId];
-      expect(wartime.deliveryRates.food).toBeGreaterThanOrEqual(other.deliveryRates.food);
+      expect(industrial.deliveryRates.food).toBeGreaterThanOrEqual(other.deliveryRates.food);
     }
   });
 
@@ -493,15 +493,15 @@ describe('EraSystem getters', () => {
   it('getDeliveryRates returns a copy', () => {
     const sys = new EraSystem(1990);
     const rates = sys.getDeliveryRates();
-    expect(rates).toEqual({ food: 0.45, vodka: 0.4, money: 0.5 });
+    expect(rates).toEqual({ food: 0.12, vodka: 0.1, money: 0.15 });
     rates.food = 999;
-    expect(sys.getDeliveryRates().food).toBe(0.45);
+    expect(sys.getDeliveryRates().food).toBe(0.12);
   });
 
   it('getQuotaEscalation varies by era', () => {
     expect(new EraSystem(1917).getQuotaEscalation()).toBe(1.0);
-    expect(new EraSystem(1925).getQuotaEscalation()).toBe(1.3);
-    expect(new EraSystem(1942).getQuotaEscalation()).toBe(1.5);
+    expect(new EraSystem(1925).getQuotaEscalation()).toBe(1.2);
+    expect(new EraSystem(1942).getQuotaEscalation()).toBe(1.15);
   });
 });
 

@@ -26,13 +26,13 @@ describe('consumptionSystem', () => {
   // ── Food consumption ──────────────────────────────────────
 
   describe('food consumption', () => {
-    it('consumes ceil(pop/10) food per tick', () => {
+    it('consumes ceil(pop/25) food per tick', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 500;
       consumptionSystem();
-      // ceil(100/10) = 10
-      expect(store.resources.food).toBe(490);
+      // ceil(100/25) = 4
+      expect(store.resources.food).toBe(496);
     });
 
     it('consumes 1 food for population of 1', () => {
@@ -53,31 +53,31 @@ describe('consumptionSystem', () => {
       expect(store.resources.food).toBe(99);
     });
 
-    it('consumes 2 food for population of 11', () => {
+    it('consumes 1 food for population of 11', () => {
       const store = getResourceEntity()!;
       store.resources.population = 11;
       store.resources.food = 100;
       consumptionSystem();
-      // ceil(11/10) = 2
-      expect(store.resources.food).toBe(98);
+      // ceil(11/12) = 1
+      expect(store.resources.food).toBe(99);
     });
 
-    it('consumes 2 food for population of 15', () => {
+    it('consumes 1 food for population of 15', () => {
       const store = getResourceEntity()!;
       store.resources.population = 15;
       store.resources.food = 100;
       consumptionSystem();
-      // ceil(15/10) = 2
-      expect(store.resources.food).toBe(98);
+      // ceil(15/25) = 1
+      expect(store.resources.food).toBe(99);
     });
   });
 
   // ── Starvation ────────────────────────────────────────────
 
   describe('starvation', () => {
-    /** Run starvation ticks to exhaust the grace period (90 ticks). */
+    /** Run starvation ticks to exhaust the grace period (180 ticks). */
     function exhaustGracePeriod(store: ReturnType<typeof getResourceEntity>) {
-      for (let i = 0; i < 90; i++) {
+      for (let i = 0; i < 180; i++) {
         consumptionSystem();
       }
     }
@@ -91,14 +91,14 @@ describe('consumptionSystem', () => {
       expect(result.starvationDeaths).toBe(0);
     });
 
-    it('returns 5 starvation deaths after grace period expires', () => {
+    it('returns 2 starvation deaths after grace period expires', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 0;
       exhaustGracePeriod(store);
       // Grace period exhausted — next tick should cause deaths
       const result = consumptionSystem();
-      expect(result.starvationDeaths).toBe(5);
+      expect(result.starvationDeaths).toBe(2);
       // Population is NOT modified — caller (SimulationEngine) routes through WorkerSystem
       expect(store.resources.population).toBe(100);
     });
@@ -106,28 +106,28 @@ describe('consumptionSystem', () => {
     it('sets food to 0 during starvation (consumes whatever is available)', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
-      store.resources.food = 5; // need ceil(100/10)=10, have only 5
+      store.resources.food = 2; // need ceil(100/25)=4, have only 2
       consumptionSystem();
       // Food is consumed (set to 0) even during starvation
       expect(store.resources.food).toBe(0);
     });
 
-    it('clamps starvation deaths at population size when pop < 5', () => {
-      const store = getResourceEntity()!;
-      store.resources.population = 3;
-      store.resources.food = 0;
-      exhaustGracePeriod(store);
-      const result = consumptionSystem();
-      expect(result.starvationDeaths).toBe(3);
-    });
-
-    it('returns 1 starvation death when pop is 1 after grace period', () => {
+    it('clamps starvation deaths at population size when pop < 2', () => {
       const store = getResourceEntity()!;
       store.resources.population = 1;
       store.resources.food = 0;
       exhaustGracePeriod(store);
       const result = consumptionSystem();
       expect(result.starvationDeaths).toBe(1);
+    });
+
+    it('returns 2 starvation deaths when pop >= 2 after grace period', () => {
+      const store = getResourceEntity()!;
+      store.resources.population = 3;
+      store.resources.food = 0;
+      exhaustGracePeriod(store);
+      const result = consumptionSystem();
+      expect(result.starvationDeaths).toBe(2);
     });
 
     it('fires starvation callback on each tick with insufficient food', () => {
@@ -267,9 +267,9 @@ describe('consumptionSystem', () => {
       store.resources.food = 100;
       store.resources.vodka = 50;
       consumptionSystem();
-      // food: 100 - ceil(40/10) = 100 - 4 = 96
+      // food: 100 - ceil(40/25) = 100 - 2 = 98
       // vodka: 50 - ceil(40/20) = 50 - 2 = 48
-      expect(store.resources.food).toBe(96);
+      expect(store.resources.food).toBe(98);
       expect(store.resources.vodka).toBe(48);
     });
   });

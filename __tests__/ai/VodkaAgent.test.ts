@@ -22,16 +22,16 @@ describe('VodkaAgent', () => {
 
   // ── Grain conversion ratio ────────────────────────────────────────────────
 
-  it('converts grain to vodka at GRAIN_TO_VODKA_RATIO (2:1)', () => {
-    expect(GRAIN_TO_VODKA_RATIO).toBe(2);
+  it('converts grain to vodka at GRAIN_TO_VODKA_RATIO (1:1)', () => {
+    expect(GRAIN_TO_VODKA_RATIO).toBe(1);
     const agent = new VodkaAgent();
     const resources = makeResources({ food: 100, vodka: 0, population: 0 });
 
-    // rawVodkaOutput=10, each unit costs 2 grain → 20 grain consumed, 10 vodka produced
+    // rawVodkaOutput=10, each unit costs 1 grain → 10 grain consumed, 10 vodka produced
     const result = agent.update(10, resources, 1);
     expect(result.vodkaProduced).toBe(10);
-    expect(result.grainConsumed).toBe(20);
-    expect(resources.food).toBe(80);
+    expect(result.grainConsumed).toBe(10);
+    expect(resources.food).toBe(90);
     expect(resources.vodka).toBe(10);
   });
 
@@ -39,12 +39,12 @@ describe('VodkaAgent', () => {
     const agent = new VodkaAgent();
     const resources = makeResources({ food: 6, vodka: 0, population: 0 });
 
-    // rawVodkaOutput=10, but only 6 food → afford 3 vodka (6 / 2)
+    // rawVodkaOutput=10, but only 6 food → afford 6 vodka (6 / 1)
     const result = agent.update(10, resources, 1);
-    expect(result.vodkaProduced).toBeCloseTo(3);
+    expect(result.vodkaProduced).toBeCloseTo(6);
     expect(result.grainConsumed).toBeCloseTo(6);
     expect(resources.food).toBeCloseTo(0);
-    expect(resources.vodka).toBeCloseTo(3);
+    expect(resources.vodka).toBeCloseTo(6);
   });
 
   // ── Consumption calculation ───────────────────────────────────────────────
@@ -162,17 +162,17 @@ describe('VodkaAgent', () => {
     const resources = makeResources({ food: 100, vodka: 0, population: 100 });
     const result = agent.update(5, resources, 1);
     expect(result.vodkaProduced).toBe(5);
-    expect(result.grainConsumed).toBe(10);
+    expect(result.grainConsumed).toBe(5);
   });
 
   it('setDiversionRate controls how much output is fermented', () => {
     const agent = new VodkaAgent();
     agent.setDiversionRate(0.5);
-    // rawVodkaOutput=10 * 0.5 = 5 vodka, costing 10 food
+    // rawVodkaOutput=10 * 0.5 = 5 vodka, costing 5 food (1:1 ratio)
     const resources = makeResources({ food: 200, vodka: 0, population: 0 });
     const result = agent.update(10, resources, 1);
     expect(result.vodkaProduced).toBeCloseTo(5);
-    expect(result.grainConsumed).toBeCloseTo(10);
+    expect(result.grainConsumed).toBeCloseTo(5);
   });
 
   it('clamps diversion rate to [0, 1]', () => {

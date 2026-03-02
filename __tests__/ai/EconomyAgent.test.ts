@@ -483,7 +483,7 @@ describe('EconomyAgent — era transitions', () => {
   it('getMultipliers returns correct values for difficulty', () => {
     const worker = new EconomyAgent('revolution', 'worker');
     const mults = worker.getMultipliers();
-    expect(mults.quotaTarget).toBe(0.8);
+    expect(mults.quotaTarget).toBe(0.6);
 
     const tovarish = new EconomyAgent('revolution', 'tovarish');
     const multT = tovarish.getMultipliers();
