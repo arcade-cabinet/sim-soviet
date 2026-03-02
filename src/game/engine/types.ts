@@ -26,7 +26,7 @@ import type { EconomySaveData } from '../../ai/agents/economy/EconomyAgent';
 import type { EventSystemSaveData } from '../../ai/agents/narrative/events';
 import type { PravdaSaveData } from '../../ai/agents/narrative/pravda';
 import type { PolitburoSaveData } from '../../ai/agents/narrative/politburo';
-import type { PoliticalEntitySaveData } from '../political';
+import type { PoliticalEntitySaveData } from '../../ai/agents/political/types';
 import type { MinigameRouterSaveData } from '../../ai/agents/meta/minigames/MinigameTypes';
 import type { TutorialSaveData } from '../../ai/agents/meta/TutorialSystem';
 import type { AchievementTrackerSaveData } from '../../ai/agents/meta/AchievementTracker';

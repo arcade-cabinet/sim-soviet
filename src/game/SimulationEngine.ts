@@ -87,8 +87,9 @@ import type { MandateWithFulfillment, PlanMandateState } from '../ai/agents/poli
 import { createMandatesForEra, createPlanMandateState, recordBuildingPlaced } from '../ai/agents/political/PoliticalAgent';
 import type { PolitburoSaveData } from '../ai/agents/narrative/politburo';
 import { PolitburoSystem } from '../ai/agents/narrative/politburo';
-import type { PoliticalEntitySaveData } from './political';
-import { addPaperwork, getPaperwork, PoliticalEntitySystem } from './political';
+import type { PoliticalEntitySaveData } from '../ai/agents/political/types';
+import { addPaperwork, getPaperwork } from '../ai/agents/political/doctrine';
+import { PoliticalEntitySystem } from '../ai/agents/political/PoliticalEntitySystem';
 import type { PravdaSaveData } from '../ai/agents/narrative/pravda';
 import { PravdaSystem } from '../ai/agents/narrative/pravda';
 import type { ConsequenceConfig, ConsequenceLevel, DifficultyLevel, ScoringSystemSaveData } from '../ai/agents/political/ScoringSystem';

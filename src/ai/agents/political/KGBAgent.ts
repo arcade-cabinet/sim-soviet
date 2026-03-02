@@ -17,7 +17,7 @@ import type {
   KGBInvestigation,
   PoliticalEntityStats,
   PoliticalTickResult,
-} from '../../../game/political/types';
+} from './types';
 import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { world } from '@/ecs/world';

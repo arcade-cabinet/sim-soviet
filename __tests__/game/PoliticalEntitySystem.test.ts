@@ -1,7 +1,7 @@
 import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
-import type { PoliticalEntitySaveData } from '@/game/political';
-import { PoliticalEntitySystem } from '@/game/political';
+import type { PoliticalEntitySaveData } from '@/ai/agents/political/types';
+import { PoliticalEntitySystem } from '@/ai/agents/political/PoliticalEntitySystem';
 import { GameRng } from '@/game/SeedSystem';
 
 describe('PoliticalEntitySystem', () => {

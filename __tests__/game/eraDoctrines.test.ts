@@ -14,7 +14,7 @@ import {
   resetPaperwork,
   resetThawFreezeState,
   setThawFreezeState,
-} from '@/game/political/doctrine';
+} from '@/ai/agents/political/doctrine';
 import { GameRng } from '@/game/SeedSystem';
 
 function makeCtx(overrides: Partial<DoctrineContext> = {}): DoctrineContext {

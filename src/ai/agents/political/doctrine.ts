@@ -1,5 +1,5 @@
 /**
- * @module game/political/doctrine
+ * @module ai/agents/political/doctrine
  *
  * DOCTRINE SIGNATURE MECHANICS
  *

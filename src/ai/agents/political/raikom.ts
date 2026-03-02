@@ -1,5 +1,5 @@
 /**
- * @module game/political/raikom
+ * @module ai/agents/political/raikom
  *
  * RAIKOM SYSTEM — District Committee
  *

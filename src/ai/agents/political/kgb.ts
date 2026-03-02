@@ -1,5 +1,5 @@
 /**
- * @module game/political/kgb
+ * @module ai/agents/political/kgb
  *
  * KGB-specific constants, investigation lifecycle, informant network,
  * worker arrest (removal), and skill targeting (brain drain).

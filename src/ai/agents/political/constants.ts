@@ -1,5 +1,5 @@
 /**
- * @module game/political/constants
+ * @module ai/agents/political/constants
  *
  * Shared constants, name generation, and pure helpers for the political system.
  */

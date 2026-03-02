@@ -1,5 +1,5 @@
 /**
- * @module game/political/PoliticalEntitySystem
+ * @module ai/agents/political/PoliticalEntitySystem
  *
  * Makes political actors VISIBLE on the game map as entities that interact
  * with workers and buildings.

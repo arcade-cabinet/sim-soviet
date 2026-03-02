@@ -7,12 +7,12 @@
  * - Entity positions match the stationedAt field
  */
 
-import { PoliticalEntitySystem } from '../../src/game/political/PoliticalEntitySystem';
+import { PoliticalEntitySystem } from '../../src/ai/agents/political/PoliticalEntitySystem';
 import { GameRng } from '../../src/game/SeedSystem';
 
 // Provide a minimal building for entities to station at
-jest.mock('../../src/game/political/constants', () => {
-  const actual = jest.requireActual('../../src/game/political/constants');
+jest.mock('../../src/ai/agents/political/constants', () => {
+  const actual = jest.requireActual('../../src/ai/agents/political/constants');
   return {
     ...actual,
     pickRandomBuildingPosition: (rng: any) => ({

@@ -14,7 +14,7 @@
 
 import { KGBAgent } from '../../src/ai/agents/political/KGBAgent';
 import type { KGBState } from '../../src/ai/agents/political/KGBAgent';
-import type { PoliticalEntityStats, PoliticalTickResult } from '../../src/game/political/types';
+import type { PoliticalEntityStats, PoliticalTickResult } from '../../src/ai/agents/political/types';
 
 // ─────────────────────────────────────────────────────────
 //  Test RNG stub

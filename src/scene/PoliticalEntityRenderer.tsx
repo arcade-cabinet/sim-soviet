@@ -20,7 +20,7 @@ import { useRef, useState } from 'react';
 import type * as THREE from 'three';
 
 import { getEngine } from '../bridge/GameInit';
-import type { PoliticalRole } from '../game/political/types';
+import type { PoliticalRole } from '../ai/agents/political/types';
 
 /** Role -> color mapping for political entity meshes. */
 const ROLE_COLORS: Record<PoliticalRole, string> = {

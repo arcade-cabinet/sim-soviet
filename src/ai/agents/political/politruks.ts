@@ -1,5 +1,5 @@
 /**
- * @module game/political/politruks
+ * @module ai/agents/political/politruks
  *
  * Politruk-specific constants and tick logic.
  *

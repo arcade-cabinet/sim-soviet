@@ -1,5 +1,5 @@
 /**
- * @module game/political/military
+ * @module ai/agents/political/military
  *
  * Military, conscription, and orgnabor constants and queue processing.
  */

@@ -29,8 +29,8 @@ import { PersonnelFile as PersonnelFileClass } from '../../ai/agents/political/K
 import type { PlanMandateState } from '../../ai/agents/political/PoliticalAgent';
 import type { PolitburoSystem } from '../../ai/agents/narrative/politburo';
 import { PolitburoSystem as PolitburoSystemClass } from '../../ai/agents/narrative/politburo';
-import type { PoliticalEntitySystem } from '../political';
-import { PoliticalEntitySystem as PoliticalEntitySystemClass } from '../political';
+import type { PoliticalEntitySystem } from '../../ai/agents/political/PoliticalEntitySystem';
+import { PoliticalEntitySystem as PoliticalEntitySystemClass } from '../../ai/agents/political/PoliticalEntitySystem';
 import type { PravdaSystem } from '../../ai/agents/narrative/pravda';
 import { PravdaSystem as PravdaSystemClass } from '../../ai/agents/narrative/pravda';
 import type { ScoringSystem } from '../../ai/agents/political/ScoringSystem';

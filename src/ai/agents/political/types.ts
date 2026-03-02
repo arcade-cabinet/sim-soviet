@@ -1,5 +1,5 @@
 /**
- * @module game/political/types
+ * @module ai/agents/political/types
  *
  * Type definitions for the political entity system.
  */
