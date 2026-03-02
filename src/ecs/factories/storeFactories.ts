@@ -133,7 +133,7 @@ export function createMetaStore(initialValues?: Partial<GameMeta>): Entity {
   const entity: Entity = {
     gameMeta: {
       seed: initialValues?.seed ?? '',
-      date: initialValues?.date ?? { year: 1922, month: 10, tick: 0 },
+      date: initialValues?.date ?? { year: 1917, month: 10, tick: 0 },
       quota: initialValues?.quota ?? {
         type: 'food',
         target: 500,

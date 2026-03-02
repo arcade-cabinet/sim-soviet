@@ -388,7 +388,7 @@ describe('PravdaSystem', () => {
     it('includes the current year', () => {
       pravda.headlineFromEvent(createMockEvent());
       const page = pravda.formatFrontPage();
-      expect(page).toContain('1922');
+      expect(page).toContain('1917');
     });
 
     it('shows up to 3 headlines with star prefix', () => {

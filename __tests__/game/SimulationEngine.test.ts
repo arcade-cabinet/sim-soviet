@@ -57,11 +57,11 @@ describe('SimulationEngine', () => {
       expect(getMetaEntity()!.gameMeta.date.month).toBe(11);
     });
 
-    it('rolls year after 3 months (Oct 1922 → Jan 1923)', () => {
+    it('rolls year after 3 months (Oct 1917 → Jan 1918)', () => {
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
       // Starting at month 10, 3 months (90 ticks) to year boundary
       for (let i = 0; i < 90; i++) engine.tick();
-      expect(getMetaEntity()!.gameMeta.date.year).toBe(1923);
+      expect(getMetaEntity()!.gameMeta.date.year).toBe(1918);
       expect(getMetaEntity()!.gameMeta.date.month).toBe(1);
     });
 

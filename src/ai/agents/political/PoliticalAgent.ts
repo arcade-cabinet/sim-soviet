@@ -1268,9 +1268,7 @@ export class PoliticalAgent extends Vehicle {
     difficulty: DifficultyLevel;
     chronology: ChronologyAgent;
   }): void {
-    const meta = getMetaEntity();
-    const currentYear = meta?.gameMeta.date.year ?? 1922;
-    const newEra = this.checkEraTransition(currentYear);
+    const newEra = this.checkEraTransition(deps.year);
 
     if (newEra) {
       // Score the completed era before transitioning
@@ -1293,7 +1291,7 @@ export class PoliticalAgent extends Vehicle {
       // PoliticalAgent IS the EraSystem now, so call this.saveCheckpoint()
       this.saveCheckpoint(
         JSON.stringify({
-          year: currentYear,
+          year: deps.year,
           eraId: newEra.id,
         }),
       );

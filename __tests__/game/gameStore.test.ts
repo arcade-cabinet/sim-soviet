@@ -51,7 +51,7 @@ describe('gameStore', () => {
       expect(store.resources.vodka).toBe(50);
       expect(store.resources.power).toBe(0);
       expect(store.resources.powerUsed).toBe(0);
-      expect(meta.gameMeta.date.year).toBe(1922);
+      expect(meta.gameMeta.date.year).toBe(1917);
       expect(meta.gameMeta.date.month).toBe(10);
       expect(meta.gameMeta.selectedTool).toBe('none');
       expect(meta.gameMeta.gameOver).toBeNull();
