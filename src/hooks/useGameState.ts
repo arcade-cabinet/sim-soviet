@@ -102,7 +102,12 @@ function createSnapshot(state: GameState): GameSnapshot {
   const vodka = Math.round(res?.resources.vodka ?? state.vodka);
   const powerGen = res?.resources.power ?? state.powerGen;
   const powerUsed = res?.resources.powerUsed ?? state.powerUsed;
-  const pop = m ? citizens.entities.length : state.pop;
+  // Check for aggregate population mode (RaionPool on resource store)
+  const raion = res?.resources?.raion;
+
+  const pop = raion
+    ? raion.totalPopulation
+    : m ? citizens.entities.length : state.pop;
 
   // Compute income as money delta between snapshots
   if (_previousMoney !== null) {
@@ -138,25 +143,40 @@ function createSnapshot(state: GameState): GameSnapshot {
   const seasonLabel = getSeason(month);
   const dir = DIRECTIVES[state.directiveIndex];
 
-  // Workforce breakdown
-  let assignedCount = 0;
-  for (const c of citizens.entities) {
-    if (c.citizen?.assignment) assignedCount++;
-  }
+  // Workforce, morale, loyalty — aggregate mode reads from RaionPool,
+  // entity mode iterates individual citizen/dvor entities.
+  let assignedCount: number;
+  let avgMorale: number;
+  let avgLoyalty: number;
+  let dvorCount: number;
 
-  // Dvor loyalty average
-  let loyaltySum = 0;
-  for (const d of dvory.entities) {
-    loyaltySum += d.dvor.loyaltyToCollective;
-  }
-  const avgLoyalty = dvory.entities.length > 0 ? Math.round(loyaltySum / dvory.entities.length) : 0;
+  if (raion) {
+    // Aggregate mode: read district-level stats from RaionPool
+    assignedCount = raion.assignedWorkers;
+    avgMorale = Math.round(raion.avgMorale);
+    avgLoyalty = Math.round(raion.avgLoyalty);
+    dvorCount = raion.totalHouseholds;
+  } else {
+    // Entity mode: iterate citizens and dvory
+    assignedCount = 0;
+    for (const c of citizens.entities) {
+      if (c.citizen?.assignment) assignedCount++;
+    }
 
-  // Morale average
-  let moraleSum = 0;
-  for (const c of citizens.entities) {
-    moraleSum += c.citizen?.happiness ?? 0;
+    let loyaltySum = 0;
+    for (const d of dvory.entities) {
+      loyaltySum += d.dvor.loyaltyToCollective;
+    }
+    avgLoyalty = dvory.entities.length > 0 ? Math.round(loyaltySum / dvory.entities.length) : 0;
+
+    let moraleSum = 0;
+    for (const c of citizens.entities) {
+      moraleSum += c.citizen?.happiness ?? 0;
+    }
+    avgMorale = pop > 0 ? Math.round(moraleSum / pop) : 0;
+
+    dvorCount = dvory.entities.length;
   }
-  const avgMorale = pop > 0 ? Math.round(moraleSum / pop) : 0;
 
   return {
     money,
@@ -207,7 +227,7 @@ function createSnapshot(state: GameState): GameSnapshot {
     // Workforce
     assignedWorkers: assignedCount,
     idleWorkers: pop - assignedCount,
-    dvorCount: dvory.entities.length,
+    dvorCount,
     avgMorale,
     avgLoyalty,
   };
