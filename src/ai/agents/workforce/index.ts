@@ -43,3 +43,8 @@ export {
   HEATING_FAILURE_MORALE_PENALTY,
 } from './constants';
 export { applyMorale, calcBaseEfficiency, calcClassBonus } from './classes';
+export {
+  getPopulationMode,
+  collapseEntitiesToBuildings,
+  type PopulationMode,
+} from './collectiveTransition';
