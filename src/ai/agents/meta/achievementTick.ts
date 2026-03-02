@@ -8,7 +8,7 @@
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import type { AchievementTracker } from './AchievementTracker';
 import type { ChronologySystem } from '../core/ChronologyAgent';
-import type { SimCallbacks } from '../../../game/SimulationEngine';
+import type { SimCallbacks } from '../../../game/engine/types';
 import type { TutorialSystem } from './TutorialSystem';
 
 /** Subset of SimulationEngine state needed by achievement/tutorial helpers. */

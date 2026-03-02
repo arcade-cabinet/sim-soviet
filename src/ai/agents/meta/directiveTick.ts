@@ -11,7 +11,7 @@
 import { getResourceEntity } from '@/ecs/archetypes';
 import { DIRECTIVES } from '@/engine/Directives';
 import { gameState } from '@/engine/GameState';
-import type { SimCallbacks } from '../../../game/SimulationEngine';
+import type { SimCallbacks } from '../../../game/engine/types';
 
 /** Subset of SimulationEngine state needed by the directive tick. */
 export interface DirectiveContext {

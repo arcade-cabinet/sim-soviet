@@ -14,7 +14,8 @@ import { MapSystem } from '@/game/map';
 import { recalculatePaths } from '@/game/PathSystem';
 import { SaveSystem } from '@/game/SaveSystem';
 import { type ConsequenceLevel, DIFFICULTY_PRESETS, type DifficultyLevel } from '@/ai/agents/political/ScoringSystem';
-import { type SimCallbacks, SimulationEngine } from '@/game/SimulationEngine';
+import type { SimCallbacks } from '@/game/engine/types';
+import { SimulationEngine } from '@/game/SimulationEngine';
 import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 
 /** Configuration options for game initialization (difficulty, map size, seed). */

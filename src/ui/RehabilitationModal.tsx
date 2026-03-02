@@ -5,7 +5,7 @@
 
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { RehabilitationData } from '../game/SimulationEngine';
+import type { RehabilitationData } from '../game/engine/types';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 

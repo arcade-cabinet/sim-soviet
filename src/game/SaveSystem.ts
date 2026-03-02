@@ -21,7 +21,8 @@ import type { Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import { getFootprint } from '@/game/BuildingFootprints';
 import type { GameGrid } from './GameGrid';
-import type { SimulationEngine, SubsystemSaveData } from './SimulationEngine';
+import type { SimulationEngine } from './SimulationEngine';
+import type { SubsystemSaveData } from './engine/types';
 
 const LOCALSTORAGE_KEY = 'simsoviet_save_v2';
 

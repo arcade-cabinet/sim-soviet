@@ -16,7 +16,7 @@ import type { MandateWithFulfillment, PlanMandateState } from './PoliticalAgent'
 import { allMandatesComplete, getMandateFulfillment } from './PoliticalAgent';
 import type { ScoringSystem } from './ScoringSystem';
 import type { GameRng } from '../../../game/SeedSystem';
-import type { SimCallbacks } from '../../../game/SimulationEngine';
+import type { SimCallbacks } from '../../../game/engine/types';
 
 /** Consecutive quota failures that trigger game over. */
 const MAX_QUOTA_FAILURES = 3;

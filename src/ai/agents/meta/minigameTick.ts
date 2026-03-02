@@ -11,7 +11,7 @@ import { resolveBuildingTrigger } from './minigames/BuildingMinigameMap';
 import type { MinigameRouter } from './minigames/MinigameRouter';
 import type { MinigameOutcome } from './minigames/MinigameTypes';
 import type { PersonnelFile } from '../political/KGBAgent';
-import type { SimCallbacks } from '../../../game/SimulationEngine';
+import type { SimCallbacks } from '../../../game/engine/types';
 
 /** Subset of SimulationEngine state needed by minigame helpers. */
 export interface MinigameContext {
