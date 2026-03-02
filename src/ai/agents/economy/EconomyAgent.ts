@@ -123,7 +123,7 @@ import {
 
 import { defaultCategory, TRUDODNI_VALUES } from './trudodni';
 import type { MemberRole } from '../../../ecs/world';
-import { buildingsLogic, citizens, dvory, getResourceEntity } from '../../../ecs/archetypes';
+import { buildingsLogic, citizens, dvory, getResourceEntity, operationalBuildings } from '../../../ecs/archetypes';
 
 // ---------------------------------------------------------------------------
 // Constants (re-exported for consumers)
@@ -369,6 +369,30 @@ export class EconomyAgent extends Vehicle {
    * @returns Total trudodni accrued and number of members processed
    */
   accrueTrudodniFromDvory(): { totalTrudodni: number; memberCount: number } {
+    // In aggregate mode (raion pool defined), citizen entities do not exist.
+    // Trudodni is tracked per-building via building.trudodniAccrued instead.
+    const resources = getResourceEntity()?.resources;
+    if (resources?.raion) {
+      let totalTrudodni = 0;
+      let buildingCount = 0;
+      for (const entity of operationalBuildings.entities) {
+        const bldg = entity.building;
+        const accrued = bldg.trudodniAccrued;
+        if (accrued > 0) {
+          const pos = entity.position;
+          const buildingId = `${pos.x},${pos.y}`;
+          this.trudodniPerBuilding.set(
+            buildingId,
+            (this.trudodniPerBuilding.get(buildingId) ?? 0) + accrued,
+          );
+          totalTrudodni += accrued;
+          buildingCount++;
+        }
+      }
+      this.trudodniTotal += totalTrudodni;
+      return { totalTrudodni, memberCount: buildingCount };
+    }
+
     let totalTrudodni = 0;
     let memberCount = 0;
 

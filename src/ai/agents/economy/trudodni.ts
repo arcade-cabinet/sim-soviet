@@ -10,7 +10,7 @@
  * Moved from game/TrudodniSystem.ts to economy package.
  */
 
-import { citizens, dvory } from '@/ecs/archetypes';
+import { citizens, dvory, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 import type { MemberRole } from '@/ecs/world';
 
 /** Trudodni category (1-7, higher = more valuable labor). */
@@ -95,6 +95,30 @@ export function resetBuildingTrudodni(): void {
  * Also accumulates trudodni per building assignment.
  */
 export function accrueTrudodni(): TrudodniAccrualResult {
+  // In aggregate mode (raion pool defined), citizen entities do not exist.
+  // Trudodni is tracked per-building via building.trudodniAccrued instead.
+  // Sum from operational buildings and sync to the per-building map.
+  const resources = getResourceEntity()?.resources;
+  if (resources?.raion) {
+    let totalTrudodni = 0;
+    let buildingCount = 0;
+    for (const entity of operationalBuildings.entities) {
+      const bldg = entity.building;
+      const accrued = bldg.trudodniAccrued;
+      if (accrued > 0) {
+        const pos = entity.position;
+        const buildingId = `${pos.x},${pos.y}`;
+        buildingTrudodniMap.set(
+          buildingId,
+          (buildingTrudodniMap.get(buildingId) ?? 0) + accrued,
+        );
+        totalTrudodni += accrued;
+        buildingCount++;
+      }
+    }
+    return { totalTrudodni, memberCount: buildingCount };
+  }
+
   let totalTrudodni = 0;
   let memberCount = 0;
 
