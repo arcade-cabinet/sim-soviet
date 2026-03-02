@@ -24,7 +24,13 @@ export interface MinigameOverlayProps {
   onDismiss: () => void;
 }
 
-/** Map interactive minigame results to outcomes based on the minigame definition. */
+/**
+ * Map interactive minigame results to outcomes based on the minigame definition.
+ * @param interactiveType - The type of interactive minigame ('hunt', 'factory_emergency', 'inspection')
+ * @param success - Whether the player succeeded at the minigame
+ * @param score - Numeric score achieved (interpretation varies by minigame type)
+ * @returns A MinigameOutcome with resource deltas, marks, and announcement text
+ */
 function resolveInteractiveOutcome(
   interactiveType: InteractiveMinigameType,
   success: boolean,

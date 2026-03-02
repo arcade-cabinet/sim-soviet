@@ -25,7 +25,11 @@ export interface HuntMinigameProps {
   onComplete: (success: boolean, score: number) => void;
 }
 
-/** Interactive hunting minigame: tap the moving target to score hits. */
+/**
+ * Interactive hunting minigame: tap the moving target to score hits.
+ * @param props - {@link HuntMinigameProps}
+ * @param props.onComplete - Callback fired when the minigame ends with (success, hitCount)
+ */
 export const HuntMinigame: React.FC<HuntMinigameProps> = ({ onComplete }) => {
   const [targetX, setTargetX] = useState(PLAY_WIDTH / 2);
   const [targetY, setTargetY] = useState(PLAY_HEIGHT / 2);

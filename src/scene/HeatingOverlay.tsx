@@ -25,7 +25,11 @@ interface HeatingVisual {
   heated: boolean;
 }
 
-/** Whether this season has cold months that require heating. */
+/**
+ * Whether this season has cold months that require heating.
+ * @param season - The current season name (e.g. 'winter', 'autumn', 'spring', 'summer')
+ * @returns True if the season requires building heating
+ */
 function isColdSeason(season: string): boolean {
   return season === 'winter' || season === 'autumn';
 }

@@ -149,7 +149,7 @@ export class ChronologyAgent extends Vehicle {
    * @param years - Number of years to advance the calendar
    */
   advanceYears(years: number): void {
-    if (!Number.isFinite(years) || years < 0) return;
+    if (!Number.isFinite(years) || !Number.isInteger(years) || years <= 0) return;
     this.date.year += years;
     this.date.totalTicks += years * TICKS_PER_YEAR;
     this.season = getSeasonForMonth(this.date.month);

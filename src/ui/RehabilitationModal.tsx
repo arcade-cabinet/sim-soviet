@@ -16,7 +16,14 @@ export interface RehabilitationModalProps {
   onResume: () => void;
 }
 
-/** Soviet-themed modal shown after gulag rehabilitation with loss summary. */
+/**
+ * Soviet-themed modal shown after gulag rehabilitation with loss summary.
+ * @param props - {@link RehabilitationModalProps}
+ * @param props.visible - Whether the modal is shown
+ * @param props.data - Rehabilitation outcome data (losses, marks reset)
+ * @param props.playerName - Chairman name displayed in the header (default 'CHAIRMAN')
+ * @param props.onResume - Callback when the player acknowledges and resumes
+ */
 export const RehabilitationModal: React.FC<RehabilitationModalProps> = ({
   visible,
   data,

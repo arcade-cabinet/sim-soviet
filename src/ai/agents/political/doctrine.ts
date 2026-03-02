@@ -175,6 +175,7 @@ export function getPaperwork(): number {
 
 /** Set the paperwork value (for deserialization). */
 export function setPaperwork(value: number): void {
+  if (!Number.isFinite(value)) return;
   _paperwork = Math.max(0, value);
 }
 
@@ -185,6 +186,7 @@ export function resetPaperwork(): void {
 
 /** Add paperwork from doctrine effects. Returns new total. */
 export function addPaperwork(delta: number): number {
+  if (!Number.isFinite(delta)) return _paperwork;
   _paperwork = Math.max(0, _paperwork + delta);
   return _paperwork;
 }

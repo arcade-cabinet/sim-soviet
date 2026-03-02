@@ -390,18 +390,21 @@ export class KGBAgent extends Vehicle {
 
   /** Reset marks after rehabilitation (gulag return). */
   resetForRehabilitation(marksReset: number, tick: number): void {
-    this.state.blackMarks = marksReset;
+    const clamped = Number.isFinite(marksReset)
+      ? Math.max(0, Math.min(Math.floor(marksReset), ARREST_THRESHOLD - 1))
+      : 0;
+    this.state.blackMarks = clamped;
     this.state.commendations = 0;
     this.state.lastMarkAddedTick = -Infinity;
     this.state.lastDecayTick = tick;
-    this.state.markCount = marksReset;
+    this.state.markCount = clamped;
 
     this.state.history.push({
       tick,
       type: 'reset',
       source: 'rehabilitation',
       amount: 0,
-      description: `Comrade Chairman rehabilitated after corrective labor. Marks reset to ${marksReset}.`,
+      description: `Comrade Chairman rehabilitated after corrective labor. Marks reset to ${clamped}.`,
     });
   }
 
