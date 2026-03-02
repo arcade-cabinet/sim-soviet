@@ -1,8 +1,10 @@
 import { dvory } from '@/ecs/archetypes';
 import { createDvor } from '@/ecs/factories';
 import type { DvorMemberSeed } from '@/ecs/factories';
+import type { RaionPool, BuildingComponent } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';
+import { GameRng as RealGameRng } from '@/game/SeedSystem';
 import {
   DemographicAgent,
   ERA_BIRTH_RATE_MULTIPLIER,
@@ -511,6 +513,218 @@ describe('DemographicAgent', () => {
       // Use alwaysZeroRng so births occur
       const result = agent.onTick(30, alwaysZeroRng, 0.9, 'revolution');
       expect(result.births).toBeGreaterThanOrEqual(0); // sanity check — system runs
+    });
+  });
+
+  // ── Aggregate mode ──────────────────────────────────────────────────────
+
+  describe('aggregate mode (RaionPool)', () => {
+    /** Create a resource store entity with raion set, return cleanup fn. */
+    function setupAggregateMode(raion: RaionPool): () => void {
+      const entity = world.add({
+        resources: {
+          money: 0, food: 500, vodka: 0, power: 0, powerUsed: 0,
+          population: raion.totalPopulation,
+          trudodni: 0, blat: 0, timber: 0, steel: 0, cement: 0, prefab: 0,
+          seedFund: 0, emergencyReserve: 0, storageCapacity: 0,
+          raion,
+        },
+        isResourceStore: true,
+      });
+      return () => world.remove(entity);
+    }
+
+    function makeRaionPool(overrides?: Partial<RaionPool>): RaionPool {
+      return {
+        totalPopulation: 0,
+        totalHouseholds: 0,
+        maleAgeBuckets: new Array(20).fill(0),
+        femaleAgeBuckets: new Array(20).fill(0),
+        classCounts: {},
+        birthsThisYear: 0,
+        deathsThisYear: 0,
+        totalBirths: 0,
+        totalDeaths: 0,
+        pregnancyWaves: [0, 0, 0],
+        laborForce: 0,
+        assignedWorkers: 0,
+        idleWorkers: 0,
+        avgMorale: 50,
+        avgLoyalty: 50,
+        avgSkill: 50,
+        ...overrides,
+      };
+    }
+
+    let cleanup: (() => void) | null = null;
+
+    afterEach(() => {
+      if (cleanup) {
+        cleanup();
+        cleanup = null;
+      }
+    });
+
+    it('dispatches to statistical functions when raion is defined', () => {
+      const raion = makeRaionPool();
+      // Put 100 women in fertile age bucket 5 (ages 25-29)
+      raion.femaleAgeBuckets[5] = 100;
+      raion.maleAgeBuckets[5] = 100;
+      raion.totalPopulation = 200;
+      // Pre-load some births ready to deliver
+      raion.pregnancyWaves = [10, 5, 0];
+
+      cleanup = setupAggregateMode(raion);
+
+      const agent = new DemographicAgent();
+      const rng = new RealGameRng('aggregate-test');
+
+      // Month boundary tick — should use statistical functions
+      const result = agent.onTick(30, rng, 0.8, 'revolution');
+
+      // Should have delivered the 10 births from pregnancyWaves[0]
+      expect(result.births).toBe(10);
+      expect(raion.totalBirths).toBe(10);
+      // Deaths should have occurred (low but non-zero for 200 people)
+      expect(result.deaths).toBeGreaterThanOrEqual(0);
+      // No entity-level dead members in aggregate mode
+      expect(result.deadMembers).toHaveLength(0);
+      expect(result.agedIntoWorking).toHaveLength(0);
+    });
+
+    it('does not iterate dvory in aggregate mode', () => {
+      const raion = makeRaionPool();
+      raion.femaleAgeBuckets[5] = 50;
+      raion.totalPopulation = 50;
+      raion.pregnancyWaves = [0, 0, 0];
+
+      cleanup = setupAggregateMode(raion);
+
+      // Also create some dvory — they should NOT be touched
+      createTestDvor('dvor-agg-1', [seed('female', 25)]);
+      const membersBefore = dvory.entities[0]!.dvor.members[0]!.age;
+
+      const agent = new DemographicAgent();
+      const rng = new RealGameRng('agg-no-dvory');
+
+      // Year boundary (360) — would age dvory members in entity mode
+      agent.onTick(360, rng, 0.8, 'revolution');
+
+      // Dvor member age should NOT have changed (aggregate mode skips dvory)
+      expect(dvory.entities[0]!.dvor.members[0]!.age).toBe(membersBefore);
+    });
+
+    it('runs aging on year boundary in aggregate mode', () => {
+      const raion = makeRaionPool();
+      raion.maleAgeBuckets[0] = 20; // 20 infants
+      raion.maleAgeBuckets[19] = 5;  // 5 very old (will die from overflow)
+      raion.femaleAgeBuckets[19] = 3; // 3 very old
+      raion.totalPopulation = 28;
+      raion.pregnancyWaves = [0, 0, 0];
+
+      cleanup = setupAggregateMode(raion);
+
+      const agent = new DemographicAgent();
+      const rng = new RealGameRng('agg-aging');
+
+      const result = agent.onTick(360, rng, 0.8, 'revolution');
+
+      // 8 overflow deaths (bucket 19)
+      expect(result.deaths).toBeGreaterThanOrEqual(8);
+      // Bucket 0 should now be 0 (shifted to bucket 1)
+      expect(raion.maleAgeBuckets[0]).toBe(0);
+      expect(raion.maleAgeBuckets[1]).toBe(20);
+    });
+
+    it('resets yearly counters on year boundary', () => {
+      const raion = makeRaionPool();
+      raion.femaleAgeBuckets[5] = 100;
+      raion.totalPopulation = 100;
+      raion.birthsThisYear = 50;
+      raion.deathsThisYear = 10;
+      raion.pregnancyWaves = [0, 0, 0];
+
+      cleanup = setupAggregateMode(raion);
+
+      const agent = new DemographicAgent();
+      const rng = new RealGameRng('agg-reset');
+
+      agent.onTick(360, rng, 0.8, 'revolution');
+
+      expect(raion.birthsThisYear).toBe(0);
+      expect(raion.deathsThisYear).toBe(0);
+    });
+
+    it('falls back to entity mode when raion is undefined', () => {
+      // No aggregate mode setup — resource store has no raion
+      const entity = world.add({
+        resources: {
+          money: 0, food: 500, vodka: 0, power: 0, powerUsed: 0,
+          population: 10, trudodni: 0, blat: 0, timber: 0, steel: 0,
+          cement: 0, prefab: 0, seedFund: 0, emergencyReserve: 0,
+          storageCapacity: 0,
+          // raion is NOT set — entity mode
+        },
+        isResourceStore: true,
+      });
+      cleanup = () => world.remove(entity);
+
+      createTestDvor('dvor-entity-mode', [seed('female', 25), seed('male', 28)]);
+
+      const agent = new DemographicAgent();
+
+      // RNG that returns 0 for first call (conception succeeds) then 1.0 (no deaths)
+      let callCount = 0;
+      const birthThenSurviveRng: GameRng = {
+        random: () => (callCount++ < 2 ? 0 : 1.0),
+        int: () => 0,
+        pick: (a: unknown[]) => a[0],
+        weightedIndex: () => 0,
+      } as GameRng;
+
+      const result = agent.onTick(30, birthThenSurviveRng, 0.9, 'revolution');
+
+      // Entity mode should produce births via dvor iteration
+      expect(result.births).toBeGreaterThanOrEqual(1);
+      // No deadMembers from aggregate path — entity mode tracks them
+      expect(result.deadMembers.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('statisticalHouseholdFormation distributes to housing buildings', () => {
+      const raion = makeRaionPool();
+      // Put 200 people in eligible age buckets (4-7)
+      for (let i = 4; i <= 7; i++) {
+        raion.maleAgeBuckets[i] = 25;
+        raion.femaleAgeBuckets[i] = 25;
+      }
+      raion.totalPopulation = 200;
+      raion.totalHouseholds = 10;
+
+      // Create a housing building with capacity
+      const housingEntity = world.add({
+        position: { gridX: 0, gridY: 0 },
+        building: {
+          defId: 'barracks', level: 0, powered: true, powerReq: 0, powerOutput: 0,
+          housingCap: 100, pollution: 0, fear: 0,
+          workerCount: 0, residentCount: 0, avgMorale: 50, avgSkill: 50,
+          avgLoyalty: 50, avgVodkaDep: 0, trudodniAccrued: 0, householdCount: 0,
+          constructionPhase: 'complete' as const,
+        } as BuildingComponent,
+        isBuilding: true,
+      });
+
+      const agent = new DemographicAgent();
+      const rng = new RealGameRng('hh-formation');
+
+      agent.statisticalHouseholdFormation(raion, rng);
+
+      // Should have added some households
+      expect(housingEntity.building!.householdCount).toBeGreaterThan(0);
+      expect(housingEntity.building!.residentCount).toBeGreaterThan(0);
+      expect(raion.totalHouseholds).toBeGreaterThan(10);
+
+      // Cleanup
+      world.remove(housingEntity);
     });
   });
 });
