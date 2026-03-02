@@ -1,8 +1,8 @@
 /**
  * Drizzle ORM schema for SimSoviet 2000.
  *
- * Defines SQLite tables for game persistence via sql.js (web)
- * or @capacitor-community/sqlite (mobile).
+ * Defines SQLite tables for game persistence via expo-sqlite
+ * (OPFS on web, native SQLite on mobile).
  */
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 

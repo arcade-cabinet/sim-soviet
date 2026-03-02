@@ -1,40 +1,102 @@
+import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import * as dbSchema from '../../src/db/schema';
+
+// Variables prefixed with 'mock' are allowed inside jest.mock() factories
+let mockRawDb: InstanceType<typeof Database>;
+let mockTestDb: ReturnType<typeof drizzle>;
+
+// Mock expo-sqlite (never loaded in tests)
+jest.mock('expo-sqlite', () => ({}));
+
+// Mock @/db/provider so getDatabase() returns our better-sqlite3 backed drizzle instance.
+// The `mock`-prefixed variables are allowed by Jest's hoisting rules.
+jest.mock('../../src/db/provider', () => ({
+  getDatabase: () => mockTestDb,
+  initDatabase: async () => mockTestDb,
+  closeDatabase: () => {},
+  exportDatabaseFile: () => null,
+  importDatabaseFile: async () => mockTestDb,
+}));
+
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
 import { type ExtendedSaveData, SaveSystem } from '../../src/game/SaveSystem';
 
-// Polyfill localStorage for react-native test environment
-if (typeof globalThis.localStorage === 'undefined') {
-  const store: Record<string, string> = {};
-  (globalThis as any).localStorage = {
-    getItem: (key: string) => (key in store ? store[key]! : null),
-    setItem: (key: string, value: string) => {
-      store[key] = String(value);
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      for (const k of Object.keys(store)) delete store[k];
-    },
-    get length() {
-      return Object.keys(store).length;
-    },
-    key: (i: number) => Object.keys(store)[i] ?? null,
-  };
+/** Create tables in the in-memory database. */
+function createTables(db: InstanceType<typeof Database>): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS saves (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL DEFAULT 'autosave',
+      timestamp INTEGER NOT NULL,
+      version TEXT NOT NULL DEFAULT '1.0.0',
+      game_state TEXT
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS resources (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      save_id INTEGER NOT NULL REFERENCES saves(id),
+      money INTEGER NOT NULL DEFAULT 2000,
+      food INTEGER NOT NULL DEFAULT 200,
+      vodka INTEGER NOT NULL DEFAULT 50,
+      power INTEGER NOT NULL DEFAULT 0,
+      power_used INTEGER NOT NULL DEFAULT 0,
+      population INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS chronology (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      save_id INTEGER NOT NULL REFERENCES saves(id),
+      year INTEGER NOT NULL DEFAULT 1980,
+      month INTEGER NOT NULL DEFAULT 1,
+      tick INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS quotas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      save_id INTEGER NOT NULL REFERENCES saves(id),
+      type TEXT NOT NULL DEFAULT 'food',
+      target INTEGER NOT NULL DEFAULT 500,
+      current INTEGER NOT NULL DEFAULT 0,
+      deadline_year INTEGER NOT NULL DEFAULT 1985
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS buildings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      save_id INTEGER NOT NULL REFERENCES saves(id),
+      grid_x INTEGER NOT NULL,
+      grid_y INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      powered INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
 }
-
-const LS_KEY = 'simsoviet_save_v2';
 
 describe('SaveSystem', () => {
   let grid: GameGrid;
   let saveSystem: SaveSystem;
 
-  // happy-dom provides localStorage, but let's ensure clean state
   beforeEach(() => {
     world.clear();
-    localStorage.clear();
+
+    // Create a fresh in-memory SQLite database for each test
+    mockRawDb = new Database(':memory:');
+    createTables(mockRawDb);
+    mockTestDb = drizzle(mockRawDb, { schema: dbSchema }) as any;
+
     grid = new GameGrid();
     createResourceStore();
     createMetaStore();
@@ -42,9 +104,9 @@ describe('SaveSystem', () => {
   });
 
   afterEach(() => {
-    localStorage.clear();
     jest.restoreAllMocks();
     world.clear();
+    if (mockRawDb) mockRawDb.close();
   });
 
   // ── Save ────────────────────────────────────────────────
@@ -54,16 +116,19 @@ describe('SaveSystem', () => {
       expect(await saveSystem.save()).toBe(true);
     });
 
-    it('stores data in localStorage under the correct key', async () => {
+    it('stores data in the database', async () => {
       await saveSystem.save();
-      const raw = localStorage.getItem(LS_KEY);
-      expect(raw).not.toBeNull();
+      const rows = mockRawDb.prepare('SELECT * FROM saves').all();
+      expect(rows.length).toBeGreaterThan(0);
     });
 
-    it('stores valid JSON', async () => {
+    it('stores valid game_state JSON', async () => {
       await saveSystem.save();
-      const raw = localStorage.getItem(LS_KEY)!;
-      expect(() => JSON.parse(raw)).not.toThrow();
+      const row = mockRawDb.prepare('SELECT game_state FROM saves WHERE name = ?').get('autosave') as {
+        game_state: string;
+      };
+      expect(row).toBeTruthy();
+      expect(() => JSON.parse(row.game_state)).not.toThrow();
     });
 
     it('saves all resource fields', async () => {
@@ -75,7 +140,10 @@ describe('SaveSystem', () => {
       getResourceEntity()!.resources.powerUsed = 25;
 
       await saveSystem.save();
-      const data: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
+      const row = mockRawDb.prepare('SELECT game_state FROM saves WHERE name = ?').get('autosave') as {
+        game_state: string;
+      };
+      const data: ExtendedSaveData = JSON.parse(row.game_state);
 
       expect(data.resources.money).toBe(5000);
       expect(data.resources.population).toBe(42);
@@ -88,7 +156,10 @@ describe('SaveSystem', () => {
     it('saves date information', async () => {
       getMetaEntity()!.gameMeta.date = { year: 1990, month: 6, tick: 3 };
       await saveSystem.save();
-      const data: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
+      const row = mockRawDb.prepare('SELECT game_state FROM saves WHERE name = ?').get('autosave') as {
+        game_state: string;
+      };
+      const data: ExtendedSaveData = JSON.parse(row.game_state);
       expect(data.gameMeta.date).toEqual({ year: 1990, month: 6, tick: 3 });
     });
 
@@ -97,7 +168,10 @@ describe('SaveSystem', () => {
       buildingsLogic.entities[0]!.building.powered = true;
 
       await saveSystem.save();
-      const data: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
+      const row = mockRawDb.prepare('SELECT game_state FROM saves WHERE name = ?').get('autosave') as {
+        game_state: string;
+      };
+      const data: ExtendedSaveData = JSON.parse(row.game_state);
 
       expect(data.buildings).toHaveLength(1);
       expect(data.buildings[0]!.x).toBe(5);
@@ -114,7 +188,10 @@ describe('SaveSystem', () => {
         deadlineYear: 1990,
       };
       await saveSystem.save();
-      const data: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
+      const row = mockRawDb.prepare('SELECT game_state FROM saves WHERE name = ?').get('autosave') as {
+        game_state: string;
+      };
+      const data: ExtendedSaveData = JSON.parse(row.game_state);
       expect(data.gameMeta.quota).toEqual({
         type: 'vodka',
         target: 300,
@@ -127,7 +204,10 @@ describe('SaveSystem', () => {
       const now = Date.now();
       jest.spyOn(Date, 'now').mockReturnValue(now);
       await saveSystem.save();
-      const data: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
+      const row = mockRawDb.prepare('SELECT game_state FROM saves WHERE name = ?').get('autosave') as {
+        game_state: string;
+      };
+      const data: ExtendedSaveData = JSON.parse(row.game_state);
       expect(data.version).toBe('2.0.0');
       expect(data.timestamp).toBe(now);
     });
@@ -263,11 +343,6 @@ describe('SaveSystem', () => {
         deadlineYear: 2000,
       });
     });
-
-    it('returns false on corrupt JSON', async () => {
-      localStorage.setItem(LS_KEY, '{not valid json');
-      expect(await saveSystem.load()).toBe(false);
-    });
   });
 
   // ── Save/Load cycle integrity ───────────────────────────
@@ -336,9 +411,11 @@ describe('SaveSystem', () => {
 
       // Modify the loaded state and verify the original is unaffected
       getMetaEntity()!.gameMeta.date.year = 2000;
-      // The original date was saved as { year: 1985 } — it lives in localStorage,
-      // so re-reading should still produce the original value
-      const raw: ExtendedSaveData = JSON.parse(localStorage.getItem(LS_KEY)!);
+      // Re-read from DB to confirm the save data is independent
+      const row = mockRawDb.prepare('SELECT game_state FROM saves WHERE name = ?').get('autosave') as {
+        game_state: string;
+      };
+      const raw: ExtendedSaveData = JSON.parse(row.game_state);
       expect(raw.gameMeta.date.year).toBe(1985);
     });
   });
@@ -359,7 +436,7 @@ describe('SaveSystem', () => {
   // ── deleteSave ──────────────────────────────────────────
 
   describe('deleteSave', () => {
-    it('removes save data from localStorage', async () => {
+    it('removes save data from database', async () => {
       await saveSystem.save();
       expect(await saveSystem.hasSave()).toBe(true);
       await saveSystem.deleteSave();

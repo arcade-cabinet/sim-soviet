@@ -10,13 +10,13 @@
  * - No CSS injection (native doesn't need it)
  * - No service worker registration
  * - No WebGPURenderer — uses standard GL props via Canvas
- * - No window.addEventListener — uses AppState for lifecycle
- * - Database persistence via AppState instead of beforeunload
+ * - No window.addEventListener for lifecycle
+ * - Database persistence handled by expo-sqlite automatically
  */
 
 import { Canvas } from '@react-three/fiber/native';
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { AppState, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import AudioManager from './audio/AudioManager';
 import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
@@ -25,7 +25,7 @@ import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitial
 import { resetAllSingletons } from './bridge/Reset';
 import Content from './Content';
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
-import { initDatabase, persistToIndexedDB } from './db/provider';
+import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import type { LensType, TabType } from './engine/GameState';
 import { gameState } from './engine/GameState';
@@ -272,12 +272,8 @@ const App: React.FC = () => {
 
     // Async init: database first, then game engine
     (async () => {
-      // Initialize SQLite database
-      try {
-        await initDatabase();
-      } catch {
-        // Falls back to localStorage if sql.js WASM fails to load
-      }
+      // Initialize SQLite database (expo-sqlite handles persistence automatically)
+      await initDatabase();
 
       initGame(
         {
@@ -415,15 +411,7 @@ const App: React.FC = () => {
       }
     })();
 
-    // Persist database when app goes to background (native equivalent of beforeunload)
-    const subscription = AppState.addEventListener('change', (nextState) => {
-      if (nextState === 'background' || nextState === 'inactive') {
-        persistToIndexedDB();
-      }
-    });
-    return () => {
-      subscription.remove();
-    };
+    // expo-sqlite handles persistence automatically — no AppState listener needed
   }, [screen]);
 
   // --- Loading callbacks ---

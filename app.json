@@ -4,7 +4,11 @@
     "slug": "sim-soviet-1917",
     "version": "0.1.0",
     "orientation": "landscape",
-    "platforms": ["web", "ios", "android"],
+    "platforms": [
+      "web",
+      "ios",
+      "android"
+    ],
     "experiments": {
       "baseUrl": "/sim-soviet"
     },
@@ -24,6 +28,9 @@
       "assets/textures/**/*",
       "assets/hdri/**/*",
       "public/models/**/*.glb"
+    ],
+    "plugins": [
+      "expo-sqlite"
     ]
   }
 }

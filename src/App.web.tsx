@@ -27,7 +27,7 @@ const ARTabletop = React.lazy(() => import('./xr/ARTabletop'));
 const VRWalkthrough = React.lazy(() => import('./xr/VRWalkthrough'));
 
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
-import { initDatabase, persistToIndexedDB } from './db/provider';
+import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import type { LensType, TabType } from './engine/GameState';
 import { gameState } from './engine/GameState';
@@ -299,12 +299,8 @@ const App: React.FC = () => {
 
     // Async init: database first, then game engine
     (async () => {
-      // Initialize SQLite database (loads persisted saves from IndexedDB)
-      try {
-        await initDatabase();
-      } catch {
-        // Falls back to localStorage if sql.js WASM fails to load
-      }
+      // Initialize SQLite database (expo-sqlite handles persistence automatically)
+      await initDatabase();
 
       initGame(
         {
@@ -445,14 +441,7 @@ const App: React.FC = () => {
       }
     })();
 
-    // Persist database to IndexedDB before page unload
-    const handleBeforeUnload = () => {
-      persistToIndexedDB();
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
+    // expo-sqlite handles persistence automatically — no beforeunload needed
   }, [screen]);
 
   // Ticker messages now come exclusively from PravdaSystem via
