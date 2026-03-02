@@ -1,3 +1,4 @@
+// DEPRECATED: logic moved to CollectiveAgent (src/ai/agents/CollectiveAgent.ts)
 /**
  * @module game/CollectivePlanner
  *

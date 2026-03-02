@@ -142,7 +142,10 @@ export function productionSystem(farmModifier = 1.0, vodkaModifier = 1.0, mods?:
         store.resources.food += prod.amount * farmModifier * expandedMult;
         break;
       case 'vodka': {
-        // FIX-05: Vodka/grain diversion — 2 grain (food) per 1 vodka produced
+        // DEPRECATED: vodka logic moved to VodkaAgent
+        // VodkaAgent.update() now handles grain diversion (2 food → 1 vodka),
+        // consumption (1 per 20 citizens), and morale. This branch is kept
+        // only for builds that have not yet wired VodkaAgent into the tick.
         const vodkaOutput = prod.amount * vodkaModifier * expandedMult;
         const grainCost = vodkaOutput * 2;
         if (store.resources.food >= grainCost) {

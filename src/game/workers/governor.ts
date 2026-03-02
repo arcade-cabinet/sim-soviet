@@ -1,3 +1,4 @@
+// DEPRECATED: logic moved to CollectiveAgent (src/ai/agents/CollectiveAgent.ts)
 /**
  * @fileoverview Behavioral Governor — Autonomous Worker AI.
  *

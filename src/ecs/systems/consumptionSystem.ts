@@ -84,7 +84,9 @@ export function consumptionSystem(consumptionMult = 1): ConsumptionResult {
     }
   }
 
-  // Vodka consumption (scaled by era/difficulty multiplier)
+  // DEPRECATED: vodka logic moved to VodkaAgent
+  // VodkaAgent.update() now handles vodka consumption and morale.
+  // This block is retained for builds that have not yet wired VodkaAgent into the tick.
   const vodkaDrink = Math.ceil((pop / 20) * consumptionMult);
   if (store.resources.vodka >= vodkaDrink) {
     store.resources.vodka -= vodkaDrink;
