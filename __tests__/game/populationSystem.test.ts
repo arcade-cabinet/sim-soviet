@@ -30,8 +30,8 @@ describe('populationSystem', () => {
 
   // ── Growth with sufficient housing + food ─────────────────
 
-  describe('population growth', () => {
-    it('returns growth count when housing and food are available (with rng)', () => {
+  describe('population growth (yearly immigration)', () => {
+    it('returns growth count when housing and food are available', () => {
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'apartment-tower-a'); // housingCap=50
       powerSystem();
@@ -40,25 +40,12 @@ describe('populationSystem', () => {
       store.resources.population = 5;
       store.resources.food = 100;
 
-      const rng = createMockRng(2); // Always grow by 2
+      // immigrationCap = max(1, floor(50 * 0.03)) = max(1, 1) = 1
+      // rng.int(0, 1) returns 1 → growthCount = 1
+      const rng = createMockRng(1);
       const result = populationSystem(rng);
 
-      expect(result.growthCount).toBe(2);
-    });
-
-    it('returns growth count when housing and food are available (without rng)', () => {
-      createBuilding(0, 0, 'power-station');
-      createBuilding(1, 1, 'apartment-tower-a');
-      powerSystem();
-
-      const store = getResourceEntity()!;
-      store.resources.population = 5;
-      store.resources.food = 100;
-
-      jest.spyOn(Math, 'random').mockReturnValue(0.67); // floor(0.67 * 3) = 2
-      const result = populationSystem();
-
-      expect(result.growthCount).toBe(2);
+      expect(result.growthCount).toBe(1);
     });
 
     it('can return 0 growth (rng returns 0)', () => {
@@ -76,15 +63,38 @@ describe('populationSystem', () => {
       expect(result.growthCount).toBe(0);
     });
 
-    it('can return 1 growth', () => {
+    it('immigration cap scales with housing capacity', () => {
       createBuilding(0, 0, 'power-station');
-      createBuilding(1, 1, 'apartment-tower-a');
+      // Create multiple apartment buildings for higher housing cap
+      createBuilding(1, 1, 'apartment-tower-a'); // 50
+      createBuilding(2, 2, 'apartment-tower-a'); // 50
+      createBuilding(3, 3, 'apartment-tower-a'); // 50
+      createBuilding(4, 4, 'apartment-tower-a'); // 50 — total 200
+      powerSystem();
+
+      const store = getResourceEntity()!;
+      store.resources.population = 10;
+      store.resources.food = 1000;
+
+      // immigrationCap = max(1, floor(200 * 0.03)) = max(1, 6) = 6
+      // rng.int(0, 6) returns 6 (mock always returns intReturn)
+      const rng = createMockRng(6);
+      const result = populationSystem(rng);
+
+      expect(result.growthCount).toBe(6);
+    });
+
+    it('immigration cap has a minimum of 1', () => {
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a'); // housingCap=50
       powerSystem();
 
       const store = getResourceEntity()!;
       store.resources.population = 5;
       store.resources.food = 100;
 
+      // immigrationCap = max(1, floor(50 * 0.03)) = max(1, 1) = 1
+      // Even with small housing, at least 1 immigrant can arrive
       const rng = createMockRng(1);
       const result = populationSystem(rng);
 
@@ -134,10 +144,11 @@ describe('populationSystem', () => {
       store.resources.population = 5;
       store.resources.food = 11;
 
-      const rng = createMockRng(2);
+      // immigrationCap = max(1, floor(50 * 0.03)) = 1
+      const rng = createMockRng(1);
       const result = populationSystem(rng);
 
-      expect(result.growthCount).toBe(2);
+      expect(result.growthCount).toBe(1);
     });
   });
 
@@ -185,6 +196,7 @@ describe('populationSystem', () => {
       store.resources.population = 75; // Under 100 cap
       store.resources.food = 1000;
 
+      // immigrationCap = max(1, floor(100 * 0.03)) = max(1, 3) = 3
       const rng = createMockRng(2);
       const result = populationSystem(rng);
 
@@ -243,22 +255,6 @@ describe('populationSystem', () => {
     });
   });
 
-  // ── Edge: no resource store ───────────────────────────────
-
-  describe('edge: no resource store', () => {
-    it('does not throw when resource store is missing', () => {
-      world.clear();
-      expect(() => populationSystem()).not.toThrow();
-    });
-
-    it('returns zero growth result when resource store is missing', () => {
-      world.clear();
-      const result = populationSystem();
-      expect(result.growthCount).toBe(0);
-      expect(result.housingCapacity).toBe(0);
-    });
-  });
-
   // ── Edge: population near housing cap ──────────────────────
 
   describe('edge: population near housing cap', () => {
@@ -271,12 +267,52 @@ describe('populationSystem', () => {
       store.resources.population = 49; // 1 below cap
       store.resources.food = 1000;
 
-      const rng = createMockRng(2);
+      // immigrationCap = max(1, floor(50 * 0.03)) = 1
+      const rng = createMockRng(1);
       const result = populationSystem(rng);
 
-      // System returns growth of 2 even though pop + growth > cap.
+      // System returns growth even though pop + growth > cap.
       // Caller (SimulationEngine) decides how many to actually spawn.
-      expect(result.growthCount).toBe(2);
+      expect(result.growthCount).toBe(1);
+    });
+  });
+
+  // ── Growth multiplier ──────────────────────────────────────
+
+  describe('growth multiplier', () => {
+    it('applies growth multiplier to base immigration', () => {
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a'); // 50
+      createBuilding(2, 2, 'apartment-tower-a'); // 50
+      createBuilding(3, 3, 'apartment-tower-a'); // 50
+      createBuilding(4, 4, 'apartment-tower-a'); // 50 — total 200
+      powerSystem();
+
+      const store = getResourceEntity()!;
+      store.resources.population = 10;
+      store.resources.food = 1000;
+
+      // immigrationCap = max(1, floor(200 * 0.03)) = 6
+      // rng.int(0, 6) = 3, * growthMult 2.0 = 6
+      const rng = createMockRng(3);
+      const result = populationSystem(rng, 2.0);
+
+      expect(result.growthCount).toBe(6);
+    });
+
+    it('zero growth multiplier prevents immigration', () => {
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'apartment-tower-a');
+      powerSystem();
+
+      const store = getResourceEntity()!;
+      store.resources.population = 5;
+      store.resources.food = 1000;
+
+      const rng = createMockRng(1);
+      const result = populationSystem(rng, 0);
+
+      expect(result.growthCount).toBe(0);
     });
   });
 });

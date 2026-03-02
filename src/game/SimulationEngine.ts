@@ -674,14 +674,16 @@ export class SimulationEngine {
       rng: this.rng,
     });
 
-    // ── 13. Population growth ──
-    const growthResult = populationSystem(
-      this.rng,
-      politburoMods.populationGrowthMult * eraMods.populationGrowthMult * diffConfig.growthMultiplier,
-      this.chronologyAgent.getDate().month,
-    );
-    if (growthResult.growthCount > 0) {
-      this.workerSystem.spawnInflowDvor(growthResult.growthCount, 'growth');
+    // ── 13. Population growth (yearly immigration only) ──
+    if (tickResult.newYear) {
+      const growthResult = populationSystem(
+        this.rng,
+        politburoMods.populationGrowthMult * eraMods.populationGrowthMult * diffConfig.growthMultiplier,
+        this.chronologyAgent.getDate().month,
+      );
+      if (growthResult.growthCount > 0) {
+        this.workerSystem.spawnInflowDvor(growthResult.growthCount, 'growth');
+      }
     }
 
     // ── 14. Worker system tick ──

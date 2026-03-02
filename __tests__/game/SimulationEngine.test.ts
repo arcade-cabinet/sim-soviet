@@ -285,7 +285,7 @@ describe('SimulationEngine', () => {
     });
   });
 
-  // ── Population growth ───────────────────────────────────
+  // ── Population growth (yearly immigration) ─────────────
 
   describe('population growth', () => {
     it('does not grow population without housing', () => {
@@ -298,17 +298,16 @@ describe('SimulationEngine', () => {
       expect(getResourceEntity()!.resources.population).toBe(0);
     });
 
-    it('grows population when housing and food are available', () => {
+    it('does not grow population on a normal (non-year-boundary) tick', () => {
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'apartment-tower-a'); // housingCap=50
       const store = getResourceEntity()!;
       store.resources.food = 1000;
-      // Sync citizen entities to match desired population
       engine.getWorkerSystem().syncPopulation(5);
-      jest.spyOn(Math, 'random').mockReturnValue(0.5);
-      engine.tick();
-      // populationSystem returns growthCount=1, WorkerSystem spawns 1 new citizen
-      expect(getResourceEntity()!.resources.population).toBe(6);
+      const popBefore = getResourceEntity()!.resources.population;
+      engine.tick(); // Not a year boundary
+      // Immigration is gated to yearly — no growth on normal tick
+      expect(getResourceEntity()!.resources.population).toBe(popBefore);
     });
 
     it('does not grow population when at housing cap', () => {
@@ -331,7 +330,7 @@ describe('SimulationEngine', () => {
       engine.getWorkerSystem().syncPopulation(1);
       engine.tick();
       // After consumption: food = 5 - ceil(1/10) = 4
-      // populationSystem: food(4) > 10? No → no growth
+      // populationSystem: food(4) > 10? No → no growth even at year boundary
       expect(getResourceEntity()!.resources.population).toBeLessThanOrEqual(1);
     });
   });
