@@ -105,7 +105,7 @@ export class EventSystem {
 
     // 12% base chance per eligible tick, scaled by era modifier
     const rng = getEventRng();
-    if ((rng?.random() ?? Math.random()) < EVENT_BASE_PROBABILITY * eventFrequencyMult) {
+    if ((rng ? rng.random() : Math.random()) < EVENT_BASE_PROBABILITY * eventFrequencyMult) {
       const event = this.generateEvent();
       if (event) {
         this.applyEffects(event);
@@ -163,7 +163,7 @@ export class EventSystem {
     // Weighted random selection
     const rng = getEventRng();
     const totalWeight = eligible.reduce((sum, t) => sum + (t.weight ?? 1), 0);
-    let roll = (rng?.random() ?? Math.random()) * totalWeight;
+    let roll = (rng ? rng.random() : Math.random()) * totalWeight;
     for (const template of eligible) {
       roll -= template.weight ?? 1;
       if (roll <= 0) {

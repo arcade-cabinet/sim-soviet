@@ -2,10 +2,13 @@
  * @fileoverview WorkerSystem — AUTHORITATIVE population manager.
  *
  * This is the single source of truth for population count.
- * The ECS citizen entity count IS the population.
+ * In entity mode: the ECS citizen entity count IS the population.
+ * In aggregate mode: RaionPool.totalPopulation IS the population,
+ * and building entities track per-building workforce aggregates.
  *
  * populationSystem is no longer used for growth — this system handles:
- *   - Spawning/removing citizen entities
+ *   - Spawning/removing citizen entities (entity mode)
+ *   - Incrementing/decrementing building workforce + raion pool (aggregate mode)
  *   - Per-worker tick (vodka, food, morale, defection, production)
  *   - Population drains (migration, youth flight, KGB arrest, disease, accidents)
  *   - Population inflows (Moscow assignments, forced resettlement, kolkhoz)
@@ -23,7 +26,7 @@ import {
 } from '@/ecs/archetypes';
 import { createCitizen, createDvor } from '@/ecs/factories';
 import { laborCapacityForAge } from '@/ecs/factories/demographics';
-import type { CitizenComponent, DvorMember, Entity } from '@/ecs/world';
+import type { BuildingComponent, CitizenComponent, DvorMember, Entity, RaionPool } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';
 import {
@@ -49,11 +52,13 @@ import {
   FLIGHT_COUNT_NORMAL,
   FLIGHT_MORALE_CRITICAL,
   FLIGHT_MORALE_THRESHOLD,
+  FOOD_PER_WORKER,
   FORCED_RESETTLEMENT_COUNT,
   FORCED_RESETTLEMENT_MORALE,
   KOLKHOZ_AMALGAMATION_COUNT,
   MOSCOW_ASSIGNMENT_COUNT,
   TRUDODNI_PER_TICK,
+  VODKA_PER_WORKER,
   YOUTH_FLIGHT_INTERVAL,
   YOUTH_FLIGHT_MORALE_THRESHOLD,
   YOUTH_MAX_AGE,
@@ -106,6 +111,10 @@ const GOVERNOR_INTERVAL = 10;
  * Authoritative population manager: spawns/removes citizen entities,
  * processes per-worker consumption/production/morale each tick,
  * handles population drains/inflows, and runs the behavioral governor.
+ *
+ * Supports two modes:
+ * - **Entity mode**: individual citizen ECS entities (pop <= 200)
+ * - **Aggregate mode**: statistical tracking via RaionPool + building workforce fields (pop > 200)
  */
 export class WorkerSystem {
   private stats: Map<Entity, WorkerStats> = new Map();
@@ -117,6 +126,22 @@ export class WorkerSystem {
 
   constructor(rng?: GameRng) {
     this.rng = rng ?? null;
+  }
+
+  // ── Aggregate Mode Helpers ────────────────────────────────
+
+  /**
+   * Returns the RaionPool if the game is in aggregate mode, or undefined
+   * if still in entity mode. This is the canonical aggregate-mode check.
+   */
+  private getRaion(): RaionPool | undefined {
+    const store = getResourceEntity();
+    return store?.resources.raion;
+  }
+
+  /** Whether the system is operating in aggregate mode. */
+  isAggregateMode(): boolean {
+    return this.getRaion() != null;
   }
 
   // ── Public API ──────────────────────────────────────────
@@ -138,11 +163,33 @@ export class WorkerSystem {
 
   /**
    * Remove all citizen entities from the world and clear all stats.
+   * In aggregate mode, resets building workforce fields and clears the raion pool.
    * Used during save-load restoration to reset before re-creating from saved dvory.
    */
   clearAllWorkers(): void {
-    for (const entity of [...citizens]) {
-      world.remove(entity);
+    const raion = this.getRaion();
+    if (raion) {
+      // Aggregate mode: reset building workforce fields
+      for (const b of buildingsLogic) {
+        b.building.workerCount = 0;
+        b.building.residentCount = 0;
+        b.building.avgMorale = 0;
+        b.building.avgSkill = 0;
+        b.building.avgLoyalty = 0;
+        b.building.avgVodkaDep = 0;
+        b.building.trudodniAccrued = 0;
+        b.building.householdCount = 0;
+      }
+      // Clear the raion pool from resource store
+      const store = getResourceEntity();
+      if (store) {
+        store.resources.raion = undefined;
+      }
+    } else {
+      // Entity mode: remove citizen entities
+      for (const entity of [...citizens]) {
+        world.remove(entity);
+      }
     }
     this.stats.clear();
     this.trudodniTracker.clear();
@@ -157,13 +204,24 @@ export class WorkerSystem {
     this.stats.set(entity, { ...stats });
   }
 
-  /** Authoritative population count — the number of citizen entities. */
+  /**
+   * Authoritative population count.
+   * Entity mode: citizen entity count.
+   * Aggregate mode: raion.totalPopulation.
+   */
   getPopulation(): number {
+    const raion = this.getRaion();
+    if (raion) return raion.totalPopulation;
     return [...citizens].length;
   }
 
-  /** Calculate average morale across all workers. */
+  /**
+   * Calculate average morale across all workers.
+   * Aggregate mode reads from raion.avgMorale.
+   */
   getAverageMorale(): number {
+    const raion = this.getRaion();
+    if (raion) return raion.avgMorale;
     let sum = 0;
     let count = 0;
     for (const stats of this.stats.values()) {
@@ -181,9 +239,15 @@ export class WorkerSystem {
    * - skill 50  -> 1.0  (baseline)
    * - skill 100 -> 1.5  (50% bonus)
    *
+   * Aggregate mode reads from raion.avgSkill.
+   *
    * @returns Skill multiplier in [0.5..1.5], defaults to 1.0 if no workers
    */
   getAverageSkill(): number {
+    const raion = this.getRaion();
+    if (raion) {
+      return 0.5 + (raion.avgSkill / 100);
+    }
     let sum = 0;
     let count = 0;
     for (const stats of this.stats.values()) {
@@ -208,13 +272,14 @@ export class WorkerSystem {
   /**
    * Create a new dvor for incoming population (inflow events) and spawn linked citizens.
    *
-   * Every population inflow (housing growth, Moscow transfer, resettlement, events)
-   * goes through this method to ensure all citizens are dvor-linked.
+   * In entity mode: creates dvor + citizen entities as before.
+   * In aggregate mode: increments raion pool counts and distributes workers
+   * to building workforces (idle pool first, then lowest-staffed buildings).
    *
    * @param count - Number of adults to add
    * @param reason - Descriptive tag for the dvor ID (e.g. 'moscow', 'growth')
    * @param overrides - Optional stat overrides per worker (morale, loyalty, skill)
-   * @returns Array of spawned citizen entities
+   * @returns Array of spawned citizen entities (empty in aggregate mode)
    */
   spawnInflowDvor(
     count: number,
@@ -222,6 +287,11 @@ export class WorkerSystem {
     overrides?: Partial<Pick<WorkerStats, 'morale' | 'loyalty' | 'skill'>>,
   ): Entity[] {
     if (count <= 0) return [];
+
+    const raion = this.getRaion();
+    if (raion) {
+      return this.spawnInflowAggregate(count, overrides);
+    }
 
     const rng = this.rng;
     const timestamp = Date.now();
@@ -265,14 +335,77 @@ export class WorkerSystem {
   }
 
   /**
+   * Aggregate-mode inflow: increments raion pool counts and distributes
+   * incoming workers to building workforces.
+   */
+  private spawnInflowAggregate(
+    count: number,
+    overrides?: Partial<Pick<WorkerStats, 'morale' | 'loyalty' | 'skill'>>,
+  ): Entity[] {
+    const raion = this.getRaion()!;
+    const rng = this.rng;
+    const morale = overrides?.morale ?? 50;
+    const loyalty = overrides?.loyalty ?? 50;
+    const skill = overrides?.skill ?? 30;
+
+    // Update raion totals
+    raion.totalPopulation += count;
+    raion.totalHouseholds += 1; // One new household
+    raion.idleWorkers += count;
+    raion.laborForce += count;
+
+    // Blend incoming workers into raion averages
+    const oldPop = raion.totalPopulation - count;
+    if (oldPop > 0) {
+      raion.avgMorale = (raion.avgMorale * oldPop + morale * count) / raion.totalPopulation;
+      raion.avgLoyalty = (raion.avgLoyalty * oldPop + loyalty * count) / raion.totalPopulation;
+      raion.avgSkill = (raion.avgSkill * oldPop + skill * count) / raion.totalPopulation;
+    } else {
+      raion.avgMorale = morale;
+      raion.avgLoyalty = loyalty;
+      raion.avgSkill = skill;
+    }
+
+    // Add to age-sex buckets (all working-age adults)
+    for (let i = 0; i < count; i++) {
+      const age = rng ? rng.int(18, 45) : 30;
+      const bucket = Math.min(Math.floor(age / 5), 19);
+      const isMale = rng ? rng.coinFlip() : i % 2 === 0;
+      if (isMale) {
+        raion.maleAgeBuckets[bucket]++;
+      } else {
+        raion.femaleAgeBuckets[bucket]++;
+      }
+    }
+
+    // Update class counts (default to worker class)
+    raion.classCounts['worker'] = (raion.classCounts['worker'] ?? 0) + count;
+
+    // Sync resource store population
+    const store = getResourceEntity();
+    if (store) {
+      store.resources.population = raion.totalPopulation;
+    }
+
+    return []; // No entities spawned in aggregate mode
+  }
+
+  /**
    * Remove N citizens by priority (idle/unassigned first, lowest morale).
-   * Uses removeWorker() which handles dvor member cleanup automatically.
+   * Entity mode: uses removeWorker() which handles dvor member cleanup.
+   * Aggregate mode: decrements from building workforces (idle first, then lowest-morale buildings).
    *
    * @param count - Number of citizens to remove
    * @param reason - Reason for removal (logged on each removeWorker call)
    */
   removeWorkersByCount(count: number, reason: string): void {
     if (count <= 0) return;
+
+    const raion = this.getRaion();
+    if (raion) {
+      this.removeWorkersAggregate(count, raion);
+      return;
+    }
 
     const currentCitizens = [...citizens];
     // Prefer idle/unassigned, then lowest morale
@@ -299,9 +432,52 @@ export class WorkerSystem {
   }
 
   /**
+   * Aggregate-mode worker removal: decrement idle pool first,
+   * then from buildings sorted by lowest morale (weakest first).
+   */
+  private removeWorkersAggregate(count: number, raion: RaionPool): void {
+    let remaining = Math.min(count, raion.totalPopulation);
+
+    // Phase 1: remove from idle pool
+    const fromIdle = Math.min(remaining, raion.idleWorkers);
+    raion.idleWorkers -= fromIdle;
+    remaining -= fromIdle;
+
+    // Phase 2: remove from building workforces (lowest morale first)
+    if (remaining > 0) {
+      const staffed = [...buildingsLogic]
+        .filter((e) => e.building.workerCount > 0)
+        .sort((a, b) => a.building.avgMorale - b.building.avgMorale);
+
+      for (const entity of staffed) {
+        if (remaining <= 0) break;
+        const bld = entity.building;
+        const take = Math.min(remaining, bld.workerCount);
+        bld.workerCount -= take;
+        raion.assignedWorkers -= take;
+        remaining -= take;
+      }
+    }
+
+    // Update raion totals
+    const totalRemoved = Math.min(count, raion.totalPopulation);
+    raion.totalPopulation -= totalRemoved;
+    raion.laborForce = Math.max(0, raion.laborForce - totalRemoved);
+
+    // Sync resource store
+    const store = getResourceEntity();
+    if (store) {
+      store.resources.population = raion.totalPopulation;
+    }
+  }
+
+  /**
    * Remove N citizens, preferring males aged 18-51 (conscription-age).
    * Falls back to females (any working-age) if insufficient males in range.
    * Used for military conscription only — other drains use removeWorkersByCount().
+   *
+   * Aggregate mode: decrements from male age buckets 3-10 (ages 15-51) first,
+   * then falls back to female buckets + general removal.
    *
    * @param count - Number of citizens to conscript
    * @param reason - Reason for removal (e.g. 'conscription')
@@ -309,6 +485,11 @@ export class WorkerSystem {
    */
   removeWorkersByCountMaleFirst(count: number, reason: string): number {
     if (count <= 0) return 0;
+
+    const raion = this.getRaion();
+    if (raion) {
+      return this.removeWorkersMaleFirstAggregate(count, raion);
+    }
 
     // Phase 1: males aged 18-51, sorted idle-first then lowest morale
     const eligibleMales = [...maleCitizens]
@@ -358,6 +539,75 @@ export class WorkerSystem {
     }
 
     return removed;
+  }
+
+  /**
+   * Aggregate-mode male-first conscription: decrement from male age buckets
+   * 3-10 (ages 15-51), then female buckets, then general pool.
+   */
+  private removeWorkersMaleFirstAggregate(count: number, raion: RaionPool): number {
+    let remaining = count;
+    let removed = 0;
+
+    // Phase 1: males aged 18-51 (buckets 3-10)
+    for (let bucket = 3; bucket <= 10 && remaining > 0; bucket++) {
+      const take = Math.min(remaining, raion.maleAgeBuckets[bucket]!);
+      raion.maleAgeBuckets[bucket] -= take;
+      remaining -= take;
+      removed += take;
+    }
+
+    // Phase 2: females aged 18-51 (buckets 3-10)
+    for (let bucket = 3; bucket <= 10 && remaining > 0; bucket++) {
+      const take = Math.min(remaining, raion.femaleAgeBuckets[bucket]!);
+      raion.femaleAgeBuckets[bucket] -= take;
+      remaining -= take;
+      removed += take;
+    }
+
+    // Update totals
+    raion.totalPopulation -= removed;
+    raion.laborForce = Math.max(0, raion.laborForce - removed);
+
+    // Decrement from building workforces
+    this.removeWorkersFromBuildings(removed, raion);
+
+    // Sync resource store
+    const store = getResourceEntity();
+    if (store) {
+      store.resources.population = raion.totalPopulation;
+    }
+
+    return removed;
+  }
+
+  /**
+   * Shared helper: decrement N workers from building workforces in aggregate mode.
+   * Removes from idle pool first, then from lowest-morale buildings.
+   */
+  private removeWorkersFromBuildings(count: number, raion: RaionPool): void {
+    let remaining = count;
+
+    // Remove from idle pool first
+    const fromIdle = Math.min(remaining, raion.idleWorkers);
+    raion.idleWorkers -= fromIdle;
+    remaining -= fromIdle;
+
+    // Then from buildings sorted by lowest morale
+    if (remaining > 0) {
+      const staffed = [...buildingsLogic]
+        .filter((e) => e.building.workerCount > 0)
+        .sort((a, b) => a.building.avgMorale - b.building.avgMorale);
+
+      for (const entity of staffed) {
+        if (remaining <= 0) break;
+        const bld = entity.building;
+        const take = Math.min(remaining, bld.workerCount);
+        bld.workerCount -= take;
+        raion.assignedWorkers -= take;
+        remaining -= take;
+      }
+    }
   }
 
   /**
@@ -465,9 +715,13 @@ export class WorkerSystem {
 
   /**
    * Spawn citizen entities for all members across all dvory in the ECS world.
-   * Returns the total number of citizen entities created.
+   * In aggregate mode, returns raion.totalPopulation (no entities to spawn).
+   * Returns the total number of citizen entities created / population count.
    */
   syncPopulationFromDvory(): number {
+    const raion = this.getRaion();
+    if (raion) return raion.totalPopulation;
+
     let count = 0;
     for (const entity of dvory) {
       for (const member of entity.dvor.members) {
@@ -627,8 +881,17 @@ export class WorkerSystem {
   /**
    * Remove a worker due to KGB arrest. Returns the drain event if successful.
    * Called by SimulationEngine when personnel file triggers an arrest.
+   *
+   * Aggregate mode: decrements from raion pool + building workforce.
    */
   arrestWorker(): PopulationDrainEvent | null {
+    const raion = this.getRaion();
+    if (raion) {
+      if (raion.totalPopulation <= 0) return null;
+      this.removeWorkersAggregate(1, raion);
+      return { name: 'Arrested Citizen', class: 'worker', reason: 'kgb_arrest' };
+    }
+
     // Pick a random non-party worker
     const eligible = [...citizens].filter((e) => {
       const cls = e.citizen.class;
@@ -729,6 +992,17 @@ export class WorkerSystem {
   }
 
   private _tick(ctx: WorkerTickContext): WorkerTickResult {
+    const raion = this.getRaion();
+    if (raion) {
+      return this._tickAggregate(ctx, raion);
+    }
+    return this._tickEntity(ctx);
+  }
+
+  /**
+   * Entity-mode tick: processes individual citizen entities.
+   */
+  private _tickEntity(ctx: WorkerTickContext): WorkerTickResult {
     const stakhanovites: WorkerTickResult['stakhanovites'] = [];
     const drains: PopulationDrainEvent[] = [];
     const inflows: PopulationInflowEvent[] = [];
@@ -794,6 +1068,122 @@ export class WorkerSystem {
       inflows,
       averageMorale,
       population,
+    };
+  }
+
+  /**
+   * Aggregate-mode tick: iterates buildings instead of citizens.
+   * Processes consumption, morale, defection, and production at the
+   * building level using aggregate workforce stats.
+   */
+  private _tickAggregate(ctx: WorkerTickContext, raion: RaionPool): WorkerTickResult {
+    const rng = this.rng;
+    const drains: PopulationDrainEvent[] = [];
+    const inflows: PopulationInflowEvent[] = [];
+
+    let vodkaConsumed = 0;
+    let foodConsumed = 0;
+    const classEfficiency = emptyClassRecord();
+    let totalWorkers = 0;
+    let totalEfficiency = 0;
+
+    // Process each staffed building
+    for (const entity of buildingsLogic) {
+      const bld = entity.building;
+      if (bld.workerCount <= 0) continue;
+
+      const wc = bld.workerCount;
+
+      // Food consumption: per-worker rate * count
+      const foodNeeded = FOOD_PER_WORKER * wc;
+      if (ctx.foodAvailable >= foodNeeded) {
+        ctx.foodAvailable -= foodNeeded;
+        foodConsumed += foodNeeded;
+      } else {
+        // Partial food: morale penalty proportional to shortfall
+        foodConsumed += ctx.foodAvailable;
+        ctx.foodAvailable = 0;
+        bld.avgMorale = Math.max(0, bld.avgMorale - 5);
+      }
+
+      // Vodka consumption: per-worker rate * average dependency * count
+      const vodkaNeeded = VODKA_PER_WORKER * (bld.avgVodkaDep / 50) * wc;
+      if (ctx.vodkaAvailable >= vodkaNeeded) {
+        ctx.vodkaAvailable -= vodkaNeeded;
+        vodkaConsumed += vodkaNeeded;
+        bld.avgMorale = Math.min(100, bld.avgMorale + 1);
+      } else {
+        vodkaConsumed += ctx.vodkaAvailable;
+        ctx.vodkaAvailable = 0;
+        bld.avgMorale = Math.max(0, bld.avgMorale - 2);
+      }
+
+      // Heating failure penalty
+      if (ctx.heatingFailing) {
+        bld.avgMorale = Math.max(0, bld.avgMorale - 5);
+      }
+
+      // Trudodni accrual
+      bld.trudodniAccrued += TRUDODNI_PER_TICK * wc;
+
+      // Skill growth
+      bld.avgSkill = Math.min(100, bld.avgSkill + 0.01);
+
+      // Production efficiency
+      const efficiency = calcBaseEfficiency(bld.avgMorale, bld.avgSkill);
+      totalEfficiency += efficiency * wc;
+      totalWorkers += wc;
+
+      // Defection check: low-loyalty buildings lose workers
+      if (bld.avgLoyalty < 20) {
+        const defectionChance = 0.02 * (1 - bld.avgLoyalty / 20);
+        const defectors = Math.floor(wc * defectionChance);
+        if (defectors > 0) {
+          bld.workerCount -= defectors;
+          raion.totalPopulation -= defectors;
+          raion.assignedWorkers -= defectors;
+          raion.laborForce = Math.max(0, raion.laborForce - defectors);
+          drains.push({
+            name: `${defectors} workers`,
+            class: 'worker',
+            reason: 'defection',
+          });
+        }
+      }
+    }
+
+    // Set overall class efficiency (simplified: all workers treated as generic)
+    const avgEff = totalWorkers > 0 ? totalEfficiency / totalWorkers : 0;
+    classEfficiency.worker = avgEff;
+
+    // Aggregate-mode population drains
+    this.processMigrationFlightAggregate(ctx.totalTicks, drains, raion);
+    this.processYouthFlightAggregate(ctx.totalTicks, drains, raion);
+    this.processWorkplaceAccidentsAggregate(drains, raion);
+
+    // Update raion morale from building averages
+    this.syncRaionFromBuildings(raion);
+
+    this.tickCounter++;
+
+    // Sync resource store
+    const store = getResourceEntity();
+    if (store) {
+      store.resources.population = raion.totalPopulation;
+    }
+
+    return {
+      vodkaConsumed,
+      foodConsumed,
+      defections: drains
+        .filter((d) => d.reason === 'defection' || d.reason === 'escape')
+        .map((d) => ({ name: d.name, class: d.class })),
+      stakhanovites: [],
+      classEfficiency,
+      drains,
+      inflows,
+      averageMorale: raion.avgMorale,
+      population: raion.totalPopulation,
     };
   }
 
@@ -887,7 +1277,7 @@ export class WorkerSystem {
 
     // Check for accident per factory
     for (let i = 0; i < factoryCount; i++) {
-      const roll = rng?.random() ?? Math.random();
+      const roll = rng ? rng.random() : Math.random();
       if (roll < ACCIDENT_RATE_PER_FACTORY) {
         // Find a factory-assigned worker to be the victim
         const factoryWorkers = [...citizens].filter((e) => {
@@ -907,7 +1297,7 @@ export class WorkerSystem {
           return stats && stats.skill < 20;
         });
 
-        if (lowSkill.length > 0 && (rng?.random() ?? Math.random()) < ACCIDENT_LOW_SKILL_MULT / 3) {
+        if (lowSkill.length > 0 && (rng ? rng.random() : Math.random()) < ACCIDENT_LOW_SKILL_MULT / 3) {
           victim = rng ? lowSkill[rng.int(0, lowSkill.length - 1)]! : lowSkill[0]!;
         } else {
           victim = rng ? factoryWorkers[rng.int(0, factoryWorkers.length - 1)]! : factoryWorkers[0]!;
@@ -923,6 +1313,148 @@ export class WorkerSystem {
         break; // One accident per tick max
       }
     }
+  }
+
+  // ── Aggregate Drain Processors ──────────────────────────
+
+  /**
+   * Aggregate-mode migration flight: decrement raion pool when morale is low.
+   */
+  private processMigrationFlightAggregate(totalTicks: number, drains: PopulationDrainEvent[], raion: RaionPool): void {
+    if (totalTicks % FLIGHT_CHECK_INTERVAL !== 0 || totalTicks === 0) return;
+    if (raion.avgMorale >= FLIGHT_MORALE_THRESHOLD) return;
+
+    const rng = this.rng;
+    const [min, max] = raion.avgMorale < FLIGHT_MORALE_CRITICAL ? FLIGHT_COUNT_CRITICAL : FLIGHT_COUNT_NORMAL;
+    const fleeCount = rng ? rng.int(min, max) : min;
+    const actual = Math.min(fleeCount, raion.totalPopulation);
+
+    if (actual <= 0) return;
+
+    this.removeWorkersAggregate(actual, raion);
+    drains.push({
+      name: `${actual} workers`,
+      class: 'worker',
+      reason: 'migration',
+    });
+  }
+
+  /**
+   * Aggregate-mode youth flight: decrement young workers from raion age buckets.
+   */
+  private processYouthFlightAggregate(totalTicks: number, drains: PopulationDrainEvent[], raion: RaionPool): void {
+    if (totalTicks % YOUTH_FLIGHT_INTERVAL !== 0 || totalTicks === 0) return;
+    if (raion.avgMorale >= YOUTH_FLIGHT_MORALE_THRESHOLD) return;
+
+    const hasRetention = [...operationalBuildings].some((e) => YOUTH_RETENTION_BUILDINGS.includes(e.building.defId));
+    if (hasRetention) return;
+
+    // Youth age 16-25 = buckets 3-5
+    let found = false;
+    for (let bucket = 3; bucket <= 5; bucket++) {
+      if (raion.maleAgeBuckets[bucket]! > 0) {
+        raion.maleAgeBuckets[bucket]--;
+        found = true;
+        break;
+      }
+      if (raion.femaleAgeBuckets[bucket]! > 0) {
+        raion.femaleAgeBuckets[bucket]--;
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      raion.totalPopulation--;
+      raion.laborForce = Math.max(0, raion.laborForce - 1);
+      this.removeWorkersFromBuildings(1, raion);
+      drains.push({
+        name: 'Young worker',
+        class: 'worker',
+        reason: 'youth_flight',
+      });
+    }
+  }
+
+  /**
+   * Aggregate-mode workplace accidents: probabilistic worker death per factory.
+   */
+  private processWorkplaceAccidentsAggregate(drains: PopulationDrainEvent[], raion: RaionPool): void {
+    const rng = this.rng;
+    let factoryCount = 0;
+    for (const entity of buildingsLogic) {
+      const phase = entity.building.constructionPhase;
+      if ((phase == null || phase === 'complete') && entity.building.powered) {
+        const defId = entity.building.defId;
+        if (defId.includes('factory') || defId.includes('industrial') || defId === 'vodka-distillery') {
+          factoryCount++;
+        }
+      }
+    }
+
+    if (factoryCount === 0) return;
+
+    for (let i = 0; i < factoryCount; i++) {
+      const roll = rng ? rng.random() : Math.random();
+      if (roll < ACCIDENT_RATE_PER_FACTORY) {
+        // Find a factory building with workers to be the accident location
+        const factoryBuildings = [...buildingsLogic].filter((e) => {
+          const bld = e.building;
+          if (bld.workerCount <= 0) return false;
+          const defId = bld.defId;
+          return defId.includes('factory') || defId.includes('industrial') || defId === 'vodka-distillery';
+        });
+
+        if (factoryBuildings.length === 0) break;
+        const target = rng
+          ? factoryBuildings[rng.int(0, factoryBuildings.length - 1)]!
+          : factoryBuildings[0]!;
+
+        target.building.workerCount--;
+        raion.totalPopulation--;
+        raion.assignedWorkers--;
+        raion.laborForce = Math.max(0, raion.laborForce - 1);
+        raion.deathsThisYear++;
+        raion.totalDeaths++;
+
+        drains.push({
+          name: 'Factory worker',
+          class: 'worker',
+          reason: 'workplace_accident',
+        });
+        break; // One accident per tick max
+      }
+    }
+  }
+
+  /**
+   * Sync raion-level averages from building-level workforce data.
+   * Called at the end of each aggregate tick.
+   */
+  private syncRaionFromBuildings(raion: RaionPool): void {
+    let moraleSum = 0;
+    let loyaltySum = 0;
+    let skillSum = 0;
+    let totalWorkers = 0;
+    let assignedWorkers = 0;
+
+    for (const entity of buildingsLogic) {
+      const bld = entity.building;
+      if (bld.workerCount <= 0) continue;
+      moraleSum += bld.avgMorale * bld.workerCount;
+      loyaltySum += bld.avgLoyalty * bld.workerCount;
+      skillSum += bld.avgSkill * bld.workerCount;
+      totalWorkers += bld.workerCount;
+      assignedWorkers += bld.workerCount;
+    }
+
+    if (totalWorkers > 0) {
+      raion.avgMorale = moraleSum / totalWorkers;
+      raion.avgLoyalty = loyaltySum / totalWorkers;
+      raion.avgSkill = skillSum / totalWorkers;
+    }
+    raion.assignedWorkers = assignedWorkers;
+    raion.idleWorkers = Math.max(0, raion.laborForce - assignedWorkers);
   }
 
   // ── Trudodni Tracking ───────────────────────────────────

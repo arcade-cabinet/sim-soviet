@@ -191,8 +191,8 @@ export function getWorkingMotherPenalty(dvor: DvorComponent, member: DvorMember)
  * Follows convention: Given + Patronymic (from father/head) + Gendered Surname.
  */
 function generateInfantName(dvor: DvorComponent, infantGender: 'male' | 'female', rng: GameRng | null): string {
-  const r = () => rng?.random() ?? Math.random();
-  const pickFrom = <T>(arr: readonly T[]): T => arr[Math.floor(r() * arr.length)]!;
+  const r = () => rng ? rng.random() : Math.random();
+  const pickFrom = <T>(arr: readonly T[]): T => rng ? rng.pick(arr) : arr[Math.floor(Math.random() * arr.length)]!;
 
   const givenName = infantGender === 'male' ? pickFrom(MALE_GIVEN_NAMES) : pickFrom(FEMALE_GIVEN_NAMES);
 
@@ -288,6 +288,10 @@ export class DemographicAgent extends Vehicle {
   /**
    * Main demographic tick — call every simulation tick.
    *
+   * Detects population mode from the resource store:
+   * - **Entity mode** (raion undefined): iterates dvory, creates/removes citizen entities
+   * - **Aggregate mode** (raion defined): dispatches to O(20) statistical functions
+   *
    * Only processes on time boundaries:
    * - Year boundary (every 360 ticks): aging + household formation
    * - Month boundary (every 30 ticks): pregnancies, births, deaths
@@ -311,6 +315,26 @@ export class DemographicAgent extends Vehicle {
 
     if (totalTicks <= 0) return result;
 
+    // Detect aggregate mode from resource store
+    const storeRef = getResourceEntity();
+    const raion = storeRef?.resources?.raion;
+
+    if (raion != null && rng != null) {
+      return this._tickAggregate(totalTicks, rng, foodLevel, eraId ?? 'revolution', raion, result);
+    }
+
+    return this._tickEntity(totalTicks, rng, foodLevel, eraId, result);
+  }
+
+  // ── Entity mode tick (original code path) ─────────────────────────────────
+
+  private _tickEntity(
+    totalTicks: number,
+    rng: GameRng | null,
+    foodLevel: number,
+    eraId: string | undefined,
+    result: DemographicTickResult,
+  ): DemographicTickResult {
     if (totalTicks % TICKS_PER_YEAR === 0) {
       result.aged = this.ageAllMembers(result);
       this.householdFormation(rng, result, totalTicks);
@@ -333,6 +357,98 @@ export class DemographicAgent extends Vehicle {
     }
 
     return result;
+  }
+
+  // ── Aggregate mode tick ───────────────────────────────────────────────────
+
+  private _tickAggregate(
+    totalTicks: number,
+    rng: GameRng,
+    foodLevel: number,
+    eraId: string,
+    raion: RaionPool,
+    result: DemographicTickResult,
+  ): DemographicTickResult {
+    if (totalTicks % TICKS_PER_YEAR === 0) {
+      const agingDeaths = statisticalAgingTick(raion);
+      result.aged = raion.totalPopulation; // all buckets shifted
+      result.deaths += agingDeaths;
+      this.statisticalHouseholdFormation(raion, rng);
+      // Reset yearly counters
+      this.birthsThisYear = 0;
+      this.deathsThisYear = 0;
+      // Reset yearly pool counters
+      raion.birthsThisYear = 0;
+      raion.deathsThisYear = 0;
+    }
+
+    if (totalTicks % TICKS_PER_MONTH === 0) {
+      const births = statisticalBirthTick(raion, foodLevel, eraId, rng);
+      const deaths = statisticalDeathTick(raion, foodLevel, rng);
+
+      result.births = births;
+      result.deaths += deaths;
+
+      this.birthsThisYear += births;
+      this.deathsThisYear += deaths;
+      this.totalBirths += births;
+      this.totalDeaths += deaths;
+
+      this._checkMilestonesAggregate(raion);
+    }
+
+    return result;
+  }
+
+  // ── Statistical household formation (aggregate mode) ──────────────────────
+
+  /**
+   * Statistical household formation for aggregate mode.
+   *
+   * Instead of pairing individual dvor members, estimates new household
+   * formation from the population pool and distributes them across housing
+   * buildings by incrementing householdCount.
+   *
+   * Rate: ~10% of eligible population (ages 20-35) forms new households annually.
+   */
+  statisticalHouseholdFormation(raion: RaionPool, rng: GameRng): void {
+    // Eligible population: age buckets 4-7 (ages 20-39, approximation for 20-35)
+    let eligiblePop = 0;
+    for (let i = 4; i <= 7; i++) {
+      eligiblePop += raion.maleAgeBuckets[i]! + raion.femaleAgeBuckets[i]!;
+    }
+
+    // Each household needs 2 people; 10% annual formation probability
+    const potentialPairs = Math.floor(eligiblePop / 2);
+    const newHouseholds = Math.floor(potentialPairs * FORMATION_PROBABILITY);
+
+    if (newHouseholds <= 0) return;
+
+    // Distribute new households across housing buildings with available capacity
+    const housingBuildings = [...housing];
+    if (housingBuildings.length === 0) return;
+
+    let remaining = newHouseholds;
+    const shuffled = rng.shuffle(housingBuildings);
+
+    for (const entity of shuffled) {
+      if (remaining <= 0) break;
+
+      const bldg = entity.building;
+      // Each household ~= 4 residents; check capacity
+      const currentResidents = bldg.residentCount;
+      const availableSlots = Math.max(0, bldg.housingCap - currentResidents);
+      const slotsForHouseholds = Math.floor(availableSlots / 4);
+
+      if (slotsForHouseholds > 0) {
+        const toAdd = Math.min(remaining, slotsForHouseholds);
+        bldg.householdCount += toAdd;
+        bldg.residentCount += toAdd * 4;
+        remaining -= toAdd;
+      }
+    }
+
+    raion.totalHouseholds += newHouseholds - remaining;
   }
 
   // ── Aging ──────────────────────────────────────────────────────────────────
@@ -404,7 +520,7 @@ export class DemographicAgent extends Vehicle {
         if (member.age < FERTILITY_MIN_AGE || member.age > FERTILITY_MAX_AGE) continue;
         if (member.pregnant != null && member.pregnant > 0) continue;
 
-        const roll = rng?.random() ?? Math.random();
+        const roll = rng ? rng.random() : Math.random();
         if (roll < threshold) {
           member.pregnant = PREGNANCY_DURATION_TICKS;
           result.births++;
@@ -433,7 +549,7 @@ export class DemographicAgent extends Vehicle {
         if (member.pregnant <= 0) {
           member.pregnant = undefined;
 
-          const infantGender: 'male' | 'female' = (rng?.random() ?? Math.random()) < 0.5 ? 'male' : 'female';
+          const infantGender: 'male' | 'female' = (rng ? rng.random() : Math.random()) < 0.5 ? 'male' : 'female';
           dvor.nextMemberId = (dvor.nextMemberId ?? dvor.members.length) + 1;
           const infantId = `${dvor.id}-m${dvor.nextMemberId}`;
           const infantName = generateInfantName(dvor, infantGender, rng);
@@ -479,7 +595,7 @@ export class DemographicAgent extends Vehicle {
         const monthlyRate = annualRate / 12;
         const totalRate = monthlyRate + starvationMod;
 
-        const roll = rng?.random() ?? Math.random();
+        const roll = rng ? rng.random() : Math.random();
         if (roll < totalRate) {
           result.deaths++;
           result.deadMembers.push({ dvorId: dvor.id, memberId: member.id });
@@ -546,7 +662,7 @@ export class DemographicAgent extends Vehicle {
         if (usedFemales.has(female.member.id)) continue;
         if (male.dvorEntity.dvor.id === female.dvorEntity.dvor.id) continue;
 
-        const roll = rng?.random() ?? Math.random();
+        const roll = rng ? rng.random() : Math.random();
         if (roll >= FORMATION_PROBABILITY) continue;
 
         usedMales.add(male.member.id);
@@ -672,6 +788,14 @@ export class DemographicAgent extends Vehicle {
     if (milestone > this.lastMilestone) {
       this.lastMilestone = milestone;
       // Milestone reached — callers can check via assessLaborCapacity() or serialize()
+    }
+  }
+
+  private _checkMilestonesAggregate(raion: RaionPool): void {
+    const pop = raion.totalPopulation;
+    const milestone = Math.floor(pop / POPULATION_MILESTONE_STEP) * POPULATION_MILESTONE_STEP;
+    if (milestone > this.lastMilestone) {
+      this.lastMilestone = milestone;
     }
   }
 }

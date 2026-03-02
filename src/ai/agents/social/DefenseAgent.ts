@@ -538,7 +538,7 @@ export class DefenseAgent extends Vehicle {
       if (disease.ticksRemaining <= 1) {
         const def = DISEASE_DEFINITIONS.find((d) => d.type === disease.type);
         const mortalityRate = def?.mortalityRate ?? 0.1;
-        const roll = this.rng?.random() ?? Math.random();
+        const roll = this.rng ? this.rng.random() : Math.random();
         if (roll < mortalityRate) {
           result.deaths++;
           result.deadEntities.push(entity);
@@ -584,7 +584,7 @@ export class DefenseAgent extends Vehicle {
         const clinicFactor = this.clinicPreventionFactor(diseaseDef, medicalCounts);
         const chance = BASE_OUTBREAK_CHANCE * diseaseDef.spreadRate * envModifier * clinicFactor;
 
-        const roll = this.rng?.random() ?? Math.random();
+        const roll = this.rng ? this.rng.random() : Math.random();
         if (roll < chance) {
           entity.citizen.disease = {
             type: diseaseDef.type,
@@ -795,7 +795,7 @@ export class DefenseAgent extends Vehicle {
     for (const entity of buildingsLogic) {
       if (entity.building.housingCap < 0) {
         if (entity.building.powered && deps.workers.getPopulation() > 0) {
-          if ((deps.rng?.random() ?? Math.random()) < 0.1) {
+          if ((deps.rng ? deps.rng.random() : Math.random()) < 0.1) {
             const arrest = deps.workers.arrestWorker();
             if (arrest) {
               deps.scoring.onKGBLoss(1);
@@ -838,7 +838,7 @@ export class DefenseAgent extends Vehicle {
         if (headlines && headlines.length > 0) {
           const headline = rngLocal
             ? rngLocal.pick(headlines)
-            : headlines[Math.floor(Math.random() * headlines.length)]!;
+            : headlines[Math.floor(Math.random() * headlines.length)]!; // cosmetic fallback
           deps.callbacks.onPravda(headline);
         }
       }

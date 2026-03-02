@@ -136,7 +136,7 @@ export function processReport(ctx: AnnualReportContext, submission: ReportSubmis
   const blatInsurance = Math.min(0.25, blatLevel * 0.005);
 
   const investigationProb = Math.min(0.8, Math.max(0, maxRisk / 100 + historyBonus - blatInsurance));
-  const roll = ctx.rng?.random() ?? Math.random();
+  const roll = ctx.rng ? ctx.rng.random() : Math.random();
 
   // Spend blat when falsifying — connections used to smooth things over
   if (blatInsurance > 0 && res) {

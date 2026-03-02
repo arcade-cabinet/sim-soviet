@@ -38,7 +38,7 @@ export function randInt(min: number, max: number): number {
 }
 
 export function random(): number {
-  return _rng?.random() ?? Math.random();
+  return _rng ? _rng.random() : Math.random();
 }
 
 export function clamp(value: number, min: number, max: number): number {

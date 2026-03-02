@@ -199,7 +199,7 @@ export function ageAllMembers(result: DemographicTickResult): number {
  * The head of household's given name is used for the patronymic (Russian custom).
  */
 function generateInfantName(dvor: DvorComponent, infantGender: 'male' | 'female', rng: GameRng | null): string {
-  const r = () => rng?.random() ?? Math.random();
+  const r = () => rng ? rng.random() : Math.random();
   const pickFrom = <T>(arr: readonly T[]): T => arr[Math.floor(r() * arr.length)]!;
 
   // Given name
@@ -270,7 +270,7 @@ export function birthCheck(
       if (member.age < FERTILITY_MIN_AGE || member.age > FERTILITY_MAX_AGE) continue;
       if (member.pregnant != null && member.pregnant > 0) continue;
 
-      const roll = rng?.random() ?? Math.random();
+      const roll = rng ? rng.random() : Math.random();
       if (roll < threshold) {
         // Conception — start pregnancy
         member.pregnant = PREGNANCY_DURATION_TICKS;
@@ -303,7 +303,7 @@ export function pregnancyTick(rng: GameRng | null, _result: DemographicTickResul
         // Pregnancy complete — deliver infant
         member.pregnant = undefined;
 
-        const infantGender: 'male' | 'female' = (rng?.random() ?? Math.random()) < 0.5 ? 'male' : 'female';
+        const infantGender: 'male' | 'female' = (rng ? rng.random() : Math.random()) < 0.5 ? 'male' : 'female';
         dvor.nextMemberId = (dvor.nextMemberId ?? dvor.members.length) + 1;
         const infantId = `${dvor.id}-m${dvor.nextMemberId}`;
         const infantName = generateInfantName(dvor, infantGender, rng);
@@ -352,7 +352,7 @@ export function deathCheck(rng: GameRng | null, foodLevel: number, result: Demog
       const monthlyRate = annualRate / 12;
       const totalRate = monthlyRate + starvationMod;
 
-      const roll = rng?.random() ?? Math.random();
+      const roll = rng ? rng.random() : Math.random();
       if (roll < totalRate) {
         // Dead — track identity for entity-level removal
         result.deaths++;
@@ -441,7 +441,7 @@ export function householdFormation(rng: GameRng | null, result: DemographicTickR
       if (male.dvorEntity.dvor.id === female.dvorEntity.dvor.id) continue;
 
       // 10% probability
-      const roll = rng?.random() ?? Math.random();
+      const roll = rng ? rng.random() : Math.random();
       if (roll >= FORMATION_PROBABILITY) continue;
 
       usedMales.add(male.member.id);

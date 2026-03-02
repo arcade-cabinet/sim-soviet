@@ -243,7 +243,7 @@ export function progressDiseases(result: DiseaseTickResult): void {
       const def = DISEASE_DEFINITIONS.find((d) => d.type === disease.type);
       const mortalityRate = def?.mortalityRate ?? 0.1;
 
-      const roll = rng?.random() ?? Math.random();
+      const roll = rng ? rng.random() : Math.random();
       if (roll < mortalityRate) {
         // Death — collect for WorkerSystem removal (don't remove here)
         result.deaths++;
@@ -300,7 +300,7 @@ export function checkOutbreaks(month: number, result: DiseaseTickResult): void {
       const clinicFactor = clinicPreventionFactor(diseaseDef, medicalCounts);
       const chance = BASE_OUTBREAK_CHANCE * diseaseDef.spreadRate * envModifier * clinicFactor;
 
-      const roll = rng?.random() ?? Math.random();
+      const roll = rng ? rng.random() : Math.random();
       if (roll < chance) {
         // Infected!
         entity.citizen.disease = {

@@ -1165,7 +1165,7 @@ export class PoliticalAgent extends Vehicle {
       const pop = store.resources.population;
       if (pop >= 15) {
         const count = Math.min(Math.max(2, Math.floor(pop * 0.05)), 5);
-        const duration = 60 + Math.floor(Math.random() * 60); // 60-120 ticks
+        const duration = this.rng ? this.rng.int(60, 120) : 60 + Math.floor(Math.random() * 60);
         const purpose =
           eraId === 'reconstruction'
             ? 'post-war reconstruction of the Motherland'

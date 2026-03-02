@@ -98,7 +98,7 @@ export class MinigameRouter {
       return { announcement: 'Invalid choice.' };
     }
 
-    const roll = _rng?.random() ?? Math.random();
+    const roll = _rng ? _rng.random() : Math.random();
     const success = roll < choice.successChance;
     const outcome = success ? choice.onSuccess : choice.onFailure;
 

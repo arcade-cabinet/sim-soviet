@@ -39,7 +39,7 @@ export function generateHeadline(gs: GameView): GeneratedHeadline {
   // 40% chance to use a contextual generator if any are eligible
   if (eligibleContextual.length > 0 && coinFlip(0.4)) {
     const totalWeight = eligibleContextual.reduce((sum, cg) => sum + cg.weight, 0);
-    let roll = (rng?.random() ?? Math.random()) * totalWeight;
+    let roll = (rng ? rng.random() : Math.random()) * totalWeight;
     for (const cg of eligibleContextual) {
       roll -= cg.weight;
       if (roll <= 0) {
@@ -52,7 +52,7 @@ export function generateHeadline(gs: GameView): GeneratedHeadline {
 
   // Otherwise, pick from generic generator pools
   const totalWeight = ALL_GENERIC_GENERATORS.reduce((sum, g) => sum + g.weight, 0);
-  let roll = (rng?.random() ?? Math.random()) * totalWeight;
+  let roll = (rng ? rng.random() : Math.random()) * totalWeight;
   for (const pool of ALL_GENERIC_GENERATORS) {
     roll -= pool.weight;
     if (roll <= 0) {

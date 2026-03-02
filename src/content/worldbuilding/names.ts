@@ -89,7 +89,7 @@ export const CITY_MODIFIERS = [
  */
 export function generateCityName(includeModifier = false): string {
   const _rng = getRng();
-  const r = () => _rng?.random() ?? Math.random();
+  const r = () => _rng ? _rng.random() : Math.random();
   const useLeader = r() < 0.6;
   const prefixes = useLeader ? LEADER_PREFIXES : IDEOLOGICAL_PREFIXES;
   const prefix = pick(prefixes);
