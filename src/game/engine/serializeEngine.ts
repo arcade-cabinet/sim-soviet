@@ -5,7 +5,7 @@
  * a SubsystemSaveData blob for save/load persistence.
  */
 
-import { citizens, dvory, getResourceEntity } from '@/ecs/archetypes';
+import { buildingsLogic, citizens, dvory, getResourceEntity } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import { world } from '@/ecs/world';
 import type { AchievementTracker } from '../../ai/agents/meta/AchievementTracker';
@@ -87,7 +87,7 @@ export interface SerializableEngine {
   pendingReport: boolean;
   pendingReportSinceTick: number;
   ended: boolean;
-  rng: GameRng | undefined;
+  rng: GameRng;
   eventHandler: (event: GameEvent) => void;
   politburoEventHandler: (event: GameEvent) => void;
   syncSystemsToMeta: () => void;
@@ -184,7 +184,7 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
 
   // Restore Compulsory Deliveries
   engine.deliveries = CompulsoryDeliveriesClass.deserialize(data.deliveries);
-  if (engine.rng) engine.deliveries.setRng(engine.rng);
+  engine.deliveries.setRng(engine.rng);
 
   // Restore quota state
   engine.quota.type = data.quota.type as 'food' | 'vodka';
@@ -198,20 +198,12 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
   // -- Extended subsystems (optional -- old saves won't have these) --
 
   if (data.chronology) {
-    engine.chronology = ChronologySystemClass.deserialize(
-      data.chronology,
-      engine.rng ??
-        ({
-          random: () => Math.random(),
-          int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
-          pick: <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!,
-        } as GameRng),
-    );
+    engine.chronology = ChronologySystemClass.deserialize(data.chronology, engine.rng);
   }
 
   if (data.economy) {
     engine.economySystem = EconomySystemClass.deserialize(data.economy);
-    if (engine.rng) engine.economySystem.setRng(engine.rng);
+    engine.economySystem.setRng(engine.rng);
   }
 
   if (data.events) {
@@ -248,11 +240,11 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
 
   if (data.transport) {
     engine.transport = TransportSystemClass.deserialize(data.transport);
-    if (engine.rng) engine.transport.setRng(engine.rng);
+    engine.transport.setRng(engine.rng);
   }
 
   if (data.fire) {
-    engine.fireSystem = FireSystemClass.deserialize(data.fire, engine.rng ?? undefined);
+    engine.fireSystem = FireSystemClass.deserialize(data.fire, engine.rng);
   }
 
   if (data.engineState) {

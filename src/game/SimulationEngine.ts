@@ -94,7 +94,7 @@ import type { PravdaSaveData } from '../ai/agents/narrative/pravda';
 import { PravdaSystem } from '../ai/agents/narrative/pravda';
 import type { ConsequenceConfig, ConsequenceLevel, DifficultyLevel, ScoringSystemSaveData } from '../ai/agents/political/ScoringSystem';
 import { CONSEQUENCE_PRESETS, DIFFICULTY_PRESETS, eraIdToIndex, ScoringSystem } from '../ai/agents/political/ScoringSystem';
-import type { GameRng } from './SeedSystem';
+import { GameRng } from './SeedSystem';
 import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from '../ai/agents/infrastructure/SettlementSystem';
 import { SettlementSystem } from '../ai/agents/infrastructure/SettlementSystem';
 import { type TransportSaveData, TransportSystem } from '../ai/agents/infrastructure/TransportSystem';
@@ -177,7 +177,7 @@ export class SimulationEngine {
   // ── Engine state ──
   private difficulty: DifficultyLevel;
   private quota: QuotaState;
-  private rng: GameRng | undefined;
+  private rng: GameRng;
   private lastSeason = '';
   private lastWeather = '';
   private lastDayPhase = '';
@@ -203,28 +203,23 @@ export class SimulationEngine {
     difficulty?: DifficultyLevel,
     consequence?: ConsequenceLevel,
   ) {
-    this.rng = rng;
+    this.rng = rng ?? new GameRng();
     this.difficulty = difficulty ?? 'comrade';
     this.quota = createDefaultQuota();
     this.quota.target = Math.round(this.quota.target * DIFFICULTY_PRESETS[this.difficulty].quotaMultiplier);
     const meta = getMetaEntity();
     const startYear = meta?.gameMeta.date.year ?? 1917;
     this.startYear = startYear;
-    const fallbackRng = rng ?? ({
-      random: () => Math.random(),
-      int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
-      pick: <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!,
-    } as GameRng);
 
-    this.chronology = new ChronologySystem(fallbackRng, startYear);
+    this.chronology = new ChronologySystem(this.rng, startYear);
     this.eraSystem = new EraSystem(startYear);
 
     const economyEra = GAME_ERA_TO_ECONOMY_ERA[this.eraSystem.getCurrentEraId()] ?? 'revolution';
     this.economySystem = new EconomySystem(economyEra, difficulty ?? 'comrade');
-    if (rng) this.economySystem.setRng(rng);
+    this.economySystem.setRng(this.rng);
     this.economySystem.markReformsBeforeYear(startYear);
 
-    this.pravdaSystem = new PravdaSystem(rng);
+    this.pravdaSystem = new PravdaSystem(this.rng);
 
     this.eventHandler = (event: GameEvent) => {
       const headline = this.pravdaSystem.headlineFromEvent(event);
@@ -242,25 +237,25 @@ export class SimulationEngine {
       this.checkEventMinigame(event.id);
     };
 
-    this.eventSystem = new EventSystem(this.eventHandler, rng);
+    this.eventSystem = new EventSystem(this.eventHandler, this.rng);
 
     this.politburoEventHandler = (event: GameEvent) => {
       this.applyEventEffects(event);
       this.eventHandler(event);
     };
-    this.politburo = new PolitburoSystem(this.politburoEventHandler, rng, startYear);
+    this.politburo = new PolitburoSystem(this.politburoEventHandler, this.rng, startYear);
 
     this.personnelFile = new PersonnelFile(this.difficulty);
     this.eventSystem.setPersonnelFile(this.personnelFile);
 
     this.deliveries = new CompulsoryDeliveries(this.eraSystem.getDoctrine());
-    if (rng) this.deliveries.setRng(rng);
+    this.deliveries.setRng(this.rng);
 
     this.settlement = new SettlementSystem(meta?.gameMeta.settlementTier ?? 'selo');
-    this.politicalEntities = new PoliticalEntitySystem(rng);
-    this.minigameRouter = new MinigameRouter(rng);
+    this.politicalEntities = new PoliticalEntitySystem(this.rng);
+    this.minigameRouter = new MinigameRouter(this.rng);
 
-    this.workerSystem = new WorkerSystem(rng);
+    this.workerSystem = new WorkerSystem(this.rng);
     const initialStore = getResourceEntity();
     const dvorCount = [...dvory].length;
     if (dvorCount > 0) {
@@ -275,9 +270,9 @@ export class SimulationEngine {
     this.achievements = new AchievementTracker();
 
     this.transport = new TransportSystem(this.eraSystem.getCurrentEraId());
-    if (rng) this.transport.setRng(rng);
+    this.transport.setRng(this.rng);
 
-    this.fireSystem = new FireSystem(rng, {
+    this.fireSystem = new FireSystem(this.rng, {
       onBuildingCollapsed: (gridX, gridY, defId) => {
         this.callbacks.onToast(`FIRE DESTROYED: ${defId} at (${gridX}, ${gridY})`, 'critical');
         this.callbacks.onBuildingCollapsed?.(gridX, gridY, defId);
@@ -287,7 +282,7 @@ export class SimulationEngine {
       },
     });
 
-    initDiseaseSystem(rng ?? null);
+    initDiseaseSystem(this.rng);
 
     const initialEraId = this.eraSystem.getCurrentEraId();
     const initialMandates = createMandatesForEra(initialEraId, this.difficulty);
@@ -296,7 +291,7 @@ export class SimulationEngine {
     this.agentManager = new AgentManager();
 
     // ── Instantiate and register Yuka agents ──
-    this.chronologyAgent = new ChronologyAgent(fallbackRng, startYear);
+    this.chronologyAgent = new ChronologyAgent(this.rng, startYear);
     this.agentManager.registerChronology(this.chronologyAgent);
 
     this.weatherAgent = new WeatherAgent();
@@ -315,7 +310,7 @@ export class SimulationEngine {
     this.agentManager.registerStorage(this.storageAgent);
 
     this.economyAgent = new EconomyAgent(economyEra, difficulty ?? 'comrade');
-    if (rng) this.economyAgent.setRng(rng);
+    this.economyAgent.setRng(this.rng);
     this.economyAgent.markReformsBeforeYear(startYear);
     this.agentManager.registerEconomy(this.economyAgent);
 
@@ -326,14 +321,14 @@ export class SimulationEngine {
     this.agentManager.registerDemographic(this.demographicAgent);
 
     this.kgbAgent = new KGBAgent(this.difficulty);
-    if (rng) this.kgbAgent.setRng(rng);
+    this.kgbAgent.setRng(this.rng);
     this.agentManager.registerKGB(this.kgbAgent);
 
     this.politicalAgent = new PoliticalAgent(startYear);
     this.politicalAgent.generateMandatesForCurrentEra(this.difficulty);
     this.agentManager.registerPolitical(this.politicalAgent);
 
-    this.defenseAgent = new DefenseAgent(rng, {
+    this.defenseAgent = new DefenseAgent(this.rng, {
       onBuildingCollapsed: (gridX, gridY, defId) => {
         this.callbacks.onToast(`FIRE DESTROYED: ${defId} at (${gridX}, ${gridY})`, 'critical');
         this.callbacks.onBuildingCollapsed?.(gridX, gridY, defId);
@@ -345,7 +340,7 @@ export class SimulationEngine {
     this.agentManager.registerDefense(this.defenseAgent);
 
     this.loyaltyAgent = new LoyaltyAgent();
-    if (rng) this.loyaltyAgent.setRng(rng);
+    this.loyaltyAgent.setRng(this.rng);
     this.agentManager.registerLoyalty(this.loyaltyAgent);
 
     // Wire ECS callbacks
@@ -490,12 +485,7 @@ export class SimulationEngine {
     this.eventSystem.setPersonnelFile(this.personnelFile);
 
     if (data.chronology) {
-      const restoreRng = this.rng ?? ({
-        random: () => Math.random(),
-        int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)),
-        pick: <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!,
-      } as GameRng);
-      this.chronologyAgent = ChronologyAgent.deserialize(data.chronology, restoreRng);
+      this.chronologyAgent = ChronologyAgent.deserialize(data.chronology, this.rng);
       this.agentManager.registerChronology(this.chronologyAgent);
     }
 
@@ -503,7 +493,7 @@ export class SimulationEngine {
 
     if (data.economy) {
       this.economyAgent = EconomyAgent.deserialize(data.economy);
-      if (this.rng) this.economyAgent.setRng(this.rng);
+      this.economyAgent.setRng(this.rng);
       this.agentManager.registerEconomy(this.economyAgent);
     }
 
@@ -788,7 +778,7 @@ export class SimulationEngine {
       this.callbacks.onAdvisor(
         'Comrade, the workers notice your constant meddling. They whisper that the chairman does not trust the collective.',
       );
-      if ((this.rng?.random() ?? Math.random()) < 0.05) {
+      if (this.rng.random() < 0.05) {
         this.kgbAgent.addMark(
           'excessive_intervention',
           this.chronologyAgent.getDate().totalTicks,
