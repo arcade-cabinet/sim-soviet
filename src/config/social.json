@@ -1,0 +1,35 @@
+{
+  "fire": {
+    "spreadChanceBase": 0.05,
+    "spreadRadius": 2,
+    "fireStationSuppression": 0.2,
+    "fireStationRadius": 5,
+    "durationMin": 30,
+    "durationMax": 60,
+    "damagePerTick": 3,
+    "rainFactor": 0.5,
+    "maxZeppelins": 2,
+    "zeppelinExtinguishTicks": 5,
+    "zeppelinSpeed": 0.5,
+    "zeppelinArrivalDist": 1.0
+  },
+  "disease": {
+    "baseOutbreakChance": 0.02,
+    "overcrowdingMult": 2.0,
+    "winterMult": 1.5,
+    "foodShortageThreshold": 0.3,
+    "foodShortageScurvyMult": 3.0,
+    "clinicReductionPerBuilding": 0.4,
+    "maxClinicReduction": 0.1,
+    "sickLaborMult": 0.5,
+    "definitions": {
+      "typhus": { "spreadRate": 0.04, "mortalityRate": 0.15, "durationTicks": 90 },
+      "cholera": { "spreadRate": 0.03, "mortalityRate": 0.25, "durationTicks": 60 },
+      "influenza": { "spreadRate": 0.08, "mortalityRate": 0.05, "durationTicks": 30 },
+      "scurvy": { "spreadRate": 0.06, "mortalityRate": 0.03, "durationTicks": 60 }
+    }
+  },
+  "gulag": {
+    "arrestChance": 0.1
+  }
+}

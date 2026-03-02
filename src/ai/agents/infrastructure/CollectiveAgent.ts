@@ -17,7 +17,7 @@
  */
 
 import { Vehicle } from 'yuka';
-import { GRID_SIZE } from '@/config';
+import { GRID_SIZE, infrastructure } from '@/config';
 import { buildingsLogic, buildings, operationalBuildings, terrainFeatures, underConstruction, getResourceEntity } from '@/ecs/archetypes';
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
@@ -89,63 +89,64 @@ export interface CollectiveAgentState {
   pendingDemands: ConstructionDemand[];
 }
 
-// ── Governor Constants (absorbed from governor.ts) ────────────────────────────
+// ── Governor Constants (from config/infrastructure.json) ─────────────────────
+
+const gcfg = infrastructure.governor;
+const dcfg = infrastructure.demand;
+const acfg = infrastructure.autoBuilder;
 
 /** Food per capita below which the collective is in food crisis. */
-export const FOOD_CRISIS_THRESHOLD = 2.0;
+export const FOOD_CRISIS_THRESHOLD = gcfg.foodCrisisThreshold;
 
 /** Hunger level above which an individual worker is starving. */
-export const HUNGER_CRISIS_THRESHOLD = 60;
+export const HUNGER_CRISIS_THRESHOLD = gcfg.hungerCrisisThreshold;
 
 /** Durability percentage below which a building needs repair. */
-export const REPAIR_THRESHOLD = 50;
+export const REPAIR_THRESHOLD = gcfg.repairThreshold;
 
 /** Minimum age for a worker to receive governor assignments. */
-const MIN_WORKING_AGE = 14;
+const MIN_WORKING_AGE = gcfg.minWorkingAge;
 
 /** Food threshold modifier when player focuses on food production. */
-export const FOOD_FOCUS_MULTIPLIER = 3.0;
+export const FOOD_FOCUS_MULTIPLIER = gcfg.foodFocusMultiplier;
 
-// ── Demand System Constants (absorbed from demandSystem.ts) ───────────────────
+// ── Demand System Constants (from config/infrastructure.json) ────────────────
 
 /** Food per capita below this is a critical shortage. */
-export const FOOD_CRITICAL_THRESHOLD = 1.5;
+export const FOOD_CRITICAL_THRESHOLD = dcfg.foodCriticalThreshold;
 
 /** Food per capita below this triggers urgent farm demand. */
-export const FOOD_DEMAND_THRESHOLD = 3.0;
+export const FOOD_DEMAND_THRESHOLD = dcfg.foodDemandThreshold;
 
 /** Vodka per capita below this triggers urgent distillery demand. */
-export const VODKA_DEMAND_THRESHOLD = 1.0;
+export const VODKA_DEMAND_THRESHOLD = dcfg.vodkaDemandThreshold;
 
 /** Vodka per capita below this is a critical shortage. */
-export const VODKA_CRITICAL_THRESHOLD = 0.3;
+export const VODKA_CRITICAL_THRESHOLD = dcfg.vodkaCriticalThreshold;
 
 /** Housing occupancy ratio at or above this triggers urgent demand. */
-export const HOUSING_OCCUPANCY_THRESHOLD = 0.8;
+export const HOUSING_OCCUPANCY_THRESHOLD = dcfg.housingOccupancyThreshold;
 
-// ── AutoBuilder Constants (absorbed from autoBuilder.ts) ──────────────────────
+// ── AutoBuilder Constants (from config/infrastructure.json) ──────────────────
 
 /** Maximum Manhattan distance from an existing building to consider for placement. */
-export const MAX_PLACEMENT_DISTANCE = 4;
+export const MAX_PLACEMENT_DISTANCE = acfg.maxPlacementDistance;
 
 /** Maximum number of candidates to keep before random selection. */
-export const CANDIDATE_LIMIT = 20;
+export const CANDIDATE_LIMIT = acfg.candidateLimit;
 
 /** How often (in ticks) the autonomous collective checks for construction needs. */
-const COLLECTIVE_CHECK_INTERVAL = 30;
+const COLLECTIVE_CHECK_INTERVAL = acfg.collectiveCheckInterval;
 
 /** Terrain feature types that block building placement. */
 const IMPASSABLE_FEATURES = new Set(['mountain', 'river', 'forest']);
 
 // ── CollectivePlanner Constants (absorbed from CollectivePlanner.ts) ──────────
 
-const DEMAND_PRIORITY_WEIGHT: Record<DemandPriority, number> = {
-  critical: 0, // Build before mandates
-  urgent: 20, // Build after mandates
-  normal: 30, // Lowest priority
-};
+const DEMAND_PRIORITY_WEIGHT: Record<DemandPriority, number> =
+  infrastructure.planner.demandPriorityWeight as Record<DemandPriority, number>;
 
-const MANDATE_WEIGHT = 10; // Between critical demands and urgent demands
+const MANDATE_WEIGHT = infrastructure.planner.mandateWeight;
 
 // ── Suggested Building DefIds (absorbed from demandSystem.ts) ─────────────────
 

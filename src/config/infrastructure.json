@@ -1,0 +1,97 @@
+{
+  "governor": {
+    "foodCrisisThreshold": 2.0,
+    "hungerCrisisThreshold": 60,
+    "repairThreshold": 50,
+    "minWorkingAge": 14,
+    "foodFocusMultiplier": 3.0
+  },
+  "demand": {
+    "foodCriticalThreshold": 1.5,
+    "foodDemandThreshold": 3.0,
+    "vodkaDemandThreshold": 1.0,
+    "vodkaCriticalThreshold": 0.3,
+    "housingOccupancyThreshold": 0.8
+  },
+  "autoBuilder": {
+    "maxPlacementDistance": 4,
+    "candidateLimit": 20,
+    "collectiveCheckInterval": 30
+  },
+  "planner": {
+    "demandPriorityWeight": {
+      "critical": 0,
+      "urgent": 20,
+      "normal": 30
+    },
+    "mandateWeight": 10
+  },
+  "transport": {
+    "buildingScores": {
+      "dirt-path": 1,
+      "road-depot": 3,
+      "train-station": 4,
+      "motor-pool": 4,
+      "rail-depot": 5
+    },
+    "tierBonus": {
+      "selo": 0,
+      "posyolok": 2,
+      "pgt": 5,
+      "gorod": 8
+    },
+    "eraBonus": {
+      "revolution": 0,
+      "collectivization": 0,
+      "industrialization": 1,
+      "great_patriotic": 0,
+      "reconstruction": 3,
+      "thaw_and_freeze": 5,
+      "stagnation": 4,
+      "the_eternal": 3
+    },
+    "mitigation": {
+      "none": 0.0,
+      "dirt": 0.1,
+      "gravel": 0.3,
+      "paved": 0.6,
+      "highway": 0.85
+    },
+    "scoreToQualityThresholds": {
+      "highway": 16,
+      "paved": 9,
+      "gravel": 4,
+      "dirt": 1
+    },
+    "recalcInterval": 30,
+    "rasputitsaDecay": 0.15,
+    "winterDecay": 0.08,
+    "baselineDecay": 0.02,
+    "maintenanceRecovery": 2.0,
+    "maintenanceTimberCost": 1,
+    "conditionThresholds": {
+      "maintenanceTrigger": 80,
+      "downgradeOne": 25,
+      "downgradeTwo": 10
+    }
+  },
+  "settlement": {
+    "gorodMinDistinctRoles": 5,
+    "tierThresholds": {
+      "selo": { "populationReq": 0, "nonAgriPercent": 0, "upgradeTicks": 0, "downgradeTicks": 0 },
+      "posyolok": { "populationReq": 50, "nonAgriPercent": 0, "upgradeTicks": 30, "downgradeTicks": 60 },
+      "pgt": { "populationReq": 150, "nonAgriPercent": 50, "upgradeTicks": 30, "downgradeTicks": 60 },
+      "gorod": { "populationReq": 400, "nonAgriPercent": 85, "upgradeTicks": 30, "downgradeTicks": 60 }
+    }
+  },
+  "construction": {
+    "defaultBaseTicks": 15,
+    "defaultStaffCap": 5,
+    "defaultMaterialCost": {
+      "timber": 30,
+      "steel": 10,
+      "cement": 5,
+      "prefab": 0
+    }
+  }
+}

@@ -18,10 +18,13 @@
  * Soviet flavor: all diseases are officially "capitalist sabotage."
  */
 
+import { social } from '@/config';
 import { citizens, getResourceEntity, housing as housingArchetype, operationalBuildings } from '@/ecs/archetypes';
 import type { CitizenDisease } from '@/ecs/world';
 import { TICKS_PER_MONTH } from '@/game/Chronology';
 import type { GameRng } from '@/game/SeedSystem';
+
+const dcfg = social.disease;
 
 // ── Disease Definitions ──────────────────────────────────────────────────────
 
@@ -95,28 +98,28 @@ export const DISEASE_DEFINITIONS: readonly DiseaseDefinition[] = [
 // ── Constants ────────────────────────────────────────────────────────────────
 
 /** Base outbreak chance per citizen per month check (2%). */
-const BASE_OUTBREAK_CHANCE = 0.02;
+const BASE_OUTBREAK_CHANCE = dcfg.baseOutbreakChance;
 
 /** Overcrowding multiplier (pop > housing cap). */
-const OVERCROWDING_MULT = 2.0;
+const OVERCROWDING_MULT = dcfg.overcrowdingMult;
 
 /** Winter multiplier for all non-nutritional diseases. */
-const WINTER_MULT = 1.5;
+const WINTER_MULT = dcfg.winterMult;
 
 /** Food shortage threshold below which scurvy risk increases. */
-const FOOD_SHORTAGE_THRESHOLD = 0.3;
+const FOOD_SHORTAGE_THRESHOLD = dcfg.foodShortageThreshold;
 
 /** Food shortage multiplier for scurvy. */
-const FOOD_SHORTAGE_SCURVY_MULT = 3.0;
+const FOOD_SHORTAGE_SCURVY_MULT = dcfg.foodShortageScurvyMult;
 
 /** Reduction factor per operational medical building (multiplicative). */
-const CLINIC_REDUCTION_PER_BUILDING = 0.4;
+const CLINIC_REDUCTION_PER_BUILDING = dcfg.clinicReductionPerBuilding;
 
 /** Maximum clinic reduction (floor — clinics can't eliminate disease entirely). */
-const MAX_CLINIC_REDUCTION = 0.1;
+const MAX_CLINIC_REDUCTION = dcfg.maxClinicReduction;
 
 /** Labor efficiency multiplier for sick citizens. */
-export const SICK_LABOR_MULT = 0.5;
+export const SICK_LABOR_MULT = dcfg.sickLaborMult;
 
 // ── Module-level RNG (standard pattern) ──────────────────────────────────────
 

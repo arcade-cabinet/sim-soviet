@@ -4,13 +4,14 @@
  * Military, conscription, and orgnabor constants and queue processing.
  */
 
+import { political } from '@/config';
 import type { GameRng } from '@/game/SeedSystem';
 import type { ConscriptionEvent, OrgnaborEvent, PoliticalTickResult } from './types';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ─── Constants (from config/political.json) ─────────────────────────────────
 
 /** Default casualty rate for permanent conscription. */
-export const WARTIME_CASUALTY_RATE = 0.2;
+export const WARTIME_CASUALTY_RATE = political.military.wartimeCasualtyRate;
 
 // ─── Queue Processing ───────────────────────────────────────────────────────
 
@@ -19,7 +20,7 @@ export const WARTIME_CASUALTY_RATE = 0.2;
  * Returns new return-queue entries to be appended.
  */
 /** Default deadline window for player to respond to conscription (ticks). */
-export const CONSCRIPTION_DEADLINE_TICKS = 30;
+export const CONSCRIPTION_DEADLINE_TICKS = political.military.conscriptionDeadlineTicks;
 
 export function processConscriptionQueue(
   queue: ConscriptionEvent[],

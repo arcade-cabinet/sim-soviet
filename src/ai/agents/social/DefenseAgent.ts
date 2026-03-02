@@ -24,7 +24,7 @@
 
 import { Vehicle } from 'yuka';
 import type { With } from 'miniplex';
-import { GRID_SIZE } from '../../../config';
+import { GRID_SIZE, social } from '../../../config';
 import { buildingsLogic, operationalBuildings, citizens, getResourceEntity, housing as housingArchetype } from '../../../ecs/archetypes';
 import type { Entity, CitizenDisease } from '../../../ecs/world';
 import { world } from '../../../ecs/world';
@@ -35,66 +35,70 @@ import { WeatherType } from '../core/weather-types';
 import { MSG } from '../../telegrams';
 import { diseaseTick, DISEASE_PRAVDA_HEADLINES } from './disease';
 
-// ─── Fire Constants ───────────────────────────────────────────────────────────
+// ─── Fire Constants (from config/social.json) ────────────────────────────────
+
+const fcfg = social.fire;
 
 /** Base chance per tick that fire spreads to an adjacent building. */
-const SPREAD_CHANCE_BASE = 0.05;
+const SPREAD_CHANCE_BASE = fcfg.spreadChanceBase;
 
 /** Manhattan distance within which fire can spread. */
-const SPREAD_RADIUS = 2;
+const SPREAD_RADIUS = fcfg.spreadRadius;
 
 /** Fire-station suppression factor (80% reduction). */
-const FIRE_STATION_SUPPRESSION = 0.2;
+const FIRE_STATION_SUPPRESSION = fcfg.fireStationSuppression;
 
 /** Radius (Manhattan) in which a fire station suppresses fire spread. */
-const FIRE_STATION_RADIUS = 5;
+const FIRE_STATION_RADIUS = fcfg.fireStationRadius;
 
 /** Minimum fire duration in ticks. */
-const FIRE_DURATION_MIN = 30;
+const FIRE_DURATION_MIN = fcfg.durationMin;
 
 /** Maximum fire duration in ticks. */
-const FIRE_DURATION_MAX = 60;
+const FIRE_DURATION_MAX = fcfg.durationMax;
 
 /** Durability damage per tick while on fire. */
-const FIRE_DAMAGE_PER_TICK = 3;
+const FIRE_DAMAGE_PER_TICK = fcfg.damagePerTick;
 
 /** Rain reduces spread chance and fire duration by this factor. */
-const RAIN_FACTOR = 0.5;
+const RAIN_FACTOR = fcfg.rainFactor;
 
 /** Maximum concurrent zeppelins. */
-const MAX_ZEPPELINS = 2;
+const MAX_ZEPPELINS = fcfg.maxZeppelins;
 
 /** Ticks it takes a zeppelin to extinguish a fire once it arrives. */
-const ZEPPELIN_EXTINGUISH_TICKS = 5;
+const ZEPPELIN_EXTINGUISH_TICKS = fcfg.zeppelinExtinguishTicks;
 
 /** Zeppelin movement speed in grid units per tick. */
-const ZEPPELIN_SPEED = 0.5;
+const ZEPPELIN_SPEED = fcfg.zeppelinSpeed;
 
 /** Distance threshold at which a zeppelin is "over" its target. */
-const ZEPPELIN_ARRIVAL_DIST = 1.0;
+const ZEPPELIN_ARRIVAL_DIST = fcfg.zeppelinArrivalDist;
 
-// ─── Disease Constants ────────────────────────────────────────────────────────
+// ─── Disease Constants (from config/social.json) ─────────────────────────────
+
+const ddcfg = social.disease;
 
 /** Base outbreak chance per citizen per month check (2%). */
-const BASE_OUTBREAK_CHANCE = 0.02;
+const BASE_OUTBREAK_CHANCE = ddcfg.baseOutbreakChance;
 
 /** Overcrowding multiplier (pop > housing cap). */
-const OVERCROWDING_MULT = 2.0;
+const OVERCROWDING_MULT = ddcfg.overcrowdingMult;
 
 /** Winter multiplier for all non-nutritional diseases. */
-const WINTER_MULT = 1.5;
+const WINTER_MULT = ddcfg.winterMult;
 
 /** Food shortage threshold below which scurvy risk increases. */
-const FOOD_SHORTAGE_THRESHOLD = 0.3;
+const FOOD_SHORTAGE_THRESHOLD = ddcfg.foodShortageThreshold;
 
 /** Food shortage multiplier for scurvy. */
-const FOOD_SHORTAGE_SCURVY_MULT = 3.0;
+const FOOD_SHORTAGE_SCURVY_MULT = ddcfg.foodShortageScurvyMult;
 
 /** Reduction factor per operational medical building (multiplicative). */
-const CLINIC_REDUCTION_PER_BUILDING = 0.4;
+const CLINIC_REDUCTION_PER_BUILDING = ddcfg.clinicReductionPerBuilding;
 
 /** Maximum clinic reduction (floor — clinics can't eliminate disease entirely). */
-const MAX_CLINIC_REDUCTION = 0.1;
+const MAX_CLINIC_REDUCTION = ddcfg.maxClinicReduction;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

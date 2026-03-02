@@ -12,7 +12,22 @@ import demographicsData from './demographics.json';
 import economyData from './economy.json';
 import workforceData from './workforce.json';
 import chronologyData from './chronology.json';
-import type { ChronologyConfig, DemographicsConfig, EconomyConfig, WorkforceConfig } from './types';
+import politicalData from './political.json';
+import socialData from './social.json';
+import infrastructureData from './infrastructure.json';
+import narrativeData from './narrative.json';
+import metaData from './meta.json';
+import type {
+  ChronologyConfig,
+  DemographicsConfig,
+  EconomyConfig,
+  InfrastructureConfig,
+  MetaConfig,
+  NarrativeConfig,
+  PoliticalConfig,
+  SocialConfig,
+  WorkforceConfig,
+} from './types';
 
 // ── Legacy grid config (previously src/config.ts) ───────────────────────────
 
@@ -39,6 +54,31 @@ export const workforce: WorkforceConfig = workforceData as WorkforceConfig;
 /** Typed chronology configuration loaded from chronology.json. */
 export const chronology: ChronologyConfig = chronologyData as ChronologyConfig;
 
+// ── Political config ────────────────────────────────────────────────────────
+
+/** Typed political configuration loaded from political.json. */
+export const political: PoliticalConfig = politicalData as PoliticalConfig;
+
+// ── Social config ───────────────────────────────────────────────────────────
+
+/** Typed social configuration loaded from social.json. */
+export const social: SocialConfig = socialData as SocialConfig;
+
+// ── Infrastructure config ───────────────────────────────────────────────────
+
+/** Typed infrastructure configuration loaded from infrastructure.json. */
+export const infrastructure: InfrastructureConfig = infrastructureData as InfrastructureConfig;
+
+// ── Narrative config ────────────────────────────────────────────────────────
+
+/** Typed narrative configuration loaded from narrative.json. */
+export const narrative: NarrativeConfig = narrativeData as NarrativeConfig;
+
+// ── Meta config ─────────────────────────────────────────────────────────────
+
+/** Typed meta configuration loaded from meta.json. */
+export const meta: MetaConfig = metaData as MetaConfig;
+
 // Re-export types for consumers
 export type {
   AggregateConfig,
@@ -51,7 +91,12 @@ export type {
   EntityConfig,
   FoodModifierConfig,
   HouseholdFormationConfig,
+  InfrastructureConfig,
+  MetaConfig,
   MortalityBracket,
+  NarrativeConfig,
+  PoliticalConfig,
+  SocialConfig,
   StarvationConfig,
   TrendsConfig,
   WorkforceConfig,

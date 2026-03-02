@@ -6,6 +6,7 @@
  * minigame from re-triggering too quickly.
  */
 
+import { meta } from '@/config';
 import type { GameRng } from '../../../../game/SeedSystem';
 import { getMinigameDefinition, MINIGAME_DEFINITIONS } from './definitions';
 import type {
@@ -21,11 +22,13 @@ import { autoResolveMiningExpedition } from './MiningExpedition';
 //  CONSTANTS
 // ─────────────────────────────────────────────────────────
 
+const mcfg = meta.minigames;
+
 /** Default cooldown in ticks after a minigame resolves before it can trigger again. */
-const DEFAULT_COOLDOWN = 60;
+const DEFAULT_COOLDOWN = mcfg.defaultCooldown;
 
 /** Minimum population required for periodic queue minigame. */
-const QUEUE_POPULATION_THRESHOLD = 30;
+const QUEUE_POPULATION_THRESHOLD = mcfg.queuePopulationThreshold;
 
 /** Module-level RNG reference, set by constructor. */
 let _rng: GameRng | null = null;

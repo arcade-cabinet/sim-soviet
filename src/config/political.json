@@ -1,0 +1,226 @@
+{
+  "kgb": {
+    "markAmounts": {
+      "worker_arrested": 1,
+      "quota_missed_minor": 1,
+      "quota_missed_major": 2,
+      "quota_missed_catastrophic": 3,
+      "construction_mandate": 1,
+      "conscription_failed": 2,
+      "black_market": 2,
+      "lying_to_kgb": 2,
+      "stakhanovite_fraud": 1,
+      "blat_noticed": 1,
+      "suppressing_news": 1,
+      "report_falsified": 3,
+      "excessive_intervention": 1
+    },
+    "commendationAmounts": {
+      "quota_exceeded": 1,
+      "stakhanovite_celebrated": 1,
+      "inspection_passed": 0.5,
+      "ideology_session_passed": 0.5,
+      "mandates_fulfilled": 1
+    },
+    "decayIntervals": {
+      "worker": 360,
+      "comrade": 720,
+      "tovarish": 1440
+    },
+    "arrestThreshold": 7,
+    "markThresholds": {
+      "low": 8,
+      "medium": 5,
+      "high": 3
+    },
+    "investigationMinTicks": 10,
+    "investigationMaxTicks": 30,
+    "reassignmentInterval": 40,
+    "moraleDrop": 3,
+    "loyaltyBoost": 2,
+    "flagChance": 0.1,
+    "blackMarkChanceThorough": 0.3,
+    "blackMarkChancePurge": 0.6,
+    "baseArrestCount": 1,
+    "purgeArrestMult": 3,
+    "informantReportInterval": 60,
+    "informantFlagChance": 0.3,
+    "escalationMarkThreshold": 3
+  },
+  "raikom": {
+    "baseVisitInterval": 180,
+    "visitIntervalVariance": 60,
+    "blatFavorRate": 5,
+    "badReportFavorThreshold": 30,
+    "goodReportFavorThreshold": 70,
+    "badReportMarks": 1,
+    "directiveDeadlineTicks": 120,
+    "maxActiveDirectives": 3,
+    "neutralStartingFavor": 50,
+    "badReportFavorLoss": 5,
+    "failedDirectiveFavorLoss": 10,
+    "favorDriftUp": 45,
+    "favorDriftDown": 55
+  },
+  "politruks": {
+    "rotationInterval": 120,
+    "moraleBoost": 10,
+    "workersPerPolitruk": 20,
+    "sessionInterval": 30,
+    "loyaltyThreshold": 40,
+    "kgbFlagChanceFromSession": 0.25,
+    "personalityWeights": {
+      "zealous": 25,
+      "lazy": 25,
+      "paranoid": 25,
+      "corrupt": 25
+    },
+    "personalityBehaviors": {
+      "zealous": {
+        "loyaltyThresholdMult": 1.3,
+        "skipChance": 0,
+        "kgbFlagMult": 1.5,
+        "extraWorkers": 2,
+        "sessionProductionPenalty": 0.2
+      },
+      "lazy": {
+        "loyaltyThresholdMult": 0.7,
+        "skipChance": 0.4,
+        "kgbFlagMult": 0.5,
+        "extraWorkers": 0,
+        "sessionProductionPenalty": 0.05
+      },
+      "paranoid": {
+        "loyaltyThresholdMult": 1.0,
+        "skipChance": 0,
+        "kgbFlagMult": 2.0,
+        "extraWorkers": 1,
+        "sessionProductionPenalty": 0.15
+      },
+      "corrupt": {
+        "loyaltyThresholdMult": 0.9,
+        "skipChance": 0.2,
+        "kgbFlagMult": 0.3,
+        "extraWorkers": 0,
+        "sessionProductionPenalty": 0.1
+      }
+    }
+  },
+  "loyalty": {
+    "gainGoodFood": 0.15,
+    "lossStarvation": -0.8,
+    "sabotageChance": 0.1,
+    "flightChance": 0.05,
+    "disloyalThreshold": 20,
+    "flightThreshold": 10
+  },
+  "scoring": {
+    "points": {
+      "workersAlive": 2,
+      "quotaMet": 50,
+      "quotaExceeded": 25,
+      "buildingStanding": 5,
+      "commendation": 30,
+      "blackMark": -40,
+      "kgbLoss": -10,
+      "conscripted": -5,
+      "cleanEra": 100
+    },
+    "scoreMultiplierMatrix": {
+      "worker": { "forgiving": 0.5, "permadeath": 1.0, "harsh": 0.7 },
+      "comrade": { "forgiving": 0.8, "permadeath": 1.5, "harsh": 1.2 },
+      "tovarish": { "forgiving": 1.0, "permadeath": 2.0, "harsh": 1.8 }
+    }
+  },
+  "entityScaling": {
+    "selo": {
+      "politruk": [0, 1],
+      "kgb_agent": [0, 0],
+      "military_officer": [0, 0],
+      "conscription_officer": [0, 0]
+    },
+    "posyolok": {
+      "politruk": [1, 2],
+      "kgb_agent": [0, 1],
+      "military_officer": [0, 1],
+      "conscription_officer": [0, 0]
+    },
+    "pgt": {
+      "politruk": [2, 3],
+      "kgb_agent": [1, 2],
+      "military_officer": [1, 1],
+      "conscription_officer": [0, 1]
+    },
+    "gorod": {
+      "politruk": [3, 5],
+      "kgb_agent": [2, 4],
+      "military_officer": [1, 2],
+      "conscription_officer": [1, 1]
+    }
+  },
+  "highCorruptionThreshold": 50,
+  "compulsoryDeliveries": {
+    "rates": {
+      "revolutionary": { "food": 0.4, "vodka": 0.3, "money": 0.2 },
+      "industrialization": { "food": 0.5, "vodka": 0.4, "money": 0.6 },
+      "wartime": { "food": 0.7, "vodka": 0.6, "money": 0.7 },
+      "reconstruction": { "food": 0.35, "vodka": 0.25, "money": 0.3 },
+      "thaw": { "food": 0.3, "vodka": 0.2, "money": 0.25 },
+      "freeze": { "food": 0.45, "vodka": 0.35, "money": 0.5 },
+      "stagnation": { "food": 0.45, "vodka": 0.4, "money": 0.5 },
+      "eternal": { "food": 0.4, "vodka": 0.35, "money": 0.4 }
+    },
+    "corruptionMin": 0.05,
+    "corruptionMax": 0.15
+  },
+  "annualReport": {
+    "maxQuotaFailures": 3,
+    "pripiskiQuotaInflation": 0.2,
+    "pripiskiHistoryInspectionBonus": 0.15
+  },
+  "military": {
+    "wartimeCasualtyRate": 0.2,
+    "conscriptionDeadlineTicks": 30
+  },
+  "doctrine": {
+    "mechanicIntervals": {
+      "grain_requisitioning": 30,
+      "collectivization_seizure": 90,
+      "stakhanovite_bonus": 30,
+      "wartime_conscription": 60,
+      "thaw_freeze_oscillation": 30,
+      "stagnation_rot": 30,
+      "eternal_bureaucracy": 10
+    },
+    "grainRequisitionRate": 0.3,
+    "collectivizationSeizureRate": 0.15,
+    "collectivizationResistanceChance": 0.2,
+    "stakhanoviteProductionBonus": 0.15,
+    "stakhanovitePressurePenalty": 0.05,
+    "wartimeConscriptionRate": 0.05,
+    "wartimeProductionBonus": 0.1,
+    "thawFreezePhaseTicks": 720,
+    "thawMoraleBoost": 5,
+    "freezeMoralePenalty": -5,
+    "thawProductionBonus": 0.1,
+    "freezeProductionPenalty": 0.1,
+    "stagnationDecayMult": 2.0,
+    "stagnationPaperworkPerTick": 3,
+    "stagnationProductivityLossPerYear": 0.01,
+    "stagnationCorruptionMult": 1.5,
+    "eternalPaperworkThreshold": 5000,
+    "eternalPaperworkBase": 5,
+    "eternalPaperworkGrowthFactor": 0.001,
+    "eternalBureaucracySlowdownPer1000": 0.05,
+    "policies": {
+      "revolution": { "productionMult": 0.8, "consumptionMult": 1.2 },
+      "collectivization": { "productionMult": 0.9, "consumptionMult": 1.0 },
+      "industrialization": { "productionMult": 1.1, "consumptionMult": 1.0 },
+      "great_patriotic": { "productionMult": 0.7, "consumptionMult": 1.5 },
+      "reconstruction": { "productionMult": 1.0, "consumptionMult": 0.9 },
+      "thaw_and_freeze": { "productionMult": 1.1, "consumptionMult": 0.9 },
+      "stagnation": { "productionMult": 0.9, "consumptionMult": 1.1 },
+      "the_eternal": { "productionMult": 1.0, "consumptionMult": 1.0 }
+    }
+  }
+}

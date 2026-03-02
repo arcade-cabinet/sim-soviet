@@ -21,6 +21,7 @@ import type {
 import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { world } from '@/ecs/world';
+import { political } from '@/config';
 import type { ConsequenceConfig } from './ScoringSystem';
 import type { ScoringSystem } from './ScoringSystem';
 import type { GameGrid } from '../../../game/GameGrid';
@@ -83,38 +84,16 @@ export interface PersonnelFileSaveData {
 }
 
 // ─────────────────────────────────────────────────────────
-//  Constants (from PersonnelFile)
+//  Constants (from config/political.json)
 // ─────────────────────────────────────────────────────────
 
-const MARK_AMOUNTS: Record<MarkSource, number> = {
-  worker_arrested: 1,
-  quota_missed_minor: 1,
-  quota_missed_major: 2,
-  quota_missed_catastrophic: 3,
-  construction_mandate: 1,
-  conscription_failed: 2,
-  black_market: 2,
-  lying_to_kgb: 2,
-  stakhanovite_fraud: 1,
-  blat_noticed: 1,
-  suppressing_news: 1,
-  report_falsified: 3,
-  excessive_intervention: 1,
-};
+const cfg = political.kgb;
 
-const COMMENDATION_AMOUNTS: Record<CommendationSource, number> = {
-  quota_exceeded: 1,
-  stakhanovite_celebrated: 1,
-  inspection_passed: 0.5,
-  ideology_session_passed: 0.5,
-  mandates_fulfilled: 1,
-};
+const MARK_AMOUNTS: Record<MarkSource, number> = cfg.markAmounts as Record<MarkSource, number>;
 
-const DECAY_INTERVALS: Record<Difficulty, number> = {
-  worker: 360,
-  comrade: 720,
-  tovarish: 1440,
-};
+const COMMENDATION_AMOUNTS: Record<CommendationSource, number> = cfg.commendationAmounts as Record<CommendationSource, number>;
+
+const DECAY_INTERVALS: Record<Difficulty, number> = cfg.decayIntervals as Record<Difficulty, number>;
 
 const DEFAULT_MARK_DESCRIPTIONS: Record<MarkSource, string> = {
   worker_arrested: 'Worker arrested for disloyalty',
@@ -141,48 +120,48 @@ const DEFAULT_COMMENDATION_DESCRIPTIONS: Record<CommendationSource, string> = {
 };
 
 /** Number of effective marks at which arrest is triggered. */
-const ARREST_THRESHOLD = 7;
+const ARREST_THRESHOLD = cfg.arrestThreshold;
 
 // ─────────────────────────────────────────────────────────
 //  Constants (from kgb.ts)
 // ─────────────────────────────────────────────────────────
 
 /** Default investigation duration range (ticks). */
-export const INVESTIGATION_MIN_TICKS = 10;
-export const INVESTIGATION_MAX_TICKS = 30;
+export const INVESTIGATION_MIN_TICKS = cfg.investigationMinTicks;
+export const INVESTIGATION_MAX_TICKS = cfg.investigationMaxTicks;
 
 /** How often KGB agents pick a new building to investigate (ticks). */
-export const KGB_REASSIGNMENT_INTERVAL = 40;
+export const KGB_REASSIGNMENT_INTERVAL = cfg.reassignmentInterval;
 
 /** KGB investigation: morale drop per tick. */
-export const KGB_MORALE_DROP = 3;
+export const KGB_MORALE_DROP = cfg.moraleDrop;
 
 /** KGB investigation: loyalty boost per tick (through fear). */
-export const KGB_LOYALTY_BOOST = 2;
+export const KGB_LOYALTY_BOOST = cfg.loyaltyBoost;
 
 /** Chance per investigation tick that a worker gets flagged. */
-export const KGB_FLAG_CHANCE = 0.1;
+export const KGB_FLAG_CHANCE = cfg.flagChance;
 
 /** Chance that a thorough investigation finds a black mark. */
-export const KGB_BLACK_MARK_CHANCE_THOROUGH = 0.3;
+export const KGB_BLACK_MARK_CHANCE_THOROUGH = cfg.blackMarkChanceThorough;
 
 /** Chance that a purge investigation finds a black mark. */
-export const KGB_BLACK_MARK_CHANCE_PURGE = 0.6;
+export const KGB_BLACK_MARK_CHANCE_PURGE = cfg.blackMarkChancePurge;
 
 /** Base number of workers arrested when an investigation completes with arrest result. */
-export const BASE_ARREST_COUNT = 1;
+export const BASE_ARREST_COUNT = cfg.baseArrestCount;
 
 /** Multiplier for arrest count during purge-intensity investigations. */
-export const PURGE_ARREST_MULT = 3;
+export const PURGE_ARREST_MULT = cfg.purgeArrestMult;
 
 /** Ticks between informant reports. */
-export const INFORMANT_REPORT_INTERVAL = 60;
+export const INFORMANT_REPORT_INTERVAL = cfg.informantReportInterval;
 
 /** Chance that an informant report flags a worker. */
-export const INFORMANT_FLAG_CHANCE = 0.3;
+export const INFORMANT_FLAG_CHANCE = cfg.informantFlagChance;
 
 /** How many existing marks before investigation priority is escalated. */
-export const ESCALATION_MARK_THRESHOLD = 3;
+export const ESCALATION_MARK_THRESHOLD = cfg.escalationMarkThreshold;
 
 // ─────────────────────────────────────────────────────────
 //  Constants (from assessThreat / wrapper)
@@ -192,11 +171,7 @@ export const ESCALATION_MARK_THRESHOLD = 3;
  * Mark count thresholds for suspicion scoring by aggression level.
  * Threshold is the mark count at which suspicion reaches 1.0.
  */
-const MARK_THRESHOLDS: Record<'low' | 'medium' | 'high', number> = {
-  low: 8,
-  medium: 5,
-  high: 3,
-};
+const MARK_THRESHOLDS: Record<'low' | 'medium' | 'high', number> = cfg.markThresholds as Record<'low' | 'medium' | 'high', number>;
 
 /** Default aggression level by difficulty name. */
 const DIFFICULTY_AGGRESSION: Record<string, 'low' | 'medium' | 'high'> = {

@@ -5,6 +5,7 @@
  * tension rules, appointment strategies, and name/stat tables.
  */
 
+import { narrative } from '@/config';
 import {
   type AppointmentStrategy,
   Ministry,
@@ -13,6 +14,8 @@ import {
   PersonalityType,
   type TensionRule,
 } from './types';
+
+const pcfg = narrative.politburo;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  MINISTRY NAMES
@@ -40,31 +43,11 @@ export const MINISTRY_NAMES: Record<Ministry, string> = {
  * Default (neutral) modifiers — an empty chair would produce these.
  */
 export const DEFAULT_MODIFIERS: MinistryModifiers = {
-  foodProductionMult: 1.0,
-  vodkaProductionMult: 1.0,
-  factoryOutputMult: 1.0,
-  buildingCostMult: 1.0,
-  techResearchMult: 1.0,
-  moraleModifier: 0,
-  purgeFrequencyMult: 1.0,
-  fearLevel: 30,
-  surveillanceRate: 4,
-  conscriptionRate: 5,
-  crimeRate: 30,
-  corruptionDrain: 0,
-  quotaDifficultyMult: 1.0,
-  populationGrowthMult: 1.0,
-  supplyChainDelayMult: 1.0,
-  infrastructureDecayMult: 1.0,
-  pollutionMult: 1.0,
-  accidentRate: 0.02,
-  hospitalEffectiveness: 1.0,
-  literacyRate: 70,
+  ...pcfg.defaultModifiers,
   privateGardensAllowed: false,
   vodkaRestricted: false,
   blackMarketTolerated: false,
   artCensored: false,
-  propagandaIntensity: 50,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -751,71 +734,68 @@ export const TENSION_RULES: TensionRule[] = [
 //  APPOINTMENT LOGIC
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Helper to look up appointment strategy numeric fields from config. */
+function asCfg(pt: string) {
+  return pcfg.appointmentStrategies[pt] ?? { retentionRate: 0.5, loyaltyThreshold: 30 };
+}
+
 /** How each GS personality type fills the cabinet on succession. */
 export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy> = {
   [PersonalityType.ZEALOT]: {
-    retentionRate: 0.0,
+    ...asCfg('zealot'),
     preferredTypes: [PersonalityType.ZEALOT, PersonalityType.MILITARIST],
-    loyaltyThreshold: 90,
     meritBased: false,
     purgesKGB: true,
     transitionDescription: 'The new General Secretary purges the entire cabinet. Loyalty is the only qualification.',
   },
   [PersonalityType.IDEALIST]: {
-    retentionRate: 0.4,
+    ...asCfg('idealist'),
     preferredTypes: [PersonalityType.IDEALIST, PersonalityType.REFORMER, PersonalityType.TECHNOCRAT],
-    loyaltyThreshold: 30,
     meritBased: false,
     purgesKGB: false,
     transitionDescription: 'The new leader keeps some old faces for stability, but whispers of change circulate.',
   },
   [PersonalityType.REFORMER]: {
-    retentionRate: 0.6,
+    ...asCfg('reformer'),
     preferredTypes: [PersonalityType.REFORMER, PersonalityType.TECHNOCRAT, PersonalityType.IDEALIST],
-    loyaltyThreshold: 20,
     meritBased: true,
     purgesKGB: false,
     transitionDescription:
       'A cautious transition. Reformers placed in key positions, but the old guard remains for now.',
   },
   [PersonalityType.TECHNOCRAT]: {
-    retentionRate: 0.5,
+    ...asCfg('technocrat'),
     preferredTypes: [PersonalityType.TECHNOCRAT, PersonalityType.REFORMER],
-    loyaltyThreshold: 10,
     meritBased: true,
     purgesKGB: false,
     transitionDescription:
       'Cabinet reshuffled based on performance metrics. Incompetent ministers replaced regardless of loyalty.',
   },
   [PersonalityType.APPARATCHIK]: {
-    retentionRate: 0.8,
+    ...asCfg('apparatchik'),
     preferredTypes: [PersonalityType.APPARATCHIK, PersonalityType.TECHNOCRAT],
-    loyaltyThreshold: 10,
     meritBased: false,
     purgesKGB: false,
     transitionDescription: 'Almost nothing changes. Those who waited longest get promoted. The system endures.',
   },
   [PersonalityType.POPULIST]: {
-    retentionRate: 0.4,
+    ...asCfg('populist'),
     preferredTypes: [PersonalityType.POPULIST, PersonalityType.IDEALIST, PersonalityType.REFORMER],
-    loyaltyThreshold: 30,
     meritBased: false,
     purgesKGB: false,
     transitionDescription: 'Popular ministers kept. Unpopular ones replaced with people who smile more.',
   },
   [PersonalityType.MILITARIST]: {
-    retentionRate: 0.3,
+    ...asCfg('militarist'),
     preferredTypes: [PersonalityType.MILITARIST, PersonalityType.ZEALOT],
-    loyaltyThreshold: 60,
     meritBased: false,
     purgesKGB: true,
     transitionDescription:
       'Marshal law declared. Most of the old cabinet arrested. Uniforms mandatory for new appointees.',
   },
   [PersonalityType.MYSTIC]: {
-    retentionRate: 0.5,
+    ...asCfg('mystic'),
     preferredTypes: [PersonalityType.MYSTIC, PersonalityType.IDEALIST],
-    loyaltyThreshold: 20,
     meritBased: false,
     purgesKGB: false,
     transitionDescription:
@@ -841,6 +821,16 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
  * │ MYSTIC      │ 30-60 │ 10-40 │ 30-70   │ 20-50      │
  * └─────────────┴───────┴───────┴─────────┴────────────┘
  */
+/** Helper to look up personality stat ranges from config. */
+function statRange(pt: string) {
+  return pcfg.personalityStatRanges[pt] ?? {
+    loyalty: [50, 70] as [number, number],
+    competence: [30, 60] as [number, number],
+    ambition: [30, 60] as [number, number],
+    corruption: [10, 40] as [number, number],
+  };
+}
+
 export const PERSONALITY_STAT_RANGES: Record<
   PersonalityType,
   {
@@ -850,54 +840,14 @@ export const PERSONALITY_STAT_RANGES: Record<
     corruption: [number, number];
   }
 > = {
-  [PersonalityType.ZEALOT]: {
-    loyalty: [70, 95],
-    competence: [20, 60],
-    ambition: [50, 90],
-    corruption: [10, 30],
-  },
-  [PersonalityType.IDEALIST]: {
-    loyalty: [50, 80],
-    competence: [40, 70],
-    ambition: [20, 50],
-    corruption: [5, 20],
-  },
-  [PersonalityType.REFORMER]: {
-    loyalty: [30, 60],
-    competence: [50, 80],
-    ambition: [40, 70],
-    corruption: [10, 25],
-  },
-  [PersonalityType.TECHNOCRAT]: {
-    loyalty: [40, 70],
-    competence: [70, 95],
-    ambition: [30, 60],
-    corruption: [10, 30],
-  },
-  [PersonalityType.APPARATCHIK]: {
-    loyalty: [50, 80],
-    competence: [20, 50],
-    ambition: [20, 50],
-    corruption: [30, 70],
-  },
-  [PersonalityType.POPULIST]: {
-    loyalty: [40, 70],
-    competence: [30, 60],
-    ambition: [50, 80],
-    corruption: [20, 50],
-  },
-  [PersonalityType.MILITARIST]: {
-    loyalty: [60, 90],
-    competence: [40, 70],
-    ambition: [60, 90],
-    corruption: [15, 40],
-  },
-  [PersonalityType.MYSTIC]: {
-    loyalty: [30, 60],
-    competence: [10, 40],
-    ambition: [30, 70],
-    corruption: [20, 50],
-  },
+  [PersonalityType.ZEALOT]: statRange('zealot'),
+  [PersonalityType.IDEALIST]: statRange('idealist'),
+  [PersonalityType.REFORMER]: statRange('reformer'),
+  [PersonalityType.TECHNOCRAT]: statRange('technocrat'),
+  [PersonalityType.APPARATCHIK]: statRange('apparatchik'),
+  [PersonalityType.POPULIST]: statRange('populist'),
+  [PersonalityType.MILITARIST]: statRange('militarist'),
+  [PersonalityType.MYSTIC]: statRange('mystic'),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

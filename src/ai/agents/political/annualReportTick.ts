@@ -6,6 +6,7 @@
  * commendations, and game-over from consecutive failures.
  */
 
+import { political } from '@/config';
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
 import { getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import type { QuotaState } from './PoliticalAgent';
@@ -19,13 +20,13 @@ import type { GameRng } from '../../../game/SeedSystem';
 import type { SimCallbacks } from '../../../game/engine/types';
 
 /** Consecutive quota failures that trigger game over. */
-const MAX_QUOTA_FAILURES = 3;
+const MAX_QUOTA_FAILURES = political.annualReport.maxQuotaFailures;
 
 /** Pripiski inflation applied to next quota when falsification succeeds. */
-const PRIPISKI_QUOTA_INFLATION = 0.2;
+const PRIPISKI_QUOTA_INFLATION = political.annualReport.pripiskiQuotaInflation;
 
 /** Additional investigation probability from prior pripiski history. */
-const PRIPISKI_HISTORY_INSPECTION_BONUS = 0.15;
+const PRIPISKI_HISTORY_INSPECTION_BONUS = political.annualReport.pripiskiHistoryInspectionBonus;
 
 /** Mutable engine state that the annual report helpers read and write. */
 export interface AnnualReportEngineState {

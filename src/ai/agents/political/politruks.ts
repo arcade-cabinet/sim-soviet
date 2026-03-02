@@ -10,6 +10,7 @@
  * Target ratio: 1 politruk per 20 workers (modified by doctrine/difficulty).
  */
 
+import { political } from '@/config';
 import type { GameRng } from '@/game/SeedSystem';
 import type {
   IdeologySessionResult,
@@ -19,34 +20,31 @@ import type {
   PolitrukPersonality,
 } from './types';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ─── Constants (from config/political.json) ─────────────────────────────────
+
+const cfg = political.politruks;
 
 /** How often politruks rotate to a new building (ticks). */
-export const POLITRUK_ROTATION_INTERVAL = 120;
+export const POLITRUK_ROTATION_INTERVAL = cfg.rotationInterval;
 
 /** Politruk morale boost (through fear). */
-export const POLITRUK_MORALE_BOOST = 10;
+export const POLITRUK_MORALE_BOOST = cfg.moraleBoost;
 
 /** Base workers per politruk ratio. */
-export const WORKERS_PER_POLITRUK = 20;
+export const WORKERS_PER_POLITRUK = cfg.workersPerPolitruk;
 
 /** How often ideology sessions occur (ticks between sessions). */
-export const SESSION_INTERVAL = 30;
+export const SESSION_INTERVAL = cfg.sessionInterval;
 
 /** Base loyalty threshold — workers below this fail the check. */
-export const LOYALTY_THRESHOLD = 40;
+export const LOYALTY_THRESHOLD = cfg.loyaltyThreshold;
 
 /** Chance a failed worker gets flagged for KGB investigation. */
-export const KGB_FLAG_CHANCE_FROM_SESSION = 0.25;
+export const KGB_FLAG_CHANCE_FROM_SESSION = cfg.kgbFlagChanceFromSession;
 
 // ─── Personality Weights ────────────────────────────────────────────────────
 
-const PERSONALITY_WEIGHTS: Record<PolitrukPersonality, number> = {
-  zealous: 25,
-  lazy: 25,
-  paranoid: 25,
-  corrupt: 25,
-};
+const PERSONALITY_WEIGHTS: Record<PolitrukPersonality, number> = cfg.personalityWeights as Record<PolitrukPersonality, number>;
 
 /** Roll a random politruk personality. */
 export function rollPolitrukPersonality(rng: GameRng): PolitrukPersonality {
@@ -85,36 +83,20 @@ interface PersonalityBehavior {
 
 const PERSONALITY_BEHAVIORS: Record<PolitrukPersonality, PersonalityBehavior> = {
   zealous: {
-    loyaltyThresholdMult: 1.3, // Harsh checks — higher threshold to pass
-    skipChance: 0,
-    kgbFlagMult: 1.5,
+    ...cfg.personalityBehaviors.zealous,
     acceptsBribes: false,
-    extraWorkers: 2,
-    sessionProductionPenalty: 0.2,
   },
   lazy: {
-    loyaltyThresholdMult: 0.7, // Lenient — lower threshold
-    skipChance: 0.4, // 40% chance to skip session entirely
-    kgbFlagMult: 0.5,
+    ...cfg.personalityBehaviors.lazy,
     acceptsBribes: false,
-    extraWorkers: 0,
-    sessionProductionPenalty: 0.05, // Barely disrupts production
   },
   paranoid: {
-    loyaltyThresholdMult: 1.0,
-    skipChance: 0,
-    kgbFlagMult: 2.0, // Flags innocents — double KGB referrals
+    ...cfg.personalityBehaviors.paranoid,
     acceptsBribes: false,
-    extraWorkers: 1,
-    sessionProductionPenalty: 0.15,
   },
   corrupt: {
-    loyaltyThresholdMult: 0.9,
-    skipChance: 0.2,
-    kgbFlagMult: 0.3, // Easily bribed — fewer flags
+    ...cfg.personalityBehaviors.corrupt,
     acceptsBribes: true,
-    extraWorkers: 0,
-    sessionProductionPenalty: 0.1,
   },
 };
 

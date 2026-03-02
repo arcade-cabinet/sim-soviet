@@ -493,3 +493,380 @@ export interface ChronologyConfig {
   startYear: number;
   startMonth: number;
 }
+
+// ── Political Config ──────────────────────────────────────────────────────
+
+/** KGB personnel file and investigation parameters. */
+export interface KGBConfig {
+  markAmounts: Record<string, number>;
+  commendationAmounts: Record<string, number>;
+  decayIntervals: Record<string, number>;
+  arrestThreshold: number;
+  markThresholds: Record<string, number>;
+  investigationMinTicks: number;
+  investigationMaxTicks: number;
+  reassignmentInterval: number;
+  moraleDrop: number;
+  loyaltyBoost: number;
+  flagChance: number;
+  blackMarkChanceThorough: number;
+  blackMarkChancePurge: number;
+  baseArrestCount: number;
+  purgeArrestMult: number;
+  informantReportInterval: number;
+  informantFlagChance: number;
+  escalationMarkThreshold: number;
+}
+
+/** Raikom district committee parameters. */
+export interface RaikomConfig {
+  baseVisitInterval: number;
+  visitIntervalVariance: number;
+  blatFavorRate: number;
+  badReportFavorThreshold: number;
+  goodReportFavorThreshold: number;
+  badReportMarks: number;
+  directiveDeadlineTicks: number;
+  maxActiveDirectives: number;
+  neutralStartingFavor: number;
+  badReportFavorLoss: number;
+  failedDirectiveFavorLoss: number;
+  favorDriftUp: number;
+  favorDriftDown: number;
+}
+
+/** Politruk personality behavior (numeric fields only). */
+export interface PolitrukBehaviorConfig {
+  loyaltyThresholdMult: number;
+  skipChance: number;
+  kgbFlagMult: number;
+  extraWorkers: number;
+  sessionProductionPenalty: number;
+}
+
+/** Politruk system parameters. */
+export interface PolitruksConfig {
+  rotationInterval: number;
+  moraleBoost: number;
+  workersPerPolitruk: number;
+  sessionInterval: number;
+  loyaltyThreshold: number;
+  kgbFlagChanceFromSession: number;
+  personalityWeights: Record<string, number>;
+  personalityBehaviors: Record<string, PolitrukBehaviorConfig>;
+}
+
+/** Per-dvor loyalty parameters. */
+export interface LoyaltyConfig {
+  gainGoodFood: number;
+  lossStarvation: number;
+  sabotageChance: number;
+  flightChance: number;
+  disloyalThreshold: number;
+  flightThreshold: number;
+}
+
+/** Score point values. */
+export interface ScoringPointsConfig {
+  workersAlive: number;
+  quotaMet: number;
+  quotaExceeded: number;
+  buildingStanding: number;
+  commendation: number;
+  blackMark: number;
+  kgbLoss: number;
+  conscripted: number;
+  cleanEra: number;
+}
+
+/** Scoring system parameters. */
+export interface ScoringConfig {
+  points: ScoringPointsConfig;
+  scoreMultiplierMatrix: Record<string, Record<string, number>>;
+}
+
+/** Compulsory delivery rates per doctrine. */
+export interface DeliveryRatesConfig {
+  food: number;
+  vodka: number;
+  money: number;
+}
+
+/** Compulsory delivery system parameters. */
+export interface CompulsoryDeliveriesConfig {
+  rates: Record<string, DeliveryRatesConfig>;
+  corruptionMin: number;
+  corruptionMax: number;
+}
+
+/** Annual report parameters. */
+export interface AnnualReportConfig {
+  maxQuotaFailures: number;
+  pripiskiQuotaInflation: number;
+  pripiskiHistoryInspectionBonus: number;
+}
+
+/** Military parameters. */
+export interface MilitaryConfig {
+  wartimeCasualtyRate: number;
+  conscriptionDeadlineTicks: number;
+}
+
+/** Doctrine policy numeric fields. */
+export interface DoctrinePolicyConfig {
+  productionMult: number;
+  consumptionMult: number;
+}
+
+/** Doctrine mechanic parameters. */
+export interface DoctrineConfig {
+  mechanicIntervals: Record<string, number>;
+  grainRequisitionRate: number;
+  collectivizationSeizureRate: number;
+  collectivizationResistanceChance: number;
+  stakhanoviteProductionBonus: number;
+  stakhanovitePressurePenalty: number;
+  wartimeConscriptionRate: number;
+  wartimeProductionBonus: number;
+  thawFreezePhaseTicks: number;
+  thawMoraleBoost: number;
+  freezeMoralePenalty: number;
+  thawProductionBonus: number;
+  freezeProductionPenalty: number;
+  stagnationDecayMult: number;
+  stagnationPaperworkPerTick: number;
+  stagnationProductivityLossPerYear: number;
+  stagnationCorruptionMult: number;
+  eternalPaperworkThreshold: number;
+  eternalPaperworkBase: number;
+  eternalPaperworkGrowthFactor: number;
+  eternalBureaucracySlowdownPer1000: number;
+  policies: Record<string, DoctrinePolicyConfig>;
+}
+
+/** Complete political configuration. */
+export interface PoliticalConfig {
+  kgb: KGBConfig;
+  raikom: RaikomConfig;
+  politruks: PolitruksConfig;
+  loyalty: LoyaltyConfig;
+  scoring: ScoringConfig;
+  entityScaling: Record<string, Record<string, [number, number]>>;
+  highCorruptionThreshold: number;
+  compulsoryDeliveries: CompulsoryDeliveriesConfig;
+  annualReport: AnnualReportConfig;
+  military: MilitaryConfig;
+  doctrine: DoctrineConfig;
+}
+
+// ── Social Config ─────────────────────────────────────────────────────────
+
+/** Fire system parameters. */
+export interface FireConfig {
+  spreadChanceBase: number;
+  spreadRadius: number;
+  fireStationSuppression: number;
+  fireStationRadius: number;
+  durationMin: number;
+  durationMax: number;
+  damagePerTick: number;
+  rainFactor: number;
+  maxZeppelins: number;
+  zeppelinExtinguishTicks: number;
+  zeppelinSpeed: number;
+  zeppelinArrivalDist: number;
+}
+
+/** Disease definition numeric parameters. */
+export interface DiseaseDefConfig {
+  spreadRate: number;
+  mortalityRate: number;
+  durationTicks: number;
+}
+
+/** Disease system parameters. */
+export interface DiseaseConfig {
+  baseOutbreakChance: number;
+  overcrowdingMult: number;
+  winterMult: number;
+  foodShortageThreshold: number;
+  foodShortageScurvyMult: number;
+  clinicReductionPerBuilding: number;
+  maxClinicReduction: number;
+  sickLaborMult: number;
+  definitions: Record<string, DiseaseDefConfig>;
+}
+
+/** Gulag parameters. */
+export interface GulagConfig {
+  arrestChance: number;
+}
+
+/** Complete social configuration. */
+export interface SocialConfig {
+  fire: FireConfig;
+  disease: DiseaseConfig;
+  gulag: GulagConfig;
+}
+
+// ── Infrastructure Config ─────────────────────────────────────────────────
+
+/** Governor AI parameters. */
+export interface GovernorConfig {
+  foodCrisisThreshold: number;
+  hungerCrisisThreshold: number;
+  repairThreshold: number;
+  minWorkingAge: number;
+  foodFocusMultiplier: number;
+}
+
+/** Construction demand detection thresholds. */
+export interface DemandConfig {
+  foodCriticalThreshold: number;
+  foodDemandThreshold: number;
+  vodkaDemandThreshold: number;
+  vodkaCriticalThreshold: number;
+  housingOccupancyThreshold: number;
+}
+
+/** Auto-builder parameters. */
+export interface AutoBuilderConfig {
+  maxPlacementDistance: number;
+  candidateLimit: number;
+  collectiveCheckInterval: number;
+}
+
+/** Construction planner parameters. */
+export interface PlannerConfig {
+  demandPriorityWeight: Record<string, number>;
+  mandateWeight: number;
+}
+
+/** Transport condition thresholds. */
+export interface TransportConditionThresholds {
+  maintenanceTrigger: number;
+  downgradeOne: number;
+  downgradeTwo: number;
+}
+
+/** Transport system parameters. */
+export interface TransportConfig {
+  buildingScores: Record<string, number>;
+  tierBonus: Record<string, number>;
+  eraBonus: Record<string, number>;
+  mitigation: Record<string, number>;
+  scoreToQualityThresholds: Record<string, number>;
+  recalcInterval: number;
+  rasputitsaDecay: number;
+  winterDecay: number;
+  baselineDecay: number;
+  maintenanceRecovery: number;
+  maintenanceTimberCost: number;
+  conditionThresholds: TransportConditionThresholds;
+}
+
+/** Settlement tier numeric thresholds. */
+export interface TierThresholdConfig {
+  populationReq: number;
+  nonAgriPercent: number;
+  upgradeTicks: number;
+  downgradeTicks: number;
+}
+
+/** Settlement system parameters. */
+export interface SettlementConfig {
+  gorodMinDistinctRoles: number;
+  tierThresholds: Record<string, TierThresholdConfig>;
+}
+
+/** Default construction cost parameters. */
+export interface ConstructionConfig {
+  defaultBaseTicks: number;
+  defaultStaffCap: number;
+  defaultMaterialCost: Record<string, number>;
+}
+
+/** Complete infrastructure configuration. */
+export interface InfrastructureConfig {
+  governor: GovernorConfig;
+  demand: DemandConfig;
+  autoBuilder: AutoBuilderConfig;
+  planner: PlannerConfig;
+  transport: TransportConfig;
+  settlement: SettlementConfig;
+  construction: ConstructionConfig;
+}
+
+// ── Narrative Config ──────────────────────────────────────────────────────
+
+/** Event system parameters. */
+export interface EventsConfig {
+  cooldownTicks: number;
+  baseProbability: number;
+  maxRecentMemory: number;
+}
+
+/** Politburo numeric modifier defaults. */
+export interface PolitburoDefaultModifiers {
+  foodProductionMult: number;
+  vodkaProductionMult: number;
+  factoryOutputMult: number;
+  buildingCostMult: number;
+  techResearchMult: number;
+  moraleModifier: number;
+  purgeFrequencyMult: number;
+  fearLevel: number;
+  surveillanceRate: number;
+  conscriptionRate: number;
+  crimeRate: number;
+  corruptionDrain: number;
+  quotaDifficultyMult: number;
+  populationGrowthMult: number;
+  supplyChainDelayMult: number;
+  infrastructureDecayMult: number;
+  pollutionMult: number;
+  accidentRate: number;
+  hospitalEffectiveness: number;
+  literacyRate: number;
+  propagandaIntensity: number;
+}
+
+/** Appointment strategy numeric fields. */
+export interface AppointmentStrategyConfig {
+  retentionRate: number;
+  loyaltyThreshold: number;
+}
+
+/** Personality stat range (min, max). */
+export interface StatRangeConfig {
+  loyalty: [number, number];
+  competence: [number, number];
+  ambition: [number, number];
+  corruption: [number, number];
+}
+
+/** Politburo system parameters. */
+export interface PolitburoConfig {
+  defaultModifiers: PolitburoDefaultModifiers;
+  appointmentStrategies: Record<string, AppointmentStrategyConfig>;
+  personalityStatRanges: Record<string, StatRangeConfig>;
+}
+
+/** Complete narrative configuration. */
+export interface NarrativeConfig {
+  events: EventsConfig;
+  politburo: PolitburoConfig;
+}
+
+// ── Meta Config ───────────────────────────────────────────────────────────
+
+/** Minigame system parameters. */
+export interface MinigamesConfig {
+  defaultCooldown: number;
+  queuePopulationThreshold: number;
+}
+
+/** Complete meta configuration. */
+export interface MetaConfig {
+  minigames: MinigamesConfig;
+}

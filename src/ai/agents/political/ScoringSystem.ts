@@ -10,6 +10,7 @@
  * (docs/design/scoring.md) and exported for NewGameFlow and other UI.
  */
 
+import { political } from '@/config';
 import { ERA_ORDER } from '../../../game/era';
 
 // ─────────────────────────────────────────────────────────
@@ -244,39 +245,14 @@ export const CONSEQUENCE_PRESETS: Record<ConsequenceLevel, ConsequenceConfig> = 
  * Final score multiplier based on difficulty x consequence combination.
  * Higher = more rewarding. Permadeath always pays the most.
  */
-export const SCORE_MULTIPLIER_MATRIX: Record<DifficultyLevel, Record<ConsequenceLevel, number>> = {
-  worker: {
-    forgiving: 0.5,
-    permadeath: 1.0,
-    harsh: 0.7,
-  },
-  comrade: {
-    forgiving: 0.8,
-    permadeath: 1.5,
-    harsh: 1.2,
-  },
-  tovarish: {
-    forgiving: 1.0,
-    permadeath: 2.0,
-    harsh: 1.8,
-  },
-};
+export const SCORE_MULTIPLIER_MATRIX: Record<DifficultyLevel, Record<ConsequenceLevel, number>> =
+  political.scoring.scoreMultiplierMatrix as Record<DifficultyLevel, Record<ConsequenceLevel, number>>;
 
 // ─────────────────────────────────────────────────────────
 //  CONSTANTS: SCORE POINT VALUES
 // ─────────────────────────────────────────────────────────
 
-const POINTS = {
-  workersAlive: 2,
-  quotaMet: 50,
-  quotaExceeded: 25,
-  buildingStanding: 5,
-  commendation: 30,
-  blackMark: -40,
-  kgbLoss: -10,
-  conscripted: -5,
-  cleanEra: 100,
-} as const;
+const POINTS = political.scoring.points;
 
 // ─────────────────────────────────────────────────────────
 //  CONSTANTS: MEDALS

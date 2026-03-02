@@ -25,29 +25,32 @@
  * archetypes (producers, housing, etc.).
  */
 
+import { infrastructure } from '@/config';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { assignedCitizens, getResourceEntity, underConstruction } from '@/ecs/archetypes';
 import type { Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
 
+const ccfg = infrastructure.construction;
+
 /**
  * Default construction ticks when a building def doesn't specify constructionCost.
  * At ~3 ticks per in-game day, this is roughly 5 days of construction.
  */
-export const DEFAULT_BASE_TICKS = 15;
+export const DEFAULT_BASE_TICKS = ccfg.defaultBaseTicks;
 
 /** Default staffCap when a building def doesn't specify constructionCost.staffCap. */
-export const DEFAULT_STAFF_CAP = 5;
+export const DEFAULT_STAFF_CAP = ccfg.defaultStaffCap;
 
 /**
  * Default material cost when a building def doesn't specify constructionCost.
  * Represents a small wooden structure (Era 1 kolkhoz building).
  */
 export const DEFAULT_MATERIAL_COST = {
-  timber: 30,
-  steel: 10,
-  cement: 5,
-  prefab: 0,
+  timber: ccfg.defaultMaterialCost.timber,
+  steel: ccfg.defaultMaterialCost.steel,
+  cement: ccfg.defaultMaterialCost.cement,
+  prefab: ccfg.defaultMaterialCost.prefab,
 } as const;
 
 type MaterialSet = { timber: number; steel: number; cement: number; prefab: number };

@@ -1,0 +1,52 @@
+{
+  "events": {
+    "cooldownTicks": 60,
+    "baseProbability": 0.08,
+    "maxRecentMemory": 10
+  },
+  "politburo": {
+    "defaultModifiers": {
+      "foodProductionMult": 1.0,
+      "vodkaProductionMult": 1.0,
+      "factoryOutputMult": 1.0,
+      "buildingCostMult": 1.0,
+      "techResearchMult": 1.0,
+      "moraleModifier": 0,
+      "purgeFrequencyMult": 1.0,
+      "fearLevel": 30,
+      "surveillanceRate": 4,
+      "conscriptionRate": 5,
+      "crimeRate": 30,
+      "corruptionDrain": 0,
+      "quotaDifficultyMult": 1.0,
+      "populationGrowthMult": 1.0,
+      "supplyChainDelayMult": 1.0,
+      "infrastructureDecayMult": 1.0,
+      "pollutionMult": 1.0,
+      "accidentRate": 0.02,
+      "hospitalEffectiveness": 1.0,
+      "literacyRate": 70,
+      "propagandaIntensity": 50
+    },
+    "appointmentStrategies": {
+      "zealot": { "retentionRate": 0.0, "loyaltyThreshold": 90 },
+      "idealist": { "retentionRate": 0.4, "loyaltyThreshold": 30 },
+      "reformer": { "retentionRate": 0.6, "loyaltyThreshold": 20 },
+      "technocrat": { "retentionRate": 0.5, "loyaltyThreshold": 10 },
+      "apparatchik": { "retentionRate": 0.8, "loyaltyThreshold": 10 },
+      "populist": { "retentionRate": 0.4, "loyaltyThreshold": 30 },
+      "militarist": { "retentionRate": 0.3, "loyaltyThreshold": 60 },
+      "mystic": { "retentionRate": 0.5, "loyaltyThreshold": 20 }
+    },
+    "personalityStatRanges": {
+      "zealot": { "loyalty": [70, 95], "competence": [20, 60], "ambition": [50, 90], "corruption": [10, 30] },
+      "idealist": { "loyalty": [50, 80], "competence": [40, 70], "ambition": [20, 50], "corruption": [5, 20] },
+      "reformer": { "loyalty": [30, 60], "competence": [50, 80], "ambition": [40, 70], "corruption": [10, 25] },
+      "technocrat": { "loyalty": [40, 70], "competence": [70, 95], "ambition": [30, 60], "corruption": [10, 30] },
+      "apparatchik": { "loyalty": [50, 80], "competence": [20, 50], "ambition": [20, 50], "corruption": [30, 70] },
+      "populist": { "loyalty": [40, 70], "competence": [30, 60], "ambition": [50, 80], "corruption": [20, 50] },
+      "militarist": { "loyalty": [60, 90], "competence": [40, 70], "ambition": [60, 90], "corruption": [15, 40] },
+      "mystic": { "loyalty": [30, 60], "competence": [10, 40], "ambition": [30, 70], "corruption": [20, 50] }
+    }
+  }
+}

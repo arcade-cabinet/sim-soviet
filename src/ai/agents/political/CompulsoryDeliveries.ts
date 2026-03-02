@@ -16,6 +16,7 @@
  * siphons goods into the bureaucracy on top of the official delivery rates.
  */
 
+import { political } from '@/config';
 import type { GameRng } from '../../../game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -77,20 +78,12 @@ export interface CompulsoryDeliverySaveData {
  * | stagnation       | 0.45 | 0.40  | 0.50  | Plus "administrative losses"   |
  * | eternal          | 0.40 | 0.35  | 0.40  | Bureaucratic                   |
  */
-const DELIVERY_RATES: Record<Doctrine, DeliveryRates> = {
-  revolutionary: { food: 0.4, vodka: 0.3, money: 0.2 },
-  industrialization: { food: 0.5, vodka: 0.4, money: 0.6 },
-  wartime: { food: 0.7, vodka: 0.6, money: 0.7 },
-  reconstruction: { food: 0.35, vodka: 0.25, money: 0.3 },
-  thaw: { food: 0.3, vodka: 0.2, money: 0.25 },
-  freeze: { food: 0.45, vodka: 0.35, money: 0.5 },
-  stagnation: { food: 0.45, vodka: 0.4, money: 0.5 },
-  eternal: { food: 0.4, vodka: 0.35, money: 0.4 },
-};
+const DELIVERY_RATES: Record<Doctrine, DeliveryRates> =
+  political.compulsoryDeliveries.rates as Record<Doctrine, DeliveryRates>;
 
 /** Corruption bounds during stagnation — "administrative losses". */
-const CORRUPTION_MIN = 0.05;
-const CORRUPTION_MAX = 0.15;
+const CORRUPTION_MIN = political.compulsoryDeliveries.corruptionMin;
+const CORRUPTION_MAX = political.compulsoryDeliveries.corruptionMax;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  COMPULSORY DELIVERIES CLASS

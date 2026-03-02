@@ -20,8 +20,11 @@
  * These mechanics apply composable effects each tick when their era is active.
  */
 
+import { political } from '@/config';
 import type { GameRng } from '@/game/SeedSystem';
 import type { DoctrineMechanicConfig, DoctrineMechanicEffect, DoctrineMechanicId } from './types';
+
+const dcfg = political.doctrine;
 
 // ─── Mechanic Configurations ────────────────────────────────────────────────
 
@@ -30,107 +33,107 @@ export const DOCTRINE_MECHANICS: Record<DoctrineMechanicId, DoctrineMechanicConf
   grain_requisitioning: {
     id: 'grain_requisitioning',
     activeEras: ['revolution'],
-    intervalTicks: 30, // Every month
+    intervalTicks: dcfg.mechanicIntervals.grain_requisitioning,
   },
   collectivization_seizure: {
     id: 'collectivization_seizure',
     activeEras: ['collectivization'],
-    intervalTicks: 90, // Every quarter
+    intervalTicks: dcfg.mechanicIntervals.collectivization_seizure,
   },
   stakhanovite_bonus: {
     id: 'stakhanovite_bonus',
     activeEras: ['industrialization', 'reconstruction', 'thaw_and_freeze'],
-    intervalTicks: 30, // Monthly
+    intervalTicks: dcfg.mechanicIntervals.stakhanovite_bonus,
   },
   wartime_conscription: {
     id: 'wartime_conscription',
     activeEras: ['great_patriotic'],
-    intervalTicks: 60, // Bi-monthly
+    intervalTicks: dcfg.mechanicIntervals.wartime_conscription,
   },
   thaw_freeze_oscillation: {
     id: 'thaw_freeze_oscillation',
     activeEras: ['thaw_and_freeze'],
-    intervalTicks: 30, // Monthly check (phase changes every ~720 ticks / 2 years)
+    intervalTicks: dcfg.mechanicIntervals.thaw_freeze_oscillation,
   },
   stagnation_rot: {
     id: 'stagnation_rot',
     activeEras: ['stagnation'],
-    intervalTicks: 30, // Monthly decay check
+    intervalTicks: dcfg.mechanicIntervals.stagnation_rot,
   },
   eternal_bureaucracy: {
     id: 'eternal_bureaucracy',
     activeEras: ['the_eternal'],
-    intervalTicks: 10, // Frequent paperwork accumulation
+    intervalTicks: dcfg.mechanicIntervals.eternal_bureaucracy,
   },
 };
 
 // ─── Mechanic Constants ─────────────────────────────────────────────────────
 
 /** Fraction of food requisitioned during War Communism. */
-const GRAIN_REQUISITION_RATE = 0.3;
+const GRAIN_REQUISITION_RATE = dcfg.grainRequisitionRate;
 
 /** Fraction of food seized during collectivization events. */
-const COLLECTIVIZATION_SEIZURE_RATE = 0.15;
+const COLLECTIVIZATION_SEIZURE_RATE = dcfg.collectivizationSeizureRate;
 
 /** Chance of resistance during collectivization (pop loss). */
-const COLLECTIVIZATION_RESISTANCE_CHANCE = 0.2;
+const COLLECTIVIZATION_RESISTANCE_CHANCE = dcfg.collectivizationResistanceChance;
 
 /** Stakhanovite production bonus when workers exceed quota. */
-const STAKHANOVITE_PRODUCTION_BONUS = 0.15;
+const STAKHANOVITE_PRODUCTION_BONUS = dcfg.stakhanoviteProductionBonus;
 
 /** Stakhanovite pressure penalty on non-Stakhanovites. */
-const STAKHANOVITE_PRESSURE_PENALTY = 0.05;
+const STAKHANOVITE_PRESSURE_PENALTY = dcfg.stakhanovitePressurePenalty;
 
 /** Fraction of population available for wartime conscription. */
-const WARTIME_CONSCRIPTION_RATE = 0.05;
+const WARTIME_CONSCRIPTION_RATE = dcfg.wartimeConscriptionRate;
 
 /** Production bonus during wartime (patriotic fervor). */
-const WARTIME_PRODUCTION_BONUS = 0.1;
+const WARTIME_PRODUCTION_BONUS = dcfg.wartimeProductionBonus;
 
 // ── Thaw/Freeze Constants ─────────────────────────────────────────────────
 
 /** Ticks per thaw/freeze phase (720 ticks ~ 2 in-game years at 30 ticks/month). */
-const THAW_FREEZE_PHASE_TICKS = 720;
+const THAW_FREEZE_PHASE_TICKS = dcfg.thawFreezePhaseTicks;
 
 /** Morale boost during thaw phase. */
-const THAW_MORALE_BOOST = 5;
+const THAW_MORALE_BOOST = dcfg.thawMoraleBoost;
 
 /** Morale penalty during freeze phase. */
-const FREEZE_MORALE_PENALTY = -5;
+const FREEZE_MORALE_PENALTY = dcfg.freezeMoralePenalty;
 
 /** Production bonus during thaw phase (relaxed policies). */
-const THAW_PRODUCTION_BONUS = 0.1;
+const THAW_PRODUCTION_BONUS = dcfg.thawProductionBonus;
 
 /** Production penalty during freeze phase (crackdowns). */
-const FREEZE_PRODUCTION_PENALTY = 0.1;
+const FREEZE_PRODUCTION_PENALTY = dcfg.freezeProductionPenalty;
 
 // ── Stagnation Constants ──────────────────────────────────────────────────
 
 /** Building decay rate multiplier during stagnation. */
-const STAGNATION_DECAY_MULT = 2.0;
+const STAGNATION_DECAY_MULT = dcfg.stagnationDecayMult;
 
 /** Base paperwork accumulation per tick during stagnation. */
-const STAGNATION_PAPERWORK_PER_TICK = 3;
+const STAGNATION_PAPERWORK_PER_TICK = dcfg.stagnationPaperworkPerTick;
 
 /** Productivity decrease per year of stagnation (cumulative). */
-const STAGNATION_PRODUCTIVITY_LOSS_PER_YEAR = 0.01;
+const STAGNATION_PRODUCTIVITY_LOSS_PER_YEAR = dcfg.stagnationProductivityLossPerYear;
 
 /** Corruption rate multiplier during stagnation. */
-const STAGNATION_CORRUPTION_MULT = 1.5;
+const STAGNATION_CORRUPTION_MULT = dcfg.stagnationCorruptionMult;
 
 // ── Eternal Bureaucracy Constants ─────────────────────────────────────────
 
 /** Paperwork victory threshold — reaching this wins the "bureaucratic singularity". */
-export const ETERNAL_PAPERWORK_THRESHOLD = 5000;
+export const ETERNAL_PAPERWORK_THRESHOLD = dcfg.eternalPaperworkThreshold;
 
 /** Base paperwork accumulation per tick in the eternal era. */
-const ETERNAL_PAPERWORK_BASE = 5;
+const ETERNAL_PAPERWORK_BASE = dcfg.eternalPaperworkBase;
 
 /** Exponential growth factor for paperwork (per 1000 existing paperwork). */
-const ETERNAL_PAPERWORK_GROWTH_FACTOR = 0.001;
+const ETERNAL_PAPERWORK_GROWTH_FACTOR = dcfg.eternalPaperworkGrowthFactor;
 
 /** Production slowdown per 1000 paperwork accumulated. */
-const ETERNAL_BUREAUCRACY_SLOWDOWN_PER_1000 = 0.05;
+const ETERNAL_BUREAUCRACY_SLOWDOWN_PER_1000 = dcfg.eternalBureaucracySlowdownPer1000;
 
 // ─── Thaw/Freeze State ─────────────────────────────────────────────────────
 
@@ -471,56 +474,27 @@ export interface DoctrinePolicy {
   blackMarketTolerated: boolean;
 }
 
-const DOCTRINE_POLICIES: Record<string, DoctrinePolicy> = {
-  revolution: {
-    productionMult: 0.8,
-    consumptionMult: 1.2,
-    privateGardensAllowed: true, // NEP remnants
-    blackMarketTolerated: true,
-  },
-  collectivization: {
-    productionMult: 0.9,
-    consumptionMult: 1.0,
-    privateGardensAllowed: false, // Collectivized
-    blackMarketTolerated: false,
-  },
-  industrialization: {
-    productionMult: 1.1,
-    consumptionMult: 1.0,
-    privateGardensAllowed: false,
-    blackMarketTolerated: false,
-  },
-  great_patriotic: {
-    productionMult: 0.7,
-    consumptionMult: 1.5,
-    privateGardensAllowed: true, // Desperate times
-    blackMarketTolerated: true,
-  },
-  reconstruction: {
-    productionMult: 1.0,
-    consumptionMult: 0.9,
-    privateGardensAllowed: true,
-    blackMarketTolerated: false,
-  },
-  thaw_and_freeze: {
-    productionMult: 1.1,
-    consumptionMult: 0.9,
-    privateGardensAllowed: true,
-    blackMarketTolerated: true,
-  },
-  stagnation: {
-    productionMult: 0.9,
-    consumptionMult: 1.1,
-    privateGardensAllowed: true,
-    blackMarketTolerated: true,
-  },
-  the_eternal: {
-    productionMult: 1.0,
-    consumptionMult: 1.0,
-    privateGardensAllowed: true,
-    blackMarketTolerated: true,
-  },
+/** Build DOCTRINE_POLICIES from config (numeric mults) + hardcoded booleans. */
+const BOOLEAN_POLICIES: Record<string, { privateGardensAllowed: boolean; blackMarketTolerated: boolean }> = {
+  revolution: { privateGardensAllowed: true, blackMarketTolerated: true },
+  collectivization: { privateGardensAllowed: false, blackMarketTolerated: false },
+  industrialization: { privateGardensAllowed: false, blackMarketTolerated: false },
+  great_patriotic: { privateGardensAllowed: true, blackMarketTolerated: true },
+  reconstruction: { privateGardensAllowed: true, blackMarketTolerated: false },
+  thaw_and_freeze: { privateGardensAllowed: true, blackMarketTolerated: true },
+  stagnation: { privateGardensAllowed: true, blackMarketTolerated: true },
+  the_eternal: { privateGardensAllowed: true, blackMarketTolerated: true },
 };
+
+const DOCTRINE_POLICIES: Record<string, DoctrinePolicy> = Object.fromEntries(
+  Object.entries(dcfg.policies).map(([eraId, mults]) => [
+    eraId,
+    {
+      ...mults,
+      ...(BOOLEAN_POLICIES[eraId] ?? { privateGardensAllowed: false, blackMarketTolerated: false }),
+    },
+  ]),
+);
 
 /** Default policy for unknown eras. */
 const DEFAULT_POLICY: DoctrinePolicy = {

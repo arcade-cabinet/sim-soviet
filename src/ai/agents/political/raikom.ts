@@ -11,34 +11,37 @@
  * - Reports to Moscow (affects personnel file)
  */
 
+import { political } from '@/config';
 import type { GameRng } from '@/game/SeedSystem';
 import type { RaikomDirective, RaikomPersonality, RaikomState } from './types';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ─── Constants (from config/political.json) ─────────────────────────────────
+
+const cfg = political.raikom;
 
 /** How often the Raikom visits (base ticks between visits). */
-const BASE_VISIT_INTERVAL = 180;
+const BASE_VISIT_INTERVAL = cfg.baseVisitInterval;
 
 /** Variance on visit timing (ticks). */
-const VISIT_INTERVAL_VARIANCE = 60;
+const VISIT_INTERVAL_VARIANCE = cfg.visitIntervalVariance;
 
 /** Favor gained per unit of blat spent. */
-const BLAT_FAVOR_RATE = 5;
+const BLAT_FAVOR_RATE = cfg.blatFavorRate;
 
 /** Favor threshold below which Raikom sends bad reports to Moscow. */
-const BAD_REPORT_FAVOR_THRESHOLD = 30;
+const BAD_REPORT_FAVOR_THRESHOLD = cfg.badReportFavorThreshold;
 
 /** Favor threshold above which Raikom sends good reports to Moscow. */
-const GOOD_REPORT_FAVOR_THRESHOLD = 70;
+const GOOD_REPORT_FAVOR_THRESHOLD = cfg.goodReportFavorThreshold;
 
 /** Marks penalty per bad Moscow report. */
-const BAD_REPORT_MARKS = 1;
+const BAD_REPORT_MARKS = cfg.badReportMarks;
 
 /** How many ticks a directive lasts before deadline. */
-const DIRECTIVE_DEADLINE_TICKS = 120;
+const DIRECTIVE_DEADLINE_TICKS = cfg.directiveDeadlineTicks;
 
 /** Maximum active directives at once. */
-const MAX_ACTIVE_DIRECTIVES = 3;
+const MAX_ACTIVE_DIRECTIVES = cfg.maxActiveDirectives;
 
 // ─── Name Generation ────────────────────────────────────────────────────────
 

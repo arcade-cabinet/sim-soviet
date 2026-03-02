@@ -4,6 +4,7 @@
  * Shared constants, name generation, and pure helpers for the political system.
  */
 
+import { political } from '@/config';
 import type { DialogueContext } from '@/content/dialogue';
 import { getDialogue } from '@/content/dialogue';
 import { buildingsLogic } from '@/ecs/archetypes';
@@ -11,41 +12,17 @@ import type { GameRng } from '@/game/SeedSystem';
 import type { SettlementTier } from '@/ai/agents/infrastructure/SettlementSystem';
 import type { PoliticalRole } from './types';
 
-// ─── Entity Scaling ─────────────────────────────────────────────────────────
+// ─── Entity Scaling (from config/political.json) ────────────────────────────
 
 /** Entity count ranges per tier: [min, max] for each role. */
-export const ENTITY_SCALING: Record<SettlementTier, Record<PoliticalRole, [min: number, max: number]>> = {
-  selo: {
-    politruk: [0, 1],
-    kgb_agent: [0, 0],
-    military_officer: [0, 0],
-    conscription_officer: [0, 0],
-  },
-  posyolok: {
-    politruk: [1, 2],
-    kgb_agent: [0, 1],
-    military_officer: [0, 1],
-    conscription_officer: [0, 0],
-  },
-  pgt: {
-    politruk: [2, 3],
-    kgb_agent: [1, 2],
-    military_officer: [1, 1],
-    conscription_officer: [0, 1],
-  },
-  gorod: {
-    politruk: [3, 5],
-    kgb_agent: [2, 4],
-    military_officer: [1, 2],
-    conscription_officer: [1, 1],
-  },
-};
+export const ENTITY_SCALING: Record<SettlementTier, Record<PoliticalRole, [min: number, max: number]>> =
+  political.entityScaling as Record<SettlementTier, Record<PoliticalRole, [min: number, max: number]>>;
 
 /** Wartime eras double military presence. */
 export const WARTIME_ERAS = new Set(['revolution', 'great_patriotic']);
 
 /** Corruption threshold above which KGB presence increases. */
-export const HIGH_CORRUPTION_THRESHOLD = 50;
+export const HIGH_CORRUPTION_THRESHOLD = political.highCorruptionThreshold;
 
 // ─── Name Generation ────────────────────────────────────────────────────────
 

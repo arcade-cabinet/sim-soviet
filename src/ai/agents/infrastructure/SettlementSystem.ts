@@ -10,6 +10,7 @@
  * multiple consecutive ticks.
  */
 
+import { infrastructure } from '@/config';
 import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
 import { getBuildingDef } from '@/data/buildingDefs';
 
@@ -74,7 +75,7 @@ export interface SettlementSaveData {
 // ─────────────────────────────────────────────────────────
 
 /** Minimum distinct building roles required for gorod tier. */
-export const GOROD_MIN_DISTINCT_ROLES = 5;
+export const GOROD_MIN_DISTINCT_ROLES = infrastructure.settlement.gorodMinDistinctRoles;
 
 /** Settlement tiers in ascending order from village to city. */
 export const TIER_ORDER: readonly SettlementTier[] = ['selo', 'posyolok', 'pgt', 'gorod'];

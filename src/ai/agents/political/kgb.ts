@@ -5,47 +5,50 @@
  * worker arrest (removal), and skill targeting (brain drain).
  */
 
+import { political } from '@/config';
 import type { GameRng } from '@/game/SeedSystem';
 import type { KGBInformant, KGBInvestigation, PoliticalEntityStats, PoliticalTickResult } from './types';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ─── Constants (from config/political.json) ─────────────────────────────────
+
+const cfg = political.kgb;
 
 /** Default investigation duration range (ticks). */
-export const INVESTIGATION_MIN_TICKS = 10;
-export const INVESTIGATION_MAX_TICKS = 30;
+export const INVESTIGATION_MIN_TICKS = cfg.investigationMinTicks;
+export const INVESTIGATION_MAX_TICKS = cfg.investigationMaxTicks;
 
 /** How often KGB agents pick a new building to investigate (ticks). */
-export const KGB_REASSIGNMENT_INTERVAL = 40;
+export const KGB_REASSIGNMENT_INTERVAL = cfg.reassignmentInterval;
 
 /** KGB investigation: morale drop per tick. */
-export const KGB_MORALE_DROP = 3;
+export const KGB_MORALE_DROP = cfg.moraleDrop;
 
 /** KGB investigation: loyalty boost per tick (through fear). */
-export const KGB_LOYALTY_BOOST = 2;
+export const KGB_LOYALTY_BOOST = cfg.loyaltyBoost;
 
 /** Chance per investigation tick that a worker gets flagged. */
-export const KGB_FLAG_CHANCE = 0.1;
+export const KGB_FLAG_CHANCE = cfg.flagChance;
 
 /** Chance that a thorough investigation finds a black mark. */
-export const KGB_BLACK_MARK_CHANCE_THOROUGH = 0.3;
+export const KGB_BLACK_MARK_CHANCE_THOROUGH = cfg.blackMarkChanceThorough;
 
 /** Chance that a purge investigation finds a black mark. */
-export const KGB_BLACK_MARK_CHANCE_PURGE = 0.6;
+export const KGB_BLACK_MARK_CHANCE_PURGE = cfg.blackMarkChancePurge;
 
 /** Base number of workers arrested when an investigation completes with arrest result. */
-export const BASE_ARREST_COUNT = 1;
+export const BASE_ARREST_COUNT = cfg.baseArrestCount;
 
 /** Multiplier for arrest count during purge-intensity investigations. */
-export const PURGE_ARREST_MULT = 3;
+export const PURGE_ARREST_MULT = cfg.purgeArrestMult;
 
 /** Ticks between informant reports. */
-export const INFORMANT_REPORT_INTERVAL = 60;
+export const INFORMANT_REPORT_INTERVAL = cfg.informantReportInterval;
 
 /** Chance that an informant report flags a worker. */
-export const INFORMANT_FLAG_CHANCE = 0.3;
+export const INFORMANT_FLAG_CHANCE = cfg.informantFlagChance;
 
 /** How many existing marks before investigation priority is escalated. */
-export const ESCALATION_MARK_THRESHOLD = 3;
+export const ESCALATION_MARK_THRESHOLD = cfg.escalationMarkThreshold;
 
 // ─── Logic ──────────────────────────────────────────────────────────────────
 

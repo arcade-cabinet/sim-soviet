@@ -11,25 +11,28 @@
  */
 
 import { Vehicle } from 'yuka';
+import { political } from '@/config';
 import { dvory } from '../../../ecs/archetypes';
 import { MSG } from '../../telegrams';
 
 // ---------------------------------------------------------------------------
-// Constants
+// Constants (from config/political.json)
 // ---------------------------------------------------------------------------
 
+const cfg = political.loyalty;
+
 /** Monthly loyalty gain when food supply is good (foodLevel > 0.7). */
-const LOYALTY_GAIN_GOOD_FOOD = 0.15;
+const LOYALTY_GAIN_GOOD_FOOD = cfg.gainGoodFood;
 /** Monthly loyalty loss during starvation (foodLevel <= 0). */
-const LOYALTY_LOSS_STARVATION = -0.8;
+const LOYALTY_LOSS_STARVATION = cfg.lossStarvation;
 /** Sabotage chance per dvor per month when loyalty < 20. */
-const SABOTAGE_CHANCE = 0.1;
+const SABOTAGE_CHANCE = cfg.sabotageChance;
 /** Flight chance per dvor per month when loyalty < 10. */
-const FLIGHT_CHANCE = 0.05;
+const FLIGHT_CHANCE = cfg.flightChance;
 /** Loyalty threshold below which a dvor is considered disloyal. */
-const DISLOYAL_THRESHOLD = 20;
+const DISLOYAL_THRESHOLD = cfg.disloyalThreshold;
 /** Loyalty threshold below which a dvor is at flight risk. */
-const FLIGHT_THRESHOLD = 10;
+const FLIGHT_THRESHOLD = cfg.flightThreshold;
 
 // ---------------------------------------------------------------------------
 // State interface

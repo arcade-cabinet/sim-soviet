@@ -13,11 +13,14 @@
  * Score recalculation is throttled (every 30 ticks).
  */
 
+import { infrastructure } from '@/config';
 import { getBuildingDef } from '@/data/buildingDefs';
 import type { Entity } from '@/ecs/world';
 import type { SeasonProfile } from '../../../game/Chronology';
 import type { GameRng } from '../../../game/SeedSystem';
 import type { SettlementTier } from './SettlementSystem';
+
+const tcfg = infrastructure.transport;
 
 // ── Road Quality Enum ────────────────────────────────────────────────────
 
@@ -51,44 +54,18 @@ const QUALITY_ORDER: RoadQuality[] = [
 // ── Score Tables ─────────────────────────────────────────────────────────
 
 /** Transport score contributed by each building defId. */
-const BUILDING_SCORES: Record<string, number> = {
-  'dirt-path': 1,
-  'road-depot': 3,
-  'train-station': 4,
-  'motor-pool': 4,
-  'rail-depot': 5,
-};
+const BUILDING_SCORES: Record<string, number> = tcfg.buildingScores;
 
 /** Bonus score from settlement tier (Party attention). */
-const TIER_BONUS: Record<SettlementTier, number> = {
-  selo: 0,
-  posyolok: 2,
-  pgt: 5,
-  gorod: 8,
-};
+const TIER_BONUS: Record<SettlementTier, number> = tcfg.tierBonus as Record<SettlementTier, number>;
 
 /** Bonus score from historical era (technology/investment). */
-const ERA_BONUS: Record<string, number> = {
-  revolution: 0,
-  collectivization: 0,
-  industrialization: 1,
-  great_patriotic: 0,
-  reconstruction: 3,
-  thaw_and_freeze: 5,
-  stagnation: 4,
-  the_eternal: 3,
-};
+const ERA_BONUS: Record<string, number> = tcfg.eraBonus;
 
 // ── Mitigation Table ─────────────────────────────────────────────────────
 
 /** Fraction of rasputitsa penalty absorbed by each road quality. */
-const MITIGATION: Record<RoadQuality, number> = {
-  [RoadQuality.NONE]: 0.0,
-  [RoadQuality.DIRT]: 0.1,
-  [RoadQuality.GRAVEL]: 0.3,
-  [RoadQuality.PAVED]: 0.6,
-  [RoadQuality.HIGHWAY]: 0.85,
-};
+const MITIGATION: Record<RoadQuality, number> = tcfg.mitigation as Record<RoadQuality, number>;
 
 // ── Pure Functions (module-level exports for direct testing) ─────────────
 
@@ -113,10 +90,11 @@ export function computeTransportScore(
  * Map a numeric transport score to a RoadQuality level.
  */
 export function scoreToQuality(score: number): RoadQuality {
-  if (score >= 16) return RoadQuality.HIGHWAY;
-  if (score >= 9) return RoadQuality.PAVED;
-  if (score >= 4) return RoadQuality.GRAVEL;
-  if (score >= 1) return RoadQuality.DIRT;
+  const t = tcfg.scoreToQualityThresholds;
+  if (score >= t.highway) return RoadQuality.HIGHWAY;
+  if (score >= t.paved) return RoadQuality.PAVED;
+  if (score >= t.gravel) return RoadQuality.GRAVEL;
+  if (score >= t.dirt) return RoadQuality.DIRT;
   return RoadQuality.NONE;
 }
 
@@ -193,19 +171,19 @@ export class TransportSystem {
   private _condition = 100;
   private nextRecalcTick = 0;
   private eraId: string;
-  // ── Constants ──
-  /** Recalculate transport score every 30 ticks (~10 days). */
-  static readonly RECALC_INTERVAL = 30;
+  // ── Constants (from config/infrastructure.json) ──
+  /** Recalculate transport score every N ticks. */
+  static readonly RECALC_INTERVAL = tcfg.recalcInterval;
   /** Condition decay per tick during rasputitsa (mud destroys roads). */
-  static readonly RASPUTITSA_DECAY = 0.15;
+  static readonly RASPUTITSA_DECAY = tcfg.rasputitsaDecay;
   /** Condition decay per tick during winter (frost + snow). */
-  static readonly WINTER_DECAY = 0.08;
+  static readonly WINTER_DECAY = tcfg.winterDecay;
   /** Condition decay per tick baseline (normal wear). */
-  static readonly BASELINE_DECAY = 0.02;
+  static readonly BASELINE_DECAY = tcfg.baselineDecay;
   /** Condition recovery per maintenance tick (timber spent). */
-  static readonly MAINTENANCE_RECOVERY = 2.0;
+  static readonly MAINTENANCE_RECOVERY = tcfg.maintenanceRecovery;
   /** Timber cost per maintenance recovery application. */
-  static readonly MAINTENANCE_TIMBER_COST = 1;
+  static readonly MAINTENANCE_TIMBER_COST = tcfg.maintenanceTimberCost;
 
   constructor(eraId = 'revolution') {
     this.eraId = eraId;
@@ -259,17 +237,17 @@ export class TransportSystem {
     }
     this._condition = Math.max(0, this._condition - decayRate);
 
-    // 3. MAINTENANCE (auto-repair when condition < 80 and timber available)
-    if (this._condition < 80 && resources && resources.timber >= TransportSystem.MAINTENANCE_TIMBER_COST) {
+    // 3. MAINTENANCE (auto-repair when condition < threshold and timber available)
+    if (this._condition < tcfg.conditionThresholds.maintenanceTrigger && resources && resources.timber >= TransportSystem.MAINTENANCE_TIMBER_COST) {
       resources.timber -= TransportSystem.MAINTENANCE_TIMBER_COST;
       this._condition = Math.min(100, this._condition + TransportSystem.MAINTENANCE_RECOVERY);
     }
 
     // 4. EFFECTIVE QUALITY (condition-adjusted)
     let effectiveQuality = this.quality;
-    if (this._condition < 25) {
+    if (this._condition < tcfg.conditionThresholds.downgradeOne) {
       const idx = QUALITY_ORDER.indexOf(effectiveQuality);
-      const downgrade = this._condition < 10 ? 2 : 1;
+      const downgrade = this._condition < tcfg.conditionThresholds.downgradeTwo ? 2 : 1;
       effectiveQuality = QUALITY_ORDER[Math.max(0, idx - downgrade)]!;
     }
 
