@@ -1,3 +1,5 @@
+// DEPRECATED: logic moved to DefenseAgent (src/ai/agents/DefenseAgent.ts)
+
 /**
  * @module game/DiseaseSystem
  *
