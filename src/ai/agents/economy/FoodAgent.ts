@@ -140,6 +140,54 @@ export class FoodAgent extends Vehicle {
   }
 
   // -------------------------------------------------------------------------
+  // Public production/consumption split — allows SimulationEngine to insert
+  // CompulsoryDeliveries between production and consumption steps.
+  // -------------------------------------------------------------------------
+
+  /**
+   * Run the production phase only (farms + optional private plots).
+   * Does NOT consume. Call `consume()` separately after any interleaved logic.
+   *
+   * @param opts - Production modifiers and era context
+   * @param opts.includePrivatePlots - Whether to run private plot production (default true; set false for non-monthly ticks)
+   */
+  produce(opts: {
+    farmModifier?: number;
+    vodkaModifier?: number;
+    eraId?: string;
+    skillFactor?: number;
+    conditionFactor?: number;
+    stakhanoviteBoosts?: ReadonlyMap<string, number>;
+    includePrivatePlots?: boolean;
+  } = {}): void {
+    const farmModifier = opts.farmModifier ?? 1.0;
+    const vodkaModifier = opts.vodkaModifier ?? 1.0;
+    const eraId = opts.eraId ?? 'revolution';
+
+    this._runProduction(farmModifier, vodkaModifier, {
+      skillFactor: opts.skillFactor,
+      conditionFactor: opts.conditionFactor,
+      stakhanoviteBoosts: opts.stakhanoviteBoosts,
+    });
+
+    if (opts.includePrivatePlots !== false) {
+      this._runPrivatePlots(eraId);
+    }
+  }
+
+  /**
+   * Run the consumption phase only (food + vodka consumption + starvation).
+   * Call after `produce()` and any interleaved logic (e.g. CompulsoryDeliveries).
+   *
+   * @param consumptionMult - Era/difficulty multiplier on consumption rates
+   * @returns Number of starvation deaths the caller should route through WorkerSystem
+   */
+  consume(consumptionMult = 1.0): { starvationDeaths: number } {
+    const starvationDeaths = this._runConsumption(consumptionMult);
+    return { starvationDeaths };
+  }
+
+  // -------------------------------------------------------------------------
   // Production (absorbed from productionSystem.ts — food paths only)
   // -------------------------------------------------------------------------
 

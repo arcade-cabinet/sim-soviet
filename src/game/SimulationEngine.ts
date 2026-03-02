@@ -37,17 +37,12 @@ import {
 import type { QuotaState } from '@/ecs/systems';
 import {
   constructionSystem,
-  consumptionSystem,
   createDefaultQuota,
   decaySystem,
-  demographicTick,
   populationSystem,
-  powerSystem,
-  productionSystem,
   quotaSystem,
   setBuildingCollapsedCallback,
   setStarvationCallback,
-  storageSystem,
 } from '@/ecs/systems';
 import { world } from '@/ecs/world';
 import type { AchievementTrackerSaveData } from './AchievementTracker';
@@ -55,7 +50,7 @@ import { AchievementTracker } from './AchievementTracker';
 import { TICKS_PER_YEAR } from './Chronology';
 import type { ChronologyState, TickResult } from '../ai/agents/core/ChronologyAgent';
 import { ChronologySystem } from '../ai/agents/core/ChronologyAgent';
-import { CollectivePlanner } from '../ai/agents/infrastructure/CollectiveAgent';
+// CollectivePlanner removed — using CollectiveAgent.generateQueue() directly
 import type { CompulsoryDeliverySaveData } from './CompulsoryDeliveries';
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
 import { DISEASE_PRAVDA_HEADLINES, diseaseTick, initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
@@ -87,18 +82,18 @@ import type { EraDefinition, EraSystemSaveData } from './era';
 import { ERA_DEFINITIONS, EraSystem } from './era';
 import type { EventSystemSaveData, GameEvent } from './events';
 import { EventSystem } from './events';
-import type { FireSystemSaveData } from './FireSystem';
-import { FireSystem } from './FireSystem';
+import type { FireSystemSaveData } from '../ai/agents/social/DefenseAgent';
+import { FireSystem } from '../ai/agents/social/DefenseAgent';
 import type { GameGrid } from './GameGrid';
 import { createGameTally, type TallyData } from './GameTally';
-import { tickLoyalty } from '../ai/agents/political/LoyaltyAgent';
+// tickLoyalty standalone removed — LoyaltyAgent.tickLoyalty() called directly
 import { MinigameRouter } from './minigames/MinigameRouter';
 import type { ActiveMinigame, MinigameRouterSaveData } from './minigames/MinigameTypes';
-import type { PersonnelFileSaveData } from './PersonnelFile';
-import { PersonnelFile } from './PersonnelFile';
+import type { PersonnelFileSaveData } from '../ai/agents/political/KGBAgent';
+import { PersonnelFile } from '../ai/agents/political/KGBAgent';
 import type { MandateWithFulfillment, PlanMandateState } from '../ai/agents/political/PoliticalAgent';
 import { createMandatesForEra, createPlanMandateState, recordBuildingPlaced } from '../ai/agents/political/PoliticalAgent';
-import { calculatePrivatePlotProduction } from '../ai/agents/economy/FoodAgent';
+// calculatePrivatePlotProduction standalone removed — FoodAgent._runPrivatePlots() called internally
 import type { PolitburoSaveData } from './politburo';
 import { PolitburoSystem } from './politburo';
 import type { PoliticalEntitySaveData } from './political';
@@ -115,8 +110,7 @@ import { accrueTrudodni } from '../ai/agents/economy/EconomyAgent';
 import type { TutorialMilestone, TutorialSaveData } from './TutorialSystem';
 import { TutorialSystem } from './TutorialSystem';
 import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
-import { autoPlaceBuilding } from '../ai/agents/infrastructure/CollectiveAgent';
-import { detectConstructionDemands } from '../ai/agents/infrastructure/CollectiveAgent';
+// autoPlaceBuilding/detectConstructionDemands standalone removed — CollectiveAgent methods called directly
 import { WorkerSystem } from './workers/WorkerSystem';
 import { AgentManager } from '../ai/AgentManager';
 // ── Yuka agents (Phase 4) ──
@@ -285,7 +279,7 @@ export class SimulationEngine {
   private tutorial: TutorialSystem;
   private achievements: AchievementTracker;
   private mandateState: PlanMandateState | null = null;
-  private collectivePlanner = new CollectivePlanner();
+  // collectivePlanner removed — CollectiveAgent.generateQueue() called directly
   private transport: TransportSystem;
   private fireSystem: FireSystem;
 
@@ -955,11 +949,16 @@ export class SimulationEngine {
     // FIX-07: Compute expanded production modifiers (skill, condition)
     const avgSkill = this.getAverageWorkerSkill();
     const avgCondition = this.getAverageBuildingCondition();
-    // Phase 4: still calling old productionSystem — FoodAgent will fully replace in Phase 5
-    productionSystem(farmMod, vodkaMod, {
+    // FoodAgent.produce() replaces productionSystem — runs farm/vodka production
+    // Private plots only run on month boundaries (matching old PrivatePlotSystem cadence)
+    this.foodAgent.produce({
+      farmModifier: farmMod,
+      vodkaModifier: vodkaMod,
+      eraId: this.politicalAgent.getCurrentEraId(),
       skillFactor: avgSkill,
       conditionFactor: avgCondition,
       stakhanoviteBoosts: this.stakhanoviteBoosts,
+      includePrivatePlots: tickResult.newMonth,
     });
 
     // FIX-10: Production chains — multi-step resource conversion (grain→bread, grain→vodka, etc.)
@@ -993,10 +992,13 @@ export class SimulationEngine {
       }
     }
 
-    const consumptionResult = consumptionSystem(eraMods.consumptionMult);
-    // Route starvation deaths through WorkerSystem for proper entity + dvor cleanup
-    if (consumptionResult.starvationDeaths > 0) {
-      this.workerSystem.removeWorkersByCount(consumptionResult.starvationDeaths, 'starvation');
+    // FoodAgent.consume() replaces consumptionSystem — runs AFTER CompulsoryDeliveries
+    const foodResult = this.foodAgent.consume(eraMods.consumptionMult);
+
+    // Route FoodAgent starvation deaths through WorkerSystem for proper entity + dvor cleanup
+    if (foodResult.starvationDeaths > 0) {
+      this.callbacks.onToast('STARVATION DETECTED', 'critical');
+      this.workerSystem.removeWorkersByCount(foodResult.starvationDeaths, 'starvation');
     }
 
     // Disease System — outbreak checks (monthly) + disease progression (every tick)
@@ -1070,12 +1072,11 @@ export class SimulationEngine {
       );
     }
 
-    // Demographic System — births, deaths, aging for dvor households
-    // Phase 4: DemographicAgent absorbs this but demographicTick still called directly
+    // DemographicAgent — births, deaths, aging for dvor households
     const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, workerResult.population * 2));
-    const demoResult = demographicTick(
-      this.rng ?? null,
+    const demoResult = this.demographicAgent.onTick(
       this.chronologyAgent.getDate().totalTicks,
+      this.rng ?? null,
       normalizedFood,
       this.politicalAgent.getCurrentEraId(),
     );
@@ -1104,18 +1105,13 @@ export class SimulationEngine {
       this.workerSystem.resetAnnualTrudodni();
     }
 
-    // ── Monthly economic systems: private plots, loyalty, trudodni ──
+    // ── Monthly economic systems: loyalty, trudodni ──
+    // Note: Private plot food is now handled inside FoodAgent.update() via _runPrivatePlots()
     if (tickResult.newMonth) {
-      // Phase 4: PoliticalAgent provides current era (replaces EraSystem)
+      // PoliticalAgent provides current era
       const currentEraId = this.politicalAgent.getCurrentEraId();
 
-      // Private Plot Food — dvor plots and livestock produce food
-      const plotFood = calculatePrivatePlotProduction(currentEraId);
-      if (plotFood > 0) {
-        storeRef.resources.food += plotFood;
-      }
-
-      // Phase 4: LoyaltyAgent replaces tickLoyalty() function
+      // LoyaltyAgent — monthly loyalty evaluation
       const pop = storeRef.resources.population;
       const foodLevel = pop > 0 ? Math.min(1, storeRef.resources.food / (pop * 2)) : 1;
       const quotaMet = this.quota.current >= this.quota.target;
@@ -1146,8 +1142,8 @@ export class SimulationEngine {
       accrueTrudodni();
     }
 
-    // Collective Autonomy — demand detection + auto-build
-    this.tickCollective(this.chronologyAgent.getDate().totalTicks);
+    // CollectiveAgent — demand detection + auto-build
+    this.tickCollectiveViaAgent(this.chronologyAgent.getDate().totalTicks, storeRef);
 
     // Chairman meddling — political cost for excessive player overrides
     if (this.workerSystem.isChairmanMeddling() && this.chronologyAgent.getDate().totalTicks % 60 === 0) {
@@ -1657,35 +1653,36 @@ export class SimulationEngine {
    * GDD: "Watch the settlement breathe — workers auto-assign to jobs,
    *        paths form between buildings, production ticks"
    */
-  private tickCollective(totalTicks: number): void {
+  /**
+   * CollectiveAgent-driven autonomous construction pipeline.
+   * Detects demands, merges with mandates, and auto-places buildings.
+   *
+   * The agent owns demand detection, queue generation, and placement logic.
+   * This method provides the orchestration layer: material gating, throttling,
+   * mandate tracking, and UI callback notifications.
+   */
+  private tickCollectiveViaAgent(totalTicks: number, storeRef: ReturnType<typeof getResourceEntity>): void {
     if (totalTicks % COLLECTIVE_CHECK_INTERVAL !== 0) return;
-
-    // Don't auto-build during first 60 ticks (let player orient)
     if (totalTicks < 60) return;
-
-    // Don't auto-build if there are already 3+ buildings under construction
     if (underConstruction.entities.length >= 3) return;
-
-    const storeRef = getResourceEntity();
     if (!storeRef) return;
 
+    const res = storeRef.resources;
     const housingCap = this.getHousingCapacity();
-    const demands = detectConstructionDemands(storeRef.resources.population, housingCap, {
-      food: storeRef.resources.food,
-      vodka: storeRef.resources.vodka,
-      power: storeRef.resources.power,
-    });
 
-    const queue = this.collectivePlanner.generateQueue(this.mandateState, demands);
+    // Step 1-2: CollectiveAgent detects demands and generates queue
+    const demands = this.collectiveAgent.detectConstructionDemands(res.population, housingCap, {
+      food: res.food,
+      vodka: res.vodka,
+      power: res.power,
+    });
+    const queue = this.collectiveAgent.generateQueue(this.mandateState, demands);
     if (queue.length === 0) return;
 
-    // Auto-place the highest priority building
     const request = queue[0]!;
 
-    // Check material availability before placing
-    const res = storeRef.resources;
+    // Material availability gate
     if (res.timber < 10 || res.steel < 5) {
-      // Can't build — notify player (but don't spam)
       if (totalTicks % 120 === 0) {
         this.callbacks.onAdvisor(
           `Comrade, the collective wishes to build ${request.label}, but we lack materials. We need timber and steel.`,
@@ -1694,6 +1691,7 @@ export class SimulationEngine {
       return;
     }
 
+    // Step 3: Auto-place via CollectiveAgent
     const rng =
       this.rng ??
       ({
@@ -1703,12 +1701,10 @@ export class SimulationEngine {
         pickIndex: (len: number) => Math.floor(Math.random() * len),
       } as GameRng);
 
-    const entity = autoPlaceBuilding(request.defId, rng);
+    const entity = this.collectiveAgent.autoPlaceBuilding(request.defId, rng);
     if (entity) {
-      // Track mandate fulfillment
       this.recordBuildingForMandates(request.defId);
 
-      // Notify the player with source-appropriate message
       if (request.source === 'mandate') {
         this.callbacks.onToast(`DECREE FULFILLED: Construction of ${request.label} has begun`);
       } else {
