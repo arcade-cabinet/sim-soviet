@@ -43,7 +43,7 @@ config.server = {
         req.url = req.url.slice('/assets'.length);
         return staticHandler(req, res, () => middleware(req, res, next));
       }
-      // Route /wasm/* requests to public/wasm/ (sql.js WASM binary)
+      // Route /wasm/* requests to public/wasm/ (Draco mesh decoder)
       if (req.url.startsWith('/wasm/')) {
         return publicHandler(req, res, () => middleware(req, res, next));
       }
