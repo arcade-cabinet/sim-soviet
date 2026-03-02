@@ -104,6 +104,8 @@ import { TutorialSystem } from '../ai/agents/meta/TutorialSystem';
 import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
 import { WorkerSystem } from '../ai/agents/workforce/WorkerSystem';
 import { AgentManager } from '../ai/AgentManager';
+import { getPopulationMode, collapseEntitiesToBuildings } from '../ai/agents/workforce/collectiveTransition';
+import { computeBuildingProduction } from '../ai/agents/economy/buildingProduction';
 // ── Yuka agents ──
 import { ChronologyAgent } from '../ai/agents/core/ChronologyAgent';
 import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
@@ -195,6 +197,8 @@ export class SimulationEngine {
   private agentManager: AgentManager;
   private _originalOnMinigame?: SimCallbacks['onMinigame'];
   private _originalOnAnnualReport?: SimCallbacks['onAnnualReport'];
+  /** Cached RaionPool reference — non-null when in aggregate population mode. */
+  private raion: import('@/ecs/world').RaionPool | undefined;
 
   constructor(
     private grid: GameGrid,
@@ -283,6 +287,9 @@ export class SimulationEngine {
     });
 
     initDiseaseSystem(this.rng);
+
+    // Check if we're restoring into aggregate mode (save/load)
+    this.raion = initialStore?.resources.raion;
 
     const initialEraId = this.eraSystem.getCurrentEraId();
     const initialMandates = createMandatesForEra(initialEraId, this.difficulty);
@@ -382,6 +389,7 @@ export class SimulationEngine {
   public getFireSystem(): FireSystem { return this.defenseAgent; }
   public getAchievements(): AchievementTracker { return this.achievements; }
   public getQuota(): Readonly<QuotaState> { return this.quota; }
+  public getRaion(): import('@/ecs/world').RaionPool | undefined { return this.raion; }
 
   // ── Agent getters ───────────────────────────────────────────────────────────
 
@@ -501,6 +509,10 @@ export class SimulationEngine {
     }
 
     this.politicalAgent.checkEraTransition(this.eraSystem.getYear());
+
+    // Restore raion reference from resource store (aggregate mode save/load)
+    const restoredStore = getResourceEntity();
+    this.raion = restoredStore?.resources.raion;
   }
 
   // ── Minigame API ────────────────────────────────────────────────────────────
@@ -535,8 +547,25 @@ export class SimulationEngine {
     this.syncChronologyToMeta(tickResult);
     this.emitChronologyChanges(tickResult);
 
+    // ── 1b. Population mode detection ──
+    const popMode = getPopulationMode(
+      storeRef.resources.population,
+      this.raion,
+    );
+
     // ── 2. Year boundary: era transition + quota check ──
     if (tickResult.newYear) {
+      // Check for entity → aggregate collapse on year boundary
+      if (popMode === 'aggregate' && !this.raion) {
+        this.raion = collapseEntitiesToBuildings();
+        storeRef.resources.raion = this.raion;
+        storeRef.resources.population = this.raion.totalPopulation;
+        this.callbacks.onToast(
+          'The collective has grown. Individual records are now maintained by the raion.',
+          'warning',
+        );
+      }
+
       this.politicalAgent.handleEraTransitionFull({
         year: this.chronologyAgent.getDate().year,
         deliveries: this.deliveries,
@@ -610,24 +639,64 @@ export class SimulationEngine {
     const vodkaBefore = storeRef.resources.vodka;
     const moneyBefore = storeRef.resources.money;
 
-    const avgSkill = this.workerSystem.getAverageSkill();
-    const avgCondition = this.getAverageBuildingCondition();
+    if (this.raion) {
+      // Aggregate mode: compute production per operational building
+      for (const entity of operationalBuildings.entities) {
+        const bldg = entity.building;
+        const def = getBuildingDef(bldg.defId);
+        if (!def) continue;
 
-    this.foodAgent.produce({
-      farmModifier: farmMod,
-      vodkaModifier: vodkaMod,
-      eraId: this.politicalAgent.getCurrentEraId(),
-      skillFactor: avgSkill,
-      conditionFactor: avgCondition,
-      stakhanoviteBoosts: this.stakhanoviteBoosts,
-      includePrivatePlots: tickResult.newMonth,
-    });
+        const prodResult = computeBuildingProduction(bldg, def, {
+          eraId: this.politicalAgent.getCurrentEraId(),
+          powered: bldg.powered,
+          durability: entity.durability?.current ?? 100,
+          season: tickResult.season.season,
+          rng: this.rng,
+          eraProductionMod: eraMods.productionMult,
+          weatherMod: farmMod,
+        });
 
-    // Production chains
-    {
-      const chainBuildingIds: string[] = [];
-      for (const entity of buildingsLogic) chainBuildingIds.push(entity.building.defId);
-      this.economyAgent.tickProductionChains(chainBuildingIds, storeRef.resources);
+        if (prodResult.resource === 'food') {
+          storeRef.resources.food += prodResult.amount;
+        } else if (prodResult.resource === 'vodka') {
+          storeRef.resources.vodka += prodResult.amount;
+        }
+        storeRef.resources.power += prodResult.powerGenerated;
+        bldg.trudodniAccrued += prodResult.trudodniAccrued;
+
+        // Stochastic events
+        if (prodResult.accidents > 0) {
+          this.workerSystem.removeWorkersByCount(prodResult.accidents, 'workplace_accident');
+        }
+      }
+
+      // Production chains still run in aggregate mode
+      {
+        const chainBuildingIds: string[] = [];
+        for (const entity of buildingsLogic) chainBuildingIds.push(entity.building.defId);
+        this.economyAgent.tickProductionChains(chainBuildingIds, storeRef.resources);
+      }
+    } else {
+      // Entity mode: existing production path
+      const avgSkill = this.workerSystem.getAverageSkill();
+      const avgCondition = this.getAverageBuildingCondition();
+
+      this.foodAgent.produce({
+        farmModifier: farmMod,
+        vodkaModifier: vodkaMod,
+        eraId: this.politicalAgent.getCurrentEraId(),
+        skillFactor: avgSkill,
+        conditionFactor: avgCondition,
+        stakhanoviteBoosts: this.stakhanoviteBoosts,
+        includePrivatePlots: tickResult.newMonth,
+      });
+
+      // Production chains
+      {
+        const chainBuildingIds: string[] = [];
+        for (const entity of buildingsLogic) chainBuildingIds.push(entity.building.defId);
+        this.economyAgent.tickProductionChains(chainBuildingIds, storeRef.resources);
+      }
     }
 
     // ── 8. Storage ──
@@ -659,10 +728,29 @@ export class SimulationEngine {
     }
 
     // ── 11. Food consumption + starvation ──
-    const foodResult = this.foodAgent.consume(eraMods.consumptionMult);
-    if (foodResult.starvationDeaths > 0) {
-      this.callbacks.onToast('STARVATION DETECTED', 'critical');
-      this.workerSystem.removeWorkersByCount(foodResult.starvationDeaths, 'starvation');
+    if (this.raion) {
+      // Aggregate mode: consumption scales with raion population
+      const pop = this.raion.totalPopulation;
+      const consumeRate = eraMods.consumptionMult;
+      // Each citizen consumes ~0.5 food per tick (same as entity mode FoodAgent)
+      const foodConsumed = pop * 0.5 * consumeRate;
+      const vodkaConsumed = pop * 0.1 * consumeRate;
+      storeRef.resources.food = Math.max(0, storeRef.resources.food - foodConsumed);
+      storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - vodkaConsumed);
+
+      // Starvation check: delegate to FoodAgent for consistency
+      const foodResult = this.foodAgent.consume(eraMods.consumptionMult);
+      if (foodResult.starvationDeaths > 0) {
+        this.callbacks.onToast('STARVATION DETECTED', 'critical');
+        this.workerSystem.removeWorkersByCount(foodResult.starvationDeaths, 'starvation');
+      }
+    } else {
+      // Entity mode: existing consumption path
+      const foodResult = this.foodAgent.consume(eraMods.consumptionMult);
+      if (foodResult.starvationDeaths > 0) {
+        this.callbacks.onToast('STARVATION DETECTED', 'critical');
+        this.workerSystem.removeWorkersByCount(foodResult.starvationDeaths, 'starvation');
+      }
     }
 
     // ── 12. Disease ──
@@ -675,7 +763,10 @@ export class SimulationEngine {
     });
 
     // ── 13. Population growth (yearly immigration only) ──
-    if (tickResult.newYear) {
+    // In aggregate mode, births are handled by DemographicAgent statistical
+    // tick (statisticalBirthTick on month boundaries). Skip entity-mode
+    // housing-gated immigration to avoid double-counting.
+    if (tickResult.newYear && !this.raion) {
       const growthResult = populationSystem(
         this.rng,
         politburoMods.populationGrowthMult * eraMods.populationGrowthMult * diffConfig.growthMultiplier,
@@ -738,9 +829,11 @@ export class SimulationEngine {
     }
     if (tickResult.newYear) {
       this.workerSystem.resetAnnualTrudodni();
-      // Annual entity GC sweeps — remove orphan citizens and empty dvory
-      this.workerSystem.sweepOrphanCitizens();
-      this.demographicAgent.sweepEmptyDvory();
+      // Annual entity GC sweeps — only needed in entity mode
+      if (!this.raion) {
+        this.workerSystem.sweepOrphanCitizens();
+        this.demographicAgent.sweepEmptyDvory();
+      }
     }
 
     // ── 16. Monthly: loyalty + trudodni ──
