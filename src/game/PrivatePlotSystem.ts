@@ -4,6 +4,9 @@
  * Historical: Under the 1935 Model Charter, private plots (0.25-0.5 hectares)
  * produced 25-50% of total agricultural output on just 1-3% of the land.
  * Each household could keep a cow, pigs, sheep, and poultry.
+ *
+ * DEPRECATED: logic moved to FoodAgent (src/ai/agents/FoodAgent.ts).
+ * This file is retained for SimulationEngine compatibility until Phase 4 migration.
  */
 
 import { dvory } from '@/ecs/archetypes';

@@ -6,6 +6,9 @@
  * Citizens collectively consume food based on population size.
  * If food runs out, starvation deaths are returned (caller handles removal).
  * Vodka consumption is aspirational but not lethal if unmet.
+ *
+ * DEPRECATED: logic moved to FoodAgent (src/ai/agents/FoodAgent.ts).
+ * This file is retained for SimulationEngine compatibility until Phase 4 migration.
  */
 
 import { getResourceEntity } from '@/ecs/archetypes';

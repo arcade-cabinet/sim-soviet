@@ -1,12 +1,12 @@
 /**
- * PersonnelFile -- the central game-over mechanic for SimSoviet 2000.
+ * DEPRECATED: Logic moved to KGBAgent (src/ai/agents/KGBAgent.ts).
  *
- * The player's personnel file accumulates black marks (bad) and
- * commendations (good). Too many effective marks = arrest = game over.
+ * PersonnelFile is now a thin compatibility shim. All mark tracking,
+ * decay, threat level computation, and arrest logic lives in KGBAgent.
+ * This file re-exports types and provides a delegating wrapper so
+ * existing callers can continue to work without immediate updates.
  *
- * Effective marks = blackMarks - commendations (minimum 0).
- * Threshold effects escalate from normal operations to arrest at 7+.
- * Marks decay over time if no new marks are added (rate depends on difficulty).
+ * @deprecated Import from KGBAgent directly for new code.
  */
 
 // ─────────────────────────────────────────────────────────

@@ -6,6 +6,9 @@
  *
  * Only powered producer buildings contribute resources. Unpowered
  * producers are silently skipped.
+ *
+ * DEPRECATED: food/vodka production logic moved to FoodAgent (src/ai/agents/FoodAgent.ts).
+ * This file is retained for SimulationEngine compatibility until Phase 4 migration.
  */
 
 import { getBuildingDef } from '@/data/buildingDefs';
