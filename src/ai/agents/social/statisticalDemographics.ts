@@ -45,6 +45,12 @@ const LABOR_BUCKET_MAX = cfg.laborForce.bucketMax;
 const ERA_BIRTH_MULTIPLIER: Record<string, number> = cfg.eraBirthMultiplier;
 
 /**
+ * Era death-rate multipliers (statistical mode).
+ * Keys match era IDs from the EraSystem / Chronology.
+ */
+const ERA_DEATH_MULTIPLIER: Record<string, number> = cfg.eraDeathMultiplier;
+
+/**
  * Annual mortality rates by 5-year age bucket (Soviet historical approximation).
  * Index = bucket number (0 = ages 0-4, 19 = ages 95-99).
  */
@@ -144,12 +150,14 @@ export function statisticalBirthTick(
  *
  * @param pool      - Mutable RaionPool to update
  * @param foodLevel - Normalized food level (0.0-1.0+)
+ * @param eraId     - Current era identifier for death rate multiplier
  * @param rng       - Seeded RNG instance
  * @returns Total number of deaths this tick
  */
 export function statisticalDeathTick(
   pool: RaionPool,
   foodLevel: number,
+  eraId: string,
   rng: GameRng,
 ): number {
   // Starvation modifier: up to maxMultiplier at zero food
@@ -158,10 +166,13 @@ export function statisticalDeathTick(
     ? 1 + (starvThreshold - foodLevel) * starvScale
     : 1.0;
 
+  // Era death modifier (wartime, famine eras amplify mortality)
+  const eraMod = ERA_DEATH_MULTIPLIER[eraId] ?? 1.0;
+
   let totalDeaths = 0;
 
   for (let i = 0; i < NUM_BUCKETS; i++) {
-    const monthlyRate = (ANNUAL_MORTALITY_BY_BUCKET[i]! / 12) * starvationMod;
+    const monthlyRate = (ANNUAL_MORTALITY_BY_BUCKET[i]! / 12) * starvationMod * eraMod;
 
     // Male deaths
     const maleCount = pool.maleAgeBuckets[i]!;

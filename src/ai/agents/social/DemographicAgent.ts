@@ -376,7 +376,7 @@ export class DemographicAgent extends Vehicle {
 
     if (totalTicks % TICKS_PER_MONTH === 0) {
       const births = statisticalBirthTick(raion, foodLevel, eraId, rng);
-      const deaths = statisticalDeathTick(raion, foodLevel, rng);
+      const deaths = statisticalDeathTick(raion, foodLevel, eraId, rng);
 
       result.births = births;
       result.deaths += deaths;

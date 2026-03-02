@@ -253,8 +253,8 @@ describe('statisticalDeathTick', () => {
       const fedPool = makePopulatedPool(500);
       const starvePool = makePopulatedPool(500);
 
-      fedDeaths += statisticalDeathTick(fedPool, 1.0, fedRng);
-      starvingDeaths += statisticalDeathTick(starvePool, 0.0, starveRng);
+      fedDeaths += statisticalDeathTick(fedPool, 1.0, 'revolution', fedRng);
+      starvingDeaths += statisticalDeathTick(starvePool, 0.0, 'revolution', starveRng);
     }
 
     // Starvation should cause significantly more deaths (up to 3x modifier)
@@ -273,7 +273,7 @@ describe('statisticalDeathTick', () => {
       const freshPool = makePool();
       freshPool.maleAgeBuckets[19] = 1;
       freshPool.totalPopulation = 1;
-      statisticalDeathTick(freshPool, 0.0, new GameRng(`cap-${i}`));
+      statisticalDeathTick(freshPool, 0.0, 'revolution', new GameRng(`cap-${i}`));
       expect(freshPool.maleAgeBuckets[19]).toBeGreaterThanOrEqual(0);
       expect(freshPool.totalPopulation).toBeGreaterThanOrEqual(0);
     }
@@ -285,7 +285,7 @@ describe('statisticalDeathTick', () => {
     const laborBefore = pool.laborForce;
 
     // Extreme starvation to guarantee some deaths
-    statisticalDeathTick(pool, 0.0, rng);
+    statisticalDeathTick(pool, 0.0, 'revolution', rng);
 
     // Labor force should be recalculated (may or may not have changed,
     // but it should equal the sum of working-age buckets)
@@ -304,7 +304,7 @@ describe('statisticalDeathTick', () => {
     pool.totalDeaths = 100;
     const popBefore = pool.totalPopulation;
 
-    const deaths = statisticalDeathTick(pool, 0.5, rng);
+    const deaths = statisticalDeathTick(pool, 0.5, 'revolution', rng);
 
     expect(pool.deathsThisYear).toBe(10 + deaths);
     expect(pool.totalDeaths).toBe(100 + deaths);
@@ -327,8 +327,8 @@ describe('statisticalDeathTick', () => {
       adultPool.maleAgeBuckets[5] = 100; // 100 adults age 25-29
       adultPool.totalPopulation = 100;
 
-      infantDeaths += statisticalDeathTick(infantPool, 1.0, infantRng);
-      adultDeaths += statisticalDeathTick(adultPool, 1.0, adultRng);
+      infantDeaths += statisticalDeathTick(infantPool, 1.0, 'revolution', infantRng);
+      adultDeaths += statisticalDeathTick(adultPool, 1.0, 'revolution', adultRng);
     }
 
     // Infant mortality (0.08/yr) >> adult mortality (0.005/yr)
@@ -430,7 +430,7 @@ describe('performance', () => {
       p.laborForce = 500000;
 
       statisticalBirthTick(p, 0.8, 'stagnation', rng);
-      statisticalDeathTick(p, 0.8, rng);
+      statisticalDeathTick(p, 0.8, 'stagnation', rng);
       statisticalAgingTick(p);
     }
 
