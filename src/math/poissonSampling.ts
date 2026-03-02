@@ -22,6 +22,7 @@ import type { GameRng } from '@/game/SeedSystem';
  * @returns Non-negative integer sample from Poisson(lambda)
  */
 export function poissonSample(lambda: number, rng: GameRng): number {
+  if (!Number.isFinite(lambda)) return 0;
   if (lambda <= 0) return 0;
 
   if (lambda < 30) {

@@ -470,4 +470,96 @@ describe('WorkerSystem — aggregate mode', () => {
       expect(system.syncPopulationFromDvory()).toBe(350);
     });
   });
+
+  // ── NaN population guards ─────────────────────────────────
+
+  describe('NaN population guards', () => {
+    it('removeWorkersAggregate clamps totalPopulation to >= 0', () => {
+      // Set up a raion where totalPopulation is less than the removal count
+      // (simulating an already-corrupted pool)
+      const raion = makeRaion({
+        totalPopulation: 5,
+        laborForce: 5,
+        idleWorkers: 5,
+        assignedWorkers: 0,
+      });
+      // Put all 5 workers in male bucket 5
+      const maleBuckets = new Array(20).fill(0);
+      maleBuckets[5] = 5;
+      raion.maleAgeBuckets = maleBuckets;
+      raion.femaleAgeBuckets = new Array(20).fill(0);
+
+      setupAggregateWorld(raion);
+
+      // Remove more than available (10 > 5)
+      system.removeWorkersByCount(10, 'test');
+
+      expect(raion.totalPopulation).toBeGreaterThanOrEqual(0);
+      expect(Number.isFinite(raion.totalPopulation)).toBe(true);
+    });
+
+    it('removeWorkersMaleFirstAggregate clamps totalPopulation to >= 0', () => {
+      const maleBuckets = new Array(20).fill(0);
+      maleBuckets[5] = 3;
+      const raion = makeRaion({
+        totalPopulation: 3,
+        laborForce: 3,
+        idleWorkers: 0,
+        assignedWorkers: 3,
+        maleAgeBuckets: maleBuckets,
+        femaleAgeBuckets: new Array(20).fill(0),
+      });
+
+      setupAggregateWorld(raion);
+
+      // Add a building with workers for the removal to consume
+      world.add({
+        building: makeBuilding('factory_basic', { workerCount: 3, avgMorale: 50, avgSkill: 30, avgLoyalty: 50 }),
+      });
+
+      // Remove more than available
+      const removed = system.removeWorkersByCountMaleFirst(10, 'conscription');
+
+      expect(raion.totalPopulation).toBeGreaterThanOrEqual(0);
+      expect(removed).toBeLessThanOrEqual(3);
+    });
+
+    it('defection clamps totalPopulation and syncs age buckets', () => {
+      // Create a building with very low loyalty to trigger defection
+      const maleBuckets = new Array(20).fill(0);
+      maleBuckets[5] = 100;
+      const raion = makeRaion({
+        totalPopulation: 100,
+        laborForce: 100,
+        idleWorkers: 0,
+        assignedWorkers: 100,
+        maleAgeBuckets: maleBuckets,
+        femaleAgeBuckets: new Array(20).fill(0),
+      });
+
+      setupAggregateWorld(raion);
+
+      // Building with 100 workers and loyalty=0 → defection chance = 0.02
+      world.add({
+        building: makeBuilding('factory_basic', {
+          workerCount: 100,
+          avgMorale: 50,
+          avgSkill: 30,
+          avgLoyalty: 0, // triggers defection
+          avgVodkaDep: 10,
+        }),
+        position: { gridX: 0, gridY: 0 },
+      });
+
+      const result = system.tick(makeTickCtx());
+
+      expect(raion.totalPopulation).toBeGreaterThanOrEqual(0);
+      expect(Number.isFinite(raion.totalPopulation)).toBe(true);
+
+      // Verify age buckets are non-negative after defection
+      for (let i = 0; i < 20; i++) {
+        expect(raion.maleAgeBuckets[i]).toBeGreaterThanOrEqual(0);
+      }
+    });
+  });
 });

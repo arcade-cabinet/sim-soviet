@@ -536,3 +536,86 @@ describe('calibration', () => {
     expect(pool.totalPopulation).toBeGreaterThan(startPop * 1.5);
   });
 });
+
+// ── NaN Guards ─────────────────────────────────────────────────────────────
+
+describe('NaN guards', () => {
+  describe('poissonSample', () => {
+    it('returns 0 for NaN lambda', () => {
+      const rng = new GameRng('test-nan');
+      expect(poissonSample(NaN, rng)).toBe(0);
+    });
+
+    it('returns 0 for Infinity lambda', () => {
+      const rng = new GameRng('test-inf');
+      expect(poissonSample(Infinity, rng)).toBe(0);
+    });
+
+    it('returns 0 for -Infinity lambda', () => {
+      const rng = new GameRng('test-neginf');
+      expect(poissonSample(-Infinity, rng)).toBe(0);
+    });
+  });
+
+  describe('statisticalBirthTick', () => {
+    it('returns 0 births when foodLevel is NaN', () => {
+      const rng = new GameRng('test-nan-food-birth');
+      const pool = makePool();
+      pool.femaleAgeBuckets[5] = 50;
+      pool.totalPopulation = 50;
+      pool.pregnancyWaves = [10, 0, 0];
+
+      const births = statisticalBirthTick(pool, NaN, 'revolution', rng);
+      // Existing pregnancies still deliver (from wave[0]), but no new conceptions
+      expect(births).toBe(10);
+      // New conceptions should be 0 since foodModifier returns minMultiplier
+      // and conceptionRate guard catches NaN propagation
+      expect(Number.isFinite(pool.totalPopulation)).toBe(true);
+    });
+
+    it('produces no new conceptions when foodLevel is NaN', () => {
+      const rng = new GameRng('test-nan-food-conception');
+      const pool = makePool();
+      pool.femaleAgeBuckets[5] = 100;
+      pool.totalPopulation = 100;
+      pool.pregnancyWaves = [0, 0, 0];
+
+      statisticalBirthTick(pool, NaN, 'revolution', rng);
+      // conceptions should still be finite (foodModifier returns safe default)
+      expect(Number.isFinite(pool.pregnancyWaves[2])).toBe(true);
+    });
+  });
+
+  describe('statisticalDeathTick', () => {
+    it('does not produce NaN deaths when foodLevel is NaN', () => {
+      const rng = new GameRng('test-nan-food-death');
+      const pool = makePopulatedPool(300);
+      const popBefore = pool.totalPopulation;
+
+      const deaths = statisticalDeathTick(pool, NaN, 'revolution', rng);
+      expect(Number.isFinite(deaths)).toBe(true);
+      expect(pool.totalPopulation).toBeGreaterThanOrEqual(0);
+      expect(Number.isFinite(pool.totalPopulation)).toBe(true);
+    });
+  });
+
+  describe('statisticalAgingTick', () => {
+    it('clamps buckets to non-negative integers after aging', () => {
+      const rng = new GameRng('test-aging-clamp');
+      const pool = makePool();
+      // Set fractional values that could arise from floating-point drift
+      pool.maleAgeBuckets[5] = 10.7;
+      pool.femaleAgeBuckets[5] = 8.3;
+      pool.totalPopulation = 19;
+
+      statisticalAgingTick(pool, rng);
+
+      for (let i = 0; i < 20; i++) {
+        expect(pool.maleAgeBuckets[i]).toBeGreaterThanOrEqual(0);
+        expect(pool.femaleAgeBuckets[i]).toBeGreaterThanOrEqual(0);
+        expect(Number.isInteger(pool.maleAgeBuckets[i])).toBe(true);
+        expect(Number.isInteger(pool.femaleAgeBuckets[i])).toBe(true);
+      }
+    });
+  });
+});

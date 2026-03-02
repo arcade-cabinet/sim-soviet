@@ -810,7 +810,9 @@ export class SimulationEngine {
     }
 
     // ── 15. Demographics ──
-    const normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, workerResult.population * 2));
+    const effectivePop = this.raion?.totalPopulation ?? workerResult.population;
+    let normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, effectivePop * 2));
+    if (!Number.isFinite(normalizedFood)) normalizedFood = 0;
     const demoResult = this.demographicAgent.onTick(
       this.chronologyAgent.getDate().totalTicks,
       this.rng,

@@ -492,8 +492,8 @@ export class WorkerSystem {
       }
     }
 
-    // Update raion totals
-    raion.totalPopulation -= totalRemoved;
+    // Update raion totals (clamp to prevent negative population)
+    raion.totalPopulation = Math.max(0, raion.totalPopulation - totalRemoved);
 
     // Recalculate labor force from actual bucket contents
     let laborForce = 0;
@@ -603,8 +603,8 @@ export class WorkerSystem {
       removed += take;
     }
 
-    // Update totals
-    raion.totalPopulation -= removed;
+    // Update totals (clamp to prevent negative population)
+    raion.totalPopulation = Math.max(0, raion.totalPopulation - removed);
 
     // Recalculate labor force from actual bucket contents
     let laborForce = 0;
@@ -1184,9 +1184,23 @@ export class WorkerSystem {
         const defectors = Math.floor(wc * defectionChance);
         if (defectors > 0) {
           bld.workerCount -= defectors;
-          raion.totalPopulation -= defectors;
-          raion.assignedWorkers -= defectors;
+          raion.totalPopulation = Math.max(0, raion.totalPopulation - defectors);
+          raion.assignedWorkers = Math.max(0, raion.assignedWorkers - defectors);
           raion.laborForce = Math.max(0, raion.laborForce - defectors);
+
+          // Decrement age buckets to stay in sync (working-age males first)
+          let bucketRem = defectors;
+          for (let bi = 3; bi <= 12 && bucketRem > 0; bi++) {
+            const take = Math.min(bucketRem, raion.maleAgeBuckets[bi]!);
+            raion.maleAgeBuckets[bi]! -= take;
+            bucketRem -= take;
+          }
+          for (let bi = 3; bi <= 12 && bucketRem > 0; bi++) {
+            const take = Math.min(bucketRem, raion.femaleAgeBuckets[bi]!);
+            raion.femaleAgeBuckets[bi]! -= take;
+            bucketRem -= take;
+          }
+
           drains.push({
             name: `${defectors} workers`,
             class: 'worker',

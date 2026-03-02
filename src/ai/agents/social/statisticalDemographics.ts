@@ -64,6 +64,7 @@ const ANNUAL_MORTALITY_BY_BUCKET: readonly number[] = cfg.annualMortalityByBucke
  */
 function foodModifier(foodLevel: number): number {
   const { lowThreshold, highThreshold, minMultiplier, maxMultiplier } = cfg.foodModifier;
+  if (!Number.isFinite(foodLevel)) return minMultiplier;
   if (foodLevel < lowThreshold) return minMultiplier;
   if (foodLevel > highThreshold) return maxMultiplier;
   // Linear interpolation between thresholds → minMultiplier to 1.0
@@ -109,6 +110,7 @@ export function statisticalBirthTick(
   const foodMod = foodModifier(foodLevel);
   const eraMod = ERA_BIRTH_MULTIPLIER[eraId] ?? 1.0;
   const conceptionRate = BASE_MONTHLY_CONCEPTION_RATE * foodMod * eraMod;
+  if (!Number.isFinite(conceptionRate) || conceptionRate < 0) return 0;
 
   // Sample conceptions
   const conceptions = poissonSample(eligibleWomen * conceptionRate, rng);
@@ -173,6 +175,7 @@ export function statisticalDeathTick(
 
   for (let i = 0; i < NUM_BUCKETS; i++) {
     const monthlyRate = (ANNUAL_MORTALITY_BY_BUCKET[i]! / 12) * starvationMod * eraMod;
+    if (!Number.isFinite(monthlyRate) || monthlyRate < 0) continue;
 
     // Male deaths
     const maleCount = pool.maleAgeBuckets[i]!;
@@ -262,6 +265,12 @@ export function statisticalAgingTick(pool: RaionPool, rng: GameRng): number {
     } else {
       overflowDeaths += maleAdvancers[i]! + femaleAdvancers[i]!;
     }
+  }
+
+  // Clamp all buckets to non-negative integers (guard against floating-point drift)
+  for (let i = 0; i < NUM_BUCKETS; i++) {
+    pool.maleAgeBuckets[i] = Math.max(0, Math.round(pool.maleAgeBuckets[i]!));
+    pool.femaleAgeBuckets[i] = Math.max(0, Math.round(pool.femaleAgeBuckets[i]!));
   }
 
   // Update pool totals
