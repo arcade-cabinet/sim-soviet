@@ -3,10 +3,13 @@
  */
 
 import type { CitizenComponent } from '@/ecs/world';
+import { economy, workforce } from '@/config';
+
+const cfg = workforce;
 
 /** Weighted class distribution for random spawning.
  *  Order: worker, engineer, farmer, party_official, soldier, prisoner */
-export const CLASS_WEIGHTS: readonly number[] = [40, 15, 25, 5, 10, 5];
+export const CLASS_WEIGHTS: readonly number[] = cfg.classWeights;
 export const CLASS_ORDER: readonly CitizenComponent['class'][] = [
   'worker',
   'engineer',
@@ -17,14 +20,8 @@ export const CLASS_ORDER: readonly CitizenComponent['class'][] = [
 ];
 
 /** Production bonuses by class for their specialty buildings. */
-export const CLASS_PRODUCTION_BONUS: Record<CitizenComponent['class'], number> = {
-  worker: 0,
-  engineer: 0.2,
-  farmer: 0.3,
-  party_official: -0.5,
-  soldier: 0,
-  prisoner: 0.1,
-};
+export const CLASS_PRODUCTION_BONUS: Record<CitizenComponent['class'], number> =
+  cfg.classProductionBonus as Record<CitizenComponent['class'], number>;
 
 /** Building defId prefixes that count as "factory" for engineer bonus. */
 export const FACTORY_PREFIXES = ['vodka-distillery', 'factory', 'industrial'];
@@ -33,131 +30,131 @@ export const FACTORY_PREFIXES = ['vodka-distillery', 'factory', 'industrial'];
 export const FARM_PREFIXES = ['collective-farm', 'kolkhoz', 'farm'];
 
 /** Base food consumed per worker per tick. */
-export const FOOD_PER_WORKER = 0.1;
+export const FOOD_PER_WORKER = cfg.consumption.foodPerWorker;
 
 /** Base vodka consumed per worker per tick (scaled by dependency). */
-export const VODKA_PER_WORKER = 0.05;
+export const VODKA_PER_WORKER = cfg.consumption.vodkaPerWorker;
 
 /** Morale penalty when food is unavailable. */
-export const HUNGER_MORALE_PENALTY = 5;
+export const HUNGER_MORALE_PENALTY = cfg.morale.hungerPenalty;
 
 /** Morale penalty per tick when vodka is needed but unavailable. */
-export const VODKA_WITHDRAWAL_PENALTY = 3;
+export const VODKA_WITHDRAWAL_PENALTY = cfg.morale.vodkaWithdrawalPenalty;
 
 /** Morale boost from receiving vodka. */
-export const VODKA_MORALE_BOOST = 2;
+export const VODKA_MORALE_BOOST = cfg.morale.vodkaBoost;
 
 /** Morale boost from being housed. */
-export const HOUSING_MORALE_BOOST = 1;
+export const HOUSING_MORALE_BOOST = cfg.morale.housingBoost;
 
 /** Morale penalty for being unhoused. */
-export const UNHOUSED_MORALE_PENALTY = 2;
+export const UNHOUSED_MORALE_PENALTY = cfg.morale.unhousedPenalty;
 
 /** Morale penalty when heating fails in winter (-30% of max morale = -30 flat). */
-export const HEATING_FAILURE_MORALE_PENALTY = 30;
+export const HEATING_FAILURE_MORALE_PENALTY = cfg.morale.heatingFailurePenalty;
 
 /** Party official morale boost to others (per official, per tick). */
-export const PARTY_MORALE_BOOST = 0.5;
+export const PARTY_MORALE_BOOST = cfg.morale.partyBoostPerTick;
 
 /** Loyalty threshold below which defection check occurs. */
-export const DEFECTION_LOYALTY_THRESHOLD = 20;
+export const DEFECTION_LOYALTY_THRESHOLD = cfg.loyalty.defectionThreshold;
 
 /** Base defection probability per tick when below loyalty threshold. */
-export const DEFECTION_BASE_CHANCE = 0.02;
+export const DEFECTION_BASE_CHANCE = cfg.loyalty.defectionBaseChance;
 
 /** Prisoner escape chance per tick. */
-export const PRISONER_ESCAPE_CHANCE = 0.005;
+export const PRISONER_ESCAPE_CHANCE = cfg.loyalty.prisonerEscapeChance;
 
 /** Stakhanovite event chance per tick for high-morale workers. */
-export const STAKHANOVITE_CHANCE = 0.003;
+export const STAKHANOVITE_CHANCE = cfg.skills.stakhanoviteChance;
 
 /** Morale threshold above which Stakhanovite events can trigger. */
-export const STAKHANOVITE_MORALE_THRESHOLD = 75;
+export const STAKHANOVITE_MORALE_THRESHOLD = cfg.skills.stakhanoviteMoraleThreshold;
 
 /** Skill growth per tick when assigned to work. */
-export const SKILL_GROWTH_RATE = 0.01;
+export const SKILL_GROWTH_RATE = cfg.skills.skillGrowthRate;
 
 /** Maximum vodka dependency escalation per tick. */
-export const VODKA_DEPENDENCY_GROWTH = 0.1;
+export const VODKA_DEPENDENCY_GROWTH = cfg.skills.vodkaDependencyGrowth;
 
 // ─────────────────────────────────────────────────────────
 //  POPULATION DRAIN CONSTANTS
 // ─────────────────────────────────────────────────────────
 
 /** Morale threshold below which workers begin fleeing. */
-export const FLIGHT_MORALE_THRESHOLD = 30;
+export const FLIGHT_MORALE_THRESHOLD = cfg.flight.moraleThreshold;
 
 /** Critical morale threshold — accelerated flight. */
-export const FLIGHT_MORALE_CRITICAL = 15;
+export const FLIGHT_MORALE_CRITICAL = cfg.flight.moraleCritical;
 
 /** How often (in ticks) the migration check runs. */
-export const FLIGHT_CHECK_INTERVAL = 60;
+export const FLIGHT_CHECK_INTERVAL = cfg.flight.checkInterval;
 
 /** Workers fleeing per check when morale < FLIGHT_MORALE_THRESHOLD. */
-export const FLIGHT_COUNT_NORMAL: [min: number, max: number] = [1, 2];
+export const FLIGHT_COUNT_NORMAL: [min: number, max: number] = [cfg.flight.countNormalMin, cfg.flight.countNormalMax];
 
 /** Workers fleeing per check when morale < FLIGHT_MORALE_CRITICAL. */
-export const FLIGHT_COUNT_CRITICAL: [min: number, max: number] = [3, 5];
+export const FLIGHT_COUNT_CRITICAL: [min: number, max: number] = [cfg.flight.countCriticalMin, cfg.flight.countCriticalMax];
 
 /** Youth flight check interval (ticks). */
-export const YOUTH_FLIGHT_INTERVAL = 120;
+export const YOUTH_FLIGHT_INTERVAL = cfg.flight.youthInterval;
 
 /** Youth max age for flight eligibility. */
-export const YOUTH_MAX_AGE = 25;
+export const YOUTH_MAX_AGE = cfg.flight.youthMaxAge;
 
 /** Youth min age for flight eligibility. */
-export const YOUTH_MIN_AGE = 16;
+export const YOUTH_MIN_AGE = cfg.flight.youthMinAge;
 
 /** Morale threshold below which youth consider leaving. */
-export const YOUTH_FLIGHT_MORALE_THRESHOLD = 40;
+export const YOUTH_FLIGHT_MORALE_THRESHOLD = cfg.flight.youthMoraleThreshold;
 
 /** Building defIds that prevent youth flight (cultural/educational). */
 export const YOUTH_RETENTION_BUILDINGS = ['school', 'club', 'cinema', 'library', 'university'];
 
 /** Workplace accident probability per factory per tick. */
-export const ACCIDENT_RATE_PER_FACTORY = 1 / 500;
+export const ACCIDENT_RATE_PER_FACTORY = cfg.accidents.ratePerFactory;
 
 /** Accident rate multiplier for low-skill workers (skill < 20). */
-export const ACCIDENT_LOW_SKILL_MULT = 2.0;
+export const ACCIDENT_LOW_SKILL_MULT = cfg.accidents.lowSkillMultiplier;
 
 // ─────────────────────────────────────────────────────────
 //  POPULATION INFLOW CONSTANTS
 // ─────────────────────────────────────────────────────────
 
 /** Moscow assignment: min-max workers per decree. */
-export const MOSCOW_ASSIGNMENT_COUNT: [min: number, max: number] = [3, 12];
+export const MOSCOW_ASSIGNMENT_COUNT: [min: number, max: number] = [cfg.inflow.moscowAssignmentMin, cfg.inflow.moscowAssignmentMax];
 
 /** Forced resettlement: min-max hostile workers. */
-export const FORCED_RESETTLEMENT_COUNT: [min: number, max: number] = [5, 30];
+export const FORCED_RESETTLEMENT_COUNT: [min: number, max: number] = [cfg.inflow.forcedResettlementMin, cfg.inflow.forcedResettlementMax];
 
 /** Forced resettlement: initial morale range for hostile workers. */
-export const FORCED_RESETTLEMENT_MORALE: [min: number, max: number] = [10, 30];
+export const FORCED_RESETTLEMENT_MORALE: [min: number, max: number] = [cfg.inflow.forcedResettlementMoraleMin, cfg.inflow.forcedResettlementMoraleMax];
 
 /** Kolkhoz amalgamation: min-max workers from merged collective. */
-export const KOLKHOZ_AMALGAMATION_COUNT: [min: number, max: number] = [20, 60];
+export const KOLKHOZ_AMALGAMATION_COUNT: [min: number, max: number] = [cfg.inflow.kolkhozAmalgamationMin, cfg.inflow.kolkhozAmalgamationMax];
 
 // ─────────────────────────────────────────────────────────
 //  TRUDODNI CONSTANTS
 // ─────────────────────────────────────────────────────────
 
 /** Base annual trudodni requirement per worker. */
-export const TRUDODNI_ANNUAL_MINIMUM = 200;
+export const TRUDODNI_ANNUAL_MINIMUM = economy.trudodni.annualMinimum;
 
 /** Morale penalty for failing to meet trudodni minimum. */
-export const TRUDODNI_SHORTFALL_MORALE_PENALTY = 10;
+export const TRUDODNI_SHORTFALL_MORALE_PENALTY = economy.trudodni.shortfallMoralePenalty;
 
 /** Trudodni earned per tick when assigned to production. */
-export const TRUDODNI_PER_TICK = 0.5;
+export const TRUDODNI_PER_TICK = economy.trudodni.perTick;
 
 // ─────────────────────────────────────────────────────────
 //  PRIVATE PLOT CONSTANTS
 // ─────────────────────────────────────────────────────────
 
 /** Food produced per hectare of private plot per year. */
-export const PRIVATE_PLOT_FOOD_PER_HECTARE = 10;
+export const PRIVATE_PLOT_FOOD_PER_HECTARE = cfg.privatePlots.foodPerHectare;
 
 /** Morale boost per tick when private plot is active. */
-export const PRIVATE_PLOT_MORALE_BOOST = 5;
+export const PRIVATE_PLOT_MORALE_BOOST = cfg.privatePlots.moraleBoost;
 
 // ─────────────────────────────────────────────────────────
 //  NAME GENERATION DATA

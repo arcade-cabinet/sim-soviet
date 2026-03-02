@@ -1,0 +1,8 @@
+{
+  "hoursPerTick": 8,
+  "ticksPerDay": 3,
+  "daysPerMonth": 10,
+  "monthsPerYear": 12,
+  "startYear": 1922,
+  "startMonth": 10
+}

@@ -29,6 +29,7 @@
  */
 
 import type { GameRng } from '../../../game/SeedSystem';
+import { economy } from '@/config';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  TYPES
@@ -243,13 +244,13 @@ export interface BlatKgbResult {
 }
 
 /** Blat connections at or below this level are safe from KGB scrutiny. */
-export const BLAT_SAFE_THRESHOLD = 15;
+export const BLAT_SAFE_THRESHOLD = economy.blat.safeThreshold;
 
 /** Blat connections above this level risk outright arrest. */
-export const BLAT_ARREST_THRESHOLD = 30;
+export const BLAT_ARREST_THRESHOLD = economy.blat.arrestThreshold;
 
 /** KGB investigation probability per excess blat point per tick. */
-export const KGB_INVESTIGATION_CHANCE_PER_POINT = 0.01;
+export const KGB_INVESTIGATION_CHANCE_PER_POINT = economy.blat.kgbInvestigationChancePerPoint;
 
 /** Aggregate result of a single economy system tick. */
 export interface EconomyTickResult {
@@ -323,7 +324,7 @@ export interface EconomySaveData {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Default trudodni rate per worker per tick for unknown buildings. */
-export const DEFAULT_TRUDODNI = 0.5;
+export const DEFAULT_TRUDODNI = economy.trudodni.defaultRate;
 
 /**
  * Trudodni rate per worker per tick, keyed by building defId.
@@ -331,59 +332,11 @@ export const DEFAULT_TRUDODNI = 0.5;
  * Historical basis: 7-9 difficulty categories.
  * Cat 1 (simple) = 0.5, Cat 6 (heavy industry) = 1.5, Cat 8 (power) = 3.0.
  */
-export const TRUDODNI_PER_BUILDING: Record<string, number> = {
-  // Agriculture (Cat 2-3)
-  'collective-farm-hq': 1.0,
-  'kolkhoz-hq': 1.0,
-  kolkhoz: 1.0,
-  greenhouse: 0.7,
-  barn: 0.7,
-
-  // Light industry (Cat 4)
-  'vodka-distillery': 1.0,
-  'vodka-plant': 1.0,
-  bakery: 1.0,
-
-  // Construction / medium industry (Cat 5)
-  factory: 1.2,
-  warehouse: 1.2,
-
-  // Heavy industry (Cat 6)
-  'coal-plant': 1.5,
-  'steel-mill': 1.5,
-  'cement-works': 1.5,
-
-  // Specialist (Cat 7)
-  hospital: 2.0,
-  school: 2.0,
-  university: 2.0,
-
-  // Heavy machinery / power (Cat 8)
-  'power-station': 3.0,
-  tec: 3.0,
-
-  // Government / admin (below factory)
-  ministry: 0.7,
-  'party-hq': 0.7,
-  soviet: 0.7,
-
-  // Propaganda / culture
-  monument: 0.5,
-  cinema: 0.7,
-  'radio-tower': 1.0,
-
-  // Military / security
-  gulag: 1.5,
-  barracks: 1.0,
-  'guard-tower': 0.5,
-};
+export const TRUDODNI_PER_BUILDING: Record<string, number> = economy.trudodni.perBuilding;
 
 /** Minimum trudodni required per tick, by difficulty. */
-export const MINIMUM_TRUDODNI_BY_DIFFICULTY: Record<DifficultyLevel, number> = {
-  worker: 50,
-  comrade: 100,
-  tovarish: 200,
-};
+export const MINIMUM_TRUDODNI_BY_DIFFICULTY: Record<DifficultyLevel, number> =
+  economy.trudodni.minimumByDifficulty as Record<DifficultyLevel, number>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONSTANTS — Fondy (Material Allocations)
@@ -397,68 +350,37 @@ const ZERO_RESOURCES: Record<TransferableResource, number> = {
   timber: 0,
 };
 
+/** Build FONDY_BY_ERA from flat JSON config. */
+function _buildFondyByEra(): Record<EraId, FondyConfig> {
+  const result = {} as Record<EraId, FondyConfig>;
+  for (const [era, cfg] of Object.entries(economy.fondy)) {
+    result[era as EraId] = {
+      reliability: cfg.reliability,
+      interval: cfg.interval,
+      allocated: {
+        food: cfg.food,
+        vodka: cfg.vodka,
+        money: cfg.money,
+        steel: cfg.steel,
+        timber: cfg.timber,
+      },
+    };
+  }
+  return result;
+}
+
 /** Fondy delivery configuration per historical era (reliability, interval, allocated amounts). */
-export const FONDY_BY_ERA: Record<EraId, FondyConfig> = {
-  revolution: {
-    reliability: 0.4,
-    interval: 30,
-    allocated: { food: 0, vodka: 0, money: 0, steel: 0, timber: 10 },
-  },
-  industrialization: {
-    reliability: 0.6,
-    interval: 20,
-    allocated: { food: 5, vodka: 0, money: 10, steel: 20, timber: 15 },
-  },
-  wartime: {
-    reliability: 0.3,
-    interval: 40,
-    allocated: { food: 5, vodka: 0, money: 5, steel: 10, timber: 5 },
-  },
-  reconstruction: {
-    reliability: 0.5,
-    interval: 25,
-    allocated: { food: 5, vodka: 0, money: 10, steel: 15, timber: 10 },
-  },
-  thaw: {
-    reliability: 0.8,
-    interval: 15,
-    allocated: { food: 10, vodka: 5, money: 20, steel: 25, timber: 20 },
-  },
-  stagnation: {
-    reliability: 0.4,
-    interval: 30,
-    allocated: { food: 5, vodka: 5, money: 15, steel: 15, timber: 10 },
-  },
-  perestroika: {
-    reliability: 0.3,
-    interval: 35,
-    allocated: { food: 3, vodka: 3, money: 10, steel: 10, timber: 8 },
-  },
-  eternal: {
-    reliability: 0.2,
-    interval: 40,
-    allocated: { food: 2, vodka: 2, money: 5, steel: 5, timber: 5 },
-  },
-};
+export const FONDY_BY_ERA: Record<EraId, FondyConfig> = _buildFondyByEra();
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONSTANTS — Rations
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Historical ration card periods. */
-export const RATION_PERIODS: readonly { start: number; end: number }[] = [
-  { start: 1929, end: 1935 },
-  { start: 1941, end: 1947 },
-  { start: 1983, end: 9999 },
-];
+export const RATION_PERIODS: readonly { start: number; end: number }[] = economy.rations.periods;
 
 /** Default ration tier distribution and per-capita consumption. */
-export const DEFAULT_RATIONS: RationConfig = {
-  worker: { share: 0.5, food: 1.0, vodka: 0.3 },
-  employee: { share: 0.2, food: 0.7, vodka: 0.2 },
-  dependent: { share: 0.2, food: 0.5, vodka: 0.1 },
-  children: { share: 0.1, food: 0.4, vodka: 0.0 },
-};
+export const DEFAULT_RATIONS: RationConfig = economy.rations.defaultTiers as unknown as RationConfig;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONSTANTS — Production Chains
@@ -502,63 +424,40 @@ export const PRODUCTION_CHAINS: readonly ProductionChain[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Multiplier applied to quota target when the plan is met. */
-export const QUOTA_MET_ESCALATION = 1.15;
+export const QUOTA_MET_ESCALATION = economy.quota.metEscalation;
 
 /** Multiplier applied to quota target when the plan is missed. */
-export const QUOTA_MISSED_REDUCTION = 0.95;
+export const QUOTA_MISSED_REDUCTION = economy.quota.missedReduction;
 
 /** Era-specific escalation multiplier for quota targets. */
-export const ERA_ESCALATION: Record<EraId, number> = {
-  revolution: 1.0,
-  industrialization: 1.2,
-  wartime: 1.4,
-  reconstruction: 0.9,
-  thaw: 1.0,
-  stagnation: 1.1,
-  perestroika: 0.8,
-  eternal: 1.0,
-};
+export const ERA_ESCALATION: Record<EraId, number> = economy.quota.eraEscalation as Record<EraId, number>;
 
 /** Difficulty-specific quota target multiplier. */
-export const DIFFICULTY_QUOTA_MULT: Record<DifficultyLevel, number> = {
-  worker: 0.8,
-  comrade: 1.0,
-  tovarish: 1.3,
-};
+export const DIFFICULTY_QUOTA_MULT: Record<DifficultyLevel, number> =
+  economy.quota.difficultyMult as Record<DifficultyLevel, number>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONSTANTS — Starting Resources
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Difficulty multiplier for starting resources. */
-export const DIFFICULTY_RESOURCE_MULT: Record<DifficultyLevel, number> = {
-  worker: 2.0,
-  comrade: 1.0,
-  tovarish: 0.5,
-};
+export const DIFFICULTY_RESOURCE_MULT: Record<DifficultyLevel, number> =
+  economy.startingResources.difficultyMult as Record<DifficultyLevel, number>;
 
 /** Era multiplier for starting resources. */
-export const ERA_RESOURCE_MULT: Record<EraId, number> = {
-  revolution: 0.8,
-  industrialization: 0.9,
-  wartime: 0.6,
-  reconstruction: 0.7,
-  thaw: 1.2,
-  stagnation: 1.0,
-  perestroika: 0.8,
-  eternal: 0.5,
-};
+export const ERA_RESOURCE_MULT: Record<EraId, number> =
+  economy.startingResources.eraMult as Record<EraId, number>;
 
-const BASE_STARTING_RESOURCES = {
-  money: 2000,
-  food: 200,
-  vodka: 50,
-  power: 0,
-  population: 30,
-  timber: 100,
-  steel: 50,
-  paperwork: 20,
-} as const;
+const BASE_STARTING_RESOURCES = economy.startingResources.base as {
+  readonly money: number;
+  readonly food: number;
+  readonly vodka: number;
+  readonly power: number;
+  readonly population: number;
+  readonly timber: number;
+  readonly steel: number;
+  readonly paperwork: number;
+};
 
 /** Typed starting resources — keys match BASE_STARTING_RESOURCES. */
 export type StartingResources = { [K in keyof typeof BASE_STARTING_RESOURCES]: number };
@@ -568,51 +467,15 @@ export type StartingResources = { [K in keyof typeof BASE_STARTING_RESOURCES]: n
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Full difficulty multiplier presets for worker/comrade/tovarish levels. */
-export const DIFFICULTY_MULTIPLIERS: Record<DifficultyLevel, DifficultyMultipliers> = {
-  worker: {
-    quotaTarget: 0.8,
-    startingResources: 1.5,
-    birthRate: 1.2,
-    decayRate: 0.7,
-    politruksPer100: 0.5,
-    fondyReliability: 1.2,
-    deliveryRate: 0.8,
-    eventSeverity: 0.7,
-    markDecayRate: 1.2,
-    starvationRate: 0.7,
-  },
-  comrade: {
-    quotaTarget: 1.0,
-    startingResources: 1.0,
-    birthRate: 1.0,
-    decayRate: 1.0,
-    politruksPer100: 1.0,
-    fondyReliability: 1.0,
-    deliveryRate: 1.0,
-    eventSeverity: 1.0,
-    markDecayRate: 1.0,
-    starvationRate: 1.0,
-  },
-  tovarish: {
-    quotaTarget: 1.3,
-    startingResources: 0.7,
-    birthRate: 0.8,
-    decayRate: 1.3,
-    politruksPer100: 1.5,
-    fondyReliability: 0.7,
-    deliveryRate: 1.2,
-    eventSeverity: 1.3,
-    markDecayRate: 0.7,
-    starvationRate: 1.5,
-  },
-};
+export const DIFFICULTY_MULTIPLIERS: Record<DifficultyLevel, DifficultyMultipliers> =
+  economy.difficulty as Record<DifficultyLevel, DifficultyMultipliers>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONSTANTS — Stakhanovite
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Probability of a Stakhanovite event per check. Very small. */
-export const STAKHANOVITE_CHANCE = 0.005;
+export const STAKHANOVITE_CHANCE = economy.stakhanovite.chance;
 
 const STAKHANOVITE_FIRST_NAMES = [
   'Ivan',
@@ -644,15 +507,15 @@ const STAKHANOVITE_LAST_NAMES = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** MTS operated from 1928 to 1958. */
-export const MTS_START_YEAR = 1928;
+export const MTS_START_YEAR = economy.mts.startYear;
 /** MTS disbanded in 1958 when equipment was sold to kolkhozy. */
-export const MTS_END_YEAR = 1958;
+export const MTS_END_YEAR = economy.mts.endYear;
 
 /** Default MTS parameters: tractor units available, rental cost, and grain production boost. */
 export const MTS_DEFAULTS = {
-  tractorUnits: 5,
-  rentalCostPerUnit: 10,
-  grainBoostMultiplier: 1.3,
+  tractorUnits: economy.mts.tractorUnits,
+  rentalCostPerUnit: economy.mts.rentalCostPerUnit,
+  grainBoostMultiplier: economy.mts.grainBoostMultiplier,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -660,31 +523,27 @@ export const MTS_DEFAULTS = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Population threshold for upgrading from pechka to district heating. */
-export const DISTRICT_HEATING_POPULATION = 100;
+export const DISTRICT_HEATING_POPULATION = economy.heating.districtPopulation;
 
 /** Ticks at district tier before infrastructure crumbles. */
-export const DISTRICT_TO_CRUMBLING_TICKS = 1000;
+export const DISTRICT_TO_CRUMBLING_TICKS = economy.heating.districtToCrumblingTicks;
+
+/** Build HEATING_CONFIGS from flat JSON config. */
+function _buildHeatingConfig(tier: 'pechka' | 'district' | 'crumbling'): HeatingConfig {
+  const cfg = economy.heating[tier];
+  return {
+    consumption: { amount: cfg.consumptionAmount, resource: cfg.consumptionResource },
+    baseEfficiency: cfg.baseEfficiency,
+    capacityPer100Pop: cfg.capacityPer100Pop,
+    repairThreshold: cfg.repairThreshold,
+  };
+}
 
 /** Heating configuration for each infrastructure tier (fuel type, efficiency, capacity). */
 export const HEATING_CONFIGS: Record<HeatingTier, HeatingConfig> = {
-  pechka: {
-    consumption: { amount: 2, resource: 'timber' },
-    baseEfficiency: 0.6,
-    capacityPer100Pop: 50,
-    repairThreshold: 500,
-  },
-  district: {
-    consumption: { amount: 5, resource: 'power' },
-    baseEfficiency: 0.9,
-    capacityPer100Pop: 200,
-    repairThreshold: 800,
-  },
-  crumbling: {
-    consumption: { amount: 8, resource: 'power' },
-    baseEfficiency: 0.5,
-    capacityPer100Pop: 150,
-    repairThreshold: 1200,
-  },
+  pechka: _buildHeatingConfig('pechka'),
+  district: _buildHeatingConfig('district'),
+  crumbling: _buildHeatingConfig('crumbling'),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -692,18 +551,13 @@ export const HEATING_CONFIGS: Record<HeatingTier, HeatingConfig> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Historical Soviet currency reforms, in chronological order. */
-export const CURRENCY_REFORMS: CurrencyReform[] = [
-  { year: 1924, name: 'Chervonets Reform', rate: 50000, applied: false },
-  { year: 1947, name: 'Post-War Reform', rate: 10, applied: false },
-  { year: 1961, name: 'Khrushchev Reform', rate: 10, applied: false },
-  {
-    year: 1991,
-    name: 'Pavlov Reform',
-    rate: 1,
-    applied: false,
-    confiscation: { threshold: 1000, rate: 0.5 },
-  },
-];
+export const CURRENCY_REFORMS: CurrencyReform[] = economy.currencyReforms.map((r) => ({
+  year: r.year,
+  name: r.name,
+  rate: r.rate,
+  applied: false,
+  confiscation: r.confiscation ? { ...r.confiscation } : undefined,
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  PURE FUNCTIONS
@@ -888,7 +742,11 @@ export class EconomySystem {
   private heating: HeatingState;
 
   // Consumer goods
-  private consumerGoods: ConsumerGoodsState = { available: 50, demand: 100, satisfaction: 0.5 };
+  private consumerGoods: ConsumerGoodsState = {
+    available: economy.consumerGoods.startingAvailable,
+    demand: economy.consumerGoods.startingDemand,
+    satisfaction: economy.consumerGoods.startingSatisfaction,
+  };
 
   // Currency reforms — own copy so mutations don't affect the shared constant
   private reforms: CurrencyReform[];
@@ -908,8 +766,8 @@ export class EconomySystem {
       nextDeliveryTick: fondyConfig.interval,
     };
 
-    // Init blat at 10
-    this.blat = { connections: 10, totalSpent: 0, totalEarned: 10 };
+    // Init blat
+    this.blat = { connections: economy.blat.startingConnections, totalSpent: 0, totalEarned: economy.blat.startingConnections };
 
     // Init rations (inactive by default)
     this.rations = {
@@ -1015,7 +873,7 @@ export class EconomySystem {
 
     if (delivered) {
       const quantityRoll = this.rng ? this.rng.random() : Math.random();
-      const quantity = 0.7 + quantityRoll * 0.3;
+      const quantity = economy.deliveryQuantity.min + quantityRoll * economy.deliveryQuantity.range;
       actualDelivered = { ...ZERO_RESOURCES };
       for (const key of Object.keys(ZERO_RESOURCES) as TransferableResource[]) {
         actualDelivered[key] = Math.round(this.fondy.allocated[key] * quantity);
@@ -1043,7 +901,7 @@ export class EconomySystem {
   }
 
   grantBlat(amount: number): void {
-    this.blat.connections = Math.min(100, this.blat.connections + amount);
+    this.blat.connections = Math.min(economy.blat.maxConnections, this.blat.connections + amount);
     this.blat.totalEarned += amount;
   }
 
@@ -1056,39 +914,34 @@ export class EconomySystem {
 
     let effect: BlatEffect | undefined;
 
+    const blatCfg = economy.blat;
+
     switch (purpose) {
       case 'improve_delivery':
-        // Existing: improve fondy delivery reliability
-        this.fondy.reliability = Math.min(1.0, this.fondy.reliability + 0.05);
-        effect = { type: 'improve_delivery', value: 0.05 };
+        this.fondy.reliability = Math.min(1.0, this.fondy.reliability + blatCfg.fondyReliabilityBoostPerSpend);
+        effect = { type: 'improve_delivery', value: blatCfg.fondyReliabilityBoostPerSpend };
         break;
       case 'reduce_quota':
-        // FIX-09: Spend blat to reduce current quota targets by 5% per point
-        effect = { type: 'reduce_quota', value: amount * 0.05 };
+        effect = { type: 'reduce_quota', value: amount * blatCfg.quotaReductionPerPoint };
         break;
       case 'kgb_protection':
-        // FIX-09: Spend blat to reduce KGB investigation risk
-        // Each point spent provides temporary protection (reduces effective threat)
-        effect = { type: 'kgb_protection', value: amount * 2 };
+        effect = { type: 'kgb_protection', value: amount * blatCfg.kgbProtectionPerPoint };
         break;
       case 'consumer_goods':
-        // FIX-09: Spend blat to acquire consumer goods (boost satisfaction)
-        this.consumerGoods.available += amount * 5;
-        effect = { type: 'consumer_goods', value: amount * 5 };
+        this.consumerGoods.available += amount * blatCfg.consumerGoodsPerPoint;
+        effect = { type: 'consumer_goods', value: amount * blatCfg.consumerGoodsPerPoint };
         break;
       case 'trading':
-        // FIX-09: Spend blat for favorable trade terms (money bonus)
-        effect = { type: 'trading', value: amount * 10 };
+        effect = { type: 'trading', value: amount * blatCfg.tradingMoneyPerPoint };
         break;
     }
 
-    // KGB detection risk: 2% per point above threshold of 5
-    // High blat + high visibility = corruption investigation
-    const kgbThreshold = 5;
+    // KGB detection risk: per point above threshold
+    const kgbThreshold = blatCfg.spendKgbThreshold;
     let kgbDetected = false;
     if (amount > kgbThreshold) {
       const excessPoints = amount - kgbThreshold;
-      const detectionChance = excessPoints * 0.02;
+      const detectionChance = excessPoints * blatCfg.spendKgbDetectionChancePerPoint;
       const rand = this.rng ? this.rng.random() : Math.random();
       if (rand < detectionChance) {
         kgbDetected = true;
@@ -1131,7 +984,7 @@ export class EconomySystem {
         'extensive personal connections. An investigation has been opened.';
     }
 
-    if (connections > BLAT_ARREST_THRESHOLD && rand() < 0.01) {
+    if (connections > BLAT_ARREST_THRESHOLD && rand() < economy.blat.arrestChancePerTick) {
       arrested = true;
       announcement =
         'KGB DIRECTIVE: Citizen detained for questioning regarding ' +
@@ -1181,15 +1034,13 @@ export class EconomySystem {
       : Math.floor(Math.random() * STAKHANOVITE_LAST_NAMES.length);
     const workerName = `${STAKHANOVITE_FIRST_NAMES[firstIdx]} ${STAKHANOVITE_LAST_NAMES[lastIdx]}`;
 
-    // Production boost: 1.5 - 4.0
+    const sCfg = economy.stakhanovite;
     const boostRand = this.rng ? this.rng.random() : Math.random();
-    const productionBoost = 1.5 + boostRand * 2.5;
+    const productionBoost = sCfg.productionBoostMin + boostRand * sCfg.productionBoostRange;
 
-    // Propaganda value: 10 - 50
-    const propagandaValue = Math.round(10 + (this.rng ? this.rng.random() : Math.random()) * 40);
+    const propagandaValue = Math.round(sCfg.propagandaMin + (this.rng ? this.rng.random() : Math.random()) * sCfg.propagandaRange);
 
-    // Quota increase: 15 - 25%
-    const quotaIncrease = 0.15 + (this.rng ? this.rng.random() : Math.random()) * 0.1;
+    const quotaIncrease = sCfg.quotaIncreaseBase + (this.rng ? this.rng.random() : Math.random()) * sCfg.quotaIncreaseRange;
 
     return {
       workerName,
@@ -1207,7 +1058,7 @@ export class EconomySystem {
     const distributed = { ...ZERO_RESOURCES };
     const reserved = { ...ZERO_RESOURCES };
     for (const key of Object.keys(ZERO_RESOURCES) as TransferableResource[]) {
-      distributed[key] = Math.floor(surplus[key] * 0.7);
+      distributed[key] = Math.floor(surplus[key] * economy.remainder.distributedFraction);
       reserved[key] = surplus[key] - distributed[key];
     }
     return { distributed, reserved };

@@ -10,46 +10,39 @@
 
 import { Vehicle } from 'yuka';
 import { getBuildingDef } from '@/data/buildingDefs';
+import { economy } from '@/config';
 import { buildingsLogic, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 import { MSG } from '../../telegrams';
 
 // ---------------------------------------------------------------------------
-// Constants
+// Constants (sourced from config/economy.json → storage)
 // ---------------------------------------------------------------------------
 
+const cfg = economy.storage;
+
 /** Base spoilage rate for food exceeding storage capacity per tick. */
-const OVERFLOW_SPOILAGE_RATE = 0.05;
+const OVERFLOW_SPOILAGE_RATE = cfg.overflowSpoilageRate;
 
 /** Base spoilage rate for food within storage (standard buildings). */
-const STORED_SPOILAGE_RATE = 0.005;
+const STORED_SPOILAGE_RATE = cfg.storedSpoilageRate;
 
 /** Reduced spoilage rate for cold-storage buildings (10× better than standard). */
-const COLD_STORAGE_SPOILAGE_RATE = 0.0005;
+const COLD_STORAGE_SPOILAGE_RATE = cfg.coldStorageSpoilageRate;
 
 /** Reduced spoilage rate for grain elevators (5× better than standard). */
-const ELEVATOR_SPOILAGE_RATE = 0.001;
+const ELEVATOR_SPOILAGE_RATE = cfg.elevatorSpoilageRate;
 
 /** Rate for a single cold-storage building: 0.1% per tick. */
-const SINGLE_COLD_STORAGE_RATE = 0.001;
+const SINGLE_COLD_STORAGE_RATE = cfg.singleColdStorageRate;
 
 /**
  * Storage capacity contribution per building role.
  * Specialized storage buildings add more capacity.
  */
-const STORAGE_BY_ROLE: Record<string, number> = {
-  agriculture: 50,
-  industry: 30,
-};
+const STORAGE_BY_ROLE: Record<string, number> = cfg.byRole;
 
 /** Extra storage from specific building defIds. */
-const STORAGE_BY_DEF: Record<string, number> = {
-  warehouse: 300,
-  'grain-elevator': 2000,
-  'cold-storage': 400,
-  'fuel-depot': 500,
-  granary: 500,
-  'root-cellar': 200,
-};
+const STORAGE_BY_DEF: Record<string, number> = cfg.byDef;
 
 // ---------------------------------------------------------------------------
 // State interface
@@ -81,7 +74,7 @@ export interface StorageState {
 export class StorageAgent extends Vehicle {
   /** Internal storage state. */
   private state: StorageState = {
-    capacity: 200,
+    capacity: cfg.baseCapacity,
     lastSpoilageAmount: 0,
     coldStorageCount: 0,
   };
@@ -170,7 +163,7 @@ export class StorageAgent extends Vehicle {
    * @returns Total food storage capacity in units
    */
   private _calculateStorageCapacity(): number {
-    let capacity = 200; // base storage (communal root cellars)
+    let capacity = cfg.baseCapacity; // base storage (communal root cellars)
 
     for (const entity of buildingsLogic) {
       const defId = entity.building.defId;
@@ -247,7 +240,7 @@ export class StorageAgent extends Vehicle {
    * @returns Weighted spoilage rate (grain elevators improve stored food preservation)
    */
   private _getStandardElevatorRate(): number {
-    let totalCapacity = 200; // base storage at standard rate
+    let totalCapacity = cfg.baseCapacity; // base storage at standard rate
     let elevatorCapacity = 0;
 
     for (const entity of buildingsLogic) {
@@ -302,8 +295,9 @@ export class StorageAgent extends Vehicle {
    * @returns Spoilage multiplier (summer x2.0, winter x0.3, spring/autumn x1.0)
    */
   private _getSeasonalSpoilageMult(month: number): number {
-    if (month >= 6 && month <= 8) return 2.0;
-    if (month >= 11 || month <= 3) return 0.3;
+    const s = cfg.seasonalSpoilage;
+    if (month >= s.summerMonthStart && month <= s.summerMonthEnd) return s.summerMultiplier;
+    if (month >= s.winterMonthStart || month <= s.winterMonthEnd) return s.winterMultiplier;
     return 1.0;
   }
 

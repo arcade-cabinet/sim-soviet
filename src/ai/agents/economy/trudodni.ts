@@ -11,24 +11,20 @@
  */
 
 import { citizens, dvory, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
+import { economy } from '@/config';
 import type { MemberRole } from '@/ecs/world';
 
 /** Trudodni category (1-7, higher = more valuable labor). */
 export type TrudodniCategory = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 /** Daily trudodni value for each category. */
-export const TRUDODNI_VALUES: Record<TrudodniCategory, number> = {
-  1: 0.5,
-  2: 0.75,
-  3: 1.0,
-  4: 1.25,
-  5: 1.5,
-  6: 2.0,
-  7: 2.5,
-};
+export const TRUDODNI_VALUES: Record<TrudodniCategory, number> =
+  Object.fromEntries(
+    Object.entries(economy.trudodni.values).map(([k, v]) => [Number(k), v]),
+  ) as Record<TrudodniCategory, number>;
 
 /** Approximate days per month for trudodni accrual. */
-const DAYS_PER_MONTH = 26; // 6-day work week
+const DAYS_PER_MONTH = economy.trudodni.daysPerMonth;
 
 /**
  * Determine the default trudodni category based on gender and role.

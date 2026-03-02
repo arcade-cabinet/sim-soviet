@@ -149,3 +149,347 @@ export interface DemographicsConfig {
   /** Population trend thresholds. */
   trends: TrendsConfig;
 }
+
+// ── Economy Config ─────────────────────────────────────────────────────────
+
+/** Blat (connections) system parameters. */
+export interface BlatConfig {
+  safeThreshold: number;
+  arrestThreshold: number;
+  kgbInvestigationChancePerPoint: number;
+  spendKgbThreshold: number;
+  spendKgbDetectionChancePerPoint: number;
+  fondyReliabilityBoostPerSpend: number;
+  quotaReductionPerPoint: number;
+  kgbProtectionPerPoint: number;
+  consumerGoodsPerPoint: number;
+  tradingMoneyPerPoint: number;
+  maxConnections: number;
+  startingConnections: number;
+  arrestChancePerTick: number;
+}
+
+/** Trudodni (labor-day) system parameters. */
+export interface TrudodniConfig {
+  defaultRate: number;
+  perBuilding: Record<string, number>;
+  minimumByDifficulty: Record<string, number>;
+  values: Record<string, number>;
+  daysPerMonth: number;
+  annualMinimum: number;
+  shortfallMoralePenalty: number;
+  perTick: number;
+}
+
+/** Quota escalation parameters. */
+export interface QuotaConfig {
+  metEscalation: number;
+  missedReduction: number;
+  eraEscalation: Record<string, number>;
+  difficultyMult: Record<string, number>;
+}
+
+/** Starting resource base values and multipliers. */
+export interface StartingResourcesConfig {
+  base: Record<string, number>;
+  difficultyMult: Record<string, number>;
+  eraMult: Record<string, number>;
+}
+
+/** Difficulty multiplier preset. */
+export interface DifficultyPreset {
+  quotaTarget: number;
+  startingResources: number;
+  birthRate: number;
+  decayRate: number;
+  politruksPer100: number;
+  fondyReliability: number;
+  deliveryRate: number;
+  eventSeverity: number;
+  markDecayRate: number;
+  starvationRate: number;
+}
+
+/** Stakhanovite event parameters. */
+export interface StakhanoviteConfig {
+  chance: number;
+  productionBoostMin: number;
+  productionBoostRange: number;
+  propagandaMin: number;
+  propagandaRange: number;
+  quotaIncreaseBase: number;
+  quotaIncreaseRange: number;
+}
+
+/** MTS (Machine-Tractor Station) parameters. */
+export interface MTSConfig {
+  startYear: number;
+  endYear: number;
+  tractorUnits: number;
+  rentalCostPerUnit: number;
+  grainBoostMultiplier: number;
+}
+
+/** Heating tier config (flat — no nested resource objects). */
+export interface HeatingTierConfig {
+  consumptionAmount: number;
+  consumptionResource: string;
+  baseEfficiency: number;
+  capacityPer100Pop: number;
+  repairThreshold: number;
+}
+
+/** Heating system parameters. */
+export interface HeatingConfigRoot {
+  districtPopulation: number;
+  districtToCrumblingTicks: number;
+  pechka: HeatingTierConfig;
+  district: HeatingTierConfig;
+  crumbling: HeatingTierConfig;
+}
+
+/** Fondy era config (flat — reliability, interval, and resource amounts). */
+export interface FondyEraConfig {
+  reliability: number;
+  interval: number;
+  food: number;
+  vodka: number;
+  money: number;
+  steel: number;
+  timber: number;
+}
+
+/** Ration period definition. */
+export interface RationPeriod {
+  start: number;
+  end: number;
+}
+
+/** Ration tier allocation. */
+export interface RationTierConfig {
+  share: number;
+  food: number;
+  vodka: number;
+}
+
+/** Ration system parameters. */
+export interface RationsConfig {
+  periods: RationPeriod[];
+  defaultTiers: Record<string, RationTierConfig>;
+}
+
+/** Currency reform definition (JSON-safe, no `applied` flag). */
+export interface CurrencyReformConfig {
+  year: number;
+  name: string;
+  rate: number;
+  confiscation?: { threshold: number; rate: number };
+}
+
+/** Seasonal spoilage multiplier thresholds. */
+export interface SeasonalSpoilageConfig {
+  summerMonthStart: number;
+  summerMonthEnd: number;
+  summerMultiplier: number;
+  winterMonthStart: number;
+  winterMonthEnd: number;
+  winterMultiplier: number;
+}
+
+/** Storage and spoilage system parameters. */
+export interface StorageConfig {
+  baseCapacity: number;
+  overflowSpoilageRate: number;
+  storedSpoilageRate: number;
+  coldStorageSpoilageRate: number;
+  elevatorSpoilageRate: number;
+  singleColdStorageRate: number;
+  seasonalSpoilage: SeasonalSpoilageConfig;
+  byRole: Record<string, number>;
+  byDef: Record<string, number>;
+}
+
+/** Consumption system parameters. */
+export interface ConsumptionConfig {
+  starvationGraceTicks: number;
+  maxStarvationDeathsPerTick: number;
+  foodPerPopDivisor: number;
+  vodkaPerPopDivisor: number;
+}
+
+/** Production system parameters. */
+export interface ProductionConfig {
+  overstaffingMinContribution: number;
+  overstaffingDecayRate: number;
+  grainToVodkaRatio: number;
+  vodkaMoraleBonus: number;
+  foodCrisisThreshold: number;
+}
+
+/** Private plot parameters. */
+export interface PrivatePlotsConfig {
+  baseFoodPerHectarePerYear: number;
+  monthsPerYear: number;
+  livestockFood: Record<string, number>;
+  eraMultiplier: Record<string, number>;
+}
+
+/** Remainder allocation parameters. */
+export interface RemainderConfig {
+  distributedFraction: number;
+}
+
+/** Delivery quantity randomization range. */
+export interface DeliveryQuantityConfig {
+  min: number;
+  range: number;
+}
+
+/** Consumer goods starting state. */
+export interface ConsumerGoodsConfig {
+  startingAvailable: number;
+  startingDemand: number;
+  startingSatisfaction: number;
+}
+
+/** Complete economy configuration. */
+export interface EconomyConfig {
+  blat: BlatConfig;
+  trudodni: TrudodniConfig;
+  quota: QuotaConfig;
+  startingResources: StartingResourcesConfig;
+  difficulty: Record<string, DifficultyPreset>;
+  stakhanovite: StakhanoviteConfig;
+  mts: MTSConfig;
+  heating: HeatingConfigRoot;
+  fondy: Record<string, FondyEraConfig>;
+  rations: RationsConfig;
+  currencyReforms: CurrencyReformConfig[];
+  storage: StorageConfig;
+  consumption: ConsumptionConfig;
+  production: ProductionConfig;
+  privatePlots: PrivatePlotsConfig;
+  remainder: RemainderConfig;
+  deliveryQuantity: DeliveryQuantityConfig;
+  consumerGoods: ConsumerGoodsConfig;
+}
+
+// ── Workforce Config ───────────────────────────────────────────────────────
+
+/** Worker consumption rates. */
+export interface WorkforceConsumptionConfig {
+  foodPerWorker: number;
+  vodkaPerWorker: number;
+}
+
+/** Worker morale modifiers. */
+export interface WorkforceMoraleConfig {
+  hungerPenalty: number;
+  vodkaWithdrawalPenalty: number;
+  vodkaBoost: number;
+  housingBoost: number;
+  unhousedPenalty: number;
+  heatingFailurePenalty: number;
+  partyBoostPerTick: number;
+}
+
+/** Loyalty and defection parameters. */
+export interface WorkforceLoyaltyConfig {
+  defectionThreshold: number;
+  defectionBaseChance: number;
+  prisonerEscapeChance: number;
+}
+
+/** Skill and stakhanovite parameters. */
+export interface WorkforceSkillsConfig {
+  stakhanoviteChance: number;
+  stakhanoviteMoraleThreshold: number;
+  skillGrowthRate: number;
+  vodkaDependencyGrowth: number;
+}
+
+/** Population flight parameters. */
+export interface WorkforceFlightConfig {
+  moraleThreshold: number;
+  moraleCritical: number;
+  checkInterval: number;
+  countNormalMin: number;
+  countNormalMax: number;
+  countCriticalMin: number;
+  countCriticalMax: number;
+  youthInterval: number;
+  youthMaxAge: number;
+  youthMinAge: number;
+  youthMoraleThreshold: number;
+}
+
+/** Workplace accident parameters. */
+export interface WorkforceAccidentsConfig {
+  ratePerFactory: number;
+  lowSkillMultiplier: number;
+}
+
+/** Population inflow parameters. */
+export interface WorkforceInflowConfig {
+  moscowAssignmentMin: number;
+  moscowAssignmentMax: number;
+  forcedResettlementMin: number;
+  forcedResettlementMax: number;
+  forcedResettlementMoraleMin: number;
+  forcedResettlementMoraleMax: number;
+  kolkhozAmalgamationMin: number;
+  kolkhozAmalgamationMax: number;
+}
+
+/** Private plot parameters (workforce). */
+export interface WorkforcePrivatePlotsConfig {
+  foodPerHectare: number;
+  moraleBoost: number;
+}
+
+/** Aggregate transition parameters. */
+export interface WorkforceTransitionConfig {
+  aggregateThreshold: number;
+  defaultMorale: number;
+  defaultSkill: number;
+  defaultLoyalty: number;
+  defaultVodkaDep: number;
+  ageBucketCount: number;
+  maxPregnancyTicks: number;
+}
+
+/** Gender labor config for a single era. */
+export interface GenderLaborEraConfig {
+  femaleHeavyIndustry: number;
+  femaleAgriculture: number;
+  femaleServices: number;
+  femalesMilitary: boolean;
+}
+
+/** Complete workforce configuration. */
+export interface WorkforceConfig {
+  classWeights: number[];
+  classProductionBonus: Record<string, number>;
+  consumption: WorkforceConsumptionConfig;
+  morale: WorkforceMoraleConfig;
+  loyalty: WorkforceLoyaltyConfig;
+  skills: WorkforceSkillsConfig;
+  flight: WorkforceFlightConfig;
+  accidents: WorkforceAccidentsConfig;
+  inflow: WorkforceInflowConfig;
+  privatePlots: WorkforcePrivatePlotsConfig;
+  transition: WorkforceTransitionConfig;
+  genderLabor: Record<string, GenderLaborEraConfig>;
+}
+
+// ── Chronology Config ──────────────────────────────────────────────────────
+
+/** Time model constants. */
+export interface ChronologyConfig {
+  hoursPerTick: number;
+  ticksPerDay: number;
+  daysPerMonth: number;
+  monthsPerYear: number;
+  startYear: number;
+  startMonth: number;
+}

@@ -1,0 +1,289 @@
+{
+  "blat": {
+    "safeThreshold": 15,
+    "arrestThreshold": 30,
+    "kgbInvestigationChancePerPoint": 0.01,
+    "spendKgbThreshold": 5,
+    "spendKgbDetectionChancePerPoint": 0.02,
+    "fondyReliabilityBoostPerSpend": 0.05,
+    "quotaReductionPerPoint": 0.05,
+    "kgbProtectionPerPoint": 2,
+    "consumerGoodsPerPoint": 5,
+    "tradingMoneyPerPoint": 10,
+    "maxConnections": 100,
+    "startingConnections": 10,
+    "arrestChancePerTick": 0.01
+  },
+  "trudodni": {
+    "defaultRate": 0.5,
+    "perBuilding": {
+      "collective-farm-hq": 1.0,
+      "kolkhoz-hq": 1.0,
+      "kolkhoz": 1.0,
+      "greenhouse": 0.7,
+      "barn": 0.7,
+      "vodka-distillery": 1.0,
+      "vodka-plant": 1.0,
+      "bakery": 1.0,
+      "factory": 1.2,
+      "warehouse": 1.2,
+      "coal-plant": 1.5,
+      "steel-mill": 1.5,
+      "cement-works": 1.5,
+      "hospital": 2.0,
+      "school": 2.0,
+      "university": 2.0,
+      "power-station": 3.0,
+      "tec": 3.0,
+      "ministry": 0.7,
+      "party-hq": 0.7,
+      "soviet": 0.7,
+      "monument": 0.5,
+      "cinema": 0.7,
+      "radio-tower": 1.0,
+      "gulag": 1.5,
+      "barracks": 1.0,
+      "guard-tower": 0.5
+    },
+    "minimumByDifficulty": {
+      "worker": 50,
+      "comrade": 100,
+      "tovarish": 200
+    },
+    "values": {
+      "1": 0.5,
+      "2": 0.75,
+      "3": 1.0,
+      "4": 1.25,
+      "5": 1.5,
+      "6": 2.0,
+      "7": 2.5
+    },
+    "daysPerMonth": 26,
+    "annualMinimum": 200,
+    "shortfallMoralePenalty": 10,
+    "perTick": 0.5
+  },
+  "quota": {
+    "metEscalation": 1.15,
+    "missedReduction": 0.95,
+    "eraEscalation": {
+      "revolution": 1.0,
+      "industrialization": 1.2,
+      "wartime": 1.4,
+      "reconstruction": 0.9,
+      "thaw": 1.0,
+      "stagnation": 1.1,
+      "perestroika": 0.8,
+      "eternal": 1.0
+    },
+    "difficultyMult": {
+      "worker": 0.8,
+      "comrade": 1.0,
+      "tovarish": 1.3
+    }
+  },
+  "startingResources": {
+    "base": {
+      "money": 2000,
+      "food": 200,
+      "vodka": 50,
+      "power": 0,
+      "population": 30,
+      "timber": 100,
+      "steel": 50,
+      "paperwork": 20
+    },
+    "difficultyMult": {
+      "worker": 2.0,
+      "comrade": 1.0,
+      "tovarish": 0.5
+    },
+    "eraMult": {
+      "revolution": 0.8,
+      "industrialization": 0.9,
+      "wartime": 0.6,
+      "reconstruction": 0.7,
+      "thaw": 1.2,
+      "stagnation": 1.0,
+      "perestroika": 0.8,
+      "eternal": 0.5
+    }
+  },
+  "difficulty": {
+    "worker": {
+      "quotaTarget": 0.8,
+      "startingResources": 1.5,
+      "birthRate": 1.2,
+      "decayRate": 0.7,
+      "politruksPer100": 0.5,
+      "fondyReliability": 1.2,
+      "deliveryRate": 0.8,
+      "eventSeverity": 0.7,
+      "markDecayRate": 1.2,
+      "starvationRate": 0.7
+    },
+    "comrade": {
+      "quotaTarget": 1.0,
+      "startingResources": 1.0,
+      "birthRate": 1.0,
+      "decayRate": 1.0,
+      "politruksPer100": 1.0,
+      "fondyReliability": 1.0,
+      "deliveryRate": 1.0,
+      "eventSeverity": 1.0,
+      "markDecayRate": 1.0,
+      "starvationRate": 1.0
+    },
+    "tovarish": {
+      "quotaTarget": 1.3,
+      "startingResources": 0.7,
+      "birthRate": 0.8,
+      "decayRate": 1.3,
+      "politruksPer100": 1.5,
+      "fondyReliability": 0.7,
+      "deliveryRate": 1.2,
+      "eventSeverity": 1.3,
+      "markDecayRate": 0.7,
+      "starvationRate": 1.5
+    }
+  },
+  "stakhanovite": {
+    "chance": 0.005,
+    "productionBoostMin": 1.5,
+    "productionBoostRange": 2.5,
+    "propagandaMin": 10,
+    "propagandaRange": 40,
+    "quotaIncreaseBase": 0.15,
+    "quotaIncreaseRange": 0.1
+  },
+  "mts": {
+    "startYear": 1928,
+    "endYear": 1958,
+    "tractorUnits": 5,
+    "rentalCostPerUnit": 10,
+    "grainBoostMultiplier": 1.3
+  },
+  "heating": {
+    "districtPopulation": 100,
+    "districtToCrumblingTicks": 1000,
+    "pechka": {
+      "consumptionAmount": 2,
+      "consumptionResource": "timber",
+      "baseEfficiency": 0.6,
+      "capacityPer100Pop": 50,
+      "repairThreshold": 500
+    },
+    "district": {
+      "consumptionAmount": 5,
+      "consumptionResource": "power",
+      "baseEfficiency": 0.9,
+      "capacityPer100Pop": 200,
+      "repairThreshold": 800
+    },
+    "crumbling": {
+      "consumptionAmount": 8,
+      "consumptionResource": "power",
+      "baseEfficiency": 0.5,
+      "capacityPer100Pop": 150,
+      "repairThreshold": 1200
+    }
+  },
+  "fondy": {
+    "revolution": { "reliability": 0.4, "interval": 30, "food": 0, "vodka": 0, "money": 0, "steel": 0, "timber": 10 },
+    "industrialization": { "reliability": 0.6, "interval": 20, "food": 5, "vodka": 0, "money": 10, "steel": 20, "timber": 15 },
+    "wartime": { "reliability": 0.3, "interval": 40, "food": 5, "vodka": 0, "money": 5, "steel": 10, "timber": 5 },
+    "reconstruction": { "reliability": 0.5, "interval": 25, "food": 5, "vodka": 0, "money": 10, "steel": 15, "timber": 10 },
+    "thaw": { "reliability": 0.8, "interval": 15, "food": 10, "vodka": 5, "money": 20, "steel": 25, "timber": 20 },
+    "stagnation": { "reliability": 0.4, "interval": 30, "food": 5, "vodka": 5, "money": 15, "steel": 15, "timber": 10 },
+    "perestroika": { "reliability": 0.3, "interval": 35, "food": 3, "vodka": 3, "money": 10, "steel": 10, "timber": 8 },
+    "eternal": { "reliability": 0.2, "interval": 40, "food": 2, "vodka": 2, "money": 5, "steel": 5, "timber": 5 }
+  },
+  "rations": {
+    "periods": [
+      { "start": 1929, "end": 1935 },
+      { "start": 1941, "end": 1947 },
+      { "start": 1983, "end": 9999 }
+    ],
+    "defaultTiers": {
+      "worker": { "share": 0.5, "food": 1.0, "vodka": 0.3 },
+      "employee": { "share": 0.2, "food": 0.7, "vodka": 0.2 },
+      "dependent": { "share": 0.2, "food": 0.5, "vodka": 0.1 },
+      "children": { "share": 0.1, "food": 0.4, "vodka": 0.0 }
+    }
+  },
+  "currencyReforms": [
+    { "year": 1924, "name": "Chervonets Reform", "rate": 50000 },
+    { "year": 1947, "name": "Post-War Reform", "rate": 10 },
+    { "year": 1961, "name": "Khrushchev Reform", "rate": 10 },
+    { "year": 1991, "name": "Pavlov Reform", "rate": 1, "confiscation": { "threshold": 1000, "rate": 0.5 } }
+  ],
+  "storage": {
+    "baseCapacity": 200,
+    "overflowSpoilageRate": 0.05,
+    "storedSpoilageRate": 0.005,
+    "coldStorageSpoilageRate": 0.0005,
+    "elevatorSpoilageRate": 0.001,
+    "singleColdStorageRate": 0.001,
+    "seasonalSpoilage": {
+      "summerMonthStart": 6,
+      "summerMonthEnd": 8,
+      "summerMultiplier": 2.0,
+      "winterMonthStart": 11,
+      "winterMonthEnd": 3,
+      "winterMultiplier": 0.3
+    },
+    "byRole": {
+      "agriculture": 50,
+      "industry": 30
+    },
+    "byDef": {
+      "warehouse": 300,
+      "grain-elevator": 2000,
+      "cold-storage": 400,
+      "fuel-depot": 500,
+      "granary": 500,
+      "root-cellar": 200
+    }
+  },
+  "consumption": {
+    "starvationGraceTicks": 90,
+    "maxStarvationDeathsPerTick": 5,
+    "foodPerPopDivisor": 10,
+    "vodkaPerPopDivisor": 20
+  },
+  "production": {
+    "overstaffingMinContribution": 0.015625,
+    "overstaffingDecayRate": 0.5,
+    "grainToVodkaRatio": 2,
+    "vodkaMoraleBonus": 20,
+    "foodCrisisThreshold": 0.5
+  },
+  "privatePlots": {
+    "baseFoodPerHectarePerYear": 200,
+    "monthsPerYear": 12,
+    "livestockFood": {
+      "cow": 4,
+      "pig": 2,
+      "sheep": 0.4,
+      "poultry": 0.2
+    },
+    "eraMultiplier": {
+      "thaw_and_freeze": 1.5,
+      "great_patriotic": 0.0,
+      "stagnation": 0.8
+    }
+  },
+  "remainder": {
+    "distributedFraction": 0.7
+  },
+  "deliveryQuantity": {
+    "min": 0.7,
+    "range": 0.3
+  },
+  "consumerGoods": {
+    "startingAvailable": 50,
+    "startingDemand": 100,
+    "startingSatisfaction": 0.5
+  }
+}

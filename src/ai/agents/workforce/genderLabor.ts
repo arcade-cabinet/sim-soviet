@@ -6,6 +6,8 @@
  * War: women do everything. Stagnation: return to traditional roles on paper.
  */
 
+import { workforce } from '@/config';
+
 /** Era-specific multipliers controlling female labor participation by sector. */
 export interface GenderLaborConfig {
   /** Multiplier for female workers in heavy industry */
@@ -18,56 +20,8 @@ export interface GenderLaborConfig {
   femalesMilitary: boolean;
 }
 
-const ERA_GENDER_CONFIGS: Record<string, GenderLaborConfig> = {
-  revolution: {
-    femaleHeavyIndustry: 0.7,
-    femaleAgriculture: 1.0,
-    femaleServices: 1.0,
-    femalesMilitary: false,
-  },
-  collectivization: {
-    femaleHeavyIndustry: 0.8,
-    femaleAgriculture: 1.0,
-    femaleServices: 1.1,
-    femalesMilitary: false,
-  },
-  industrialization: {
-    femaleHeavyIndustry: 0.9,
-    femaleAgriculture: 1.0,
-    femaleServices: 1.2,
-    femalesMilitary: false,
-  },
-  wartime: {
-    femaleHeavyIndustry: 1.0,
-    femaleAgriculture: 1.0,
-    femaleServices: 1.0,
-    femalesMilitary: true,
-  },
-  reconstruction: {
-    femaleHeavyIndustry: 0.9,
-    femaleAgriculture: 1.0,
-    femaleServices: 1.2,
-    femalesMilitary: false,
-  },
-  thaw: {
-    femaleHeavyIndustry: 0.85,
-    femaleAgriculture: 0.95,
-    femaleServices: 1.3,
-    femalesMilitary: false,
-  },
-  stagnation: {
-    femaleHeavyIndustry: 0.8,
-    femaleAgriculture: 0.9,
-    femaleServices: 1.3,
-    femalesMilitary: false,
-  },
-  eternal: {
-    femaleHeavyIndustry: 1.0,
-    femaleAgriculture: 1.0,
-    femaleServices: 1.0,
-    femalesMilitary: true,
-  },
-};
+const ERA_GENDER_CONFIGS: Record<string, GenderLaborConfig> =
+  workforce.genderLabor as Record<string, GenderLaborConfig>;
 
 /**
  * Look up the gender labor configuration for a given era.

@@ -7,13 +7,14 @@
  */
 
 import { getBuildingDef } from '@/data/buildingDefs';
+import { economy } from '@/config';
 import { citizens, getResourceEntity, producers } from '@/ecs/archetypes';
 
 /**
  * Minimum contribution ratio for extra workers (below this, no benefit).
  * After ~6 extra workers the geometric decay drops below this threshold.
  */
-const OVERSTAFFING_MIN_CONTRIBUTION = 0.015625; // 0.5^6
+const OVERSTAFFING_MIN_CONTRIBUTION = economy.production.overstaffingMinContribution;
 
 /**
  * Calculates effective worker count with overstaffing diminishing returns.

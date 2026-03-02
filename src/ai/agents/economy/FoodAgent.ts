@@ -14,44 +14,37 @@
 
 import { Vehicle } from 'yuka';
 import { getBuildingDef } from '@/data/buildingDefs';
+import { economy } from '@/config';
 import { citizens, dvory, getResourceEntity, producers } from '@/ecs/archetypes';
 import { RETIREMENT_AGE } from '@/ecs/factories/demographics';
 import { MSG } from '../../telegrams';
 import type { EraId } from '@/game/era/types';
 
 // ---------------------------------------------------------------------------
-// Constants
+// Constants (sourced from config/economy.json)
 // ---------------------------------------------------------------------------
 
 /** Consecutive starvation ticks before deaths begin (~1 season at 1x speed). */
-const STARVATION_GRACE_TICKS = 90;
+const STARVATION_GRACE_TICKS = economy.consumption.starvationGraceTicks;
 
 /** Maximum starvation deaths applied per tick. */
-const MAX_STARVATION_DEATHS_PER_TICK = 5;
+const MAX_STARVATION_DEATHS_PER_TICK = economy.consumption.maxStarvationDeathsPerTick;
 
 /** Minimum overstaffing contribution before truncating decay series. */
-const OVERSTAFFING_MIN_CONTRIBUTION = 0.015625; // 0.5^6
+const OVERSTAFFING_MIN_CONTRIBUTION = economy.production.overstaffingMinContribution;
 
 /** Base food production per hectare per year from private plots. */
-const BASE_FOOD_PER_HECTARE_PER_YEAR = 200;
+const BASE_FOOD_PER_HECTARE_PER_YEAR = economy.privatePlots.baseFoodPerHectarePerYear;
 
 /** Months per year for converting annual plot output to monthly ticks. */
-const MONTHS_PER_YEAR = 12;
+const MONTHS_PER_YEAR = economy.privatePlots.monthsPerYear;
 
 /** Monthly food bonus per livestock type. */
-const LIVESTOCK_FOOD: Record<string, number> = {
-  cow: 4,
-  pig: 2,
-  sheep: 0.4,
-  poultry: 0.2,
-};
+const LIVESTOCK_FOOD: Record<string, number> = economy.privatePlots.livestockFood;
 
 /** Era-specific multipliers for private plot production. */
-const ERA_PLOT_MULTIPLIER: Partial<Record<EraId, number>> = {
-  thaw_and_freeze: 1.5, // Larger plots allowed under Khrushchev
-  great_patriotic: 0.0, // Plots confiscated for war effort
-  stagnation: 0.8, // Declining rural investment
-};
+const ERA_PLOT_MULTIPLIER: Partial<Record<EraId, number>> =
+  economy.privatePlots.eraMultiplier as Partial<Record<EraId, number>>;
 
 // ---------------------------------------------------------------------------
 // Food state machine

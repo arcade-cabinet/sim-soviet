@@ -12,22 +12,25 @@
 
 import type { Entity, RaionPool } from '@/ecs/world';
 import { world } from '@/ecs/world';
+import { workforce } from '@/config';
 import type { World } from 'miniplex';
+
+const tcfg = workforce.transition;
 
 /** Population tracking mode: individual entities or aggregate statistics. */
 export type PopulationMode = 'entity' | 'aggregate';
 
 /** Population threshold that triggers the one-way transition to aggregate mode. */
-const AGGREGATE_THRESHOLD = 200;
+const AGGREGATE_THRESHOLD = tcfg.aggregateThreshold;
 
 /** Default stats for citizens without WorkerStats data. */
-const DEFAULT_MORALE = 50;
-const DEFAULT_SKILL = 30;
-const DEFAULT_LOYALTY = 50;
-const DEFAULT_VODKA_DEP = 10;
+const DEFAULT_MORALE = tcfg.defaultMorale;
+const DEFAULT_SKILL = tcfg.defaultSkill;
+const DEFAULT_LOYALTY = tcfg.defaultLoyalty;
+const DEFAULT_VODKA_DEP = tcfg.defaultVodkaDep;
 
 /** Number of 5-year age buckets (0-4 through 95-99). */
-const AGE_BUCKET_COUNT = 20;
+const AGE_BUCKET_COUNT = tcfg.ageBucketCount;
 
 /**
  * Determine whether the game should use entity or aggregate population mode.
@@ -171,7 +174,7 @@ export function collapseEntitiesToBuildings(w: World<Entity> = world): RaionPool
       if (member.pregnant != null && member.pregnant > 0) {
         // pregnant is ticks remaining; assume 3 trimesters mapped to 3 buckets
         // High ticks = newly conceived, low ticks = about to deliver
-        const maxPregnancyTicks = 90; // ~3 months at 30 ticks/month
+        const maxPregnancyTicks = tcfg.maxPregnancyTicks; // ~3 months at 30 ticks/month
         const ratio = member.pregnant / maxPregnancyTicks;
         if (ratio > 0.66) {
           pregnancyWaves[2]++; // newly conceived

@@ -12,6 +12,7 @@
  */
 
 import { getResourceEntity } from '@/ecs/archetypes';
+import { economy } from '@/config';
 
 /** Starvation notification callback type */
 export type StarvationCallback = () => void;
@@ -52,7 +53,7 @@ export interface ConsumptionResult {
  */
 
 /** Number of consecutive starvation ticks before deaths begin (~1 season at 1x speed). */
-const STARVATION_GRACE_TICKS = 90;
+const STARVATION_GRACE_TICKS = economy.consumption.starvationGraceTicks;
 
 /** Tracks consecutive ticks without food. Resets when food is available. */
 let _starvationCounter = 0;

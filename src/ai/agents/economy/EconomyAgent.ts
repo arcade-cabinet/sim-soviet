@@ -17,6 +17,7 @@
  */
 
 import { Vehicle } from 'yuka';
+import { economy } from '@/config';
 import { MSG } from '../../telegrams';
 import type { GameRng } from '../../../game/SeedSystem';
 
@@ -215,7 +216,11 @@ export class EconomyAgent extends Vehicle {
   private heating: HeatingState;
 
   // Consumer goods
-  private consumerGoods: ConsumerGoodsState = { available: 50, demand: 100, satisfaction: 0.5 };
+  private consumerGoods: ConsumerGoodsState = {
+    available: economy.consumerGoods.startingAvailable,
+    demand: economy.consumerGoods.startingDemand,
+    satisfaction: economy.consumerGoods.startingSatisfaction,
+  };
 
   // Currency reforms — own copy so mutations don't affect shared constant
   private reforms: CurrencyReform[];
@@ -241,7 +246,7 @@ export class EconomyAgent extends Vehicle {
     };
 
     // Init blat at 10
-    this.blat = { connections: 10, totalSpent: 0, totalEarned: 10 };
+    this.blat = { connections: economy.blat.startingConnections, totalSpent: 0, totalEarned: economy.blat.startingConnections };
 
     // Init rations (inactive by default)
     this.rations = {
@@ -475,7 +480,7 @@ export class EconomyAgent extends Vehicle {
     let reason: string;
 
     if (delivered) {
-      const quantity = 0.7 + this.rand() * 0.3;
+      const quantity = economy.deliveryQuantity.min + this.rand() * economy.deliveryQuantity.range;
       actualDelivered = { ...ZERO_RESOURCES };
       for (const key of Object.keys(ZERO_RESOURCES) as TransferableResource[]) {
         actualDelivered[key] = Math.round(this.fondy.allocated[key] * quantity);
@@ -503,7 +508,7 @@ export class EconomyAgent extends Vehicle {
   }
 
   grantBlat(amount: number): void {
-    this.blat.connections = Math.min(100, this.blat.connections + amount);
+    this.blat.connections = Math.min(economy.blat.maxConnections, this.blat.connections + amount);
     this.blat.totalEarned += amount;
   }
 
@@ -534,32 +539,34 @@ export class EconomyAgent extends Vehicle {
 
     let effect: BlatEffect | undefined;
 
+    const blatCfg = economy.blat;
+
     switch (purpose) {
       case 'improve_delivery':
-        this.fondy.reliability = Math.min(1.0, this.fondy.reliability + 0.05);
-        effect = { type: 'improve_delivery', value: 0.05 };
+        this.fondy.reliability = Math.min(1.0, this.fondy.reliability + blatCfg.fondyReliabilityBoostPerSpend);
+        effect = { type: 'improve_delivery', value: blatCfg.fondyReliabilityBoostPerSpend };
         break;
       case 'reduce_quota':
-        effect = { type: 'reduce_quota', value: amount * 0.05 };
+        effect = { type: 'reduce_quota', value: amount * blatCfg.quotaReductionPerPoint };
         break;
       case 'kgb_protection':
-        effect = { type: 'kgb_protection', value: amount * 2 };
+        effect = { type: 'kgb_protection', value: amount * blatCfg.kgbProtectionPerPoint };
         break;
       case 'consumer_goods':
-        this.consumerGoods.available += amount * 5;
-        effect = { type: 'consumer_goods', value: amount * 5 };
+        this.consumerGoods.available += amount * blatCfg.consumerGoodsPerPoint;
+        effect = { type: 'consumer_goods', value: amount * blatCfg.consumerGoodsPerPoint };
         break;
       case 'trading':
-        effect = { type: 'trading', value: amount * 10 };
+        effect = { type: 'trading', value: amount * blatCfg.tradingMoneyPerPoint };
         break;
     }
 
-    // KGB detection: 2% per point above threshold of 5
-    const kgbThreshold = 5;
+    // KGB detection: per point above threshold
+    const kgbThreshold = blatCfg.spendKgbThreshold;
     let kgbDetected = false;
     if (amount > kgbThreshold) {
       const excessPoints = amount - kgbThreshold;
-      const detectionChance = excessPoints * 0.02;
+      const detectionChance = excessPoints * blatCfg.spendKgbDetectionChancePerPoint;
       if (this.rand() < detectionChance) {
         kgbDetected = true;
       }
@@ -596,7 +603,7 @@ export class EconomyAgent extends Vehicle {
         'extensive personal connections. An investigation has been opened.';
     }
 
-    if (connections > BLAT_ARREST_THRESHOLD && this.rand() < 0.01) {
+    if (connections > BLAT_ARREST_THRESHOLD && this.rand() < economy.blat.arrestChancePerTick) {
       arrested = true;
       announcement =
         'KGB DIRECTIVE: Citizen detained for questioning regarding ' +
@@ -642,9 +649,10 @@ export class EconomyAgent extends Vehicle {
     const lastName = STAKHANOVITE_LAST_NAMES[this.pickIndex(STAKHANOVITE_LAST_NAMES.length)]!;
     const workerName = `${firstName} ${lastName}`;
 
-    const productionBoost = 1.5 + this.rand() * 2.5;
-    const propagandaValue = Math.round(10 + this.rand() * 40);
-    const quotaIncrease = 0.15 + this.rand() * 0.1;
+    const sCfg = economy.stakhanovite;
+    const productionBoost = sCfg.productionBoostMin + this.rand() * sCfg.productionBoostRange;
+    const propagandaValue = Math.round(sCfg.propagandaMin + this.rand() * sCfg.propagandaRange);
+    const quotaIncrease = sCfg.quotaIncreaseBase + this.rand() * sCfg.quotaIncreaseRange;
 
     return {
       workerName,
@@ -662,7 +670,7 @@ export class EconomyAgent extends Vehicle {
     const distributed = { ...ZERO_RESOURCES };
     const reserved = { ...ZERO_RESOURCES };
     for (const key of Object.keys(ZERO_RESOURCES) as TransferableResource[]) {
-      distributed[key] = Math.floor(surplus[key] * 0.7);
+      distributed[key] = Math.floor(surplus[key] * economy.remainder.distributedFraction);
       reserved[key] = surplus[key] - distributed[key];
     }
     return { distributed, reserved };

@@ -12,26 +12,27 @@
  */
 
 import { Vehicle } from 'yuka';
+import { economy } from '@/config';
 import { MSG } from '../../telegrams';
 
 // ─────────────────────────────────────────────────────────
-//  Constants
+//  Constants (sourced from config/economy.json → production)
 // ─────────────────────────────────────────────────────────
 
 /** Grain units consumed per vodka unit produced. */
-export const GRAIN_TO_VODKA_RATIO = 2;
+export const GRAIN_TO_VODKA_RATIO = economy.production.grainToVodkaRatio;
 
 /** Vodka units consumed per N citizens per tick. */
-const CITIZENS_PER_VODKA = 20;
+const CITIZENS_PER_VODKA = economy.consumption.vodkaPerPopDivisor;
 
 /** Morale bonus applied when vodka demand is fully met. */
-export const VODKA_MORALE_BONUS = 20;
+export const VODKA_MORALE_BONUS = economy.production.vodkaMoraleBonus;
 
 /**
  * Food-per-citizen threshold below which grain diversion stops.
  * Protects population from starvation during scarcity.
  */
-const FOOD_CRISIS_THRESHOLD = 0.5;
+const FOOD_CRISIS_THRESHOLD = economy.production.foodCrisisThreshold;
 
 // ─────────────────────────────────────────────────────────
 //  Public types
