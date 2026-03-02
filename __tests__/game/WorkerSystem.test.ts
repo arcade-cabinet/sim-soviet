@@ -2,7 +2,7 @@ import { citizens } from '@/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
-import { generateWorkerName, WorkerSystem } from '@/game/workers/index';
+import { generateWorkerName, WorkerSystem } from '@/ai/agents/workforce/workers-index';
 
 describe('WorkerSystem', () => {
   let system: WorkerSystem;

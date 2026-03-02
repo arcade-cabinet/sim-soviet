@@ -31,8 +31,11 @@ import { MSG } from '../../telegrams';
 export type { EraId, EraModifiers, EraDefinition, EraSystemSaveData, EraCheckpoint, ConstructionMethod } from '../../../game/era/types';
 export { ERA_ORDER, ERA_DEFINITIONS, ALL_BUILDING_IDS, eraIndexForYear } from '../../../game/era/definitions';
 
-import { ERA_ORDER, ERA_DEFINITIONS, eraIndexForYear } from '../../../game/era/definitions';
-import type { EraId, EraModifiers, EraDefinition } from '../../../game/era/types';
+import { ERA_ORDER, ERA_DEFINITIONS, ALL_BUILDING_IDS, eraIndexForYear } from '../../../game/era/definitions';
+import type { EraId, EraModifiers, EraDefinition, ConstructionMethod, EraCheckpoint, EraSystemSaveData } from '../../../game/era/types';
+import type { Doctrine } from './CompulsoryDeliveries';
+import type { SettlementTier } from '../infrastructure/SettlementSystem';
+import { tierMeetsRequirement, getBuildingTierRequirement } from '../../../game/era/tiers';
 import { getResourceEntity } from '../../../ecs/archetypes';
 import type { DifficultyLevel } from './ScoringSystem';
 
@@ -328,6 +331,10 @@ export interface PoliticalState {
   // Mandate state (absorbed from PlanMandates)
   /** Current plan's building mandates with fulfillment tracking. */
   mandates: MandateWithFulfillment[];
+
+  // Checkpoint state (absorbed from EraSystem)
+  /** Era-keyed checkpoints for save/restore. */
+  checkpoints: Map<EraId, EraCheckpoint>;
 }
 
 // ---------------------------------------------------------------------------
@@ -374,6 +381,7 @@ export class PoliticalAgent extends Vehicle {
       consecutiveFailures: 0,
       pripiskiHistory: 0,
       mandates: [],
+      checkpoints: new Map(),
     };
   }
 
@@ -446,6 +454,13 @@ export class PoliticalAgent extends Vehicle {
   }
 
   /**
+   * Alias for checkEraTransition (backward compat with old EraSystem API).
+   */
+  checkTransition(year: number): EraDefinition | null {
+    return this.checkEraTransition(year);
+  }
+
+  /**
    * Advance the modifier blend by one tick.
    * Call once per simulation tick while transitioning.
    *
@@ -494,19 +509,22 @@ export class PoliticalAgent extends Vehicle {
 
   /**
    * Get buildings available in the current era (cumulative — includes prior eras).
+   * Optionally filters by settlement tier.
    *
    * Absorbed from EraSystem.getAvailableBuildings().
    *
+   * @param tier - Optional settlement tier to filter by
    * @returns Array of building defIds
    */
-  getAvailableBuildings(): string[] {
+  getAvailableBuildings(tier?: SettlementTier): string[] {
     const currentIdx = eraIndexForYear(this.state.currentYear);
     const available: string[] = [];
     for (let i = 0; i <= currentIdx; i++) {
       const eraId = ERA_ORDER[i]!;
       available.push(...ERA_DEFINITIONS[eraId].unlockedBuildings);
     }
-    return available;
+    if (!tier) return available;
+    return available.filter((defId) => tierMeetsRequirement(tier, getBuildingTierRequirement(defId)));
   }
 
   /**
@@ -535,6 +553,129 @@ export class PoliticalAgent extends Vehicle {
    */
   getYear(): number {
     return this.state.currentYear;
+  }
+
+  /**
+   * Get the doctrine for the current era.
+   * Absorbed from EraSystem.getDoctrine().
+   */
+  getDoctrine(): Doctrine {
+    return this.getCurrentEra().doctrine;
+  }
+
+  /**
+   * Get the delivery rates for the current era.
+   * Absorbed from EraSystem.getDeliveryRates().
+   */
+  getDeliveryRates(): { food: number; vodka: number; money: number } {
+    return { ...this.getCurrentEra().deliveryRates };
+  }
+
+  /**
+   * Get quota escalation multiplier for the current era.
+   * Absorbed from EraSystem.getQuotaEscalation().
+   */
+  getQuotaEscalation(): number {
+    return this.getCurrentEra().quotaEscalation;
+  }
+
+  /**
+   * Get the construction method for the current era.
+   * Absorbed from EraSystem.getConstructionMethod().
+   */
+  getConstructionMethod(): ConstructionMethod {
+    return this.getCurrentEra().constructionMethod;
+  }
+
+  /**
+   * Get the construction time multiplier for the current era.
+   * Absorbed from EraSystem.getConstructionTimeMult().
+   */
+  getConstructionTimeMult(): number {
+    return this.getCurrentEra().constructionTimeMult;
+  }
+
+  /**
+   * Get buildings that are NOT yet available (locked by era).
+   * Absorbed from EraSystem.getLockedBuildings().
+   */
+  getLockedBuildings(): string[] {
+    const available = new Set(this.getAvailableBuildings());
+    return ALL_BUILDING_IDS.filter((id) => !available.has(id));
+  }
+
+  /**
+   * Save a checkpoint for the current era.
+   * Absorbed from EraSystem.saveCheckpoint().
+   */
+  saveCheckpoint(snapshot: string): void {
+    const era = this.getCurrentEra();
+    this.state.checkpoints.set(era.id, {
+      eraId: era.id,
+      year: this.state.currentYear,
+      snapshot,
+    });
+  }
+
+  /**
+   * Find which era unlocks a given building.
+   * Absorbed from EraSystem.getBuildingUnlockEra().
+   */
+  getBuildingUnlockEra(defId: string): EraDefinition | null {
+    for (const eraId of ERA_ORDER) {
+      const def = ERA_DEFINITIONS[eraId];
+      if (def.unlockedBuildings.includes(defId)) {
+        return def;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get the saved checkpoint for a given era.
+   * Absorbed from EraSystem.getCheckpoint().
+   */
+  getCheckpoint(eraId: EraId): EraCheckpoint | null {
+    return this.state.checkpoints.get(eraId) ?? null;
+  }
+
+  /**
+   * Get all saved checkpoints.
+   * Absorbed from EraSystem.getAllCheckpoints().
+   */
+  getAllCheckpoints(): ReadonlyMap<EraId, EraCheckpoint> {
+    return this.state.checkpoints;
+  }
+
+  /**
+   * Check if a checkpoint exists for a given era.
+   * Absorbed from EraSystem.hasCheckpoint().
+   */
+  hasCheckpoint(eraId: EraId): boolean {
+    return this.state.checkpoints.has(eraId);
+  }
+
+  /**
+   * Serialize era system state for save/load.
+   * Absorbed from EraSystem.serialize().
+   */
+  serialize(): EraSystemSaveData {
+    return {
+      currentYear: this.state.currentYear,
+      previousEraId: this.state.previousEraId,
+      transitionTicksRemaining: this.state.transitionTicksRemaining,
+    };
+  }
+
+  /**
+   * Restore a PoliticalAgent from serialized era state.
+   * Absorbed from EraSystem.deserialize().
+   */
+  static deserialize(data: EraSystemSaveData): PoliticalAgent {
+    const agent = new PoliticalAgent(data.currentYear);
+    agent.state.previousEraId = data.previousEraId;
+    agent.state.transitionTicksRemaining = data.transitionTicksRemaining ?? 0;
+    return agent;
   }
 
   // =========================================================================
@@ -954,6 +1095,4 @@ export class PoliticalAgent extends Vehicle {
   }
 }
 
-/** Backward-compat alias: EraSystem is now PoliticalAgent. */
-export { PoliticalAgent as EraSystem };
 

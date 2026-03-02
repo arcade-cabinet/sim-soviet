@@ -6,7 +6,7 @@
  */
 
 export { ERA_DEFINITIONS, ERA_ORDER, getAvailableBuildingsForYear } from './definitions';
-export { EraSystem } from '../../ai/agents/political/PoliticalAgent';
+export { PoliticalAgent as EraSystem } from '../../ai/agents/political/PoliticalAgent';
 export {
   BUILDING_TIER_REQUIREMENTS,
   getBuildingTierRequirement,

@@ -90,7 +90,7 @@ describe('Playthrough: Population Growth & Collapse', () => {
     store.resources.food = 0;
     store.resources.vodka = 0;
     // Reset starvation counter so grace period starts fresh from food cutoff
-    resetStarvationCounter();
+    engine.getFoodAgent().reset();
 
     // Tick enough times for grace period (90) + starvation to kill everyone.
     // Keep food at 0 each tick to prevent private plot production from resetting counter.

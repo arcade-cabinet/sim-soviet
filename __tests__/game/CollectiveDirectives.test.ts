@@ -1,5 +1,5 @@
 // __tests__/game/CollectiveDirectives.test.ts
-import { COLLECTIVE_DIRECTIVES, getDirectiveByFocus } from '@/game/workers/collectiveDirectives';
+import { COLLECTIVE_DIRECTIVES, getDirectiveByFocus } from '@/ai/agents/workforce/collectiveDirectives';
 
 describe('Collective Directives', () => {
   it('has 4 directives matching CollectiveFocus values', () => {

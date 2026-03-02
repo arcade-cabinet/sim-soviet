@@ -11,9 +11,9 @@
 
 import type { CitizenComponent } from '../../src/ecs/world';
 import { DISTRICT_HEATING_POPULATION, EconomySystem, HEATING_CONFIGS } from '../../src/ai/agents/economy/economy-core';
-import { applyMorale } from '../../src/game/workers/classes';
-import { HEATING_FAILURE_MORALE_PENALTY } from '../../src/game/workers/constants';
-import type { WorkerStats } from '../../src/game/workers/types';
+import { applyMorale } from '../../src/ai/agents/workforce/classes';
+import { HEATING_FAILURE_MORALE_PENALTY } from '../../src/ai/agents/workforce/constants';
+import type { WorkerStats } from '../../src/ai/agents/workforce/types';
 
 describe('Heating fuel consumption', () => {
   it('pechka consumes timber during winter', () => {

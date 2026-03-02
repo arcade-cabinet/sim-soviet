@@ -24,7 +24,7 @@ import {
   HUNGER_CRISIS_THRESHOLD,
   runGovernor,
 } from '@/ai/agents/infrastructure/CollectiveAgent';
-import type { WorkerStats } from '@/game/workers/types';
+import type { WorkerStats } from '@/ai/agents/workforce/types';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

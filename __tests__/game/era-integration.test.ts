@@ -1,6 +1,6 @@
 import type { GameMeta, Resources } from '@/ecs/world';
 import { ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from '@/game/era/definitions';
-import { EraSystem } from '../../src/ai/agents/political/PoliticalAgent';
+import { EraSystem } from '@/game/era';
 import { getBuildingTierRequirement, tierMeetsRequirement } from '@/game/era/tiers';
 import type { EraId } from '@/game/era/types';
 

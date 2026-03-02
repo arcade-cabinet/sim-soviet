@@ -553,13 +553,11 @@ export class SimulationEngine {
   }
 
   public getChronology(): ChronologySystem {
-    // Phase 4: Return ChronologyAgent — structurally compatible with ChronologySystem
-    return this.chronologyAgent as any;
+    return this.chronologyAgent;
   }
 
   public getPersonnelFile(): PersonnelFile {
-    // Phase 4: Return KGBAgent — structurally compatible with PersonnelFile
-    return this.kgbAgent as any;
+    return this.kgbAgent;
   }
 
   public getDeliveries(): CompulsoryDeliveries {
@@ -571,13 +569,11 @@ export class SimulationEngine {
   }
 
   public getEraSystem(): EraSystem {
-    // Phase 4: Return PoliticalAgent — structurally compatible with EraSystem
-    return this.politicalAgent as any;
+    return this.politicalAgent;
   }
 
   public getEconomySystem(): EconomySystem {
-    // Phase 4: Return EconomyAgent — structurally compatible with EconomySystem
-    return this.economyAgent as any;
+    return this.economyAgent;
   }
 
   public getPoliticalEntities(): PoliticalEntitySystem {
@@ -607,8 +603,7 @@ export class SimulationEngine {
   }
 
   public getFireSystem(): FireSystem {
-    // Phase 4: Return DefenseAgent — structurally compatible with FireSystem
-    return this.defenseAgent as any;
+    return this.defenseAgent;
   }
 
   public getAchievements(): AchievementTracker {
@@ -1276,20 +1271,17 @@ export class SimulationEngine {
   // ── Context builders for extracted helpers ──
 
   private getMinigameContext() {
-    // TODO(cleanup): Remove 'as any' casts by updating extracted helpers to accept
-    // agent types (ChronologyAgent, KGBAgent) instead of legacy system types.
-    // Tracked as: Phase 5 — full agent-type migration for helper contexts.
     return {
-      chronology: this.chronologyAgent as any,
+      chronology: this.chronologyAgent,
       minigameRouter: this.minigameRouter,
-      personnelFile: this.kgbAgent as any,
+      personnelFile: this.kgbAgent,
       callbacks: this.callbacks,
     };
   }
 
   private getAchievementContext() {
     return {
-      chronology: this.chronologyAgent as any,
+      chronology: this.chronologyAgent,
       achievements: this.achievements,
       tutorial: this.tutorial,
       callbacks: this.callbacks,
@@ -1298,8 +1290,8 @@ export class SimulationEngine {
 
   private getAnnualReportContext() {
     return {
-      chronology: this.chronologyAgent as any,
-      personnelFile: this.kgbAgent as any,
+      chronology: this.chronologyAgent,
+      personnelFile: this.kgbAgent,
       scoring: this.scoring,
       callbacks: this.callbacks,
       rng: this.rng,
@@ -1317,40 +1309,24 @@ export class SimulationEngine {
   }
 
   private getSerializableEngine() {
-    // Phase 4: Agents are the active systems during tick(); old system instances
-    // are stale. Create shim objects that delegate serialize() to agents so that
-    // serializeSubsystems() captures live state. The restoreSubsystemsHelper
-    // replaces these entries with freshly-deserialized system instances, which
-    // get written back to the old system fields AND synced into agents.
-    const chronologyShim = {
-      serialize: () => this.chronologyAgent.serialize(),
-    } as typeof this.chronology;
-    const personnelShim = {
-      serialize: () => this.kgbAgent.serializePersonnelFile(),
-    } as typeof this.personnelFile;
-    const economyShim = {
-      serialize: () => this.economyAgent.serialize(),
-    } as typeof this.economySystem;
-    const eraShim = {
-      ...this.eraSystem,
-      serialize: () => ({
-        currentYear: this.chronologyAgent.getDate().year,
-        previousEraId: this.politicalAgent.getPreviousEraId(),
-        transitionTicksRemaining: 0,
-      }),
-    } as typeof this.eraSystem;
-    const fireShim = {
-      serialize: () => this.defenseAgent.serialize(),
-    } as typeof this.fireSystem;
+    // Agents are the canonical systems now — pass them directly.
+    // PoliticalAgent.serialize() returns EraSystemSaveData, and
+    // the eraSystem needs its year synced from chronology.
+    const politicalForSerialization = Object.create(this.politicalAgent);
+    politicalForSerialization.serialize = () => ({
+      currentYear: this.chronologyAgent.getDate().year,
+      previousEraId: this.politicalAgent.getPreviousEraId(),
+      transitionTicksRemaining: 0,
+    });
 
     return {
-      chronology: chronologyShim,
-      eraSystem: eraShim,
-      economySystem: economyShim,
+      chronology: this.chronologyAgent,
+      eraSystem: politicalForSerialization,
+      economySystem: this.economyAgent,
       eventSystem: this.eventSystem,
       pravdaSystem: this.pravdaSystem,
       politburo: this.politburo,
-      personnelFile: personnelShim,
+      personnelFile: this.kgbAgent,
       deliveries: this.deliveries,
       settlement: this.settlement,
       politicalEntities: this.politicalEntities,
@@ -1360,7 +1336,7 @@ export class SimulationEngine {
       achievements: this.achievements,
       mandateState: this.mandateState,
       transport: this.transport,
-      fireSystem: fireShim,
+      fireSystem: this.defenseAgent,
       workerSystem: this.workerSystem,
       quota: this.quota,
       consecutiveQuotaFailures: this.consecutiveQuotaFailures,

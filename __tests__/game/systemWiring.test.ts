@@ -20,8 +20,8 @@ import type { ConscriptionEvent, OrgnaborEvent, PoliticalTickResult } from '@/ga
 import { DIFFICULTY_PRESETS } from '@/ai/agents/political/ScoringSystem';
 import { SimulationEngine } from '@/game/SimulationEngine';
 import { WEATHER_PROFILES, WeatherType } from '@/ai/agents/core/weather-types';
-import { applyMorale } from '@/game/workers/classes';
-import { HEATING_FAILURE_MORALE_PENALTY } from '@/game/workers/constants';
+import { applyMorale } from '@/ai/agents/workforce/classes';
+import { HEATING_FAILURE_MORALE_PENALTY } from '@/ai/agents/workforce/constants';
 import { createTestDvory } from '../playthrough/helpers';
 
 function createMockCallbacks() {

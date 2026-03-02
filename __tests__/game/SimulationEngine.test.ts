@@ -1,7 +1,6 @@
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import type { QuotaState } from '../../src/ai/agents/political/PoliticalAgent';
-import { resetStarvationCounter } from '../../src/ai/agents/economy/consumptionSystem';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
@@ -227,7 +226,7 @@ describe('SimulationEngine', () => {
       store.resources.vodka = 100;
       // Exhaust grace period (90 ticks) — force food=0 each tick to prevent
       // PrivatePlotSystem food production from resetting the starvation counter
-      resetStarvationCounter();
+      engine.getFoodAgent().reset();
       for (let i = 0; i < 91; i++) {
         store.resources.food = 0;
         store.resources.vodka = 100;
@@ -244,7 +243,7 @@ describe('SimulationEngine', () => {
       const popBefore = getResourceEntity()!.resources.population;
       // Exhaust grace period (90 ticks) + sustain starvation for 20 more ticks.
       // Force food=0 each tick to prevent any food production from resetting the counter.
-      resetStarvationCounter();
+      engine.getFoodAgent().reset();
       for (let i = 0; i < 120; i++) {
         store.resources.food = 0;
         store.resources.vodka = 100;
