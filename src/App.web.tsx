@@ -54,6 +54,7 @@ import {
   closeBuildingInspector,
   closeCitizenDossierByIndex,
   closePoliticalPanel,
+  type GameSpeed,
   isPaused,
   notifyStateChange,
   setGameSpeed,
@@ -511,7 +512,7 @@ const App: React.FC = () => {
       setSpeed(gameState, 0);
     } else {
       setPaused(false);
-      setGameSpeed(sp as 1 | 2 | 3);
+      setGameSpeed(sp as GameSpeed);
       setSpeed(gameState, sp);
     }
   }, []);
@@ -857,6 +858,7 @@ const App: React.FC = () => {
               onShowMarket={handleShowMarket}
               onShowNotifications={handleShowNotifications}
               unreadNotifications={unreadNotifications}
+              autopilot={getEngine()?.getAgentManager().isAutopilot() ?? false}
             />
 
             <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />

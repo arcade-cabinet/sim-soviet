@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AudioManager from '../audio/AudioManager';
 import SFXManager from '../audio/SFXManager';
+import { getEngine } from '../bridge/GameInit';
 import { isColorBlindMode, setColorBlindMode } from '../stores/gameStore';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
@@ -28,6 +29,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
   const [muted, setMuted] = useState(() => AudioManager.getInstance().isMuted);
   const [sfxMuted, setSfxMuted] = useState(() => SFXManager.getInstance().isMuted);
   const [colorBlind, setColorBlind] = useState(() => isColorBlindMode());
+  const [autopilot, setAutopilot] = useState(() => {
+    const engine = getEngine();
+    return engine?.getAgentManager().isAutopilot() ?? false;
+  });
   const [xrSupported, setXrSupported] = useState(false);
 
   // Check WebXR availability on mount (web only)
@@ -64,6 +69,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
     const newValue = !colorBlind;
     setColorBlindMode(newValue);
     setColorBlind(newValue);
+  };
+
+  const handleToggleAutopilot = () => {
+    const engine = getEngine();
+    if (!engine) return;
+    if (autopilot) {
+      engine.disableAutopilot();
+    } else {
+      engine.enableAutopilot();
+    }
+    setAutopilot(!autopilot);
   };
 
   const handleEnterAR = () => {
@@ -108,6 +124,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
         description={colorBlind ? 'Patterns supplement colors.' : 'Standard color display.'}
         value={colorBlind}
         onToggle={handleToggleColorBlind}
+      />
+
+      <SettingToggle
+        label="COMRADE ADVISOR"
+        description={autopilot ? 'The AI governs all decisions.' : 'Manual control — you are the Chairman.'}
+        value={autopilot}
+        onToggle={handleToggleAutopilot}
       />
 
       {/* XR Section — web only, shown when WebXR is available */}

@@ -63,6 +63,7 @@ export interface TopBarProps {
   onShowMarket?: () => void;
   onShowNotifications?: () => void;
   unreadNotifications?: number;
+  autopilot?: boolean;
 }
 
 // ── Overflow menu item definition ─────────────────────────────────────────
@@ -118,6 +119,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onShowMarket,
   onShowNotifications,
   unreadNotifications = 0,
+  autopilot = false,
 }) => {
   const [showOverflow, setShowOverflow] = useState(false);
 
@@ -183,6 +185,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             <TouchableOpacity onPress={onShowAchievements} style={styles.achBtn} activeOpacity={0.7}>
               <Text style={styles.achBtnText}>{'\u2605'}</Text>
             </TouchableOpacity>
+          )}
+          {autopilot && (
+            <View style={styles.aiBadge}>
+              <Text style={styles.aiBadgeText}>AI</Text>
+            </View>
           )}
           {onShowNotifications && (
             <TouchableOpacity onPress={onShowNotifications} style={styles.notifBtn} activeOpacity={0.7}>
@@ -571,6 +578,20 @@ const styles = StyleSheet.create({
   },
   moreBtnTextActive: {
     color: Colors.sovietGold,
+  },
+  aiBadge: {
+    backgroundColor: Colors.termGreen,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: '#00c853',
+  },
+  aiBadgeText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: '#000',
+    letterSpacing: 1,
   },
 
   // Overflow menu
