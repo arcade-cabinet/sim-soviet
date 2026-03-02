@@ -118,6 +118,7 @@ import { getWeatherProfile, type WeatherType } from './WeatherSystem';
 import { autoPlaceBuilding } from './workers/autoBuilder';
 import { detectConstructionDemands } from './workers/demandSystem';
 import { WorkerSystem } from './workers/WorkerSystem';
+import { AgentManager } from '../ai/AgentManager';
 
 /**
  * Callback interface for SimulationEngine → React communication.
@@ -293,6 +294,9 @@ export class SimulationEngine {
   /** Stored so restoreSubsystems can rewire EventSystem/PolitburoSystem. */
   private eventHandler!: (event: GameEvent) => void;
   private politburoEventHandler!: (event: GameEvent) => void;
+  private agentManager: AgentManager;
+  private _originalOnMinigame?: SimCallbacks['onMinigame'];
+  private _originalOnAnnualReport?: SimCallbacks['onAnnualReport'];
 
   constructor(
     private grid: GameGrid,
@@ -429,6 +433,9 @@ export class SimulationEngine {
     const initialMandates = createMandatesForEra(initialEraId, this.difficulty);
     this.mandateState = createPlanMandateState(initialMandates);
 
+    // AgentManager — Yuka EntityManager wrapper for autopilot AI
+    this.agentManager = new AgentManager();
+
     // Wire ECS callbacks to UI
     setStarvationCallback(() => {
       this.callbacks.onToast('STARVATION DETECTED', 'critical');
@@ -491,6 +498,11 @@ export class SimulationEngine {
     return this.workerSystem;
   }
 
+  /** Get the AgentManager for autopilot control. */
+  public getAgentManager(): AgentManager {
+    return this.agentManager;
+  }
+
   public getMinigameRouter(): MinigameRouter {
     return this.minigameRouter;
   }
@@ -513,6 +525,68 @@ export class SimulationEngine {
 
   public getQuota(): Readonly<QuotaState> {
     return this.quota;
+  }
+
+  /**
+   * Enable autopilot mode. Wraps minigame/report callbacks so ChairmanAgent
+   * auto-resolves them instead of deferring to the UI.
+   */
+  public enableAutopilot(): void {
+    this.agentManager.enableAutopilot();
+
+    // Store original callbacks for restoration
+    if (!this._originalOnMinigame) {
+      this._originalOnMinigame = this.callbacks.onMinigame;
+    }
+    if (!this._originalOnAnnualReport) {
+      this._originalOnAnnualReport = this.callbacks.onAnnualReport;
+    }
+
+    // Wrap onMinigame to auto-resolve
+    this.callbacks.onMinigame = (active, resolveChoice) => {
+      const chairman = this.agentManager.getChairman();
+      if (chairman) {
+        const aiChoices = active.definition.choices.map((c) => ({
+          id: c.id,
+          successChance: c.successChance,
+          onSuccess: c.onSuccess,
+          onFailure: c.onFailure,
+        }));
+        const choiceId = chairman.resolveMinigame(aiChoices);
+        resolveChoice(choiceId);
+      } else {
+        // Fallback: pick first choice
+        resolveChoice(active.definition.choices[0]?.id ?? '');
+      }
+    };
+
+    // Wrap onAnnualReport to auto-submit
+    this.callbacks.onAnnualReport = (data, submitReport) => {
+      const chairman = this.agentManager.getChairman();
+      const quotaPercent = data.quotaTarget > 0 ? data.quotaCurrent / data.quotaTarget : 1;
+      const honest = chairman ? chairman.resolveAnnualReport(quotaPercent) : true;
+      submitReport({
+        honest,
+        quotaType: data.quotaType,
+        quotaTarget: data.quotaTarget,
+        actualAmount: data.quotaCurrent,
+      });
+    };
+  }
+
+  /**
+   * Disable autopilot mode. Restores original callbacks.
+   */
+  public disableAutopilot(): void {
+    this.agentManager.disableAutopilot();
+    if (this._originalOnMinigame !== undefined) {
+      this.callbacks.onMinigame = this._originalOnMinigame;
+      this._originalOnMinigame = undefined;
+    }
+    if (this._originalOnAnnualReport !== undefined) {
+      this.callbacks.onAnnualReport = this._originalOnAnnualReport;
+      this._originalOnAnnualReport = undefined;
+    }
   }
 
   /** Record that a building was placed — updates mandate fulfillment tracking. */
@@ -967,6 +1041,29 @@ export class SimulationEngine {
 
     // Achievement Tracker — update stats and check unlock conditions
     tickAchievementsHelper(this.getAchievementContext());
+
+    // ── Autopilot: ChairmanAgent goal assessment + collective focus ──
+    if (this.agentManager.isAutopilot()) {
+      const chairman = this.agentManager.getChairman();
+      if (chairman) {
+        const res = getResourceEntity();
+        const pop = res?.resources.population ?? 0;
+        const food = res?.resources.food ?? 0;
+        const meta = getMetaEntity();
+        chairman.assessGameState(
+          { food, population: pop },
+          {
+            quotaProgress: this.quota.target > 0 ? this.quota.current / this.quota.target : 1,
+            quotaDeadlineMonths: (this.quota.deadlineYear - (meta?.gameMeta.date.year ?? 1917)) * 12,
+            blackMarks: this.personnelFile.getBlackMarks(),
+            commendations: this.personnelFile.getCommendations(),
+            blat: res?.resources.blat ?? 0,
+          },
+        );
+        const focus = chairman.getRecommendedDirective();
+        this.workerSystem.setCollectiveFocus(focus);
+      }
+    }
 
     // Sync non-resource state to gameMeta for React snapshots
     this.syncSystemsToMeta();

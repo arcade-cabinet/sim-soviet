@@ -23,6 +23,8 @@ export interface GameInitOptions {
   consequence?: ConsequenceLevel;
   seed?: string;
   mapSize?: 'small' | 'medium' | 'large';
+  /** When true, enables ChairmanAgent autopilot — AI auto-resolves minigames and reports. */
+  autopilot?: boolean;
 }
 
 let engine: SimulationEngine | null = null;
@@ -96,6 +98,11 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
 
   // Create and configure SimulationEngine
   engine = new SimulationEngine(grid, callbacks, undefined, difficulty, consequence);
+
+  // Enable autopilot if requested — ChairmanAgent auto-resolves minigames and reports
+  if (options?.autopilot) {
+    engine.enableAutopilot();
+  }
 
   // Create SaveSystem wired to the grid and engine
   saveSystem = new SaveSystem(grid);
