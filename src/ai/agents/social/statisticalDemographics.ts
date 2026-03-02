@@ -217,8 +217,8 @@ export function statisticalDeathTick(
     }
   }
 
-  // Update pool totals
-  pool.totalPopulation -= totalDeaths;
+  // Update pool totals (clamp to 0 — can't have negative population)
+  pool.totalPopulation = Math.max(0, pool.totalPopulation - totalDeaths);
   pool.deathsThisYear += totalDeaths;
   pool.totalDeaths += totalDeaths;
 
@@ -263,8 +263,8 @@ export function statisticalAgingTick(pool: RaionPool): number {
   pool.maleAgeBuckets[0] = 0;
   pool.femaleAgeBuckets[0] = 0;
 
-  // Update pool totals
-  pool.totalPopulation -= overflowDeaths;
+  // Update pool totals (clamp to 0)
+  pool.totalPopulation = Math.max(0, pool.totalPopulation - overflowDeaths);
   pool.deathsThisYear += overflowDeaths;
   pool.totalDeaths += overflowDeaths;
 
