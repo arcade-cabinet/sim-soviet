@@ -11,6 +11,12 @@ config.transformer = {
   unstable_allowRequireContext: true,
 };
 
+// Allow Metro to resolve .wasm files as assets (required by expo-sqlite's web worker).
+config.resolver = {
+  ...config.resolver,
+  assetExts: [...(config.resolver?.assetExts ?? []), 'wasm'],
+};
+
 // DEV-ONLY: Serve the `assets/` and `public/` directories as static files
 // during local Metro development. The Access-Control-Allow-Origin: * header
 // is required because Metro dev-server and the web app may run on different

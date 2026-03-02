@@ -278,22 +278,71 @@ export async function goToMainMenu(page: Page): Promise<void> {
   await page.getByText('NEW GAME').waitFor({ state: 'visible', timeout: 10_000 });
 }
 
+// ── Modal Dismissal ──────────────────────────────────────────────────────────
+
+/**
+ * Dismiss any blocking modal currently visible (plan, era, annual report, etc.).
+ *
+ * Checks for common modal CTA button texts and clicks the first visible one.
+ * Also falls back to Escape key if no known button is found.
+ */
+export async function dismissAnyModal(page: Page): Promise<boolean> {
+  const ctaTexts = [
+    'REFUSAL IS NOT AN OPTION',
+    'ASSUME MAYORAL AUTHORITY',
+    'GLORY TO THE WORKERS',
+    'FOR THE MOTHERLAND',
+    'ACCEPT MANDATE',
+    'ACKNOWLEDGED',
+    'CONTINUE',
+    'DISMISS',
+    'CLOSE',
+    'OK',
+  ];
+
+  for (const text of ctaTexts) {
+    const btn = page.getByText(text, { exact: false });
+    if (await btn.first().isVisible({ timeout: 100 }).catch(() => false)) {
+      // Use force:true because modal backdrops intercept pointer events
+      await btn.first().click({ force: true, timeout: 1000 }).catch(() => {});
+      await page.waitForTimeout(200);
+      return true;
+    }
+  }
+
+  // Fallback: try Escape key to dismiss any overlay
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  return false;
+}
+
 // ── Autopilot / Turbo Helpers ─────────────────────────────────────────────────
 
-/** Enable autopilot via the settings modal. */
+/** Enable autopilot via the exposed engine API (window.__simEngine). */
 export async function enableAutopilot(page: Page): Promise<void> {
-  await openSettings(page);
-  const toggle = page.getByText('COMRADE ADVISOR');
-  await toggle.click();
-  await page.keyboard.press('Escape'); // close settings
+  await page.evaluate(() => {
+    const engine = (window as any).__simEngine;
+    if (engine?.enableAutopilot) {
+      engine.enableAutopilot();
+    }
+  });
   await page.waitForTimeout(300);
 }
 
-/** Set turbo speed (100x). */
+/** Set turbo speed (100x) by clicking the ⏩⏩ button. Falls back to ⏩ (10x). */
 export async function setTurboSpeed(page: Page): Promise<void> {
-  const turboBtn = page.getByText('⏩⏩');
-  if (await turboBtn.first().isVisible().catch(() => false)) {
-    await turboBtn.first().click();
+  // Dismiss any overlays first
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+
+  const turbo100 = page.getByText('\u23E9\u23E9');
+  if (await turbo100.first().isVisible().catch(() => false)) {
+    await turbo100.first().click();
+    return;
+  }
+  const turbo10 = page.getByText('\u23E9');
+  if (await turbo10.first().isVisible().catch(() => false)) {
+    await turbo10.first().click();
   }
 }
 

@@ -18,6 +18,7 @@ import {
   captureGameSnapshot,
   isGameOverVisible,
   extractGameState,
+  dismissAnyModal,
   type GameSnapshotData,
 } from './helpers';
 
@@ -108,7 +109,9 @@ async function runVisualPlaytest(
   // Start game with autopilot + turbo speed
   await startGameWithDifficulty(page, difficulty);
   await enableAutopilot(page);
+  await dismissAnyModal(page);
   await setTurboSpeed(page);
+  await dismissAnyModal(page);
 
   const captures: CaptureEntry[] = [];
   let seq = 0;
@@ -125,6 +128,9 @@ async function runVisualPlaytest(
 
   while (true) {
     await page.waitForTimeout(POLL_INTERVAL_MS);
+
+    // Dismiss any blocking modals (plan, era, annual report, etc.)
+    await dismissAnyModal(page);
 
     // Check game over
     const gameOver = await isGameOverVisible(page);
