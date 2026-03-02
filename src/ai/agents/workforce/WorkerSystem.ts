@@ -436,7 +436,8 @@ export class WorkerSystem {
    * then from buildings sorted by lowest morale (weakest first).
    */
   private removeWorkersAggregate(count: number, raion: RaionPool): void {
-    let remaining = Math.min(count, raion.totalPopulation);
+    const totalRemoved = Math.min(count, raion.totalPopulation);
+    let remaining = totalRemoved;
 
     // Phase 1: remove from idle pool
     const fromIdle = Math.min(remaining, raion.idleWorkers);
@@ -459,10 +460,47 @@ export class WorkerSystem {
       }
     }
 
+    // Phase 3: decrement age buckets to keep them in sync with totalPopulation.
+    // Removed workers were working-age, so decrement working-age buckets first.
+    let bucketRemaining = totalRemoved;
+
+    // Working-age male buckets first (3-12 = ages 15-64), youngest first
+    for (let i = 3; i <= 12 && bucketRemaining > 0; i++) {
+      const take = Math.min(bucketRemaining, raion.maleAgeBuckets[i]!);
+      raion.maleAgeBuckets[i]! -= take;
+      bucketRemaining -= take;
+    }
+
+    // Working-age female buckets (3-12), youngest first
+    for (let i = 3; i <= 12 && bucketRemaining > 0; i++) {
+      const take = Math.min(bucketRemaining, raion.femaleAgeBuckets[i]!);
+      raion.femaleAgeBuckets[i]! -= take;
+      bucketRemaining -= take;
+    }
+
+    // Fallback: any remaining from non-working-age buckets
+    if (bucketRemaining > 0) {
+      for (let i = 0; i < 20 && bucketRemaining > 0; i++) {
+        if (i >= 3 && i <= 12) continue; // already processed
+        const mTake = Math.min(bucketRemaining, raion.maleAgeBuckets[i]!);
+        raion.maleAgeBuckets[i]! -= mTake;
+        bucketRemaining -= mTake;
+        if (bucketRemaining <= 0) break;
+        const fTake = Math.min(bucketRemaining, raion.femaleAgeBuckets[i]!);
+        raion.femaleAgeBuckets[i]! -= fTake;
+        bucketRemaining -= fTake;
+      }
+    }
+
     // Update raion totals
-    const totalRemoved = Math.min(count, raion.totalPopulation);
     raion.totalPopulation -= totalRemoved;
-    raion.laborForce = Math.max(0, raion.laborForce - totalRemoved);
+
+    // Recalculate labor force from actual bucket contents
+    let laborForce = 0;
+    for (let i = 3; i <= 12; i++) {
+      laborForce += raion.maleAgeBuckets[i]! + raion.femaleAgeBuckets[i]!;
+    }
+    raion.laborForce = laborForce;
 
     // Sync resource store
     const store = getResourceEntity();
@@ -567,7 +605,13 @@ export class WorkerSystem {
 
     // Update totals
     raion.totalPopulation -= removed;
-    raion.laborForce = Math.max(0, raion.laborForce - removed);
+
+    // Recalculate labor force from actual bucket contents
+    let laborForce = 0;
+    for (let i = 3; i <= 12; i++) {
+      laborForce += raion.maleAgeBuckets[i]! + raion.femaleAgeBuckets[i]!;
+    }
+    raion.laborForce = laborForce;
 
     // Decrement from building workforces
     this.removeWorkersFromBuildings(removed, raion);

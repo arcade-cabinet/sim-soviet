@@ -31,20 +31,42 @@ function makeBuilding(defId: string, opts?: Partial<BuildingComponent>): Buildin
   };
 }
 
-/** Helper: create a minimal RaionPool. */
+/** Helper: create a minimal RaionPool, distributing laborForce across working-age buckets. */
 function makeRaion(overrides?: Partial<RaionPool>): RaionPool {
+  const maleBuckets = overrides?.maleAgeBuckets ?? new Array(20).fill(0);
+  const femaleBuckets = overrides?.femaleAgeBuckets ?? new Array(20).fill(0);
+  const laborForce = overrides?.laborForce ?? 200;
+
+  // If no explicit age buckets provided, distribute laborForce evenly
+  // across working-age buckets (3-12) so bucket sums stay consistent.
+  if (!overrides?.maleAgeBuckets && !overrides?.femaleAgeBuckets && laborForce > 0) {
+    const bucketsCount = 10; // buckets 3-12
+    const perBucket = Math.floor(laborForce / 2 / bucketsCount);
+    const maleRemainder = Math.floor(laborForce / 2) - perBucket * bucketsCount;
+    const femaleTotal = laborForce - Math.floor(laborForce / 2);
+    const fPerBucket = Math.floor(femaleTotal / bucketsCount);
+    const femaleRemainder = femaleTotal - fPerBucket * bucketsCount;
+    for (let i = 3; i <= 12; i++) {
+      maleBuckets[i] = perBucket;
+      femaleBuckets[i] = fPerBucket;
+    }
+    // Distribute remainders into first working-age bucket
+    maleBuckets[3]! += maleRemainder;
+    femaleBuckets[3]! += femaleRemainder;
+  }
+
   return {
     totalPopulation: 250,
     totalHouseholds: 50,
-    maleAgeBuckets: new Array(20).fill(0),
-    femaleAgeBuckets: new Array(20).fill(0),
+    maleAgeBuckets: maleBuckets,
+    femaleAgeBuckets: femaleBuckets,
     classCounts: { worker: 200, farmer: 30, engineer: 20 },
     birthsThisYear: 0,
     deathsThisYear: 0,
     totalBirths: 0,
     totalDeaths: 0,
     pregnancyWaves: [0, 0, 0],
-    laborForce: 200,
+    laborForce,
     assignedWorkers: 150,
     idleWorkers: 50,
     avgMorale: 50,
@@ -255,10 +277,17 @@ describe('WorkerSystem — aggregate mode', () => {
 
   describe('removeWorkersByCountMaleFirst', () => {
     it('removes from male age buckets 3-10 first', () => {
-      const raion = makeRaion({ totalPopulation: 100 });
-      raion.maleAgeBuckets[6] = 20; // 30-34 year old males
-      raion.maleAgeBuckets[7] = 15; // 35-39 year old males
-      raion.femaleAgeBuckets[6] = 10; // 30-34 year old females
+      const maleBuckets = new Array(20).fill(0);
+      const femaleBuckets = new Array(20).fill(0);
+      maleBuckets[6] = 20; // 30-34 year old males
+      maleBuckets[7] = 15; // 35-39 year old males
+      femaleBuckets[6] = 10; // 30-34 year old females
+      const raion = makeRaion({
+        totalPopulation: 100,
+        laborForce: 45,
+        maleAgeBuckets: maleBuckets,
+        femaleAgeBuckets: femaleBuckets,
+      });
       setupAggregateWorld(raion);
 
       // Add building so removeWorkersFromBuildings has something
@@ -277,9 +306,17 @@ describe('WorkerSystem — aggregate mode', () => {
     });
 
     it('falls back to female buckets when males exhausted', () => {
-      const raion = makeRaion({ totalPopulation: 50, laborForce: 50, idleWorkers: 50 });
-      raion.maleAgeBuckets[6] = 3;
-      raion.femaleAgeBuckets[6] = 10;
+      const maleBuckets = new Array(20).fill(0);
+      const femaleBuckets = new Array(20).fill(0);
+      maleBuckets[6] = 3;
+      femaleBuckets[6] = 10;
+      const raion = makeRaion({
+        totalPopulation: 50,
+        laborForce: 13,
+        idleWorkers: 50,
+        maleAgeBuckets: maleBuckets,
+        femaleAgeBuckets: femaleBuckets,
+      });
       setupAggregateWorld(raion);
 
       const removed = system.removeWorkersByCountMaleFirst(8, 'conscription');
