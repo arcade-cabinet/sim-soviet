@@ -158,6 +158,15 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+      - name: Upload visual playtest screenshots
+        if: success() || failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: visual-playtest-screenshots
+          path: e2e/screenshots/
+          retention-days: 14
+          if-no-files-found: ignore
+
   all-checks:
     name: All Checks Passed
     runs-on: ubuntu-latest

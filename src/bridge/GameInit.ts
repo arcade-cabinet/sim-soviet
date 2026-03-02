@@ -115,6 +115,11 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
 
   initialized = true;
 
+  // Expose engine on window for E2E page.evaluate() access
+  if (typeof window !== 'undefined') {
+    (window as any).__simEngine = engine;
+  }
+
   // Initial notification to populate React snapshot
   notifyTerrainDirty();
   notifyStateChange();
