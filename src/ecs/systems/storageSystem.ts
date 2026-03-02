@@ -1,6 +1,8 @@
 /**
  * @module ecs/systems/storageSystem
  *
+ * DEPRECATED: logic moved to StorageAgent (src/ai/agents/StorageAgent.ts)
+ *
  * STORAGE & SPOILAGE SYSTEM
  * ==========================
  * Resources don't stockpile infinitely. Storage buildings have capacity
