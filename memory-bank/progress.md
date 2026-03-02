@@ -40,10 +40,25 @@
 - [x] Save/load (full serialization to IndexedDB)
 - [x] WebXR support (AR tabletop, VR walkthrough)
 
+### Building-as-Container Architecture
+- [x] Dual population modes (entity < 200, aggregate >= 200)
+- [x] RaionPool district demographics (age-sex buckets, vital stats)
+- [x] Building workforce fields (8 new fields on BuildingComponent)
+- [x] Statistical demographics (Poisson-sampled births/deaths/aging)
+- [x] Building production function (computeBuildingProduction)
+- [x] Collapse transition (collapseEntitiesToBuildings)
+- [x] Brutalist building scaling (capacity-based, no new assets)
+- [x] Seeded GameRng mandatory (80+ Math.random replaced)
+- [x] Population growth gated yearly (3% housing cap)
+- [x] Aggregate mode guards (disease, trudodni, UI snapshot)
+- [x] Serialization with backward compatibility
+- [x] Entity GC sweeps (orphan citizens, empty dvory)
+- [x] Shared poissonSample utility (src/math/poissonSampling.ts)
+
 ### Infrastructure
 - [x] CI (typecheck + tests on PR)
 - [x] CD (Release Please → GitHub Pages + Android APK)
-- [x] 2,609+ tests across 96 suites
+- [x] 3,381+ tests across 128 suites
 
 ### Health & Safety
 - [x] Disease events (DiseaseSystem with seasonal epidemics)
@@ -59,18 +74,14 @@
 
 ## What's In Progress
 
-- [ ] Game completion sprint (consequence modes, era doctrines, minigames, renderers)
 - [ ] E2E Playwright test expansion (6 spec files)
-- [ ] Dynamic grid size system
-- [ ] Consequence mode rehabilitation flow
-- [ ] Interactive minigame UI framework
 
 ## What's Planned
 
-- [ ] Per-building trudodni assignment
 - [ ] Leader archetype behavioral modifiers (11 types designed)
 - [ ] Era doctrine full mechanics (thaw/freeze, stagnation rot, eternal bureaucracy)
 - [ ] Power transition mechanics full implementation
+- [ ] Late-era building definitions (mega-blocks, arcologies with large housingCap/staffCap)
 - [ ] Native minimap
 - [ ] WebXR entry point UI
 - [ ] iOS build pipeline + E2E CI

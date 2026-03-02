@@ -73,10 +73,10 @@ commits:
 | Document | Type | Implementation |
 |----------|------|---------------|
 | `design/overview.md` | design | — |
-| `design/economy.md` | design | `src/game/economy.ts` |
-| `design/workers.md` | design | `src/game/workers/WorkerSystem.ts` |
-| `design/demographics.md` | design | `src/ecs/systems/demographicSystem.ts` |
-| `design/political.md` | design | `src/game/political/`, `src/game/politburo/` |
+| `design/economy.md` | design | `src/ai/agents/economy/` |
+| `design/workers.md` | design | `src/ai/agents/workforce/WorkerSystem.ts` |
+| `design/demographics.md` | design | `src/ai/agents/social/DemographicAgent.ts`, `src/ai/agents/social/statisticalDemographics.ts` |
+| `design/political.md` | design | `src/ai/agents/political/` |
 | `design/eras.md` | design | `src/game/era/EraSystem.ts` |
 | `design/minigames.md` | design | `src/game/minigames/MinigameRouter.ts` |
 | `design/scoring.md` | design | `src/game/ScoringSystem.ts` |

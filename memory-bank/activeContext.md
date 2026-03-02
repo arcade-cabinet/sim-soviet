@@ -2,35 +2,45 @@
 
 ## Current Development Focus
 
-Yuka agent architecture migration — decomposing SimulationEngine into domain agents:
+Building-as-Container architecture + RNG purge — replacing per-citizen entities with aggregate workforce on buildings:
 
-- **Phase 1 COMPLETE**: Created 8 agent subpackages under `src/ai/agents/` (123 files, 28k lines)
-- **Phase 2 COMPLETE**: SimulationEngine decomposed from 2207 → 1126 lines (12 methods moved to agents)
-- **Phase 3 COMPLETE**: Import rewiring — agents import from `engine/types`, not SimulationEngine
-- **Phase 4 COMPLETE**: `src/game/political/` absorbed into `src/ai/agents/political/` (8 files moved)
+- **RNG Purge COMPLETE**: GameRng mandatory on SimulationEngine, all 80+ simulation-critical Math.random() replaced with seeded rng
+- **Building-as-Container COMPLETE**: Dual population modes (entity < 200, aggregate >= 200), RaionPool demographics, building production functions
+- **Integration Gaps COMPLETE**: Aggregate mode guards on disease, trudodni, UI snapshot; shared poissonSample utility extracted
+- **Agent Architecture COMPLETE**: 8 agent subpackages under `src/ai/agents/` (123+ files, 28k+ lines)
 
 ## Recent Changes
 
-### Yuka Agent Architecture (feat/game-completion branch)
+### Building-as-Container Architecture (feat/game-completion branch)
 
-- 8 agent subpackages: core, economy, political, infrastructure, social, workforce, narrative, meta
-- 12 private methods MOVED from SimEngine to agents (delete-from-source, not copy)
-- Types extracted to `src/game/engine/types.ts` (SimCallbacks, RehabilitationData, SubsystemSaveData)
-- `src/game/political/` fully absorbed into `src/ai/agents/political/`
-- All 3,277 tests passing, 0 regressions
+- **Dual population modes**: `entity` (pop < 200, early game) and `aggregate` (pop >= 200, one-way transition)
+- **RaionPool**: District-level age-sex demographics (20 buckets per gender), class counts, vital stats, labor tracking
+- **Building workforce fields**: 8 new fields on BuildingComponent (workerCount, residentCount, avgMorale, avgSkill, avgLoyalty, avgVodkaDep, trudodniAccrued, householdCount)
+- **Statistical demographics**: Poisson-sampled births/deaths/aging on RaionPool (O(20) per bucket, not O(population))
+- **Building production function**: Pure `computeBuildingProduction()` with formula: baseRate × effectiveWorkers × skillFactor × moraleFactor × conditionFactor × powerFactor × eraMod × weatherFactor
+- **Brutalist scaling**: Same 55 GLB models scaled proportionally to capacity (no new assets). Base=1.0, mega-block=~5.5, arcology=~8.0
+- **Collapse transition**: `collapseEntitiesToBuildings()` removes all citizen/dvor entities, builds RaionPool, populates building workforces
+- **Serialization**: Save/load supports both modes with backward compatibility
 
-### Key Agent Methods Added
+### RNG Purge
 
-- `EconomyAgent.applyTickResults()` — fondy, trudodni, currency reform, rations
-- `PoliticalAgent.tickEntitiesFull/handleEraTransitionFull/checkConditions`
-- `DefenseAgent.processGulagEffect/tickDiseaseFull`
-- `CollectiveAgent.tickAutonomous/getHousingCapacity`
-- `KGBAgent.applyRehabilitation`
-- `SettlementSystem.tickWithCallbacks`
-- `WorkerSystem.getAverageSkill`
+- GameRng mandatory on SimulationEngine (no more Math.random fallbacks)
+- All 14 agents receive seeded GameRng via `setRng()` or constructor
+- 80+ Math.random() calls replaced across ~20 simulation files
+- Population growth gated to yearly immigration (3% housing cap)
+- Fixed infinite loop in `generateSeedPhrase()` with constant RNG mock
+
+### Integration Gap Fixes
+
+- Disease system (DefenseAgent, disease.ts): aggregate mode early-returns
+- Trudodni accrual (EconomyAgent, trudodni.ts): building-level aggregate path
+- UI snapshot (useGameState.ts): raion fallback for population stats
+- Shared `poissonSample()` extracted to `src/math/poissonSampling.ts`
+- Entity GC sweeps: `sweepOrphanCitizens()`, `sweepEmptyDvory()` on year boundary
 
 ### Previous Major Work
 
+- Yuka agent architecture (8 subpackages, 12 methods moved from SimEngine)
 - Demographics overhaul (PR #39 — merged)
 - Documentation/JSDoc/.claude overhaul (PR #39 — merged)
 - Game completion sprint (PR #40 — 22 features)
@@ -41,10 +51,10 @@ Yuka agent architecture migration — decomposing SimulationEngine into domain a
 | Branch | Purpose | Status |
 |--------|---------|--------|
 | `main` | Release branch | Current |
-| `feat/game-completion` | Agent architecture + game completion | In progress (32 commits ahead) |
+| `feat/game-completion` | Building-as-container + RNG purge + agent architecture | In progress |
 
 ## Known Issues
 
 - tsconfig: `module: "commonjs"` conflicts with `moduleResolution: "bundler"` — pre-existing, doesn't block builds
-- 27 pre-existing TypeScript errors from yuka type declarations (`.name` property, `override` modifier) — tests pass because Jest doesn't check types
+- 50 pre-existing TypeScript errors from yuka type declarations (`.name` property, `override` modifier) — tests pass because Jest doesn't check types
 - Branch protection: main requires PRs — cannot push directly

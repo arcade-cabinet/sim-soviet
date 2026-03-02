@@ -26,11 +26,20 @@ The miniplex world holds all game entities. Each entity is a plain object with c
 
 ### Archetype Pattern
 Archetypes in `src/ecs/` define the component "shape" of different entity types:
-- Building entities: position, building type, level, health, workers, production
-- Citizen entities: age, gender, role, household (dvor), loyalty, labor capacity
+- Building entities: position, building type, level, health, workers, production, **+ 8 workforce fields** (workerCount, residentCount, avgMorale, avgSkill, avgLoyalty, avgVodkaDep, trudodniAccrued, householdCount)
+- Citizen entities: age, gender, role, household (dvor), loyalty, labor capacity (**only in entity mode, pop < 200**)
 - Terrain entities: position, terrain type, elevation, moisture
 - Vehicle entities: position, velocity, route, cargo
 - Weather entities: type, intensity, duration, position
+- Resource store: includes optional `raion?: RaionPool` for aggregate demographics
+
+### RaionPool (Aggregate Mode)
+When population exceeds 200, citizen/dvor entities are collapsed into a `RaionPool` on the resource store. This pool tracks:
+- Age-sex pyramid (20 buckets per gender, 5-year intervals)
+- Class counts, vital stats (births/deaths per year)
+- Labor force tracking (total, assigned, idle workers)
+- Aggregate morale/loyalty/skill averages
+All demographic operations become O(20) per bucket, not O(population).
 
 ### System Tick Order
 Systems execute in a defined order within SimulationEngine. The order matters because later systems depend on state computed by earlier systems. When adding or reordering systems, verify no dependencies are broken.
