@@ -490,8 +490,8 @@ describe('EconomySystem — Starting Resources', () => {
   it('default 30x30 matches base values at comrade+revolution', () => {
     // comrade = 1.0, revolution = 0.8, size = 30/30 = 1.0
     const res = calculateStartingResources('comrade', 'revolution', 30);
-    expect(res.money).toBe(Math.round(2000 * 1.0 * 0.8 * 1.0));
-    expect(res.food).toBe(Math.round(200 * 1.0 * 0.8 * 1.0));
+    expect(res.money).toBe(Math.round(3000 * 1.0 * 0.8 * 1.0));
+    expect(res.food).toBe(Math.round(500 * 1.0 * 0.8 * 1.0));
   });
 
   it('all difficulty levels have valid multipliers', () => {
