@@ -3,7 +3,7 @@
 ## Environment
 - **Node**: v25.7.0
 - **pnpm**: 10.28.2
-- **Branch**: feat/game-completion (bac993f)
+- **Branch**: feat/game-completion (2b3842a)
 - **Platform**: macOS Darwin 24.6.0
 
 ## Golden Command Set Results
@@ -12,7 +12,7 @@
 |---------|--------|---------|
 | `pnpm install` | PASS | All deps installed |
 | `pnpm run lint` | PASS | 0 errors, 1 warning (unused var in test) |
-| `pnpm run typecheck` | 26 errors | All yuka-derived (pre-existing, no @types/yuka) |
+| `pnpm run typecheck` | PASS | 0 errors (yuka.d.ts added, Position.x/y fixed) |
 | `pnpm test` | PASS | 4,475 passed, 7 skipped, 0 failed |
 | `pnpm run build` | pending | To verify after commit |
 
@@ -66,3 +66,6 @@
 | Unused var in test | `12-aggregate-scaling-stress.test.ts` | Remove `initialRaion` | Lint passes |
 | Implicit any let | `freeform-governor.test.ts`, `historical-governor.test.ts` | Add explicit type | Lint passes |
 | Self-compare constant | `freeform-ui.test.ts` | Simplify to literal 1.0 | Lint passes |
+| yuka type errors (62) | `src/types/yuka.d.ts` | Ambient declarations for Vehicle/GameEntity/EntityManager | typecheck 0 errors |
+| Position.x/y bug | `EconomyAgent.ts`, `trudodni.ts` | Fix to `gridX`/`gridY` (ECS Position) | typecheck passes |
+| Lockfile stale | `pnpm-lock.yaml` | Regenerate for postprocessing deps | CI frozen-lockfile passes |
