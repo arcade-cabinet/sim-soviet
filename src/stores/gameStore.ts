@@ -888,6 +888,53 @@ function subscribePoliticalPanel(listener: () => void): () => void {
   };
 }
 
+// ── Minimap Visibility ────────────────────────────────────────────────────
+
+let _minimapVisible = true;
+const _minimapListeners = new Set<() => void>();
+
+/** Whether the minimap is currently visible. */
+export function isMinimapVisible(): boolean {
+  return _minimapVisible;
+}
+
+/** Toggle minimap visibility and notify React. */
+export function toggleMinimap(): void {
+  _minimapVisible = !_minimapVisible;
+  for (const listener of _minimapListeners) {
+    listener();
+  }
+}
+
+/** React hook — subscribe to minimap visibility state. */
+export function useMinimapVisible(): boolean {
+  return useSyncExternalStore(subscribeMinimap, isMinimapVisible, isMinimapVisible);
+}
+
+function subscribeMinimap(listener: () => void): () => void {
+  _minimapListeners.add(listener);
+  return () => {
+    _minimapListeners.delete(listener);
+  };
+}
+
+// ── Lens Cycling ──────────────────────────────────────────────────────────
+
+import type { LensType } from '../engine/GameState';
+import { gameState } from '../engine/GameState';
+import { setLens } from '../engine/helpers';
+
+const LENS_CYCLE: LensType[] = ['default', 'water', 'power', 'smog', 'aura'];
+
+/** Cycle to the next lens mode and update game state. */
+export function cycleLens(): void {
+  const current = gameState.activeLens ?? 'default';
+  const idx = LENS_CYCLE.indexOf(current);
+  const next = LENS_CYCLE[(idx + 1) % LENS_CYCLE.length];
+  setLens(gameState, next);
+  notifyStateChange();
+}
+
 // ── Internal ──────────────────────────────────────────────────────────────
 
 function subscribe(listener: () => void): () => void {

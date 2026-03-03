@@ -26,6 +26,8 @@ const XRSession = React.lazy(() => import('./xr/XRSession'));
 const ARTabletop = React.lazy(() => import('./xr/ARTabletop'));
 const VRWalkthrough = React.lazy(() => import('./xr/VRWalkthrough'));
 
+import type { SettlementEvent } from './ai/agents/infrastructure/SettlementSystem';
+import type { ActiveMinigame, MinigameOutcome } from './ai/agents/meta/minigames/MinigameTypes';
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
@@ -42,13 +44,12 @@ import {
   showAdvisor,
   showToast,
 } from './engine/helpers';
+import type { RehabilitationData } from './game/engine/types';
 import type { EraDefinition } from './game/era';
 import type { TallyData } from './game/GameTally';
-import type { ActiveMinigame, MinigameOutcome } from './ai/agents/meta/minigames/MinigameTypes';
-import type { SettlementEvent } from './ai/agents/infrastructure/SettlementSystem';
-import type { RehabilitationData } from './game/engine/types';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
+import { useInputManager } from './input/useInputManager';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import {
   closeBuildingInspector,
@@ -261,6 +262,9 @@ const App: React.FC = () => {
       window.removeEventListener('touchstart', initSFX);
     };
   }, []);
+
+  // Universal input system (keyboard + gamepad)
+  useInputManager(screen === 'game' && loadingFaded);
 
   // Start ECS game loop (replaces old flat-state game loop)
   useECSGameLoop();
@@ -781,14 +785,22 @@ const App: React.FC = () => {
             >
               {xrMode ? (
                 <Suspense fallback={null}>
-                  <XRSession>
+                  <XRSession onSessionEnd={() => setXrMode(null)}>
                     {xrMode === 'ar' ? (
                       <ARTabletop>
-                        <Content onLoadProgress={handleLoadProgress} onLoadComplete={handleLoadComplete} />
+                        <Content
+                          onLoadProgress={handleLoadProgress}
+                          onLoadComplete={handleLoadComplete}
+                          disableCamera
+                        />
                       </ARTabletop>
                     ) : (
                       <VRWalkthrough>
-                        <Content onLoadProgress={handleLoadProgress} onLoadComplete={handleLoadComplete} />
+                        <Content
+                          onLoadProgress={handleLoadProgress}
+                          onLoadComplete={handleLoadComplete}
+                          disableCamera
+                        />
                       </VRWalkthrough>
                     )}
                   </XRSession>

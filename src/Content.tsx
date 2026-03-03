@@ -14,11 +14,10 @@
 import { useProgress } from '@react-three/drei';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-
+import type { SettlementTier } from './ai/agents/infrastructure/SettlementSystem';
 import AudioManager from './audio/AudioManager';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
-import type { SettlementTier } from './ai/agents/infrastructure/SettlementSystem';
 import { useGameSnapshot } from './hooks/useGameState';
 import { notifyStateChange, useTerrainVersion } from './stores/gameStore';
 
@@ -40,6 +39,7 @@ import LightningRenderer from './scene/LightningRenderer';
 import MeteorRenderer from './scene/MeteorRenderer';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import PoliticalEntityRenderer from './scene/PoliticalEntityRenderer';
+import PostProcessing from './scene/PostProcessing';
 import SceneProps from './scene/SceneProps';
 import SmogOverlay from './scene/SmogOverlay';
 // Scene components
@@ -47,7 +47,6 @@ import TerrainGrid from './scene/TerrainGrid';
 import TrainRenderer from './scene/TrainRenderer';
 import VehicleRenderer from './scene/VehicleRenderer';
 import WeatherFX from './scene/WeatherFX';
-import PostProcessing from './scene/PostProcessing';
 import ZeppelinRenderer from './scene/ZeppelinRenderer';
 
 /** Progress callback: (loaded, total, currentModelName) */
@@ -56,9 +55,11 @@ type ModelLoadProgress = (loaded: number, total: number, name: string) => void;
 interface ContentProps {
   onLoadProgress?: ModelLoadProgress;
   onLoadComplete?: () => void;
+  /** When true, disables the orbit camera controller (XR provides its own camera). */
+  disableCamera?: boolean;
 }
 
-const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => {
+const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disableCamera }) => {
   const snap = useGameSnapshot();
 
   // Track drei loading progress (useGLTF.preload triggers this)
@@ -118,7 +119,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete }) => 
   // Core scene + VFX layers + Interaction
   return (
     <>
-      <CameraController />
+      <CameraController disabled={disableCamera} />
       <Environment season={snap.season} />
       <Lighting timeOfDay={snap.timeOfDay} season={snap.season} isStorm={snap.weatherLabel === 'STORM'} />
       <TerrainGrid grid={ecsGrid} season={snap.season} />

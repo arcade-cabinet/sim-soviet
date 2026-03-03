@@ -7,6 +7,7 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Colors, monoFont } from './styles';
+import { useResponsive } from './useResponsive';
 
 const MAX_VISIBLE = 3;
 const DEFAULT_DURATION = 3000;
@@ -23,7 +24,8 @@ const ToastEntry: React.FC<{
   item: ToastItem;
   index: number;
   onDone: (id: number) => void;
-}> = ({ item, index, onDone }) => {
+  compact?: boolean;
+}> = ({ item, index, onDone, compact }) => {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-20)).current;
 
@@ -65,6 +67,7 @@ const ToastEntry: React.FC<{
     <Animated.View
       style={[
         styles.toast,
+        compact && styles.compactToast,
         {
           opacity,
           transform: [{ translateY }],
@@ -91,6 +94,7 @@ let _nextToastId = 0;
 export const Toast: React.FC<ToastProps> = ({ message, onDismiss, duration = DEFAULT_DURATION }) => {
   const [stack, setStack] = useState<ToastItem[]>([]);
   const lastMsg = useRef<string | null>(null);
+  const { isCompact } = useResponsive();
 
   // Push new messages onto the stack
   useEffect(() => {
@@ -120,9 +124,9 @@ export const Toast: React.FC<ToastProps> = ({ message, onDismiss, duration = DEF
   if (stack.length === 0) return null;
 
   return (
-    <View style={styles.container} pointerEvents="box-none">
+    <View style={[styles.container, isCompact && styles.compactContainer]} pointerEvents="box-none">
       {stack.map((item, i) => (
-        <ToastEntry key={item.id} item={item} index={i} onDone={handleDone} />
+        <ToastEntry key={item.id} item={item} index={i} onDone={handleDone} compact={isCompact} />
       ))}
     </View>
   );
@@ -136,6 +140,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     zIndex: 1000,
   },
+  compactContainer: {
+    top: 50,
+    right: 8,
+    left: 8,
+    alignItems: 'stretch',
+  },
   toast: {
     backgroundColor: 'rgba(140, 0, 0, 0.95)',
     borderWidth: 2,
@@ -143,6 +153,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 8,
     maxWidth: 400,
+  },
+  compactToast: {
+    maxWidth: '100%',
   },
   text: {
     color: Colors.white,

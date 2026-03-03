@@ -5,7 +5,9 @@
 
 import type React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { MIN_TAP_TARGET } from './responsive';
 import { Colors, monoFont } from './styles';
+import { useResponsive } from './useResponsive';
 
 /** Visual overlay lens mode for the 3D viewport. */
 export type LensValue = 'default' | 'water' | 'power' | 'smog' | 'aura';
@@ -25,6 +27,8 @@ export interface LensSelectorProps {
 
 /** Vertical column of lens toggle buttons (bottom-right of viewport). */
 export const LensSelector: React.FC<LensSelectorProps> = ({ activeLens, onLensChange }) => {
+  const { isCompact } = useResponsive();
+
   return (
     <View style={styles.container}>
       {LENSES.map((lens) => {
@@ -33,10 +37,12 @@ export const LensSelector: React.FC<LensSelectorProps> = ({ activeLens, onLensCh
           <TouchableOpacity
             key={lens.value}
             onPress={() => onLensChange(lens.value)}
-            style={[styles.button, active && styles.buttonActive]}
+            style={[styles.button, isCompact && styles.compactButton, active && styles.buttonActive]}
             activeOpacity={0.7}
           >
-            <Text style={[styles.label, active && styles.labelActive]}>{lens.label}</Text>
+            <Text style={[styles.label, isCompact && styles.compactLabel, active && styles.labelActive]}>
+              {lens.label}
+            </Text>
           </TouchableOpacity>
         );
       })}
@@ -87,5 +93,13 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(255, 255, 255, 0.6)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 4,
+  },
+  compactButton: {
+    width: MIN_TAP_TARGET,
+    minHeight: MIN_TAP_TARGET,
+    paddingVertical: 8,
+  },
+  compactLabel: {
+    fontSize: 12,
   },
 });

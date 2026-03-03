@@ -12,11 +12,12 @@
 
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getGridCells } from '../bridge/ECSBridge';
 import type { GridCell } from '../engine/GridTypes';
 import { getCurrentGridSize, type TerrainType } from '../engine/GridTypes';
-import { SharedStyles } from './styles';
+import { Colors, monoFont, SharedStyles } from './styles';
+import { useResponsive } from './useResponsive';
 
 const TERRAIN_COLORS: Record<TerrainType, string> = {
   grass: '#3a5a2c',
@@ -165,10 +166,31 @@ const WebMinimap: React.FC = () => {
 
 /** Canvas-based minimap (web) or View-based minimap (native) rendering real grid data. */
 export const Minimap: React.FC = () => {
-  if (Platform.OS !== 'web') {
-    return <NativeMinimap />;
+  const { isCompact } = useResponsive();
+  const [visible, setVisible] = useState(!isCompact);
+
+  if (isCompact && !visible) {
+    return (
+      <TouchableOpacity style={styles.toggleBtn} onPress={() => setVisible(true)} activeOpacity={0.7}>
+        <Text style={styles.toggleBtnText}>{'\u{1F5FA}'}</Text>
+      </TouchableOpacity>
+    );
   }
-  return <WebMinimap />;
+
+  const content = Platform.OS !== 'web' ? <NativeMinimap /> : <WebMinimap />;
+
+  if (isCompact) {
+    return (
+      <View>
+        {content}
+        <TouchableOpacity style={styles.closeBtnCompact} onPress={() => setVisible(false)} activeOpacity={0.7}>
+          <Text style={styles.closeBtnText}>X</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return content;
 };
 
 const styles = StyleSheet.create({
@@ -180,5 +202,43 @@ const styles = StyleSheet.create({
     height: 120,
     zIndex: 50,
     overflow: 'hidden',
+  },
+  toggleBtn: {
+    position: 'absolute',
+    bottom: 140,
+    right: 10,
+    width: 44,
+    height: 44,
+    backgroundColor: Colors.panelBg,
+    borderWidth: 2,
+    borderTopColor: Colors.panelHighlight,
+    borderLeftColor: Colors.panelHighlight,
+    borderBottomColor: Colors.panelShadow,
+    borderRightColor: Colors.panelShadow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 50,
+  },
+  toggleBtnText: {
+    fontSize: 18,
+  },
+  closeBtnCompact: {
+    position: 'absolute',
+    top: 60,
+    left: 102,
+    width: 20,
+    height: 20,
+    backgroundColor: Colors.panelBg,
+    borderWidth: 1,
+    borderColor: '#555',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 51,
+  },
+  closeBtnText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
   },
 });

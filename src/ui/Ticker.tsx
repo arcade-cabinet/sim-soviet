@@ -7,6 +7,7 @@ import type React from 'react';
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Colors, monoFont } from './styles';
+import { useResponsive } from './useResponsive';
 
 export interface TickerProps {
   messages: string;
@@ -15,6 +16,7 @@ export interface TickerProps {
 /** Horizontally scrolling Pravda news ticker along the bottom of the screen. */
 export const Ticker: React.FC<TickerProps> = ({ messages }) => {
   const { width: screenWidth } = useWindowDimensions();
+  const { isCompact } = useResponsive();
   const translateX = useRef(new Animated.Value(0)).current;
   const textWidthRef = useRef(screenWidth * 2);
 
@@ -41,7 +43,7 @@ export const Ticker: React.FC<TickerProps> = ({ messages }) => {
     <View style={styles.container}>
       <Animated.View style={{ transform: [{ translateX }] }}>
         <Text
-          style={styles.text}
+          style={[styles.text, isCompact && styles.compactText]}
           onLayout={(e) => {
             textWidthRef.current = e.nativeEvent.layout.width;
           }}
@@ -69,5 +71,8 @@ const styles = StyleSheet.create({
     color: Colors.termGreen,
     fontFamily: monoFont,
     fontSize: 14,
+  },
+  compactText: {
+    fontSize: 12,
   },
 });

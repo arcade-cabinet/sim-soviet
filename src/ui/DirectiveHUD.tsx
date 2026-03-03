@@ -6,6 +6,7 @@
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors, monoFont, SharedStyles } from './styles';
+import { useResponsive } from './useResponsive';
 
 export interface DirectiveHUDProps {
   text: string;
@@ -14,6 +15,10 @@ export interface DirectiveHUDProps {
 
 /** Active tutorial directive display showing objective text and reward. */
 export const DirectiveHUD: React.FC<DirectiveHUDProps> = ({ text, reward }) => {
+  const { isCompact } = useResponsive();
+
+  if (isCompact) return null;
+
   return (
     <View style={[SharedStyles.panel, styles.container]}>
       <Text style={styles.heading}>ACTIVE DIRECTIVE</Text>
