@@ -23,7 +23,7 @@ export type CrisisSeverity = 'localized' | 'regional' | 'national' | 'existentia
 // ─── Crisis Type ────────────────────────────────────────────────────────────
 
 /** High-level crisis category. */
-export type CrisisType = 'war' | 'famine' | 'disaster';
+export type CrisisType = 'war' | 'famine' | 'disaster' | 'political';
 
 // ─── Crisis Impact ──────────────────────────────────────────────────────────
 
@@ -119,6 +119,12 @@ export interface CrisisDefinition {
   buildupTicks: number;
   /** Ticks for the aftermath ramp after peak. */
   aftermathTicks: number;
+  /** Human-readable description of the crisis. */
+  description?: string;
+  /** IDs of other crises this one compounds with (simultaneous amplification). */
+  compoundsWith?: string[];
+  /** Era this crisis aligns with (for scheduling). */
+  eraAlignment?: string;
 }
 
 // ─── Crisis Context ─────────────────────────────────────────────────────────
