@@ -161,14 +161,14 @@
   "highCorruptionThreshold": 50,
   "compulsoryDeliveries": {
     "rates": {
-      "revolutionary": { "food": 0.05, "vodka": 0.03, "money": 0.05 },
-      "industrialization": { "food": 0.08, "vodka": 0.05, "money": 0.1 },
-      "wartime": { "food": 0.1, "vodka": 0.08, "money": 0.15 },
-      "reconstruction": { "food": 0.06, "vodka": 0.04, "money": 0.08 },
-      "thaw": { "food": 0.05, "vodka": 0.03, "money": 0.05 },
-      "freeze": { "food": 0.08, "vodka": 0.05, "money": 0.1 },
-      "stagnation": { "food": 0.08, "vodka": 0.05, "money": 0.1 },
-      "eternal": { "food": 0.06, "vodka": 0.04, "money": 0.08 }
+      "revolutionary":      { "food": 0.30, "vodka": 0.20, "money": 0.25 },
+      "industrialization":  { "food": 0.45, "vodka": 0.35, "money": 0.50 },
+      "wartime":            { "food": 0.60, "vodka": 0.50, "money": 0.65 },
+      "reconstruction":     { "food": 0.25, "vodka": 0.20, "money": 0.30 },
+      "thaw":               { "food": 0.25, "vodka": 0.15, "money": 0.25 },
+      "freeze":             { "food": 0.40, "vodka": 0.30, "money": 0.45 },
+      "stagnation":         { "food": 0.35, "vodka": 0.30, "money": 0.40 },
+      "eternal":            { "food": 0.30, "vodka": 0.25, "money": 0.35 }
     },
     "corruptionMin": 0.03,
     "corruptionMax": 0.08

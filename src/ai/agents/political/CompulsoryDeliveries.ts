@@ -69,14 +69,14 @@ export interface CompulsoryDeliverySaveData {
  *
  * | Doctrine         | Food | Vodka | Money | Notes                          |
  * |------------------|------|-------|-------|--------------------------------|
- * | revolutionary    | 0.40 | 0.30  | 0.20  | Post-revolution requisitioning |
- * | industrialization| 0.50 | 0.40  | 0.60  | Heavy industrial extraction    |
- * | wartime          | 0.70 | 0.60  | 0.70  | Total war economy              |
- * | reconstruction   | 0.35 | 0.25  | 0.30  | Recovery — lighter touch       |
- * | thaw             | 0.30 | 0.20  | 0.25  | Best period for workers        |
- * | freeze           | 0.45 | 0.35  | 0.50  | Crackdown                      |
- * | stagnation       | 0.45 | 0.40  | 0.50  | Plus "administrative losses"   |
- * | eternal          | 0.40 | 0.35  | 0.40  | Bureaucratic                   |
+ * | revolutionary    | 0.30 | 0.20  | 0.25  | Post-revolution requisitioning |
+ * | industrialization| 0.45 | 0.35  | 0.50  | Heavy industrial extraction    |
+ * | wartime          | 0.60 | 0.50  | 0.65  | Total war economy              |
+ * | reconstruction   | 0.25 | 0.20  | 0.30  | Recovery — lighter touch       |
+ * | thaw             | 0.25 | 0.15  | 0.25  | Best period for workers        |
+ * | freeze           | 0.40 | 0.30  | 0.45  | Crackdown                      |
+ * | stagnation       | 0.35 | 0.30  | 0.40  | Plus "administrative losses"   |
+ * | eternal          | 0.30 | 0.25  | 0.35  | Bureaucratic                   |
  */
 const DELIVERY_RATES: Record<Doctrine, DeliveryRates> =
   political.compulsoryDeliveries.rates as Record<Doctrine, DeliveryRates>;
@@ -98,9 +98,11 @@ export class CompulsoryDeliveries {
   private totalDelivered = { food: 0, vodka: 0, money: 0 };
   private corruptionRate = 0;
   private rng: GameRng | null = null;
+  private difficultyMultiplier: number;
 
-  constructor(initialDoctrine?: Doctrine) {
+  constructor(initialDoctrine?: Doctrine, difficultyDeliveryRate?: number) {
     this.doctrine = initialDoctrine ?? 'revolutionary';
+    this.difficultyMultiplier = difficultyDeliveryRate ?? 1.0;
     if (this.doctrine === 'stagnation') {
       this.rollCorruption();
     }
@@ -126,10 +128,11 @@ export class CompulsoryDeliveries {
     return this.doctrine;
   }
 
-  /** Get current delivery rates for the active doctrine. */
+  /** Get current delivery rates for the active doctrine (with difficulty scaling). */
   getRates(): DeliveryRates {
     const base = DELIVERY_RATES[this.doctrine];
-    return { food: base.food, vodka: base.vodka, money: base.money };
+    const m = this.difficultyMultiplier;
+    return { food: base.food * m, vodka: base.vodka * m, money: base.money * m };
   }
 
   /**
@@ -145,21 +148,27 @@ export class CompulsoryDeliveries {
    * @param newMoney - Money/industrial output produced THIS tick
    */
   applyDeliveries(newFood: number, newVodka: number, newMoney: number): DeliveryResult {
-    const rates = DELIVERY_RATES[this.doctrine];
+    const base = DELIVERY_RATES[this.doctrine];
+    const m = this.difficultyMultiplier;
+
+    // Effective rates = base × difficulty multiplier
+    const foodRate = base.food * m;
+    const vodkaRate = base.vodka * m;
+    const moneyRate = base.money * m;
 
     // Base deliveries
-    let foodTaken = newFood * rates.food;
-    let vodkaTaken = newVodka * rates.vodka;
-    let moneyTaken = newMoney * rates.money;
+    let foodTaken = newFood * foodRate;
+    let vodkaTaken = newVodka * vodkaRate;
+    let moneyTaken = newMoney * moneyRate;
 
     // Corruption: additional loss during stagnation
     let corruptionLoss = 0;
     if (this.doctrine === 'stagnation') {
       // Re-roll corruption each tick for variation
       this.rollCorruption();
-      const corruptionFood = newFood * rates.food * this.corruptionRate;
-      const corruptionVodka = newVodka * rates.vodka * this.corruptionRate;
-      const corruptionMoney = newMoney * rates.money * this.corruptionRate;
+      const corruptionFood = newFood * foodRate * this.corruptionRate;
+      const corruptionVodka = newVodka * vodkaRate * this.corruptionRate;
+      const corruptionMoney = newMoney * moneyRate * this.corruptionRate;
       corruptionLoss = corruptionFood + corruptionVodka + corruptionMoney;
       foodTaken += corruptionFood;
       vodkaTaken += corruptionVodka;
@@ -205,8 +214,13 @@ export class CompulsoryDeliveries {
     };
   }
 
-  static deserialize(data: CompulsoryDeliverySaveData): CompulsoryDeliveries {
-    const instance = new CompulsoryDeliveries(data.doctrine);
+  /** Get the difficulty delivery rate multiplier. */
+  getDifficultyMultiplier(): number {
+    return this.difficultyMultiplier;
+  }
+
+  static deserialize(data: CompulsoryDeliverySaveData, difficultyDeliveryRate?: number): CompulsoryDeliveries {
+    const instance = new CompulsoryDeliveries(data.doctrine, difficultyDeliveryRate);
     instance.totalDelivered = { ...data.totalDelivered };
     instance.corruptionRate = data.corruptionRate;
     return instance;

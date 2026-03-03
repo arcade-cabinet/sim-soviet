@@ -50,6 +50,7 @@ import { TransportSystem as TransportSystemClass } from '../../ai/agents/infrast
 import type { TutorialSystem } from '../../ai/agents/meta/TutorialSystem';
 import { TutorialSystem as TutorialSystemClass } from '../../ai/agents/meta/TutorialSystem';
 import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
+import { DIFFICULTY_MULTIPLIERS } from '../../ai/agents/economy/economy-core';
 
 /** Maps game EraSystem IDs to EconomySystem EraIds (needed for fallback on restore). */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -243,8 +244,10 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
   // Restore Scoring System
   engine.scoring = ScoringSystemClass.deserialize(data.scoring);
 
-  // Restore Compulsory Deliveries
-  engine.deliveries = CompulsoryDeliveriesClass.deserialize(data.deliveries);
+  // Restore Compulsory Deliveries (with difficulty multiplier from scoring system)
+  const restoredDifficulty = engine.scoring.getDifficulty();
+  const restoredDeliveryMult = DIFFICULTY_MULTIPLIERS[restoredDifficulty]?.deliveryRate ?? 1.0;
+  engine.deliveries = CompulsoryDeliveriesClass.deserialize(data.deliveries, restoredDeliveryMult);
   engine.deliveries.setRng(engine.rng);
 
   // Restore quota state

@@ -76,7 +76,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1922,
 
     doctrine: 'revolutionary',
-    deliveryRates: { food: 0.1, vodka: 0.05, money: 0.1 },
+    deliveryRates: { food: 0.30, vodka: 0.20, money: 0.25 },
     quotaEscalation: 1.0,
 
     unlockedBuildings: [
@@ -125,7 +125,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1932,
 
     doctrine: 'industrialization',
-    deliveryRates: { food: 0.15, vodka: 0.1, money: 0.15 },
+    deliveryRates: { food: 0.45, vodka: 0.35, money: 0.50 },
     quotaEscalation: 1.2,
 
     unlockedBuildings: ['workers-house-c', 'bread-factory', 'warehouse', 'school', 'barracks', 'road-depot'],
@@ -170,7 +170,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1941,
 
     doctrine: 'industrialization',
-    deliveryRates: { food: 0.2, vodka: 0.15, money: 0.25 },
+    deliveryRates: { food: 0.45, vodka: 0.35, money: 0.50 },
     quotaEscalation: 1.3,
 
     unlockedBuildings: [
@@ -223,7 +223,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1945,
 
     doctrine: 'wartime',
-    deliveryRates: { food: 0.15, vodka: 0.1, money: 0.2 },
+    deliveryRates: { food: 0.60, vodka: 0.50, money: 0.65 },
     quotaEscalation: 1.15,
 
     unlockedBuildings: [],
@@ -268,7 +268,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1956,
 
     doctrine: 'reconstruction',
-    deliveryRates: { food: 0.15, vodka: 0.1, money: 0.15 },
+    deliveryRates: { food: 0.25, vodka: 0.20, money: 0.30 },
     quotaEscalation: 1.2,
 
     unlockedBuildings: [
@@ -316,7 +316,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 1982,
 
     doctrine: 'thaw',
-    deliveryRates: { food: 0.1, vodka: 0.08, money: 0.1 },
+    deliveryRates: { food: 0.25, vodka: 0.15, money: 0.25 },
     quotaEscalation: 1.1,
 
     unlockedBuildings: [
@@ -366,7 +366,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: 2000,
 
     doctrine: 'stagnation',
-    deliveryRates: { food: 0.12, vodka: 0.1, money: 0.15 },
+    deliveryRates: { food: 0.35, vodka: 0.30, money: 0.40 },
     quotaEscalation: 1.05,
 
     unlockedBuildings: ['apartment-tower-d'],
@@ -406,7 +406,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     endYear: -1,
 
     doctrine: 'eternal',
-    deliveryRates: { food: 0.15, vodka: 0.1, money: 0.2 },
+    deliveryRates: { food: 0.30, vodka: 0.25, money: 0.35 },
     quotaEscalation: 1.25,
 
     unlockedBuildings: [],

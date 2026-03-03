@@ -49,6 +49,7 @@ import type { CompulsoryDeliverySaveData } from '../ai/agents/political/Compulso
 import { CompulsoryDeliveries } from '../ai/agents/political/CompulsoryDeliveries';
 import { initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
 import { type EraId as EconomyEraId, type EconomySaveData, EconomySystem } from '../ai/agents/economy/EconomyAgent';
+import { DIFFICULTY_MULTIPLIERS } from '../ai/agents/economy/economy-core';
 import {
   tickAchievements as tickAchievementsHelper,
   tickTutorial as tickTutorialHelper,
@@ -252,7 +253,8 @@ export class SimulationEngine {
     this.personnelFile = new PersonnelFile(this.difficulty);
     this.eventSystem.setPersonnelFile(this.personnelFile);
 
-    this.deliveries = new CompulsoryDeliveries(this.eraSystem.getDoctrine());
+    const deliveryRateMult = DIFFICULTY_MULTIPLIERS[this.difficulty]?.deliveryRate ?? 1.0;
+    this.deliveries = new CompulsoryDeliveries(this.eraSystem.getDoctrine(), deliveryRateMult);
     this.deliveries.setRng(this.rng);
 
     this.settlement = new SettlementSystem(meta?.gameMeta.settlementTier ?? 'selo');

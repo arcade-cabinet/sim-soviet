@@ -17,6 +17,7 @@ import type { CompulsoryDeliverySaveData, DeliveryResult } from './CompulsoryDel
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
 import type { DifficultyLevel, ConsequenceLevel, ScoringSystemSaveData } from './ScoringSystem';
 import { ScoringSystem } from './ScoringSystem';
+import { DIFFICULTY_MULTIPLIERS } from '../economy/economy-core';
 
 /** Serializable snapshot for save/load. */
 export interface QuotaAgentSaveData {
@@ -76,8 +77,9 @@ export class QuotaAgent extends Vehicle {
   }
 
   static deserialize(data: QuotaAgentSaveData): QuotaAgent {
-    const deliveriesInstance = CompulsoryDeliveries.deserialize(data.deliveries);
     const scoringInstance = ScoringSystem.deserialize(data.scoring);
+    const deliveryMult = DIFFICULTY_MULTIPLIERS[scoringInstance.getDifficulty()]?.deliveryRate ?? 1.0;
+    const deliveriesInstance = CompulsoryDeliveries.deserialize(data.deliveries, deliveryMult);
     const agent = new QuotaAgent(scoringInstance.getDifficulty(), scoringInstance.getConsequence());
     // Replace the default instances with deserialized ones
     (agent as unknown as { deliveries: CompulsoryDeliveries }).deliveries = deliveriesInstance;
