@@ -110,6 +110,8 @@ import { AgentManager } from '../ai/AgentManager';
 import { getPopulationMode, collapseEntitiesToBuildings } from '../ai/agents/workforce/collectiveTransition';
 import { computeBuildingProduction } from '../ai/agents/economy/buildingProduction';
 import { computeDistribution, computeRoleBuckets } from '@/ecs/systems/distributionWeights';
+import type { IGovernor, GovernorDirective } from '../ai/agents/crisis/Governor';
+import { applyCrisisImpacts } from '../ai/agents/crisis/CrisisImpactApplicator';
 // ── Yuka agents ──
 import { ChronologyAgent } from '../ai/agents/core/ChronologyAgent';
 import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
@@ -210,6 +212,10 @@ export class SimulationEngine {
   private evacueeInfluxFired = false;
   /** Persistent state for the survival foraging system. */
   private foragingState: ForagingState = createForagingState();
+
+  // ── Governor (null by default — all existing behavior unchanged) ──
+  private governor: IGovernor | null = null;
+  private cachedDirective: GovernorDirective | null = null;
 
   constructor(
     private grid: GameGrid,
@@ -418,6 +424,11 @@ export class SimulationEngine {
   public getPoliticalAgent(): PoliticalAgent { return this.politicalAgent; }
   public getDefenseAgent(): DefenseAgent { return this.defenseAgent; }
   public getLoyaltyAgent(): LoyaltyAgent { return this.loyaltyAgent; }
+
+  // ── Governor ───────────────────────────────────────────────────────────────
+
+  public setGovernor(gov: IGovernor): void { this.governor = gov; }
+  public getGovernor(): IGovernor | null { return this.governor; }
 
   // ── Autopilot ───────────────────────────────────────────────────────────────
 
@@ -634,6 +645,42 @@ export class SimulationEngine {
 
     this.politicalAgent.tickTransition();
 
+    // ── 2.5 Governor evaluation ──
+    this.cachedDirective = null;
+    if (this.governor) {
+      const date = this.chronologyAgent.getDate();
+      const govCtx = {
+        year: date.year,
+        month: date.month,
+        population: storeRef.resources.population,
+        food: storeRef.resources.food,
+        money: storeRef.resources.money,
+        rng: this.rng,
+        totalTicks: date.totalTicks,
+        eraId: this.politicalAgent.getCurrentEra().id,
+      };
+      this.cachedDirective = this.governor.evaluate(govCtx);
+      if (this.cachedDirective.crisisImpacts.length > 0) {
+        applyCrisisImpacts(this.cachedDirective.crisisImpacts, {
+          resources: storeRef.resources,
+          callbacks: this.callbacks,
+          workerSystem: this.workerSystem,
+          kgbAgent: this.kgbAgent,
+          buildings: operationalBuildings.entities.map(e => ({
+            gridX: e.position.gridX,
+            gridY: e.position.gridY,
+            type: e.building.defId,
+          })),
+          rng: this.rng,
+          totalTicks: this.chronologyAgent.getDate().totalTicks,
+        });
+      }
+      // Year boundary hook
+      if (tickResult.newYear && this.governor.onYearBoundary) {
+        this.governor.onYearBoundary(tickResult.year);
+      }
+    }
+
     // ── 3. Production modifiers ──
     const weatherProfile = getWeatherProfile(tickResult.weather as WeatherType);
     const politburoMods = this.politburo.getModifiers();
@@ -644,7 +691,7 @@ export class SimulationEngine {
       seasonFarmMult * weatherProfile.farmModifier * politburoMods.foodProductionMult *
       eraMods.productionMult * heatingPenalty * this.mtsGrainMultiplier;
     const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult * heatingPenalty;
-    const diffConfig = DIFFICULTY_PRESETS[this.difficulty];
+    const diffConfig = this.cachedDirective?.modifiers ?? DIFFICULTY_PRESETS[this.difficulty];
 
     // ── 4. Power ──
     this.powerAgent.distributePower();
@@ -1155,7 +1202,7 @@ export class SimulationEngine {
         pendingReport: this.pendingReport,
         mandateState: this.mandateState,
         pripiskiCount: this.pripiskiCount,
-        quotaMultiplier: DIFFICULTY_PRESETS[this.difficulty].quotaMultiplier,
+        quotaMultiplier: this.cachedDirective?.modifiers.quotaMultiplier ?? DIFFICULTY_PRESETS[this.difficulty].quotaMultiplier,
       },
       endGame: (victory: boolean, reason: string) => this.endGame(victory, reason),
     };
@@ -1281,6 +1328,7 @@ export class SimulationEngine {
       eventHandler: this.eventHandler,
       politburoEventHandler: this.politburoEventHandler,
       syncSystemsToMeta: () => this.syncSystemsToMeta(),
+      governor: this.governor,
     };
   }
 

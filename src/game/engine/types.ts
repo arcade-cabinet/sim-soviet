@@ -32,6 +32,7 @@ import type { TutorialSaveData } from '../../ai/agents/meta/TutorialSystem';
 import type { AchievementTrackerSaveData } from '../../ai/agents/meta/AchievementTracker';
 import type { TransportSaveData } from '../../ai/agents/infrastructure/TransportSystem';
 import type { FireSystemSaveData } from '../../ai/agents/social/DefenseAgent';
+import type { GovernorSaveData } from '../../ai/agents/crisis/Governor';
 
 /**
  * Callback interface for SimulationEngine → React communication.
@@ -187,4 +188,6 @@ export interface SubsystemSaveData {
   raionPool?: RaionPoolSaveData;
   /** Per-building workforce data (aggregate mode only) */
   buildingWorkforce?: BuildingWorkforceSaveEntry[];
+  /** Governor state (optional — null when no governor is active) */
+  governor?: GovernorSaveData;
 }

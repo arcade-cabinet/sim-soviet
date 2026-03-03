@@ -47,6 +47,7 @@ import type {
 } from './types';
 import type { ForagingState } from '../../ai/agents/economy/foragingSystem';
 import { createForagingState } from '../../ai/agents/economy/foragingSystem';
+import type { IGovernor } from '../../ai/agents/crisis/Governor';
 import type { TransportSystem } from '../../ai/agents/infrastructure/TransportSystem';
 import { TransportSystem as TransportSystemClass } from '../../ai/agents/infrastructure/TransportSystem';
 import type { TutorialSystem } from '../../ai/agents/meta/TutorialSystem';
@@ -103,6 +104,7 @@ export interface SerializableEngine {
   eventHandler: (event: GameEvent) => void;
   politburoEventHandler: (event: GameEvent) => void;
   syncSystemsToMeta: () => void;
+  governor: IGovernor | null;
 }
 
 /**
@@ -153,6 +155,7 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
     },
     foraging: { ...engine.foragingState },
     populationMode: isAggregate ? 'aggregate' : 'entity',
+    governor: engine.governor?.serialize() ?? undefined,
   };
 
   if (isAggregate) {
@@ -337,6 +340,11 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
     engine.foragingState = { ...data.foraging };
   } else {
     engine.foragingState = createForagingState();
+  }
+
+  // Restore governor state (if present and governor is set)
+  if (data.governor && engine.governor) {
+    engine.governor.restore(data.governor);
   }
 
   // Update economy system to match restored era (fallback for saves without economy data)
