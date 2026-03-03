@@ -13,8 +13,16 @@ export {
   DEFAULT_STAFF_CAP,
   workerSpeedMult,
 } from '../../ai/agents/infrastructure/constructionSystem';
-export type { ConsumptionResult, StarvationCallback } from '../../ai/agents/economy/consumptionSystem';
-export { consumptionSystem, resetStarvationCounter, setStarvationCallback } from '../../ai/agents/economy/consumptionSystem';
+export type { ConsumptionResult, ResentmentCallback, StarvationCallback } from '../../ai/agents/economy/consumptionSystem';
+export { consumptionSystem, resetStarvationCounter, setResentmentCallback, setStarvationCallback } from '../../ai/agents/economy/consumptionSystem';
+export type { DistributionResult, RoleBucket } from './distributionWeights';
+export {
+  computeDistribution,
+  computeRoleBuckets,
+  DISTRIBUTION_WEIGHTS,
+  RESENTMENT_MORALE_PENALTY,
+  RESENTMENT_THRESHOLD,
+} from './distributionWeights';
 // Re-export from new agent location
 export type { BuildingCollapsedCallback } from '../../ai/agents/infrastructure/decaySystem';
 export { decaySystem, setBuildingCollapsedCallback } from '../../ai/agents/infrastructure/decaySystem';

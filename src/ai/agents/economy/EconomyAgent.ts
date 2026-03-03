@@ -654,6 +654,9 @@ export class EconomyAgent extends Vehicle {
     const propagandaValue = Math.round(sCfg.propagandaMin + this.rand() * sCfg.propagandaRange);
     const quotaIncrease = sCfg.quotaIncreaseBase + this.rand() * sCfg.quotaIncreaseRange;
 
+    const sabotageFired = this.rand() < sCfg.coworkerSabotageChance;
+    const fraudExposed = this.rand() < sCfg.fraudExposureChance;
+
     return {
       workerName,
       building,
@@ -661,6 +664,10 @@ export class EconomyAgent extends Vehicle {
       propagandaValue,
       quotaIncrease,
       announcement: `HERO OF SOCIALIST LABOR: ${workerName} exceeds quota by ${Math.round((productionBoost - 1) * 100)}% at ${building}!`,
+      neighborMoralePenalty: sCfg.neighborMoralePenalty,
+      sabotageFired,
+      fraudExposed,
+      nextPlanEscalation: sCfg.nextPlanEscalation,
     };
   }
 
@@ -1007,7 +1014,10 @@ export class EconomyAgent extends Vehicle {
    */
   public applyTickResults(deps: {
     chronology: { getDate(): { totalTicks: number; year: number; month: number } };
-    workers: { removeWorkersByCount(count: number, reason: string): void };
+    workers: {
+      removeWorkersByCount(count: number, reason: string): void;
+      applyGlobalMoraleDelta(delta: number): void;
+    };
     kgb: {
       addMark(reason: string, tick: number, desc: string): void;
       addCommendation(reason: string, tick: number, desc: string): void;
@@ -1110,6 +1120,45 @@ export class EconomyAgent extends Vehicle {
       if (s.propagandaValue >= 30) {
         deps.kgb.addCommendation('stakhanovite_celebrated', totalTicks, s.announcement);
       }
+
+      // ── Stakhanovite Consequences ──────────────────────────────────────────
+
+      // 1. Neighbor morale penalty: coworkers resent "now they'll raise our quotas too"
+      deps.workers.applyGlobalMoraleDelta(-s.neighborMoralePenalty);
+
+      // 2. Coworker sabotage: an "accident" befalls the celebrated worker
+      if (s.sabotageFired) {
+        deps.stakhanoviteBoosts.delete(s.building);
+        deps.callbacks.onPravda(
+          `WORKPLACE INCIDENT: An "accident" befalls Comrade ${s.workerName}. Production at ${s.building} returns to normal.`,
+        );
+        deps.callbacks.onToast(`Stakhanovite sabotaged at ${s.building}`, 'warning');
+        const injuryRoll = this.rng ? this.rng.random() : Math.random();
+        if (injuryRoll < 0.3) {
+          deps.workers.removeWorkersByCount(1, 'stakhanovite_sabotage');
+          deps.callbacks.onAdvisor(
+            `Comrade, the "accident" at ${s.building} has resulted in a casualty. The investigation concludes it was an unfortunate coincidence.`,
+          );
+        }
+      }
+
+      // 3. Fraud exposure: the achievement was staged
+      if (s.fraudExposed) {
+        deps.stakhanoviteBoosts.delete(s.building);
+        deps.kgb.addMark('stakhanovite_fraud', totalTicks, `Stakhanovite achievement by ${s.workerName} at ${s.building} exposed as staged`);
+        deps.workers.applyGlobalMoraleDelta(-15);
+        deps.callbacks.onPravda(
+          `CORRECTION: Investigation reveals Comrade ${s.workerName}'s heroic achievement was staged. Records have been adjusted.`,
+        );
+        deps.callbacks.onToast('Stakhanovite fraud exposed — black mark issued', 'critical');
+      }
+
+      // 4. Quota cascade: Moscow raises ALL quotas
+      deps.quota.target = Math.round(deps.quota.target * s.nextPlanEscalation);
+      deps.workers.applyGlobalMoraleDelta(-8);
+      deps.callbacks.onPravda(
+        `INSPIRED BY HEROES: Moscow raises all production quotas by ${Math.round((s.nextPlanEscalation - 1) * 100)}%.`,
+      );
     } else {
       // Clear stakhanovite boosts when no event active
       deps.stakhanoviteBoosts.clear();

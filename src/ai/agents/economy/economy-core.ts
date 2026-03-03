@@ -132,6 +132,14 @@ export interface StakhanoviteEvent {
   propagandaValue: number;
   quotaIncrease: number;
   announcement: string;
+  /** Morale penalty for coworkers in the same building. */
+  neighborMoralePenalty: number;
+  /** Whether coworker sabotage was rolled (workplace "accident"). */
+  sabotageFired: boolean;
+  /** Whether the achievement was exposed as fraud. */
+  fraudExposed: boolean;
+  /** Multiplier to apply to the next 5-year plan quotas. */
+  nextPlanEscalation: number;
 }
 
 /** A single step in a multi-step production chain (building + inputs -> outputs). */
@@ -476,6 +484,24 @@ export const DIFFICULTY_MULTIPLIERS: Record<DifficultyLevel, DifficultyMultiplie
 
 /** Probability of a Stakhanovite event per check. Very small. */
 export const STAKHANOVITE_CHANCE = economy.stakhanovite.chance;
+
+/** Full Stakhanovite configuration with consequence parameters. */
+export const STAKHANOVITE_CONFIG = {
+  chance: economy.stakhanovite.chance,
+  productionBoostMin: economy.stakhanovite.productionBoostMin,
+  productionBoostRange: economy.stakhanovite.productionBoostRange,
+  propagandaMin: economy.stakhanovite.propagandaMin,
+  propagandaRange: economy.stakhanovite.propagandaRange,
+  quotaIncreaseBase: economy.stakhanovite.quotaIncreaseBase,
+  quotaIncreaseRange: economy.stakhanovite.quotaIncreaseRange,
+  nextPlanEscalation: economy.stakhanovite.nextPlanEscalation,
+  /** Morale penalty applied to workers in the same building (resentment). */
+  neighborMoralePenalty: economy.stakhanovite.neighborMoralePenalty,
+  /** Chance that coworkers sabotage the Stakhanovite (workplace "accident"). */
+  coworkerSabotageChance: economy.stakhanovite.coworkerSabotageChance,
+  /** Chance the achievement is exposed as staged/fraudulent. */
+  fraudExposureChance: economy.stakhanovite.fraudExposureChance,
+} as const;
 
 const STAKHANOVITE_FIRST_NAMES = [
   'Ivan',
@@ -1016,8 +1042,10 @@ export class EconomySystem {
   checkStakhanovite(buildingDefIds: string[]): StakhanoviteEvent | null {
     if (buildingDefIds.length === 0) return null;
 
+    const cfg = STAKHANOVITE_CONFIG;
+
     const rand = this.rng ? this.rng.random() : Math.random();
-    if (rand >= STAKHANOVITE_CHANCE) return null;
+    if (rand >= cfg.chance) return null;
 
     // Pick building
     const buildingIdx = this.rng
@@ -1034,13 +1062,19 @@ export class EconomySystem {
       : Math.floor(Math.random() * STAKHANOVITE_LAST_NAMES.length);
     const workerName = `${STAKHANOVITE_FIRST_NAMES[firstIdx]} ${STAKHANOVITE_LAST_NAMES[lastIdx]}`;
 
-    const sCfg = economy.stakhanovite;
     const boostRand = this.rng ? this.rng.random() : Math.random();
-    const productionBoost = sCfg.productionBoostMin + boostRand * sCfg.productionBoostRange;
+    const productionBoost = cfg.productionBoostMin + boostRand * cfg.productionBoostRange;
 
-    const propagandaValue = Math.round(sCfg.propagandaMin + (this.rng ? this.rng.random() : Math.random()) * sCfg.propagandaRange);
+    const propagandaValue = Math.round(cfg.propagandaMin + (this.rng ? this.rng.random() : Math.random()) * cfg.propagandaRange);
 
-    const quotaIncrease = sCfg.quotaIncreaseBase + (this.rng ? this.rng.random() : Math.random()) * sCfg.quotaIncreaseRange;
+    const quotaIncrease = cfg.quotaIncreaseBase + (this.rng ? this.rng.random() : Math.random()) * cfg.quotaIncreaseRange;
+
+    // Roll for consequences
+    const sabotageRoll = this.rng ? this.rng.random() : Math.random();
+    const sabotageFired = sabotageRoll < cfg.coworkerSabotageChance;
+
+    const fraudRoll = this.rng ? this.rng.random() : Math.random();
+    const fraudExposed = fraudRoll < cfg.fraudExposureChance;
 
     return {
       workerName,
@@ -1049,6 +1083,10 @@ export class EconomySystem {
       propagandaValue,
       quotaIncrease,
       announcement: `HERO OF SOCIALIST LABOR: ${workerName} exceeds quota by ${Math.round((productionBoost - 1) * 100)}% at ${building}!`,
+      neighborMoralePenalty: cfg.neighborMoralePenalty,
+      sabotageFired,
+      fraudExposed,
+      nextPlanEscalation: cfg.nextPlanEscalation,
     };
   }
 

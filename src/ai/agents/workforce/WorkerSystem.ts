@@ -263,6 +263,19 @@ export class WorkerSystem {
   }
 
   /**
+   * Apply a morale penalty (or boost) to all workers.
+   * Used for settlement-wide morale effects like Stakhanovite resentment
+   * or quota cascade announcements.
+   *
+   * @param delta - Amount to add to each worker's morale (negative = penalty)
+   */
+  applyGlobalMoraleDelta(delta: number): void {
+    for (const stats of this.stats.values()) {
+      stats.morale = Math.max(0, Math.min(100, stats.morale + delta));
+    }
+  }
+
+  /**
    * Get the most recent labor budget result, computed during the last tick.
    * Returns null if no tick has been processed yet.
    */

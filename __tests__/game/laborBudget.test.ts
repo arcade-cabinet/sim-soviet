@@ -20,8 +20,8 @@ import {
   type LaborBudgetConfig,
   type LaborBudgetResult,
   LABOR_BUDGET_CONFIG,
-} from '@/game/workers/laborBudget';
-import { WorkerSystem } from '@/game/workers/WorkerSystem';
+} from '@/ai/agents/workforce/laborBudget';
+import { WorkerSystem } from '@/ai/agents/workforce/WorkerSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  HELPERS

@@ -223,10 +223,12 @@ describe('SimulationEngine', () => {
 
     it('causes starvation when food is insufficient (after grace period)', () => {
       const store = getResourceEntity()!;
-      // Must create actual citizen entities — tick() syncs population from entity count
-      engine.getWorkerSystem().syncPopulation(100);
+      // Must create actual citizen entities — tick() syncs population from entity count.
+      // Use 200 to survive cannibalism deaths from the foraging system (1/tick after
+      // 30 ticks of starvation) throughout the 180-tick grace period.
+      engine.getWorkerSystem().syncPopulation(200);
       store.resources.food = 0;
-      store.resources.vodka = 100;
+      store.resources.vodka = 200;
       // Exhaust grace period (180 ticks) — force food=0 each tick to prevent
       // any food source (fondy, private plots, production) from resetting
       // the starvation counter. Mock FoodAgent.produce AND intercept consume
@@ -241,10 +243,10 @@ describe('SimulationEngine', () => {
       });
       for (let i = 0; i < 181; i++) {
         store.resources.food = 0;
-        store.resources.vodka = 100;
+        store.resources.vodka = 200;
         engine.tick();
       }
-      expect(getResourceEntity()!.resources.population).toBeLessThan(100);
+      expect(getResourceEntity()!.resources.population).toBeLessThan(200);
       expect(cb.onToast).toHaveBeenCalledWith('STARVATION DETECTED', 'critical');
     });
 

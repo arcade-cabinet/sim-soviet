@@ -109,6 +109,7 @@ import { WorkerSystem } from '../ai/agents/workforce/WorkerSystem';
 import { AgentManager } from '../ai/AgentManager';
 import { getPopulationMode, collapseEntitiesToBuildings } from '../ai/agents/workforce/collectiveTransition';
 import { computeBuildingProduction } from '../ai/agents/economy/buildingProduction';
+import { computeDistribution, computeRoleBuckets } from '@/ecs/systems/distributionWeights';
 // ── Yuka agents ──
 import { ChronologyAgent } from '../ai/agents/core/ChronologyAgent';
 import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
@@ -123,6 +124,7 @@ import { KGBAgent } from '../ai/agents/political/KGBAgent';
 import { PoliticalAgent } from '../ai/agents/political/PoliticalAgent';
 import { DefenseAgent } from '../ai/agents/social/DefenseAgent';
 import { LoyaltyAgent } from '../ai/agents/political/LoyaltyAgent';
+import { createForagingState, foragingTick, type ForagingState } from '../ai/agents/economy/foragingSystem';
 
 /** Maps game EraSystem IDs → EconomySystem EraIds. */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -206,6 +208,8 @@ export class SimulationEngine {
   private lastInflowYear: Record<string, number> = {};
   /** Whether the Great Patriotic evacuee influx has already fired. */
   private evacueeInfluxFired = false;
+  /** Persistent state for the survival foraging system. */
+  private foragingState: ForagingState = createForagingState();
 
   constructor(
     private grid: GameGrid,
@@ -517,6 +521,7 @@ export class SimulationEngine {
     this.ended = se.ended;
     this.lastInflowYear = se.lastInflowYear;
     this.evacueeInfluxFired = se.evacueeInfluxFired;
+    this.foragingState = se.foragingState;
 
     this.eventSystem.setPersonnelFile(this.personnelFile);
 
@@ -776,6 +781,55 @@ export class SimulationEngine {
       if (foodResult.starvationDeaths > 0) {
         this.callbacks.onToast('STARVATION DETECTED', 'critical');
         this.workerSystem.removeWorkersByCount(foodResult.starvationDeaths, 'starvation');
+      }
+    }
+
+    // ── 11b. Distribution resentment check ──
+    // Compute weighted distribution to detect privileged overconsumption
+    {
+      const politicalCounts = this.politicalEntities.getEntityCounts();
+      const pop = storeRef.resources.population;
+      if (pop > 0) {
+        const buckets = computeRoleBuckets(pop, politicalCounts);
+        const dist = computeDistribution(pop, totalConsumptionMult, buckets);
+        if (dist.resentmentActive) {
+          this.callbacks.onPravda('Some comrades are more equal than others.');
+        }
+      }
+    }
+
+    // ── 11c. Foraging System — survival foraging when food is critically low ──
+    {
+      const foragingResult = foragingTick(
+        storeRef.resources.food,
+        storeRef.resources.population,
+        this.chronologyAgent.getDate().month,
+        this.foragingState,
+        this.rng,
+      );
+
+      if (foragingResult.foodGathered > 0) {
+        storeRef.resources.food += foragingResult.foodGathered;
+      }
+
+      if (foragingResult.kgbRisk > 0) {
+        this.kgbAgent.addMark(
+          'workers_abandoning_collective',
+          this.chronologyAgent.getDate().totalTicks,
+          'Workers observed abandoning collective duties for personal foraging',
+        );
+        this.callbacks.onToast('BLACK MARK: Workers abandoning collective duties for personal foraging', 'warning');
+      }
+
+      if (foragingResult.cannibalismFired) {
+        this.workerSystem.removeWorkersByCount(1, 'starvation');
+        this.callbacks.onToast('Something unspeakable has happened in the settlement...', 'critical');
+      }
+
+      if (foragingResult.moralePenalty > 0 && foragingResult.method === 'stone_soup') {
+        this.callbacks.onAdvisor(
+          'Comrade Mayor, the workers are boiling stones for soup. We have come to this.',
+        );
       }
     }
 
@@ -1222,6 +1276,7 @@ export class SimulationEngine {
       ended: this.ended,
       lastInflowYear: this.lastInflowYear,
       evacueeInfluxFired: this.evacueeInfluxFired,
+      foragingState: this.foragingState,
       rng: this.rng,
       eventHandler: this.eventHandler,
       politburoEventHandler: this.politburoEventHandler,

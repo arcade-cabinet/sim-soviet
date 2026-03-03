@@ -51,7 +51,8 @@ export type MarkSource =
   | 'blat_noticed'
   | 'suppressing_news'
   | 'report_falsified'
-  | 'excessive_intervention';
+  | 'excessive_intervention'
+  | 'workers_abandoning_collective';
 
 /** Categorized source of a commendation entry in the personnel file. */
 export type CommendationSource =
@@ -109,6 +110,7 @@ const DEFAULT_MARK_DESCRIPTIONS: Record<MarkSource, string> = {
   suppressing_news: 'Suppressing news from central committee',
   report_falsified: 'Falsification of production report (pripiski) detected',
   excessive_intervention: 'Chairman interfered excessively with collective operations',
+  workers_abandoning_collective: 'Workers observed abandoning collective duties for personal foraging',
 };
 
 const DEFAULT_COMMENDATION_DESCRIPTIONS: Record<CommendationSource, string> = {

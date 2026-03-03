@@ -13,7 +13,7 @@
  * 10% for everything else.
  */
 
-import type { EraId } from '../era';
+import type { EraId } from '../../../game/era';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONFIGURATION

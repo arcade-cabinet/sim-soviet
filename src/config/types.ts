@@ -219,6 +219,14 @@ export interface StakhanoviteConfig {
   propagandaRange: number;
   quotaIncreaseBase: number;
   quotaIncreaseRange: number;
+  /** Multiplier applied to next plan's quota after a Stakhanovite event. */
+  nextPlanEscalation: number;
+  /** Morale penalty applied to coworkers in the same building. */
+  neighborMoralePenalty: number;
+  /** Probability that coworkers sabotage the Stakhanovite worker. */
+  coworkerSabotageChance: number;
+  /** Probability the achievement is exposed as fraudulent. */
+  fraudExposureChance: number;
 }
 
 /** MTS (Machine-Tractor Station) parameters. */

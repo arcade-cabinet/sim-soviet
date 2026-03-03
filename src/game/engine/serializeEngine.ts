@@ -45,6 +45,8 @@ import type {
   SubsystemSaveData,
   WorkerStatSaveEntry,
 } from './types';
+import type { ForagingState } from '../../ai/agents/economy/foragingSystem';
+import { createForagingState } from '../../ai/agents/economy/foragingSystem';
 import type { TransportSystem } from '../../ai/agents/infrastructure/TransportSystem';
 import { TransportSystem as TransportSystemClass } from '../../ai/agents/infrastructure/TransportSystem';
 import type { TutorialSystem } from '../../ai/agents/meta/TutorialSystem';
@@ -96,6 +98,7 @@ export interface SerializableEngine {
   ended: boolean;
   lastInflowYear: Record<string, number>;
   evacueeInfluxFired: boolean;
+  foragingState: ForagingState;
   rng: GameRng;
   eventHandler: (event: GameEvent) => void;
   politburoEventHandler: (event: GameEvent) => void;
@@ -148,6 +151,7 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
       lastInflowYear: { ...engine.lastInflowYear },
       evacueeInfluxFired: engine.evacueeInfluxFired,
     },
+    foraging: { ...engine.foragingState },
     populationMode: isAggregate ? 'aggregate' : 'entity',
   };
 
@@ -326,6 +330,13 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
     engine.pripiskiCount = data.engineState.pripiskiCount ?? 0;
     engine.lastInflowYear = data.engineState.lastInflowYear ?? {};
     engine.evacueeInfluxFired = data.engineState.evacueeInfluxFired ?? false;
+  }
+
+  // Restore foraging state (backward compat: default to fresh state for old saves)
+  if (data.foraging) {
+    engine.foragingState = { ...data.foraging };
+  } else {
+    engine.foragingState = createForagingState();
   }
 
   // Update economy system to match restored era (fallback for saves without economy data)

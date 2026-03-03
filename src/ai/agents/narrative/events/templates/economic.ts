@@ -148,4 +148,58 @@ export const ECONOMIC_EVENTS: EventTemplate[] = [
     effects: { money: 200 },
     weight: 0.3,
   },
+  // ── Cannibalism (triggered programmatically by foragingSystem, never by random events) ──
+  {
+    id: 'cannibalism',
+    title: 'UNSPEAKABLE HUNGER',
+    description:
+      'The settlement has descended into darkness. What happened will not be spoken of. What happened will not be written. The survivors do not meet each other\'s eyes.',
+    pravdaHeadline: 'ISOLATED INCIDENT RESOLVED; SETTLEMENT MORALE REMAINS HIGH',
+    category: 'economic',
+    severity: 'catastrophic',
+    effects: { pop: -1, food: 5 },
+    weight: 0,
+    condition: () => false,
+  },
+  // ── Stakhanovite consequence events ──
+  {
+    id: 'stakhanovite_sabotage',
+    title: 'WORKPLACE INCIDENT',
+    description:
+      'An "accident" befalls the celebrated Stakhanovite worker. Tools malfunction, a beam falls, production returns to normal. ' +
+      'Coworkers express appropriate concern. No one saw anything.',
+    pravdaHeadline: 'MINOR WORKPLACE INCIDENT; SAFETY COMMITTEE CONVENED',
+    category: 'economic',
+    severity: 'minor',
+    effects: { pop: -1 },
+    weight: 0,
+    eraFilter: ['industrialization', 'reconstruction', 'thaw_and_freeze'],
+  },
+  {
+    id: 'stakhanovite_fraud_exposed',
+    title: 'INVESTIGATION RESULTS',
+    description:
+      'Investigation reveals the celebrated Stakhanovite achievement was staged. The production figures were falsified. ' +
+      'A black mark has been issued. The embarrassment is felt settlement-wide.',
+    pravdaHeadline: 'CORRECTION: PREVIOUS HERO OF LABOR REPORT CONTAINED INACCURACIES',
+    category: 'economic',
+    severity: 'major',
+    effects: {},
+    weight: 0,
+    eraFilter: ['industrialization', 'reconstruction', 'thaw_and_freeze'],
+  },
+  {
+    id: 'stakhanovite_quota_cascade',
+    title: 'QUOTA ADJUSTMENT',
+    description:
+      'Inspired by the Stakhanovite achievement, Moscow raises ALL production quotas by 30%. ' +
+      'Workers exchange knowing glances. Everyone understands what this means. ' +
+      'The celebration is over. The real work begins.',
+    pravdaHeadline: 'HEROIC WORKERS INSPIRE HIGHER GOALS FOR ALL; NATION REJOICES',
+    category: 'economic',
+    severity: 'major',
+    effects: {},
+    weight: 0,
+    eraFilter: ['industrialization', 'reconstruction', 'thaw_and_freeze'],
+  },
 ];

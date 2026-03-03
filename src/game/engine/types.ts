@@ -179,6 +179,8 @@ export interface SubsystemSaveData {
   dvory?: DvorSaveEntry[];
   /** Per-worker stats keyed by dvor linkage (entity mode only) */
   workers?: WorkerStatSaveEntry[];
+  /** Foraging system persistent state (optional for backward compat with old saves). */
+  foraging?: import('../../ai/agents/economy/foragingSystem').ForagingState;
   /** Population mode — 'entity' (default for old saves) or 'aggregate' */
   populationMode?: 'entity' | 'aggregate';
   /** RaionPool snapshot (aggregate mode only) */

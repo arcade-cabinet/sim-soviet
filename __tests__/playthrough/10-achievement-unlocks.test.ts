@@ -64,8 +64,10 @@ describe('Playthrough: Achievement Unlocks', () => {
   // ── Scenario 3a: no_food (famine) achievement ─────────────────────────────
 
   it('no_food achievement fires when food reaches 0', () => {
+    // Use population: 0 so the foraging system doesn't add food back after consumption.
+    // The no_food achievement checks r.food <= 0 which is independent of population.
     const { engine, callbacks } = createPlaythroughEngine({
-      resources: { food: 0, population: 10, money: 500 },
+      resources: { food: 0, population: 0, money: 500 },
       consequence: 'forgiving',
     });
 
