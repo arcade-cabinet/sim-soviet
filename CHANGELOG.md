@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.0](https://github.com/arcade-cabinet/sim-soviet/compare/v1.1.3...v1.2.0) (2026-03-03)
+
+
+### Features
+
+* autonomous collective — demand detection, auto-build, political cost ([#36](https://github.com/arcade-cabinet/sim-soviet/issues/36)) ([7a4d149](https://github.com/arcade-cabinet/sim-soviet/commit/7a4d1492245fcc64123537fff3316817c9b221e1))
+* game completion — 22 features, universal controls, responsive UI, XR ([#40](https://github.com/arcade-cabinet/sim-soviet/issues/40)) ([4759ba4](https://github.com/arcade-cabinet/sim-soviet/commit/4759ba4186c1569f477242def4c5e7ecd0ea7ab6))
+* historically-researched demographics overhaul (9 features) ([fc84fa4](https://github.com/arcade-cabinet/sim-soviet/commit/fc84fa4831798439ce84eec9f5408084b09a9d25))
+* playthrough integration tests + 4 bug fixes ([#38](https://github.com/arcade-cabinet/sim-soviet/issues/38)) ([4b57211](https://github.com/arcade-cabinet/sim-soviet/commit/4b57211232a884a6cbed77f57979874ec932832a))
+
 ## [1.1.3](https://github.com/arcade-cabinet/sim-soviet/compare/v1.1.2...v1.1.3) (2026-02-28)
 
 
