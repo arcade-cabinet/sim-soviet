@@ -118,6 +118,7 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     env:
@@ -135,8 +136,16 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Build project
-        run: pnpm run build
+      - name: Build project for E2E (no base URL prefix)
+        run: |
+          # Override baseUrl to "" for local static serving (no /sim-soviet/ prefix)
+          node -e "
+            const fs = require('fs');
+            const cfg = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+            cfg.expo.experiments.baseUrl = '';
+            fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2));
+          "
+          pnpm run build
 
       - name: Copy static assets into dist
         run: |
@@ -145,6 +154,9 @@ jobs:
           cp -r assets/hdri dist/assets/hdri
           cp -r assets/textures dist/assets/textures
           cp -r assets/audio dist/assets/audio
+          # Mirror at /sim-soviet/ for runtime assetUrl() which prefixes /sim-soviet in production
+          mkdir -p dist/sim-soviet
+          ln -s ../assets dist/sim-soviet/assets
 
       - name: Run Playwright E2E tests
         run: npx playwright test

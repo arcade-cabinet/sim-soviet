@@ -33,6 +33,8 @@ export const canvas = (page: Page) => page.locator('canvas');
  * Checks: canvas exists + pop-value testID exists in DOM (TopBar mounted).
  */
 export async function waitForGameReady(page: Page): Promise<void> {
+  // CI with SwiftShader needs more time for WebGL canvas + asset loading
+  const timeout = process.env.CI ? 120_000 : 45_000;
   await page.waitForFunction(
     () => {
       const canvas = document.querySelector('canvas');
@@ -41,7 +43,7 @@ export async function waitForGameReady(page: Page): Promise<void> {
       return !!pop;
     },
     undefined,
-    { timeout: 45_000 },
+    { timeout },
   );
 }
 
@@ -49,7 +51,7 @@ export async function waitForGameReady(page: Page): Promise<void> {
  * Wait for the simulation to advance (date text changes).
  * Speeds up simulation to 3x first to reduce wait time.
  */
-export async function waitForSimTick(page: Page, maxMs = 30_000): Promise<void> {
+export async function waitForSimTick(page: Page, maxMs = process.env.CI ? 60_000 : 30_000): Promise<void> {
   // Dismiss any overlays that might block interaction
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
@@ -263,7 +265,7 @@ export async function advanceGameTime(page: Page, ticks = 3): Promise<void> {
         return current !== prev && current.length > 0;
       },
       currentDate,
-      { timeout: 30_000 },
+      { timeout: process.env.CI ? 60_000 : 30_000 },
     );
   }
 }
