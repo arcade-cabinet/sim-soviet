@@ -12,6 +12,8 @@
 
 import { political } from '@/config';
 import { ERA_ORDER } from '../../../game/era';
+import { modifiersToDifficultyConfig } from '../crisis/DynamicDifficultyProvider';
+import type { DynamicModifiers } from '../crisis/Governor';
 
 // ─────────────────────────────────────────────────────────
 //  TYPES
@@ -403,9 +405,25 @@ export class ScoringSystem {
   /** Medals awarded during the game. */
   private awardedMedalIds: Set<string> = new Set();
 
+  /** Governor-supplied dynamic modifiers (null when in classic mode). */
+  private governorModifiers: DynamicModifiers | null = null;
+
   constructor(difficulty: DifficultyLevel = 'comrade', consequence: ConsequenceLevel = 'permadeath') {
     this.difficulty = difficulty;
     this.consequence = consequence;
+  }
+
+  // ── Governor modifier injection ─────────────────────
+
+  /**
+   * Set or clear governor-supplied dynamic modifiers.
+   * When set, getDifficultyConfig() returns the governor's modifiers
+   * instead of DIFFICULTY_PRESETS. Pass null to revert to classic mode.
+   *
+   * @param modifiers - Governor's dynamic modifiers, or null for classic mode
+   */
+  setGovernorModifiers(modifiers: DynamicModifiers | null): void {
+    this.governorModifiers = modifiers;
   }
 
   // ── Event Hooks (called by SimulationEngine) ────────
@@ -539,8 +557,11 @@ export class ScoringSystem {
     return this.consequence;
   }
 
-  /** Get the difficulty config for the current level. */
+  /** Get the difficulty config for the current level (or governor modifiers when active). */
   getDifficultyConfig(): DifficultyConfig {
+    if (this.governorModifiers) {
+      return modifiersToDifficultyConfig(this.governorModifiers);
+    }
     return { ...DIFFICULTY_PRESETS[this.difficulty] };
   }
 

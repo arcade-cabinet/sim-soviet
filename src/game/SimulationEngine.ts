@@ -694,6 +694,13 @@ export class SimulationEngine {
       }
     }
 
+    // ── 2.6 Push governor modifiers into ScoringSystem ──
+    if (this.cachedDirective) {
+      this.scoring.setGovernorModifiers(this.cachedDirective.modifiers);
+    } else {
+      this.scoring.setGovernorModifiers(null);
+    }
+
     // ── 3. Production modifiers ──
     const weatherProfile = getWeatherProfile(tickResult.weather as WeatherType);
     const politburoMods = this.politburo.getModifiers();
