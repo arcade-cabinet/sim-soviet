@@ -102,7 +102,7 @@ export function accrueTrudodni(): TrudodniAccrualResult {
       const accrued = bldg.trudodniAccrued;
       if (accrued > 0) {
         const pos = entity.position;
-        const buildingId = `${pos.x},${pos.y}`;
+        const buildingId = `${pos.gridX},${pos.gridY}`;
         buildingTrudodniMap.set(buildingId, (buildingTrudodniMap.get(buildingId) ?? 0) + accrued);
         totalTrudodni += accrued;
         buildingCount++;

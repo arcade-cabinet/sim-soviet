@@ -406,7 +406,7 @@ export class EconomyAgent extends Vehicle {
         const accrued = bldg.trudodniAccrued;
         if (accrued > 0) {
           const pos = entity.position;
-          const buildingId = `${pos.x},${pos.y}`;
+          const buildingId = `${pos.gridX},${pos.gridY}`;
           this.trudodniPerBuilding.set(buildingId, (this.trudodniPerBuilding.get(buildingId) ?? 0) + accrued);
           totalTrudodni += accrued;
           buildingCount++;
