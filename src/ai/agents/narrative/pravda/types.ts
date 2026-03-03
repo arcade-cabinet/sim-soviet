@@ -10,7 +10,7 @@ export interface PravdaHeadline {
   subtext: string;
   /** The grim reality behind the headline */
   reality: string;
-  category: 'triumph' | 'production' | 'culture' | 'weather' | 'editorial' | 'threat' | 'leader' | 'spin';
+  category: 'triumph' | 'production' | 'culture' | 'weather' | 'editorial' | 'threat' | 'leader' | 'spin' | 'crisis';
   timestamp: number;
 }
 
@@ -23,6 +23,14 @@ export interface GeneratedHeadline {
   subtext: string;
   reality: string;
   category: HeadlineCategory;
+}
+
+/** Minimal crisis info passed to the Pravda headline system. */
+export interface ActiveCrisisInfo {
+  /** Crisis category (war, famine, disaster, political). */
+  type: 'war' | 'famine' | 'disaster' | 'political';
+  /** Current lifecycle phase. */
+  phase: 'buildup' | 'peak' | 'aftermath';
 }
 
 /** Function that produces a headline from the current game view. */

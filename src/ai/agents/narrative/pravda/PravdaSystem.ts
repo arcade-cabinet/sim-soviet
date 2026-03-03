@@ -4,7 +4,7 @@ import { createGameView } from '../../../../game/GameView';
 import type { GameRng } from '../../../../game/SeedSystem';
 import { generateEventReactiveHeadline, generateHeadline } from './generators';
 import { setPravdaRng } from './helpers';
-import type { GeneratedHeadline, HeadlineCategory, PravdaHeadline } from './types';
+import type { ActiveCrisisInfo, GeneratedHeadline, HeadlineCategory, PravdaHeadline } from './types';
 
 /** Save data for PravdaSystem. */
 export interface PravdaSaveData {
@@ -56,8 +56,12 @@ export class PravdaSystem {
   /**
    * Generate a random ambient headline not tied to a specific event.
    * Called periodically to keep the news ticker alive.
+   *
+   * When active crises are provided, crisis-specific headlines are weighted
+   * higher (3x at peak, 2x during buildup/aftermath) to reflect the
+   * crisis dominating the news cycle.
    */
-  public generateAmbientHeadline(): PravdaHeadline | null {
+  public generateAmbientHeadline(activeCrises?: ActiveCrisisInfo[]): PravdaHeadline | null {
     const now = Date.now();
     if (now - this.lastHeadlineTime < this.headlineCooldown) return null;
 
@@ -65,7 +69,7 @@ export class PravdaSystem {
     let generated: GeneratedHeadline;
     let attempts = 0;
     do {
-      generated = generateHeadline(createGameView());
+      generated = generateHeadline(createGameView(), activeCrises);
       attempts++;
     } while (
       attempts < 5 &&

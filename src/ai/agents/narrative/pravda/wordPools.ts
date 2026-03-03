@@ -404,6 +404,176 @@ export const GENERIC_REALITIES = [
   'Any resemblance to actual events is purely ideological.',
 ] as const;
 
+// ─── CRISIS HEADLINE POOLS ────────────────────────────────────────────
+
+/** War crisis headlines — mobilization, wartime quotas, enemy advance, victory promises. */
+export const WAR_HEADLINES = [
+  'MOTHERLAND CALLS ALL SONS TO ARMS',
+  'HEROIC WORKERS EXCEED WARTIME QUOTAS',
+  'VICTORY IS INEVITABLE — ONWARD COMRADES',
+  'ENEMY APPROACHES — CIVILIANS MUST EVACUATE',
+  'ALL FACTORIES CONVERTED TO WAR PRODUCTION',
+  'GREAT PATRIOTIC EFFORT DEMANDS SACRIFICE FROM ALL',
+  'RED ARMY ADVANCES ON ALL FRONTS',
+  'WARTIME RATIONS DISTRIBUTED FAIRLY AND GENEROUSLY',
+  'DEFENSE COMMITTEE ANNOUNCES TOTAL MOBILIZATION',
+  'PARTISAN BRIGADES REPORT DEVASTATING STRIKES BEHIND ENEMY LINES',
+  'HOME FRONT WORKERS EQUAL HEROES OF THE BATTLEFIELD',
+  'AMMUNITION PRODUCTION EXCEEDS ALL EXPECTATIONS',
+  'COMRADES — THE FRONT NEEDS YOUR LABOR MORE THAN EVER',
+  'MILITARY COMMAND REPORTS STRATEGIC WITHDRAWAL (NOT RETREAT)',
+  'ENEMY MORALE CRUMBLING UNDER WEIGHT OF SOVIET RESOLVE',
+  'EVACUATION OF INDUSTRIAL EQUIPMENT PROCEEDS WITH REVOLUTIONARY EFFICIENCY',
+] as const;
+
+/** War crisis subtext lines. */
+export const WAR_SUBTEXTS = [
+  'All leave cancelled. Enthusiasm for cancellation: mandatory.',
+  'Production targets doubled. Complaints about doubling: halved.',
+  'Victory gardens planted in every available surface including rooftops and shoes.',
+  'Citizens reminded: fear is a capitalist emotion.',
+  'The front is everywhere. The rear is also the front. There is only front.',
+  'Casualty reports classified. Optimism reports: declassified and mandatory.',
+  'Every bullet counts. Counting bullets: also classified.',
+  'Defense bonds now accepted as legal tender, emotional support, and building material.',
+] as const;
+
+/** War crisis reality lines. */
+export const WAR_REALITIES = [
+  'The "strategic withdrawal" covered 200 kilometers in three days.',
+  'Wartime rations consist of hope and a turnip to share between four.',
+  'Factory converted to shell production. Workers have no idea what the shells do. Neither do the shells.',
+  'Evacuation train arrived empty. It departed emptier. Nobody asks questions.',
+  'Partisan brigade is three farmers with a pitchfork and strong opinions.',
+  'Ammunition production exceeds expectations because expectations were set to zero.',
+] as const;
+
+/** Famine crisis headlines — denying hunger, blaming kulaks, celebrating "adequate" supplies. */
+export const FAMINE_HEADLINES = [
+  'GRAIN RESERVES ADEQUATE — IGNORE RUMORS',
+  'AGRICULTURAL MODERNIZATION AHEAD OF SCHEDULE',
+  'KULAK SABOTEURS DESTROY HARVEST — ARRESTS IMMINENT',
+  'COLLECTIVE FARMS REPORT RECORD OUTPUT',
+  'FOOD DISTRIBUTION PROCEEDS IN ORDERLY FASHION',
+  'CITIZENS EMBRACE REVOLUTIONARY DIET OF REDUCED PORTIONS',
+  'MINISTRY OF AGRICULTURE DENIES EXISTENCE OF "SHORTAGE"',
+  'NEW SCIENTIFIC FARMING METHODS ELIMINATE NEED FOR RAIN',
+  'GRAIN DELIVERIES TO STATE GRANARIES EXCEED ALL QUOTAS',
+  'DROUGHT RECLASSIFIED AS VOLUNTARY SOLAR IRRIGATION PROGRAM',
+  'HOARDING IS TREASON — REPORT NEIGHBORS WITH SUSPICIOUS PANTRIES',
+  'HARVEST FESTIVAL CELEBRATES BOUNTIFUL IMAGINATION',
+  'CALORIC INTAKE SCIENTIFICALLY OPTIMIZED FOR MAXIMUM PRODUCTIVITY',
+  'BREAD QUEUES PROVIDE VALUABLE COMMUNITY BONDING EXPERIENCE',
+  'AGRICULTURAL SABOTAGE RING EXPOSED AND LIQUIDATED',
+  'LYSENKO CONFIRMS: WHEAT WILL GROW IF BELIEVED IN HARD ENOUGH',
+] as const;
+
+/** Famine crisis subtext lines. */
+export const FAMINE_SUBTEXTS = [
+  'Grain reserves at levels the Ministry describes as "non-zero" (technically correct).',
+  'Citizens advised to eat slowly to extend the sensation of eating.',
+  'Kulak sabotage confirmed by confession obtained in record time.',
+  'Collective farm output: magnificent. Collective farm existence: also magnificent.',
+  'The word "famine" has been removed from all dictionaries. Problem solved.',
+  'Bread ration cards now double as postcards. Write to loved ones about how full you are.',
+  'Nutritionists confirm: hunger is a state of mind. The state has spoken.',
+  'Surplus food relocated to strategic reserves (location: classified, existence: classified).',
+] as const;
+
+/** Famine crisis reality lines. */
+export const FAMINE_REALITIES = [
+  'Citizens have eaten the seed grain. Next year will be interesting.',
+  'The "record harvest" was measured using a unit of measurement that no longer exists.',
+  'Kulak saboteurs are three elderly farmers who refused to surrender their last potato.',
+  'Collective farms produced exactly one beet per hectare. The beet was decorative.',
+  'Children are drawing pictures of food. The pictures are also being eaten.',
+  'A man was arrested for the crime of looking hungry in public.',
+] as const;
+
+/** Disaster crisis headlines — downplaying catastrophe, heroic response, scientific reassurance. */
+export const DISASTER_HEADLINES = [
+  'MINOR TECHNICAL INCIDENT UNDER CONTROL',
+  'HEROIC FIREFIGHTERS CONTAIN SITUATION',
+  'SCIENTISTS CONFIRM NO DANGER TO POPULATION',
+  'EVACUATION DRILL PROCEEDS SMOOTHLY',
+  'LOCALIZED ATMOSPHERIC EVENT POSES NO RISK',
+  'STRUCTURAL ADJUSTMENT OF BUILDING WAS PLANNED ALL ALONG',
+  'RADIATION LEVELS WITHIN ACCEPTABLE PARAMETERS (PARAMETERS REVISED)',
+  'EMERGENCY SERVICES RESPOND WITH UNPRECEDENTED EFFICIENCY',
+  'MINOR SEISMIC ACTIVITY ATTRIBUTED TO ENTHUSIASTIC MARCHING',
+  'CHEMICAL RELEASE DESCRIBED AS "REFRESHING INDUSTRIAL BREEZE"',
+  'FLOOD WATERS REBRANDED AS "SPONTANEOUS IRRIGATION PROJECT"',
+  'EXPLOSION RECLASSIFIED AS RAPID UNSCHEDULED DISASSEMBLY',
+  'ALL AFFECTED CITIZENS RELOCATED TO BETTER HOUSING (TENTS)',
+  'DAMAGED REACTOR PERFORMING EXACTLY AS REDESIGNED',
+  'FIRE DEPARTMENT REPORTS: FIRE HAS BEEN OFFICIALLY DISCOURAGED',
+  'COLLAPSE OF STRUCTURE REVEALS EXCITING NEW OPEN-AIR FLOOR PLAN',
+] as const;
+
+/** Disaster crisis subtext lines. */
+export const DISASTER_SUBTEXTS = [
+  'Citizens in the exclusion zone report excellent views. The zone is expanding.',
+  'Protective equipment distributed: one pamphlet per household.',
+  'Scientists confirm no danger. Scientists have been relocated 500 kilometers away.',
+  'Evacuation zone is "precautionary." Precaution radius: the entire oblast.',
+  'Emergency services arrived within minutes. Minutes have been redefined.',
+  'Situation under control. "Control" has been redefined to include the current situation.',
+  'No casualties reported. Reporting of casualties has been temporarily suspended.',
+  'The affected area has been renamed "Zone of Accelerated Urban Renewal."',
+] as const;
+
+/** Disaster crisis reality lines. */
+export const DISASTER_REALITIES = [
+  'The "minor incident" is visible from space. Cosmonauts have been told not to look down.',
+  'Scientists who confirmed safety were reading from a prepared statement. Upside down.',
+  'Evacuation drill involved actual evacuation. Citizens were not informed of the distinction.',
+  'The fire has been burning for three weeks. The fire department has been "containing" it by watching.',
+  'Radiation dosimeters were confiscated to prevent "unnecessary anxiety."',
+  'The explosion was heard in four oblasts. Official report: "a door slammed."',
+] as const;
+
+/** Political crisis headlines — purges, party discipline, counter-revolutionary exposure. */
+export const POLITICAL_HEADLINES = [
+  'COUNTER-REVOLUTIONARY ELEMENTS LIQUIDATED',
+  'THE PARTY STRENGTHENS ITS VIGILANCE',
+  'NEW FIVE-YEAR PLAN PROMISES PROSPERITY',
+  'ENEMIES OF THE PEOPLE CONFESS CRIMES AGAINST THE STATE',
+  'POLITBURO UNANIMOUSLY ENDORSES LATEST LEADERSHIP DECISION',
+  'PURGE OF UNRELIABLE ELEMENTS RESTORES PARTY PURITY',
+  'SHOW TRIAL REVEALS DEPTHS OF BOURGEOIS CONSPIRACY',
+  'ALL FORMER ALLIES NOW CONFIRMED AS LIFELONG TRAITORS',
+  'LOYALTY REVIEW BOARD CLEARS THOSE WHO REMAIN',
+  'KGB UNCOVERS NEST OF WRECKERS IN MINISTRY OF OPTIMIZATION',
+  'REHABILITATED COMRADES EXPRESS GRATITUDE FOR RE-EDUCATION',
+  'NEW APPOINTMENTS PROVE CONTINUITY OF CORRECT LINE',
+  'PARTY CONGRESS VOTES 100% IN FAVOR OF EVERYTHING',
+  'IDEOLOGICAL DEVIATION DETECTED AND CORRECTED IN SECTOR 7',
+  'FORMER HERO OF LABOR RECLASSIFIED AS ENEMY OF PROGRESS',
+  'COMMITTEE FOR STATE SECURITY REPORTS: TRUST NO ONE (EXCEPT THE COMMITTEE)',
+] as const;
+
+/** Political crisis subtext lines. */
+export const POLITICAL_SUBTEXTS = [
+  'Show trial concluded in record time. Verdict was prepared in advance for efficiency.',
+  'Purged officials expressed gratitude for being identified as enemies. Their families concur.',
+  'Party membership cards reissued. Previous cards declared counter-revolutionary.',
+  'Loyalty oaths now required hourly. Sincerity measured by volume.',
+  'New appointments fill vacancies created by previous new appointments.',
+  'The correct ideological line has been updated. Previous correct line was incorrect.',
+  'Citizens encouraged to report suspicious behavior. Defining "suspicious": also suspicious.',
+  'All confessions voluntary. Voluntariness certified by the confession extraction department.',
+] as const;
+
+/** Political crisis reality lines. */
+export const POLITICAL_REALITIES = [
+  'The "counter-revolutionaries" were three clerks who filed a form incorrectly.',
+  'Show trial script was written before the arrest. Efficient justice.',
+  'Purged official\'s replacement was purged within the week. His replacement is nervous.',
+  'Loyalty review board passed everyone who showed up. Showing up was the test.',
+  'The conspiracy involved one man, his diary, and an opinion. The diary has been arrested.',
+  'Rehabilitated comrades cannot be found for comment. Cannot be found at all, actually.',
+] as const;
+
 export const THREAT_REALITIES = [
   'The "spy" was a confused tourist with a camera.',
   'The "saboteur" was a pigeon that shorted a transformer.',

@@ -2,9 +2,10 @@ import type { GameEvent } from '../../events';
 import type { GameView } from '../../../../../game/GameView';
 import { coinFlip, getPravdaRng, pick } from '../helpers';
 import { categoryFromEvent, spinEventEffects } from '../spin';
-import type { GeneratedHeadline, HeadlineGenerator } from '../types';
+import type { ActiveCrisisInfo, GeneratedHeadline, HeadlineGenerator } from '../types';
 import { DESTRUCTION_SPINS, INSTITUTIONS, LEADER_TITLES, QUALIFIERS, WESTERN_COUNTRIES } from '../wordPools';
 import { contextualGenerators } from './absurdist';
+import { crisisPhaseWeight, generateCrisisHeadline } from './crisis';
 import { culturalVictoryGenerators } from './cultural';
 import { weatherFillerGenerators } from './daily';
 import { internalTriumphGenerators, resourceSpinGenerators } from './economic';
@@ -29,9 +30,51 @@ export const ALL_GENERIC_GENERATORS: { generators: HeadlineGenerator[]; weight: 
   { generators: weatherFillerGenerators, weight: 1.5 },
 ];
 
-/** Generate an ambient headline using weighted selection from contextual and generic pools. */
-export function generateHeadline(gs: GameView): GeneratedHeadline {
+/** Generate an ambient headline using weighted selection from contextual, crisis, and generic pools. */
+export function generateHeadline(gs: GameView, activeCrises?: ActiveCrisisInfo[]): GeneratedHeadline {
   const rng = getPravdaRng();
+  const crises = activeCrises ?? [];
+
+  // If crises are active, calculate total crisis weight and compete with generic pool
+  if (crises.length > 0) {
+    const crisisWeight = crises.reduce((sum, c) => sum + crisisPhaseWeight(c.phase), 0);
+    const genericWeight = ALL_GENERIC_GENERATORS.reduce((sum, g) => sum + g.weight, 0);
+    const contextualEligible = contextualGenerators.filter((cg) => cg.condition(gs));
+    const contextualWeight = contextualEligible.length > 0 ? contextualEligible.reduce((sum, cg) => sum + cg.weight, 0) * 0.4 : 0;
+    const totalWeight = crisisWeight + genericWeight + contextualWeight;
+    let roll = (rng ? rng.random() : Math.random()) * totalWeight;
+
+    // Try crisis pools first
+    for (const crisis of crises) {
+      roll -= crisisPhaseWeight(crisis.phase);
+      if (roll <= 0) {
+        return generateCrisisHeadline(crisis);
+      }
+    }
+
+    // Then contextual
+    if (contextualEligible.length > 0) {
+      for (const cg of contextualEligible) {
+        roll -= cg.weight * 0.4;
+        if (roll <= 0) {
+          return cg.generate(gs);
+        }
+      }
+    }
+
+    // Then generic
+    for (const pool of ALL_GENERIC_GENERATORS) {
+      roll -= pool.weight;
+      if (roll <= 0) {
+        return pick(pool.generators)(gs);
+      }
+    }
+
+    // Fallback to crisis headline from first active crisis
+    return generateCrisisHeadline(crises[0]!);
+  }
+
+  // No active crises — original behavior
 
   // First, check contextual generators (state-reactive)
   const eligibleContextual = contextualGenerators.filter((cg) => cg.condition(gs));
@@ -128,8 +171,10 @@ export function generateEventReactiveHeadline(event: GameEvent, gs: GameView): G
 // Re-export generator arrays for external use
 export {
   contextualGenerators,
+  crisisPhaseWeight,
   culturalVictoryGenerators,
   externalThreatGenerators,
+  generateCrisisHeadline,
   internalTriumphGenerators,
   leaderPraiseGenerators,
   resourceSpinGenerators,
