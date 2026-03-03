@@ -27,12 +27,16 @@ export const MAP_SIZE_CONFIG: Record<MapSize, { label: string; gridSize: number;
   large: { label: 'Large', gridSize: 50, desc: 'Sprawling industrial zone. 50x50 grid.' },
 };
 
+/** Game mode — historical follows real Soviet timeline, classic uses difficulty presets. */
+export type GameMode = 'historical' | 'classic';
+
 /** Player-selected options for starting a new game session. */
 export interface NewGameConfig {
   difficulty: DifficultyLevel;
   consequence: ConsequenceLevel;
   seed: string;
   mapSize: MapSize;
+  gameMode: GameMode;
 }
 
 export interface NewGameSetupProps {
@@ -52,8 +56,14 @@ const CONSEQUENCE_FLAVOR: Record<ConsequenceLevel, string> = {
   harsh: 'The Village Is Evacuated. Return after 3 years. 40% buildings survive. Despair is permanent.',
 };
 
+const GAME_MODE_FLAVOR: Record<GameMode, string> = {
+  historical: 'History IS the difficulty. Survive the actual Soviet timeline.',
+  classic: 'Choose your own difficulty. Standard city-builder experience.',
+};
+
 /** Soviet dossier-styled game configuration screen for difficulty, consequence, seed, and map size. */
 export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) => {
+  const [gameMode, setGameMode] = useState<GameMode>('classic');
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('comrade');
   const [consequence, setConsequence] = useState<ConsequenceLevel>('permadeath');
   const [seed, setSeed] = useState('');
@@ -75,6 +85,25 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
         <Text style={styles.subHeader}>CENTRAL PLANNING BUREAU — PERSONNEL DIVISION</Text>
 
         <View style={styles.section}>
+          <Text style={styles.sectionLabel}>GAME MODE</Text>
+          <View style={styles.optionRow}>
+            {(['historical', 'classic'] as GameMode[]).map((m) => (
+              <TouchableOpacity
+                key={m}
+                style={[styles.optionBtn, gameMode === m && styles.optionBtnActive]}
+                onPress={() => setGameMode(m)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.optionLabel, gameMode === m && styles.optionLabelActive]}>
+                  {m.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={styles.flavor}>{GAME_MODE_FLAVOR[gameMode]}</Text>
+        </View>
+
+        {gameMode === 'classic' && <View style={styles.section}>
           <Text style={styles.sectionLabel}>DIFFICULTY LEVEL</Text>
           <View style={styles.optionRow}>
             {(['worker', 'comrade', 'tovarish'] as DifficultyLevel[]).map((d) => (
@@ -96,7 +125,7 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
             <Text style={styles.statText}>Growth: x{diffConfig.growthMultiplier}</Text>
             <Text style={styles.statText}>Decay: x{diffConfig.decayMultiplier}</Text>
           </View>
-        </View>
+        </View>}
 
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>CONSEQUENCE LEVEL</Text>
@@ -191,6 +220,7 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
                 consequence,
                 seed: seed.trim() || `simsoviet-${Date.now()}`,
                 mapSize,
+                gameMode,
               })
             }
             style={styles.btnStart}

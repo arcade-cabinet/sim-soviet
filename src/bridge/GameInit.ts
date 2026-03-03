@@ -14,6 +14,8 @@ import { MapSystem } from '@/game/map';
 import { recalculatePaths } from '@/game/PathSystem';
 import { SaveSystem } from '@/game/SaveSystem';
 import { type ConsequenceLevel, DIFFICULTY_PRESETS, type DifficultyLevel } from '@/ai/agents/political/ScoringSystem';
+import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
+import type { GovernorMode } from '@/ai/agents/crisis/Governor';
 import type { SimCallbacks } from '@/game/engine/types';
 import { SimulationEngine } from '@/game/SimulationEngine';
 import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
@@ -26,6 +28,8 @@ export interface GameInitOptions {
   mapSize?: 'small' | 'medium' | 'large';
   /** When true, enables ChairmanAgent autopilot — AI auto-resolves minigames and reports. */
   autopilot?: boolean;
+  /** Game mode — historical uses real Soviet timeline, freeform uses alternate history, classic uses DIFFICULTY_PRESETS. */
+  gameMode?: GovernorMode;
 }
 
 let engine: SimulationEngine | null = null;
@@ -58,7 +62,10 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   // Create singleton store entities with starting resources.
   // Era 1 (Revolution/1917): Timber only. No steel, no power, no food stockpile.
   // Scale starting resources by difficulty multiplier (worker=2.0x, comrade=1.0x, tovarish=0.5x).
-  const resMult = DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
+  // Historical mode: history IS the difficulty — use 1.0 (equivalent to 'comrade').
+  const resMult = options?.gameMode === 'historical'
+    ? 1.0
+    : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
   // Starting resources — generous enough for ~2 seasons of survival without farms.
   // This is a city-builder, not a survival game: players need time to explore and build.
   createResourceStore({
@@ -99,6 +106,14 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
 
   // Create and configure SimulationEngine
   engine = new SimulationEngine(grid, callbacks, undefined, difficulty, consequence);
+
+  // Wire Governor based on game mode
+  if (options?.gameMode === 'historical') {
+    const governor = new HistoricalGovernor();
+    engine.setGovernor(governor);
+  }
+  // 'freeform' mode will be wired when FreeformGovernor is available
+  // 'classic' or undefined: no governor (backward compat — uses DIFFICULTY_PRESETS)
 
   // Enable autopilot if requested — ChairmanAgent auto-resolves minigames and reports
   if (options?.autopilot) {
