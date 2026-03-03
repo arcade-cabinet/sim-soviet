@@ -77,32 +77,46 @@ describe('SimulationEngine edge cases', () => {
     });
   });
 
-  // ── Loss condition: 3 consecutive quota failures ──────────
+  // ── Loss condition: 5 consecutive quota failures ──────────
 
-  describe('loss condition: 3 consecutive quota failures', () => {
-    it('ends game after 3 consecutive quota failures', () => {
+  describe('loss condition: 8 consecutive quota failures', () => {
+    it('ends game after 8 consecutive quota failures', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      // Not enough food to meet any quota of 500
-      createResourceStore({ food: 10, vodka: 10, population: 0 });
-      createMetaStore({ date: { year: 1926, month: 12, tick: 0 } });
-      const engine2 = new SimulationEngine(grid2, cb2);
+      // Start with food=0. Use worker difficulty (quotaMultiplier=0.4 → target=200).
+      // forgiving consequence to survive KGB marks from missed quotas.
+      // Zero food each year boundary to ensure quotas are always missed.
+      createResourceStore({ food: 0, vodka: 0, population: 0 });
+      createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
+      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'forgiving');
+      // Disable minigame/annual report callbacks to prevent interference
+      cb2.onMinigame = undefined as never;
+      cb2.onAnnualReport = undefined as never;
 
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Advance through 3 five-year plans: 1927, 1932, 1937
-      // Year 1926 Oct → 1927 Jan (fail 1) — 3 months (90 ticks)
-      for (let i = 0; i < 90; i++) engine2.tick();
+      // Year 1926 Oct → 1927 Jan (fail 1) — 90 ticks
+      // Zero food each tick to prevent fondy accumulation
+      for (let i = 0; i < 90; i++) {
+        getResourceEntity()!.resources.food = 0;
+        getResourceEntity()!.resources.vodka = 0;
+        engine2.tick();
+      }
 
       // After first failure, deadline advances to 1932
       expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed the 5-Year Plan'));
 
-      // Year 1927 -> 1932 (fail 2)
-      advanceYears(engine2, 5);
-
-      // Year 1932 -> 1937 (fail 3) — game over
-      advanceYears(engine2, 5);
+      // Failures 2-8: advance 5 years each, zeroing food to prevent fondy accumulation
+      for (let f = 2; f <= 8; f++) {
+        for (let i = 0; i < 5 * TICKS_PER_YEAR; i++) {
+          getResourceEntity()!.resources.food = 0;
+          getResourceEntity()!.resources.vodka = 0;
+          engine2.tick();
+          if (getMetaEntity()!.gameMeta.gameOver) break;
+        }
+        if (getMetaEntity()!.gameMeta.gameOver) break;
+      }
 
       expect(cb2.onGameOver).toHaveBeenCalledWith(false, expect.stringContaining('Politburo'));
       expect(getMetaEntity()!.gameMeta.gameOver).not.toBeNull();
@@ -157,15 +171,27 @@ describe('SimulationEngine edge cases', () => {
         return;
       }
 
-      // Now set food to 0 and let starvation kill everyone
-      const store = getResourceEntity()!;
-      store.resources.food = 0;
-      store.resources.vodka = 0;
-      store.resources.population = 3;
-      engine2.tick();
+      // Mock the FoodAgent to prevent private plot food production from
+      // resetting the starvation counter, and mock produce to stop all
+      // food sources. Then starve through the full grace period + 1 tick.
+      jest.spyOn(engine2.getFoodAgent(), 'produce').mockImplementation(() => {});
+      const originalConsume = engine2.getFoodAgent().consume.bind(engine2.getFoodAgent());
+      jest.spyOn(engine2.getFoodAgent(), 'consume').mockImplementation((mult?: number) => {
+        getResourceEntity()!.resources.food = 0;
+        return originalConsume(mult);
+      });
 
-      expect(getResourceEntity()!.resources.population).toBe(0);
-      // Era failure condition fires first ("ERA FAILURE: ...") or fallback "perished"
+      // Starve through grace period (180 ticks) + enough kill ticks to deplete population.
+      // maxStarvationDeathsPerTick=2, so need (graceTicks + pop/2 + margin) iterations.
+      for (let i = 0; i < 400; i++) {
+        const store = getResourceEntity()!;
+        store.resources.food = 0;
+        store.resources.vodka = 0;
+        engine2.tick();
+        if (getMetaEntity()!.gameMeta.gameOver) break;
+      }
+
+      // Population should have died off or game ended
       expect(cb2.onGameOver).toHaveBeenCalledWith(false, expect.any(String));
       expect(getMetaEntity()!.gameMeta.gameOver!.victory).toBe(false);
     });
@@ -208,27 +234,36 @@ describe('SimulationEngine edge cases', () => {
   // ── Game does not tick after ended ────────────────────────
 
   describe('game does not tick after ended', () => {
+    /** Helper: advance engine zeroing food+vodka each tick to ensure quota failures. */
+    function advanceYearsZeroed(eng: SimulationEngine, years: number): void {
+      for (let i = 0; i < years * TICKS_PER_YEAR; i++) {
+        getResourceEntity()!.resources.food = 0;
+        getResourceEntity()!.resources.vodka = 0;
+        eng.tick();
+        if (getMetaEntity()!.gameMeta.gameOver) return;
+      }
+    }
+
     it('tick() is a no-op after game over', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 9999, vodka: 9999, population: 0 });
-      createTestDvory(3);
-      createMetaStore();
-      const engine2 = new SimulationEngine(grid2, cb2);
-      createBuilding(0, 0, 'apartment-tower-a');
+      createResourceStore({ food: 0, vodka: 0, population: 0 });
+      createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
+      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'forgiving');
+      cb2.onMinigame = undefined as never;
+      cb2.onAnnualReport = undefined as never;
 
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Advance past first year so pop-loss check activates
-      for (let i = 0; i < 361; i++) engine2.tick();
+      // Trigger 8 quota failures with food zeroed each tick
+      for (let i = 0; i < 90; i++) {
+        getResourceEntity()!.resources.food = 0;
+        getResourceEntity()!.resources.vodka = 0;
+        engine2.tick();
+      }
+      for (let f = 2; f <= 8; f++) advanceYearsZeroed(engine2, 5);
 
-      // Now cause starvation to trigger game over
-      const store = getResourceEntity()!;
-      store.resources.food = 0;
-      store.resources.vodka = 0;
-      store.resources.population = 3;
-      engine2.tick();
       expect(getMetaEntity()!.gameMeta.gameOver).not.toBeNull();
 
       const yearAtGameOver = getMetaEntity()!.gameMeta.date.year;
@@ -249,23 +284,23 @@ describe('SimulationEngine edge cases', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      createResourceStore({ food: 9999, vodka: 9999, population: 0 });
-      createTestDvory(2);
-      createMetaStore();
-      const engine2 = new SimulationEngine(grid2, cb2);
-      createBuilding(0, 0, 'apartment-tower-a');
+      createResourceStore({ food: 0, vodka: 0, population: 0 });
+      createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
+      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'forgiving');
+      cb2.onMinigame = undefined as never;
+      cb2.onAnnualReport = undefined as never;
 
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Advance past first year
-      for (let i = 0; i < 361; i++) engine2.tick();
+      // Trigger 8 quota failures with food zeroed each tick
+      for (let i = 0; i < 90; i++) {
+        getResourceEntity()!.resources.food = 0;
+        getResourceEntity()!.resources.vodka = 0;
+        engine2.tick();
+      }
+      for (let f = 2; f <= 8; f++) advanceYearsZeroed(engine2, 5);
 
-      // Cause starvation
-      const store = getResourceEntity()!;
-      store.resources.food = 0;
-      store.resources.vodka = 0;
-      store.resources.population = 2;
-      engine2.tick(); // Game ends here
+      expect(getMetaEntity()!.gameMeta.gameOver).not.toBeNull();
       const tickVal = getMetaEntity()!.gameMeta.date.tick;
 
       engine2.tick();
@@ -380,13 +415,16 @@ describe('SimulationEngine edge cases', () => {
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'gulag-admin');
 
-      // Mock random to always trigger gulag effect (< 0.1)
+      // Math.random mock must be set BEFORE engine construction for seed
+      // generation. Gulag uses GameRng (10% per tick), so run 30 ticks
+      // for 96% probability of at least one arrest.
       jest.spyOn(Math, 'random').mockReturnValue(0.05);
-      const engine2 = new SimulationEngine(grid2, cb2);
-      engine2.tick();
+      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'worker', 'forgiving');
+      cb2.onMinigame = undefined as never;
+      cb2.onAnnualReport = undefined as never;
+      for (let i = 0; i < 30; i++) engine2.tick();
 
       // Population should have decreased by at least 1 (gulag effect)
-      // Note: consumption also runs, but food is abundant
       expect(getResourceEntity()!.resources.population).toBeLessThan(100);
     });
 

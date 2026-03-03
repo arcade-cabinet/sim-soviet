@@ -1,6 +1,6 @@
 import type { GameMeta, Resources } from '@/ecs/world';
+import { EraSystem } from '@/game/era';
 import { ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from '@/game/era/definitions';
-import { EraSystem } from '@/game/era/EraSystem';
 import { getBuildingTierRequirement, tierMeetsRequirement } from '@/game/era/tiers';
 import type { EraId } from '@/game/era/types';
 
@@ -211,12 +211,12 @@ describe('Era Integration', () => {
 
     it('delivery rates match era definitions', () => {
       const wartime = ERA_DEFINITIONS.great_patriotic;
-      expect(wartime.deliveryRates.food).toBe(0.7);
-      expect(wartime.deliveryRates.vodka).toBe(0.6);
+      expect(wartime.deliveryRates.food).toBe(0.6);
+      expect(wartime.deliveryRates.vodka).toBe(0.5);
 
       const thaw = ERA_DEFINITIONS.thaw_and_freeze;
-      expect(thaw.deliveryRates.food).toBe(0.3);
-      expect(thaw.deliveryRates.vodka).toBe(0.2);
+      expect(thaw.deliveryRates.food).toBe(0.25);
+      expect(thaw.deliveryRates.vodka).toBe(0.15);
     });
 
     it('getDoctrine and getDeliveryRates reflect current era', () => {
@@ -226,7 +226,7 @@ describe('Era Integration', () => {
       expect(eraSys.getDoctrine()).toBe('industrialization');
 
       const rates = eraSys.getDeliveryRates();
-      expect(rates.food).toBe(0.5);
+      expect(rates.food).toBe(0.45);
     });
   });
 

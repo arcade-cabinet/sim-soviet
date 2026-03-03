@@ -8,8 +8,8 @@
 
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import type { ConsequenceLevel, DifficultyLevel, EraScoreBreakdown, Medal } from '../ai/agents/political/ScoringSystem';
 import { getEngine } from '../bridge/GameInit';
-import type { ConsequenceLevel, DifficultyLevel, EraScoreBreakdown, Medal } from '../game/ScoringSystem';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

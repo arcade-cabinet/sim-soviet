@@ -12,11 +12,11 @@
 import type React from 'react';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import type { CollectiveFocus } from '../ai/agents/infrastructure/CollectiveAgent';
+import { CLASS_ORDER } from '../ai/agents/workforce/constants';
+import type { WorkerDisplayInfo } from '../ai/agents/workforce/types';
 import { getEngine } from '../bridge/GameInit';
 import { citizens } from '../ecs/archetypes';
-import { CLASS_ORDER } from '../game/workers/constants';
-import type { CollectiveFocus } from '../game/workers/governor';
-import type { WorkerDisplayInfo } from '../game/workers/types';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

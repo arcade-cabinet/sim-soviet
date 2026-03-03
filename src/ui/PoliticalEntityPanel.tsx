@@ -8,9 +8,14 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type {
+  ConscriptionEvent,
+  KGBInvestigation,
+  PoliticalEntityStats,
+  PoliticalRole,
+} from '../ai/agents/political/types';
 import { getEngine } from '../bridge/GameInit';
 import type { DialogueContext } from '../content/dialogue/types';
-import type { ConscriptionEvent, KGBInvestigation, PoliticalEntityStats, PoliticalRole } from '../game/political/types';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

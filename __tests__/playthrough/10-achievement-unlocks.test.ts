@@ -1,6 +1,6 @@
 import { createBuilding } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import { advanceTicks, buildBasicSettlement, createPlaythroughEngine, getResources } from './helpers';
+import { advanceTicks, buildBasicSettlement, createPlaythroughEngine } from './helpers';
 
 describe('Playthrough: Achievement Unlocks', () => {
   afterEach(() => {
@@ -35,24 +35,23 @@ describe('Playthrough: Achievement Unlocks', () => {
   // ── Scenario 2: hundred_pop achievement via direct resource manipulation ──
 
   it('hundred_pop achievement fires when population reaches 100', () => {
+    // Start with 100 dvory — resources.population is overwritten each tick by
+    // workerSystem.getPopulation() (dvor-derived), so we must have actual dvory
+    // for the achievement tracker to see population >= 100.
     const { engine, callbacks } = createPlaythroughEngine({
-      resources: { population: 99, food: 9999, vodka: 9999, money: 9999 },
+      resources: { population: 100, food: 9999, vodka: 9999, money: 9999 },
+      consequence: 'forgiving',
     });
+
+    // Disable interactive callbacks that cause mark accumulation or defer evaluation
+    callbacks.onMinigame = undefined as never;
+    callbacks.onAnnualReport = undefined as never;
 
     // Place power and housing to support population
     buildBasicSettlement({ power: 1, housing: 2, farms: 1 });
 
-    // Advance enough ticks for population growth (ticks at multiples of 10
-    // evaluate achievements; population grows slowly from sim tick).
-    // We'll advance many ticks, but if growth is too slow, manually bump population.
-    advanceTicks(engine, 100);
-
-    const res = getResources();
-    if (res.population < 100) {
-      // Growth was insufficient; set population directly and tick again
-      res.population = 100;
-      advanceTicks(engine, 10);
-    }
+    // Advance 10 ticks so achievement evaluation runs (every tick checks conditions)
+    advanceTicks(engine, 10);
 
     expect(callbacks.onAchievement).toHaveBeenCalled();
     const calls = callbacks.onAchievement.mock.calls;
@@ -65,8 +64,11 @@ describe('Playthrough: Achievement Unlocks', () => {
   // ── Scenario 3a: no_food (famine) achievement ─────────────────────────────
 
   it('no_food achievement fires when food reaches 0', () => {
+    // Use population: 0 so the foraging system doesn't add food back after consumption.
+    // The no_food achievement checks r.food <= 0 which is independent of population.
     const { engine, callbacks } = createPlaythroughEngine({
-      resources: { food: 0, population: 10, money: 500 },
+      resources: { food: 0, population: 0, money: 500 },
+      consequence: 'forgiving',
     });
 
     // Advance 10 ticks so achievement evaluation runs
@@ -87,6 +89,7 @@ describe('Playthrough: Achievement Unlocks', () => {
       // Start above 1000 to account for consumption before the first achievement check
       // (tickAchievements runs at totalTicks % 10 === 0). Set money > vodka to avoid vodka_economy.
       resources: { vodka: 1100, food: 500, money: 5000, population: 10 },
+      consequence: 'forgiving',
     });
 
     // Advance 10 ticks so tickAchievements evaluates (runs at totalTicks % 10 === 0).
@@ -113,6 +116,7 @@ describe('Playthrough: Achievement Unlocks', () => {
   it('bankruptcy achievement fires when money reaches 0', () => {
     const { engine, callbacks } = createPlaythroughEngine({
       resources: { money: 0, food: 500, population: 10 },
+      consequence: 'forgiving',
     });
 
     // Advance 10 ticks so achievement evaluation runs

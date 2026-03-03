@@ -9,7 +9,7 @@
  * (always available once era-unlocked).
  */
 
-import type { SettlementTier } from '../SettlementSystem';
+import type { SettlementTier } from '../../ai/agents/infrastructure/SettlementSystem';
 
 /**
  * Ordered list of settlement tiers from lowest to highest.

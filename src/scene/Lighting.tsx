@@ -7,6 +7,10 @@
  * - <fog> for distance depth cueing
  * - Day/night cycle: sun position orbits based on timeOfDay (0-1)
  * - Season-dependent ambient and fog
+ *
+ * Shadow optimization: shadow camera tracks the main camera's target point
+ * and covers a 25-unit radius around it at 2048px resolution. This gives
+ * 4x higher shadow density where the player is actually looking.
  */
 
 import { useFrame, useThree } from '@react-three/fiber';
@@ -53,27 +57,21 @@ function sunDirection(t: number): [number, number, number] {
   return [x / len, y / len, z / len];
 }
 
-/** Sun position for shadow casting (offset from origin along sun direction) */
-function sunPosition(t: number): [number, number, number] {
-  const dir = sunDirection(t);
-  // Position the light source away from origin along the inverse direction
-  return [-dir[0] * 40, -dir[1] * 40, -dir[2] * 40];
-}
-
 const FOG_COLOR = '#a6b8d1'; // (0.65, 0.72, 0.82)
-const SHADOW_MAP_SIZE = 1024;
-const SHADOW_CAMERA_SIZE = 50;
+const SHADOW_MAP_SIZE = 2048;
+const SHADOW_CAMERA_SIZE = 25;
+const SUN_DISTANCE = 40;
 
 /** Renders directional sun light with day/night cycle, hemispheric ambient fill, and distance fog. */
 const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer', isStorm = false }) => {
   const sunRef = useRef<THREE.DirectionalLight>(null);
   const hemiRef = useRef<THREE.HemisphereLight>(null);
-  const { scene } = useThree();
+  const targetRef = useRef<THREE.Object3D>(null);
+  const { scene, camera } = useThree();
 
   // Compute sun values
   const intensity = sunIntensity(timeOfDay);
-  const position = sunPosition(timeOfDay);
-  const _dir = sunDirection(timeOfDay);
+  const dir = sunDirection(timeOfDay);
   const hemiIntensity = 1.0 * seasonBrightness(season);
 
   // Storm dimming
@@ -88,11 +86,36 @@ const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer',
     return density;
   }, [timeOfDay, isStorm]);
 
-  // Update fog on the scene each frame (fog density is not easily animated via JSX)
+  // Track camera target with the shadow camera for high-resolution shadows
   useFrame(() => {
     if (scene.fog && scene.fog instanceof THREE.FogExp2) {
       scene.fog.density = fogDensity;
     }
+
+    const sun = sunRef.current;
+    const target = targetRef.current;
+    if (!sun || !target) return;
+
+    // Extract the camera's look-at point (where MapControls target is).
+    // For a perspective camera, project a ray from camera center to the XZ ground plane.
+    const cameraDir = new THREE.Vector3();
+    camera.getWorldDirection(cameraDir);
+
+    // Intersect camera ray with Y=0 plane to find ground focus point
+    let focusX = camera.position.x;
+    let focusZ = camera.position.z;
+    if (cameraDir.y < -0.01) {
+      const t = -camera.position.y / cameraDir.y;
+      focusX = camera.position.x + cameraDir.x * t;
+      focusZ = camera.position.z + cameraDir.z * t;
+    }
+
+    // Position directional light relative to focus point along sun direction
+    sun.position.set(focusX - dir[0] * SUN_DISTANCE, -dir[1] * SUN_DISTANCE, focusZ - dir[2] * SUN_DISTANCE);
+
+    // Point the light target at the focus point on the ground
+    target.position.set(focusX, 0, focusZ);
+    target.updateMatrixWorld();
   });
 
   return (
@@ -100,10 +123,9 @@ const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer',
       {/* Exponential fog for depth cueing */}
       <fogExp2 attach="fog" args={[FOG_COLOR, fogDensity]} />
 
-      {/* Directional light (sun) — main light source with shadows */}
+      {/* Directional light (sun) — shadows track camera focus */}
       <directionalLight
         ref={sunRef}
-        position={position}
         intensity={intensity * stormMul}
         color="#fff5e0"
         castShadow
@@ -114,12 +136,11 @@ const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer',
         shadow-camera-top={SHADOW_CAMERA_SIZE}
         shadow-camera-bottom={-SHADOW_CAMERA_SIZE}
         shadow-camera-near={0.5}
-        shadow-camera-far={200}
-        shadow-bias={-0.0005}
+        shadow-camera-far={150}
+        shadow-bias={-0.0003}
         shadow-normalBias={0.02}
       >
-        {/* Point the directional light at origin */}
-        <primitive object={new THREE.Object3D()} attach="target" position={[0, 0, 0]} />
+        <primitive ref={targetRef} object={new THREE.Object3D()} attach="target" />
       </directionalLight>
 
       {/* Hemispheric light — warm ambient fill */}

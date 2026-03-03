@@ -14,17 +14,17 @@
  * Force-assigned workers are never overridden.
  */
 
-import { createCitizen } from '@/ecs/factories';
-import type { Entity, Resources } from '@/ecs/world';
-import { world } from '@/ecs/world';
 import {
   evaluateWorkerPriority,
   FOOD_CRISIS_THRESHOLD,
   findBestAssignment,
   HUNGER_CRISIS_THRESHOLD,
   runGovernor,
-} from '@/game/workers/governor';
-import type { WorkerStats } from '@/game/workers/types';
+} from '@/ai/agents/infrastructure/CollectiveAgent';
+import type { WorkerStats } from '@/ai/agents/workforce/types';
+import { createCitizen } from '@/ecs/factories';
+import type { Entity, Resources } from '@/ecs/world';
+import { world } from '@/ecs/world';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

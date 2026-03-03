@@ -36,6 +36,14 @@ export function createBuilding(gridX: number, gridY: number, defId: string): Ent
     housingCap: def.stats.housingCap,
     pollution: def.stats.pollution,
     fear: def.stats.fear,
+    workerCount: 0,
+    residentCount: 0,
+    avgMorale: 0,
+    avgSkill: 0,
+    avgLoyalty: 0,
+    avgVodkaDep: 0,
+    trudodniAccrued: 0,
+    householdCount: 0,
   };
 
   // Derive renderable from sprite data
@@ -90,6 +98,14 @@ export function placeNewBuilding(gridX: number, gridY: number, defId: string): E
     constructionPhase: 'foundation',
     constructionProgress: 0,
     constructionTicks: 0,
+    workerCount: 0,
+    residentCount: 0,
+    avgMorale: 0,
+    avgSkill: 0,
+    avgLoyalty: 0,
+    avgVodkaDep: 0,
+    trudodniAccrued: 0,
+    householdCount: 0,
   };
 
   const renderable: Renderable = {

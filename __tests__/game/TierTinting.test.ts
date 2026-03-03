@@ -6,7 +6,7 @@
  * The actual Three.js material manipulation is tested via integration tests.
  */
 
-import { type SettlementTier, TIER_ORDER } from '../../src/game/SettlementSystem';
+import { type SettlementTier, TIER_ORDER } from '../../src/ai/agents/infrastructure/SettlementSystem';
 import { getTierVariant, TIER_MODEL_VARIANTS } from '../../src/scene/ModelMapping';
 import type { Season } from '../../src/scene/TerrainGrid';
 import { SEASON_TINTS, TIER_TINTS } from '../../src/scene/TierTinting';

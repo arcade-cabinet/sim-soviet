@@ -1,36 +1,34 @@
 /**
- * BuildingRenderer — reads game state buildings and renders 3D GLB clones.
+ * BuildingRenderer — reads game state buildings and renders 3D GLB models.
  *
- * For each building in state: lookup model via getModelName, load GLB via
- * useGLTF from drei, clone via <Clone>, position at grid coordinates with
- * elevation, and manage lifecycle on state changes.
+ * Operational buildings are batched into InstancedMesh per unique model URL
+ * and child mesh, drastically reducing draw calls (from N buildings to ~M
+ * unique meshes across all model types).
  *
- * Buildings are tinted per settlement tier (selo->posyolok->pgt->gorod) to
- * visually communicate the settlement's progression. On tier change, all
- * buildings are re-tinted with an optional flash celebration effect.
+ * Buildings under construction remain as individual Clone components since
+ * they need per-building transparency and emissive effects.
  *
- * Buildings under construction are rendered semi-transparent with a yellow
- * emissive glow that intensifies as construction progresses.
- *
- * R3F migration: uses drei's useGLTF + Clone for model instancing.
- * Each building wrapped in Suspense since useGLTF suspends on first load.
+ * Per-instance tinting (tier, season, powered state) is achieved via
+ * InstancedMesh.instanceColor which multiplies the base material color.
  */
 
 import { Clone, useGLTF } from '@react-three/drei';
 import type React from 'react';
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import type { SettlementTier } from '../game/SettlementSystem';
+import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
+import { BUILDING_TYPES, GROWN_TYPES } from '../engine/BuildingTypes';
 import { getModelName, getTierVariant } from './ModelMapping';
 import { getModelUrl } from './ModelPreloader';
 import type { Season } from './TerrainGrid';
 import {
   applyConstructionState,
   applyFireTint,
-  applyPoweredState,
   applySeasonTint,
   applyTierTint,
   clearTintData,
+  SEASON_TINTS,
+  TIER_TINTS,
 } from './TierTinting';
 
 /** State snapshot for a single building, consumed by the 3D renderer. */
@@ -47,6 +45,10 @@ export interface BuildingState {
   constructionPhase?: 'foundation' | 'building' | 'complete';
   /** Construction progress 0.0–1.0 (undefined means complete) */
   constructionProgress?: number;
+  /** Housing capacity — used for brutalist scaling (aggregate mode mega-blocks) */
+  housingCap?: number;
+  /** Worker count — used for brutalist scaling (aggregate mode factories) */
+  workerCount?: number;
 }
 
 interface BuildingRendererProps {
@@ -57,9 +59,43 @@ interface BuildingRendererProps {
   season?: Season;
 }
 
-// ── Single Building Component ───────────────────────────────────────────────
+// ── Brutalist Scaling ───────────────────────────────────────────────────────
 
-interface BuildingMeshProps {
+/**
+ * Compute brutalist capacity-based scale multiplier.
+ * Mega-blocks use the SAME GLB model — just bigger. Same depressing geometry.
+ *
+ * Returns 1.0 for normal buildings, up to ~8.0 for arcology-scale structures.
+ */
+function getBrutalistScale(buildingType: string, housingCap?: number, workerCount?: number): number {
+  let baseCap = 10;
+  const grownKey =
+    buildingType.includes('house') || buildingType.includes('apartment') || buildingType.includes('khrushch')
+      ? 'housing'
+      : buildingType.includes('factory') || buildingType.includes('mill') || buildingType.includes('workshop')
+        ? 'factory'
+        : buildingType.includes('distill') || buildingType.includes('vodka') || buildingType.includes('brewery')
+          ? 'distillery'
+          : buildingType.includes('farm') || buildingType.includes('kolkhoz') || buildingType.includes('sovkhoz')
+            ? 'farm'
+            : null;
+  if (grownKey && GROWN_TYPES[grownKey]) {
+    baseCap = GROWN_TYPES[grownKey][0].cap ?? GROWN_TYPES[grownKey][0].amt ?? 10;
+  } else {
+    const btDef = BUILDING_TYPES[buildingType];
+    baseCap = Math.abs(btDef?.cap ?? 10);
+  }
+
+  const actualCap = housingCap || workerCount || baseCap;
+  if (actualCap <= baseCap) return 1.0;
+
+  const scaleTier = Math.max(1, Math.log2(actualCap / baseCap) + 1);
+  return 1 + (scaleTier - 1) * 0.5;
+}
+
+// ── Construction Building (Clone-based) ─────────────────────────────────────
+
+interface ConstructionMeshProps {
   building: BuildingState;
   modelUrl: string;
   settlementTier: SettlementTier;
@@ -67,57 +103,45 @@ interface BuildingMeshProps {
 }
 
 /**
- * Individual building — loads GLB via useGLTF, clones it, applies
- * tier tinting + powered/fire/construction state, positions at grid cell.
+ * Individual building under construction — uses Clone for per-building
+ * transparency and emissive effects that InstancedMesh cannot support.
  */
-const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlementTier, season }) => {
+const ConstructionMesh: React.FC<ConstructionMeshProps> = ({ building, modelUrl, settlementTier, season }) => {
   const { scene } = useGLTF(modelUrl);
   const groupRef = useRef<THREE.Group>(null);
 
-  // Apply tier tinting + powered/fire/construction state after clone mounts
   useEffect(() => {
     const group = groupRef.current;
     if (!group) return;
 
-    // Scale building to fill its tile footprint (~85% of tile width).
-    // Use XZ extent only so buildings stand naturally tall.
     let yOffset = 0;
     const box = new THREE.Box3().setFromObject(group);
     const size = box.getSize(new THREE.Vector3());
-    const _center = box.getCenter(new THREE.Vector3());
     const maxFootprint = Math.max(size.x, size.z);
 
     if (maxFootprint > 0) {
-      const scale = 0.85 / maxFootprint;
+      const tileScale = 0.85 / maxFootprint;
+      const brutalist = getBrutalistScale(building.type, building.housingCap, building.workerCount);
+      const scale = tileScale * brutalist;
       group.scale.setScalar(scale);
 
-      // Recompute after scaling
       const scaledBox = new THREE.Box3().setFromObject(group);
-      const _scaledCenter = scaledBox.getCenter(new THREE.Vector3());
       const scaledMin = scaledBox.min;
       yOffset = -scaledMin.y;
     }
 
     group.position.set(building.gridX + 0.5, building.elevation * 0.5 + yOffset, building.gridY + 0.5);
-
-    // Store yOffset for later updates
     group.userData._yOffset = yOffset;
 
-    // Apply visual states
     applyTierTint(group, settlementTier);
     applySeasonTint(group, season);
-    if (building.constructionPhase != null && building.constructionPhase !== 'complete') {
-      applyConstructionState(
-        group,
-        building.constructionPhase as 'foundation' | 'building',
-        building.constructionProgress ?? 0,
-      );
-    } else {
-      applyPoweredState(group, building.powered);
-    }
+    applyConstructionState(
+      group,
+      building.constructionPhase as 'foundation' | 'building',
+      building.constructionProgress ?? 0,
+    );
     applyFireTint(group, building.onFire);
 
-    // Enable shadow casting on all child meshes
     group.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
@@ -135,42 +159,11 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
     building.gridX,
     building.gridY,
     building.onFire,
-    building.powered,
     building.constructionPhase,
     building.constructionProgress,
-  ]);
-
-  // Update position and visual states when building data changes
-  useEffect(() => {
-    const group = groupRef.current;
-    if (!group) return;
-
-    const yOffset = group.userData._yOffset ?? 0;
-    group.position.set(building.gridX + 0.5, building.elevation * 0.5 + yOffset, building.gridY + 0.5);
-
-    // Re-apply tint from base (resets powered/fire/construction modifications)
-    applyTierTint(group, settlementTier);
-    applySeasonTint(group, season);
-    if (building.constructionPhase != null && building.constructionPhase !== 'complete') {
-      applyConstructionState(
-        group,
-        building.constructionPhase as 'foundation' | 'building',
-        building.constructionProgress ?? 0,
-      );
-    } else {
-      applyPoweredState(group, building.powered);
-    }
-    applyFireTint(group, building.onFire);
-  }, [
-    building.gridX,
-    building.gridY,
-    building.elevation,
-    building.powered,
-    building.onFire,
-    building.constructionPhase,
-    building.constructionProgress,
-    settlementTier,
-    season,
+    building.housingCap,
+    building.workerCount,
+    building.type,
   ]);
 
   return (
@@ -180,38 +173,265 @@ const BuildingMesh: React.FC<BuildingMeshProps> = ({ building, modelUrl, settlem
   );
 };
 
+// ── InstancedMesh helpers ───────────────────────────────────────────────────
+
+/** Extracted child mesh info from a GLB scene. */
+interface MeshInfo {
+  geometry: THREE.BufferGeometry;
+  material: THREE.Material;
+  /** Local transform within the GLB scene graph */
+  localMatrix: THREE.Matrix4;
+}
+
+/**
+ * Extract all Mesh children from a GLB scene, capturing their geometry,
+ * material, and world transform relative to the scene root.
+ */
+function extractMeshes(scene: THREE.Group): MeshInfo[] {
+  const meshes: MeshInfo[] = [];
+  scene.traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      // Get the child's world matrix relative to the scene root
+      const localMatrix = new THREE.Matrix4();
+      child.updateWorldMatrix(true, false);
+      localMatrix.copy(child.matrixWorld);
+      // Remove the scene root's own transform to get relative transform
+      const sceneInv = new THREE.Matrix4().copy(scene.matrixWorld).invert();
+      localMatrix.premultiply(sceneInv);
+
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      for (const mat of materials) {
+        meshes.push({
+          geometry: child.geometry,
+          material: mat,
+          localMatrix,
+        });
+      }
+    }
+  });
+  return meshes;
+}
+
+/**
+ * Compute tile-fitting scale for a GLB scene. Normalizes the model's
+ * XZ footprint to 85% of a tile width, returns the scale and Y offset.
+ */
+function computeTileFitScale(scene: THREE.Group): { tileScale: number; yOffsetBase: number } {
+  const box = new THREE.Box3().setFromObject(scene);
+  const size = box.getSize(new THREE.Vector3());
+  const maxFootprint = Math.max(size.x, size.z);
+  if (maxFootprint <= 0) return { tileScale: 1, yOffsetBase: 0 };
+
+  const tileScale = 0.85 / maxFootprint;
+
+  // Compute Y offset after scaling — need to figure out how much to raise
+  // the model so its bottom sits on the ground plane.
+  // We scale uniformly, so minY * tileScale is the scaled bottom.
+  const yOffsetBase = -box.min.y * tileScale;
+  return { tileScale, yOffsetBase };
+}
+
+/**
+ * Compute per-instance color combining tier tint, season tint, and powered state.
+ * This is multiplied with the base material color via InstancedMesh.instanceColor.
+ */
+function computeInstanceColor(tier: SettlementTier, season: Season, powered: boolean, onFire: boolean): THREE.Color {
+  const tierTint = TIER_TINTS[tier];
+  const seasonTint = SEASON_TINTS[season];
+
+  const r = tierTint.colorFactor[0] * seasonTint[0];
+  const g = tierTint.colorFactor[1] * seasonTint[1];
+  const b = tierTint.colorFactor[2] * seasonTint[2];
+
+  const color = new THREE.Color(r, g, b);
+
+  // Unpowered buildings dim to 40%
+  if (!powered) {
+    color.multiplyScalar(0.4);
+  }
+
+  // Fire gives a reddish tint boost (approximate the emissive with color shift)
+  if (onFire) {
+    color.r = Math.min(1, color.r + 0.3);
+    color.g *= 0.6;
+    color.b *= 0.5;
+  }
+
+  return color;
+}
+
+// ── Instanced Model Group ───────────────────────────────────────────────────
+
+interface InstancedModelGroupProps {
+  modelUrl: string;
+  buildings: BuildingState[];
+  settlementTier: SettlementTier;
+  season: Season;
+}
+
+/**
+ * Renders all buildings sharing a single model URL as InstancedMesh batches.
+ * One InstancedMesh per child mesh in the GLB.
+ */
+const InstancedModelGroup: React.FC<InstancedModelGroupProps> = ({ modelUrl, buildings, settlementTier, season }) => {
+  const { scene } = useGLTF(modelUrl);
+  const groupRef = useRef<THREE.Group>(null);
+  const instancedMeshRefs = useRef<THREE.InstancedMesh[]>([]);
+
+  // Extract child meshes from the GLB scene (memoized on scene identity)
+  const meshInfos = useMemo(() => {
+    scene.updateMatrixWorld(true);
+    return extractMeshes(scene);
+  }, [scene]);
+
+  // Compute the tile-fitting base scale for this model
+  const { tileScale, yOffsetBase } = useMemo(() => computeTileFitScale(scene), [scene]);
+
+  // Create/update InstancedMesh objects when mesh infos or building count changes
+  useEffect(() => {
+    const group = groupRef.current;
+    if (!group || meshInfos.length === 0 || buildings.length === 0) return;
+
+    // Clean up previous instanced meshes
+    for (const im of instancedMeshRefs.current) {
+      group.remove(im);
+      im.dispose();
+    }
+    instancedMeshRefs.current = [];
+
+    const count = buildings.length;
+    const tierTint = TIER_TINTS[settlementTier];
+
+    for (const info of meshInfos) {
+      // Clone material so tinting doesn't affect the shared GLB material
+      const mat = info.material.clone() as THREE.MeshStandardMaterial;
+      // Apply PBR tier overrides to the base material
+      if (mat instanceof THREE.MeshStandardMaterial) {
+        const PBR_BLEND = 0.7;
+        mat.roughness = mat.roughness + (tierTint.roughness - mat.roughness) * PBR_BLEND;
+        mat.metalness = mat.metalness + (tierTint.metalness - mat.metalness) * PBR_BLEND;
+      }
+
+      const im = new THREE.InstancedMesh(info.geometry, mat, count);
+      im.castShadow = true;
+      im.receiveShadow = true;
+      im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(count * 3), 3);
+
+      // Pre-compute instance transforms and colors
+      const tempMatrix = new THREE.Matrix4();
+      const tempColor = new THREE.Color();
+
+      for (let i = 0; i < count; i++) {
+        const bldg = buildings[i];
+        const brutalist = getBrutalistScale(bldg.type, bldg.housingCap, bldg.workerCount);
+        const scale = tileScale * brutalist;
+
+        // Build instance matrix: localMeshTransform * (scale + position)
+        // 1. Start with the mesh's local transform within the GLB
+        tempMatrix.copy(info.localMatrix);
+        // 2. Apply uniform scale
+        tempMatrix.scale(new THREE.Vector3(scale, scale, scale));
+        // 3. Set position: grid center + elevation + yOffset (scaled by brutalist)
+        const yOffset = yOffsetBase * brutalist;
+        const posX = bldg.gridX + 0.5;
+        const posY = bldg.elevation * 0.5 + yOffset;
+        const posZ = bldg.gridY + 0.5;
+        tempMatrix.setPosition(posX, posY, posZ);
+
+        im.setMatrixAt(i, tempMatrix);
+
+        // Compute per-instance color
+        tempColor.copy(computeInstanceColor(settlementTier, season, bldg.powered, bldg.onFire));
+        im.setColorAt(i, tempColor);
+      }
+
+      im.instanceMatrix.needsUpdate = true;
+      if (im.instanceColor) im.instanceColor.needsUpdate = true;
+
+      instancedMeshRefs.current.push(im);
+      group.add(im);
+    }
+
+    return () => {
+      for (const im of instancedMeshRefs.current) {
+        group.remove(im);
+        im.dispose();
+      }
+      instancedMeshRefs.current = [];
+    };
+  }, [meshInfos, buildings, settlementTier, season, tileScale, yOffsetBase]);
+
+  return <group ref={groupRef} />;
+};
+
 // ── Main BuildingRenderer ───────────────────────────────────────────────────
 
-/** Renders all buildings as GLB model clones with tier tinting, season colors, and status effects. */
+/** Renders all buildings: operational via InstancedMesh batching, constructing via Clone. */
 const BuildingRenderer: React.FC<BuildingRendererProps> = ({
   buildings,
   settlementTier = 'selo',
   season = 'summer',
 }) => {
-  const _lastTierRef = useRef<SettlementTier>(settlementTier);
+  // Partition buildings into constructing vs operational
+  const { constructing, operationalByModel } = useMemo(() => {
+    const constructingList: BuildingState[] = [];
+    const modelGroups = new Map<string, { modelUrl: string; buildings: BuildingState[] }>();
 
-  // Detect tier changes for flash effect
-  // (Individual BuildingMesh components handle re-tinting via useEffect deps)
-  // The flash is a nice-to-have visual nicety that we handle at the group level.
-  // For simplicity in R3F, the flash is omitted here — the tier tint update
-  // in each BuildingMesh's useEffect already re-tints smoothly.
+    for (const building of buildings) {
+      // Check if building is under construction
+      const isConstructing = building.constructionPhase != null && building.constructionPhase !== 'complete';
+
+      if (isConstructing) {
+        constructingList.push(building);
+        continue;
+      }
+
+      // Resolve model URL
+      const baseModel = getModelName(building.type, building.level) ?? building.type;
+      if (!baseModel) continue;
+      const modelName = getTierVariant(baseModel, settlementTier);
+      const modelUrl = getModelUrl(modelName);
+      if (!modelUrl) continue;
+
+      let group = modelGroups.get(modelUrl);
+      if (!group) {
+        group = { modelUrl, buildings: [] };
+        modelGroups.set(modelUrl, group);
+      }
+      group.buildings.push(building);
+    }
+
+    return {
+      constructing: constructingList,
+      operationalByModel: Array.from(modelGroups.values()),
+    };
+  }, [buildings, settlementTier]);
 
   return (
     <group>
-      {buildings.map((building) => {
-        // ECS defIds match GLB model names directly (e.g., "apartment-tower-a")
-        // Fall back to getModelName for legacy building types
+      {/* Operational buildings — batched via InstancedMesh per model type */}
+      {operationalByModel.map((group) => (
+        <Suspense key={group.modelUrl} fallback={null}>
+          <InstancedModelGroup
+            modelUrl={group.modelUrl}
+            buildings={group.buildings}
+            settlementTier={settlementTier}
+            season={season}
+          />
+        </Suspense>
+      ))}
+
+      {/* Constructing buildings — individual Clone components for transparency effects */}
+      {constructing.map((building) => {
         const baseModel = getModelName(building.type, building.level) ?? building.type;
         if (!baseModel) return null;
-
-        // Apply tier-based model variant (e.g., workers-house-a → workers-house-b at posyolok)
         const modelName = getTierVariant(baseModel, settlementTier);
         const modelUrl = getModelUrl(modelName);
         if (!modelUrl) return null;
 
         return (
           <Suspense key={building.id} fallback={null}>
-            <BuildingMesh building={building} modelUrl={modelUrl} settlementTier={settlementTier} season={season} />
+            <ConstructionMesh building={building} modelUrl={modelUrl} settlementTier={settlementTier} season={season} />
           </Suspense>
         );
       })}

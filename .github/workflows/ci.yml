@@ -115,10 +115,74 @@ jobs:
           path: dist/
           retention-days: 1
 
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      CI: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          lfs: true
+
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build project for E2E (no base URL prefix)
+        run: |
+          # Override baseUrl to "" for local static serving (no /sim-soviet/ prefix)
+          node -e "
+            const fs = require('fs');
+            const cfg = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+            cfg.expo.experiments.baseUrl = '';
+            fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2));
+          "
+          pnpm run build
+
+      - name: Copy static assets into dist
+        run: |
+          mkdir -p dist/assets
+          cp -r assets/models dist/assets/models
+          cp -r assets/hdri dist/assets/hdri
+          cp -r assets/textures dist/assets/textures
+          cp -r assets/audio dist/assets/audio
+          # Mirror at /sim-soviet/ for runtime assetUrl() which prefixes /sim-soviet in production
+          mkdir -p dist/sim-soviet
+          ln -s ../assets dist/sim-soviet/assets
+
+      - name: Run Playwright E2E tests
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: success() || failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload visual playtest screenshots
+        if: success() || failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: visual-playtest-screenshots
+          path: e2e/screenshots/
+          retention-days: 14
+          if-no-files-found: ignore
+
   all-checks:
     name: All Checks Passed
     runs-on: ubuntu-latest
-    needs: [quality]
+    needs: [quality, e2e]
     if: always()
     permissions:
       contents: read
@@ -126,9 +190,14 @@ jobs:
       - name: Check all jobs
         env:
           QUALITY_RESULT: ${{ needs.quality.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
         run: |
           if [ "$QUALITY_RESULT" != "success" ]; then
-            echo "Quality checks failed"
+            echo "::error::Quality checks failed"
             exit 1
           fi
-          echo "All checks passed successfully!"
+          if [ "$E2E_RESULT" != "success" ]; then
+            echo "::warning::E2E tests did not fully pass (result: $E2E_RESULT)"
+            echo "E2E tests are informational — SwiftShader WebGL on CI cannot run simulation ticks reliably"
+          fi
+          echo "All required checks passed successfully!"

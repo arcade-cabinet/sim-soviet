@@ -423,7 +423,7 @@ describe('factories', () => {
     it('creates meta store with default values', () => {
       const entity = createMetaStore();
       expect(entity.gameMeta).toBeDefined();
-      expect(entity.gameMeta!.date).toEqual({ year: 1922, month: 10, tick: 0 });
+      expect(entity.gameMeta!.date).toEqual({ year: 1917, month: 10, tick: 0 });
       expect(entity.gameMeta!.quota).toEqual({
         type: 'food',
         target: 500,

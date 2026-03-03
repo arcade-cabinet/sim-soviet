@@ -5,19 +5,19 @@
  * used by the building inspector panel.
  */
 
-import { getBuildingStorageContribution } from '../../src/ecs/systems/storageSystem';
+import { getBuildingStorageContribution } from '../../src/ai/agents/economy/storageSystem';
 
 describe('getBuildingStorageContribution', () => {
   it('returns storage for warehouse', () => {
-    expect(getBuildingStorageContribution('warehouse')).toBe(300);
+    expect(getBuildingStorageContribution('warehouse')).toBe(5000);
   });
 
   it('returns storage for grain-elevator', () => {
-    expect(getBuildingStorageContribution('grain-elevator')).toBe(2000);
+    expect(getBuildingStorageContribution('grain-elevator')).toBe(5000);
   });
 
   it('returns storage for cold-storage', () => {
-    expect(getBuildingStorageContribution('cold-storage')).toBe(400);
+    expect(getBuildingStorageContribution('cold-storage')).toBe(1000);
   });
 
   it('returns 0 for non-storage buildings', () => {
@@ -25,8 +25,8 @@ describe('getBuildingStorageContribution', () => {
   });
 
   it('returns role-based storage for agriculture buildings', () => {
-    // Agriculture role buildings should get 50
-    expect(getBuildingStorageContribution('collective-farm-hq')).toBe(50);
+    // Agriculture role buildings should get 500
+    expect(getBuildingStorageContribution('collective-farm-hq')).toBe(500);
   });
 
   it('returns 0 for unknown defIds', () => {

@@ -9,11 +9,11 @@
  * construction system and worker system via SimulationEngine.
  */
 
+import { getWeatherProfile, WeatherType } from '@/ai/agents/core/weather-types';
+import { constructionSystem, DEFAULT_BASE_TICKS } from '@/ai/agents/infrastructure/constructionSystem';
 import { underConstruction } from '@/ecs/archetypes';
 import { createMetaStore, createResourceStore, placeNewBuilding } from '@/ecs/factories';
-import { constructionSystem, DEFAULT_BASE_TICKS } from '@/ecs/systems/constructionSystem';
 import { world } from '@/ecs/world';
-import { getWeatherProfile, WeatherType } from '@/game/WeatherSystem';
 
 // ─────────────────────────────────────────────────────────
 //  WeatherProfile modifier values
@@ -38,9 +38,9 @@ describe('WeatherProfile modifiers', () => {
   });
 
   describe('blizzard reduces farm output and slows construction', () => {
-    it('farmModifier is 0 (no farm production in blizzard)', () => {
+    it('farmModifier is 0.2 (minimal farm production in blizzard)', () => {
       const profile = getWeatherProfile(WeatherType.BLIZZARD);
-      expect(profile.farmModifier).toBe(0.0);
+      expect(profile.farmModifier).toBe(0.2);
     });
 
     it('constructionTimeMult is 1.25 (+25% construction time)', () => {

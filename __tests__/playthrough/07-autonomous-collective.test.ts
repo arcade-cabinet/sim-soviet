@@ -89,9 +89,14 @@ describe('Playthrough: Autonomous Collective', () => {
   it('collective does not auto-build without sufficient materials', () => {
     // population=30, food=50 → food demand triggered
     // timber=0, steel=0 → NOT enough materials (need timber>=10, steel>=5)
+    // Start in eternal era with low fondy reliability (0.2) + high random
+    // to prevent fondy from delivering materials during the test
     const { engine } = createPlaythroughEngine({
+      meta: { date: { year: 2050, month: 1, tick: 0 } },
       resources: { population: 30, food: 50, timber: 0, steel: 0, money: 500, vodka: 100, power: 100 },
     });
+
+    jest.spyOn(Math, 'random').mockReturnValue(0.99);
 
     // Place reference building
     createBuilding(15, 15, 'power-station');

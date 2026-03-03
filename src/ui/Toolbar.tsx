@@ -12,7 +12,9 @@
 import type React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { TabType } from '../engine/GameState';
+import { MIN_TAP_TARGET } from './responsive';
 import { Colors, monoFont, SharedStyles } from './styles';
+import { useResponsive } from './useResponsive';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -66,47 +68,59 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   activeBuildTab = 'zone',
   onBuildTabChange,
 }) => {
+  const { isCompact } = useResponsive();
+
   return (
     <View style={styles.wrapper}>
-      {/* ── Primary Navigation Row ── */}
-      <View style={[SharedStyles.panel, styles.primaryRow]}>
+      {/* Primary Navigation Row */}
+      <View style={[SharedStyles.panel, styles.primaryRow, isCompact && styles.compactPrimaryRow]}>
         {PRIMARY_TABS.map((tab) => {
           const isActive = activeTab === tab.key;
           return (
             <TouchableOpacity
               key={tab.key}
-              style={[styles.primaryTab, isActive && styles.primaryTabActive]}
+              style={[styles.primaryTab, isCompact && styles.compactPrimaryTab, isActive && styles.primaryTabActive]}
               onPress={() => onTabChange(tab.key)}
               activeOpacity={0.7}
             >
-              <Text style={styles.tabIcon}>{tab.icon}</Text>
-              <Text
-                style={[
-                  styles.tabLabel,
-                  tab.dangerColor && !isActive ? { color: tab.dangerColor } : null,
-                  isActive && styles.tabLabelActive,
-                ]}
-              >
-                {tab.label}
-              </Text>
+              <Text style={isCompact ? styles.compactTabIcon : styles.tabIcon}>{tab.icon}</Text>
+              {!isCompact && (
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    tab.dangerColor && !isActive ? { color: tab.dangerColor } : null,
+                    isActive && styles.tabLabelActive,
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              )}
             </TouchableOpacity>
           );
         })}
       </View>
 
-      {/* ── Build Sub-Category Row (conditional) ── */}
+      {/* Build Sub-Category Row (conditional) */}
       {activeTab === 'build' && (
-        <View style={styles.subRow}>
+        <View style={[styles.subRow, isCompact && styles.compactSubRow]}>
           {BUILD_SUBTABS.map((sub) => {
             const isActive = activeBuildTab === sub.key;
             return (
               <TouchableOpacity
                 key={sub.key}
-                style={[styles.subTab, isActive && styles.subTabActive]}
+                style={[styles.subTab, isCompact && styles.compactSubTab, isActive && styles.subTabActive]}
                 onPress={() => onBuildTabChange?.(sub.key)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.subTabText, isActive && styles.subTabTextActive]}>{sub.label}</Text>
+                <Text
+                  style={[
+                    styles.subTabText,
+                    isCompact && styles.compactSubTabText,
+                    isActive && styles.subTabTextActive,
+                  ]}
+                >
+                  {sub.label}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -156,6 +170,18 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
 
+  // Compact (mobile) styles
+  compactPrimaryRow: {
+    height: 50,
+  },
+  compactPrimaryTab: {
+    minWidth: MIN_TAP_TARGET,
+    minHeight: MIN_TAP_TARGET,
+  },
+  compactTabIcon: {
+    fontSize: 20,
+  },
+
   // Build sub-category row
   subRow: {
     flexDirection: 'row',
@@ -183,5 +209,16 @@ const styles = StyleSheet.create({
   },
   subTabTextActive: {
     color: Colors.black,
+  },
+
+  // Compact sub-category row
+  compactSubRow: {
+    height: 36,
+  },
+  compactSubTab: {
+    minHeight: 36,
+  },
+  compactSubTabText: {
+    fontSize: 12,
   },
 });

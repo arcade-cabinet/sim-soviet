@@ -10,21 +10,24 @@
  * - No CSS injection (native doesn't need it)
  * - No service worker registration
  * - No WebGPURenderer — uses standard GL props via Canvas
- * - No window.addEventListener — uses AppState for lifecycle
- * - Database persistence via AppState instead of beforeunload
+ * - No window.addEventListener for lifecycle
+ * - Database persistence handled by expo-sqlite automatically
  */
 
 import { Canvas } from '@react-three/fiber/native';
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { AppState, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import type { SettlementEvent } from './ai/agents/infrastructure/SettlementSystem';
+import type { ActiveMinigame } from './ai/agents/meta/minigames/MinigameTypes';
 import AudioManager from './audio/AudioManager';
 import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
 import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitialized } from './bridge/GameInit';
+import { resetAllSingletons } from './bridge/Reset';
 import Content from './Content';
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
-import { initDatabase, persistToIndexedDB } from './db/provider';
+import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import type { LensType, TabType } from './engine/GameState';
 import { gameState } from './engine/GameState';
@@ -41,8 +44,6 @@ import {
 } from './engine/helpers';
 import type { EraDefinition } from './game/era';
 import type { TallyData } from './game/GameTally';
-import type { ActiveMinigame } from './game/minigames/MinigameTypes';
-import type { SettlementEvent } from './game/SettlementSystem';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
@@ -271,11 +272,11 @@ const App: React.FC = () => {
 
     // Async init: database first, then game engine
     (async () => {
-      // Initialize SQLite database
+      // Initialize SQLite database (expo-sqlite handles persistence automatically)
       try {
         await initDatabase();
-      } catch {
-        // Falls back to localStorage if sql.js WASM fails to load
+      } catch (err) {
+        console.error('[DB] Failed to open SQLite database:', err);
       }
 
       initGame(
@@ -414,15 +415,7 @@ const App: React.FC = () => {
       }
     })();
 
-    // Persist database when app goes to background (native equivalent of beforeunload)
-    const subscription = AppState.addEventListener('change', (nextState) => {
-      if (nextState === 'background' || nextState === 'inactive') {
-        persistToIndexedDB();
-      }
-    });
-    return () => {
-      subscription.remove();
-    };
+    // expo-sqlite handles persistence automatically — no AppState listener needed
   }, [screen]);
 
   // --- Loading callbacks ---
@@ -687,9 +680,17 @@ const App: React.FC = () => {
   const handleRestart = useCallback(() => {
     setGameOver(null);
     setGameTally(null);
-    // On native, we cannot do window.location.reload().
-    // For now, reset to main menu. A full engine reset would require
-    // clearing all module-level singletons — future work.
+    setActiveMinigame(null);
+    resolveMinigameRef.current = null;
+    submitReportRef.current = null;
+    // Reset all module-level singletons so a fresh game can be initialized
+    resetAllSingletons();
+    // Reset local component state for a clean game screen
+    setAssetsReady(false);
+    setLoadingFaded(false);
+    setShowIntro(false);
+    setLoadProgress({ loaded: 0, total: TOTAL_MODEL_COUNT, name: '' });
+    loadStartRef.current = 0;
     setScreen('menu');
   }, []);
 

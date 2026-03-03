@@ -1,15 +1,15 @@
 /**
  * @module ecs/systems/populationSystem
  *
- * Housing-based population growth gate.
+ * Yearly immigration gate — controls population inflow once per year.
  *
  * IMPORTANT: WorkerSystem is the authoritative population source.
  * This system only checks housing capacity and signals whether growth
  * is possible. It no longer modifies resources.population directly —
  * WorkerSystem.tick() syncs the authoritative count at the end of each tick.
  *
- * The system now returns a growth hint that SimulationEngine uses to
- * decide whether to spawn new workers via WorkerSystem.
+ * Called once per year (gated by tickResult.newYear in SimulationEngine).
+ * Immigration cap: max(1, floor(housingCap * 0.03)) — 3% of housing capacity.
  */
 
 import { getResourceEntity, housing as housingArchetype } from '@/ecs/archetypes';
@@ -26,17 +26,19 @@ export interface PopulationGrowthResult {
 }
 
 /**
- * Checks whether population growth is possible based on housing + food.
+ * Checks whether yearly immigration is possible based on housing + food.
  *
  * Returns a growth hint — the caller (SimulationEngine) decides whether
  * to actually spawn workers via WorkerSystem.
  *
- * @param rng        - Seeded RNG for deterministic growth rolls
+ * Immigration cap: max(1, floor(housingCap * 0.03)) per year (3% of housing).
+ *
+ * @param rng        - Seeded RNG for deterministic growth rolls (required)
  * @param growthMult - Multiplier on population growth rate (default 1.0)
  * @param _month     - Current month (reserved for future seasonal modifiers)
  * @returns Growth hint with spawn count, housing capacity, and overcrowding flag
  */
-export function populationSystem(rng?: GameRng, growthMult = 1.0, _month = 1): PopulationGrowthResult {
+export function populationSystem(rng: GameRng, growthMult = 1.0, _month = 1): PopulationGrowthResult {
   const store = getResourceEntity();
   const result: PopulationGrowthResult = {
     growthCount: 0,
@@ -55,10 +57,21 @@ export function populationSystem(rng?: GameRng, growthMult = 1.0, _month = 1): P
   result.housingCapacity = housingCap;
   result.overcrowded = store.resources.population > housingCap;
 
-  // Grow population if there is room and food
+  // Yearly immigration: cap at 8% of housing capacity (min 3)
   if (store.resources.population < housingCap && store.resources.food > 10) {
-    const baseGrowth = rng ? rng.int(0, 2) : Math.floor(Math.random() * 3);
-    result.growthCount = Math.round(baseGrowth * Math.max(0, growthMult));
+    const immigrationCap = Math.max(3, Math.floor(housingCap * 0.08));
+    const baseGrowth = rng.int(1, immigrationCap);
+    let growth = Math.round(baseGrowth * Math.max(0, growthMult));
+
+    // Emergency immigration boost when population is critically low
+    // The Party dispatches reinforcements to save the settlement
+    if (store.resources.population < 20 && store.resources.population > 0) {
+      growth = Math.max(growth, 5); // At least 5 new settlers
+    } else if (store.resources.population < 40) {
+      growth = Math.max(growth, 3); // At least 3 new settlers
+    }
+
+    result.growthCount = growth;
   }
 
   return result;

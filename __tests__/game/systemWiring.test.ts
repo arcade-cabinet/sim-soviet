@@ -1,5 +1,23 @@
+import { WEATHER_PROFILES, WeatherType } from '@/ai/agents/core/weather-types';
+import { resolveBuildingTrigger } from '@/ai/agents/meta/minigames/BuildingMinigameMap';
+import { MINIGAME_DEFINITIONS } from '@/ai/agents/meta/minigames/definitions';
+import { MinigameRouter } from '@/ai/agents/meta/minigames/MinigameRouter';
+import { ALL_EVENT_TEMPLATES } from '@/ai/agents/narrative/events/templates';
+import {
+  type AnnualReportContext,
+  type AnnualReportEngineState,
+  processReport,
+} from '@/ai/agents/political/annualReportTick';
+import { processConscriptionQueue, processOrgnaborQueue, processReturns } from '@/ai/agents/political/military';
+import { PoliticalEntitySystem } from '@/ai/agents/political/PoliticalEntitySystem';
+import { DIFFICULTY_PRESETS } from '@/ai/agents/political/ScoringSystem';
+import type { ConscriptionEvent, OrgnaborEvent, PoliticalTickResult } from '@/ai/agents/political/types';
+import { applyMorale } from '@/ai/agents/workforce/classes';
+import { HEATING_FAILURE_MORALE_PENALTY } from '@/ai/agents/workforce/constants';
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
+import { GameGrid } from '@/game/GameGrid';
+import { SimulationEngine } from '@/game/SimulationEngine';
 import {
   applyCurrencyReform,
   CURRENCY_REFORMS,
@@ -7,21 +25,7 @@ import {
   findPendingReform,
   HEATING_CONFIGS,
   type HeatingTier,
-} from '@/game/economy';
-import { type AnnualReportContext, type AnnualReportEngineState, processReport } from '@/game/engine/annualReportTick';
-import { ALL_EVENT_TEMPLATES } from '@/game/events/templates';
-import { GameGrid } from '@/game/GameGrid';
-import { resolveBuildingTrigger } from '@/game/minigames/BuildingMinigameMap';
-import { MINIGAME_DEFINITIONS } from '@/game/minigames/definitions';
-import { MinigameRouter } from '@/game/minigames/MinigameRouter';
-import { processConscriptionQueue, processOrgnaborQueue, processReturns } from '@/game/political/military';
-import { PoliticalEntitySystem } from '@/game/political/PoliticalEntitySystem';
-import type { ConscriptionEvent, OrgnaborEvent, PoliticalTickResult } from '@/game/political/types';
-import { DIFFICULTY_PRESETS } from '@/game/ScoringSystem';
-import { SimulationEngine } from '@/game/SimulationEngine';
-import { WEATHER_PROFILES, WeatherType } from '@/game/WeatherSystem';
-import { applyMorale } from '@/game/workers/classes';
-import { HEATING_FAILURE_MORALE_PENALTY } from '@/game/workers/constants';
+} from '../../src/ai/agents/economy/economy-core';
 import { createTestDvory } from '../playthrough/helpers';
 
 function createMockCallbacks() {
@@ -131,8 +135,8 @@ describe('GAP-013: Pripiski downstream effects', () => {
     // Submit falsified report that passes quota check (reported >= target)
     processReport(ctx, { reportedQuota: 600, reportedSecondary: 60, reportedPop: 10 });
 
-    // After successful pripiski + quota met → next quota target should be 500 * 1.2 = 600
-    expect(ctx.engineState.quota.target).toBe(600);
+    // After successful pripiski + quota met → next quota target should be 500 * 1.15 = 575
+    expect(ctx.engineState.quota.target).toBe(575);
   });
 
   it('honest report does not inflate next quota target', () => {
@@ -224,8 +228,8 @@ describe('GAP-023: Difficulty multipliers', () => {
     const engine = new SimulationEngine(grid, cb, undefined, 'worker');
 
     const quota = engine.getQuota();
-    // Default target is 500 * 0.6 = 300
-    expect(quota.target).toBe(300);
+    // Default target is 500 * 0.4 = 200
+    expect(quota.target).toBe(200);
   });
 
   it('tovarish difficulty starts with quotaMultiplier=1.5 applied to initial quota', () => {
@@ -240,7 +244,7 @@ describe('GAP-023: Difficulty multipliers', () => {
     expect(quota.target).toBe(750);
   });
 
-  it('comrade difficulty starts with quotaMultiplier=1.0 (default)', () => {
+  it('comrade difficulty starts with quotaMultiplier=0.8 (default)', () => {
     createResourceStore();
     createMetaStore();
     const grid = new GameGrid();
@@ -248,26 +252,27 @@ describe('GAP-023: Difficulty multipliers', () => {
     const engine = new SimulationEngine(grid, cb, undefined, 'comrade');
 
     const quota = engine.getQuota();
-    expect(quota.target).toBe(500);
+    // Default target is 500 * 0.8 = 400
+    expect(quota.target).toBe(400);
   });
 
   it('difficulty quotaMultiplier is applied to next quota after annual report', () => {
     createResourceStore({ food: 600, vodka: 50, population: 10 });
     createMetaStore({ date: { year: 1927, month: 10, tick: 0 } });
 
-    // Simulate with worker difficulty quotaMultiplier = 0.6
+    // Simulate with worker difficulty quotaMultiplier = 0.4
     const ctx = createMockContext({
       engineState: createMockEngineState({
-        quota: { type: 'food', target: 300, current: 600, deadlineYear: 1927 },
-        quotaMultiplier: 0.6,
+        quota: { type: 'food', target: 200, current: 600, deadlineYear: 1927 },
+        quotaMultiplier: 0.4,
       }),
     });
 
     // Honest report, quota met
     processReport(ctx, { reportedQuota: 600, reportedSecondary: 50, reportedPop: 10 });
 
-    // Next quota should be 500 * 0.6 = 300
-    expect(ctx.engineState.quota.target).toBe(300);
+    // Next quota should be 500 * 0.4 = 200
+    expect(ctx.engineState.quota.target).toBe(200);
   });
 
   it('difficulty presets define all expected fields', () => {
@@ -286,9 +291,9 @@ describe('GAP-023: Difficulty multipliers', () => {
 // ── GAP-026: Weather effects on gameplay ──
 
 describe('GAP-026: Weather effects on gameplay', () => {
-  it('blizzard has farmModifier=0.0 (no farm production)', () => {
+  it('blizzard has farmModifier=0.2 (minimal farm production)', () => {
     const profile = WEATHER_PROFILES[WeatherType.BLIZZARD];
-    expect(profile.farmModifier).toBe(0.0);
+    expect(profile.farmModifier).toBe(0.2);
   });
 
   it('blizzard slows construction (+25%)', () => {

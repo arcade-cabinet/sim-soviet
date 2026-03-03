@@ -8,7 +8,7 @@ import {
   MEDALS,
   SCORE_MULTIPLIER_MATRIX,
   ScoringSystem,
-} from '../../src/game/ScoringSystem';
+} from '../../src/ai/agents/political/ScoringSystem';
 
 describe('ScoringSystem', () => {
   // ── Difficulty Presets ───────────────────────────────
@@ -23,35 +23,35 @@ describe('ScoringSystem', () => {
     });
 
     it('worker has 0.6x quota multiplier per design doc', () => {
-      expect(DIFFICULTY_PRESETS.worker.quotaMultiplier).toBe(0.6);
+      expect(DIFFICULTY_PRESETS.worker.quotaMultiplier).toBe(0.4);
     });
 
-    it('comrade has 1.0x quota multiplier', () => {
-      expect(DIFFICULTY_PRESETS.comrade.quotaMultiplier).toBe(1.0);
+    it('comrade has 0.8x quota multiplier', () => {
+      expect(DIFFICULTY_PRESETS.comrade.quotaMultiplier).toBe(0.8);
     });
 
     it('tovarish has 1.5x quota multiplier per design doc', () => {
       expect(DIFFICULTY_PRESETS.tovarish.quotaMultiplier).toBe(1.5);
     });
 
-    it('worker mark decay is 360 ticks (1/year)', () => {
-      expect(DIFFICULTY_PRESETS.worker.markDecayTicks).toBe(360);
+    it('worker mark decay is 180 ticks (6 months)', () => {
+      expect(DIFFICULTY_PRESETS.worker.markDecayTicks).toBe(180);
     });
 
-    it('comrade mark decay is 720 ticks (1/2 years)', () => {
-      expect(DIFFICULTY_PRESETS.comrade.markDecayTicks).toBe(720);
+    it('comrade mark decay is 540 ticks (~1.5 years)', () => {
+      expect(DIFFICULTY_PRESETS.comrade.markDecayTicks).toBe(540);
     });
 
-    it('tovarish mark decay is 1440 ticks (1/4 years)', () => {
-      expect(DIFFICULTY_PRESETS.tovarish.markDecayTicks).toBe(1440);
+    it('tovarish mark decay is 1800 ticks (5 years)', () => {
+      expect(DIFFICULTY_PRESETS.tovarish.markDecayTicks).toBe(1800);
     });
 
-    it('worker has 1:40 politruk ratio', () => {
-      expect(DIFFICULTY_PRESETS.worker.politrukRatio).toBe(40);
+    it('worker has 1:50 politruk ratio', () => {
+      expect(DIFFICULTY_PRESETS.worker.politrukRatio).toBe(50);
     });
 
-    it('tovarish has 1:8 politruk ratio', () => {
-      expect(DIFFICULTY_PRESETS.tovarish.politrukRatio).toBe(8);
+    it('tovarish has 1:10 politruk ratio', () => {
+      expect(DIFFICULTY_PRESETS.tovarish.politrukRatio).toBe(10);
     });
 
     it('all difficulties have complete configs', () => {
@@ -410,7 +410,7 @@ describe('ScoringSystem', () => {
       const sys = new ScoringSystem('worker');
       const cfg = sys.getDifficultyConfig();
       cfg.quotaMultiplier = 999;
-      expect(sys.getDifficultyConfig().quotaMultiplier).toBe(0.6);
+      expect(sys.getDifficultyConfig().quotaMultiplier).toBe(0.4);
     });
 
     it('getConsequenceConfig returns a copy', () => {

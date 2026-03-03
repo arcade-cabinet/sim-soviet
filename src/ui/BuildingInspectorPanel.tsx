@@ -18,13 +18,13 @@
 
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { effectiveWorkers } from '../ai/agents/economy/productionSystem';
+import { getBuildingStorageContribution } from '../ai/agents/economy/storageSystem';
+import type { WorkerDisplayInfo } from '../ai/agents/workforce/types';
 import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
 import { buildingsLogic, decayableBuildings } from '../ecs/archetypes';
-import { effectiveWorkers } from '../ecs/systems/productionSystem';
-import { getBuildingStorageContribution } from '../ecs/systems/storageSystem';
 import type { BuildingComponent, CitizenComponent, Durability } from '../ecs/world';
-import type { WorkerDisplayInfo } from '../game/workers/types';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 
@@ -339,7 +339,7 @@ const ProductionRing: React.FC<{
   workerCap,
   powerOutput,
   storageContribution,
-  role,
+  role: _role,
 }) => {
   // Only show for buildings that produce something
   const hasProduction = produces || powerOutput > 0 || storageContribution > 0;

@@ -10,14 +10,18 @@ You are a specialist in SimSoviet 1917's core game systems — the ECS-based sim
 - **ScoringSystem** (`src/game/ScoringSystem.ts`): Score calculation with difficulty multipliers. You know how building counts, resource levels, population, and era progression factor into the final score.
 - **SettlementSystem** (`src/game/SettlementSystem.ts`): Settlement tier progression (selo through gorod). You understand tier thresholds, upgrade conditions, and settlement naming.
 - **Minigames** (`src/game/minigames/`): 9 minigame definitions plus the router. You know trigger conditions, reward structures, and how minigames integrate with the main game loop.
-- **Demographics** (`src/game/demographicSystem.ts`, `src/game/demographics.ts`): Birth/death/aging/pregnancy/household formation. Dvory as canonical population source, gender-differentiated retirement (55F/60M), era birth rate multipliers, conscription logic.
-- **Worker Systems** (`src/game/WorkerSystem.ts`, `src/game/TrudodniSystem.ts`): Population management, labor capacity curves, 7-category labor accounting, male-first conscription.
-- **Loyalty & Private Plots** (`src/game/LoyaltySystem.ts`, `src/game/PrivatePlotSystem.ts`): Sabotage/flight mechanics, food from private plots.
+- **Demographics** (`src/ai/agents/social/DemographicAgent.ts`, `src/ai/agents/social/demographicSystem.ts`, `src/ai/agents/social/statisticalDemographics.ts`): Dual-mode: entity (dvory iteration) or aggregate (Poisson-sampled RaionPool). Birth/death/aging/pregnancy/household formation. Gender-differentiated retirement (55F/60M), era birth rate multipliers, conscription logic.
+- **Worker Systems** (`src/ai/agents/workforce/WorkerSystem.ts`, `src/ai/agents/economy/trudodni.ts`): Dual-mode population management, labor capacity curves, 7-category labor accounting, male-first conscription. Aggregate mode operates on building workforce fields.
+- **Loyalty & Private Plots** (`src/ai/agents/workforce/LoyaltySystem.ts`, `src/ai/agents/workforce/PrivatePlotSystem.ts`): Sabotage/flight mechanics, food from private plots.
+- **Building Production** (`src/ai/agents/economy/buildingProduction.ts`): Pure production function for aggregate mode. `computeBuildingProduction()` with Poisson-sampled accidents/stakhanovites.
+- **Population Modes** (`src/ai/agents/workforce/collectiveTransition.ts`): Dual-mode detection (`entity` < 200, `aggregate` >= 200). One-way collapse transition on year boundary.
 
 ## Reference Directories
 
-- `src/game/` — All ECS game systems
+- `src/ai/agents/` — Domain agent subpackages (8 domains, 123+ files)
+- `src/game/` — Thin orchestrator (SimulationEngine) + shared infrastructure
 - `src/engine/` — Legacy pure TypeScript game logic (GameState, SimTick, BuildingTypes, GridTypes, BuildActions, Directives, etc.)
+- `src/math/` — Shared math utilities (poissonSampling.ts)
 - `src/bridge/GameInit.ts` — ECS-to-React bridge with GameInitOptions and callback wiring
 - `src/stores/gameStore.ts` — Cross-cutting state
 - `docs/design/` — Game design documents (if present)

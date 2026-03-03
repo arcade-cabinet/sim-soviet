@@ -1,7 +1,7 @@
+import { AchievementTracker } from '../../src/ai/agents/meta/AchievementTracker';
+import { ScoringSystem } from '../../src/ai/agents/political/ScoringSystem';
 import { ACHIEVEMENTS } from '../../src/content/worldbuilding';
-import { AchievementTracker } from '../../src/game/AchievementTracker';
 import { createGameTally, type TallyGameState } from '../../src/game/GameTally';
-import { ScoringSystem } from '../../src/game/ScoringSystem';
 
 /** Helper to build a minimal TallyGameState. */
 function makeGameState(overrides?: Partial<TallyGameState>): TallyGameState {

@@ -8,20 +8,28 @@
  */
 
 import { Canvas } from '@react-three/fiber';
-import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import React, { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AudioManager from './audio/AudioManager';
 import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
 import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitialized } from './bridge/GameInit';
+import { resetAllSingletons } from './bridge/Reset';
 
 // Lazy-load Content — it transitively imports Three.js + all 22 scene
 // components (~5 MB). This keeps the menu/setup bundle small and fast.
 const Content = React.lazy(() => import('./Content'));
 
+// Lazy-load XR components — only needed when user activates AR/VR
+const XRSession = React.lazy(() => import('./xr/XRSession'));
+const ARTabletop = React.lazy(() => import('./xr/ARTabletop'));
+const VRWalkthrough = React.lazy(() => import('./xr/VRWalkthrough'));
+
+import type { SettlementEvent } from './ai/agents/infrastructure/SettlementSystem';
+import type { ActiveMinigame, MinigameOutcome } from './ai/agents/meta/minigames/MinigameTypes';
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
-import { initDatabase, persistToIndexedDB } from './db/provider';
+import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import type { LensType, TabType } from './engine/GameState';
 import { gameState } from './engine/GameState';
@@ -36,17 +44,18 @@ import {
   showAdvisor,
   showToast,
 } from './engine/helpers';
+import type { RehabilitationData } from './game/engine/types';
 import type { EraDefinition } from './game/era';
 import type { TallyData } from './game/GameTally';
-import type { ActiveMinigame } from './game/minigames/MinigameTypes';
-import type { SettlementEvent } from './game/SettlementSystem';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
+import { useInputManager } from './input/useInputManager';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import {
   closeBuildingInspector,
   closeCitizenDossierByIndex,
   closePoliticalPanel,
+  type GameSpeed,
   isPaused,
   notifyStateChange,
   setGameSpeed,
@@ -79,6 +88,7 @@ import { LensSelector } from './ui/LensSelector';
 import { LoadingScreen } from './ui/LoadingScreen';
 import { MainMenu } from './ui/MainMenu';
 import { MandateProgressPanel } from './ui/MandateProgressPanel';
+import { MinigameOverlay } from './ui/MinigameOverlay';
 import { MinigameReferencePanel } from './ui/MinigameReferencePanel';
 import { Minimap } from './ui/Minimap';
 import { type NewGameConfig, NewGameSetup } from './ui/NewGameSetup';
@@ -90,6 +100,7 @@ import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
 import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
 import { QuotaHUD } from './ui/QuotaHUD';
 import { RadialMenu } from './ui/RadialMenu';
+import { RehabilitationModal } from './ui/RehabilitationModal';
 import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { ScoringPanel } from './ui/ScoringPanel';
 import { SettingsModal } from './ui/SettingsModal';
@@ -202,6 +213,9 @@ const App: React.FC = () => {
   const [showMarket, setShowMarket] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
+  // ── XR mode state ──
+  const [xrMode, setXrMode] = useState<'ar' | 'vr' | null>(null);
+
   // ── Soviet tab state ──
   const [sovietTab, setSovietTab] = useState<SovietTab>('build');
   const [buildTab, setBuildTab] = useState<TabType>('zone');
@@ -216,9 +230,10 @@ const App: React.FC = () => {
   const [planDirective, setPlanDirective] = useState<PlanDirective | null>(null);
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
   const [gameTally, setGameTally] = useState<TallyData | null>(null);
+  const [rehabilitation, setRehabilitation] = useState<RehabilitationData | null>(null);
 
   // Auto-pause when interactive modals are open (restore prior state on close)
-  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver;
+  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver || !!rehabilitation;
   const wasPausedBeforeModal = useRef(false);
   useEffect(() => {
     if (hasInteractiveModal) {
@@ -247,6 +262,9 @@ const App: React.FC = () => {
       window.removeEventListener('touchstart', initSFX);
     };
   }, []);
+
+  // Universal input system (keyboard + gamepad)
+  useInputManager(screen === 'game' && loadingFaded);
 
   // Start ECS game loop (replaces old flat-state game loop)
   useECSGameLoop();
@@ -285,11 +303,11 @@ const App: React.FC = () => {
 
     // Async init: database first, then game engine
     (async () => {
-      // Initialize SQLite database (loads persisted saves from IndexedDB)
+      // Initialize SQLite database (expo-sqlite handles persistence automatically)
       try {
         await initDatabase();
-      } catch {
-        // Falls back to localStorage if sql.js WASM fails to load
+      } catch (err) {
+        console.error('[DB] Failed to open SQLite database:', err);
       }
 
       initGame(
@@ -332,6 +350,9 @@ const App: React.FC = () => {
           onGameOver: (victory, reason) => {
             setGameOver({ victory, reason });
             SFXManager.getInstance().play('game_over');
+          },
+          onRehabilitation: (data) => {
+            setRehabilitation(data);
           },
           onAchievement: (name, description) => {
             showToast(gameState, `★ ${name}: ${description}`);
@@ -428,14 +449,7 @@ const App: React.FC = () => {
       }
     })();
 
-    // Persist database to IndexedDB before page unload
-    const handleBeforeUnload = () => {
-      persistToIndexedDB();
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
+    // expo-sqlite handles persistence automatically — no beforeunload needed
   }, [screen]);
 
   // Ticker messages now come exclusively from PravdaSystem via
@@ -495,7 +509,7 @@ const App: React.FC = () => {
       setSpeed(gameState, 0);
     } else {
       setPaused(false);
-      setGameSpeed(sp as 1 | 2 | 3);
+      setGameSpeed(sp as GameSpeed);
       setSpeed(gameState, sp);
     }
   }, []);
@@ -700,6 +714,10 @@ const App: React.FC = () => {
     setActiveMinigame(null);
     resolveMinigameRef.current = null;
   }, []);
+  const handleInteractiveMinigameComplete = useCallback((_outcome: MinigameOutcome) => {
+    // Outcome is applied by MinigameOverlay via resolveInteractiveOutcome.
+    // The engine's minigame router will be notified when we dismiss.
+  }, []);
   const handleSubmitReport = useCallback((submission: ReportSubmission) => {
     submitReportRef.current?.(submission);
     submitReportRef.current = null;
@@ -710,8 +728,20 @@ const App: React.FC = () => {
   const handleRestart = useCallback(() => {
     setGameOver(null);
     setGameTally(null);
-    // Full restart requires clearing all module-level singletons — page reload
-    window.location.reload();
+    setXrMode(null);
+    setRehabilitation(null);
+    setActiveMinigame(null);
+    resolveMinigameRef.current = null;
+    submitReportRef.current = null;
+    // Reset all module-level singletons so a fresh game can be initialized
+    resetAllSingletons();
+    // Reset local component state for a clean game screen
+    setAssetsReady(false);
+    setLoadingFaded(false);
+    setShowIntro(false);
+    setLoadProgress({ loaded: 0, total: TOTAL_MODEL_COUNT, name: '' });
+    loadStartRef.current = 0;
+    setScreen('menu');
   }, []);
 
   // Read toast/advisor from side-channel
@@ -753,7 +783,31 @@ const App: React.FC = () => {
               style={{ width: '100%', height: '100%' }}
               gl={{ antialias: true, alpha: false }}
             >
-              <Content onLoadProgress={handleLoadProgress} onLoadComplete={handleLoadComplete} />
+              {xrMode ? (
+                <Suspense fallback={null}>
+                  <XRSession onSessionEnd={() => setXrMode(null)}>
+                    {xrMode === 'ar' ? (
+                      <ARTabletop>
+                        <Content
+                          onLoadProgress={handleLoadProgress}
+                          onLoadComplete={handleLoadComplete}
+                          disableCamera
+                        />
+                      </ARTabletop>
+                    ) : (
+                      <VRWalkthrough>
+                        <Content
+                          onLoadProgress={handleLoadProgress}
+                          onLoadComplete={handleLoadComplete}
+                          disableCamera
+                        />
+                      </VRWalkthrough>
+                    )}
+                  </XRSession>
+                </Suspense>
+              ) : (
+                <Content onLoadProgress={handleLoadProgress} onLoadComplete={handleLoadComplete} />
+              )}
             </Canvas>
           </EngineErrorBoundary>
         </View>
@@ -809,6 +863,7 @@ const App: React.FC = () => {
               onShowMarket={handleShowMarket}
               onShowNotifications={handleShowNotifications}
               unreadNotifications={unreadNotifications}
+              autopilot={getEngine()?.getAgentManager().isAutopilot() ?? false}
             />
 
             <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
@@ -889,6 +944,18 @@ const App: React.FC = () => {
           onRestart={handleRestart}
         />
 
+        <MinigameOverlay
+          activeMinigame={activeMinigame}
+          onInteractiveComplete={handleInteractiveMinigameComplete}
+          onDismiss={handleDismissMinigame}
+        />
+
+        <RehabilitationModal
+          visible={!!rehabilitation}
+          data={rehabilitation}
+          onResume={() => setRehabilitation(null)}
+        />
+
         <PersonnelFilePanel visible={showPersonnelFile} onDismiss={() => setShowPersonnelFile(false)} />
 
         <AchievementsPanel visible={showAchievements} onDismiss={() => setShowAchievements(false)} />
@@ -967,9 +1034,18 @@ const App: React.FC = () => {
           onDismiss={handleDismissCitizenDossier}
         />
 
-        <SettingsModal visible={showSettings} onDismiss={() => setShowSettings(false)} />
+        <SettingsModal visible={showSettings} onDismiss={() => setShowSettings(false)} onEnterXR={setXrMode} />
 
         <IntroModal visible={showIntro} onDismiss={handleDismissIntro} />
+
+        {/* XR exit overlay — shown when in AR/VR mode */}
+        {xrMode && (
+          <View style={styles.xrExitOverlay} pointerEvents="box-none">
+            <TouchableOpacity style={styles.xrExitButton} onPress={() => setXrMode(null)} activeOpacity={0.7}>
+              <Text style={styles.xrExitText}>EXIT {xrMode === 'ar' ? 'AR' : 'VR'}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Radial menu — unified build/inspect overlay */}
         <RadialMenu />
@@ -993,6 +1069,26 @@ const styles = StyleSheet.create({
   },
   bottomPanel: {
     backgroundColor: Colors.panelBg,
+  },
+  xrExitOverlay: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 200,
+  },
+  xrExitButton: {
+    backgroundColor: Colors.sovietRed,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: Colors.sovietGold,
+  },
+  xrExitText: {
+    color: Colors.white,
+    fontFamily: 'monospace',
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 2,
   },
 });
 

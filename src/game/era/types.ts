@@ -5,7 +5,7 @@
  */
 
 import type { GameMeta, Resources } from '@/ecs/world';
-import type { Doctrine } from '../CompulsoryDeliveries';
+import type { Doctrine } from '../../ai/agents/political/CompulsoryDeliveries';
 
 // ─── Era Identifiers ────────────────────────────────────────────────────────
 

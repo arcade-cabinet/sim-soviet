@@ -11,6 +11,12 @@ config.transformer = {
   unstable_allowRequireContext: true,
 };
 
+// Allow Metro to resolve .wasm files as assets (required by expo-sqlite's web worker).
+config.resolver = {
+  ...config.resolver,
+  assetExts: [...(config.resolver?.assetExts ?? []), 'wasm'],
+};
+
 // DEV-ONLY: Serve the `assets/` and `public/` directories as static files
 // during local Metro development. The Access-Control-Allow-Origin: * header
 // is required because Metro dev-server and the web app may run on different
@@ -43,7 +49,7 @@ config.server = {
         req.url = req.url.slice('/assets'.length);
         return staticHandler(req, res, () => middleware(req, res, next));
       }
-      // Route /wasm/* requests to public/wasm/ (sql.js WASM binary)
+      // Route /wasm/* requests to public/wasm/ (Draco mesh decoder)
       if (req.url.startsWith('/wasm/')) {
         return publicHandler(req, res, () => middleware(req, res, next));
       }

@@ -14,21 +14,23 @@
  * | Year  | 12 months                 | 360s      |
  */
 
+import { chronology } from '@/config';
+
 // ─────────────────────────────────────────────────────────
-//  TIME CONSTANTS
+//  TIME CONSTANTS (sourced from config/chronology.json)
 // ─────────────────────────────────────────────────────────
 
 /** Hours that advance per tick (3 ticks = 24 hours = 1 day). */
-export const HOURS_PER_TICK = 8;
+export const HOURS_PER_TICK = chronology.hoursPerTick;
 
 /** Ticks in a single game day. */
-export const TICKS_PER_DAY = 3;
+export const TICKS_PER_DAY = chronology.ticksPerDay;
 
 /** Days per month (Soviet dekada calendar). */
-export const DAYS_PER_MONTH = 10;
+export const DAYS_PER_MONTH = chronology.daysPerMonth;
 
 /** Months per year. */
-export const MONTHS_PER_YEAR = 12;
+export const MONTHS_PER_YEAR = chronology.monthsPerYear;
 
 /** Ticks in a single month. */
 export const TICKS_PER_MONTH = TICKS_PER_DAY * DAYS_PER_MONTH; // 30
@@ -55,10 +57,10 @@ export interface GameDate {
 }
 
 /** Creates a fresh GameDate for a new game starting in October 1922 (founding of the USSR). */
-export function createGameDate(startYear = 1922): GameDate {
+export function createGameDate(startYear = chronology.startYear): GameDate {
   return {
     year: startYear,
-    month: 10,
+    month: chronology.startMonth,
     day: 1,
     hour: 0,
     totalTicks: 0,

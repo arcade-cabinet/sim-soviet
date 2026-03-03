@@ -9,6 +9,7 @@ import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/fact
 import type { QuotaState } from '@/ecs/systems';
 import { world } from '@/ecs/world';
 import { GameGrid } from '@/game/GameGrid';
+import { GameRng } from '@/game/SeedSystem';
 import { SimulationEngine } from '@/game/SimulationEngine';
 import { createTestDvory } from '../playthrough/helpers';
 
@@ -57,7 +58,7 @@ describe('SimulationEngine — Annual Report', () => {
     const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [AnnualReportData, (s: ReportSubmission) => void];
     expect(data.year).toBe(1927);
     expect(data.quotaType).toBe('food');
-    expect(data.quotaTarget).toBe(500);
+    expect(data.quotaTarget).toBe(400);
     expect(typeof submitFn).toBe('function');
   });
 
@@ -105,18 +106,23 @@ describe('SimulationEngine — Annual Report', () => {
   });
 
   it('falsified report can be detected (high risk → caught)', () => {
-    // Low random value means caught — but we need enough resources
-    // to survive until the annual report deadline despite aggressive events
-    jest.spyOn(Math, 'random').mockReturnValue(0.01);
-
+    // GameRng is seeded, so Math.random mocking doesn't affect the
+    // investigation roll. Instead, pass a deterministic seed to the engine
+    // and spy on rng.random() just before report submission.
     createResourceStore({ food: 5000, vodka: 500, population: 0 });
     createTestDvory(100);
     createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
-    const engine = new SimulationEngine(grid, cb);
+    const rng = new GameRng('test-caught-seed');
+    const engine = new SimulationEngine(grid, cb, rng, 'worker', 'forgiving');
+    cb.onMinigame = undefined as never;
 
     for (let i = 0; i < 90; i++) engine.tick();
 
     const [_data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [AnnualReportData, (s: ReportSubmission) => void];
+
+    // Spy on rng.random to return a low value — guarantees investigation catches falsification
+    // (investigationProb caps at 0.8, so roll=0.01 < 0.8 → caught)
+    jest.spyOn(rng, 'random').mockReturnValue(0.01);
 
     // Submit wildly inflated numbers
     submitFn({
@@ -130,16 +136,21 @@ describe('SimulationEngine — Annual Report', () => {
   });
 
   it('falsified report can succeed (low risk or lucky roll)', () => {
-    // High random means not caught
-    jest.spyOn(Math, 'random').mockReturnValue(0.99);
-
+    // GameRng is seeded, so Math.random mocking doesn't affect the
+    // investigation roll. Use a deterministic seed and spy on rng.random()
+    // just before submission to guarantee "not caught".
     createResourceStore({ food: 100, vodka: 50, population: 0 });
     createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
-    const engine = new SimulationEngine(grid, cb);
+    const rng = new GameRng('test-success-seed');
+    const engine = new SimulationEngine(grid, cb, rng);
 
     for (let i = 0; i < 90; i++) engine.tick();
 
     const [data, submitFn] = cb.onAnnualReport.mock.calls[0]! as [AnnualReportData, (s: ReportSubmission) => void];
+
+    // Spy on rng.random to return a high value — guarantees investigation misses
+    // (any investigationProb < 0.99 → roll=0.99 > prob → not caught)
+    jest.spyOn(rng, 'random').mockReturnValue(0.99);
 
     // Inflate quota slightly (small enough risk, but enough to pass)
     submitFn({

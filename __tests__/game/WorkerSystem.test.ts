@@ -1,8 +1,9 @@
+import { generateWorkerName, WorkerSystem } from '@/ai/agents/workforce/workers-index';
 import { citizens } from '@/ecs/archetypes';
-import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
+import type { DvorMemberSeed } from '@/ecs/factories';
+import { createBuilding, createDvor, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
-import { generateWorkerName, WorkerSystem } from '@/game/workers/index';
 
 describe('WorkerSystem', () => {
   let system: WorkerSystem;
@@ -714,6 +715,174 @@ describe('WorkerSystem', () => {
       // Net effect: +0.5 (party) -2 (unhoused) = morale went down but less than without party
       // Just check the tick completed without error; morale math depends on multiple factors
       expect(workerStats.morale).toBeDefined();
+    });
+  });
+
+  // ── Entity GC Sweep ─────────────────────────────────────
+
+  describe('sweepOrphanCitizens', () => {
+    it('removes citizens whose dvorId references a non-existent dvor', () => {
+      // Create a valid dvor + citizen
+      const dvorEntity = createDvor('dvor-valid', 'Testov', [
+        { name: 'Ivan Testov', gender: 'male', age: 30 } as DvorMemberSeed,
+      ]);
+      const validMember = dvorEntity.dvor.members[0]!;
+
+      // Spawn a citizen linked to the valid dvor
+      const _validCitizen = world.add({
+        position: { gridX: 0, gridY: 0 },
+        citizen: {
+          class: 'worker' as const,
+          happiness: 50,
+          hunger: 0,
+          dvorId: 'dvor-valid',
+          dvorMemberId: validMember.id,
+          gender: 'male',
+          age: 30,
+          name: 'Ivan Testov',
+        },
+        isCitizen: true,
+      });
+
+      // Spawn an orphan citizen whose dvor no longer exists
+      const _orphanCitizen = world.add({
+        position: { gridX: 1, gridY: 1 },
+        citizen: {
+          class: 'worker' as const,
+          happiness: 50,
+          hunger: 0,
+          dvorId: 'dvor-deleted',
+          dvorMemberId: 'member-gone',
+          gender: 'female',
+          age: 25,
+          name: 'Olga Testova',
+        },
+        isCitizen: true,
+      });
+
+      expect([...citizens].length).toBe(2);
+
+      const removed = system.sweepOrphanCitizens();
+
+      expect(removed).toBe(1);
+      expect([...citizens].length).toBe(1);
+      // The valid citizen should remain
+      expect([...citizens][0]!.citizen.name).toBe('Ivan Testov');
+    });
+
+    it('removes citizens whose dvorMemberId is no longer in the dvor', () => {
+      // Create a dvor with one member
+      createDvor('dvor-partial', 'Testov', [{ name: 'Pyotr Testov', gender: 'male', age: 40 } as DvorMemberSeed]);
+
+      // Spawn a citizen linked to a member ID that no longer exists in the dvor
+      world.add({
+        position: { gridX: 2, gridY: 2 },
+        citizen: {
+          class: 'worker' as const,
+          happiness: 50,
+          hunger: 0,
+          dvorId: 'dvor-partial',
+          dvorMemberId: 'member-removed-long-ago',
+          gender: 'male',
+          age: 35,
+          name: 'Ghost Testov',
+        },
+        isCitizen: true,
+      });
+
+      const removed = system.sweepOrphanCitizens();
+      expect(removed).toBe(1);
+      expect([...citizens].length).toBe(0);
+    });
+
+    it('does not remove citizens without dvorId', () => {
+      // Early-game citizen without dvor linkage — not an orphan
+      world.add({
+        position: { gridX: 0, gridY: 0 },
+        citizen: {
+          class: 'worker' as const,
+          happiness: 50,
+          hunger: 0,
+          gender: 'male',
+          age: 25,
+          name: 'No Dvor Worker',
+        },
+        isCitizen: true,
+      });
+
+      const removed = system.sweepOrphanCitizens();
+      expect(removed).toBe(0);
+      expect([...citizens].length).toBe(1);
+    });
+
+    it('returns 0 when no orphans exist', () => {
+      const dvorEntity = createDvor('dvor-ok', 'Testov', [
+        { name: 'Andrei Testov', gender: 'male', age: 28 } as DvorMemberSeed,
+      ]);
+      const member = dvorEntity.dvor.members[0]!;
+
+      world.add({
+        position: { gridX: 0, gridY: 0 },
+        citizen: {
+          class: 'worker' as const,
+          happiness: 50,
+          hunger: 0,
+          dvorId: 'dvor-ok',
+          dvorMemberId: member.id,
+          gender: 'male',
+          age: 28,
+          name: 'Andrei Testov',
+        },
+        isCitizen: true,
+      });
+
+      const removed = system.sweepOrphanCitizens();
+      expect(removed).toBe(0);
+    });
+
+    it('returns 0 in aggregate mode', () => {
+      // Set up aggregate mode by adding raion to resource store
+      const store = world.with('resources', 'isResourceStore').entities[0]!;
+      store.resources.raion = {
+        totalPopulation: 500,
+        totalHouseholds: 50,
+        maleAgeBuckets: new Array(20).fill(0),
+        femaleAgeBuckets: new Array(20).fill(0),
+        classCounts: {},
+        birthsThisYear: 0,
+        deathsThisYear: 0,
+        totalBirths: 0,
+        totalDeaths: 0,
+        pregnancyWaves: [0, 0, 0],
+        laborForce: 0,
+        assignedWorkers: 0,
+        idleWorkers: 0,
+        avgMorale: 50,
+        avgLoyalty: 50,
+        avgSkill: 50,
+      };
+
+      // Create an orphan citizen
+      world.add({
+        position: { gridX: 0, gridY: 0 },
+        citizen: {
+          class: 'worker' as const,
+          happiness: 50,
+          hunger: 0,
+          dvorId: 'dvor-ghost',
+          dvorMemberId: 'member-ghost',
+          gender: 'male',
+          age: 30,
+          name: 'Ghost',
+        },
+        isCitizen: true,
+      });
+
+      const removed = system.sweepOrphanCitizens();
+      expect(removed).toBe(0); // Should skip in aggregate mode
+
+      // Cleanup
+      store.resources.raion = undefined;
     });
   });
 });

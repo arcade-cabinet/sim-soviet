@@ -25,7 +25,7 @@ export interface GameSnapshot {
   buildingCount: number;
   gameOver: GameMeta['gameOver'];
   paused: boolean;
-  gameSpeed: 1 | 2 | 3;
+  gameSpeed: GameSpeed;
   leaderName?: string;
   leaderPersonality?: string;
   settlementTier: 'selo' | 'posyolok' | 'pgt' | 'gorod';
@@ -190,8 +190,11 @@ function subscribeDrag(listener: () => void): () => void {
 
 // ── Pause & Speed State ──────────────────────────────────────────────────
 
+/** Simulation speed multiplier: 1 = normal, 2 = double, 3 = triple, 10 = fast-forward, 100 = turbo. */
+export type GameSpeed = 1 | 2 | 3 | 10 | 100;
+
 let _paused = false;
-let _gameSpeed: 1 | 2 | 3 = 1;
+let _gameSpeed: GameSpeed = 1;
 
 /** Whether the game simulation is currently paused. */
 export function isPaused(): boolean {
@@ -215,9 +218,6 @@ export function setPaused(paused: boolean): void {
   notifyStateChange();
 }
 
-/** Simulation speed multiplier: 1 = normal, 2 = double, 3 = triple. */
-export type GameSpeed = 1 | 2 | 3;
-
 /** Get the current game simulation speed. */
 export function getGameSpeed(): GameSpeed {
   return _gameSpeed;
@@ -230,12 +230,14 @@ export function setGameSpeed(speed: GameSpeed): void {
 }
 
 /**
- * Cycle through game speeds: 1 -> 2 -> 3 -> 1.
+ * Cycle through game speeds: 1 -> 2 -> 3 -> 10 -> 100 -> 1.
  *
  * @returns The new game speed after cycling
  */
 export function cycleGameSpeed(): GameSpeed {
-  _gameSpeed = (_gameSpeed === 3 ? 1 : _gameSpeed + 1) as GameSpeed;
+  const cycle: GameSpeed[] = [1, 2, 3, 10, 100];
+  const idx = cycle.indexOf(_gameSpeed);
+  _gameSpeed = cycle[(idx + 1) % cycle.length];
   notifyStateChange();
   return _gameSpeed;
 }
@@ -884,6 +886,53 @@ function subscribePoliticalPanel(listener: () => void): () => void {
   return () => {
     _politicalPanelListeners.delete(listener);
   };
+}
+
+// ── Minimap Visibility ────────────────────────────────────────────────────
+
+let _minimapVisible = true;
+const _minimapListeners = new Set<() => void>();
+
+/** Whether the minimap is currently visible. */
+export function isMinimapVisible(): boolean {
+  return _minimapVisible;
+}
+
+/** Toggle minimap visibility and notify React. */
+export function toggleMinimap(): void {
+  _minimapVisible = !_minimapVisible;
+  for (const listener of _minimapListeners) {
+    listener();
+  }
+}
+
+/** React hook — subscribe to minimap visibility state. */
+export function useMinimapVisible(): boolean {
+  return useSyncExternalStore(subscribeMinimap, isMinimapVisible, isMinimapVisible);
+}
+
+function subscribeMinimap(listener: () => void): () => void {
+  _minimapListeners.add(listener);
+  return () => {
+    _minimapListeners.delete(listener);
+  };
+}
+
+// ── Lens Cycling ──────────────────────────────────────────────────────────
+
+import type { LensType } from '../engine/GameState';
+import { gameState } from '../engine/GameState';
+import { setLens } from '../engine/helpers';
+
+const LENS_CYCLE: LensType[] = ['default', 'water', 'power', 'smog', 'aura'];
+
+/** Cycle to the next lens mode and update game state. */
+export function cycleLens(): void {
+  const current = gameState.activeLens ?? 'default';
+  const idx = LENS_CYCLE.indexOf(current);
+  const next = LENS_CYCLE[(idx + 1) % LENS_CYCLE.length];
+  setLens(gameState, next);
+  notifyStateChange();
 }
 
 // ── Internal ──────────────────────────────────────────────────────────────

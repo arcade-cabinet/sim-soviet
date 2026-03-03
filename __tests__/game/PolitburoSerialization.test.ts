@@ -1,7 +1,7 @@
+import type { GameEvent } from '../../src/ai/agents/narrative/events';
+import { Ministry, PolitburoSystem } from '../../src/ai/agents/narrative/politburo';
 import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import type { GameEvent } from '../../src/game/events';
-import { Ministry, PolitburoSystem } from '../../src/game/politburo';
 import { GameRng } from '../../src/game/SeedSystem';
 
 describe('PolitburoSystem serialization', () => {

@@ -1,3 +1,4 @@
+import { ERA_SPECIFIC_EVENTS } from '@/ai/agents/narrative/events/templates/era_specific';
 import {
   BUILDING_TIER_REQUIREMENTS,
   ERA_DEFINITIONS,
@@ -10,7 +11,6 @@ import {
   tierMeetsRequirement,
 } from '@/game/era';
 import { ALL_BUILDING_IDS } from '@/game/era/definitions';
-import { ERA_SPECIFIC_EVENTS } from '@/game/events/templates/era_specific';
 
 // ─────────────────────────────────────────────────────────
 //  Era Definition Integrity
@@ -134,7 +134,7 @@ describe('ERA modifiers', () => {
     }
   });
 
-  it('wartime era has highest delivery rates', () => {
+  it('great_patriotic (wartime) era has highest food delivery rate', () => {
     const wartime = ERA_DEFINITIONS.great_patriotic;
     for (const eraId of ERA_ORDER) {
       if (eraId === 'great_patriotic') continue;
@@ -493,15 +493,15 @@ describe('EraSystem getters', () => {
   it('getDeliveryRates returns a copy', () => {
     const sys = new EraSystem(1990);
     const rates = sys.getDeliveryRates();
-    expect(rates).toEqual({ food: 0.45, vodka: 0.4, money: 0.5 });
+    expect(rates).toEqual({ food: 0.35, vodka: 0.3, money: 0.4 });
     rates.food = 999;
-    expect(sys.getDeliveryRates().food).toBe(0.45);
+    expect(sys.getDeliveryRates().food).toBe(0.35);
   });
 
   it('getQuotaEscalation varies by era', () => {
     expect(new EraSystem(1917).getQuotaEscalation()).toBe(1.0);
-    expect(new EraSystem(1925).getQuotaEscalation()).toBe(1.3);
-    expect(new EraSystem(1942).getQuotaEscalation()).toBe(1.5);
+    expect(new EraSystem(1925).getQuotaEscalation()).toBe(1.2);
+    expect(new EraSystem(1942).getQuotaEscalation()).toBe(1.15);
   });
 });
 

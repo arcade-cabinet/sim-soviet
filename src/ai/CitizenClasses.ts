@@ -394,7 +394,7 @@ import type { GameRng } from '@/game/SeedSystem';
  */
 export function randomCitizenClass(rng?: GameRng): CitizenClass {
   const distribution = getClassDistribution();
-  let roll = rng?.random() ?? Math.random();
+  let roll = rng ? rng.random() : Math.random();
   for (const [cls, weight] of distribution) {
     roll -= weight;
     if (roll <= 0) return cls;

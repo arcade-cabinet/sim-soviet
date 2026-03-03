@@ -6,6 +6,7 @@
 import type React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
+import { useResponsive } from './useResponsive';
 
 export interface AdvisorProps {
   visible: boolean;
@@ -16,10 +17,12 @@ export interface AdvisorProps {
 
 /** Comrade advisor notification popup with character name and dismissible message. */
 export const Advisor: React.FC<AdvisorProps> = ({ visible, name = 'COMRADE KRUPNIK', message, onDismiss }) => {
+  const { isCompact } = useResponsive();
+
   if (!visible) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isCompact && styles.compactContainer]}>
       <Text style={styles.name}>{name}:</Text>
       <Text style={styles.message}>{message}</Text>
       <TouchableOpacity onPress={onDismiss} style={styles.dismissBtn} activeOpacity={0.7}>
@@ -67,5 +70,9 @@ const styles = StyleSheet.create({
     color: '#9e9e9e',
     fontFamily: monoFont,
     fontSize: 10,
+  },
+  compactContainer: {
+    width: '90%',
+    left: '5%',
   },
 });

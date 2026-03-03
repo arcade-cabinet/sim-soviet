@@ -10,8 +10,8 @@
 import type React from 'react';
 import { useCallback } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { CollectiveFocus } from '../ai/agents/infrastructure/CollectiveAgent';
 import { getEngine } from '../bridge/GameInit';
-import type { CollectiveFocus } from '../game/workers/governor';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { notifyStateChange } from '../stores/gameStore';
 import { Colors, monoFont, SharedStyles } from './styles';

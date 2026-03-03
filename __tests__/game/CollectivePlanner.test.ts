@@ -13,11 +13,11 @@
  * Deduplication: if a mandate already covers a defId, the demand is skipped.
  */
 
+import type { ConstructionDemand } from '@/ai/agents/infrastructure/CollectiveAgent';
+import { CollectivePlanner } from '@/ai/agents/infrastructure/CollectiveAgent';
+import { createPlanMandateState, type PlanMandateState } from '@/ai/agents/political/PoliticalAgent';
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
-import { CollectivePlanner } from '@/game/CollectivePlanner';
-import { createPlanMandateState, type PlanMandateState } from '@/game/PlanMandates';
-import type { ConstructionDemand } from '@/game/workers/demandSystem';
 
 describe('CollectivePlanner', () => {
   let planner: CollectivePlanner;

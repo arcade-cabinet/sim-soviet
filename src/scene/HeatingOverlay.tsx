@@ -1,25 +1,102 @@
 /**
  * HeatingOverlay — Per-building heating visual indicators during cold seasons.
  *
- * TODO: Implement heating overlay for R3F.
- * This is a visual nicety, not core gameplay. The original BabylonJS version
- * rendered warm orange point lights + chimney smoke for heated buildings
- * and blue tint planes for unheated buildings during cold months.
+ * During cold months (Nov-Mar = winter/autumn seasons):
+ *   - Buildings with operational heating: warm orange pointLight glow
+ *   - Buildings with failing heating: blue-tinted semi-transparent plane above
  *
- * Future implementation should use:
- * - <pointLight> for warm glow effects
- * - <points> for chimney smoke particles
- * - Semi-transparent planes for cold tint overlays
+ * Reads heating state from the EconomySystem via SimulationEngine,
+ * and building positions from the ECS bridge.
+ *
+ * Only renders during cold seasons to minimize GPU load.
  */
+
+import { useFrame } from '@react-three/fiber';
 import type React from 'react';
+import { useRef, useState } from 'react';
+import { getBuildingStates } from '../bridge/ECSBridge';
+import { getEngine } from '../bridge/GameInit';
+import { useGameSnapshot } from '../hooks/useGameState';
+
+/** Data for a single building's heating visual. */
+interface HeatingVisual {
+  gridX: number;
+  gridY: number;
+  heated: boolean;
+}
 
 /**
- * @stub Intentionally deferred during R3F migration (visual nicety, not core gameplay).
- * Tracked for post-launch: warm point lights + chimney smoke for heated buildings,
- * blue tint planes for unheated buildings during cold months.
+ * Whether this season has cold months that require heating.
+ * @param season - The current season name (e.g. 'winter', 'autumn', 'spring', 'summer')
+ * @returns True if the season requires building heating
  */
+function isColdSeason(season: string): boolean {
+  return season === 'winter' || season === 'autumn';
+}
+
+/** Renders per-building heating indicators (warm glow or cold overlay) during cold seasons. */
 const HeatingOverlay: React.FC = () => {
-  return null;
+  const snap = useGameSnapshot();
+  const [visuals, setVisuals] = useState<HeatingVisual[]>([]);
+  const prevVersionRef = useRef('');
+
+  // Only render during cold seasons
+  const cold = isColdSeason(snap.season);
+
+  // Update heating visuals at low frequency (when building count changes)
+  useFrame(() => {
+    if (!cold) {
+      if (visuals.length > 0) setVisuals([]);
+      return;
+    }
+
+    const engine = getEngine();
+    if (!engine) return;
+
+    const buildings = getBuildingStates();
+    const heating = engine.getEconomySystem().getHeating();
+    const versionKey = `${buildings.length}:${heating.failing}`;
+
+    // Version check — rebuild when building count or heating.failing changes
+    if (versionKey === prevVersionRef.current) return;
+    prevVersionRef.current = versionKey;
+
+    const isHeated = !heating.failing;
+
+    setVisuals(
+      buildings.map((b) => ({
+        gridX: b.gridX,
+        gridY: b.gridY,
+        heated: isHeated,
+      })),
+    );
+  });
+
+  if (!cold || visuals.length === 0) return null;
+
+  return (
+    <>
+      {visuals.map((v, i) =>
+        v.heated ? (
+          // Warm orange glow for heated buildings
+          <pointLight
+            key={`heat_${i}`}
+            position={[v.gridX + 0.5, 1.2, v.gridY + 0.5]}
+            color="#ff8a50"
+            intensity={0.4}
+            distance={3}
+            decay={2}
+          />
+        ) : (
+          // Blue cold overlay for unheated buildings
+          <mesh key={`cold_${i}`} position={[v.gridX + 0.5, 1.0, v.gridY + 0.5]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.9, 0.9]} />
+            <meshBasicMaterial color="#42a5f5" transparent opacity={0.3} depthWrite={false} side={2} />
+          </mesh>
+        ),
+      )}
+    </>
+  );
 };
 
 export default HeatingOverlay;

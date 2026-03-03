@@ -23,7 +23,8 @@
 
 | Directory | What | Files |
 |-----------|------|-------|
-| `src/game/` | ECS game systems (SimulationEngine, demographics, political, economy) | ~107 |
+| `src/ai/agents/` | **Yuka domain agents** (8 subpackages: core, economy, political, infrastructure, social, workforce, narrative, meta) | ~123 |
+| `src/game/` | Thin orchestrator (SimulationEngine ~1126 lines) + shared infra (era, Chronology, SeedSystem, SaveSystem) | ~15 |
 | `src/ecs/` | Miniplex ECS world, archetypes, systems, factories | ~20 |
 | `src/engine/` | Legacy game logic (GameState, SimTick) | ~13 |
 | `src/scene/` | R3F/drei 3D components | ~25 |

@@ -8,11 +8,11 @@
  * foundations autonomously.
  */
 
+import { autoPlaceBuilding, findPlacementCell } from '@/ai/agents/infrastructure/CollectiveAgent';
 import { GRID_SIZE } from '@/config';
 import { createBuilding, createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
-import { autoPlaceBuilding, findPlacementCell } from '@/game/workers/autoBuilder';
 
 describe('AutoBuilder', () => {
   let rng: GameRng;

@@ -1,6 +1,8 @@
 /**
  * @module ecs/systems/powerSystem
  *
+ * @deprecated Logic moved to PowerAgent (src/ai/agents/PowerAgent.ts).
+ *
  * Calculates power distribution across all buildings.
  *
  * Power plants generate power; other buildings consume it.

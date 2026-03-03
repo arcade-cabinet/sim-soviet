@@ -12,10 +12,10 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
+import { getMinigameNameForBuilding } from '../ai/agents/meta/minigames/BuildingMinigameMap';
 import { getUpgradeInfo, isUpgradeable, upgradeECSBuilding } from '../bridge/BuildingPlacement';
 import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
-import { getMinigameNameForBuilding } from '../game/minigames/BuildingMinigameMap';
 import {
   closeInspectMenu,
   type InspectBuildingType,

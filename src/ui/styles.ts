@@ -5,6 +5,9 @@
 
 import { Platform, StyleSheet } from 'react-native';
 
+// Re-export responsive utilities for convenience
+export { COMPACT_BREAKPOINT, MIN_FONT_SIZE, MIN_TAP_TARGET, scaled, scaledFont, scaledTap } from './responsive';
+
 // --- Color palette ---
 
 /** Soviet-themed color palette used across all UI components. */

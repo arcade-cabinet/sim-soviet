@@ -36,7 +36,7 @@ import {
   shouldRationsBeActive,
   TRUDODNI_PER_BUILDING,
   type TransferableResource,
-} from '../../src/game/economy';
+} from '../../src/ai/agents/economy/economy-core';
 import { GameRng } from '../../src/game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -312,8 +312,12 @@ describe('EconomySystem — Ration Cards', () => {
 
   it('ration demand accounts for tier distribution', () => {
     const demand = calculateRationDemand(100, DEFAULT_RATIONS);
-    // 50 workers * 1.0 + 20 employees * 0.7 + 20 dependents * 0.5 + 10 children * 0.4
-    const expectedFood = 50 * 1.0 + 20 * 0.7 + 20 * 0.5 + 10 * 0.4;
+    // 100 * (0.5 * 0.05 + 0.2 * 0.04 + 0.2 * 0.03 + 0.1 * 0.02) = 100 * 0.041 = 4.1
+    const expectedFood =
+      100 * DEFAULT_RATIONS.worker.share * DEFAULT_RATIONS.worker.food +
+      100 * DEFAULT_RATIONS.employee.share * DEFAULT_RATIONS.employee.food +
+      100 * DEFAULT_RATIONS.dependent.share * DEFAULT_RATIONS.dependent.food +
+      100 * DEFAULT_RATIONS.children.share * DEFAULT_RATIONS.children.food;
     expect(demand.food).toBeCloseTo(expectedFood);
   });
 
@@ -486,8 +490,8 @@ describe('EconomySystem — Starting Resources', () => {
   it('default 30x30 matches base values at comrade+revolution', () => {
     // comrade = 1.0, revolution = 0.8, size = 30/30 = 1.0
     const res = calculateStartingResources('comrade', 'revolution', 30);
-    expect(res.money).toBe(Math.round(2000 * 1.0 * 0.8 * 1.0));
-    expect(res.food).toBe(Math.round(200 * 1.0 * 0.8 * 1.0));
+    expect(res.money).toBe(Math.round(3000 * 1.0 * 0.8 * 1.0));
+    expect(res.food).toBe(Math.round(500 * 1.0 * 0.8 * 1.0));
   });
 
   it('all difficulty levels have valid multipliers', () => {

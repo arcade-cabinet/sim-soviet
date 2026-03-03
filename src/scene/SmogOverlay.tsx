@@ -15,13 +15,13 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 import { gameState } from '../engine/GameState';
-import { GRID_SIZE } from '../engine/GridTypes';
+import { getCurrentGridSize } from '../engine/GridTypes';
 
 /** Minimum smog value to render (skip nearly-clean cells) */
 const SMOG_THRESHOLD = 8;
 
-/** Max possible smog tiles (GRID_SIZE * GRID_SIZE) */
-const MAX_INSTANCES = GRID_SIZE * GRID_SIZE;
+/** Max possible smog tiles (50*50 = 2500 covers the largest grid) */
+const MAX_INSTANCES = 50 * 50;
 
 /** Lerp between muted green and warm amber based on smog ratio */
 function smogColor(ratio: number): [number, number, number] {
@@ -69,12 +69,13 @@ const SmogOverlay: React.FC = () => {
       return;
     }
 
+    const gridSize = getCurrentGridSize();
     let instanceIdx = 0;
 
-    for (let y = 0; y < GRID_SIZE; y++) {
+    for (let y = 0; y < gridSize; y++) {
       const row = grid[y];
       if (!row) continue;
-      for (let x = 0; x < GRID_SIZE; x++) {
+      for (let x = 0; x < gridSize; x++) {
         const cell = row[x];
         if (!cell || cell.smog < SMOG_THRESHOLD) continue;
 

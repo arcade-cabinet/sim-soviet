@@ -1,29 +1,25 @@
 /**
- * SaveSystem — game persistence via Drizzle ORM + sql.js (SQLite).
+ * SaveSystem — game persistence via Drizzle ORM + expo-sqlite.
  *
- * Saves/loads game state from ECS to an in-memory SQLite database that is
- * persisted to IndexedDB between sessions.
- *
- * Falls back to localStorage if the database isn't initialized
- * (e.g., during tests or if sql.js Wasm fails to load).
+ * Saves/loads game state from ECS to SQLite via expo-sqlite,
+ * which handles persistence automatically (OPFS on web, native SQLite on mobile).
  *
  * The `game_state` JSON column stores ALL extended state (subsystems,
  * all 14 resource fields, game config, durability, etc.) as a single blob.
  */
 import { eq } from 'drizzle-orm';
-import type { SQLJsDatabase } from 'drizzle-orm/sql-js';
+import type { ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite';
 import { z } from 'zod/v4';
-import { getDatabase, persistToIndexedDB } from '@/db/provider';
+import { getDatabase } from '@/db/provider';
 import * as dbSchema from '@/db/schema';
 import { buildingsLogic, decayableBuildings, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import { createBuilding } from '@/ecs/factories';
 import type { Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import { getFootprint } from '@/game/BuildingFootprints';
+import type { SubsystemSaveData } from './engine/types';
 import type { GameGrid } from './GameGrid';
-import type { SimulationEngine, SubsystemSaveData } from './SimulationEngine';
-
-const LOCALSTORAGE_KEY = 'simsoviet_save_v2';
+import type { SimulationEngine } from './SimulationEngine';
 
 /** Zod schema for validating save data on import / DB load. */
 const BuildingSaveEntrySchema = z.object({
@@ -96,9 +92,6 @@ const ExtendedSaveDataSchema = z.object({
     .optional(),
 });
 
-/** Module-level flag to log SQLite fallback warning only once. */
-let _sqliteWarningLogged = false;
-
 /** Shape of building data in save files. */
 interface BuildingSaveEntry {
   x: number;
@@ -140,8 +133,8 @@ export interface ExtendedSaveData {
 }
 
 /**
- * Game persistence via Drizzle ORM + sql.js (SQLite in Wasm).
- * Handles save/load/autosave with fallback to localStorage.
+ * Game persistence via Drizzle ORM + expo-sqlite.
+ * Handles save/load/autosave with SQLite persistence.
  */
 export class SaveSystem {
   private autoSaveTimer: ReturnType<typeof setInterval> | null = null;
@@ -155,16 +148,12 @@ export class SaveSystem {
   }
 
   /**
-   * Save the current game state.
-   * Uses Drizzle/SQLite if available, falls back to localStorage.
+   * Save the current game state to SQLite.
    */
   public async save(name = 'autosave'): Promise<boolean> {
     try {
-      const db = this.tryGetDb();
-      if (db) {
-        return this.saveToDb(db, name);
-      }
-      return this.saveToLocalStorage();
+      const db = getDatabase();
+      return this.saveToDb(db, name);
     } catch (error) {
       console.error('Failed to save game:', error);
       return false;
@@ -172,16 +161,12 @@ export class SaveSystem {
   }
 
   /**
-   * Load a saved game.
-   * Uses Drizzle/SQLite if available, falls back to localStorage.
+   * Load a saved game from SQLite.
    */
   public async load(name = 'autosave'): Promise<boolean> {
     try {
-      const db = this.tryGetDb();
-      if (db) {
-        return this.loadFromDb(db, name);
-      }
-      return this.loadFromLocalStorage();
+      const db = getDatabase();
+      return this.loadFromDb(db, name);
     } catch (error) {
       console.error('Failed to load game:', error);
       return false;
@@ -191,12 +176,9 @@ export class SaveSystem {
   /** Check if a save exists. */
   public async hasSave(name = 'autosave'): Promise<boolean> {
     try {
-      const db = this.tryGetDb();
-      if (db) {
-        const rows = db.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).all();
-        return rows.length > 0;
-      }
-      return localStorage.getItem(LOCALSTORAGE_KEY) !== null;
+      const db = getDatabase();
+      const rows = db.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).all();
+      return rows.length > 0;
     } catch (error) {
       console.error('[SaveSystem] hasSave failed:', error);
       return false;
@@ -206,12 +188,9 @@ export class SaveSystem {
   /** Check if any save exists (autosave or manual). */
   public async hasAnySave(): Promise<boolean> {
     try {
-      const db = this.tryGetDb();
-      if (db) {
-        const rows = db.select().from(dbSchema.saves).all();
-        return rows.length > 0;
-      }
-      return localStorage.getItem(LOCALSTORAGE_KEY) !== null;
+      const db = getDatabase();
+      const rows = db.select().from(dbSchema.saves).all();
+      return rows.length > 0;
     } catch (error) {
       console.error('[SaveSystem] hasAnySave failed:', error);
       return false;
@@ -221,12 +200,9 @@ export class SaveSystem {
   /** List all save names. */
   public async listSaves(): Promise<string[]> {
     try {
-      const db = this.tryGetDb();
-      if (db) {
-        const rows = db.select({ name: dbSchema.saves.name }).from(dbSchema.saves).all();
-        return rows.map((r) => r.name);
-      }
-      return localStorage.getItem(LOCALSTORAGE_KEY) !== null ? ['autosave'] : [];
+      const db = getDatabase();
+      const rows = db.select({ name: dbSchema.saves.name }).from(dbSchema.saves).all();
+      return rows.map((r) => r.name);
     } catch (error) {
       console.error('[SaveSystem] listSaves failed:', error);
       return [];
@@ -236,18 +212,10 @@ export class SaveSystem {
   /** Get timestamp of the most recent save. */
   public async getLastSaveTime(): Promise<number | undefined> {
     try {
-      const db = this.tryGetDb();
-      if (db) {
-        const rows = db.select({ timestamp: dbSchema.saves.timestamp }).from(dbSchema.saves).all();
-        if (rows.length === 0) return undefined;
-        return Math.max(...rows.map((r) => r.timestamp));
-      }
-      const raw = localStorage.getItem(LOCALSTORAGE_KEY);
-      if (raw) {
-        const data = JSON.parse(raw);
-        return data.timestamp;
-      }
-      return undefined;
+      const db = getDatabase();
+      const rows = db.select({ timestamp: dbSchema.saves.timestamp }).from(dbSchema.saves).all();
+      if (rows.length === 0) return undefined;
+      return Math.max(...rows.map((r) => r.timestamp));
     } catch (error) {
       console.error('[SaveSystem] getLastSaveTime failed:', error);
       return undefined;
@@ -257,19 +225,14 @@ export class SaveSystem {
   /** Delete a save. */
   public async deleteSave(name = 'autosave'): Promise<void> {
     try {
-      const db = this.tryGetDb();
-      if (db) {
-        const save = db.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).get();
-        if (save) {
-          db.delete(dbSchema.buildings).where(eq(dbSchema.buildings.saveId, save.id)).run();
-          db.delete(dbSchema.resources).where(eq(dbSchema.resources.saveId, save.id)).run();
-          db.delete(dbSchema.chronology).where(eq(dbSchema.chronology.saveId, save.id)).run();
-          db.delete(dbSchema.quotas).where(eq(dbSchema.quotas.saveId, save.id)).run();
-          db.delete(dbSchema.saves).where(eq(dbSchema.saves.id, save.id)).run();
-          await persistToIndexedDB();
-        }
-      } else {
-        localStorage.removeItem(LOCALSTORAGE_KEY);
+      const db = getDatabase();
+      const save = db.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).get();
+      if (save) {
+        db.delete(dbSchema.buildings).where(eq(dbSchema.buildings.saveId, save.id)).run();
+        db.delete(dbSchema.resources).where(eq(dbSchema.resources.saveId, save.id)).run();
+        db.delete(dbSchema.chronology).where(eq(dbSchema.chronology.saveId, save.id)).run();
+        db.delete(dbSchema.quotas).where(eq(dbSchema.quotas.saveId, save.id)).run();
+        db.delete(dbSchema.saves).where(eq(dbSchema.saves.id, save.id)).run();
       }
     } catch (error) {
       console.error('Failed to delete save:', error);
@@ -454,19 +417,7 @@ export class SaveSystem {
 
   // ── SQLite (Drizzle) persistence ──────────────────────────────────────
 
-  private tryGetDb(): SQLJsDatabase<typeof dbSchema> | null {
-    try {
-      return getDatabase();
-    } catch (error) {
-      if (!_sqliteWarningLogged) {
-        console.warn('[SaveSystem] SQLite unavailable, using localStorage fallback:', error);
-        _sqliteWarningLogged = true;
-      }
-      return null;
-    }
-  }
-
-  private saveToDb(db: SQLJsDatabase<typeof dbSchema>, name: string): boolean {
+  private saveToDb(db: ExpoSQLiteDatabase<typeof dbSchema>, name: string): boolean {
     const extendedState = this.collectExtendedState();
     if (!extendedState) return false;
 
@@ -547,13 +498,10 @@ export class SaveSystem {
       }
     });
 
-    // Persist SQLite to IndexedDB (fire-and-forget)
-    persistToIndexedDB();
-
     return true;
   }
 
-  private loadFromDb(db: SQLJsDatabase<typeof dbSchema>, name: string): boolean {
+  private loadFromDb(db: ExpoSQLiteDatabase<typeof dbSchema>, name: string): boolean {
     const save = db.select().from(dbSchema.saves).where(eq(dbSchema.saves.name, name)).get();
     if (!save) return false;
 
@@ -576,7 +524,7 @@ export class SaveSystem {
   }
 
   /** Load from legacy per-table format (pre-v2.0.0 saves). */
-  private loadFromDbLegacy(db: SQLJsDatabase<typeof dbSchema>, saveId: number): boolean {
+  private loadFromDbLegacy(db: ExpoSQLiteDatabase<typeof dbSchema>, saveId: number): boolean {
     const res = getResourceEntity();
     const meta = getMetaEntity();
     if (!res || !meta) return false;
@@ -631,33 +579,5 @@ export class SaveSystem {
     }
 
     return true;
-  }
-
-  // ── localStorage fallback ──────────────────────────────────────────────
-
-  private saveToLocalStorage(): boolean {
-    const extendedState = this.collectExtendedState();
-    if (!extendedState) return false;
-
-    localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(extendedState));
-    return true;
-  }
-
-  private loadFromLocalStorage(): boolean {
-    const savedData = localStorage.getItem(LOCALSTORAGE_KEY);
-    if (!savedData) return false;
-
-    try {
-      const raw: unknown = JSON.parse(savedData);
-      const result = ExtendedSaveDataSchema.safeParse(raw);
-      if (!result.success) {
-        console.error('localStorage save data failed validation:', result.error);
-        return false;
-      }
-      return this.restoreExtendedState(result.data as ExtendedSaveData);
-    } catch (error) {
-      console.error('Failed to parse localStorage save data:', error);
-      return false;
-    }
   }
 }

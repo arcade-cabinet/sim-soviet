@@ -6,15 +6,19 @@
  * ready for tick().
  */
 
-import { GRID_SIZE } from '@/config';
+import { FreeformGovernor } from '@/ai/agents/crisis/FreeformGovernor';
+import type { GovernorMode } from '@/ai/agents/crisis/Governor';
+import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
+import { type ConsequenceLevel, DIFFICULTY_PRESETS, type DifficultyLevel } from '@/ai/agents/political/ScoringSystem';
+import { GRID_SIZE, setCurrentGridSize } from '@/config';
 import { createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { createStartingSettlement } from '@/ecs/factories/settlementFactories';
+import type { SimCallbacks } from '@/game/engine/types';
 import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
 import { recalculatePaths } from '@/game/PathSystem';
 import { SaveSystem } from '@/game/SaveSystem';
-import { type ConsequenceLevel, DIFFICULTY_PRESETS, type DifficultyLevel } from '@/game/ScoringSystem';
-import { type SimCallbacks, SimulationEngine } from '@/game/SimulationEngine';
+import { SimulationEngine } from '@/game/SimulationEngine';
 import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 
 /** Configuration options for game initialization (difficulty, map size, seed). */
@@ -23,6 +27,12 @@ export interface GameInitOptions {
   consequence?: ConsequenceLevel;
   seed?: string;
   mapSize?: 'small' | 'medium' | 'large';
+  /** When true, enables ChairmanAgent autopilot — AI auto-resolves minigames and reports. */
+  autopilot?: boolean;
+  /** Game mode — historical uses real Soviet timeline, freeform uses alternate history, classic uses DIFFICULTY_PRESETS. */
+  gameMode?: GovernorMode;
+  /** Year at which history diverges in freeform mode (1917-1991). */
+  divergenceYear?: number;
 }
 
 let engine: SimulationEngine | null = null;
@@ -49,12 +59,21 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   const MAP_GRID_SIZES: Record<string, number> = { small: 20, medium: 30, large: 50 };
   const gridSize = MAP_GRID_SIZES[mapSizeKey] ?? GRID_SIZE;
 
+  // Set runtime grid size so scene components use the correct value
+  setCurrentGridSize(gridSize);
+
   // Create singleton store entities with starting resources.
   // Era 1 (Revolution/1917): Timber only. No steel, no power, no food stockpile.
   // Scale starting resources by difficulty multiplier (worker=2.0x, comrade=1.0x, tovarish=0.5x).
-  const resMult = DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
+  // Historical/freeform mode: history IS the difficulty — use 1.0 (equivalent to 'comrade').
+  const resMult =
+    options?.gameMode === 'historical' || options?.gameMode === 'freeform'
+      ? 1.0
+      : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
+  // Starting resources — generous enough for ~2 seasons of survival without farms.
+  // This is a city-builder, not a survival game: players need time to explore and build.
   createResourceStore({
-    food: 0,
+    food: Math.round(500 * resMult),
     timber: Math.round(200 * resMult),
     steel: 0,
     cement: 0,
@@ -86,11 +105,26 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   createStartingSettlement(difficulty);
 
   // Create spatial index grid
-  gameGrid = new GameGrid(GRID_SIZE);
+  gameGrid = new GameGrid(gridSize);
   const grid = gameGrid;
 
   // Create and configure SimulationEngine
   engine = new SimulationEngine(grid, callbacks, undefined, difficulty, consequence);
+
+  // Wire Governor based on game mode
+  if (options?.gameMode === 'historical') {
+    const governor = new HistoricalGovernor();
+    engine.setGovernor(governor);
+  } else if (options?.gameMode === 'freeform') {
+    const governor = new FreeformGovernor(options.divergenceYear ?? 1945);
+    engine.setGovernor(governor);
+  }
+  // 'classic' or undefined: no governor (backward compat — uses DIFFICULTY_PRESETS)
+
+  // Enable autopilot if requested — ChairmanAgent auto-resolves minigames and reports
+  if (options?.autopilot) {
+    engine.enableAutopilot();
+  }
 
   // Create SaveSystem wired to the grid and engine
   saveSystem = new SaveSystem(grid);
@@ -101,6 +135,11 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   recalculatePaths();
 
   initialized = true;
+
+  // Expose engine on window for E2E page.evaluate() access
+  if (typeof window !== 'undefined') {
+    (window as any).__simEngine = engine;
+  }
 
   // Initial notification to populate React snapshot
   notifyTerrainDirty();
@@ -135,4 +174,16 @@ export function shutdownSaveSystem(): void {
     stopAutoSave();
     stopAutoSave = null;
   }
+}
+
+/**
+ * Reset all module-level state so initGame() can be called again for a new game.
+ * Called by resetAllSingletons() during game restart.
+ */
+export function resetGameInit(): void {
+  shutdownSaveSystem();
+  engine = null;
+  gameGrid = null;
+  saveSystem = null;
+  initialized = false;
 }

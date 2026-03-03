@@ -1,7 +1,8 @@
+import type { QuotaState } from '../../src/ai/agents/political/PoliticalAgent';
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
-import type { QuotaState } from '../../src/ecs/systems';
 import { world } from '../../src/ecs/world';
+import { TICKS_PER_MONTH } from '../../src/game/Chronology';
 import { GameGrid } from '../../src/game/GameGrid';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
@@ -57,11 +58,11 @@ describe('SimulationEngine', () => {
       expect(getMetaEntity()!.gameMeta.date.month).toBe(11);
     });
 
-    it('rolls year after 3 months (Oct 1922 → Jan 1923)', () => {
+    it('rolls year after 3 months (Oct 1917 → Jan 1918)', () => {
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
       // Starting at month 10, 3 months (90 ticks) to year boundary
       for (let i = 0; i < 90; i++) engine.tick();
-      expect(getMetaEntity()!.gameMeta.date.year).toBe(1923);
+      expect(getMetaEntity()!.gameMeta.date.year).toBe(1918);
       expect(getMetaEntity()!.gameMeta.date.month).toBe(1);
     });
 
@@ -199,14 +200,15 @@ describe('SimulationEngine', () => {
   // ── Food consumption ────────────────────────────────────
 
   describe('food consumption', () => {
-    it('consumes food based on population (pop/10 rounded up)', () => {
+    it('consumes food based on population (pop/25 rounded up)', () => {
       const store = getResourceEntity()!;
       store.resources.population = 15;
       store.resources.food = 100;
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
       engine.tick();
-      // 100 - ceil(15/10) = 98 consumption, minus ~0.5 spoilage from storageSystem
-      expect(getResourceEntity()!.resources.food).toBeCloseTo(97.5, 0);
+      // ceil(15/25 * consumptionMult) where revolution consumptionMult=0.9 → ceil(0.54) = 1
+      // 100 - 1 = 99, minus ~0.1 spoilage from storageSystem
+      expect(getResourceEntity()!.resources.food).toBeCloseTo(98.9, 0);
     });
 
     it('consumes 0 food when population is 0', () => {
@@ -219,23 +221,59 @@ describe('SimulationEngine', () => {
       expect(getResourceEntity()!.resources.food).toBeGreaterThan(99);
     });
 
-    it('causes starvation when food is insufficient', () => {
+    it('causes starvation when food is insufficient (after grace period)', () => {
       const store = getResourceEntity()!;
-      store.resources.population = 100;
+      // Must create actual citizen entities — tick() syncs population from entity count.
+      // Use 200 to survive cannibalism deaths from the foraging system (1/tick after
+      // 30 ticks of starvation) throughout the 180-tick grace period.
+      engine.getWorkerSystem().syncPopulation(200);
       store.resources.food = 0;
-      store.resources.vodka = 100;
-      engine.tick();
-      expect(getResourceEntity()!.resources.population).toBeLessThanOrEqual(95);
+      store.resources.vodka = 200;
+      // Exhaust grace period (180 ticks) — force food=0 each tick to prevent
+      // any food source (fondy, private plots, production) from resetting
+      // the starvation counter. Mock FoodAgent.produce AND intercept consume
+      // to zero food just before the starvation check.
+      engine.getFoodAgent().reset();
+      jest.spyOn(engine.getFoodAgent(), 'produce').mockImplementation(() => {});
+      const originalConsume = engine.getFoodAgent().consume.bind(engine.getFoodAgent());
+      jest.spyOn(engine.getFoodAgent(), 'consume').mockImplementation((mult?: number) => {
+        // Zero food right before consumption so starvation counter increments
+        store.resources.food = 0;
+        return originalConsume(mult);
+      });
+      for (let i = 0; i < 181; i++) {
+        store.resources.food = 0;
+        store.resources.vodka = 200;
+        engine.tick();
+      }
+      expect(getResourceEntity()!.resources.population).toBeLessThan(200);
       expect(cb.onToast).toHaveBeenCalledWith('STARVATION DETECTED', 'critical');
     });
 
-    it('reduces population by 5 during starvation (clamped at 0)', () => {
+    it('reduces population during starvation (up to 3 per tick)', () => {
       const store = getResourceEntity()!;
-      store.resources.food = 0;
-      // Sync citizen entities to match desired population
-      engine.getWorkerSystem().syncPopulation(3);
-      engine.tick();
-      expect(getResourceEntity()!.resources.population).toBe(0);
+      // Use enough population that starvation deaths are clearly visible
+      engine.getWorkerSystem().syncPopulation(100);
+      const popBefore = getResourceEntity()!.resources.population;
+      // Exhaust grace period (120 ticks) + sustain starvation for 30 more ticks.
+      // Mock FoodAgent.produce and intercept consume to zero food before
+      // starvation check, preventing any food source from resetting the counter.
+      engine.getFoodAgent().reset();
+      jest.spyOn(engine.getFoodAgent(), 'produce').mockImplementation(() => {});
+      const originalConsume2 = engine.getFoodAgent().consume.bind(engine.getFoodAgent());
+      jest.spyOn(engine.getFoodAgent(), 'consume').mockImplementation((mult?: number) => {
+        store.resources.food = 0;
+        return originalConsume2(mult);
+      });
+      for (let i = 0; i < 150; i++) {
+        store.resources.food = 0;
+        store.resources.vodka = 100;
+        engine.tick();
+      }
+      // After 150 ticks (120 grace + 30 death ticks at 3/tick), population
+      // should be significantly reduced from the starting 100
+      const popAfter = getResourceEntity()!.resources.population;
+      expect(popAfter).toBeLessThan(popBefore);
     });
   });
 
@@ -250,7 +288,7 @@ describe('SimulationEngine', () => {
       engine.getWorkerSystem().syncPopulation(20);
       engine.tick();
       // Vodka consumed: ceil((20/20) * consumptionMult) where consumptionMult varies by era
-      // Revolution era consumptionMult=1.2 → ceil(1.2)=2 → 48
+      // Revolution era consumptionMult=0.9 → ceil(0.9)=1 → 49
       // Default consumptionMult=1.0 → ceil(1.0)=1 → 49
       expect(getResourceEntity()!.resources.vodka).toBeLessThan(50);
       expect(getResourceEntity()!.resources.vodka).toBeGreaterThanOrEqual(48);
@@ -267,7 +305,7 @@ describe('SimulationEngine', () => {
     });
   });
 
-  // ── Population growth ───────────────────────────────────
+  // ── Population growth (yearly immigration) ─────────────
 
   describe('population growth', () => {
     it('does not grow population without housing', () => {
@@ -280,17 +318,16 @@ describe('SimulationEngine', () => {
       expect(getResourceEntity()!.resources.population).toBe(0);
     });
 
-    it('grows population when housing and food are available', () => {
+    it('does not grow population on a normal (non-year-boundary) tick', () => {
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'apartment-tower-a'); // housingCap=50
       const store = getResourceEntity()!;
       store.resources.food = 1000;
-      // Sync citizen entities to match desired population
       engine.getWorkerSystem().syncPopulation(5);
-      jest.spyOn(Math, 'random').mockReturnValue(0.5);
-      engine.tick();
-      // populationSystem returns growthCount=1, WorkerSystem spawns 1 new citizen
-      expect(getResourceEntity()!.resources.population).toBe(6);
+      const popBefore = getResourceEntity()!.resources.population;
+      engine.tick(); // Not a year boundary
+      // Immigration is gated to yearly — no growth on normal tick
+      expect(getResourceEntity()!.resources.population).toBe(popBefore);
     });
 
     it('does not grow population when at housing cap', () => {
@@ -312,8 +349,8 @@ describe('SimulationEngine', () => {
       // Sync citizen entities to match desired population
       engine.getWorkerSystem().syncPopulation(1);
       engine.tick();
-      // After consumption: food = 5 - ceil(1/10) = 4
-      // populationSystem: food(4) > 10? No → no growth
+      // After consumption: food = 5 - ceil(1/12) = 4
+      // populationSystem: food(4) > 10? No → no growth even at year boundary
       expect(getResourceEntity()!.resources.population).toBeLessThanOrEqual(1);
     });
   });
@@ -360,7 +397,7 @@ describe('SimulationEngine', () => {
 
       expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('Quota met'));
       expect(getMetaEntity()!.gameMeta.quota.type).toBe('vodka');
-      expect(getMetaEntity()!.gameMeta.quota.target).toBe(500);
+      expect(getMetaEntity()!.gameMeta.quota.target).toBe(400);
     });
 
     it('shows game-over advisor when quota is failed', () => {
@@ -421,7 +458,241 @@ describe('SimulationEngine', () => {
       const quota = engine.getQuota();
       expect(quota).toBeDefined();
       expect(quota.type).toBe('food');
-      expect(quota.target).toBe(500);
+      expect(quota.target).toBe(400);
+    });
+  });
+
+  // ── Autopilot falsification ─────────────────────────────────
+
+  describe('autopilot annual report falsification', () => {
+    it('submits honest report when quota is fully met', () => {
+      engine.enableAutopilot();
+      let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
+
+      // Trigger the autopilot onAnnualReport callback directly
+      const reportCallback = (engine as unknown as { callbacks: SimCallbacks }).callbacks.onAnnualReport!;
+      reportCallback(
+        {
+          year: 1922,
+          quotaType: 'food',
+          quotaTarget: 500,
+          quotaCurrent: 600, // Quota exceeded
+          actualPop: 80,
+          actualFood: 600,
+          actualVodka: 30,
+        },
+        (submission) => {
+          captured = submission;
+        },
+      );
+
+      expect(captured).not.toBeNull();
+      expect(captured!.reportedQuota).toBe(600); // Honest: actual value
+      expect(captured!.reportedSecondary).toBe(30); // Honest: actual vodka
+      expect(captured!.reportedPop).toBe(80);
+    });
+
+    it('falsifies report for moderate shortfall when marks are low', () => {
+      engine.enableAutopilot();
+
+      // Set up low marks via assessGameState — tick the autopilot section
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 0, commendations: 0, blat: 0 });
+
+      let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
+
+      const reportCallback = (engine as unknown as { callbacks: SimCallbacks }).callbacks.onAnnualReport!;
+      reportCallback(
+        {
+          year: 1922,
+          quotaType: 'food',
+          quotaTarget: 500,
+          quotaCurrent: 350, // 70% met — moderate shortfall
+          actualPop: 80,
+          actualFood: 350,
+          actualVodka: 20,
+        },
+        (submission) => {
+          captured = submission;
+        },
+      );
+
+      expect(captured).not.toBeNull();
+      // Falsified: quota inflated to target
+      expect(captured!.reportedQuota).toBe(500);
+      // Secondary inflated by same ratio: 20 * (500/350) ≈ 29
+      expect(captured!.reportedSecondary).toBe(Math.round(20 * (500 / 350)));
+      // Population always honest
+      expect(captured!.reportedPop).toBe(80);
+    });
+
+    it('submits honest report for moderate shortfall when marks are high', () => {
+      engine.enableAutopilot();
+
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 4, commendations: 0, blat: 0 });
+
+      let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
+
+      const reportCallback = (engine as unknown as { callbacks: SimCallbacks }).callbacks.onAnnualReport!;
+      reportCallback(
+        {
+          year: 1922,
+          quotaType: 'food',
+          quotaTarget: 500,
+          quotaCurrent: 350, // 70% met
+          actualPop: 80,
+          actualFood: 350,
+          actualVodka: 20,
+        },
+        (submission) => {
+          captured = submission;
+        },
+      );
+
+      expect(captured).not.toBeNull();
+      // Honest: too risky to falsify with 4 marks
+      expect(captured!.reportedQuota).toBe(350);
+      expect(captured!.reportedSecondary).toBe(20);
+      expect(captured!.reportedPop).toBe(80);
+    });
+
+    it('submits honest report for large shortfall regardless of marks', () => {
+      engine.enableAutopilot();
+
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 0, commendations: 0, blat: 0 });
+
+      let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
+
+      const reportCallback = (engine as unknown as { callbacks: SimCallbacks }).callbacks.onAnnualReport!;
+      reportCallback(
+        {
+          year: 1922,
+          quotaType: 'food',
+          quotaTarget: 500,
+          quotaCurrent: 200, // 40% met — large shortfall
+          actualPop: 80,
+          actualFood: 200,
+          actualVodka: 10,
+        },
+        (submission) => {
+          captured = submission;
+        },
+      );
+
+      expect(captured).not.toBeNull();
+      // Honest: gap too obvious to falsify
+      expect(captured!.reportedQuota).toBe(200);
+      expect(captured!.reportedSecondary).toBe(10);
+      expect(captured!.reportedPop).toBe(80);
+    });
+  });
+
+  // ── Autopilot bribery ───────────────────────────────────────
+
+  describe('autopilot bribery', () => {
+    it('fires bribe toast and calls handleBribeOffer when chairman recommends bribe', () => {
+      engine.enableAutopilot();
+      const store = getResourceEntity()!;
+      store.resources.blat = 10;
+
+      // Give the chairman high marks + blat context
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 5, commendations: 0, blat: 10 });
+
+      // Spy on KGBAgent.handleBribeOffer to verify it's called
+      const kgb = engine.getKGBAgent();
+      const bribeSpy = jest.spyOn(kgb, 'handleBribeOffer');
+
+      engine.tick();
+
+      // Bribe should have been attempted
+      expect(cb.onToast).toHaveBeenCalledWith('Autopilot: blat exchanged to reduce KGB suspicion', 'warning');
+      expect(bribeSpy).toHaveBeenCalledWith(0.5);
+    });
+
+    it('does not bribe when marks are low', () => {
+      engine.enableAutopilot();
+      const store = getResourceEntity()!;
+      store.resources.blat = 10;
+
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 2, commendations: 0, blat: 10 });
+
+      engine.tick();
+
+      // The bribery toast should NOT have fired — marks too low
+      expect(cb.onToast).not.toHaveBeenCalledWith('Autopilot: blat exchanged to reduce KGB suspicion', 'warning');
+    });
+
+    it('does not bribe when blat is insufficient', () => {
+      engine.enableAutopilot();
+      const store = getResourceEntity()!;
+      store.resources.blat = 1;
+
+      const chairman = engine.getAgentManager().getChairman()!;
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 5, commendations: 0, blat: 1 });
+
+      engine.tick();
+
+      // The bribery toast should NOT have fired — blat too low
+      expect(cb.onToast).not.toHaveBeenCalledWith('Autopilot: blat exchanged to reduce KGB suspicion', 'warning');
+    });
+  });
+
+  // ── Seasonal farm multiplier ──────────────────────────────
+
+  describe('seasonal farm multiplier', () => {
+    it('passes farmModifier === 0 to FoodAgent during winter months', () => {
+      // Game starts at month 10 (Oct). Advance 1 month (30 ticks) to reach month 11 (Winter).
+      // Winter months (11,12,1,2,3) have farmMultiplier = 0.0
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
+
+      for (let i = 0; i < TICKS_PER_MONTH; i++) engine.tick(); // Now at month 11 (Winter)
+
+      // Spy on FoodAgent.produce to capture the farmModifier passed in
+      const foodAgent = engine.getFoodAgent();
+      const produceSpy = jest.spyOn(foodAgent, 'produce');
+
+      engine.tick(); // One tick in month 11 (Winter)
+
+      expect(produceSpy).toHaveBeenCalled();
+      const callArgs = produceSpy.mock.calls[0]![0]!;
+      // farmModifier should be 0 because seasonFarmMult (0.0) * anything = 0
+      expect(callArgs.farmModifier).toBe(0);
+    });
+
+    it('passes amplified farmModifier (> 1.0) to FoodAgent during Golden Week (month 6)', () => {
+      // Game starts at month 10 (Oct). Advance 8 months to reach month 6 (Golden Week).
+      // Month: 10 -> 11 -> 12 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6
+      createBuilding(0, 0, 'power-station');
+      createBuilding(1, 1, 'collective-farm-hq');
+
+      // Prevent game-over from KGB arrests / quota failures during the 240-tick advance.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      jest.spyOn(engine as any, 'endGame').mockImplementation(() => {});
+
+      // Spy on FoodAgent.produce BEFORE advancing
+      const foodAgent = engine.getFoodAgent();
+      const produceSpy = jest.spyOn(foodAgent, 'produce');
+
+      // Advance 8 months (240 ticks) to reach month 6
+      for (let i = 0; i < 8 * TICKS_PER_MONTH; i++) engine.tick();
+
+      produceSpy.mockClear();
+      engine.tick(); // One tick in month 6 (Golden Week)
+
+      expect(produceSpy).toHaveBeenCalled();
+      const callArgs = produceSpy.mock.calls[0]![0]!;
+      // Golden Week farmMultiplier = 3.0
+      // farmMod = 3.0 * weatherProfile.farmModifier * politburoMods * eraMods * heatingPenalty * mts
+      // Weather modifier varies (0.15-2.0) so farmMod ranges widely, but must be > 1.0
+      // since seasonFarmMult alone is 3.0 (even worst weather 0.15 * 3.0 = 0.45 won't apply
+      // here because Golden Week weather is favorable). With typical weather: ~1.5 - 6.0
+      // Without the seasonal fix, this value would be <= 1.0 (just weather * other mods).
+      expect(callArgs.farmModifier).toBeGreaterThan(1.0);
     });
   });
 });

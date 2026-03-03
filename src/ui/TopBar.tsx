@@ -7,6 +7,7 @@ import type React from 'react';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont, SharedStyles } from './styles';
+import { useResponsive } from './useResponsive';
 
 const ERA_LABELS: Record<string, string> = {
   revolution: 'REVOLUTION',
@@ -63,6 +64,7 @@ export interface TopBarProps {
   onShowMarket?: () => void;
   onShowNotifications?: () => void;
   unreadNotifications?: number;
+  autopilot?: boolean;
 }
 
 // ── Overflow menu item definition ─────────────────────────────────────────
@@ -118,8 +120,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   onShowMarket,
   onShowNotifications,
   unreadNotifications = 0,
+  autopilot = false,
 }) => {
   const [showOverflow, setShowOverflow] = useState(false);
+  const { isCompact } = useResponsive();
 
   const toggleOverflow = useCallback(() => {
     setShowOverflow((v) => !v);
@@ -155,23 +159,31 @@ export const TopBar: React.FC<TopBarProps> = ({
   if (onShowMarket) overflowItems.push({ icon: '\u{1F6D2}', label: 'MARKET', handler: onShowMarket });
   if (onShowSaveLoad) overflowItems.push({ icon: '\u{1F4BE}', label: 'SAVE / LOAD', handler: onShowSaveLoad });
 
+  const containerHeight = isCompact ? 44 : 60;
+
   return (
     <View style={styles.wrapper}>
-      <View style={[SharedStyles.panel, styles.container]}>
+      <View style={[SharedStyles.panel, styles.container, { height: containerHeight }]}>
         <View style={styles.leftGroup}>
-          <Text style={styles.title}>
-            <Text style={{ color: Colors.sovietRed }}>SIM</Text>
-            <Text style={{ color: Colors.white }}>SOVIET</Text> <Text style={styles.titleYear}>1917</Text>
-          </Text>
-          <View style={styles.seasonBox}>
-            <Text style={styles.seasonLabel}>{season}</Text>
-            <Text style={styles.weatherLabel}>{weather}</Text>
-          </View>
-          <View style={styles.eraBox}>
-            <Text testID="era-label" style={styles.eraLabel}>
-              {ERA_LABELS[currentEra] ?? currentEra.toUpperCase()}
+          {!isCompact && (
+            <Text style={styles.title}>
+              <Text style={{ color: Colors.sovietRed }}>SIM</Text>
+              <Text style={{ color: Colors.white }}>SOVIET</Text> <Text style={styles.titleYear}>1917</Text>
             </Text>
-          </View>
+          )}
+          {!isCompact && (
+            <View style={styles.seasonBox}>
+              <Text style={styles.seasonLabel}>{season}</Text>
+              <Text style={styles.weatherLabel}>{weather}</Text>
+            </View>
+          )}
+          {!isCompact && (
+            <View style={styles.eraBox}>
+              <Text testID="era-label" style={styles.eraLabel}>
+                {ERA_LABELS[currentEra] ?? currentEra.toUpperCase()}
+              </Text>
+            </View>
+          )}
           <ThreatIndicator
             threatLevel={threatLevel}
             blackMarks={blackMarks}
@@ -183,6 +195,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             <TouchableOpacity onPress={onShowAchievements} style={styles.achBtn} activeOpacity={0.7}>
               <Text style={styles.achBtnText}>{'\u2605'}</Text>
             </TouchableOpacity>
+          )}
+          {autopilot && (
+            <View style={styles.aiBadge}>
+              <Text style={styles.aiBadgeText}>AI</Text>
+            </View>
           )}
           {onShowNotifications && (
             <TouchableOpacity onPress={onShowNotifications} style={styles.notifBtn} activeOpacity={0.7}>
@@ -202,59 +219,149 @@ export const TopBar: React.FC<TopBarProps> = ({
         </View>
 
         {/* Right: resources, calendar, speed */}
-        <View style={styles.rightGroup}>
-          <ResourceStat
-            label="TIMBER"
-            emoji={'\u{1FAB5}'}
-            value={String(timber)}
-            color="#a1887f"
-            testID="timber-value"
-          />
-          <ResourceStat label="STEEL" emoji={'\u{1F529}'} value={String(steel)} color="#90a4ae" testID="steel-value" />
-          <ResourceStat label="CEMENT" value={String(cement)} color="#bdbdbd" testID="cement-value" />
-          <ResourceStat
-            label="POWER"
-            emoji={'\u26A1'}
-            value={`${powerUsed}/${powerGen}`}
-            color={Colors.sovietGold}
-            testID="power-value"
-          />
-          <ResourceStat label="FOOD" emoji={'\u{1F954}'} value={String(food)} color="#fdba74" testID="food-value" />
-          <ResourceStat
-            label="VODKA"
-            emoji={'\u{1F37E}'}
-            value={String(vodka)}
-            color={Colors.termBlue}
-            testID="vodka-value"
-          />
-          <ResourceStat label="POP" value={String(population)} color={Colors.white} borderRight testID="pop-value" />
+        {isCompact ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.compactRightScroll}
+            contentContainerStyle={styles.compactRightContent}
+          >
+            <ResourceStat
+              label="TIMBER"
+              emoji={'\u{1FAB5}'}
+              value={String(timber)}
+              color="#a1887f"
+              testID="timber-value"
+              compact
+            />
+            <ResourceStat
+              label="STEEL"
+              emoji={'\u{1F529}'}
+              value={String(steel)}
+              color="#90a4ae"
+              testID="steel-value"
+              compact
+            />
+            <ResourceStat label="CEMENT" value={String(cement)} color="#bdbdbd" testID="cement-value" compact />
+            <ResourceStat
+              label="POWER"
+              emoji={'\u26A1'}
+              value={`${powerUsed}/${powerGen}`}
+              color={Colors.sovietGold}
+              testID="power-value"
+              compact
+            />
+            <ResourceStat
+              label="FOOD"
+              emoji={'\u{1F954}'}
+              value={String(food)}
+              color="#fdba74"
+              testID="food-value"
+              compact
+            />
+            <ResourceStat
+              label="VODKA"
+              emoji={'\u{1F37E}'}
+              value={String(vodka)}
+              color={Colors.termBlue}
+              testID="vodka-value"
+              compact
+            />
+            <ResourceStat
+              label="POP"
+              value={String(population)}
+              color={Colors.white}
+              borderRight
+              testID="pop-value"
+              compact
+            />
 
-          {/* Calendar */}
-          <View style={styles.calendarBox}>
-            <Text style={styles.statLabel}>CALENDAR</Text>
-            <Text testID="date-label" style={styles.dateText}>
-              {dateLabel}
-            </Text>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${Math.round(monthProgress * 100)}%` }]} />
+            <View style={styles.calendarBox}>
+              <Text style={styles.compactStatLabel}>CALENDAR</Text>
+              <Text testID="date-label" style={styles.compactDateText}>
+                {dateLabel}
+              </Text>
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${Math.round(monthProgress * 100)}%` }]} />
+              </View>
+            </View>
+
+            <View style={styles.speedRow}>
+              <SpeedButton label="||" value={0} active={speed === 0} onPress={onSetSpeed} compact />
+              <SpeedButton label={'\u25B6'} value={1} active={speed === 1} onPress={onSetSpeed} compact />
+              <SpeedButton label={'\u25B6\u25B6'} value={2} active={speed === 2} onPress={onSetSpeed} compact />
+              <SpeedButton label={'\u25B6\u25B6\u25B6'} value={3} active={speed === 3} onPress={onSetSpeed} compact />
+              <SpeedButton label={'\u23E9'} value={10} active={speed === 10} onPress={onSetSpeed} compact />
+              <SpeedButton label={'\u23E9\u23E9'} value={100} active={speed === 100} onPress={onSetSpeed} compact />
+            </View>
+          </ScrollView>
+        ) : (
+          <View style={styles.rightGroup}>
+            <ResourceStat
+              label="TIMBER"
+              emoji={'\u{1FAB5}'}
+              value={String(timber)}
+              color="#a1887f"
+              testID="timber-value"
+            />
+            <ResourceStat
+              label="STEEL"
+              emoji={'\u{1F529}'}
+              value={String(steel)}
+              color="#90a4ae"
+              testID="steel-value"
+            />
+            <ResourceStat label="CEMENT" value={String(cement)} color="#bdbdbd" testID="cement-value" />
+            <ResourceStat
+              label="POWER"
+              emoji={'\u26A1'}
+              value={`${powerUsed}/${powerGen}`}
+              color={Colors.sovietGold}
+              testID="power-value"
+            />
+            <ResourceStat label="FOOD" emoji={'\u{1F954}'} value={String(food)} color="#fdba74" testID="food-value" />
+            <ResourceStat
+              label="VODKA"
+              emoji={'\u{1F37E}'}
+              value={String(vodka)}
+              color={Colors.termBlue}
+              testID="vodka-value"
+            />
+            <ResourceStat label="POP" value={String(population)} color={Colors.white} borderRight testID="pop-value" />
+
+            {/* Calendar */}
+            <View style={styles.calendarBox}>
+              <Text style={styles.statLabel}>CALENDAR</Text>
+              <Text testID="date-label" style={styles.dateText}>
+                {dateLabel}
+              </Text>
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${Math.round(monthProgress * 100)}%` }]} />
+              </View>
+            </View>
+
+            {/* Speed controls */}
+            <View style={styles.speedRow}>
+              <SpeedButton label="||" value={0} active={speed === 0} onPress={onSetSpeed} />
+              <SpeedButton label={'\u25B6'} value={1} active={speed === 1} onPress={onSetSpeed} />
+              <SpeedButton label={'\u25B6\u25B6'} value={2} active={speed === 2} onPress={onSetSpeed} />
+              <SpeedButton label={'\u25B6\u25B6\u25B6'} value={3} active={speed === 3} onPress={onSetSpeed} />
+              <SpeedButton label={'\u23E9'} value={10} active={speed === 10} onPress={onSetSpeed} />
+              <SpeedButton label={'\u23E9\u23E9'} value={100} active={speed === 100} onPress={onSetSpeed} />
             </View>
           </View>
-
-          {/* Speed controls */}
-          <View style={styles.speedRow}>
-            <SpeedButton label="||" value={0} active={speed === 0} onPress={onSetSpeed} />
-            <SpeedButton label={'\u25B6'} value={1} active={speed === 1} onPress={onSetSpeed} />
-            <SpeedButton label={'\u25B6\u25B6'} value={2} active={speed === 2} onPress={onSetSpeed} />
-            <SpeedButton label={'\u25B6\u25B6\u25B6'} value={3} active={speed === 3} onPress={onSetSpeed} />
-          </View>
-        </View>
+        )}
       </View>
 
       {/* Overflow dropdown */}
       {showOverflow && (
         <>
-          <TouchableOpacity style={styles.overflowBackdrop} activeOpacity={1} onPress={() => setShowOverflow(false)} />
-          <View style={styles.overflowMenu}>
+          <TouchableOpacity
+            style={[styles.overflowBackdrop, { top: containerHeight }]}
+            activeOpacity={1}
+            onPress={() => setShowOverflow(false)}
+          />
+          <View style={[styles.overflowMenu, { top: containerHeight }]}>
             <ScrollView style={styles.overflowScroll} nestedScrollEnabled>
               {overflowItems.map((item) => (
                 <TouchableOpacity
@@ -323,16 +430,26 @@ interface ResourceStatProps {
   color: string;
   borderRight?: boolean;
   testID?: string;
+  compact?: boolean;
   children?: React.ReactNode;
 }
 
-const ResourceStat: React.FC<ResourceStatProps> = ({ label, emoji, value, color, borderRight, testID, children }) => (
+const ResourceStat: React.FC<ResourceStatProps> = ({
+  label,
+  emoji,
+  value,
+  color,
+  borderRight,
+  testID,
+  compact,
+  children,
+}) => (
   <View style={[styles.statCol, borderRight && styles.statBorderRight]}>
-    <Text style={styles.statLabel}>
+    <Text style={compact ? styles.compactStatLabel : styles.statLabel}>
       {label} {emoji}
     </Text>
     <View style={styles.statValueRow}>
-      <Text testID={testID} style={[styles.statValue, { color }]}>
+      <Text testID={testID} style={[compact ? styles.compactStatValue : styles.statValue, { color }]}>
         {value}
       </Text>
       {children}
@@ -345,12 +462,17 @@ interface SpeedButtonProps {
   value: number;
   active: boolean;
   onPress: (v: number) => void;
+  compact?: boolean;
 }
 
-const SpeedButton: React.FC<SpeedButtonProps> = ({ label, value, active, onPress }) => (
+const SpeedButton: React.FC<SpeedButtonProps> = ({ label, value, active, onPress, compact }) => (
   <TouchableOpacity
     onPress={() => onPress(value)}
-    style={[SharedStyles.timeBtn, active && SharedStyles.timeBtnActive, styles.speedBtn]}
+    style={[
+      SharedStyles.timeBtn,
+      active && SharedStyles.timeBtnActive,
+      compact ? styles.compactSpeedBtn : styles.speedBtn,
+    ]}
     activeOpacity={0.7}
   >
     <Text style={[styles.speedLabel, active && { color: Colors.white }]}>{label}</Text>
@@ -570,11 +692,59 @@ const styles = StyleSheet.create({
   moreBtnTextActive: {
     color: Colors.sovietGold,
   },
+  aiBadge: {
+    backgroundColor: Colors.termGreen,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: '#00c853',
+  },
+  aiBadgeText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: '#000',
+    letterSpacing: 1,
+  },
+
+  // Compact mode (mobile) styles
+  compactRightScroll: {
+    flexShrink: 1,
+  },
+  compactRightContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  compactStatLabel: {
+    color: '#9e9e9e',
+    fontSize: 12,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  compactStatValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    fontFamily: monoFont,
+  },
+  compactDateText: {
+    color: '#f5f5f5',
+    fontSize: 13,
+    fontWeight: 'bold',
+    fontFamily: monoFont,
+    letterSpacing: 1,
+  },
+  compactSpeedBtn: {
+    width: 32,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   // Overflow menu
   overflowBackdrop: {
     position: 'absolute',
-    top: 60,
     left: 0,
     right: 0,
     bottom: -2000,
@@ -582,7 +752,6 @@ const styles = StyleSheet.create({
   },
   overflowMenu: {
     position: 'absolute',
-    top: 60,
     left: 12,
     backgroundColor: '#1e2228',
     borderWidth: 2,

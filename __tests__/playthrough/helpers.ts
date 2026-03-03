@@ -6,13 +6,13 @@
  * on scenario logic.
  */
 
+import type { ConsequenceLevel, DifficultyLevel } from '../../src/ai/agents/political/ScoringSystem';
 import { getMetaEntity, getResourceEntity, operationalBuildings } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { createDvor } from '../../src/ecs/factories/settlementFactories';
 import type { Entity, GameMeta, Resources } from '../../src/ecs/world';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
-import type { ConsequenceLevel, DifficultyLevel } from '../../src/game/ScoringSystem';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
 
@@ -108,11 +108,13 @@ export function createPlaythroughEngine(options: PlaythroughOptions = {}): Playt
     createTestDvory(requestedPop);
   }
 
-  const engine = new SimulationEngine(grid, callbacks, undefined, options.difficulty, options.consequence);
-
+  // Mock Math.random BEFORE engine construction so GameRng seed generation
+  // is deterministic (generateSeedPhrase uses Math.random internally)
   if (options.deterministicRandom !== false) {
     jest.spyOn(Math, 'random').mockReturnValue(0.99);
   }
+
+  const engine = new SimulationEngine(grid, callbacks, undefined, options.difficulty, options.consequence);
 
   return { engine, callbacks, grid };
 }

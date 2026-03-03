@@ -165,12 +165,14 @@ const SEED_NOUNS: readonly string[] = [
  * non-deterministic randomness is appropriate (creating a new seed).
  */
 export function generateSeedPhrase(): string {
-  const adj1 = SEED_ADJECTIVES[Math.floor(Math.random() * SEED_ADJECTIVES.length)]!;
-  let adj2 = SEED_ADJECTIVES[Math.floor(Math.random() * SEED_ADJECTIVES.length)]!;
-  // Avoid duplicate adjectives
-  while (adj2 === adj1) {
-    adj2 = SEED_ADJECTIVES[Math.floor(Math.random() * SEED_ADJECTIVES.length)]!;
+  const adj1Idx = Math.floor(Math.random() * SEED_ADJECTIVES.length);
+  const adj1 = SEED_ADJECTIVES[adj1Idx]!;
+  // Pick a different adjective; if Math.random is stubbed, offset by 1
+  let adj2Idx = Math.floor(Math.random() * SEED_ADJECTIVES.length);
+  if (adj2Idx === adj1Idx && SEED_ADJECTIVES.length > 1) {
+    adj2Idx = (adj2Idx + 1) % SEED_ADJECTIVES.length;
   }
+  const adj2 = SEED_ADJECTIVES[adj2Idx]!;
   const noun = SEED_NOUNS[Math.floor(Math.random() * SEED_NOUNS.length)]!;
   return `${adj1}-${adj2}-${noun}`;
 }

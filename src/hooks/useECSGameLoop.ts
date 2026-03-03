@@ -42,10 +42,19 @@ export function useECSGameLoop(): void {
         simAccumulator.current += dt * 1000;
         const tickMs = TICK_DURATION_MS / speed;
 
-        while (simAccumulator.current >= tickMs) {
+        const MAX_TICKS_PER_FRAME = speed >= 10 ? Math.min(speed, 100) : 3;
+        let ticksThisFrame = 0;
+
+        while (simAccumulator.current >= tickMs && ticksThisFrame < MAX_TICKS_PER_FRAME) {
           simAccumulator.current -= tickMs;
           engine.tick();
           didTick = true;
+          ticksThisFrame++;
+        }
+
+        // Drain excess accumulation at turbo speeds to prevent runaway
+        if (speed >= 10 && simAccumulator.current > tickMs * 2) {
+          simAccumulator.current = 0;
         }
       }
 

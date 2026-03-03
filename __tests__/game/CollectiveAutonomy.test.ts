@@ -1,12 +1,14 @@
+import {
+  autoPlaceBuilding,
+  CollectivePlanner,
+  detectConstructionDemands,
+} from '@/ai/agents/infrastructure/CollectiveAgent';
+import { createPlanMandateState } from '@/ai/agents/political/PoliticalAgent';
 import { GRID_SIZE } from '@/config';
 import { underConstruction } from '@/ecs/archetypes';
 import { createBuilding, createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
-import { CollectivePlanner } from '@/game/CollectivePlanner';
-import { createPlanMandateState } from '@/game/PlanMandates';
 import { GameRng } from '@/game/SeedSystem';
-import { autoPlaceBuilding } from '@/game/workers/autoBuilder';
-import { detectConstructionDemands } from '@/game/workers/demandSystem';
 import { createTestDvory } from '../playthrough/helpers';
 
 describe('Collective Autonomy Integration', () => {

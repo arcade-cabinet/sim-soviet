@@ -1,4 +1,4 @@
-import { effectiveWorkers } from '@/ecs/systems/productionSystem';
+import { effectiveWorkers } from '@/ai/agents/economy/productionSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  OVERSTAFFING DIMINISHING RETURNS

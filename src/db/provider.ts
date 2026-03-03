@@ -1,120 +1,41 @@
 /**
  * Database provider — abstracts SQLite backend for cross-platform use.
  *
- * Web: sql.js (Wasm-based, in-memory with IndexedDB persistence)
- * Mobile: @capacitor-community/sqlite (future)
+ * Uses expo-sqlite which provides:
+ * - Web: OPFS-based persistence (automatic)
+ * - Native: Native SQLite (automatic)
  *
- * Storage security note: Game state stored in IndexedDB is intentionally
+ * Storage security note: Game state stored locally is intentionally
  * unencrypted. This is single-player game save data with no sensitive user
  * information (no passwords, tokens, PII, or payment data). Encrypting
  * local game saves would add complexity without meaningful security benefit.
  */
 
-import type { SQLJsDatabase } from 'drizzle-orm/sql-js';
-import { drizzle } from 'drizzle-orm/sql-js';
-import initSqlJs from 'sql.js';
-import { assetUrl } from '../utils/assetPath';
+import { drizzle, type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite';
+import { migrate } from 'drizzle-orm/expo-sqlite/migrator';
+import { deserializeDatabaseSync, openDatabaseSync } from 'expo-sqlite';
+import migrations from './drizzle/migrations';
 import * as schema from './schema';
 
-const DB_STORAGE_KEY = 'simsoviet_db';
-
-let _db: SQLJsDatabase<typeof schema> | null = null;
-let _sqlDb: InstanceType<Awaited<ReturnType<typeof initSqlJs>>['Database']> | null = null;
+let _db: ExpoSQLiteDatabase<typeof schema> | null = null;
+let _sqliteDb: ReturnType<typeof openDatabaseSync> | null = null;
 
 /**
- * Initialize the database, loading any persisted data from IndexedDB.
+ * Initialize the database. expo-sqlite handles persistence automatically.
  * Safe to call multiple times — returns cached instance after first init.
  *
+ * Runs Drizzle migrations on first init to create/update tables.
+ *
  * @returns Drizzle ORM database instance with the SimSoviet schema
- * @throws If sql.js WASM binary fails to load (no WebAssembly support)
  */
-export async function initDatabase(): Promise<SQLJsDatabase<typeof schema>> {
+export async function initDatabase(): Promise<ExpoSQLiteDatabase<typeof schema>> {
   if (_db) return _db;
 
-  let SQL: Awaited<ReturnType<typeof initSqlJs>>;
-  try {
-    SQL = await initSqlJs({
-      // sql.js Wasm binary served from public/wasm/ via Metro middleware
-      locateFile: (file: string) => assetUrl(`wasm/${file}`),
-    });
-  } catch (err) {
-    console.warn(
-      '[DB] sql.js WASM failed to load. SaveSystem will fall back to localStorage.',
-      'This may happen in environments without WebAssembly support.',
-      err,
-    );
-    throw err;
-  }
+  _sqliteDb = openDatabaseSync('simsoviet.db');
+  _db = drizzle(_sqliteDb, { schema });
 
-  // Try to restore persisted database from IndexedDB
-  const persisted = await loadFromIndexedDB();
-  _sqlDb = persisted ? new SQL.Database(persisted) : new SQL.Database();
-
-  _db = drizzle(_sqlDb, { schema });
-
-  // Create tables if they don't exist (idempotent)
-  _sqlDb.run(`
-    CREATE TABLE IF NOT EXISTS saves (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL DEFAULT 'autosave',
-      timestamp INTEGER NOT NULL,
-      version TEXT NOT NULL DEFAULT '1.0.0'
-    )
-  `);
-  _sqlDb.run(`
-    CREATE TABLE IF NOT EXISTS resources (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      save_id INTEGER NOT NULL REFERENCES saves(id),
-      money INTEGER NOT NULL DEFAULT 2000,
-      food INTEGER NOT NULL DEFAULT 200,
-      vodka INTEGER NOT NULL DEFAULT 50,
-      power INTEGER NOT NULL DEFAULT 0,
-      power_used INTEGER NOT NULL DEFAULT 0,
-      population INTEGER NOT NULL DEFAULT 0
-    )
-  `);
-  _sqlDb.run(`
-    CREATE TABLE IF NOT EXISTS chronology (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      save_id INTEGER NOT NULL REFERENCES saves(id),
-      year INTEGER NOT NULL DEFAULT 1980,
-      month INTEGER NOT NULL DEFAULT 1,
-      tick INTEGER NOT NULL DEFAULT 0
-    )
-  `);
-  _sqlDb.run(`
-    CREATE TABLE IF NOT EXISTS quotas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      save_id INTEGER NOT NULL REFERENCES saves(id),
-      type TEXT NOT NULL DEFAULT 'food',
-      target INTEGER NOT NULL DEFAULT 500,
-      current INTEGER NOT NULL DEFAULT 0,
-      deadline_year INTEGER NOT NULL DEFAULT 1985
-    )
-  `);
-  _sqlDb.run(`
-    CREATE TABLE IF NOT EXISTS buildings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      save_id INTEGER NOT NULL REFERENCES saves(id),
-      grid_x INTEGER NOT NULL,
-      grid_y INTEGER NOT NULL,
-      type TEXT NOT NULL,
-      powered INTEGER NOT NULL DEFAULT 0
-    )
-  `);
-  _sqlDb.run(`
-    CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    )
-  `);
-
-  // Migration: add game_state column to saves table (idempotent).
-  try {
-    _sqlDb.run(`ALTER TABLE saves ADD COLUMN game_state TEXT`);
-  } catch {
-    // Column already exists — safe to ignore.
-  }
+  // Run Drizzle migrations (idempotent — tracks applied migrations internally)
+  await migrate(_db, migrations);
 
   return _db;
 }
@@ -125,74 +46,16 @@ export async function initDatabase(): Promise<SQLJsDatabase<typeof schema>> {
  * @returns Drizzle ORM database instance
  * @throws If initDatabase() has not been called
  */
-export function getDatabase(): SQLJsDatabase<typeof schema> {
+export function getDatabase(): ExpoSQLiteDatabase<typeof schema> {
   if (!_db) throw new Error('Database not initialized. Call initDatabase() first.');
   return _db;
 }
 
-/** Persist the current database state to IndexedDB. */
-export async function persistToIndexedDB(): Promise<void> {
-  if (!_sqlDb) return;
-  const data = _sqlDb.export();
-  const buffer = new Uint8Array(data);
-
-  return new Promise<void>((resolve, reject) => {
-    const request = indexedDB.open('simsoviet', 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains('db')) {
-        db.createObjectStore('db');
-      }
-    };
-    request.onsuccess = () => {
-      const db = request.result;
-      const tx = db.transaction('db', 'readwrite');
-      tx.objectStore('db').put(buffer, DB_STORAGE_KEY);
-      tx.oncomplete = () => {
-        db.close();
-        resolve();
-      };
-      tx.onerror = () => {
-        db.close();
-        reject(tx.error);
-      };
-    };
-    request.onerror = () => reject(request.error);
-  });
-}
-
-/** Load persisted database from IndexedDB (returns null if none). */
-async function loadFromIndexedDB(): Promise<Uint8Array | null> {
-  return new Promise<Uint8Array | null>((resolve) => {
-    const request = indexedDB.open('simsoviet', 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains('db')) {
-        db.createObjectStore('db');
-      }
-    };
-    request.onsuccess = () => {
-      const db = request.result;
-      const tx = db.transaction('db', 'readonly');
-      const getReq = tx.objectStore('db').get(DB_STORAGE_KEY);
-      getReq.onsuccess = () => {
-        db.close();
-        resolve((getReq.result as Uint8Array | null) ?? null);
-      };
-      getReq.onerror = () => {
-        db.close();
-        resolve(null);
-      };
-    };
-    request.onerror = () => resolve(null);
-  });
-}
-
 /** Close the database and clean up. */
 export function closeDatabase(): void {
-  if (_sqlDb) {
-    _sqlDb.close();
-    _sqlDb = null;
+  if (_sqliteDb) {
+    _sqliteDb.closeSync();
+    _sqliteDb = null;
   }
   _db = null;
 }
@@ -203,32 +66,28 @@ export function closeDatabase(): void {
  * @returns Raw SQLite database bytes, or null if database not initialized
  */
 export function exportDatabaseFile(): Uint8Array | null {
-  if (!_sqlDb) return null;
-  return new Uint8Array(_sqlDb.export());
+  if (!_sqliteDb) return null;
+  return _sqliteDb.serializeSync();
 }
 
 /**
  * Import a SQLite database from a Uint8Array (uploaded .db file).
- * Replaces the current in-memory database and persists to IndexedDB.
+ * Replaces the current database with the imported data.
  *
  * @param data - Raw SQLite database bytes
  * @returns New Drizzle ORM database instance wrapping the imported data
  */
-export async function importDatabaseFile(data: Uint8Array): Promise<SQLJsDatabase<typeof schema>> {
-  const SQL = await initSqlJs({
-    locateFile: (file: string) => assetUrl(`wasm/${file}`),
-  });
-
+export async function importDatabaseFile(data: Uint8Array): Promise<ExpoSQLiteDatabase<typeof schema>> {
   // Close existing database
-  if (_sqlDb) {
-    _sqlDb.close();
+  if (_sqliteDb) {
+    _sqliteDb.closeSync();
   }
 
-  _sqlDb = new SQL.Database(data);
-  _db = drizzle(_sqlDb, { schema });
+  _sqliteDb = deserializeDatabaseSync(data);
+  _db = drizzle(_sqliteDb, { schema });
 
-  // Persist immediately
-  await persistToIndexedDB();
+  // Run migrations on imported data to handle older schema versions
+  await migrate(_db, migrations);
 
   return _db;
 }

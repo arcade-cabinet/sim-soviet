@@ -12,9 +12,14 @@
 import type React from 'react';
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import type {
+  CurrencyReform,
+  DifficultyLevel,
+  HeatingTier,
+  TransferableResource,
+} from '../ai/agents/economy/EconomyAgent';
+import { HEATING_CONFIGS } from '../ai/agents/economy/EconomyAgent';
 import { getEngine } from '../bridge/GameInit';
-import type { CurrencyReform, DifficultyLevel, HeatingTier, TransferableResource } from '../game/economy';
-import { HEATING_CONFIGS } from '../game/economy';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

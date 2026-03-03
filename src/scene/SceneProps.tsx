@@ -21,7 +21,7 @@ import type React from 'react';
 import { Suspense, useMemo, useRef } from 'react';
 import type * as THREE from 'three';
 import { gameState } from '../engine/GameState';
-import { GRID_SIZE } from '../engine/GridTypes';
+import { getCurrentGridSize } from '../engine/GridTypes';
 import { getPropUrl } from './ModelPreloader';
 import type { Season } from './TerrainGrid';
 
@@ -83,21 +83,22 @@ function getPlacementPositions(
 ): Array<{ x: number; z: number; y: number }> {
   const positions: Array<{ x: number; z: number; y: number }> = [];
   const grid = gameState.grid;
-  const center = GRID_SIZE / 2;
+  const gridSize = getCurrentGridSize();
+  const center = gridSize / 2;
 
   switch (placement) {
     case 'perimeter': {
       for (let i = 0; i < 40; i++) {
         const angle = rng() * Math.PI * 2;
-        const dist = GRID_SIZE * 0.5 + rng() * 30 + 5;
+        const dist = gridSize * 0.5 + rng() * 30 + 5;
         positions.push({
           x: center + Math.cos(angle) * dist,
           z: center + Math.sin(angle) * dist,
           y: 0,
         });
       }
-      for (let y = 0; y < GRID_SIZE; y++) {
-        for (let x = 0; x < GRID_SIZE; x++) {
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
           const cell = grid[y]?.[x];
           if (cell?.terrain === 'mountain' && rng() < 0.3) {
             positions.push({
@@ -111,8 +112,8 @@ function getPlacementPositions(
       break;
     }
     case 'grass': {
-      for (let y = 0; y < GRID_SIZE; y++) {
-        for (let x = 0; x < GRID_SIZE; x++) {
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
           const cell = grid[y]?.[x];
           if (cell && !cell.type && cell.terrain === 'grass' && rng() < 0.06) {
             positions.push({
@@ -126,8 +127,8 @@ function getPlacementPositions(
       break;
     }
     case 'forest-edge': {
-      for (let y = 1; y < GRID_SIZE - 1; y++) {
-        for (let x = 1; x < GRID_SIZE - 1; x++) {
+      for (let y = 1; y < gridSize - 1; y++) {
+        for (let x = 1; x < gridSize - 1; x++) {
           const cell = grid[y]?.[x];
           if (cell && !cell.type && cell.terrain !== 'tree') {
             const hasForestNeighbor =
@@ -157,7 +158,7 @@ function getPlacementPositions(
           const oz = (rng() - 0.5) * 6;
           const px = farm.x + ox;
           const pz = farm.y + oz;
-          if (px >= 0 && px < GRID_SIZE && pz >= 0 && pz < GRID_SIZE) {
+          if (px >= 0 && px < gridSize && pz >= 0 && pz < gridSize) {
             const cell = grid[Math.floor(pz)]?.[Math.floor(px)];
             if (cell && !cell.type && cell.terrain !== 'water' && cell.terrain !== 'mountain') {
               positions.push({
@@ -170,8 +171,8 @@ function getPlacementPositions(
         }
       }
       if (farms.length === 0) {
-        for (let y = 0; y < GRID_SIZE; y++) {
-          for (let x = 0; x < GRID_SIZE; x++) {
+        for (let y = 0; y < gridSize; y++) {
+          for (let x = 0; x < gridSize; x++) {
             const cell = grid[y]?.[x];
             if (cell && !cell.type && cell.terrain === 'grass' && rng() < 0.008) {
               positions.push({
@@ -186,8 +187,8 @@ function getPlacementPositions(
       break;
     }
     case 'irradiated': {
-      for (let y = 0; y < GRID_SIZE; y++) {
-        for (let x = 0; x < GRID_SIZE; x++) {
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
           const cell = grid[y]?.[x];
           if (cell?.terrain === 'irradiated') {
             positions.push({

@@ -1,11 +1,11 @@
-import type { GameMeta, Resources } from '@/ecs/world';
 import {
   MILESTONE_LABELS,
   TUTORIAL_MILESTONES,
   type TutorialSaveData,
   TutorialSystem,
   type UIElement,
-} from '@/game/TutorialSystem';
+} from '@/ai/agents/meta/TutorialSystem';
+import type { GameMeta, Resources } from '@/ecs/world';
 
 // ─── Test Helpers ────────────────────────────────────────
 

@@ -58,7 +58,7 @@ describe('archetypes', () => {
       createMetaStore();
       const entity = getMetaEntity();
       expect(entity).toBeDefined();
-      expect(entity!.gameMeta.date.year).toBe(1922);
+      expect(entity!.gameMeta.date.year).toBe(1917);
     });
 
     it('returns undefined after world.clear()', () => {

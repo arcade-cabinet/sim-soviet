@@ -7,7 +7,7 @@
  * shapes the 3D components understand.
  */
 
-import { GRID_SIZE } from '@/config';
+import { getCurrentGridSize } from '@/config';
 import { buildings, terrainFeatures, tiles } from '@/ecs/archetypes';
 import type { GridCell, TerrainType } from '../engine/GridTypes';
 import type { BuildingState } from '../scene/BuildingRenderer';
@@ -48,6 +48,8 @@ export function getBuildingStates(): BuildingState[] {
       elevation: elevationMap.get(key) ?? 0,
       powered: building.powered,
       onFire: entity.building.onFire === true,
+      housingCap: building.housingCap,
+      workerCount: building.workerCount,
       ...(isUnderConstruction && {
         constructionPhase: phase as 'foundation' | 'building',
         constructionProgress: building.constructionProgress ?? 0,
@@ -67,10 +69,11 @@ export function getBuildingStates(): BuildingState[] {
 export function getGridCells(): GridCell[][] {
   const grid: GridCell[][] = [];
 
-  // Initialize empty grid
-  for (let y = 0; y < GRID_SIZE; y++) {
+  // Initialize empty grid — use runtime grid size
+  const gridSize = getCurrentGridSize();
+  for (let y = 0; y < gridSize; y++) {
     const row: GridCell[] = [];
-    for (let x = 0; x < GRID_SIZE; x++) {
+    for (let x = 0; x < gridSize; x++) {
       row.push({
         type: null,
         zone: null,
@@ -91,7 +94,7 @@ export function getGridCells(): GridCell[][] {
   for (const entity of tiles.entities) {
     const { position, tile } = entity;
     const { gridX, gridY } = position;
-    if (gridY >= 0 && gridY < GRID_SIZE && gridX >= 0 && gridX < GRID_SIZE) {
+    if (gridY >= 0 && gridY < gridSize && gridX >= 0 && gridX < gridSize) {
       const cell = grid[gridY][gridX];
       // Map ECS terrain type to 3D terrain type
       cell.terrain = mapTerrain(tile.terrain);
@@ -104,7 +107,7 @@ export function getGridCells(): GridCell[][] {
   for (const entity of terrainFeatures.entities) {
     const { position, terrainFeature } = entity;
     const { gridX, gridY } = position;
-    if (gridY >= 0 && gridY < GRID_SIZE && gridX >= 0 && gridX < GRID_SIZE) {
+    if (gridY >= 0 && gridY < gridSize && gridX >= 0 && gridX < gridSize) {
       const cell = grid[gridY][gridX];
       cell.terrain = mapTerrain(terrainFeature.featureType);
       cell.z = terrainFeature.elevation;
@@ -115,7 +118,7 @@ export function getGridCells(): GridCell[][] {
   for (const entity of buildings.entities) {
     const { position, building } = entity;
     const { gridX, gridY } = position;
-    if (gridY >= 0 && gridY < GRID_SIZE && gridX >= 0 && gridX < GRID_SIZE) {
+    if (gridY >= 0 && gridY < gridSize && gridX >= 0 && gridX < gridSize) {
       const cell = grid[gridY][gridX];
       cell.type = building.defId;
       if (building.onFire) {

@@ -1,29 +1,59 @@
 /**
  * SettingsModal — Game settings panel.
  *
- * Toggles for music, color-blind mode. Accessible from MainMenu
- * SETTINGS button and in-game pause.
+ * Toggles for music, color-blind mode, and XR entry (AR/VR).
+ * Accessible from MainMenu SETTINGS button and in-game pause.
  */
 
 import type React from 'react';
-import { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AudioManager from '../audio/AudioManager';
 import SFXManager from '../audio/SFXManager';
+import { getEngine } from '../bridge/GameInit';
 import { isColorBlindMode, setColorBlindMode } from '../stores/gameStore';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 
+/** XR mode types: null = standard, 'ar' = AR tabletop, 'vr' = VR walkthrough. */
+export type XRMode = 'ar' | 'vr' | null;
+
 export interface SettingsModalProps {
   visible: boolean;
   onDismiss: () => void;
+  onEnterXR?: (mode: XRMode) => void;
 }
 
-/** Settings panel with music volume, SFX toggle, and color-blind mode options. */
-export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss }) => {
+/** Settings panel with music volume, SFX toggle, color-blind mode, and XR entry options. */
+export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss, onEnterXR }) => {
   const [muted, setMuted] = useState(() => AudioManager.getInstance().isMuted);
   const [sfxMuted, setSfxMuted] = useState(() => SFXManager.getInstance().isMuted);
   const [colorBlind, setColorBlind] = useState(() => isColorBlindMode());
+  const [autopilot, setAutopilot] = useState(() => {
+    const engine = getEngine();
+    return engine?.getAgentManager().isAutopilot() ?? false;
+  });
+  const [xrSupported, setXrSupported] = useState(false);
+
+  // Check WebXR availability on mount (web only)
+  useEffect(() => {
+    let cancelled = false;
+    if (Platform.OS !== 'web') return;
+    if (typeof navigator !== 'undefined' && 'xr' in navigator) {
+      const xr = (navigator as any).xr;
+      if (xr?.isSessionSupported) {
+        Promise.all([
+          xr.isSessionSupported('immersive-ar').catch(() => false),
+          xr.isSessionSupported('immersive-vr').catch(() => false),
+        ]).then(([ar, vr]: [boolean, boolean]) => {
+          if (!cancelled) setXrSupported(ar || vr);
+        });
+      }
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleToggleMusic = () => {
     const newMuted = AudioManager.getInstance().toggleMute();
@@ -39,6 +69,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
     const newValue = !colorBlind;
     setColorBlindMode(newValue);
     setColorBlind(newValue);
+  };
+
+  const handleToggleAutopilot = () => {
+    const engine = getEngine();
+    if (!engine) return;
+    if (autopilot) {
+      engine.disableAutopilot();
+    } else {
+      engine.enableAutopilot();
+    }
+    setAutopilot(!autopilot);
+  };
+
+  const handleEnterAR = () => {
+    onEnterXR?.('ar');
+    onDismiss();
+  };
+
+  const handleEnterVR = () => {
+    onEnterXR?.('vr');
+    onDismiss();
   };
 
   return (
@@ -74,6 +125,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
         value={colorBlind}
         onToggle={handleToggleColorBlind}
       />
+
+      <SettingToggle
+        label="COMRADE ADVISOR"
+        description={autopilot ? 'The AI governs all decisions.' : 'Manual control — you are the Chairman.'}
+        value={autopilot}
+        onToggle={handleToggleAutopilot}
+      />
+
+      {/* XR Section — web only, shown when WebXR is available */}
+      {Platform.OS === 'web' && onEnterXR && (
+        <>
+          <View style={styles.divider} />
+          <Text style={styles.xrHeader}>IMMERSIVE REALITY DIVISION</Text>
+          {xrSupported ? (
+            <View style={styles.xrButtons}>
+              <TouchableOpacity style={styles.xrButton} onPress={handleEnterAR} activeOpacity={0.7}>
+                <Text style={styles.xrButtonText}>ENTER AR MODE</Text>
+                <Text style={styles.xrButtonDesc}>Tabletop city model</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.xrButton} onPress={handleEnterVR} activeOpacity={0.7}>
+                <Text style={styles.xrButtonText}>ENTER VR MODE</Text>
+                <Text style={styles.xrButtonDesc}>Street-level walkthrough</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <Text style={styles.xrUnsupported}>
+              WebXR NOT SUPPORTED{'\n'}Your browser or device does not support immersive sessions.
+            </Text>
+          )}
+        </>
+      )}
 
       <View style={styles.divider} />
       <Text style={styles.footer}>SETTINGS ARE SAVED AUTOMATICALLY /// THE STATE REMEMBERS</Text>
@@ -165,6 +247,50 @@ const styles = StyleSheet.create({
   },
   toggleTextActive: {
     color: Colors.white,
+  },
+  xrHeader: {
+    fontSize: 11,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.sovietGold,
+    letterSpacing: 2,
+    marginBottom: 12,
+  },
+  xrButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  xrButton: {
+    flex: 1,
+    backgroundColor: '#333',
+    borderWidth: 2,
+    borderTopColor: '#555',
+    borderLeftColor: '#555',
+    borderBottomColor: '#111',
+    borderRightColor: '#111',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  xrButtonText: {
+    fontSize: 11,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.sovietRed,
+    letterSpacing: 1,
+  },
+  xrButtonDesc: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    color: '#888',
+    marginTop: 4,
+  },
+  xrUnsupported: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    color: '#666',
+    textAlign: 'center',
+    paddingVertical: 8,
   },
   divider: {
     borderTopWidth: 1,

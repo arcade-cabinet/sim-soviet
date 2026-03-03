@@ -9,11 +9,11 @@
  * - Heating failure causes population attrition
  */
 
+import { DISTRICT_HEATING_POPULATION, EconomySystem, HEATING_CONFIGS } from '../../src/ai/agents/economy/economy-core';
+import { applyMorale } from '../../src/ai/agents/workforce/classes';
+import { HEATING_FAILURE_MORALE_PENALTY } from '../../src/ai/agents/workforce/constants';
+import type { WorkerStats } from '../../src/ai/agents/workforce/types';
 import type { CitizenComponent } from '../../src/ecs/world';
-import { DISTRICT_HEATING_POPULATION, EconomySystem, HEATING_CONFIGS } from '../../src/game/economy';
-import { applyMorale } from '../../src/game/workers/classes';
-import { HEATING_FAILURE_MORALE_PENALTY } from '../../src/game/workers/constants';
-import type { WorkerStats } from '../../src/game/workers/types';
 
 describe('Heating fuel consumption', () => {
   it('pechka consumes timber during winter', () => {
@@ -91,8 +91,8 @@ describe('Heating morale penalty', () => {
     expect(s1.morale - s2.morale).toBe(HEATING_FAILURE_MORALE_PENALTY);
   });
 
-  it('morale penalty is exactly 30', () => {
-    expect(HEATING_FAILURE_MORALE_PENALTY).toBe(30);
+  it('morale penalty is exactly 10', () => {
+    expect(HEATING_FAILURE_MORALE_PENALTY).toBe(10);
   });
 
   it('morale does not go below 0 with heating penalty', () => {

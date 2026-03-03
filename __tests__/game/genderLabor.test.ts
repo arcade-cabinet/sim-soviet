@@ -1,4 +1,4 @@
-import { getGenderLaborConfig, getGenderLaborMultiplier } from '../../src/game/workers/genderLabor';
+import { getGenderLaborConfig, getGenderLaborMultiplier } from '../../src/ai/agents/workforce/genderLabor';
 
 describe('genderLabor', () => {
   it('returns 1.0 for male workers', () => {
