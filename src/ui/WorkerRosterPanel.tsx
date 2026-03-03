@@ -9,10 +9,10 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import type { CollectiveFocus } from '../ai/agents/infrastructure/CollectiveAgent';
 import { getEngine } from '../bridge/GameInit';
 import { citizens as citizensArchetype } from '../ecs/archetypes';
 import type { CitizenComponent } from '../ecs/world';
-import type { CollectiveFocus } from '../ai/agents/infrastructure/CollectiveAgent';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { openCitizenDossierByIndex } from '../stores/gameStore';
 import { SovietModal } from './SovietModal';

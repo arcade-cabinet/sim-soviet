@@ -17,15 +17,11 @@
  * the starvation callback + counter utilities used by SimulationEngine and Reset.
  */
 
-import { getResourceEntity } from '@/ecs/archetypes';
-import { economy } from '@/config';
 import type { PoliticalRole } from '@/ai/agents/political/types';
+import { economy } from '@/config';
+import { getResourceEntity } from '@/ecs/archetypes';
 import type { DistributionResult } from '@/ecs/systems/distributionWeights';
-import {
-  computeDistribution,
-  computeRoleBuckets,
-  RESENTMENT_MORALE_PENALTY,
-} from '@/ecs/systems/distributionWeights';
+import { computeDistribution, computeRoleBuckets, RESENTMENT_MORALE_PENALTY } from '@/ecs/systems/distributionWeights';
 
 /** Starvation notification callback type */
 export type StarvationCallback = () => void;
@@ -125,9 +121,10 @@ export function consumptionSystem(
 
   // Use WEIGHTED food need for actual consumption (the reality)
   // Fall back to uniform formula if distribution returned 0 (edge case)
-  const foodNeed = distribution.weightedFoodNeed > 0
-    ? distribution.weightedFoodNeed
-    : Math.ceil((pop / FOOD_PER_POP_DIVISOR) * consumptionMult);
+  const foodNeed =
+    distribution.weightedFoodNeed > 0
+      ? distribution.weightedFoodNeed
+      : Math.ceil((pop / FOOD_PER_POP_DIVISOR) * consumptionMult);
 
   if (store.resources.food >= foodNeed) {
     store.resources.food -= foodNeed;
@@ -145,9 +142,8 @@ export function consumptionSystem(
   }
 
   // Use WEIGHTED vodka need for actual consumption
-  const vodkaDrink = distribution.weightedVodkaNeed > 0
-    ? distribution.weightedVodkaNeed
-    : Math.ceil((pop / 20) * consumptionMult);
+  const vodkaDrink =
+    distribution.weightedVodkaNeed > 0 ? distribution.weightedVodkaNeed : Math.ceil((pop / 20) * consumptionMult);
   if (store.resources.vodka >= vodkaDrink) {
     store.resources.vodka -= vodkaDrink;
   }

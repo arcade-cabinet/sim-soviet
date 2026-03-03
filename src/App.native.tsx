@@ -17,6 +17,8 @@
 import { Canvas } from '@react-three/fiber/native';
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import type { SettlementEvent } from './ai/agents/infrastructure/SettlementSystem';
+import type { ActiveMinigame } from './ai/agents/meta/minigames/MinigameTypes';
 import AudioManager from './audio/AudioManager';
 import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
@@ -42,8 +44,6 @@ import {
 } from './engine/helpers';
 import type { EraDefinition } from './game/era';
 import type { TallyData } from './game/GameTally';
-import type { ActiveMinigame } from './ai/agents/meta/minigames/MinigameTypes';
-import type { SettlementEvent } from './ai/agents/infrastructure/SettlementSystem';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';

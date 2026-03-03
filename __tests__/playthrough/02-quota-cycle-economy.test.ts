@@ -1,6 +1,6 @@
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { world } from '../../src/ecs/world';
-import { advanceTicks, advanceYears, createPlaythroughEngine, isGameOver } from './helpers';
+import { advanceTicks, createPlaythroughEngine, isGameOver } from './helpers';
 
 /**
  * Disables callbacks that interfere with pure quota testing:
@@ -14,7 +14,6 @@ function disableNonQuotaCallbacks(callbacks: Record<string, unknown>): void {
   callbacks.onAnnualReport = undefined;
   callbacks.onMinigame = undefined;
 }
-
 
 describe('Playthrough: Quota Cycle Economy', () => {
   afterEach(() => {

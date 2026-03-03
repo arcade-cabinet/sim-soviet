@@ -18,113 +18,111 @@
 
 import { Vehicle } from 'yuka';
 import { economy } from '@/config';
-import { MSG } from '../../telegrams';
 import type { GameRng } from '../../../game/SeedSystem';
 
 // Re-export key types from economy.ts for consumers
 export type {
-  EraId,
-  DifficultyLevel,
-  TransferableResource,
-  FondyConfig,
-  FondyState,
-  FondyDeliveryResult,
-  TrudodniState,
-  BlatState,
-  BlatPurpose,
   BlatEffect,
-  RationTier,
-  RationConfig,
-  RationState,
-  RationDemand,
-  StakhanoviteEvent,
-  ProductionStep,
-  ProductionChain,
-  RemainderAllocation,
-  MTSResult,
-  MTSState,
-  HeatingTier,
-  HeatingConfig,
-  HeatingState,
-  HeatingResult,
+  BlatKgbResult,
+  BlatPurpose,
+  BlatState,
+  ConsumerGoodsState,
   CurrencyReform,
   CurrencyReformResult,
+  DifficultyLevel,
   DifficultyMultipliers,
-  BlatKgbResult,
-  EconomyTickResult,
-  ConsumerGoodsState,
   EconomySaveData,
+  EconomyTickResult,
+  EraId,
+  FondyConfig,
+  FondyDeliveryResult,
+  FondyState,
+  HeatingConfig,
+  HeatingResult,
+  HeatingState,
+  HeatingTier,
+  MTSResult,
+  MTSState,
+  ProductionChain,
+  ProductionStep,
+  RationConfig,
+  RationDemand,
+  RationState,
+  RationTier,
+  RemainderAllocation,
+  StakhanoviteEvent,
+  TransferableResource,
+  TrudodniState,
 } from './economy-core';
 
+import { buildingsLogic, citizens, dvory, getResourceEntity, operationalBuildings } from '../../../ecs/archetypes';
+import type { MemberRole } from '../../../ecs/world';
 import {
+  applyCurrencyReform,
+  BLAT_ARREST_THRESHOLD,
   // Constants
   BLAT_SAFE_THRESHOLD,
-  BLAT_ARREST_THRESHOLD,
-  KGB_INVESTIGATION_CHANCE_PER_POINT,
-  MINIMUM_TRUDODNI_BY_DIFFICULTY,
-  TRUDODNI_PER_BUILDING,
-  DEFAULT_TRUDODNI,
-  FONDY_BY_ERA,
-  RATION_PERIODS,
-  DEFAULT_RATIONS,
-  PRODUCTION_CHAINS,
-  MTS_START_YEAR,
-  MTS_END_YEAR,
-  MTS_DEFAULTS,
-  DISTRICT_HEATING_POPULATION,
-  DISTRICT_TO_CRUMBLING_TICKS,
-  HEATING_CONFIGS,
+  type BlatEffect,
+  type BlatKgbResult,
+  type BlatPurpose,
+  type BlatState,
+  type ConsumerGoodsState,
   CURRENCY_REFORMS,
-  STAKHANOVITE_CHANCE,
-  DIFFICULTY_MULTIPLIERS,
-  ERA_ESCALATION,
-  ERA_RESOURCE_MULT,
-  DIFFICULTY_QUOTA_MULT,
-  DIFFICULTY_RESOURCE_MULT,
-  QUOTA_MET_ESCALATION,
-  QUOTA_MISSED_REDUCTION,
+  type CurrencyReform,
+  type CurrencyReformResult,
   // Pure functions
   calculateBuildingTrudodni,
   calculateNextQuota,
   calculateRationDemand,
   calculateStartingResources,
-  shouldRationsBeActive,
-  shouldMTSBeActive,
+  DEFAULT_RATIONS,
+  DEFAULT_TRUDODNI,
+  DIFFICULTY_MULTIPLIERS,
+  DIFFICULTY_QUOTA_MULT,
+  DIFFICULTY_RESOURCE_MULT,
+  DISTRICT_HEATING_POPULATION,
+  DISTRICT_TO_CRUMBLING_TICKS,
+  type DifficultyLevel,
+  type DifficultyMultipliers,
   determineHeatingTier,
-  getDifficultyMultipliers,
-  findPendingReform,
-  applyCurrencyReform,
+  type EconomySaveData,
+  type EconomyTickResult,
+  ERA_ESCALATION,
+  ERA_RESOURCE_MULT,
   // Types
   type EraId,
-  type DifficultyLevel,
-  type TransferableResource,
-  type FondyState,
+  FONDY_BY_ERA,
   type FondyDeliveryResult,
-  type TrudodniState,
-  type BlatState,
-  type BlatPurpose,
-  type BlatEffect,
-  type RationConfig,
-  type RationState,
-  type RationDemand,
-  type StakhanoviteEvent,
+  type FondyState,
+  findPendingReform,
+  getDifficultyMultipliers,
+  HEATING_CONFIGS,
+  type HeatingResult,
+  type HeatingState,
+  KGB_INVESTIGATION_CHANCE_PER_POINT,
+  MINIMUM_TRUDODNI_BY_DIFFICULTY,
+  MTS_DEFAULTS,
+  MTS_END_YEAR,
+  MTS_START_YEAR,
   type MTSResult,
   type MTSState,
-  type HeatingState,
-  type HeatingResult,
-  type CurrencyReform,
-  type CurrencyReformResult,
-  type DifficultyMultipliers,
-  type BlatKgbResult,
-  type EconomyTickResult,
-  type ConsumerGoodsState,
-  type EconomySaveData,
+  PRODUCTION_CHAINS,
+  QUOTA_MET_ESCALATION,
+  QUOTA_MISSED_REDUCTION,
+  RATION_PERIODS,
+  type RationConfig,
+  type RationDemand,
+  type RationState,
   type RemainderAllocation,
+  STAKHANOVITE_CHANCE,
+  type StakhanoviteEvent,
+  shouldMTSBeActive,
+  shouldRationsBeActive,
+  TRUDODNI_PER_BUILDING,
+  type TransferableResource,
+  type TrudodniState,
 } from './economy-core';
-
 import { defaultCategory, TRUDODNI_VALUES } from './trudodni';
-import type { MemberRole } from '../../../ecs/world';
-import { buildingsLogic, citizens, dvory, getResourceEntity, operationalBuildings } from '../../../ecs/archetypes';
 
 // ---------------------------------------------------------------------------
 // Constants (re-exported for consumers)
@@ -157,20 +155,40 @@ export type EconomyMode = 'NormalOperations' | 'CrisisMode' | 'ReformPeriod';
 
 /** Thresholds for state machine transitions. */
 const CRISIS_BLAT_THRESHOLD = BLAT_ARREST_THRESHOLD; // blat > 30 triggers crisis
-const CRISIS_RATION_ACTIVATION = true; // ration activation signals crisis
-const REFORM_CURRENCY_TRIGGER = true; // currency reform triggers reform period
+const _CRISIS_RATION_ACTIVATION = true; // ration activation signals crisis
+const _REFORM_CURRENCY_TRIGGER = true; // currency reform triggers reform period
 
 const STAKHANOVITE_FIRST_NAMES = [
-  'Ivan', 'Pyotr', 'Nikolai', 'Vasily', 'Alexei',
-  'Boris', 'Mikhail', 'Sergei', 'Andrei', 'Dmitry',
+  'Ivan',
+  'Pyotr',
+  'Nikolai',
+  'Vasily',
+  'Alexei',
+  'Boris',
+  'Mikhail',
+  'Sergei',
+  'Andrei',
+  'Dmitry',
 ];
 const STAKHANOVITE_LAST_NAMES = [
-  'Stakhanov', 'Petrov', 'Ivanov', 'Kozlov', 'Novikov',
-  'Morozov', 'Volkov', 'Lebedev', 'Kuznetsov', 'Popov',
+  'Stakhanov',
+  'Petrov',
+  'Ivanov',
+  'Kozlov',
+  'Novikov',
+  'Morozov',
+  'Volkov',
+  'Lebedev',
+  'Kuznetsov',
+  'Popov',
 ];
 
 const ZERO_RESOURCES: Record<TransferableResource, number> = {
-  food: 0, vodka: 0, money: 0, steel: 0, timber: 0,
+  food: 0,
+  vodka: 0,
+  money: 0,
+  steel: 0,
+  timber: 0,
 };
 
 const WINTER_MONTHS = new Set([1, 2, 3, 11, 12]);
@@ -246,7 +264,11 @@ export class EconomyAgent extends Vehicle {
     };
 
     // Init blat at 10
-    this.blat = { connections: economy.blat.startingConnections, totalSpent: 0, totalEarned: economy.blat.startingConnections };
+    this.blat = {
+      connections: economy.blat.startingConnections,
+      totalSpent: 0,
+      totalEarned: economy.blat.startingConnections,
+    };
 
     // Init rations (inactive by default)
     this.rations = {
@@ -275,7 +297,7 @@ export class EconomyAgent extends Vehicle {
    *
    * @param delta - Frame delta in seconds (not used; economy uses discrete ticks)
    */
-  override update(delta: number): this {
+  override update(_delta: number): this {
     // Yuka lifecycle hook: state machine transitions can run each frame
     this.updateStateMachine();
     return this;
@@ -289,8 +311,7 @@ export class EconomyAgent extends Vehicle {
    * - Any → ReformPeriod if a currency reform is pending (reset to Normal after)
    */
   private updateStateMachine(): void {
-    const inCrisis =
-      this.blat.connections > CRISIS_BLAT_THRESHOLD || this.rations.active;
+    const inCrisis = this.blat.connections > CRISIS_BLAT_THRESHOLD || this.rations.active;
 
     switch (this.mode) {
       case 'NormalOperations':
@@ -386,10 +407,7 @@ export class EconomyAgent extends Vehicle {
         if (accrued > 0) {
           const pos = entity.position;
           const buildingId = `${pos.x},${pos.y}`;
-          this.trudodniPerBuilding.set(
-            buildingId,
-            (this.trudodniPerBuilding.get(buildingId) ?? 0) + accrued,
-          );
+          this.trudodniPerBuilding.set(buildingId, (this.trudodniPerBuilding.get(buildingId) ?? 0) + accrued);
           totalTrudodni += accrued;
           buildingCount++;
         }
@@ -427,10 +445,7 @@ export class EconomyAgent extends Vehicle {
         memberCount++;
 
         const buildingId = citizenInfo.assignment;
-        this.trudodniPerBuilding.set(
-          buildingId,
-          (this.trudodniPerBuilding.get(buildingId) ?? 0) + monthlyTrudodni,
-        );
+        this.trudodniPerBuilding.set(buildingId, (this.trudodniPerBuilding.get(buildingId) ?? 0) + monthlyTrudodni);
       }
     }
 
@@ -527,10 +542,7 @@ export class EconomyAgent extends Vehicle {
    * @param amount - Blat points to spend
    * @param purpose - What the blat is being used for
    */
-  spendBlat(
-    amount: number,
-    purpose: BlatPurpose,
-  ): { success: boolean; kgbDetected: boolean; effect?: BlatEffect } {
+  spendBlat(amount: number, purpose: BlatPurpose): { success: boolean; kgbDetected: boolean; effect?: BlatEffect } {
     if (this.blat.connections < amount) {
       return { success: false, kgbDetected: false };
     }
@@ -1145,7 +1157,11 @@ export class EconomyAgent extends Vehicle {
       // 3. Fraud exposure: the achievement was staged
       if (s.fraudExposed) {
         deps.stakhanoviteBoosts.delete(s.building);
-        deps.kgb.addMark('stakhanovite_fraud', totalTicks, `Stakhanovite achievement by ${s.workerName} at ${s.building} exposed as staged`);
+        deps.kgb.addMark(
+          'stakhanovite_fraud',
+          totalTicks,
+          `Stakhanovite achievement by ${s.workerName} at ${s.building} exposed as staged`,
+        );
         deps.workers.applyGlobalMoraleDelta(-15);
         deps.callbacks.onPravda(
           `CORRECTION: Investigation reveals Comrade ${s.workerName}'s heroic achievement was staged. Records have been adjusted.`,
@@ -1217,11 +1233,7 @@ export class EconomyAgent extends Vehicle {
     if (result.blatKgbResult) {
       const kgb = result.blatKgbResult;
       if (kgb.investigated) {
-        deps.kgb.addMark(
-          'blat_noticed',
-          totalTicks,
-          kgb.announcement ?? 'KGB investigation into blat connections',
-        );
+        deps.kgb.addMark('blat_noticed', totalTicks, kgb.announcement ?? 'KGB investigation into blat connections');
         deps.callbacks.onToast('KGB INVESTIGATION: Blat connections noticed', 'critical');
       }
       if (kgb.arrested) {
@@ -1397,9 +1409,9 @@ export { EconomyAgent as EconomySystem };
 export { TRUDODNI_VALUES, defaultCategory };
 export {
   accrueTrudodni,
-  resetBuildingTrudodni,
-  getBuildingTrudodni,
   getAllBuildingTrudodni,
-  type TrudodniCategory,
+  getBuildingTrudodni,
+  resetBuildingTrudodni,
   type TrudodniAccrualResult,
+  type TrudodniCategory,
 } from './trudodni';

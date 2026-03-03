@@ -16,11 +16,11 @@
  */
 
 import type {
-  CrisisDefinition,
+  CrisisAgentSaveData,
   CrisisContext,
+  CrisisDefinition,
   CrisisImpact,
   CrisisPhase,
-  CrisisAgentSaveData,
   ICrisisAgent,
 } from './types';
 
@@ -35,7 +35,7 @@ const SEVERITY_INTENSITY: Record<string, number> = {
 
 // ─── Default peakParam values ────────────────────────────────────────────────
 
-const DEFAULT_CONSCRIPTION_RATE = 0.10;
+const DEFAULT_CONSCRIPTION_RATE = 0.1;
 const DEFAULT_PRODUCTION_MULT = 1.15;
 const DEFAULT_BOMBARDMENT_RATE = 0.02;
 const DEFAULT_FOOD_DRAIN = 20;
@@ -158,7 +158,7 @@ export class WarAgent implements ICrisisAgent {
     this.definition = data.definition;
     this.phase = data.phase;
     this.ticksInPhase = data.ticksInPhase;
-    this.totalConscripted = (data.extra?.['totalConscripted'] as number) ?? 0;
+    this.totalConscripted = (data.extra?.totalConscripted as number) ?? 0;
   }
 
   // ─── Phase evaluators ──────────────────────────────────────────────────────
@@ -168,9 +168,7 @@ export class WarAgent implements ICrisisAgent {
     const intensity = SEVERITY_INTENSITY[def.severity] ?? 0.5;
 
     // Ramp fraction: 0 at start → 1 at end of buildup
-    const ramp = def.buildupTicks > 0
-      ? this.ticksInPhase / def.buildupTicks
-      : 1;
+    const ramp = def.buildupTicks > 0 ? this.ticksInPhase / def.buildupTicks : 1;
 
     const conscriptionRate = this.param('conscriptionRate', DEFAULT_CONSCRIPTION_RATE);
     const rampedConscription = Math.floor(ctx.population * conscriptionRate * ramp * 0.3);
@@ -194,9 +192,7 @@ export class WarAgent implements ICrisisAgent {
     // Narrative: occasional propaganda during buildup
     if (ctx.rng.coinFlip(0.15)) {
       impact.narrative = {
-        toastMessages: [
-          { text: 'THE MOTHERLAND CALLS \u2014 PREPARE FOR SACRIFICE', severity: 'warning' },
-        ],
+        toastMessages: [{ text: 'THE MOTHERLAND CALLS \u2014 PREPARE FOR SACRIFICE', severity: 'warning' }],
         pravdaHeadlines: [ctx.rng.pick(BUILDUP_HEADLINES)],
       };
     }
@@ -258,9 +254,15 @@ export class WarAgent implements ICrisisAgent {
     if (ctx.rng.coinFlip(0.25)) {
       impact.narrative = {
         pravdaHeadlines: [ctx.rng.pick(PEAK_HEADLINES)],
-        toastMessages: numTargets > 0
-          ? [{ text: `Enemy bombardment! ${numTargets} target${numTargets > 1 ? 's' : ''} hit!`, severity: 'critical' }]
-          : [],
+        toastMessages:
+          numTargets > 0
+            ? [
+                {
+                  text: `Enemy bombardment! ${numTargets} target${numTargets > 1 ? 's' : ''} hit!`,
+                  severity: 'critical',
+                },
+              ]
+            : [],
       };
     }
 
@@ -272,17 +274,13 @@ export class WarAgent implements ICrisisAgent {
     const intensity = SEVERITY_INTENSITY[def.severity] ?? 0.5;
 
     // Decay fraction: 1 at start → 0 at end of aftermath
-    const decay = def.aftermathTicks > 0
-      ? 1 - (this.ticksInPhase / def.aftermathTicks)
-      : 0;
+    const decay = def.aftermathTicks > 0 ? 1 - this.ticksInPhase / def.aftermathTicks : 0;
 
     const veteranReturnRate = this.param('veteranReturnRate', DEFAULT_VETERAN_RETURN_RATE);
 
     // Return veterans gradually over the aftermath period
     const totalToReturn = Math.floor(this.totalConscripted * veteranReturnRate);
-    const returningPerTick = def.aftermathTicks > 0
-      ? Math.floor(totalToReturn / def.aftermathTicks)
-      : totalToReturn;
+    const returningPerTick = def.aftermathTicks > 0 ? Math.floor(totalToReturn / def.aftermathTicks) : totalToReturn;
 
     const impact: CrisisImpact = {
       crisisId: def.id,

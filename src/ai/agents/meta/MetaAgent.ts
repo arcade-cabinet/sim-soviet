@@ -7,30 +7,27 @@
  */
 
 import { Vehicle } from 'yuka';
-import { AchievementTracker } from './AchievementTracker';
+import type { GameRng } from '../../../game/SeedSystem';
 import type { AchievementTrackerSaveData } from './AchievementTracker';
+import { AchievementTracker } from './AchievementTracker';
 import {
+  type AchievementContext,
   tickAchievements as tickAchievementsHelper,
   tickTutorial as tickTutorialHelper,
-  type AchievementContext,
 } from './achievementTick';
-import {
-  tickDirectives as tickDirectivesHelper,
-  type DirectiveContext,
-} from './directiveTick';
+import { type DirectiveContext, tickDirectives as tickDirectivesHelper } from './directiveTick';
 import { MinigameRouter } from './minigames/MinigameRouter';
 import type { MinigameRouterSaveData } from './minigames/MinigameTypes';
 import {
-  tickMinigames as tickMinigamesHelper,
   checkBuildingTapMinigame as checkBuildingTapMinigameHelper,
   checkEventMinigame as checkEventMinigameHelper,
   isMinigameAvailable as isMinigameAvailableHelper,
-  resolveMinigameChoice as resolveMinigameChoiceHelper,
   type MinigameContext,
+  resolveMinigameChoice as resolveMinigameChoiceHelper,
+  tickMinigames as tickMinigamesHelper,
 } from './minigameTick';
-import { TutorialSystem } from './TutorialSystem';
 import type { TutorialSaveData } from './TutorialSystem';
-import type { GameRng } from '../../../game/SeedSystem';
+import { TutorialSystem } from './TutorialSystem';
 
 // ─────────────────────────────────────────────────────────
 //  SAVE DATA

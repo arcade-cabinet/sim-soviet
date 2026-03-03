@@ -238,7 +238,11 @@ export class TransportSystem {
     this._condition = Math.max(0, this._condition - decayRate);
 
     // 3. MAINTENANCE (auto-repair when condition < threshold and timber available)
-    if (this._condition < tcfg.conditionThresholds.maintenanceTrigger && resources && resources.timber >= TransportSystem.MAINTENANCE_TIMBER_COST) {
+    if (
+      this._condition < tcfg.conditionThresholds.maintenanceTrigger &&
+      resources &&
+      resources.timber >= TransportSystem.MAINTENANCE_TIMBER_COST
+    ) {
       resources.timber -= TransportSystem.MAINTENANCE_TIMBER_COST;
       this._condition = Math.min(100, this._condition + TransportSystem.MAINTENANCE_RECOVERY);
     }

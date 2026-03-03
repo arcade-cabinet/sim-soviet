@@ -6,10 +6,10 @@
  * follow mode-specific rules.
  */
 
-import { GameRng } from '@/game/SeedSystem';
-import { SimulationEngine } from '@/game/SimulationEngine';
 import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
 import { DIFFICULTY_PRESETS } from '@/ai/agents/political/ScoringSystem';
+import { GameRng } from '@/game/SeedSystem';
+import { SimulationEngine } from '@/game/SimulationEngine';
 import type { NewGameConfig } from '@/ui/NewGameSetup';
 
 // ── Minimal mock grid + callbacks for SimulationEngine constructor ──────────
@@ -83,14 +83,12 @@ describe('GameInit governor wiring', () => {
     const difficulty = 'worker' as const;
     const gameMode = 'historical' as const;
 
-    const resMult = gameMode === 'historical'
-      ? 1.0
-      : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
+    const resMult = gameMode === 'historical' ? 1.0 : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
 
     // Historical mode ignores difficulty — always 1.0
     expect(resMult).toBe(1.0);
     // Worker difficulty would normally give 2.0
-    expect(DIFFICULTY_PRESETS['worker'].resourceMultiplier).toBe(2.0);
+    expect(DIFFICULTY_PRESETS.worker.resourceMultiplier).toBe(2.0);
   });
 
   it('classic mode: resourceMultiplier uses DIFFICULTY_PRESETS', () => {
@@ -103,9 +101,7 @@ describe('GameInit governor wiring', () => {
     for (const { difficulty, expected } of testCases) {
       const gameMode = 'classic' as const;
 
-      const resMult = gameMode === 'historical'
-        ? 1.0
-        : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
+      const resMult = gameMode === 'historical' ? 1.0 : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
 
       expect(resMult).toBe(expected);
     }

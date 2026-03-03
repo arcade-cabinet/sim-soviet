@@ -6,8 +6,8 @@
  * diminishing-returns calculations used by UI and tests.
  */
 
-import { getBuildingDef } from '@/data/buildingDefs';
 import { economy } from '@/config';
+import { getBuildingDef } from '@/data/buildingDefs';
 import { citizens, getResourceEntity, producers } from '@/ecs/archetypes';
 
 /**

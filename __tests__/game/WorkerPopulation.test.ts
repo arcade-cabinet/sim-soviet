@@ -1,9 +1,9 @@
+import type { WorkerTickContext } from '@/ai/agents/workforce/workers-index';
+import { WorkerSystem } from '@/ai/agents/workforce/workers-index';
 import { citizens } from '@/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
-import type { WorkerTickContext } from '@/ai/agents/workforce/workers-index';
-import { WorkerSystem } from '@/ai/agents/workforce/workers-index';
 import { createTestDvory } from '../playthrough/helpers';
 
 /** Build a default tick context with overrides. */

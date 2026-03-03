@@ -12,11 +12,11 @@
  */
 
 import type {
+  CrisisAgentSaveData,
   CrisisContext,
   CrisisDefinition,
   CrisisImpact,
   CrisisPhase,
-  CrisisAgentSaveData,
   ICrisisAgent,
 } from './types';
 
@@ -181,9 +181,7 @@ export class FamineAgent implements ICrisisAgent {
    * Ramp factor goes from 0 → 1 over buildupTicks.
    */
   private evaluateBuildup(ctx: CrisisContext): CrisisImpact {
-    const ramp = this.definition.buildupTicks > 0
-      ? this.ticksInPhase / this.definition.buildupTicks
-      : 1;
+    const ramp = this.definition.buildupTicks > 0 ? this.ticksInPhase / this.definition.buildupTicks : 1;
     const severity = this.definition.severity;
 
     // Production mult ramps from 0.9 down toward peak value
@@ -206,9 +204,10 @@ export class FamineAgent implements ICrisisAgent {
       },
       narrative: {
         pravdaHeadlines: [headline],
-        toastMessages: ramp > 0.5
-          ? [{ text: 'COMRADES, CONSERVE GRAIN — TEMPORARY SHORTFALL EXPECTED', severity: 'warning' as const }]
-          : [],
+        toastMessages:
+          ramp > 0.5
+            ? [{ text: 'COMRADES, CONSERVE GRAIN — TEMPORARY SHORTFALL EXPECTED', severity: 'warning' as const }]
+            : [],
       },
     };
   }
@@ -259,9 +258,7 @@ export class FamineAgent implements ICrisisAgent {
       },
       narrative: {
         pravdaHeadlines: [headline],
-        toastMessages: [
-          { text: 'STARVATION SPREADING — GRAIN RESERVES DEPLETED', severity: 'critical' as const },
-        ],
+        toastMessages: [{ text: 'STARVATION SPREADING — GRAIN RESERVES DEPLETED', severity: 'critical' as const }],
       },
     };
   }
@@ -272,9 +269,7 @@ export class FamineAgent implements ICrisisAgent {
    * Recovery factor goes from 0 → 1 over aftermathTicks.
    */
   private evaluateAftermath(ctx: CrisisContext): CrisisImpact {
-    const recovery = this.definition.aftermathTicks > 0
-      ? this.ticksInPhase / this.definition.aftermathTicks
-      : 1;
+    const recovery = this.definition.aftermathTicks > 0 ? this.ticksInPhase / this.definition.aftermathTicks : 1;
     const severity = this.definition.severity;
 
     // Production recovering toward 1.0
@@ -323,9 +318,6 @@ export class FamineAgent implements ICrisisAgent {
     const totalYears = this.definition.endYear - this.definition.startYear;
     // Assume ~12 ticks/year as a baseline
     const totalTicks = Math.max(1, totalYears * 12);
-    return Math.max(
-      1,
-      totalTicks - this.definition.buildupTicks - this.definition.aftermathTicks,
-    );
+    return Math.max(1, totalTicks - this.definition.buildupTicks - this.definition.aftermathTicks);
   }
 }

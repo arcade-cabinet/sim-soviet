@@ -8,16 +8,10 @@
  * - Crisis events only fire when matching crisis is active
  */
 
+import { ALL_EVENT_TEMPLATES, CRISIS_EVENTS, EventSystem, type GameEvent } from '../../src/ai/agents/narrative/events';
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import {
-  ALL_EVENT_TEMPLATES,
-  CRISIS_EVENTS,
-  EventSystem,
-  type GameEvent,
-} from '../../src/ai/agents/narrative/events';
-import type { EventTemplate } from '../../src/ai/agents/narrative/events/types';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

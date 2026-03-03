@@ -10,9 +10,9 @@
  */
 
 import type { DifficultyConfig } from '@/ai/agents/political/ScoringSystem';
-import type { CrisisImpact } from './types';
 import type { DynamicModifiers } from './Governor';
 import { DEFAULT_MODIFIERS } from './Governor';
+import type { CrisisImpact } from './types';
 
 /**
  * Compute a DifficultyConfig from era modifiers layered with crisis impacts.
@@ -36,7 +36,7 @@ export function computeDynamicDifficulty(
   let quotaMult = 1.0;
   let growthMult = 1.0;
   let decayMult = 1.0;
-  let consumptionMult = 1.0;
+  const consumptionMult = 1.0;
   let maxKgbMult = 1.0;
 
   if (crisisImpacts) {

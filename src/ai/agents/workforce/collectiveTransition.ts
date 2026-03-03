@@ -10,10 +10,10 @@
  * @param raion - Existing RaionPool (if already transitioned)
  */
 
+import type { World } from 'miniplex';
+import { workforce } from '@/config';
 import type { Entity, RaionPool } from '@/ecs/world';
 import { world } from '@/ecs/world';
-import { workforce } from '@/config';
-import type { World } from 'miniplex';
 
 const tcfg = workforce.transition;
 
@@ -219,7 +219,7 @@ export function collapseEntitiesToBuildings(w: World<Entity> = world): RaionPool
   const idleWorkers = Math.max(0, laborForce - assignedWorkers);
 
   // Household counts on housing buildings from dvory
-  for (const dEntity of dvorEntities) {
+  for (const _dEntity of dvorEntities) {
     // Find which housing building this dvor belongs to via its citizens
     // For simplicity, distribute households across housing buildings evenly
     // (citizens have home positions linking to buildings)

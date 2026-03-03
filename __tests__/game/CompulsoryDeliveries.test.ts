@@ -23,14 +23,14 @@ const ALL_DOCTRINES: Doctrine[] = [
 
 /** Updated base rates from political.json (30-70% range). */
 const EXPECTED_RATES: Record<Doctrine, DeliveryRates> = {
-  revolutionary:     { food: 0.30, vodka: 0.20, money: 0.25 },
-  industrialization: { food: 0.45, vodka: 0.35, money: 0.50 },
-  wartime:           { food: 0.60, vodka: 0.50, money: 0.65 },
-  reconstruction:    { food: 0.25, vodka: 0.20, money: 0.30 },
-  thaw:              { food: 0.25, vodka: 0.15, money: 0.25 },
-  freeze:            { food: 0.40, vodka: 0.30, money: 0.45 },
-  stagnation:        { food: 0.35, vodka: 0.30, money: 0.40 },
-  eternal:           { food: 0.30, vodka: 0.25, money: 0.35 },
+  revolutionary: { food: 0.3, vodka: 0.2, money: 0.25 },
+  industrialization: { food: 0.45, vodka: 0.35, money: 0.5 },
+  wartime: { food: 0.6, vodka: 0.5, money: 0.65 },
+  reconstruction: { food: 0.25, vodka: 0.2, money: 0.3 },
+  thaw: { food: 0.25, vodka: 0.15, money: 0.25 },
+  freeze: { food: 0.4, vodka: 0.3, money: 0.45 },
+  stagnation: { food: 0.35, vodka: 0.3, money: 0.4 },
+  eternal: { food: 0.3, vodka: 0.25, money: 0.35 },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -49,8 +49,8 @@ describe('CompulsoryDeliveries', () => {
     it('has correct default rates (food: 0.30)', () => {
       const cd = new CompulsoryDeliveries();
       const rates = cd.getRates();
-      expect(rates.food).toBeCloseTo(0.30);
-      expect(rates.vodka).toBeCloseTo(0.20);
+      expect(rates.food).toBeCloseTo(0.3);
+      expect(rates.vodka).toBeCloseTo(0.2);
       expect(rates.money).toBeCloseTo(0.25);
     });
 
@@ -93,7 +93,7 @@ describe('CompulsoryDeliveries', () => {
       const cd = new CompulsoryDeliveries('wartime');
       const result = cd.applyDeliveries(100, 0, 0);
       // wartime food rate = 0.60
-      expect(result.totalFoodRemaining).toBeCloseTo(100 * (1 - 0.60));
+      expect(result.totalFoodRemaining).toBeCloseTo(100 * (1 - 0.6));
       expect(result.totalFoodRemaining).toBeCloseTo(40);
     });
 
@@ -155,7 +155,7 @@ describe('CompulsoryDeliveries', () => {
 
       cd.setDoctrine('wartime');
       expect(cd.getDoctrine()).toBe('wartime');
-      expect(cd.getRates().food).toBeCloseTo(0.60);
+      expect(cd.getRates().food).toBeCloseTo(0.6);
     });
 
     it('switching to stagnation activates corruption', () => {
@@ -215,8 +215,8 @@ describe('CompulsoryDeliveries', () => {
       // Base: food=350, vodka=150, money=800
       // Corruption adds extra on top
       expect(result.foodTaken).toBeGreaterThan(1000 * 0.35);
-      expect(result.vodkaTaken).toBeGreaterThan(500 * 0.30);
-      expect(result.moneyTaken).toBeGreaterThan(2000 * 0.40);
+      expect(result.vodkaTaken).toBeGreaterThan(500 * 0.3);
+      expect(result.moneyTaken).toBeGreaterThan(2000 * 0.4);
       expect(result.corruptionLoss).toBeGreaterThan(0);
     });
 
@@ -345,8 +345,8 @@ describe('CompulsoryDeliveries', () => {
       expect(Number.isFinite(result.moneyTaken)).toBe(true);
       expect(Number.isFinite(result.totalFoodRemaining)).toBe(true);
 
-      expect(result.foodTaken).toBeCloseTo(bigValue * 0.60);
-      expect(result.totalFoodRemaining).toBeCloseTo(bigValue * 0.40);
+      expect(result.foodTaken).toBeCloseTo(bigValue * 0.6);
+      expect(result.totalFoodRemaining).toBeCloseTo(bigValue * 0.4);
     });
 
     it('cumulative totals handle many ticks', () => {
@@ -407,7 +407,7 @@ describe('CompulsoryDeliveries', () => {
       const rates = cd.getRates();
       // wartime base: food=0.60, vodka=0.50, money=0.65
       // with 0.5x: food=0.30, vodka=0.25, money=0.325
-      expect(rates.food).toBeCloseTo(0.30);
+      expect(rates.food).toBeCloseTo(0.3);
       expect(rates.vodka).toBeCloseTo(0.25);
       expect(rates.money).toBeCloseTo(0.325);
     });
@@ -415,8 +415,8 @@ describe('CompulsoryDeliveries', () => {
     it('comrade difficulty (1.0x) uses base rates unchanged', () => {
       const cd = new CompulsoryDeliveries('wartime', 1.0);
       const rates = cd.getRates();
-      expect(rates.food).toBeCloseTo(0.60);
-      expect(rates.vodka).toBeCloseTo(0.50);
+      expect(rates.food).toBeCloseTo(0.6);
+      expect(rates.vodka).toBeCloseTo(0.5);
       expect(rates.money).toBeCloseTo(0.65);
     });
 
@@ -425,9 +425,9 @@ describe('CompulsoryDeliveries', () => {
       const rates = cd.getRates();
       // thaw base: food=0.25, vodka=0.15, money=0.25
       // with 1.2x: food=0.30, vodka=0.18, money=0.30
-      expect(rates.food).toBeCloseTo(0.30);
+      expect(rates.food).toBeCloseTo(0.3);
       expect(rates.vodka).toBeCloseTo(0.18);
-      expect(rates.money).toBeCloseTo(0.30);
+      expect(rates.money).toBeCloseTo(0.3);
     });
 
     it('difficulty multiplier is applied in applyDeliveries', () => {
@@ -440,9 +440,9 @@ describe('CompulsoryDeliveries', () => {
       const rTovarish = cdTovarish.applyDeliveries(1000, 1000, 1000);
 
       // revolutionary base: food=0.30
-      expect(rWorker.foodTaken).toBeCloseTo(1000 * 0.30 * 0.5);   // 150
-      expect(rComrade.foodTaken).toBeCloseTo(1000 * 0.30 * 1.0);  // 300
-      expect(rTovarish.foodTaken).toBeCloseTo(1000 * 0.30 * 1.2); // 360
+      expect(rWorker.foodTaken).toBeCloseTo(1000 * 0.3 * 0.5); // 150
+      expect(rComrade.foodTaken).toBeCloseTo(1000 * 0.3 * 1.0); // 300
+      expect(rTovarish.foodTaken).toBeCloseTo(1000 * 0.3 * 1.2); // 360
 
       // Worker takes less than comrade takes less than tovarish
       expect(rWorker.foodTaken).toBeLessThan(rComrade.foodTaken);
@@ -478,7 +478,7 @@ describe('CompulsoryDeliveries', () => {
   describe('rate ordering across doctrines', () => {
     it('wartime has the highest food rate', () => {
       for (const doctrine of ALL_DOCTRINES) {
-        const wartimeRates = EXPECTED_RATES['wartime'];
+        const wartimeRates = EXPECTED_RATES.wartime;
         const otherRates = EXPECTED_RATES[doctrine];
         expect(wartimeRates.food).toBeGreaterThanOrEqual(otherRates.food);
       }
@@ -486,7 +486,7 @@ describe('CompulsoryDeliveries', () => {
 
     it('wartime has the highest vodka rate', () => {
       for (const doctrine of ALL_DOCTRINES) {
-        const wartimeRates = EXPECTED_RATES['wartime'];
+        const wartimeRates = EXPECTED_RATES.wartime;
         const otherRates = EXPECTED_RATES[doctrine];
         expect(wartimeRates.vodka).toBeGreaterThanOrEqual(otherRates.vodka);
       }
@@ -494,14 +494,14 @@ describe('CompulsoryDeliveries', () => {
 
     it('wartime has the highest money rate', () => {
       for (const doctrine of ALL_DOCTRINES) {
-        const wartimeRates = EXPECTED_RATES['wartime'];
+        const wartimeRates = EXPECTED_RATES.wartime;
         const otherRates = EXPECTED_RATES[doctrine];
         expect(wartimeRates.money).toBeGreaterThanOrEqual(otherRates.money);
       }
     });
 
     it('thaw has the lowest food rate (tied with reconstruction)', () => {
-      const thawRates = EXPECTED_RATES['thaw'];
+      const thawRates = EXPECTED_RATES.thaw;
       for (const doctrine of ALL_DOCTRINES) {
         const otherRates = EXPECTED_RATES[doctrine];
         expect(thawRates.food).toBeLessThanOrEqual(otherRates.food);
@@ -509,7 +509,7 @@ describe('CompulsoryDeliveries', () => {
     });
 
     it('thaw has the lowest vodka rate', () => {
-      const thawRates = EXPECTED_RATES['thaw'];
+      const thawRates = EXPECTED_RATES.thaw;
       for (const doctrine of ALL_DOCTRINES) {
         const otherRates = EXPECTED_RATES[doctrine];
         expect(thawRates.vodka).toBeLessThanOrEqual(otherRates.vodka);
@@ -517,7 +517,7 @@ describe('CompulsoryDeliveries', () => {
     });
 
     it('thaw has the lowest money rate (tied with revolutionary)', () => {
-      const thawRates = EXPECTED_RATES['thaw'];
+      const thawRates = EXPECTED_RATES.thaw;
       for (const doctrine of ALL_DOCTRINES) {
         const otherRates = EXPECTED_RATES[doctrine];
         expect(thawRates.money).toBeLessThanOrEqual(otherRates.money);

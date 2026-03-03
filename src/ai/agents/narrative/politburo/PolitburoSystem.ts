@@ -10,9 +10,9 @@
  */
 
 import { getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
-import type { GameEvent } from '../events';
 import { createGameView } from '../../../../game/GameView';
 import type { GameRng } from '../../../../game/SeedSystem';
+import type { GameEvent } from '../events';
 import {
   APPOINTMENT_STRATEGIES,
   DEFAULT_MODIFIERS,

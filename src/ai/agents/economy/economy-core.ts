@@ -28,8 +28,8 @@
  * - Starting resource calculation
  */
 
-import type { GameRng } from '../../../game/SeedSystem';
 import { economy } from '@/config';
+import type { GameRng } from '../../../game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  TYPES
@@ -343,8 +343,8 @@ export const DEFAULT_TRUDODNI = economy.trudodni.defaultRate;
 export const TRUDODNI_PER_BUILDING: Record<string, number> = economy.trudodni.perBuilding;
 
 /** Minimum trudodni required per tick, by difficulty. */
-export const MINIMUM_TRUDODNI_BY_DIFFICULTY: Record<DifficultyLevel, number> =
-  economy.trudodni.minimumByDifficulty as Record<DifficultyLevel, number>;
+export const MINIMUM_TRUDODNI_BY_DIFFICULTY: Record<DifficultyLevel, number> = economy.trudodni
+  .minimumByDifficulty as Record<DifficultyLevel, number>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONSTANTS — Fondy (Material Allocations)
@@ -441,20 +441,21 @@ export const QUOTA_MISSED_REDUCTION = economy.quota.missedReduction;
 export const ERA_ESCALATION: Record<EraId, number> = economy.quota.eraEscalation as Record<EraId, number>;
 
 /** Difficulty-specific quota target multiplier. */
-export const DIFFICULTY_QUOTA_MULT: Record<DifficultyLevel, number> =
-  economy.quota.difficultyMult as Record<DifficultyLevel, number>;
+export const DIFFICULTY_QUOTA_MULT: Record<DifficultyLevel, number> = economy.quota.difficultyMult as Record<
+  DifficultyLevel,
+  number
+>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONSTANTS — Starting Resources
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Difficulty multiplier for starting resources. */
-export const DIFFICULTY_RESOURCE_MULT: Record<DifficultyLevel, number> =
-  economy.startingResources.difficultyMult as Record<DifficultyLevel, number>;
+export const DIFFICULTY_RESOURCE_MULT: Record<DifficultyLevel, number> = economy.startingResources
+  .difficultyMult as Record<DifficultyLevel, number>;
 
 /** Era multiplier for starting resources. */
-export const ERA_RESOURCE_MULT: Record<EraId, number> =
-  economy.startingResources.eraMult as Record<EraId, number>;
+export const ERA_RESOURCE_MULT: Record<EraId, number> = economy.startingResources.eraMult as Record<EraId, number>;
 
 const BASE_STARTING_RESOURCES = economy.startingResources.base as {
   readonly money: number;
@@ -475,8 +476,10 @@ export type StartingResources = { [K in keyof typeof BASE_STARTING_RESOURCES]: n
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Full difficulty multiplier presets for worker/comrade/tovarish levels. */
-export const DIFFICULTY_MULTIPLIERS: Record<DifficultyLevel, DifficultyMultipliers> =
-  economy.difficulty as Record<DifficultyLevel, DifficultyMultipliers>;
+export const DIFFICULTY_MULTIPLIERS: Record<DifficultyLevel, DifficultyMultipliers> = economy.difficulty as Record<
+  DifficultyLevel,
+  DifficultyMultipliers
+>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CONSTANTS — Stakhanovite
@@ -793,7 +796,11 @@ export class EconomySystem {
     };
 
     // Init blat
-    this.blat = { connections: economy.blat.startingConnections, totalSpent: 0, totalEarned: economy.blat.startingConnections };
+    this.blat = {
+      connections: economy.blat.startingConnections,
+      totalSpent: 0,
+      totalEarned: economy.blat.startingConnections,
+    };
 
     // Init rations (inactive by default)
     this.rations = {
@@ -1065,9 +1072,12 @@ export class EconomySystem {
     const boostRand = this.rng ? this.rng.random() : Math.random();
     const productionBoost = cfg.productionBoostMin + boostRand * cfg.productionBoostRange;
 
-    const propagandaValue = Math.round(cfg.propagandaMin + (this.rng ? this.rng.random() : Math.random()) * cfg.propagandaRange);
+    const propagandaValue = Math.round(
+      cfg.propagandaMin + (this.rng ? this.rng.random() : Math.random()) * cfg.propagandaRange,
+    );
 
-    const quotaIncrease = cfg.quotaIncreaseBase + (this.rng ? this.rng.random() : Math.random()) * cfg.quotaIncreaseRange;
+    const quotaIncrease =
+      cfg.quotaIncreaseBase + (this.rng ? this.rng.random() : Math.random()) * cfg.quotaIncreaseRange;
 
     // Roll for consequences
     const sabotageRoll = this.rng ? this.rng.random() : Math.random();

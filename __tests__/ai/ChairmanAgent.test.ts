@@ -46,10 +46,7 @@ describe('ChairmanAgent', () => {
 
   it('resolves minigame by choosing best expected value', () => {
     const chairman = new ChairmanAgent();
-    chairman.assessGameState(
-      { food: 500, population: 50 },
-      { blackMarks: 1, commendations: 2, blat: 3 },
-    );
+    chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 1, commendations: 2, blat: 3 });
 
     const choices = [
       {
@@ -85,30 +82,21 @@ describe('ChairmanAgent', () => {
 
   it('falsifies report for moderate shortfall when marks are low', () => {
     const chairman = new ChairmanAgent();
-    chairman.assessGameState(
-      { food: 500, population: 50 },
-      { blackMarks: 0, commendations: 0, blat: 0 },
-    );
+    chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 0, commendations: 0, blat: 0 });
     // 70% met, low marks -> falsify (return false = not honest)
     expect(chairman.resolveAnnualReport(0.7)).toBe(false);
   });
 
   it('is honest for moderate shortfall when marks are high', () => {
     const chairman = new ChairmanAgent();
-    chairman.assessGameState(
-      { food: 500, population: 50 },
-      { blackMarks: 4, commendations: 0, blat: 0 },
-    );
+    chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 4, commendations: 0, blat: 0 });
     // 70% met, high marks -> too risky to falsify
     expect(chairman.resolveAnnualReport(0.7)).toBe(true);
   });
 
   it('defense overrides all during emergency', () => {
     const chairman = new ChairmanAgent();
-    chairman.assessGameState(
-      { food: 5000, population: 50 },
-      { activeFires: 2, activeMeteors: 0, activeOutbreaks: 0 },
-    );
+    chairman.assessGameState({ food: 5000, population: 50 }, { activeFires: 2, activeMeteors: 0, activeOutbreaks: 0 });
     // Defense should override balanced/quota
     expect(chairman.getRecommendedDirective()).toBe('food');
   });
@@ -128,10 +116,7 @@ describe('ChairmanAgent', () => {
 
   it('recommends bribe when blackMarks >= 4 and blat >= 2', () => {
     const chairman = new ChairmanAgent();
-    chairman.assessGameState(
-      { food: 500, population: 50 },
-      { blackMarks: 4, commendations: 0, blat: 5 },
-    );
+    chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 4, commendations: 0, blat: 5 });
     const result = chairman.shouldAttemptBribe();
     expect(result.shouldBribe).toBe(true);
     expect(result.amount).toBe(0.5);
@@ -139,10 +124,7 @@ describe('ChairmanAgent', () => {
 
   it('does not recommend bribe when blackMarks < 4', () => {
     const chairman = new ChairmanAgent();
-    chairman.assessGameState(
-      { food: 500, population: 50 },
-      { blackMarks: 3, commendations: 0, blat: 5 },
-    );
+    chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 3, commendations: 0, blat: 5 });
     const result = chairman.shouldAttemptBribe();
     expect(result.shouldBribe).toBe(false);
     expect(result.amount).toBe(0);
@@ -150,10 +132,7 @@ describe('ChairmanAgent', () => {
 
   it('does not recommend bribe when blat < 2', () => {
     const chairman = new ChairmanAgent();
-    chairman.assessGameState(
-      { food: 500, population: 50 },
-      { blackMarks: 5, commendations: 0, blat: 1 },
-    );
+    chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 5, commendations: 0, blat: 1 });
     const result = chairman.shouldAttemptBribe();
     expect(result.shouldBribe).toBe(false);
     expect(result.amount).toBe(0);
@@ -161,10 +140,7 @@ describe('ChairmanAgent', () => {
 
   it('recommends bribe at exact threshold (marks=4, blat=2)', () => {
     const chairman = new ChairmanAgent();
-    chairman.assessGameState(
-      { food: 500, population: 50 },
-      { blackMarks: 4, commendations: 0, blat: 2 },
-    );
+    chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 4, commendations: 0, blat: 2 });
     const result = chairman.shouldAttemptBribe();
     expect(result.shouldBribe).toBe(true);
     expect(result.amount).toBe(0.5);
@@ -172,10 +148,7 @@ describe('ChairmanAgent', () => {
 
   it('does not recommend bribe with no blat (undefined)', () => {
     const chairman = new ChairmanAgent();
-    chairman.assessGameState(
-      { food: 500, population: 50 },
-      { blackMarks: 5, commendations: 0 },
-    );
+    chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 5, commendations: 0 });
     const result = chairman.shouldAttemptBribe();
     expect(result.shouldBribe).toBe(false);
     expect(result.amount).toBe(0);

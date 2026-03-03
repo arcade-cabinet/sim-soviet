@@ -8,7 +8,6 @@
  * Meeting mandates earns commendations; ignoring them risks black marks.
  */
 
-import { world } from '@/ecs/world';
 import {
   allMandatesComplete,
   type BuildingMandate,
@@ -19,6 +18,7 @@ import {
   type PlanMandateState,
   recordBuildingPlaced,
 } from '@/ai/agents/political/PoliticalAgent';
+import { world } from '@/ecs/world';
 
 describe('PlanMandates', () => {
   beforeEach(() => {

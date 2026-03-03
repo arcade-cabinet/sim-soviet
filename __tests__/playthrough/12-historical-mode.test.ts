@@ -17,10 +17,10 @@
  * short tick-based lifecycles that resolve within a single game-year.
  */
 
-import { world } from '../../src/ecs/world';
-import { getResourceEntity } from '../../src/ecs/archetypes';
 import { HistoricalGovernor } from '../../src/ai/agents/crisis/HistoricalGovernor';
 import { HISTORICAL_CRISES } from '../../src/config/historicalCrises';
+import { getResourceEntity } from '../../src/ecs/archetypes';
+import { world } from '../../src/ecs/world';
 import {
   advanceTicks,
   buildBasicSettlement,
@@ -29,7 +29,6 @@ import {
   getDate,
   getResources,
   TICKS_PER_MONTH,
-  TICKS_PER_YEAR,
 } from './helpers';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -50,7 +49,7 @@ interface YearSnapshot {
  * runs through population-depleting crises without stopping.
  */
 function disableGameOver(engine: unknown): void {
-  (engine as Record<string, unknown>)['endGame'] = () => {};
+  (engine as Record<string, unknown>).endGame = () => {};
 }
 
 /**
@@ -297,9 +296,7 @@ describe('Historical mode — full timeline playthrough', () => {
 
   it('all non-political historical crises activate during the timeline', () => {
     // Non-political crises that the HistoricalGovernor creates agents for
-    const expectedCrises = HISTORICAL_CRISES.filter(
-      (c) => c.type !== 'political' && c.startYear <= simulationEndYear,
-    );
+    const expectedCrises = HISTORICAL_CRISES.filter((c) => c.type !== 'political' && c.startYear <= simulationEndYear);
 
     const missingCrises: string[] = [];
     for (const crisis of expectedCrises) {

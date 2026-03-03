@@ -10,14 +10,16 @@
  * - Integration with consumptionSystem properly drains resources
  */
 
-import { getResourceEntity } from '../../src/ecs/archetypes';
-import { createResourceStore } from '../../src/ecs/factories';
 import {
   consumptionSystem,
   resetStarvationCounter,
   setResentmentCallback,
   setStarvationCallback,
 } from '../../src/ai/agents/economy/consumptionSystem';
+import { economy } from '../../src/config';
+import { getResourceEntity } from '../../src/ecs/archetypes';
+import { createResourceStore } from '../../src/ecs/factories';
+import type { RoleBucket } from '../../src/ecs/systems/distributionWeights';
 import {
   computeDistribution,
   computeRoleBuckets,
@@ -25,10 +27,8 @@ import {
   RESENTMENT_MORALE_PENALTY,
   RESENTMENT_THRESHOLD,
 } from '../../src/ecs/systems/distributionWeights';
-import type { RoleBucket } from '../../src/ecs/systems/distributionWeights';
 import { world } from '../../src/ecs/world';
 import { createTestDvory } from '../playthrough/helpers';
-import { economy } from '../../src/config';
 
 /** The actual food divisor from config — tests must match runtime values. */
 const FOOD_DIV = economy.consumption.foodPerPopDivisor; // 25
@@ -397,10 +397,7 @@ describe('Dual-Layer Distribution Model', () => {
       });
 
       expect(cb).toHaveBeenCalledTimes(1);
-      expect(cb).toHaveBeenCalledWith(
-        RESENTMENT_MORALE_PENALTY,
-        expect.any(Number),
-      );
+      expect(cb).toHaveBeenCalledWith(RESENTMENT_MORALE_PENALTY, expect.any(Number));
       // Verify the fraction is above threshold
       const actualFraction = cb.mock.calls[0]![1] as number;
       expect(actualFraction).toBeGreaterThan(RESENTMENT_THRESHOLD);

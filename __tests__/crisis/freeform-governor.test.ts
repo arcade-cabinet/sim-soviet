@@ -9,10 +9,10 @@
  * and extreme divergence years.
  */
 
-import { GameRng } from '@/game/SeedSystem';
 import { FreeformGovernor } from '@/ai/agents/crisis/FreeformGovernor';
-import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
 import type { GovernorContext } from '@/ai/agents/crisis/Governor';
+import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
+import { GameRng } from '@/game/SeedSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -34,12 +34,8 @@ function makeCtx(overrides?: Partial<GovernorContext>): GovernorContext {
  * Helper: advance the governor through multiple ticks at a given year/month.
  * Returns the last directive.
  */
-function advanceTicks(
-  gov: FreeformGovernor,
-  ticks: number,
-  ctxOverrides: Partial<GovernorContext>,
-) {
-  let directive;
+function advanceTicks(gov: FreeformGovernor, ticks: number, ctxOverrides: Partial<GovernorContext>) {
+  let directive: ReturnType<FreeformGovernor['evaluate']> | undefined;
   for (let i = 0; i < ticks; i++) {
     directive = gov.evaluate(makeCtx(ctxOverrides));
   }
@@ -106,15 +102,17 @@ describe('FreeformGovernor: post-divergence ChaosEngine', () => {
     // Run many years post-divergence with conditions that should trigger crises
     for (let year = 1920; year <= 1970; year++) {
       gov.onYearBoundary(year);
-      gov.evaluate(makeCtx({
-        year,
-        month: 1, // month=1 triggers ChaosEngine check
-        population: 3000,
-        food: 200,
-        money: 5000,
-        rng: new GameRng(`chaos-${year}`),
-        totalTicks: (year - 1917) * 12 + 1,
-      }));
+      gov.evaluate(
+        makeCtx({
+          year,
+          month: 1, // month=1 triggers ChaosEngine check
+          population: 3000,
+          food: 200,
+          money: 5000,
+          rng: new GameRng(`chaos-${year}`),
+          totalTicks: (year - 1917) * 12 + 1,
+        }),
+      );
     }
 
     const events = gov.getTimeline().getAllEvents();
@@ -131,15 +129,17 @@ describe('FreeformGovernor: post-divergence ChaosEngine', () => {
     for (let year = 1920; year <= 1980 && !foundImpactsPostDivergence; year++) {
       gov.onYearBoundary(year);
       for (let month = 1; month <= 12; month++) {
-        const directive = gov.evaluate(makeCtx({
-          year,
-          month,
-          population: 3000,
-          food: 100,
-          money: 5000,
-          rng: new GameRng(`impacts-${year}-${month}`),
-          totalTicks: (year - 1917) * 12 + month,
-        }));
+        const directive = gov.evaluate(
+          makeCtx({
+            year,
+            month,
+            population: 3000,
+            food: 100,
+            money: 5000,
+            rng: new GameRng(`impacts-${year}-${month}`),
+            totalTicks: (year - 1917) * 12 + month,
+          }),
+        );
 
         if (directive.crisisImpacts.length > 0 && gov.isDiverged()) {
           foundImpactsPostDivergence = true;
@@ -159,12 +159,14 @@ describe('FreeformGovernor: post-divergence ChaosEngine', () => {
     const gov = new FreeformGovernor(1917);
 
     // Only evaluate at month=6 (not month=1) — no crisis generation
-    gov.evaluate(makeCtx({
-      year: 1917,
-      month: 6,
-      rng: new GameRng('no-gen'),
-      totalTicks: 6,
-    }));
+    gov.evaluate(
+      makeCtx({
+        year: 1917,
+        month: 6,
+        rng: new GameRng('no-gen'),
+        totalTicks: 6,
+      }),
+    );
 
     const events = gov.getTimeline().getAllEvents();
     const generated = events.filter((e) => !e.isHistorical);
@@ -319,17 +321,17 @@ describe('FreeformGovernor: serialization', () => {
     const data = gov.serialize();
 
     expect(data.mode).toBe('freeform');
-    expect(data.state['divergenceYear']).toBe(1945);
-    expect(data.state['hasDiverged']).toBe(true);
-    expect(data.state['historicalAgentStates']).toBeDefined();
-    expect(data.state['historicalActivatedSet']).toBeDefined();
-    expect(data.state['freeformEntries']).toBeDefined();
-    expect(data.state['timeline']).toBeDefined();
-    expect(data.state['yearsSinceLastWar']).toBeDefined();
-    expect(data.state['yearsSinceLastFamine']).toBeDefined();
-    expect(data.state['yearsSinceLastDisaster']).toBeDefined();
-    expect(data.state['yearsSinceLastPolitical']).toBeDefined();
-    expect(data.state['totalCrisesExperienced']).toBeDefined();
+    expect(data.state.divergenceYear).toBe(1945);
+    expect(data.state.hasDiverged).toBe(true);
+    expect(data.state.historicalAgentStates).toBeDefined();
+    expect(data.state.historicalActivatedSet).toBeDefined();
+    expect(data.state.freeformEntries).toBeDefined();
+    expect(data.state.timeline).toBeDefined();
+    expect(data.state.yearsSinceLastWar).toBeDefined();
+    expect(data.state.yearsSinceLastFamine).toBeDefined();
+    expect(data.state.yearsSinceLastDisaster).toBeDefined();
+    expect(data.state.yearsSinceLastPolitical).toBeDefined();
+    expect(data.state.totalCrisesExperienced).toBeDefined();
   });
 
   it('restored governor preserves timeline events', () => {
@@ -438,15 +440,17 @@ describe('FreeformGovernor: getActiveCrises()', () => {
     // Diverge and run until freeform crises appear
     for (let year = 1920; year <= 1970; year++) {
       gov.onYearBoundary(year);
-      gov.evaluate(makeCtx({
-        year,
-        month: 1,
-        population: 3000,
-        food: 100,
-        money: 5000,
-        rng: new GameRng(`active-${year}`),
-        totalTicks: (year - 1917) * 12 + 1,
-      }));
+      gov.evaluate(
+        makeCtx({
+          year,
+          month: 1,
+          population: 3000,
+          food: 100,
+          money: 5000,
+          rng: new GameRng(`active-${year}`),
+          totalTicks: (year - 1917) * 12 + 1,
+        }),
+      );
     }
 
     // By now, freeform crises should exist in timeline
@@ -469,9 +473,16 @@ describe('FreeformGovernor: getActiveCrises()', () => {
 
     const active = gov.getActiveCrises();
     const politicalIds = [
-      'red_terror', 'great_terror', 'destalinization', 'virgin_lands',
-      'anti_alcohol_campaign', 'glasnost_perestroika', 'kronstadt_rebellion',
-      'doctors_plot', 'sino_soviet_split', 'august_coup',
+      'red_terror',
+      'great_terror',
+      'destalinization',
+      'virgin_lands',
+      'anti_alcohol_campaign',
+      'glasnost_perestroika',
+      'kronstadt_rebellion',
+      'doctors_plot',
+      'sino_soviet_split',
+      'august_coup',
     ];
     for (const id of politicalIds) {
       expect(active).not.toContain(id);
@@ -485,11 +496,13 @@ describe('FreeformGovernor: different divergence years', () => {
   it('diverge from 1917: everything diverges immediately', () => {
     const gov = new FreeformGovernor(1917);
 
-    const directive = gov.evaluate(makeCtx({
-      year: 1917,
-      month: 1,
-      totalTicks: 0,
-    }));
+    const directive = gov.evaluate(
+      makeCtx({
+        year: 1917,
+        month: 1,
+        totalTicks: 0,
+      }),
+    );
 
     expect(gov.isDiverged()).toBe(true);
     expect(gov.getDivergenceYear()).toBe(1917);
@@ -578,15 +591,17 @@ describe('FreeformGovernor: totalCrisesExperienced', () => {
     // Run until ChaosEngine generates something
     for (let year = 1920; year <= 1970; year++) {
       gov.onYearBoundary(year);
-      gov.evaluate(makeCtx({
-        year,
-        month: 1,
-        population: 3000,
-        food: 100,
-        money: 5000,
-        rng: new GameRng(`total-${year}`),
-        totalTicks: (year - 1917) * 12 + 1,
-      }));
+      gov.evaluate(
+        makeCtx({
+          year,
+          month: 1,
+          population: 3000,
+          food: 100,
+          money: 5000,
+          rng: new GameRng(`total-${year}`),
+          totalTicks: (year - 1917) * 12 + 1,
+        }),
+      );
     }
 
     expect(gov.getTotalCrisesExperienced()).toBeGreaterThan(initialCount);

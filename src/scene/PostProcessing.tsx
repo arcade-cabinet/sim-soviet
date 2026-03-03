@@ -10,7 +10,7 @@
  * All effects are lightweight — targeting < 2ms per frame overhead.
  */
 
-import { EffectComposer, Bloom, ToneMapping, Vignette, SMAA } from '@react-three/postprocessing';
+import { Bloom, EffectComposer, SMAA, ToneMapping, Vignette } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
 import type React from 'react';
 
@@ -22,12 +22,7 @@ const PostProcessing: React.FC = () => {
       <SMAA />
 
       {/* Bloom — subtle glow on bright elements (fire, powered buildings, emissive) */}
-      <Bloom
-        luminanceThreshold={0.9}
-        luminanceSmoothing={0.3}
-        intensity={0.4}
-        mipmapBlur
-      />
+      <Bloom luminanceThreshold={0.9} luminanceSmoothing={0.3} intensity={0.4} mipmapBlur />
 
       {/* Tone mapping — ACES Filmic for cinematic color range */}
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />

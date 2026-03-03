@@ -5,11 +5,11 @@
  */
 
 import { Vehicle } from 'yuka';
-import type { GameRng } from '../../../game/SeedSystem';
-import { TransportSystem, type TransportSaveData, type TransportTickResult } from './TransportSystem';
 import type { Entity } from '../../../ecs/world';
 import type { SeasonProfile } from '../../../game/Chronology';
+import type { GameRng } from '../../../game/SeedSystem';
 import type { SettlementTier } from './SettlementSystem';
+import { type TransportSaveData, TransportSystem, type TransportTickResult } from './TransportSystem';
 
 /**
  * Wraps TransportSystem as a Yuka Vehicle agent.

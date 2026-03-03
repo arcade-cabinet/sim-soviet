@@ -6,12 +6,12 @@
  * freeform mode uses the correct resource multiplier.
  */
 
-import { GameRng } from '@/game/SeedSystem';
-import { SimulationEngine } from '@/game/SimulationEngine';
 import { FreeformGovernor } from '@/ai/agents/crisis/FreeformGovernor';
 import { DIFFICULTY_PRESETS } from '@/ai/agents/political/ScoringSystem';
-import type { NewGameConfig, GameMode } from '@/ui/NewGameSetup';
 import type { GameInitOptions } from '@/bridge/GameInit';
+import { GameRng } from '@/game/SeedSystem';
+import { SimulationEngine } from '@/game/SimulationEngine';
+import type { GameMode, NewGameConfig } from '@/ui/NewGameSetup';
 
 // ── Minimal mock grid + callbacks for SimulationEngine constructor ──────────
 
@@ -161,24 +161,21 @@ describe('Freeform mode resource multiplier', () => {
     const gameMode = 'freeform' as const;
 
     // Replicate the logic from GameInit.ts
-    const resMult = (gameMode === 'historical' || gameMode === 'freeform')
-      ? 1.0
-      : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
+    const resMult =
+      gameMode === 'historical' || gameMode === 'freeform' ? 1.0 : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
 
     // Freeform mode ignores difficulty — always 1.0
     expect(resMult).toBe(1.0);
     // Worker difficulty would normally give 2.0
-    expect(DIFFICULTY_PRESETS['worker'].resourceMultiplier).toBe(2.0);
+    expect(DIFFICULTY_PRESETS.worker.resourceMultiplier).toBe(2.0);
   });
 
   it('freeform mode: all difficulty levels get 1.0', () => {
     const difficulties = ['worker', 'comrade', 'tovarish'] as const;
 
     for (const difficulty of difficulties) {
-      const resMult = ('freeform' === 'historical' || 'freeform' === 'freeform')
-        ? 1.0
-        : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
-
+      // Freeform mode always uses 1.0 resource multiplier (Governor system handles difficulty)
+      const resMult = 1.0;
       expect(resMult).toBe(1.0);
     }
   });

@@ -1,7 +1,7 @@
+import { EventSystem, type GameEvent } from '../../src/ai/agents/narrative/events';
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import { EventSystem, type GameEvent } from '../../src/ai/agents/narrative/events';
 import { GameRng } from '../../src/game/SeedSystem';
 
 describe('EventSystem serialization', () => {

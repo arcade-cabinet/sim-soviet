@@ -1,14 +1,14 @@
-import { CollectiveAgent } from '../../src/ai/agents/infrastructure/CollectiveAgent';
 import {
+  CANDIDATE_LIMIT,
+  CollectiveAgent,
+  type CollectiveAgentState,
   FOOD_CRISIS_THRESHOLD,
-  FOOD_FOCUS_MULTIPLIER,
   FOOD_CRITICAL_THRESHOLD,
   FOOD_DEMAND_THRESHOLD,
+  FOOD_FOCUS_MULTIPLIER,
   HOUSING_OCCUPANCY_THRESHOLD,
-  REPAIR_THRESHOLD,
   MAX_PLACEMENT_DISTANCE,
-  CANDIDATE_LIMIT,
-  type CollectiveAgentState,
+  REPAIR_THRESHOLD,
 } from '../../src/ai/agents/infrastructure/CollectiveAgent';
 
 describe('CollectiveAgent', () => {
@@ -114,7 +114,16 @@ describe('CollectiveAgent', () => {
     it('returns null for children under 14', () => {
       const agent = new CollectiveAgent();
       const child = { citizen: { hunger: 0, age: 10, class: 'worker', assignment: null } } as any;
-      const stats = { assignmentSource: 'auto' as const, morale: 50, loyalty: 50, skill: 50, vodkaDependency: 0, ticksSinceVodka: 0, name: 'Kolya', assignmentDuration: 0 };
+      const stats = {
+        assignmentSource: 'auto' as const,
+        morale: 50,
+        loyalty: 50,
+        skill: 50,
+        vodkaDependency: 0,
+        ticksSinceVodka: 0,
+        name: 'Kolya',
+        assignmentDuration: 0,
+      };
       const result = agent.runGovernor(child, stats, makeResources(100, 10));
       expect(result).toBeNull();
     });
@@ -122,7 +131,16 @@ describe('CollectiveAgent', () => {
     it('returns null for forced-assigned workers', () => {
       const agent = new CollectiveAgent();
       const worker = { citizen: { hunger: 0, age: 25, class: 'worker', assignment: null } } as any;
-      const stats = { assignmentSource: 'forced' as const, morale: 50, loyalty: 50, skill: 50, vodkaDependency: 0, ticksSinceVodka: 0, name: 'Pavel', assignmentDuration: 0 };
+      const stats = {
+        assignmentSource: 'forced' as const,
+        morale: 50,
+        loyalty: 50,
+        skill: 50,
+        vodkaDependency: 0,
+        ticksSinceVodka: 0,
+        name: 'Pavel',
+        assignmentDuration: 0,
+      };
       const result = agent.runGovernor(worker, stats, makeResources(1, 10)); // even food crisis
       expect(result).toBeNull();
     });
@@ -130,7 +148,16 @@ describe('CollectiveAgent', () => {
     it('returns null for player-assigned workers', () => {
       const agent = new CollectiveAgent();
       const worker = { citizen: { hunger: 0, age: 25, class: 'worker', assignment: null } } as any;
-      const stats = { assignmentSource: 'player' as const, morale: 50, loyalty: 50, skill: 50, vodkaDependency: 0, ticksSinceVodka: 0, name: 'Misha', assignmentDuration: 0 };
+      const stats = {
+        assignmentSource: 'player' as const,
+        morale: 50,
+        loyalty: 50,
+        skill: 50,
+        vodkaDependency: 0,
+        ticksSinceVodka: 0,
+        name: 'Misha',
+        assignmentDuration: 0,
+      };
       const result = agent.runGovernor(worker, stats, makeResources(1, 10)); // even food crisis
       expect(result).toBeNull();
     });
@@ -229,9 +256,7 @@ describe('CollectiveAgent', () => {
     it('includes unfulfilled mandates with sortPriority=10', () => {
       const agent = new CollectiveAgent();
       const mandateState = {
-        mandates: [
-          { defId: 'power-station', label: 'Power Station', required: 2, fulfilled: 0 },
-        ],
+        mandates: [{ defId: 'power-station', label: 'Power Station', required: 2, fulfilled: 0 }],
       };
       const queue = agent.generateQueue(mandateState, []);
       expect(queue).toHaveLength(2); // one per remaining unit
@@ -242,9 +267,7 @@ describe('CollectiveAgent', () => {
     it('skips fully fulfilled mandates', () => {
       const agent = new CollectiveAgent();
       const mandateState = {
-        mandates: [
-          { defId: 'power-station', label: 'Power Station', required: 1, fulfilled: 1 },
-        ],
+        mandates: [{ defId: 'power-station', label: 'Power Station', required: 1, fulfilled: 1 }],
       };
       const queue = agent.generateQueue(mandateState, []);
       expect(queue).toHaveLength(0);
@@ -253,9 +276,7 @@ describe('CollectiveAgent', () => {
     it('places critical demands (priority=0) before mandates (priority=10)', () => {
       const agent = new CollectiveAgent();
       const mandateState = {
-        mandates: [
-          { defId: 'guard-post', label: 'Guard Post', required: 1, fulfilled: 0 },
-        ],
+        mandates: [{ defId: 'guard-post', label: 'Guard Post', required: 1, fulfilled: 0 }],
       };
       const demands = [
         {
@@ -274,9 +295,7 @@ describe('CollectiveAgent', () => {
     it('deduplicates: skips demand if mandate already covers the defId', () => {
       const agent = new CollectiveAgent();
       const mandateState = {
-        mandates: [
-          { defId: 'collective-farm-hq', label: 'Farm', required: 1, fulfilled: 0 },
-        ],
+        mandates: [{ defId: 'collective-farm-hq', label: 'Farm', required: 1, fulfilled: 0 }],
       };
       const demands = [
         {
@@ -363,7 +382,16 @@ describe('CollectiveAgent', () => {
       const agent = new CollectiveAgent();
       // foodPerCapita = 4.0 — safe under balanced (threshold=2.0) but crisis under food focus (threshold=6.0)
       const worker = { citizen: { hunger: 0, age: 25, class: 'worker', assignment: null } } as any;
-      const stats = { assignmentSource: 'auto' as const, morale: 50, loyalty: 50, skill: 50, vodkaDependency: 0, ticksSinceVodka: 0, name: 'Test', assignmentDuration: 0 };
+      const stats = {
+        assignmentSource: 'auto' as const,
+        morale: 50,
+        loyalty: 50,
+        skill: 50,
+        vodkaDependency: 0,
+        ticksSinceVodka: 0,
+        name: 'Test',
+        assignmentDuration: 0,
+      };
       const resources = { food: 40, population: 10, vodka: 100, power: 100, rubles: 1000, smog: 0 };
 
       const balancedPriority = agent.evaluateWorkerPriority(worker, stats, resources, 'balanced');

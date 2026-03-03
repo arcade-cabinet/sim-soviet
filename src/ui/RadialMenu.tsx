@@ -12,16 +12,16 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
+import { DEFAULT_MATERIAL_COST } from '../ai/agents/infrastructure/constructionSystem';
+import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
+import { getMinigameNameForBuilding } from '../ai/agents/meta/minigames/BuildingMinigameMap';
+import type { TutorialSystem } from '../ai/agents/meta/TutorialSystem';
+import { MILESTONE_LABELS } from '../ai/agents/meta/TutorialSystem';
 import { getUpgradeInfo, isUpgradeable, upgradeECSBuilding } from '../bridge/BuildingPlacement';
 import { getEngine } from '../bridge/GameInit';
 import type { BuildingDef, Role } from '../data/buildingDefs';
 import { BUILDING_DEFS, getBuildingDef, getBuildingsByRole } from '../data/buildingDefs';
-import { DEFAULT_MATERIAL_COST } from '../ai/agents/infrastructure/constructionSystem';
 import { getAvailableBuildingsForYear } from '../game/era';
-import { getMinigameNameForBuilding } from '../ai/agents/meta/minigames/BuildingMinigameMap';
-import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
-import type { TutorialSystem } from '../ai/agents/meta/TutorialSystem';
-import { MILESTONE_LABELS } from '../ai/agents/meta/TutorialSystem';
 import { useGameSnapshot } from '../hooks/useGameState';
 import {
   closeInspectMenu,

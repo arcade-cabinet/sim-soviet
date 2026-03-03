@@ -6,8 +6,8 @@
  * removes workers, skips time, resets marks, and resumes gameplay.
  */
 
-import { PersonnelFile } from '../../src/ai/agents/political/KGBAgent';
 import { CONSEQUENCE_PRESETS, type ConsequenceConfig } from '@/ai/agents/political/ScoringSystem';
+import { PersonnelFile } from '../../src/ai/agents/political/KGBAgent';
 
 describe('ConsequenceModes', () => {
   // ── Consequence Presets ──

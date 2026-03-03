@@ -10,8 +10,8 @@ import { Vehicle } from 'yuka';
 import type { GameRng } from '../../../game/SeedSystem';
 import type { GameEvent } from './events';
 import { EventSystem, type EventSystemSaveData } from './events';
-import { PravdaSystem, type PravdaSaveData } from './pravda';
-import { PolitburoSystem, type PolitburoSaveData } from './politburo';
+import { type PolitburoSaveData, PolitburoSystem } from './politburo';
+import { type PravdaSaveData, PravdaSystem } from './pravda';
 
 // ─────────────────────────────────────────────────────────
 //  SAVE DATA
@@ -115,10 +115,7 @@ export class NarrativeAgent extends Vehicle {
     };
   }
 
-  static deserialize(
-    data: NarrativeAgentSaveData,
-    rng?: GameRng,
-  ): NarrativeAgent {
+  static deserialize(data: NarrativeAgentSaveData, rng?: GameRng): NarrativeAgent {
     const agent = Object.create(NarrativeAgent.prototype) as NarrativeAgent;
     Vehicle.call(agent);
 

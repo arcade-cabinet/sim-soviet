@@ -4,28 +4,27 @@
  * Infrastructure agents: power distribution, collective construction,
  * building construction/decay, transport/roads, and settlement tiers.
  */
-export { PowerAgent } from './PowerAgent';
-export type { PowerPriority, PowerAgentState } from './PowerAgent';
+
+export type {
+  CollectiveAgentState,
+  CollectiveFocus,
+  ConstructionDemand,
+  ConstructionRequest,
+  DemandCategory,
+  DemandPriority,
+  GovernorPriority,
+  GovernorRecommendation,
+  RequestSource,
+  ResourceSnapshot,
+} from './CollectiveAgent';
 export {
+  autoPlaceBuilding,
   CollectiveAgent,
   CollectivePlanner,
   detectConstructionDemands,
-  autoPlaceBuilding,
   evaluateWorkerPriority,
   findBestAssignment,
   runGovernor,
-} from './CollectiveAgent';
-export type {
-  CollectiveFocus,
-  GovernorPriority,
-  GovernorRecommendation,
-  DemandCategory,
-  DemandPriority,
-  ConstructionDemand,
-  ResourceSnapshot,
-  RequestSource,
-  ConstructionRequest,
-  CollectiveAgentState,
 } from './CollectiveAgent';
 export { ConstructionAgent } from './ConstructionAgent';
 export {
@@ -36,33 +35,35 @@ export {
   workerSpeedMult,
 } from './constructionSystem';
 export { DecayAgent } from './DecayAgent';
-export { decaySystem, setBuildingCollapsedCallback } from './decaySystem';
 export type { BuildingCollapsedCallback } from './decaySystem';
-export { TransportAgent } from './TransportAgent';
-export {
-  TransportSystem,
-  RoadQuality,
-  ROAD_QUALITY_LABELS,
-  computeTransportScore,
-  scoreToQuality,
-  getRasputitsaMitigation,
-  applyMitigation,
-  serializeTransport,
-  deserializeTransport,
-} from './TransportSystem';
-export type { TransportSaveData, TransportTickResult } from './TransportSystem';
+export { decaySystem, setBuildingCollapsedCallback } from './decaySystem';
+export type { PowerAgentState, PowerPriority } from './PowerAgent';
+export { PowerAgent } from './PowerAgent';
 export { SettlementAgent } from './SettlementAgent';
-export {
-  SettlementSystem,
-  TIER_ORDER,
-  TIER_DEFINITIONS,
-  GOROD_MIN_DISTINCT_ROLES,
-} from './SettlementSystem';
 export type {
-  SettlementTier,
-  TierDefinition,
-  SettlementMetrics,
   SettlementEvent,
   SettlementEventType,
+  SettlementMetrics,
   SettlementSaveData,
+  SettlementTier,
+  TierDefinition,
 } from './SettlementSystem';
+export {
+  GOROD_MIN_DISTINCT_ROLES,
+  SettlementSystem,
+  TIER_DEFINITIONS,
+  TIER_ORDER,
+} from './SettlementSystem';
+export { TransportAgent } from './TransportAgent';
+export type { TransportSaveData, TransportTickResult } from './TransportSystem';
+export {
+  applyMitigation,
+  computeTransportScore,
+  deserializeTransport,
+  getRasputitsaMitigation,
+  ROAD_QUALITY_LABELS,
+  RoadQuality,
+  scoreToQuality,
+  serializeTransport,
+  TransportSystem,
+} from './TransportSystem';

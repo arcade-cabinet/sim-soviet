@@ -5,15 +5,15 @@
  * RaionPool age buckets instead of individual citizen entities.
  */
 
-import type { RaionPool } from '@/ecs/world';
-import { demographics } from '@/config';
-import { GameRng } from '@/game/SeedSystem';
 import {
   poissonSample,
   statisticalAgingTick,
   statisticalBirthTick,
   statisticalDeathTick,
 } from '@/ai/agents/social/statisticalDemographics';
+import { demographics } from '@/config';
+import type { RaionPool } from '@/ecs/world';
+import { GameRng } from '@/game/SeedSystem';
 
 // ── Config-derived constants ─────────────────────────────────────────────────
 
@@ -125,7 +125,7 @@ describe('poissonSample', () => {
 
 describe('statisticalBirthTick', () => {
   it('produces births proportional to eligible women', () => {
-    const rng = new GameRng('test-births-proportional');
+    const _rng = new GameRng('test-births-proportional');
 
     // Small population
     const smallPool = makePool();
@@ -271,7 +271,7 @@ describe('statisticalDeathTick', () => {
   });
 
   it('never kills more than bucket count', () => {
-    const rng = new GameRng('test-death-cap');
+    const _rng = new GameRng('test-death-cap');
     const pool = makePool();
     // Put just 1 person in the highest-mortality bucket
     pool.maleAgeBuckets[19] = 1;
@@ -480,7 +480,7 @@ describe('calibration', () => {
     const pool = makePopulatedPool(10000);
     // Ensure women in fertile buckets
     for (let i = FERTILE_BUCKET_MIN; i <= FERTILE_BUCKET_MAX; i++) {
-      pool.femaleAgeBuckets[i] = Math.floor(10000 / 20 * 0.52); // ~52% female
+      pool.femaleAgeBuckets[i] = Math.floor((10000 / 20) * 0.52); // ~52% female
     }
     pool.pregnancyWaves = [0, 0, 0];
 
@@ -507,7 +507,7 @@ describe('calibration', () => {
       const peacePool = makePopulatedPool(1000);
       const warPool = makePopulatedPool(1000);
 
-      peaceDeaths += statisticalDeathTick(peacePool, 1.0, 'nep', peaceRng);       // nep = 0.9x
+      peaceDeaths += statisticalDeathTick(peacePool, 1.0, 'nep', peaceRng); // nep = 0.9x
       warDeaths += statisticalDeathTick(warPool, 1.0, 'great_patriotic_war', warRng); // gpw = 2.5x
     }
 
@@ -590,7 +590,7 @@ describe('NaN guards', () => {
     it('does not produce NaN deaths when foodLevel is NaN', () => {
       const rng = new GameRng('test-nan-food-death');
       const pool = makePopulatedPool(300);
-      const popBefore = pool.totalPopulation;
+      const _popBefore = pool.totalPopulation;
 
       const deaths = statisticalDeathTick(pool, NaN, 'revolution', rng);
       expect(Number.isFinite(deaths)).toBe(true);

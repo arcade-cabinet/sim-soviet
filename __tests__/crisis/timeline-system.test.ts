@@ -5,14 +5,8 @@
  * divergence point tracking, serialization round-trip, and clear/reset.
  */
 
-import {
-  TimelineSystem,
-} from '@/ai/agents/crisis/TimelineSystem';
-import type {
-  TimelineEvent,
-  DivergencePoint,
-  TimelineFilter,
-} from '@/ai/agents/crisis/TimelineSystem';
+import type { DivergencePoint, TimelineEvent } from '@/ai/agents/crisis/TimelineSystem';
+import { TimelineSystem } from '@/ai/agents/crisis/TimelineSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 

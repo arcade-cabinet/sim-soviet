@@ -22,19 +22,19 @@
  * test loop tracks actual game years, not tick count.
  */
 
-import { world } from '../../src/ecs/world';
-import { getResourceEntity } from '../../src/ecs/archetypes';
 import { resetStarvationCounter } from '../../src/ai/agents/economy/consumptionSystem';
+import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding } from '../../src/ecs/factories';
+import { world } from '../../src/ecs/world';
 import type { SimulationEngine } from '../../src/game/SimulationEngine';
 import {
   buildFullEconomy,
   createPlaythroughEngine,
+  getBuildingCount,
   getDate,
+  getGameOverReason,
   getResources,
   isGameOver,
-  getGameOverReason,
-  getBuildingCount,
   TICKS_PER_YEAR,
 } from './helpers';
 
@@ -62,10 +62,8 @@ interface YearlySnapshot {
  * Shows every 10th year plus the final snapshot.
  */
 function printDecadeSummary(snapshots: YearlySnapshot[], label: string): void {
-  const header =
-    '  Year  | Pop       | Food      | Vodka     | Era              | Marks | Bldgs | Labor';
-  const divider =
-    '  ------+-----------+-----------+-----------+------------------+-------+-------+------';
+  const header = '  Year  | Pop       | Food      | Vodka     | Era              | Marks | Bldgs | Labor';
+  const divider = '  ------+-----------+-----------+-----------+------------------+-------+-------+------';
 
   console.log(`\n  === ${label} ===`);
   console.log(header);
@@ -73,9 +71,7 @@ function printDecadeSummary(snapshots: YearlySnapshot[], label: string): void {
 
   // If the playthrough is short (< 30 years), show every year for diagnosis.
   // Otherwise show every 10th year.
-  const totalYears = snapshots.length > 0
-    ? snapshots[snapshots.length - 1]!.year - snapshots[0]!.year
-    : 0;
+  const totalYears = snapshots.length > 0 ? snapshots[snapshots.length - 1]!.year - snapshots[0]!.year : 0;
   const showEveryYear = totalYears < 30;
 
   for (const s of snapshots) {
@@ -182,10 +178,7 @@ function buildRobustSettlement(): void {
  * This prevents infinite loops if time skips cause the year to jump
  * faster than expected.
  */
-function runPlaythrough(
-  difficulty: 'worker' | 'comrade' | 'tovarish',
-  targetYears: number,
-): YearlySnapshot[] {
+function runPlaythrough(difficulty: 'worker' | 'comrade' | 'tovarish', targetYears: number): YearlySnapshot[] {
   // Generous starting resources — the party sends ample supplies for a new
   // settlement. Food 50,000 = ~27 years of consumption for 50 pop at
   // 1 food per 10 citizens per tick (1,800 food/year).
@@ -307,10 +300,12 @@ describe('Playthrough: 200-Year Headless Playthrough', () => {
     }
 
     // Population should have been positive at some point
-    const peakPop = Math.max(...snapshots.map(s => s.population));
+    const peakPop = Math.max(...snapshots.map((s) => s.population));
     expect(peakPop).toBeGreaterThan(0);
 
-    console.log(`  Worker: ${yearsPlayed} calendar years, ${snapshots.length} snapshots, peak pop=${peakPop}, final pop=${finalSnapshot.population}`);
+    console.log(
+      `  Worker: ${yearsPlayed} calendar years, ${snapshots.length} snapshots, peak pop=${peakPop}, final pop=${finalSnapshot.population}`,
+    );
   }, 600000);
 
   it('comrade difficulty — challenging but survivable', () => {
@@ -332,7 +327,7 @@ describe('Playthrough: 200-Year Headless Playthrough', () => {
     expect(yearsPlayed).toBeGreaterThanOrEqual(3);
 
     // Population should have been positive at some point
-    const peakPop = Math.max(...snapshots.map(s => s.population));
+    const peakPop = Math.max(...snapshots.map((s) => s.population));
     expect(peakPop).toBeGreaterThan(0);
 
     if (finalSnapshot.gameOver) {

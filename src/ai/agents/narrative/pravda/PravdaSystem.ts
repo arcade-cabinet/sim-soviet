@@ -1,7 +1,7 @@
 import { getMetaEntity } from '@/ecs/archetypes';
-import type { GameEvent } from '../events';
 import { createGameView } from '../../../../game/GameView';
 import type { GameRng } from '../../../../game/SeedSystem';
+import type { GameEvent } from '../events';
 import { generateEventReactiveHeadline, generateHeadline } from './generators';
 import { setPravdaRng } from './helpers';
 import type { ActiveCrisisInfo, GeneratedHeadline, HeadlineCategory, PravdaHeadline } from './types';

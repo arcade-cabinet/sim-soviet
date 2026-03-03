@@ -1,8 +1,8 @@
+import type { GameEvent } from '../../src/ai/agents/narrative/events';
+import { PravdaSystem } from '../../src/ai/agents/narrative/pravda';
 import { getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import type { GameEvent } from '../../src/ai/agents/narrative/events';
-import { PravdaSystem } from '../../src/ai/agents/narrative/pravda';
 
 function createMockEvent(overrides: Partial<GameEvent> = {}): GameEvent {
   return {

@@ -16,7 +16,13 @@
 
 import { ACHIEVEMENTS } from '@/content/worldbuilding';
 import type { AchievementStats, AchievementTracker } from '../ai/agents/meta/AchievementTracker';
-import type { ConsequenceLevel, DifficultyLevel, Medal, ScoreBreakdown, ScoringSystem } from '../ai/agents/political/ScoringSystem';
+import type {
+  ConsequenceLevel,
+  DifficultyLevel,
+  Medal,
+  ScoreBreakdown,
+  ScoringSystem,
+} from '../ai/agents/political/ScoringSystem';
 
 // ─────────────────────────────────────────────────────────
 //  TYPES

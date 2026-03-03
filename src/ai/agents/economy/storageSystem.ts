@@ -17,8 +17,8 @@
  * - Vodka: NEVER spoils (historically accurate)
  */
 
-import { getBuildingDef } from '@/data/buildingDefs';
 import { economy } from '@/config';
+import { getBuildingDef } from '@/data/buildingDefs';
 import { buildingsLogic, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 
 const cfg = economy.storage;

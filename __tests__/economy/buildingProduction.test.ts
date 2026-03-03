@@ -7,13 +7,13 @@
  */
 
 import {
+  type BuildingDefForProduction,
   computeBuildingProduction,
   type ProductionContext,
-  type BuildingDefForProduction,
 } from '../../src/ai/agents/economy/buildingProduction';
-import { poissonSample } from '../../src/math/poissonSampling';
 import type { BuildingComponent } from '../../src/ecs/world';
 import { GameRng } from '../../src/game/SeedSystem';
+import { poissonSample } from '../../src/math/poissonSampling';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -196,11 +196,7 @@ describe('computeBuildingProduction — unpowered', () => {
 
     // Use same seed so stochastic events are identical
     const powered = computeBuildingProduction(bldg, def, makeCtx({ powered: true, rng: new GameRng('power-test') }));
-    const unpowered = computeBuildingProduction(
-      bldg,
-      def,
-      makeCtx({ powered: false, rng: new GameRng('power-test') }),
-    );
+    const unpowered = computeBuildingProduction(bldg, def, makeCtx({ powered: false, rng: new GameRng('power-test') }));
 
     // Unpowered should be 30% of powered (same stochastic events from same seed)
     const ratio = unpowered.amount / powered.amount;
@@ -357,16 +353,8 @@ describe('computeBuildingProduction — trudodni', () => {
   it('trudodni scales linearly with worker count at full utilization', () => {
     const def = makeDef({ staffCap: 20 });
 
-    const result5 = computeBuildingProduction(
-      makeBldg({ workerCount: 5, avgSkill: 50 }),
-      def,
-      makeCtx(),
-    );
-    const result10 = computeBuildingProduction(
-      makeBldg({ workerCount: 10, avgSkill: 50 }),
-      def,
-      makeCtx(),
-    );
+    const result5 = computeBuildingProduction(makeBldg({ workerCount: 5, avgSkill: 50 }), def, makeCtx());
+    const result10 = computeBuildingProduction(makeBldg({ workerCount: 10, avgSkill: 50 }), def, makeCtx());
 
     // Both under staffCap, so utilization = workerCount/20
     // trudodni = workerCount * utilization * (avgSkill/100)
@@ -380,16 +368,8 @@ describe('computeBuildingProduction — trudodni', () => {
   it('higher skill produces more trudodni', () => {
     const def = makeDef({ staffCap: 10 });
 
-    const lowSkill = computeBuildingProduction(
-      makeBldg({ workerCount: 10, avgSkill: 20 }),
-      def,
-      makeCtx(),
-    );
-    const highSkill = computeBuildingProduction(
-      makeBldg({ workerCount: 10, avgSkill: 80 }),
-      def,
-      makeCtx(),
-    );
+    const lowSkill = computeBuildingProduction(makeBldg({ workerCount: 10, avgSkill: 20 }), def, makeCtx());
+    const highSkill = computeBuildingProduction(makeBldg({ workerCount: 10, avgSkill: 80 }), def, makeCtx());
 
     // trudodni = 10 * 1.0 * (skill/100)
     expect(lowSkill.trudodniAccrued).toBe(2.0); // 10 * 1.0 * 0.2
@@ -399,11 +379,7 @@ describe('computeBuildingProduction — trudodni', () => {
 
   it('zero skill produces zero trudodni', () => {
     const def = makeDef({ staffCap: 10 });
-    const result = computeBuildingProduction(
-      makeBldg({ workerCount: 10, avgSkill: 0 }),
-      def,
-      makeCtx(),
-    );
+    const result = computeBuildingProduction(makeBldg({ workerCount: 10, avgSkill: 0 }), def, makeCtx());
 
     expect(result.trudodniAccrued).toBe(0);
   });
@@ -419,11 +395,7 @@ describe('computeBuildingProduction — modifier interactions', () => {
     const def = makeDef({ staffCap: 10, produces: { resource: 'food', amount: 10 } });
 
     const base = computeBuildingProduction(bldg, def, makeCtx({ eraProductionMod: 1.0, rng: new GameRng('era-1') }));
-    const boosted = computeBuildingProduction(
-      bldg,
-      def,
-      makeCtx({ eraProductionMod: 1.5, rng: new GameRng('era-1') }),
-    );
+    const boosted = computeBuildingProduction(bldg, def, makeCtx({ eraProductionMod: 1.5, rng: new GameRng('era-1') }));
 
     const ratio = boosted.amount / base.amount;
     expect(ratio).toBeCloseTo(1.5, 1);

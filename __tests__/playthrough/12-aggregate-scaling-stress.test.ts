@@ -15,15 +15,14 @@
  * independently of entity-mode game balance.
  */
 
-import { world, type RaionPool } from '../../src/ecs/world';
-import { dvory, citizens, operationalBuildings } from '../../src/ecs/archetypes';
+import type { ConsequenceLevel, DifficultyLevel } from '../../src/ai/agents/political/ScoringSystem';
+import { citizens, dvory, getResourceEntity, operationalBuildings } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { createDvor } from '../../src/ecs/factories/settlementFactories';
-import { getResourceEntity } from '../../src/ecs/archetypes';
-import { SimulationEngine } from '../../src/game/SimulationEngine';
+import { type RaionPool, world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
-import type { DifficultyLevel, ConsequenceLevel } from '../../src/ai/agents/political/ScoringSystem';
+import { SimulationEngine } from '../../src/game/SimulationEngine';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -68,8 +67,26 @@ function createRaionPool(totalPop: number): RaionPool {
 
   // Approximate Soviet age distribution weights (young-heavy pyramid)
   const bucketWeights = [
-    8, 7, 7, 7, 7, 6, 6, 5, 5, 5,    // 0-49
-    4, 4, 3, 3, 2, 2, 1, 1, 0.5, 0.2, // 50-99
+    8,
+    7,
+    7,
+    7,
+    7,
+    6,
+    6,
+    5,
+    5,
+    5, // 0-49
+    4,
+    4,
+    3,
+    3,
+    2,
+    2,
+    1,
+    1,
+    0.5,
+    0.2, // 50-99
   ];
   const totalWeight = bucketWeights.reduce((s, w) => s + w, 0);
 
@@ -296,9 +313,7 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
     console.log('\n  === Aggregate Mode 50-Year Trajectory (start=500 pop) ===');
     for (const s of snapshots) {
       if ((s.year - 1918) % 10 === 0 || s === snapshots[snapshots.length - 1]) {
-        console.log(
-          `  year=${s.year} pop=${s.pop} births=${s.births} deaths=${s.deaths} entities=${s.entities}`,
-        );
+        console.log(`  year=${s.year} pop=${s.pop} births=${s.births} deaths=${s.deaths} entities=${s.entities}`);
       }
     }
 
@@ -308,7 +323,7 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
     expect(finalRaion).toBeDefined();
 
     // 2. Entity count stayed flat (no per-citizen entity leak)
-    const maxEntities = Math.max(...snapshots.map(s => s.entities));
+    const maxEntities = Math.max(...snapshots.map((s) => s.entities));
     // Allow some growth for autonomous construction but not proportional to pop
     expect(maxEntities).toBeLessThan(initialEntityCount * 2 + 50);
     console.log(`  Entity count: initial=${initialEntityCount} max=${maxEntities} (flat: OK)`);
@@ -319,7 +334,7 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
 
     // 4. Population must never be NaN at any snapshot
     expect(finalRaion.totalPopulation).not.toBeNaN();
-    expect(snapshots.every(s => !Number.isNaN(s.pop))).toBe(true);
+    expect(snapshots.every((s) => !Number.isNaN(s.pop))).toBe(true);
 
     // 5. Population should be non-negative (no accounting underflow)
     expect(finalRaion.totalPopulation).toBeGreaterThanOrEqual(0);
@@ -327,7 +342,7 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
     // 6. Population peaked above starting (demographics worked before worker drains)
     // NOTE: Without autopilot, morale-based worker flight overwhelms births.
     // Growth testing requires autopilot — see 13-full-playthrough.test.ts.
-    const peakPop = Math.max(...snapshots.map(s => s.pop));
+    const peakPop = Math.max(...snapshots.map((s) => s.pop));
     expect(peakPop).toBeGreaterThanOrEqual(initialRaion.totalPopulation * 0.5);
   }, 120000);
 
@@ -374,7 +389,7 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
 
     // Population must never be NaN at any snapshot
     expect(finalRaion.totalPopulation).not.toBeNaN();
-    expect(snapshots.every(s => !Number.isNaN(s.pop))).toBe(true);
+    expect(snapshots.every((s) => !Number.isNaN(s.pop))).toBe(true);
 
     // Demographics should have produced significant numbers
     expect(finalRaion.totalBirths).toBeGreaterThan(100);
@@ -434,8 +449,7 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
       expect(maxPop).toBeGreaterThan(0);
 
       console.log(
-        `  [${difficulty}/${consequence}] maxPop=${maxPop} finalPop=${finalPop}` +
-        ` entities=${world.entities.length}`,
+        `  [${difficulty}/${consequence}] maxPop=${maxPop} finalPop=${finalPop}` + ` entities=${world.entities.length}`,
       );
     }, 60000);
   });
@@ -475,15 +489,13 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
     expect(run1.births).toBe(run2.births);
     expect(run1.deaths).toBe(run2.deaths);
 
-    console.log(
-      `  Determinism: pop=${run1.finalPop} births=${run1.births} deaths=${run1.deaths}`,
-    );
+    console.log(`  Determinism: pop=${run1.finalPop} births=${run1.births} deaths=${run1.deaths}`);
   }, 120000);
 
   // ── 200-year timeline ──────────────────────────────────────────────
 
   it('200-year timeline shows growth curve with era-appropriate dynamics', () => {
-    const { engine, raion: initialRaion } = createAggregateEngine({ population: 10_000 });
+    const { engine } = createAggregateEngine({ population: 10_000 });
 
     const snapshots: { year: number; pop: number; births: number; deaths: number }[] = [];
 
@@ -510,7 +522,9 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
 
     console.log('\n  === 200-Year Timeline (start=10K) ===');
     for (const s of snapshots) {
-      console.log(`  year=${s.year} pop=${s.pop.toLocaleString()} births=${s.births.toLocaleString()} deaths=${s.deaths.toLocaleString()}`);
+      console.log(
+        `  year=${s.year} pop=${s.pop.toLocaleString()} births=${s.births.toLocaleString()} deaths=${s.deaths.toLocaleString()}`,
+      );
     }
 
     const finalRaion = getRaion()!;
@@ -519,7 +533,7 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
 
     // Population must never be NaN — at final or at any decade snapshot
     expect(finalRaion.totalPopulation).not.toBeNaN();
-    expect(snapshots.every(s => !Number.isNaN(s.pop))).toBe(true);
+    expect(snapshots.every((s) => !Number.isNaN(s.pop))).toBe(true);
 
     // Demographics ran throughout (total births/deaths accumulate even if pop drops)
     expect(finalRaion.totalBirths).toBeGreaterThan(0);
@@ -550,15 +564,29 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
 
     // Create 300 dvory (1 member each = 300 pop)
     for (let i = 0; i < 300; i++) {
-      createDvor(`dvor-${i}`, `Surname${i}`, [{ name: `Worker ${i}`, gender: i % 2 === 0 ? 'male' : 'female', age: 25 }]);
+      createDvor(`dvor-${i}`, `Surname${i}`, [
+        { name: `Worker ${i}`, gender: i % 2 === 0 ? 'male' : 'female', age: 25 },
+      ]);
     }
 
     // Place buildings
     let x = 0;
-    for (let i = 0; i < 3; i++) { createBuilding(x, 0, 'power-station'); x += 2; }
-    for (let i = 0; i < 5; i++) { createBuilding(x, 0, 'apartment-tower-d'); x += 2; }
-    for (let i = 0; i < 3; i++) { createBuilding(x, 0, 'collective-farm-hq'); x += 2; }
-    for (let i = 0; i < 2; i++) { createBuilding(x, 0, 'bread-factory'); x += 2; }
+    for (let i = 0; i < 3; i++) {
+      createBuilding(x, 0, 'power-station');
+      x += 2;
+    }
+    for (let i = 0; i < 5; i++) {
+      createBuilding(x, 0, 'apartment-tower-d');
+      x += 2;
+    }
+    for (let i = 0; i < 3; i++) {
+      createBuilding(x, 0, 'collective-farm-hq');
+      x += 2;
+    }
+    for (let i = 0; i < 2; i++) {
+      createBuilding(x, 0, 'bread-factory');
+      x += 2;
+    }
 
     jest.spyOn(Math, 'random').mockReturnValue(0.42);
 
@@ -590,7 +618,7 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
     if (raion) {
       console.log(
         `  Collapse: dvory=0 citizens=0 raionPop=${raion.totalPopulation}` +
-        ` births=${raion.totalBirths} deaths=${raion.totalDeaths}`,
+          ` births=${raion.totalBirths} deaths=${raion.totalDeaths}`,
       );
 
       expect(getEntityCounts().citizens).toBe(0);

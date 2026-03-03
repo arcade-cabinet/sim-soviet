@@ -1,17 +1,22 @@
 // Quick diagnostic: trace population year-by-year for a worker run
-import { world } from '../../src/ecs/world';
-import { getResourceEntity } from '../../src/ecs/archetypes';
+
 import { resetStarvationCounter } from '../../src/ai/agents/economy/consumptionSystem';
+import { DIFFICULTY_PRESETS } from '../../src/ai/agents/political/ScoringSystem';
+import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { createDvor } from '../../src/ecs/factories/settlementFactories';
+import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
 import { GameRng } from '../../src/game/SeedSystem';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
-import { DIFFICULTY_PRESETS } from '../../src/ai/agents/political/ScoringSystem';
-import { createMockCallbacks, getDate, getResources, isGameOver, getGameOverReason, TICKS_PER_YEAR } from './helpers';
+import { createMockCallbacks, getDate, getGameOverReason, getResources, isGameOver, TICKS_PER_YEAR } from './helpers';
 
 describe('Population Diagnostic', () => {
-  afterEach(() => { world.clear(); jest.restoreAllMocks(); resetStarvationCounter(); });
+  afterEach(() => {
+    world.clear();
+    jest.restoreAllMocks();
+    resetStarvationCounter();
+  });
 
   it('traces pop year-by-year for worker difficulty', () => {
     const seed = 'diag-worker-0';
@@ -19,19 +24,25 @@ describe('Population Diagnostic', () => {
     const resMult = DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
 
     createResourceStore({
-      food: Math.round(50000 * resMult), vodka: Math.round(10000 * resMult),
-      money: Math.round(50000 * resMult), timber: Math.round(20000 * resMult),
-      steel: Math.round(10000 * resMult), cement: Math.round(10000 * resMult),
+      food: Math.round(50000 * resMult),
+      vodka: Math.round(10000 * resMult),
+      money: Math.round(50000 * resMult),
+      timber: Math.round(20000 * resMult),
+      steel: Math.round(10000 * resMult),
+      cement: Math.round(10000 * resMult),
       population: 0,
     });
     createMetaStore({ date: { year: 1917, month: 10, tick: 0 } });
 
     // Create mixed-gender dvory
     for (let i = 0; i < 50; i++) {
-      const members = i % 3 !== 2
-        ? [{ name: `H${i}`, gender: 'male' as const, age: 25 + (i % 10) },
-           { name: `W${i}`, gender: 'female' as const, age: 23 + (i % 8) }]
-        : [{ name: `S${i}`, gender: 'male' as const, age: 30 }];
+      const members =
+        i % 3 !== 2
+          ? [
+              { name: `H${i}`, gender: 'male' as const, age: 25 + (i % 10) },
+              { name: `W${i}`, gender: 'female' as const, age: 23 + (i % 8) },
+            ]
+          : [{ name: `S${i}`, gender: 'male' as const, age: 30 }];
       createDvor(`${seed}-dvor-${i}`, `F${i}`, members);
     }
 
@@ -82,7 +93,9 @@ describe('Population Diagnostic', () => {
           }
           lastYear = d.year;
         }
-      } catch { break; }
+      } catch {
+        break;
+      }
     }
 
     console.log('\n=== POPULATION TRACE (Worker) ===');

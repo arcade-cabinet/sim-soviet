@@ -568,7 +568,7 @@ export const POLITICAL_SUBTEXTS = [
 export const POLITICAL_REALITIES = [
   'The "counter-revolutionaries" were three clerks who filed a form incorrectly.',
   'Show trial script was written before the arrest. Efficient justice.',
-  'Purged official\'s replacement was purged within the week. His replacement is nervous.',
+  "Purged official's replacement was purged within the week. His replacement is nervous.",
   'Loyalty review board passed everyone who showed up. Showing up was the test.',
   'The conspiracy involved one man, his diary, and an opinion. The diary has been arrested.',
   'Rehabilitated comrades cannot be found for comment. Cannot be found at all, actually.',

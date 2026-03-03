@@ -9,15 +9,11 @@
 import { Vehicle } from 'yuka';
 import { Season } from '../../../game/Chronology';
 import type { GameRng } from '../../../game/SeedSystem';
-import {
-  WeatherType,
-  WEATHER_PROFILES,
-  type WeatherProfile,
-} from './weather-types';
+import { WEATHER_PROFILES, type WeatherProfile, WeatherType } from './weather-types';
 
-// Re-export weather types for consumers
-export { WeatherType, WEATHER_PROFILES, getWeatherProfile } from './weather-types';
 export type { WeatherProfile, WeatherState } from './weather-types';
+// Re-export weather types for consumers
+export { getWeatherProfile, WEATHER_PROFILES, WeatherType } from './weather-types';
 
 // ─────────────────────────────────────────────────────────
 //  PER-SEASON PROBABILITY TABLES

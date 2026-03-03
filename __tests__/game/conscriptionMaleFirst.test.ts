@@ -1,8 +1,8 @@
+import { WorkerSystem } from '@/ai/agents/workforce/workers-index';
 import { citizens, getResourceEntity, maleCitizens } from '@/ecs/archetypes';
 import { createCitizen, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
-import { WorkerSystem } from '@/ai/agents/workforce/workers-index';
 
 describe('removeWorkersByCountMaleFirst', () => {
   let system: WorkerSystem;

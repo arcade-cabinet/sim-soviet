@@ -1,7 +1,7 @@
+import { ALL_EVENT_TEMPLATES, EventSystem, type GameEvent } from '../../src/ai/agents/narrative/events';
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import { ALL_EVENT_TEMPLATES, EventSystem, type GameEvent } from '../../src/ai/agents/narrative/events';
 import { createGameView } from '../../src/game/GameView';
 
 describe('EventSystem', () => {

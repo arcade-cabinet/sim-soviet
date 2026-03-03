@@ -6,8 +6,8 @@
  */
 
 import { getTableColumns, getTableName } from 'drizzle-orm';
-import { timelineEvents, divergencePoints } from '@/db/timeline';
 import * as schema from '@/db/schema';
+import { divergencePoints, timelineEvents } from '@/db/timeline';
 
 // ─── timelineEvents table ────────────────────────────────────────────────────
 

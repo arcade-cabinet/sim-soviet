@@ -8,9 +8,9 @@
  * The ECS world and archetypes are mocked so tests run without a full sim.
  */
 
-import { DefenseAgent, DISEASE_DEFINITIONS } from '../../src/ai/agents/social/DefenseAgent';
-import type { DiseaseDefinition, ZeppelinState } from '../../src/ai/agents/social/DefenseAgent';
 import { WeatherType } from '../../src/ai/agents/core/weather-types';
+import type { ZeppelinState } from '../../src/ai/agents/social/DefenseAgent';
+import { DefenseAgent, DISEASE_DEFINITIONS } from '../../src/ai/agents/social/DefenseAgent';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 

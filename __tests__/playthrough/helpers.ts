@@ -6,13 +6,13 @@
  * on scenario logic.
  */
 
+import type { ConsequenceLevel, DifficultyLevel } from '../../src/ai/agents/political/ScoringSystem';
 import { getMetaEntity, getResourceEntity, operationalBuildings } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { createDvor } from '../../src/ecs/factories/settlementFactories';
 import type { Entity, GameMeta, Resources } from '../../src/ecs/world';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
-import type { ConsequenceLevel, DifficultyLevel } from '../../src/ai/agents/political/ScoringSystem';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
 

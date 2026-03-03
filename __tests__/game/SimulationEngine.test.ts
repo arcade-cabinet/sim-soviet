@@ -1,9 +1,9 @@
+import type { QuotaState } from '../../src/ai/agents/political/PoliticalAgent';
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
-import type { QuotaState } from '../../src/ai/agents/political/PoliticalAgent';
 import { world } from '../../src/ecs/world';
-import { GameGrid } from '../../src/game/GameGrid';
 import { TICKS_PER_MONTH } from '../../src/game/Chronology';
+import { GameGrid } from '../../src/game/GameGrid';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
 
@@ -481,7 +481,9 @@ describe('SimulationEngine', () => {
           actualFood: 600,
           actualVodka: 30,
         },
-        (submission) => { captured = submission; },
+        (submission) => {
+          captured = submission;
+        },
       );
 
       expect(captured).not.toBeNull();
@@ -495,10 +497,7 @@ describe('SimulationEngine', () => {
 
       // Set up low marks via assessGameState — tick the autopilot section
       const chairman = engine.getAgentManager().getChairman()!;
-      chairman.assessGameState(
-        { food: 500, population: 50 },
-        { blackMarks: 0, commendations: 0, blat: 0 },
-      );
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 0, commendations: 0, blat: 0 });
 
       let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
 
@@ -513,7 +512,9 @@ describe('SimulationEngine', () => {
           actualFood: 350,
           actualVodka: 20,
         },
-        (submission) => { captured = submission; },
+        (submission) => {
+          captured = submission;
+        },
       );
 
       expect(captured).not.toBeNull();
@@ -529,10 +530,7 @@ describe('SimulationEngine', () => {
       engine.enableAutopilot();
 
       const chairman = engine.getAgentManager().getChairman()!;
-      chairman.assessGameState(
-        { food: 500, population: 50 },
-        { blackMarks: 4, commendations: 0, blat: 0 },
-      );
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 4, commendations: 0, blat: 0 });
 
       let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
 
@@ -547,7 +545,9 @@ describe('SimulationEngine', () => {
           actualFood: 350,
           actualVodka: 20,
         },
-        (submission) => { captured = submission; },
+        (submission) => {
+          captured = submission;
+        },
       );
 
       expect(captured).not.toBeNull();
@@ -561,10 +561,7 @@ describe('SimulationEngine', () => {
       engine.enableAutopilot();
 
       const chairman = engine.getAgentManager().getChairman()!;
-      chairman.assessGameState(
-        { food: 500, population: 50 },
-        { blackMarks: 0, commendations: 0, blat: 0 },
-      );
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 0, commendations: 0, blat: 0 });
 
       let captured: { reportedQuota: number; reportedSecondary: number; reportedPop: number } | null = null;
 
@@ -579,7 +576,9 @@ describe('SimulationEngine', () => {
           actualFood: 200,
           actualVodka: 10,
         },
-        (submission) => { captured = submission; },
+        (submission) => {
+          captured = submission;
+        },
       );
 
       expect(captured).not.toBeNull();
@@ -600,10 +599,7 @@ describe('SimulationEngine', () => {
 
       // Give the chairman high marks + blat context
       const chairman = engine.getAgentManager().getChairman()!;
-      chairman.assessGameState(
-        { food: 500, population: 50 },
-        { blackMarks: 5, commendations: 0, blat: 10 },
-      );
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 5, commendations: 0, blat: 10 });
 
       // Spy on KGBAgent.handleBribeOffer to verify it's called
       const kgb = engine.getKGBAgent();
@@ -612,10 +608,7 @@ describe('SimulationEngine', () => {
       engine.tick();
 
       // Bribe should have been attempted
-      expect(cb.onToast).toHaveBeenCalledWith(
-        'Autopilot: blat exchanged to reduce KGB suspicion',
-        'warning',
-      );
+      expect(cb.onToast).toHaveBeenCalledWith('Autopilot: blat exchanged to reduce KGB suspicion', 'warning');
       expect(bribeSpy).toHaveBeenCalledWith(0.5);
     });
 
@@ -625,18 +618,12 @@ describe('SimulationEngine', () => {
       store.resources.blat = 10;
 
       const chairman = engine.getAgentManager().getChairman()!;
-      chairman.assessGameState(
-        { food: 500, population: 50 },
-        { blackMarks: 2, commendations: 0, blat: 10 },
-      );
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 2, commendations: 0, blat: 10 });
 
       engine.tick();
 
       // The bribery toast should NOT have fired — marks too low
-      expect(cb.onToast).not.toHaveBeenCalledWith(
-        'Autopilot: blat exchanged to reduce KGB suspicion',
-        'warning',
-      );
+      expect(cb.onToast).not.toHaveBeenCalledWith('Autopilot: blat exchanged to reduce KGB suspicion', 'warning');
     });
 
     it('does not bribe when blat is insufficient', () => {
@@ -645,18 +632,12 @@ describe('SimulationEngine', () => {
       store.resources.blat = 1;
 
       const chairman = engine.getAgentManager().getChairman()!;
-      chairman.assessGameState(
-        { food: 500, population: 50 },
-        { blackMarks: 5, commendations: 0, blat: 1 },
-      );
+      chairman.assessGameState({ food: 500, population: 50 }, { blackMarks: 5, commendations: 0, blat: 1 });
 
       engine.tick();
 
       // The bribery toast should NOT have fired — blat too low
-      expect(cb.onToast).not.toHaveBeenCalledWith(
-        'Autopilot: blat exchanged to reduce KGB suspicion',
-        'warning',
-      );
+      expect(cb.onToast).not.toHaveBeenCalledWith('Autopilot: blat exchanged to reduce KGB suspicion', 'warning');
     });
   });
 

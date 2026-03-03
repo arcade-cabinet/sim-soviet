@@ -1,7 +1,7 @@
 import { getResourceEntity } from '@/ecs/archetypes';
 import { createGameView } from '../../../../game/GameView';
-import type { CommendationSource, MarkSource, PersonnelFile } from '../../political/KGBAgent';
 import type { GameRng } from '../../../../game/SeedSystem';
+import type { CommendationSource, MarkSource, PersonnelFile } from '../../political/KGBAgent';
 import { EVENT_BASE_PROBABILITY, EVENT_COOLDOWN_TICKS, MAX_RECENT_MEMORY } from './constants';
 import { getEventRng, pick, setEventRng } from './helpers';
 import { ALL_EVENT_TEMPLATES } from './templates';

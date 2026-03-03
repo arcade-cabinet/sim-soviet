@@ -5,10 +5,10 @@
  * minimum interval enforcement, and crisis cascade chains.
  */
 
-import { GameRng } from '@/game/SeedSystem';
 import { ChaosEngine, type ChaosState } from '@/ai/agents/crisis/ChaosEngine';
 import type { TimelineEvent } from '@/ai/agents/crisis/TimelineSystem';
 import type { CrisisType } from '@/ai/agents/crisis/types';
+import { GameRng } from '@/game/SeedSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -121,7 +121,7 @@ describe('ChaosEngine — peaceful state', () => {
   it('has low trigger probability with abundant resources and no recent crises', () => {
     const engine = new ChaosEngine();
     const state = peacefulState();
-    const rng = new GameRng('peaceful-test');
+    const _rng = new GameRng('peaceful-test');
 
     // Run many attempts — most should return null
     let crisisCount = 0;
@@ -154,11 +154,7 @@ describe('ChaosEngine — post-war famine boost', () => {
       const rng2 = new GameRng(`postwar-${i}`);
 
       const postWarResult = engine.generateNextCrisis(postWarState(), warTimeline, rng1);
-      const peaceResult = engine.generateNextCrisis(
-        peacefulState({ food: 200, population: 2000 }),
-        [],
-        rng2,
-      );
+      const peaceResult = engine.generateNextCrisis(peacefulState({ food: 200, population: 2000 }), [], rng2);
 
       if (postWarResult?.type === 'famine') postWarFamines++;
       if (peaceResult?.type === 'famine') peaceFamines++;
@@ -260,11 +256,11 @@ describe('ChaosEngine — generated crisis structure', () => {
     const def = warArch.generate(longPeaceState(), rng);
 
     expect(def.type).toBe('war');
-    expect(def.peakParams['conscriptionRate']).toBeDefined();
-    expect(def.peakParams['conscriptionRate']).toBeGreaterThan(0);
-    expect(def.peakParams['conscriptionRate']).toBeLessThanOrEqual(0.15);
-    expect(def.peakParams['foodDrain']).toBeDefined();
-    expect(def.peakParams['moneyDrain']).toBeDefined();
+    expect(def.peakParams.conscriptionRate).toBeDefined();
+    expect(def.peakParams.conscriptionRate).toBeGreaterThan(0);
+    expect(def.peakParams.conscriptionRate).toBeLessThanOrEqual(0.15);
+    expect(def.peakParams.foodDrain).toBeDefined();
+    expect(def.peakParams.moneyDrain).toBeDefined();
   });
 
   it('generates famine definitions with food-related peakParams', () => {
@@ -276,8 +272,8 @@ describe('ChaosEngine — generated crisis structure', () => {
     const def = famineArch.generate(lowFoodState(), rng);
 
     expect(def.type).toBe('famine');
-    expect(def.peakParams['diseaseMult']).toBeGreaterThan(1);
-    expect(def.peakParams['growthMult']).toBeLessThan(1);
+    expect(def.peakParams.diseaseMult).toBeGreaterThan(1);
+    expect(def.peakParams.growthMult).toBeLessThan(1);
   });
 });
 
@@ -489,7 +485,10 @@ describe('ChaosEngine — archetype coverage', () => {
 
   it('archetype types match crisis types', () => {
     const engine = new ChaosEngine();
-    const types = engine.getArchetypes().map((a) => a.type).sort();
+    const types = engine
+      .getArchetypes()
+      .map((a) => a.type)
+      .sort();
     expect(types).toEqual(['disaster', 'famine', 'political', 'war']);
   });
 
@@ -548,11 +547,7 @@ describe('ChaosEngine — edge cases', () => {
     const ids = new Set<string>();
 
     for (let i = 0; i < 100; i++) {
-      const result = engine.generateNextCrisis(
-        { ...state, year: state.year + i * 5 },
-        [],
-        new GameRng(`unique-${i}`),
-      );
+      const result = engine.generateNextCrisis({ ...state, year: state.year + i * 5 }, [], new GameRng(`unique-${i}`));
       if (result) {
         expect(ids.has(result.id)).toBe(false);
         ids.add(result.id);

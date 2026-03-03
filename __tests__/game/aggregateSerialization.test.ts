@@ -74,10 +74,7 @@ jest.mock('../../src/game/era', () => ({
 }));
 
 // Import AFTER mocks are set up
-import {
-  restoreSubsystems,
-  serializeSubsystems,
-} from '../../src/game/engine/serializeEngine';
+import { restoreSubsystems, serializeSubsystems } from '../../src/game/engine/serializeEngine';
 
 // ─── Minimal mock engine for serialization tests ─────────────────────────────
 
@@ -341,9 +338,7 @@ describe('Aggregate Serialization', () => {
     // Building workforce should match
     expect(saved2.buildingWorkforce!.length).toBe(saved1.buildingWorkforce!.length);
     for (const entry1 of saved1.buildingWorkforce!) {
-      const entry2 = saved2.buildingWorkforce!.find(
-        (b) => b.gridX === entry1.gridX && b.gridY === entry1.gridY,
-      );
+      const entry2 = saved2.buildingWorkforce!.find((b) => b.gridX === entry1.gridX && b.gridY === entry1.gridY);
       expect(entry2).toBeDefined();
       expect(entry2!.workerCount).toBe(entry1.workerCount);
       expect(entry2!.residentCount).toBe(entry1.residentCount);

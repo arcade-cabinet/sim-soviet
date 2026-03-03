@@ -11,10 +11,10 @@
  * 6. Serialize/restore preserves divergence state
  */
 
-import { world } from '../../src/ecs/world';
-import { getResourceEntity } from '../../src/ecs/archetypes';
 import { FreeformGovernor } from '../../src/ai/agents/crisis/FreeformGovernor';
 import { HISTORICAL_CRISES } from '../../src/config/historicalCrises';
+import { getResourceEntity } from '../../src/ecs/archetypes';
+import { world } from '../../src/ecs/world';
 import {
   advanceTicks,
   buildBasicSettlement,
@@ -23,7 +23,6 @@ import {
   getDate,
   getResources,
   TICKS_PER_MONTH,
-  TICKS_PER_YEAR,
 } from './helpers';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -44,8 +43,8 @@ interface YearSnapshot {
  * run through population-depleting crises without stopping.
  */
 function disableGameOver(engine: unknown): void {
-  (engine as Record<string, unknown>)['endGame'] = () => {};
-  (engine as Record<string, unknown>)['ended'] = false;
+  (engine as Record<string, unknown>).endGame = () => {};
+  (engine as Record<string, unknown>).ended = false;
 }
 
 /**
@@ -213,9 +212,7 @@ describe('Freeform mode — divergence integration tests', () => {
     });
 
     it('no historical crises with startYear >= 1945 activate', () => {
-      const postDivergenceHistorical = HISTORICAL_CRISES.filter(
-        (c) => c.startYear >= 1945 && c.type !== 'political',
-      );
+      const postDivergenceHistorical = HISTORICAL_CRISES.filter((c) => c.startYear >= 1945 && c.type !== 'political');
       const unexpectedCrises: string[] = [];
       for (const crisis of postDivergenceHistorical) {
         if (everActiveCrises.has(crisis.id)) {
@@ -274,9 +271,7 @@ describe('Freeform mode — divergence integration tests', () => {
     });
 
     it('no historical crisis IDs activate (all are post-divergence)', () => {
-      const historicalIds = new Set(
-        HISTORICAL_CRISES.filter((c) => c.type !== 'political').map((c) => c.id),
-      );
+      const historicalIds = new Set(HISTORICAL_CRISES.filter((c) => c.type !== 'political').map((c) => c.id));
       const activatedHistorical: string[] = [];
       for (const id of everActiveCrises) {
         if (historicalIds.has(id)) {
@@ -292,14 +287,9 @@ describe('Freeform mode — divergence integration tests', () => {
     it('ChaosEngine generates at least one crisis within 25 years', () => {
       // Chaos-generated crisis IDs follow the pattern: type-year-randomId
       // e.g. war-1927-abc123, famine-1932-def456
-      const chaosGenerated = [...everActiveCrises].filter(
-        (id) => id.match(/^(war|famine|disaster|political)-\d+-/),
-      );
+      const chaosGenerated = [...everActiveCrises].filter((id) => id.match(/^(war|famine|disaster|political)-\d+-/));
 
-      console.log(
-        `Chaos-generated crises (25 years): ${chaosGenerated.length} — ` +
-          `[${chaosGenerated.join(', ')}]`,
-      );
+      console.log(`Chaos-generated crises (25 years): ${chaosGenerated.length} — ` + `[${chaosGenerated.join(', ')}]`);
 
       expect(chaosGenerated.length).toBeGreaterThanOrEqual(1);
     });
@@ -378,11 +368,11 @@ describe('Freeform mode — divergence integration tests', () => {
     it('serialized state includes timeline data', () => {
       const serialized = governor.serialize();
       expect(serialized.mode).toBe('freeform');
-      expect(serialized.state['divergenceYear']).toBe(1930);
-      expect(serialized.state['hasDiverged']).toBe(true);
-      expect(serialized.state['timeline']).toBeDefined();
+      expect(serialized.state.divergenceYear).toBe(1930);
+      expect(serialized.state.hasDiverged).toBe(true);
+      expect(serialized.state.timeline).toBeDefined();
 
-      const timelineData = serialized.state['timeline'] as {
+      const timelineData = serialized.state.timeline as {
         events: unknown[];
         divergencePoints: unknown[];
       };
@@ -619,14 +609,9 @@ describe('Freeform mode — divergence integration tests', () => {
 
     it('ChaosEngine may generate alternate crises after 1991', () => {
       // Chaos-generated crisis IDs follow the pattern: type-year-randomId
-      const chaosGenerated = [...everActiveCrises].filter(
-        (id) => id.match(/^(war|famine|disaster|political)-\d+-/),
-      );
+      const chaosGenerated = [...everActiveCrises].filter((id) => id.match(/^(war|famine|disaster|political)-\d+-/));
 
-      console.log(
-        `Post-1991 chaos crises: ${chaosGenerated.length} — ` +
-          `[${chaosGenerated.join(', ')}]`,
-      );
+      console.log(`Post-1991 chaos crises: ${chaosGenerated.length} — ` + `[${chaosGenerated.join(', ')}]`);
 
       // After 1991, ChaosEngine should have had ~26 years to generate
       // crises. It's probabilistic so we allow zero but log the count.
@@ -696,14 +681,12 @@ describe('Freeform mode — divergence integration tests', () => {
       expect(restoredCounters.political).toBe(originalCounters.political);
 
       // Verify: total crises experienced matches
-      expect(restored.getTotalCrisesExperienced()).toBe(
-        original.getTotalCrisesExperienced(),
-      );
+      expect(restored.getTotalCrisesExperienced()).toBe(original.getTotalCrisesExperienced());
 
       // Verify: serialized mode is correct
       expect(savedData.mode).toBe('freeform');
-      expect(savedData.state['divergenceYear']).toBe(1930);
-      expect(savedData.state['hasDiverged']).toBe(true);
+      expect(savedData.state.divergenceYear).toBe(1930);
+      expect(savedData.state.hasDiverged).toBe(true);
 
       console.log(
         `Serialize/restore: divergenceYear=${originalDivergenceYear}, ` +

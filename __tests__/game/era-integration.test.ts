@@ -1,6 +1,6 @@
 import type { GameMeta, Resources } from '@/ecs/world';
-import { ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from '@/game/era/definitions';
 import { EraSystem } from '@/game/era';
+import { ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from '@/game/era/definitions';
 import { getBuildingTierRequirement, tierMeetsRequirement } from '@/game/era/tiers';
 import type { EraId } from '@/game/era/types';
 
@@ -211,8 +211,8 @@ describe('Era Integration', () => {
 
     it('delivery rates match era definitions', () => {
       const wartime = ERA_DEFINITIONS.great_patriotic;
-      expect(wartime.deliveryRates.food).toBe(0.60);
-      expect(wartime.deliveryRates.vodka).toBe(0.50);
+      expect(wartime.deliveryRates.food).toBe(0.6);
+      expect(wartime.deliveryRates.vodka).toBe(0.5);
 
       const thaw = ERA_DEFINITIONS.thaw_and_freeze;
       expect(thaw.deliveryRates.food).toBe(0.25);

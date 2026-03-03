@@ -1,9 +1,6 @@
 import { World } from 'miniplex';
-import type { Entity, RaionPool, BuildingComponent } from '../../src/ecs/world';
-import {
-  getPopulationMode,
-  collapseEntitiesToBuildings,
-} from '../../src/ai/agents/workforce/collectiveTransition';
+import { collapseEntitiesToBuildings, getPopulationMode } from '../../src/ai/agents/workforce/collectiveTransition';
+import type { BuildingComponent, Entity, RaionPool } from '../../src/ecs/world';
 
 /** Helper: create a minimal BuildingComponent with workforce fields zeroed. */
 function makeBuilding(defId: string, housingCap = 0): BuildingComponent {
@@ -189,10 +186,46 @@ describe('collapseEntitiesToBuildings', () => {
       dvor: {
         id: 'dvor-1',
         members: [
-          { id: 'm1', name: 'Ivan', gender: 'male', age: 35, role: 'head', laborCapacity: 1.0, trudodniEarned: 0, health: 100 },
-          { id: 'm2', name: 'Maria', gender: 'female', age: 32, role: 'spouse', laborCapacity: 0.9, trudodniEarned: 0, health: 100 },
-          { id: 'm3', name: 'Petya', gender: 'male', age: 8, role: 'child', laborCapacity: 0, trudodniEarned: 0, health: 100 },
-          { id: 'm4', name: 'Babushka', gender: 'female', age: 72, role: 'elder', laborCapacity: 0.1, trudodniEarned: 0, health: 80 },
+          {
+            id: 'm1',
+            name: 'Ivan',
+            gender: 'male',
+            age: 35,
+            role: 'head',
+            laborCapacity: 1.0,
+            trudodniEarned: 0,
+            health: 100,
+          },
+          {
+            id: 'm2',
+            name: 'Maria',
+            gender: 'female',
+            age: 32,
+            role: 'spouse',
+            laborCapacity: 0.9,
+            trudodniEarned: 0,
+            health: 100,
+          },
+          {
+            id: 'm3',
+            name: 'Petya',
+            gender: 'male',
+            age: 8,
+            role: 'child',
+            laborCapacity: 0,
+            trudodniEarned: 0,
+            health: 100,
+          },
+          {
+            id: 'm4',
+            name: 'Babushka',
+            gender: 'female',
+            age: 72,
+            role: 'elder',
+            laborCapacity: 0.1,
+            trudodniEarned: 0,
+            health: 80,
+          },
         ],
         headOfHousehold: 'm1',
         privatePlotSize: 0.25,
@@ -224,13 +257,52 @@ describe('collapseEntitiesToBuildings', () => {
       dvor: {
         id: 'dvor-preg',
         members: [
-          { id: 'm1', name: 'Head', gender: 'male', age: 30, role: 'head', laborCapacity: 1.0, trudodniEarned: 0, health: 100 },
+          {
+            id: 'm1',
+            name: 'Head',
+            gender: 'male',
+            age: 30,
+            role: 'head',
+            laborCapacity: 1.0,
+            trudodniEarned: 0,
+            health: 100,
+          },
           // Newly conceived (high ticks remaining)
-          { id: 'm2', name: 'Anna', gender: 'female', age: 25, role: 'spouse', laborCapacity: 0.7, trudodniEarned: 0, health: 100, pregnant: 80 },
+          {
+            id: 'm2',
+            name: 'Anna',
+            gender: 'female',
+            age: 25,
+            role: 'spouse',
+            laborCapacity: 0.7,
+            trudodniEarned: 0,
+            health: 100,
+            pregnant: 80,
+          },
           // Mid-term
-          { id: 'm3', name: 'Olga', gender: 'female', age: 28, role: 'worker', laborCapacity: 0.6, trudodniEarned: 0, health: 100, pregnant: 45 },
+          {
+            id: 'm3',
+            name: 'Olga',
+            gender: 'female',
+            age: 28,
+            role: 'worker',
+            laborCapacity: 0.6,
+            trudodniEarned: 0,
+            health: 100,
+            pregnant: 45,
+          },
           // About to deliver (low ticks remaining)
-          { id: 'm4', name: 'Natasha', gender: 'female', age: 22, role: 'worker', laborCapacity: 0.5, trudodniEarned: 0, health: 100, pregnant: 10 },
+          {
+            id: 'm4',
+            name: 'Natasha',
+            gender: 'female',
+            age: 22,
+            role: 'worker',
+            laborCapacity: 0.5,
+            trudodniEarned: 0,
+            health: 100,
+            pregnant: 10,
+          },
         ],
         headOfHousehold: 'm1',
         privatePlotSize: 0.1,
@@ -275,7 +347,16 @@ describe('collapseEntitiesToBuildings', () => {
       dvor: {
         id: 'dvor-1',
         members: [
-          { id: 'm1', name: 'Ivan', gender: 'male', age: 30, role: 'head', laborCapacity: 1.0, trudodniEarned: 0, health: 100 },
+          {
+            id: 'm1',
+            name: 'Ivan',
+            gender: 'male',
+            age: 30,
+            role: 'head',
+            laborCapacity: 1.0,
+            trudodniEarned: 0,
+            health: 100,
+          },
         ],
         headOfHousehold: 'm1',
         privatePlotSize: 0,
@@ -372,9 +453,9 @@ describe('collapseEntitiesToBuildings', () => {
 
     const raion = collapseEntitiesToBuildings(w);
 
-    expect(raion.classCounts['worker']).toBe(2);
-    expect(raion.classCounts['farmer']).toBe(1);
-    expect(raion.classCounts['engineer']).toBe(1);
+    expect(raion.classCounts.worker).toBe(2);
+    expect(raion.classCounts.farmer).toBe(1);
+    expect(raion.classCounts.engineer).toBe(1);
   });
 
   it('sets household counts on housing buildings from dvor citizens', () => {
@@ -440,12 +521,57 @@ describe('collapseEntitiesToBuildings', () => {
         id: 'dvor-labor',
         members: [
           // Working age (15-59): buckets 3-11
-          { id: 'm1', name: 'Worker1', gender: 'male', age: 20, role: 'worker', laborCapacity: 1.0, trudodniEarned: 0, health: 100 },
-          { id: 'm2', name: 'Worker2', gender: 'female', age: 40, role: 'worker', laborCapacity: 1.0, trudodniEarned: 0, health: 100 },
-          { id: 'm3', name: 'Worker3', gender: 'male', age: 55, role: 'worker', laborCapacity: 0.8, trudodniEarned: 0, health: 90 },
+          {
+            id: 'm1',
+            name: 'Worker1',
+            gender: 'male',
+            age: 20,
+            role: 'worker',
+            laborCapacity: 1.0,
+            trudodniEarned: 0,
+            health: 100,
+          },
+          {
+            id: 'm2',
+            name: 'Worker2',
+            gender: 'female',
+            age: 40,
+            role: 'worker',
+            laborCapacity: 1.0,
+            trudodniEarned: 0,
+            health: 100,
+          },
+          {
+            id: 'm3',
+            name: 'Worker3',
+            gender: 'male',
+            age: 55,
+            role: 'worker',
+            laborCapacity: 0.8,
+            trudodniEarned: 0,
+            health: 90,
+          },
           // Not working age
-          { id: 'm4', name: 'Child', gender: 'male', age: 10, role: 'child', laborCapacity: 0, trudodniEarned: 0, health: 100 },
-          { id: 'm5', name: 'Elder', gender: 'female', age: 70, role: 'elder', laborCapacity: 0.1, trudodniEarned: 0, health: 80 },
+          {
+            id: 'm4',
+            name: 'Child',
+            gender: 'male',
+            age: 10,
+            role: 'child',
+            laborCapacity: 0,
+            trudodniEarned: 0,
+            health: 100,
+          },
+          {
+            id: 'm5',
+            name: 'Elder',
+            gender: 'female',
+            age: 70,
+            role: 'elder',
+            laborCapacity: 0.1,
+            trudodniEarned: 0,
+            health: 80,
+          },
         ],
         headOfHousehold: 'm1',
         privatePlotSize: 0.2,

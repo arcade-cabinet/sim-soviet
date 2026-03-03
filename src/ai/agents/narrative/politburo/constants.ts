@@ -823,12 +823,14 @@ export const APPOINTMENT_STRATEGIES: Record<PersonalityType, AppointmentStrategy
  */
 /** Helper to look up personality stat ranges from config. */
 function statRange(pt: string) {
-  return pcfg.personalityStatRanges[pt] ?? {
-    loyalty: [50, 70] as [number, number],
-    competence: [30, 60] as [number, number],
-    ambition: [30, 60] as [number, number],
-    corruption: [10, 40] as [number, number],
-  };
+  return (
+    pcfg.personalityStatRanges[pt] ?? {
+      loyalty: [50, 70] as [number, number],
+      competence: [30, 60] as [number, number],
+      ambition: [30, 60] as [number, number],
+      corruption: [10, 40] as [number, number],
+    }
+  );
 }
 
 export const PERSONALITY_STAT_RANGES: Record<

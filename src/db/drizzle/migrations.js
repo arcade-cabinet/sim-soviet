@@ -60,6 +60,6 @@ CREATE TABLE \`settings\` (
 export default {
   journal,
   migrations: {
-    m0000
-  }
-}
+    m0000,
+  },
+};

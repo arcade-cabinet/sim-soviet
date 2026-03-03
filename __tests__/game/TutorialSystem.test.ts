@@ -1,4 +1,3 @@
-import type { GameMeta, Resources } from '@/ecs/world';
 import {
   MILESTONE_LABELS,
   TUTORIAL_MILESTONES,
@@ -6,6 +5,7 @@ import {
   TutorialSystem,
   type UIElement,
 } from '@/ai/agents/meta/TutorialSystem';
+import type { GameMeta, Resources } from '@/ecs/world';
 
 // ─── Test Helpers ────────────────────────────────────────
 

@@ -1,16 +1,16 @@
 import { dvory } from '@/ecs/archetypes';
-import { createDvor } from '@/ecs/factories';
 import type { DvorMemberSeed } from '@/ecs/factories';
-import type { RaionPool, BuildingComponent } from '@/ecs/world';
+import { createDvor } from '@/ecs/factories';
+import type { BuildingComponent, RaionPool } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';
 import { GameRng as RealGameRng } from '@/game/SeedSystem';
+import type { DemographicAgentSnapshot } from '../../src/ai/agents/social/DemographicAgent';
 import {
   DemographicAgent,
   ERA_BIRTH_RATE_MULTIPLIER,
   getWorkingMotherPenalty,
 } from '../../src/ai/agents/social/DemographicAgent';
-import type { DemographicAgentSnapshot } from '../../src/ai/agents/social/DemographicAgent';
 
 // ── Deterministic RNG ────────────────────────────────────────────────────────
 
@@ -119,7 +119,12 @@ describe('DemographicAgent', () => {
 
       // BASE monthly rate = 0.15/12 * 0.5 * 1.0 ≈ 0.00625
       // RNG returns 0.01 → above threshold → no conception
-      const rng0_01: GameRng = { random: () => 0.01, int: () => 0, pick: (a) => a[0]!, weightedIndex: () => 0 } as GameRng;
+      const rng0_01: GameRng = {
+        random: () => 0.01,
+        int: () => 0,
+        pick: (a) => a[0]!,
+        weightedIndex: () => 0,
+      } as GameRng;
       const result = emptyResult();
       agent.birthCheck(rng0_01, 0.2, result, 'revolution');
       expect(result.births).toBe(0);
@@ -152,27 +157,31 @@ describe('DemographicAgent', () => {
 
   describe('ERA_BIRTH_RATE_MULTIPLIER', () => {
     it('has correct multiplier for revolution era (1.0)', () => {
-      expect(ERA_BIRTH_RATE_MULTIPLIER['revolution']).toBe(1.0);
+      expect(ERA_BIRTH_RATE_MULTIPLIER.revolution).toBe(1.0);
     });
 
     it('has correct multiplier for great_patriotic era (0.4)', () => {
-      expect(ERA_BIRTH_RATE_MULTIPLIER['great_patriotic']).toBe(0.4);
+      expect(ERA_BIRTH_RATE_MULTIPLIER.great_patriotic).toBe(0.4);
     });
 
     it('has correct multiplier for the_eternal era (0.3)', () => {
-      expect(ERA_BIRTH_RATE_MULTIPLIER['the_eternal']).toBe(0.3);
+      expect(ERA_BIRTH_RATE_MULTIPLIER.the_eternal).toBe(0.3);
     });
 
     it('great_patriotic birth rate is lower than revolution', () => {
-      expect(ERA_BIRTH_RATE_MULTIPLIER['great_patriotic']!).toBeLessThan(
-        ERA_BIRTH_RATE_MULTIPLIER['revolution']!,
-      );
+      expect(ERA_BIRTH_RATE_MULTIPLIER.great_patriotic!).toBeLessThan(ERA_BIRTH_RATE_MULTIPLIER.revolution!);
     });
 
     it('all 8 eras are defined', () => {
       const expectedEras = [
-        'revolution', 'collectivization', 'industrialization', 'great_patriotic',
-        'reconstruction', 'thaw_and_freeze', 'stagnation', 'the_eternal',
+        'revolution',
+        'collectivization',
+        'industrialization',
+        'great_patriotic',
+        'reconstruction',
+        'thaw_and_freeze',
+        'stagnation',
+        'the_eternal',
       ];
       for (const era of expectedEras) {
         expect(ERA_BIRTH_RATE_MULTIPLIER[era]).toBeDefined();
@@ -263,7 +272,12 @@ describe('DemographicAgent', () => {
       // adult: annual 0.5%/year → monthly ~0.000417
       // starvation adds +5% monthly → total ~0.0504
       // RNG = 0.04 → below starvation threshold (dies) but above base-only threshold (survives)
-      const rng0_04: GameRng = { random: () => 0.04, int: () => 0, pick: (a) => a[0]!, weightedIndex: () => 0 } as GameRng;
+      const rng0_04: GameRng = {
+        random: () => 0.04,
+        int: () => 0,
+        pick: (a) => a[0]!,
+        weightedIndex: () => 0,
+      } as GameRng;
 
       // Without starvation: 0.04 > 0.000417 → survives
       createTestDvor('dvor-nostarvation', [seed('male', 30)]);
@@ -287,7 +301,7 @@ describe('DemographicAgent', () => {
       createTestDvor('dvor-headdie', [
         seed('male', 40), // head
         seed('female', 35), // spouse
-        seed('male', 18),  // worker
+        seed('male', 18), // worker
       ]);
 
       // Kill only the first member (head): RNG returns 0 for first call, 1.0 for rest
@@ -453,11 +467,7 @@ describe('DemographicAgent', () => {
     });
 
     it('returns 1.0 when female elder is present for childcare', () => {
-      createTestDvor('dvor-wmp3', [
-        seed('female', 30),
-        seed('male', 1),
-        seed('female', 60),
-      ]);
+      createTestDvor('dvor-wmp3', [seed('female', 30), seed('male', 1), seed('female', 60)]);
       const entity = dvory.entities[0]!;
       // The 30-year-old female is not the head here (males are heads); find her by age
       const mother = entity.dvor.members.find((m) => m.gender === 'female' && m.age === 30)!;
@@ -523,10 +533,21 @@ describe('DemographicAgent', () => {
     function setupAggregateMode(raion: RaionPool): () => void {
       const entity = world.add({
         resources: {
-          money: 0, food: 500, vodka: 0, power: 0, powerUsed: 0,
+          money: 0,
+          food: 500,
+          vodka: 0,
+          power: 0,
+          powerUsed: 0,
           population: raion.totalPopulation,
-          trudodni: 0, blat: 0, timber: 0, steel: 0, cement: 0, prefab: 0,
-          seedFund: 0, emergencyReserve: 0, storageCapacity: 0,
+          trudodni: 0,
+          blat: 0,
+          timber: 0,
+          steel: 0,
+          cement: 0,
+          prefab: 0,
+          seedFund: 0,
+          emergencyReserve: 0,
+          storageCapacity: 0,
           raion,
         },
         isResourceStore: true,
@@ -617,7 +638,7 @@ describe('DemographicAgent', () => {
     it('runs aging on year boundary in aggregate mode', () => {
       const raion = makeRaionPool();
       raion.maleAgeBuckets[0] = 100; // 100 infants (large enough for Poisson to reliably advance some)
-      raion.maleAgeBuckets[19] = 50;  // 50 very old (will partially overflow)
+      raion.maleAgeBuckets[19] = 50; // 50 very old (will partially overflow)
       raion.femaleAgeBuckets[19] = 30; // 30 very old
       raion.totalPopulation = 180;
       raion.pregnancyWaves = [0, 0, 0];
@@ -662,9 +683,20 @@ describe('DemographicAgent', () => {
       // No aggregate mode setup — resource store has no raion
       const entity = world.add({
         resources: {
-          money: 0, food: 500, vodka: 0, power: 0, powerUsed: 0,
-          population: 10, trudodni: 0, blat: 0, timber: 0, steel: 0,
-          cement: 0, prefab: 0, seedFund: 0, emergencyReserve: 0,
+          money: 0,
+          food: 500,
+          vodka: 0,
+          power: 0,
+          powerUsed: 0,
+          population: 10,
+          trudodni: 0,
+          blat: 0,
+          timber: 0,
+          steel: 0,
+          cement: 0,
+          prefab: 0,
+          seedFund: 0,
+          emergencyReserve: 0,
           storageCapacity: 0,
           // raion is NOT set — entity mode
         },
@@ -707,10 +739,22 @@ describe('DemographicAgent', () => {
       const housingEntity = world.add({
         position: { gridX: 0, gridY: 0 },
         building: {
-          defId: 'barracks', level: 0, powered: true, powerReq: 0, powerOutput: 0,
-          housingCap: 100, pollution: 0, fear: 0,
-          workerCount: 0, residentCount: 0, avgMorale: 50, avgSkill: 50,
-          avgLoyalty: 50, avgVodkaDep: 0, trudodniAccrued: 0, householdCount: 0,
+          defId: 'barracks',
+          level: 0,
+          powered: true,
+          powerReq: 0,
+          powerOutput: 0,
+          housingCap: 100,
+          pollution: 0,
+          fear: 0,
+          workerCount: 0,
+          residentCount: 0,
+          avgMorale: 50,
+          avgSkill: 50,
+          avgLoyalty: 50,
+          avgVodkaDep: 0,
+          trudodniAccrued: 0,
+          householdCount: 0,
           constructionPhase: 'complete' as const,
         } as BuildingComponent,
         isBuilding: true,
@@ -739,7 +783,7 @@ describe('DemographicAgent', () => {
 
       // Create a normal dvor and an empty one
       createTestDvor('dvor-normal', [seed('male', 30)]);
-      const emptyDvor = world.add({
+      const _emptyDvor = world.add({
         dvor: {
           id: 'dvor-empty',
           members: [],
@@ -795,18 +839,38 @@ describe('DemographicAgent', () => {
       // Set up aggregate mode
       const storeEntity = world.add({
         resources: {
-          money: 0, food: 0, vodka: 0, power: 0, powerUsed: 0,
-          population: 500, trudodni: 0, blat: 0, timber: 0, steel: 0,
-          cement: 0, prefab: 0, seedFund: 0, emergencyReserve: 0,
+          money: 0,
+          food: 0,
+          vodka: 0,
+          power: 0,
+          powerUsed: 0,
+          population: 500,
+          trudodni: 0,
+          blat: 0,
+          timber: 0,
+          steel: 0,
+          cement: 0,
+          prefab: 0,
+          seedFund: 0,
+          emergencyReserve: 0,
           storageCapacity: 0,
           raion: {
-            totalPopulation: 500, totalHouseholds: 50,
+            totalPopulation: 500,
+            totalHouseholds: 50,
             maleAgeBuckets: new Array(20).fill(0),
             femaleAgeBuckets: new Array(20).fill(0),
-            classCounts: {}, birthsThisYear: 0, deathsThisYear: 0,
-            totalBirths: 0, totalDeaths: 0, pregnancyWaves: [0, 0, 0],
-            laborForce: 0, assignedWorkers: 0, idleWorkers: 0,
-            avgMorale: 50, avgLoyalty: 50, avgSkill: 50,
+            classCounts: {},
+            birthsThisYear: 0,
+            deathsThisYear: 0,
+            totalBirths: 0,
+            totalDeaths: 0,
+            pregnancyWaves: [0, 0, 0],
+            laborForce: 0,
+            assignedWorkers: 0,
+            idleWorkers: 0,
+            avgMorale: 50,
+            avgLoyalty: 50,
+            avgSkill: 50,
           },
         },
         isResourceStore: true,

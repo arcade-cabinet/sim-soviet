@@ -1,5 +1,5 @@
-import { getGameSpeed, setGameSpeed, cycleGameSpeed } from '../../src/stores/gameStore';
 import type { GameSpeed } from '../../src/stores/gameStore';
+import { cycleGameSpeed, getGameSpeed, setGameSpeed } from '../../src/stores/gameStore';
 
 describe('Turbo Speed Mode', () => {
   afterEach(() => {

@@ -57,12 +57,8 @@
           "name": "buildings_save_id_saves_id_fk",
           "tableFrom": "buildings",
           "tableTo": "saves",
-          "columnsFrom": [
-            "save_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["save_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -119,12 +115,8 @@
           "name": "chronology_save_id_saves_id_fk",
           "tableFrom": "chronology",
           "tableTo": "saves",
-          "columnsFrom": [
-            "save_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["save_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -189,12 +181,8 @@
           "name": "quotas_save_id_saves_id_fk",
           "tableFrom": "quotas",
           "tableTo": "saves",
-          "columnsFrom": [
-            "save_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["save_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -275,12 +263,8 @@
           "name": "resources_save_id_saves_id_fk",
           "tableFrom": "resources",
           "tableTo": "saves",
-          "columnsFrom": [
-            "save_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["save_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

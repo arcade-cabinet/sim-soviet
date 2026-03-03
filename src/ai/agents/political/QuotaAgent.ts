@@ -11,13 +11,13 @@
  */
 
 import { Vehicle } from 'yuka';
-import type { QuotaState } from './quotaSystem';
-import { quotaSystem } from './quotaSystem';
+import { DIFFICULTY_MULTIPLIERS } from '../economy/economy-core';
 import type { CompulsoryDeliverySaveData, DeliveryResult } from './CompulsoryDeliveries';
 import { CompulsoryDeliveries } from './CompulsoryDeliveries';
-import type { DifficultyLevel, ConsequenceLevel, ScoringSystemSaveData } from './ScoringSystem';
+import type { QuotaState } from './quotaSystem';
+import { quotaSystem } from './quotaSystem';
+import type { ConsequenceLevel, DifficultyLevel, ScoringSystemSaveData } from './ScoringSystem';
 import { ScoringSystem } from './ScoringSystem';
-import { DIFFICULTY_MULTIPLIERS } from '../economy/economy-core';
 
 /** Serializable snapshot for save/load. */
 export interface QuotaAgentSaveData {

@@ -6,14 +6,14 @@
  * singleton that persists across React component lifecycles.
  */
 
+import { resetBuildingTrudodni } from '@/ai/agents/economy/EconomyAgent';
+import { resetPaperwork, resetThawFreezeState } from '@/ai/agents/political/doctrine';
 import AudioManager from '@/audio/AudioManager';
 import SFXManager from '@/audio/SFXManager';
 import { resetStarvationCounter } from '@/ecs/systems';
 import { world } from '@/ecs/world';
 import { gameState } from '@/engine/GameState';
 import { clearToast, dismissAdvisor } from '@/engine/helpers';
-import { resetPaperwork, resetThawFreezeState } from '@/ai/agents/political/doctrine';
-import { resetBuildingTrudodni } from '@/ai/agents/economy/EconomyAgent';
 import {
   closeBuildingInspector,
   closeCitizenDossier,

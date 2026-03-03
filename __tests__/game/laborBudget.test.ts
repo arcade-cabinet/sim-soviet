@@ -12,16 +12,16 @@
  *   - Integration with WorkerSystem tick
  */
 
+import {
+  computeLaborBudget,
+  LABOR_BUDGET_CONFIG,
+  type LaborBudgetConfig,
+  type LaborBudgetResult,
+} from '@/ai/agents/workforce/laborBudget';
+import { WorkerSystem } from '@/ai/agents/workforce/WorkerSystem';
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
-import {
-  computeLaborBudget,
-  type LaborBudgetConfig,
-  type LaborBudgetResult,
-  LABOR_BUDGET_CONFIG,
-} from '@/ai/agents/workforce/laborBudget';
-import { WorkerSystem } from '@/ai/agents/workforce/WorkerSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  HELPERS
@@ -29,12 +29,12 @@ import { WorkerSystem } from '@/ai/agents/workforce/WorkerSystem';
 
 /** All 8 era IDs with their expected state demand fractions. */
 const ERA_DEMANDS: Array<{ era: string; expected: number }> = [
-  { era: 'revolution', expected: 0.6 },       // 0.5 < 0.6 floor → 0.6
+  { era: 'revolution', expected: 0.6 }, // 0.5 < 0.6 floor → 0.6
   { era: 'collectivization', expected: 0.65 },
   { era: 'industrialization', expected: 0.75 },
   { era: 'great_patriotic', expected: 0.9 },
   { era: 'reconstruction', expected: 0.6 },
-  { era: 'thaw_and_freeze', expected: 0.6 },  // 0.55 < 0.6 floor → 0.6
+  { era: 'thaw_and_freeze', expected: 0.6 }, // 0.55 < 0.6 floor → 0.6
   { era: 'stagnation', expected: 0.65 },
   { era: 'the_eternal', expected: 0.7 },
 ];
@@ -60,13 +60,10 @@ describe('computeLaborBudget', () => {
   // ── Era state demand fractions ──────────────────────────────────────────
 
   describe('era state demand fractions', () => {
-    it.each(ERA_DEMANDS)(
-      '$era has state demand of $expected',
-      ({ era, expected }) => {
-        const result = computeLaborBudget(era, 100, false, config);
-        expect(result.stateLaborFraction).toBeCloseTo(expected, 10);
-      },
-    );
+    it.each(ERA_DEMANDS)('$era has state demand of $expected', ({ era, expected }) => {
+      const result = computeLaborBudget(era, 100, false, config);
+      expect(result.stateLaborFraction).toBeCloseTo(expected, 10);
+    });
 
     it('unknown era falls back to stateMinDemandFraction', () => {
       const result = computeLaborBudget('unknown_era', 100, false, config);
@@ -81,10 +78,7 @@ describe('computeLaborBudget', () => {
       const result = computeLaborBudget('great_patriotic', 100, false, config);
       expect(result.stateLaborFraction).toBe(0.9);
       const personalTime =
-        result.privatePlotFraction +
-        result.foragingFraction +
-        result.restFraction +
-        result.idleFraction;
+        result.privatePlotFraction + result.foragingFraction + result.restFraction + result.idleFraction;
       expect(personalTime).toBeCloseTo(0.1, 10);
     });
 

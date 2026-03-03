@@ -1,5 +1,5 @@
-import { LoyaltyAgent } from '../../src/ai/agents/political/LoyaltyAgent';
 import type { LoyaltyState } from '../../src/ai/agents/political/LoyaltyAgent';
+import { LoyaltyAgent } from '../../src/ai/agents/political/LoyaltyAgent';
 import { MSG } from '../../src/ai/telegrams';
 import { dvory } from '../../src/ecs/archetypes';
 import { createDvor } from '../../src/ecs/factories';

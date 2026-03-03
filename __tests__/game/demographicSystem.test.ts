@@ -1,12 +1,3 @@
-import { dvory, femaleCitizens, maleCitizens, renderableCitizens } from '@/ecs/archetypes';
-import {
-  ageCategoryFromAge,
-  computeRenderSlot,
-  createCitizen,
-  createDvor,
-  createStartingSettlement,
-  type DvorMemberSeed,
-} from '@/ecs/factories';
 import {
   ageAllMembers,
   birthCheck,
@@ -18,6 +9,15 @@ import {
   householdFormation,
   pregnancyTick,
 } from '@/ai/agents/social/demographicSystem';
+import { dvory, femaleCitizens, maleCitizens, renderableCitizens } from '@/ecs/archetypes';
+import {
+  ageCategoryFromAge,
+  computeRenderSlot,
+  createCitizen,
+  createDvor,
+  createStartingSettlement,
+  type DvorMemberSeed,
+} from '@/ecs/factories';
 import type { CitizenRenderSlot, DvorMember } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';

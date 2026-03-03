@@ -7,12 +7,7 @@
  */
 
 import { world } from '../../src/ecs/world';
-import {
-  advanceTicks,
-  buildBasicSettlement,
-  createPlaythroughEngine,
-  getResources,
-} from '../playthrough/helpers';
+import { advanceTicks, buildBasicSettlement, createPlaythroughEngine, getResources } from '../playthrough/helpers';
 
 describe('Autopilot Integration', () => {
   afterEach(() => {

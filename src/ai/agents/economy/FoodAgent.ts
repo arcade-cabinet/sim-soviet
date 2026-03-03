@@ -13,12 +13,12 @@
  */
 
 import { Vehicle } from 'yuka';
-import { getBuildingDef } from '@/data/buildingDefs';
 import { economy } from '@/config';
+import { getBuildingDef } from '@/data/buildingDefs';
 import { citizens, dvory, getResourceEntity, producers } from '@/ecs/archetypes';
 import { RETIREMENT_AGE } from '@/ecs/factories/demographics';
-import { MSG } from '../../telegrams';
 import type { EraId } from '@/game/era/types';
+import { MSG } from '../../telegrams';
 
 // ---------------------------------------------------------------------------
 // Constants (sourced from config/economy.json)
@@ -49,8 +49,9 @@ const LIVESTOCK_FOOD: Record<string, number> = economy.privatePlots.livestockFoo
 const GRAIN_TO_VODKA_RATIO = economy.production.grainToVodkaRatio;
 
 /** Era-specific multipliers for private plot production. */
-const ERA_PLOT_MULTIPLIER: Partial<Record<EraId, number>> =
-  economy.privatePlots.eraMultiplier as Partial<Record<EraId, number>>;
+const ERA_PLOT_MULTIPLIER: Partial<Record<EraId, number>> = economy.privatePlots.eraMultiplier as Partial<
+  Record<EraId, number>
+>;
 
 // ---------------------------------------------------------------------------
 // Food state machine
@@ -150,15 +151,17 @@ export class FoodAgent extends Vehicle {
    * @param opts - Production modifiers and era context
    * @param opts.includePrivatePlots - Whether to run private plot production (default true; set false for non-monthly ticks)
    */
-  produce(opts: {
-    farmModifier?: number;
-    vodkaModifier?: number;
-    eraId?: string;
-    skillFactor?: number;
-    conditionFactor?: number;
-    stakhanoviteBoosts?: ReadonlyMap<string, number>;
-    includePrivatePlots?: boolean;
-  } = {}): void {
+  produce(
+    opts: {
+      farmModifier?: number;
+      vodkaModifier?: number;
+      eraId?: string;
+      skillFactor?: number;
+      conditionFactor?: number;
+      stakhanoviteBoosts?: ReadonlyMap<string, number>;
+      includePrivatePlots?: boolean;
+    } = {},
+  ): void {
     const farmModifier = opts.farmModifier ?? 1.0;
     const vodkaModifier = opts.vodkaModifier ?? 1.0;
     const eraId = opts.eraId ?? 'revolution';

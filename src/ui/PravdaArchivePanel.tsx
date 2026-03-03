@@ -9,8 +9,8 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { getEngine } from '../bridge/GameInit';
 import type { PravdaHeadline } from '../ai/agents/narrative/pravda/types';
+import { getEngine } from '../bridge/GameInit';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
@@ -35,6 +35,7 @@ const CATEGORY_COLOR: Record<HeadlineCategory, string> = {
   threat: Colors.sovietRed,
   leader: '#fbc02d',
   spin: '#ff9800',
+  crisis: Colors.sovietRed,
 };
 
 const CATEGORY_LABEL: Record<HeadlineCategory, string> = {
@@ -46,6 +47,7 @@ const CATEGORY_LABEL: Record<HeadlineCategory, string> = {
   threat: 'THREAT',
   leader: 'LEADER',
   spin: 'SPIN',
+  crisis: 'CRISIS',
 };
 
 const ALL_CATEGORIES: HeadlineCategory[] = [
@@ -143,6 +145,7 @@ export const PravdaArchivePanel: React.FC<PravdaArchivePanelProps> = ({ visible,
       threat: 0,
       leader: 0,
       spin: 0,
+      crisis: 0,
     };
     for (const h of recentHeadlines) {
       if (h.category in counts) {

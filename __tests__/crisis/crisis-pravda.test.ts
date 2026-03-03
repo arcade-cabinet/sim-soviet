@@ -6,19 +6,19 @@
  * the satirical Soviet propaganda tone.
  */
 
+import { PravdaSystem } from '../../src/ai/agents/narrative/pravda';
+import { generateHeadline } from '../../src/ai/agents/narrative/pravda/generators';
+import { crisisPhaseWeight, generateCrisisHeadline } from '../../src/ai/agents/narrative/pravda/generators/crisis';
+import type { ActiveCrisisInfo } from '../../src/ai/agents/narrative/pravda/types';
+import {
+  DISASTER_HEADLINES,
+  FAMINE_HEADLINES,
+  POLITICAL_HEADLINES,
+  WAR_HEADLINES,
+} from '../../src/ai/agents/narrative/pravda/wordPools';
 import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import { PravdaSystem } from '../../src/ai/agents/narrative/pravda';
-import type { ActiveCrisisInfo } from '../../src/ai/agents/narrative/pravda/types';
-import { generateCrisisHeadline, crisisPhaseWeight } from '../../src/ai/agents/narrative/pravda/generators/crisis';
-import { generateHeadline } from '../../src/ai/agents/narrative/pravda/generators';
 import { createGameView } from '../../src/game/GameView';
-import {
-  WAR_HEADLINES,
-  FAMINE_HEADLINES,
-  DISASTER_HEADLINES,
-  POLITICAL_HEADLINES,
-} from '../../src/ai/agents/narrative/pravda/wordPools';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -203,8 +203,8 @@ describe('generateHeadline with active crises', () => {
     for (let i = 0; i < trials; i++) {
       const headline = generateHeadline(gs, crises);
       if (headline.category === 'crisis') {
-        if (WAR_HEADLINES.includes(headline.headline as typeof WAR_HEADLINES[number])) warHeadlines++;
-        if (FAMINE_HEADLINES.includes(headline.headline as typeof FAMINE_HEADLINES[number])) famineHeadlines++;
+        if (WAR_HEADLINES.includes(headline.headline as (typeof WAR_HEADLINES)[number])) warHeadlines++;
+        if (FAMINE_HEADLINES.includes(headline.headline as (typeof FAMINE_HEADLINES)[number])) famineHeadlines++;
       }
     }
 
@@ -311,35 +311,120 @@ describe('PravdaSystem.generateAmbientHeadline with crises', () => {
 
 describe('Crisis headline satirical tone', () => {
   it('war headlines reference military/patriotic themes', () => {
-    const militaryTerms = ['MOTHERLAND', 'ARMS', 'WAR', 'HERO', 'FRONT', 'ARMY', 'MOBILIZATION', 'PARTISAN', 'AMMUNITION', 'DEFENSE', 'ENEMY', 'EVACUATION', 'MILITARY', 'BATTLE', 'FACTORY', 'PRODUCTION', 'COMRADE', 'LABOR', 'SACRIFICE', 'INDUSTRIAL', 'COMMAND', 'PATRIOTIC', 'RED'];
-    const matchCount = WAR_HEADLINES.filter((h) =>
-      militaryTerms.some((term) => h.includes(term)),
-    ).length;
+    const militaryTerms = [
+      'MOTHERLAND',
+      'ARMS',
+      'WAR',
+      'HERO',
+      'FRONT',
+      'ARMY',
+      'MOBILIZATION',
+      'PARTISAN',
+      'AMMUNITION',
+      'DEFENSE',
+      'ENEMY',
+      'EVACUATION',
+      'MILITARY',
+      'BATTLE',
+      'FACTORY',
+      'PRODUCTION',
+      'COMRADE',
+      'LABOR',
+      'SACRIFICE',
+      'INDUSTRIAL',
+      'COMMAND',
+      'PATRIOTIC',
+      'RED',
+    ];
+    const matchCount = WAR_HEADLINES.filter((h) => militaryTerms.some((term) => h.includes(term))).length;
     // At least 80% should match
     expect(matchCount / WAR_HEADLINES.length).toBeGreaterThanOrEqual(0.8);
   });
 
   it('famine headlines reference food/agriculture themes', () => {
-    const famineTerms = ['GRAIN', 'HARVEST', 'FARM', 'FOOD', 'AGRICULTURAL', 'KULAK', 'CALORIC', 'BREAD', 'WHEAT', 'PORTION', 'DIET', 'HOARDING', 'SABOTAGE', 'LYSENKO', 'SHORTAGE', 'DROUGHT', 'DELIVERIES', 'MINISTRY', 'RATION', 'QUEUE', 'FESTIVAL'];
-    const matchCount = FAMINE_HEADLINES.filter((h) =>
-      famineTerms.some((term) => h.includes(term)),
-    ).length;
+    const famineTerms = [
+      'GRAIN',
+      'HARVEST',
+      'FARM',
+      'FOOD',
+      'AGRICULTURAL',
+      'KULAK',
+      'CALORIC',
+      'BREAD',
+      'WHEAT',
+      'PORTION',
+      'DIET',
+      'HOARDING',
+      'SABOTAGE',
+      'LYSENKO',
+      'SHORTAGE',
+      'DROUGHT',
+      'DELIVERIES',
+      'MINISTRY',
+      'RATION',
+      'QUEUE',
+      'FESTIVAL',
+    ];
+    const matchCount = FAMINE_HEADLINES.filter((h) => famineTerms.some((term) => h.includes(term))).length;
     expect(matchCount / FAMINE_HEADLINES.length).toBeGreaterThanOrEqual(0.8);
   });
 
   it('disaster headlines minimize/deny the catastrophe', () => {
-    const minimizers = ['MINOR', 'CONTROL', 'NO DANGER', 'SMOOTHLY', 'NO RISK', 'PLANNED', 'ACCEPTABLE', 'EFFICIENCY', 'REFRESHING', 'REBRANDED', 'RECLASSIFIED', 'RELOCATED', 'REDESIGNED', 'DISCOURAGED', 'EXCITING', 'HEROIC', 'DRILL', 'SEISMIC', 'RAPID', 'COLLAPSE', 'CONFIRM'];
-    const matchCount = DISASTER_HEADLINES.filter((h) =>
-      minimizers.some((term) => h.includes(term)),
-    ).length;
+    const minimizers = [
+      'MINOR',
+      'CONTROL',
+      'NO DANGER',
+      'SMOOTHLY',
+      'NO RISK',
+      'PLANNED',
+      'ACCEPTABLE',
+      'EFFICIENCY',
+      'REFRESHING',
+      'REBRANDED',
+      'RECLASSIFIED',
+      'RELOCATED',
+      'REDESIGNED',
+      'DISCOURAGED',
+      'EXCITING',
+      'HEROIC',
+      'DRILL',
+      'SEISMIC',
+      'RAPID',
+      'COLLAPSE',
+      'CONFIRM',
+    ];
+    const matchCount = DISASTER_HEADLINES.filter((h) => minimizers.some((term) => h.includes(term))).length;
     expect(matchCount / DISASTER_HEADLINES.length).toBeGreaterThanOrEqual(0.8);
   });
 
   it('political headlines reference party/state apparatus', () => {
-    const politicalTerms = ['PARTY', 'COUNTER-REVOLUTIONARY', 'PURGE', 'TRIAL', 'KGB', 'CONFESS', 'REHABILITATED', 'POLITBURO', 'LOYALTY', 'IDEOLOGICAL', 'CONGRESS', 'COMMITTEE', 'VIGILANCE', 'HERO', 'ENEMY', 'DEVIATION', 'RECLASSIFIED', 'PEOPLE', 'STATE', 'PLAN', 'APPOINTM', 'WRECKER', 'TRAITOR', 'VOTE'];
-    const matchCount = POLITICAL_HEADLINES.filter((h) =>
-      politicalTerms.some((term) => h.includes(term)),
-    ).length;
+    const politicalTerms = [
+      'PARTY',
+      'COUNTER-REVOLUTIONARY',
+      'PURGE',
+      'TRIAL',
+      'KGB',
+      'CONFESS',
+      'REHABILITATED',
+      'POLITBURO',
+      'LOYALTY',
+      'IDEOLOGICAL',
+      'CONGRESS',
+      'COMMITTEE',
+      'VIGILANCE',
+      'HERO',
+      'ENEMY',
+      'DEVIATION',
+      'RECLASSIFIED',
+      'PEOPLE',
+      'STATE',
+      'PLAN',
+      'APPOINTM',
+      'WRECKER',
+      'TRAITOR',
+      'VOTE',
+    ];
+    const matchCount = POLITICAL_HEADLINES.filter((h) => politicalTerms.some((term) => h.includes(term))).length;
     expect(matchCount / POLITICAL_HEADLINES.length).toBeGreaterThanOrEqual(0.8);
   });
 });

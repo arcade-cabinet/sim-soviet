@@ -16,8 +16,8 @@
  */
 
 import type { GameRng } from '@/game/SeedSystem';
-import type { CrisisDefinition, CrisisType, CrisisSeverity } from './types';
 import type { TimelineEvent } from './TimelineSystem';
+import type { CrisisDefinition, CrisisSeverity, CrisisType } from './types';
 
 // ─── ChaosState ──────────────────────────────────────────────────────────────
 
@@ -70,36 +70,65 @@ export interface CrisisArchetype {
 // ─── Name Pools ──────────────────────────────────────────────────────────────
 
 const WAR_ENEMIES = [
-  'Finland', 'Poland', 'Manchuria', 'Turkey', 'Persia',
-  'Afghanistan', 'Korea', 'Hungary', 'Czechoslovakia', 'Georgia',
+  'Finland',
+  'Poland',
+  'Manchuria',
+  'Turkey',
+  'Persia',
+  'Afghanistan',
+  'Korea',
+  'Hungary',
+  'Czechoslovakia',
+  'Georgia',
 ];
 
 const WAR_PREFIXES = [
-  'Border Conflict with', 'Workers\' Liberation of',
-  'Proxy War in', 'Fraternal Intervention in',
-  'Defense of', 'Campaign Against',
+  'Border Conflict with',
+  "Workers' Liberation of",
+  'Proxy War in',
+  'Fraternal Intervention in',
+  'Defense of',
+  'Campaign Against',
 ];
 
 const FAMINE_REGIONS = [
-  'Volga', 'Ukraine', 'Kazakhstan', 'Caucasus', 'Siberia',
-  'Central Asia', 'Urals', 'Don Basin', 'Kuban', 'Bessarabia',
+  'Volga',
+  'Ukraine',
+  'Kazakhstan',
+  'Caucasus',
+  'Siberia',
+  'Central Asia',
+  'Urals',
+  'Don Basin',
+  'Kuban',
+  'Bessarabia',
 ];
 
 const DISASTER_TYPES = [
-  'Industrial Incident', 'Factory Explosion', 'Pipeline Rupture',
-  'Chemical Spill', 'Mine Collapse', 'Dam Failure',
-  'Rail Disaster', 'Power Plant Malfunction',
+  'Industrial Incident',
+  'Factory Explosion',
+  'Pipeline Rupture',
+  'Chemical Spill',
+  'Mine Collapse',
+  'Dam Failure',
+  'Rail Disaster',
+  'Power Plant Malfunction',
 ];
 
 const POLITICAL_ADJECTIVES = [
-  'Great', 'Second', 'Final', 'Necessary', 'Corrective',
-  'Preventive', 'Thorough', 'Socialist', 'Democratic', 'Revolutionary',
+  'Great',
+  'Second',
+  'Final',
+  'Necessary',
+  'Corrective',
+  'Preventive',
+  'Thorough',
+  'Socialist',
+  'Democratic',
+  'Revolutionary',
 ];
 
-const POLITICAL_NOUNS = [
-  'Purge', 'Reorganization', 'Cleansing', 'Correction',
-  'Reform', 'Restructuring',
-];
+const POLITICAL_NOUNS = ['Purge', 'Reorganization', 'Cleansing', 'Correction', 'Reform', 'Restructuring'];
 
 // ─── Archetype Implementations ───────────────────────────────────────────────
 
@@ -137,10 +166,8 @@ const warArchetype: CrisisArchetype = {
     const prefix = rng.pick(WAR_PREFIXES);
     const name = `${prefix} ${enemy}`;
 
-    const conscriptionRate = severity === 'existential' ? 0.15
-      : severity === 'national' ? 0.10
-      : severity === 'regional' ? 0.06
-      : 0.03;
+    const conscriptionRate =
+      severity === 'existential' ? 0.15 : severity === 'national' ? 0.1 : severity === 'regional' ? 0.06 : 0.03;
 
     return {
       id: `war-${state.year}-${rng.id()}`,
@@ -172,9 +199,7 @@ const famineArchetype: CrisisArchetype = {
     let score = 0;
 
     // Low food reserves — primary trigger
-    const monthsOfFood = state.population > 0
-      ? state.food / (state.population * 0.5)
-      : Infinity;
+    const monthsOfFood = state.population > 0 ? state.food / (state.population * 0.5) : Infinity;
     if (monthsOfFood < 3) {
       score += 0.4 + Math.min(0.3, (3 - monthsOfFood) * 0.1);
     }
@@ -195,16 +220,10 @@ const famineArchetype: CrisisArchetype = {
   generate(state: ChaosState, rng: GameRng): CrisisDefinition {
     const duration = rng.int(1, 3);
     const region = rng.pick(FAMINE_REGIONS);
-    const nameVariants = [
-      `Great ${region} Famine`,
-      `Harvest Failure of ${state.year}`,
-      `${region} Food Crisis`,
-    ];
+    const nameVariants = [`Great ${region} Famine`, `Harvest Failure of ${state.year}`, `${region} Food Crisis`];
     const name = rng.pick(nameVariants);
 
-    const foodDeficit = state.population > 0
-      ? Math.max(0, 1 - state.food / (state.population * 1.5))
-      : 0;
+    const foodDeficit = state.population > 0 ? Math.max(0, 1 - state.food / (state.population * 1.5)) : 0;
     const severity = scoreSeverity(foodDeficit, rng);
 
     return {
@@ -320,15 +339,11 @@ const politicalCrisisArchetype: CrisisArchetype = {
   generate(state: ChaosState, rng: GameRng): CrisisDefinition {
     const adj = rng.pick(POLITICAL_ADJECTIVES);
     const noun = rng.pick(POLITICAL_NOUNS);
-    const nameVariants = [
-      `The ${adj} ${noun}`,
-      `Reform Movement of ${state.year}`,
-      `Power Struggle of ${state.year}`,
-    ];
+    const nameVariants = [`The ${adj} ${noun}`, `Reform Movement of ${state.year}`, `Power Struggle of ${state.year}`];
     const name = rng.pick(nameVariants);
 
     const morale = state.morale ?? 0.5;
-    const severityScore = Math.min(1, (1 - morale) + (state.marks ?? 0) / 10);
+    const severityScore = Math.min(1, 1 - morale + (state.marks ?? 0) / 10);
     const severity = scoreSeverity(severityScore, rng);
 
     return {
@@ -392,10 +407,7 @@ function scoreSeverity(score: number, rng: GameRng): CrisisSeverity {
  * Find the most recent timeline event of a given crisis type,
  * or undefined if none exists.
  */
-function lastEventOfType(
-  timeline: TimelineEvent[],
-  type: CrisisType,
-): TimelineEvent | undefined {
+function lastEventOfType(timeline: TimelineEvent[], type: CrisisType): TimelineEvent | undefined {
   for (let i = timeline.length - 1; i >= 0; i--) {
     if (timeline[i]!.crisisType === type) return timeline[i];
   }
@@ -415,12 +427,7 @@ export class ChaosEngine {
   private archetypes: CrisisArchetype[];
 
   constructor() {
-    this.archetypes = [
-      warArchetype,
-      famineArchetype,
-      disasterArchetype,
-      politicalCrisisArchetype,
-    ];
+    this.archetypes = [warArchetype, famineArchetype, disasterArchetype, politicalCrisisArchetype];
   }
 
   /**
@@ -431,11 +438,7 @@ export class ChaosEngine {
    * @param timeline - All timeline events so far (for feedback rules)
    * @param rng - Seeded RNG for deterministic outcomes
    */
-  generateNextCrisis(
-    state: ChaosState,
-    timeline: TimelineEvent[],
-    rng: GameRng,
-  ): CrisisDefinition | null {
+  generateNextCrisis(state: ChaosState, timeline: TimelineEvent[], rng: GameRng): CrisisDefinition | null {
     // 1. Score each archetype
     const scores = this.archetypes.map((arch) => ({
       archetype: arch,
@@ -451,7 +454,7 @@ export class ChaosEngine {
     // 3. Apply minimum interval filter — zero out types that fired too recently
     const filteredScores = boostedScores.map(({ archetype, score }) => {
       const lastEvent = lastEventOfType(timeline, archetype.type);
-      if (lastEvent && (state.year - lastEvent.endYear) < MIN_INTERVAL_YEARS) {
+      if (lastEvent && state.year - lastEvent.endYear < MIN_INTERVAL_YEARS) {
         return { archetype, score: 0 };
       }
       // Also suppress if there's an active crisis of this type
@@ -462,9 +465,7 @@ export class ChaosEngine {
     });
 
     // 4. Weight scores: finalWeight = score * baseWeight
-    const weights = filteredScores.map(
-      ({ archetype, score }) => Math.max(0, score * archetype.baseWeight),
-    );
+    const weights = filteredScores.map(({ archetype, score }) => Math.max(0, score * archetype.baseWeight));
 
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
 
@@ -475,12 +476,12 @@ export class ChaosEngine {
     const probabilities = weights.map((w) => w / totalWeight);
 
     // 6. Find the highest-probability archetype
-    let bestIdx = 0;
+    let _bestIdx = 0;
     let bestProb = probabilities[0]!;
     for (let i = 1; i < probabilities.length; i++) {
       if (probabilities[i]! > bestProb) {
         bestProb = probabilities[i]!;
-        bestIdx = i;
+        _bestIdx = i;
       }
     }
 
@@ -505,11 +506,7 @@ export class ChaosEngine {
    * Compute feedback boost for a given crisis type based on recent history.
    * Implements the self-referencing cascade rules.
    */
-  private computeFeedbackBoost(
-    type: CrisisType,
-    state: ChaosState,
-    timeline: TimelineEvent[],
-  ): number {
+  private computeFeedbackBoost(type: CrisisType, state: ChaosState, _timeline: TimelineEvent[]): number {
     let boost = 0;
 
     switch (type) {

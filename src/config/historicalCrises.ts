@@ -387,7 +387,7 @@ export const HISTORICAL_CRISES: readonly CrisisDefinition[] = [
     buildupTicks: 3,
     aftermathTicks: 12,
     description:
-      'Cheka unleashed after Fanny Kaplan\'s assassination attempt on Lenin. ' +
+      "Cheka unleashed after Fanny Kaplan's assassination attempt on Lenin. " +
       'Mass executions, hostage-taking, and concentration camps. "Better to arrest ' +
       'a hundred innocent than let one guilty escape."',
     compoundsWith: ['russian_civil_war'],
@@ -411,7 +411,7 @@ export const HISTORICAL_CRISES: readonly CrisisDefinition[] = [
     buildupTicks: 6,
     aftermathTicks: 18,
     description:
-      'Stalin\'s purges consume the Party, the military, the intelligentsia. ' +
+      "Stalin's purges consume the Party, the military, the intelligentsia. " +
       '750,000 executed, 1.3 million sent to the Gulag. Trust becomes extinct.',
     eraAlignment: 'industrialization',
   },
@@ -431,7 +431,7 @@ export const HISTORICAL_CRISES: readonly CrisisDefinition[] = [
     buildupTicks: 3,
     aftermathTicks: 12,
     description:
-      'Khrushchev\'s Secret Speech denounces Stalin\'s cult of personality. ' +
+      "Khrushchev's Secret Speech denounces Stalin's cult of personality. " +
       'Political prisoners released, censorship relaxed. A brief, bewildering thaw.',
     eraAlignment: 'thaw_and_freeze',
   },
@@ -452,7 +452,7 @@ export const HISTORICAL_CRISES: readonly CrisisDefinition[] = [
     buildupTicks: 12,
     aftermathTicks: 24,
     description:
-      'Khrushchev\'s gamble: plow the Kazakh steppe for grain. Initial bumper ' +
+      "Khrushchev's gamble: plow the Kazakh steppe for grain. Initial bumper " +
       'harvests give way to dust bowls. The soil was not consulted.',
     eraAlignment: 'thaw_and_freeze',
   },
@@ -588,9 +588,7 @@ export const HISTORICAL_CRISES: readonly CrisisDefinition[] = [
 // ─── Lookup ─────────────────────────────────────────────────────────────────
 
 /** Map for O(1) crisis lookup by ID. */
-const crisisById = new Map<string, CrisisDefinition>(
-  HISTORICAL_CRISES.map((c) => [c.id, c]),
-);
+const crisisById = new Map<string, CrisisDefinition>(HISTORICAL_CRISES.map((c) => [c.id, c]));
 
 /**
  * Returns the CrisisDefinition for the given ID, or undefined if not found.

@@ -27,33 +27,43 @@
 import { Vehicle } from 'yuka';
 import { MSG } from '../../telegrams';
 
+export { ALL_BUILDING_IDS, ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from '../../../game/era/definitions';
 // Re-export canonical types and definitions so callers can import from one place
-export type { EraId, EraModifiers, EraDefinition, EraSystemSaveData, EraCheckpoint, ConstructionMethod } from '../../../game/era/types';
-export { ERA_ORDER, ERA_DEFINITIONS, ALL_BUILDING_IDS, eraIndexForYear } from '../../../game/era/definitions';
+export type {
+  ConstructionMethod,
+  EraCheckpoint,
+  EraDefinition,
+  EraId,
+  EraModifiers,
+  EraSystemSaveData,
+} from '../../../game/era/types';
 
-import { ERA_ORDER, ERA_DEFINITIONS, ALL_BUILDING_IDS, eraIndexForYear } from '../../../game/era/definitions';
-import type { EraId, EraModifiers, EraDefinition, ConstructionMethod, EraCheckpoint, EraSystemSaveData } from '../../../game/era/types';
-import type { Doctrine } from './CompulsoryDeliveries';
-import type { CompulsoryDeliveries } from './CompulsoryDeliveries';
-import type { SettlementTier } from '../infrastructure/SettlementSystem';
-import type { SettlementSystem } from '../infrastructure/SettlementSystem';
-import { tierMeetsRequirement, getBuildingTierRequirement } from '../../../game/era/tiers';
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../../ecs/archetypes';
-import type { DifficultyLevel } from './ScoringSystem';
-import { eraIdToIndex } from './ScoringSystem';
-import type { ScoringSystem } from './ScoringSystem';
-import type { SimCallbacks } from '../../../game/engine/types';
-import type { PoliticalEntitySystem } from './PoliticalEntitySystem';
-import { addPaperwork, getPaperwork } from './doctrine';
-import type { WorkerSystem } from '../workforce/WorkerSystem';
-import type { KGBAgent } from './KGBAgent';
-import type { PolitburoSystem } from '../narrative/politburo';
-import type { GameRng } from '../../../game/SeedSystem';
 import { TICKS_PER_YEAR } from '../../../game/Chronology';
-import type { EraId as EconomyEraId } from '../economy/EconomyAgent';
-import type { EconomyAgent } from '../economy/EconomyAgent';
-import type { TransportSystem } from '../infrastructure/TransportSystem';
+import type { SimCallbacks } from '../../../game/engine/types';
+import { ALL_BUILDING_IDS, ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from '../../../game/era/definitions';
+import { getBuildingTierRequirement, tierMeetsRequirement } from '../../../game/era/tiers';
+import type {
+  ConstructionMethod,
+  EraCheckpoint,
+  EraDefinition,
+  EraId,
+  EraModifiers,
+  EraSystemSaveData,
+} from '../../../game/era/types';
+import type { GameRng } from '../../../game/SeedSystem';
 import type { ChronologyAgent } from '../core/ChronologyAgent';
+import type { EconomyAgent, EraId as EconomyEraId } from '../economy/EconomyAgent';
+import type { SettlementSystem, SettlementTier } from '../infrastructure/SettlementSystem';
+import type { TransportSystem } from '../infrastructure/TransportSystem';
+import type { PolitburoSystem } from '../narrative/politburo';
+import type { WorkerSystem } from '../workforce/WorkerSystem';
+import type { CompulsoryDeliveries, Doctrine } from './CompulsoryDeliveries';
+import { addPaperwork, getPaperwork } from './doctrine';
+import type { KGBAgent } from './KGBAgent';
+import type { PoliticalEntitySystem } from './PoliticalEntitySystem';
+import type { DifficultyLevel, ScoringSystem } from './ScoringSystem';
+import { eraIdToIndex } from './ScoringSystem';
 
 /** Maps game EraSystem IDs → EconomySystem EraIds. */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -756,12 +766,8 @@ export class PoliticalAgent extends Vehicle {
     if (rq.power && resources.power !== undefined) rq.power.current = resources.power;
 
     // Sync primary quota progress from the tracked resource type
-    const primaryValue = this.state.quotaType === 'food'
-      ? (resources.food ?? 0)
-      : (resources.vodka ?? 0);
-    this.state.quotaProgress = this.state.quotaTarget > 0
-      ? Math.min(1, primaryValue / this.state.quotaTarget)
-      : 0;
+    const primaryValue = this.state.quotaType === 'food' ? (resources.food ?? 0) : (resources.vodka ?? 0);
+    this.state.quotaProgress = this.state.quotaTarget > 0 ? Math.min(1, primaryValue / this.state.quotaTarget) : 0;
   }
 
   /**
@@ -942,12 +948,7 @@ export class PoliticalAgent extends Vehicle {
    * @param blatLevel - Current blat resource for insurance reduction
    * @returns Investigation probability (0-1)
    */
-  computeInvestigationProbability(
-    quotaRisk: number,
-    secRisk: number,
-    popRisk: number,
-    blatLevel = 0,
-  ): number {
+  computeInvestigationProbability(quotaRisk: number, secRisk: number, popRisk: number, blatLevel = 0): number {
     const maxRisk = Math.max(quotaRisk, secRisk, popRisk);
     const historyBonus = this.state.pripiskiHistory * PRIPISKI_INSPECTION_BONUS;
     const blatInsurance = Math.min(0.25, blatLevel * 0.005);
@@ -1088,9 +1089,7 @@ export class PoliticalAgent extends Vehicle {
     return {
       ...this.state,
       mandates: [...this.state.mandates],
-      resourceQuotas: this.state.resourceQuotas
-        ? { ...this.state.resourceQuotas }
-        : undefined,
+      resourceQuotas: this.state.resourceQuotas ? { ...this.state.resourceQuotas } : undefined,
     };
   }
 
@@ -1409,5 +1408,3 @@ export class PoliticalAgent extends Vehicle {
     };
   }
 }
-
-

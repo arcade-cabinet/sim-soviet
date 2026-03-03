@@ -1,4 +1,8 @@
-import { type BuildingCollapsedCallback, decaySystem, setBuildingCollapsedCallback } from '@/ai/agents/infrastructure/decaySystem';
+import {
+  type BuildingCollapsedCallback,
+  decaySystem,
+  setBuildingCollapsedCallback,
+} from '@/ai/agents/infrastructure/decaySystem';
 import type { Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
 

@@ -71,4 +71,4 @@ export const settings = sqliteTable('settings', {
   value: text('value').notNull(),
 });
 
-export { timelineEvents, divergencePoints } from './timeline';
+export { divergencePoints, timelineEvents } from './timeline';

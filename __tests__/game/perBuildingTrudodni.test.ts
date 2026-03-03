@@ -5,7 +5,6 @@
  * to the workers assigned to it. Tracked in a Map<buildingId, number>.
  */
 
-import { world } from '@/ecs/world';
 import {
   accrueTrudodni,
   defaultCategory,
@@ -14,6 +13,7 @@ import {
   resetBuildingTrudodni,
   TRUDODNI_VALUES,
 } from '@/ai/agents/economy/EconomyAgent';
+import { world } from '@/ecs/world';
 
 describe('PerBuildingTrudodni', () => {
   beforeEach(() => {

@@ -1,6 +1,6 @@
 import { createBuilding } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import { advanceTicks, buildBasicSettlement, createPlaythroughEngine, getResources } from './helpers';
+import { advanceTicks, buildBasicSettlement, createPlaythroughEngine } from './helpers';
 
 describe('Playthrough: Achievement Unlocks', () => {
   afterEach(() => {

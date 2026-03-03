@@ -252,8 +252,8 @@ export const CONSEQUENCE_PRESETS: Record<ConsequenceLevel, ConsequenceConfig> = 
  * Final score multiplier based on difficulty x consequence combination.
  * Higher = more rewarding. Permadeath always pays the most.
  */
-export const SCORE_MULTIPLIER_MATRIX: Record<DifficultyLevel, Record<ConsequenceLevel, number>> =
-  political.scoring.scoreMultiplierMatrix as Record<DifficultyLevel, Record<ConsequenceLevel, number>>;
+export const SCORE_MULTIPLIER_MATRIX: Record<DifficultyLevel, Record<ConsequenceLevel, number>> = political.scoring
+  .scoreMultiplierMatrix as Record<DifficultyLevel, Record<ConsequenceLevel, number>>;
 
 // ─────────────────────────────────────────────────────────
 //  CONSTANTS: SCORE POINT VALUES

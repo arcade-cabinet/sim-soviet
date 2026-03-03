@@ -1,8 +1,8 @@
-import { evaluateSurvival } from '../../src/ai/goals/SurvivalGoal';
-import { evaluateQuota } from '../../src/ai/goals/QuotaGoal';
-import { evaluatePolitical } from '../../src/ai/goals/PoliticalGoal';
-import { evaluateGrowth } from '../../src/ai/goals/GrowthGoal';
 import { evaluateDefense } from '../../src/ai/goals/DefenseGoal';
+import { evaluateGrowth } from '../../src/ai/goals/GrowthGoal';
+import { evaluatePolitical } from '../../src/ai/goals/PoliticalGoal';
+import { evaluateQuota } from '../../src/ai/goals/QuotaGoal';
+import { evaluateSurvival } from '../../src/ai/goals/SurvivalGoal';
 
 describe('Goal Evaluators', () => {
   describe('SurvivalGoal', () => {

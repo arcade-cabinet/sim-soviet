@@ -5,18 +5,17 @@
  * 3b: Scheduled inflows fire at correct intervals per era
  */
 
-import { political } from '@/config';
 import {
-  evaluateDoctrineMechanics,
   type DoctrineContext,
-  resetThawFreezeState,
+  evaluateDoctrineMechanics,
   resetPaperwork,
+  resetThawFreezeState,
 } from '@/ai/agents/political/doctrine';
-import { GameRng } from '@/game/SeedSystem';
-import { world } from '@/ecs/world';
+import { political } from '@/config';
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
-import { getResourceEntity } from '@/ecs/archetypes';
+import { world } from '@/ecs/world';
 import { GameGrid } from '@/game/GameGrid';
+import { GameRng } from '@/game/SeedSystem';
 import type { SimCallbacks } from '@/game/SimulationEngine';
 import { SimulationEngine } from '@/game/SimulationEngine';
 

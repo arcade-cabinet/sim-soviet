@@ -5,8 +5,8 @@
  * The world module is mocked to inject controlled building entities.
  */
 
-import { PowerAgent } from '../../src/ai/agents/infrastructure/PowerAgent';
 import type { PowerAgentState } from '../../src/ai/agents/infrastructure/PowerAgent';
+import { PowerAgent } from '../../src/ai/agents/infrastructure/PowerAgent';
 import { MSG } from '../../src/ai/telegrams';
 
 // ---------------------------------------------------------------------------
@@ -226,7 +226,9 @@ describe('PowerAgent', () => {
 
     let capturedDeficit = -1;
     const agent = new PowerAgent();
-    agent.onShortage((deficit) => { capturedDeficit = deficit; });
+    agent.onShortage((deficit) => {
+      capturedDeficit = deficit;
+    });
     agent.distributePower();
 
     expect(capturedDeficit).toBeGreaterThan(0);
@@ -237,7 +239,9 @@ describe('PowerAgent', () => {
 
     let called = false;
     const agent = new PowerAgent();
-    agent.onShortage(() => { called = true; });
+    agent.onShortage(() => {
+      called = true;
+    });
     agent.distributePower();
 
     expect(called).toBe(false);

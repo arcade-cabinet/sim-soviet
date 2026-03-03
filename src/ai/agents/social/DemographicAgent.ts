@@ -13,19 +13,14 @@
 
 import { Vehicle } from 'yuka';
 import { demographics } from '@/config';
-import { FEMALE_GIVEN_NAMES, MALE_GIVEN_NAMES, PATRONYMIC_RULES, SURNAMES_RAW } from '../../names';
-import { dvory, housing } from '../../../ecs/archetypes';
+import { dvory, getResourceEntity, housing } from '../../../ecs/archetypes';
 import { laborCapacityForAge, memberRoleForAge } from '../../../ecs/factories';
 import type { DvorComponent, DvorMember, RaionPool } from '../../../ecs/world';
 import { world } from '../../../ecs/world';
-import { getResourceEntity } from '../../../ecs/archetypes';
 import { TICKS_PER_MONTH, TICKS_PER_YEAR } from '../../../game/Chronology';
 import type { GameRng } from '../../../game/SeedSystem';
-import {
-  statisticalAgingTick,
-  statisticalBirthTick,
-  statisticalDeathTick,
-} from './statisticalDemographics';
+import { FEMALE_GIVEN_NAMES, MALE_GIVEN_NAMES, PATRONYMIC_RULES, SURNAMES_RAW } from '../../names';
+import { statisticalAgingTick, statisticalBirthTick, statisticalDeathTick } from './statisticalDemographics';
 
 // ── Re-exported types ──────────────────────────────────────────────────────
 
@@ -183,8 +178,8 @@ export function getWorkingMotherPenalty(dvor: DvorComponent, member: DvorMember)
  * Follows convention: Given + Patronymic (from father/head) + Gendered Surname.
  */
 function generateInfantName(dvor: DvorComponent, infantGender: 'male' | 'female', rng: GameRng | null): string {
-  const r = () => rng ? rng.random() : Math.random();
-  const pickFrom = <T>(arr: readonly T[]): T => rng ? rng.pick(arr) : arr[Math.floor(Math.random() * arr.length)]!;
+  const _r = () => (rng ? rng.random() : Math.random());
+  const pickFrom = <T>(arr: readonly T[]): T => (rng ? rng.pick(arr) : arr[Math.floor(Math.random() * arr.length)]!);
 
   const givenName = infantGender === 'male' ? pickFrom(MALE_GIVEN_NAMES) : pickFrom(FEMALE_GIVEN_NAMES);
 
@@ -261,9 +256,6 @@ export class DemographicAgent extends Vehicle {
 
   /** Last population milestone reached (multiple of POPULATION_MILESTONE_STEP). */
   private lastMilestone = 0;
-
-  /** Seeded RNG (set via setRng). */
-  private rng?: GameRng;
 
   constructor() {
     super();
@@ -490,12 +482,7 @@ export class DemographicAgent extends Vehicle {
    * @param result    - Mutable result object to record birth count
    * @param eraId     - Optional era identifier for birth rate multiplier
    */
-  birthCheck(
-    rng: GameRng | null,
-    foodLevel: number,
-    result: DemographicTickResult,
-    eraId?: string,
-  ): void {
+  birthCheck(rng: GameRng | null, foodLevel: number, result: DemographicTickResult, eraId?: string): void {
     let foodMod = 1.0;
     if (foodLevel < 0.5) foodMod = 0.5;
     else if (foodLevel > 0.8) foodMod = 1.2;

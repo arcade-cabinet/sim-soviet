@@ -10,18 +10,17 @@
  * Moved from game/TrudodniSystem.ts to economy package.
  */
 
-import { citizens, dvory, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 import { economy } from '@/config';
+import { citizens, dvory, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
 import type { MemberRole } from '@/ecs/world';
 
 /** Trudodni category (1-7, higher = more valuable labor). */
 export type TrudodniCategory = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 /** Daily trudodni value for each category. */
-export const TRUDODNI_VALUES: Record<TrudodniCategory, number> =
-  Object.fromEntries(
-    Object.entries(economy.trudodni.values).map(([k, v]) => [Number(k), v]),
-  ) as Record<TrudodniCategory, number>;
+export const TRUDODNI_VALUES: Record<TrudodniCategory, number> = Object.fromEntries(
+  Object.entries(economy.trudodni.values).map(([k, v]) => [Number(k), v]),
+) as Record<TrudodniCategory, number>;
 
 /** Approximate days per month for trudodni accrual. */
 const DAYS_PER_MONTH = economy.trudodni.daysPerMonth;
@@ -104,10 +103,7 @@ export function accrueTrudodni(): TrudodniAccrualResult {
       if (accrued > 0) {
         const pos = entity.position;
         const buildingId = `${pos.x},${pos.y}`;
-        buildingTrudodniMap.set(
-          buildingId,
-          (buildingTrudodniMap.get(buildingId) ?? 0) + accrued,
-        );
+        buildingTrudodniMap.set(buildingId, (buildingTrudodniMap.get(buildingId) ?? 0) + accrued);
         totalTrudodni += accrued;
         buildingCount++;
       }

@@ -93,12 +93,16 @@ describe('Playthrough: Full 1917->2117 Timeline', () => {
     const date = getDate();
     const meta = world.with('gameMeta').entities[0];
     if (isGameOver()) {
-      console.log(`Timeline ended at year ${date.year} after ${yearsCompleted} years | ` +
-        `eras: ${eraTransitions.length} | maxPop: ${maxPop} | ` +
-        `reason: ${meta?.gameMeta.gameOver?.reason?.slice(0, 80)}`);
+      console.log(
+        `Timeline ended at year ${date.year} after ${yearsCompleted} years | ` +
+          `eras: ${eraTransitions.length} | maxPop: ${maxPop} | ` +
+          `reason: ${meta?.gameMeta.gameOver?.reason?.slice(0, 80)}`,
+      );
     } else {
-      console.log(`Timeline completed 200 years to ${date.year} | ` +
-        `eras: ${eraTransitions.length} | maxPop: ${maxPop} | finalPop: ${getResources().population}`);
+      console.log(
+        `Timeline completed 200 years to ${date.year} | ` +
+          `eras: ${eraTransitions.length} | maxPop: ${maxPop} | finalPop: ${getResources().population}`,
+      );
       expect(date.year).toBeGreaterThanOrEqual(2100);
     }
   }, 120000);
@@ -111,8 +115,12 @@ describe('Playthrough: Full 1917->2117 Timeline', () => {
         meta: { date: { year: 1917, month: 10, tick: 0 } },
         resources: {
           population: 50,
-          food: 99999, vodka: 99999, money: 99999,
-          timber: 99999, steel: 99999, cement: 99999,
+          food: 99999,
+          vodka: 99999,
+          money: 99999,
+          timber: 99999,
+          steel: 99999,
+          cement: 99999,
         },
         difficulty: 'worker',
         consequence: 'forgiving',
@@ -123,7 +131,9 @@ describe('Playthrough: Full 1917->2117 Timeline', () => {
       buildBasicSettlement({ housing: 3, farms: 2, power: 2 });
 
       let eraCount = 0;
-      callbacks.onEraChanged.mockImplementation(() => { eraCount++; });
+      callbacks.onEraChanged.mockImplementation(() => {
+        eraCount++;
+      });
 
       for (let year = 0; year < 50; year++) {
         const res = getResources();

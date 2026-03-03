@@ -4,8 +4,8 @@
  * All interfaces, enums, and type aliases for the Politburo system.
  */
 
-import type { EventCategory, EventSeverity, ResourceDelta } from '../events';
 import type { GameView } from '../../../../game/GameView';
+import type { EventCategory, EventSeverity, ResourceDelta } from '../events';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  ENUMS & CORE TYPES

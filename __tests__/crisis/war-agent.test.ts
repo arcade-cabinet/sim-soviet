@@ -5,13 +5,9 @@
  * veteran returns, narrative output, and serialization round-trips.
  */
 
-import { GameRng } from '@/game/SeedSystem';
+import type { CrisisContext, CrisisDefinition, CrisisPhase } from '@/ai/agents/crisis/types';
 import { WarAgent } from '@/ai/agents/crisis/WarAgent';
-import type {
-  CrisisDefinition,
-  CrisisContext,
-  CrisisPhase,
-} from '@/ai/agents/crisis/types';
+import { GameRng } from '@/game/SeedSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -209,9 +205,7 @@ describe('WarAgent — Civil War (regional)', () => {
     const gpwImpact = gpwAgent.evaluate(makeContext())[0]!;
 
     // GPW should drain more food than Civil War
-    expect(Math.abs(gpwImpact.economy!.foodDelta!)).toBeGreaterThan(
-      Math.abs(civilImpact.economy!.foodDelta!)
-    );
+    expect(Math.abs(gpwImpact.economy!.foodDelta!)).toBeGreaterThan(Math.abs(civilImpact.economy!.foodDelta!));
   });
 });
 
@@ -295,9 +289,7 @@ describe('WarAgent conscription scaling', () => {
     const impact1 = agent1.evaluate(ctx1)[0]!;
     const impact2 = agent2.evaluate(ctx2)[0]!;
 
-    expect(impact2.workforce!.conscriptionCount).toBe(
-      10 * impact1.workforce!.conscriptionCount!
-    );
+    expect(impact2.workforce!.conscriptionCount).toBe(10 * impact1.workforce!.conscriptionCount!);
   });
 
   it('ramps conscription gradually during buildup', () => {
@@ -466,7 +458,7 @@ describe('WarAgent serialization', () => {
     const restoredSaved = restored.serialize();
     expect(restoredSaved.phase).toBe(saved.phase);
     expect(restoredSaved.ticksInPhase).toBe(saved.ticksInPhase);
-    expect(restoredSaved.extra!['totalConscripted']).toBe(saved.extra!['totalConscripted']);
+    expect(restoredSaved.extra!.totalConscripted).toBe(saved.extra!.totalConscripted);
     expect(restoredSaved.definition.id).toBe('gpw');
   });
 
@@ -507,13 +499,13 @@ describe('WarAgent serialization', () => {
     for (let i = 0; i < 5; i++) agent.evaluate(ctx);
 
     const saved = agent.serialize();
-    const totalBefore = saved.extra!['totalConscripted'] as number;
+    const totalBefore = saved.extra!.totalConscripted as number;
     expect(totalBefore).toBeGreaterThan(0);
 
     const restored = new WarAgent();
     restored.restore(saved);
     const restoredSaved = restored.serialize();
-    expect(restoredSaved.extra!['totalConscripted']).toBe(totalBefore);
+    expect(restoredSaved.extra!.totalConscripted).toBe(totalBefore);
   });
 
   it('round-trips through JSON', () => {
@@ -541,7 +533,7 @@ describe('WarAgent narrative', () => {
     agent.configure(GPW_DEF);
 
     // Run many ticks to get at least one narrative hit (RNG-dependent)
-    const ctx = makeContext();
+    const _ctx = makeContext();
     let hasNarrative = false;
 
     for (let i = 0; i < 100; i++) {

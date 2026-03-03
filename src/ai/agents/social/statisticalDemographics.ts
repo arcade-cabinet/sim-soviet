@@ -90,12 +90,7 @@ function foodModifier(foodLevel: number): number {
  * @param rng       - Seeded RNG instance
  * @returns Number of births delivered this tick
  */
-export function statisticalBirthTick(
-  pool: RaionPool,
-  foodLevel: number,
-  eraId: string,
-  rng: GameRng,
-): number {
+export function statisticalBirthTick(pool: RaionPool, foodLevel: number, eraId: string, rng: GameRng): number {
   // Count eligible women: female buckets 3-9 (ages 15-49)
   let eligibleWomen = 0;
   for (let i = FERTILE_BUCKET_MIN; i <= FERTILE_BUCKET_MAX; i++) {
@@ -119,9 +114,7 @@ export function statisticalBirthTick(
 
   // Only gate NEW conceptions on valid rate
   pool.pregnancyWaves[2] =
-    Number.isFinite(conceptionRate) && conceptionRate >= 0
-      ? poissonSample(eligibleWomen * conceptionRate, rng)
-      : 0;
+    Number.isFinite(conceptionRate) && conceptionRate >= 0 ? poissonSample(eligibleWomen * conceptionRate, rng) : 0;
 
   // Distribute births 50/50 male/female
   if (births > 0) {
@@ -158,17 +151,10 @@ export function statisticalBirthTick(
  * @param rng       - Seeded RNG instance
  * @returns Total number of deaths this tick
  */
-export function statisticalDeathTick(
-  pool: RaionPool,
-  foodLevel: number,
-  eraId: string,
-  rng: GameRng,
-): number {
+export function statisticalDeathTick(pool: RaionPool, foodLevel: number, eraId: string, rng: GameRng): number {
   // Starvation modifier: up to maxMultiplier at zero food
   const { threshold: starvThreshold, scale: starvScale } = cfg.starvation;
-  const starvationMod = foodLevel < starvThreshold
-    ? 1 + (starvThreshold - foodLevel) * starvScale
-    : 1.0;
+  const starvationMod = foodLevel < starvThreshold ? 1 + (starvThreshold - foodLevel) * starvScale : 1.0;
 
   // Era death modifier (wartime, famine eras amplify mortality)
   const eraMod = ERA_DEATH_MULTIPLIER[eraId] ?? 1.0;
@@ -182,10 +168,7 @@ export function statisticalDeathTick(
     // Male deaths
     const maleCount = pool.maleAgeBuckets[i]!;
     if (maleCount > 0) {
-      const maleDeaths = Math.min(
-        poissonSample(maleCount * monthlyRate, rng),
-        maleCount,
-      );
+      const maleDeaths = Math.min(poissonSample(maleCount * monthlyRate, rng), maleCount);
       pool.maleAgeBuckets[i]! -= maleDeaths;
       totalDeaths += maleDeaths;
     }
@@ -193,10 +176,7 @@ export function statisticalDeathTick(
     // Female deaths
     const femaleCount = pool.femaleAgeBuckets[i]!;
     if (femaleCount > 0) {
-      const femaleDeaths = Math.min(
-        poissonSample(femaleCount * monthlyRate, rng),
-        femaleCount,
-      );
+      const femaleDeaths = Math.min(poissonSample(femaleCount * monthlyRate, rng), femaleCount);
       pool.femaleAgeBuckets[i]! -= femaleDeaths;
       totalDeaths += femaleDeaths;
     }
@@ -244,10 +224,7 @@ export function statisticalAgingTick(pool: RaionPool, rng: GameRng): number {
   const femaleAdvancers = new Array<number>(NUM_BUCKETS).fill(0);
 
   for (let i = 0; i < NUM_BUCKETS; i++) {
-    maleAdvancers[i] = Math.min(
-      poissonSample(pool.maleAgeBuckets[i]! * agingFraction, rng),
-      pool.maleAgeBuckets[i]!,
-    );
+    maleAdvancers[i] = Math.min(poissonSample(pool.maleAgeBuckets[i]! * agingFraction, rng), pool.maleAgeBuckets[i]!);
     femaleAdvancers[i] = Math.min(
       poissonSample(pool.femaleAgeBuckets[i]! * agingFraction, rng),
       pool.femaleAgeBuckets[i]!,

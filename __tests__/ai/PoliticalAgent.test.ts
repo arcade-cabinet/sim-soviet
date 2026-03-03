@@ -1,11 +1,11 @@
 import {
-  PoliticalAgent,
-  MAX_QUOTA_FAILURES,
-  PRIPISKI_QUOTA_INFLATION,
-  PRIPISKI_INSPECTION_BONUS,
-  STAKHANOVITE_THRESHOLD,
-  ERA_ORDER,
   ERA_DEFINITIONS,
+  ERA_ORDER,
+  MAX_QUOTA_FAILURES,
+  PoliticalAgent,
+  PRIPISKI_INSPECTION_BONUS,
+  PRIPISKI_QUOTA_INFLATION,
+  STAKHANOVITE_THRESHOLD,
 } from '../../src/ai/agents/political/PoliticalAgent';
 
 // ---------------------------------------------------------------------------
@@ -380,10 +380,10 @@ describe('PoliticalAgent — pripiski', () => {
 
   it('computes falsification risk correctly', () => {
     const agent = makeAgent();
-    expect(agent.computeFalsificationRisk(100, 100)).toBe(0);   // exact — no risk
-    expect(agent.computeFalsificationRisk(100, 150)).toBe(50);  // 50% over-reporting
-    expect(agent.computeFalsificationRisk(0, 50)).toBe(100);    // actual 0 → max risk
-    expect(agent.computeFalsificationRisk(0, 0)).toBe(0);       // both 0 → no risk
+    expect(agent.computeFalsificationRisk(100, 100)).toBe(0); // exact — no risk
+    expect(agent.computeFalsificationRisk(100, 150)).toBe(50); // 50% over-reporting
+    expect(agent.computeFalsificationRisk(0, 50)).toBe(100); // actual 0 → max risk
+    expect(agent.computeFalsificationRisk(0, 0)).toBe(0); // both 0 → no risk
   });
 
   it('computes investigation probability increasing with risk', () => {

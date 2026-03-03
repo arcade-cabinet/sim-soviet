@@ -19,8 +19,8 @@
  * food has been at 0 for 30+ ticks with population > 5.
  */
 
-import { terrainFeatures } from '@/ecs/archetypes';
 import foragingConfig from '@/config/economy.json';
+import { terrainFeatures } from '@/ecs/archetypes';
 import type { GameRng } from '../../../game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────
@@ -29,10 +29,10 @@ import type { GameRng } from '../../../game/SeedSystem';
 
 /** Methods by which workers can forage for survival food. */
 export type ForagingMethod =
-  | 'gathering'   // Berries, mushrooms, roots -- always available spring-autumn
-  | 'hunting'     // Rabbits, birds -- year-round, winter penalty
-  | 'fishing'     // Fish -- spring-autumn only (rivers freeze)
-  | 'trapping'    // Snares -- year-round, delayed yield
+  | 'gathering' // Berries, mushrooms, roots -- always available spring-autumn
+  | 'hunting' // Rabbits, birds -- year-round, winter penalty
+  | 'fishing' // Fish -- spring-autumn only (rivers freeze)
+  | 'trapping' // Snares -- year-round, delayed yield
   | 'stone_soup'; // Desperate: boil anything edible -- minimal food, morale hit
 
 /** Result of a single foraging tick. */
@@ -140,12 +140,8 @@ export function bestForagingMethod(
   hasWater: boolean,
   trapsReady: boolean,
 ): ForagingMethod {
-  const gatheringSeason =
-    month >= CONFIG.methods.gathering.seasonStart &&
-    month <= CONFIG.methods.gathering.seasonEnd;
-  const fishingSeason =
-    month >= CONFIG.methods.fishing.seasonStart &&
-    month <= CONFIG.methods.fishing.seasonEnd;
+  const gatheringSeason = month >= CONFIG.methods.gathering.seasonStart && month <= CONFIG.methods.gathering.seasonEnd;
+  const fishingSeason = month >= CONFIG.methods.fishing.seasonStart && month <= CONFIG.methods.fishing.seasonEnd;
 
   // Priority: trapping (if ready) > hunting > fishing > gathering > stone_soup
   if (hasForest && trapsReady) return 'trapping';
@@ -170,9 +166,7 @@ export function yieldPerWorker(method: ForagingMethod, month: number): number {
 
   switch (method) {
     case 'gathering': {
-      const inSeason =
-        month >= methods.gathering.seasonStart &&
-        month <= methods.gathering.seasonEnd;
+      const inSeason = month >= methods.gathering.seasonStart && month <= methods.gathering.seasonEnd;
       return inSeason ? methods.gathering.foodPerWorker : 0;
     }
     case 'hunting': {
@@ -182,9 +176,7 @@ export function yieldPerWorker(method: ForagingMethod, month: number): number {
       return isWinter ? base * methods.hunting.winterPenalty : base;
     }
     case 'fishing': {
-      const inSeason =
-        month >= methods.fishing.seasonStart &&
-        month <= methods.fishing.seasonEnd;
+      const inSeason = month >= methods.fishing.seasonStart && month <= methods.fishing.seasonEnd;
       return inSeason ? methods.fishing.foodPerWorker : 0;
     }
     case 'trapping':
@@ -275,10 +267,7 @@ export function foragingTick(
   // Calculate foraging workforce fraction
   // More desperate = more workers forage (scales with how far below threshold)
   const desperation = Math.min(1, 1 - food / crisisThreshold);
-  const foragingFraction = Math.min(
-    CONFIG.maxForagingFraction,
-    desperation * CONFIG.maxForagingFraction,
-  );
+  const foragingFraction = Math.min(CONFIG.maxForagingFraction, desperation * CONFIG.maxForagingFraction);
   const workersForaging = Math.max(1, Math.floor(population * foragingFraction));
   result.workersForaging = workersForaging;
 

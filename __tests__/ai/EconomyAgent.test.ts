@@ -7,14 +7,11 @@
  * machine transitions, and serialization round-trip.
  */
 
-import { EconomyAgent } from '../../src/ai/agents/economy/EconomyAgent';
 import {
   BLAT_SAFE_THRESHOLD,
-  BLAT_ARREST_THRESHOLD,
-  TRUDODNI_VALUES,
-  MINIMUM_TRUDODNI_BY_DIFFICULTY,
+  EconomyAgent,
   FONDY_BY_ERA,
-  RATION_PERIODS,
+  MINIMUM_TRUDODNI_BY_DIFFICULTY,
 } from '../../src/ai/agents/economy/EconomyAgent';
 
 // ---------------------------------------------------------------------------
@@ -82,7 +79,7 @@ describe('EconomyAgent — trudodni accrual', () => {
 
   it('accumulates across multiple buildings', () => {
     const agent = new EconomyAgent();
-    agent.recordTrudodni('farm1', 'kolkhoz', 5);  // rate 1.0 × 5 = 5
+    agent.recordTrudodni('farm1', 'kolkhoz', 5); // rate 1.0 × 5 = 5
     agent.recordTrudodni('mill1', 'steel-mill', 3); // rate 1.5 × 3 = 4.5
     const state = agent.getTrudodni();
     expect(state.totalContributed).toBeCloseTo(9.5);
@@ -92,7 +89,7 @@ describe('EconomyAgent — trudodni accrual', () => {
     const agent = new EconomyAgent('revolution', 'worker');
     // worker minimum = 50
     agent.recordTrudodni('b1', 'factory', 10); // 1.2 × 10 = 12
-    expect(agent.getTrudodniRatio()).toBeCloseTo(12 / MINIMUM_TRUDODNI_BY_DIFFICULTY['worker']);
+    expect(agent.getTrudodniRatio()).toBeCloseTo(12 / MINIMUM_TRUDODNI_BY_DIFFICULTY.worker);
   });
 
   it('resetTrudodni clears totals', () => {
@@ -122,7 +119,7 @@ describe('EconomyAgent — fondy delivery reliability', () => {
     const agent = new EconomyAgent('thaw', 'comrade');
     // thaw reliability = 0.8; RNG = 0.5 → should deliver
     agent.setRng(makeMockRng([0.5, 0.9]) as any);
-    const result = agent.processDelivery(FONDY_BY_ERA['thaw'].interval);
+    const result = agent.processDelivery(FONDY_BY_ERA.thaw.interval);
     expect(result).not.toBeNull();
     expect(result!.delivered).toBe(true);
   });
@@ -131,7 +128,7 @@ describe('EconomyAgent — fondy delivery reliability', () => {
     const agent = new EconomyAgent('revolution', 'comrade');
     // revolution reliability = 0.4; RNG = 0.9 → should fail
     agent.setRng(makeMockRng([0.9]) as any);
-    const result = agent.processDelivery(FONDY_BY_ERA['revolution'].interval);
+    const result = agent.processDelivery(FONDY_BY_ERA.revolution.interval);
     expect(result).not.toBeNull();
     expect(result!.delivered).toBe(false);
     // Failed delivery delivers zero resources
@@ -148,7 +145,7 @@ describe('EconomyAgent — fondy delivery reliability', () => {
   it('advances nextDeliveryTick after delivery attempt', () => {
     const agent = new EconomyAgent('thaw', 'comrade');
     agent.setRng(makeMockRng([0.5, 0.9]) as any);
-    const interval = FONDY_BY_ERA['thaw'].interval;
+    const interval = FONDY_BY_ERA.thaw.interval;
     agent.processDelivery(interval);
     // Should now not deliver until 2 * interval
     const secondResult = agent.processDelivery(interval);
@@ -158,11 +155,11 @@ describe('EconomyAgent — fondy delivery reliability', () => {
   });
 
   it('wartime has lower reliability than thaw', () => {
-    expect(FONDY_BY_ERA['wartime'].reliability).toBeLessThan(FONDY_BY_ERA['thaw'].reliability);
+    expect(FONDY_BY_ERA.wartime.reliability).toBeLessThan(FONDY_BY_ERA.thaw.reliability);
   });
 
   it('eternal era has lowest reliability', () => {
-    expect(FONDY_BY_ERA['eternal'].reliability).toBeLessThanOrEqual(
+    expect(FONDY_BY_ERA.eternal.reliability).toBeLessThanOrEqual(
       Math.min(...Object.values(FONDY_BY_ERA).map((f) => f.reliability)),
     );
   });
@@ -172,10 +169,10 @@ describe('EconomyAgent — fondy delivery reliability', () => {
     // RNG: first call (reliability check) = 0.1 (< 0.8 → deliver),
     // second call (quantity roll) = 0.0 → 70% of allocated
     agent.setRng(makeMockRng([0.1, 0.0]) as any);
-    const interval = FONDY_BY_ERA['thaw'].interval;
+    const interval = FONDY_BY_ERA.thaw.interval;
     const result = agent.processDelivery(interval);
     expect(result!.delivered).toBe(true);
-    const allocated = FONDY_BY_ERA['thaw'].allocated;
+    const allocated = FONDY_BY_ERA.thaw.allocated;
     // quantity = 0.7 + 0.0 * 0.3 = 0.7
     expect(result!.actualDelivered.steel).toBe(Math.round(allocated.steel * 0.7));
   });
@@ -473,11 +470,11 @@ describe('EconomyAgent — MTS rental', () => {
 describe('EconomyAgent — era transitions', () => {
   it('setEra updates fondy configuration', () => {
     const agent = new EconomyAgent('revolution', 'comrade');
-    expect(agent.getFondy().reliability).toBe(FONDY_BY_ERA['revolution'].reliability);
+    expect(agent.getFondy().reliability).toBe(FONDY_BY_ERA.revolution.reliability);
 
     agent.setEra('thaw');
     expect(agent.getEra()).toBe('thaw');
-    expect(agent.getFondy().reliability).toBe(FONDY_BY_ERA['thaw'].reliability);
+    expect(agent.getFondy().reliability).toBe(FONDY_BY_ERA.thaw.reliability);
   });
 
   it('getMultipliers returns correct values for difficulty', () => {

@@ -20,8 +20,10 @@ export interface GenderLaborConfig {
   femalesMilitary: boolean;
 }
 
-const ERA_GENDER_CONFIGS: Record<string, GenderLaborConfig> =
-  workforce.genderLabor as Record<string, GenderLaborConfig>;
+const ERA_GENDER_CONFIGS: Record<string, GenderLaborConfig> = workforce.genderLabor as Record<
+  string,
+  GenderLaborConfig
+>;
 
 /**
  * Look up the gender labor configuration for a given era.

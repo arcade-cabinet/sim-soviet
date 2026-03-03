@@ -18,13 +18,20 @@
 
 import { Vehicle } from 'yuka';
 import { GRID_SIZE, infrastructure } from '@/config';
-import { buildingsLogic, buildings, operationalBuildings, terrainFeatures, underConstruction, getResourceEntity } from '@/ecs/archetypes';
+import {
+  buildings,
+  buildingsLogic,
+  getResourceEntity,
+  operationalBuildings,
+  terrainFeatures,
+  underConstruction,
+} from '@/ecs/archetypes';
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
+import type { GameRng } from '../../../game/SeedSystem';
 import type { PlanMandateState } from '../political/PoliticalAgent';
 import type { WorkerStats } from '../workforce/types';
-import type { GameRng } from '../../../game/SeedSystem';
 
 // ── Re-exported types (absorbed from governor.ts) ─────────────────────────────
 
@@ -143,8 +150,10 @@ const IMPASSABLE_FEATURES = new Set(['mountain', 'river', 'forest']);
 
 // ── CollectivePlanner Constants (absorbed from CollectivePlanner.ts) ──────────
 
-const DEMAND_PRIORITY_WEIGHT: Record<DemandPriority, number> =
-  infrastructure.planner.demandPriorityWeight as Record<DemandPriority, number>;
+const DEMAND_PRIORITY_WEIGHT: Record<DemandPriority, number> = infrastructure.planner.demandPriorityWeight as Record<
+  DemandPriority,
+  number
+>;
 
 const MANDATE_WEIGHT = infrastructure.planner.mandateWeight;
 
@@ -861,10 +870,7 @@ export function evaluateWorkerPriority(
  * Find the best building to assign a worker to for a given priority.
  * Standalone wrapper around CollectiveAgent.findBestAssignment().
  */
-export function findBestAssignment(
-  priority: GovernorPriority,
-  citizenClass: string,
-): GovernorRecommendation | null {
+export function findBestAssignment(priority: GovernorPriority, citizenClass: string): GovernorRecommendation | null {
   return _sharedAgent.findBestAssignment(priority, citizenClass);
 }
 

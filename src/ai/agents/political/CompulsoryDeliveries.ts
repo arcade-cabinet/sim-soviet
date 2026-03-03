@@ -78,8 +78,10 @@ export interface CompulsoryDeliverySaveData {
  * | stagnation       | 0.35 | 0.30  | 0.40  | Plus "administrative losses"   |
  * | eternal          | 0.30 | 0.25  | 0.35  | Bureaucratic                   |
  */
-const DELIVERY_RATES: Record<Doctrine, DeliveryRates> =
-  political.compulsoryDeliveries.rates as Record<Doctrine, DeliveryRates>;
+const DELIVERY_RATES: Record<Doctrine, DeliveryRates> = political.compulsoryDeliveries.rates as Record<
+  Doctrine,
+  DeliveryRates
+>;
 
 /** Corruption bounds during stagnation — "administrative losses". */
 const CORRUPTION_MIN = political.compulsoryDeliveries.corruptionMin;

@@ -6,13 +6,10 @@
  * modifiersToDifficultyConfig adapts DynamicModifiers correctly.
  */
 
-import {
-  computeDynamicDifficulty,
-  modifiersToDifficultyConfig,
-} from '@/ai/agents/crisis/DynamicDifficultyProvider';
+import { computeDynamicDifficulty, modifiersToDifficultyConfig } from '@/ai/agents/crisis/DynamicDifficultyProvider';
+import type { DynamicModifiers } from '@/ai/agents/crisis/Governor';
 import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
 import type { CrisisImpact } from '@/ai/agents/crisis/types';
-import type { DynamicModifiers } from '@/ai/agents/crisis/Governor';
 
 // ─── No-crisis baseline ────────────────────────────────────────────────────
 
@@ -36,25 +33,19 @@ describe('computeDynamicDifficulty — no-crisis baseline', () => {
 
 describe('computeDynamicDifficulty — single crisis impacts', () => {
   it('war impact with quotaMult 1.5 increases quotaMultiplier', () => {
-    const impacts: CrisisImpact[] = [
-      { crisisId: 'ww2', political: { quotaMult: 1.5 } },
-    ];
+    const impacts: CrisisImpact[] = [{ crisisId: 'ww2', political: { quotaMult: 1.5 } }];
     const config = computeDynamicDifficulty(undefined, impacts);
     expect(config.quotaMultiplier).toBe(1.5);
   });
 
   it('famine impact with growthMult 0.3 reduces growthMultiplier', () => {
-    const impacts: CrisisImpact[] = [
-      { crisisId: 'holodomor', social: { growthMult: 0.3 } },
-    ];
+    const impacts: CrisisImpact[] = [{ crisisId: 'holodomor', social: { growthMult: 0.3 } }];
     const config = computeDynamicDifficulty(undefined, impacts);
     expect(config.growthMultiplier).toBeCloseTo(0.3);
   });
 
   it('disaster impact with decayMult 2.0 increases decayMultiplier', () => {
-    const impacts: CrisisImpact[] = [
-      { crisisId: 'chernobyl', infrastructure: { decayMult: 2.0 } },
-    ];
+    const impacts: CrisisImpact[] = [{ crisisId: 'chernobyl', infrastructure: { decayMult: 2.0 } }];
     const config = computeDynamicDifficulty(undefined, impacts);
     expect(config.decayMultiplier).toBe(2.0);
   });
@@ -97,33 +88,25 @@ describe('computeDynamicDifficulty — multiple concurrent crises', () => {
 
 describe('computeDynamicDifficulty — KGB aggression mapping', () => {
   it('kgbAggressionMult 1.0 keeps default medium', () => {
-    const impacts: CrisisImpact[] = [
-      { crisisId: 'minor', political: { kgbAggressionMult: 1.0 } },
-    ];
+    const impacts: CrisisImpact[] = [{ crisisId: 'minor', political: { kgbAggressionMult: 1.0 } }];
     const config = computeDynamicDifficulty(undefined, impacts);
     expect(config.kgbAggression).toBe('medium');
   });
 
   it('kgbAggressionMult 1.5 maps to medium', () => {
-    const impacts: CrisisImpact[] = [
-      { crisisId: 'purge', political: { kgbAggressionMult: 1.5 } },
-    ];
+    const impacts: CrisisImpact[] = [{ crisisId: 'purge', political: { kgbAggressionMult: 1.5 } }];
     const config = computeDynamicDifficulty(undefined, impacts);
     expect(config.kgbAggression).toBe('medium');
   });
 
   it('kgbAggressionMult 2.5 maps to high', () => {
-    const impacts: CrisisImpact[] = [
-      { crisisId: 'great-purge', political: { kgbAggressionMult: 2.5 } },
-    ];
+    const impacts: CrisisImpact[] = [{ crisisId: 'great-purge', political: { kgbAggressionMult: 2.5 } }];
     const config = computeDynamicDifficulty(undefined, impacts);
     expect(config.kgbAggression).toBe('high');
   });
 
   it('kgbAggressionMult exactly 2.0 maps to high', () => {
-    const impacts: CrisisImpact[] = [
-      { crisisId: 'purge', political: { kgbAggressionMult: 2.0 } },
-    ];
+    const impacts: CrisisImpact[] = [{ crisisId: 'purge', political: { kgbAggressionMult: 2.0 } }];
     const config = computeDynamicDifficulty(undefined, impacts);
     expect(config.kgbAggression).toBe('high');
   });
@@ -152,9 +135,7 @@ describe('computeDynamicDifficulty — base modifier overrides', () => {
   });
 
   it('overridden base multiplies with crisis impacts', () => {
-    const impacts: CrisisImpact[] = [
-      { crisisId: 'ww2', political: { quotaMult: 1.5 } },
-    ];
+    const impacts: CrisisImpact[] = [{ crisisId: 'ww2', political: { quotaMult: 1.5 } }];
     const config = computeDynamicDifficulty({ quotaMultiplier: 2.0 }, impacts);
     expect(config.quotaMultiplier).toBeCloseTo(3.0);
   });

@@ -2,8 +2,8 @@
  * @fileoverview Constants for the worker system: thresholds, rates, and class data.
  */
 
-import type { CitizenComponent } from '@/ecs/world';
 import { economy, workforce } from '@/config';
+import type { CitizenComponent } from '@/ecs/world';
 
 const cfg = workforce;
 
@@ -20,8 +20,10 @@ export const CLASS_ORDER: readonly CitizenComponent['class'][] = [
 ];
 
 /** Production bonuses by class for their specialty buildings. */
-export const CLASS_PRODUCTION_BONUS: Record<CitizenComponent['class'], number> =
-  cfg.classProductionBonus as Record<CitizenComponent['class'], number>;
+export const CLASS_PRODUCTION_BONUS: Record<CitizenComponent['class'], number> = cfg.classProductionBonus as Record<
+  CitizenComponent['class'],
+  number
+>;
 
 /** Building defId prefixes that count as "factory" for engineer bonus. */
 export const FACTORY_PREFIXES = ['vodka-distillery', 'factory', 'industrial'];
@@ -94,7 +96,10 @@ export const FLIGHT_CHECK_INTERVAL = cfg.flight.checkInterval;
 export const FLIGHT_COUNT_NORMAL: [min: number, max: number] = [cfg.flight.countNormalMin, cfg.flight.countNormalMax];
 
 /** Workers fleeing per check when morale < FLIGHT_MORALE_CRITICAL. */
-export const FLIGHT_COUNT_CRITICAL: [min: number, max: number] = [cfg.flight.countCriticalMin, cfg.flight.countCriticalMax];
+export const FLIGHT_COUNT_CRITICAL: [min: number, max: number] = [
+  cfg.flight.countCriticalMin,
+  cfg.flight.countCriticalMax,
+];
 
 /** Youth flight check interval (ticks). */
 export const YOUTH_FLIGHT_INTERVAL = cfg.flight.youthInterval;
@@ -122,16 +127,28 @@ export const ACCIDENT_LOW_SKILL_MULT = cfg.accidents.lowSkillMultiplier;
 // ─────────────────────────────────────────────────────────
 
 /** Moscow assignment: min-max workers per decree. */
-export const MOSCOW_ASSIGNMENT_COUNT: [min: number, max: number] = [cfg.inflow.moscowAssignmentMin, cfg.inflow.moscowAssignmentMax];
+export const MOSCOW_ASSIGNMENT_COUNT: [min: number, max: number] = [
+  cfg.inflow.moscowAssignmentMin,
+  cfg.inflow.moscowAssignmentMax,
+];
 
 /** Forced resettlement: min-max hostile workers. */
-export const FORCED_RESETTLEMENT_COUNT: [min: number, max: number] = [cfg.inflow.forcedResettlementMin, cfg.inflow.forcedResettlementMax];
+export const FORCED_RESETTLEMENT_COUNT: [min: number, max: number] = [
+  cfg.inflow.forcedResettlementMin,
+  cfg.inflow.forcedResettlementMax,
+];
 
 /** Forced resettlement: initial morale range for hostile workers. */
-export const FORCED_RESETTLEMENT_MORALE: [min: number, max: number] = [cfg.inflow.forcedResettlementMoraleMin, cfg.inflow.forcedResettlementMoraleMax];
+export const FORCED_RESETTLEMENT_MORALE: [min: number, max: number] = [
+  cfg.inflow.forcedResettlementMoraleMin,
+  cfg.inflow.forcedResettlementMoraleMax,
+];
 
 /** Kolkhoz amalgamation: min-max workers from merged collective. */
-export const KOLKHOZ_AMALGAMATION_COUNT: [min: number, max: number] = [cfg.inflow.kolkhozAmalgamationMin, cfg.inflow.kolkhozAmalgamationMax];
+export const KOLKHOZ_AMALGAMATION_COUNT: [min: number, max: number] = [
+  cfg.inflow.kolkhozAmalgamationMin,
+  cfg.inflow.kolkhozAmalgamationMax,
+];
 
 // ─────────────────────────────────────────────────────────
 //  TRUDODNI CONSTANTS

@@ -4,19 +4,21 @@
  * Shared constants, name generation, and pure helpers for the political system.
  */
 
+import type { SettlementTier } from '@/ai/agents/infrastructure/SettlementSystem';
 import { political } from '@/config';
 import type { DialogueContext } from '@/content/dialogue';
 import { getDialogue } from '@/content/dialogue';
 import { buildingsLogic } from '@/ecs/archetypes';
 import type { GameRng } from '@/game/SeedSystem';
-import type { SettlementTier } from '@/ai/agents/infrastructure/SettlementSystem';
 import type { PoliticalRole } from './types';
 
 // ─── Entity Scaling (from config/political.json) ────────────────────────────
 
 /** Entity count ranges per tier: [min, max] for each role. */
-export const ENTITY_SCALING: Record<SettlementTier, Record<PoliticalRole, [min: number, max: number]>> =
-  political.entityScaling as Record<SettlementTier, Record<PoliticalRole, [min: number, max: number]>>;
+export const ENTITY_SCALING: Record<
+  SettlementTier,
+  Record<PoliticalRole, [min: number, max: number]>
+> = political.entityScaling as Record<SettlementTier, Record<PoliticalRole, [min: number, max: number]>>;
 
 /** Wartime eras double military presence. */
 export const WARTIME_ERAS = new Set(['revolution', 'great_patriotic']);

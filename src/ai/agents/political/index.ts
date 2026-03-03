@@ -4,78 +4,33 @@
  * Political agents: era management, KGB surveillance, loyalty tracking,
  * quota enforcement, compulsory deliveries, and scoring.
  */
-export { PoliticalAgent } from './PoliticalAgent';
-export type { PoliticalState, ReportStrategy } from './PoliticalAgent';
-export { KGBAgent } from './KGBAgent';
-export type { Difficulty, MarkSource, CommendationSource, FileEntry, ThreatLevel, PersonnelFileSaveData } from './KGBAgent';
-export { LoyaltyAgent } from './LoyaltyAgent';
-export type { LoyaltyState, LoyaltyResult } from './LoyaltyAgent';
 
-// QuotaAgent + absorbed systems
-export { QuotaAgent } from './QuotaAgent';
-export type { QuotaAgentSaveData } from './QuotaAgent';
-export { quotaSystem, createDefaultQuota, areAllQuotasMet } from './quotaSystem';
-export type { QuotaState, QuotaResourceType, ResourceQuota } from './quotaSystem';
-export { CompulsoryDeliveries } from './CompulsoryDeliveries';
-export type {
-  Doctrine,
-  DeliveryRates,
-  DeliveryResult,
-  CompulsoryDeliverySaveData,
-} from './CompulsoryDeliveries';
-export {
-  ScoringSystem,
-  eraIdToIndex,
-  getEraMultiplier,
-  getSettingsMultiplier,
-  DIFFICULTY_PRESETS,
-  CONSEQUENCE_PRESETS,
-  SCORE_MULTIPLIER_MATRIX,
-  MEDALS,
-} from './ScoringSystem';
-export type {
-  DifficultyLevel,
-  ConsequenceLevel,
-  DifficultyConfig,
-  ConsequenceConfig,
-  EraScoreBreakdown,
-  ScoreBreakdown,
-  Medal,
-  ScoringSystemSaveData,
-} from './ScoringSystem';
-
+export type { AnnualReportContext, AnnualReportEngineState } from './annualReportTick';
 // Annual report helpers
 export {
   checkQuota,
-  processReport,
   falsificationRisk,
   handleQuotaMet,
   handleQuotaMissed,
+  processReport,
 } from './annualReportTick';
-export type { AnnualReportEngineState, AnnualReportContext } from './annualReportTick';
-
-// Political entity system + supporting modules (moved from src/game/political/)
-export { PoliticalEntitySystem } from './PoliticalEntitySystem';
 export type {
-  ConscriptionEvent,
-  DoctrineMechanicConfig,
-  DoctrineMechanicEffect,
-  DoctrineMechanicId,
-  IdeologySessionResult,
-  KGBInformant,
-  KGBInvestigation,
-  OrgnaborEvent,
-  PoliticalBuildingEffect,
-  PoliticalEntitySaveData,
-  PoliticalEntityStats,
-  PoliticalRole,
-  PoliticalTickResult,
-  PolitrukEffect,
-  PolitrukPersonality,
-  RaikomDirective,
-  RaikomPersonality,
-  RaikomState,
-} from './types';
+  CompulsoryDeliverySaveData,
+  DeliveryRates,
+  DeliveryResult,
+  Doctrine,
+} from './CompulsoryDeliveries';
+export { CompulsoryDeliveries } from './CompulsoryDeliveries';
+export {
+  calcTargetCount,
+  ENTITY_SCALING,
+  generateOfficerName,
+  getEntityDialogueText,
+  HIGH_CORRUPTION_THRESHOLD,
+  pickRandomBuildingPosition,
+  roleToDialogueCharacter,
+  WARTIME_ERAS,
+} from './constants';
 export type { DoctrineContext, DoctrinePolicy, ThawFreezeState } from './doctrine';
 export {
   addPaperwork,
@@ -90,16 +45,15 @@ export {
   setPaperwork,
   setThawFreezeState,
 } from './doctrine';
-export {
-  calcTargetCount,
-  ENTITY_SCALING,
-  generateOfficerName,
-  getEntityDialogueText,
-  HIGH_CORRUPTION_THRESHOLD,
-  pickRandomBuildingPosition,
-  roleToDialogueCharacter,
-  WARTIME_ERAS,
-} from './constants';
+export type {
+  CommendationSource,
+  Difficulty,
+  FileEntry,
+  MarkSource,
+  PersonnelFileSaveData,
+  ThreatLevel,
+} from './KGBAgent';
+export { KGBAgent } from './KGBAgent';
 export {
   BASE_ARREST_COUNT,
   createInformant,
@@ -121,6 +75,8 @@ export {
   tickInformants,
   tickInvestigations,
 } from './kgb';
+export type { LoyaltyResult, LoyaltyState } from './LoyaltyAgent';
+export { LoyaltyAgent } from './LoyaltyAgent';
 export {
   CONSCRIPTION_DEADLINE_TICKS,
   processConscriptionQueue,
@@ -128,6 +84,10 @@ export {
   processReturns,
   WARTIME_CASUALTY_RATE,
 } from './military';
+export type { PoliticalState, ReportStrategy } from './PoliticalAgent';
+export { PoliticalAgent } from './PoliticalAgent';
+// Political entity system + supporting modules (moved from src/game/political/)
+export { PoliticalEntitySystem } from './PoliticalEntitySystem';
 export {
   applyPolitrukTick,
   calcPolitrukCount,
@@ -141,6 +101,11 @@ export {
   SESSION_INTERVAL,
   WORKERS_PER_POLITRUK,
 } from './politruks';
+export type { QuotaAgentSaveData } from './QuotaAgent';
+// QuotaAgent + absorbed systems
+export { QuotaAgent } from './QuotaAgent';
+export type { QuotaResourceType, QuotaState, ResourceQuota } from './quotaSystem';
+export { areAllQuotasMet, createDefaultQuota, quotaSystem } from './quotaSystem';
 export {
   checkDirectiveDeadlines,
   generateRaikom,
@@ -148,3 +113,43 @@ export {
   processVisit,
   tickRaikom,
 } from './raikom';
+export type {
+  ConsequenceConfig,
+  ConsequenceLevel,
+  DifficultyConfig,
+  DifficultyLevel,
+  EraScoreBreakdown,
+  Medal,
+  ScoreBreakdown,
+  ScoringSystemSaveData,
+} from './ScoringSystem';
+export {
+  CONSEQUENCE_PRESETS,
+  DIFFICULTY_PRESETS,
+  eraIdToIndex,
+  getEraMultiplier,
+  getSettingsMultiplier,
+  MEDALS,
+  SCORE_MULTIPLIER_MATRIX,
+  ScoringSystem,
+} from './ScoringSystem';
+export type {
+  ConscriptionEvent,
+  DoctrineMechanicConfig,
+  DoctrineMechanicEffect,
+  DoctrineMechanicId,
+  IdeologySessionResult,
+  KGBInformant,
+  KGBInvestigation,
+  OrgnaborEvent,
+  PoliticalBuildingEffect,
+  PoliticalEntitySaveData,
+  PoliticalEntityStats,
+  PoliticalRole,
+  PoliticalTickResult,
+  PolitrukEffect,
+  PolitrukPersonality,
+  RaikomDirective,
+  RaikomPersonality,
+  RaikomState,
+} from './types';

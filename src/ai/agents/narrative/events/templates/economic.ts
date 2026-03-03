@@ -153,7 +153,7 @@ export const ECONOMIC_EVENTS: EventTemplate[] = [
     id: 'cannibalism',
     title: 'UNSPEAKABLE HUNGER',
     description:
-      'The settlement has descended into darkness. What happened will not be spoken of. What happened will not be written. The survivors do not meet each other\'s eyes.',
+      "The settlement has descended into darkness. What happened will not be spoken of. What happened will not be written. The survivors do not meet each other's eyes.",
     pravdaHeadline: 'ISOLATED INCIDENT RESOLVED; SETTLEMENT MORALE REMAINS HIGH',
     category: 'economic',
     severity: 'catastrophic',

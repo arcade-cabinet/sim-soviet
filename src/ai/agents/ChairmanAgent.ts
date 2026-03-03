@@ -7,11 +7,11 @@
  */
 
 import { Vehicle } from 'yuka';
-import { evaluateSurvival } from '../goals/SurvivalGoal';
-import { evaluateQuota } from '../goals/QuotaGoal';
-import { evaluatePolitical, type PoliticalInputs } from '../goals/PoliticalGoal';
-import { evaluateGrowth } from '../goals/GrowthGoal';
 import { evaluateDefense } from '../goals/DefenseGoal';
+import { evaluateGrowth } from '../goals/GrowthGoal';
+import { evaluatePolitical, type PoliticalInputs } from '../goals/PoliticalGoal';
+import { evaluateQuota } from '../goals/QuotaGoal';
+import { evaluateSurvival } from '../goals/SurvivalGoal';
 import type { CollectiveFocus } from './infrastructure/CollectiveAgent';
 
 /** Simplified minigame choice for AI evaluation. */

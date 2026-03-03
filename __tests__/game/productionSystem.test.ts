@@ -1,7 +1,7 @@
+import { productionSystem } from '../../src/ai/agents/economy/productionSystem';
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createResourceStore } from '../../src/ecs/factories';
 import { powerSystem } from '../../src/ecs/systems/powerSystem';
-import { productionSystem } from '../../src/ai/agents/economy/productionSystem';
 import { world } from '../../src/ecs/world';
 
 describe('productionSystem', () => {

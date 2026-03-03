@@ -105,9 +105,7 @@ function createSnapshot(state: GameState): GameSnapshot {
   // Check for aggregate population mode (RaionPool on resource store)
   const raion = res?.resources?.raion;
 
-  const pop = raion
-    ? raion.totalPopulation
-    : m ? citizens.entities.length : state.pop;
+  const pop = raion ? raion.totalPopulation : m ? citizens.entities.length : state.pop;
 
   // Compute income as money delta between snapshots
   if (_previousMoney !== null) {

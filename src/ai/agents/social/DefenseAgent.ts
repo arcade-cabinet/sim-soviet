@@ -22,18 +22,24 @@
  *   - Medical buildings reduce spread multiplicatively (0.4× per building, floor 0.1)
  */
 
-import { Vehicle } from 'yuka';
 import type { With } from 'miniplex';
+import { Vehicle } from 'yuka';
 import { GRID_SIZE, social } from '../../../config';
-import { buildingsLogic, operationalBuildings, citizens, getResourceEntity, housing as housingArchetype } from '../../../ecs/archetypes';
-import type { Entity, CitizenDisease } from '../../../ecs/world';
+import {
+  buildingsLogic,
+  citizens,
+  getResourceEntity,
+  housing as housingArchetype,
+  operationalBuildings,
+} from '../../../ecs/archetypes';
+import type { CitizenDisease, Entity } from '../../../ecs/world';
 import { world } from '../../../ecs/world';
 import { TICKS_PER_MONTH } from '../../../game/Chronology';
 import type { GameGrid } from '../../../game/GameGrid';
 import type { GameRng } from '../../../game/SeedSystem';
-import { WeatherType } from '../core/weather-types';
 import { MSG } from '../../telegrams';
-import { diseaseTick, DISEASE_PRAVDA_HEADLINES } from './disease';
+import { WeatherType } from '../core/weather-types';
+import { DISEASE_PRAVDA_HEADLINES, diseaseTick } from './disease';
 
 // ─── Fire Constants (from config/social.json) ────────────────────────────────
 
@@ -561,10 +567,7 @@ export class DefenseAgent extends Vehicle {
     }
   }
 
-  private checkOutbreaks(
-    month: number,
-    result: { newInfections: number; outbreakTypes: DiseaseType[] },
-  ): void {
+  private checkOutbreaks(month: number, result: { newInfections: number; outbreakTypes: DiseaseType[] }): void {
     const store = getResourceEntity();
     if (!store) return;
 
@@ -807,11 +810,7 @@ export class DefenseAgent extends Vehicle {
             const arrest = deps.workers.arrestWorker();
             if (arrest) {
               deps.scoring.onKGBLoss(1);
-              deps.kgb.addMark(
-                'worker_arrested',
-                deps.totalTicks,
-                'Gulag processing of enemy of the people',
-              );
+              deps.kgb.addMark('worker_arrested', deps.totalTicks, 'Gulag processing of enemy of the people');
               deps.callbacks.onPravda('ENEMY OF THE PEOPLE SENTENCED TO CORRECTIVE LABOR');
             }
           }
@@ -865,13 +864,13 @@ export type FireSystemSaveData = DefenseAgentSnapshot;
 
 // Re-export disease system functions (from disease.ts, originally DiseaseSystem.ts)
 export {
-  diseaseTick,
-  initDiseaseSystem,
-  DISEASE_PRAVDA_HEADLINES,
   calcOutbreakModifier,
   checkOutbreaks,
   clinicPreventionFactor,
+  DISEASE_PRAVDA_HEADLINES,
+  type DiseaseTickResult,
+  diseaseTick,
+  initDiseaseSystem,
   progressDiseases,
   SICK_LABOR_MULT,
-  type DiseaseTickResult,
 } from './disease';

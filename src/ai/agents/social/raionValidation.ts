@@ -8,8 +8,8 @@
  * @module raionValidation
  */
 
-import type { RaionPool } from '@/ecs/world';
 import { demographics } from '@/config';
+import type { RaionPool } from '@/ecs/world';
 
 const cfg = demographics.aggregate;
 const LABOR_BUCKET_MIN = cfg.laborForce.bucketMin;
@@ -37,14 +37,10 @@ export function validateRaionPool(pool: RaionPool): ValidationResult {
 
   // ── Bucket array lengths ────────────────────────────────────────────────
   if (pool.maleAgeBuckets.length !== 20) {
-    errors.push(
-      `maleAgeBuckets length is ${pool.maleAgeBuckets.length}, expected 20`,
-    );
+    errors.push(`maleAgeBuckets length is ${pool.maleAgeBuckets.length}, expected 20`);
   }
   if (pool.femaleAgeBuckets.length !== 20) {
-    errors.push(
-      `femaleAgeBuckets length is ${pool.femaleAgeBuckets.length}, expected 20`,
-    );
+    errors.push(`femaleAgeBuckets length is ${pool.femaleAgeBuckets.length}, expected 20`);
   }
 
   // ── Per-bucket checks: non-negative, finite, integer, no NaN ──────────
@@ -93,34 +89,22 @@ export function validateRaionPool(pool: RaionPool): ValidationResult {
   }
 
   // Only check sum equality when both sides are finite and non-NaN
-  if (
-    Number.isFinite(pool.totalPopulation) &&
-    Number.isFinite(bucketSum) &&
-    pool.totalPopulation !== bucketSum
-  ) {
-    errors.push(
-      `totalPopulation (${pool.totalPopulation}) != sum of age buckets (${bucketSum})`,
-    );
+  if (Number.isFinite(pool.totalPopulation) && Number.isFinite(bucketSum) && pool.totalPopulation !== bucketSum) {
+    errors.push(`totalPopulation (${pool.totalPopulation}) != sum of age buckets (${bucketSum})`);
   }
 
   // ── laborForce == sum of buckets 3-12 (both genders) ──────────────────
   let expectedLabor = 0;
   for (let i = LABOR_BUCKET_MIN; i <= LABOR_BUCKET_MAX; i++) {
-    expectedLabor +=
-      (pool.maleAgeBuckets[i] ?? 0) + (pool.femaleAgeBuckets[i] ?? 0);
+    expectedLabor += (pool.maleAgeBuckets[i] ?? 0) + (pool.femaleAgeBuckets[i] ?? 0);
   }
 
   if (Number.isNaN(pool.laborForce)) {
     errors.push('laborForce is NaN');
   } else if (!Number.isFinite(pool.laborForce)) {
     errors.push(`laborForce is not finite (${pool.laborForce})`);
-  } else if (
-    Number.isFinite(expectedLabor) &&
-    pool.laborForce !== expectedLabor
-  ) {
-    errors.push(
-      `laborForce (${pool.laborForce}) != sum of labor buckets 3-12 (${expectedLabor})`,
-    );
+  } else if (Number.isFinite(expectedLabor) && pool.laborForce !== expectedLabor) {
+    errors.push(`laborForce (${pool.laborForce}) != sum of labor buckets 3-12 (${expectedLabor})`);
   }
 
   // ── pregnancyWaves: all >= 0 ──────────────────────────────────────────

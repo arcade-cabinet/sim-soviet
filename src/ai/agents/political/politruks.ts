@@ -44,7 +44,10 @@ export const KGB_FLAG_CHANCE_FROM_SESSION = cfg.kgbFlagChanceFromSession;
 
 // ─── Personality Weights ────────────────────────────────────────────────────
 
-const PERSONALITY_WEIGHTS: Record<PolitrukPersonality, number> = cfg.personalityWeights as Record<PolitrukPersonality, number>;
+const PERSONALITY_WEIGHTS: Record<PolitrukPersonality, number> = cfg.personalityWeights as Record<
+  PolitrukPersonality,
+  number
+>;
 
 /** Roll a random politruk personality. */
 export function rollPolitrukPersonality(rng: GameRng): PolitrukPersonality {

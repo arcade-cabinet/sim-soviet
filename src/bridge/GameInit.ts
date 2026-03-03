@@ -6,18 +6,18 @@
  * ready for tick().
  */
 
+import { FreeformGovernor } from '@/ai/agents/crisis/FreeformGovernor';
+import type { GovernorMode } from '@/ai/agents/crisis/Governor';
+import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
+import { type ConsequenceLevel, DIFFICULTY_PRESETS, type DifficultyLevel } from '@/ai/agents/political/ScoringSystem';
 import { GRID_SIZE, setCurrentGridSize } from '@/config';
 import { createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { createStartingSettlement } from '@/ecs/factories/settlementFactories';
+import type { SimCallbacks } from '@/game/engine/types';
 import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
 import { recalculatePaths } from '@/game/PathSystem';
 import { SaveSystem } from '@/game/SaveSystem';
-import { type ConsequenceLevel, DIFFICULTY_PRESETS, type DifficultyLevel } from '@/ai/agents/political/ScoringSystem';
-import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
-import { FreeformGovernor } from '@/ai/agents/crisis/FreeformGovernor';
-import type { GovernorMode } from '@/ai/agents/crisis/Governor';
-import type { SimCallbacks } from '@/game/engine/types';
 import { SimulationEngine } from '@/game/SimulationEngine';
 import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 
@@ -66,9 +66,10 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   // Era 1 (Revolution/1917): Timber only. No steel, no power, no food stockpile.
   // Scale starting resources by difficulty multiplier (worker=2.0x, comrade=1.0x, tovarish=0.5x).
   // Historical/freeform mode: history IS the difficulty — use 1.0 (equivalent to 'comrade').
-  const resMult = (options?.gameMode === 'historical' || options?.gameMode === 'freeform')
-    ? 1.0
-    : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
+  const resMult =
+    options?.gameMode === 'historical' || options?.gameMode === 'freeform'
+      ? 1.0
+      : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
   // Starting resources — generous enough for ~2 seasons of survival without farms.
   // This is a city-builder, not a survival game: players need time to explore and build.
   createResourceStore({

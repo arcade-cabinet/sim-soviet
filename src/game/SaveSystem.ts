@@ -17,9 +17,9 @@ import { createBuilding } from '@/ecs/factories';
 import type { Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import { getFootprint } from '@/game/BuildingFootprints';
+import type { SubsystemSaveData } from './engine/types';
 import type { GameGrid } from './GameGrid';
 import type { SimulationEngine } from './SimulationEngine';
-import type { SubsystemSaveData } from './engine/types';
 
 /** Zod schema for validating save data on import / DB load. */
 const BuildingSaveEntrySchema = z.object({

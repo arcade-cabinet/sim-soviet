@@ -11,11 +11,16 @@
  *   - Historical mode (with governor): ScoringSystem receives governor modifiers after tick
  */
 
-import { ScoringSystem, DIFFICULTY_PRESETS } from '@/ai/agents/political/ScoringSystem';
+import type {
+  DynamicModifiers,
+  GovernorContext,
+  GovernorDirective,
+  GovernorSaveData,
+  IGovernor,
+} from '@/ai/agents/crisis/Governor';
 import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
-import type { DynamicModifiers } from '@/ai/agents/crisis/Governor';
-import type { IGovernor, GovernorContext, GovernorDirective, GovernorSaveData } from '@/ai/agents/crisis/Governor';
-import { createResourceStore, createMetaStore } from '@/ecs/factories';
+import { DIFFICULTY_PRESETS, ScoringSystem } from '@/ai/agents/political/ScoringSystem';
+import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameGrid } from '@/game/GameGrid';
 import type { SimCallbacks } from '@/game/SimulationEngine';

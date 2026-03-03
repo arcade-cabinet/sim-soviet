@@ -18,9 +18,8 @@ import { useFrame } from '@react-three/fiber';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import type * as THREE from 'three';
-
-import { getEngine } from '../bridge/GameInit';
 import type { PoliticalRole } from '../ai/agents/political/types';
+import { getEngine } from '../bridge/GameInit';
 
 /** Role -> color mapping for political entity meshes. */
 const ROLE_COLORS: Record<PoliticalRole, string> = {

@@ -3,10 +3,11 @@
  * resource store, the system should operate on building workforces and
  * raion-level statistics instead of individual citizen entities.
  */
-import { world } from '../../src/ecs/world';
-import type { BuildingComponent, RaionPool, Resources } from '../../src/ecs/world';
-import { WorkerSystem } from '../../src/ai/agents/workforce/WorkerSystem';
+
 import type { WorkerTickContext } from '../../src/ai/agents/workforce/WorkerSystem';
+import { WorkerSystem } from '../../src/ai/agents/workforce/WorkerSystem';
+import type { BuildingComponent, RaionPool, Resources } from '../../src/ecs/world';
+import { world } from '../../src/ecs/world';
 
 /** Helper: create a minimal BuildingComponent with workforce fields zeroed. */
 function makeBuilding(defId: string, opts?: Partial<BuildingComponent>): BuildingComponent {
@@ -136,9 +137,21 @@ describe('WorkerSystem — aggregate mode', () => {
     it('returns false when no raion on resource store', () => {
       world.add({
         resources: {
-          money: 0, food: 0, vodka: 0, power: 0, powerUsed: 0, population: 10,
-          trudodni: 0, blat: 0, timber: 0, steel: 0, cement: 0, prefab: 0,
-          seedFund: 0, emergencyReserve: 0, storageCapacity: 0,
+          money: 0,
+          food: 0,
+          vodka: 0,
+          power: 0,
+          powerUsed: 0,
+          population: 10,
+          trudodni: 0,
+          blat: 0,
+          timber: 0,
+          steel: 0,
+          cement: 0,
+          prefab: 0,
+          seedFund: 0,
+          emergencyReserve: 0,
+          storageCapacity: 0,
         },
         isResourceStore: true,
       });
@@ -202,12 +215,14 @@ describe('WorkerSystem — aggregate mode', () => {
     });
 
     it('blends incoming worker stats into raion averages', () => {
-      const raion = setupAggregateWorld(makeRaion({
-        totalPopulation: 100,
-        avgMorale: 50,
-        avgLoyalty: 50,
-        avgSkill: 30,
-      }));
+      const raion = setupAggregateWorld(
+        makeRaion({
+          totalPopulation: 100,
+          avgMorale: 50,
+          avgLoyalty: 50,
+          avgSkill: 30,
+        }),
+      );
 
       system.spawnInflowDvor(100, 'resettlement', { morale: 10, loyalty: 10, skill: 10 });
 
@@ -232,11 +247,13 @@ describe('WorkerSystem — aggregate mode', () => {
 
   describe('removeWorkersByCount', () => {
     it('removes from idle pool first', () => {
-      const raion = setupAggregateWorld(makeRaion({
-        totalPopulation: 100,
-        idleWorkers: 10,
-        laborForce: 100,
-      }));
+      const raion = setupAggregateWorld(
+        makeRaion({
+          totalPopulation: 100,
+          idleWorkers: 10,
+          laborForce: 100,
+        }),
+      );
 
       system.removeWorkersByCount(5, 'migration');
 
@@ -246,12 +263,14 @@ describe('WorkerSystem — aggregate mode', () => {
     });
 
     it('removes from buildings when idle pool exhausted', () => {
-      const raion = setupAggregateWorld(makeRaion({
-        totalPopulation: 100,
-        idleWorkers: 2,
-        assignedWorkers: 98,
-        laborForce: 100,
-      }));
+      const raion = setupAggregateWorld(
+        makeRaion({
+          totalPopulation: 100,
+          idleWorkers: 2,
+          assignedWorkers: 98,
+          laborForce: 100,
+        }),
+      );
 
       // Add a building with workers
       world.add({
@@ -350,7 +369,7 @@ describe('WorkerSystem — aggregate mode', () => {
 
   describe('tick', () => {
     it('processes buildings and returns valid WorkerTickResult', () => {
-      const raion = setupAggregateWorld(makeRaion({ totalPopulation: 100, avgMorale: 60 }));
+      const _raion = setupAggregateWorld(makeRaion({ totalPopulation: 100, avgMorale: 60 }));
 
       // Add staffed buildings
       world.add({
@@ -423,7 +442,7 @@ describe('WorkerSystem — aggregate mode', () => {
     });
 
     it('handles empty buildings gracefully', () => {
-      const raion = setupAggregateWorld(makeRaion({ totalPopulation: 50, idleWorkers: 50, assignedWorkers: 0 }));
+      const _raion = setupAggregateWorld(makeRaion({ totalPopulation: 50, idleWorkers: 50, assignedWorkers: 0 }));
 
       // Building with 0 workers
       world.add({
@@ -551,7 +570,7 @@ describe('WorkerSystem — aggregate mode', () => {
         position: { gridX: 0, gridY: 0 },
       });
 
-      const result = system.tick(makeTickCtx());
+      const _result = system.tick(makeTickCtx());
 
       expect(raion.totalPopulation).toBeGreaterThanOrEqual(0);
       expect(Number.isFinite(raion.totalPopulation)).toBe(true);

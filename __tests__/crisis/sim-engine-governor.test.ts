@@ -10,15 +10,15 @@
  *   6. Annual report uses governor's quotaMultiplier when present
  */
 
+import type { GovernorContext, GovernorDirective, GovernorSaveData, IGovernor } from '@/ai/agents/crisis/Governor';
+import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
+import type { CrisisImpact } from '@/ai/agents/crisis/types';
 import { getResourceEntity } from '@/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameGrid } from '@/game/GameGrid';
 import type { SimCallbacks } from '@/game/SimulationEngine';
 import { SimulationEngine } from '@/game/SimulationEngine';
-import type { IGovernor, GovernorContext, GovernorDirective, GovernorSaveData } from '@/ai/agents/crisis/Governor';
-import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
-import type { CrisisImpact } from '@/ai/agents/crisis/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -244,9 +244,7 @@ describe('SimulationEngine — Governor integration', () => {
       const impact: CrisisImpact = {
         crisisId: 'test-war',
         narrative: {
-          toastMessages: [
-            { text: 'WAR HAS BEGUN!', severity: 'critical' },
-          ],
+          toastMessages: [{ text: 'WAR HAS BEGUN!', severity: 'critical' }],
         },
       };
       const gov = createMockGovernor({
@@ -283,8 +281,8 @@ describe('SimulationEngine — Governor integration', () => {
       engine.setGovernor(gov);
 
       const store = getResourceEntity()!;
-      const foodBefore = store.resources.food;
-      const moneyBefore = store.resources.money;
+      const _foodBefore = store.resources.food;
+      const _moneyBefore = store.resources.money;
 
       engine.tick();
 

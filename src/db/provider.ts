@@ -11,7 +11,7 @@
  * local game saves would add complexity without meaningful security benefit.
  */
 
-import { type ExpoSQLiteDatabase, drizzle } from 'drizzle-orm/expo-sqlite';
+import { drizzle, type ExpoSQLiteDatabase } from 'drizzle-orm/expo-sqlite';
 import { migrate } from 'drizzle-orm/expo-sqlite/migrator';
 import { deserializeDatabaseSync, openDatabaseSync } from 'expo-sqlite';
 import migrations from './drizzle/migrations';

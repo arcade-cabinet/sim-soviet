@@ -111,11 +111,7 @@ const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer',
     }
 
     // Position directional light relative to focus point along sun direction
-    sun.position.set(
-      focusX - dir[0] * SUN_DISTANCE,
-      -dir[1] * SUN_DISTANCE,
-      focusZ - dir[2] * SUN_DISTANCE,
-    );
+    sun.position.set(focusX - dir[0] * SUN_DISTANCE, -dir[1] * SUN_DISTANCE, focusZ - dir[2] * SUN_DISTANCE);
 
     // Point the light target at the focus point on the ground
     target.position.set(focusX, 0, focusZ);

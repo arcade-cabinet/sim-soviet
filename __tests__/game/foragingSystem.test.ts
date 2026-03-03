@@ -1,15 +1,15 @@
-import { getResourceEntity } from '../../src/ecs/archetypes';
-import { createResourceStore } from '../../src/ecs/factories';
-import { world } from '../../src/ecs/world';
 import {
   bestForagingMethod,
   createForagingState,
+  type ForagingState,
   foragingTick,
   hasForestTiles,
   hasWaterTiles,
   yieldPerWorker,
-  type ForagingState,
 } from '../../src/ai/agents/economy/foragingSystem';
+import { getResourceEntity } from '../../src/ecs/archetypes';
+import { createResourceStore } from '../../src/ecs/factories';
+import { world } from '../../src/ecs/world';
 import { GameRng } from '../../src/game/SeedSystem';
 
 // ── Helper: create terrain feature entities ──────────────────────────────────
@@ -276,7 +276,7 @@ describe('foragingSystem', () => {
     it('KGB risk possible when >20% workforce foraging', () => {
       // Need to make sure RNG triggers the risk
       // Force a scenario with high foraging ratio
-      const state = createForagingState();
+      const _state = createForagingState();
       // Food=0, pop=10 -> desperation=1.0, fraction=0.3 -> 3 workers out of 10 = 30% > 20%
       // Use a controlled rng that returns low values to trigger the 5% check
       let triggered = false;
@@ -444,7 +444,7 @@ describe('foragingSystem', () => {
       const result = foragingTick(0, 20, 1, state, rng);
       expect(result.method).toBe('hunting');
       // Winter hunt yields less than summer hunt
-      const summerResult = foragingTick(0, 20, 6, createForagingState(), rng);
+      const _summerResult = foragingTick(0, 20, 6, createForagingState(), rng);
       // Both use hunting but winter has penalty — per-worker yield differs
       // The total depends on RNG and worker count, so check the yield rate
     });
@@ -475,13 +475,7 @@ describe('foragingSystem', () => {
 
       const state = createForagingState();
       const rng = new GameRng('integration-test');
-      const result = foragingTick(
-        store.resources.food,
-        store.resources.population,
-        6,
-        state,
-        rng,
-      );
+      const result = foragingTick(store.resources.food, store.resources.population, 6, state, rng);
 
       // Simulate what SimulationEngine would do
       store.resources.food += result.foodGathered;

@@ -5,6 +5,15 @@
  * consume materials, apply era multipliers, and transition to
  * operational when complete.
  */
+
+import { productionSystem } from '../../src/ai/agents/economy/productionSystem';
+import {
+  constructionSystem,
+  DEFAULT_BASE_TICKS,
+  DEFAULT_MATERIAL_COST,
+  DEFAULT_STAFF_CAP,
+  workerSpeedMult,
+} from '../../src/ai/agents/infrastructure/constructionSystem';
 import {
   getResourceEntity,
   housing,
@@ -19,14 +28,6 @@ import {
   isOperational,
   placeNewBuilding,
 } from '../../src/ecs/factories';
-import {
-  constructionSystem,
-  DEFAULT_BASE_TICKS,
-  DEFAULT_MATERIAL_COST,
-  DEFAULT_STAFF_CAP,
-  workerSpeedMult,
-} from '../../src/ai/agents/infrastructure/constructionSystem';
-import { productionSystem } from '../../src/ai/agents/economy/productionSystem';
 import { world } from '../../src/ecs/world';
 
 describe('constructionSystem', () => {

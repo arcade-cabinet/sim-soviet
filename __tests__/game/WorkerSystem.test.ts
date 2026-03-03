@@ -1,9 +1,9 @@
-import { citizens, dvory } from '@/ecs/archetypes';
-import { createBuilding, createDvor, createMetaStore, createResourceStore } from '@/ecs/factories';
+import { generateWorkerName, WorkerSystem } from '@/ai/agents/workforce/workers-index';
+import { citizens } from '@/ecs/archetypes';
 import type { DvorMemberSeed } from '@/ecs/factories';
+import { createBuilding, createDvor, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import { GameRng } from '@/game/SeedSystem';
-import { generateWorkerName, WorkerSystem } from '@/ai/agents/workforce/workers-index';
 
 describe('WorkerSystem', () => {
   let system: WorkerSystem;
@@ -729,7 +729,7 @@ describe('WorkerSystem', () => {
       const validMember = dvorEntity.dvor.members[0]!;
 
       // Spawn a citizen linked to the valid dvor
-      const validCitizen = world.add({
+      const _validCitizen = world.add({
         position: { gridX: 0, gridY: 0 },
         citizen: {
           class: 'worker' as const,
@@ -745,7 +745,7 @@ describe('WorkerSystem', () => {
       });
 
       // Spawn an orphan citizen whose dvor no longer exists
-      const orphanCitizen = world.add({
+      const _orphanCitizen = world.add({
         position: { gridX: 1, gridY: 1 },
         citizen: {
           class: 'worker' as const,
@@ -772,9 +772,7 @@ describe('WorkerSystem', () => {
 
     it('removes citizens whose dvorMemberId is no longer in the dvor', () => {
       // Create a dvor with one member
-      createDvor('dvor-partial', 'Testov', [
-        { name: 'Pyotr Testov', gender: 'male', age: 40 } as DvorMemberSeed,
-      ]);
+      createDvor('dvor-partial', 'Testov', [{ name: 'Pyotr Testov', gender: 'male', age: 40 } as DvorMemberSeed]);
 
       // Spawn a citizen linked to a member ID that no longer exists in the dvor
       world.add({
@@ -846,13 +844,22 @@ describe('WorkerSystem', () => {
       // Set up aggregate mode by adding raion to resource store
       const store = world.with('resources', 'isResourceStore').entities[0]!;
       store.resources.raion = {
-        totalPopulation: 500, totalHouseholds: 50,
+        totalPopulation: 500,
+        totalHouseholds: 50,
         maleAgeBuckets: new Array(20).fill(0),
         femaleAgeBuckets: new Array(20).fill(0),
-        classCounts: {}, birthsThisYear: 0, deathsThisYear: 0,
-        totalBirths: 0, totalDeaths: 0, pregnancyWaves: [0, 0, 0],
-        laborForce: 0, assignedWorkers: 0, idleWorkers: 0,
-        avgMorale: 50, avgLoyalty: 50, avgSkill: 50,
+        classCounts: {},
+        birthsThisYear: 0,
+        deathsThisYear: 0,
+        totalBirths: 0,
+        totalDeaths: 0,
+        pregnancyWaves: [0, 0, 0],
+        laborForce: 0,
+        assignedWorkers: 0,
+        idleWorkers: 0,
+        avgMorale: 50,
+        avgLoyalty: 50,
+        avgSkill: 50,
       };
 
       // Create an orphan citizen

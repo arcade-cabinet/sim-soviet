@@ -90,10 +90,7 @@ function neutralResult(): ApplicatorResult {
  * @param deps - External system dependencies (resources, callbacks, etc.)
  * @returns Merged result with multipliers for caller to apply to subsystems
  */
-export function applyCrisisImpacts(
-  impacts: CrisisImpact[],
-  deps: ApplicatorDeps,
-): ApplicatorResult {
+export function applyCrisisImpacts(impacts: CrisisImpact[], deps: ApplicatorDeps): ApplicatorResult {
   const result = neutralResult();
 
   for (const impact of impacts) {
@@ -110,11 +107,7 @@ export function applyCrisisImpacts(
 
 // ─── Per-Domain Applicators ────────────────────────────────────────────────
 
-function applyEconomy(
-  impact: CrisisImpact,
-  deps: ApplicatorDeps,
-  result: ApplicatorResult,
-): void {
+function applyEconomy(impact: CrisisImpact, deps: ApplicatorDeps, result: ApplicatorResult): void {
   const eco = impact.economy;
   if (!eco) return;
 
@@ -129,20 +122,13 @@ function applyEconomy(
   }
 }
 
-function applyWorkforce(
-  impact: CrisisImpact,
-  deps: ApplicatorDeps,
-  result: ApplicatorResult,
-): void {
+function applyWorkforce(impact: CrisisImpact, deps: ApplicatorDeps, result: ApplicatorResult): void {
   const wf = impact.workforce;
   if (!wf) return;
 
   if (wf.conscriptionCount !== undefined && wf.conscriptionCount !== 0 && deps.workerSystem) {
     if (wf.conscriptionCount > 0) {
-      const removed = deps.workerSystem.removeWorkersByCountMaleFirst(
-        wf.conscriptionCount,
-        'crisis_conscription',
-      );
+      const removed = deps.workerSystem.removeWorkersByCountMaleFirst(wf.conscriptionCount, 'crisis_conscription');
       result.workersLost += removed;
     } else {
       // Negative conscription = veteran returns
@@ -152,19 +138,12 @@ function applyWorkforce(
   }
 
   if (wf.casualtyCount !== undefined && wf.casualtyCount > 0 && deps.workerSystem) {
-    const removed = deps.workerSystem.removeWorkersByCountMaleFirst(
-      wf.casualtyCount,
-      'crisis_casualty',
-    );
+    const removed = deps.workerSystem.removeWorkersByCountMaleFirst(wf.casualtyCount, 'crisis_casualty');
     result.workersLost += removed;
   }
 }
 
-function applyInfrastructure(
-  impact: CrisisImpact,
-  deps: ApplicatorDeps,
-  result: ApplicatorResult,
-): void {
+function applyInfrastructure(impact: CrisisImpact, _deps: ApplicatorDeps, result: ApplicatorResult): void {
   const infra = impact.infrastructure;
   if (!infra) return;
 

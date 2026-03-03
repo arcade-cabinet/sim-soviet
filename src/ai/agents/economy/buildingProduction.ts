@@ -114,14 +114,7 @@ export function computeBuildingProduction(
   if (def.stats.produces) {
     const baseRate = def.stats.produces.amount / staffCap; // per-worker base rate
     let output =
-      baseRate *
-      effectiveWorkers *
-      skillFactor *
-      moraleFactor *
-      conditionFactor *
-      powerFactor *
-      eraMod *
-      weatherFactor;
+      baseRate * effectiveWorkers * skillFactor * moraleFactor * conditionFactor * powerFactor * eraMod * weatherFactor;
 
     // Stakhanovite bonus: each adds 10%
     output *= 1 + result.stakhanovites * 0.1;

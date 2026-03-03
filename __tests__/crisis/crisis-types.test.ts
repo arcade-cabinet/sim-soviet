@@ -5,21 +5,18 @@
  * and the emptyCrisisImpact helper.
  */
 
-import { GameRng } from '@/game/SeedSystem';
-import {
-  emptyCrisisImpact,
-  DEFAULT_PEAK_PARAMS,
-} from '@/ai/agents/crisis/types';
 import type {
-  CrisisImpact,
-  CrisisDefinition,
+  CrisisAgentSaveData,
   CrisisContext,
+  CrisisDefinition,
+  CrisisImpact,
   CrisisPhase,
   CrisisSeverity,
   CrisisType,
   ICrisisAgent,
-  CrisisAgentSaveData,
 } from '@/ai/agents/crisis/types';
+import { DEFAULT_PEAK_PARAMS, emptyCrisisImpact } from '@/ai/agents/crisis/types';
+import { GameRng } from '@/game/SeedSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -106,8 +103,8 @@ describe('CrisisDefinition', () => {
       ...WW2_DEFINITION,
       peakParams: { customParam: 42, another: 0.5 },
     };
-    expect(def.peakParams['customParam']).toBe(42);
-    expect(def.peakParams['another']).toBe(0.5);
+    expect(def.peakParams.customParam).toBe(42);
+    expect(def.peakParams.another).toBe(0.5);
   });
 });
 
@@ -202,7 +199,10 @@ describe('CrisisImpact', () => {
   });
 
   it('supports infrastructure slot with destruction targets', () => {
-    const targets = [{ gridX: 5, gridY: 10 }, { gridX: 12, gridY: 3 }];
+    const targets = [
+      { gridX: 5, gridY: 10 },
+      { gridX: 12, gridY: 3 },
+    ];
     const impact: CrisisImpact = {
       crisisId: 'ww2',
       infrastructure: { decayMult: 2.0, destructionTargets: targets },
@@ -235,10 +235,7 @@ describe('CrisisImpact', () => {
       crisisId: 'ww2',
       narrative: {
         pravdaHeadlines: ['FASCIST INVADERS REPELLED AT STALINGRAD'],
-        toastMessages: [
-          { text: 'Air raid warning!', severity: 'critical' },
-          { text: 'Citizens evacuating...' },
-        ],
+        toastMessages: [{ text: 'Air raid warning!', severity: 'critical' }, { text: 'Citizens evacuating...' }],
       },
     };
     expect(impact.narrative!.pravdaHeadlines).toHaveLength(1);
@@ -294,7 +291,7 @@ describe('DEFAULT_PEAK_PARAMS', () => {
   });
 
   it('silently rejects mutations (frozen)', () => {
-    (DEFAULT_PEAK_PARAMS as Record<string, number>)['foo'] = 1;
+    (DEFAULT_PEAK_PARAMS as Record<string, number>).foo = 1;
     // In sloppy mode, assignment silently fails on frozen objects
     expect(DEFAULT_PEAK_PARAMS).not.toHaveProperty('foo');
   });
@@ -391,8 +388,8 @@ describe('CrisisAgentSaveData', () => {
       ticksInPhase: 30,
       extra: { radiationDecay: 0.95, evacuatedZones: [3, 7, 12] },
     };
-    expect(save.extra!['radiationDecay']).toBe(0.95);
-    expect(save.extra!['evacuatedZones']).toEqual([3, 7, 12]);
+    expect(save.extra!.radiationDecay).toBe(0.95);
+    expect(save.extra!.evacuatedZones).toEqual([3, 7, 12]);
   });
 
   it('round-trips through JSON serialization', () => {

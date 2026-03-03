@@ -5,10 +5,34 @@
  * needed by external consumers (SimulationEngine, UI panels, tests).
  */
 
-export { WorkerAgent } from './WorkerAgent';
-export { WorkerSystem } from './WorkerSystem';
-export type { WorkerStatEntry, WorkerSystemSaveData, WorkerTickContext } from './WorkerSystem';
-export { generateWorkerName } from './classes';
+export { applyMorale, calcBaseEfficiency, calcClassBonus, generateWorkerName } from './classes';
+export {
+  COLLECTIVE_DIRECTIVES,
+  type CollectiveDirective,
+  getDirectiveByFocus,
+  type RiskLevel,
+} from './collectiveDirectives';
+export {
+  collapseEntitiesToBuildings,
+  getPopulationMode,
+  type PopulationMode,
+} from './collectiveTransition';
+export {
+  CLASS_ORDER,
+  CLASS_PRODUCTION_BONUS,
+  CLASS_WEIGHTS,
+  HEATING_FAILURE_MORALE_PENALTY,
+  PRIVATE_PLOT_FOOD_PER_HECTARE,
+  PRIVATE_PLOT_MORALE_BOOST,
+  TRUDODNI_ANNUAL_MINIMUM,
+  TRUDODNI_PER_TICK,
+  TRUDODNI_SHORTFALL_MORALE_PENALTY,
+} from './constants';
+export {
+  type GenderLaborConfig,
+  getGenderLaborConfig,
+  getGenderLaborMultiplier,
+} from './genderLabor';
 export type {
   AssignmentSource,
   PopulationDrainEvent,
@@ -20,31 +44,6 @@ export type {
   WorkerStats,
   WorkerTickResult,
 } from './types';
-export {
-  COLLECTIVE_DIRECTIVES,
-  getDirectiveByFocus,
-  type CollectiveDirective,
-  type RiskLevel,
-} from './collectiveDirectives';
-export {
-  getGenderLaborConfig,
-  getGenderLaborMultiplier,
-  type GenderLaborConfig,
-} from './genderLabor';
-export {
-  CLASS_ORDER,
-  CLASS_WEIGHTS,
-  CLASS_PRODUCTION_BONUS,
-  TRUDODNI_ANNUAL_MINIMUM,
-  TRUDODNI_SHORTFALL_MORALE_PENALTY,
-  TRUDODNI_PER_TICK,
-  PRIVATE_PLOT_FOOD_PER_HECTARE,
-  PRIVATE_PLOT_MORALE_BOOST,
-  HEATING_FAILURE_MORALE_PENALTY,
-} from './constants';
-export { applyMorale, calcBaseEfficiency, calcClassBonus } from './classes';
-export {
-  getPopulationMode,
-  collapseEntitiesToBuildings,
-  type PopulationMode,
-} from './collectiveTransition';
+export { WorkerAgent } from './WorkerAgent';
+export type { WorkerStatEntry, WorkerSystemSaveData, WorkerTickContext } from './WorkerSystem';
+export { WorkerSystem } from './WorkerSystem';

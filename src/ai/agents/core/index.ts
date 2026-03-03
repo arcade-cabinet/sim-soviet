@@ -3,17 +3,17 @@
  *
  * Core simulation agents: time and weather management.
  */
-export { ChronologyAgent } from './ChronologyAgent';
-export type { TickResult, ChronologyState } from './ChronologyAgent';
-export { WeatherAgent } from './WeatherAgent';
-export type { WeatherAgentSnapshot } from './WeatherAgent';
 
+export type { ChronologyState, TickResult } from './ChronologyAgent';
+export { ChronologyAgent } from './ChronologyAgent';
+export type { WeatherAgentSnapshot } from './WeatherAgent';
+export { WeatherAgent } from './WeatherAgent';
+export type { WeatherProfile, WeatherState } from './weather-types';
 // Re-export weather types/constants (canonical location: weather-types.ts)
 export {
-  WeatherType,
-  WEATHER_PROFILES,
-  getWeatherProfile,
   createWeatherState,
+  getWeatherProfile,
   rollWeather,
+  WEATHER_PROFILES,
+  WeatherType,
 } from './weather-types';
-export type { WeatherProfile, WeatherState } from './weather-types';

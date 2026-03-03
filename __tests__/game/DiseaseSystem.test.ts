@@ -1,8 +1,3 @@
-import { citizens, getResourceEntity } from '@/ecs/archetypes';
-import { createBuilding, createCitizen, createResourceStore } from '@/ecs/factories';
-import { powerSystem } from '@/ecs/systems/powerSystem';
-import { world } from '@/ecs/world';
-import { TICKS_PER_MONTH } from '@/game/Chronology';
 import {
   calcOutbreakModifier,
   checkOutbreaks,
@@ -15,6 +10,11 @@ import {
   progressDiseases,
   SICK_LABOR_MULT,
 } from '@/ai/agents/social/DefenseAgent';
+import { citizens, getResourceEntity } from '@/ecs/archetypes';
+import { createBuilding, createCitizen, createResourceStore } from '@/ecs/factories';
+import { powerSystem } from '@/ecs/systems/powerSystem';
+import { world } from '@/ecs/world';
+import { TICKS_PER_MONTH } from '@/game/Chronology';
 import type { GameRng } from '@/game/SeedSystem';
 import { createTestDvory } from '../playthrough/helpers';
 

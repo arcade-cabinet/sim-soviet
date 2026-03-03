@@ -8,9 +8,9 @@
 
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { getEngine } from '../bridge/GameInit';
 import type { GeneralSecretary, Minister, MinistryModifiers } from '../ai/agents/narrative/politburo/types';
 import { Ministry, PersonalityType } from '../ai/agents/narrative/politburo/types';
+import { getEngine } from '../bridge/GameInit';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';

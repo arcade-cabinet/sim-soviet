@@ -17,27 +17,15 @@
  * for both phases.
  */
 
-import type {
-  IGovernor,
-  GovernorContext,
-  GovernorDirective,
-  DynamicModifiers,
-  GovernorSaveData,
-} from './Governor';
-import { DEFAULT_MODIFIERS } from './Governor';
-import type {
-  CrisisImpact,
-  CrisisContext,
-  ICrisisAgent,
-  CrisisDefinition,
-  CrisisAgentSaveData,
-} from './types';
 import { HISTORICAL_CRISES } from '@/config/historicalCrises';
 import { ChaosEngine, type ChaosState } from './ChaosEngine';
-import { TimelineSystem, type TimelineEvent } from './TimelineSystem';
-import { WarAgent } from './WarAgent';
-import { FamineAgent } from './FamineAgent';
 import { DisasterAgent } from './DisasterAgent';
+import { FamineAgent } from './FamineAgent';
+import type { DynamicModifiers, GovernorContext, GovernorDirective, GovernorSaveData, IGovernor } from './Governor';
+import { DEFAULT_MODIFIERS } from './Governor';
+import { type TimelineEvent, TimelineSystem } from './TimelineSystem';
+import type { CrisisAgentSaveData, CrisisContext, CrisisDefinition, CrisisImpact, ICrisisAgent } from './types';
+import { WarAgent } from './WarAgent';
 
 // ─── Agent Entry ────────────────────────────────────────────────────────────
 
@@ -147,11 +135,7 @@ export class FreeformGovernor implements IGovernor {
 
     for (const entry of this.historicalEntries) {
       // Only activate new historical crises before divergence
-      if (
-        !entry.activated &&
-        ctx.year >= entry.definition.startYear &&
-        !this.hasDiverged
-      ) {
+      if (!entry.activated && ctx.year >= entry.definition.startYear && !this.hasDiverged) {
         entry.agent.configure(entry.definition);
         entry.activated = true;
         this.recordEvent(entry.definition, true);
@@ -159,11 +143,7 @@ export class FreeformGovernor implements IGovernor {
       }
 
       // Handle WarAgent aftermath transition (same as HistoricalGovernor)
-      if (
-        entry.activated &&
-        ctx.year > entry.definition.endYear &&
-        entry.agent.getPhase() === 'peak'
-      ) {
+      if (entry.activated && ctx.year > entry.definition.endYear && entry.agent.getPhase() === 'peak') {
         if (entry.agent instanceof WarAgent) {
           entry.agent.transitionToAftermath();
         }
@@ -184,11 +164,7 @@ export class FreeformGovernor implements IGovernor {
 
       for (const entry of this.freeformEntries) {
         // Handle WarAgent aftermath transition for freeform crises too
-        if (
-          entry.activated &&
-          ctx.year > entry.definition.endYear &&
-          entry.agent.getPhase() === 'peak'
-        ) {
+        if (entry.activated && ctx.year > entry.definition.endYear && entry.agent.getPhase() === 'peak') {
           if (entry.agent instanceof WarAgent) {
             entry.agent.transitionToAftermath();
           }
@@ -302,17 +278,17 @@ export class FreeformGovernor implements IGovernor {
   restore(data: GovernorSaveData): void {
     const s = data.state;
 
-    this.divergenceYear = (s['divergenceYear'] as number) ?? this.divergenceYear;
-    this.hasDiverged = (s['hasDiverged'] as boolean) ?? false;
-    this.currentYear = (s['currentYear'] as number) ?? 0;
-    this.yearsSinceLastWar = (s['yearsSinceLastWar'] as number) ?? 10;
-    this.yearsSinceLastFamine = (s['yearsSinceLastFamine'] as number) ?? 10;
-    this.yearsSinceLastDisaster = (s['yearsSinceLastDisaster'] as number) ?? 10;
-    this.yearsSinceLastPolitical = (s['yearsSinceLastPolitical'] as number) ?? 10;
-    this.totalCrisesExperienced = (s['totalCrisesExperienced'] as number) ?? 0;
+    this.divergenceYear = (s.divergenceYear as number) ?? this.divergenceYear;
+    this.hasDiverged = (s.hasDiverged as boolean) ?? false;
+    this.currentYear = (s.currentYear as number) ?? 0;
+    this.yearsSinceLastWar = (s.yearsSinceLastWar as number) ?? 10;
+    this.yearsSinceLastFamine = (s.yearsSinceLastFamine as number) ?? 10;
+    this.yearsSinceLastDisaster = (s.yearsSinceLastDisaster as number) ?? 10;
+    this.yearsSinceLastPolitical = (s.yearsSinceLastPolitical as number) ?? 10;
+    this.totalCrisesExperienced = (s.totalCrisesExperienced as number) ?? 0;
 
     // Restore timeline
-    const timelineData = s['timeline'] as ReturnType<TimelineSystem['serialize']> | undefined;
+    const timelineData = s.timeline as ReturnType<TimelineSystem['serialize']> | undefined;
     if (timelineData) {
       this.timeline.restore(timelineData);
     }
@@ -321,11 +297,8 @@ export class FreeformGovernor implements IGovernor {
     this.loadHistoricalCrises();
 
     // Restore historical agent states
-    const historicalActivatedSet = new Set(
-      (s['historicalActivatedSet'] as string[]) ?? [],
-    );
-    const historicalAgentStates =
-      (s['historicalAgentStates'] as Record<string, CrisisAgentSaveData>) ?? {};
+    const historicalActivatedSet = new Set((s.historicalActivatedSet as string[]) ?? []);
+    const historicalAgentStates = (s.historicalAgentStates as Record<string, CrisisAgentSaveData>) ?? {};
 
     for (const entry of this.historicalEntries) {
       if (historicalActivatedSet.has(entry.definition.id)) {
@@ -341,7 +314,7 @@ export class FreeformGovernor implements IGovernor {
     // Restore freeform entries
     this.freeformEntries = [];
     const savedFreeform =
-      (s['freeformEntries'] as Array<{
+      (s.freeformEntries as Array<{
         definition: CrisisDefinition;
         agentState: CrisisAgentSaveData;
         activated: boolean;
@@ -420,11 +393,7 @@ export class FreeformGovernor implements IGovernor {
       totalCrisesExperienced: this.totalCrisesExperienced,
     };
 
-    const newCrisis = this.chaosEngine.generateNextCrisis(
-      chaosState,
-      this.timeline.getAllEvents(),
-      ctx.rng,
-    );
+    const newCrisis = this.chaosEngine.generateNextCrisis(chaosState, this.timeline.getAllEvents(), ctx.rng);
 
     if (newCrisis) {
       const agent = createAgentForType(newCrisis.type);
@@ -445,10 +414,7 @@ export class FreeformGovernor implements IGovernor {
   // ─── Private: Helpers ──────────────────────────────────────────────────
 
   /** Build a CrisisContext from GovernorContext. */
-  private buildCrisisContext(
-    ctx: GovernorContext,
-    activeCrisisIds: string[],
-  ): CrisisContext {
+  private buildCrisisContext(ctx: GovernorContext, activeCrisisIds: string[]): CrisisContext {
     return {
       year: ctx.year,
       month: ctx.month,
@@ -509,7 +475,7 @@ export class FreeformGovernor implements IGovernor {
     let quotaMult = 1.0;
     let growthMult = 1.0;
     let decayMult = 1.0;
-    let consumptionMult = 1.0;
+    const consumptionMult = 1.0;
 
     // Track max KGB aggression across all impacts
     let maxKgbMult = 1.0;

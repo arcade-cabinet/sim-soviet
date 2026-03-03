@@ -5,8 +5,8 @@
  * single violations, and multiple simultaneous violations.
  */
 
-import type { RaionPool } from '@/ecs/world';
 import { validateRaionPool } from '@/ai/agents/social/raionValidation';
+import type { RaionPool } from '@/ecs/world';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -89,9 +89,7 @@ describe('validateRaionPool', () => {
     pool.totalPopulation = -10;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('totalPopulation is negative'))).toBe(
-      true,
-    );
+    expect(result.errors.some((e) => e.includes('totalPopulation is negative'))).toBe(true);
   });
 
   test('detects NaN totalPopulation', () => {
@@ -107,9 +105,7 @@ describe('validateRaionPool', () => {
     pool.totalPopulation = Infinity;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('totalPopulation is not finite')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('totalPopulation is not finite'))).toBe(true);
   });
 
   // ── NaN in buckets ──────────────────────────────────────────────────────
@@ -119,9 +115,7 @@ describe('validateRaionPool', () => {
     pool.maleAgeBuckets[5] = NaN;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('maleAgeBuckets[5] is NaN'))).toBe(
-      true,
-    );
+    expect(result.errors.some((e) => e.includes('maleAgeBuckets[5] is NaN'))).toBe(true);
   });
 
   test('detects NaN in female age bucket', () => {
@@ -129,9 +123,7 @@ describe('validateRaionPool', () => {
     pool.femaleAgeBuckets[10] = NaN;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('femaleAgeBuckets[10] is NaN')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('femaleAgeBuckets[10] is NaN'))).toBe(true);
   });
 
   // ── Negative buckets ──────────────────────────────────────────────────
@@ -141,9 +133,7 @@ describe('validateRaionPool', () => {
     pool.maleAgeBuckets[0] = -3;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('maleAgeBuckets[0] is negative')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('maleAgeBuckets[0] is negative'))).toBe(true);
   });
 
   test('detects negative female age bucket', () => {
@@ -151,9 +141,7 @@ describe('validateRaionPool', () => {
     pool.femaleAgeBuckets[19] = -1;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('femaleAgeBuckets[19] is negative')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('femaleAgeBuckets[19] is negative'))).toBe(true);
   });
 
   // ── Non-integer buckets ─────────────────────────────────────────────────
@@ -164,9 +152,7 @@ describe('validateRaionPool', () => {
     pool.totalPopulation = 3.5;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('maleAgeBuckets[7] is not an integer')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('maleAgeBuckets[7] is not an integer'))).toBe(true);
   });
 
   test('detects non-integer female age bucket', () => {
@@ -175,9 +161,7 @@ describe('validateRaionPool', () => {
     pool.totalPopulation = 1.1;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('femaleAgeBuckets[2] is not an integer')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('femaleAgeBuckets[2] is not an integer'))).toBe(true);
   });
 
   // ── laborForce mismatch ─────────────────────────────────────────────────
@@ -206,9 +190,7 @@ describe('validateRaionPool', () => {
     pool.pregnancyWaves = [0, -1, 0];
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('pregnancyWaves[1] is negative')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('pregnancyWaves[1] is negative'))).toBe(true);
   });
 
   test('detects NaN pregnancyWave entry', () => {
@@ -216,9 +198,7 @@ describe('validateRaionPool', () => {
     pool.pregnancyWaves = [NaN, 0, 0];
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('pregnancyWaves[0] is NaN')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('pregnancyWaves[0] is NaN'))).toBe(true);
   });
 
   // ── totalBirths / totalDeaths ──────────────────────────────────────────
@@ -228,9 +208,7 @@ describe('validateRaionPool', () => {
     pool.totalBirths = -5;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('totalBirths is negative'))).toBe(
-      true,
-    );
+    expect(result.errors.some((e) => e.includes('totalBirths is negative'))).toBe(true);
   });
 
   test('detects negative totalDeaths', () => {
@@ -238,9 +216,7 @@ describe('validateRaionPool', () => {
     pool.totalDeaths = -1;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('totalDeaths is negative'))).toBe(
-      true,
-    );
+    expect(result.errors.some((e) => e.includes('totalDeaths is negative'))).toBe(true);
   });
 
   test('detects NaN totalBirths', () => {
@@ -256,9 +232,7 @@ describe('validateRaionPool', () => {
     pool.totalDeaths = Infinity;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('totalDeaths is not finite')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('totalDeaths is not finite'))).toBe(true);
   });
 
   // ── assignedWorkers / idleWorkers ──────────────────────────────────────
@@ -268,9 +242,7 @@ describe('validateRaionPool', () => {
     pool.assignedWorkers = -2;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('assignedWorkers is negative')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('assignedWorkers is negative'))).toBe(true);
   });
 
   test('detects negative idleWorkers', () => {
@@ -278,9 +250,7 @@ describe('validateRaionPool', () => {
     pool.idleWorkers = -1;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('idleWorkers is negative'))).toBe(
-      true,
-    );
+    expect(result.errors.some((e) => e.includes('idleWorkers is negative'))).toBe(true);
   });
 
   test('detects NaN assignedWorkers', () => {
@@ -288,9 +258,7 @@ describe('validateRaionPool', () => {
     pool.assignedWorkers = NaN;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('assignedWorkers is NaN')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('assignedWorkers is NaN'))).toBe(true);
   });
 
   // ── Multiple violations ────────────────────────────────────────────────
@@ -309,18 +277,10 @@ describe('validateRaionPool', () => {
     // Should have at least 6 distinct violations
     expect(result.errors.length).toBeGreaterThanOrEqual(6);
     // Spot-check that specific violations appear
-    expect(result.errors.some((e) => e.includes('maleAgeBuckets[0] is NaN'))).toBe(
-      true,
-    );
-    expect(
-      result.errors.some((e) => e.includes('femaleAgeBuckets[19] is negative')),
-    ).toBe(true);
-    expect(
-      result.errors.some((e) => e.includes('totalPopulation is negative')),
-    ).toBe(true);
-    expect(result.errors.some((e) => e.includes('totalBirths is negative'))).toBe(
-      true,
-    );
+    expect(result.errors.some((e) => e.includes('maleAgeBuckets[0] is NaN'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('femaleAgeBuckets[19] is negative'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('totalPopulation is negative'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('totalBirths is negative'))).toBe(true);
     expect(result.errors.some((e) => e.includes('laborForce'))).toBe(true);
     expect(result.errors.some((e) => e.includes('pregnancyWaves'))).toBe(true);
   });
@@ -332,9 +292,7 @@ describe('validateRaionPool', () => {
     pool.maleAgeBuckets = new Array(15).fill(0);
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('maleAgeBuckets length is 15')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('maleAgeBuckets length is 15'))).toBe(true);
   });
 
   test('detects wrong femaleAgeBuckets length', () => {
@@ -342,9 +300,7 @@ describe('validateRaionPool', () => {
     pool.femaleAgeBuckets = new Array(25).fill(0);
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('femaleAgeBuckets length is 25')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('femaleAgeBuckets length is 25'))).toBe(true);
   });
 
   // ── Population in non-labor buckets ─────────────────────────────────────
@@ -369,8 +325,6 @@ describe('validateRaionPool', () => {
     pool.maleAgeBuckets[4] = Infinity;
     const result = validateRaionPool(pool);
     expect(result.valid).toBe(false);
-    expect(
-      result.errors.some((e) => e.includes('maleAgeBuckets[4] is not finite')),
-    ).toBe(true);
+    expect(result.errors.some((e) => e.includes('maleAgeBuckets[4] is not finite'))).toBe(true);
   });
 });

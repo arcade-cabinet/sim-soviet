@@ -6,10 +6,10 @@
  * peaceful years, getActiveCrises(), and serialization round-trips.
  */
 
-import { GameRng } from '@/game/SeedSystem';
-import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
-import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
 import type { GovernorContext } from '@/ai/agents/crisis/Governor';
+import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
+import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
+import { GameRng } from '@/game/SeedSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -31,13 +31,9 @@ function makeCtx(overrides?: Partial<GovernorContext>): GovernorContext {
  * Helper: advance the governor through multiple ticks at a given year/month.
  * Returns the last directive.
  */
-function advanceTicks(
-  gov: HistoricalGovernor,
-  ticks: number,
-  yearOrCtx: number | Partial<GovernorContext>,
-) {
+function advanceTicks(gov: HistoricalGovernor, ticks: number, yearOrCtx: number | Partial<GovernorContext>) {
   const base = typeof yearOrCtx === 'number' ? { year: yearOrCtx } : yearOrCtx;
-  let directive;
+  let directive: ReturnType<HistoricalGovernor['evaluate']> | undefined;
   for (let i = 0; i < ticks; i++) {
     directive = gov.evaluate(makeCtx(base));
   }
@@ -102,9 +98,7 @@ describe('HistoricalGovernor: Holodomor', () => {
     expect(active).toContain('holodomor');
 
     // Should produce at least one impact from the Holodomor famine agent
-    const famineImpacts = directive.crisisImpacts.filter(
-      (i) => i.crisisId === 'holodomor',
-    );
+    const famineImpacts = directive.crisisImpacts.filter((i) => i.crisisId === 'holodomor');
     expect(famineImpacts.length).toBeGreaterThan(0);
   });
 
@@ -115,9 +109,7 @@ describe('HistoricalGovernor: Holodomor', () => {
     const directive = advanceTicks(gov, 15, { year: 1932, month: 6 });
 
     // Growth should be reduced by famine effects
-    expect(directive.modifiers.growthMultiplier).toBeLessThan(
-      DEFAULT_MODIFIERS.growthMultiplier,
-    );
+    expect(directive.modifiers.growthMultiplier).toBeLessThan(DEFAULT_MODIFIERS.growthMultiplier);
   });
 });
 
@@ -133,9 +125,7 @@ describe('HistoricalGovernor: Great Patriotic War', () => {
     expect(active).toContain('great_patriotic_war');
 
     // Should have war impacts (conscription, economy)
-    const warImpacts = directive.crisisImpacts.filter(
-      (i) => i.crisisId === 'great_patriotic_war',
-    );
+    const warImpacts = directive.crisisImpacts.filter((i) => i.crisisId === 'great_patriotic_war');
     expect(warImpacts.length).toBeGreaterThan(0);
   });
 
@@ -146,9 +136,7 @@ describe('HistoricalGovernor: Great Patriotic War', () => {
     advanceTicks(gov, 13, { year: 1941, month: 6 });
     const directive = gov.evaluate(makeCtx({ year: 1943, month: 1 }));
 
-    const warImpact = directive.crisisImpacts.find(
-      (i) => i.crisisId === 'great_patriotic_war',
-    );
+    const warImpact = directive.crisisImpacts.find((i) => i.crisisId === 'great_patriotic_war');
     expect(warImpact).toBeDefined();
     expect(warImpact!.workforce?.conscriptionCount).toBeDefined();
   });
@@ -166,7 +154,7 @@ describe('HistoricalGovernor: Great Patriotic War', () => {
     advanceTicks(gov, 1, { year: 1946 });
 
     // The war should still be active (in aftermath), not instantly resolved
-    const active = gov.getActiveCrises();
+    const _active = gov.getActiveCrises();
     // After the endYear transition, it may still be active in aftermath
     // or it may have resolved depending on aftermath ticks
     const directive = gov.evaluate(makeCtx({ year: 1946, month: 6 }));
@@ -193,9 +181,7 @@ describe('HistoricalGovernor: Chernobyl', () => {
     // Chernobyl has buildupTicks=0, goes straight to peak then aftermath
     const directive = gov.evaluate(makeCtx({ year: 1986, month: 4 }));
 
-    const chernobylImpact = directive.crisisImpacts.find(
-      (i) => i.crisisId === 'chernobyl',
-    );
+    const chernobylImpact = directive.crisisImpacts.find((i) => i.crisisId === 'chernobyl');
     expect(chernobylImpact).toBeDefined();
   });
 });
@@ -270,9 +256,7 @@ describe('HistoricalGovernor: concurrent crises', () => {
     const directive = gov.evaluate(makeCtx({ year: 1921, month: 6 }));
 
     // Should have impacts from multiple sources
-    const uniqueCrisisIds = new Set(
-      directive.crisisImpacts.map((i) => i.crisisId),
-    );
+    const uniqueCrisisIds = new Set(directive.crisisImpacts.map((i) => i.crisisId));
     expect(uniqueCrisisIds.size).toBeGreaterThanOrEqual(2);
   });
 });
@@ -302,9 +286,7 @@ describe('HistoricalGovernor: impact merging', () => {
     const directive = gov.evaluate(makeCtx({ year: 1919, month: 6 }));
 
     // Decay multiplier should be >= 1.0 during active war
-    expect(directive.modifiers.decayMultiplier).toBeGreaterThanOrEqual(
-      DEFAULT_MODIFIERS.decayMultiplier,
-    );
+    expect(directive.modifiers.decayMultiplier).toBeGreaterThanOrEqual(DEFAULT_MODIFIERS.decayMultiplier);
   });
 });
 
@@ -407,9 +389,9 @@ describe('HistoricalGovernor: serialization', () => {
     expect(data.mode).toBe('historical');
     expect(data.activeCrises).toContain('great_patriotic_war');
     expect(data.state).toBeDefined();
-    expect(data.state['currentYear']).toBeDefined();
-    expect(data.state['agentStates']).toBeDefined();
-    expect(data.state['activatedSet']).toBeDefined();
+    expect(data.state.currentYear).toBeDefined();
+    expect(data.state.agentStates).toBeDefined();
+    expect(data.state.activatedSet).toBeDefined();
   });
 
   it('restored governor produces consistent directives', () => {

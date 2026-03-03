@@ -6,13 +6,13 @@
  * collective can auto-build distilleries.
  */
 
-import { createMetaStore, createResourceStore } from '@/ecs/factories';
-import { world } from '@/ecs/world';
 import {
   detectConstructionDemands,
   VODKA_CRITICAL_THRESHOLD,
   VODKA_DEMAND_THRESHOLD,
 } from '@/ai/agents/infrastructure/CollectiveAgent';
+import { createMetaStore, createResourceStore } from '@/ecs/factories';
+import { world } from '@/ecs/world';
 
 describe('VodkaDemand', () => {
   beforeEach(() => {

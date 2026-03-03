@@ -8,15 +8,14 @@
  * that previously lived in src/config.ts.
  */
 
+import chronologyData from './chronology.json';
 import demographicsData from './demographics.json';
 import economyData from './economy.json';
-import workforceData from './workforce.json';
-import chronologyData from './chronology.json';
+import infrastructureData from './infrastructure.json';
+import metaData from './meta.json';
+import narrativeData from './narrative.json';
 import politicalData from './political.json';
 import socialData from './social.json';
-import infrastructureData from './infrastructure.json';
-import narrativeData from './narrative.json';
-import metaData from './meta.json';
 import type {
   ChronologyConfig,
   DemographicsConfig,
@@ -28,6 +27,7 @@ import type {
   SocialConfig,
   WorkforceConfig,
 } from './types';
+import workforceData from './workforce.json';
 
 // ── Legacy grid config (previously src/config.ts) ───────────────────────────
 
@@ -57,7 +57,7 @@ export const chronology: ChronologyConfig = chronologyData as ChronologyConfig;
 // ── Political config ────────────────────────────────────────────────────────
 
 /** Typed political configuration loaded from political.json. */
-export const political: PoliticalConfig = politicalData as PoliticalConfig;
+export const political: PoliticalConfig = politicalData as unknown as PoliticalConfig;
 
 // ── Social config ───────────────────────────────────────────────────────────
 
@@ -72,7 +72,7 @@ export const infrastructure: InfrastructureConfig = infrastructureData as Infras
 // ── Narrative config ────────────────────────────────────────────────────────
 
 /** Typed narrative configuration loaded from narrative.json. */
-export const narrative: NarrativeConfig = narrativeData as NarrativeConfig;
+export const narrative: NarrativeConfig = narrativeData as unknown as NarrativeConfig;
 
 // ── Meta config ─────────────────────────────────────────────────────────────
 
@@ -81,8 +81,8 @@ export const meta: MetaConfig = metaData as MetaConfig;
 
 // Re-export types for consumers
 export type {
-  AggregateConfig,
   AggregateBirthRates,
+  AggregateConfig,
   AggregateLaborForce,
   ChronologyConfig,
   DemographicsConfig,

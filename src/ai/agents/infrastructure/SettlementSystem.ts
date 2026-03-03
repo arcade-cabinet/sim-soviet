@@ -11,8 +11,8 @@
  */
 
 import { infrastructure } from '@/config';
-import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
 import { getBuildingDef } from '@/data/buildingDefs';
+import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
 
 // ─────────────────────────────────────────────────────────
 //  TYPES

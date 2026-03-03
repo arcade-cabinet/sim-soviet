@@ -6,33 +6,25 @@
  */
 
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
-import type { EraDefinition } from '../era';
-import type { TallyData } from '../GameTally';
-import type {
-  MandateWithFulfillment,
-  PlanMandateState,
-} from '../../ai/agents/political/PoliticalAgent';
-import type { ActiveMinigame } from '../../ai/agents/meta/minigames/MinigameTypes';
-import type { TutorialMilestone } from '../../ai/agents/meta/TutorialSystem';
-import type { SettlementEvent } from '../../ai/agents/infrastructure/SettlementSystem';
-import type { ConsequenceLevel } from '../../ai/agents/political/ScoringSystem';
-import type { EraSystemSaveData } from '../era';
-import type { PersonnelFileSaveData } from '../../ai/agents/political/KGBAgent';
-import type { SettlementSaveData } from '../../ai/agents/infrastructure/SettlementSystem';
-import type { ScoringSystemSaveData } from '../../ai/agents/political/ScoringSystem';
-import type { CompulsoryDeliverySaveData } from '../../ai/agents/political/CompulsoryDeliveries';
 import type { ChronologyState } from '../../ai/agents/core/ChronologyAgent';
-import type { EconomySaveData } from '../../ai/agents/economy/EconomyAgent';
-import type { EventSystemSaveData } from '../../ai/agents/narrative/events';
-import type { PravdaSaveData } from '../../ai/agents/narrative/pravda';
-import type { PolitburoSaveData } from '../../ai/agents/narrative/politburo';
-import type { PoliticalEntitySaveData } from '../../ai/agents/political/types';
-import type { MinigameRouterSaveData } from '../../ai/agents/meta/minigames/MinigameTypes';
-import type { TutorialSaveData } from '../../ai/agents/meta/TutorialSystem';
-import type { AchievementTrackerSaveData } from '../../ai/agents/meta/AchievementTracker';
-import type { TransportSaveData } from '../../ai/agents/infrastructure/TransportSystem';
-import type { FireSystemSaveData } from '../../ai/agents/social/DefenseAgent';
 import type { GovernorSaveData } from '../../ai/agents/crisis/Governor';
+import type { EconomySaveData } from '../../ai/agents/economy/EconomyAgent';
+import type { SettlementEvent, SettlementSaveData } from '../../ai/agents/infrastructure/SettlementSystem';
+import type { TransportSaveData } from '../../ai/agents/infrastructure/TransportSystem';
+import type { AchievementTrackerSaveData } from '../../ai/agents/meta/AchievementTracker';
+import type { ActiveMinigame, MinigameRouterSaveData } from '../../ai/agents/meta/minigames/MinigameTypes';
+import type { TutorialMilestone, TutorialSaveData } from '../../ai/agents/meta/TutorialSystem';
+import type { EventSystemSaveData } from '../../ai/agents/narrative/events';
+import type { PolitburoSaveData } from '../../ai/agents/narrative/politburo';
+import type { PravdaSaveData } from '../../ai/agents/narrative/pravda';
+import type { CompulsoryDeliverySaveData } from '../../ai/agents/political/CompulsoryDeliveries';
+import type { PersonnelFileSaveData } from '../../ai/agents/political/KGBAgent';
+import type { MandateWithFulfillment, PlanMandateState } from '../../ai/agents/political/PoliticalAgent';
+import type { ConsequenceLevel, ScoringSystemSaveData } from '../../ai/agents/political/ScoringSystem';
+import type { PoliticalEntitySaveData } from '../../ai/agents/political/types';
+import type { FireSystemSaveData } from '../../ai/agents/social/DefenseAgent';
+import type { EraDefinition, EraSystemSaveData } from '../era';
+import type { TallyData } from '../GameTally';
 
 /**
  * Callback interface for SimulationEngine → React communication.

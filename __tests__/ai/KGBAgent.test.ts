@@ -12,8 +12,8 @@
  *   - Informant network
  */
 
-import { KGBAgent } from '../../src/ai/agents/political/KGBAgent';
 import type { KGBState } from '../../src/ai/agents/political/KGBAgent';
+import { KGBAgent } from '../../src/ai/agents/political/KGBAgent';
 import type { PoliticalEntityStats, PoliticalTickResult } from '../../src/ai/agents/political/types';
 
 // ─────────────────────────────────────────────────────────
@@ -96,14 +96,14 @@ describe('KGBAgent — mark addition', () => {
 
   it('accumulates black marks correctly', () => {
     const kgb = new KGBAgent('comrade');
-    kgb.addMark('quota_missed_minor', 100);    // +1
-    kgb.addMark('quota_missed_major', 200);    // +2
+    kgb.addMark('quota_missed_minor', 100); // +1
+    kgb.addMark('quota_missed_major', 200); // +2
     expect(kgb.getBlackMarks()).toBe(3);
   });
 
   it('adds marks with correct amounts per source', () => {
     const kgb = new KGBAgent();
-    kgb.addMark('report_falsified', 1);          // 3 marks
+    kgb.addMark('report_falsified', 1); // 3 marks
     expect(kgb.getBlackMarks()).toBe(3);
 
     kgb.addMark('quota_missed_catastrophic', 2); // 3 more marks
@@ -136,8 +136,8 @@ describe('KGBAgent — mark addition', () => {
 describe('KGBAgent — commendations', () => {
   it('commendations reduce effective marks', () => {
     const kgb = new KGBAgent();
-    kgb.addMark('quota_missed_minor', 1);    // +1 mark
-    kgb.addMark('quota_missed_minor', 2);    // +1 mark (total 2)
+    kgb.addMark('quota_missed_minor', 1); // +1 mark
+    kgb.addMark('quota_missed_minor', 2); // +1 mark (total 2)
     kgb.addCommendation('quota_exceeded', 3); // +1 commendation
 
     expect(kgb.getBlackMarks()).toBe(2);
@@ -168,29 +168,29 @@ describe('KGBAgent — threat level computation', () => {
 
   it('returns "watched" at 3 effective marks', () => {
     const kgb = new KGBAgent();
-    kgb.addMark('quota_missed_major', 1);  // +2
-    kgb.addMark('quota_missed_minor', 2);  // +1 → 3 total
+    kgb.addMark('quota_missed_major', 1); // +2
+    kgb.addMark('quota_missed_minor', 2); // +1 → 3 total
     expect(kgb.getThreatLevel()).toBe('watched');
   });
 
   it('returns "warned" at 4 effective marks', () => {
     const kgb = new KGBAgent();
     kgb.addMark('conscription_failed', 1); // +2
-    kgb.addMark('quota_missed_major', 2);  // +2 → 4 total
+    kgb.addMark('quota_missed_major', 2); // +2 → 4 total
     expect(kgb.getThreatLevel()).toBe('warned');
   });
 
   it('returns "investigated" at 5 effective marks', () => {
     const kgb = new KGBAgent();
-    kgb.addMark('report_falsified', 1);    // +3
-    kgb.addMark('quota_missed_major', 2);  // +2 → 5 total
+    kgb.addMark('report_falsified', 1); // +3
+    kgb.addMark('quota_missed_major', 2); // +2 → 5 total
     expect(kgb.getThreatLevel()).toBe('investigated');
   });
 
   it('returns "reviewed" at 6 effective marks', () => {
     const kgb = new KGBAgent();
-    kgb.addMark('report_falsified', 1);    // +3
-    kgb.addMark('report_falsified', 2);    // +3 → 6 total
+    kgb.addMark('report_falsified', 1); // +3
+    kgb.addMark('report_falsified', 2); // +3 → 6 total
     expect(kgb.getThreatLevel()).toBe('reviewed');
   });
 
@@ -198,14 +198,14 @@ describe('KGBAgent — threat level computation', () => {
     const kgb = new KGBAgent();
     kgb.addMark('quota_missed_catastrophic', 1); // +3
     kgb.addMark('quota_missed_catastrophic', 2); // +3 → 6
-    kgb.addMark('quota_missed_minor', 3);        // +1 → 7
+    kgb.addMark('quota_missed_minor', 3); // +1 → 7
     expect(kgb.getThreatLevel()).toBe('arrested');
     expect(kgb.isArrested()).toBe(true);
   });
 
   it('isArrested returns false below threshold', () => {
     const kgb = new KGBAgent();
-    kgb.addMark('quota_missed_major', 1);  // +2 (effective = 2)
+    kgb.addMark('quota_missed_major', 1); // +2 (effective = 2)
     expect(kgb.isArrested()).toBe(false);
   });
 });
@@ -303,7 +303,7 @@ describe('KGBAgent — mark decay (tickPersonnelFile)', () => {
 describe('KGBAgent — rehabilitation and era resets', () => {
   it('resetForRehabilitation sets marks and clears commendations', () => {
     const kgb = new KGBAgent();
-    kgb.addMark('report_falsified', 1);     // +3
+    kgb.addMark('report_falsified', 1); // +3
     kgb.addCommendation('quota_exceeded', 2); // +1 commendation
     kgb.resetForRehabilitation(2, 100);
 
@@ -387,7 +387,7 @@ describe('KGBAgent — suspicion assessment (assessThreat)', () => {
     const high = new KGBAgent('tovarish');
 
     // Same marks, quota: tovarish (high) reaches higher suspicion sooner
-    low.assessThreat(3, 0, 1.0, 'worker');    // 3/8 = 0.375
+    low.assessThreat(3, 0, 1.0, 'worker'); // 3/8 = 0.375
     high.assessThreat(3, 0, 1.0, 'tovarish'); // 3/3 = 1.0
 
     expect(high.getSuspicionLevel()).toBeGreaterThan(low.getSuspicionLevel());

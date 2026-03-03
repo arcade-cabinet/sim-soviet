@@ -3,7 +3,20 @@
  *
  * Social agents: demographics and civil defense (fire/disease).
  */
-export { DemographicAgent } from './DemographicAgent';
-export type { DeadMemberRef, AgedIntoWorkingRef, DemographicTickResult, DemographicAgentSnapshot } from './DemographicAgent';
+
+export type {
+  DefenseAgentCallbacks,
+  DefenseAgentSnapshot,
+  DiseaseDefinition,
+  DiseaseType,
+  EmergencyState,
+  ZeppelinState,
+} from './DefenseAgent';
 export { DefenseAgent, DISEASE_DEFINITIONS } from './DefenseAgent';
-export type { DiseaseType, DiseaseDefinition, ZeppelinState, EmergencyState, DefenseAgentSnapshot, DefenseAgentCallbacks } from './DefenseAgent';
+export type {
+  AgedIntoWorkingRef,
+  DeadMemberRef,
+  DemographicAgentSnapshot,
+  DemographicTickResult,
+} from './DemographicAgent';
+export { DemographicAgent } from './DemographicAgent';

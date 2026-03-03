@@ -60,7 +60,8 @@ const CONSEQUENCE_FLAVOR: Record<ConsequenceLevel, string> = {
 
 const GAME_MODE_FLAVOR: Record<GameMode, string> = {
   historical: 'History IS the difficulty. Survive the actual Soviet timeline.',
-  freeform: 'Play through history to your chosen year, then forge your own Soviet timeline. What if the revolution had gone differently?',
+  freeform:
+    'Play through history to your chosen year, then forge your own Soviet timeline. What if the revolution had gone differently?',
   classic: 'Choose your own difficulty. Standard city-builder experience.',
 };
 
@@ -112,9 +113,7 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
                 onPress={() => setGameMode(m)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.optionLabel, gameMode === m && styles.optionLabelActive]}>
-                  {m.toUpperCase()}
-                </Text>
+                <Text style={[styles.optionLabel, gameMode === m && styles.optionLabelActive]}>{m.toUpperCase()}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -142,35 +141,35 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
               </TouchableOpacity>
             </View>
             <Text style={styles.eraLabel}>{getEraLabel(divergenceYear)}</Text>
-            <Text style={styles.flavor}>
-              History diverges in {divergenceYear}. After that, anything can happen.
-            </Text>
+            <Text style={styles.flavor}>History diverges in {divergenceYear}. After that, anything can happen.</Text>
           </View>
         )}
 
-        {gameMode === 'classic' && <View style={styles.section}>
-          <Text style={styles.sectionLabel}>DIFFICULTY LEVEL</Text>
-          <View style={styles.optionRow}>
-            {(['worker', 'comrade', 'tovarish'] as DifficultyLevel[]).map((d) => (
-              <TouchableOpacity
-                key={d}
-                style={[styles.optionBtn, difficulty === d && styles.optionBtnActive]}
-                onPress={() => setDifficulty(d)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.optionLabel, difficulty === d && styles.optionLabelActive]}>
-                  {DIFFICULTY_PRESETS[d].label.toUpperCase()}
-                </Text>
-              </TouchableOpacity>
-            ))}
+        {gameMode === 'classic' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>DIFFICULTY LEVEL</Text>
+            <View style={styles.optionRow}>
+              {(['worker', 'comrade', 'tovarish'] as DifficultyLevel[]).map((d) => (
+                <TouchableOpacity
+                  key={d}
+                  style={[styles.optionBtn, difficulty === d && styles.optionBtnActive]}
+                  onPress={() => setDifficulty(d)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.optionLabel, difficulty === d && styles.optionLabelActive]}>
+                    {DIFFICULTY_PRESETS[d].label.toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.flavor}>{DIFFICULTY_FLAVOR[difficulty]}</Text>
+            <View style={styles.statsRow}>
+              <Text style={styles.statText}>Quota: x{diffConfig.quotaMultiplier}</Text>
+              <Text style={styles.statText}>Growth: x{diffConfig.growthMultiplier}</Text>
+              <Text style={styles.statText}>Decay: x{diffConfig.decayMultiplier}</Text>
+            </View>
           </View>
-          <Text style={styles.flavor}>{DIFFICULTY_FLAVOR[difficulty]}</Text>
-          <View style={styles.statsRow}>
-            <Text style={styles.statText}>Quota: x{diffConfig.quotaMultiplier}</Text>
-            <Text style={styles.statText}>Growth: x{diffConfig.growthMultiplier}</Text>
-            <Text style={styles.statText}>Decay: x{diffConfig.decayMultiplier}</Text>
-          </View>
-        </View>}
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>CONSEQUENCE LEVEL</Text>

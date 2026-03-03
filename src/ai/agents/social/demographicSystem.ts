@@ -14,8 +14,8 @@
  *   - Tick 0 is skipped (no events before the game starts)
  */
 
-import { demographics } from '@/config';
 import { FEMALE_GIVEN_NAMES, MALE_GIVEN_NAMES, PATRONYMIC_RULES, SURNAMES_RAW } from '@/ai/names';
+import { demographics } from '@/config';
 import { dvory } from '@/ecs/archetypes';
 import { laborCapacityForAge, memberRoleForAge } from '@/ecs/factories';
 import type { DvorComponent, DvorMember } from '@/ecs/world';
@@ -187,7 +187,7 @@ export function ageAllMembers(result: DemographicTickResult): number {
  * The head of household's given name is used for the patronymic (Russian custom).
  */
 function generateInfantName(dvor: DvorComponent, infantGender: 'male' | 'female', rng: GameRng | null): string {
-  const r = () => rng ? rng.random() : Math.random();
+  const r = () => (rng ? rng.random() : Math.random());
   const pickFrom = <T>(arr: readonly T[]): T => arr[Math.floor(r() * arr.length)]!;
 
   // Given name

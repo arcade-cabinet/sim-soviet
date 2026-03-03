@@ -1,3 +1,4 @@
+import { ERA_SPECIFIC_EVENTS } from '@/ai/agents/narrative/events/templates/era_specific';
 import {
   BUILDING_TIER_REQUIREMENTS,
   ERA_DEFINITIONS,
@@ -10,7 +11,6 @@ import {
   tierMeetsRequirement,
 } from '@/game/era';
 import { ALL_BUILDING_IDS } from '@/game/era/definitions';
-import { ERA_SPECIFIC_EVENTS } from '@/ai/agents/narrative/events/templates/era_specific';
 
 // ─────────────────────────────────────────────────────────
 //  Era Definition Integrity
@@ -493,7 +493,7 @@ describe('EraSystem getters', () => {
   it('getDeliveryRates returns a copy', () => {
     const sys = new EraSystem(1990);
     const rates = sys.getDeliveryRates();
-    expect(rates).toEqual({ food: 0.35, vodka: 0.30, money: 0.40 });
+    expect(rates).toEqual({ food: 0.35, vodka: 0.3, money: 0.4 });
     rates.food = 999;
     expect(sys.getDeliveryRates().food).toBe(0.35);
   });

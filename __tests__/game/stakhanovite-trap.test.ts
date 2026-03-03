@@ -19,8 +19,8 @@ import {
   STAKHANOVITE_CONFIG,
   type StakhanoviteEvent,
 } from '../../src/ai/agents/economy/economy-core';
-import { GameRng } from '../../src/game/SeedSystem';
 import { WorkerSystem } from '../../src/ai/agents/workforce/WorkerSystem';
+import { GameRng } from '../../src/game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Helpers
@@ -121,7 +121,7 @@ describe('StakhanoviteEvent — new consequence fields', () => {
     const event = result!.event;
     // quotaIncrease = base + random * range = 0.25 + [0,1) * 0.15
     expect(event.quotaIncrease).toBeGreaterThanOrEqual(0.25);
-    expect(event.quotaIncrease).toBeLessThanOrEqual(0.40);
+    expect(event.quotaIncrease).toBeLessThanOrEqual(0.4);
   });
 });
 
@@ -178,7 +178,7 @@ describe('Stakhanovite — fraud exposure', () => {
     const ratio = fraudCount / eventCount;
     // Allow wide tolerance
     expect(ratio).toBeGreaterThan(0.02);
-    expect(ratio).toBeLessThan(0.20);
+    expect(ratio).toBeLessThan(0.2);
   });
 });
 

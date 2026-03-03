@@ -5,13 +5,9 @@
  * phase transitions, aftermath exponential decay, and serialization round-trips.
  */
 
+import { aftermathDecay, DisasterAgent } from '@/ai/agents/crisis/DisasterAgent';
+import type { CrisisContext, CrisisDefinition, CrisisImpact } from '@/ai/agents/crisis/types';
 import { GameRng } from '@/game/SeedSystem';
-import { DisasterAgent, aftermathDecay } from '@/ai/agents/crisis/DisasterAgent';
-import type {
-  CrisisDefinition,
-  CrisisContext,
-  CrisisImpact,
-} from '@/ai/agents/crisis/types';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -116,11 +112,7 @@ function makeContext(overrides?: Partial<CrisisContext>): CrisisContext {
 }
 
 /** Advance the agent N ticks, collecting all impacts. */
-function advanceTicks(
-  agent: DisasterAgent,
-  count: number,
-  ctxOverrides?: Partial<CrisisContext>,
-): CrisisImpact[] {
+function advanceTicks(agent: DisasterAgent, count: number, ctxOverrides?: Partial<CrisisContext>): CrisisImpact[] {
   const allImpacts: CrisisImpact[] = [];
   for (let i = 0; i < count; i++) {
     const impacts = agent.evaluate(makeContext(ctxOverrides));
@@ -658,7 +650,7 @@ describe('DisasterAgent — serialization', () => {
     const saved = agent1.serialize();
     expect(saved.phase).toBe('aftermath');
     expect(saved.ticksInPhase).toBe(10);
-    expect(saved.extra?.['hasStarted']).toBe(true);
+    expect(saved.extra?.hasStarted).toBe(true);
 
     const agent2 = new DisasterAgent();
     agent2.restore(saved);
@@ -696,7 +688,7 @@ describe('DisasterAgent — serialization', () => {
     expect(agent1.getPhase()).toBe('resolved');
 
     const saved = agent1.serialize();
-    expect(saved.extra?.['hasStarted']).toBe(true);
+    expect(saved.extra?.hasStarted).toBe(true);
 
     const agent2 = new DisasterAgent();
     agent2.restore(saved);

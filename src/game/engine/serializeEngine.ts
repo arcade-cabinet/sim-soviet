@@ -8,36 +8,45 @@
 import { buildingsLogic, citizens, dvory, getResourceEntity } from '@/ecs/archetypes';
 import type { QuotaState } from '@/ecs/systems';
 import { world } from '@/ecs/world';
-import type { AchievementTracker } from '../../ai/agents/meta/AchievementTracker';
-import { AchievementTracker as AchievementTrackerClass } from '../../ai/agents/meta/AchievementTracker';
 import type { ChronologySystem } from '../../ai/agents/core/ChronologyAgent';
 import { ChronologySystem as ChronologySystemClass } from '../../ai/agents/core/ChronologyAgent';
-import type { CompulsoryDeliveries } from '../../ai/agents/political/CompulsoryDeliveries';
-import { CompulsoryDeliveries as CompulsoryDeliveriesClass } from '../../ai/agents/political/CompulsoryDeliveries';
+import type { IGovernor } from '../../ai/agents/crisis/Governor';
 import type { EraId as EconomyEraId, EconomySystem } from '../../ai/agents/economy/EconomyAgent';
 import { EconomySystem as EconomySystemClass } from '../../ai/agents/economy/EconomyAgent';
-import type { EraSystem } from '../era';
-import { EraSystem as EraSystemClass } from '../era';
-import type { EventSystem, GameEvent } from '../../ai/agents/narrative/events';
-import { EventSystem as EventSystemClass } from '../../ai/agents/narrative/events';
-import type { FireSystem } from '../../ai/agents/social/DefenseAgent';
-import { FireSystem as FireSystemClass } from '../../ai/agents/social/DefenseAgent';
+import { DIFFICULTY_MULTIPLIERS } from '../../ai/agents/economy/economy-core';
+import type { ForagingState } from '../../ai/agents/economy/foragingSystem';
+import { createForagingState } from '../../ai/agents/economy/foragingSystem';
+import type { SettlementSystem } from '../../ai/agents/infrastructure/SettlementSystem';
+import { SettlementSystem as SettlementSystemClass } from '../../ai/agents/infrastructure/SettlementSystem';
+import type { TransportSystem } from '../../ai/agents/infrastructure/TransportSystem';
+import { TransportSystem as TransportSystemClass } from '../../ai/agents/infrastructure/TransportSystem';
+import type { AchievementTracker } from '../../ai/agents/meta/AchievementTracker';
+import { AchievementTracker as AchievementTrackerClass } from '../../ai/agents/meta/AchievementTracker';
 import type { MinigameRouter } from '../../ai/agents/meta/minigames/MinigameRouter';
 import { MinigameRouter as MinigameRouterClass } from '../../ai/agents/meta/minigames/MinigameRouter';
+import type { TutorialSystem } from '../../ai/agents/meta/TutorialSystem';
+import { TutorialSystem as TutorialSystemClass } from '../../ai/agents/meta/TutorialSystem';
+import type { EventSystem, GameEvent } from '../../ai/agents/narrative/events';
+import { EventSystem as EventSystemClass } from '../../ai/agents/narrative/events';
+import type { PolitburoSystem } from '../../ai/agents/narrative/politburo';
+import { PolitburoSystem as PolitburoSystemClass } from '../../ai/agents/narrative/politburo';
+import type { PravdaSystem } from '../../ai/agents/narrative/pravda';
+import { PravdaSystem as PravdaSystemClass } from '../../ai/agents/narrative/pravda';
+import type { CompulsoryDeliveries } from '../../ai/agents/political/CompulsoryDeliveries';
+import { CompulsoryDeliveries as CompulsoryDeliveriesClass } from '../../ai/agents/political/CompulsoryDeliveries';
 import type { PersonnelFile } from '../../ai/agents/political/KGBAgent';
 import { PersonnelFile as PersonnelFileClass } from '../../ai/agents/political/KGBAgent';
 import type { PlanMandateState } from '../../ai/agents/political/PoliticalAgent';
-import type { PolitburoSystem } from '../../ai/agents/narrative/politburo';
-import { PolitburoSystem as PolitburoSystemClass } from '../../ai/agents/narrative/politburo';
 import type { PoliticalEntitySystem } from '../../ai/agents/political/PoliticalEntitySystem';
 import { PoliticalEntitySystem as PoliticalEntitySystemClass } from '../../ai/agents/political/PoliticalEntitySystem';
-import type { PravdaSystem } from '../../ai/agents/narrative/pravda';
-import { PravdaSystem as PravdaSystemClass } from '../../ai/agents/narrative/pravda';
 import type { ScoringSystem } from '../../ai/agents/political/ScoringSystem';
 import { ScoringSystem as ScoringSystemClass } from '../../ai/agents/political/ScoringSystem';
+import type { FireSystem } from '../../ai/agents/social/DefenseAgent';
+import { FireSystem as FireSystemClass } from '../../ai/agents/social/DefenseAgent';
+import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
+import type { EraSystem } from '../era';
+import { EraSystem as EraSystemClass } from '../era';
 import type { GameRng } from '../SeedSystem';
-import type { SettlementSystem } from '../../ai/agents/infrastructure/SettlementSystem';
-import { SettlementSystem as SettlementSystemClass } from '../../ai/agents/infrastructure/SettlementSystem';
 import type {
   BuildingWorkforceSaveEntry,
   DvorSaveEntry,
@@ -45,15 +54,6 @@ import type {
   SubsystemSaveData,
   WorkerStatSaveEntry,
 } from './types';
-import type { ForagingState } from '../../ai/agents/economy/foragingSystem';
-import { createForagingState } from '../../ai/agents/economy/foragingSystem';
-import type { IGovernor } from '../../ai/agents/crisis/Governor';
-import type { TransportSystem } from '../../ai/agents/infrastructure/TransportSystem';
-import { TransportSystem as TransportSystemClass } from '../../ai/agents/infrastructure/TransportSystem';
-import type { TutorialSystem } from '../../ai/agents/meta/TutorialSystem';
-import { TutorialSystem as TutorialSystemClass } from '../../ai/agents/meta/TutorialSystem';
-import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
-import { DIFFICULTY_MULTIPLIERS } from '../../ai/agents/economy/economy-core';
 
 /** Maps game EraSystem IDs to EconomySystem EraIds (needed for fallback on restore). */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -451,9 +451,7 @@ function restoreRaionPool(saved: RaionPoolSaveData): import('@/ecs/world').Raion
 function restoreBuildingWorkforce(entries: BuildingWorkforceSaveEntry[]): void {
   const allBuildings = [...buildingsLogic];
   for (const entry of entries) {
-    const match = allBuildings.find(
-      (b) => b.position.gridX === entry.gridX && b.position.gridY === entry.gridY,
-    );
+    const match = allBuildings.find((b) => b.position.gridX === entry.gridX && b.position.gridY === entry.gridY);
     if (match) {
       match.building.workerCount = entry.workerCount;
       match.building.residentCount = entry.residentCount;

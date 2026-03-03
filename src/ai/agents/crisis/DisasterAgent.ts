@@ -19,11 +19,11 @@
  */
 
 import type {
-  CrisisDefinition,
+  CrisisAgentSaveData,
   CrisisContext,
+  CrisisDefinition,
   CrisisImpact,
   CrisisPhase,
-  CrisisAgentSaveData,
   ICrisisAgent,
 } from './types';
 
@@ -55,11 +55,7 @@ export const DISASTER_PARAM_KEYS = {
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /** Read a numeric param with a default value. */
-function param(
-  peakParams: Record<string, number>,
-  key: string,
-  defaultValue: number,
-): number {
+function param(peakParams: Record<string, number>, key: string, defaultValue: number): number {
   const v = peakParams[key];
   return v !== undefined ? v : defaultValue;
 }
@@ -154,7 +150,7 @@ export class DisasterAgent implements ICrisisAgent {
     this.definition = data.definition;
     this.phase = data.phase;
     this.ticksInPhase = data.ticksInPhase;
-    this.hasStarted = !!(data.extra?.['hasStarted']);
+    this.hasStarted = !!data.extra?.hasStarted;
     this.configured = true;
   }
 
@@ -203,9 +199,7 @@ export class DisasterAgent implements ICrisisAgent {
 
   private evaluateBuildup(_ctx: CrisisContext): CrisisImpact[] {
     const pp = this.definition.peakParams;
-    const buildupProgress = this.definition.buildupTicks > 0
-      ? this.ticksInPhase / this.definition.buildupTicks
-      : 1;
+    const buildupProgress = this.definition.buildupTicks > 0 ? this.ticksInPhase / this.definition.buildupTicks : 1;
 
     const impact: CrisisImpact = {
       crisisId: this.definition.id,
@@ -293,9 +287,7 @@ export class DisasterAgent implements ICrisisAgent {
           severity: 'critical',
         },
       ],
-      pravdaHeadlines: [
-        `MINOR INCIDENT AT ${this.definition.name.toUpperCase()} POSES NO THREAT TO HEROIC WORKERS`,
-      ],
+      pravdaHeadlines: [`MINOR INCIDENT AT ${this.definition.name.toUpperCase()} POSES NO THREAT TO HEROIC WORKERS`],
     };
 
     return [impact];

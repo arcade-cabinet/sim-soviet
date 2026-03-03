@@ -1,10 +1,10 @@
-import { ChronologyAgent } from '../../src/ai/agents/core/ChronologyAgent';
 import type { ChronologyState } from '../../src/ai/agents/core/ChronologyAgent';
+import { ChronologyAgent } from '../../src/ai/agents/core/ChronologyAgent';
+import { DayPhase, Season, TICKS_PER_DAY, TICKS_PER_MONTH, TICKS_PER_YEAR } from '../../src/game/Chronology';
 import { GameRng } from '../../src/game/SeedSystem';
-import { Season, DayPhase, TICKS_PER_DAY, TICKS_PER_MONTH, TICKS_PER_YEAR } from '../../src/game/Chronology';
 
 /** Helper: run the agent for N ticks and return the last TickResult. */
-function runTicks(agent: ChronologyAgent, n: number) {
+function _runTicks(agent: ChronologyAgent, n: number) {
   let result = agent.tick();
   for (let i = 1; i < n; i++) {
     result = agent.tick();
@@ -163,7 +163,7 @@ describe('ChronologyAgent', () => {
     }
 
     // Spot-check canonical season mappings
-    expect(monthSeasons[1]).toBe(Season.WINTER);   // January
+    expect(monthSeasons[1]).toBe(Season.WINTER); // January
     expect(monthSeasons[4]).toBe(Season.RASPUTITSA_SPRING);
     expect(monthSeasons[5]).toBe(Season.SHORT_SUMMER);
     expect(monthSeasons[6]).toBe(Season.GOLDEN_WEEK);

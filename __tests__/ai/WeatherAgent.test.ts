@@ -1,7 +1,7 @@
 import { WeatherAgent } from '../../src/ai/agents/core/WeatherAgent';
 import { WeatherType } from '../../src/ai/agents/core/weather-types';
-import { GameRng } from '../../src/game/SeedSystem';
 import { Season } from '../../src/game/Chronology';
+import { GameRng } from '../../src/game/SeedSystem';
 
 function makeRng(seed = 'test-seed'): GameRng {
   return new GameRng(seed);
@@ -76,13 +76,7 @@ describe('WeatherAgent', () => {
     const agent = new WeatherAgent();
     const rng = makeRng('frost-test');
     agent.rollWeather(Season.EARLY_FROST, rng);
-    const validFrost = [
-      WeatherType.OVERCAST,
-      WeatherType.SNOW,
-      WeatherType.RAIN,
-      WeatherType.CLEAR,
-      WeatherType.FOG,
-    ];
+    const validFrost = [WeatherType.OVERCAST, WeatherType.SNOW, WeatherType.RAIN, WeatherType.CLEAR, WeatherType.FOG];
     expect(validFrost).toContain(agent.getCurrentWeather());
   });
 

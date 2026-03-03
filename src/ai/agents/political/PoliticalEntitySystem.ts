@@ -12,9 +12,9 @@
  * Also manages the Raikom (district committee) and doctrine mechanics.
  */
 
+import type { SettlementTier } from '@/ai/agents/infrastructure/SettlementSystem';
 import type { DialogueContext } from '@/content/dialogue';
 import type { GameRng } from '@/game/SeedSystem';
-import type { SettlementTier } from '@/ai/agents/infrastructure/SettlementSystem';
 import {
   calcTargetCount,
   ENTITY_SCALING,

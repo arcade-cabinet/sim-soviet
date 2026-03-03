@@ -1,10 +1,10 @@
-import { getResourceEntity } from '../../src/ecs/archetypes';
-import { createResourceStore } from '../../src/ecs/factories';
 import {
   consumptionSystem,
   resetStarvationCounter,
   setStarvationCallback,
 } from '../../src/ai/agents/economy/consumptionSystem';
+import { getResourceEntity } from '../../src/ecs/archetypes';
+import { createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
 import { createTestDvory } from '../playthrough/helpers';
 
@@ -76,7 +76,7 @@ describe('consumptionSystem', () => {
 
   describe('starvation', () => {
     /** Run starvation ticks to exhaust the grace period (180 ticks). */
-    function exhaustGracePeriod(store: ReturnType<typeof getResourceEntity>) {
+    function exhaustGracePeriod(_store: ReturnType<typeof getResourceEntity>) {
       for (let i = 0; i < 180; i++) {
         consumptionSystem();
       }

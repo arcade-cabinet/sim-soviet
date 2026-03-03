@@ -11,7 +11,8 @@
  */
 
 import { useFrame } from '@react-three/fiber';
-import React, { useMemo, useRef } from 'react';
+import type React from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getBuildingHeight } from '../engine/BuildingTypes';
 import { gameState } from '../engine/GameState';
@@ -160,8 +161,8 @@ const FireRenderer: React.FC = () => {
       if (i < fireCount) {
         const fire = fires[i];
         light.position.set(fire.x, fire.y + 0.5, fire.z);
-        const flicker = Math.sin(frameCount.current * 0.3 + i * 2) * 0.3 +
-                        Math.sin(frameCount.current * 0.7 + i * 3) * 0.2;
+        const flicker =
+          Math.sin(frameCount.current * 0.3 + i * 2) * 0.3 + Math.sin(frameCount.current * 0.7 + i * 3) * 0.2;
         light.intensity = 0.5 + fire.intensity * 0.1 + flicker;
         light.visible = true;
       } else {
@@ -193,7 +194,9 @@ const FireRenderer: React.FC = () => {
       {Array.from({ length: MAX_LIGHTS }, (_, i) => (
         <pointLight
           key={`fire_light_${i}`}
-          ref={(el) => { lightRefs.current[i] = el; }}
+          ref={(el) => {
+            lightRefs.current[i] = el;
+          }}
           color="#ff8000"
           intensity={0}
           distance={3}

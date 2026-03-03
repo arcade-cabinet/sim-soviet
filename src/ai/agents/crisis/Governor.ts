@@ -14,8 +14,8 @@
  *   - FreeformGovernor: pattern-driven alternate-history extrapolation
  */
 
-import type { CrisisImpact } from './types';
 import type { GameRng } from '@/game/SeedSystem';
+import type { CrisisImpact } from './types';
 
 // ─── Governor Mode ─────────────────────────────────────────────────────────
 

@@ -1,5 +1,23 @@
+import { WEATHER_PROFILES, WeatherType } from '@/ai/agents/core/weather-types';
+import { resolveBuildingTrigger } from '@/ai/agents/meta/minigames/BuildingMinigameMap';
+import { MINIGAME_DEFINITIONS } from '@/ai/agents/meta/minigames/definitions';
+import { MinigameRouter } from '@/ai/agents/meta/minigames/MinigameRouter';
+import { ALL_EVENT_TEMPLATES } from '@/ai/agents/narrative/events/templates';
+import {
+  type AnnualReportContext,
+  type AnnualReportEngineState,
+  processReport,
+} from '@/ai/agents/political/annualReportTick';
+import { processConscriptionQueue, processOrgnaborQueue, processReturns } from '@/ai/agents/political/military';
+import { PoliticalEntitySystem } from '@/ai/agents/political/PoliticalEntitySystem';
+import { DIFFICULTY_PRESETS } from '@/ai/agents/political/ScoringSystem';
+import type { ConscriptionEvent, OrgnaborEvent, PoliticalTickResult } from '@/ai/agents/political/types';
+import { applyMorale } from '@/ai/agents/workforce/classes';
+import { HEATING_FAILURE_MORALE_PENALTY } from '@/ai/agents/workforce/constants';
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
+import { GameGrid } from '@/game/GameGrid';
+import { SimulationEngine } from '@/game/SimulationEngine';
 import {
   applyCurrencyReform,
   CURRENCY_REFORMS,
@@ -8,20 +26,6 @@ import {
   HEATING_CONFIGS,
   type HeatingTier,
 } from '../../src/ai/agents/economy/economy-core';
-import { type AnnualReportContext, type AnnualReportEngineState, processReport } from '@/ai/agents/political/annualReportTick';
-import { ALL_EVENT_TEMPLATES } from '@/ai/agents/narrative/events/templates';
-import { GameGrid } from '@/game/GameGrid';
-import { resolveBuildingTrigger } from '@/ai/agents/meta/minigames/BuildingMinigameMap';
-import { MINIGAME_DEFINITIONS } from '@/ai/agents/meta/minigames/definitions';
-import { MinigameRouter } from '@/ai/agents/meta/minigames/MinigameRouter';
-import { processConscriptionQueue, processOrgnaborQueue, processReturns } from '@/ai/agents/political/military';
-import { PoliticalEntitySystem } from '@/ai/agents/political/PoliticalEntitySystem';
-import type { ConscriptionEvent, OrgnaborEvent, PoliticalTickResult } from '@/ai/agents/political/types';
-import { DIFFICULTY_PRESETS } from '@/ai/agents/political/ScoringSystem';
-import { SimulationEngine } from '@/game/SimulationEngine';
-import { WEATHER_PROFILES, WeatherType } from '@/ai/agents/core/weather-types';
-import { applyMorale } from '@/ai/agents/workforce/classes';
-import { HEATING_FAILURE_MORALE_PENALTY } from '@/ai/agents/workforce/constants';
 import { createTestDvory } from '../playthrough/helpers';
 
 function createMockCallbacks() {

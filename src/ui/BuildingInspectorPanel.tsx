@@ -18,13 +18,13 @@
 
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { effectiveWorkers } from '../ai/agents/economy/productionSystem';
+import { getBuildingStorageContribution } from '../ai/agents/economy/storageSystem';
+import type { WorkerDisplayInfo } from '../ai/agents/workforce/types';
 import { getEngine } from '../bridge/GameInit';
 import { getBuildingDef } from '../data/buildingDefs';
 import { buildingsLogic, decayableBuildings } from '../ecs/archetypes';
-import { effectiveWorkers } from '../ai/agents/economy/productionSystem';
-import { getBuildingStorageContribution } from '../ai/agents/economy/storageSystem';
 import type { BuildingComponent, CitizenComponent, Durability } from '../ecs/world';
-import type { WorkerDisplayInfo } from '../ai/agents/workforce/types';
 import { SovietModal } from './SovietModal';
 import { Colors, monoFont } from './styles';
 

@@ -6,10 +6,6 @@
  * IGovernor can be implemented as a mock.
  */
 
-import { GameRng } from '@/game/SeedSystem';
-import {
-  DEFAULT_MODIFIERS,
-} from '@/ai/agents/crisis/Governor';
 import type {
   DynamicModifiers,
   GovernorContext,
@@ -18,8 +14,10 @@ import type {
   GovernorSaveData,
   IGovernor,
 } from '@/ai/agents/crisis/Governor';
-import type { DifficultyConfig } from '@/ai/agents/political/ScoringSystem';
+import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
 import type { CrisisImpact } from '@/ai/agents/crisis/types';
+import type { DifficultyConfig } from '@/ai/agents/political/ScoringSystem';
+import { GameRng } from '@/game/SeedSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -74,7 +72,7 @@ describe('DynamicModifiers', () => {
     }
 
     // DifficultyConfig has exactly one extra key: "label"
-    const extraKeys = difficultyKeys.filter(k => !modifierKeys.includes(k as keyof DynamicModifiers));
+    const extraKeys = difficultyKeys.filter((k) => !modifierKeys.includes(k as keyof DynamicModifiers));
     expect(extraKeys).toEqual(['label']);
   });
 
@@ -123,7 +121,7 @@ describe('DEFAULT_MODIFIERS', () => {
   });
 
   it('rejects mutations silently', () => {
-    (DEFAULT_MODIFIERS as Record<string, unknown>)['quotaMultiplier'] = 999;
+    (DEFAULT_MODIFIERS as Record<string, unknown>).quotaMultiplier = 999;
     expect(DEFAULT_MODIFIERS.quotaMultiplier).toBe(1.0);
   });
 
@@ -225,8 +223,8 @@ describe('GovernorSaveData', () => {
       activeCrises: [],
       state: { divergenceYear: 1953, branchId: 'khrushchev-falls' },
     };
-    expect(save.state['divergenceYear']).toBe(1953);
-    expect(save.state['branchId']).toBe('khrushchev-falls');
+    expect(save.state.divergenceYear).toBe(1953);
+    expect(save.state.branchId).toBe('khrushchev-falls');
   });
 
   it('round-trips through JSON serialization', () => {

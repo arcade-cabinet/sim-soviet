@@ -1,6 +1,6 @@
+import { AchievementTracker } from '../../src/ai/agents/meta/AchievementTracker';
 import { ACHIEVEMENTS } from '../../src/content/worldbuilding';
 import type { Resources } from '../../src/ecs/world';
-import { AchievementTracker } from '../../src/ai/agents/meta/AchievementTracker';
 
 /** Helper to build a minimal Resources object. */
 function makeResources(overrides?: Partial<Resources>): Resources {

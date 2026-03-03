@@ -1,5 +1,5 @@
-import type { GameEvent } from '../../events';
 import type { GameView } from '../../../../../game/GameView';
+import type { GameEvent } from '../../events';
 import { coinFlip, getPravdaRng, pick } from '../helpers';
 import { categoryFromEvent, spinEventEffects } from '../spin';
 import type { ActiveCrisisInfo, GeneratedHeadline, HeadlineGenerator } from '../types';
@@ -40,7 +40,8 @@ export function generateHeadline(gs: GameView, activeCrises?: ActiveCrisisInfo[]
     const crisisWeight = crises.reduce((sum, c) => sum + crisisPhaseWeight(c.phase), 0);
     const genericWeight = ALL_GENERIC_GENERATORS.reduce((sum, g) => sum + g.weight, 0);
     const contextualEligible = contextualGenerators.filter((cg) => cg.condition(gs));
-    const contextualWeight = contextualEligible.length > 0 ? contextualEligible.reduce((sum, cg) => sum + cg.weight, 0) * 0.4 : 0;
+    const contextualWeight =
+      contextualEligible.length > 0 ? contextualEligible.reduce((sum, cg) => sum + cg.weight, 0) * 0.4 : 0;
     const totalWeight = crisisWeight + genericWeight + contextualWeight;
     let roll = (rng ? rng.random() : Math.random()) * totalWeight;
 

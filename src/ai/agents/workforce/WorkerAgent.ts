@@ -7,21 +7,11 @@
  */
 
 import { Vehicle } from 'yuka';
-import type { CollectiveFocus } from '../infrastructure/CollectiveAgent';
 import type { DvorMember, Entity } from '../../../ecs/world';
 import type { GameRng } from '../../../game/SeedSystem';
-import type {
-  PopulationDrainEvent,
-  WorkerDisplayInfo,
-  WorkerStats,
-  WorkerTickResult,
-} from './types';
-import {
-  WorkerSystem,
-  type WorkerStatEntry,
-  type WorkerSystemSaveData,
-  type WorkerTickContext,
-} from './WorkerSystem';
+import type { CollectiveFocus } from '../infrastructure/CollectiveAgent';
+import type { PopulationDrainEvent, WorkerDisplayInfo, WorkerStats, WorkerTickResult } from './types';
+import { WorkerSystem, type WorkerSystemSaveData, type WorkerTickContext } from './WorkerSystem';
 
 /**
  * WorkerAgent — Yuka Vehicle that owns the WorkerSystem.
@@ -158,7 +148,12 @@ export class WorkerAgent extends Vehicle {
     return this.workerSystem.kolkhozAmalgamation();
   }
 
-  assignWorker(worker: Entity, buildingGridX: number, buildingGridY: number, source?: 'player' | 'forced' | 'auto'): boolean {
+  assignWorker(
+    worker: Entity,
+    buildingGridX: number,
+    buildingGridY: number,
+    source?: 'player' | 'forced' | 'auto',
+  ): boolean {
     return this.workerSystem.assignWorker(worker, buildingGridX, buildingGridY, source);
   }
 

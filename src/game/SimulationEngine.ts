@@ -11,15 +11,15 @@
 
 // ── Re-exports (backward compat — callers import from here) ─────────────────
 export type {
-  SimCallbacks,
-  RehabilitationData,
   DvorSaveEntry,
-  WorkerStatSaveEntry,
+  RehabilitationData,
+  SimCallbacks,
   SubsystemSaveData,
+  WorkerStatSaveEntry,
 } from './engine/types';
-import type { SimCallbacks, SubsystemSaveData } from './engine/types';
 
-import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
+import type { InflowScheduleEntry } from '@/config';
+import { political } from '@/config';
 import { getBuildingDef } from '@/data/buildingDefs';
 import {
   buildingsLogic,
@@ -28,7 +28,6 @@ import {
   getMetaEntity,
   getResourceEntity,
   operationalBuildings,
-  underConstruction,
 } from '@/ecs/archetypes';
 import {
   constructionSystem,
@@ -37,30 +36,38 @@ import {
   setBuildingCollapsedCallback,
   setStarvationCallback,
 } from '@/ecs/systems';
-import type { QuotaState } from '../ai/agents/political/PoliticalAgent';
-import { createDefaultQuota, quotaSystem } from '../ai/agents/political/PoliticalAgent';
-import { world } from '@/ecs/world';
-import type { AchievementTrackerSaveData } from '../ai/agents/meta/AchievementTracker';
-import { AchievementTracker } from '../ai/agents/meta/AchievementTracker';
-import { TICKS_PER_YEAR } from './Chronology';
-import type { ChronologyState, TickResult } from '../ai/agents/core/ChronologyAgent';
-import { ChronologySystem } from '../ai/agents/core/ChronologyAgent';
-import type { CompulsoryDeliverySaveData } from '../ai/agents/political/CompulsoryDeliveries';
-import { CompulsoryDeliveries } from '../ai/agents/political/CompulsoryDeliveries';
-import { initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
-import { type EraId as EconomyEraId, type EconomySaveData, EconomySystem } from '../ai/agents/economy/EconomyAgent';
+import { computeDistribution, computeRoleBuckets } from '@/ecs/systems/distributionWeights';
+import { AgentManager } from '../ai/AgentManager';
+import type { TickResult } from '../ai/agents/core/ChronologyAgent';
+// ── Yuka agents ──
+import { ChronologyAgent, ChronologySystem } from '../ai/agents/core/ChronologyAgent';
+import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
+import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
+import { applyCrisisImpacts } from '../ai/agents/crisis/CrisisImpactApplicator';
+import type { GovernorDirective, IGovernor } from '../ai/agents/crisis/Governor';
+import { computeBuildingProduction } from '../ai/agents/economy/buildingProduction';
+import {
+  accrueTrudodni,
+  EconomyAgent,
+  type EraId as EconomyEraId,
+  EconomySystem,
+} from '../ai/agents/economy/EconomyAgent';
 import { DIFFICULTY_MULTIPLIERS } from '../ai/agents/economy/economy-core';
+import { FoodAgent } from '../ai/agents/economy/FoodAgent';
+import { createForagingState, type ForagingState, foragingTick } from '../ai/agents/economy/foragingSystem';
+import { StorageAgent } from '../ai/agents/economy/StorageAgent';
+import { VodkaAgent } from '../ai/agents/economy/VodkaAgent';
+import { CollectiveAgent } from '../ai/agents/infrastructure/CollectiveAgent';
+import { PowerAgent } from '../ai/agents/infrastructure/PowerAgent';
+import { SettlementSystem } from '../ai/agents/infrastructure/SettlementSystem';
+import { TransportSystem } from '../ai/agents/infrastructure/TransportSystem';
+import { AchievementTracker } from '../ai/agents/meta/AchievementTracker';
 import {
   tickAchievements as tickAchievementsHelper,
   tickTutorial as tickTutorialHelper,
 } from '../ai/agents/meta/achievementTick';
-import {
-  type AnnualReportEngineState,
-  checkQuota as checkQuotaHelper,
-  handleQuotaMet as handleQuotaMetHelper,
-  handleQuotaMissed as handleQuotaMissedHelper,
-} from '../ai/agents/political/annualReportTick';
 import { tickDirectives as tickDirectivesHelper } from '../ai/agents/meta/directiveTick';
+import { MinigameRouter } from '../ai/agents/meta/minigames/MinigameRouter';
 import {
   checkBuildingTapMinigame as checkBuildingTapMinigameHelper,
   checkEventMinigame as checkEventMinigameHelper,
@@ -68,65 +75,46 @@ import {
   resolveMinigameChoice as resolveMinigameChoiceHelper,
   tickMinigames as tickMinigamesHelper,
 } from '../ai/agents/meta/minigameTick';
+import { TutorialSystem } from '../ai/agents/meta/TutorialSystem';
+import type { GameEvent } from '../ai/agents/narrative/events';
+import { EventSystem } from '../ai/agents/narrative/events';
+import { PolitburoSystem } from '../ai/agents/narrative/politburo';
+import { PravdaSystem } from '../ai/agents/narrative/pravda';
+import {
+  type AnnualReportEngineState,
+  checkQuota as checkQuotaHelper,
+  handleQuotaMet as handleQuotaMetHelper,
+  handleQuotaMissed as handleQuotaMissedHelper,
+} from '../ai/agents/political/annualReportTick';
+import { CompulsoryDeliveries } from '../ai/agents/political/CompulsoryDeliveries';
+import { KGBAgent, PersonnelFile } from '../ai/agents/political/KGBAgent';
+import { LoyaltyAgent } from '../ai/agents/political/LoyaltyAgent';
+import type { PlanMandateState, QuotaState } from '../ai/agents/political/PoliticalAgent';
+import {
+  createDefaultQuota,
+  createMandatesForEra,
+  createPlanMandateState,
+  PoliticalAgent,
+  quotaSystem,
+  recordBuildingPlaced,
+} from '../ai/agents/political/PoliticalAgent';
+import { PoliticalEntitySystem } from '../ai/agents/political/PoliticalEntitySystem';
+import type { ConsequenceConfig, ConsequenceLevel, DifficultyLevel } from '../ai/agents/political/ScoringSystem';
+import { CONSEQUENCE_PRESETS, DIFFICULTY_PRESETS, ScoringSystem } from '../ai/agents/political/ScoringSystem';
+import { DefenseAgent, FireSystem, initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
+import { DemographicAgent } from '../ai/agents/social/DemographicAgent';
+import { collapseEntitiesToBuildings, getPopulationMode } from '../ai/agents/workforce/collectiveTransition';
+import { WorkerSystem } from '../ai/agents/workforce/WorkerSystem';
+import { TICKS_PER_YEAR } from './Chronology';
 import {
   restoreSubsystems as restoreSubsystemsHelper,
   serializeSubsystems as serializeSubsystemsHelper,
 } from './engine/serializeEngine';
-import type { EraDefinition, EraSystemSaveData } from './era';
-import { ERA_DEFINITIONS, EraSystem } from './era';
-import type { EventSystemSaveData, GameEvent } from '../ai/agents/narrative/events';
-import { EventSystem } from '../ai/agents/narrative/events';
-import type { FireSystemSaveData } from '../ai/agents/social/DefenseAgent';
-import { FireSystem } from '../ai/agents/social/DefenseAgent';
+import type { SimCallbacks, SubsystemSaveData } from './engine/types';
+import { EraSystem } from './era';
 import type { GameGrid } from './GameGrid';
-import { createGameTally, type TallyData } from './GameTally';
-import { MinigameRouter } from '../ai/agents/meta/minigames/MinigameRouter';
-import type { ActiveMinigame, MinigameRouterSaveData } from '../ai/agents/meta/minigames/MinigameTypes';
-import type { PersonnelFileSaveData } from '../ai/agents/political/KGBAgent';
-import { PersonnelFile } from '../ai/agents/political/KGBAgent';
-import type { MandateWithFulfillment, PlanMandateState } from '../ai/agents/political/PoliticalAgent';
-import { createMandatesForEra, createPlanMandateState, recordBuildingPlaced } from '../ai/agents/political/PoliticalAgent';
-import type { PolitburoSaveData } from '../ai/agents/narrative/politburo';
-import { PolitburoSystem } from '../ai/agents/narrative/politburo';
-import type { PoliticalEntitySaveData } from '../ai/agents/political/types';
-import { addPaperwork, getPaperwork } from '../ai/agents/political/doctrine';
-import { PoliticalEntitySystem } from '../ai/agents/political/PoliticalEntitySystem';
-import type { PravdaSaveData } from '../ai/agents/narrative/pravda';
-import { PravdaSystem } from '../ai/agents/narrative/pravda';
-import type { ConsequenceConfig, ConsequenceLevel, DifficultyLevel, ScoringSystemSaveData } from '../ai/agents/political/ScoringSystem';
-import { CONSEQUENCE_PRESETS, DIFFICULTY_PRESETS, eraIdToIndex, ScoringSystem } from '../ai/agents/political/ScoringSystem';
-import { political } from '@/config';
-import type { InflowScheduleEntry } from '@/config';
+import { createGameTally } from './GameTally';
 import { GameRng } from './SeedSystem';
-import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from '../ai/agents/infrastructure/SettlementSystem';
-import { SettlementSystem } from '../ai/agents/infrastructure/SettlementSystem';
-import { type TransportSaveData, TransportSystem } from '../ai/agents/infrastructure/TransportSystem';
-import { accrueTrudodni } from '../ai/agents/economy/EconomyAgent';
-import type { TutorialMilestone, TutorialSaveData } from '../ai/agents/meta/TutorialSystem';
-import { TutorialSystem } from '../ai/agents/meta/TutorialSystem';
-import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
-import { WorkerSystem } from '../ai/agents/workforce/WorkerSystem';
-import { AgentManager } from '../ai/AgentManager';
-import { getPopulationMode, collapseEntitiesToBuildings } from '../ai/agents/workforce/collectiveTransition';
-import { computeBuildingProduction } from '../ai/agents/economy/buildingProduction';
-import { computeDistribution, computeRoleBuckets } from '@/ecs/systems/distributionWeights';
-import type { IGovernor, GovernorDirective } from '../ai/agents/crisis/Governor';
-import { applyCrisisImpacts } from '../ai/agents/crisis/CrisisImpactApplicator';
-// ── Yuka agents ──
-import { ChronologyAgent } from '../ai/agents/core/ChronologyAgent';
-import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
-import { PowerAgent } from '../ai/agents/infrastructure/PowerAgent';
-import { FoodAgent } from '../ai/agents/economy/FoodAgent';
-import { VodkaAgent } from '../ai/agents/economy/VodkaAgent';
-import { StorageAgent } from '../ai/agents/economy/StorageAgent';
-import { EconomyAgent } from '../ai/agents/economy/EconomyAgent';
-import { CollectiveAgent } from '../ai/agents/infrastructure/CollectiveAgent';
-import { DemographicAgent } from '../ai/agents/social/DemographicAgent';
-import { KGBAgent } from '../ai/agents/political/KGBAgent';
-import { PoliticalAgent } from '../ai/agents/political/PoliticalAgent';
-import { DefenseAgent } from '../ai/agents/social/DefenseAgent';
-import { LoyaltyAgent } from '../ai/agents/political/LoyaltyAgent';
-import { createForagingState, foragingTick, type ForagingState } from '../ai/agents/economy/foragingSystem';
 
 /** Maps game EraSystem IDs → EconomySystem EraIds. */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -389,41 +377,105 @@ export class SimulationEngine {
 
   // ── System getters ──────────────────────────────────────────────────────────
 
-  public getEventSystem(): EventSystem { return this.eventSystem; }
-  public getPravdaSystem(): PravdaSystem { return this.pravdaSystem; }
-  public getPolitburo(): PolitburoSystem { return this.politburo; }
-  public getChronology(): ChronologySystem { return this.chronologyAgent; }
-  public getPersonnelFile(): PersonnelFile { return this.kgbAgent; }
-  public getDeliveries(): CompulsoryDeliveries { return this.deliveries; }
-  public getSettlement(): SettlementSystem { return this.settlement; }
-  public getEraSystem(): EraSystem { return this.politicalAgent; }
-  public getEconomySystem(): EconomySystem { return this.economyAgent; }
-  public getPoliticalEntities(): PoliticalEntitySystem { return this.politicalEntities; }
-  public getWorkerSystem(): WorkerSystem { return this.workerSystem; }
-  public getAgentManager(): AgentManager { return this.agentManager; }
-  public getMinigameRouter(): MinigameRouter { return this.minigameRouter; }
-  public getScoring(): ScoringSystem { return this.scoring; }
-  public getTutorial(): TutorialSystem { return this.tutorial; }
-  public getFireSystem(): FireSystem { return this.defenseAgent; }
-  public getAchievements(): AchievementTracker { return this.achievements; }
-  public getQuota(): Readonly<QuotaState> { return this.quota; }
-  public getRaion(): import('@/ecs/world').RaionPool | undefined { return this.raion; }
+  public getEventSystem(): EventSystem {
+    return this.eventSystem;
+  }
+  public getPravdaSystem(): PravdaSystem {
+    return this.pravdaSystem;
+  }
+  public getPolitburo(): PolitburoSystem {
+    return this.politburo;
+  }
+  public getChronology(): ChronologySystem {
+    return this.chronologyAgent;
+  }
+  public getPersonnelFile(): PersonnelFile {
+    return this.kgbAgent;
+  }
+  public getDeliveries(): CompulsoryDeliveries {
+    return this.deliveries;
+  }
+  public getSettlement(): SettlementSystem {
+    return this.settlement;
+  }
+  public getEraSystem(): EraSystem {
+    return this.politicalAgent;
+  }
+  public getEconomySystem(): EconomySystem {
+    return this.economyAgent;
+  }
+  public getPoliticalEntities(): PoliticalEntitySystem {
+    return this.politicalEntities;
+  }
+  public getWorkerSystem(): WorkerSystem {
+    return this.workerSystem;
+  }
+  public getAgentManager(): AgentManager {
+    return this.agentManager;
+  }
+  public getMinigameRouter(): MinigameRouter {
+    return this.minigameRouter;
+  }
+  public getScoring(): ScoringSystem {
+    return this.scoring;
+  }
+  public getTutorial(): TutorialSystem {
+    return this.tutorial;
+  }
+  public getFireSystem(): FireSystem {
+    return this.defenseAgent;
+  }
+  public getAchievements(): AchievementTracker {
+    return this.achievements;
+  }
+  public getQuota(): Readonly<QuotaState> {
+    return this.quota;
+  }
+  public getRaion(): import('@/ecs/world').RaionPool | undefined {
+    return this.raion;
+  }
 
   // ── Agent getters ───────────────────────────────────────────────────────────
 
-  public getChronologyAgent(): ChronologyAgent { return this.chronologyAgent; }
-  public getWeatherAgent(): WeatherAgent { return this.weatherAgent; }
-  public getPowerAgent(): PowerAgent { return this.powerAgent; }
-  public getFoodAgent(): FoodAgent { return this.foodAgent; }
-  public getVodkaAgent(): VodkaAgent { return this.vodkaAgent; }
-  public getStorageAgent(): StorageAgent { return this.storageAgent; }
-  public getEconomyAgent(): EconomyAgent { return this.economyAgent; }
-  public getCollectiveAgent(): CollectiveAgent { return this.collectiveAgent; }
-  public getDemographicAgent(): DemographicAgent { return this.demographicAgent; }
-  public getKGBAgent(): KGBAgent { return this.kgbAgent; }
-  public getPoliticalAgent(): PoliticalAgent { return this.politicalAgent; }
-  public getDefenseAgent(): DefenseAgent { return this.defenseAgent; }
-  public getLoyaltyAgent(): LoyaltyAgent { return this.loyaltyAgent; }
+  public getChronologyAgent(): ChronologyAgent {
+    return this.chronologyAgent;
+  }
+  public getWeatherAgent(): WeatherAgent {
+    return this.weatherAgent;
+  }
+  public getPowerAgent(): PowerAgent {
+    return this.powerAgent;
+  }
+  public getFoodAgent(): FoodAgent {
+    return this.foodAgent;
+  }
+  public getVodkaAgent(): VodkaAgent {
+    return this.vodkaAgent;
+  }
+  public getStorageAgent(): StorageAgent {
+    return this.storageAgent;
+  }
+  public getEconomyAgent(): EconomyAgent {
+    return this.economyAgent;
+  }
+  public getCollectiveAgent(): CollectiveAgent {
+    return this.collectiveAgent;
+  }
+  public getDemographicAgent(): DemographicAgent {
+    return this.demographicAgent;
+  }
+  public getKGBAgent(): KGBAgent {
+    return this.kgbAgent;
+  }
+  public getPoliticalAgent(): PoliticalAgent {
+    return this.politicalAgent;
+  }
+  public getDefenseAgent(): DefenseAgent {
+    return this.defenseAgent;
+  }
+  public getLoyaltyAgent(): LoyaltyAgent {
+    return this.loyaltyAgent;
+  }
 
   // ── Governor ───────────────────────────────────────────────────────────────
 
@@ -441,7 +493,9 @@ export class SimulationEngine {
       return false;
     });
   }
-  public getGovernor(): IGovernor | null { return this.governor; }
+  public getGovernor(): IGovernor | null {
+    return this.governor;
+  }
 
   // ── Autopilot ───────────────────────────────────────────────────────────────
 
@@ -454,7 +508,10 @@ export class SimulationEngine {
       const chairman = this.agentManager.getChairman();
       if (chairman) {
         const aiChoices = active.definition.choices.map((c) => ({
-          id: c.id, successChance: c.successChance, onSuccess: c.onSuccess, onFailure: c.onFailure,
+          id: c.id,
+          successChance: c.successChance,
+          onSuccess: c.onSuccess,
+          onFailure: c.onFailure,
         }));
         resolveChoice(chairman.resolveMinigame(aiChoices));
       } else {
@@ -505,7 +562,9 @@ export class SimulationEngine {
     if (this.mandateState) this.mandateState = recordBuildingPlaced(this.mandateState, defId);
   }
 
-  public getMandateState(): PlanMandateState | null { return this.mandateState; }
+  public getMandateState(): PlanMandateState | null {
+    return this.mandateState;
+  }
 
   // ── Serialization ───────────────────────────────────────────────────────────
 
@@ -602,10 +661,7 @@ export class SimulationEngine {
     this.emitChronologyChanges(tickResult);
 
     // ── 1b. Population mode detection ──
-    const popMode = getPopulationMode(
-      storeRef.resources.population,
-      this.raion,
-    );
+    const popMode = getPopulationMode(storeRef.resources.population, this.raion);
 
     // ── 2. Year boundary: era transition + quota check ──
     if (tickResult.newYear) {
@@ -675,11 +731,11 @@ export class SimulationEngine {
       this.cachedDirective = this.governor.evaluate(govCtx);
       if (this.cachedDirective.crisisImpacts.length > 0) {
         applyCrisisImpacts(this.cachedDirective.crisisImpacts, {
-          resources: storeRef.resources,
+          resources: storeRef.resources as any,
           callbacks: this.callbacks,
           workerSystem: this.workerSystem,
-          kgbAgent: this.kgbAgent,
-          buildings: operationalBuildings.entities.map(e => ({
+          kgbAgent: this.kgbAgent as any,
+          buildings: operationalBuildings.entities.map((e) => ({
             gridX: e.position.gridX,
             gridY: e.position.gridY,
             type: e.building.defId,
@@ -690,7 +746,7 @@ export class SimulationEngine {
       }
       // Year boundary hook
       if (tickResult.newYear && this.governor.onYearBoundary) {
-        this.governor.onYearBoundary(tickResult.year);
+        this.governor.onYearBoundary(date.year);
       }
     }
 
@@ -708,8 +764,12 @@ export class SimulationEngine {
     const heatingPenalty = this.economyAgent.getHeating().failing ? 0.5 : 1.0;
     const seasonFarmMult = tickResult.season.farmMultiplier;
     const farmMod =
-      seasonFarmMult * weatherProfile.farmModifier * politburoMods.foodProductionMult *
-      eraMods.productionMult * heatingPenalty * this.mtsGrainMultiplier;
+      seasonFarmMult *
+      weatherProfile.farmModifier *
+      politburoMods.foodProductionMult *
+      eraMods.productionMult *
+      heatingPenalty *
+      this.mtsGrainMultiplier;
     const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult * heatingPenalty;
     const diffConfig = this.cachedDirective?.modifiers ?? DIFFICULTY_PRESETS[this.difficulty];
 
@@ -894,9 +954,7 @@ export class SimulationEngine {
       }
 
       if (foragingResult.moralePenalty > 0 && foragingResult.method === 'stone_soup') {
-        this.callbacks.onAdvisor(
-          'Comrade Mayor, the workers are boiling stones for soup. We have come to this.',
-        );
+        this.callbacks.onAdvisor('Comrade Mayor, the workers are boiling stones for soup. We have come to this.');
       }
     }
 
@@ -1070,9 +1128,7 @@ export class SimulationEngine {
     });
 
     // ── 21. Settlement ──
-    this.settlement.tickWithCallbacks(
-      this.callbacks as Parameters<typeof this.settlement.tickWithCallbacks>[0],
-    );
+    this.settlement.tickWithCallbacks(this.callbacks as Parameters<typeof this.settlement.tickWithCallbacks>[0]);
 
     // ── 22. Era conditions ──
     this.politicalAgent.checkConditions({
@@ -1098,7 +1154,13 @@ export class SimulationEngine {
     // ── 24. Minigames + events + fire + politburo + pravda + KGB ──
     tickMinigamesHelper(this.getMinigameContext());
     this.eventSystem.tick(this.chronologyAgent.getDate().totalTicks, eraMods.eventFrequencyMult);
-    this.defenseAgent.update(1, tickResult.weather as WeatherType, this.grid, this.chronologyAgent.getDate().totalTicks, this.chronologyAgent.getDate().month);
+    this.defenseAgent.update(
+      1,
+      tickResult.weather as WeatherType,
+      this.grid,
+      this.chronologyAgent.getDate().totalTicks,
+      this.chronologyAgent.getDate().month,
+    );
     this.politburo.setCorruptionMult(eraMods.corruptionMult);
     this.politburo.tick(tickResult);
 
@@ -1114,7 +1176,9 @@ export class SimulationEngine {
     const currentThreat = this.kgbAgent.getThreatLevel();
     if (
       (currentThreat === 'investigated' || currentThreat === 'reviewed' || currentThreat === 'arrested') &&
-      this.lastThreatLevel !== 'investigated' && this.lastThreatLevel !== 'reviewed' && this.lastThreatLevel !== 'arrested'
+      this.lastThreatLevel !== 'investigated' &&
+      this.lastThreatLevel !== 'reviewed' &&
+      this.lastThreatLevel !== 'arrested'
     ) {
       this.scoring.onInvestigation();
     }
@@ -1140,7 +1204,10 @@ export class SimulationEngine {
     if (this.kgbAgent.isArrested()) {
       const consequenceConfig = CONSEQUENCE_PRESETS[this.scoring.getConsequence()];
       if (consequenceConfig.permadeath) {
-        this.endGame(false, 'Your personnel file has been reviewed. You have been declared an Enemy of the People. No further correspondence is expected.');
+        this.endGame(
+          false,
+          'Your personnel file has been reviewed. You have been declared an Enemy of the People. No further correspondence is expected.',
+        );
       } else {
         this.applyRehabilitation(consequenceConfig);
       }
@@ -1222,7 +1289,8 @@ export class SimulationEngine {
         pendingReport: this.pendingReport,
         mandateState: this.mandateState,
         pripiskiCount: this.pripiskiCount,
-        quotaMultiplier: this.cachedDirective?.modifiers.quotaMultiplier ?? DIFFICULTY_PRESETS[this.difficulty].quotaMultiplier,
+        quotaMultiplier:
+          this.cachedDirective?.modifiers.quotaMultiplier ?? DIFFICULTY_PRESETS[this.difficulty].quotaMultiplier,
       },
       endGame: (victory: boolean, reason: string) => this.endGame(victory, reason),
     };
@@ -1248,10 +1316,7 @@ export class SimulationEngine {
       const count = this.rng.int(minCount, maxCount);
       this.workerSystem.spawnInflowDvor(count, 'evacuee_influx', { morale: 25, loyalty: 40 });
       this.evacueeInfluxFired = true;
-      this.callbacks.onToast(
-        `War evacuees arrive: ${count} displaced persons seeking refuge.`,
-        'warning',
-      );
+      this.callbacks.onToast(`War evacuees arrive: ${count} displaced persons seeking refuge.`, 'warning');
       return;
     }
 
@@ -1265,38 +1330,26 @@ export class SimulationEngine {
     switch (entry.type) {
       case 'forced_resettlement': {
         const result = this.workerSystem.forcedResettlement();
-        this.callbacks.onToast(
-          `${result.count} families forcibly resettled to your settlement.`,
-          'warning',
-        );
+        this.callbacks.onToast(`${result.count} families forcibly resettled to your settlement.`, 'warning');
         break;
       }
       case 'moscow_assignment': {
         const result = this.workerSystem.moscowAssignment();
-        this.callbacks.onToast(
-          `Moscow sends ${result.count} new workers to the collective.`,
-          'warning',
-        );
+        this.callbacks.onToast(`Moscow sends ${result.count} new workers to the collective.`, 'warning');
         break;
       }
       case 'veteran_return': {
         const [minCount, maxCount] = entry.count ?? [5, 20];
         const count = this.rng.int(minCount, maxCount);
         this.workerSystem.spawnInflowDvor(count, 'veteran_return', { morale: 35, skill: 40 });
-        this.callbacks.onToast(
-          `Veterans return from the front: ${count} scarred workers rejoin.`,
-          'warning',
-        );
+        this.callbacks.onToast(`Veterans return from the front: ${count} scarred workers rejoin.`, 'warning');
         break;
       }
       case 'algorithmic_assignment': {
         const [minCount, maxCount] = entry.count ?? [1, 50];
         const count = this.rng.int(minCount, maxCount);
         this.workerSystem.spawnInflowDvor(count, 'algorithmic');
-        this.callbacks.onToast(
-          `The Algorithm assigns ${count} new workers to your sector.`,
-          'warning',
-        );
+        this.callbacks.onToast(`The Algorithm assigns ${count} new workers to your sector.`, 'warning');
         break;
       }
       default:

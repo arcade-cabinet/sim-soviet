@@ -7,10 +7,10 @@
 
 import { Vehicle } from 'yuka';
 import {
-  SettlementSystem,
   type SettlementEvent,
   type SettlementMetrics,
   type SettlementSaveData,
+  SettlementSystem,
   type SettlementTier,
 } from './SettlementSystem';
 

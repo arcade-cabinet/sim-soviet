@@ -1,6 +1,3 @@
-import type { Entity } from '@/ecs/world';
-import type { SeasonProfile } from '@/game/Chronology';
-import { Season } from '@/game/Chronology';
 import {
   applyMitigation,
   computeTransportScore,
@@ -12,6 +9,9 @@ import {
   serializeTransport,
   TransportSystem,
 } from '@/ai/agents/infrastructure/TransportSystem';
+import type { Entity } from '@/ecs/world';
+import type { SeasonProfile } from '@/game/Chronology';
+import { Season } from '@/game/Chronology';
 
 // Mock getBuildingDef to return role for known transport buildings
 jest.mock('@/data/buildingDefs', () => ({

@@ -16,9 +16,9 @@
  * The gap between them IS the game's tension.
  */
 
-import { citizens, dvory } from '@/ecs/archetypes';
-import { economy } from '@/config';
 import type { PoliticalRole } from '@/ai/agents/political/types';
+import { economy } from '@/config';
+import { citizens, dvory } from '@/ecs/archetypes';
 
 /** Food consumed per citizen per tick = 1 / FOOD_DIVISOR. Matches consumptionSystem. */
 const FOOD_DIVISOR = economy.consumption.foodPerPopDivisor;

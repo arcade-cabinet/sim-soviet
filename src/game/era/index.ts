@@ -5,8 +5,8 @@
  * gates, modifiers, and campaign flavor text.
  */
 
-export { ERA_DEFINITIONS, ERA_ORDER, getAvailableBuildingsForYear } from './definitions';
 export { PoliticalAgent as EraSystem } from '../../ai/agents/political/PoliticalAgent';
+export { ERA_DEFINITIONS, ERA_ORDER, getAvailableBuildingsForYear } from './definitions';
 export {
   BUILDING_TIER_REQUIREMENTS,
   getBuildingTierRequirement,

@@ -5,9 +5,9 @@
  * phase transitions, severity scaling, war compounding, and serialization.
  */
 
-import { GameRng } from '@/game/SeedSystem';
 import { FamineAgent } from '@/ai/agents/crisis/FamineAgent';
 import type { CrisisContext, CrisisDefinition } from '@/ai/agents/crisis/types';
+import { GameRng } from '@/game/SeedSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -677,18 +677,14 @@ describe('Severity scaling', () => {
     const localized = peakImpactForSeverity('localized');
     const existential = peakImpactForSeverity('existential');
 
-    expect(existential.workforce!.moraleModifier!).toBeLessThan(
-      localized.workforce!.moraleModifier!,
-    );
+    expect(existential.workforce!.moraleModifier!).toBeLessThan(localized.workforce!.moraleModifier!);
   });
 
   it('higher severity = lower production', () => {
     const localized = peakImpactForSeverity('localized');
     const existential = peakImpactForSeverity('existential');
 
-    expect(existential.economy!.productionMult!).toBeLessThan(
-      localized.economy!.productionMult!,
-    );
+    expect(existential.economy!.productionMult!).toBeLessThan(localized.economy!.productionMult!);
   });
 });
 

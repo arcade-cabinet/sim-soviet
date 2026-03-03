@@ -6,15 +6,12 @@
  * double-conscription. Other mechanics must remain unaffected.
  */
 
-import { GameRng } from '@/game/SeedSystem';
-import {
-  evaluateDoctrineMechanics,
-  DOCTRINE_MECHANICS,
-} from '@/ai/agents/political/doctrine';
 import type { DoctrineContext } from '@/ai/agents/political/doctrine';
+import { DOCTRINE_MECHANICS, evaluateDoctrineMechanics } from '@/ai/agents/political/doctrine';
 import { PoliticalEntitySystem } from '@/ai/agents/political/PoliticalEntitySystem';
-import { world } from '@/ecs/world';
 import { createBuilding } from '@/ecs/factories';
+import { world } from '@/ecs/world';
+import { GameRng } from '@/game/SeedSystem';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -46,9 +43,7 @@ describe('Doctrine bypass when crisis agent active', () => {
       const ctx = makeDoctrineCtx();
       const effects = evaluateDoctrineMechanics(ctx);
 
-      const conscriptionEffects = effects.filter(
-        (e) => e.mechanicId === 'wartime_conscription',
-      );
+      const conscriptionEffects = effects.filter((e) => e.mechanicId === 'wartime_conscription');
       expect(conscriptionEffects).toHaveLength(1);
       expect(conscriptionEffects[0]!.popDelta).toBeLessThan(0);
     });
@@ -59,9 +54,7 @@ describe('Doctrine bypass when crisis agent active', () => {
       });
       const effects = evaluateDoctrineMechanics(ctx);
 
-      const conscriptionEffects = effects.filter(
-        (e) => e.mechanicId === 'wartime_conscription',
-      );
+      const conscriptionEffects = effects.filter((e) => e.mechanicId === 'wartime_conscription');
       expect(conscriptionEffects).toHaveLength(0);
     });
 
@@ -71,9 +64,7 @@ describe('Doctrine bypass when crisis agent active', () => {
       });
       const effects = evaluateDoctrineMechanics(ctx);
 
-      const conscriptionEffects = effects.filter(
-        (e) => e.mechanicId === 'wartime_conscription',
-      );
+      const conscriptionEffects = effects.filter((e) => e.mechanicId === 'wartime_conscription');
       expect(conscriptionEffects).toHaveLength(1);
       expect(conscriptionEffects[0]!.popDelta).toBeLessThan(0);
     });
@@ -88,9 +79,7 @@ describe('Doctrine bypass when crisis agent active', () => {
       });
       const effects = evaluateDoctrineMechanics(ctx);
 
-      const grainEffects = effects.filter(
-        (e) => e.mechanicId === 'grain_requisitioning',
-      );
+      const grainEffects = effects.filter((e) => e.mechanicId === 'grain_requisitioning');
       expect(grainEffects).toHaveLength(1);
     });
 
@@ -104,9 +93,7 @@ describe('Doctrine bypass when crisis agent active', () => {
       });
       const effects = evaluateDoctrineMechanics(ctx);
 
-      const stakhEffects = effects.filter(
-        (e) => e.mechanicId === 'stakhanovite_bonus',
-      );
+      const stakhEffects = effects.filter((e) => e.mechanicId === 'stakhanovite_bonus');
       expect(stakhEffects).toHaveLength(1);
     });
   });
@@ -129,9 +116,7 @@ describe('Doctrine bypass when crisis agent active', () => {
       const result = system.tick(CONSCRIPTION_INTERVAL, doctrineCtx);
 
       // wartime_conscription should be skipped
-      const conscriptionEffects = result.doctrineMechanicEffects.filter(
-        (e) => e.mechanicId === 'wartime_conscription',
-      );
+      const conscriptionEffects = result.doctrineMechanicEffects.filter((e) => e.mechanicId === 'wartime_conscription');
       expect(conscriptionEffects).toHaveLength(0);
     });
 
@@ -147,9 +132,7 @@ describe('Doctrine bypass when crisis agent active', () => {
       const result = system.tick(CONSCRIPTION_INTERVAL, doctrineCtx);
 
       // wartime_conscription should fire normally
-      const conscriptionEffects = result.doctrineMechanicEffects.filter(
-        (e) => e.mechanicId === 'wartime_conscription',
-      );
+      const conscriptionEffects = result.doctrineMechanicEffects.filter((e) => e.mechanicId === 'wartime_conscription');
       expect(conscriptionEffects).toHaveLength(1);
       expect(conscriptionEffects[0]!.popDelta).toBeLessThan(0);
     });

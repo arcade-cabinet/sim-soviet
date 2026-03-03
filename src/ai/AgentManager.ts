@@ -7,27 +7,27 @@
 
 import { EntityManager } from 'yuka';
 import { ChairmanAgent } from './agents/ChairmanAgent';
-import { ChronologyAgent } from './agents/core/ChronologyAgent';
-import { WeatherAgent } from './agents/core/WeatherAgent';
-import { PowerAgent } from './agents/infrastructure/PowerAgent';
-import { FoodAgent } from './agents/economy/FoodAgent';
-import { VodkaAgent } from './agents/economy/VodkaAgent';
-import { StorageAgent } from './agents/economy/StorageAgent';
-import { EconomyAgent } from './agents/economy/EconomyAgent';
-import { CollectiveAgent } from './agents/infrastructure/CollectiveAgent';
-import { DemographicAgent } from './agents/social/DemographicAgent';
-import { KGBAgent } from './agents/political/KGBAgent';
-import { PoliticalAgent } from './agents/political/PoliticalAgent';
-import { DefenseAgent } from './agents/social/DefenseAgent';
-import { LoyaltyAgent } from './agents/political/LoyaltyAgent';
-import { ConstructionAgent } from './agents/infrastructure/ConstructionAgent';
-import { DecayAgent } from './agents/infrastructure/DecayAgent';
-import { TransportAgent } from './agents/infrastructure/TransportAgent';
-import { SettlementAgent } from './agents/infrastructure/SettlementAgent';
-import { WorkerAgent } from './agents/workforce/WorkerAgent';
-import { NarrativeAgent } from './agents/narrative/NarrativeAgent';
-import { QuotaAgent } from './agents/political/QuotaAgent';
-import { MetaAgent } from './agents/meta/MetaAgent';
+import type { ChronologyAgent } from './agents/core/ChronologyAgent';
+import type { WeatherAgent } from './agents/core/WeatherAgent';
+import type { EconomyAgent } from './agents/economy/EconomyAgent';
+import type { FoodAgent } from './agents/economy/FoodAgent';
+import type { StorageAgent } from './agents/economy/StorageAgent';
+import type { VodkaAgent } from './agents/economy/VodkaAgent';
+import type { CollectiveAgent } from './agents/infrastructure/CollectiveAgent';
+import type { ConstructionAgent } from './agents/infrastructure/ConstructionAgent';
+import type { DecayAgent } from './agents/infrastructure/DecayAgent';
+import type { PowerAgent } from './agents/infrastructure/PowerAgent';
+import type { SettlementAgent } from './agents/infrastructure/SettlementAgent';
+import type { TransportAgent } from './agents/infrastructure/TransportAgent';
+import type { MetaAgent } from './agents/meta/MetaAgent';
+import type { NarrativeAgent } from './agents/narrative/NarrativeAgent';
+import type { KGBAgent } from './agents/political/KGBAgent';
+import type { LoyaltyAgent } from './agents/political/LoyaltyAgent';
+import type { PoliticalAgent } from './agents/political/PoliticalAgent';
+import type { QuotaAgent } from './agents/political/QuotaAgent';
+import type { DefenseAgent } from './agents/social/DefenseAgent';
+import type { DemographicAgent } from './agents/social/DemographicAgent';
+import type { WorkerAgent } from './agents/workforce/WorkerAgent';
 
 /** Serialized AgentManager state for save/load. */
 export interface AgentManagerSaveData {

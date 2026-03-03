@@ -6,12 +6,8 @@
  * building destruction, narrative callbacks, and neutral defaults.
  */
 
+import { type ApplicatorDeps, applyCrisisImpacts } from '@/ai/agents/crisis/CrisisImpactApplicator';
 import type { CrisisImpact } from '@/ai/agents/crisis/types';
-import {
-  applyCrisisImpacts,
-  type ApplicatorDeps,
-  type ApplicatorResult,
-} from '@/ai/agents/crisis/CrisisImpactApplicator';
 
 // ─── Test Helpers ──────────────────────────────────────────────────────────
 
@@ -36,7 +32,7 @@ function makeDeps(overrides?: Partial<ApplicatorDeps>): ApplicatorDeps {
       { gridX: 3, gridY: 3, type: 'barracks' },
     ],
     rng: {
-      int: jest.fn().mockImplementation((min: number, max: number) => min),
+      int: jest.fn().mockImplementation((min: number, _max: number) => min),
       random: jest.fn().mockReturnValue(0.5),
     },
     totalTicks: 100,
@@ -166,10 +162,7 @@ describe('applyCrisisImpacts — workforce', () => {
     };
 
     const result = applyCrisisImpacts([impact], deps);
-    expect(deps.workerSystem!.removeWorkersByCountMaleFirst).toHaveBeenCalledWith(
-      50,
-      'crisis_conscription',
-    );
+    expect(deps.workerSystem!.removeWorkersByCountMaleFirst).toHaveBeenCalledWith(50, 'crisis_conscription');
     expect(result.workersLost).toBe(50);
   });
 
@@ -194,10 +187,7 @@ describe('applyCrisisImpacts — workforce', () => {
     };
 
     const result = applyCrisisImpacts([impact], deps);
-    expect(deps.workerSystem!.removeWorkersByCountMaleFirst).toHaveBeenCalledWith(
-      10,
-      'crisis_casualty',
-    );
+    expect(deps.workerSystem!.removeWorkersByCountMaleFirst).toHaveBeenCalledWith(10, 'crisis_casualty');
     expect(result.workersLost).toBe(10);
   });
 
@@ -341,10 +331,7 @@ describe('applyCrisisImpacts — narrative', () => {
     const impact: CrisisImpact = {
       crisisId: 'ww2',
       narrative: {
-        pravdaHeadlines: [
-          'FASCIST INVADERS REPELLED AT STALINGRAD',
-          'RED ARMY ADVANCES ON ALL FRONTS',
-        ],
+        pravdaHeadlines: ['FASCIST INVADERS REPELLED AT STALINGRAD', 'RED ARMY ADVANCES ON ALL FRONTS'],
       },
     };
 
@@ -453,7 +440,12 @@ describe('applyCrisisImpacts — combined impacts', () => {
       },
       {
         crisisId: 'shelling',
-        infrastructure: { destructionTargets: [{ gridX: 2, gridY: 2 }, { gridX: 3, gridY: 3 }] },
+        infrastructure: {
+          destructionTargets: [
+            { gridX: 2, gridY: 2 },
+            { gridX: 3, gridY: 3 },
+          ],
+        },
       },
     ];
 
@@ -493,10 +485,7 @@ describe('applyCrisisImpacts — combined impacts', () => {
     ];
 
     const result = applyCrisisImpacts(impacts, deps);
-    expect(deps.workerSystem!.removeWorkersByCountMaleFirst).toHaveBeenCalledWith(
-      50,
-      'crisis_conscription',
-    );
+    expect(deps.workerSystem!.removeWorkersByCountMaleFirst).toHaveBeenCalledWith(50, 'crisis_conscription');
     expect(deps.workerSystem!.spawnInflowDvor).toHaveBeenCalledWith(10, 'veteran_return');
     expect(result.workersLost).toBe(50);
     expect(result.workersGained).toBe(10);

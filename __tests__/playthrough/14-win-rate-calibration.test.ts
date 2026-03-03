@@ -23,24 +23,26 @@
  * 5. Record: survived, final year, final population, game-over reason
  */
 
-import { world } from '../../src/ecs/world';
-import { getResourceEntity } from '../../src/ecs/archetypes';
 import { resetStarvationCounter } from '../../src/ai/agents/economy/consumptionSystem';
+import {
+  type ConsequenceLevel,
+  DIFFICULTY_PRESETS,
+  type DifficultyLevel,
+} from '../../src/ai/agents/political/ScoringSystem';
+import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { createDvor } from '../../src/ecs/factories/settlementFactories';
+import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
 import { GameRng } from '../../src/game/SeedSystem';
-import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
-import { DIFFICULTY_PRESETS, type DifficultyLevel, type ConsequenceLevel } from '../../src/ai/agents/political/ScoringSystem';
 import {
   buildFullEconomy,
   createMockCallbacks,
   getDate,
+  getGameOverReason,
   getResources,
   isGameOver,
-  getGameOverReason,
-  getBuildingCount,
   TICKS_PER_YEAR,
 } from './helpers';
 
@@ -191,7 +193,7 @@ function runCalibrationRun(
 
     let peakPop = 0;
     let totalTicks = 0;
-    let lastYear = START_YEAR;
+    let _lastYear = START_YEAR;
 
     while (totalTicks < MAX_TICKS) {
       engine.tick();
@@ -201,12 +203,7 @@ function runCalibrationRun(
       if (totalTicks % TICKS_PER_YEAR === 0) {
         try {
           const r = getResources();
-          if (
-            Number.isNaN(r.food) ||
-            Number.isNaN(r.population) ||
-            Number.isNaN(r.vodka) ||
-            Number.isNaN(r.money)
-          ) {
+          if (Number.isNaN(r.food) || Number.isNaN(r.population) || Number.isNaN(r.vodka) || Number.isNaN(r.money)) {
             result.hadNaN = true;
           }
 
@@ -227,7 +224,7 @@ function runCalibrationRun(
       try {
         const currentYear = getDate().year;
         if (currentYear >= END_YEAR) break;
-        lastYear = currentYear;
+        _lastYear = currentYear;
       } catch {
         break;
       }
@@ -271,25 +268,19 @@ function formatNum(n: number): string {
 /**
  * Print the full calibration results table.
  */
-function printCalibrationResults(
-  allResults: Map<string, RunResult[]>,
-): void {
+function printCalibrationResults(allResults: Map<string, RunResult[]>): void {
   console.log('\n=== Win Rate Calibration ===');
 
   for (const config of DIFFICULTY_CONFIGS) {
     const results = allResults.get(config.difficulty) ?? [];
-    const survivedCount = results.filter(r => r.survived).length;
+    const survivedCount = results.filter((r) => r.survived).length;
     const winRate = results.length > 0 ? survivedCount / results.length : 0;
     const avgFinalPop =
-      results.length > 0
-        ? Math.round(results.reduce((sum, r) => sum + r.finalPopulation, 0) / results.length)
-        : 0;
+      results.length > 0 ? Math.round(results.reduce((sum, r) => sum + r.finalPopulation, 0) / results.length) : 0;
     const avgFinalYear =
-      results.length > 0
-        ? Math.round(results.reduce((sum, r) => sum + r.finalYear, 0) / results.length)
-        : 0;
-    const crashCount = results.filter(r => r.crashed).length;
-    const nanCount = results.filter(r => r.hadNaN).length;
+      results.length > 0 ? Math.round(results.reduce((sum, r) => sum + r.finalYear, 0) / results.length) : 0;
+    const crashCount = results.filter((r) => r.crashed).length;
+    const nanCount = results.filter((r) => r.hadNaN).length;
 
     const pct = Math.round(winRate * 100);
     const targetPct = Math.round(config.aspirationalWinRate * 100);
@@ -304,13 +295,9 @@ function printCalibrationResults(
 
     for (let i = 0; i < results.length; i++) {
       const r = results[i]!;
-      const status = r.crashed
-        ? 'CRASH'
-        : r.survived
-          ? '\u2713'
-          : '\u2717';
+      const status = r.crashed ? 'CRASH' : r.survived ? '\u2713' : '\u2717';
       const detail = r.crashed
-        ? r.crashError ?? 'unknown error'
+        ? (r.crashError ?? 'unknown error')
         : r.survived
           ? `year=${r.finalYear} pop=${formatNum(r.finalPopulation)}`
           : `year=${r.finalYear} pop=${formatNum(r.finalPopulation)} reason=${r.gameOverReason ?? 'unknown'}`;
@@ -359,7 +346,7 @@ describe('Playthrough: Win Rate Calibration', () => {
       const results = allResults.get(config.difficulty) ?? [];
 
       // At least 1 run per difficulty must not crash
-      const nonCrashed = results.filter(r => !r.crashed);
+      const nonCrashed = results.filter((r) => !r.crashed);
       expect(nonCrashed.length).toBeGreaterThanOrEqual(1);
 
       // No NaN values in any run
@@ -375,7 +362,7 @@ describe('Playthrough: Win Rate Calibration', () => {
       }
 
       // Peak population should have been positive in at least one run
-      const anyPositivePop = nonCrashed.some(r => r.peakPopulation > 0);
+      const anyPositivePop = nonCrashed.some((r) => r.peakPopulation > 0);
       expect(anyPositivePop).toBe(true);
     }
 
@@ -383,7 +370,7 @@ describe('Playthrough: Win Rate Calibration', () => {
 
     for (const config of DIFFICULTY_CONFIGS) {
       const results = allResults.get(config.difficulty) ?? [];
-      const survivedCount = results.filter(r => r.survived).length;
+      const survivedCount = results.filter((r) => r.survived).length;
       const winRate = results.length > 0 ? survivedCount / results.length : 0;
       const targetMet = winRate >= config.aspirationalWinRate;
 

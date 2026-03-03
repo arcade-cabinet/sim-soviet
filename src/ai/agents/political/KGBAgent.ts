@@ -11,24 +11,18 @@
  */
 
 import { Vehicle } from 'yuka';
-import { MSG } from '../../telegrams';
-import type {
-  KGBInformant,
-  KGBInvestigation,
-  PoliticalEntityStats,
-  PoliticalTickResult,
-} from './types';
-import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
-import { getBuildingDef } from '@/data/buildingDefs';
-import { world } from '@/ecs/world';
 import { political } from '@/config';
-import type { ConsequenceConfig } from './ScoringSystem';
-import type { ScoringSystem } from './ScoringSystem';
+import { getBuildingDef } from '@/data/buildingDefs';
+import { buildingsLogic, getResourceEntity } from '@/ecs/archetypes';
+import { world } from '@/ecs/world';
+import type { SimCallbacks } from '../../../game/engine/types';
 import type { GameGrid } from '../../../game/GameGrid';
 import type { GameRng } from '../../../game/SeedSystem';
-import type { SimCallbacks } from '../../../game/engine/types';
-import type { WorkerSystem } from '../workforce/WorkerSystem';
+import { MSG } from '../../telegrams';
 import type { ChronologyAgent } from '../core/ChronologyAgent';
+import type { WorkerSystem } from '../workforce/WorkerSystem';
+import type { ConsequenceConfig, ScoringSystem } from './ScoringSystem';
+import type { KGBInformant, KGBInvestigation, PoliticalEntityStats, PoliticalTickResult } from './types';
 
 // ─────────────────────────────────────────────────────────
 //  Re-export types from PersonnelFile so callers can migrate
@@ -92,7 +86,10 @@ const cfg = political.kgb;
 
 const MARK_AMOUNTS: Record<MarkSource, number> = cfg.markAmounts as Record<MarkSource, number>;
 
-const COMMENDATION_AMOUNTS: Record<CommendationSource, number> = cfg.commendationAmounts as Record<CommendationSource, number>;
+const COMMENDATION_AMOUNTS: Record<CommendationSource, number> = cfg.commendationAmounts as Record<
+  CommendationSource,
+  number
+>;
 
 const DECAY_INTERVALS: Record<Difficulty, number> = cfg.decayIntervals as Record<Difficulty, number>;
 
@@ -173,7 +170,10 @@ export const ESCALATION_MARK_THRESHOLD = cfg.escalationMarkThreshold;
  * Mark count thresholds for suspicion scoring by aggression level.
  * Threshold is the mark count at which suspicion reaches 1.0.
  */
-const MARK_THRESHOLDS: Record<'low' | 'medium' | 'high', number> = cfg.markThresholds as Record<'low' | 'medium' | 'high', number>;
+const MARK_THRESHOLDS: Record<'low' | 'medium' | 'high', number> = cfg.markThresholds as Record<
+  'low' | 'medium' | 'high',
+  number
+>;
 
 /** Default aggression level by difficulty name. */
 const DIFFICULTY_AGGRESSION: Record<string, 'low' | 'medium' | 'high'> = {
@@ -440,12 +440,7 @@ export class KGBAgent extends Vehicle {
    *   - Commendations subtract a small mitigation factor
    *   - Low quota performance adds suspicion
    */
-  assessThreat(
-    marks: number,
-    commendations: number,
-    quotaPerformance: number,
-    difficulty: string,
-  ): void {
+  assessThreat(marks: number, commendations: number, quotaPerformance: number, difficulty: string): void {
     this.state.aggression = DIFFICULTY_AGGRESSION[difficulty] ?? this.state.aggression;
     this.state.markCount = marks;
 
@@ -683,14 +678,17 @@ export class KGBAgent extends Vehicle {
    * Non-permadeath consequence: destroy buildings, remove workers, skip time, reset marks.
    * Absorbs SimulationEngine.applyRehabilitation().
    */
-  public applyRehabilitation(config: ConsequenceConfig, deps: {
-    grid: GameGrid;
-    rng: GameRng | undefined;
-    workers: WorkerSystem;
-    scoring: ScoringSystem;
-    chronology: ChronologyAgent;
-    callbacks: SimCallbacks;
-  }): void {
+  public applyRehabilitation(
+    config: ConsequenceConfig,
+    deps: {
+      grid: GameGrid;
+      rng: GameRng | undefined;
+      workers: WorkerSystem;
+      scoring: ScoringSystem;
+      chronology: ChronologyAgent;
+      callbacks: SimCallbacks;
+    },
+  ): void {
     const store = getResourceEntity();
     const rng = deps.rng;
 
@@ -807,11 +805,7 @@ export class KGBAgent extends Vehicle {
   }
 
   /** Create a new KGB investigation at the entity's current position. */
-  private _createInvestigation(
-    entity: PoliticalEntityStats,
-    rng: KGBRng,
-    priorMarks?: number,
-  ): KGBInvestigation {
+  private _createInvestigation(entity: PoliticalEntityStats, rng: KGBRng, priorMarks?: number): KGBInvestigation {
     const intensity = this._rollInvestigationIntensity(entity.effectiveness, rng, priorMarks);
     const duration = rng.int(INVESTIGATION_MIN_TICKS, INVESTIGATION_MAX_TICKS);
 
@@ -834,11 +828,7 @@ export class KGBAgent extends Vehicle {
    * Resolve a completed investigation.
    * Possibly generates a black mark; if shouldArrest and workers flagged, removes workers.
    */
-  private _resolveInvestigation(
-    inv: KGBInvestigation,
-    rng: KGBRng | null,
-    result: PoliticalTickResult,
-  ): void {
+  private _resolveInvestigation(inv: KGBInvestigation, rng: KGBRng | null, result: PoliticalTickResult): void {
     const blackMarkChance = this._getBlackMarkChance(inv.intensity);
 
     if (rng && blackMarkChance > 0 && rng.coinFlip(blackMarkChance)) {
@@ -866,10 +856,7 @@ export class KGBAgent extends Vehicle {
   }
 
   /** Create a new informant at a building position. */
-  private _createInformant(
-    buildingPos: { gridX: number; gridY: number },
-    rng: KGBRng,
-  ): KGBInformant {
+  private _createInformant(buildingPos: { gridX: number; gridY: number }, rng: KGBRng): KGBInformant {
     return {
       id: rng.id(),
       buildingPos: { ...buildingPos },

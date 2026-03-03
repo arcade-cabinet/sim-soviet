@@ -125,11 +125,7 @@ export class VodkaAgent extends Vehicle {
    * @param consumptionMult - Era/difficulty multiplier on consumption rates (default 1)
    * @returns Summary of what happened this tick
    */
-  update(
-    rawVodkaOutput: number,
-    resources: VodkaResourceView,
-    consumptionMult = 1,
-  ): VodkaUpdateResult {
+  update(rawVodkaOutput: number, resources: VodkaResourceView, consumptionMult = 1): VodkaUpdateResult {
     const result: VodkaUpdateResult = {
       vodkaProduced: 0,
       grainConsumed: 0,
@@ -141,9 +137,7 @@ export class VodkaAgent extends Vehicle {
 
     // ── Production ──────────────────────────────────────────────────────────
 
-    const foodPerCapita = resources.population > 0
-      ? resources.food / resources.population
-      : Infinity;
+    const foodPerCapita = resources.population > 0 ? resources.food / resources.population : Infinity;
 
     const inFoodCrisis = foodPerCapita < FOOD_CRISIS_THRESHOLD;
 

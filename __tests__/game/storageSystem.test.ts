@@ -1,11 +1,11 @@
-import { getResourceEntity } from '../../src/ecs/archetypes';
-import { createBuilding, createResourceStore } from '../../src/ecs/factories';
 import {
   calculateStorageCapacity,
   countOperationalColdStorage,
   isColdStoragePresent,
   storageSystem,
 } from '../../src/ai/agents/economy/storageSystem';
+import { getResourceEntity } from '../../src/ecs/archetypes';
+import { createBuilding, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
 
 describe('storageSystem', () => {

@@ -26,9 +26,11 @@ import {
 } from '@/ecs/archetypes';
 import { createCitizen, createDvor } from '@/ecs/factories';
 import { laborCapacityForAge } from '@/ecs/factories/demographics';
-import type { BuildingComponent, CitizenComponent, DvorMember, Entity, RaionPool } from '@/ecs/world';
+import type { CitizenComponent, DvorMember, Entity, RaionPool } from '@/ecs/world';
 import { world } from '@/ecs/world';
 import type { GameRng } from '@/game/SeedSystem';
+import type { CollectiveFocus } from '../infrastructure/CollectiveAgent';
+import { runGovernor } from '../infrastructure/CollectiveAgent';
 import {
   applyMorale,
   calcBaseEfficiency,
@@ -42,7 +44,6 @@ import {
   processVodka,
   resolveStatus,
 } from './classes';
-import { type LaborBudgetConfig, type LaborBudgetResult, LABOR_BUDGET_CONFIG, computeLaborBudget } from './laborBudget';
 import {
   ACCIDENT_LOW_SKILL_MULT,
   ACCIDENT_RATE_PER_FACTORY,
@@ -66,8 +67,7 @@ import {
   YOUTH_MIN_AGE,
   YOUTH_RETENTION_BUILDINGS,
 } from './constants';
-import type { CollectiveFocus } from '../infrastructure/CollectiveAgent';
-import { runGovernor } from '../infrastructure/CollectiveAgent';
+import { computeLaborBudget, LABOR_BUDGET_CONFIG, type LaborBudgetConfig, type LaborBudgetResult } from './laborBudget';
 import type {
   PopulationDrainEvent,
   PopulationInflowEvent,
@@ -249,7 +249,7 @@ export class WorkerSystem {
   getAverageSkill(): number {
     const raion = this.getRaion();
     if (raion) {
-      return 0.5 + (raion.avgSkill / 100);
+      return 0.5 + raion.avgSkill / 100;
     }
     let sum = 0;
     let count = 0;
@@ -259,7 +259,7 @@ export class WorkerSystem {
     }
     if (count === 0) return 1.0;
     const avgSkill = sum / count; // [0..100]
-    return 0.5 + (avgSkill / 100);  // [0.5..1.5]
+    return 0.5 + avgSkill / 100; // [0.5..1.5]
   }
 
   /**
@@ -411,7 +411,7 @@ export class WorkerSystem {
     }
 
     // Update class counts (default to worker class)
-    raion.classCounts['worker'] = (raion.classCounts['worker'] ?? 0) + count;
+    raion.classCounts.worker = (raion.classCounts.worker ?? 0) + count;
 
     // Sync resource store population
     const store = getResourceEntity();
@@ -1181,7 +1181,7 @@ export class WorkerSystem {
    * building level using aggregate workforce stats.
    */
   private _tickAggregate(ctx: WorkerTickContext, raion: RaionPool): WorkerTickResult {
-    const rng = this.rng;
+    const _rng = this.rng;
     const drains: PopulationDrainEvent[] = [];
     const inflows: PopulationInflowEvent[] = [];
 
@@ -1524,9 +1524,7 @@ export class WorkerSystem {
         });
 
         if (factoryBuildings.length === 0) break;
-        const target = rng
-          ? factoryBuildings[rng.int(0, factoryBuildings.length - 1)]!
-          : factoryBuildings[0]!;
+        const target = rng ? factoryBuildings[rng.int(0, factoryBuildings.length - 1)]! : factoryBuildings[0]!;
 
         target.building.workerCount--;
         raion.totalPopulation = Math.max(0, raion.totalPopulation - 1);

@@ -1,3 +1,4 @@
+import { GameRng } from '@/game/SeedSystem';
 import {
   BLAT_ARREST_THRESHOLD,
   BLAT_SAFE_THRESHOLD,
@@ -5,7 +6,6 @@ import {
   KGB_INVESTIGATION_CHANCE_PER_POINT,
 } from '../../src/ai/agents/economy/economy-core';
 import { PersonnelFile } from '../../src/ai/agents/political/KGBAgent';
-import { GameRng } from '@/game/SeedSystem';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  BLAT KGB RISK — Passive per-tick investigation/arrest mechanic

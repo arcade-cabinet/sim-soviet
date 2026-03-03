@@ -3,7 +3,7 @@
     "numBuckets": 20,
     "agingFraction": 0.2,
     "birthRates": {
-      "baseMonthlyConceptionRate": 0.030,
+      "baseMonthlyConceptionRate": 0.03,
       "fertileBucketMin": 3,
       "fertileBucketMax": 9
     },
@@ -46,9 +46,8 @@
       "eternal": 1.0
     },
     "annualMortalityByBucket": [
-      0.150, 0.008, 0.004, 0.005, 0.006, 0.006, 0.007, 0.008,
-      0.010, 0.014, 0.020, 0.030, 0.045, 0.065, 0.100, 0.150,
-      0.220, 0.320, 0.450, 0.600
+      0.15, 0.008, 0.004, 0.005, 0.006, 0.006, 0.007, 0.008, 0.01, 0.014, 0.02, 0.03, 0.045, 0.065, 0.1, 0.15, 0.22,
+      0.32, 0.45, 0.6
     ],
     "foodModifier": {
       "lowThreshold": 0.5,

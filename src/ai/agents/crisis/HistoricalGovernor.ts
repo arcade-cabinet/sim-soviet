@@ -10,25 +10,13 @@
  * and evaluates them each tick to produce merged DynamicModifiers.
  */
 
-import type {
-  IGovernor,
-  GovernorContext,
-  GovernorDirective,
-  DynamicModifiers,
-  GovernorSaveData,
-} from './Governor';
-import { DEFAULT_MODIFIERS } from './Governor';
-import type {
-  CrisisImpact,
-  CrisisContext,
-  ICrisisAgent,
-  CrisisDefinition,
-  CrisisAgentSaveData,
-} from './types';
 import { HISTORICAL_CRISES } from '@/config/historicalCrises';
-import { WarAgent } from './WarAgent';
-import { FamineAgent } from './FamineAgent';
 import { DisasterAgent } from './DisasterAgent';
+import { FamineAgent } from './FamineAgent';
+import type { DynamicModifiers, GovernorContext, GovernorDirective, GovernorSaveData, IGovernor } from './Governor';
+import { DEFAULT_MODIFIERS } from './Governor';
+import type { CrisisAgentSaveData, CrisisContext, CrisisDefinition, CrisisImpact, ICrisisAgent } from './types';
+import { WarAgent } from './WarAgent';
 
 // ─── Agent Entry ────────────────────────────────────────────────────────────
 
@@ -111,11 +99,7 @@ export class HistoricalGovernor implements IGovernor {
       }
 
       // If past end year and agent is still in peak, transition to aftermath
-      if (
-        entry.activated &&
-        ctx.year > entry.definition.endYear &&
-        entry.agent.getPhase() === 'peak'
-      ) {
+      if (entry.activated && ctx.year > entry.definition.endYear && entry.agent.getPhase() === 'peak') {
         // WarAgent has a special transitionToAftermath method
         if (entry.agent instanceof WarAgent) {
           entry.agent.transitionToAftermath();
@@ -153,9 +137,7 @@ export class HistoricalGovernor implements IGovernor {
 
   /** Return IDs of all currently active crises. */
   getActiveCrises(): string[] {
-    return this.entries
-      .filter((e) => e.activated && e.agent.isActive())
-      .map((e) => e.definition.id);
+    return this.entries.filter((e) => e.activated && e.agent.isActive()).map((e) => e.definition.id);
   }
 
   /** Called at the start of each new game year. */
@@ -188,9 +170,9 @@ export class HistoricalGovernor implements IGovernor {
 
   /** Restore governor state from saved data. */
   restore(data: GovernorSaveData): void {
-    this.currentYear = (data.state['currentYear'] as number) ?? 0;
-    const agentStates = (data.state['agentStates'] as Record<string, CrisisAgentSaveData>) ?? {};
-    const activatedSet = new Set((data.state['activatedSet'] as string[]) ?? []);
+    this.currentYear = (data.state.currentYear as number) ?? 0;
+    const agentStates = (data.state.agentStates as Record<string, CrisisAgentSaveData>) ?? {};
+    const activatedSet = new Set((data.state.activatedSet as string[]) ?? []);
 
     for (const entry of this.entries) {
       if (activatedSet.has(entry.definition.id)) {
@@ -220,7 +202,7 @@ export class HistoricalGovernor implements IGovernor {
     let quotaMult = 1.0;
     let growthMult = 1.0;
     let decayMult = 1.0;
-    let consumptionMult = 1.0;
+    const consumptionMult = 1.0;
 
     // Track max KGB aggression across all impacts
     let maxKgbMult = 1.0;
