@@ -197,7 +197,7 @@
     "collectivizationResistanceChance": 0.05,
     "stakhanoviteProductionBonus": 0.2,
     "stakhanovitePressurePenalty": 0.03,
-    "wartimeConscriptionRate": 0.02,
+    "wartimeConscriptionRate": 0.15,
     "wartimeProductionBonus": 0.2,
     "thawFreezePhaseTicks": 720,
     "thawMoraleBoost": 5,
@@ -221,6 +221,15 @@
       "thaw_and_freeze": { "productionMult": 1.2, "consumptionMult": 0.85 },
       "stagnation": { "productionMult": 1.0, "consumptionMult": 1.0 },
       "the_eternal": { "productionMult": 1.0, "consumptionMult": 1.0 }
+    },
+    "inflowSchedule": {
+      "collectivization": { "type": "forced_resettlement", "intervalYears": 3 },
+      "industrialization": { "type": "moscow_assignment", "intervalYears": 2 },
+      "great_patriotic": { "type": "evacuee_influx", "once": true, "count": [10, 30] },
+      "reconstruction": { "type": "veteran_return", "intervalYears": 2, "count": [5, 20] },
+      "thaw_and_freeze": { "type": "moscow_assignment", "intervalYears": 3 },
+      "stagnation": { "type": "forced_resettlement", "intervalYears": 5 },
+      "the_eternal": { "type": "algorithmic_assignment", "intervalYears": 2, "count": [1, 50] }
     }
   }
 }

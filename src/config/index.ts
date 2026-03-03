@@ -91,6 +91,7 @@ export type {
   EntityConfig,
   FoodModifierConfig,
   HouseholdFormationConfig,
+  InflowScheduleEntry,
   InfrastructureConfig,
   MetaConfig,
   MortalityBracket,

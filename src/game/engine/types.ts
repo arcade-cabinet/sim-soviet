@@ -172,6 +172,8 @@ export interface SubsystemSaveData {
     pendingReportSinceTick?: number;
     ended: boolean;
     pripiskiCount?: number;
+    lastInflowYear?: Record<string, number>;
+    evacueeInfluxFired?: boolean;
   };
   /** Dvor households — canonical population source (entity mode only) */
   dvory?: DvorSaveEntry[];

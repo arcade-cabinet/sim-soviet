@@ -94,6 +94,8 @@ export interface SerializableEngine {
   pendingReport: boolean;
   pendingReportSinceTick: number;
   ended: boolean;
+  lastInflowYear: Record<string, number>;
+  evacueeInfluxFired: boolean;
   rng: GameRng;
   eventHandler: (event: GameEvent) => void;
   politburoEventHandler: (event: GameEvent) => void;
@@ -143,6 +145,8 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
       pendingReportSinceTick: engine.pendingReportSinceTick,
       ended: engine.ended,
       pripiskiCount: engine.pripiskiCount,
+      lastInflowYear: { ...engine.lastInflowYear },
+      evacueeInfluxFired: engine.evacueeInfluxFired,
     },
     populationMode: isAggregate ? 'aggregate' : 'entity',
   };
@@ -320,6 +324,8 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
     engine.pendingReportSinceTick = data.engineState.pendingReportSinceTick ?? 0;
     engine.ended = data.engineState.ended;
     engine.pripiskiCount = data.engineState.pripiskiCount ?? 0;
+    engine.lastInflowYear = data.engineState.lastInflowYear ?? {};
+    engine.evacueeInfluxFired = data.engineState.evacueeInfluxFired ?? false;
   }
 
   // Update economy system to match restored era (fallback for saves without economy data)

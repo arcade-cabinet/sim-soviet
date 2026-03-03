@@ -95,6 +95,8 @@ import type { PravdaSaveData } from '../ai/agents/narrative/pravda';
 import { PravdaSystem } from '../ai/agents/narrative/pravda';
 import type { ConsequenceConfig, ConsequenceLevel, DifficultyLevel, ScoringSystemSaveData } from '../ai/agents/political/ScoringSystem';
 import { CONSEQUENCE_PRESETS, DIFFICULTY_PRESETS, eraIdToIndex, ScoringSystem } from '../ai/agents/political/ScoringSystem';
+import { political } from '@/config';
+import type { InflowScheduleEntry } from '@/config';
 import { GameRng } from './SeedSystem';
 import type { SettlementEvent, SettlementMetrics, SettlementSaveData } from '../ai/agents/infrastructure/SettlementSystem';
 import { SettlementSystem } from '../ai/agents/infrastructure/SettlementSystem';
@@ -200,6 +202,10 @@ export class SimulationEngine {
   private _originalOnAnnualReport?: SimCallbacks['onAnnualReport'];
   /** Cached RaionPool reference — non-null when in aggregate population mode. */
   private raion: import('@/ecs/world').RaionPool | undefined;
+  /** Tracks last year a scheduled inflow fired, keyed by era ID. */
+  private lastInflowYear: Record<string, number> = {};
+  /** Whether the Great Patriotic evacuee influx has already fired. */
+  private evacueeInfluxFired = false;
 
   constructor(
     private grid: GameGrid,
@@ -509,6 +515,8 @@ export class SimulationEngine {
     this.pendingReport = se.pendingReport;
     this.pendingReportSinceTick = se.pendingReportSinceTick;
     this.ended = se.ended;
+    this.lastInflowYear = se.lastInflowYear;
+    this.evacueeInfluxFired = se.evacueeInfluxFired;
 
     this.eventSystem.setPersonnelFile(this.personnelFile);
 
@@ -793,6 +801,9 @@ export class SimulationEngine {
       if (growthResult.growthCount > 0) {
         this.workerSystem.spawnInflowDvor(growthResult.growthCount, 'growth');
       }
+
+      // ── Scheduled era-specific population inflows ──
+      this.processScheduledInflows();
     }
 
     // Monthly emergency immigration — the Party sends reinforcements
@@ -1096,6 +1107,82 @@ export class SimulationEngine {
     };
   }
 
+  // ── Scheduled Population Inflows ────────────────────────────────────────────
+
+  /**
+   * Process scheduled population inflows based on the current era.
+   * Called on year boundaries to provide era-appropriate workforce reinforcements.
+   */
+  private processScheduledInflows(): void {
+    const currentEraId = this.politicalAgent.getCurrentEra().id;
+    const currentYear = this.chronologyAgent.getDate().year;
+    const schedule = political.doctrine.inflowSchedule as Record<string, InflowScheduleEntry>;
+    const entry = schedule[currentEraId];
+    if (!entry) return;
+
+    // Handle one-shot inflows (great_patriotic evacuee influx)
+    if (entry.once) {
+      if (this.evacueeInfluxFired) return;
+      const [minCount, maxCount] = entry.count ?? [10, 30];
+      const count = this.rng.int(minCount, maxCount);
+      this.workerSystem.spawnInflowDvor(count, 'evacuee_influx', { morale: 25, loyalty: 40 });
+      this.evacueeInfluxFired = true;
+      this.callbacks.onToast(
+        `War evacuees arrive: ${count} displaced persons seeking refuge.`,
+        'warning',
+      );
+      return;
+    }
+
+    // Interval-based inflows
+    const intervalYears = entry.intervalYears ?? 3;
+    const lastYear = this.lastInflowYear[currentEraId] ?? 0;
+    if (lastYear > 0 && currentYear - lastYear < intervalYears) return;
+
+    this.lastInflowYear[currentEraId] = currentYear;
+
+    switch (entry.type) {
+      case 'forced_resettlement': {
+        const result = this.workerSystem.forcedResettlement();
+        this.callbacks.onToast(
+          `${result.count} families forcibly resettled to your settlement.`,
+          'warning',
+        );
+        break;
+      }
+      case 'moscow_assignment': {
+        const result = this.workerSystem.moscowAssignment();
+        this.callbacks.onToast(
+          `Moscow sends ${result.count} new workers to the collective.`,
+          'warning',
+        );
+        break;
+      }
+      case 'veteran_return': {
+        const [minCount, maxCount] = entry.count ?? [5, 20];
+        const count = this.rng.int(minCount, maxCount);
+        this.workerSystem.spawnInflowDvor(count, 'veteran_return', { morale: 35, skill: 40 });
+        this.callbacks.onToast(
+          `Veterans return from the front: ${count} scarred workers rejoin.`,
+          'warning',
+        );
+        break;
+      }
+      case 'algorithmic_assignment': {
+        const [minCount, maxCount] = entry.count ?? [1, 50];
+        const count = this.rng.int(minCount, maxCount);
+        this.workerSystem.spawnInflowDvor(count, 'algorithmic');
+        this.callbacks.onToast(
+          `The Algorithm assigns ${count} new workers to your sector.`,
+          'warning',
+        );
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
   private getSerializableEngine() {
     const politicalForSerialization = Object.create(this.politicalAgent);
     politicalForSerialization.serialize = () => ({
@@ -1133,6 +1220,8 @@ export class SimulationEngine {
       pendingReport: this.pendingReport,
       pendingReportSinceTick: this.pendingReportSinceTick,
       ended: this.ended,
+      lastInflowYear: this.lastInflowYear,
+      evacueeInfluxFired: this.evacueeInfluxFired,
       rng: this.rng,
       eventHandler: this.eventHandler,
       politburoEventHandler: this.politburoEventHandler,

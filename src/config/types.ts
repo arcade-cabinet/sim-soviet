@@ -642,6 +642,15 @@ export interface DoctrineConfig {
   eternalPaperworkGrowthFactor: number;
   eternalBureaucracySlowdownPer1000: number;
   policies: Record<string, DoctrinePolicyConfig>;
+  inflowSchedule: Record<string, InflowScheduleEntry>;
+}
+
+/** Configuration for a scheduled population inflow per era. */
+export interface InflowScheduleEntry {
+  type: string;
+  intervalYears?: number;
+  once?: boolean;
+  count?: [number, number];
 }
 
 /** Complete political configuration. */
