@@ -1,5 +1,5 @@
 export { EventSystem, type EventSystemSaveData } from './EventSystem';
-export { ALL_EVENT_TEMPLATES } from './templates';
+export { ALL_EVENT_TEMPLATES, CRISIS_EVENTS } from './templates';
 export type {
   EventCategory,
   EventSeverity,

@@ -1,5 +1,6 @@
 import type { EventTemplate } from '../types';
 import { ABSURDIST_EVENTS } from './absurdist';
+import { CRISIS_EVENTS } from './crisis';
 import { CULTURAL_EVENTS } from './cultural';
 import { DISASTER_EVENTS } from './disasters';
 import { ECONOMIC_EVENTS } from './economic';
@@ -18,6 +19,15 @@ export const ALL_EVENT_TEMPLATES: EventTemplate[] = [
   ...CULTURAL_EVENTS,
   ...ABSURDIST_EVENTS,
   ...ERA_SPECIFIC_EVENTS,
+  ...CRISIS_EVENTS,
 ];
 
-export { ABSURDIST_EVENTS, CULTURAL_EVENTS, DISASTER_EVENTS, ECONOMIC_EVENTS, ERA_SPECIFIC_EVENTS, POLITICAL_EVENTS };
+export {
+  ABSURDIST_EVENTS,
+  CRISIS_EVENTS,
+  CULTURAL_EVENTS,
+  DISASTER_EVENTS,
+  ECONOMIC_EVENTS,
+  ERA_SPECIFIC_EVENTS,
+  POLITICAL_EVENTS,
+};

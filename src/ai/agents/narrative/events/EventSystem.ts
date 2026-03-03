@@ -99,14 +99,14 @@ export class EventSystem {
   }
 
   /** Called every simulation tick with the monotonic tick counter */
-  public tick(totalTicks: number, eventFrequencyMult = 1): void {
+  public tick(totalTicks: number, eventFrequencyMult = 1, activeCrisisIds: string[] = []): void {
     this.currentTick = totalTicks;
     if (totalTicks - this.lastEventTick < this.eventCooldownTicks) return;
 
     // 12% base chance per eligible tick, scaled by era modifier
     const rng = getEventRng();
     if ((rng ? rng.random() : Math.random()) < EVENT_BASE_PROBABILITY * eventFrequencyMult) {
-      const event = this.generateEvent();
+      const event = this.generateEvent(activeCrisisIds);
       if (event) {
         this.applyEffects(event);
         this.applyPersonnelMarks(event);
@@ -148,12 +148,13 @@ export class EventSystem {
 
   // ── private ──────────────────────────────────────────
 
-  private generateEvent(): GameEvent | null {
+  private generateEvent(activeCrisisIds: string[] = []): GameEvent | null {
     const view = createGameView();
-    // Filter to eligible events (condition met, not recently fired, era-matched)
+    // Filter to eligible events (condition met, not recently fired, era-matched, crisis-matched)
     const eligible = ALL_EVENT_TEMPLATES.filter((t) => {
       if (this.recentEventIds.includes(t.id)) return false;
       if (t.eraFilter && !t.eraFilter.includes(view.currentEra)) return false;
+      if (t.crisisFilter && !t.crisisFilter.some((cid) => activeCrisisIds.includes(cid))) return false;
       if (t.condition && !t.condition(view)) return false;
       return true;
     });

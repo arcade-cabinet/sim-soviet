@@ -47,4 +47,6 @@ export interface EventTemplate {
   weight?: number;
   /** If set, this event only fires during these eras */
   eraFilter?: string[];
+  /** If set, this event only fires when at least one of these crisis IDs is active */
+  crisisFilter?: string[];
 }
