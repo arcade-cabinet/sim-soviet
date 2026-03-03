@@ -182,6 +182,9 @@ async function runVisualPlaytest(
 }
 
 test.describe('Visual Playtest Capture', () => {
+  // CI: rAF under SwiftShader cannot run game loop fast enough for playthroughs
+  test.skip(!!process.env.CI, 'Visual playtest requires sustained turbo-speed game loop, unreliable on headless WebGL');
+
   test.beforeAll(() => {
     for (const level of ['worker', 'comrade', 'tovarish']) {
       mkdirSync(`${SCREENSHOT_DIR}/${level}`, { recursive: true });

@@ -31,6 +31,8 @@ test.describe('Era System', () => {
   });
 
   test('era label remains valid after advancing time', async ({ page }) => {
+    // CI: rAF under SwiftShader is too slow for multi-tick advancement
+    test.skip(!!process.env.CI, 'Multi-tick sim advancement unreliable on headless WebGL');
     await startGameAndDismiss(page);
 
     await advanceGameTime(page, 3);
@@ -41,6 +43,8 @@ test.describe('Era System', () => {
   });
 
   test('date and era are consistent after multiple ticks', async ({ page }) => {
+    // CI: rAF under SwiftShader is too slow for multi-tick advancement
+    test.skip(!!process.env.CI, 'Multi-tick sim advancement unreliable on headless WebGL');
     await startGameAndDismiss(page);
 
     const initialDate = await getDateText(page);

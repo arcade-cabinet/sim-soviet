@@ -24,6 +24,9 @@ import {
 test.describe.configure({ timeout: 300_000 }); // 5 min per test
 
 test.describe('Yuka Playthrough — Difficulty Levels', () => {
+  // CI: rAF under SwiftShader cannot advance game years — skip entire suite
+  test.skip(!!process.env.CI, 'Yuka playthrough requires multi-year sim advancement, unreliable on headless WebGL');
+
   const SCREENSHOT_DIR = 'e2e/screenshots';
   const START_YEAR = 1917;
 

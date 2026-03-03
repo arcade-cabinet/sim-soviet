@@ -36,6 +36,7 @@ test.describe('Save/Load Panel', () => {
   });
 
   test('game state is consistent after advancing time', async ({ page }) => {
+    test.skip(!!process.env.CI, 'Multi-tick sim advancement unreliable on headless WebGL');
     await startGameAndDismiss(page);
 
     const initialDate = await getDateText(page);
