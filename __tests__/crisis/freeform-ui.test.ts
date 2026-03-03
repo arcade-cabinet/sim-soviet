@@ -173,7 +173,7 @@ describe('Freeform mode resource multiplier', () => {
   it('freeform mode: all difficulty levels get 1.0', () => {
     const difficulties = ['worker', 'comrade', 'tovarish'] as const;
 
-    for (const difficulty of difficulties) {
+    for (const _difficulty of difficulties) {
       // Freeform mode always uses 1.0 resource multiplier (Governor system handles difficulty)
       const resMult = 1.0;
       expect(resMult).toBe(1.0);

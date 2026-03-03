@@ -22,7 +22,6 @@ export interface ApplicatorDeps {
     money: number;
     vodka: number;
     population: number;
-    [key: string]: number;
   };
   callbacks: {
     onPravda: (msg: string) => void;
@@ -31,9 +30,6 @@ export interface ApplicatorDeps {
   workerSystem?: {
     removeWorkersByCountMaleFirst: (count: number, reason: string) => number;
     spawnInflowDvor: (count: number, reason: string) => void;
-  };
-  kgbAgent?: {
-    addMark: (reason: string, tick: number, description: string) => void;
   };
   buildings?: Array<{ gridX: number; gridY: number; type: string }>;
   rng: { int: (min: number, max: number) => number; random: () => number };

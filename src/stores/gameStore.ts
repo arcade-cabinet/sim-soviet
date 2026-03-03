@@ -354,7 +354,7 @@ let _assignmentMode: AssignmentMode | null = null;
 const _assignmentListeners = new Set<() => void>();
 
 /** Get the current worker assignment mode (null if not in assignment mode). */
-export function getAssignmentMode(): AssignmentMode | null {
+function getAssignmentMode(): AssignmentMode | null {
   return _assignmentMode;
 }
 
@@ -429,48 +429,11 @@ export interface NotificationEntry {
   gridY?: number;
 }
 
-const MAX_NOTIFICATIONS = 50;
-let _notificationId = 0;
-let _notifications: NotificationEntry[] = [];
+const _notifications: NotificationEntry[] = [];
 const _notificationListeners = new Set<() => void>();
 
-function notifyNotificationListeners(): void {
-  for (const listener of _notificationListeners) {
-    listener();
-  }
-}
-
-/**
- * Add a notification to the log (capped at 50 entries).
- *
- * @param message - Notification text
- * @param severity - Alert level
- * @param timestamp - Game tick timestamp
- * @param gridX - Optional grid X coordinate for location-based notifications
- * @param gridY - Optional grid Y coordinate for location-based notifications
- */
-export function addNotification(
-  message: string,
-  severity: 'warning' | 'critical' | 'evacuation',
-  timestamp: number,
-  gridX?: number,
-  gridY?: number,
-): void {
-  _notificationId++;
-  const entry: NotificationEntry = {
-    id: _notificationId,
-    message,
-    severity,
-    timestamp,
-    gridX,
-    gridY,
-  };
-  _notifications = [entry, ..._notifications].slice(0, MAX_NOTIFICATIONS);
-  notifyNotificationListeners();
-}
-
 /** Get the current notification log (most recent first). */
-export function getNotifications(): NotificationEntry[] {
+function getNotifications(): NotificationEntry[] {
   return _notifications;
 }
 
@@ -483,65 +446,6 @@ function subscribeNotifications(listener: () => void): () => void {
   _notificationListeners.add(listener);
   return () => {
     _notificationListeners.delete(listener);
-  };
-}
-
-// ── Citizen Dossier Modal ─────────────────────────────────────────────────
-
-/** Data payload for the citizen dossier modal, including citizen and household info. */
-export interface CitizenDossierData {
-  citizen: {
-    name: string;
-    class: string;
-    happiness: number;
-    hunger: number;
-    assignment?: string;
-    gender?: 'male' | 'female';
-    age?: number;
-    memberRole?: string;
-    dvorId?: string;
-  };
-  household?: {
-    surname: string;
-    members: Array<{ name: string; age: number; role: string; gender: string }>;
-    headOfHousehold: string;
-    loyaltyToCollective: number;
-  };
-}
-
-let _selectedCitizen: CitizenDossierData | null = null;
-const _citizenDossierListeners = new Set<() => void>();
-
-/** Get the currently selected citizen for the dossier modal (null if closed). */
-export function getSelectedCitizen(): CitizenDossierData | null {
-  return _selectedCitizen;
-}
-
-/** Open the citizen dossier modal with the given citizen data. */
-export function openCitizenDossier(data: CitizenDossierData): void {
-  _selectedCitizen = data;
-  for (const listener of _citizenDossierListeners) {
-    listener();
-  }
-}
-
-/** Close the citizen dossier modal. */
-export function closeCitizenDossier(): void {
-  _selectedCitizen = null;
-  for (const listener of _citizenDossierListeners) {
-    listener();
-  }
-}
-
-/** React hook — subscribe to the citizen dossier modal state. */
-export function useCitizenDossier(): CitizenDossierData | null {
-  return useSyncExternalStore(subscribeCitizenDossier, getSelectedCitizen, getSelectedCitizen);
-}
-
-function subscribeCitizenDossier(listener: () => void): () => void {
-  _citizenDossierListeners.add(listener);
-  return () => {
-    _citizenDossierListeners.delete(listener);
   };
 }
 
@@ -684,7 +588,7 @@ let _buildingInspector: BuildingInspectorState | null = null;
 const _buildingInspectorListeners = new Set<() => void>();
 
 /** Get the current building inspector panel state (null if closed). */
-export function getBuildingInspector(): BuildingInspectorState | null {
+function getBuildingInspector(): BuildingInspectorState | null {
   return _buildingInspector;
 }
 
@@ -722,7 +626,7 @@ let _citizenDossierIndex: number | null = null;
 const _citizenDossierIndexListeners = new Set<() => void>();
 
 /** Get the index of the citizen dossier currently viewed (null if closed). */
-export function getCitizenDossierIndex(): number | null {
+function getCitizenDossierIndex(): number | null {
   return _citizenDossierIndex;
 }
 
@@ -773,7 +677,7 @@ let _cursorTooltip: CursorTooltipState | null = null;
 const _cursorTooltipListeners = new Set<() => void>();
 
 /** Get the current cursor tooltip state (null if no tile hovered). */
-export function getCursorTooltip(): CursorTooltipState | null {
+function getCursorTooltip(): CursorTooltipState | null {
   return _cursorTooltip;
 }
 
@@ -811,7 +715,7 @@ export function notifyTerrainDirty(): void {
 }
 
 /** Current terrain version (monotonically increasing). */
-export function getTerrainVersion(): number {
+function getTerrainVersion(): number {
   return _terrainDirtyVersion;
 }
 
@@ -839,7 +743,7 @@ export function setPlacementCallback(cb: PlacementCallback | null): void {
 }
 
 /**
- * Called by RadialBuildMenu to place a building at a grid position.
+ * Called by RadialMenu to place a building at a grid position.
  *
  * @param gridX - Grid X coordinate
  * @param gridY - Grid Y coordinate
@@ -856,7 +760,7 @@ let _showPoliticalPanel = false;
 const _politicalPanelListeners = new Set<() => void>();
 
 /** Whether the political entity panel is currently visible. */
-export function getPoliticalPanelVisible(): boolean {
+function getPoliticalPanelVisible(): boolean {
   return _showPoliticalPanel;
 }
 

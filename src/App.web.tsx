@@ -388,7 +388,7 @@ const App: React.FC = () => {
             if (ctx) {
               AudioManager.getInstance().playContext(ctx);
             }
-            // Notify store so RadialBuildMenu re-renders with newly unlocked buildings
+            // Notify store so RadialMenu re-renders with newly unlocked buildings
             notifyStateChange();
           },
           onAnnualReport: (data, submitReport) => {
@@ -401,7 +401,7 @@ const App: React.FC = () => {
           },
           onTutorialMilestone: (milestone) => {
             showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
-            // Notify store so RadialBuildMenu re-renders with newly unlocked categories
+            // Notify store so RadialMenu re-renders with newly unlocked categories
             notifyStateChange();
           },
           onGameTally: (tally) => {

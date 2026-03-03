@@ -27,6 +27,12 @@ export interface BuildingTypeInfo {
   pollution?: number;
   /** Power units required to operate */
   powerReq?: number;
+  /** Water units required to operate */
+  waterReq?: number;
+  /** Resource type produced ('food', 'vodka', 'money') */
+  prod?: string;
+  /** Amount produced per month */
+  amt?: number;
   /** Population capacity (negative for gulags) */
   cap?: number;
   /** Whether this building is hidden until unlocked */

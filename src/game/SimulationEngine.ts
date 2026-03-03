@@ -731,10 +731,9 @@ export class SimulationEngine {
       this.cachedDirective = this.governor.evaluate(govCtx);
       if (this.cachedDirective.crisisImpacts.length > 0) {
         applyCrisisImpacts(this.cachedDirective.crisisImpacts, {
-          resources: storeRef.resources as any,
+          resources: storeRef.resources,
           callbacks: this.callbacks,
           workerSystem: this.workerSystem,
-          kgbAgent: this.kgbAgent as any,
           buildings: operationalBuildings.entities.map((e) => ({
             gridX: e.position.gridX,
             gridY: e.position.gridY,
