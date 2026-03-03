@@ -1,7 +1,7 @@
 /**
  * Tests for era-gated building menu data flow.
  *
- * Verifies that the RadialBuildMenu filtering logic correctly
+ * Verifies that the RadialMenu filtering logic correctly
  * excludes buildings from future eras and includes all buildings
  * from the current and past eras.
  */
@@ -9,7 +9,7 @@
 import { BUILDING_DEFS, getBuildingsByRole, type Role } from '../../src/data/buildingDefs';
 import { ERA_DEFINITIONS, ERA_ORDER, getAvailableBuildingsForYear } from '../../src/game/era/definitions';
 
-/** Category definitions matching RadialBuildMenu.tsx */
+/** Category definitions matching RadialMenu.tsx */
 const CATEGORIES: { id: string; roles: Role[] }[] = [
   { id: 'res', roles: ['housing'] },
   { id: 'ind', roles: ['industry', 'agriculture'] },

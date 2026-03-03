@@ -204,10 +204,10 @@ export function simTick(state: GameState): void {
     const baseStats = BUILDING_TYPES[b.type] || (GROWN_TYPES[b.type] ? GROWN_TYPES[b.type][b.level || 0] : null);
     if (!baseStats) return;
     if ((b.type === 'power' || b.type === 'nuke' || b.type === 'tap') && state.grid[b.y][b.x].onFire === 0) {
-      prodPower += (baseStats as any).power || 0;
+      prodPower += baseStats.power || 0;
     }
     if (b.type === 'pump' && state.grid[b.y][b.x].onFire === 0) {
-      prodWater += (baseStats as any).water || 0;
+      prodWater += baseStats.water || 0;
     }
   });
   state.powerGen = prodPower;
@@ -307,12 +307,12 @@ export function simTick(state: GameState): void {
         }
       }
     } else {
-      if ((stats as any).powerReq) {
-        reqPower += (stats as any).powerReq;
+      if (stats.powerReq) {
+        reqPower += stats.powerReq;
         if (reqPower > state.powerGen) b.powered = false;
       }
-      if ((stats as any).waterReq) {
-        reqWater += (stats as any).waterReq;
+      if (stats.waterReq) {
+        reqWater += stats.waterReq;
         if (!cell.watered || reqWater > state.waterGen) b.powered = false;
       }
     }
@@ -331,24 +331,21 @@ export function simTick(state: GameState): void {
 
       // Production multiplier from propaganda towers
       let multiplier = 1;
-      if (
-        (stats as any).prod &&
-        activeTowers.some((t) => Math.hypot(t.x - b.x, t.y - b.y) <= 5 && t.powered !== false)
-      ) {
+      if (stats.prod && activeTowers.some((t) => Math.hypot(t.x - b.x, t.y - b.y) <= 5 && t.powered !== false)) {
         multiplier = 2;
       }
 
-      if (isMonthPassed && (stats as any).prod) {
-        const amount = (stats as any).amt * multiplier;
-        if ((stats as any).prod === 'food') {
+      if (isMonthPassed && stats.prod) {
+        const amount = (stats.amt ?? 0) * multiplier;
+        if (stats.prod === 'food') {
           prodFood += amount;
           addFloatingText(state, b.x, b.y, `+${amount}🥔`, '#00e676');
         }
-        if ((stats as any).prod === 'vodka') {
+        if (stats.prod === 'vodka') {
           prodVodka += amount;
           addFloatingText(state, b.x, b.y, `+${amount}🍾`, '#00e5ff');
         }
-        if ((stats as any).prod === 'money') {
+        if (stats.prod === 'money') {
           state.money += amount;
           addFloatingText(state, b.x, b.y, `+${amount}₽`, '#fbc02d');
         }
@@ -360,8 +357,8 @@ export function simTick(state: GameState): void {
       }
 
       // Pollution
-      if ((stats as any).pollution) {
-        nextSmog[b.y][b.x] += (stats as any).pollution;
+      if (stats.pollution) {
+        nextSmog[b.y][b.x] += stats.pollution;
       }
 
       // Random riots

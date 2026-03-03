@@ -16,7 +16,6 @@ import { gameState } from '@/engine/GameState';
 import { clearToast, dismissAdvisor } from '@/engine/helpers';
 import {
   closeBuildingInspector,
-  closeCitizenDossier,
   closeCitizenDossierByIndex,
   closeInspectMenu,
   closePoliticalPanel,
@@ -96,7 +95,6 @@ export function resetAllSingletons(): void {
   setAssignmentMode(null);
   setCursorTooltip(null);
   closeBuildingInspector();
-  closeCitizenDossier();
   closeCitizenDossierByIndex();
   closeRadialMenu();
   closeInspectMenu();
