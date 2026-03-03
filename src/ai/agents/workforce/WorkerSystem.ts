@@ -42,6 +42,7 @@ import {
   processVodka,
   resolveStatus,
 } from './classes';
+import { type LaborBudgetConfig, type LaborBudgetResult, LABOR_BUDGET_CONFIG, computeLaborBudget } from './laborBudget';
 import {
   ACCIDENT_LOW_SKILL_MULT,
   ACCIDENT_RATE_PER_FACTORY,
@@ -123,6 +124,8 @@ export class WorkerSystem {
   private tickCounter = 0;
   private trudodniTracker: Map<Entity, number> = new Map();
   private overrideCount = 0;
+  private lastLaborBudget: LaborBudgetResult | null = null;
+  private laborBudgetConfig: LaborBudgetConfig = LABOR_BUDGET_CONFIG;
 
   constructor(rng?: GameRng) {
     this.rng = rng ?? null;
@@ -257,6 +260,22 @@ export class WorkerSystem {
     if (count === 0) return 1.0;
     const avgSkill = sum / count; // [0..100]
     return 0.5 + (avgSkill / 100);  // [0.5..1.5]
+  }
+
+  /**
+   * Get the most recent labor budget result, computed during the last tick.
+   * Returns null if no tick has been processed yet.
+   */
+  getLastLaborBudget(): LaborBudgetResult | null {
+    return this.lastLaborBudget;
+  }
+
+  /**
+   * Override the labor budget config (for testing or gameplay modifiers).
+   * @param config - Partial config to merge with defaults
+   */
+  setLaborBudgetConfig(config: Partial<LaborBudgetConfig>): void {
+    this.laborBudgetConfig = { ...this.laborBudgetConfig, ...config };
   }
 
   /** Get trudodni earned this year for a worker. */
@@ -1051,6 +1070,12 @@ export class WorkerSystem {
     const drains: PopulationDrainEvent[] = [];
     const inflows: PopulationInflowEvent[] = [];
 
+    // Compute labor budget for this tick — determines how workforce time is split
+    const population = this.getPopulation();
+    const foodCrisis = ctx.foodAvailable <= 0;
+    const laborBudget = computeLaborBudget(ctx.eraId, population, foodCrisis, this.laborBudgetConfig);
+    this.lastLaborBudget = laborBudget;
+
     const tickCtx: TickContext = {
       remainingVodka: ctx.vodkaAvailable,
       remainingFood: ctx.foodAvailable,
@@ -1066,6 +1091,28 @@ export class WorkerSystem {
     }
 
     const { classEffSum, classCount, toRemove } = this.processCitizens(tickCtx, stakhanovites, ctx.trudodniRatio);
+
+    // Apply labor budget morale effects:
+    // - Too little rest (below minimum) causes morale decay
+    // - Idle above threshold means trouble brewing (minor morale penalty from unease)
+    if (population > 0) {
+      for (const entity of citizens) {
+        const stats = this.stats.get(entity);
+        if (!stats) continue;
+
+        // Rest deficit: if rest fraction is squeezed below the configured minimum,
+        // workers get exhausted and morale suffers
+        if (laborBudget.restFraction < this.laborBudgetConfig.restMinimum) {
+          stats.morale = Math.max(0, stats.morale - 1);
+        }
+
+        // Trouble from idleness: "an idle populace gets up to no good"
+        if (laborBudget.troubleRisk) {
+          stats.morale = Math.max(0, stats.morale - 0.5);
+          stats.loyalty = Math.max(0, stats.loyalty - 0.5);
+        }
+      }
+    }
 
     // Process defections
     for (const { entity, name, cls } of toRemove) {
@@ -1092,10 +1139,10 @@ export class WorkerSystem {
     }
 
     // Sync authoritative population to resource store
-    const population = this.getPopulation();
+    const finalPopulation = this.getPopulation();
     const store = getResourceEntity();
     if (store) {
-      store.resources.population = population;
+      store.resources.population = finalPopulation;
     }
 
     const averageMorale = this.getAverageMorale();
@@ -1111,7 +1158,7 @@ export class WorkerSystem {
       drains,
       inflows,
       averageMorale,
-      population,
+      population: finalPopulation,
     };
   }
 

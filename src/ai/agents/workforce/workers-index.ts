@@ -3,6 +3,8 @@
  */
 
 export { generateWorkerName } from './classes';
+export { computeLaborBudget, LABOR_BUDGET_CONFIG } from './laborBudget';
+export type { LaborBudgetConfig, LaborBudgetResult } from './laborBudget';
 export type {
   PopulationDrainEvent,
   PopulationDrainReason,
