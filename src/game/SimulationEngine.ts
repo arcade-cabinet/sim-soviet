@@ -427,7 +427,20 @@ export class SimulationEngine {
 
   // ── Governor ───────────────────────────────────────────────────────────────
 
-  public setGovernor(gov: IGovernor): void { this.governor = gov; }
+  public setGovernor(gov: IGovernor): void {
+    this.governor = gov;
+    // Wire crisis-active check so doctrine mechanics that overlap with
+    // crisis agent behavior (e.g. wartime_conscription) are skipped.
+    this.politicalEntities.setCrisisCheck((type: string) => {
+      if (!this.governor || !this.cachedDirective) return false;
+      if (type === 'war') {
+        return this.cachedDirective.crisisImpacts.some(
+          (i) => i.workforce?.conscriptionCount !== undefined && i.workforce.conscriptionCount > 0,
+        );
+      }
+      return false;
+    });
+  }
   public getGovernor(): IGovernor | null { return this.governor; }
 
   // ── Autopilot ───────────────────────────────────────────────────────────────

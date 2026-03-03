@@ -80,12 +80,25 @@ export class PoliticalEntitySystem {
   private returnQueue: Array<{ returnTick: number; count: number }> = [];
   private raikom: RaikomState | null = null;
   private rng: GameRng | null;
+  /** Optional check for whether a crisis agent of a given type is active. */
+  private crisisActiveCheck: ((type: string) => boolean) | null = null;
 
   constructor(rng?: GameRng) {
     this.rng = rng ?? null;
   }
 
   // ── Public API ───────────────────────────────────────────
+
+  /**
+   * Register a callback to check whether a crisis agent of a given type
+   * is currently active. Used to bypass doctrine mechanics that overlap
+   * with crisis agent behavior (e.g. wartime_conscription vs WarAgent).
+   *
+   * @param fn - Returns true when a crisis of the given type is active
+   */
+  setCrisisCheck(fn: (type: string) => boolean): void {
+    this.crisisActiveCheck = fn;
+  }
 
   /**
    * Synchronize political entity counts based on settlement tier, era,
@@ -190,7 +203,11 @@ export class PoliticalEntitySystem {
 
     // 8. Evaluate doctrine mechanics
     if (doctrineCtx) {
-      const doctrineEffects = evaluateDoctrineMechanics(doctrineCtx);
+      // Inject crisis agent check so overlapping mechanics are skipped
+      const ctxWithCrisis = this.crisisActiveCheck
+        ? { ...doctrineCtx, crisisAgentActive: this.crisisActiveCheck }
+        : doctrineCtx;
+      const doctrineEffects = evaluateDoctrineMechanics(ctxWithCrisis);
       result.doctrineMechanicEffects.push(...doctrineEffects);
     }
 

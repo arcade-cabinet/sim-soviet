@@ -1,17 +1,20 @@
 /**
  * @module ai/agents/crisis/FreeformGovernor
  *
- * Governor for Freeform (alternate-history) mode.
+ * Governor for Freeform (alternate-history) mode. Plays real Soviet
+ * history up to a player-chosen divergence year, then switches to
+ * ChaosEngine-driven crisis generation for speculative timelines.
  *
- * Plays real Soviet history up to a configurable divergence year,
- * then branches into procedurally generated alternate history using
- * the ChaosEngine. Records all events to a TimelineSystem for
- * causal chain tracking and chaos engine feedback.
+ * Before divergenceYear: activates historical crises exactly as
+ * HistoricalGovernor would (same agents, same dates, same phase logic).
  *
- * Pre-divergence: delegates entirely to HistoricalGovernor.
- * At divergence: records a DivergencePoint, switches to ChaosEngine.
- * Post-divergence: generates crises via ChaosEngine, manages active
- * crisis agents, merges impacts into DynamicModifiers.
+ * After divergenceYear: ChaosEngine evaluates archetype triggers
+ * against current game state and generates new crises. All events
+ * (historical and generated) are recorded in a TimelineSystem for
+ * feedback-driven crisis cascading.
+ *
+ * Uses the same crisis agents (WarAgent, FamineAgent, DisasterAgent)
+ * for both phases.
  */
 
 import type {
@@ -29,17 +32,28 @@ import type {
   CrisisDefinition,
   CrisisAgentSaveData,
 } from './types';
-import { HistoricalGovernor } from './HistoricalGovernor';
-import { ChaosEngine, ChaosState } from './ChaosEngine';
-import { TimelineSystem, TimelineEvent } from './TimelineSystem';
+import { HISTORICAL_CRISES } from '@/config/historicalCrises';
+import { ChaosEngine, type ChaosState } from './ChaosEngine';
+import { TimelineSystem, type TimelineEvent } from './TimelineSystem';
 import { WarAgent } from './WarAgent';
 import { FamineAgent } from './FamineAgent';
 import { DisasterAgent } from './DisasterAgent';
-import { GameRng } from '@/game/SeedSystem';
 
-// ─── Agent Factory ──────────────────────────────────────────────────────────
+// ─── Agent Entry ────────────────────────────────────────────────────────────
 
-/** Create a crisis agent for the given crisis type. */
+/** Internal tracking structure for each crisis + its agent. */
+interface AgentEntry {
+  definition: CrisisDefinition;
+  agent: ICrisisAgent;
+  activated: boolean;
+}
+
+// ─── Factory ────────────────────────────────────────────────────────────────
+
+/**
+ * Create the appropriate crisis agent for a given crisis type.
+ * Political crises are handled by the existing PoliticalAgent and skipped.
+ */
 function createAgentForType(type: string): ICrisisAgent | null {
   switch (type) {
     case 'war':
@@ -48,125 +62,238 @@ function createAgentForType(type: string): ICrisisAgent | null {
       return new FamineAgent();
     case 'disaster':
       return new DisasterAgent();
+    case 'political':
+      return null; // handled by existing PoliticalAgent
     default:
       return null;
   }
 }
 
-// ─── Freeform Agent Entry ───────────────────────────────────────────────────
+// ─── FreeformGovernor ─────────────────────────────────────────────────────
 
-/** Tracking entry for a chaos-generated crisis agent. */
-interface FreeformAgentEntry {
-  definition: CrisisDefinition;
-  agent: ICrisisAgent;
-}
-
-// ─── FreeformGovernor ───────────────────────────────────────────────────────
-
+/**
+ * Alternate-history governor that replays real Soviet history up to a
+ * divergence year, then uses ChaosEngine for extrapolation.
+ *
+ * @param divergenceYear - Year at which history diverges (1917-1991)
+ */
 export class FreeformGovernor implements IGovernor {
   private divergenceYear: number;
-  private diverged = false;
-  private historicalGovernor: HistoricalGovernor;
+  private hasDiverged = false;
+  private historicalEntries: AgentEntry[] = [];
+  private freeformEntries: AgentEntry[] = [];
   private chaosEngine: ChaosEngine;
   private timeline: TimelineSystem;
-  private rng: GameRng;
-  private activeFreeformAgents: Map<string, FreeformAgentEntry> = new Map();
+  private currentYear = 0;
 
-  /** Year-since counters for chaos engine state. */
-  private yearsSinceLastWar = 0;
-  private yearsSinceLastFamine = 0;
-  private yearsSinceLastDisaster = 0;
-  private yearsSinceLastPolitical = 0;
+  /** Track years since last crisis of each type (for ChaosState). */
+  private yearsSinceLastWar = 10;
+  private yearsSinceLastFamine = 10;
+  private yearsSinceLastDisaster = 10;
+  private yearsSinceLastPolitical = 10;
+  private totalCrisesExperienced = 0;
 
-  /** Last year we checked for new crises (to avoid duplicate checks). */
-  private lastCrisisCheckYear = 0;
-
-  constructor(divergenceYear: number, rng: GameRng) {
-    this.divergenceYear = divergenceYear;
-    this.rng = rng;
-    this.historicalGovernor = new HistoricalGovernor();
+  constructor(divergenceYear: number) {
+    this.divergenceYear = Math.max(1917, Math.min(1991, divergenceYear));
     this.chaosEngine = new ChaosEngine();
     this.timeline = new TimelineSystem();
+    this.loadHistoricalCrises();
   }
 
-  /** Evaluate the current tick and return a directive. */
-  evaluate(ctx: GovernorContext): GovernorDirective {
-    if (ctx.year < this.divergenceYear) {
-      // Pre-divergence: delegate to historical governor
-      const directive = this.historicalGovernor.evaluate(ctx);
+  /**
+   * Load historical crisis definitions that start before the divergence year.
+   * Crises with startYear >= divergenceYear are excluded (they never happened
+   * in this timeline).
+   */
+  private loadHistoricalCrises(): void {
+    this.historicalEntries = [];
+    for (const def of HISTORICAL_CRISES) {
+      // Only include crises that would have started before divergence
+      if (def.startYear >= this.divergenceYear) continue;
 
-      // Record active historical crises to the timeline
-      this.recordHistoricalCrises(ctx);
-
-      return directive;
-    }
-
-    // At divergence point: record and switch
-    if (!this.diverged) {
-      this.diverged = true;
-      this.timeline.recordDivergence({
-        year: ctx.year,
-        month: ctx.month,
-        historicalContext: `Diverged from Soviet history at ${ctx.year}`,
-        playerChoice: 'freeform_start',
-        divergenceTick: ctx.totalTicks,
-      });
-    }
-
-    // Post-divergence: use chaos engine
-    return this.evaluateFreeform(ctx);
-  }
-
-  /** Return IDs of all currently active crises. */
-  getActiveCrises(): string[] {
-    if (!this.diverged) {
-      return this.historicalGovernor.getActiveCrises();
-    }
-
-    const active: string[] = [];
-    for (const [id, entry] of this.activeFreeformAgents) {
-      if (entry.agent.isActive()) {
-        active.push(id);
+      const agent = createAgentForType(def.type);
+      if (agent) {
+        this.historicalEntries.push({
+          definition: def,
+          agent,
+          activated: false,
+        });
       }
     }
-    return active;
   }
 
-  /** Called at the start of each new game year. */
-  onYearBoundary(year: number): void {
-    if (!this.diverged) {
-      this.historicalGovernor.onYearBoundary(year);
+  /**
+   * Evaluate the current tick and return a GovernorDirective.
+   *
+   * Pre-divergence: activates historical crises by start year.
+   * Post-divergence: uses ChaosEngine for new crisis generation.
+   * Both phases: evaluates all active agents and merges impacts.
+   */
+  evaluate(ctx: GovernorContext): GovernorDirective {
+    this.currentYear = ctx.year;
+
+    // Check for divergence transition
+    if (!this.hasDiverged && ctx.year >= this.divergenceYear) {
+      this.hasDiverged = true;
+      this.recordDivergence(ctx);
     }
 
-    // Increment year-since counters
+    const allImpacts: CrisisImpact[] = [];
+
+    // Build the active crises list before evaluation (for CrisisContext)
+    const activeCrisisIds = this.getActiveCrises();
+
+    // ── Evaluate historical crises ──────────────────────────────────────
+
+    for (const entry of this.historicalEntries) {
+      // Only activate new historical crises before divergence
+      if (
+        !entry.activated &&
+        ctx.year >= entry.definition.startYear &&
+        !this.hasDiverged
+      ) {
+        entry.agent.configure(entry.definition);
+        entry.activated = true;
+        this.recordEvent(entry.definition, true);
+        this.totalCrisesExperienced++;
+      }
+
+      // Handle WarAgent aftermath transition (same as HistoricalGovernor)
+      if (
+        entry.activated &&
+        ctx.year > entry.definition.endYear &&
+        entry.agent.getPhase() === 'peak'
+      ) {
+        if (entry.agent instanceof WarAgent) {
+          entry.agent.transitionToAftermath();
+        }
+      }
+
+      // Evaluate all activated agents (they may still be active in aftermath)
+      if (entry.activated) {
+        const crisisCtx = this.buildCrisisContext(ctx, activeCrisisIds);
+        const impacts = entry.agent.evaluate(crisisCtx);
+        allImpacts.push(...impacts);
+      }
+    }
+
+    // ── Post-divergence: ChaosEngine-generated crises ────────────────────
+
+    if (this.hasDiverged) {
+      this.maybeGenerateNewCrisis(ctx);
+
+      for (const entry of this.freeformEntries) {
+        // Handle WarAgent aftermath transition for freeform crises too
+        if (
+          entry.activated &&
+          ctx.year > entry.definition.endYear &&
+          entry.agent.getPhase() === 'peak'
+        ) {
+          if (entry.agent instanceof WarAgent) {
+            entry.agent.transitionToAftermath();
+          }
+        }
+
+        if (entry.activated) {
+          const crisisCtx = this.buildCrisisContext(ctx, activeCrisisIds);
+          const impacts = entry.agent.evaluate(crisisCtx);
+          allImpacts.push(...impacts);
+        }
+      }
+    }
+
+    // Merge into modifiers (same logic as HistoricalGovernor)
+    const modifiers = this.mergeModifiers(allImpacts);
+
+    return {
+      crisisImpacts: allImpacts,
+      modifiers,
+    };
+  }
+
+  /** Return IDs of all currently active crises (historical + freeform). */
+  getActiveCrises(): string[] {
+    const historicalActive = this.historicalEntries
+      .filter((e) => e.activated && e.agent.isActive())
+      .map((e) => e.definition.id);
+
+    const freeformActive = this.freeformEntries
+      .filter((e) => e.activated && e.agent.isActive())
+      .map((e) => e.definition.id);
+
+    return [...historicalActive, ...freeformActive];
+  }
+
+  /**
+   * Called at the start of each new game year.
+   * Updates year-since counters: increments all, resets types with active crises.
+   */
+  onYearBoundary(year: number): void {
+    this.currentYear = year;
+
+    // Increment all year-since counters
     this.yearsSinceLastWar++;
     this.yearsSinceLastFamine++;
     this.yearsSinceLastDisaster++;
     this.yearsSinceLastPolitical++;
+
+    // Reset counters for types that have active crises
+    const allEntries = [...this.historicalEntries, ...this.freeformEntries];
+
+    for (const entry of allEntries) {
+      if (entry.activated && entry.agent.isActive()) {
+        switch (entry.definition.type) {
+          case 'war':
+            this.yearsSinceLastWar = 0;
+            break;
+          case 'famine':
+            this.yearsSinceLastFamine = 0;
+            break;
+          case 'disaster':
+            this.yearsSinceLastDisaster = 0;
+            break;
+          case 'political':
+            this.yearsSinceLastPolitical = 0;
+            break;
+        }
+      }
+    }
   }
 
   /** Serialize governor state for save persistence. */
   serialize(): GovernorSaveData {
-    const agentStates: Record<string, CrisisAgentSaveData> = {};
-    for (const [id, entry] of this.activeFreeformAgents) {
-      agentStates[id] = entry.agent.serialize();
+    const historicalAgentStates: Record<string, CrisisAgentSaveData> = {};
+    const historicalActivatedSet: string[] = [];
+
+    for (const entry of this.historicalEntries) {
+      if (entry.activated) {
+        historicalAgentStates[entry.definition.id] = entry.agent.serialize();
+        historicalActivatedSet.push(entry.definition.id);
+      }
     }
+
+    const freeformEntrySaves = this.freeformEntries.map((entry) => ({
+      definition: entry.definition,
+      agentState: entry.agent.serialize(),
+      activated: entry.activated,
+    }));
 
     return {
       mode: 'freeform',
       activeCrises: this.getActiveCrises(),
       state: {
         divergenceYear: this.divergenceYear,
-        diverged: this.diverged,
-        seed: this.rng.seed,
-        historicalGovernor: this.historicalGovernor.serialize(),
+        hasDiverged: this.hasDiverged,
+        currentYear: this.currentYear,
+        historicalAgentStates,
+        historicalActivatedSet,
+        freeformEntries: freeformEntrySaves,
         timeline: this.timeline.serialize(),
-        agentStates,
         yearsSinceLastWar: this.yearsSinceLastWar,
         yearsSinceLastFamine: this.yearsSinceLastFamine,
         yearsSinceLastDisaster: this.yearsSinceLastDisaster,
         yearsSinceLastPolitical: this.yearsSinceLastPolitical,
-        lastCrisisCheckYear: this.lastCrisisCheckYear,
+        totalCrisesExperienced: this.totalCrisesExperienced,
       },
     };
   }
@@ -176,18 +303,13 @@ export class FreeformGovernor implements IGovernor {
     const s = data.state;
 
     this.divergenceYear = (s['divergenceYear'] as number) ?? this.divergenceYear;
-    this.diverged = (s['diverged'] as boolean) ?? false;
-    this.yearsSinceLastWar = (s['yearsSinceLastWar'] as number) ?? 0;
-    this.yearsSinceLastFamine = (s['yearsSinceLastFamine'] as number) ?? 0;
-    this.yearsSinceLastDisaster = (s['yearsSinceLastDisaster'] as number) ?? 0;
-    this.yearsSinceLastPolitical = (s['yearsSinceLastPolitical'] as number) ?? 0;
-    this.lastCrisisCheckYear = (s['lastCrisisCheckYear'] as number) ?? 0;
-
-    // Restore historical governor
-    const histData = s['historicalGovernor'] as GovernorSaveData | undefined;
-    if (histData) {
-      this.historicalGovernor.restore(histData);
-    }
+    this.hasDiverged = (s['hasDiverged'] as boolean) ?? false;
+    this.currentYear = (s['currentYear'] as number) ?? 0;
+    this.yearsSinceLastWar = (s['yearsSinceLastWar'] as number) ?? 10;
+    this.yearsSinceLastFamine = (s['yearsSinceLastFamine'] as number) ?? 10;
+    this.yearsSinceLastDisaster = (s['yearsSinceLastDisaster'] as number) ?? 10;
+    this.yearsSinceLastPolitical = (s['yearsSinceLastPolitical'] as number) ?? 10;
+    this.totalCrisesExperienced = (s['totalCrisesExperienced'] as number) ?? 0;
 
     // Restore timeline
     const timelineData = s['timeline'] as ReturnType<TimelineSystem['serialize']> | undefined;
@@ -195,74 +317,139 @@ export class FreeformGovernor implements IGovernor {
       this.timeline.restore(timelineData);
     }
 
-    // Restore RNG from seed
-    const seed = s['seed'] as string | undefined;
-    if (seed) {
-      this.rng = new GameRng(seed);
+    // Reload historical entries for this divergence year
+    this.loadHistoricalCrises();
+
+    // Restore historical agent states
+    const historicalActivatedSet = new Set(
+      (s['historicalActivatedSet'] as string[]) ?? [],
+    );
+    const historicalAgentStates =
+      (s['historicalAgentStates'] as Record<string, CrisisAgentSaveData>) ?? {};
+
+    for (const entry of this.historicalEntries) {
+      if (historicalActivatedSet.has(entry.definition.id)) {
+        entry.activated = true;
+        const savedState = historicalAgentStates[entry.definition.id];
+        if (savedState) {
+          entry.agent.configure(entry.definition);
+          entry.agent.restore(savedState);
+        }
+      }
     }
 
-    // Restore freeform agents
-    const agentStates = (s['agentStates'] as Record<string, CrisisAgentSaveData>) ?? {};
-    this.activeFreeformAgents.clear();
-    for (const [id, agentData] of Object.entries(agentStates)) {
-      const agent = createAgentForType(agentData.definition.type);
+    // Restore freeform entries
+    this.freeformEntries = [];
+    const savedFreeform =
+      (s['freeformEntries'] as Array<{
+        definition: CrisisDefinition;
+        agentState: CrisisAgentSaveData;
+        activated: boolean;
+      }>) ?? [];
+
+    for (const saved of savedFreeform) {
+      const agent = createAgentForType(saved.definition.type);
       if (agent) {
-        agent.configure(agentData.definition);
-        agent.restore(agentData);
-        this.activeFreeformAgents.set(id, {
-          definition: agentData.definition,
+        agent.configure(saved.definition);
+        agent.restore(saved.agentState);
+        this.freeformEntries.push({
+          definition: saved.definition,
           agent,
+          activated: saved.activated,
         });
       }
     }
   }
 
-  /** Get the timeline system (for testing/inspection). */
+  // ─── Getters (for testing/inspection) ───────────────────────────────────
+
+  /** Whether the governor has passed the divergence year. */
+  isDiverged(): boolean {
+    return this.hasDiverged;
+  }
+
+  /** The configured divergence year. */
+  getDivergenceYear(): number {
+    return this.divergenceYear;
+  }
+
+  /** Get the timeline system (for inspection/testing). */
   getTimeline(): TimelineSystem {
     return this.timeline;
   }
 
-  /** Whether the governor has passed the divergence point. */
-  hasDiverged(): boolean {
-    return this.diverged;
+  /** Get year-since counters (for testing). */
+  getYearsSinceCounters(): {
+    war: number;
+    famine: number;
+    disaster: number;
+    political: number;
+  } {
+    return {
+      war: this.yearsSinceLastWar,
+      famine: this.yearsSinceLastFamine,
+      disaster: this.yearsSinceLastDisaster,
+      political: this.yearsSinceLastPolitical,
+    };
   }
 
-  // ─── Private: Freeform Evaluation ──────────────────────────────────────────
+  /** Get total crises experienced count (for testing). */
+  getTotalCrisesExperienced(): number {
+    return this.totalCrisesExperienced;
+  }
 
-  private evaluateFreeform(ctx: GovernorContext): GovernorDirective {
-    // Check for new crises from chaos engine (once per year, at month 1)
-    if (ctx.month === 1 && ctx.year > this.lastCrisisCheckYear) {
-      this.lastCrisisCheckYear = ctx.year;
+  // ─── Private: ChaosEngine Crisis Generation ────────────────────────────
 
-      const chaosState: ChaosState = {
-        year: ctx.year,
-        population: ctx.population,
-        food: ctx.food,
-        money: ctx.money,
-        yearsSinceLastWar: this.yearsSinceLastWar,
-        yearsSinceLastFamine: this.yearsSinceLastFamine,
-        yearsSinceLastDisaster: this.yearsSinceLastDisaster,
-        yearsSinceLastPolitical: this.yearsSinceLastPolitical,
-        activeCrises: [...this.activeFreeformAgents.keys()],
-        totalCrisesExperienced: this.timeline.getAllEvents().length,
-      };
+  /**
+   * Attempt to generate a new crisis via ChaosEngine.
+   * Only fires once per year (on month 1) to avoid crisis spam.
+   */
+  private maybeGenerateNewCrisis(ctx: GovernorContext): void {
+    if (ctx.month !== 1) return;
 
-      const newCrisis = this.chaosEngine.generateNextCrisis(
-        chaosState,
-        this.timeline.getAllEvents(),
-        this.rng,
-      );
+    const chaosState: ChaosState = {
+      year: ctx.year,
+      population: ctx.population,
+      food: ctx.food,
+      money: ctx.money,
+      yearsSinceLastWar: this.yearsSinceLastWar,
+      yearsSinceLastFamine: this.yearsSinceLastFamine,
+      yearsSinceLastDisaster: this.yearsSinceLastDisaster,
+      yearsSinceLastPolitical: this.yearsSinceLastPolitical,
+      activeCrises: this.getActiveCrises(),
+      totalCrisesExperienced: this.totalCrisesExperienced,
+    };
 
-      if (newCrisis) {
-        this.activateFreeformCrisis(newCrisis, ctx);
+    const newCrisis = this.chaosEngine.generateNextCrisis(
+      chaosState,
+      this.timeline.getAllEvents(),
+      ctx.rng,
+    );
+
+    if (newCrisis) {
+      const agent = createAgentForType(newCrisis.type);
+      if (agent) {
+        agent.configure(newCrisis);
+        const entry: AgentEntry = {
+          definition: newCrisis,
+          agent,
+          activated: true,
+        };
+        this.freeformEntries.push(entry);
+        this.recordEvent(newCrisis, false);
+        this.totalCrisesExperienced++;
       }
     }
+  }
 
-    // Evaluate all active agents
-    const allImpacts: CrisisImpact[] = [];
-    const activeCrisisIds = this.getActiveCrises();
+  // ─── Private: Helpers ──────────────────────────────────────────────────
 
-    const crisisCtx: CrisisContext = {
+  /** Build a CrisisContext from GovernorContext. */
+  private buildCrisisContext(
+    ctx: GovernorContext,
+    activeCrisisIds: string[],
+  ): CrisisContext {
+    return {
       year: ctx.year,
       month: ctx.month,
       population: ctx.population,
@@ -271,115 +458,60 @@ export class FreeformGovernor implements IGovernor {
       rng: ctx.rng,
       activeCrises: activeCrisisIds,
     };
-
-    for (const [id, entry] of this.activeFreeformAgents) {
-      if (entry.agent.isActive()) {
-        const impacts = entry.agent.evaluate(crisisCtx);
-        allImpacts.push(...impacts);
-      } else {
-        // Agent resolved — record end event
-        this.activeFreeformAgents.delete(id);
-      }
-    }
-
-    // Merge impacts into DynamicModifiers
-    const modifiers = this.mergeModifiers(allImpacts);
-
-    return {
-      crisisImpacts: allImpacts,
-      modifiers,
-    };
   }
 
-  // ─── Private: Crisis Activation ────────────────────────────────────────────
-
-  private activateFreeformCrisis(def: CrisisDefinition, ctx: GovernorContext): void {
-    const agent = createAgentForType(def.type);
-    if (!agent) return;
-
-    agent.configure(def);
-    this.activeFreeformAgents.set(def.id, { definition: def, agent });
-
-    // Reset year-since counter for this crisis type
-    switch (def.type) {
-      case 'war':
-        this.yearsSinceLastWar = 0;
-        break;
-      case 'famine':
-        this.yearsSinceLastFamine = 0;
-        break;
-      case 'disaster':
-        this.yearsSinceLastDisaster = 0;
-        break;
-      case 'political':
-        this.yearsSinceLastPolitical = 0;
-        break;
-    }
-
-    // Record to timeline
-    this.timeline.recordEvent({
+  /**
+   * Record a crisis event to the timeline.
+   *
+   * @param def - The crisis definition to record
+   * @param isHistorical - Whether this is a real historical event
+   */
+  private recordEvent(def: CrisisDefinition, isHistorical: boolean): void {
+    const event: TimelineEvent = {
       eventId: def.id,
       crisisType: def.type,
       name: def.name,
       startYear: def.startYear,
       endYear: def.endYear,
-      isHistorical: false,
+      isHistorical,
+      recordedTick: 0,
       parameters: { ...def.peakParams },
-      recordedTick: ctx.totalTicks,
+    };
+    this.timeline.recordEvent(event);
+  }
+
+  /** Record the divergence point on the timeline. */
+  private recordDivergence(ctx: GovernorContext): void {
+    this.timeline.recordDivergence({
+      year: ctx.year,
+      month: ctx.month,
+      historicalContext: `Soviet history through ${this.divergenceYear}`,
+      playerChoice: `Timeline diverges at year ${this.divergenceYear}`,
+      divergenceTick: ctx.totalTicks,
     });
   }
 
-  // ─── Private: Historical Event Recording ───────────────────────────────────
-
-  private recordHistoricalCrises(ctx: GovernorContext): void {
-    const activeCrises = this.historicalGovernor.getActiveCrises();
-    for (const crisisId of activeCrises) {
-      // Only record each crisis once
-      const existing = this.timeline.queryEvents({
-        yearRange: { start: ctx.year, end: ctx.year },
-      });
-      if (existing.some((e) => e.eventId === crisisId)) continue;
-
-      this.timeline.recordEvent({
-        eventId: crisisId,
-        crisisType: this.inferCrisisType(crisisId),
-        name: crisisId,
-        startYear: ctx.year,
-        endYear: ctx.year + 1,
-        isHistorical: true,
-        recordedTick: ctx.totalTicks,
-      });
-    }
-  }
-
-  /** Infer crisis type from crisis ID prefix. */
-  private inferCrisisType(crisisId: string): 'war' | 'famine' | 'disaster' | 'political' {
-    if (crisisId.includes('war') || crisisId.includes('gpw') || crisisId.includes('afghan') ||
-        crisisId.includes('civil') || crisisId.includes('finnish') || crisisId.includes('polish') ||
-        crisisId.includes('korean') || crisisId.includes('sino')) {
-      return 'war';
-    }
-    if (crisisId.includes('famine') || crisisId.includes('holodomor') || crisisId.includes('hunger')) {
-      return 'famine';
-    }
-    if (crisisId.includes('disaster') || crisisId.includes('chernobyl') || crisisId.includes('kyshtym') ||
-        crisisId.includes('earthquake') || crisisId.includes('aral') || crisisId.includes('nedelin')) {
-      return 'disaster';
-    }
-    return 'political';
-  }
-
-  // ─── Private: Impact Merging ───────────────────────────────────────────────
+  // ─── Private: Impact Merging ──────────────────────────────────────────
 
   /**
    * Merge crisis impacts into DynamicModifiers.
-   * Same logic as HistoricalGovernor.mergeModifiers.
+   *
+   * Multiplicative fields (quotaMultiplier, growthMultiplier, decayMultiplier,
+   * consumptionMultiplier) are computed as:
+   *   base * product(crisis_mult or 1.0)
+   *
+   * Non-numeric fields keep their DEFAULT_MODIFIERS values unless a crisis
+   * explicitly pushes them (e.g. KGB aggression during purges).
+   *
+   * Identical to HistoricalGovernor.mergeModifiers().
    */
   private mergeModifiers(impacts: CrisisImpact[]): DynamicModifiers {
     let quotaMult = 1.0;
     let growthMult = 1.0;
     let decayMult = 1.0;
     let consumptionMult = 1.0;
+
+    // Track max KGB aggression across all impacts
     let maxKgbMult = 1.0;
 
     for (const impact of impacts) {
@@ -397,6 +529,7 @@ export class FreeformGovernor implements IGovernor {
       }
     }
 
+    // Map KGB aggression multiplier to aggression level
     let kgbAggression: 'low' | 'medium' | 'high' = DEFAULT_MODIFIERS.kgbAggression;
     if (maxKgbMult >= 2.0) {
       kgbAggression = 'high';

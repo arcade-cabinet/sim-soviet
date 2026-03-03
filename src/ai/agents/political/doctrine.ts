@@ -414,6 +414,13 @@ export interface DoctrineContext {
   eraStartTick?: number;
   /** Current accumulated paperwork (for eternal bureaucracy). */
   currentPaperwork?: number;
+  /**
+   * Optional callback to check whether a crisis agent of a given type is
+   * currently handling effects that would overlap with a doctrine mechanic.
+   * When this returns true for 'war', the wartime_conscription mechanic is
+   * skipped to avoid double-conscription with the WarAgent.
+   */
+  crisisAgentActive?: (type: string) => boolean;
 }
 
 /**
@@ -426,6 +433,9 @@ export function evaluateDoctrineMechanics(ctx: DoctrineContext): DoctrineMechani
   for (const config of Object.values(DOCTRINE_MECHANICS)) {
     // Skip mechanics not active in the current era
     if (!config.activeEras.includes(ctx.currentEraId)) continue;
+
+    // Skip wartime_conscription when a WarAgent is handling conscription
+    if (config.id === 'wartime_conscription' && ctx.crisisAgentActive?.('war')) continue;
 
     // Check interval
     if (config.intervalTicks > 0 && ctx.totalTicks % config.intervalTicks !== 0) continue;
