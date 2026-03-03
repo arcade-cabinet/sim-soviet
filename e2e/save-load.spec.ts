@@ -22,8 +22,8 @@ test.describe('Save/Load Panel', () => {
 
     await openSavePanel(page);
 
-    // Save panel should show — use exact match to avoid ambiguity with "SAVE / LOAD"
-    await expect(page.getByText('SAVE / LOAD').first()).toBeVisible();
+    // Save panel should show — modal title is "STATE ARCHIVES"
+    await expect(page.getByText('STATE ARCHIVES').first()).toBeVisible();
   });
 
   test('save panel shows slot options', async ({ page }) => {
@@ -32,7 +32,7 @@ test.describe('Save/Load Panel', () => {
     await openSavePanel(page);
 
     // At minimum, the save modal should be open
-    await expect(page.getByText('SAVE / LOAD').first()).toBeVisible();
+    await expect(page.getByText('STATE ARCHIVES').first()).toBeVisible();
   });
 
   test('game state is consistent after advancing time', async ({ page }) => {

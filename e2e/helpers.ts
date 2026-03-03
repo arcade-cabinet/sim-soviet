@@ -63,16 +63,21 @@ export async function waitForSimTick(page: Page, maxMs = process.env.CI ? 60_000
   }
 
   const initialDate = await getDateText(page);
-  await page.waitForFunction(
-    (prev) => {
+  const deadline = Date.now() + maxMs;
+
+  // Poll for date change, dismissing any blocking modals between checks
+  while (Date.now() < deadline) {
+    const newDate = await page.evaluate(() => {
       const el = document.querySelector('[data-testid="date-label"]');
-      if (!el) return false;
-      const current = el.textContent?.trim() ?? '';
-      return current !== prev && current.length > 0;
-    },
-    initialDate,
-    { timeout: maxMs },
-  );
+      return el?.textContent?.trim() ?? '';
+    });
+    if (newDate !== initialDate && newDate.length > 0) return;
+
+    await dismissAnyModal(page);
+    await page.waitForTimeout(500);
+  }
+
+  throw new Error(`waitForSimTick: date did not change within ${maxMs}ms (stuck at "${initialDate}")`);
 }
 
 // ── Action Helpers ───────────────────────────────────────────────────────────
@@ -255,18 +260,32 @@ export async function advanceGameTime(page: Page, ticks = 3): Promise<void> {
     await speed3x.first().click();
   }
 
+  const tickTimeout = process.env.CI ? 60_000 : 30_000;
+
   for (let i = 0; i < ticks; i++) {
     const currentDate = await getDateText(page);
-    await page.waitForFunction(
-      (prev) => {
+    const deadline = Date.now() + tickTimeout;
+
+    // Poll for date change, dismissing any blocking modals between checks
+    while (Date.now() < deadline) {
+      const newDate = await page.evaluate(() => {
         const el = document.querySelector('[data-testid="date-label"]');
-        if (!el) return false;
-        const current = el.textContent?.trim() ?? '';
-        return current !== prev && current.length > 0;
-      },
-      currentDate,
-      { timeout: process.env.CI ? 60_000 : 30_000 },
-    );
+        return el?.textContent?.trim() ?? '';
+      });
+      if (newDate !== currentDate && newDate.length > 0) break;
+
+      // Dismiss any event/era/plan modals that pause the sim
+      await dismissAnyModal(page);
+      await page.waitForTimeout(500);
+    }
+
+    // Verify the date actually changed
+    const finalDate = await getDateText(page);
+    if (finalDate === currentDate) {
+      throw new Error(
+        `advanceGameTime: date did not change within ${tickTimeout}ms (stuck at "${currentDate}")`,
+      );
+    }
   }
 }
 
@@ -290,10 +309,12 @@ export async function goToMainMenu(page: Page): Promise<void> {
  */
 export async function dismissAnyModal(page: Page): Promise<boolean> {
   const ctaTexts = [
+    'IGNORE (AUTO-RESOLVE)',
     'REFUSAL IS NOT AN OPTION',
     'ASSUME MAYORAL AUTHORITY',
     'GLORY TO THE WORKERS',
     'FOR THE MOTHERLAND',
+    'LONG LIVE THE PARTY',
     'ACCEPT MANDATE',
     'ACKNOWLEDGED',
     'CONTINUE',
