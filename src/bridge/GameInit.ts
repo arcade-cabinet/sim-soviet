@@ -15,6 +15,7 @@ import { recalculatePaths } from '@/game/PathSystem';
 import { SaveSystem } from '@/game/SaveSystem';
 import { type ConsequenceLevel, DIFFICULTY_PRESETS, type DifficultyLevel } from '@/ai/agents/political/ScoringSystem';
 import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
+import { FreeformGovernor } from '@/ai/agents/crisis/FreeformGovernor';
 import type { GovernorMode } from '@/ai/agents/crisis/Governor';
 import type { SimCallbacks } from '@/game/engine/types';
 import { SimulationEngine } from '@/game/SimulationEngine';
@@ -30,6 +31,8 @@ export interface GameInitOptions {
   autopilot?: boolean;
   /** Game mode — historical uses real Soviet timeline, freeform uses alternate history, classic uses DIFFICULTY_PRESETS. */
   gameMode?: GovernorMode;
+  /** Year at which history diverges in freeform mode (1917-1991). */
+  divergenceYear?: number;
 }
 
 let engine: SimulationEngine | null = null;
@@ -62,8 +65,8 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   // Create singleton store entities with starting resources.
   // Era 1 (Revolution/1917): Timber only. No steel, no power, no food stockpile.
   // Scale starting resources by difficulty multiplier (worker=2.0x, comrade=1.0x, tovarish=0.5x).
-  // Historical mode: history IS the difficulty — use 1.0 (equivalent to 'comrade').
-  const resMult = options?.gameMode === 'historical'
+  // Historical/freeform mode: history IS the difficulty — use 1.0 (equivalent to 'comrade').
+  const resMult = (options?.gameMode === 'historical' || options?.gameMode === 'freeform')
     ? 1.0
     : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
   // Starting resources — generous enough for ~2 seasons of survival without farms.
@@ -111,8 +114,10 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   if (options?.gameMode === 'historical') {
     const governor = new HistoricalGovernor();
     engine.setGovernor(governor);
+  } else if (options?.gameMode === 'freeform') {
+    const governor = new FreeformGovernor(options.divergenceYear ?? 1945);
+    engine.setGovernor(governor);
   }
-  // 'freeform' mode will be wired when FreeformGovernor is available
   // 'classic' or undefined: no governor (backward compat — uses DIFFICULTY_PRESETS)
 
   // Enable autopilot if requested — ChairmanAgent auto-resolves minigames and reports
