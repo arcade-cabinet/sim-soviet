@@ -141,11 +141,13 @@ export function useGameSnapshot(): GameSnapshot {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-/** Set selected building tool and notify React. */
+/** Set selected building tool and notify React. Only 'none' and 'bulldoze' are allowed (Phase 1). */
 export function selectTool(tool: string): void {
+  // Phase 1: direct building placement disabled — only allow none and bulldoze
+  const allowed = tool === 'none' || tool === 'bulldoze' ? tool : 'none';
   const meta = getMetaEntity();
   if (meta) {
-    meta.gameMeta.selectedTool = tool;
+    meta.gameMeta.selectedTool = allowed;
   }
   notifyStateChange();
 }

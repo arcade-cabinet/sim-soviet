@@ -113,40 +113,39 @@ describe('gameStore', () => {
   // ── selectTool / getSelectedTool ───────────────────────────
 
   describe('selectTool', () => {
-    it('sets the selected tool on the meta entity', () => {
-      selectTool('power-station');
-      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('power-station');
-    });
-
-    it('can be set to any string value', () => {
-      selectTool('apartment-tower-a');
-      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('apartment-tower-a');
-
-      selectTool('collective-farm-hq');
-      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('collective-farm-hq');
+    it('allows none and bulldoze', () => {
+      selectTool('none');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('none');
 
       selectTool('bulldoze');
       expect(getMetaEntity()!.gameMeta.selectedTool).toBe('bulldoze');
     });
 
-    it('can be reset to none', () => {
+    it('rejects building tools — maps to none (Phase 1)', () => {
       selectTool('power-station');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('none');
+
+      selectTool('apartment-tower-a');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('none');
+
+      selectTool('collective-farm-hq');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('none');
+    });
+
+    it('can be reset to none', () => {
+      selectTool('bulldoze');
       selectTool('none');
       expect(getMetaEntity()!.gameMeta.selectedTool).toBe('none');
     });
 
     it('calls notifyStateChange (triggers listeners)', () => {
-      // We can't directly add a listener through the public API without
-      // useSyncExternalStore, but we can verify the side effect:
-      // selectTool mutates gameMeta.selectedTool and calls notifyStateChange.
-      selectTool('gulag-admin');
-      // Verify the tool was set (indirect proof that the function worked)
-      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('gulag-admin');
+      selectTool('bulldoze');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('bulldoze');
     });
 
-    it('handles empty string', () => {
+    it('handles empty string as non-allowed tool', () => {
       selectTool('');
-      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('');
+      expect(getMetaEntity()!.gameMeta.selectedTool).toBe('none');
     });
   });
 
@@ -420,19 +419,18 @@ describe('gameStore', () => {
       expect(() => notifyStateChange()).not.toThrow();
     });
 
-    it('rapid selectTool calls work correctly', () => {
-      const tools = [
-        'none',
-        'power-station',
-        'apartment-tower-a',
-        'collective-farm-hq',
-        'vodka-distillery',
-        'gulag-admin',
-        'bulldoze',
+    it('rapid selectTool calls work correctly (only none/bulldoze allowed)', () => {
+      const toolsAndExpected: [string, string][] = [
+        ['none', 'none'],
+        ['power-station', 'none'],
+        ['bulldoze', 'bulldoze'],
+        ['collective-farm-hq', 'none'],
+        ['none', 'none'],
+        ['bulldoze', 'bulldoze'],
       ];
-      for (const tool of tools) {
+      for (const [tool, expected] of toolsAndExpected) {
         selectTool(tool);
-        expect(getMetaEntity()!.gameMeta.selectedTool).toBe(tool);
+        expect(getMetaEntity()!.gameMeta.selectedTool).toBe(expected);
       }
     });
 

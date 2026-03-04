@@ -301,10 +301,9 @@ const GhostPreview: React.FC = () => {
 
       if (tool === 'bulldoze') {
         bulldozeECSBuilding(pick.gridX, pick.gridZ);
-      } else if (tool === 'road' || tool === 'pipe') {
-        showToast(gameState, 'INFRASTRUCTURE DEVELOPMENT PENDING APPROVAL');
       } else {
-        placeECSBuilding(tool, pick.gridX, pick.gridZ);
+        // Direct placement disabled — settlement builds autonomously
+        showToast(gameState, 'THE COLLECTIVE DECIDES WHERE TO BUILD, COMRADE');
       }
     };
     canvas.addEventListener('click', onClick);
