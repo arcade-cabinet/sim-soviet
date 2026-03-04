@@ -85,9 +85,7 @@ export function phaseSocial(ctx: TickContext): void {
   }
 
   if (workerResult.averageMorale < 30 && chronology.getDate().totalTicks % 60 === 0) {
-    callbacks.onAdvisor(
-      'Comrade Mayor! Workers are deeply unhappy. If conditions do not improve, they WILL flee!',
-    );
+    callbacks.onAdvisor('Comrade Mayor! Workers are deeply unhappy. If conditions do not improve, they WILL flee!');
   }
 
   // ── 15. Demographics ──

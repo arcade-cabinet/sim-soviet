@@ -1,7 +1,6 @@
 import { buildingsLogic, getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import { TICKS_PER_MONTH } from '../../src/game/Chronology';
 import { GameGrid } from '../../src/game/GameGrid';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';

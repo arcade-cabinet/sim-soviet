@@ -5,8 +5,8 @@
  * distribution resentment, and foraging.
  */
 
-import { computeDistribution, computeRoleBuckets } from '../../ecs/systems/distributionWeights';
 import { foragingTick } from '../../ai/agents/economy/foragingSystem';
+import { computeDistribution, computeRoleBuckets } from '../../ecs/systems/distributionWeights';
 import type { PreProductionSnapshot } from './phaseProduction';
 import type { TickContext } from './tickContext';
 

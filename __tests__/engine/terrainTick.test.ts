@@ -1,5 +1,5 @@
 // __tests__/engine/terrainTick.test.ts
-import { tickTerrain, type TerrainTileState, type YearlyTerrainContext } from '../../src/ai/agents/core/terrainTick';
+import { type TerrainTileState, tickTerrain, type YearlyTerrainContext } from '../../src/ai/agents/core/terrainTick';
 
 describe('tickTerrain', () => {
   const baseTile: TerrainTileState = {

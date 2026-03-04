@@ -13,7 +13,7 @@ import {
 import { tickDirectives as tickDirectivesHelper } from '../../ai/agents/meta/directiveTick';
 import { tickMinigames as tickMinigamesHelper } from '../../ai/agents/meta/minigameTick';
 import { CONSEQUENCE_PRESETS } from '../../ai/agents/political/ScoringSystem';
-import { getMetaEntity, getResourceEntity } from '../../ecs/archetypes';
+import { getResourceEntity } from '../../ecs/archetypes';
 import type { TickContext } from './tickContext';
 
 /**
@@ -24,7 +24,17 @@ import type { TickContext } from './tickContext';
 export function phaseNarrative(ctx: TickContext): void {
   const { tickResult, callbacks, rng } = ctx;
   const { chronology, kgb: kgbAgent, defense: defenseAgent } = ctx.agents;
-  const { eventSystem, politburo, pravda: pravdaSystem, scoring, minigameRouter, tutorial, achievements, workerSystem, agentManager } = ctx.systems;
+  const {
+    eventSystem,
+    politburo,
+    pravda: pravdaSystem,
+    scoring,
+    minigameRouter,
+    tutorial,
+    achievements,
+    workerSystem,
+    agentManager,
+  } = ctx.systems;
   const { eraMods } = ctx.modifiers;
 
   // ── 24. Minigames + events + fire + politburo + pravda + KGB ──

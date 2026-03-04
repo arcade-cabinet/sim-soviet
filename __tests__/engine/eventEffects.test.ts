@@ -1,9 +1,9 @@
+import type { GameEvent } from '../../src/ai/agents/narrative/events';
+import type { WorkerSystem } from '../../src/ai/agents/workforce/WorkerSystem';
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
 import { applyEventEffects } from '../../src/game/engine/eventEffects';
-import type { GameEvent } from '../../src/ai/agents/narrative/events';
-import type { WorkerSystem } from '../../src/ai/agents/workforce/WorkerSystem';
 
 /** Create a minimal GameEvent with specified effects. */
 function makeEvent(effects: Partial<GameEvent['effects']>): GameEvent {

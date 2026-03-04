@@ -17,7 +17,14 @@ import type { TickContext } from './tickContext';
  */
 export function phasePolitical(ctx: TickContext): void {
   const { tickResult, storeRef, callbacks, rng } = ctx;
-  const { chronology, political: politicalAgent, kgb: kgbAgent, loyalty: loyaltyAgent, collective: collectiveAgent, defense: defenseAgent } = ctx.agents;
+  const {
+    chronology,
+    political: politicalAgent,
+    kgb: kgbAgent,
+    loyalty: loyaltyAgent,
+    collective: collectiveAgent,
+    defense: defenseAgent,
+  } = ctx.agents;
   const { settlement, politicalEntities, workerSystem, scoring, politburo } = ctx.systems;
   const { eraMods, politburoMods } = ctx.modifiers;
   const diffConfig = ctx.diffConfig;
@@ -42,10 +49,7 @@ export function phasePolitical(ctx: TickContext): void {
 
     if (loyaltyResult.flightCount > 0) {
       workerSystem.removeWorkersByCount(loyaltyResult.flightCount, 'loyalty_flight');
-      callbacks.onToast(
-        `${loyaltyResult.flightCount} worker(s) fled the collective due to disloyalty`,
-        'warning',
-      );
+      callbacks.onToast(`${loyaltyResult.flightCount} worker(s) fled the collective due to disloyalty`, 'warning');
     }
 
     accrueTrudodni();

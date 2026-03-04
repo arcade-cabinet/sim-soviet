@@ -2,8 +2,8 @@ import { getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
 import { TICKS_PER_YEAR } from '../../src/game/Chronology';
+import { type SyncMetaDeps, syncSystemsToMeta } from '../../src/game/engine/phaseFinalize';
 import { GameGrid } from '../../src/game/GameGrid';
-import { syncSystemsToMeta, type SyncMetaDeps } from '../../src/game/engine/phaseFinalize';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
 

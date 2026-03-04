@@ -6,9 +6,9 @@
  */
 
 import type { TickResult } from '../../ai/agents/core/ChronologyAgent';
-import type { GovernorDirective } from '../../ai/agents/crisis/Governor';
 import { applyCrisisImpacts } from '../../ai/agents/crisis/CrisisImpactApplicator';
 import { FreeformGovernor } from '../../ai/agents/crisis/FreeformGovernor';
+import type { GovernorDirective } from '../../ai/agents/crisis/Governor';
 import {
   type AnnualReportEngineState,
   checkQuota as checkQuotaHelper,
@@ -18,8 +18,8 @@ import {
 import { DIFFICULTY_PRESETS } from '../../ai/agents/political/ScoringSystem';
 import { collapseEntitiesToBuildings } from '../../ai/agents/workforce/collectiveTransition';
 import { buildingsLogic, getMetaEntity, operationalBuildings } from '../../ecs/archetypes';
-import { INDUSTRIAL_BUILDING_IDS } from '../../growth/OrganicUnlocks';
 import type { RaionPool } from '../../ecs/world';
+import { INDUSTRIAL_BUILDING_IDS } from '../../growth/OrganicUnlocks';
 import type { TickContext } from './tickContext';
 
 /** Result of the chronology phase — engine-owned state that must be written back. */
@@ -56,10 +56,7 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
       raion = collapseEntitiesToBuildings();
       storeRef.resources.raion = raion;
       storeRef.resources.population = raion.totalPopulation;
-      callbacks.onToast(
-        'The collective has grown. Individual records are now maintained by the raion.',
-        'warning',
-      );
+      callbacks.onToast('The collective has grown. Individual records are now maintained by the raion.', 'warning');
     }
 
     // In Freeform mode, provide organic unlock context for condition-based era transitions

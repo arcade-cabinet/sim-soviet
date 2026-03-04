@@ -1,4 +1,4 @@
-import { getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
+import { getMetaEntity } from '../../src/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
 import { TICKS_PER_MONTH } from '../../src/game/Chronology';

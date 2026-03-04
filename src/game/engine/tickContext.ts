@@ -3,9 +3,10 @@
  * Built once per tick by SimulationEngine, consumed by phase modules.
  */
 
-import type { TickResult } from '../../ai/agents/core/ChronologyAgent';
-import type { ChronologyAgent } from '../../ai/agents/core/ChronologyAgent';
+import type { AgentManager } from '../../ai/AgentManager';
+import type { ChronologyAgent, TickResult } from '../../ai/agents/core/ChronologyAgent';
 import type { WeatherAgent } from '../../ai/agents/core/WeatherAgent';
+import type { WeatherProfile } from '../../ai/agents/core/weather-types';
 import type { DynamicModifiers, GovernorDirective, IGovernor } from '../../ai/agents/crisis/Governor';
 import type { EconomyAgent } from '../../ai/agents/economy/EconomyAgent';
 import type { FoodAgent } from '../../ai/agents/economy/FoodAgent';
@@ -21,28 +22,38 @@ import type { MinigameRouter } from '../../ai/agents/meta/minigames/MinigameRout
 import type { TutorialSystem } from '../../ai/agents/meta/TutorialSystem';
 import type { EventSystem } from '../../ai/agents/narrative/events';
 import type { PolitburoSystem } from '../../ai/agents/narrative/politburo';
+import type { MinistryModifiers } from '../../ai/agents/narrative/politburo/types';
 import type { PravdaSystem } from '../../ai/agents/narrative/pravda';
 import type { CompulsoryDeliveries } from '../../ai/agents/political/CompulsoryDeliveries';
 import type { KGBAgent } from '../../ai/agents/political/KGBAgent';
 import type { LoyaltyAgent } from '../../ai/agents/political/LoyaltyAgent';
 import type { PlanMandateState, PoliticalAgent, QuotaState } from '../../ai/agents/political/PoliticalAgent';
-import type { DifficultyConfig, DifficultyLevel, ScoringSystem } from '../../ai/agents/political/ScoringSystem';
 import type { PoliticalEntitySystem } from '../../ai/agents/political/PoliticalEntitySystem';
+import type { DifficultyConfig, DifficultyLevel, ScoringSystem } from '../../ai/agents/political/ScoringSystem';
 import type { DefenseAgent, FireSystem } from '../../ai/agents/social/DefenseAgent';
 import type { DemographicAgent } from '../../ai/agents/social/DemographicAgent';
 import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
-import type { AgentManager } from '../../ai/AgentManager';
-import type { WeatherProfile } from '../../ai/agents/core/weather-types';
-import type { MinistryModifiers } from '../../ai/agents/narrative/politburo/types';
+import type { RaionPool } from '../../ecs/world';
 import type { EraModifiers } from '../../game/era/types';
-import type { SimCallbacks } from './types';
 import type { GameGrid } from '../GameGrid';
 import type { GameRng } from '../SeedSystem';
-import type { RaionPool } from '../../ecs/world';
+import type { SimCallbacks } from './types';
 
 export interface TickContext {
   /** ECS resource store ref */
-  storeRef: { resources: Record<string, any> & { food: number; money: number; vodka: number; population: number; power: number; blat: number; timber: number; steel: number; raion?: RaionPool } };
+  storeRef: {
+    resources: Record<string, any> & {
+      food: number;
+      money: number;
+      vodka: number;
+      population: number;
+      power: number;
+      blat: number;
+      timber: number;
+      steel: number;
+      raion?: RaionPool;
+    };
+  };
   /** Chronology tick result (computed at start of tick) */
   tickResult: TickResult;
   /** Current population mode */

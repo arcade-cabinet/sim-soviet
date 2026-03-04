@@ -5,11 +5,10 @@
  * food/vodka/money production (entity or aggregate mode).
  */
 
-import { getBuildingDef } from '../../data/buildingDefs';
-import { buildingsLogic, operationalBuildings } from '../../ecs/archetypes';
-import { constructionSystem } from '../../ecs/systems';
 import { computeBuildingProduction } from '../../ai/agents/economy/buildingProduction';
-import { decayableBuildings } from '../../ecs/archetypes';
+import { getBuildingDef } from '../../data/buildingDefs';
+import { buildingsLogic, decayableBuildings, operationalBuildings } from '../../ecs/archetypes';
+import { constructionSystem } from '../../ecs/systems';
 import type { TickContext } from './tickContext';
 
 /** Snapshot of resource levels before production, for delivery calculations. */

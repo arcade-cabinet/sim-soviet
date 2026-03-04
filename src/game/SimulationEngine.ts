@@ -12,16 +12,8 @@
 // ── Re-exports (callers import SimCallbacks/SubsystemSaveData from here) ─────
 export type { SimCallbacks, SubsystemSaveData } from './engine/types';
 
-import {
-  buildingsLogic,
-  dvory,
-  getMetaEntity,
-  getResourceEntity,
-} from '@/ecs/archetypes';
-import {
-  setBuildingCollapsedCallback,
-  setStarvationCallback,
-} from '@/ecs/systems';
+import { buildingsLogic, dvory, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
+import { setBuildingCollapsedCallback, setStarvationCallback } from '@/ecs/systems';
 import { AgentManager } from '../ai/AgentManager';
 import type { TickResult } from '../ai/agents/core/ChronologyAgent';
 // ── Yuka agents ──
@@ -29,11 +21,7 @@ import { ChronologyAgent, ChronologySystem } from '../ai/agents/core/ChronologyA
 import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
 import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
 import type { GovernorDirective, IGovernor } from '../ai/agents/crisis/Governor';
-import {
-  EconomyAgent,
-  type EraId as EconomyEraId,
-  EconomySystem,
-} from '../ai/agents/economy/EconomyAgent';
+import { EconomyAgent, type EraId as EconomyEraId, EconomySystem } from '../ai/agents/economy/EconomyAgent';
 import { DIFFICULTY_MULTIPLIERS } from '../ai/agents/economy/economy-core';
 import { FoodAgent } from '../ai/agents/economy/FoodAgent';
 import { createForagingState, type ForagingState } from '../ai/agents/economy/foragingSystem';
@@ -74,10 +62,7 @@ import { DefenseAgent, FireSystem, initDiseaseSystem } from '../ai/agents/social
 import { DemographicAgent } from '../ai/agents/social/DemographicAgent';
 import { getPopulationMode } from '../ai/agents/workforce/collectiveTransition';
 import { WorkerSystem } from '../ai/agents/workforce/WorkerSystem';
-import {
-  restoreSubsystems as restoreSubsystemsHelper,
-  serializeSubsystems as serializeSubsystemsHelper,
-} from './engine/serializeEngine';
+import { applyEventEffects } from './engine/eventEffects';
 import { phaseChronology } from './engine/phaseChronology';
 import { phaseConsumption } from './engine/phaseConsumption';
 import { phaseFinalize, syncSystemsToMeta } from './engine/phaseFinalize';
@@ -85,8 +70,11 @@ import { phaseNarrative } from './engine/phaseNarrative';
 import { phasePolitical } from './engine/phasePolitical';
 import { phaseProduction } from './engine/phaseProduction';
 import { phaseSocial } from './engine/phaseSocial';
+import {
+  restoreSubsystems as restoreSubsystemsHelper,
+  serializeSubsystems as serializeSubsystemsHelper,
+} from './engine/serializeEngine';
 import type { TickContext } from './engine/tickContext';
-import { applyEventEffects } from './engine/eventEffects';
 import type { SimCallbacks, SubsystemSaveData } from './engine/types';
 import { EraSystem } from './era';
 import type { GameGrid } from './GameGrid';
