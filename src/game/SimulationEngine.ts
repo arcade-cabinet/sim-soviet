@@ -112,6 +112,7 @@ import {
   restoreSubsystems as restoreSubsystemsHelper,
   serializeSubsystems as serializeSubsystemsHelper,
 } from './engine/serializeEngine';
+import type { TickContext } from './engine/tickContext';
 import type { SimCallbacks, SubsystemSaveData } from './engine/types';
 import { EraSystem } from './era';
 import type { GameGrid } from './GameGrid';
@@ -1437,6 +1438,74 @@ export class SimulationEngine {
       politburoEventHandler: this.politburoEventHandler,
       syncSystemsToMeta: () => this.syncSystemsToMeta(),
       governor: this.governor,
+    };
+  }
+
+  private buildTickContext(tickResult: TickResult, storeRef: any): TickContext {
+    const popMode = getPopulationMode(storeRef.resources.population, this.raion);
+    const diffConfig = this.cachedDirective?.modifiers ?? DIFFICULTY_PRESETS[this.difficulty];
+    return {
+      storeRef,
+      tickResult,
+      popMode,
+      raion: this.raion,
+      diffConfig,
+      cachedDirective: this.cachedDirective,
+      agents: {
+        chronology: this.chronologyAgent,
+        weather: this.weatherAgent,
+        power: this.powerAgent,
+        food: this.foodAgent,
+        vodka: this.vodkaAgent,
+        storage: this.storageAgent,
+        economy: this.economyAgent,
+        collective: this.collectiveAgent,
+        demographic: this.demographicAgent,
+        kgb: this.kgbAgent,
+        political: this.politicalAgent,
+        defense: this.defenseAgent,
+        loyalty: this.loyaltyAgent,
+      },
+      systems: {
+        settlement: this.settlement,
+        politicalEntities: this.politicalEntities,
+        minigameRouter: this.minigameRouter,
+        scoring: this.scoring,
+        workerSystem: this.workerSystem,
+        tutorial: this.tutorial,
+        achievements: this.achievements,
+        transport: this.transport,
+        fireSystem: this.defenseAgent,
+        deliveries: this.deliveries,
+        pravda: this.pravdaSystem,
+        politburo: this.politburo,
+        eventSystem: this.eventSystem,
+        agentManager: this.agentManager,
+      },
+      state: {
+        quota: this.quota,
+        mandateState: this.mandateState,
+        foragingState: this.foragingState,
+        stakhanoviteBoosts: this.stakhanoviteBoosts,
+        mtsGrainMultiplier: this.mtsGrainMultiplier,
+        difficulty: this.difficulty,
+        startYear: this.startYear,
+        lastThreatLevel: this.lastThreatLevel,
+        consecutiveQuotaFailures: this.consecutiveQuotaFailures,
+        pendingReport: this.pendingReport,
+        pendingReportSinceTick: this.pendingReportSinceTick,
+        pripiskiCount: this.pripiskiCount,
+        ended: this.ended,
+        evacueeInfluxFired: this.evacueeInfluxFired,
+        lastInflowYear: this.lastInflowYear,
+        lastSeason: this.lastSeason,
+        lastWeather: this.lastWeather,
+        lastDayPhase: this.lastDayPhase,
+      },
+      rng: this.rng,
+      grid: this.grid,
+      governor: this.governor,
+      callbacks: this.callbacks,
     };
   }
 
