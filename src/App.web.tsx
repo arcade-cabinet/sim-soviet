@@ -31,15 +31,10 @@ import type { ActiveMinigame, MinigameOutcome } from './ai/agents/meta/minigames
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
-import type { LensType, TabType } from './engine/GameState';
 import { gameState } from './engine/GameState';
 import {
   clearToast,
-  dismissAdvisor,
-  getAdvisor,
   getToast,
-  selectTool,
-  setLens,
   setSpeed,
   showAdvisor,
   showToast,
@@ -66,14 +61,14 @@ import {
   usePoliticalPanel,
 } from './stores/gameStore';
 import { AchievementsPanel } from './ui/AchievementsPanel';
-import { Advisor } from './ui/Advisor';
+// Advisor removed — Phase 1 minimal HUD
 import { BuildingInspectorPanel } from './ui/BuildingInspectorPanel';
 import { CitizenDossierModal } from './ui/CitizenDossierModal';
 import { CompulsoryDeliveriesPanel } from './ui/CompulsoryDeliveriesPanel';
 import { ConsumerGoodsMarketPanel } from './ui/ConsumerGoodsMarketPanel';
 import { CRTOverlay } from './ui/CRTOverlay';
 import { CursorTooltip } from './ui/CursorTooltip';
-import { DirectiveHUD } from './ui/DirectiveHUD';
+// DirectiveHUD removed — Phase 1 minimal HUD
 import { DiseasePanel } from './ui/DiseasePanel';
 import { EconomyDetailPanel } from './ui/EconomyDetailPanel';
 import { EconomyPanel } from './ui/EconomyPanel';
@@ -84,7 +79,7 @@ import { GameModals, type GameOverInfo, type PlanDirective } from './ui/GameModa
 import { InfrastructurePanel } from './ui/InfrastructurePanel';
 import { IntroModal } from './ui/IntroModal';
 import { LeadershipPanel } from './ui/LeadershipPanel';
-import { LensSelector } from './ui/LensSelector';
+// LensSelector removed — Phase 1 minimal HUD
 import { LoadingScreen } from './ui/LoadingScreen';
 import { MainMenu } from './ui/MainMenu';
 import { MandateProgressPanel } from './ui/MandateProgressPanel';
@@ -98,7 +93,7 @@ import { PersonnelFilePanel } from './ui/PersonnelFilePanel';
 import { PolitburoPanel } from './ui/PolitburoPanel';
 import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
 import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
-import { QuotaHUD } from './ui/QuotaHUD';
+// QuotaHUD removed — Phase 1 minimal HUD
 import { RadialMenu } from './ui/RadialMenu';
 import { RehabilitationModal } from './ui/RehabilitationModal';
 import { SaveLoadPanel } from './ui/SaveLoadPanel';
@@ -106,17 +101,16 @@ import { ScoringPanel } from './ui/ScoringPanel';
 import { SettingsModal } from './ui/SettingsModal';
 import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
 import { Colors } from './ui/styles';
-import { Ticker } from './ui/Ticker';
+// Ticker removed — Phase 1 minimal HUD
 import { Toast } from './ui/Toast';
-import type { SovietTab } from './ui/Toolbar';
-import { Toolbar } from './ui/Toolbar';
+// Toolbar removed — Phase 1 minimal HUD
 // UI components
 import { TopBar } from './ui/TopBar';
 import { ViewportFrame } from './ui/ViewportFrame';
 import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
-import { WorkerStatusBar } from './ui/WorkerStatusBar';
+// WorkerStatusBar removed — Phase 1 minimal HUD
 
 /**
  * Error boundary to catch Engine/WebGL crashes and show a fallback
@@ -183,9 +177,8 @@ const App: React.FC = () => {
     name: '',
   });
 
-  const [tickerText, setTickerText] = useState(
-    'CITIZENS REMINDED THAT COMPLAINING IS A CRIME  ///  WEATHER FORECAST: PERPETUAL GRAY  ///  ',
-  );
+  // Ticker text state retained for PravdaSystem callback (not rendered in Phase 1)
+  const [, setTickerText] = useState('');
 
   // ── Panel state ──
   const [showPersonnelFile, setShowPersonnelFile] = useState(false);
@@ -215,10 +208,6 @@ const App: React.FC = () => {
 
   // ── XR mode state ──
   const [xrMode, setXrMode] = useState<'ar' | 'vr' | null>(null);
-
-  // ── Soviet tab state ──
-  const [sovietTab, setSovietTab] = useState<SovietTab>('build');
-  const [buildTab, setBuildTab] = useState<TabType>('zone');
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -386,7 +375,7 @@ const App: React.FC = () => {
             SFXManager.getInstance().play('era_transition');
             const ctx = ERA_CONTEXTS[era.id];
             if (ctx) {
-              AudioManager.getInstance().playContext(ctx);
+              AudioManager.getInstance().playContext(ctx, 5000);
             }
             // Notify store so RadialMenu re-renders with newly unlocked buildings
             notifyStateChange();
@@ -514,17 +503,8 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleLensChange = useCallback((lens: LensType) => {
-    setLens(gameState, lens);
-  }, []);
-
   const handleDismissToast = useCallback(() => {
     clearToast();
-  }, []);
-
-  const handleDismissAdvisor = useCallback(() => {
-    dismissAdvisor();
-    gameState.notify();
   }, []);
 
   const handleDismissIntro = useCallback(() => {
@@ -555,37 +535,6 @@ const App: React.FC = () => {
 
   const handleShowMandates = useCallback(() => {
     setShowMandates(true);
-  }, []);
-
-  const handleSovietTab = useCallback(
-    (tab: SovietTab) => {
-      setSovietTab(tab);
-      switch (tab) {
-        case 'build':
-          // Build mode — deselect any active tool, let sub-tabs handle category
-          selectTool(gameState, 'none');
-          break;
-        case 'mandates':
-          handleShowMandates();
-          break;
-        case 'workers':
-          handleShowWorkers();
-          break;
-        case 'reports':
-          handleShowEconomy();
-          break;
-        case 'purge':
-          selectTool(gameState, 'bulldoze');
-          break;
-      }
-    },
-    [handleShowMandates, handleShowWorkers, handleShowEconomy],
-  );
-
-  const handleBuildTabChange = useCallback((tab: TabType) => {
-    setBuildTab(tab);
-    gameState.activeTab = tab;
-    gameState.notify();
   }, []);
 
   const handleShowDisease = useCallback(() => {
@@ -744,9 +693,8 @@ const App: React.FC = () => {
     setScreen('menu');
   }, []);
 
-  // Read toast/advisor from side-channel
+  // Read toast from side-channel (advisor removed in Phase 1)
   const toast = getToast();
-  const advisor = getAdvisor();
 
   // ─── MAIN MENU ───
   if (screen === 'menu') {
@@ -820,16 +768,8 @@ const App: React.FC = () => {
         {loadingFaded && (
           <View style={styles.uiOverlay} pointerEvents="box-none">
             <TopBar
-              season={snap.seasonLabel}
-              weather={snap.weatherLabel}
-              timber={snap.timber}
-              steel={snap.steel}
-              cement={snap.cement}
-              powerUsed={snap.powerUsed}
-              powerGen={snap.powerGen}
-              currentEra={snap.currentEra}
               food={snap.food}
-              vodka={snap.vodka}
+              timber={snap.timber}
               population={snap.pop}
               dateLabel={snap.dateLabel}
               monthProgress={snap.monthProgress}
@@ -840,61 +780,11 @@ const App: React.FC = () => {
               commendations={snap.commendations}
               settlementTier={snap.settlementTier}
               onThreatPress={handleThreatPress}
-              onShowAchievements={handleShowAchievements}
-              onShowLeadership={handleShowLeadership}
-              onShowEconomy={handleShowEconomy}
-              onShowWorkers={handleShowWorkers}
-              onShowMandates={handleShowMandates}
-              onShowDisease={handleShowDisease}
-              onShowInfra={handleShowInfra}
-              onShowEvents={handleShowEvents}
-              onShowPolitical={handleShowPolitical}
-              onShowScoring={handleShowScoring}
-              onShowWeather={handleShowWeather}
-              onShowEra={handleShowEra}
-              onShowSettlement={handleShowSettlement}
-              onShowPolitburo={handleShowPolitburo}
-              onShowDeliveries={handleShowDeliveries}
-              onShowMinigames={handleShowMinigames}
-              onShowPravda={handleShowPravda}
-              onShowWorkerAnalytics={handleShowWorkerAnalytics}
-              onShowEconomyDetail={handleShowEconomyDetail}
-              onShowSaveLoad={handleShowSaveLoad}
-              onShowMarket={handleShowMarket}
-              onShowNotifications={handleShowNotifications}
-              unreadNotifications={unreadNotifications}
-              autopilot={getEngine()?.getAgentManager().isAutopilot() ?? false}
             />
 
             <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
 
-            {snap.quotaTarget > 0 && (
-              <QuotaHUD
-                targetType={snap.quotaType}
-                targetAmount={snap.quotaTarget}
-                current={snap.quotaCurrent}
-                deadlineYear={snap.quotaDeadline}
-              />
-            )}
-
             <Minimap />
-
-            <DirectiveHUD text={snap.directiveText} reward={snap.directiveReward} />
-
-            <LensSelector activeLens={snap.activeLens} onLensChange={handleLensChange} />
-
-            <Advisor visible={!!advisor} message={advisor?.text ?? ''} onDismiss={handleDismissAdvisor} />
-
-            <View style={styles.bottomPanel}>
-              <Ticker messages={tickerText} />
-              <Toolbar
-                activeTab={sovietTab}
-                onTabChange={handleSovietTab}
-                activeBuildTab={buildTab}
-                onBuildTabChange={handleBuildTabChange}
-              />
-              <WorkerStatusBar onShowWorkers={handleShowWorkers} />
-            </View>
 
             <CursorTooltip
               visible={!!cursorTooltip}
@@ -1066,9 +956,6 @@ const styles = StyleSheet.create({
   uiOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between',
-  },
-  bottomPanel: {
-    backgroundColor: Colors.panelBg,
   },
   xrExitOverlay: {
     position: 'absolute',
