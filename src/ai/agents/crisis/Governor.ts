@@ -16,6 +16,7 @@
 
 import type { SettlementSummary } from '@/game/engine/SettlementSummary';
 import type { GameRng } from '@/game/SeedSystem';
+import type { PressureReadContext } from './pressure/PressureDomains';
 import type { CrisisImpact } from './types';
 
 // ─── Governor Mode ─────────────────────────────────────────────────────────
@@ -91,6 +92,8 @@ export interface GovernorContext {
   eraId: string;
   /** Fixed-size settlement snapshot for governor decision-making. Optional for backward compat. */
   settlement?: SettlementSummary;
+  /** Pressure system readings for pressure-based crisis generation. Optional for backward compat. */
+  pressureReadings?: PressureReadContext;
 }
 
 // ─── Governor Directive ────────────────────────────────────────────────────

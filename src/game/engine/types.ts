@@ -182,4 +182,6 @@ export interface SubsystemSaveData {
   buildingWorkforce?: BuildingWorkforceSaveEntry[];
   /** Governor state (optional — null when no governor is active) */
   governor?: GovernorSaveData;
+  /** WorldAgent geopolitical state (optional for backward compat with old saves) */
+  worldAgent?: import('../../ai/agents/core/WorldAgent').WorldStateSaveData;
 }

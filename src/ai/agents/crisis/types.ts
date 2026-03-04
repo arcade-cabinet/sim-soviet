@@ -23,7 +23,7 @@ export type CrisisSeverity = 'localized' | 'regional' | 'national' | 'existentia
 // ─── Crisis Type ────────────────────────────────────────────────────────────
 
 /** High-level crisis category. */
-export type CrisisType = 'war' | 'famine' | 'disaster' | 'political';
+export type CrisisType = 'war' | 'famine' | 'disaster' | 'political' | 'climate' | 'black_swan' | 'cold_branch';
 
 // ─── Crisis Impact ──────────────────────────────────────────────────────────
 

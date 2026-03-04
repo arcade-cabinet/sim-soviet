@@ -18,9 +18,12 @@ import { AgentManager } from '../ai/AgentManager';
 import type { TickResult } from '../ai/agents/core/ChronologyAgent';
 // ── Yuka agents ──
 import { ChronologyAgent, ChronologySystem } from '../ai/agents/core/ChronologyAgent';
+import { WorldAgent } from '../ai/agents/core/WorldAgent';
+import type { TerrainTileState } from '../ai/agents/core/terrainTick';
 import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
 import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
-import type { GovernorDirective, IGovernor } from '../ai/agents/crisis/Governor';
+import { FreeformGovernor } from '../ai/agents/crisis/FreeformGovernor';
+import type { GovernorDirective, GovernorMode, IGovernor } from '../ai/agents/crisis/Governor';
 import { EconomyAgent, type EraId as EconomyEraId, EconomySystem } from '../ai/agents/economy/EconomyAgent';
 import { DIFFICULTY_MULTIPLIERS } from '../ai/agents/economy/economy-core';
 import { FoodAgent } from '../ai/agents/economy/FoodAgent';
@@ -135,6 +138,7 @@ export class SimulationEngine {
   private politicalAgent!: PoliticalAgent;
   private defenseAgent!: DefenseAgent;
   private loyaltyAgent!: LoyaltyAgent;
+  private worldAgent!: WorldAgent;
 
   // ── Engine state ──
   private difficulty: DifficultyLevel;
@@ -166,9 +170,25 @@ export class SimulationEngine {
   /** Persistent state for the survival foraging system. */
   private foragingState: ForagingState = createForagingState();
 
+  /** Current prestige project demand (null if none announced yet for this era). */
+  private prestigeDemand: import('./engine/tickContext').TickContext['state']['prestigeDemand'] = null;
+  /** In-progress prestige project construction (null if not started). */
+  private prestigeConstruction: import('./engine/tickContext').TickContext['state']['prestigeConstruction'] = null;
+
   // ── Governor (null by default — all existing behavior unchanged) ──
   private governor: IGovernor | null = null;
   private cachedDirective: GovernorDirective | null = null;
+
+  // ── Terrain simulation state ──
+  private terrainTiles: TerrainTileState[] = [];
+  private gameMode: GovernorMode = 'historical';
+
+  // ── HQ splitting milestone tracker ──
+  private hqSplitState: import('../growth/HQSplitting').HQSplitState = {
+    split50: false,
+    split150: false,
+    split400: false,
+  };
 
   constructor(
     private grid: GameGrid,
@@ -326,6 +346,9 @@ export class SimulationEngine {
     this.loyaltyAgent.setRng(this.rng);
     this.agentManager.registerLoyalty(this.loyaltyAgent);
 
+    this.worldAgent = new WorldAgent();
+    this.worldAgent.setRng(this.rng);
+
     // Wire ECS callbacks
     setStarvationCallback(() => {
       this.callbacks.onToast('STARVATION DETECTED', 'critical');
@@ -446,6 +469,9 @@ export class SimulationEngine {
   public getLoyaltyAgent(): LoyaltyAgent {
     return this.loyaltyAgent;
   }
+  public getWorldAgent(): WorldAgent {
+    return this.worldAgent;
+  }
 
   // ── Governor ───────────────────────────────────────────────────────────────
 
@@ -463,11 +489,8 @@ export class SimulationEngine {
       return false;
     });
     // Tell PoliticalAgent what mode we're in so it uses the right era transition logic
-    if (gov.constructor.name === 'HistoricalGovernor') {
-      this.politicalAgent.setGameMode('historical');
-    } else if (gov.constructor.name === 'FreeformGovernor') {
-      this.politicalAgent.setGameMode('freeform');
-    }
+    this.gameMode = gov instanceof FreeformGovernor ? 'freeform' : 'historical';
+    this.politicalAgent.setGameMode(this.gameMode);
   }
   public getGovernor(): IGovernor | null {
     return this.governor;
@@ -730,6 +753,7 @@ export class SimulationEngine {
           politburo: this.politburo,
         }),
       governor: this.governor,
+      worldAgent: this.worldAgent,
     };
   }
 
@@ -757,6 +781,7 @@ export class SimulationEngine {
         political: this.politicalAgent,
         defense: this.defenseAgent,
         loyalty: this.loyaltyAgent,
+        world: this.worldAgent,
       },
       systems: {
         settlement: this.settlement,
@@ -793,6 +818,11 @@ export class SimulationEngine {
         lastSeason: this.lastSeason,
         lastWeather: this.lastWeather,
         lastDayPhase: this.lastDayPhase,
+        prestigeDemand: this.prestigeDemand,
+        prestigeConstruction: this.prestigeConstruction,
+        gameMode: this.gameMode,
+        terrainTiles: this.terrainTiles,
+        hqSplitState: this.hqSplitState,
       },
       modifiers: null as any, // Filled by computeTickModifiers() after phaseChronology
       rng: this.rng,
@@ -845,6 +875,9 @@ export class SimulationEngine {
     // endGame() may have set this.ended directly; don't overwrite with stale ctx value
     this.ended = this.ended || ctx.state.ended;
     this.evacueeInfluxFired = ctx.state.evacueeInfluxFired;
+    this.prestigeDemand = ctx.state.prestigeDemand;
+    this.prestigeConstruction = ctx.state.prestigeConstruction;
+    this.terrainTiles = ctx.state.terrainTiles;
   }
 
   private endGame(victory: boolean, reason: string): void {

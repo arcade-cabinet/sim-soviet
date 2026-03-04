@@ -13,11 +13,30 @@
  */
 
 import { HISTORICAL_CRISES } from '@/config/historicalCrises';
+import type { Season } from '@/game/Chronology';
+import type { WorldState } from '../core/WorldAgent';
+import type { GovernanceType, SphereId } from '../core/worldCountries';
+import {
+  type BranchSystemSaveData,
+  type BranchTracker,
+  COLD_BRANCHES,
+  type ColdBranch,
+  evaluateBranches,
+  restoreBranchSystem,
+  serializeBranchSystem,
+} from '../core/worldBranches';
+import type { WeatherType } from '../core/weather-types';
+import { BlackSwanSystem, type BlackSwanResult } from './BlackSwanSystem';
 import { ChaosEngine, type ChaosState } from './ChaosEngine';
+import { ClimateEventSystem } from './ClimateEventSystem';
 import { DisasterAgent } from './DisasterAgent';
 import { FamineAgent } from './FamineAgent';
 import type { DynamicModifiers, GovernorContext, GovernorDirective, GovernorSaveData, IGovernor } from './Governor';
 import { DEFAULT_MODIFIERS } from './Governor';
+import { applyMeteorImpact, convertCraterToMine, type MeteorEvent, rollMeteorStrike } from './meteorStrike';
+import type { PressureDomain } from './pressure/PressureDomains';
+import { PressureCrisisEngine, type EmergenceResult } from './pressure/PressureCrisisEngine';
+import { PressureSystem } from './pressure/PressureSystem';
 import { type TimelineEvent, TimelineSystem } from './TimelineSystem';
 import type { CrisisAgentSaveData, CrisisContext, CrisisDefinition, CrisisImpact, ICrisisAgent } from './types';
 import { WarAgent } from './WarAgent';
@@ -145,6 +164,7 @@ export class FreeformGovernor implements IGovernor {
 
   private historicalWindows: HistoricalCrisisWindow[] = [];
   private activeEntries: AgentEntry[] = [];
+  /** @deprecated Retained for backward compat with old saves. New games use PressureCrisisEngine. */
   private chaosEngine: ChaosEngine;
   private timeline: TimelineSystem;
   private currentYear = 0;
@@ -156,11 +176,28 @@ export class FreeformGovernor implements IGovernor {
   private yearsSinceLastPolitical = 10;
   private totalCrisesExperienced = 0;
 
+  /** Last meteor strike event, if any (for UI/downstream consumption). */
+  private lastMeteorEvent: MeteorEvent | null = null;
+
+  // ── New Pressure-Valve Pipeline ──────────────────────────────────────────
+  private pressureSystem: PressureSystem;
+  private pressureCrisisEngine: PressureCrisisEngine;
+  private climateEventSystem: ClimateEventSystem;
+  private blackSwanSystem: BlackSwanSystem;
+
+  // ── Cold Branch State ────────────────────────────────────────────────────
+  private activatedBranches: Set<string> = new Set();
+  private branchTrackers: Map<string, BranchTracker> = new Map();
+
   constructor(divergenceYear?: number) {
     // divergenceYear is now ignored for new games but accepted for backward compat
     this.divergenceYear = divergenceYear ?? 1917;
     this.chaosEngine = new ChaosEngine();
     this.timeline = new TimelineSystem();
+    this.pressureSystem = new PressureSystem();
+    this.pressureCrisisEngine = new PressureCrisisEngine();
+    this.climateEventSystem = new ClimateEventSystem();
+    this.blackSwanSystem = new BlackSwanSystem();
     this.loadHistoricalWindows();
   }
 
@@ -180,23 +217,197 @@ export class FreeformGovernor implements IGovernor {
   /**
    * Evaluate the current tick and return a GovernorDirective.
    *
-   * Each tick:
-   * 1. Check historical crisis windows for probabilistic activation
-   * 2. Run ChaosEngine for additional crisis generation
-   * 3. Evaluate all active agents and merge impacts
+   * New pipeline (every tick):
+   * 1. PressureSystem.tick() — reads agent metrics, accumulates pressure
+   * 2. PressureCrisisEngine.checkForEmergence() — Tier 1
+   * 3. ClimateEventSystem.evaluate() — Tier 2 (seasonal)
+   * 4. BlackSwanSystem.roll() — Tier 3 (incredibly rare)
+   * 5. Cold branch evaluation
+   * 6. Historical crisis windows + existing agents (preserved)
    */
   evaluate(ctx: GovernorContext): GovernorDirective {
     this.currentYear = ctx.year;
 
     const allImpacts: CrisisImpact[] = [];
 
+    // ══════════════════════════════════════════════════════════════════════
+    //  NEW PRESSURE-VALVE PIPELINE
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ── Tier 1: Pressure System tick + crisis emergence ─────────────────
+    if (ctx.pressureReadings) {
+      // Get world modifiers if WorldAgent is available
+      const worldModifiers: Partial<Record<PressureDomain, number>> = {};
+      // World modifiers are applied via the PressureReadContext's worldModifiers field
+      // which is computed upstream by WorldAgent.computePressureModifiers()
+
+      this.pressureSystem.tick(ctx.pressureReadings, worldModifiers);
+
+      // Check for pressure-driven crisis emergence
+      const pressureState = this.pressureSystem.getState();
+      const activeCrisisIds = this.getActiveCrises();
+      const emergence = this.pressureCrisisEngine.checkForEmergence(pressureState, ctx.year, activeCrisisIds);
+
+      // Minor incidents → direct impacts
+      allImpacts.push(...emergence.minorImpacts);
+
+      // Major crises → spawn agents through existing pipeline
+      for (const crisis of emergence.majorCrises) {
+        const agent = createAgentForType(crisis.type);
+        if (agent) {
+          agent.configure(crisis);
+          this.activeEntries.push({ definition: crisis, agent, activated: true });
+          this.recordEvent(crisis, false);
+          this.totalCrisesExperienced++;
+        }
+      }
+    }
+
+    // ── Tier 2: Climate events (every tick, season-gated) ───────────────
+    if (ctx.pressureReadings) {
+      const season = ctx.pressureReadings.season as Season;
+      const weather = ctx.pressureReadings.weather as WeatherType;
+      const climateTrend = ctx.pressureReadings.climateTrend ?? 0;
+
+      const climateResult = this.climateEventSystem.evaluate(season, weather, climateTrend, ctx.rng);
+      allImpacts.push(...climateResult.impacts);
+
+      // Feed climate pressure spikes into pressure system
+      if (Object.keys(climateResult.pressureSpikes).length > 0) {
+        for (const [domain, spike] of Object.entries(climateResult.pressureSpikes)) {
+          this.pressureSystem.applySpike(domain as PressureDomain, spike);
+        }
+      }
+    }
+
+    // ── Tier 3: Black swans (every tick, pure probability) ──────────────
+    this.lastMeteorEvent = null;
+    const gridSize = 30; // default grid size
+    const blackSwanResult = this.blackSwanSystem.roll(ctx.year, ctx.rng, gridSize);
+    allImpacts.push(...blackSwanResult.impacts);
+    if (blackSwanResult.meteorEvent) {
+      this.lastMeteorEvent = blackSwanResult.meteorEvent;
+    }
+
+    // Feed black swan pressure spikes into pressure system
+    for (const [domain, spike] of Object.entries(blackSwanResult.pressureSpikes)) {
+      this.pressureSystem.applySpike(domain as PressureDomain, spike);
+    }
+
+    // ── Cold branch evaluation (every tick) ─────────────────────────────
+    if (ctx.pressureReadings) {
+      const pressureState = this.pressureSystem.getState();
+      // Build pressure + world state for branch evaluation
+      const pressureForBranches: Record<PressureDomain, { level: number }> = {} as any;
+      for (const [domain, gauge] of Object.entries(pressureState)) {
+        pressureForBranches[domain as PressureDomain] = { level: gauge.level };
+      }
+
+      // WorldState comes from pressureReadings (assembled upstream)
+      const worldState = ctx.pressureReadings.worldState;
+      const spheres = ctx.pressureReadings.spheres;
+
+      if (worldState && spheres) {
+        const activated = evaluateBranches(
+          COLD_BRANCHES,
+          this.activatedBranches,
+          this.branchTrackers,
+          pressureForBranches,
+          worldState as unknown as WorldState,
+          ctx.year,
+          spheres as unknown as Record<SphereId, { governance: GovernanceType; aggregateHostility: number }>,
+        );
+
+        for (const branch of activated) {
+          // Apply pressure spikes
+          if (branch.effects.pressureSpikes) {
+            for (const [domain, spike] of Object.entries(branch.effects.pressureSpikes)) {
+              this.pressureSystem.applySpike(domain as PressureDomain, spike);
+            }
+          }
+
+          // Create crisis from branch if defined
+          if (branch.effects.crisisDefinition) {
+            const def = {
+              ...branch.effects.crisisDefinition,
+              startYear: ctx.year,
+              endYear: ctx.year + (branch.effects.crisisDefinition.endYear - branch.effects.crisisDefinition.startYear || 2),
+            };
+            const agent = createAgentForType(def.type);
+            if (agent) {
+              agent.configure(def);
+              this.activeEntries.push({ definition: def, agent, activated: true });
+              this.recordEvent(def, false);
+              this.totalCrisesExperienced++;
+            }
+          }
+
+          // Narrative
+          allImpacts.push({
+            crisisId: `branch-${branch.id}-${ctx.year}`,
+            narrative: {
+              pravdaHeadlines: [branch.effects.narrative.pravdaHeadline],
+              toastMessages: [{ text: branch.effects.narrative.toast, severity: 'critical' }],
+            },
+          });
+        }
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  EXISTING PIPELINE (preserved for backward compat + historical windows)
+    // ══════════════════════════════════════════════════════════════════════
+
     // ── Check historical crisis windows (on month 1 only) ──────────────
     if (ctx.month === 1) {
       this.checkHistoricalWindows(ctx);
     }
 
-    // ── ChaosEngine: generate new crises ────────────────────────────────
-    this.maybeGenerateNewCrisis(ctx);
+    // ── ChaosEngine: generate new crises (legacy fallback) ─────────────
+    // Only runs if no pressure readings available (old saves without PressureSystem)
+    if (!ctx.pressureReadings) {
+      this.maybeGenerateNewCrisis(ctx);
+
+      // Legacy meteor strike roll (now handled by BlackSwanSystem when pressure available)
+      this.lastMeteorEvent = null;
+      if (ctx.month === 1) {
+        const meteor = rollMeteorStrike(ctx.rng, ctx.year);
+        if (meteor) {
+          this.lastMeteorEvent = meteor;
+          const impact = applyMeteorImpact(meteor.targetX, meteor.targetY, gridSize);
+          const mine = convertCraterToMine(impact);
+
+          this.timeline.recordEvent({
+            eventId: `meteor-${ctx.year}`,
+            crisisType: 'disaster',
+            name: `Meteorite Strike (${impact.resourceDeposit} deposit)`,
+            startYear: ctx.year,
+            endYear: ctx.year,
+            isHistorical: false,
+            recordedTick: 0,
+            parameters: {
+              magnitude: meteor.magnitude,
+              damageRadius: impact.damageRadius,
+              destroyedTiles: impact.destroyedTiles.length,
+              resource: mine.resource,
+              capacity: mine.capacity,
+            },
+          });
+
+          allImpacts.push({
+            crisisId: `meteor-${ctx.year}`,
+            infrastructure: { decayMult: 1.0 + impact.damageRadius * 0.1 },
+            social: { growthMult: 0.95 },
+            narrative: {
+              pravdaHeadlines: [
+                `METEORITE STRIKES NEAR (${meteor.targetX}, ${meteor.targetY})! ${impact.resourceDeposit} deposit discovered.`,
+              ],
+              toastMessages: [{ text: `Meteor impact! ${impact.resourceDeposit} deposit found.`, severity: 'critical' }],
+            },
+          });
+        }
+      }
+    }
 
     // Recompute active crisis IDs after spawning so agents see the updated list
     const activeCrisisIds = this.getActiveCrises();
@@ -218,8 +429,6 @@ export class FreeformGovernor implements IGovernor {
     }
 
     // ── Prune resolved entries to prevent unbounded growth ────────────
-    // Agents that have fully resolved (aftermath complete) will never
-    // produce impacts again. Keeping them wastes CPU on every tick.
     if (ctx.month === 1) {
       this.activeEntries = this.activeEntries.filter((entry) => !entry.activated || entry.agent.isActive());
     }
@@ -411,6 +620,12 @@ export class FreeformGovernor implements IGovernor {
         yearsSinceLastDisaster: this.yearsSinceLastDisaster,
         yearsSinceLastPolitical: this.yearsSinceLastPolitical,
         totalCrisesExperienced: this.totalCrisesExperienced,
+        lastMeteorEvent: this.lastMeteorEvent,
+        // New pressure-valve pipeline state
+        pressureState: this.pressureSystem.serialize(),
+        pressureCrisisEngine: this.pressureCrisisEngine.serialize(),
+        climateEventCooldowns: this.climateEventSystem.serialize(),
+        branchSystem: serializeBranchSystem(this.activatedBranches, this.branchTrackers),
       },
     };
   }
@@ -476,6 +691,22 @@ export class FreeformGovernor implements IGovernor {
           activated: saved.activated,
         });
       }
+    }
+
+    // Restore new pressure-valve pipeline state (missing in old saves → defaults)
+    if (s.pressureState) {
+      this.pressureSystem.restore(s.pressureState as Parameters<PressureSystem['restore']>[0]);
+    }
+    if (s.pressureCrisisEngine) {
+      this.pressureCrisisEngine.restore(s.pressureCrisisEngine as Parameters<PressureCrisisEngine['restore']>[0]);
+    }
+    if (s.climateEventCooldowns) {
+      this.climateEventSystem.restore(s.climateEventCooldowns as Array<[string, number]>);
+    }
+    if (s.branchSystem) {
+      const branchData = restoreBranchSystem(s.branchSystem as BranchSystemSaveData);
+      this.activatedBranches = branchData.activatedBranches;
+      this.branchTrackers = branchData.trackers;
     }
   }
 
@@ -570,6 +801,36 @@ export class FreeformGovernor implements IGovernor {
   /** Get historical crisis windows (for testing). */
   getHistoricalWindows(): readonly HistoricalCrisisWindow[] {
     return this.historicalWindows;
+  }
+
+  /** Get the last meteor strike event, if any occurred this tick. */
+  getLastMeteorEvent(): MeteorEvent | null {
+    return this.lastMeteorEvent;
+  }
+
+  /** Get the pressure system (for testing/inspection). */
+  getPressureSystem(): PressureSystem {
+    return this.pressureSystem;
+  }
+
+  /** Get the pressure crisis engine (for testing/inspection). */
+  getPressureCrisisEngine(): PressureCrisisEngine {
+    return this.pressureCrisisEngine;
+  }
+
+  /** Get the climate event system (for testing/inspection). */
+  getClimateEventSystem(): ClimateEventSystem {
+    return this.climateEventSystem;
+  }
+
+  /** Get the black swan system (for testing/inspection). */
+  getBlackSwanSystem(): BlackSwanSystem {
+    return this.blackSwanSystem;
+  }
+
+  /** Get activated cold branches (for testing/inspection). */
+  getActivatedBranches(): ReadonlySet<string> {
+    return this.activatedBranches;
   }
 
   // ─── Private: ChaosEngine Crisis Generation ────────────────────────────

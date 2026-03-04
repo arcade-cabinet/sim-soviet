@@ -105,6 +105,7 @@ export interface SerializableEngine {
   politburoEventHandler: (event: GameEvent) => void;
   syncSystemsToMeta: () => void;
   governor: IGovernor | null;
+  worldAgent?: import('../../ai/agents/core/WorldAgent').WorldAgent;
 }
 
 /**
@@ -156,6 +157,7 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
     foraging: { ...engine.foragingState },
     populationMode: isAggregate ? 'aggregate' : 'entity',
     governor: engine.governor?.serialize() ?? undefined,
+    worldAgent: engine.worldAgent?.serialize(),
   };
 
   if (isAggregate) {
@@ -345,6 +347,11 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
   // Restore governor state (if present and governor is set)
   if (data.governor && engine.governor) {
     engine.governor.restore(data.governor);
+  }
+
+  // Restore WorldAgent geopolitical state (old saves → default 1917 state)
+  if (data.worldAgent && engine.worldAgent) {
+    engine.worldAgent.restore(data.worldAgent);
   }
 
   // Update economy system to match restored era (fallback for saves without economy data)

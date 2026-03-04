@@ -6,9 +6,12 @@
  */
 
 import type { TickResult } from '../../ai/agents/core/ChronologyAgent';
+import { applyWarmingToTerrain, computeWarmingLevel, isWarmingActive } from '../../ai/agents/core/globalWarming';
+import { isTileActive, type TerrainTileState, tickTerrain } from '../../ai/agents/core/terrainTick';
 import { applyCrisisImpacts } from '../../ai/agents/crisis/CrisisImpactApplicator';
 import { FreeformGovernor } from '../../ai/agents/crisis/FreeformGovernor';
 import type { GovernorDirective } from '../../ai/agents/crisis/Governor';
+import type { PressureReadContext } from '../../ai/agents/crisis/pressure/PressureDomains';
 import {
   type AnnualReportEngineState,
   checkQuota as checkQuotaHelper,
@@ -17,9 +20,15 @@ import {
 } from '../../ai/agents/political/annualReportTick';
 import { DIFFICULTY_PRESETS } from '../../ai/agents/political/ScoringSystem';
 import { collapseEntitiesToBuildings } from '../../ai/agents/workforce/collectiveTransition';
+import { getCurrentGridSize, setCurrentGridSize } from '../../config';
+import { LAND_GRANT_TIERS } from '../../config/landGrants';
 import { buildingsLogic, getMetaEntity, operationalBuildings } from '../../ecs/archetypes';
 import type { RaionPool } from '../../ecs/world';
+import { checkHQSplitting } from '../../growth/HQSplitting';
 import { INDUSTRIAL_BUILDING_IDS } from '../../growth/OrganicUnlocks';
+import { notifyTerrainDirty } from '../../stores/gameStore';
+import { shouldExpand } from './endlessMode';
+import { expandGrid, getCurrentTier, initializeNewTiles } from './mapExpansion';
 import { buildSettlementSummary, type SettlementSummary } from './SettlementSummary';
 import type { TickContext } from './tickContext';
 
@@ -101,6 +110,19 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
       ctx.state.pendingReportSinceTick = chronoAgent.getDate().totalTicks;
     }
     syncAnnualReportState(ctx, reportCtx.engineState);
+
+    // ── 2.1 Dynamic map expansion ──
+    runMapExpansion(ctx);
+
+    // ── 2.2 Terrain yearly tick ──
+    runTerrainTick(ctx);
+
+    // ── 2.3 HQ splitting (population milestones) ──
+    checkHQSplitting(ctx.state.hqSplitState, {
+      population: storeRef.resources.population,
+      gridSize: getCurrentGridSize(),
+      callbacks,
+    });
   }
 
   // Auto-resolve pending report after 90 ticks
@@ -120,10 +142,21 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
 
   politicalAgent.tickTransition();
 
-  // ── 2.5 Governor evaluation ──
+  // ── 2.5 WorldAgent yearly tick ──
+  if (tickResult.newYear && ctx.agents.world) {
+    const date = chronoAgent.getDate();
+    ctx.agents.world.setEra(politicalAgent.getCurrentEraId());
+    ctx.agents.world.tickYear(date.year);
+  }
+
+  // ── 2.5b Governor evaluation ──
   if (ctx.governor) {
     const date = chronoAgent.getDate();
     const settlement = buildSettlementSummaryFromContext(ctx, date);
+
+    // Assemble PressureReadContext from existing agents
+    const pressureReadings = assemblePressureReadContext(ctx);
+
     const govCtx = {
       year: date.year,
       month: date.month,
@@ -134,6 +167,7 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
       totalTicks: date.totalTicks,
       eraId: politicalAgent.getCurrentEra().id,
       settlement,
+      pressureReadings,
     };
     cachedDirective = ctx.governor.evaluate(govCtx);
     if (cachedDirective.crisisImpacts.length > 0) {
@@ -207,10 +241,7 @@ function syncAnnualReportState(ctx: TickContext, state: AnnualReportEngineState)
  * Build a SettlementSummary from tick context and chronology date.
  * Uses ECS state for buildings/morale/power, and governor for crisis counters.
  */
-function buildSettlementSummaryFromContext(
-  ctx: TickContext,
-  date: { year: number; month: number },
-): SettlementSummary {
+function buildSettlementSummaryFromContext(ctx: TickContext, date: { year: number; month: number }): SettlementSummary {
   const { storeRef } = ctx;
   const buildings = buildingsLogic.entities;
   const buildingCount = buildings.length;
@@ -289,4 +320,162 @@ function buildAnnualReportContext(ctx: TickContext, cachedDirective: GovernorDir
     },
     endGame: (victory: boolean, reason: string) => ctx.endGame(victory, reason),
   };
+}
+
+// ── Dynamic map expansion ──────────────────────────────────────────────────
+
+/**
+ * Check whether the settlement has grown enough to expand the grid.
+ * If so, expand, initialize new terrain tiles, and signal the scene to rebuild.
+ */
+function runMapExpansion(ctx: TickContext): void {
+  const population = ctx.storeRef.resources.population;
+  const currentRadius = Math.floor(getCurrentGridSize() / 2);
+
+  if (!shouldExpand(ctx.state.gameMode, population, currentRadius)) return;
+
+  const tier = getCurrentTier(population);
+  const tierRadius = LAND_GRANT_TIERS[tier]?.radius ?? currentRadius;
+
+  const { newTiles, newRadius } = expandGrid(currentRadius, tierRadius);
+  if (newTiles.length === 0) return;
+
+  // Update the runtime grid size (diameter = 2 * radius + 1)
+  setCurrentGridSize(newRadius * 2 + 1);
+
+  // Initialize terrain state for new tiles
+  const season = ctx.tickResult.season.season;
+  const defaultTerrain = season === 'winter' ? 'snow' : 'grass';
+  const newTileStates = initializeNewTiles(newTiles, defaultTerrain);
+  ctx.state.terrainTiles.push(...newTileStates);
+
+  // Signal the 3D scene to rebuild TerrainGrid
+  notifyTerrainDirty();
+
+  ctx.callbacks.onToast(`The settlement has been granted additional land (${newTiles.length} new tiles).`, 'warning');
+}
+
+// ── Pressure context assembly ───────────────────────────────────────────────
+
+/**
+ * Assemble a PressureReadContext from existing agent APIs.
+ * NO new computation — just reads from agents already ticked.
+ */
+function assemblePressureReadContext(ctx: TickContext): PressureReadContext | undefined {
+  try {
+    const { food, kgb, power, demographic, loyalty, political } = ctx.agents;
+    const buildings = buildingsLogic.entities;
+    const totalBuildings = buildings.length;
+
+    // Average durability from durability components
+    let avgDurability = 100;
+    const durableBuildings = buildings.filter((b) => (b as any).durability);
+    if (durableBuildings.length > 0) {
+      let totalDur = 0;
+      for (const b of durableBuildings) {
+        totalDur += (b as any).durability.current ?? 100;
+      }
+      avgDurability = totalDur / durableBuildings.length;
+    }
+
+    // Housing capacity from building housingCap
+    let housingCapacity = 0;
+    for (const b of buildings) {
+      housingCapacity += b.building.housingCap ?? 0;
+    }
+
+    // Sick count approximation (no direct getter — use 0 as baseline)
+    const sickCount = 0;
+
+    // Labor ratio approximation
+    const population = ctx.storeRef.resources.population;
+    const laborRatio = population > 0 ? Math.min(1, ctx.systems.workerSystem.getPopulation() / Math.max(1, population)) : 0.5;
+
+    // Production trend from economy agent
+    const productionTrend = 0.5; // neutral default — could be enhanced from economy metrics
+
+    // Quota deficit
+    const quota = ctx.state.quota;
+    const quotaDeficit = quota.target > 0 ? Math.max(0, Math.min(1, 1 - quota.current / quota.target)) : 0;
+
+    // World state from WorldAgent (optional)
+    const world = ctx.agents.world;
+    const worldState = world ? (world.getState() as Record<string, unknown>) : undefined;
+    const spheres = world
+      ? Object.fromEntries(
+          Object.entries((world.getState() as any).spheres).map(([id, s]: [string, any]) => [
+            id,
+            { governance: s.governance, aggregateHostility: s.aggregateHostility },
+          ]),
+        )
+      : undefined;
+
+    return {
+      foodState: food.getFoodState(),
+      starvationCounter: food.getStarvationCounter(),
+      starvationGraceTicks: 90,
+      averageMorale: ctx.systems.workerSystem.getAverageMorale(),
+      averageLoyalty: loyalty.getAvgLoyalty(),
+      sabotageCount: loyalty.getSabotageCount(),
+      flightCount: loyalty.getFlightCount(),
+      population,
+      housingCapacity: Math.max(1, housingCapacity),
+      suspicionLevel: kgb.getSuspicionLevel(),
+      blackMarks: kgb.getBlackMarks(),
+      blat: ctx.storeRef.resources.blat ?? 0,
+      powerShortage: power.isInShortage(),
+      unpoweredCount: power.getUnpoweredCount(),
+      totalBuildings: Math.max(1, totalBuildings),
+      averageDurability: avgDurability,
+      growthRate: demographic.getGrowthRate(),
+      laborRatio,
+      sickCount,
+      quotaDeficit,
+      productionTrend,
+      season: ctx.tickResult.season.season,
+      weather: ctx.tickResult.weather,
+      climateTrend: world?.getClimateTrend(),
+      worldState,
+      spheres,
+    };
+  } catch {
+    // If any agent API isn't available (old saves, missing agents), return undefined
+    // FreeformGovernor will fall back to ChaosEngine when pressureReadings is undefined
+    return undefined;
+  }
+}
+
+// ── Terrain yearly tick ────────────────────────────────────────────────────
+
+/**
+ * Run one year of terrain evolution on all active tiles.
+ * Global warming effects only apply in freeform mode after 2050.
+ */
+function runTerrainTick(ctx: TickContext): void {
+  const tiles = ctx.state.terrainTiles;
+  if (tiles.length === 0) return;
+
+  const year = ctx.agents.chronology.getDate().year;
+  const gameMode = ctx.state.gameMode;
+  const rainfall = ctx.tickResult.season.farmMultiplier; // proxy for yearly rainfall
+
+  const warmingActive = isWarmingActive(gameMode, year);
+  const warmingLevel = warmingActive ? computeWarmingLevel(year) : 0;
+
+  const terrainCtx = { rainfall, globalWarmingRate: warmingLevel };
+
+  for (let i = 0; i < tiles.length; i++) {
+    const tile = tiles[i];
+    // Skip dormant tiles for performance
+    if (!isTileActive(tile) && !warmingActive) continue;
+
+    let updated: TerrainTileState = tickTerrain(tile, terrainCtx);
+
+    // Apply global warming effects (freeform mode only, post-2050)
+    if (warmingActive) {
+      updated = applyWarmingToTerrain(updated, warmingLevel);
+    }
+
+    tiles[i] = updated;
+  }
 }

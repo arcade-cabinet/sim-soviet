@@ -262,13 +262,15 @@ describe('Freeform mode — organic divergence integration tests', () => {
       jest.restoreAllMocks();
     });
 
-    it('ChaosEngine generates at least one crisis within 25 years', () => {
-      // Chaos-generated crisis IDs follow the pattern: type-year-randomId
-      const chaosGenerated = [...everActiveCrises].filter((id) => id.match(/^(war|famine|disaster|political)-\d+-/));
+    it('pressure system or ChaosEngine generates at least one crisis within 25 years', () => {
+      // Pressure-generated IDs: pressure-domain-year-tick; ChaosEngine IDs: type-year-randomId
+      const generated = [...everActiveCrises].filter(
+        (id) => id.match(/^pressure-/) || id.match(/^(war|famine|disaster|political)-\d+-/),
+      );
 
-      console.log(`Chaos-generated crises (25 years): ${chaosGenerated.length} — ` + `[${chaosGenerated.join(', ')}]`);
+      console.log(`Generated crises (25 years): ${generated.length} — ` + `[${generated.slice(0, 10).join(', ')}${generated.length > 10 ? '...' : ''}]`);
 
-      expect(chaosGenerated.length).toBeGreaterThanOrEqual(1);
+      expect(generated.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -328,7 +330,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
         expect(event.eventId).toBeDefined();
         expect(typeof event.eventId).toBe('string');
         expect(event.crisisType).toBeDefined();
-        expect(['war', 'famine', 'disaster', 'political']).toContain(event.crisisType);
+        expect(['war', 'famine', 'disaster', 'political', 'climate', 'black_swan', 'cold_branch']).toContain(event.crisisType);
         expect(typeof event.name).toBe('string');
         expect(typeof event.startYear).toBe('number');
         expect(typeof event.endYear).toBe('number');

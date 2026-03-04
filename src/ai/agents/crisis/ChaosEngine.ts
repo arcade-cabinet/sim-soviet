@@ -1,6 +1,13 @@
 /**
  * @module ai/agents/crisis/ChaosEngine
  *
+ * @deprecated Replaced by the three-tier Pressure-Valve Crisis System:
+ * - Tier 1: PressureCrisisEngine (sustained pressure → crisis emergence)
+ * - Tier 2: ClimateEventSystem (seasonal/weather pattern-driven)
+ * - Tier 3: BlackSwanSystem (pure low-probability, no gates)
+ * Retained for backward compatibility with old saves that don't have
+ * PressureReadContext available.
+ *
  * "History repeats itself" — the extrapolation engine for freeform mode.
  *
  * Generates plausible alternate crisis events from parameterized archetypes,
@@ -415,6 +422,8 @@ function yearsSinceForType(state: ChaosState, type: CrisisType): number {
       return state.yearsSinceLastDisaster;
     case 'political':
       return state.yearsSinceLastPolitical;
+    default:
+      return 10; // New crisis types (climate, black_swan, cold_branch) not tracked by ChaosEngine
   }
 }
 

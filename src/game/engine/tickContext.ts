@@ -5,9 +5,11 @@
 
 import type { AgentManager } from '../../ai/AgentManager';
 import type { ChronologyAgent, TickResult } from '../../ai/agents/core/ChronologyAgent';
+import type { WorldAgent } from '../../ai/agents/core/WorldAgent';
+import type { TerrainTileState } from '../../ai/agents/core/terrainTick';
 import type { WeatherAgent } from '../../ai/agents/core/WeatherAgent';
 import type { WeatherProfile } from '../../ai/agents/core/weather-types';
-import type { DynamicModifiers, GovernorDirective, IGovernor } from '../../ai/agents/crisis/Governor';
+import type { DynamicModifiers, GovernorDirective, GovernorMode, IGovernor } from '../../ai/agents/crisis/Governor';
 import type { EconomyAgent } from '../../ai/agents/economy/EconomyAgent';
 import type { FoodAgent } from '../../ai/agents/economy/FoodAgent';
 import type { ForagingState } from '../../ai/agents/economy/foragingSystem';
@@ -24,6 +26,10 @@ import type { EventSystem } from '../../ai/agents/narrative/events';
 import type { PolitburoSystem } from '../../ai/agents/narrative/politburo';
 import type { MinistryModifiers } from '../../ai/agents/narrative/politburo/types';
 import type { PravdaSystem } from '../../ai/agents/narrative/pravda';
+import type {
+  ConstructionState as PrestigeConstructionState,
+  PrestigeProjectDemand,
+} from '../../ai/agents/narrative/prestigeLifecycle';
 import type { CompulsoryDeliveries } from '../../ai/agents/political/CompulsoryDeliveries';
 import type { KGBAgent } from '../../ai/agents/political/KGBAgent';
 import type { LoyaltyAgent } from '../../ai/agents/political/LoyaltyAgent';
@@ -35,6 +41,7 @@ import type { DemographicAgent } from '../../ai/agents/social/DemographicAgent';
 import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
 import type { RaionPool } from '../../ecs/world';
 import type { EraModifiers } from '../../game/era/types';
+import type { HQSplitState } from '../../growth/HQSplitting';
 import type { GameGrid } from '../GameGrid';
 import type { GameRng } from '../SeedSystem';
 import type { SimCallbacks } from './types';
@@ -80,6 +87,8 @@ export interface TickContext {
     political: PoliticalAgent;
     defense: DefenseAgent;
     loyalty: LoyaltyAgent;
+    /** WorldAgent — models geopolitical context. Null for old saves without it. */
+    world: WorldAgent | null;
   };
 
   // ── System references ──
@@ -120,6 +129,16 @@ export interface TickContext {
     lastSeason: string;
     lastWeather: string;
     lastDayPhase: string;
+    /** Current prestige project demand (null if none announced yet for this era). */
+    prestigeDemand: PrestigeProjectDemand | null;
+    /** In-progress prestige project construction (null if not started). */
+    prestigeConstruction: PrestigeConstructionState | null;
+    /** Game mode: 'historical' or 'freeform' — derived from governor type. */
+    gameMode: GovernorMode;
+    /** Per-tile terrain simulation state (fertility, contamination, etc.). */
+    terrainTiles: TerrainTileState[];
+    /** HQ splitting milestone tracker. */
+    hqSplitState: HQSplitState;
   };
 
   // ── Per-tick computed modifiers (set by engine before phase calls) ──
