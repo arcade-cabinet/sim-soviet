@@ -16,7 +16,6 @@
  */
 
 import type { GameRng } from '@/game/SeedSystem';
-import type { TimelineEvent } from './TimelineSystem';
 import type { CrisisDefinition, CrisisSeverity, CrisisType } from './types';
 
 // ─── ChaosState ──────────────────────────────────────────────────────────────
@@ -404,14 +403,19 @@ function scoreSeverity(score: number, rng: GameRng): CrisisSeverity {
 }
 
 /**
- * Find the most recent timeline event of a given crisis type,
- * or undefined if none exists.
+ * Map a CrisisType to the corresponding yearsSince field on ChaosState.
  */
-function lastEventOfType(timeline: TimelineEvent[], type: CrisisType): TimelineEvent | undefined {
-  for (let i = timeline.length - 1; i >= 0; i--) {
-    if (timeline[i]!.crisisType === type) return timeline[i];
+function yearsSinceForType(state: ChaosState, type: CrisisType): number {
+  switch (type) {
+    case 'war':
+      return state.yearsSinceLastWar;
+    case 'famine':
+      return state.yearsSinceLastFamine;
+    case 'disaster':
+      return state.yearsSinceLastDisaster;
+    case 'political':
+      return state.yearsSinceLastPolitical;
   }
-  return undefined;
 }
 
 // ─── ChaosEngine ─────────────────────────────────────────────────────────────
@@ -431,30 +435,31 @@ export class ChaosEngine {
   }
 
   /**
-   * Evaluate all archetypes against current state and timeline history.
+   * Evaluate all archetypes against current state.
    * Returns a generated crisis if any archetype triggers, null otherwise.
    *
-   * @param state - Current game state snapshot
-   * @param timeline - All timeline events so far (for feedback rules)
+   * Pure function of fixed-size input: ChaosState contains pre-computed
+   * yearsSince counters so no timeline scan is needed.
+   *
+   * @param state - Current game state snapshot (includes yearsSince counters)
    * @param rng - Seeded RNG for deterministic outcomes
    */
-  generateNextCrisis(state: ChaosState, timeline: TimelineEvent[], rng: GameRng): CrisisDefinition | null {
+  generateNextCrisis(state: ChaosState, rng: GameRng): CrisisDefinition | null {
     // 1. Score each archetype
     const scores = this.archetypes.map((arch) => ({
       archetype: arch,
       rawScore: arch.evaluateTrigger(state),
     }));
 
-    // 2. Apply feedback rules
+    // 2. Apply feedback rules (pure function of ChaosState)
     const boostedScores = scores.map(({ archetype, rawScore }) => ({
       archetype,
-      score: rawScore + this.computeFeedbackBoost(archetype.type, state, timeline),
+      score: rawScore + this.computeFeedbackBoost(archetype.type, state),
     }));
 
     // 3. Apply minimum interval filter — zero out types that fired too recently
     const filteredScores = boostedScores.map(({ archetype, score }) => {
-      const lastEvent = lastEventOfType(timeline, archetype.type);
-      if (lastEvent && state.year - lastEvent.endYear < MIN_INTERVAL_YEARS) {
+      if (yearsSinceForType(state, archetype.type) < MIN_INTERVAL_YEARS) {
         return { archetype, score: 0 };
       }
       // Also suppress if there's an active crisis of this type
@@ -505,8 +510,9 @@ export class ChaosEngine {
   /**
    * Compute feedback boost for a given crisis type based on recent history.
    * Implements the self-referencing cascade rules.
+   * Pure function of ChaosState — no timeline scan needed.
    */
-  private computeFeedbackBoost(type: CrisisType, state: ChaosState, _timeline: TimelineEvent[]): number {
+  private computeFeedbackBoost(type: CrisisType, state: ChaosState): number {
     let boost = 0;
 
     switch (type) {

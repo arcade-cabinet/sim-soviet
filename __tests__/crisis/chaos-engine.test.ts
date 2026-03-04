@@ -6,8 +6,6 @@
  */
 
 import { ChaosEngine, type ChaosState } from '@/ai/agents/crisis/ChaosEngine';
-import type { TimelineEvent } from '@/ai/agents/crisis/TimelineSystem';
-import type { CrisisType } from '@/ai/agents/crisis/types';
 import { GameRng } from '@/game/SeedSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
@@ -96,24 +94,6 @@ function lowFoodState(overrides?: Partial<ChaosState>): ChaosState {
   };
 }
 
-/** Create a timeline event for testing. */
-function makeTimelineEvent(
-  type: CrisisType,
-  startYear: number,
-  endYear: number,
-  overrides?: Partial<TimelineEvent>,
-): TimelineEvent {
-  return {
-    eventId: `${type}-${startYear}`,
-    crisisType: type,
-    name: `Test ${type}`,
-    startYear,
-    endYear,
-    isHistorical: false,
-    recordedTick: 0,
-    ...overrides,
-  };
-}
 
 // ─── Peaceful state ─────────────────────────────────────────────────────────
 
@@ -127,7 +107,7 @@ describe('ChaosEngine — peaceful state', () => {
     let crisisCount = 0;
     const attempts = 100;
     for (let i = 0; i < attempts; i++) {
-      const result = engine.generateNextCrisis(state, [], new GameRng(`peaceful-${i}`));
+      const result = engine.generateNextCrisis(state, new GameRng(`peaceful-${i}`));
       if (result !== null) crisisCount++;
     }
 
@@ -143,8 +123,6 @@ describe('ChaosEngine — post-war famine boost', () => {
     const engine = new ChaosEngine();
 
     // Compare famine generation rates: post-war vs. long-peace
-    const warTimeline = [makeTimelineEvent('war', 1941, 1945)];
-
     let postWarFamines = 0;
     let peaceFamines = 0;
     const attempts = 200;
@@ -153,8 +131,8 @@ describe('ChaosEngine — post-war famine boost', () => {
       const rng1 = new GameRng(`postwar-${i}`);
       const rng2 = new GameRng(`postwar-${i}`);
 
-      const postWarResult = engine.generateNextCrisis(postWarState(), warTimeline, rng1);
-      const peaceResult = engine.generateNextCrisis(peacefulState({ food: 200, population: 2000 }), [], rng2);
+      const postWarResult = engine.generateNextCrisis(postWarState(), rng1);
+      const peaceResult = engine.generateNextCrisis(peacefulState({ food: 200, population: 2000 }), rng2);
 
       if (postWarResult?.type === 'famine') postWarFamines++;
       if (peaceResult?.type === 'famine') peaceFamines++;
@@ -207,7 +185,7 @@ describe('ChaosEngine — low food famine trigger', () => {
 
     let famineGenerated = false;
     for (let i = 0; i < 50; i++) {
-      const result = engine.generateNextCrisis(state, [], new GameRng(`famine-gen-${i}`));
+      const result = engine.generateNextCrisis(state, new GameRng(`famine-gen-${i}`));
       if (result?.type === 'famine') {
         famineGenerated = true;
         break;
@@ -228,7 +206,7 @@ describe('ChaosEngine — generated crisis structure', () => {
 
     let definition = null;
     for (let i = 0; i < 100; i++) {
-      definition = engine.generateNextCrisis(state, [], new GameRng(`struct-${i}`));
+      definition = engine.generateNextCrisis(state, new GameRng(`struct-${i}`));
       if (definition) break;
     }
 
@@ -283,10 +261,9 @@ describe('ChaosEngine — determinism', () => {
   it('produces identical output with the same seed', () => {
     const engine = new ChaosEngine();
     const state = longPeaceState();
-    const timeline: TimelineEvent[] = [];
 
-    const result1 = engine.generateNextCrisis(state, timeline, new GameRng('deterministic'));
-    const result2 = engine.generateNextCrisis(state, timeline, new GameRng('deterministic'));
+    const result1 = engine.generateNextCrisis(state, new GameRng('deterministic'));
+    const result2 = engine.generateNextCrisis(state, new GameRng('deterministic'));
 
     // Both should produce exactly the same result
     expect(JSON.stringify(result1)).toBe(JSON.stringify(result2));
@@ -298,7 +275,7 @@ describe('ChaosEngine — determinism', () => {
 
     const results = new Set<string>();
     for (let i = 0; i < 50; i++) {
-      const result = engine.generateNextCrisis(state, [], new GameRng(`diff-seed-${i}`));
+      const result = engine.generateNextCrisis(state, new GameRng(`diff-seed-${i}`));
       if (result) {
         results.add(result.id);
       }
@@ -315,8 +292,7 @@ describe('ChaosEngine — minimum interval enforcement', () => {
   it('does not generate same crisis type within 3 years of previous', () => {
     const engine = new ChaosEngine();
 
-    // Timeline has a war that ended 1 year ago
-    const timeline = [makeTimelineEvent('war', 1945, 1949)];
+    // yearsSinceLastWar=1 means war ended 1 year ago (< MIN_INTERVAL_YEARS=3)
     const state = longPeaceState({
       year: 1950,
       yearsSinceLastWar: 1,
@@ -324,7 +300,7 @@ describe('ChaosEngine — minimum interval enforcement', () => {
 
     let warGenerated = false;
     for (let i = 0; i < 200; i++) {
-      const result = engine.generateNextCrisis(state, timeline, new GameRng(`interval-${i}`));
+      const result = engine.generateNextCrisis(state, new GameRng(`interval-${i}`));
       if (result?.type === 'war') {
         warGenerated = true;
         break;
@@ -337,8 +313,7 @@ describe('ChaosEngine — minimum interval enforcement', () => {
   it('allows same type after minimum interval has passed', () => {
     const engine = new ChaosEngine();
 
-    // Timeline has a war that ended 5 years ago (> 3 year min interval)
-    const timeline = [makeTimelineEvent('war', 1940, 1945)];
+    // yearsSinceLastWar=25 (>> 3 year min interval)
     const state = longPeaceState({
       year: 1970,
       yearsSinceLastWar: 25,
@@ -348,7 +323,7 @@ describe('ChaosEngine — minimum interval enforcement', () => {
 
     let warGenerated = false;
     for (let i = 0; i < 200; i++) {
-      const result = engine.generateNextCrisis(state, timeline, new GameRng(`after-interval-${i}`));
+      const result = engine.generateNextCrisis(state, new GameRng(`after-interval-${i}`));
       if (result?.type === 'war') {
         warGenerated = true;
         break;
@@ -370,7 +345,7 @@ describe('ChaosEngine — minimum interval enforcement', () => {
 
     let warGenerated = false;
     for (let i = 0; i < 200; i++) {
-      const result = engine.generateNextCrisis(state, [], new GameRng(`active-${i}`));
+      const result = engine.generateNextCrisis(state, new GameRng(`active-${i}`));
       if (result?.type === 'war') {
         warGenerated = true;
         break;
@@ -428,11 +403,10 @@ describe('ChaosEngine — feedback cascade', () => {
     // Verify the engine itself applies the boost — count political crises
     let postFaminePolitical = 0;
     let noFaminePolitical = 0;
-    const timeline = [makeTimelineEvent('famine', 1948, 1949)];
 
     for (let i = 0; i < 200; i++) {
-      const r1 = engine.generateNextCrisis(postFamine, timeline, new GameRng(`chain-a-${i}`));
-      const r2 = engine.generateNextCrisis(noFamine, [], new GameRng(`chain-b-${i}`));
+      const r1 = engine.generateNextCrisis(postFamine, new GameRng(`chain-a-${i}`));
+      const r2 = engine.generateNextCrisis(noFamine, new GameRng(`chain-b-${i}`));
       if (r1?.type === 'political') postFaminePolitical++;
       if (r2?.type === 'political') noFaminePolitical++;
     }
@@ -462,11 +436,10 @@ describe('ChaosEngine — feedback cascade', () => {
 
     let postDisasterPolitical = 0;
     let noDisasterPolitical = 0;
-    const disasterTimeline = [makeTimelineEvent('disaster', 1949, 1949)];
 
     for (let i = 0; i < 200; i++) {
-      const r1 = engine.generateNextCrisis(postDisaster, disasterTimeline, new GameRng(`dis-a-${i}`));
-      const r2 = engine.generateNextCrisis(noDisaster, [], new GameRng(`dis-b-${i}`));
+      const r1 = engine.generateNextCrisis(postDisaster, new GameRng(`dis-a-${i}`));
+      const r2 = engine.generateNextCrisis(noDisaster, new GameRng(`dis-b-${i}`));
       if (r1?.type === 'political') postDisasterPolitical++;
       if (r2?.type === 'political') noDisasterPolitical++;
     }
@@ -511,33 +484,24 @@ describe('ChaosEngine — archetype coverage', () => {
 describe('ChaosEngine — edge cases', () => {
   it('returns null when all types are on minimum interval cooldown', () => {
     const engine = new ChaosEngine();
-    const timeline = [
-      makeTimelineEvent('war', 1948, 1950),
-      makeTimelineEvent('famine', 1949, 1950),
-      makeTimelineEvent('disaster', 1949, 1950),
-      makeTimelineEvent('political', 1949, 1950),
-    ];
-    const state = peacefulState({ year: 1951 }); // All ended 1 year ago (< 3)
+    // All yearsSince counters < 3 (MIN_INTERVAL_YEARS)
+    const state = peacefulState({
+      year: 1951,
+      yearsSinceLastWar: 1,
+      yearsSinceLastFamine: 1,
+      yearsSinceLastDisaster: 1,
+      yearsSinceLastPolitical: 1,
+    });
 
-    const result = engine.generateNextCrisis(state, timeline, new GameRng('cooldown'));
+    const result = engine.generateNextCrisis(state, new GameRng('cooldown'));
     expect(result).toBeNull();
-  });
-
-  it('handles empty timeline gracefully', () => {
-    const engine = new ChaosEngine();
-    const state = longPeaceState();
-
-    // Should not throw
-    const result = engine.generateNextCrisis(state, [], new GameRng('empty-timeline'));
-    // May or may not generate — just shouldn't crash
-    expect(result === null || result.id !== undefined).toBe(true);
   });
 
   it('handles zero population without crashing', () => {
     const engine = new ChaosEngine();
     const state = peacefulState({ population: 0 });
 
-    const result = engine.generateNextCrisis(state, [], new GameRng('zero-pop'));
+    const result = engine.generateNextCrisis(state, new GameRng('zero-pop'));
     expect(result === null || result.id !== undefined).toBe(true);
   });
 
@@ -547,7 +511,7 @@ describe('ChaosEngine — edge cases', () => {
     const ids = new Set<string>();
 
     for (let i = 0; i < 100; i++) {
-      const result = engine.generateNextCrisis({ ...state, year: state.year + i * 5 }, [], new GameRng(`unique-${i}`));
+      const result = engine.generateNextCrisis({ ...state, year: state.year + i * 5 }, new GameRng(`unique-${i}`));
       if (result) {
         expect(ids.has(result.id)).toBe(false);
         ids.add(result.id);

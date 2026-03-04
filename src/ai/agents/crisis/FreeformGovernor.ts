@@ -594,7 +594,7 @@ export class FreeformGovernor implements IGovernor {
       totalCrisesExperienced: this.totalCrisesExperienced,
     };
 
-    const newCrisis = this.chaosEngine.generateNextCrisis(chaosState, this.timeline.getAllEvents(), ctx.rng);
+    const newCrisis = this.chaosEngine.generateNextCrisis(chaosState, ctx.rng);
 
     if (newCrisis) {
       const agent = createAgentForType(newCrisis.type);
