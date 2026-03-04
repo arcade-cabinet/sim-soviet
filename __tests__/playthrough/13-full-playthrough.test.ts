@@ -194,7 +194,7 @@ function runPlaythrough(difficulty: 'worker' | 'comrade' | 'tovarish', targetYea
       cement: 10000,
     },
     difficulty,
-    consequence: 'forgiving',
+    consequence: 'rehabilitated',
     deterministicRandom: false,
   });
 
@@ -288,7 +288,7 @@ describe('Playthrough: 200-Year Headless Playthrough', () => {
     const finalSnapshot = snapshots[snapshots.length - 1]!;
     const yearsPlayed = finalSnapshot.year - 1917;
 
-    // Worker difficulty (easiest) with forgiving consequences should survive
+    // Worker difficulty (easiest) with rehabilitated consequences should survive
     // a meaningful stretch. The game may end from era failures, quota issues,
     // repeated rehabilitations, or population collapse. With generous starting
     // resources, we expect at least 5 calendar years.

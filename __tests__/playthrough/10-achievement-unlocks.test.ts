@@ -40,7 +40,7 @@ describe('Playthrough: Achievement Unlocks', () => {
     // for the achievement tracker to see population >= 100.
     const { engine, callbacks } = createPlaythroughEngine({
       resources: { population: 100, food: 9999, vodka: 9999, money: 9999 },
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
 
     // Disable interactive callbacks that cause mark accumulation or defer evaluation
@@ -68,7 +68,7 @@ describe('Playthrough: Achievement Unlocks', () => {
     // The no_food achievement checks r.food <= 0 which is independent of population.
     const { engine, callbacks } = createPlaythroughEngine({
       resources: { food: 0, population: 0, money: 500 },
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
 
     // Advance 10 ticks so achievement evaluation runs
@@ -89,7 +89,7 @@ describe('Playthrough: Achievement Unlocks', () => {
       // Start above 1000 to account for consumption before the first achievement check
       // (tickAchievements runs at totalTicks % 10 === 0). Set money > vodka to avoid vodka_economy.
       resources: { vodka: 1100, food: 500, money: 5000, population: 10 },
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
 
     // Advance 10 ticks so tickAchievements evaluates (runs at totalTicks % 10 === 0).
@@ -116,7 +116,7 @@ describe('Playthrough: Achievement Unlocks', () => {
   it('bankruptcy achievement fires when money reaches 0', () => {
     const { engine, callbacks } = createPlaythroughEngine({
       resources: { money: 0, food: 500, population: 10 },
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
 
     // Advance 10 ticks so achievement evaluation runs

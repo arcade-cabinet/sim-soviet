@@ -99,7 +99,7 @@ describe('Historical mode — full timeline playthrough', () => {
         power: 99999,
       },
       difficulty: 'worker',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       deterministicRandom: true,
     });
 

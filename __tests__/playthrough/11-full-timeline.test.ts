@@ -7,7 +7,7 @@
  * 3. Population bounded — entity count doesn't explode
  * 4. Deterministic — same seed produces same results
  *
- * Uses forgiving consequence and worker difficulty to maximize survival.
+ * Uses rehabilitated consequence and worker difficulty to maximize survival.
  * The run may end early via era failure (population decline) since the test
  * uses entity mode — this is expected until aggregate mode is wired in (Task 11).
  */
@@ -44,7 +44,7 @@ describe('Playthrough: Full 1917->2117 Timeline', () => {
         cement: 99999,
       },
       difficulty: 'worker',
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
 
     // Disable interactive callbacks that would block in tests
@@ -123,7 +123,7 @@ describe('Playthrough: Full 1917->2117 Timeline', () => {
           cement: 99999,
         },
         difficulty: 'worker',
-        consequence: 'forgiving',
+        consequence: 'rehabilitated',
         deterministicRandom: true,
       });
       callbacks.onMinigame = undefined as never;

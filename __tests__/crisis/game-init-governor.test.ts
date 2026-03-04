@@ -54,7 +54,7 @@ describe('GameInit governor wiring', () => {
       makeMockCallbacks(),
       new GameRng('classic-test'),
       'comrade',
-      'permadeath',
+      'rasstrelyat',
     );
 
     // Default — no governor wired
@@ -67,7 +67,7 @@ describe('GameInit governor wiring', () => {
       makeMockCallbacks(),
       new GameRng('historical-test'),
       'comrade',
-      'permadeath',
+      'rasstrelyat',
     );
 
     // Wire governor as GameInit would
@@ -114,7 +114,7 @@ describe('NewGameConfig', () => {
   it('includes gameMode field', () => {
     const config: NewGameConfig = {
       difficulty: 'comrade',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       seed: 'test-seed',
       mapSize: 'medium',
       gameMode: 'historical',
@@ -126,7 +126,7 @@ describe('NewGameConfig', () => {
   it('accepts freeform game mode', () => {
     const config: NewGameConfig = {
       difficulty: 'tovarish',
-      consequence: 'harsh',
+      consequence: 'gulag',
       seed: 'freeform-seed',
       mapSize: 'large',
       gameMode: 'freeform',

@@ -290,7 +290,7 @@ describe('Diagnostic: Historical mode 1917-1997 playthrough', () => {
         power: 99999,
       },
       difficulty: 'worker',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       deterministicRandom: true,
     });
 

@@ -240,7 +240,7 @@ export class SimulationEngine {
       initialStore.resources.population = 0;
     }
 
-    this.scoring = new ScoringSystem(difficulty ?? 'comrade', consequence ?? 'permadeath');
+    this.scoring = new ScoringSystem(difficulty ?? 'comrade', consequence ?? 'gulag');
     this.tutorial = new TutorialSystem();
     // Skip tutorial — settlement builds organically via CollectiveAgent bootstrap
     this.tutorial.skip();

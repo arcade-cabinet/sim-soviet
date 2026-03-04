@@ -161,7 +161,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
           power: 99999,
         },
         difficulty: 'worker',
-        consequence: 'permadeath',
+        consequence: 'rasstrelyat',
         deterministicRandom: true,
       });
 
@@ -240,7 +240,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
           power: 99999,
         },
         difficulty: 'worker',
-        consequence: 'permadeath',
+        consequence: 'rasstrelyat',
         deterministicRandom: true,
       });
 
@@ -293,7 +293,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
           power: 99999,
         },
         difficulty: 'worker',
-        consequence: 'permadeath',
+        consequence: 'rasstrelyat',
         deterministicRandom: true,
       });
 
@@ -376,7 +376,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
             power: 99999,
           },
           difficulty: 'worker',
-          consequence: 'permadeath',
+          consequence: 'rasstrelyat',
           deterministicRandom: true,
         });
 
@@ -412,7 +412,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
             power: 99999,
           },
           difficulty: 'worker',
-          consequence: 'permadeath',
+          consequence: 'rasstrelyat',
           deterministicRandom: false,
         });
 
@@ -467,7 +467,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
           power: 99999,
         },
         difficulty: 'worker',
-        consequence: 'permadeath',
+        consequence: 'rasstrelyat',
         deterministicRandom: true,
       });
 

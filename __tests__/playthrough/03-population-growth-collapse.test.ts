@@ -23,7 +23,7 @@ describe('Playthrough: Population Growth & Collapse', () => {
     const { engine, callbacks } = createPlaythroughEngine({
       resources: { population: 20, food: 9999, vodka: 9999 },
       difficulty: 'worker',
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
 
     // Disable interactive callbacks that accumulate marks or defer evaluation
@@ -34,7 +34,7 @@ describe('Playthrough: Population Growth & Collapse', () => {
 
     // Population growth is yearly-gated (immigration at 3% of housing cap).
     // After 1 year, immigration should have added at least 1 citizen.
-    // With worker difficulty and forgiving consequence, the settlement survives.
+    // With worker difficulty and rehabilitated consequence, the settlement survives.
     advanceYears(engine, 1);
 
     const pop = getResources().population;
@@ -42,7 +42,7 @@ describe('Playthrough: Population Growth & Collapse', () => {
     // active, net growth may be modest or even slightly negative, but
     // the settlement should remain viable with 20 starting pop.
     expect(pop).toBeGreaterThan(0);
-    // Game should not end from arrest (forgiving consequence) or starvation
+    // Game should not end from arrest (rehabilitated consequence) or starvation
     // (abundant food/vodka)
     if (isGameOver()) {
       // If game ended, it's an acceptable outcome from era failure or similar —
@@ -56,7 +56,7 @@ describe('Playthrough: Population Growth & Collapse', () => {
   it('population does not massively exceed housing capacity', () => {
     const { engine, callbacks } = createPlaythroughEngine({
       resources: { population: 48, food: 9999, vodka: 9999 },
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
 
     // Disable callbacks that interfere with pure population testing
@@ -150,7 +150,7 @@ describe('Playthrough: Population Growth & Collapse', () => {
     const { engine } = createPlaythroughEngine({
       resources: { population: 100, food: 9999, vodka: 9999 },
       difficulty: 'worker',
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
 
     // Place power-station + gulag-admin (both instant-operational via createBuilding)

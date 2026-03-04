@@ -113,7 +113,7 @@ describe('SimulationEngine — Annual Report', () => {
     createTestDvory(100);
     createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
     const rng = new GameRng('test-caught-seed');
-    const engine = new SimulationEngine(grid, cb, rng, 'worker', 'forgiving');
+    const engine = new SimulationEngine(grid, cb, rng, 'worker', 'rehabilitated');
     cb.onMinigame = undefined as never;
 
     for (let i = 0; i < 90; i++) engine.tick();

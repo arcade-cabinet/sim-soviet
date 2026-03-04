@@ -247,7 +247,7 @@ function createAggregateEngine(options: {
     callbacks,
     undefined,
     options.difficulty ?? 'worker',
-    options.consequence ?? 'forgiving',
+    options.consequence ?? 'rehabilitated',
   );
 
   return { engine, callbacks, raion };
@@ -403,7 +403,7 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
   // ── All difficulty levels ─────────────────────────────────────────────
 
   const difficulties: DifficultyLevel[] = ['worker', 'comrade', 'tovarish'];
-  const consequences: ConsequenceLevel[] = ['forgiving', 'harsh', 'permadeath'];
+  const consequences: ConsequenceLevel[] = ['rehabilitated', 'gulag', 'rasstrelyat'];
 
   describe.each(difficulties)('difficulty=%s', (difficulty) => {
     it.each(consequences)('consequence=%s — aggregate mode survives 20 years', (consequence) => {
@@ -594,7 +594,7 @@ describe('Playthrough: Aggregate Mode Scaling Stress', () => {
     const callbacks = createMockCallbacks();
     callbacks.onMinigame = jest.fn();
     callbacks.onAnnualReport = jest.fn();
-    const engine = new SimulationEngine(grid, callbacks, undefined, 'worker', 'forgiving');
+    const engine = new SimulationEngine(grid, callbacks, undefined, 'worker', 'rehabilitated');
 
     // Before collapse
     expect(getRaion()).toBeUndefined();

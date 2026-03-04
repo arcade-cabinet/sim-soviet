@@ -68,7 +68,7 @@ function createMockGovernor(overrides?: Partial<GovernorDirective>): IGovernor {
 
 describe('ScoringSystem.getDifficultyConfig — governor modifier injection', () => {
   it('returns DIFFICULTY_PRESETS when no governor modifiers are set', () => {
-    const scoring = new ScoringSystem('worker', 'permadeath');
+    const scoring = new ScoringSystem('worker', 'rasstrelyat');
     const config = scoring.getDifficultyConfig();
 
     expect(config.label).toBe(DIFFICULTY_PRESETS.worker.label);
@@ -84,7 +84,7 @@ describe('ScoringSystem.getDifficultyConfig — governor modifier injection', ()
   });
 
   it('returns governor modifiers when set via setGovernorModifiers()', () => {
-    const scoring = new ScoringSystem('worker', 'permadeath');
+    const scoring = new ScoringSystem('worker', 'rasstrelyat');
     const customModifiers: DynamicModifiers = {
       ...DEFAULT_MODIFIERS,
       quotaMultiplier: 2.5,
@@ -105,7 +105,7 @@ describe('ScoringSystem.getDifficultyConfig — governor modifier injection', ()
   });
 
   it('reverts to DIFFICULTY_PRESETS when setGovernorModifiers(null) is called', () => {
-    const scoring = new ScoringSystem('tovarish', 'harsh');
+    const scoring = new ScoringSystem('tovarish', 'gulag');
     const customModifiers: DynamicModifiers = {
       ...DEFAULT_MODIFIERS,
       quotaMultiplier: 5.0,
@@ -127,7 +127,7 @@ describe('ScoringSystem.getDifficultyConfig — governor modifier injection', ()
 
   it('each difficulty level returns its own preset when no governor modifiers', () => {
     for (const level of ['worker', 'comrade', 'tovarish'] as const) {
-      const scoring = new ScoringSystem(level, 'permadeath');
+      const scoring = new ScoringSystem(level, 'rasstrelyat');
       const config = scoring.getDifficultyConfig();
       expect(config.label).toBe(DIFFICULTY_PRESETS[level].label);
       expect(config.quotaMultiplier).toBe(DIFFICULTY_PRESETS[level].quotaMultiplier);
@@ -136,7 +136,7 @@ describe('ScoringSystem.getDifficultyConfig — governor modifier injection', ()
 
   it('governor modifiers override regardless of difficulty level', () => {
     // Even with worker (easiest) difficulty, governor modifiers take precedence
-    const scoring = new ScoringSystem('worker', 'forgiving');
+    const scoring = new ScoringSystem('worker', 'rehabilitated');
     const harshModifiers: DynamicModifiers = {
       ...DEFAULT_MODIFIERS,
       quotaMultiplier: 3.0,

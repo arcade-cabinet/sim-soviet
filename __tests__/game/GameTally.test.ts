@@ -111,13 +111,13 @@ describe('GameTally', () => {
     });
 
     it('final score applies difficulty multiplier', () => {
-      const scoring = new ScoringSystem('worker', 'forgiving'); // 0.5x multiplier
+      const scoring = new ScoringSystem('worker', 'rehabilitated'); // 0.8x multiplier
       scoring.onEraEnd(0, 'Stagnation', 100, 10, 0, 0);
       const subtotal = scoring.getScoreBreakdown().subtotal;
 
       const tally = createGameTally(scoring, new AchievementTracker(), makeGameState());
 
-      expect(tally.finalScore).toBe(Math.floor(subtotal * 0.5));
+      expect(tally.finalScore).toBe(Math.floor(subtotal * 0.8));
     });
   });
 

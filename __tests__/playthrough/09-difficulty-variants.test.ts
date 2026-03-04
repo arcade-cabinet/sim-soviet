@@ -91,12 +91,12 @@ describe('Playthrough: Difficulty Variants', () => {
     const startFood = 2000;
     const startPop = 30;
 
-    // Use forgiving consequence so KGB arrest doesn't end game prematurely.
+    // Use rehabilitated consequence so KGB arrest doesn't end game prematurely.
     // Disable interactive callbacks that accumulate marks or defer evaluation.
     const runDifficulty = (diff: 'worker' | 'comrade' | 'tovarish') => {
       const { engine, callbacks } = createPlaythroughEngine({
         difficulty: diff,
-        consequence: 'forgiving',
+        consequence: 'rehabilitated',
         resources: { food: startFood, population: startPop, power: 100, vodka: 5000 },
       });
       callbacks.onMinigame = undefined as never;

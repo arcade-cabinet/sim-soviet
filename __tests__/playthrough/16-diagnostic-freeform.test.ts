@@ -286,7 +286,7 @@ describe('Diagnostic: Freeform mode 200-year playthrough', () => {
         power: 99999,
       },
       difficulty: 'worker',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       deterministicRandom: true,
     });
 

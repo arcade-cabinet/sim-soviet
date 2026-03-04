@@ -52,7 +52,7 @@ describe('NewGameConfig type shape', () => {
   it('accepts divergenceYear as deprecated optional field', () => {
     const config: NewGameConfig = {
       difficulty: 'comrade',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       seed: 'test-seed',
       mapSize: 'medium',
       gameMode: 'freeform',
@@ -66,7 +66,7 @@ describe('NewGameConfig type shape', () => {
   it('divergenceYear is optional (not required for any mode)', () => {
     const config: NewGameConfig = {
       difficulty: 'comrade',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       seed: 'test-seed',
       mapSize: 'medium',
       gameMode: 'freeform',
@@ -87,7 +87,7 @@ describe('GameInitOptions type shape', () => {
   it('accepts divergenceYear as deprecated optional field', () => {
     const options: GameInitOptions = {
       difficulty: 'comrade',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       seed: 'test-seed',
       mapSize: 'medium',
       gameMode: 'freeform',
@@ -116,7 +116,7 @@ describe('Freeform mode governor wiring', () => {
       makeMockCallbacks(),
       new GameRng('freeform-test'),
       'comrade',
-      'permadeath',
+      'rasstrelyat',
     );
 
     // Wire governor as GameInit would for freeform mode (no divergenceYear)

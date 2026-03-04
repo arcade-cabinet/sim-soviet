@@ -24,7 +24,7 @@ describe('Playthrough: First Year Survival', () => {
     const { engine, callbacks } = createPlaythroughEngine({
       resources: { food: 5000, vodka: 5000, population: 20 },
       difficulty: 'worker',
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
 
     // Disable interactive callbacks that can cause mark accumulation or defer evaluation
@@ -62,7 +62,7 @@ describe('Playthrough: First Year Survival', () => {
   it('building construction progresses through phases to completion', () => {
     const { engine, callbacks } = createPlaythroughEngine({
       resources: { timber: 500, steel: 200, cement: 200, prefab: 100 },
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
     callbacks.onMinigame = undefined as never;
     callbacks.onAnnualReport = undefined as never;
@@ -99,7 +99,7 @@ describe('Playthrough: First Year Survival', () => {
     const { engine, callbacks } = createPlaythroughEngine({
       meta: { date: { year: 1922, month: 1, tick: 0 } },
       resources: { food: 1000, population: 12 },
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
     callbacks.onMinigame = undefined as never;
     callbacks.onAnnualReport = undefined as never;
