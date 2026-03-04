@@ -891,6 +891,7 @@ export function clearCameraTarget(): void {
   _cameraTarget = null;
 }
 
+
 // ── Lens Cycling ──────────────────────────────────────────────────────────
 
 import type { LensType } from '../engine/GameState';

@@ -1,12 +1,21 @@
 /**
  * TopBar — Minimal resource bar, calendar, speed controls.
  * Phase 1: stripped to essentials — food, timber, population, date, threat, speed.
+ * Includes overflow menu for accessing deep panels.
  */
 
 import type React from 'react';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont, SharedStyles } from './styles';
 import { useResponsive } from './useResponsive';
+
+/** Overflow menu item definition. */
+interface OverflowItem {
+  icon: string;
+  label: string;
+  handler: () => void;
+}
 
 export interface TopBarProps {
   food: number;
@@ -21,9 +30,33 @@ export interface TopBarProps {
   commendations?: number;
   settlementTier?: string;
   onThreatPress?: () => void;
+  onShowAchievements?: () => void;
+  onShowLeadership?: () => void;
+  onShowEconomy?: () => void;
+  onShowWorkers?: () => void;
+  onShowMandates?: () => void;
+  onShowDisease?: () => void;
+  onShowInfra?: () => void;
+  onShowEvents?: () => void;
+  onShowPolitical?: () => void;
+  onShowScoring?: () => void;
+  onShowWeather?: () => void;
+  onShowEra?: () => void;
+  onShowSettlement?: () => void;
+  onShowPolitburo?: () => void;
+  onShowDeliveries?: () => void;
+  onShowMinigames?: () => void;
+  onShowPravda?: () => void;
+  onShowWorkerAnalytics?: () => void;
+  onShowEconomyDetail?: () => void;
+  onShowSaveLoad?: () => void;
+  onShowMarket?: () => void;
+  onShowNotifications?: () => void;
+  unreadNotifications?: number;
+  autopilot?: boolean;
 }
 
-/** Minimal top bar: food, timber, population, date, threat indicator, speed controls. */
+/** Minimal top bar: food, timber, population, date, threat indicator, speed controls, overflow menu. */
 export const TopBar: React.FC<TopBarProps> = ({
   food,
   timber,
@@ -37,8 +70,68 @@ export const TopBar: React.FC<TopBarProps> = ({
   commendations = 0,
   settlementTier = 'selo',
   onThreatPress,
+  onShowAchievements,
+  onShowLeadership,
+  onShowEconomy,
+  onShowWorkers,
+  onShowMandates,
+  onShowDisease,
+  onShowInfra,
+  onShowEvents,
+  onShowPolitical,
+  onShowScoring,
+  onShowWeather,
+  onShowEra,
+  onShowSettlement,
+  onShowPolitburo,
+  onShowDeliveries,
+  onShowMinigames,
+  onShowPravda,
+  onShowWorkerAnalytics,
+  onShowEconomyDetail,
+  onShowSaveLoad,
+  onShowMarket,
+  onShowNotifications,
+  unreadNotifications = 0,
+  autopilot = false,
 }) => {
+  const [showOverflow, setShowOverflow] = useState(false);
   const { isCompact } = useResponsive();
+
+  const toggleOverflow = useCallback(() => {
+    setShowOverflow((v) => !v);
+  }, []);
+
+  const handleOverflowAction = useCallback((handler?: () => void) => {
+    setShowOverflow(false);
+    handler?.();
+  }, []);
+
+  // Build overflow items from available handlers
+  const overflowItems: OverflowItem[] = [];
+  if (onShowLeadership) overflowItems.push({ icon: '\u262D', label: 'LEADERSHIP', handler: onShowLeadership });
+  if (onShowEconomy) overflowItems.push({ icon: '\u20BD', label: 'ECONOMY', handler: onShowEconomy });
+  if (onShowEconomyDetail)
+    overflowItems.push({ icon: '\u{1F4B0}', label: 'ECONOMY DETAIL', handler: onShowEconomyDetail });
+  if (onShowWorkers) overflowItems.push({ icon: '\u2692', label: 'WORKERS', handler: onShowWorkers });
+  if (onShowWorkerAnalytics)
+    overflowItems.push({ icon: '\u{1F4CA}', label: 'WORKER ANALYTICS', handler: onShowWorkerAnalytics });
+  if (onShowMandates) overflowItems.push({ icon: '\u2261', label: 'MANDATES', handler: onShowMandates });
+  if (onShowDisease) overflowItems.push({ icon: '\u2695', label: 'DISEASE', handler: onShowDisease });
+  if (onShowInfra) overflowItems.push({ icon: '\u2302', label: 'INFRASTRUCTURE', handler: onShowInfra });
+  if (onShowEvents) overflowItems.push({ icon: '\u2139', label: 'EVENTS', handler: onShowEvents });
+  if (onShowPolitical) overflowItems.push({ icon: '\u{1F50D}', label: 'POLITICAL', handler: onShowPolitical });
+  if (onShowScoring) overflowItems.push({ icon: '\u{1F3C6}', label: 'SCORING', handler: onShowScoring });
+  if (onShowWeather) overflowItems.push({ icon: '\u2601', label: 'WEATHER', handler: onShowWeather });
+  if (onShowEra) overflowItems.push({ icon: '\u{1F4DC}', label: 'ERA / TECH', handler: onShowEra });
+  if (onShowSettlement) overflowItems.push({ icon: '\u{1F3D8}', label: 'SETTLEMENT', handler: onShowSettlement });
+  if (onShowPolitburo) overflowItems.push({ icon: '\u{1F3DB}', label: 'POLITBURO', handler: onShowPolitburo });
+  if (onShowDeliveries) overflowItems.push({ icon: '\u{1F4E6}', label: 'DELIVERIES', handler: onShowDeliveries });
+  if (onShowMinigames) overflowItems.push({ icon: '\u{1F3B2}', label: 'MINIGAMES', handler: onShowMinigames });
+  if (onShowPravda) overflowItems.push({ icon: '\u{1F4F0}', label: 'PRAVDA', handler: onShowPravda });
+  if (onShowMarket) overflowItems.push({ icon: '\u{1F6D2}', label: 'MARKET', handler: onShowMarket });
+  if (onShowSaveLoad) overflowItems.push({ icon: '\u{1F4BE}', label: 'SAVE / LOAD', handler: onShowSaveLoad });
+
   const containerHeight = isCompact ? 44 : 60;
 
   return (
@@ -52,6 +145,31 @@ export const TopBar: React.FC<TopBarProps> = ({
             settlementTier={settlementTier}
             onPress={onThreatPress}
           />
+          {onShowAchievements && (
+            <TouchableOpacity onPress={onShowAchievements} style={styles.achBtn} activeOpacity={0.7}>
+              <Text style={styles.achBtnText}>{'\u2605'}</Text>
+            </TouchableOpacity>
+          )}
+          {autopilot && (
+            <View style={styles.aiBadge}>
+              <Text style={styles.aiBadgeText}>AI</Text>
+            </View>
+          )}
+          {onShowNotifications && (
+            <TouchableOpacity onPress={onShowNotifications} style={styles.notifBtn} activeOpacity={0.7}>
+              <Text style={styles.navBtnText}>{'\u{1F514}'}</Text>
+              {unreadNotifications > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadNotifications > 99 ? '99+' : String(unreadNotifications)}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+          {overflowItems.length > 0 && (
+            <TouchableOpacity onPress={toggleOverflow} style={styles.moreBtn} activeOpacity={0.7}>
+              <Text style={[styles.moreBtnText, showOverflow && styles.moreBtnTextActive]}>{'\u2261'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Right: resources, calendar, speed */}
@@ -141,6 +259,32 @@ export const TopBar: React.FC<TopBarProps> = ({
           </View>
         )}
       </View>
+
+      {/* Overflow dropdown */}
+      {showOverflow && (
+        <>
+          <TouchableOpacity
+            style={[styles.overflowBackdrop, { top: containerHeight }]}
+            activeOpacity={1}
+            onPress={() => setShowOverflow(false)}
+          />
+          <View style={[styles.overflowMenu, { top: containerHeight }]}>
+            <ScrollView style={styles.overflowScroll} nestedScrollEnabled>
+              {overflowItems.map((item) => (
+                <TouchableOpacity
+                  key={item.label}
+                  style={styles.overflowItem}
+                  activeOpacity={0.7}
+                  onPress={() => handleOverflowAction(item.handler)}
+                >
+                  <Text style={styles.overflowIcon}>{item.icon}</Text>
+                  <Text style={styles.overflowLabel}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </>
+      )}
     </View>
   );
 };
@@ -351,6 +495,73 @@ const styles = StyleSheet.create({
     fontFamily: monoFont,
     color: Colors.textSecondary,
   },
+  achBtn: {
+    borderLeftWidth: 1,
+    borderLeftColor: '#555',
+    paddingLeft: 10,
+    paddingVertical: 4,
+  },
+  achBtnText: {
+    fontSize: 16,
+    color: Colors.sovietGold,
+  },
+  navBtnText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  notifBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    position: 'relative' as const,
+  },
+  badge: {
+    position: 'absolute' as const,
+    top: -2,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: Colors.sovietRed,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    fontFamily: monoFont,
+    fontSize: 8,
+    fontWeight: 'bold' as const,
+    color: Colors.white,
+  },
+  moreBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderLeftWidth: 1,
+    borderLeftColor: '#555',
+    paddingLeft: 10,
+  },
+  moreBtnText: {
+    fontSize: 18,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
+  },
+  moreBtnTextActive: {
+    color: Colors.sovietGold,
+  },
+  aiBadge: {
+    backgroundColor: Colors.termGreen,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: '#00c853',
+  },
+  aiBadgeText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: '#000',
+    letterSpacing: 1,
+  },
 
   // Compact mode (mobile) styles
   compactRightScroll: {
@@ -385,5 +596,49 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // Overflow menu
+  overflowBackdrop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: -2000,
+    zIndex: 99,
+  },
+  overflowMenu: {
+    position: 'absolute',
+    left: 12,
+    backgroundColor: '#1e2228',
+    borderWidth: 2,
+    borderColor: '#444',
+    borderTopWidth: 0,
+    zIndex: 100,
+    maxHeight: 320,
+    width: 200,
+  },
+  overflowScroll: {
+    maxHeight: 320,
+  },
+  overflowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  overflowIcon: {
+    fontSize: 16,
+    width: 24,
+    textAlign: 'center',
+  },
+  overflowLabel: {
+    fontFamily: monoFont,
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#ccc',
+    letterSpacing: 1,
   },
 });
