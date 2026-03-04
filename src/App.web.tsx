@@ -48,6 +48,7 @@ import { useInputManager } from './input/useInputManager';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import {
   closeBuildingInspector,
+  closeBuildingPanel,
   closeCitizenDossierByIndex,
   closePoliticalPanel,
   type GameSpeed,
@@ -56,6 +57,7 @@ import {
   setGameSpeed,
   setPaused,
   useBuildingInspector,
+  useBuildingPanel,
   useCitizenDossierIndex,
   useCursorTooltip,
   usePoliticalPanel,
@@ -63,6 +65,7 @@ import {
 import { AchievementsPanel } from './ui/AchievementsPanel';
 // Advisor removed — Phase 1 minimal HUD
 import { BuildingInspectorPanel } from './ui/BuildingInspectorPanel';
+import { BuildingPanel } from './ui/BuildingPanel';
 import { CitizenDossierModal } from './ui/CitizenDossierModal';
 import { CompulsoryDeliveriesPanel } from './ui/CompulsoryDeliveriesPanel';
 import { ConsumerGoodsMarketPanel } from './ui/ConsumerGoodsMarketPanel';
@@ -266,6 +269,7 @@ const App: React.FC = () => {
   const citizenDossierIdx = useCitizenDossierIndex();
   const cursorTooltip = useCursorTooltip();
   const politicalPanelFromScene = usePoliticalPanel();
+  const buildingPanelCell = useBuildingPanel();
 
   // ── Notification history (store-driven unread count) ──
   const unreadNotifications = useSyncExternalStore(subscribeNotifications, getUnreadCount, getUnreadCount);
@@ -785,6 +789,8 @@ const App: React.FC = () => {
             <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
 
             <Minimap />
+
+            <BuildingPanel />
 
             <CursorTooltip
               visible={!!cursorTooltip}

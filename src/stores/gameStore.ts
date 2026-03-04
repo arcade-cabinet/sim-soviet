@@ -824,6 +824,44 @@ function subscribeMinimap(listener: () => void): () => void {
   };
 }
 
+// ── Building Panel (click-to-inspect side panel) ──────────────────────────
+
+let _selectedBuildingCell: { x: number; z: number } | null = null;
+const _buildingPanelListeners = new Set<() => void>();
+
+/** Get the currently selected building cell for the side panel (null if closed). */
+function getSelectedBuildingCell(): { x: number; z: number } | null {
+  return _selectedBuildingCell;
+}
+
+/** Open the building info side panel for the building at (x, z). */
+export function openBuildingPanel(x: number, z: number): void {
+  _selectedBuildingCell = { x, z };
+  for (const listener of _buildingPanelListeners) {
+    listener();
+  }
+}
+
+/** Close the building info side panel. */
+export function closeBuildingPanel(): void {
+  _selectedBuildingCell = null;
+  for (const listener of _buildingPanelListeners) {
+    listener();
+  }
+}
+
+/** React hook -- subscribe to the building panel cell state. */
+export function useBuildingPanel(): { x: number; z: number } | null {
+  return useSyncExternalStore(subscribeBuildingPanel, getSelectedBuildingCell, getSelectedBuildingCell);
+}
+
+function subscribeBuildingPanel(listener: () => void): () => void {
+  _buildingPanelListeners.add(listener);
+  return () => {
+    _buildingPanelListeners.delete(listener);
+  };
+}
+
 // ── Lens Cycling ──────────────────────────────────────────────────────────
 
 import type { LensType } from '../engine/GameState';

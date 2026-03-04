@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { cycleGameSpeed, cycleLens, selectTool, toggleMinimap, togglePause } from '@/stores/gameStore';
+import { closeBuildingPanel, cycleGameSpeed, cycleLens, selectTool, toggleMinimap, togglePause } from '@/stores/gameStore';
 import { GamepadHandler } from './GamepadHandler';
 import type { InputAction } from './InputManager';
 import { InputManager } from './InputManager';
@@ -38,6 +38,7 @@ function handleAction(action: InputAction): void {
   switch (action) {
     case 'deselect':
       selectTool('none');
+      closeBuildingPanel();
       break;
     case 'pause_toggle':
       togglePause();
