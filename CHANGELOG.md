@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/arcade-cabinet/sim-soviet/compare/v1.2.0...v1.3.0) (2026-03-04)
+
+
+### Features
+
+* Buildings Are the UI + Game Completion + Allocation Engine design ([ef751c0](https://github.com/arcade-cabinet/sim-soviet/commit/ef751c0cae9c5df2c992943948b85cc42218dd76))
+
 ## [1.2.0](https://github.com/arcade-cabinet/sim-soviet/compare/v1.1.3...v1.2.0) (2026-03-03)
 
 
