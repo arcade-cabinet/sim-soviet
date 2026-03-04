@@ -14,13 +14,14 @@
  *   - FreeformGovernor: pattern-driven alternate-history extrapolation
  */
 
+import type { SettlementSummary } from '@/game/engine/SettlementSummary';
 import type { GameRng } from '@/game/SeedSystem';
 import type { CrisisImpact } from './types';
 
 // ─── Governor Mode ─────────────────────────────────────────────────────────
 
 /** Which governor variant is active. */
-export type GovernorMode = 'historical' | 'freeform' | 'classic';
+export type GovernorMode = 'historical' | 'freeform';
 
 // ─── Dynamic Modifiers ─────────────────────────────────────────────────────
 
@@ -88,6 +89,8 @@ export interface GovernorContext {
   totalTicks: number;
   /** Current era identifier. */
   eraId: string;
+  /** Fixed-size settlement snapshot for governor decision-making. Optional for backward compat. */
+  settlement?: SettlementSummary;
 }
 
 // ─── Governor Directive ────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ import { collapseEntitiesToBuildings } from '../../ai/agents/workforce/collectiv
 import { buildingsLogic, getMetaEntity, operationalBuildings } from '../../ecs/archetypes';
 import type { RaionPool } from '../../ecs/world';
 import { INDUSTRIAL_BUILDING_IDS } from '../../growth/OrganicUnlocks';
+import { buildSettlementSummary, type SettlementSummary } from './SettlementSummary';
 import type { TickContext } from './tickContext';
 
 /** Result of the chronology phase — engine-owned state that must be written back. */
@@ -122,6 +123,7 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
   // ── 2.5 Governor evaluation ──
   if (ctx.governor) {
     const date = chronoAgent.getDate();
+    const settlement = buildSettlementSummaryFromContext(ctx, date);
     const govCtx = {
       year: date.year,
       month: date.month,
@@ -131,6 +133,7 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
       rng,
       totalTicks: date.totalTicks,
       eraId: politicalAgent.getCurrentEra().id,
+      settlement,
     };
     cachedDirective = ctx.governor.evaluate(govCtx);
     if (cachedDirective.crisisImpacts.length > 0) {
@@ -198,6 +201,73 @@ function syncAnnualReportState(ctx: TickContext, state: AnnualReportEngineState)
   ctx.state.pendingReport = state.pendingReport;
   ctx.state.mandateState = state.mandateState;
   ctx.state.pripiskiCount = state.pripiskiCount;
+}
+
+/**
+ * Build a SettlementSummary from tick context and chronology date.
+ * Uses ECS state for buildings/morale/power, and governor for crisis counters.
+ */
+function buildSettlementSummaryFromContext(
+  ctx: TickContext,
+  date: { year: number; month: number },
+): SettlementSummary {
+  const { storeRef } = ctx;
+  const buildings = buildingsLogic.entities;
+  const buildingCount = buildings.length;
+
+  // Compute average morale from building workforce (0 if no buildings)
+  let totalMorale = 0;
+  if (buildingCount > 0) {
+    for (const b of buildings) {
+      totalMorale += b.building.avgMorale ?? 0;
+    }
+    totalMorale = totalMorale / buildingCount;
+  }
+
+  // Derive yearsSince counters from governor if available
+  let yearsSinceLastWar = Infinity;
+  let yearsSinceLastFamine = Infinity;
+  let yearsSinceLastDisaster = Infinity;
+  if (ctx.governor instanceof FreeformGovernor) {
+    const counters = ctx.governor.getYearsSinceCounters();
+    yearsSinceLastWar = counters.war;
+    yearsSinceLastFamine = counters.famine;
+    yearsSinceLastDisaster = counters.disaster;
+  } else if (ctx.governor) {
+    // For HistoricalGovernor: infer from active crises
+    const active = ctx.governor.getActiveCrises();
+    if (active.some((id) => id.includes('war'))) yearsSinceLastWar = 0;
+    if (active.some((id) => id.includes('famine') || id.includes('holodomor'))) yearsSinceLastFamine = 0;
+    if (active.some((id) => id.includes('disaster') || id.includes('chernobyl') || id.includes('catastrophe')))
+      yearsSinceLastDisaster = 0;
+  }
+
+  // Active crisis count and types
+  const activeCrises = ctx.governor?.getActiveCrises() ?? [];
+  const activeCrisisTypes = new Set<string>();
+  for (const id of activeCrises) {
+    if (id.includes('war')) activeCrisisTypes.add('war');
+    else if (id.includes('famine') || id.includes('holodomor')) activeCrisisTypes.add('famine');
+    else if (id.includes('disaster') || id.includes('chernobyl') || id.includes('catastrophe'))
+      activeCrisisTypes.add('disaster');
+    else activeCrisisTypes.add('political');
+  }
+
+  return buildSettlementSummary({
+    year: date.year,
+    month: date.month,
+    population: storeRef.resources.population,
+    buildingCount,
+    totalFood: storeRef.resources.food,
+    totalPower: storeRef.resources.power,
+    totalMorale,
+    activeCrisisCount: activeCrises.length,
+    activeCrisisTypes,
+    trendDeltas: { food: 0, population: 0, morale: 0, power: 0 },
+    yearsSinceLastWar,
+    yearsSinceLastFamine,
+    yearsSinceLastDisaster,
+  });
 }
 
 function buildAnnualReportContext(ctx: TickContext, cachedDirective: GovernorDirective | null) {
