@@ -1,17 +1,14 @@
 /**
- * Toolbar — Unified command bar consolidating primary navigation + building
- * category tabs into a single component.
+ * Toolbar — Unified command bar for bureaucratic navigation.
  *
- * Primary row:  BUILD | MANDATES | WORKERS | REPORTS | PURGE
- * Secondary row (only when BUILD is active): ZONING | INFRASTRUCTURE | STATE
+ * Primary row: MANDATES | WORKERS | REPORTS | PURGE
  *
- * This replaces the old separate TabBar (building categories) and Toolbar
- * (management tabs), merging them into one navigation system.
+ * BUILD tab removed — SimSoviet 1917 is not a city builder.
+ * Moscow mandates what gets built; the player is a bureaucrat, not a builder.
  */
 
 import type React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { TabType } from '../engine/GameState';
 import { MIN_TAP_TARGET } from './responsive';
 import { Colors, monoFont, SharedStyles } from './styles';
 import { useResponsive } from './useResponsive';
@@ -19,7 +16,7 @@ import { useResponsive } from './useResponsive';
 // ── Types ───────────────────────────────────────────────────────────────────
 
 /** Primary navigation tab in the unified command bar. */
-export type SovietTab = 'build' | 'mandates' | 'workers' | 'reports' | 'purge';
+export type SovietTab = 'mandates' | 'workers' | 'reports' | 'purge';
 
 // ── Tab Definitions ─────────────────────────────────────────────────────────
 
@@ -32,22 +29,10 @@ interface PrimaryTabDef {
 }
 
 const PRIMARY_TABS: PrimaryTabDef[] = [
-  { key: 'build', label: 'BUILD', icon: '\u{1F3D7}' },
   { key: 'mandates', label: 'MANDATES', icon: '\u{1F4CB}' },
   { key: 'workers', label: 'WORKERS', icon: '\u2692' },
   { key: 'reports', label: 'REPORTS', icon: '\u{1F4CA}' },
   { key: 'purge', label: 'PURGE', icon: '\u{1F480}', dangerColor: '#ef5350' },
-];
-
-interface SubTabDef {
-  key: TabType;
-  label: string;
-}
-
-const BUILD_SUBTABS: SubTabDef[] = [
-  { key: 'zone', label: 'ZONING' },
-  { key: 'infra', label: 'INFRASTRUCTURE' },
-  { key: 'state', label: 'STATE' },
 ];
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -55,24 +40,17 @@ const BUILD_SUBTABS: SubTabDef[] = [
 export interface ToolbarProps {
   activeTab: SovietTab;
   onTabChange: (tab: SovietTab) => void;
-  /** Active building sub-category (only relevant when activeTab === 'build'). */
-  activeBuildTab?: TabType;
-  /** Callback when a building sub-category is selected. */
-  onBuildTabChange?: (tab: TabType) => void;
 }
 
-/** Unified command bar with primary navigation tabs and secondary building category tabs. */
+/** Unified command bar with primary navigation tabs. */
 export const Toolbar: React.FC<ToolbarProps> = ({
   activeTab,
   onTabChange,
-  activeBuildTab = 'zone',
-  onBuildTabChange,
 }) => {
   const { isCompact } = useResponsive();
 
   return (
     <View style={styles.wrapper}>
-      {/* Primary Navigation Row */}
       <View style={[SharedStyles.panel, styles.primaryRow, isCompact && styles.compactPrimaryRow]}>
         {PRIMARY_TABS.map((tab) => {
           const isActive = activeTab === tab.key;
@@ -99,33 +77,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           );
         })}
       </View>
-
-      {/* Build Sub-Category Row (conditional) */}
-      {activeTab === 'build' && (
-        <View style={[styles.subRow, isCompact && styles.compactSubRow]}>
-          {BUILD_SUBTABS.map((sub) => {
-            const isActive = activeBuildTab === sub.key;
-            return (
-              <TouchableOpacity
-                key={sub.key}
-                style={[styles.subTab, isCompact && styles.compactSubTab, isActive && styles.subTabActive]}
-                onPress={() => onBuildTabChange?.(sub.key)}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.subTabText,
-                    isCompact && styles.compactSubTabText,
-                    isActive && styles.subTabTextActive,
-                  ]}
-                >
-                  {sub.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      )}
     </View>
   );
 };
@@ -134,7 +85,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
 const styles = StyleSheet.create({
   wrapper: {
-    // The whole toolbar sits at the bottom — wraps both rows
+    // The whole toolbar sits at the bottom
   },
 
   // Primary row
@@ -180,45 +131,5 @@ const styles = StyleSheet.create({
   },
   compactTabIcon: {
     fontSize: 20,
-  },
-
-  // Build sub-category row
-  subRow: {
-    flexDirection: 'row',
-    backgroundColor: '#1a1a1a',
-    borderTopWidth: 1,
-    borderTopColor: '#333',
-    height: 30,
-  },
-  subTab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRightWidth: 1,
-    borderRightColor: '#2a2a2a',
-  },
-  subTabActive: {
-    backgroundColor: Colors.sovietGold,
-  },
-  subTabText: {
-    fontSize: 9,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    color: '#666',
-    letterSpacing: 1.5,
-  },
-  subTabTextActive: {
-    color: Colors.black,
-  },
-
-  // Compact sub-category row
-  compactSubRow: {
-    height: 36,
-  },
-  compactSubTab: {
-    minHeight: 36,
-  },
-  compactSubTabText: {
-    fontSize: 12,
   },
 });

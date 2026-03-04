@@ -29,7 +29,7 @@ import Content from './Content';
 import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualReportModal';
 import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
-import type { LensType, TabType } from './engine/GameState';
+import type { LensType } from './engine/GameState';
 import { gameState } from './engine/GameState';
 import {
   clearToast,
@@ -203,8 +203,7 @@ const App: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   // ── Soviet tab state ──
-  const [sovietTab, setSovietTab] = useState<SovietTab>('build');
-  const [buildTab, setBuildTab] = useState<TabType>('zone');
+  const [sovietTab, setSovietTab] = useState<SovietTab>('mandates');
 
   // ── Modal state ──
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
@@ -518,9 +517,6 @@ const App: React.FC = () => {
     (tab: SovietTab) => {
       setSovietTab(tab);
       switch (tab) {
-        case 'build':
-          selectTool(gameState, 'none');
-          break;
         case 'mandates':
           handleShowMandates();
           break;
@@ -537,12 +533,6 @@ const App: React.FC = () => {
     },
     [handleShowMandates, handleShowWorkers, handleShowEconomy],
   );
-
-  const handleBuildTabChange = useCallback((tab: TabType) => {
-    setBuildTab(tab);
-    gameState.activeTab = tab;
-    gameState.notify();
-  }, []);
 
   const _handleShowDisease = useCallback(() => {
     setShowDisease(true);
@@ -779,8 +769,6 @@ const App: React.FC = () => {
               <Toolbar
                 activeTab={sovietTab}
                 onTabChange={handleSovietTab}
-                activeBuildTab={buildTab}
-                onBuildTabChange={handleBuildTabChange}
               />
               <WorkerStatusBar onShowWorkers={handleShowWorkers} />
             </View>
