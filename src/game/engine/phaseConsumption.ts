@@ -5,7 +5,9 @@
  * distribution resentment, and foraging.
  */
 
+import { computeAllocation, type BuildingAllocationInput } from '../../ai/agents/economy/allocationDistribution';
 import { foragingTick } from '../../ai/agents/economy/foragingSystem';
+import { housing } from '../../ecs/archetypes';
 import { computeDistribution, computeRoleBuckets } from '../../ecs/systems/distributionWeights';
 import type { PreProductionSnapshot } from './phaseProduction';
 import type { TickContext } from './tickContext';
@@ -53,12 +55,42 @@ export function phaseConsumption(ctx: TickContext, snapshot: PreProductionSnapsh
   // ── 11. Food consumption + starvation ──
   const totalConsumptionMult = eraMods.consumptionMult * diffConfig.consumptionMultiplier;
   if (ctx.raion) {
-    // Aggregate mode: consumption scales with raion population
+    // Aggregate mode: two-layer allocation distributes food/vodka across housing buildings.
+    // 80% uniform baseline per capita + 20% spiky secondary by merit (loyalty, skill, proximity, KGB favor).
     const pop = ctx.raion.totalPopulation;
-    const foodConsumed = pop * 0.5 * totalConsumptionMult;
-    const vodkaConsumed = pop * 0.1 * totalConsumptionMult;
-    storeRef.resources.food = Math.max(0, storeRef.resources.food - foodConsumed);
-    storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - vodkaConsumed);
+    const totalFoodDemand = pop * 0.5 * totalConsumptionMult;
+    const totalVodkaDemand = pop * 0.1 * totalConsumptionMult;
+
+    const housingBuildings = housing.entities;
+    if (housingBuildings.length > 0 && pop > 0) {
+      // Build allocation inputs from housing buildings
+      const allocationInputs: BuildingAllocationInput[] = housingBuildings.map((e) => ({
+        id: e.building.defId,
+        residentCount: e.building.residentCount,
+        loyalty: e.building.avgLoyalty,
+        proximity: 1.0, // TODO: compute from distance to resource stores
+        skill: e.building.avgSkill,
+        kgbFavor: false, // TODO: wire KGB favor per building
+      }));
+
+      const totalResidents = allocationInputs.reduce((s, b) => s + b.residentCount, 0);
+
+      // Allocate food across buildings using two-layer distribution
+      const foodAlloc = computeAllocation(totalFoodDemand, totalResidents || pop, allocationInputs);
+      const vodkaAlloc = computeAllocation(totalVodkaDemand, totalResidents || pop, allocationInputs);
+
+      // Apply total consumption from allocation results
+      const foodConsumed = foodAlloc.reduce((s, r) => s + r.total, 0);
+      const vodkaConsumed = vodkaAlloc.reduce((s, r) => s + r.total, 0);
+      storeRef.resources.food = Math.max(0, storeRef.resources.food - foodConsumed);
+      storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - vodkaConsumed);
+    } else {
+      // Fallback: no housing buildings, use flat per-capita
+      const foodConsumed = pop * 0.5 * totalConsumptionMult;
+      const vodkaConsumed = pop * 0.1 * totalConsumptionMult;
+      storeRef.resources.food = Math.max(0, storeRef.resources.food - foodConsumed);
+      storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - vodkaConsumed);
+    }
 
     // Starvation check: delegate to FoodAgent for consistency
     const foodResult = foodAgent.consume(totalConsumptionMult);
