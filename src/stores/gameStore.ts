@@ -837,6 +837,7 @@ function getSelectedBuildingCell(): { x: number; z: number } | null {
 /** Open the building info side panel for the building at (x, z). */
 export function openBuildingPanel(x: number, z: number): void {
   _selectedBuildingCell = { x, z };
+  setCameraTarget(x, z);
   for (const listener of _buildingPanelListeners) {
     listener();
   }
@@ -845,6 +846,7 @@ export function openBuildingPanel(x: number, z: number): void {
 /** Close the building info side panel. */
 export function closeBuildingPanel(): void {
   _selectedBuildingCell = null;
+  clearCameraTarget();
   for (const listener of _buildingPanelListeners) {
     listener();
   }
@@ -860,6 +862,33 @@ function subscribeBuildingPanel(listener: () => void): () => void {
   return () => {
     _buildingPanelListeners.delete(listener);
   };
+}
+
+// ── Camera Target (click-to-zoom street level) ───────────────────────────
+
+/** Camera target state for smooth zoom-to-building animation. */
+export interface CameraTargetState {
+  x: number;
+  z: number;
+  returnPos?: [number, number, number];
+  returnTarget?: [number, number, number];
+}
+
+let _cameraTarget: CameraTargetState | null = null;
+
+/** Get the current camera target (null if no zoom animation active). */
+export function getCameraTarget(): CameraTargetState | null {
+  return _cameraTarget;
+}
+
+/** Set camera target to zoom toward a building at grid (x, z). */
+export function setCameraTarget(x: number, z: number): void {
+  _cameraTarget = { x, z };
+}
+
+/** Clear camera target to trigger return animation. */
+export function clearCameraTarget(): void {
+  _cameraTarget = null;
 }
 
 // ── Lens Cycling ──────────────────────────────────────────────────────────
