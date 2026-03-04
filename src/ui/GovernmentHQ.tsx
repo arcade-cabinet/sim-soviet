@@ -8,6 +8,7 @@
 import type React from 'react';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { type Allocations, DEFAULT_ALLOCATIONS, GosplanTab } from './hq-tabs/GosplanTab';
 import { Colors, monoFont } from './styles';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -51,6 +52,7 @@ export interface GovernmentHQProps {
 
 export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) => {
   const [activeTab, setActiveTab] = useState<AgencyTab>('gosplan');
+  const [allocations, setAllocations] = useState<Allocations>({ ...DEFAULT_ALLOCATIONS });
 
   if (!visible) return null;
 
@@ -92,7 +94,11 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
 
         {/* Content area */}
         <ScrollView style={styles.content}>
-          <Text style={styles.placeholder}>{TAB_DESCRIPTIONS[activeTab]}</Text>
+          {activeTab === 'gosplan' ? (
+            <GosplanTab currentAllocations={allocations} onAllocationChange={setAllocations} />
+          ) : (
+            <Text style={styles.placeholder}>{TAB_DESCRIPTIONS[activeTab]}</Text>
+          )}
         </ScrollView>
       </View>
     </View>
