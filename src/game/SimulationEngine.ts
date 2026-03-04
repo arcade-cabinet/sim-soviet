@@ -9,14 +9,8 @@
  * Re-exports canonical types from engine/types for backward compat.
  */
 
-// ── Re-exports (backward compat — callers import from here) ─────────────────
-export type {
-  DvorSaveEntry,
-  RehabilitationData,
-  SimCallbacks,
-  SubsystemSaveData,
-  WorkerStatSaveEntry,
-} from './engine/types';
+// ── Re-exports (callers import SimCallbacks/SubsystemSaveData from here) ─────
+export type { SimCallbacks, SubsystemSaveData } from './engine/types';
 
 import {
   buildingsLogic,
@@ -86,12 +80,13 @@ import {
 } from './engine/serializeEngine';
 import { phaseChronology } from './engine/phaseChronology';
 import { phaseConsumption } from './engine/phaseConsumption';
-import { phaseFinalize } from './engine/phaseFinalize';
+import { phaseFinalize, syncSystemsToMeta } from './engine/phaseFinalize';
 import { phaseNarrative } from './engine/phaseNarrative';
 import { phasePolitical } from './engine/phasePolitical';
 import { phaseProduction } from './engine/phaseProduction';
 import { phaseSocial } from './engine/phaseSocial';
 import type { TickContext } from './engine/tickContext';
+import { applyEventEffects } from './engine/eventEffects';
 import type { SimCallbacks, SubsystemSaveData } from './engine/types';
 import { EraSystem } from './era';
 import type { GameGrid } from './GameGrid';
@@ -231,7 +226,7 @@ export class SimulationEngine {
     this.eventSystem = new EventSystem(this.eventHandler, this.rng);
 
     this.politburoEventHandler = (event: GameEvent) => {
-      this.applyEventEffects(event);
+      applyEventEffects(event, this.workerSystem);
       this.eventHandler(event);
     };
     this.politburo = new PolitburoSystem(this.politburoEventHandler, this.rng, startYear);
@@ -737,7 +732,15 @@ export class SimulationEngine {
       rng: this.rng,
       eventHandler: this.eventHandler,
       politburoEventHandler: this.politburoEventHandler,
-      syncSystemsToMeta: () => this.syncSystemsToMeta(),
+      syncSystemsToMeta: () =>
+        syncSystemsToMeta({
+          quota: this.quota,
+          kgb: this.kgbAgent,
+          political: this.politicalAgent,
+          settlement: this.settlement,
+          transport: this.transport,
+          politburo: this.politburo,
+        }),
       governor: this.governor,
     };
   }
@@ -854,44 +857,6 @@ export class SimulationEngine {
     // endGame() may have set this.ended directly; don't overwrite with stale ctx value
     this.ended = this.ended || ctx.state.ended;
     this.evacueeInfluxFired = ctx.state.evacueeInfluxFired;
-  }
-
-  private syncSystemsToMeta(): void {
-    const meta = getMetaEntity();
-    if (!meta) return;
-    meta.gameMeta.quota.type = this.quota.type;
-    meta.gameMeta.quota.target = this.quota.target;
-    meta.gameMeta.quota.current = this.quota.current;
-    meta.gameMeta.quota.deadlineYear = this.quota.deadlineYear;
-    const gs = this.politburo.getGeneralSecretary();
-    meta.gameMeta.leaderName = gs.name;
-    meta.gameMeta.leaderPersonality = gs.personality;
-    meta.gameMeta.blackMarks = this.kgbAgent.getBlackMarks();
-    meta.gameMeta.commendations = this.kgbAgent.getCommendations();
-    meta.gameMeta.threatLevel = this.kgbAgent.getThreatLevel();
-    meta.gameMeta.settlementTier = this.settlement.getCurrentTier();
-    meta.gameMeta.currentEra = this.politicalAgent.getCurrentEraId();
-    meta.gameMeta.roadQuality = this.transport.getQuality();
-    meta.gameMeta.roadCondition = this.transport.getCondition();
-  }
-
-  /** Apply a GameEvent's resource effects to ECS (for PolitburoSystem events). */
-  private applyEventEffects(event: GameEvent): void {
-    const store = getResourceEntity();
-    if (!store) return;
-    const r = store.resources;
-    const fx = event.effects;
-    if (fx.money) r.money = Math.max(0, r.money + fx.money);
-    if (fx.food) r.food = Math.max(0, r.food + fx.food);
-    if (fx.vodka) r.vodka = Math.max(0, r.vodka + fx.vodka);
-    if (fx.pop) {
-      if (fx.pop > 0) {
-        this.workerSystem.spawnInflowDvor(fx.pop, 'event');
-      } else {
-        this.workerSystem.removeWorkersByCount(-fx.pop, 'event');
-      }
-    }
-    if (fx.power) r.power = Math.max(0, r.power + fx.power);
   }
 
   private endGame(victory: boolean, reason: string): void {

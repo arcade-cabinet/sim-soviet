@@ -4,9 +4,22 @@
  * Autopilot chairman assessment, system-to-meta sync, loss check.
  */
 
+import type { SettlementTier } from '../../ai/agents/infrastructure/SettlementSystem';
+import type { RoadQuality } from '../../ai/agents/infrastructure/TransportSystem';
+import type { QuotaState } from '../../ai/agents/political/PoliticalAgent';
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../ecs/archetypes';
 import { TICKS_PER_YEAR } from '../Chronology';
 import type { TickContext } from './tickContext';
+
+/** Minimal deps for syncSystemsToMeta — usable from both phaseFinalize and serialization. */
+export interface SyncMetaDeps {
+  quota: Readonly<QuotaState>;
+  kgb: { getBlackMarks(): number; getCommendations(): number; getThreatLevel(): string };
+  political: { getCurrentEraId(): string };
+  settlement: { getCurrentTier(): SettlementTier };
+  transport: { getQuality(): RoadQuality; getCondition(): number };
+  politburo: { getGeneralSecretary(): { name: string; personality: string } };
+}
 
 /**
  * Run finalize phase: autopilot, sync systems to meta, and check loss condition.
@@ -41,7 +54,14 @@ export function phaseFinalize(ctx: TickContext): void {
   }
 
   // ── 27. Sync + loss check ──
-  syncSystemsToMeta(ctx);
+  syncSystemsToMeta({
+    quota: ctx.state.quota,
+    kgb: kgbAgent,
+    political: politicalAgent,
+    settlement,
+    transport,
+    politburo,
+  });
   storeRef.resources.population = workerSystem.getPopulation();
 
   if (
@@ -55,25 +75,23 @@ export function phaseFinalize(ctx: TickContext): void {
   callbacks.onStateChange();
 }
 
-/** Sync game systems state to ECS meta entity. */
-function syncSystemsToMeta(ctx: TickContext): void {
+/** Sync game systems state to ECS meta entity. Used by phaseFinalize and serialization. */
+export function syncSystemsToMeta(deps: SyncMetaDeps): void {
   const meta = getMetaEntity();
   if (!meta) return;
-  const { chronology, kgb: kgbAgent, political: politicalAgent } = ctx.agents;
-  const { settlement, transport, politburo } = ctx.systems;
 
-  meta.gameMeta.quota.type = ctx.state.quota.type;
-  meta.gameMeta.quota.target = ctx.state.quota.target;
-  meta.gameMeta.quota.current = ctx.state.quota.current;
-  meta.gameMeta.quota.deadlineYear = ctx.state.quota.deadlineYear;
-  const gs = politburo.getGeneralSecretary();
+  meta.gameMeta.quota.type = deps.quota.type;
+  meta.gameMeta.quota.target = deps.quota.target;
+  meta.gameMeta.quota.current = deps.quota.current;
+  meta.gameMeta.quota.deadlineYear = deps.quota.deadlineYear;
+  const gs = deps.politburo.getGeneralSecretary();
   meta.gameMeta.leaderName = gs.name;
   meta.gameMeta.leaderPersonality = gs.personality;
-  meta.gameMeta.blackMarks = kgbAgent.getBlackMarks();
-  meta.gameMeta.commendations = kgbAgent.getCommendations();
-  meta.gameMeta.threatLevel = kgbAgent.getThreatLevel();
-  meta.gameMeta.settlementTier = settlement.getCurrentTier();
-  meta.gameMeta.currentEra = politicalAgent.getCurrentEraId();
-  meta.gameMeta.roadQuality = transport.getQuality();
-  meta.gameMeta.roadCondition = transport.getCondition();
+  meta.gameMeta.blackMarks = deps.kgb.getBlackMarks();
+  meta.gameMeta.commendations = deps.kgb.getCommendations();
+  meta.gameMeta.threatLevel = deps.kgb.getThreatLevel();
+  meta.gameMeta.settlementTier = deps.settlement.getCurrentTier();
+  meta.gameMeta.currentEra = deps.political.getCurrentEraId();
+  meta.gameMeta.roadQuality = deps.transport.getQuality();
+  meta.gameMeta.roadCondition = deps.transport.getCondition();
 }
