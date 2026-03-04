@@ -215,6 +215,15 @@ export class FreeformGovernor implements IGovernor {
       }
     }
 
+    // ── Prune resolved entries to prevent unbounded growth ────────────
+    // Agents that have fully resolved (aftermath complete) will never
+    // produce impacts again. Keeping them wastes CPU on every tick.
+    if (ctx.month === 1) {
+      this.activeEntries = this.activeEntries.filter(
+        (entry) => !entry.activated || entry.agent.isActive(),
+      );
+    }
+
     // Merge into modifiers
     const modifiers = this.mergeModifiers(allImpacts);
 
