@@ -4,10 +4,15 @@
  * End-to-end: government demands military building → displacement system
  * demolishes lowest-priority building → dvory ejected → motivation system
  * pathfinds to nearest housing → dvory absorbed → population preserved.
+ *
+ * Also covers nomenclatura priority eviction and the full pipeline
+ * from displacement through motivation to nomenclatura re-housing.
  */
 
 import { cascadeDisplacement, findDisplaceable } from '@/ai/agents/infrastructure/displacementSystem';
-import { type DvorState, type HousingEntry, tickMotivation } from '@/ai/agents/workforce/dvorMotivation';
+import { type DvorState, type HousingEntry, evaluateNeeds, tickMotivation } from '@/ai/agents/workforce/dvorMotivation';
+import { type HousingBuilding, type HousingResident, claimHousing, isNomenclatura } from '@/ai/agents/workforce/nomenclaturaPriority';
+import { getDemolitionPriority, isProtected } from '@/config/protectedClasses';
 import type { BuildingComponent, Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
 
@@ -82,7 +87,6 @@ describe('displacement cascade end-to-end', () => {
     const farmWorkers = farm.building!.workerCount;
 
     // Step 2: Government demands new military building — need to clear a tile
-    // Military has priority Infinity, so it can displace anything below it
     const buildings = world.with('position', 'building').entities.slice();
     const result = cascadeDisplacement('military', buildings);
 
@@ -144,6 +148,268 @@ describe('displacement cascade end-to-end', () => {
       .with('position', 'building')
       .entities.filter((e) => e.building!.defId === 'government-hq');
     expect(govEntities).toHaveLength(1);
+  });
+
+  it('military building displaces housing, residents become displaced dvory and find new housing', () => {
+    // Settlement: housing block at (2,2) + a second housing at (8,8) with capacity
+    addBuilding('apartment-tower-a', 2, 2, {
+      housingCap: 10,
+      residentCount: 8,
+      householdCount: 4,
+    });
+    const fallback = addBuilding('apartment-tower-a', 8, 8, {
+      housingCap: 20,
+      residentCount: 5,
+      householdCount: 2,
+    });
+
+    // Military demand displaces the first housing block (both are priority 2, first found wins)
+    const buildings = world.with('position', 'building').entities.slice();
+    const result = cascadeDisplacement('military', buildings);
+
+    expect(result.success).toBe(true);
+    expect(result.demolished!.demolishedDefId).toBe('apartment-tower-a');
+    expect(result.demolished!.ejectedResidents).toBe(8);
+    expect(result.demolished!.ejectedHouseholds).toBe(4);
+
+    // Ejected residents become displaced dvory at the demolished building's tile
+    const dvory: DvorState[] = [];
+    for (let i = 0; i < result.demolished!.ejectedHouseholds; i++) {
+      dvory.push(makeDisplacedDvor(`evicted-${i}`, 2, 2, 2));
+    }
+
+    // Build housing entries from surviving buildings
+    const housingEntries: HousingEntry[] = world
+      .with('position', 'building')
+      .entities.filter((e) => e.building!.housingCap > 0)
+      .map((e) => ({ position: e.position!, building: e.building! }));
+
+    // All displaced dvory should move toward fallback housing
+    for (const dvor of dvory) {
+      const tick = tickMotivation(dvor, housingEntries);
+      expect(tick.action).toBe('move');
+      expect(tick.target).toEqual({ gridX: 8, gridY: 8 });
+    }
+
+    // Simulate arrival and absorption
+    const arrivedDvory = dvory.map((d) => ({
+      ...d,
+      position: { gridX: 8, gridY: 7 }, // within ARRIVAL_DISTANCE
+    }));
+    for (const dvor of arrivedDvory) {
+      const tick = tickMotivation(dvor, housingEntries);
+      expect(tick.action).toBe('absorb');
+      fallback.building!.residentCount += dvor.householdSize;
+    }
+
+    // Fallback absorbed everyone: original 5 + 4 households * 2 members each
+    expect(fallback.building!.residentCount).toBe(5 + 4 * 2);
+  });
+
+  it('nomenclatura claims priority housing, commoner evicted and pathfinds elsewhere', () => {
+    // Two housing buildings, both at capacity with commoners
+    const housingBuildings: HousingBuilding[] = [
+      {
+        id: 'block-a',
+        capacity: 2,
+        residents: [
+          { id: 'w1', citizenClass: 'worker' },
+          { id: 'w2', citizenClass: 'kolkhoznik' },
+        ],
+      },
+      {
+        id: 'block-b',
+        capacity: 2,
+        residents: [
+          { id: 'w3', citizenClass: 'worker' },
+          { id: 'w4', citizenClass: 'worker' },
+        ],
+      },
+    ];
+
+    // KGB officer arrives — nomenclatura, highest priority
+    const kgbOfficer: HousingResident = { id: 'kgb-1', citizenClass: 'kgb' };
+    expect(isNomenclatura(kgbOfficer.citizenClass)).toBe(true);
+
+    const claim = claimHousing(kgbOfficer, housingBuildings);
+
+    // KGB officer housed, kolkhoznik evicted (lowest priority = 1)
+    expect(claim.housed).toBe(true);
+    expect(claim.evicted).toHaveLength(1);
+    expect(claim.evicted![0].citizenClass).toBe('kolkhoznik');
+    expect(claim.evicted![0].id).toBe('w2');
+
+    // Evicted kolkhoznik becomes a displaced dvor seeking shelter
+    const evictedDvor = makeDisplacedDvor('w2-dvor', 0, 0, 1);
+    expect(evaluateNeeds(evictedDvor)).toBe('shelter');
+
+    // Add ECS housing buildings for motivation pathfinding
+    addBuilding('apartment-tower-a', 0, 0, { housingCap: 2, residentCount: 2 });
+    addBuilding('apartment-tower-a', 5, 5, { housingCap: 4, residentCount: 2 });
+
+    const housingEntries: HousingEntry[] = world
+      .with('position', 'building')
+      .entities.filter((e) => e.building!.housingCap > 0)
+      .map((e) => ({ position: e.position!, building: e.building! }));
+
+    // Evicted dvor pathfinds to the building with remaining capacity
+    const tick = tickMotivation(evictedDvor, housingEntries);
+    expect(tick.action).toBe('move');
+    expect(tick.target).toEqual({ gridX: 5, gridY: 5 });
+  });
+
+  it('no displaceable building exists — cascade returns null (demand queued)', () => {
+    // Settlement with only protected buildings
+    addBuilding('government-hq', 0, 0);
+    addBuilding('barracks', 1, 0);
+    addBuilding('militia-post', 2, 0);
+
+    // Verify all are protected
+    expect(isProtected('government')).toBe(true);
+    expect(isProtected('military')).toBe(true);
+    expect(getDemolitionPriority('government')).toBe(Infinity);
+    expect(getDemolitionPriority('military')).toBe(Infinity);
+
+    const buildings = world.with('position', 'building').entities.slice();
+    const result = cascadeDisplacement('military', buildings);
+
+    // No building can be displaced — demand would be queued
+    expect(result.success).toBe(false);
+    expect(result.demolished).toBeUndefined();
+
+    // All buildings remain intact
+    expect(world.with('position', 'building').entities).toHaveLength(3);
+  });
+
+  it('full pipeline: displacement → motivation → nomenclatura priority → everyone re-housed', () => {
+    // Step 1: Settlement with farm, 2 housing blocks, and a government HQ
+    addBuilding('farm-collective', 0, 0, {
+      workerCount: 3,
+      residentCount: 6,
+      householdCount: 3,
+    });
+    const housingA = addBuilding('apartment-tower-a', 4, 0, {
+      housingCap: 10,
+      residentCount: 8,
+      householdCount: 4,
+    });
+    const housingB = addBuilding('apartment-tower-a', 8, 0, {
+      housingCap: 10,
+      residentCount: 3,
+      householdCount: 1,
+    });
+    addBuilding('government-hq', 10, 10);
+
+    // Step 2: Military demand triggers displacement cascade
+    const buildings = world.with('position', 'building').entities.slice();
+    const cascade = cascadeDisplacement('military', buildings);
+
+    expect(cascade.success).toBe(true);
+    expect(cascade.demolished!.demolishedDefId).toBe('farm-collective');
+    expect(cascade.demolished!.ejectedResidents).toBe(6);
+
+    // Step 3: Ejected farm workers become displaced dvory
+    const displacedDvory = Array.from({ length: 3 }, (_, i) => makeDisplacedDvor(`farm-dvor-${i}`, 0, 0, 2));
+
+    // All have shelter as their dominant need
+    for (const dvor of displacedDvory) {
+      expect(evaluateNeeds(dvor)).toBe('shelter');
+    }
+
+    // Step 4: Motivation system pathfinds toward nearest housing with capacity
+    const housingEntries: HousingEntry[] = world
+      .with('position', 'building')
+      .entities.filter((e) => e.building!.housingCap > 0)
+      .map((e) => ({ position: e.position!, building: e.building! }));
+
+    // housingA has 2 slots (cap 10, residents 8), housingB has 7 slots (cap 10, residents 3)
+    // Nearest to (0,0) is housingA at (4,0)
+    for (const dvor of displacedDvory) {
+      const tick = tickMotivation(dvor, housingEntries);
+      expect(tick.action).toBe('move');
+      expect(tick.target).toEqual({ gridX: 4, gridY: 0 });
+    }
+
+    // Step 5: Party official arrives seeking housing via nomenclatura priority
+    const nomenclaturaHousing: HousingBuilding[] = [
+      {
+        id: 'block-a',
+        capacity: 10,
+        residents: Array.from({ length: 10 }, (_, i) => ({
+          id: `worker-a-${i}`,
+          citizenClass: 'worker' as const,
+        })),
+      },
+      {
+        id: 'block-b',
+        capacity: 10,
+        residents: Array.from({ length: 3 }, (_, i) => ({
+          id: `worker-b-${i}`,
+          citizenClass: 'worker' as const,
+        })),
+      },
+    ];
+
+    const partyOfficial: HousingResident = { id: 'official-1', citizenClass: 'party_official' };
+    expect(isNomenclatura(partyOfficial.citizenClass)).toBe(true);
+
+    // Block-B has open slots, so official takes open slot (no eviction needed)
+    const claim = claimHousing(partyOfficial, nomenclaturaHousing);
+    expect(claim.housed).toBe(true);
+    expect(claim.building).toBe('block-b');
+    expect(claim.evicted).toBeUndefined();
+
+    // Step 6: Fill all housing and try another official — forces eviction
+    const fullHousing: HousingBuilding[] = [
+      {
+        id: 'block-a',
+        capacity: 10,
+        residents: Array.from({ length: 10 }, (_, i) => ({
+          id: `worker-a-${i}`,
+          citizenClass: 'worker' as const,
+        })),
+      },
+      {
+        id: 'block-b',
+        capacity: 10,
+        residents: Array.from({ length: 10 }, (_, i) => ({
+          id: `kolkhoz-b-${i}`,
+          citizenClass: 'kolkhoznik' as const,
+        })),
+      },
+    ];
+
+    const militaryOfficer: HousingResident = { id: 'officer-1', citizenClass: 'military_officer' };
+    const eviction = claimHousing(militaryOfficer, fullHousing);
+
+    expect(eviction.housed).toBe(true);
+    expect(eviction.evicted).toHaveLength(1);
+    // Kolkhoznik evicted (priority 1, lower than worker priority 2)
+    expect(eviction.evicted![0].citizenClass).toBe('kolkhoznik');
+
+    // Step 7: Evicted kolkhoznik pathfinds to remaining housing
+    const evictedDvor = makeDisplacedDvor('kolkhoz-evicted', 8, 0, 1);
+    expect(evaluateNeeds(evictedDvor)).toBe('shelter');
+
+    // housingB at (8,0) still has capacity in the ECS world
+    const finalHousingEntries: HousingEntry[] = world
+      .with('position', 'building')
+      .entities.filter((e) => e.building!.housingCap > 0)
+      .map((e) => ({ position: e.position!, building: e.building! }));
+
+    const evictedTick = tickMotivation(evictedDvor, finalHousingEntries);
+    // Already at (8,0), adjacent to housingB at (8,0) → absorb
+    expect(evictedTick.action).toBe('absorb');
+    expect(evictedTick.target).toEqual({ gridX: 8, gridY: 0 });
+
+    // Step 8: Verify end state — farm removed, 2 housing blocks + gov HQ remain
+    expect(world.with('position', 'building').entities).toHaveLength(3);
+
+    // Government HQ untouched (protected)
+    const govBuildings = world
+      .with('position', 'building')
+      .entities.filter((e) => e.building!.defId === 'government-hq');
+    expect(govBuildings).toHaveLength(1);
   });
 
   it('protected buildings are never displaced regardless of demand', () => {
