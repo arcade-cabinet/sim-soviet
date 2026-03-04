@@ -194,12 +194,11 @@ describe('GovernorDirective', () => {
 // ─── GovernorMode ──────────────────────────────────────────────────────────
 
 describe('GovernorMode', () => {
-  it('accepts all three modes', () => {
-    const modes: GovernorMode[] = ['historical', 'freeform', 'classic'];
-    expect(modes).toHaveLength(3);
+  it('accepts both modes', () => {
+    const modes: GovernorMode[] = ['historical', 'freeform'];
+    expect(modes).toHaveLength(2);
     expect(modes).toContain('historical');
     expect(modes).toContain('freeform');
-    expect(modes).toContain('classic');
   });
 });
 
@@ -229,7 +228,7 @@ describe('GovernorSaveData', () => {
 
   it('round-trips through JSON serialization', () => {
     const original: GovernorSaveData = {
-      mode: 'classic',
+      mode: 'historical',
       activeCrises: ['famine-1932', 'purge-1937'],
       state: { yearsElapsed: 20 },
     };
@@ -251,7 +250,7 @@ describe('IGovernor', () => {
       getActiveCrises: jest.fn().mockReturnValue([]),
       onYearBoundary: jest.fn(),
       serialize: jest.fn().mockReturnValue({
-        mode: 'classic',
+        mode: 'historical',
         activeCrises: [],
         state: {},
       } satisfies GovernorSaveData),
@@ -269,7 +268,7 @@ describe('IGovernor', () => {
     expect(mockGovernor.onYearBoundary).toHaveBeenCalledWith(1931);
 
     const saved = mockGovernor.serialize();
-    expect(saved.mode).toBe('classic');
+    expect(saved.mode).toBe('historical');
 
     mockGovernor.restore(saved);
     expect(mockGovernor.restore).toHaveBeenCalledWith(saved);
