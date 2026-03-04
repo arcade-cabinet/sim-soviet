@@ -78,6 +78,9 @@
       "sharp"
     ]
   },
+  "overrides": {
+    "esbuild": ">=0.25.0"
+  },
   "engines": {
     "node": ">=20"
   }
