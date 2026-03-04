@@ -184,4 +184,6 @@ export interface SubsystemSaveData {
   governor?: GovernorSaveData;
   /** WorldAgent geopolitical state (optional for backward compat with old saves) */
   worldAgent?: import('../../ai/agents/core/WorldAgent').WorldStateSaveData;
+  /** RelocationEngine multi-settlement state (optional for backward compat with old saves) */
+  relocation?: { settlements: import('../relocation/Settlement').SettlementSaveData[] };
 }

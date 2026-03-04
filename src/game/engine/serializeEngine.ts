@@ -47,6 +47,7 @@ import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
 import type { EraSystem } from '../era';
 import { EraSystem as EraSystemClass } from '../era';
 import type { GameRng } from '../SeedSystem';
+import type { RelocationEngine } from '../relocation/RelocationEngine';
 import type {
   BuildingWorkforceSaveEntry,
   DvorSaveEntry,
@@ -106,6 +107,7 @@ export interface SerializableEngine {
   syncSystemsToMeta: () => void;
   governor: IGovernor | null;
   worldAgent?: import('../../ai/agents/core/WorldAgent').WorldAgent;
+  relocationEngine?: RelocationEngine;
 }
 
 /**
@@ -158,6 +160,7 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
     populationMode: isAggregate ? 'aggregate' : 'entity',
     governor: engine.governor?.serialize() ?? undefined,
     worldAgent: engine.worldAgent?.serialize(),
+    relocation: engine.relocationEngine?.serialize(),
   };
 
   if (isAggregate) {
@@ -352,6 +355,11 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
   // Restore WorldAgent geopolitical state (old saves → default 1917 state)
   if (data.worldAgent && engine.worldAgent) {
     engine.worldAgent.restore(data.worldAgent);
+  }
+
+  // Restore relocation engine (multi-settlement state)
+  if (data.relocation && engine.relocationEngine) {
+    engine.relocationEngine.restore(data.relocation);
   }
 
   // Update economy system to match restored era (fallback for saves without economy data)

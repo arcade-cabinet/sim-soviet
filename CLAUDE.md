@@ -54,11 +54,11 @@ npm run lint               # Biome lint
 - **3D Engine**: Three.js r183 via React Three Fiber (R3F v9.5) + drei helpers
 - **UI**: React Native 0.81 + Expo 54 overlay components (absolute-positioned on 3D canvas)
 - **State**: ECS world (`SimulationEngine`) + legacy `GameState` singleton, bridged via `useSyncExternalStore`
-- **AI**: Yuka-style agent system (8 subpackages, 123+ files, 28k+ lines under `src/ai/agents/`)
-- **Audio**: Web Audio API via AudioManager (52 Soviet-era public domain OGG tracks)
+- **AI**: Yuka-style agent system (9 subpackages, 169 files, 39k+ lines under `src/ai/agents/`)
+- **Audio**: Web Audio API via AudioManager (47 Soviet-era public domain OGG tracks)
 - **Build**: Expo, Metro bundler, TypeScript 5.7
 - **Database**: sql.js (Wasm-based SQLite) + Drizzle ORM, persisted to IndexedDB
-- **Models**: 55 GLB models in `assets/models/soviet/` with manifest.json
+- **Models**: 56 GLB models in `assets/models/soviet/` with manifest.json
 - **XR**: @react-three/xr v6 (WebXR support for AR/VR)
 
 ## Architecture
@@ -92,7 +92,7 @@ MainMenu → NewGameSetup → Loading Screen → IntroModal → Game
 
 ```
 src/ai/agents/
-├── core/          # ChronologyAgent, WeatherAgent
+├── core/          # ChronologyAgent, WeatherAgent, WorldAgent, worldBranches, worldCountries
 ├── economy/       # EconomyAgent, FoodAgent, StorageAgent, VodkaAgent
 ├── political/     # PoliticalAgent, KGBAgent, QuotaAgent, LoyaltyAgent, ScoringSystem
 ├── infrastructure/ # CollectiveAgent, ConstructionAgent, DecayAgent, PowerAgent, SettlementSystem, TransportSystem
@@ -100,12 +100,15 @@ src/ai/agents/
 ├── workforce/     # WorkerSystem, PrivatePlotSystem, LoyaltySystem, TrudodniSystem
 ├── narrative/     # NarrativeAgent, EventSystem, Pravda, Politburo
 ├── meta/          # AchievementTracker, TutorialSystem, ChairmanAgent, minigames
-└── crisis/        # Governor, HistoricalGovernor, FreeformGovernor, ChaosEngine, crisis agents
+└── crisis/        # Governor, HistoricalGovernor, FreeformGovernor, ChaosEngine
+    ├── pressure/  # PressureSystem, PressureCrisisEngine, PressureDomains, thresholds
+    ├── ClimateEventSystem, BlackSwanSystem
+    └── WarAgent, FamineAgent, DisasterAgent, CrisisImpactApplicator
 ```
 
 ### Engine decomposition
 
-`SimulationEngine.ts` (~890 lines) is a thin orchestrator. The 27-step tick is decomposed into 7 phase modules in `src/game/engine/`:
+`SimulationEngine.ts` (~910 lines) is a thin orchestrator. The 27-step tick is decomposed into 7 phase modules in `src/game/engine/`:
 - `phaseChronology.ts` — era transitions, governor evaluation, crisis impacts
 - `phaseProduction.ts` — production modifiers, power, transport, construction
 - `phaseConsumption.ts` — storage, economy, deliveries, food/vodka consumption
@@ -139,7 +142,7 @@ Two state systems coexist:
 - SimulationEngine decomposition (7 phase modules)
 - Building-as-Container architecture (dual population modes)
 - RNG purge (seeded GameRng everywhere)
-- Yuka agent architecture (8 subpackages)
+- Yuka agent architecture (9 subpackages)
 - Demographics (dvory, births/deaths/aging, gendered labor)
 - Governor/crisis system (historical + freeform + ChaosEngine)
 - SettlementSummary + settlement_state DB schema
@@ -157,8 +160,8 @@ Two state systems coexist:
 
 ## Assets
 
-- `assets/models/soviet/` — 55 GLB models with `manifest.json` mapping roles
-- `assets/audio/music/` — 52 OGG music tracks (Soviet anthems, war songs, folk)
+- `assets/models/soviet/` — 56 GLB models with `manifest.json` mapping roles
+- `assets/audio/music/` — 47 OGG music tracks (Soviet anthems, war songs, folk)
 - `archive/` — Previous 2D Canvas codebase + `poc.html` (reference implementation)
 
 ## Code Style

@@ -10,7 +10,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getEngine } from '../bridge/GameInit';
 import { getResourceEntity } from '../ecs/archetypes';
-import { setGosplanAllocations, useGosplanAllocations } from '../stores/gameStore';
+import { setActiveDirective, setDefensePosture, setGosplanAllocations, useActiveDirective, useDefensePosture, useGosplanAllocations } from '../stores/gameStore';
 import {
   type ActiveDirective,
   CENTRAL_COMMITTEE_DIRECTIVES,
@@ -59,11 +59,11 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
   const [activeTab, setActiveTab] = useState<AgencyTab>('gosplan');
   const allocations = useGosplanAllocations();
 
-  // Military posture (local UI state until wired to engine)
-  const [militaryPosture, setMilitaryPosture] = useState<DefensePosture>('peacetime');
+  // Military posture — stored in gameStore, read by tick pipeline
+  const militaryPosture = useDefensePosture();
 
-  // Central Committee directive state
-  const [activeDirective, setActiveDirective] = useState<ActiveDirective | null>(null);
+  // Central Committee directive — stored in gameStore, read by tick pipeline
+  const activeDirective = useActiveDirective();
 
   const handleAllocationChange = useCallback((newAlloc: typeof allocations) => {
     setGosplanAllocations(newAlloc as any);
@@ -73,12 +73,12 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
     (directiveId: string) => {
       const engine = getEngine();
       const tick = engine?.getChronology().getDate().totalTicks ?? 0;
-      const directive = CENTRAL_COMMITTEE_DIRECTIVES.find((d) => d.id === directiveId);
-      if (!directive) return;
+      const def = CENTRAL_COMMITTEE_DIRECTIVES.find((d) => d.id === directiveId);
+      if (!def) return;
       setActiveDirective({
         directiveId,
         issuedAtTick: tick,
-        lockInTicks: directive.lockInTicks,
+        lockInTicks: def.lockInTicks,
       });
     },
     [],
@@ -107,7 +107,7 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
       break;
 
     case 'military':
-      tabContent = renderMilitaryTab(engine, militaryPosture, setMilitaryPosture);
+      tabContent = renderMilitaryTab(engine, militaryPosture, setDefensePosture);
       break;
 
     case 'politburo':
@@ -258,9 +258,22 @@ function renderPolitburoTab(
     });
   }
 
-  // Prestige project: tracked in engine tick context, not directly accessible from UI.
-  // Will show "no active project" until prestige lifecycle is exposed via engine API.
-  const prestigeProject: PrestigeProjectStatus | null = null;
+  // Prestige project: read live state from engine
+  const construction = engine.getPrestigeConstruction();
+  const demand = engine.getPrestigeDemand();
+  const prestigeProject: PrestigeProjectStatus | null = construction
+    ? {
+        name: construction.project.name,
+        progress: construction.progress,
+        total: construction.project.durationYears,
+      }
+    : demand
+      ? {
+          name: demand.project.name,
+          progress: 0,
+          total: demand.project.durationYears,
+        }
+      : null;
 
   // Satisfaction: derived from final score (normalized 0-100)
   const totalScore = scoring.getFinalScore();

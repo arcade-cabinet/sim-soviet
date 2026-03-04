@@ -36,6 +36,9 @@ export interface GameSnapshot {
   roadQuality: string;
   roadCondition: number;
 
+  // ── Arrival Caravan ──
+  arrivalInProgress: boolean;
+
   // ── Population Breakdown ──
   dvorCount: number;
   avgMorale: number;
@@ -59,6 +62,14 @@ export interface GameSnapshot {
 
 const _listeners = new Set<() => void>();
 let _snapshot: GameSnapshot | null = null;
+
+// ── Arrival state (set by SimulationEngine) ──
+let _arrivalInProgress = false;
+
+/** Set by SimulationEngine each tick to indicate if the caravan is still arriving. */
+export function setArrivalInProgress(inProgress: boolean): void {
+  _arrivalInProgress = inProgress;
+}
 
 function createSnapshot(): GameSnapshot {
   const res = getResourceEntity();
@@ -105,6 +116,9 @@ function createSnapshot(): GameSnapshot {
     currentEra: m?.currentEra ?? 'revolution',
     roadQuality: m?.roadQuality ?? 'none',
     roadCondition: m?.roadCondition ?? 100,
+
+    // Arrival caravan
+    arrivalInProgress: _arrivalInProgress,
 
     // Population breakdown
     dvorCount: dvory.entities.length,
@@ -935,6 +949,62 @@ export function useGosplanAllocations(): Readonly<Allocations> {
 function subscribeAllocations(listener: () => void): () => void {
   _allocationListeners.add(listener);
   return () => { _allocationListeners.delete(listener); };
+}
+
+// ── Active Directive (Central Committee decrees) ──────────────────────────
+
+import type { ActiveDirective } from '@/ui/hq-tabs/CentralCommitteeTab';
+
+let _activeDirective: ActiveDirective | null = null;
+const _directiveListeners = new Set<() => void>();
+
+/** Get the currently active Central Committee directive (null if none). */
+export function getActiveDirective(): ActiveDirective | null {
+  return _activeDirective;
+}
+
+/** Set the active directive (called from GovernmentHQ UI). */
+export function setActiveDirective(directive: ActiveDirective | null): void {
+  _activeDirective = directive;
+  for (const listener of _directiveListeners) listener();
+}
+
+/** React hook -- subscribe to the active directive state. */
+export function useActiveDirective(): ActiveDirective | null {
+  return useSyncExternalStore(subscribeDirective, getActiveDirective, getActiveDirective);
+}
+
+function subscribeDirective(listener: () => void): () => void {
+  _directiveListeners.add(listener);
+  return () => { _directiveListeners.delete(listener); };
+}
+
+// ── Defense Posture (Military tab → engine) ──────────────────────────────
+
+import type { DefensePosture } from '@/ui/hq-tabs/MilitaryTab';
+
+let _defensePosture: DefensePosture = 'peacetime';
+const _defensePostureListeners = new Set<() => void>();
+
+/** Get the current defense posture (read by tick pipeline). */
+export function getDefensePosture(): DefensePosture {
+  return _defensePosture;
+}
+
+/** Update defense posture (called from GovernmentHQ Military tab). */
+export function setDefensePosture(posture: DefensePosture): void {
+  _defensePosture = posture;
+  for (const listener of _defensePostureListeners) listener();
+}
+
+/** React hook -- subscribe to defense posture state. */
+export function useDefensePosture(): DefensePosture {
+  return useSyncExternalStore(subscribeDefensePosture, getDefensePosture, getDefensePosture);
+}
+
+function subscribeDefensePosture(listener: () => void): () => void {
+  _defensePostureListeners.add(listener);
+  return () => { _defensePostureListeners.delete(listener); };
 }
 
 // ── Government HQ Panel ──────────────────────────────────────────────────

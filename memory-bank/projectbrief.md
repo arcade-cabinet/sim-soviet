@@ -19,12 +19,12 @@ You are a low-level Soviet bureaucrat trying not to end up in Siberia. Workers s
 ## Tech Stack Summary
 
 - **3D Engine**: Three.js r183 via React Three Fiber (R3F v9.5) + drei
-- **UI**: React Native 0.81 + Expo 54
+- **UI**: React Native 0.83.2 + Expo 55
 - **AI**: Yuka-style agent system (8 subpackages, 123+ files)
 - **State**: Miniplex ECS world + legacy GameState singleton
 - **Audio**: Web Audio API (52 Soviet-era public domain tracks)
 - **Database**: sql.js (Wasm SQLite) + Drizzle ORM → IndexedDB
-- **Build**: Expo, Metro bundler, TypeScript 5.7
+- **Build**: Expo, Metro bundler, TypeScript 5.9
 
 ## Core Gameplay Loop
 
@@ -39,7 +39,7 @@ You are a low-level Soviet bureaucrat trying not to end up in Siberia. Workers s
 ## Game Modes
 
 - **Historical** (default) — real Soviet timeline, governor fires crises by year
-- **Freeform** — ChaosEngine drives emergent alternate history
+- **Freeform** — PressureSystem + WorldAgent + ColdBranches drive emergent alternate history
 - No classic/manual difficulty mode
 
 ## Consequence Levels (Soviet nomenclature)
@@ -52,4 +52,4 @@ You are a low-level Soviet bureaucrat trying not to end up in Siberia. Workers s
 
 - GitHub: `arcade-cabinet/sim-soviet`
 - Deployed: https://arcade-cabinet.github.io/sim-soviet/
-- Current version: v1.1.3
+- Current version: v1.2.0 (pending PR #44 merge)

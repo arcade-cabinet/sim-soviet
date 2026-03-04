@@ -26,6 +26,21 @@ Each design document specifies one game system. Read the `implementation` frontm
 | `power-transitions.md` | 7 Succession Mechanics | draft | `src/game/politburo/coups.ts` | partial |
 | `dialog-bible.md` | In-Game Voice Guide | active | `src/content/dialogue/` | partial |
 
+## New Systems (feat/allocation-engine — not yet design-doc'd)
+
+These systems are implemented in code but do not yet have corresponding design documents:
+
+| System | Implementation | Description |
+|--------|---------------|-------------|
+| Pressure-Valve Crisis | `src/ai/agents/crisis/pressure/` (7 files) | 10-domain pressure accumulation with dual-spread model, threshold-based crisis emergence (replaces ChaosEngine dice rolls) |
+| Climate Events (Tier 2) | `src/ai/agents/crisis/ClimateEventSystem.ts` | Seasonal/geographic natural events gated by weather and climate trends |
+| Black Swan Events (Tier 3) | `src/ai/agents/crisis/BlackSwanSystem.ts` | Ultra-rare events (earthquakes, solar storms, nuclear accidents) with no artificial intervals |
+| World Agent | `src/ai/agents/core/WorldAgent.ts` | Geopolitical backdrop — spheres, trade, tension, climate cycles, Moscow scrutiny |
+| Sphere Dynamics | `src/ai/agents/core/sphereDynamics.ts` | Khaldun + Turchin overlapping empire lifecycle cycles |
+| Cold Branches | `src/ai/agents/core/worldBranches.ts` | Dormant divergence points that activate organically from pressure conditions |
+| Multi-Settlement / Relocation | `src/game/relocation/` (3 files) | Settlement type, RelocationEngine, terrain profiles from Siberia to Mars |
+| HQ Splitting | `src/growth/HQSplitting.ts` | Milestone-based building spawns at population thresholds (50/150/400) |
+
 ## Canonical vs Aspirational
 
 **Canonical** (implemented — reflects actual code):

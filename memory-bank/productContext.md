@@ -43,7 +43,7 @@ The satirical tone (dark comedy about bureaucracy, propaganda, and survival) pro
 | **Demographics** | Dvory (households), births/deaths/aging, gendered labor, private plots |
 | **Political Apparatus** | Politruks, KGB informants, military, personnel file with black marks |
 | **Politburo** | 10 ministries, interaction matrix, coups, purges, succession |
-| **Governor/Crisis** | Historical timeline or freeform ChaosEngine drives dynamic difficulty |
+| **Governor/Crisis** | PressureSystem + WorldAgent + ClimateEventSystem + BlackSwanSystem + ColdBranches |
 | **Eras** | 8 campaigns (Revolution → The Eternal) with doctrine integration |
 | **Scoring** | Medals, achievements, consequence multipliers |
 
@@ -52,15 +52,11 @@ The satirical tone (dark comedy about bureaucracy, propaganda, and survival) pro
 - SimulationEngine with 7 phase modules (thin orchestrator)
 - Yuka agent architecture (8 subpackages, 123+ files)
 - Building-as-Container (dual population modes: entity < 200, aggregate >= 200)
-- Governor/crisis system (historical + freeform + ChaosEngine)
+- Pressure-valve crisis system (PressureSystem + WorldAgent + ClimateEventSystem + BlackSwanSystem + ColdBranches)
+- Soviet Allocation Engine (organic growth, demand pipeline, site selection, HQ splitting)
+- Buildings-as-UI (click buildings for contextual panels: FactoryContent, FarmContent, GovernmentHQ)
+- Dynamic map expansion (grid expands via settlement tier upgrades)
 - Demographics (dvory, births/deaths/aging, gendered retirement)
 - Full political apparatus (KGB, politruks, loyalty, trudodni)
 - 55 3D models, 52 music tracks, 22 scene components
-
-## NOT YET Implemented (Planned)
-
-- **Organic settlement growth** — auto-placement via agent demand pipeline
-- **Buildings-as-UI** — click buildings for contextual panels, remove build toolbar
-- **Soviet Allocation Engine** — DB-backed tick, land grants, terrain prestige
-- **Dynamic map expansion** — grid expands via settlement tier upgrades
-- **Remove direct building placement** — strip HUD, directive-only player control
+- 5,579+ tests across 229 suites

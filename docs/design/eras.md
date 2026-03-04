@@ -3,11 +3,15 @@ title: Era-Based Campaigns
 type: design
 status: implemented
 implementation:
-  - src/game/era/EraSystem.ts
+  - src/game/era/definitions.ts
+  - src/game/era/types.ts
+  - src/game/era/tiers.ts
+  - src/ai/agents/political/PoliticalAgent.ts
 tests:
-  - src/__tests__/EraSystem.test.ts
-  - src/__tests__/era-integration.test.ts
-last_verified: 2026-03-01
+  - __tests__/game/EraSystem.test.ts
+  - __tests__/game/era-integration.test.ts
+  - __tests__/game/eraDoctrines.test.ts
+last_verified: 2026-03-04
 coverage: full
 ---
 
@@ -74,7 +78,7 @@ Each era has a default doctrine. Leaders can adopt doctrines independently of ca
 | Era | Default Doctrine | Can Also Trigger |
 |-----|-----------------|------------------|
 | Revolution | Revolutionary | — |
-| Collectivization | Revolutionary → Industrialization | — |
+| Collectivization | Industrialization | — |
 | Industrialization | Industrialization | Wartime (war events) |
 | Great Patriotic War | Wartime | — |
 | Reconstruction | Reconstruction | Thaw |
@@ -121,7 +125,6 @@ See `era-doctrines.md` for full doctrine definitions.
 - **Unlocks**: Construction yard, memorial, rebuilt housing, cultural center
 - **Key tension**: Rebuilding with reduced workforce. Veterans return but are traumatized.
 - **Special**: Rubble salvage — damaged buildings can be harvested for materials. Low quotas but also low resources.
-- **MTS abolished (1958)**: Near end of era, kolkhozes must acquire their own equipment.
 
 ### Era 6: Thaw & Freeze (1956-1982)
 - **Unlocks**: University, cinema, KGB station, radio tower, private gardens

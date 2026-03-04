@@ -12,6 +12,10 @@ jest.mock('@/ecs/archetypes', () => ({ getResourceEntity: () => null }));
 jest.mock('@/stores/gameStore', () => ({
   useGosplanAllocations: () => ({ food: 40, industrial: 30, housing: 20, military: 10 }),
   setGosplanAllocations: jest.fn(),
+  useDefensePosture: () => 'peacetime',
+  setDefensePosture: jest.fn(),
+  useActiveDirective: () => null,
+  setActiveDirective: jest.fn(),
 }));
 
 import { AGENCY_TABS, type AgencyTab, type AgencyTabDef, type GovernmentHQProps } from '@/ui/GovernmentHQ';

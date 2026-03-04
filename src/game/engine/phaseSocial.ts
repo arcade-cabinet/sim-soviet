@@ -6,6 +6,8 @@
 
 import type { InflowScheduleEntry } from '@/config';
 import { political } from '@/config';
+import { getDefensePosture } from '../../stores/gameStore';
+import { getPostureEffects } from '../../ui/hq-tabs/MilitaryTab';
 import { populationSystem } from '../../ecs/systems';
 import type { TickContext } from './tickContext';
 
@@ -55,6 +57,23 @@ export function phaseSocial(ctx: TickContext): void {
     } else if (emergencyPop >= 20 && emergencyPop < 40) {
       const reinforcements = rng.int(3, 8);
       workerSystem.spawnInflowDvor(reinforcements, 'emergency_resettlement');
+    }
+  }
+
+  // ── 13b. Defense posture conscription + morale (monthly) ──
+  if (tickResult.newMonth) {
+    const postureEffects = getPostureEffects(getDefensePosture());
+    // Conscript workers based on posture percentage (male-first, historically accurate)
+    if (postureEffects.conscriptionPercent > 0) {
+      const pop = storeRef.resources.population;
+      const conscriptCount = Math.floor(pop * postureEffects.conscriptionPercent / 100);
+      if (conscriptCount > 0) {
+        workerSystem.removeWorkersByCountMaleFirst(conscriptCount, 'conscription');
+      }
+    }
+    // Apply morale penalty from posture (negative values reduce morale)
+    if (postureEffects.moralePenalty < 0) {
+      workerSystem.applyGlobalMoraleDelta(postureEffects.moralePenalty);
     }
   }
 

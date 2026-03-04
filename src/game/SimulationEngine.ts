@@ -14,6 +14,7 @@ export type { SimCallbacks, SubsystemSaveData } from './engine/types';
 
 import { buildingsLogic, dvory, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import { setBuildingCollapsedCallback, setStarvationCallback } from '@/ecs/systems';
+import { setArrivalInProgress } from '@/stores/gameStore';
 import { AgentManager } from '../ai/AgentManager';
 import type { TickResult } from '../ai/agents/core/ChronologyAgent';
 // ── Yuka agents ──
@@ -82,6 +83,7 @@ import type { SimCallbacks, SubsystemSaveData } from './engine/types';
 import { EraSystem } from './era';
 import type { GameGrid } from './GameGrid';
 import { createGameTally } from './GameTally';
+import { RelocationEngine } from './relocation/RelocationEngine';
 import { GameRng } from './SeedSystem';
 
 /** Maps game EraSystem IDs → EconomySystem EraIds. */
@@ -123,6 +125,7 @@ export class SimulationEngine {
   private mandateState: PlanMandateState | null = null;
   private transport: TransportSystem;
   private fireSystem: FireSystem;
+  private relocationEngine: RelocationEngine;
 
   // ── Yuka agents ──
   private chronologyAgent!: ChronologyAgent;
@@ -189,6 +192,9 @@ export class SimulationEngine {
     split150: false,
     split400: false,
   };
+
+  // ── Arrival caravan — staggered dvor creation ──
+  private arrivalSequence: import('./arrivalSequence').ArrivalSequence | null = null;
 
   constructor(
     private grid: GameGrid,
@@ -280,6 +286,10 @@ export class SimulationEngine {
     });
 
     initDiseaseSystem(this.rng);
+
+    // ── Relocation engine (multi-settlement support) ──
+    this.relocationEngine = new RelocationEngine();
+    this.relocationEngine.getRegistry().createPrimary('Settlement', 20, startYear);
 
     // Check if we're restoring into aggregate mode (save/load)
     this.raion = initialStore?.resources.raion;
@@ -424,6 +434,15 @@ export class SimulationEngine {
   public getRaion(): import('@/ecs/world').RaionPool | undefined {
     return this.raion;
   }
+  public getRelocationEngine(): RelocationEngine {
+    return this.relocationEngine;
+  }
+  public getPrestigeDemand(): TickContext['state']['prestigeDemand'] {
+    return this.prestigeDemand;
+  }
+  public getPrestigeConstruction(): TickContext['state']['prestigeConstruction'] {
+    return this.prestigeConstruction;
+  }
 
   // ── Agent getters ───────────────────────────────────────────────────────────
 
@@ -494,6 +513,19 @@ export class SimulationEngine {
   }
   public getGovernor(): IGovernor | null {
     return this.governor;
+  }
+
+  // ── Arrival Caravan ────────────────────────────────────────────────────────
+
+  /** Set the arrival sequence for staggered family spawning at game start. */
+  public setArrivalSequence(seq: import('./arrivalSequence').ArrivalSequence): void {
+    this.arrivalSequence = seq;
+    setArrivalInProgress(seq.isInProgress());
+  }
+
+  /** Whether families are still arriving. */
+  public isArrivalInProgress(): boolean {
+    return this.arrivalSequence?.isInProgress() ?? false;
   }
 
   // ── Autopilot ───────────────────────────────────────────────────────────────
@@ -625,6 +657,11 @@ export class SimulationEngine {
     // Restore raion reference from resource store (aggregate mode save/load)
     const restoredStore = getResourceEntity();
     this.raion = restoredStore?.resources.raion;
+
+    // Restore relocation engine (multi-settlement state)
+    if (data.relocation) {
+      this.relocationEngine.restore(data.relocation);
+    }
   }
 
   // ── Minigame API ────────────────────────────────────────────────────────────
@@ -657,6 +694,24 @@ export class SimulationEngine {
     // Build context for all phases
     const tickResult = this.chronologyAgent.tick();
     const ctx = this.buildTickContext(tickResult, storeRef);
+
+    // Phase 0: Arrival caravan — spawn queued families and bootstrap buildings
+    if (this.arrivalSequence) {
+      if (this.arrivalSequence.isInProgress()) {
+        const arrTicks = this.chronologyAgent.getDate().totalTicks;
+        const arrived = this.arrivalSequence.tick(arrTicks, this.workerSystem, (surname, count) => {
+          this.callbacks.onToast(`ARRIVAL: The ${surname} family (${count} souls) has arrived`);
+        });
+        if (arrived > 0 || !this.arrivalSequence.isInProgress()) {
+          setArrivalInProgress(this.arrivalSequence.isInProgress());
+        }
+      }
+      // Bootstrap starter buildings once families start arriving
+      const earlyTicks = this.chronologyAgent.getDate().totalTicks;
+      if (earlyTicks <= 60 && storeRef.resources.population > 0) {
+        this.collectiveAgent.earlyGameBootstrap(this.rng, this.politicalAgent.getCurrentEraId());
+      }
+    }
 
     // Phase 1: Chronology, era transitions, governor
     const chronoResult = phaseChronology(ctx);
@@ -754,6 +809,7 @@ export class SimulationEngine {
         }),
       governor: this.governor,
       worldAgent: this.worldAgent,
+      relocationEngine: this.relocationEngine,
     };
   }
 

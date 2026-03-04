@@ -21,7 +21,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { getCurrentGridSize } from '../engine/GridTypes';
 import { InputManager } from '../input/InputManager';
-import { getCameraTarget } from '../stores/gameStore';
+import { clearCameraTarget, getCameraTarget } from '../stores/gameStore';
 
 /** Speed constants for keyboard/gamepad-driven camera movement. */
 const PAN_SPEED = 0.3;
@@ -66,6 +66,18 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
     camera.position.set(center + 8, 12, center + 8);
     camera.lookAt(center, 0, center);
   }, [camera, center, disabled]);
+
+  // Escape key — return camera from street-level zoom to default position
+  useEffect(() => {
+    if (disabled) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        clearCameraTarget();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [disabled]);
 
   // Camera animation: zoom-to-building and return
   useFrame(() => {

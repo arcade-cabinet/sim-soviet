@@ -20,7 +20,8 @@ import {
   underConstruction,
 } from '@/ecs/archetypes';
 import { createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
-import { createStartingSettlement } from '@/ecs/factories/settlementFactories';
+import { generateStartingDvorData } from '@/ecs/factories/settlementFactories';
+import { ArrivalSequence } from '@/game/arrivalSequence';
 import type { SimCallbacks } from '@/game/engine/types';
 import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
@@ -98,18 +99,21 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   });
   mapSystem.generate();
 
-  // No pre-placed starter buildings — the game starts with undeveloped land
-  // and 10 dvory (family households) + 1 chairman dvor.
+  // No pre-placed starter buildings — the game starts with undeveloped land.
+  // Families arrive as a caravan over the first ~30 ticks instead of spawning instantly.
 
-  // Create starting settlement (citizens, dvory)
-  createStartingSettlement('comrade');
+  // Generate dvor data for staggered arrival
+  const dvorData = generateStartingDvorData('comrade');
+  const arrivalSeq = new ArrivalSequence();
+  arrivalSeq.prepareArrival(dvorData);
 
   // Create spatial index grid
   gameGrid = new GameGrid(gridSize);
   const grid = gameGrid;
 
-  // Create and configure SimulationEngine
+  // Create and configure SimulationEngine with staggered arrival
   engine = new SimulationEngine(grid, callbacks, undefined, 'comrade', consequence);
+  engine.setArrivalSequence(arrivalSeq);
 
   // Wire Governor — always active (history IS the difficulty)
   if (gameMode === 'freeform') {

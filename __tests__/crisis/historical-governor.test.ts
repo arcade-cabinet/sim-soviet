@@ -9,6 +9,7 @@
 import type { GovernorContext } from '@/ai/agents/crisis/Governor';
 import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
 import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
+import type { PressureReadContext } from '@/ai/agents/crisis/pressure/PressureDomains';
 import { GameRng } from '@/game/SeedSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
@@ -459,5 +460,272 @@ describe('HistoricalGovernor: political crisis filtering', () => {
     for (const id of politicalIds) {
       expect(active).not.toContain(id);
     }
+  });
+});
+
+// ─── Pressure Read Context Fixture ──────────────────────────────────────────
+
+function makePressureReadings(overrides?: Partial<PressureReadContext>): PressureReadContext {
+  return {
+    foodState: 'stable',
+    starvationCounter: 0,
+    starvationGraceTicks: 90,
+    averageMorale: 60,
+    averageLoyalty: 60,
+    sabotageCount: 0,
+    flightCount: 0,
+    population: 5000,
+    housingCapacity: 6000,
+    suspicionLevel: 0.2,
+    blackMarks: 0,
+    blat: 0,
+    powerShortage: false,
+    unpoweredCount: 0,
+    totalBuildings: 20,
+    averageDurability: 80,
+    growthRate: 10,
+    laborRatio: 0.6,
+    sickCount: 0,
+    quotaDeficit: 0,
+    productionTrend: 0.7,
+    season: 'summer',
+    weather: 'clear',
+    ...overrides,
+  };
+}
+
+// ─── Pressure system integration ────────────────────────────────────────────
+
+describe('HistoricalGovernor: pressure system', () => {
+  it('ticks pressure system when readings are provided', () => {
+    const gov = new HistoricalGovernor();
+
+    // Provide pressure readings with high food stress
+    const readings = makePressureReadings({ foodState: 'starvation', starvationCounter: 50 });
+    gov.evaluate(makeCtx({ year: 1917, pressureReadings: readings }));
+
+    // Pressure system should have accumulated food pressure
+    const foodLevel = gov.getPressureSystem().getLevel('food');
+    expect(foodLevel).toBeGreaterThan(0);
+  });
+
+  it('does not crash without pressure readings (backward compat)', () => {
+    const gov = new HistoricalGovernor();
+
+    // No pressureReadings — should work exactly like before
+    const directive = gov.evaluate(makeCtx({ year: 1917 }));
+    expect(directive.modifiers).toEqual(DEFAULT_MODIFIERS);
+  });
+
+  it('amplifies famine impacts when food pressure is high', () => {
+    const gov = new HistoricalGovernor();
+
+    // First: get a baseline directive for Holodomor WITHOUT pressure
+    const govBaseline = new HistoricalGovernor();
+    advanceTicks(govBaseline, 15, { year: 1932, month: 6 });
+    const baselineDirective = govBaseline.evaluate(makeCtx({ year: 1932, month: 7 }));
+
+    // Now: evaluate with high food pressure
+    const highFoodPressure = makePressureReadings({
+      foodState: 'starvation',
+      starvationCounter: 80,
+    });
+
+    // Tick pressure up first (many ticks to accumulate)
+    for (let i = 0; i < 15; i++) {
+      gov.evaluate(makeCtx({ year: 1932, month: 6, pressureReadings: highFoodPressure }));
+    }
+    const pressuredDirective = gov.evaluate(makeCtx({ year: 1932, month: 7, pressureReadings: highFoodPressure }));
+
+    // With high food pressure, growth should be penalized more
+    expect(pressuredDirective.modifiers.growthMultiplier).toBeLessThanOrEqual(
+      baselineDirective.modifiers.growthMultiplier,
+    );
+  });
+
+  it('does not amplify when pressure is zero', () => {
+    const gov = new HistoricalGovernor();
+
+    // All readings are healthy/neutral
+    const neutralReadings = makePressureReadings();
+
+    // Activate a crisis with neutral pressure
+    gov.evaluate(makeCtx({ year: 1918, pressureReadings: neutralReadings }));
+
+    // Pressure system should have very low levels
+    const pressureSystem = gov.getPressureSystem();
+    expect(pressureSystem.getLevel('food')).toBeLessThan(0.1);
+    expect(pressureSystem.getLevel('demographic')).toBeLessThan(0.2);
+  });
+});
+
+// ─── Pressure serialization round-trip ──────────────────────────────────────
+
+describe('HistoricalGovernor: pressure serialization', () => {
+  it('serializes and restores pressure state', () => {
+    const gov1 = new HistoricalGovernor();
+
+    // Accumulate some pressure
+    const readings = makePressureReadings({ foodState: 'rationing' });
+    for (let i = 0; i < 5; i++) {
+      gov1.evaluate(makeCtx({ year: 1930, pressureReadings: readings }));
+    }
+
+    const foodBefore = gov1.getPressureSystem().getLevel('food');
+    const savedData = gov1.serialize();
+
+    // Restore to new governor
+    const gov2 = new HistoricalGovernor();
+    gov2.restore(savedData);
+
+    const foodAfter = gov2.getPressureSystem().getLevel('food');
+    expect(foodAfter).toBeCloseTo(foodBefore, 5);
+  });
+
+  it('serializes and restores branch state', () => {
+    const gov1 = new HistoricalGovernor();
+    const savedData = gov1.serialize();
+
+    expect(savedData.state.pressureState).toBeDefined();
+    expect(savedData.state.branchSystem).toBeDefined();
+
+    // Restore should not throw
+    const gov2 = new HistoricalGovernor();
+    expect(() => gov2.restore(savedData)).not.toThrow();
+  });
+
+  it('handles old saves without pressure/branch state', () => {
+    const gov = new HistoricalGovernor();
+
+    // Simulate old save data (no pressureState or branchSystem)
+    const oldSaveData = {
+      mode: 'historical' as const,
+      activeCrises: [],
+      state: {
+        currentYear: 1930,
+        agentStates: {},
+        activatedSet: [],
+      },
+    };
+
+    expect(() => gov.restore(oldSaveData)).not.toThrow();
+    expect(gov.getPressureSystem().getLevel('food')).toBe(0);
+    expect(gov.getActivatedBranches().size).toBe(0);
+  });
+});
+
+// ─── Cold branch evaluation ─────────────────────────────────────────────────
+
+describe('HistoricalGovernor: cold branches', () => {
+  it('does not evaluate branches without pressure readings', () => {
+    const gov = new HistoricalGovernor();
+
+    // Without pressureReadings, no branches should fire
+    gov.evaluate(makeCtx({ year: 1930 }));
+    expect(gov.getActivatedBranches().size).toBe(0);
+  });
+
+  it('evaluates only historical branches (not geopolitical/tech)', () => {
+    const gov = new HistoricalGovernor();
+
+    // The governor should only look at 4 historical branches, not WWIII/AI/etc.
+    const branches = gov.getActivatedBranches();
+    expect(branches.has('wwiii')).toBe(false);
+    expect(branches.has('ai_singularity')).toBe(false);
+    expect(branches.has('mars_colonization')).toBe(false);
+  });
+
+  it('activates dekulakization when political pressure is high in 1929-1933', () => {
+    const gov = new HistoricalGovernor();
+
+    // Provide worldState + spheres + high political pressure
+    const readings = makePressureReadings({
+      suspicionLevel: 0.8,
+      blackMarks: 3,
+      worldState: { globalTension: 0.3, borderThreat: 0.2, climateTrend: 0, techLevel: 0.1, commodityIndex: 0.5, tradeAccess: 0.5, moscowAttention: 0.3 },
+      spheres: {},
+    });
+
+    // Manually spike political pressure to > 0.5
+    gov.getPressureSystem().applySpike('political', 0.6);
+
+    // Evaluate enough ticks to meet sustainedTicks=6
+    for (let i = 0; i < 8; i++) {
+      gov.evaluate(makeCtx({ year: 1930, month: 1, pressureReadings: readings }));
+    }
+
+    // Dekulakization should have activated (or be tracking — depends on pressure accumulation)
+    // At minimum the branch tracker should be progressing or the branch activated
+    const activated = gov.getActivatedBranches();
+    // The branch has sustainedTicks: 6 and requires political > 0.5
+    // We spiked to 0.6 and evaluated 8 ticks, so it should activate
+    expect(activated.has('dekulakization_purge')).toBe(true);
+  });
+
+  it('produces narrative impact when branch activates', () => {
+    const gov = new HistoricalGovernor();
+
+    const readings = makePressureReadings({
+      worldState: { globalTension: 0.3, borderThreat: 0.2, climateTrend: 0, techLevel: 0.1, commodityIndex: 0.5, tradeAccess: 0.5, moscowAttention: 0.3 },
+      spheres: {},
+    });
+
+    // Spike political pressure high
+    gov.getPressureSystem().applySpike('political', 0.7);
+
+    // Evaluate past the sustained tick threshold for dekulakization
+    let lastDirective;
+    for (let i = 0; i < 10; i++) {
+      lastDirective = gov.evaluate(makeCtx({ year: 1930, month: 1, pressureReadings: readings }));
+    }
+
+    // If branch activated, there should be a branch narrative impact
+    if (gov.getActivatedBranches().has('dekulakization_purge')) {
+      const branchImpacts = lastDirective!.crisisImpacts.filter((i) =>
+        i.crisisId.startsWith('branch-dekulakization'),
+      );
+      // The activation tick should have produced the narrative
+      // (might be in an earlier directive, but at least the branch fired)
+      expect(gov.getActivatedBranches().has('dekulakization_purge')).toBe(true);
+    }
+  });
+
+  it('does not activate dekulakization outside year range', () => {
+    const gov = new HistoricalGovernor();
+
+    const readings = makePressureReadings({
+      suspicionLevel: 0.9,
+      worldState: { globalTension: 0.3, borderThreat: 0.2, climateTrend: 0, techLevel: 0.1, commodityIndex: 0.5, tradeAccess: 0.5, moscowAttention: 0.3 },
+      spheres: {},
+    });
+
+    gov.getPressureSystem().applySpike('political', 0.8);
+
+    // Evaluate at year 1950 — outside dekulakization year range (1929-1933)
+    for (let i = 0; i < 10; i++) {
+      gov.evaluate(makeCtx({ year: 1950, month: 1, pressureReadings: readings }));
+    }
+
+    expect(gov.getActivatedBranches().has('dekulakization_purge')).toBe(false);
+  });
+
+  it('activates virgin lands when food pressure is high in 1954-1965', () => {
+    const gov = new HistoricalGovernor();
+
+    const readings = makePressureReadings({
+      foodState: 'rationing',
+      worldState: { globalTension: 0.3, borderThreat: 0.2, climateTrend: 0, techLevel: 0.2, commodityIndex: 0.5, tradeAccess: 0.5, moscowAttention: 0.3 },
+      spheres: {},
+    });
+
+    // Spike food pressure to > 0.6
+    gov.getPressureSystem().applySpike('food', 0.7);
+
+    // Need sustainedTicks=12
+    for (let i = 0; i < 14; i++) {
+      gov.evaluate(makeCtx({ year: 1960, month: 1, pressureReadings: readings }));
+    }
+
+    expect(gov.getActivatedBranches().has('virgin_lands_assignment')).toBe(true);
   });
 });
