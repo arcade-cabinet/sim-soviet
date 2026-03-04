@@ -125,7 +125,7 @@ describe('AudioManager', () => {
     it('uses default fadeMs when not provided', () => {
       const spy = jest.spyOn(manager, 'playTrack');
       manager.playContext('winter');
-      expect(spy).toHaveBeenCalledWith('v_zemlianke', 2000);
+      expect(spy).toHaveBeenCalledWith('v_zemlianke', 5000);
       spy.mockRestore();
     });
   });

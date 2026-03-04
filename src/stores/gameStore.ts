@@ -908,6 +908,66 @@ export function cycleLens(): void {
   notifyStateChange();
 }
 
+// ── Gosplan Allocations (resource distribution) ──────────────────────────
+
+import type { Allocations } from '@/ui/hq-tabs/GosplanTab';
+import { DEFAULT_ALLOCATIONS } from '@/ui/hq-tabs/GosplanTab';
+
+let _gosplanAllocations: Allocations = { ...DEFAULT_ALLOCATIONS };
+const _allocationListeners = new Set<() => void>();
+
+/** Get the current Gosplan allocations (read by tick pipeline). */
+export function getGosplanAllocations(): Readonly<Allocations> {
+  return _gosplanAllocations;
+}
+
+/** Update Gosplan allocations (called from GovernmentHQ UI). */
+export function setGosplanAllocations(alloc: Allocations): void {
+  _gosplanAllocations = { ...alloc };
+  for (const listener of _allocationListeners) listener();
+}
+
+/** React hook -- subscribe to Gosplan allocation state. */
+export function useGosplanAllocations(): Readonly<Allocations> {
+  return useSyncExternalStore(subscribeAllocations, getGosplanAllocations, getGosplanAllocations);
+}
+
+function subscribeAllocations(listener: () => void): () => void {
+  _allocationListeners.add(listener);
+  return () => { _allocationListeners.delete(listener); };
+}
+
+// ── Government HQ Panel ──────────────────────────────────────────────────
+
+let _showGovernmentHQ = false;
+const _govHQListeners = new Set<() => void>();
+
+function getGovernmentHQState(): boolean {
+  return _showGovernmentHQ;
+}
+
+/** Open the Government HQ panel. */
+export function openGovernmentHQ(): void {
+  _showGovernmentHQ = true;
+  for (const listener of _govHQListeners) listener();
+}
+
+/** Close the Government HQ panel. */
+export function closeGovernmentHQ(): void {
+  _showGovernmentHQ = false;
+  for (const listener of _govHQListeners) listener();
+}
+
+/** React hook -- subscribe to Government HQ visibility. */
+export function useGovernmentHQ(): boolean {
+  return useSyncExternalStore(subscribeGovHQ, getGovernmentHQState, getGovernmentHQState);
+}
+
+function subscribeGovHQ(listener: () => void): () => void {
+  _govHQListeners.add(listener);
+  return () => { _govHQListeners.delete(listener); };
+}
+
 // ── Internal ──────────────────────────────────────────────────────────────
 
 function subscribe(listener: () => void): () => void {

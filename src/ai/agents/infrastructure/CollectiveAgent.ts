@@ -18,6 +18,9 @@
 
 import { Vehicle } from 'yuka';
 import { GRID_SIZE, infrastructure } from '@/config';
+import { classifyBuilding } from '@/config/buildingClassification';
+import { isProtected } from '@/config/protectedClasses';
+import { getBuildingDef } from '@/data/buildingDefs';
 import {
   buildings,
   buildingsLogic,
@@ -34,6 +37,8 @@ import { getBuildInterval } from '../../../growth/GrowthPacing';
 import { findBestPlacement, type PlacementContext } from '../../../growth/SiteSelectionRules';
 import type { PlanMandateState } from '../political/PoliticalAgent';
 import type { WorkerStats } from '../workforce/types';
+import { cascadeDisplacement } from './displacementSystem';
+import { checkScaleUpTrigger, scaleUpBuilding } from './megaScalingSystem';
 
 // ── Re-exported types (absorbed from governor.ts) ─────────────────────────────
 
@@ -495,20 +500,41 @@ export class CollectiveAgent extends Vehicle {
    * Autonomously places a building near existing buildings.
    * Returns the placed entity, or null if placement fails.
    *
+   * For protected-class buildings (government/military), if no open cell
+   * is available, attempts displacement cascade — demolishing the lowest-priority
+   * expendable building to free a tile.
+   *
    * @param defId - Building definition ID to place
    * @param rng - Seeded RNG for placement randomness
    * @param eraId - Current era for era-aware placement (optional)
    */
   autoPlaceBuilding(defId: string, rng: GameRng, eraId?: string): Entity | null {
     const cell = this.findPlacementCell(rng, defId, eraId);
-    if (!cell) {
+    if (cell) {
+      try {
+        return placeNewBuilding(cell.gridX, cell.gridY, defId);
+      } catch (e) {
+        console.warn(`[CollectiveAgent] Failed to place ${defId} at (${cell.gridX}, ${cell.gridY}):`, e);
+        return null;
+      }
+    }
+
+    // No open cell found — try displacement for protected-class buildings
+    const demandClass = classifyBuilding(defId);
+    if (!isProtected(demandClass)) {
       return null;
     }
 
+    const result = cascadeDisplacement(demandClass, buildings.entities);
+    if (!result.success || !result.demolished) {
+      return null;
+    }
+
+    const { gridX, gridY } = result.demolished.freedTile;
     try {
-      return placeNewBuilding(cell.gridX, cell.gridY, defId);
+      return placeNewBuilding(gridX, gridY, defId);
     } catch (e) {
-      console.warn(`[CollectiveAgent] Failed to place ${defId} at (${cell.gridX}, ${cell.gridY}):`, e);
+      console.warn(`[CollectiveAgent] Failed to place ${defId} at displaced tile (${gridX}, ${gridY}):`, e);
       return null;
     }
   }
@@ -667,6 +693,7 @@ export class CollectiveAgent extends Vehicle {
 
   /**
    * Full autonomous construction pipeline: detect demands, merge mandates, auto-place.
+   * Also checks for mega-scaling opportunities on housing buildings.
    * Absorbs SimulationEngine.tickCollectiveViaAgent().
    */
   public tickAutonomous(deps: {
@@ -681,6 +708,15 @@ export class CollectiveAgent extends Vehicle {
     const interval = deps.eraId ? getBuildInterval(deps.eraId) : COLLECTIVE_CHECK_INTERVAL;
     if (deps.totalTicks % interval !== 0) return;
     if (deps.totalTicks < 60) return;
+
+    // Check mega-scaling before construction (population pressure may scale existing buildings)
+    if (deps.eraId) {
+      const storeCheck = getResourceEntity();
+      if (storeCheck) {
+        this.checkMegaScaling(deps.eraId, storeCheck.resources.population, deps.callbacks);
+      }
+    }
+
     if (underConstruction.entities.length >= 3) return;
 
     const storeRef = getResourceEntity();
@@ -724,6 +760,50 @@ export class CollectiveAgent extends Vehicle {
         deps.callbacks.onToast(`WORKERS' INITIATIVE: The collective begins ${request.label}`);
         deps.callbacks.onAdvisor(`The workers have started building on their own, Comrade. ${request.reason}.`);
       }
+    }
+  }
+
+  // ── Mega-Scaling: Population Pressure Scale-Up ──────────────────────────────
+
+  /**
+   * Checks all operational housing buildings for mega-scaling opportunities.
+   *
+   * When total population exceeds a building's effective capacity * 1.5
+   * and the current era allows a higher tier, the building is scaled up.
+   * Uses the building definition's base housingCap as the tier-0 reference.
+   *
+   * @param eraId - Current era identifier for max tier lookup
+   * @param population - Current total population (demand signal)
+   * @param callbacks - Toast/advisor callbacks for UI notification
+   */
+  checkMegaScaling(
+    eraId: string,
+    population: number,
+    callbacks: { onToast: (msg: string, severity?: string) => void },
+  ): void {
+    for (const entity of operationalBuildings.entities) {
+      const bldg = entity.building;
+      if (bldg.housingCap <= 0) continue;
+
+      const def = getBuildingDef(bldg.defId);
+      if (!def) continue;
+
+      const tier: number = (bldg as any).tier ?? 0;
+      const baseCapacity = def.stats.housingCap;
+
+      // Current effective capacity is the tier-scaled value
+      if (!checkScaleUpTrigger(bldg.housingCap, population, eraId, tier)) continue;
+
+      const result = scaleUpBuilding(baseCapacity, tier);
+      if (!result) continue;
+
+      // Apply scale-up to the ECS component
+      (bldg as any).tier = result.newTier;
+      bldg.housingCap = result.newCapacity;
+
+      callbacks.onToast(
+        `EXPANSION: ${bldg.defId} scaled to Tier ${result.newTier} (capacity: ${Math.floor(result.newCapacity)})`,
+      );
     }
   }
 

@@ -10,8 +10,10 @@ import AudioManager from '../audio/AudioManager';
 import { getBuildingDef } from '../data/buildingDefs';
 import type { Role } from '../data/buildingDefs.schema';
 import { buildingsLogic } from '../ecs/archetypes';
-import { closeBuildingPanel, useBuildingPanel } from '../stores/gameStore';
+import { closeBuildingPanel, openGovernmentHQ, useBuildingPanel } from '../stores/gameStore';
 import {
+  FactoryContent,
+  FarmContent,
   GenericContent,
   HousingContent,
   PartyHQContent,
@@ -21,8 +23,8 @@ import {
 import { Colors, monoFont } from './styles';
 import { useResponsive } from './useResponsive';
 
-/** Roles that map to ProductionContent. */
-const PRODUCTION_ROLES: ReadonlySet<Role> = new Set(['industry', 'agriculture', 'power']);
+/** Roles that map to ProductionContent (fallback for power/other production). */
+const PRODUCTION_ROLES: ReadonlySet<Role> = new Set(['power']);
 
 /** Roles that map to ServiceContent. */
 const SERVICE_ROLES: ReadonlySet<Role> = new Set(['services', 'culture', 'propaganda', 'military']);
@@ -38,7 +40,7 @@ export const BuildingPanel: React.FC = () => {
   // Audio ducking
   useEffect(() => {
     if (cell) {
-      AudioManager.getInstance().duck(0.8);
+      AudioManager.getInstance().duck(0.2);
     } else {
       AudioManager.getInstance().unduck();
     }
@@ -56,9 +58,22 @@ export const BuildingPanel: React.FC = () => {
     }
   }, [cell, entity]);
 
+  // Intercept government-hq clicks: open the GovernmentHQ panel instead
+  useEffect(() => {
+    if (cell && entity && entity.building.defId === PARTY_HQ_DEF_ID) {
+      closeBuildingPanel();
+      openGovernmentHQ();
+    }
+  }, [cell, entity]);
+
   if (!cell) return null;
 
   if (!entity) {
+    return null;
+  }
+
+  // Government HQ is handled by the GovernmentHQ overlay, not the side panel
+  if (entity.building.defId === PARTY_HQ_DEF_ID) {
     return null;
   }
 
@@ -73,6 +88,10 @@ export const BuildingPanel: React.FC = () => {
     ContentComponent = <PartyHQContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else if (def.role === 'housing') {
     ContentComponent = <HousingContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
+  } else if (def.role === 'agriculture') {
+    ContentComponent = <FarmContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
+  } else if (def.role === 'industry') {
+    ContentComponent = <FactoryContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else if (PRODUCTION_ROLES.has(def.role)) {
     ContentComponent = <ProductionContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else if (SERVICE_ROLES.has(def.role)) {

@@ -1,6 +1,6 @@
 # Documentation — Master Agent Index
 
-> **SimSoviet 1917** — Satirical 3D city-builder (R3F + Three.js r183 + React Native + Expo)
+> **SimSoviet 1917** — Soviet bureaucrat survival sim (NOT a city builder). R3F + Three.js r183 + React Native + Expo.
 
 ## Quick Navigation
 

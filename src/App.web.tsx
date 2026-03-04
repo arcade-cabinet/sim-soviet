@@ -53,6 +53,8 @@ import {
   useBuildingPanel,
   useCitizenDossierIndex,
   useCursorTooltip,
+  useGovernmentHQ,
+  closeGovernmentHQ,
   usePoliticalPanel,
 } from './stores/gameStore';
 import { AchievementsPanel } from './ui/AchievementsPanel';
@@ -72,6 +74,7 @@ import { EdgeIndicators } from './ui/EdgeIndicators';
 import { EraTechTreePanel } from './ui/EraTechTreePanel';
 import { EventHistoryPanel } from './ui/EventHistoryPanel';
 import { GameModals, type GameOverInfo, type PlanDirective } from './ui/GameModals';
+import { GovernmentHQ } from './ui/GovernmentHQ';
 import { InfrastructurePanel } from './ui/InfrastructurePanel';
 import { IntroModal } from './ui/IntroModal';
 import { LeadershipPanel } from './ui/LeadershipPanel';
@@ -263,6 +266,7 @@ const App: React.FC = () => {
   const cursorTooltip = useCursorTooltip();
   const politicalPanelFromScene = usePoliticalPanel();
   const _buildingPanelCell = useBuildingPanel();
+  const showGovHQ = useGovernmentHQ();
 
   // ── Notification history (store-driven unread count) ──
   const unreadNotifications = useSyncExternalStore(subscribeNotifications, getUnreadCount, getUnreadCount);
@@ -931,6 +935,8 @@ const App: React.FC = () => {
         <ConsumerGoodsMarketPanel visible={showMarket} onDismiss={() => setShowMarket(false)} />
 
         <NotificationHistory visible={showNotifications} onDismiss={() => setShowNotifications(false)} />
+
+        <GovernmentHQ visible={showGovHQ} onClose={closeGovernmentHQ} />
 
         <BuildingInspectorPanel
           visible={!!buildingInspector}

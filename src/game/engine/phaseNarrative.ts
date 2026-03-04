@@ -12,8 +12,16 @@ import {
 } from '../../ai/agents/meta/achievementTick';
 import { tickDirectives as tickDirectivesHelper } from '../../ai/agents/meta/directiveTick';
 import { tickMinigames as tickMinigamesHelper } from '../../ai/agents/meta/minigameTick';
+import { applyMeteorImpact, rollMeteorStrike } from '../../ai/agents/crisis/meteorStrike';
+import {
+  completeProject,
+  demandPrestigeProject,
+  startConstruction,
+  tickConstruction,
+} from '../../ai/agents/narrative/prestigeLifecycle';
 import { CONSEQUENCE_PRESETS } from '../../ai/agents/political/ScoringSystem';
-import { getResourceEntity } from '../../ecs/archetypes';
+import { getCurrentGridSize } from '../../config';
+import { buildingsLogic, getResourceEntity } from '../../ecs/archetypes';
 import type { TickContext } from './tickContext';
 
 /**
@@ -111,6 +119,36 @@ export function phaseNarrative(ctx: TickContext): void {
     }
   }
 
+  // ── 24b. Prestige project lifecycle (yearly tick) ──
+  if (ctx.tickResult.newYear) {
+    tickPrestigeProjects(ctx);
+  }
+
+  // ── 24c. Meteor strike (yearly roll, any mode) ──
+  if (ctx.tickResult.newYear) {
+    const year = chronology.getDate().year;
+    const strike = rollMeteorStrike(rng, year);
+    if (strike) {
+      const gridSize = getCurrentGridSize();
+      const impact = applyMeteorImpact(strike.targetX, strike.targetY, gridSize);
+      // Destroy buildings on impacted tiles by zeroing durability (decay system removes them)
+      for (const tile of impact.destroyedTiles) {
+        for (const entity of buildingsLogic.entities) {
+          if (entity.position.gridX === tile.x && entity.position.gridY === tile.y) {
+            if ('durability' in entity && entity.durability) {
+              (entity.durability as { current: number }).current = 0;
+            }
+          }
+        }
+      }
+      callbacks.onPravda(
+        `METEORITE IMPACT at sector (${strike.targetX},${strike.targetY})! ` +
+          `${impact.destroyedTiles.length} tiles destroyed. ${impact.resourceDeposit} deposit discovered.`,
+      );
+      callbacks.onToast(`Meteor strike! ${impact.resourceDeposit} deposit found`, 'warning');
+    }
+  }
+
   // ── 25. Tutorial + directives + achievements ──
   const achievementCtx = {
     chronology,
@@ -121,4 +159,68 @@ export function phaseNarrative(ctx: TickContext): void {
   tickTutorialHelper(achievementCtx);
   tickDirectivesHelper({ callbacks });
   tickAchievementsHelper(achievementCtx);
+}
+
+/**
+ * Prestige project lifecycle: demand announcement, construction start/tick, completion.
+ * Runs once per year during the narrative phase.
+ */
+function tickPrestigeProjects(ctx: TickContext): void {
+  const { callbacks, rng, storeRef } = ctx;
+  const { chronology, political: politicalAgent } = ctx.agents;
+  const currentEra = politicalAgent.getCurrentEraId();
+  const year = chronology.getDate().year;
+
+  // If no demand yet for this era, announce it
+  if (!ctx.state.prestigeDemand || ctx.state.prestigeDemand.era !== currentEra) {
+    const demand = demandPrestigeProject(currentEra, rng);
+    ctx.state.prestigeDemand = demand;
+    ctx.state.prestigeConstruction = null;
+    callbacks.onPravda(
+      `Politburo mandates: ${demand.project.name}! Construction to begin by ${demand.announcementYear}.`,
+    );
+  }
+
+  const demand = ctx.state.prestigeDemand;
+
+  // If construction hasn't started and we've reached the announcement year, try to start
+  if (!ctx.state.prestigeConstruction && year >= demand.announcementYear) {
+    // Check required buildings exist
+    const existingDefIds = new Set<string>();
+    for (const entity of buildingsLogic.entities) {
+      existingDefIds.add(entity.building.defId);
+    }
+    const hasRequired = demand.project.requiredBuildings.every((id) => existingDefIds.has(id));
+    if (!hasRequired) return;
+
+    const resources = {
+      money: storeRef.resources.money,
+      food: storeRef.resources.food,
+      power: storeRef.resources.power,
+    };
+    const construction = startConstruction(demand.project, resources, year);
+    if (construction) {
+      // Deduction happened in-place on the resources object; write back
+      storeRef.resources.money = resources.money;
+      storeRef.resources.food = resources.food;
+      storeRef.resources.power = resources.power;
+      ctx.state.prestigeConstruction = construction;
+      callbacks.onToast(`Construction begun: ${demand.project.name}`, 'warning');
+    }
+    return;
+  }
+
+  // If construction is in progress, advance it
+  if (ctx.state.prestigeConstruction) {
+    ctx.state.prestigeConstruction = tickConstruction(ctx.state.prestigeConstruction);
+
+    // Check completion
+    const result = completeProject(ctx.state.prestigeConstruction);
+    if (result.success && result.rewards) {
+      storeRef.resources.blat += result.rewards.politicalCapital;
+      callbacks.onPravda(`${demand.project.name} completed! The Politburo commends your leadership.`);
+      callbacks.onToast(`Prestige project complete: ${demand.project.name}`, 'warning');
+      ctx.state.prestigeConstruction = null;
+    }
+  }
 }

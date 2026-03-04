@@ -128,9 +128,9 @@
       "cleanEra": 100
     },
     "scoreMultiplierMatrix": {
-      "worker": { "forgiving": 0.5, "permadeath": 1.0, "harsh": 0.7 },
-      "comrade": { "forgiving": 0.8, "permadeath": 1.5, "harsh": 1.2 },
-      "tovarish": { "forgiving": 1.0, "permadeath": 2.0, "harsh": 1.8 }
+      "worker": { "rehabilitated": 0.5, "rasstrelyat": 1.0, "gulag": 0.7 },
+      "comrade": { "rehabilitated": 0.8, "rasstrelyat": 1.5, "gulag": 1.2 },
+      "tovarish": { "rehabilitated": 1.0, "rasstrelyat": 2.0, "gulag": 1.8 }
     }
   },
   "entityScaling": {

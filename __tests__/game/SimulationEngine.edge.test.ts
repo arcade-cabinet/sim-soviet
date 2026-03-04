@@ -87,7 +87,8 @@ describe('SimulationEngine edge cases', () => {
       // Start with food=0. Use worker difficulty (quotaMultiplier=0.4 → target=200).
       // rehabilitated consequence to survive KGB marks from missed quotas.
       // Zero food each year boundary to ensure quotas are always missed.
-      createResourceStore({ food: 0, vodka: 0, population: 0 });
+      // Population=10 prevents era failure condition (population<=0 triggers "Settlement abandoned").
+      createResourceStore({ food: 0, vodka: 0, population: 10 });
       createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
       const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'rehabilitated');
       // Disable minigame/annual report callbacks to prevent interference
@@ -97,10 +98,11 @@ describe('SimulationEngine edge cases', () => {
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
 
       // Year 1926 Oct → 1927 Jan (fail 1) — 90 ticks
-      // Zero food each tick to prevent fondy accumulation
+      // Zero food each tick to prevent fondy accumulation; keep population alive to avoid era failure
       for (let i = 0; i < 90; i++) {
         getResourceEntity()!.resources.food = 0;
         getResourceEntity()!.resources.vodka = 0;
+        getResourceEntity()!.resources.population = 10;
         engine2.tick();
       }
 
@@ -112,6 +114,7 @@ describe('SimulationEngine edge cases', () => {
         for (let i = 0; i < 5 * TICKS_PER_YEAR; i++) {
           getResourceEntity()!.resources.food = 0;
           getResourceEntity()!.resources.vodka = 0;
+          getResourceEntity()!.resources.population = 10;
           engine2.tick();
           if (getMetaEntity()!.gameMeta.gameOver) break;
         }

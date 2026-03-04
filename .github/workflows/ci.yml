@@ -133,8 +133,10 @@ jobs:
       - name: Setup Node + pnpm
         uses: ./.github/actions/setup-node-pnpm
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers + xvfb
+        run: |
+          npx playwright install --with-deps chrome
+          sudo apt-get install -y xvfb
 
       - name: Build project for E2E (no base URL prefix)
         run: |
@@ -158,8 +160,8 @@ jobs:
           mkdir -p dist/sim-soviet
           ln -s ../assets dist/sim-soviet/assets
 
-      - name: Run Playwright E2E tests
-        run: npx playwright test
+      - name: Run Playwright E2E tests (headed via xvfb)
+        run: xvfb-run --auto-servernum --server-args='-screen 0 1280x720x24' npx playwright test
 
       - name: Upload Playwright report
         if: success() || failure()

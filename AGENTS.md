@@ -1,6 +1,6 @@
 # SimSoviet 1917 — Agent Navigation
 
-> Satirical 3D city-builder set in the Soviet Union (starting 1917).
+> Soviet bureaucrat survival sim (NOT a city builder). The player is the predsedatel — the settlement grows organically via autonomous agents. The player does NOT freely place buildings.
 > Built with React Three Fiber + Three.js r183 + React Native + Expo.
 
 ## Quick Start for Agents

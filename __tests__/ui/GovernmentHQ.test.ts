@@ -6,6 +6,14 @@
  * - AgencyTab type coverage
  */
 
+// Mock modules that pull in expo-sqlite (ESM not transformable by Jest)
+jest.mock('@/bridge/GameInit', () => ({ getEngine: () => null }));
+jest.mock('@/ecs/archetypes', () => ({ getResourceEntity: () => null }));
+jest.mock('@/stores/gameStore', () => ({
+  useGosplanAllocations: () => ({ food: 40, industrial: 30, housing: 20, military: 10 }),
+  setGosplanAllocations: jest.fn(),
+}));
+
 import { AGENCY_TABS, type AgencyTab, type AgencyTabDef, type GovernmentHQProps } from '@/ui/GovernmentHQ';
 
 describe('GovernmentHQ', () => {

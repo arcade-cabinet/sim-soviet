@@ -10,7 +10,16 @@ import { getBuildingDef } from '../../data/buildingDefs';
 import { buildingsLogic, decayableBuildings, operationalBuildings } from '../../ecs/archetypes';
 import { constructionSystem } from '../../ecs/systems';
 import { poissonSample } from '../../math/poissonSampling';
+import { getGosplanAllocations } from '../../stores/gameStore';
+import {
+  aggregateOffscreenResults,
+  getOffscreenBuildings,
+  type OffscreenBuilding,
+  type ResourceType,
+  tickOffscreenBuildings,
+} from './offscreenTick';
 import type { TickContext } from './tickContext';
+import { type BuildingPosition, getVisibleBounds, queryVisibleBuildings } from './viewportQuery';
 
 /** Snapshot of resource levels before production, for delivery calculations. */
 export interface PreProductionSnapshot {
@@ -56,6 +65,13 @@ export function phaseProduction(ctx: TickContext): PreProductionSnapshot {
     moneyBefore: storeRef.resources.money,
   };
 
+  // Gosplan allocation modifiers: food allocation (default 40%) scales food production,
+  // industrial allocation (default 30%) scales industrial output.
+  // Normalized so default allocation = 1.0 modifier.
+  const gosplanAlloc = getGosplanAllocations();
+  const foodAllocMod = gosplanAlloc.food / 40;
+  const industrialAllocMod = gosplanAlloc.industrial / 30;
+
   if (ctx.raion) {
     // Aggregate mode: compute production per operational building via tickBuilding
     const tickCtx: BuildingTickContext = {
@@ -85,13 +101,13 @@ export function phaseProduction(ctx: TickContext): PreProductionSnapshot {
 
       const tickResult2 = tickBuilding(tickInput, tickCtx);
 
-      // Apply resource output
+      // Apply resource output (scaled by Gosplan allocation)
       if (def.stats.produces && tickResult2.netOutput > 0) {
         const resource = def.stats.produces.resource as 'food' | 'vodka';
         if (resource === 'food') {
-          storeRef.resources.food += tickResult2.netOutput;
+          storeRef.resources.food += tickResult2.netOutput * foodAllocMod;
         } else if (resource === 'vodka') {
-          storeRef.resources.vodka += tickResult2.netOutput;
+          storeRef.resources.vodka += tickResult2.netOutput * industrialAllocMod;
         }
       }
 
@@ -113,6 +129,58 @@ export function phaseProduction(ctx: TickContext): PreProductionSnapshot {
       }
     }
 
+    // ── 7b. Offscreen building tick (viewport-aware) ──
+    // In aggregate mode with many buildings, offscreen buildings use a simplified
+    // tick path via tickOffscreenBuildings(). Camera position is approximated from
+    // the grid center when no viewport info is available.
+    if (operationalBuildings.entities.length > 50) {
+      const allPositions: BuildingPosition[] = [];
+      const allOffscreen: OffscreenBuilding[] = [];
+
+      for (const entity of operationalBuildings.entities) {
+        const pos = entity.position;
+        allPositions.push({ id: `${pos.gridX},${pos.gridY}`, x: pos.gridX, z: pos.gridY });
+
+        const bldg = entity.building;
+        const def = getBuildingDef(bldg.defId);
+        if (!def) continue;
+        const staffCap = def.stats.staffCap ?? def.stats.housingCap ?? 10;
+        const baseRate = def.stats.produces ? def.stats.produces.amount / staffCap : 0;
+        const resourceType: ResourceType = def.stats.produces
+          ? (def.stats.produces.resource as ResourceType)
+          : bldg.powerOutput > 0
+            ? 'power'
+            : 'money';
+
+        allOffscreen.push({
+          id: `${pos.gridX},${pos.gridY}`,
+          defId: bldg.defId,
+          workerCount: bldg.workerCount,
+          avgSkill: bldg.avgSkill,
+          avgMorale: bldg.avgMorale,
+          avgLoyalty: bldg.avgLoyalty,
+          powered: bldg.powered,
+          baseRate,
+          tileFertility: 50,
+          resourceType,
+        });
+      }
+
+      // Use grid center as camera approximation; viewDistance covers most of the grid
+      const bounds = getVisibleBounds(15, 15, 15);
+      const visibleIds = new Set(queryVisibleBuildings(bounds, allPositions));
+      const offscreen = getOffscreenBuildings(allOffscreen, visibleIds);
+
+      if (offscreen.length > 0) {
+        const offResults = tickOffscreenBuildings(offscreen, tickCtx);
+        const agg = aggregateOffscreenResults(offResults);
+        storeRef.resources.food += agg.totalFood;
+        storeRef.resources.vodka += agg.totalVodka;
+        storeRef.resources.power += agg.totalPower;
+        storeRef.resources.money += agg.totalMoney;
+      }
+    }
+
     // Production chains still run in aggregate mode
     {
       const chainBuildingIds: string[] = [];
@@ -125,8 +193,8 @@ export function phaseProduction(ctx: TickContext): PreProductionSnapshot {
     const avgCondition = getAverageBuildingCondition();
 
     foodAgent.produce({
-      farmModifier: farmMod,
-      vodkaModifier: vodkaMod,
+      farmModifier: farmMod * foodAllocMod,
+      vodkaModifier: vodkaMod * industrialAllocMod,
       eraId: politicalAgent.getCurrentEraId(),
       skillFactor: avgSkill,
       conditionFactor: avgCondition,

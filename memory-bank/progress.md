@@ -1,10 +1,23 @@
 # Progress
 
-## What's Complete
+## CRITICAL REMINDER
+**This is NOT a city builder.** The player is a predsedatel (chairman). The settlement grows organically. Player does NOT freely place buildings. See CLAUDE.md and docs/GAME_VISION.md.
 
-### Core Game Systems
-- [x] SimulationEngine with full tick orchestration
-- [x] 16 building types × 3 levels with placement/bulldoze
+## What's Complete (Implemented & Tested)
+
+### Engine Architecture
+- [x] SimulationEngine decomposed into 7 phase modules (thin orchestrator, ~890 lines)
+- [x] TickContext shared type for all phases
+- [x] Yuka agent architecture (8 subpackages, 123+ files, 28k+ lines)
+- [x] Governor/crisis system (HistoricalGovernor + FreeformGovernor + ChaosEngine)
+- [x] Building-as-Container (dual population modes: entity < 200, aggregate >= 200)
+- [x] Seeded GameRng mandatory (80+ Math.random replaced)
+- [x] SettlementSummary type + settlement_state DB schema
+- [x] Per-building tick, per-tile terrain tick pure functions
+- [x] Condition-based crisis state machine
+- [x] Protected building classes (government/military never demolished)
+
+### Game Systems
 - [x] Resource tracking (food, vodka, power, water, money, population)
 - [x] 5-year plan quotas with annual reviews
 - [x] 8 era campaigns with transitions and doctrine integration
@@ -12,20 +25,21 @@
 - [x] Settlement tiers (selo → posyolok → PGT → gorod)
 - [x] 31 achievements with tracking
 - [x] 9 text-choice minigames
-- [x] Scoring system with 3×3 difficulty/consequence matrix
-- [x] Tutorial system (12 sequential directives)
+- [x] Scoring system with consequence multipliers (rehabilitated/gulag/rasstrelyat)
+- [x] Classic mode REMOVED — only historical and freeform
+- [x] Soviet consequence nomenclature (rehabilitated/gulag/rasstrelyat)
 
 ### Demographics & Workers
 - [x] Dvor (household) system with family structures
 - [x] Birth/death/aging lifecycle
 - [x] Gender-differentiated retirement (55F/60M)
 - [x] Male-first conscription (18-51)
-- [x] Era birth rate multipliers
 - [x] Private plot food production
 - [x] Loyalty/sabotage system
 - [x] Trudodni (7-category labor accounting)
 - [x] Worker AI (6 behavior classes)
-- [x] Autonomous collective self-organization
+- [x] Statistical demographics (Poisson-sampled)
+- [x] Entity GC sweeps (orphan citizens, empty dvory)
 
 ### Political Systems
 - [x] Politburo with 10 ministries
@@ -40,58 +54,53 @@
 - [x] Save/load (full serialization to IndexedDB)
 - [x] WebXR support (AR tabletop, VR walkthrough)
 
-### Building-as-Container Architecture
-- [x] Dual population modes (entity < 200, aggregate >= 200)
-- [x] RaionPool district demographics (age-sex buckets, vital stats)
-- [x] Building workforce fields (8 new fields on BuildingComponent)
-- [x] Statistical demographics (Poisson-sampled births/deaths/aging)
-- [x] Building production function (computeBuildingProduction)
-- [x] Collapse transition (collapseEntitiesToBuildings)
-- [x] Brutalist building scaling (capacity-based, no new assets)
-- [x] Seeded GameRng mandatory (80+ Math.random replaced)
-- [x] Population growth gated yearly (3% housing cap)
-- [x] Aggregate mode guards (disease, trudodni, UI snapshot)
-- [x] Serialization with backward compatibility
-- [x] Entity GC sweeps (orphan citizens, empty dvory)
-- [x] Shared poissonSample utility (src/math/poissonSampling.ts)
-
 ### Infrastructure
-- [x] CI (typecheck + tests on PR)
+- [x] CI (lint + typecheck + tests on PR)
 - [x] CD (Release Please → GitHub Pages + Android APK)
-- [x] 3,381+ tests across 128 suites
-
-### Health & Safety
-- [x] Disease events (DiseaseSystem with seasonal epidemics)
-- [x] Workplace accidents (WorkerSystem accident mechanics)
-
-### Documentation & Tooling
+- [x] 4,400+ tests across 170 suites
 - [x] Documentation overhaul (41 docs with YAML frontmatter)
 - [x] JSDoc completion (~273/283 source files)
-- [x] AGENTS.md index hierarchy (8 files)
-- [x] Memory bank (Cline-style, 7 files)
-- [x] .claude agent/command architecture (6 agents, 5 commands)
-- [x] TypeDoc generation pipeline (`npm run docs:api`)
 
-## What's In Progress
+## NOT YET DONE (Planned — Implement These Next)
 
-- [ ] E2E Playwright test expansion (6 spec files)
+These are documented in detail in `docs/plans/`:
 
-## What's Planned
+### Phase 1: Remove Build Menu + Strip HUD (buildings-are-the-ui-plan Phase 1)
+- [ ] Remove BUILD toolbar, ZONING/INFRASTRUCTURE/STATE subtabs, GhostPreview
+- [ ] Strip TopBar to minimal: date, 3 resources, speed controls
+- [ ] Remove advisor popup, ticker, quota HUD, directive HUD, worker status, lens selector
+- [ ] Keep minimap (toggleable), toast (emergency only)
 
-- [ ] Leader archetype behavioral modifiers (11 types designed)
-- [ ] Era doctrine full mechanics (thaw/freeze, stagnation rot, eternal bureaucracy)
-- [ ] Power transition mechanics full implementation
-- [ ] Late-era building definitions (mega-blocks, arcologies with large housingCap/staffCap)
-- [ ] Native minimap
-- [ ] WebXR entry point UI
-- [ ] iOS build pipeline + E2E CI
+### Phase 2: Organic Settlement Growth Engine
+- [ ] Demand calculation (housing, food, fuel, industrial, infrastructure needs)
+- [ ] Era-appropriate site selection (pre-collectivization, collectivization, mikrorayon)
+- [ ] Construction queue (materials consumed, worker brigades, real build time)
+- [ ] Player influence via directives (shift demand weights, not direct placement)
+
+### Phase 3: Buildings-as-UI System
+- [ ] Click building → camera zooms → contextual side panel
+- [ ] Building type panels (commune, farm, factory, Party HQ, medical, militia, school)
+- [ ] Progressive HQ splitting (multi-function HQ → dedicated buildings as pop grows)
+
+### Phase 4: Soviet Allocation Engine
+- [ ] DB-backed tick pipeline (buildings tick via SQL, not ECS scan)
+- [ ] Dvory motivation system (survival → duty → personal needs)
+- [ ] Land grants (territory expands with settlement tier)
+- [ ] Terrain prestige and contamination
+- [ ] Policy UI via Government HQ building
+
+### Phase 5: Dynamic Map Expansion
+- [ ] Grid starts small (~20x20 at selo)
+- [ ] Expands when settlement tier upgrades (posyolok → 30x30, pgt → 40x40, gorod → 50x50)
+- [ ] GameGrid.expandGrid() + MapSystem.expandTerrain()
+- [ ] Scene components update on resize (TerrainGrid, LensSystem, CameraController)
 
 ## Version History
 
 | Version | Date | Highlights |
 |---------|------|-----------|
-| v1.2.0 | 2026-03 | Demographics overhaul, docs overhaul, game completion sprint (pending release) |
-| v1.1.3 | 2026-02 | Docs-vs-code alignment audit (83 findings) |
+| v1.2.0 | 2026-03 | Engine decomposition, classic mode removed, Soviet consequence names (pending) |
+| v1.1.3 | 2026-02 | Docs-vs-code alignment audit |
 | v1.1.2 | 2026-02 | 3D rendering fix, political entity tap interaction |
 | v1.1.0 | 2026-02 | R3F migration from BabylonJS |
 | v1.0.0 | 2026-02 | Initial release — all core systems |

@@ -9,7 +9,7 @@ last_verified: 2026-03-01
 
 > *"All documentation is accurate. Discrepancies are the reader's fault."*
 
-This directory contains the design specifications, reference documents, and development logs for **SimSoviet 1917** — a satirical 3D city-builder set in an alternate-history Soviet Union that never collapses. Built with React Three Fiber (Three.js r183 + React Native + Expo).
+This directory contains the design specifications, reference documents, and development logs for **SimSoviet 1917** — a Soviet bureaucrat survival sim (NOT a city builder) set in an alternate-history Soviet Union that never collapses. The player is the predsedatel; the settlement grows organically via autonomous agents. Built with React Three Fiber (Three.js r183 + React Native + Expo).
 
 ---
 

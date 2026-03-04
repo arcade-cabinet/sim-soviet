@@ -130,7 +130,7 @@ export {
   getEraMultiplier,
   getSettingsMultiplier,
   MEDALS,
-  SCORE_MULTIPLIER_MATRIX,
+  SCORE_MULTIPLIER,
   ScoringSystem,
 } from './ScoringSystem';
 export type {

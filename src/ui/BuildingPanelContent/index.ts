@@ -3,6 +3,8 @@
  * based on the building's role.
  */
 
+export { FactoryContent } from './FactoryContent';
+export { FarmContent } from './FarmContent';
 export { GenericContent } from './GenericContent';
 export { HousingContent } from './HousingContent';
 export { PartyHQContent } from './PartyHQContent';

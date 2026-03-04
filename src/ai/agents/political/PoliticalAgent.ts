@@ -410,7 +410,7 @@ export class PoliticalAgent extends Vehicle {
   private rng?: GameRng;
 
   /** Game mode — freeform uses OrganicUnlocks for era transitions. */
-  private gameMode: GovernorMode = 'classic';
+  private gameMode: GovernorMode = 'historical';
 
   /** Cached organic unlock context for Freeform mode era transitions. */
   private organicCtx: UnlockContext | null = null;

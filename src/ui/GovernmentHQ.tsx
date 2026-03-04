@@ -2,13 +2,28 @@
  * GovernmentHQ — Central bureaucratic panel with 6 agency tabs.
  *
  * Tabs: Gosplan | Central Committee | KGB | Military | Politburo | Reports
- * Each tab will house agency-specific content; placeholders for now.
+ * Each tab reads live data from the SimulationEngine via getEngine().
  */
 
 import type React from 'react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { type Allocations, DEFAULT_ALLOCATIONS, GosplanTab } from './hq-tabs/GosplanTab';
+import { getEngine } from '../bridge/GameInit';
+import { getResourceEntity } from '../ecs/archetypes';
+import { setGosplanAllocations, useGosplanAllocations } from '../stores/gameStore';
+import {
+  type ActiveDirective,
+  CENTRAL_COMMITTEE_DIRECTIVES,
+  CentralCommitteeTab,
+} from './hq-tabs/CentralCommitteeTab';
+import { GosplanTab } from './hq-tabs/GosplanTab';
+import type { ArrestRecord } from './hq-tabs/KGBTab';
+import { KGBTab } from './hq-tabs/KGBTab';
+import { type DefensePosture, MilitaryTab } from './hq-tabs/MilitaryTab';
+import type { PolitburoDemand, PrestigeProjectStatus } from './hq-tabs/PolitburoTab';
+import { PolitburoTab } from './hq-tabs/PolitburoTab';
+import type { AnnualSummary, QuotaHistoryEntry } from './hq-tabs/ReportsTab';
+import { ReportsTab } from './hq-tabs/ReportsTab';
 import { Colors, monoFont } from './styles';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -31,16 +46,6 @@ export const AGENCY_TABS: AgencyTabDef[] = [
   { key: 'reports', label: 'REPORTS' },
 ];
 
-/** Human-readable placeholder descriptions for each agency tab. */
-const TAB_DESCRIPTIONS: Record<AgencyTab, string> = {
-  gosplan: 'Gosplan — Coming Soon',
-  central_committee: 'Central Committee — Coming Soon',
-  kgb: 'KGB — Coming Soon',
-  military: 'Military — Coming Soon',
-  politburo: 'Politburo — Coming Soon',
-  reports: 'Reports — Coming Soon',
-};
-
 // ── Props ───────────────────────────────────────────────────────────────────
 
 export interface GovernmentHQProps {
@@ -52,9 +57,71 @@ export interface GovernmentHQProps {
 
 export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) => {
   const [activeTab, setActiveTab] = useState<AgencyTab>('gosplan');
-  const [allocations, setAllocations] = useState<Allocations>({ ...DEFAULT_ALLOCATIONS });
+  const allocations = useGosplanAllocations();
+
+  // Military posture (local UI state until wired to engine)
+  const [militaryPosture, setMilitaryPosture] = useState<DefensePosture>('peacetime');
+
+  // Central Committee directive state
+  const [activeDirective, setActiveDirective] = useState<ActiveDirective | null>(null);
+
+  const handleAllocationChange = useCallback((newAlloc: typeof allocations) => {
+    setGosplanAllocations(newAlloc as any);
+  }, []);
+
+  const handleIssueDirective = useCallback(
+    (directiveId: string) => {
+      const engine = getEngine();
+      const tick = engine?.getChronology().getDate().totalTicks ?? 0;
+      const directive = CENTRAL_COMMITTEE_DIRECTIVES.find((d) => d.id === directiveId);
+      if (!directive) return;
+      setActiveDirective({
+        directiveId,
+        issuedAtTick: tick,
+        lockInTicks: directive.lockInTicks,
+      });
+    },
+    [],
+  );
 
   if (!visible) return null;
+
+  const engine = getEngine();
+
+  // ── Build tab content ──
+
+  let tabContent: React.ReactNode;
+
+  switch (activeTab) {
+    case 'gosplan':
+      tabContent = (
+        <GosplanTab
+          currentAllocations={allocations as any}
+          onAllocationChange={handleAllocationChange}
+        />
+      );
+      break;
+
+    case 'kgb':
+      tabContent = renderKGBTab(engine);
+      break;
+
+    case 'military':
+      tabContent = renderMilitaryTab(engine, militaryPosture, setMilitaryPosture);
+      break;
+
+    case 'politburo':
+      tabContent = renderPolitburoTab(engine);
+      break;
+
+    case 'central_committee':
+      tabContent = renderCentralCommitteeTab(engine, activeDirective, handleIssueDirective);
+      break;
+
+    case 'reports':
+      tabContent = renderReportsTab(engine);
+      break;
+  }
 
   return (
     <View style={styles.overlay} pointerEvents="box-none">
@@ -93,17 +160,202 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
         </View>
 
         {/* Content area */}
-        <ScrollView style={styles.content}>
-          {activeTab === 'gosplan' ? (
-            <GosplanTab currentAllocations={allocations} onAllocationChange={setAllocations} />
-          ) : (
-            <Text style={styles.placeholder}>{TAB_DESCRIPTIONS[activeTab]}</Text>
-          )}
-        </ScrollView>
+        <ScrollView style={styles.content}>{tabContent}</ScrollView>
       </View>
     </View>
   );
 };
+
+// ── Tab renderers (extract engine data → pass to pure tab components) ────
+
+function renderKGBTab(engine: ReturnType<typeof getEngine>): React.ReactNode {
+  if (!engine) return <Text style={styles.placeholder}>Engine not initialized</Text>;
+
+  const kgb = engine.getKGBAgent();
+  const personnel = engine.getPersonnelFile();
+  const workerSystem = engine.getWorkerSystem();
+
+  // Loyalty level: approximated from worker morale (no direct loyalty avg on WorkerSystem)
+  const loyaltyLevel = Math.round(workerSystem.getAverageMorale());
+
+  // Dissidents: count from KGB investigations
+  const investigations = kgb.getActiveInvestigations();
+  const dissidentCount = investigations.length;
+
+  // Recent arrests from file history
+  const history = personnel.getHistory();
+  const recentArrests: ArrestRecord[] = history
+    .filter((h) => h.type === 'mark')
+    .slice(-5)
+    .reverse()
+    .map((h) => ({
+      name: h.source.replace(/_/g, ' ').toUpperCase(),
+      reason: h.description ?? 'No details available',
+      date: `Tick ${h.tick}`,
+    }));
+
+  // Surveillance active if there are informants or investigations running
+  const informants = kgb.getInformants();
+  const surveillanceActive = informants.length > 0 || investigations.length > 0;
+
+  return (
+    <KGBTab
+      loyaltyLevel={loyaltyLevel}
+      dissidentCount={dissidentCount}
+      recentArrests={recentArrests}
+      surveillanceActive={surveillanceActive}
+    />
+  );
+}
+
+function renderMilitaryTab(
+  engine: ReturnType<typeof getEngine>,
+  posture: DefensePosture,
+  setPosture: (p: DefensePosture) => void,
+): React.ReactNode {
+  if (!engine) return <Text style={styles.placeholder}>Engine not initialized</Text>;
+
+  const res = getResourceEntity()?.resources;
+  const pop = res?.population ?? 0;
+  const workerSystem = engine.getWorkerSystem();
+
+  // Garrison: estimated as 5% of population (no dedicated military worker tracking)
+  const garrisonStrength = Math.floor(pop * 0.05);
+
+  // Conscription pool: males 18-51
+  const conscriptionPool = Math.floor(pop * 0.25);
+
+  // Defense readiness: composite from garrison + buildings
+  const defenseReadiness = Math.min(100, Math.round((garrisonStrength / Math.max(1, pop)) * 500));
+
+  return (
+    <MilitaryTab
+      currentPosture={posture}
+      garrisonStrength={garrisonStrength}
+      conscriptionPool={conscriptionPool}
+      defenseReadiness={defenseReadiness}
+      onPostureChange={setPosture}
+    />
+  );
+}
+
+function renderPolitburoTab(
+  engine: ReturnType<typeof getEngine>,
+): React.ReactNode {
+  if (!engine) return <Text style={styles.placeholder}>Engine not initialized</Text>;
+
+  const scoring = engine.getScoring();
+
+  // 5-year plan demands from current quota
+  const demands: PolitburoDemand[] = [];
+  const quota = engine.getQuota();
+  if (quota) {
+    demands.push({
+      type: quota.type,
+      target: quota.target,
+      current: quota.current,
+      deadline: quota.deadlineYear,
+    });
+  }
+
+  // Prestige project: tracked in engine tick context, not directly accessible from UI.
+  // Will show "no active project" until prestige lifecycle is exposed via engine API.
+  const prestigeProject: PrestigeProjectStatus | null = null;
+
+  // Satisfaction: derived from final score (normalized 0-100)
+  const totalScore = scoring.getFinalScore();
+  const satisfaction = Math.min(100, Math.max(0, Math.round(totalScore / 10)));
+
+  return (
+    <PolitburoTab
+      demands={demands}
+      prestigeProject={prestigeProject}
+      satisfaction={satisfaction}
+      onAcceptMandate={() => {
+        // Mandates are accepted via the plan directive modal, not here
+      }}
+    />
+  );
+}
+
+function renderCentralCommitteeTab(
+  engine: ReturnType<typeof getEngine>,
+  activeDirective: ActiveDirective | null,
+  onIssueDirective: (id: string) => void,
+): React.ReactNode {
+  if (!engine) return <Text style={styles.placeholder}>Engine not initialized</Text>;
+
+  const tick = engine.getChronology().getDate().totalTicks;
+
+  return (
+    <CentralCommitteeTab
+      directives={CENTRAL_COMMITTEE_DIRECTIVES}
+      activeDirective={activeDirective}
+      onIssueDirective={onIssueDirective}
+      currentTick={tick}
+      politicalCapital={0}
+    />
+  );
+}
+
+function renderReportsTab(
+  engine: ReturnType<typeof getEngine>,
+): React.ReactNode {
+  if (!engine) return <Text style={styles.placeholder}>Engine not initialized</Text>;
+
+  const chronology = engine.getChronology();
+  const date = chronology.getDate();
+  const political = engine.getPoliticalAgent();
+  const scoring = engine.getScoring();
+  const kgb = engine.getKGBAgent();
+  const res = getResourceEntity()?.resources;
+
+  const currentQuota = engine.getQuota();
+  const quotaForTab = currentQuota
+    ? {
+        type: currentQuota.type,
+        target: currentQuota.target,
+        current: currentQuota.current,
+        deadlineYear: currentQuota.deadlineYear,
+      }
+    : null;
+
+  // Build annual summary from current state
+  const annualSummary: AnnualSummary = {
+    year: date.year,
+    population: res?.population ?? 0,
+    foodProduced: res?.food ?? 0,
+    buildingsConstructed: 0, // TODO: track in engine
+    blackMarks: kgb.getBlackMarks(),
+    commendations: kgb.getCommendations(),
+  };
+
+  // Quota history from scoring breakdowns
+  const quotaHistory: QuotaHistoryEntry[] = [];
+  const breakdown = scoring.getScoreBreakdown();
+  for (const bd of breakdown.eras) {
+    if (bd.quotasMet > 0 || bd.quotasExceeded > 0) {
+      quotaHistory.push({
+        year: date.year - (breakdown.eras.length - breakdown.eras.indexOf(bd)),
+        type: 'production',
+        target: 100,
+        achieved: bd.quotasMet > 0 ? 100 : 50,
+        met: bd.quotasMet > 0,
+      });
+    }
+  }
+
+  return (
+    <ReportsTab
+      currentYear={date.year}
+      currentEra={political.getCurrentEraId()}
+      quotaHistory={quotaHistory}
+      annualSummary={annualSummary}
+      totalScore={scoring.getFinalScore()}
+      currentQuota={quotaForTab}
+    />
+  );
+}
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 

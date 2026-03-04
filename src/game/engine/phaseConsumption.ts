@@ -5,12 +5,52 @@
  * distribution resentment, and foraging.
  */
 
-import { computeAllocation, type BuildingAllocationInput } from '../../ai/agents/economy/allocationDistribution';
+import { type BuildingAllocationInput, computeAllocation } from '../../ai/agents/economy/allocationDistribution';
 import { foragingTick } from '../../ai/agents/economy/foragingSystem';
-import { housing } from '../../ecs/archetypes';
+import { housing, operationalBuildings } from '../../ecs/archetypes';
 import { computeDistribution, computeRoleBuckets } from '../../ecs/systems/distributionWeights';
 import type { PreProductionSnapshot } from './phaseProduction';
 import type { TickContext } from './tickContext';
+
+/**
+ * Compute proximity factor (0-1) for a housing building based on Manhattan distance
+ * to the nearest storage building. Buildings right next to storage get 1.0; buildings
+ * far away get a lower value approaching 0.
+ */
+function computeProximity(gridX: number, gridY: number): number {
+  let minDist = Number.POSITIVE_INFINITY;
+  for (const entity of operationalBuildings.entities) {
+    const defId = entity.building.defId;
+    // Storage buildings: warehouse, grain-elevator, cold-storage, granary, fuel-depot, silo
+    if (
+      defId === 'warehouse' ||
+      defId === 'grain-elevator' ||
+      defId === 'cold-storage' ||
+      defId === 'granary' ||
+      defId === 'fuel-depot' ||
+      defId.includes('silo')
+    ) {
+      const dist = Math.abs(entity.position.gridX - gridX) + Math.abs(entity.position.gridY - gridY);
+      if (dist < minDist) minDist = dist;
+    }
+  }
+  // No storage buildings: default to 0.5 (neutral)
+  if (minDist === Number.POSITIVE_INFINITY) return 0.5;
+  // Adjacent (dist 0-1): 1.0, decay with distance: 1 / (1 + dist * 0.1)
+  return 1 / (1 + minDist * 0.1);
+}
+
+/**
+ * Check if the KGB has an informant stationed at or near a building position.
+ * Buildings under KGB surveillance receive favorable resource allocation.
+ */
+function checkKgbFavor(gridX: number, gridY: number, kgbAgent: TickContext['agents']['kgb']): boolean {
+  for (const informant of kgbAgent.getInformants()) {
+    const dist = Math.abs(informant.buildingPos.gridX - gridX) + Math.abs(informant.buildingPos.gridY - gridY);
+    if (dist <= 1) return true;
+  }
+  return false;
+}
 
 /**
  * Run consumption phase: storage, economy, deliveries, food consumption, foraging.
@@ -68,9 +108,9 @@ export function phaseConsumption(ctx: TickContext, snapshot: PreProductionSnapsh
         id: e.building.defId,
         residentCount: e.building.residentCount,
         loyalty: e.building.avgLoyalty,
-        proximity: 1.0, // TODO: compute from distance to resource stores
+        proximity: computeProximity(e.position.gridX, e.position.gridY),
         skill: e.building.avgSkill,
-        kgbFavor: false, // TODO: wire KGB favor per building
+        kgbFavor: checkKgbFavor(e.position.gridX, e.position.gridY, kgbAgent),
       }));
 
       const totalResidents = allocationInputs.reduce((s, b) => s + b.residentCount, 0);

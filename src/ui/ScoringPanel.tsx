@@ -40,9 +40,9 @@ const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
 };
 
 const CONSEQUENCE_LABELS: Record<ConsequenceLevel, string> = {
-  forgiving: 'FORGIVING',
-  permadeath: 'PERMADEATH',
-  harsh: 'HARSH',
+  rehabilitated: 'REHABILITATED',
+  gulag: 'GULAG',
+  rasstrelyat: 'RASSTRELYAT',
 };
 
 const MEDAL_TIER_COLORS: Record<string, string> = {

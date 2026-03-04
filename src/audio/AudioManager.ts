@@ -16,7 +16,7 @@ import { assetUrl } from '../utils/assetPath';
 import { GAMEPLAY_PLAYLIST, getTrack, MUSIC_CONTEXTS } from './AudioManifest';
 
 const AUDIO_BASE_PATH = `${assetUrl('assets/audio/music')}/`;
-const DEFAULT_CROSSFADE_MS = 2000;
+const DEFAULT_CROSSFADE_MS = 5000;
 const MASTER_VOLUME = 0.5;
 const MAX_BUFFER_CACHE_SIZE = 50;
 const DUCK_AMOUNT = 0.7;
