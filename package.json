@@ -35,9 +35,9 @@
     "miniplex": "^2.0.0",
     "miniplex-react": "^2.0.1",
     "postprocessing": "^6.38.3",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-native": "0.84.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native": "0.83.2",
     "react-native-svg": "^15.15.3",
     "react-native-web": "~0.21.2",
     "react-native-webgpu": "0.1.3",
@@ -50,7 +50,6 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@biomejs/biome": "^2.4.4",
-    "@expo/metro-config": "~55.0.9",
     "@gltf-transform/core": "^4.3.0",
     "@gltf-transform/extensions": "^4.3.0",
     "@gltf-transform/functions": "^4.3.0",
@@ -73,13 +72,11 @@
     "typescript": "^5.9.3"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "sharp"
-    ]
-  },
-  "overrides": {
-    "esbuild": ">=0.25.0"
+    "overrides": {
+      "esbuild": ">=0.25.0",
+      "react": "19.2.0",
+      "react-dom": "19.2.0"
+    }
   },
   "engines": {
     "node": ">=20"
