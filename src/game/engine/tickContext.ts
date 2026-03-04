@@ -39,7 +39,7 @@ import type { RaionPool } from '../../ecs/world';
 
 export interface TickContext {
   /** ECS resource store ref */
-  storeRef: { resources: Record<string, any> };
+  storeRef: { resources: Record<string, any> & { food: number; money: number; vodka: number; population: number; power: number; blat: number; raion?: RaionPool } };
   /** Chronology tick result (computed at start of tick) */
   tickResult: TickResult;
   /** Current population mode */

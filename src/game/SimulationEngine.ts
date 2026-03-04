@@ -43,7 +43,6 @@ import type { TickResult } from '../ai/agents/core/ChronologyAgent';
 import { ChronologyAgent, ChronologySystem } from '../ai/agents/core/ChronologyAgent';
 import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
 import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
-import { applyCrisisImpacts } from '../ai/agents/crisis/CrisisImpactApplicator';
 import type { GovernorDirective, IGovernor } from '../ai/agents/crisis/Governor';
 import { computeBuildingProduction } from '../ai/agents/economy/buildingProduction';
 import {
@@ -80,12 +79,6 @@ import type { GameEvent } from '../ai/agents/narrative/events';
 import { EventSystem } from '../ai/agents/narrative/events';
 import { PolitburoSystem } from '../ai/agents/narrative/politburo';
 import { PravdaSystem } from '../ai/agents/narrative/pravda';
-import {
-  type AnnualReportEngineState,
-  checkQuota as checkQuotaHelper,
-  handleQuotaMet as handleQuotaMetHelper,
-  handleQuotaMissed as handleQuotaMissedHelper,
-} from '../ai/agents/political/annualReportTick';
 import { CompulsoryDeliveries } from '../ai/agents/political/CompulsoryDeliveries';
 import { KGBAgent, PersonnelFile } from '../ai/agents/political/KGBAgent';
 import { LoyaltyAgent } from '../ai/agents/political/LoyaltyAgent';
@@ -103,15 +96,14 @@ import type { ConsequenceConfig, ConsequenceLevel, DifficultyLevel } from '../ai
 import { CONSEQUENCE_PRESETS, DIFFICULTY_PRESETS, ScoringSystem } from '../ai/agents/political/ScoringSystem';
 import { DefenseAgent, FireSystem, initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
 import { DemographicAgent } from '../ai/agents/social/DemographicAgent';
-import { collapseEntitiesToBuildings, getPopulationMode } from '../ai/agents/workforce/collectiveTransition';
+import { getPopulationMode } from '../ai/agents/workforce/collectiveTransition';
 import { WorkerSystem } from '../ai/agents/workforce/WorkerSystem';
-import { FreeformGovernor } from '../ai/agents/crisis/FreeformGovernor';
-import { INDUSTRIAL_BUILDING_IDS } from '../growth/OrganicUnlocks';
 import { TICKS_PER_YEAR } from './Chronology';
 import {
   restoreSubsystems as restoreSubsystemsHelper,
   serializeSubsystems as serializeSubsystemsHelper,
 } from './engine/serializeEngine';
+import { phaseChronology } from './engine/phaseChronology';
 import type { TickContext } from './engine/tickContext';
 import type { SimCallbacks, SubsystemSaveData } from './engine/types';
 import { EraSystem } from './era';
@@ -669,128 +661,22 @@ export class SimulationEngine {
     const storeRef = getResourceEntity();
     if (!storeRef) return;
 
-    // ── 1. Chronology ──
+    // ── 1. Chronology + 1b. Pop mode + 2. Era + 2.5 Governor + 2.6 Scoring ──
     const tickResult = this.chronologyAgent.tick();
-    this.syncChronologyToMeta(tickResult);
-    this.emitChronologyChanges(tickResult);
-
-    // ── 1b. Population mode detection ──
-    const popMode = getPopulationMode(storeRef.resources.population, this.raion);
-
-    // ── 2. Year boundary: era transition + quota check ──
-    if (tickResult.newYear) {
-      // Check for entity → aggregate collapse on year boundary
-      if (popMode === 'aggregate' && !this.raion) {
-        this.raion = collapseEntitiesToBuildings();
-        storeRef.resources.raion = this.raion;
-        storeRef.resources.population = this.raion.totalPopulation;
-        this.callbacks.onToast(
-          'The collective has grown. Individual records are now maintained by the raion.',
-          'warning',
-        );
-      }
-
-      // In Freeform mode, provide organic unlock context for condition-based era transitions
-      if (this.governor instanceof FreeformGovernor) {
-        const activeCrises = this.governor.getActiveCrises();
-        const hasActiveWar = activeCrises.some((id) => id.startsWith('war') || id.includes('war'));
-        const counters = this.governor.getYearsSinceCounters();
-        const industrialCount = buildingsLogic.entities.filter((e) =>
-          INDUSTRIAL_BUILDING_IDS.includes(e.building.defId),
-        ).length;
-
-        this.politicalAgent.setOrganicUnlockContext({
-          population: storeRef.resources.population,
-          industrialBuildingCount: industrialCount,
-          hasActiveWar,
-          hasExperiencedWar: this.governor.getTotalCrisesExperienced() > 0 && counters.war < Infinity,
-          yearsSinceLastWar: counters.war,
-          recentGrowthRate: 0, // simplified: not tracked precisely
-          lowGrowthYears: 0, // will be enhanced later
-          simulationYearsElapsed: this.chronologyAgent.getDate().year - this.startYear,
-          currentEraId: this.politicalAgent.getCurrentEraId(),
-        });
-      }
-
-      this.politicalAgent.handleEraTransitionFull({
-        year: this.chronologyAgent.getDate().year,
-        deliveries: this.deliveries,
-        economy: this.economyAgent,
-        transport: this.transport,
-        workers: this.workerSystem,
-        kgb: this.kgbAgent,
-        scoring: this.scoring,
-        callbacks: this.callbacks,
-        difficulty: this.difficulty,
-        chronology: this.chronologyAgent,
-      });
-
-      const reportCtx = this.getAnnualReportContext();
-      checkQuotaHelper(reportCtx);
-      if (reportCtx.engineState.pendingReport && !this.pendingReport) {
-        this.pendingReportSinceTick = this.chronologyAgent.getDate().totalTicks;
-      }
-      this.syncAnnualReportState(reportCtx.engineState);
-    }
-
-    // Auto-resolve pending report after 90 ticks
-    if (this.pendingReport) {
-      const elapsed = this.chronologyAgent.getDate().totalTicks - this.pendingReportSinceTick;
-      if (elapsed >= 90) {
-        this.pendingReport = false;
-        const reportCtx = this.getAnnualReportContext();
-        if (reportCtx.engineState.quota.current >= reportCtx.engineState.quota.target) {
-          handleQuotaMetHelper(reportCtx);
-        } else {
-          handleQuotaMissedHelper(reportCtx);
-        }
-        this.syncAnnualReportState(reportCtx.engineState);
-      }
-    }
-
-    this.politicalAgent.tickTransition();
-
-    // ── 2.5 Governor evaluation ──
-    this.cachedDirective = null;
-    if (this.governor) {
-      const date = this.chronologyAgent.getDate();
-      const govCtx = {
-        year: date.year,
-        month: date.month,
-        population: storeRef.resources.population,
-        food: storeRef.resources.food,
-        money: storeRef.resources.money,
-        rng: this.rng,
-        totalTicks: date.totalTicks,
-        eraId: this.politicalAgent.getCurrentEra().id,
-      };
-      this.cachedDirective = this.governor.evaluate(govCtx);
-      if (this.cachedDirective.crisisImpacts.length > 0) {
-        applyCrisisImpacts(this.cachedDirective.crisisImpacts, {
-          resources: storeRef.resources,
-          callbacks: this.callbacks,
-          workerSystem: this.workerSystem,
-          buildings: operationalBuildings.entities.map((e) => ({
-            gridX: e.position.gridX,
-            gridY: e.position.gridY,
-            type: e.building.defId,
-          })),
-          rng: this.rng,
-          totalTicks: this.chronologyAgent.getDate().totalTicks,
-        });
-      }
-      // Year boundary hook
-      if (tickResult.newYear && this.governor.onYearBoundary) {
-        this.governor.onYearBoundary(date.year);
-      }
-    }
-
-    // ── 2.6 Push governor modifiers into ScoringSystem ──
-    if (this.cachedDirective) {
-      this.scoring.setGovernorModifiers(this.cachedDirective.modifiers);
-    } else {
-      this.scoring.setGovernorModifiers(null);
-    }
+    const ctx = this.buildTickContext(tickResult, storeRef);
+    const chronoResult = phaseChronology(ctx);
+    this.raion = chronoResult.raion;
+    this.cachedDirective = chronoResult.cachedDirective;
+    // Sync mutable state back from context
+    this.lastSeason = ctx.state.lastSeason;
+    this.lastWeather = ctx.state.lastWeather;
+    this.lastDayPhase = ctx.state.lastDayPhase;
+    this.consecutiveQuotaFailures = ctx.state.consecutiveQuotaFailures;
+    this.pendingReport = ctx.state.pendingReport;
+    this.pendingReportSinceTick = ctx.state.pendingReportSinceTick;
+    this.mandateState = ctx.state.mandateState;
+    this.pripiskiCount = ctx.state.pripiskiCount;
+    this.ended = ctx.state.ended;
 
     // ── 3. Production modifiers ──
     const weatherProfile = getWeatherProfile(tickResult.weather as WeatherType);
@@ -1311,27 +1197,6 @@ export class SimulationEngine {
     };
   }
 
-  private getAnnualReportContext() {
-    return {
-      chronology: this.chronologyAgent,
-      personnelFile: this.kgbAgent,
-      scoring: this.scoring,
-      callbacks: this.callbacks,
-      rng: this.rng,
-      deliveries: this.deliveries,
-      engineState: {
-        quota: this.quota,
-        consecutiveQuotaFailures: this.consecutiveQuotaFailures,
-        pendingReport: this.pendingReport,
-        mandateState: this.mandateState,
-        pripiskiCount: this.pripiskiCount,
-        quotaMultiplier:
-          this.cachedDirective?.modifiers.quotaMultiplier ?? DIFFICULTY_PRESETS[this.difficulty].quotaMultiplier,
-      },
-      endGame: (victory: boolean, reason: string) => this.endGame(victory, reason),
-    };
-  }
-
   // ── Scheduled Population Inflows ────────────────────────────────────────────
 
   /**
@@ -1510,41 +1375,6 @@ export class SimulationEngine {
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────
-
-  private syncAnnualReportState(state: AnnualReportEngineState): void {
-    this.consecutiveQuotaFailures = state.consecutiveQuotaFailures;
-    this.pendingReport = state.pendingReport;
-    this.mandateState = state.mandateState;
-    this.pripiskiCount = state.pripiskiCount;
-  }
-
-  private syncChronologyToMeta(_tick: TickResult): void {
-    const date = this.chronologyAgent.getDate();
-    const meta = getMetaEntity();
-    if (meta) {
-      meta.gameMeta.date.year = date.year;
-      meta.gameMeta.date.month = date.month;
-      meta.gameMeta.date.tick = date.hour;
-    }
-  }
-
-  private emitChronologyChanges(tick: TickResult): void {
-    const seasonKey = tick.season.season;
-    if (seasonKey !== this.lastSeason) {
-      this.lastSeason = seasonKey;
-      this.callbacks.onSeasonChanged?.(seasonKey);
-    }
-    const weatherKey = tick.weather;
-    if (weatherKey !== this.lastWeather) {
-      this.lastWeather = weatherKey;
-      this.callbacks.onWeatherChanged?.(weatherKey);
-    }
-    const dayPhaseKey = tick.dayPhase;
-    if (dayPhaseKey !== this.lastDayPhase) {
-      this.lastDayPhase = dayPhaseKey;
-      this.callbacks.onDayPhaseChanged?.(dayPhaseKey, tick.dayProgress);
-    }
-  }
 
   private syncSystemsToMeta(): void {
     const meta = getMetaEntity();
