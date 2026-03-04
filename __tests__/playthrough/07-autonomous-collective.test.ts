@@ -20,12 +20,13 @@ describe('Playthrough: Autonomous Collective', () => {
   // ── Scenario 1: Low food triggers demand → auto-build farm ──────────────
 
   it('low food triggers collective to auto-build a farm', () => {
-    // population=30, food=80 → food per capita = 2.67 (below FOOD_DEMAND_THRESHOLD of 3.0)
-    // Generous timber/steel/vodka/money to survive 120+ ticks of consumption/heating
+    // population=10, food=20 → food per capita = 2.0 (below FOOD_DEMAND_THRESHOLD of 3.0)
+    // Generous resources to survive 600+ ticks.
+    // Small population keeps per-capita low enough to sustain food demand.
     const { engine } = createPlaythroughEngine({
       resources: {
-        population: 30,
-        food: 80,
+        population: 10,
+        food: 20,
         timber: 999,
         steel: 999,
         money: 9999,
@@ -44,9 +45,10 @@ describe('Playthrough: Autonomous Collective', () => {
 
     const initialCount = getBuildingCount();
 
-    // Advance well past the collective check interval (fires at totalTicks=60, 90, 120...)
-    // tickCollective requires totalTicks >= 60 and totalTicks % 30 === 0
-    advanceTicks(engine, 150);
+    // Advance well past the collective check interval.
+    // Era-based pacing: revolution fires at totalTicks=120, 240, 360...
+    // Need enough ticks for multiple checks.
+    advanceTicks(engine, 600);
 
     const finalCount = getBuildingCount();
     expect(finalCount).toBeGreaterThan(initialCount);

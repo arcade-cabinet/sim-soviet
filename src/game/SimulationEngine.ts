@@ -1122,6 +1122,7 @@ export class SimulationEngine {
       totalTicks: this.chronologyAgent.getDate().totalTicks,
       rng: this.rng,
       mandateState: this.mandateState,
+      eraId: this.politicalAgent.getCurrentEraId(),
       callbacks: this.callbacks as Parameters<typeof this.collectiveAgent.tickAutonomous>[0]['callbacks'],
       recordBuildingForMandates: (defId: string) => this.recordBuildingForMandates(defId),
     });
