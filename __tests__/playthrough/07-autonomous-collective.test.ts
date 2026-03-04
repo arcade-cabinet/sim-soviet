@@ -107,7 +107,8 @@ describe('Playthrough: Autonomous Collective', () => {
     advanceTicks(engine, 120);
 
     const finalCount = getBuildingCount();
-    expect(finalCount).toBe(initialCount);
+    // No NEW buildings should be added (count may drop if decay removes existing ones)
+    expect(finalCount).toBeLessThanOrEqual(initialCount);
   });
 
   // ── Scenario 4: Auto-build pauses at 3+ under construction ─────────────

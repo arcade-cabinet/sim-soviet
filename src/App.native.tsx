@@ -741,16 +741,8 @@ const App: React.FC = () => {
         {loadingFaded && (
           <View style={styles.uiOverlay} pointerEvents="box-none">
             <TopBar
-              season={snap.seasonLabel}
-              weather={snap.weatherLabel}
-              timber={snap.timber}
-              steel={snap.steel}
-              cement={snap.cement}
-              powerUsed={snap.powerUsed}
-              powerGen={snap.powerGen}
-              currentEra={snap.currentEra}
               food={snap.food}
-              vodka={snap.vodka}
+              timber={snap.timber}
               population={snap.pop}
               dateLabel={snap.dateLabel}
               monthProgress={snap.monthProgress}
@@ -761,29 +753,6 @@ const App: React.FC = () => {
               commendations={snap.commendations}
               settlementTier={snap.settlementTier}
               onThreatPress={handleThreatPress}
-              onShowAchievements={handleShowAchievements}
-              onShowLeadership={handleShowLeadership}
-              onShowEconomy={handleShowEconomy}
-              onShowWorkers={handleShowWorkers}
-              onShowMandates={handleShowMandates}
-              onShowDisease={handleShowDisease}
-              onShowInfra={handleShowInfra}
-              onShowEvents={handleShowEvents}
-              onShowPolitical={handleShowPolitical}
-              onShowScoring={handleShowScoring}
-              onShowWeather={handleShowWeather}
-              onShowEra={handleShowEra}
-              onShowSettlement={handleShowSettlement}
-              onShowPolitburo={handleShowPolitburo}
-              onShowDeliveries={handleShowDeliveries}
-              onShowMinigames={handleShowMinigames}
-              onShowPravda={handleShowPravda}
-              onShowWorkerAnalytics={handleShowWorkerAnalytics}
-              onShowEconomyDetail={handleShowEconomyDetail}
-              onShowSaveLoad={handleShowSaveLoad}
-              onShowMarket={handleShowMarket}
-              onShowNotifications={handleShowNotifications}
-              unreadNotifications={unreadNotifications}
             />
 
             <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
