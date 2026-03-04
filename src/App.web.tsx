@@ -180,8 +180,7 @@ const App: React.FC = () => {
     name: '',
   });
 
-  // Ticker text state retained for PravdaSystem callback (not rendered in Phase 1)
-  const [, setTickerText] = useState('');
+  // Ticker is not rendered in Phase 1 — state removed to avoid accumulation
 
   // ── Panel state ──
   const [showPersonnelFile, setShowPersonnelFile] = useState(false);
@@ -313,8 +312,8 @@ const App: React.FC = () => {
             showAdvisor(gameState, msg);
             SFXManager.getInstance().play('advisor_message');
           },
-          onPravda: (msg) => {
-            setTickerText((prev) => `${prev + msg}  ///  `);
+          onPravda: (_msg) => {
+            // Ticker is not rendered in Phase 1 — do not accumulate text in state
           },
           onStateChange: () => {
             // Sync ECS building powered state to old GameState for 3D effects

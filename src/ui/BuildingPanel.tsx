@@ -37,15 +37,23 @@ export const BuildingPanel: React.FC = () => {
     }
   }, [cell]);
 
+  // Find the building entity at this cell
+  const entity = cell
+    ? buildingsLogic.entities.find(
+        (e) => e.position.gridX === cell.x && e.position.gridY === cell.z,
+      )
+    : undefined;
+
+  // Close panel if the target building no longer exists
+  useEffect(() => {
+    if (cell && !entity) {
+      closeBuildingPanel();
+    }
+  }, [cell, entity]);
+
   if (!cell) return null;
 
-  // Find the building entity at this cell
-  const entity = buildingsLogic.entities.find(
-    (e) => e.position.gridX === cell.x && e.position.gridY === cell.z,
-  );
-
   if (!entity) {
-    // Building was removed while panel open
     return null;
   }
 

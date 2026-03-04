@@ -442,8 +442,8 @@ export class CollectiveAgent extends Vehicle {
       if (result) {
         return { gridX: result.x, gridY: result.z };
       }
-      // Expand search to full grid
-      const expanded = findBestPlacement(defId, ctx, GRID_SIZE);
+      // Expand search to full grid (GRID_SIZE * 2 ensures full Manhattan coverage)
+      const expanded = findBestPlacement(defId, ctx, GRID_SIZE * 2);
       if (expanded) {
         return { gridX: expanded.x, gridY: expanded.z };
       }
@@ -577,7 +577,6 @@ export class CollectiveAgent extends Vehicle {
    */
   public earlyGameBootstrap(rng: GameRng, eraId?: string): void {
     if (this.bootstrapped) return;
-    this.bootstrapped = true;
 
     // Require minimum materials and no existing buildings for bootstrap
     const storeRef = getResourceEntity();
@@ -631,6 +630,8 @@ export class CollectiveAgent extends Vehicle {
         /* placement failed */
       }
     }
+
+    this.bootstrapped = true;
   }
 
   /** Find an empty cell within radius of (cx, cy), avoiding occupied cells. */

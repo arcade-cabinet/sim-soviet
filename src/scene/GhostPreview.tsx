@@ -313,6 +313,7 @@ const GhostPreview: React.FC = () => {
 
       if (tool === 'bulldoze') {
         bulldozeECSBuilding(pick.gridX, pick.gridZ);
+        closeBuildingPanel();
       } else {
         // Direct placement disabled — settlement builds autonomously
         showToast(gameState, 'THE COLLECTIVE DECIDES WHERE TO BUILD, COMRADE');

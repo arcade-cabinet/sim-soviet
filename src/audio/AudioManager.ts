@@ -49,6 +49,7 @@ class AudioManager {
   // Ducking state
   private ducked = false;
   private duckLevel = 1;
+  private duckCount = 0;
 
   private playlist: string[] = [];
   private playlistIndex = 0;
@@ -200,11 +201,14 @@ class AudioManager {
       const buffer = await this.loadBuffer(url);
       if (!this.audioCtx || !this.incidentalGain) return;
 
-      // Create source on incidental chain
+      // Create source on incidental chain with per-track volume
       const source = this.audioCtx.createBufferSource();
       source.buffer = buffer;
       source.loop = false;
-      source.connect(this.incidentalGain);
+      const trackVolumeGain = this.audioCtx.createGain();
+      trackVolumeGain.gain.value = track.volume ?? 1.0;
+      source.connect(trackVolumeGain);
+      trackVolumeGain.connect(this.incidentalGain);
 
       source.onended = () => {
         if (this.incidentalSource === source) {
@@ -233,16 +237,19 @@ class AudioManager {
    * @param amount - Volume multiplier (e.g., 0.7 = 30% reduction)
    */
   duck(amount: number): void {
+    this.duckCount++;
     this.ducked = true;
     this.duckLevel = Math.max(0, Math.min(1, amount));
 
-    if (this.currentSource && this.audioCtx) {
+    if (this.currentSource && this.audioCtx && this.currentTrackId) {
       const trackGain: GainNode | undefined = (this.currentSource as any)._trackGain;
       if (trackGain) {
+        const track = getTrack(this.currentTrackId);
+        const baseVol = this.muted ? 0 : (track?.volume ?? 1);
         const now = this.audioCtx.currentTime;
         trackGain.gain.setValueAtTime(trackGain.gain.value, now);
         trackGain.gain.linearRampToValueAtTime(
-          trackGain.gain.value * this.duckLevel,
+          baseVol * this.duckLevel,
           now + 0.3,
         );
       }
@@ -252,6 +259,8 @@ class AudioManager {
   /** Restore base layer volume after ducking. */
   unduck(): void {
     if (!this.ducked) return;
+    this.duckCount = Math.max(0, this.duckCount - 1);
+    if (this.duckCount > 0) return;
     this.ducked = false;
     this.duckLevel = 1;
 
@@ -430,6 +439,7 @@ class AudioManager {
     this.trackStartTime = 0;
     this.ducked = false;
     this.duckLevel = 1;
+    this.duckCount = 0;
     this.bufferCache.clear();
     this.playlist = [];
     this.playlistIndex = 0;

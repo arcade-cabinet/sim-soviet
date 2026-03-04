@@ -189,7 +189,6 @@ export class FreeformGovernor implements IGovernor {
     this.currentYear = ctx.year;
 
     const allImpacts: CrisisImpact[] = [];
-    const activeCrisisIds = this.getActiveCrises();
 
     // ── Check historical crisis windows (on month 1 only) ──────────────
     if (ctx.month === 1) {
@@ -198,6 +197,9 @@ export class FreeformGovernor implements IGovernor {
 
     // ── ChaosEngine: generate new crises ────────────────────────────────
     this.maybeGenerateNewCrisis(ctx);
+
+    // Recompute active crisis IDs after spawning so agents see the updated list
+    const activeCrisisIds = this.getActiveCrises();
 
     // ── Evaluate all active agents ──────────────────────────────────────
     for (const entry of this.activeEntries) {

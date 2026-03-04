@@ -706,7 +706,7 @@ export class SimulationEngine {
           yearsSinceLastWar: counters.war,
           recentGrowthRate: 0, // simplified: not tracked precisely
           lowGrowthYears: 0, // will be enhanced later
-          simulationYearsElapsed: this.chronologyAgent.getDate().year - 1917,
+          simulationYearsElapsed: this.chronologyAgent.getDate().year - this.startYear,
           currentEraId: this.politicalAgent.getCurrentEraId(),
         });
       }
