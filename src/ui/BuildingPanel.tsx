@@ -3,14 +3,21 @@
  * Reads the building entity from the ECS world and renders the appropriate content type.
  */
 
-import React, { useEffect } from 'react';
+import type React from 'react';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import AudioManager from '../audio/AudioManager';
 import { getBuildingDef } from '../data/buildingDefs';
 import type { Role } from '../data/buildingDefs.schema';
 import { buildingsLogic } from '../ecs/archetypes';
 import { closeBuildingPanel, useBuildingPanel } from '../stores/gameStore';
-import { GenericContent, HousingContent, PartyHQContent, ProductionContent, ServiceContent } from './BuildingPanelContent';
+import {
+  GenericContent,
+  HousingContent,
+  PartyHQContent,
+  ProductionContent,
+  ServiceContent,
+} from './BuildingPanelContent';
 import { Colors, monoFont } from './styles';
 import { useResponsive } from './useResponsive';
 
@@ -39,9 +46,7 @@ export const BuildingPanel: React.FC = () => {
 
   // Find the building entity at this cell
   const entity = cell
-    ? buildingsLogic.entities.find(
-        (e) => e.position.gridX === cell.x && e.position.gridY === cell.z,
-      )
+    ? buildingsLogic.entities.find((e) => e.position.gridX === cell.x && e.position.gridY === cell.z)
     : undefined;
 
   // Close panel if the target building no longer exists
@@ -65,25 +70,15 @@ export const BuildingPanel: React.FC = () => {
   // Select content component based on role and defId
   let ContentComponent: React.ReactNode;
   if (entity.building.defId === PARTY_HQ_DEF_ID) {
-    ContentComponent = (
-      <PartyHQContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />
-    );
+    ContentComponent = <PartyHQContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else if (def.role === 'housing') {
-    ContentComponent = (
-      <HousingContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />
-    );
+    ContentComponent = <HousingContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else if (PRODUCTION_ROLES.has(def.role)) {
-    ContentComponent = (
-      <ProductionContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />
-    );
+    ContentComponent = <ProductionContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else if (SERVICE_ROLES.has(def.role)) {
-    ContentComponent = (
-      <ServiceContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />
-    );
+    ContentComponent = <ServiceContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else {
-    ContentComponent = (
-      <GenericContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />
-    );
+    ContentComponent = <GenericContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   }
 
   return (

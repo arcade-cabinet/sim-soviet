@@ -15,24 +15,22 @@ export interface TerrainTileState {
 }
 
 export interface YearlyTerrainContext {
-  rainfall: number;          // 0-1
-  globalWarmingRate: number;  // 0+ (Freeform only)
+  rainfall: number; // 0-1
+  globalWarmingRate: number; // 0+ (Freeform only)
 }
 
 /**
  * Compute one year of terrain evolution. Pure function.
  */
 export function tickTerrain(tile: TerrainTileState, ctx: YearlyTerrainContext): TerrainTileState {
-  const isDeforested = tile.type !== 'forest' && tile.type !== 'marsh' && tile.type !== 'water' && tile.type !== 'mountain';
+  const isDeforested =
+    tile.type !== 'forest' && tile.type !== 'marsh' && tile.type !== 'water' && tile.type !== 'mountain';
 
   // Erosion increases on deforested land with rainfall
   const erosion = tile.erosionLevel + (isDeforested && tile.erosionLevel > 0 ? ctx.rainfall * 0.1 : 0);
 
   // Fertility degrades from erosion and contamination
-  const fertility = Math.max(
-    0,
-    tile.fertility - erosion * 0.01 - tile.contamination * 0.05,
-  );
+  const fertility = Math.max(0, tile.fertility - erosion * 0.01 - tile.contamination * 0.05);
 
   // Forest aging
   const forestAge = tile.type === 'forest' ? tile.forestAge + 1 : 0;

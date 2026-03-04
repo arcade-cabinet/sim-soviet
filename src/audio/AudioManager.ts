@@ -248,10 +248,7 @@ class AudioManager {
         const baseVol = this.muted ? 0 : (track?.volume ?? 1);
         const now = this.audioCtx.currentTime;
         trackGain.gain.setValueAtTime(trackGain.gain.value, now);
-        trackGain.gain.linearRampToValueAtTime(
-          baseVol * this.duckLevel,
-          now + 0.3,
-        );
+        trackGain.gain.linearRampToValueAtTime(baseVol * this.duckLevel, now + 0.3);
       }
     }
   }

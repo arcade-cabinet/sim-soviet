@@ -16,4 +16,15 @@ export const terrainTiles = sqliteTable('terrain_tiles', {
   modifiedYear: integer('modified_year').notNull().default(1917),
 });
 
-export type TerrainTileType = 'forest' | 'steppe' | 'marsh' | 'tundra' | 'water' | 'mountain' | 'urban' | 'rubble' | 'crater' | 'contaminated' | 'grass';
+export type TerrainTileType =
+  | 'forest'
+  | 'steppe'
+  | 'marsh'
+  | 'tundra'
+  | 'water'
+  | 'mountain'
+  | 'urban'
+  | 'rubble'
+  | 'crater'
+  | 'contaminated'
+  | 'grass';

@@ -8,9 +8,9 @@
 export interface BuildingTickInput {
   defId: string;
   workerCount: number;
-  avgSkill: number;     // 0-100
-  avgMorale: number;    // 0-100
-  avgLoyalty: number;   // 0-100
+  avgSkill: number; // 0-100
+  avgMorale: number; // 0-100
+  avgLoyalty: number; // 0-100
   powered: boolean;
   baseRate: number;
   tileFertility: number; // 0-100

@@ -32,13 +32,7 @@ import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualR
 import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import { gameState } from './engine/GameState';
-import {
-  clearToast,
-  getToast,
-  setSpeed,
-  showAdvisor,
-  showToast,
-} from './engine/helpers';
+import { clearToast, getToast, setSpeed, showAdvisor, showToast } from './engine/helpers';
 import type { RehabilitationData } from './game/engine/types';
 import type { EraDefinition } from './game/era';
 import type { TallyData } from './game/GameTally';
@@ -48,7 +42,6 @@ import { useInputManager } from './input/useInputManager';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import {
   closeBuildingInspector,
-  closeBuildingPanel,
   closeCitizenDossierByIndex,
   closePoliticalPanel,
   type GameSpeed,
@@ -113,6 +106,7 @@ import { ViewportFrame } from './ui/ViewportFrame';
 import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
+
 // WorkerStatusBar removed — Phase 1 minimal HUD
 
 /**
@@ -268,7 +262,7 @@ const App: React.FC = () => {
   const citizenDossierIdx = useCitizenDossierIndex();
   const cursorTooltip = useCursorTooltip();
   const politicalPanelFromScene = usePoliticalPanel();
-  const buildingPanelCell = useBuildingPanel();
+  const _buildingPanelCell = useBuildingPanel();
 
   // ── Notification history (store-driven unread count) ──
   const unreadNotifications = useSyncExternalStore(subscribeNotifications, getUnreadCount, getUnreadCount);

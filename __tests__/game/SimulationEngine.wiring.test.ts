@@ -2,7 +2,7 @@
  * Tests for SimulationEngine wiring — verifies that TutorialSystem,
  * AchievementTracker, and GameTally are properly integrated.
  */
-import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
+import { getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';

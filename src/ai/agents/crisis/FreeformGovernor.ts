@@ -113,7 +113,7 @@ function createCrisisWindow(def: CrisisDefinition): HistoricalCrisisWindow {
   }
 
   // Solve: 1 - (1-p)^N = target => p = 1 - (1-target)^(1/N)
-  const baseProbability = 1 - Math.pow(1 - targetCumulative, 1 / windowYears);
+  const baseProbability = 1 - (1 - targetCumulative) ** (1 / windowYears);
 
   return {
     definition: { ...def, startYear: def.startYear, endYear: def.startYear + duration },
@@ -221,9 +221,7 @@ export class FreeformGovernor implements IGovernor {
     // Agents that have fully resolved (aftermath complete) will never
     // produce impacts again. Keeping them wastes CPU on every tick.
     if (ctx.month === 1) {
-      this.activeEntries = this.activeEntries.filter(
-        (entry) => !entry.activated || entry.agent.isActive(),
-      );
+      this.activeEntries = this.activeEntries.filter((entry) => !entry.activated || entry.agent.isActive());
     }
 
     // Merge into modifiers
@@ -438,11 +436,12 @@ export class FreeformGovernor implements IGovernor {
 
     // Restore historical window states
     this.loadHistoricalWindows();
-    const windowStates = (s.historicalWindowStates as Array<{
-      definitionId: string;
-      resolved: boolean;
-      triggered: boolean;
-    }>) ?? [];
+    const windowStates =
+      (s.historicalWindowStates as Array<{
+        definitionId: string;
+        resolved: boolean;
+        triggered: boolean;
+      }>) ?? [];
     for (const ws of windowStates) {
       const window = this.historicalWindows.find((w) => w.definition.id === ws.definitionId);
       if (window) {

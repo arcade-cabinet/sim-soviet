@@ -1,7 +1,7 @@
 import {
-  transitionCrisis,
-  type CrisisConditionState,
   type ConditionContext,
+  type CrisisConditionState,
+  transitionCrisis,
 } from '../../src/ai/agents/crisis/crisisConditions';
 
 describe('Crisis condition-based transitions', () => {

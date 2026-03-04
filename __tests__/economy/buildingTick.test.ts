@@ -1,5 +1,9 @@
 // __tests__/economy/buildingTick.test.ts
-import { tickBuilding, type BuildingTickInput, type BuildingTickContext } from '../../src/ai/agents/economy/buildingTick';
+import {
+  type BuildingTickContext,
+  type BuildingTickInput,
+  tickBuilding,
+} from '../../src/ai/agents/economy/buildingTick';
 
 describe('tickBuilding', () => {
   const baseBuilding: BuildingTickInput = {

@@ -26,13 +26,13 @@ export function computeAllocation(
   buildings: BuildingAllocationInput[],
 ): BuildingAllocationResult[] {
   if (totalPopulation <= 0 || totalSupply <= 0 || buildings.length === 0) {
-    return buildings.map(b => ({ id: b.id, baseline: 0, spike: 0, total: 0 }));
+    return buildings.map((b) => ({ id: b.id, baseline: 0, spike: 0, total: 0 }));
   }
 
   const perCapita = totalSupply / totalPopulation;
   const spikePool = totalSupply * 0.2;
 
-  const rawScores = buildings.map(b => {
+  const rawScores = buildings.map((b) => {
     const loyaltyFactor = b.loyalty / 100;
     const proximityFactor = b.proximity;
     const skillFactor = b.skill / 100;

@@ -9,17 +9,18 @@
  * Output: __tests__/playthrough/output/freeform-200yr.json
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
 import { FreeformGovernor } from '../../src/ai/agents/crisis/FreeformGovernor';
-import type { IGovernor } from '../../src/ai/agents/crisis/Governor';
 import { getPopulationMode } from '../../src/ai/agents/workforce/collectiveTransition';
 import {
-  getResourceEntity,
-  operationalBuildings,
-  underConstruction,
-  housing,
-  producers,
-  dvory,
   citizens,
+  dvory,
+  getResourceEntity,
+  housing,
+  operationalBuildings,
+  producers,
+  underConstruction,
 } from '../../src/ecs/archetypes';
 import { world } from '../../src/ecs/world';
 import {
@@ -32,9 +33,6 @@ import {
   TICKS_PER_MONTH,
   TICKS_PER_YEAR,
 } from './helpers';
-
-import * as fs from 'fs';
-import * as path from 'path';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -409,7 +407,9 @@ describe('Diagnostic: Freeform mode 200-year playthrough', () => {
     const chaosCount = report.crisisTimeline.filter(
       (e) => e.event === 'activated' && e.crisisId.match(/^(war|famine|disaster|political)-\d+-/),
     ).length;
-    console.log(`  Historical-origin activations: ${report.crisisTimeline.filter((e) => e.event === 'activated').length - chaosCount}`);
+    console.log(
+      `  Historical-origin activations: ${report.crisisTimeline.filter((e) => e.event === 'activated').length - chaosCount}`,
+    );
     console.log(`  Chaos-generated activations: ${chaosCount}`);
     console.log(`Anomalies: ${report.anomalySummary.length}`);
     if (report.anomalySummary.length > 0) {

@@ -9,8 +9,8 @@
  * - 1955+ (thaw/stagnation/eternal): Grid-aligned, services near housing (SNiP walking distances)
  */
 
-import type { EraId } from '../game/era/types';
 import { getBuildingDef } from '../data/buildingDefs';
+import type { EraId } from '../game/era/types';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 

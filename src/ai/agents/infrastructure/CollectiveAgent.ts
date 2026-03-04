@@ -29,9 +29,9 @@ import {
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
+import type { GameRng } from '../../../game/SeedSystem';
 import { getBuildInterval } from '../../../growth/GrowthPacing';
 import { findBestPlacement, type PlacementContext } from '../../../growth/SiteSelectionRules';
-import type { GameRng } from '../../../game/SeedSystem';
 import type { PlanMandateState } from '../political/PoliticalAgent';
 import type { WorkerStats } from '../workforce/types';
 
@@ -607,7 +607,7 @@ export class CollectiveAgent extends Vehicle {
     }
 
     // Place 2-3 izbas near the party-hq
-    const izbaCount = 2 + (rng.pickIndex(2)); // 2 or 3
+    const izbaCount = 2 + rng.pickIndex(2); // 2 or 3
     for (let i = 0; i < izbaCount; i++) {
       const defId = i % 2 === 0 ? 'workers-house-a' : 'workers-house-b';
       const cell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng);

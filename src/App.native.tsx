@@ -248,7 +248,7 @@ const App: React.FC = () => {
   const politicalPanelFromScene = usePoliticalPanel();
 
   // ── Notification history (store-driven unread count) ──
-  const unreadNotifications = useSyncExternalStore(subscribeNotifications, getUnreadCount, getUnreadCount);
+  const _unreadNotifications = useSyncExternalStore(subscribeNotifications, getUnreadCount, getUnreadCount);
 
   const handleDismissBuildingInspector = useCallback(() => {
     closeBuildingInspector();
@@ -494,11 +494,11 @@ const App: React.FC = () => {
     setShowPersonnelFile(true);
   }, []);
 
-  const handleShowAchievements = useCallback(() => {
+  const _handleShowAchievements = useCallback(() => {
     setShowAchievements(true);
   }, []);
 
-  const handleShowLeadership = useCallback(() => {
+  const _handleShowLeadership = useCallback(() => {
     setShowLeadership(true);
   }, []);
 
@@ -544,53 +544,53 @@ const App: React.FC = () => {
     gameState.notify();
   }, []);
 
-  const handleShowDisease = useCallback(() => {
+  const _handleShowDisease = useCallback(() => {
     setShowDisease(true);
   }, []);
 
-  const handleShowInfra = useCallback(() => {
+  const _handleShowInfra = useCallback(() => {
     setShowInfra(true);
   }, []);
-  const handleShowEvents = useCallback(() => {
+  const _handleShowEvents = useCallback(() => {
     setShowEvents(true);
   }, []);
-  const handleShowPolitical = useCallback(() => {
+  const _handleShowPolitical = useCallback(() => {
     setShowPolitical(true);
   }, []);
-  const handleShowScoring = useCallback(() => {
+  const _handleShowScoring = useCallback(() => {
     setShowScoring(true);
   }, []);
-  const handleShowWeather = useCallback(() => {
+  const _handleShowWeather = useCallback(() => {
     setShowWeather(true);
   }, []);
-  const handleShowEra = useCallback(() => {
+  const _handleShowEra = useCallback(() => {
     setShowEra(true);
   }, []);
-  const handleShowSettlement = useCallback(() => {
+  const _handleShowSettlement = useCallback(() => {
     setShowSettlement(true);
   }, []);
-  const handleShowPolitburo = useCallback(() => {
+  const _handleShowPolitburo = useCallback(() => {
     setShowPolitburo(true);
   }, []);
-  const handleShowDeliveries = useCallback(() => {
+  const _handleShowDeliveries = useCallback(() => {
     setShowDeliveries(true);
   }, []);
-  const handleShowMinigames = useCallback(() => {
+  const _handleShowMinigames = useCallback(() => {
     setShowMinigames(true);
   }, []);
-  const handleShowPravda = useCallback(() => {
+  const _handleShowPravda = useCallback(() => {
     setShowPravda(true);
   }, []);
-  const handleShowWorkerAnalytics = useCallback(() => {
+  const _handleShowWorkerAnalytics = useCallback(() => {
     setShowWorkerAnalytics(true);
   }, []);
-  const handleShowEconomyDetail = useCallback(() => {
+  const _handleShowEconomyDetail = useCallback(() => {
     setShowEconomyDetail(true);
   }, []);
-  const handleShowMarket = useCallback(() => {
+  const _handleShowMarket = useCallback(() => {
     setShowMarket(true);
   }, []);
-  const handleShowNotifications = useCallback(() => {
+  const _handleShowNotifications = useCallback(() => {
     setShowNotifications(true);
   }, []);
   // ── Save/Load state ──
@@ -606,7 +606,7 @@ const App: React.FC = () => {
     setLastSaveTime(time);
   }, []);
 
-  const handleShowSaveLoad = useCallback(() => {
+  const _handleShowSaveLoad = useCallback(() => {
     refreshSaveState();
     setShowSaveLoad(true);
   }, [refreshSaveState]);

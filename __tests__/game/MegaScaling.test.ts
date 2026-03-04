@@ -1,4 +1,4 @@
-import { getMaxBuildingTier, getScaleFactor, MEGA_SCALING_TIERS } from '../../src/config/megaScaling';
+import { getMaxBuildingTier, getScaleFactor } from '../../src/config/megaScaling';
 
 describe('Mega Scaling', () => {
   it('revolution era allows only base tier', () => {
@@ -25,5 +25,7 @@ describe('Mega Scaling', () => {
     expect(getMaxBuildingTier('the_eternal')).toBe(5);
     expect(getScaleFactor(5)).toBe(100000);
   });
-  it('unknown era defaults to 0', () => { expect(getMaxBuildingTier('unknown')).toBe(0); });
+  it('unknown era defaults to 0', () => {
+    expect(getMaxBuildingTier('unknown')).toBe(0);
+  });
 });

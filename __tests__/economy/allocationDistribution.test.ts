@@ -1,10 +1,10 @@
-import { computeAllocation, type BuildingAllocationInput } from '../../src/ai/agents/economy/allocationDistribution';
+import { type BuildingAllocationInput, computeAllocation } from '../../src/ai/agents/economy/allocationDistribution';
 
 describe('Two-layer resource distribution', () => {
   const buildings: BuildingAllocationInput[] = [
     { id: 'b1', residentCount: 100, loyalty: 80, proximity: 1.0, skill: 70, kgbFavor: false },
     { id: 'b2', residentCount: 100, loyalty: 30, proximity: 0.5, skill: 40, kgbFavor: false },
-    { id: 'b3', residentCount: 50,  loyalty: 90, proximity: 0.8, skill: 60, kgbFavor: true },
+    { id: 'b3', residentCount: 50, loyalty: 90, proximity: 0.8, skill: 60, kgbFavor: true },
   ];
 
   it('distributes baseline equally per capita', () => {
@@ -30,6 +30,6 @@ describe('Two-layer resource distribution', () => {
   });
   it('handles zero supply gracefully', () => {
     const result = computeAllocation(0, 250, buildings);
-    expect(result.every(r => r.baseline === 0 && r.spike === 0)).toBe(true);
+    expect(result.every((r) => r.baseline === 0 && r.spike === 0)).toBe(true);
   });
 });

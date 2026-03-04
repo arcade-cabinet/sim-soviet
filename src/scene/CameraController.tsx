@@ -41,7 +41,6 @@ const _panOffset = new THREE.Vector3();
 const _targetPos = new THREE.Vector3();
 const _targetLookAt = new THREE.Vector3();
 
-
 interface CameraControllerProps {
   /** When true, the camera controller is disabled (XR provides its own camera). */
   disabled?: boolean;

@@ -79,7 +79,6 @@ function getEraLabel(year: number): string {
   return 'Perestroika & Collapse (1986\u20131991)';
 }
 
-
 /** Soviet dossier-styled game configuration screen for difficulty, consequence, seed, and map size. */
 export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) => {
   const [gameMode, setGameMode] = useState<GameMode>('classic');

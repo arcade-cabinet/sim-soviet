@@ -34,6 +34,6 @@ export function getMaxBuildingTier(eraId: string): number {
 }
 
 export function getScaleFactor(tier: number): number {
-  const entry = MEGA_SCALING_TIERS.find(t => t.tier === tier);
+  const entry = MEGA_SCALING_TIERS.find((t) => t.tier === tier);
   return entry?.scaleFactor ?? 1;
 }

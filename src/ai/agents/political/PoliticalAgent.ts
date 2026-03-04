@@ -38,12 +38,11 @@ export type {
   EraSystemSaveData,
 } from '../../../game/era/types';
 
+import type { GovernorMode } from '../../../ai/agents/crisis/Governor';
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../../ecs/archetypes';
 import { TICKS_PER_YEAR } from '../../../game/Chronology';
-import type { GovernorMode } from '../../../ai/agents/crisis/Governor';
 import type { SimCallbacks } from '../../../game/engine/types';
 import { ALL_BUILDING_IDS, ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from '../../../game/era/definitions';
-import { type UnlockContext, evaluateOrganicUnlocks } from '../../../growth/OrganicUnlocks';
 import { getBuildingTierRequirement, tierMeetsRequirement } from '../../../game/era/tiers';
 import type {
   ConstructionMethod,
@@ -54,6 +53,7 @@ import type {
   EraSystemSaveData,
 } from '../../../game/era/types';
 import type { GameRng } from '../../../game/SeedSystem';
+import { evaluateOrganicUnlocks, type UnlockContext } from '../../../growth/OrganicUnlocks';
 import type { ChronologyAgent } from '../core/ChronologyAgent';
 import type { EconomyAgent, EraId as EconomyEraId } from '../economy/EconomyAgent';
 import type { SettlementSystem, SettlementTier } from '../infrastructure/SettlementSystem';
