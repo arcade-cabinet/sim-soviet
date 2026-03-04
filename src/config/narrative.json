@@ -1,7 +1,7 @@
 {
   "events": {
     "cooldownTicks": 60,
-    "baseProbability": 0.08,
+    "baseProbability": 0.04,
     "maxRecentMemory": 10
   },
   "politburo": {

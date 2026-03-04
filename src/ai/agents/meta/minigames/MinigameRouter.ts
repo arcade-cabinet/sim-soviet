@@ -239,12 +239,12 @@ export class MinigameRouter {
   ): boolean {
     switch (def.triggerCondition) {
       case 'population_60':
-        // The Queue: every 60 ticks when population is high enough
-        return context.population >= QUEUE_POPULATION_THRESHOLD && context.totalTicks % 60 === 0;
+        // The Queue: every 360 ticks when population is high enough (reduced from 60)
+        return context.population >= QUEUE_POPULATION_THRESHOLD && context.totalTicks % 360 === 0;
 
       case 'inspection_180':
-        // The Inspection: every 180 ticks
-        return context.totalTicks % 180 === 0 && context.totalTicks > 0;
+        // The Inspection: every 720 ticks (reduced from 180)
+        return context.totalTicks % 720 === 0 && context.totalTicks > 0;
 
       default:
         return false;
