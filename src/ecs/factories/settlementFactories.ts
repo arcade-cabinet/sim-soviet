@@ -280,7 +280,7 @@ export function createDvor(id: string, surname: string, memberSeeds: DvorMemberS
     privatePlotSize: 0.35,
     privateLivestock: { cow: 1, pig: 1, sheep: 3, poultry: 10 },
     joinedTick: 0,
-    loyaltyToCollective: 50,
+    loyaltyToCollective: 60,
     surname,
   };
 

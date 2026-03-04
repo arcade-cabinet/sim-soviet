@@ -96,6 +96,7 @@ export interface CollectiveAgentState {
   lastBuildTick: number;
   buildQueue: ConstructionRequest[];
   pendingDemands: ConstructionDemand[];
+  bootstrapped?: boolean;
 }
 
 // ── Governor Constants (from config/infrastructure.json) ─────────────────────
@@ -187,6 +188,9 @@ export class CollectiveAgent extends Vehicle {
 
   /** Game tick of the last autonomous build action. */
   private lastBuildTick = 0;
+
+  /** Whether the early game bootstrap has already run. */
+  private bootstrapped = false;
 
   /** Current sorted construction queue (mandates + demands merged). */
   private buildQueue: ConstructionRequest[] = [];
@@ -568,6 +572,99 @@ export class CollectiveAgent extends Vehicle {
   // ── Absorbed SimulationEngine Methods ──────────────────────────────────────
 
   /**
+   * Place essential starter buildings on the very first autonomous tick.
+   * Runs once: government-hq near water (or center), 2 izbas nearby, 1 farm.
+   */
+  public earlyGameBootstrap(rng: GameRng, eraId?: string): void {
+    if (this.bootstrapped) return;
+    this.bootstrapped = true;
+
+    // Require minimum materials and no existing buildings for bootstrap
+    const storeRef = getResourceEntity();
+    if (!storeRef || storeRef.resources.timber < 30) return;
+    if (buildings.entities.length > 0) return; // settlement already has buildings
+
+    const occupied = this.buildOccupiedSet();
+
+    // Place Government HQ — prefer near water, fallback to center
+    const ctx = eraId ? this.buildPlacementContext(eraId, occupied) : null;
+    let hqCell: { gridX: number; gridY: number } | null = null;
+
+    if (ctx) {
+      const result = findBestPlacement('government-hq', ctx, GRID_SIZE);
+      if (result) hqCell = { gridX: result.x, gridY: result.z };
+    }
+    if (!hqCell) {
+      // Fallback: center of map
+      const center = Math.floor(GRID_SIZE / 2);
+      hqCell = { gridX: center, gridY: center };
+    }
+
+    try {
+      const hq = placeNewBuilding(hqCell.gridX, hqCell.gridY, 'government-hq');
+      if (hq) occupied.add(`${hqCell.gridX},${hqCell.gridY}`);
+    } catch {
+      /* placement failed — not fatal */
+    }
+
+    // Place 2-3 izbas near the party-hq
+    const izbaCount = 2 + (rng.pickIndex(2)); // 2 or 3
+    for (let i = 0; i < izbaCount; i++) {
+      const defId = i % 2 === 0 ? 'workers-house-a' : 'workers-house-b';
+      const cell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng);
+      if (cell) {
+        try {
+          const entity = placeNewBuilding(cell.gridX, cell.gridY, defId);
+          if (entity) occupied.add(`${cell.gridX},${cell.gridY}`);
+        } catch {
+          /* placement failed */
+        }
+      }
+    }
+
+    // Place 1 farm near the settlement
+    const farmCell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng, 4);
+    if (farmCell) {
+      try {
+        placeNewBuilding(farmCell.gridX, farmCell.gridY, 'collective-farm-hq');
+      } catch {
+        /* placement failed */
+      }
+    }
+  }
+
+  /** Find an empty cell within radius of (cx, cy), avoiding occupied cells. */
+  private findNearbyEmpty(
+    cx: number,
+    cy: number,
+    occupied: Set<string>,
+    rng: GameRng,
+    minDist = 2,
+  ): { gridX: number; gridY: number } | null {
+    const candidates: Array<{ gridX: number; gridY: number; dist: number }> = [];
+    const maxDist = minDist + 3;
+
+    for (let dx = -maxDist; dx <= maxDist; dx++) {
+      for (let dy = -maxDist; dy <= maxDist; dy++) {
+        const dist = Math.abs(dx) + Math.abs(dy);
+        if (dist < minDist || dist > maxDist) continue;
+
+        const nx = cx + dx;
+        const ny = cy + dy;
+        if (!this.isInBounds(nx, ny)) continue;
+        if (occupied.has(`${nx},${ny}`)) continue;
+
+        candidates.push({ gridX: nx, gridY: ny, dist });
+      }
+    }
+
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => a.dist - b.dist);
+    const top = candidates.slice(0, Math.min(5, candidates.length));
+    return top[rng.pickIndex(top.length)]!;
+  }
+
+  /**
    * Full autonomous construction pipeline: detect demands, merge mandates, auto-place.
    * Absorbs SimulationEngine.tickCollectiveViaAgent().
    */
@@ -648,6 +745,7 @@ export class CollectiveAgent extends Vehicle {
       lastBuildTick: this.lastBuildTick,
       buildQueue: [...this.buildQueue],
       pendingDemands: [...this.pendingDemands],
+      bootstrapped: this.bootstrapped,
     };
   }
 
@@ -657,6 +755,7 @@ export class CollectiveAgent extends Vehicle {
     this.lastBuildTick = state.lastBuildTick;
     this.buildQueue = [...state.buildQueue];
     this.pendingDemands = [...state.pendingDemands];
+    this.bootstrapped = state.bootstrapped ?? false;
   }
 
   // ── Private Helpers: Governor ───────────────────────────────────────────────

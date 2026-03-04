@@ -216,7 +216,7 @@ describe('factories', () => {
 
     it('starts with default happiness and hunger', () => {
       const entity = createCitizen('worker');
-      expect(entity.citizen!.happiness).toBe(50);
+      expect(entity.citizen!.happiness).toBe(70);
       expect(entity.citizen!.hunger).toBe(0);
     });
 

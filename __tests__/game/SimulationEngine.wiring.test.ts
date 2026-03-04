@@ -50,46 +50,27 @@ describe('SimulationEngine — system wiring', () => {
   describe('TutorialSystem wiring', () => {
     it('exposes getTutorial() accessor', () => {
       expect(engine.getTutorial()).toBeDefined();
-      expect(engine.getTutorial().isActive()).toBe(true);
+      // Tutorial is skipped by default — settlement builds organically
+      expect(engine.getTutorial().isActive()).toBe(false);
     });
 
-    it('fires welcome milestone on first tick (triggerTick: 0)', () => {
+    it('tutorial is inactive — milestones do not fire', () => {
       engine.tick();
-      // Welcome milestone should fire on tick 0 with Krupnik dialogue
-      expect(cb.onAdvisor).toHaveBeenCalled();
-      const firstCall = cb.onAdvisor.mock.calls[0]![0] as string;
-      expect(firstCall).toContain('Krupnik');
+      // No tutorial milestones should trigger since tutorial is skipped
+      expect(cb.onTutorialMilestone).not.toHaveBeenCalled();
     });
 
-    it('fires onTutorialMilestone callback', () => {
-      engine.tick();
-      expect(cb.onTutorialMilestone).toHaveBeenCalled();
-      const milestone = cb.onTutorialMilestone.mock.calls[0]![0];
-      expect(milestone.id).toBe('welcome');
+    it('all buildings are unlocked when tutorial is skipped', () => {
+      const tutorial = engine.getTutorial();
+      expect(tutorial.isBuildingUnlocked('collective-farm-hq')).toBe(true);
+      expect(tutorial.isBuildingUnlocked('power-station')).toBe(true);
+      expect(tutorial.isBuildingUnlocked('vodka-distillery')).toBe(true);
     });
 
-    it('fires first_building milestone after placing a building', () => {
-      // Tick once to trigger welcome milestone
-      engine.tick();
-      cb.onTutorialMilestone.mockClear();
-      cb.onAdvisor.mockClear();
-
-      // Place a building
-      createBuilding(5, 5, 'collective-farm-hq');
-      world.reindex(buildingsLogic.entities[0]!);
-
-      // Tick again — should trigger first_building milestone
-      engine.tick();
-      expect(cb.onTutorialMilestone).toHaveBeenCalled();
-      expect(cb.onTutorialMilestone.mock.calls[0]![0].id).toBe('first_building');
-    });
-
-    it('serializes and deserializes tutorial state', () => {
-      engine.tick(); // trigger welcome milestone
+    it('serializes tutorial state as inactive', () => {
       const data = engine.serializeSubsystems();
       expect(data.tutorial).toBeDefined();
-      expect(data.tutorial!.completedMilestones).toContain('welcome');
-      expect(data.tutorial!.active).toBe(true);
+      expect(data.tutorial!.active).toBe(false);
     });
   });
 

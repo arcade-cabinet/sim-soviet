@@ -279,6 +279,8 @@ export class SimulationEngine {
 
     this.scoring = new ScoringSystem(difficulty ?? 'comrade', consequence ?? 'permadeath');
     this.tutorial = new TutorialSystem();
+    // Skip tutorial — settlement builds organically via CollectiveAgent bootstrap
+    this.tutorial.skip();
     this.achievements = new AchievementTracker();
 
     this.transport = new TransportSystem(this.eraSystem.getCurrentEraId());
@@ -462,6 +464,9 @@ export class SimulationEngine {
   }
   public getCollectiveAgent(): CollectiveAgent {
     return this.collectiveAgent;
+  }
+  public getRng(): GameRng {
+    return this.rng;
   }
   public getDemographicAgent(): DemographicAgent {
     return this.demographicAgent;
