@@ -220,11 +220,6 @@ function buildAnnualReportContext(ctx: TickContext, cachedDirective: GovernorDir
       quotaMultiplier:
         cachedDirective?.modifiers.quotaMultiplier ?? DIFFICULTY_PRESETS[ctx.state.difficulty].quotaMultiplier,
     },
-    endGame: (victory: boolean, reason: string) => {
-      ctx.state.ended = true;
-      const meta = getMetaEntity();
-      if (meta) meta.gameMeta.gameOver = { victory, reason };
-      ctx.callbacks.onGameOver?.(victory, reason);
-    },
+    endGame: (victory: boolean, reason: string) => ctx.endGame(victory, reason),
   };
 }

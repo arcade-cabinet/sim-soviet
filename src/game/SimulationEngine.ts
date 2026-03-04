@@ -18,25 +18,16 @@ export type {
   WorkerStatSaveEntry,
 } from './engine/types';
 
-import type { InflowScheduleEntry } from '@/config';
-import { political } from '@/config';
-import { getBuildingDef } from '@/data/buildingDefs';
 import {
   buildingsLogic,
-  decayableBuildings,
   dvory,
   getMetaEntity,
   getResourceEntity,
-  operationalBuildings,
 } from '@/ecs/archetypes';
 import {
-  constructionSystem,
-  decaySystem,
-  populationSystem,
   setBuildingCollapsedCallback,
   setStarvationCallback,
 } from '@/ecs/systems';
-import { computeDistribution, computeRoleBuckets } from '@/ecs/systems/distributionWeights';
 import { AgentManager } from '../ai/AgentManager';
 import type { TickResult } from '../ai/agents/core/ChronologyAgent';
 // ── Yuka agents ──
@@ -44,16 +35,14 @@ import { ChronologyAgent, ChronologySystem } from '../ai/agents/core/ChronologyA
 import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
 import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
 import type { GovernorDirective, IGovernor } from '../ai/agents/crisis/Governor';
-import { computeBuildingProduction } from '../ai/agents/economy/buildingProduction';
 import {
-  accrueTrudodni,
   EconomyAgent,
   type EraId as EconomyEraId,
   EconomySystem,
 } from '../ai/agents/economy/EconomyAgent';
 import { DIFFICULTY_MULTIPLIERS } from '../ai/agents/economy/economy-core';
 import { FoodAgent } from '../ai/agents/economy/FoodAgent';
-import { createForagingState, type ForagingState, foragingTick } from '../ai/agents/economy/foragingSystem';
+import { createForagingState, type ForagingState } from '../ai/agents/economy/foragingSystem';
 import { StorageAgent } from '../ai/agents/economy/StorageAgent';
 import { VodkaAgent } from '../ai/agents/economy/VodkaAgent';
 import { CollectiveAgent } from '../ai/agents/infrastructure/CollectiveAgent';
@@ -61,18 +50,12 @@ import { PowerAgent } from '../ai/agents/infrastructure/PowerAgent';
 import { SettlementSystem } from '../ai/agents/infrastructure/SettlementSystem';
 import { TransportSystem } from '../ai/agents/infrastructure/TransportSystem';
 import { AchievementTracker } from '../ai/agents/meta/AchievementTracker';
-import {
-  tickAchievements as tickAchievementsHelper,
-  tickTutorial as tickTutorialHelper,
-} from '../ai/agents/meta/achievementTick';
-import { tickDirectives as tickDirectivesHelper } from '../ai/agents/meta/directiveTick';
 import { MinigameRouter } from '../ai/agents/meta/minigames/MinigameRouter';
 import {
   checkBuildingTapMinigame as checkBuildingTapMinigameHelper,
   checkEventMinigame as checkEventMinigameHelper,
   isMinigameAvailable as isMinigameAvailableHelper,
   resolveMinigameChoice as resolveMinigameChoiceHelper,
-  tickMinigames as tickMinigamesHelper,
 } from '../ai/agents/meta/minigameTick';
 import { TutorialSystem } from '../ai/agents/meta/TutorialSystem';
 import type { GameEvent } from '../ai/agents/narrative/events';
@@ -88,22 +71,26 @@ import {
   createMandatesForEra,
   createPlanMandateState,
   PoliticalAgent,
-  quotaSystem,
   recordBuildingPlaced,
 } from '../ai/agents/political/PoliticalAgent';
 import { PoliticalEntitySystem } from '../ai/agents/political/PoliticalEntitySystem';
-import type { ConsequenceConfig, ConsequenceLevel, DifficultyLevel } from '../ai/agents/political/ScoringSystem';
-import { CONSEQUENCE_PRESETS, DIFFICULTY_PRESETS, ScoringSystem } from '../ai/agents/political/ScoringSystem';
+import type { ConsequenceLevel, DifficultyLevel } from '../ai/agents/political/ScoringSystem';
+import { DIFFICULTY_PRESETS, ScoringSystem } from '../ai/agents/political/ScoringSystem';
 import { DefenseAgent, FireSystem, initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
 import { DemographicAgent } from '../ai/agents/social/DemographicAgent';
 import { getPopulationMode } from '../ai/agents/workforce/collectiveTransition';
 import { WorkerSystem } from '../ai/agents/workforce/WorkerSystem';
-import { TICKS_PER_YEAR } from './Chronology';
 import {
   restoreSubsystems as restoreSubsystemsHelper,
   serializeSubsystems as serializeSubsystemsHelper,
 } from './engine/serializeEngine';
 import { phaseChronology } from './engine/phaseChronology';
+import { phaseConsumption } from './engine/phaseConsumption';
+import { phaseFinalize } from './engine/phaseFinalize';
+import { phaseNarrative } from './engine/phaseNarrative';
+import { phasePolitical } from './engine/phasePolitical';
+import { phaseProduction } from './engine/phaseProduction';
+import { phaseSocial } from './engine/phaseSocial';
 import type { TickContext } from './engine/tickContext';
 import type { SimCallbacks, SubsystemSaveData } from './engine/types';
 import { EraSystem } from './era';
@@ -661,520 +648,39 @@ export class SimulationEngine {
     const storeRef = getResourceEntity();
     if (!storeRef) return;
 
-    // ── 1. Chronology + 1b. Pop mode + 2. Era + 2.5 Governor + 2.6 Scoring ──
+    // Build context for all phases
     const tickResult = this.chronologyAgent.tick();
     const ctx = this.buildTickContext(tickResult, storeRef);
+
+    // Phase 1: Chronology, era transitions, governor
     const chronoResult = phaseChronology(ctx);
     this.raion = chronoResult.raion;
     this.cachedDirective = chronoResult.cachedDirective;
+    ctx.raion = this.raion;
+    ctx.cachedDirective = this.cachedDirective;
+    ctx.diffConfig = this.cachedDirective?.modifiers ?? DIFFICULTY_PRESETS[this.difficulty];
+    this.computeTickModifiers(ctx);
+
+    // Phase 2: Power, transport, construction, production
+    const snapshot = phaseProduction(ctx);
+
+    // Phase 3: Storage, economy, deliveries, consumption, foraging
+    phaseConsumption(ctx, snapshot);
+
+    // Phase 4: Disease, population, workers, demographics
+    phaseSocial(ctx);
+
+    // Phase 5: Loyalty, construction, decay, gulag, settlement, political entities
+    phasePolitical(ctx);
+
+    // Phase 6: Minigames, events, fire, KGB, tutorials, achievements
+    phaseNarrative(ctx);
+
+    // Phase 7: Autopilot, sync, loss check
+    phaseFinalize(ctx);
+
     // Sync mutable state back from context
-    this.lastSeason = ctx.state.lastSeason;
-    this.lastWeather = ctx.state.lastWeather;
-    this.lastDayPhase = ctx.state.lastDayPhase;
-    this.consecutiveQuotaFailures = ctx.state.consecutiveQuotaFailures;
-    this.pendingReport = ctx.state.pendingReport;
-    this.pendingReportSinceTick = ctx.state.pendingReportSinceTick;
-    this.mandateState = ctx.state.mandateState;
-    this.pripiskiCount = ctx.state.pripiskiCount;
-    this.ended = ctx.state.ended;
-
-    // ── 3. Production modifiers ──
-    const weatherProfile = getWeatherProfile(tickResult.weather as WeatherType);
-    const politburoMods = this.politburo.getModifiers();
-    const eraMods = this.politicalAgent.getModifiers();
-    const heatingPenalty = this.economyAgent.getHeating().failing ? 0.5 : 1.0;
-    const seasonFarmMult = tickResult.season.farmMultiplier;
-    const farmMod =
-      seasonFarmMult *
-      weatherProfile.farmModifier *
-      politburoMods.foodProductionMult *
-      eraMods.productionMult *
-      heatingPenalty *
-      this.mtsGrainMultiplier;
-    const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult * heatingPenalty;
-    const diffConfig = this.cachedDirective?.modifiers ?? DIFFICULTY_PRESETS[this.difficulty];
-
-    // ── 4. Power ──
-    this.powerAgent.distributePower();
-
-    // ── 5. Transport ──
-    const transportResult = this.transport.tick(
-      operationalBuildings.entities,
-      this.settlement.getCurrentTier(),
-      this.chronologyAgent.getDate().totalTicks,
-      tickResult.season,
-      storeRef.resources,
-    );
-
-    // ── 6. Construction ──
-    constructionSystem(
-      this.politicalAgent.getCurrentEra().constructionTimeMult,
-      weatherProfile.constructionTimeMult,
-      transportResult.seasonBuildMult,
-    );
-
-    // ── 7. Production ──
-    const foodBefore = storeRef.resources.food;
-    const vodkaBefore = storeRef.resources.vodka;
-    const moneyBefore = storeRef.resources.money;
-
-    if (this.raion) {
-      // Aggregate mode: compute production per operational building
-      for (const entity of operationalBuildings.entities) {
-        const bldg = entity.building;
-        const def = getBuildingDef(bldg.defId);
-        if (!def) continue;
-
-        const prodResult = computeBuildingProduction(bldg, def, {
-          eraId: this.politicalAgent.getCurrentEraId(),
-          powered: bldg.powered,
-          durability: entity.durability?.current ?? 100,
-          season: tickResult.season.season,
-          rng: this.rng,
-          eraProductionMod: eraMods.productionMult,
-          weatherMod: farmMod,
-        });
-
-        if (prodResult.resource === 'food') {
-          storeRef.resources.food += prodResult.amount;
-        } else if (prodResult.resource === 'vodka') {
-          storeRef.resources.vodka += prodResult.amount;
-        }
-        storeRef.resources.power += prodResult.powerGenerated;
-        bldg.trudodniAccrued += prodResult.trudodniAccrued;
-
-        // Stochastic events
-        if (prodResult.accidents > 0) {
-          this.workerSystem.removeWorkersByCount(prodResult.accidents, 'workplace_accident');
-        }
-      }
-
-      // Production chains still run in aggregate mode
-      {
-        const chainBuildingIds: string[] = [];
-        for (const entity of buildingsLogic) chainBuildingIds.push(entity.building.defId);
-        this.economyAgent.tickProductionChains(chainBuildingIds, storeRef.resources);
-      }
-    } else {
-      // Entity mode: existing production path
-      const avgSkill = this.workerSystem.getAverageSkill();
-      const avgCondition = this.getAverageBuildingCondition();
-
-      this.foodAgent.produce({
-        farmModifier: farmMod,
-        vodkaModifier: vodkaMod,
-        eraId: this.politicalAgent.getCurrentEraId(),
-        skillFactor: avgSkill,
-        conditionFactor: avgCondition,
-        stakhanoviteBoosts: this.stakhanoviteBoosts,
-        includePrivatePlots: tickResult.newMonth,
-      });
-
-      // Production chains
-      {
-        const chainBuildingIds: string[] = [];
-        for (const entity of buildingsLogic) chainBuildingIds.push(entity.building.defId);
-        this.economyAgent.tickProductionChains(chainBuildingIds, storeRef.resources);
-      }
-    }
-
-    // ── 8. Storage ──
-    this.storageAgent.update(this.chronologyAgent.getDate().month);
-
-    // ── 9. Economy system (fondy, trudodni, blat, stakhanovite, MTS, heating, reforms) ──
-    const econResult = this.economyAgent.applyTickResults({
-      chronology: this.chronologyAgent,
-      workers: this.workerSystem,
-      kgb: this.kgbAgent,
-      callbacks: this.callbacks as Parameters<typeof this.economyAgent.applyTickResults>[0]['callbacks'],
-      quota: this.quota,
-      settlement: this.settlement,
-      stakhanoviteBoosts: this.stakhanoviteBoosts,
-    });
-    this.mtsGrainMultiplier = econResult.mtsGrainMultiplier;
-
-    // ── 10. Compulsory deliveries ──
-    {
-      const newFood = Math.max(0, storeRef.resources.food - foodBefore);
-      const newVodka = Math.max(0, storeRef.resources.vodka - vodkaBefore);
-      const newMoney = Math.max(0, storeRef.resources.money - moneyBefore);
-      if (newFood > 0 || newVodka > 0 || newMoney > 0) {
-        const result = this.deliveries.applyDeliveries(newFood, newVodka, newMoney);
-        storeRef.resources.food = Math.max(0, storeRef.resources.food - result.foodTaken);
-        storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - result.vodkaTaken);
-        storeRef.resources.money = Math.max(0, storeRef.resources.money - result.moneyTaken);
-      }
-    }
-
-    // ── 11. Food consumption + starvation ──
-    const totalConsumptionMult = eraMods.consumptionMult * diffConfig.consumptionMultiplier;
-    if (this.raion) {
-      // Aggregate mode: consumption scales with raion population
-      const pop = this.raion.totalPopulation;
-      // Each citizen consumes ~0.5 food per tick (same as entity mode FoodAgent)
-      const foodConsumed = pop * 0.5 * totalConsumptionMult;
-      const vodkaConsumed = pop * 0.1 * totalConsumptionMult;
-      storeRef.resources.food = Math.max(0, storeRef.resources.food - foodConsumed);
-      storeRef.resources.vodka = Math.max(0, storeRef.resources.vodka - vodkaConsumed);
-
-      // Starvation check: delegate to FoodAgent for consistency
-      const foodResult = this.foodAgent.consume(totalConsumptionMult);
-      if (foodResult.starvationDeaths > 0) {
-        this.callbacks.onToast('STARVATION DETECTED', 'critical');
-        this.workerSystem.removeWorkersByCount(foodResult.starvationDeaths, 'starvation');
-      }
-    } else {
-      // Entity mode: existing consumption path
-      const foodResult = this.foodAgent.consume(totalConsumptionMult);
-      if (foodResult.starvationDeaths > 0) {
-        this.callbacks.onToast('STARVATION DETECTED', 'critical');
-        this.workerSystem.removeWorkersByCount(foodResult.starvationDeaths, 'starvation');
-      }
-    }
-
-    // ── 11b. Distribution resentment check ──
-    // Compute weighted distribution to detect privileged overconsumption
-    {
-      const politicalCounts = this.politicalEntities.getEntityCounts();
-      const pop = storeRef.resources.population;
-      if (pop > 0) {
-        const buckets = computeRoleBuckets(pop, politicalCounts);
-        const dist = computeDistribution(pop, totalConsumptionMult, buckets);
-        if (dist.resentmentActive) {
-          this.callbacks.onPravda('Some comrades are more equal than others.');
-        }
-      }
-    }
-
-    // ── 11c. Foraging System — survival foraging when food is critically low ──
-    {
-      const foragingResult = foragingTick(
-        storeRef.resources.food,
-        storeRef.resources.population,
-        this.chronologyAgent.getDate().month,
-        this.foragingState,
-        this.rng,
-      );
-
-      if (foragingResult.foodGathered > 0) {
-        storeRef.resources.food += foragingResult.foodGathered;
-      }
-
-      if (foragingResult.kgbRisk > 0) {
-        this.kgbAgent.addMark(
-          'workers_abandoning_collective',
-          this.chronologyAgent.getDate().totalTicks,
-          'Workers observed abandoning collective duties for personal foraging',
-        );
-        this.callbacks.onToast('BLACK MARK: Workers abandoning collective duties for personal foraging', 'warning');
-      }
-
-      if (foragingResult.cannibalismFired) {
-        this.workerSystem.removeWorkersByCount(1, 'starvation');
-        this.callbacks.onToast('Something unspeakable has happened in the settlement...', 'critical');
-      }
-
-      if (foragingResult.moralePenalty > 0 && foragingResult.method === 'stone_soup') {
-        this.callbacks.onAdvisor('Comrade Mayor, the workers are boiling stones for soup. We have come to this.');
-      }
-    }
-
-    // ── 12. Disease ──
-    this.defenseAgent.tickDiseaseFull({
-      totalTicks: this.chronologyAgent.getDate().totalTicks,
-      month: this.chronologyAgent.getDate().month,
-      workers: this.workerSystem,
-      callbacks: this.callbacks,
-      rng: this.rng,
-    });
-
-    // ── 13. Population growth (yearly immigration) ──
-    // Housing-gated immigration for both entity and aggregate modes.
-    // In aggregate mode, spawnInflowDvor routes to spawnInflowAggregate
-    // which adds working-age adults to raion pool + building workforces.
-    if (tickResult.newYear) {
-      const growthResult = populationSystem(
-        this.rng,
-        politburoMods.populationGrowthMult * eraMods.populationGrowthMult * diffConfig.growthMultiplier,
-        this.chronologyAgent.getDate().month,
-      );
-      if (growthResult.growthCount > 0) {
-        this.workerSystem.spawnInflowDvor(growthResult.growthCount, 'growth');
-      }
-
-      // ── Scheduled era-specific population inflows ──
-      this.processScheduledInflows();
-    }
-
-    // Monthly emergency immigration — the Party sends reinforcements
-    // when the settlement is at risk of complete collapse
-    if (tickResult.newMonth && !tickResult.newYear) {
-      const emergencyPop = storeRef.resources.population;
-      if (emergencyPop > 0 && emergencyPop < 20) {
-        const reinforcements = this.rng.int(5, 12);
-        this.workerSystem.spawnInflowDvor(reinforcements, 'emergency_resettlement');
-      } else if (emergencyPop >= 20 && emergencyPop < 40) {
-        const reinforcements = this.rng.int(3, 8);
-        this.workerSystem.spawnInflowDvor(reinforcements, 'emergency_resettlement');
-      }
-    }
-
-    // ── 14. Worker system tick ──
-    const workerResult = this.workerSystem.tick({
-      vodkaAvailable: storeRef.resources.vodka,
-      foodAvailable: storeRef.resources.food,
-      heatingFailing: this.economyAgent.getHeating().failing,
-      month: this.chronologyAgent.getDate().month,
-      eraId: this.politicalAgent.getCurrentEra().id,
-      totalTicks: this.chronologyAgent.getDate().totalTicks,
-      trudodniRatio: this.economyAgent.getTrudodniRatio(),
-    });
-
-    // Emit drain events
-    for (const drain of workerResult.drains) {
-      if (drain.reason === 'migration') {
-        this.callbacks.onToast(`WORKER FLED: ${drain.name} has abandoned the collective`, 'warning');
-        this.callbacks.onPravda('TRAITOR ABANDONS GLORIOUS COLLECTIVE — GOOD RIDDANCE');
-      } else if (drain.reason === 'youth_flight') {
-        this.callbacks.onToast(`YOUTH DEPARTED: ${drain.name} has left for the city`, 'warning');
-      } else if (drain.reason === 'workplace_accident') {
-        this.callbacks.onToast(`WORKPLACE ACCIDENT: ${drain.name} killed in industrial incident`, 'critical');
-        this.callbacks.onPravda('HEROIC WORKER MARTYRED IN SERVICE OF PRODUCTION');
-      } else if (drain.reason === 'defection') {
-        this.callbacks.onToast(`DEFECTION: ${drain.name} has defected`, 'warning');
-      }
-    }
-
-    if (workerResult.averageMorale < 30 && this.chronologyAgent.getDate().totalTicks % 60 === 0) {
-      this.callbacks.onAdvisor(
-        'Comrade Mayor! Workers are deeply unhappy. If conditions do not improve, they WILL flee!',
-      );
-    }
-
-    // ── 15. Demographics ──
-    const effectivePop = this.raion?.totalPopulation ?? workerResult.population;
-    let normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, effectivePop * 2));
-    if (!Number.isFinite(normalizedFood)) normalizedFood = 0;
-    const demoResult = this.demographicAgent.onTick(
-      this.chronologyAgent.getDate().totalTicks,
-      this.rng,
-      normalizedFood,
-      this.politicalAgent.getCurrentEraId(),
-    );
-
-    for (const dead of demoResult.deadMembers) {
-      this.workerSystem.removeWorkerByDvorMember(dead.dvorId, dead.memberId);
-    }
-    for (const ref of demoResult.agedIntoWorking) {
-      this.workerSystem.spawnWorkerFromDvor(ref.member, ref.dvorId);
-    }
-    if (demoResult.newDvory > 0) {
-      this.workerSystem.syncCitizenDvorIds();
-    }
-    if (tickResult.newYear) {
-      this.workerSystem.resetAnnualTrudodni();
-      // Annual entity GC sweeps — only needed in entity mode
-      if (!this.raion) {
-        this.workerSystem.sweepOrphanCitizens();
-        this.demographicAgent.sweepEmptyDvory();
-      }
-    }
-
-    // ── 16. Monthly: loyalty + trudodni ──
-    if (tickResult.newMonth) {
-      const currentEraId = this.politicalAgent.getCurrentEraId();
-      const pop = storeRef.resources.population;
-      const foodLevel = pop > 0 ? Math.min(1, storeRef.resources.food / (pop * 2)) : 1;
-      const quotaMet = this.quota.current >= this.quota.target;
-      this.loyaltyAgent.setFoodLevel(foodLevel);
-      const loyaltyResult = this.loyaltyAgent.tickLoyalty(currentEraId, quotaMet);
-
-      if (loyaltyResult.sabotageCount > 0) {
-        const penalty = Math.max(0.5, 1 - loyaltyResult.sabotageCount * 0.05);
-        storeRef.resources.food *= penalty;
-        storeRef.resources.vodka *= penalty;
-        if (loyaltyResult.sabotageCount >= 2) {
-          this.callbacks.onToast('SABOTAGE: Disloyal elements are destroying collective property!', 'warning');
-        }
-      }
-
-      if (loyaltyResult.flightCount > 0) {
-        this.workerSystem.removeWorkersByCount(loyaltyResult.flightCount, 'loyalty_flight');
-        this.callbacks.onToast(
-          `${loyaltyResult.flightCount} worker(s) fled the collective due to disloyalty`,
-          'warning',
-        );
-      }
-
-      accrueTrudodni();
-    }
-
-    // ── 17. Collective autonomous construction ──
-    this.collectiveAgent.tickAutonomous({
-      totalTicks: this.chronologyAgent.getDate().totalTicks,
-      rng: this.rng,
-      mandateState: this.mandateState,
-      eraId: this.politicalAgent.getCurrentEraId(),
-      callbacks: this.callbacks as Parameters<typeof this.collectiveAgent.tickAutonomous>[0]['callbacks'],
-      recordBuildingForMandates: (defId: string) => this.recordBuildingForMandates(defId),
-    });
-
-    // ── 18. Chairman meddling ──
-    if (this.workerSystem.isChairmanMeddling() && this.chronologyAgent.getDate().totalTicks % 60 === 0) {
-      this.callbacks.onAdvisor(
-        'Comrade, the workers notice your constant meddling. They whisper that the chairman does not trust the collective.',
-      );
-      if (this.rng.random() < 0.05) {
-        this.kgbAgent.addMark(
-          'excessive_intervention',
-          this.chronologyAgent.getDate().totalTicks,
-          'Chairman interfered excessively with collective operations',
-        );
-        this.callbacks.onToast('BLACK MARK: Excessive interference with collective operations', 'warning');
-      }
-    }
-
-    // ── 19. Decay + quota ──
-    decaySystem(politburoMods.infrastructureDecayMult * eraMods.decayMult * diffConfig.decayMultiplier);
-    quotaSystem(this.quota);
-
-    // ── 20. Gulag effect ──
-    this.defenseAgent.processGulagEffect({
-      population: storeRef.resources.population,
-      rng: this.rng,
-      workers: this.workerSystem,
-      scoring: this.scoring,
-      kgb: this.kgbAgent,
-      callbacks: this.callbacks,
-      totalTicks: this.chronologyAgent.getDate().totalTicks,
-    });
-
-    // ── 21. Settlement ──
-    this.settlement.tickWithCallbacks(this.callbacks as Parameters<typeof this.settlement.tickWithCallbacks>[0]);
-
-    // ── 22. Era conditions ──
-    this.politicalAgent.checkConditions({
-      totalTicks: this.chronologyAgent.getDate().totalTicks,
-      callbacks: this.callbacks,
-      endGame: (v, r) => this.endGame(v, r),
-    });
-
-    // ── 23. Political entities ──
-    this.politicalAgent.tickEntitiesFull({
-      politicalEntities: this.politicalEntities,
-      workers: this.workerSystem,
-      kgb: this.kgbAgent,
-      scoring: this.scoring,
-      callbacks: this.callbacks,
-      settlement: this.settlement,
-      politburo: this.politburo,
-      quota: this.quota,
-      rng: this.rng,
-      chronologyTotalTicks: this.chronologyAgent.getDate().totalTicks,
-    });
-
-    // ── 24. Minigames + events + fire + politburo + pravda + KGB ──
-    tickMinigamesHelper(this.getMinigameContext());
-    this.eventSystem.tick(this.chronologyAgent.getDate().totalTicks, eraMods.eventFrequencyMult);
-    this.defenseAgent.update(
-      1,
-      tickResult.weather as WeatherType,
-      this.grid,
-      this.chronologyAgent.getDate().totalTicks,
-      this.chronologyAgent.getDate().month,
-    );
-    this.politburo.setCorruptionMult(eraMods.corruptionMult);
-    this.politburo.tick(tickResult);
-
-    // Pravda ambient headlines
-    const headline = this.pravdaSystem.generateAmbientHeadline();
-    if (headline) this.callbacks.onPravda(headline.headline);
-
-    // KGB personnel file tick
-    const totalTicks = this.chronologyAgent.getDate().totalTicks;
-    this.kgbAgent.tickPersonnelFile(totalTicks);
-
-    // Threat level tracking for scoring
-    const currentThreat = this.kgbAgent.getThreatLevel();
-    if (
-      (currentThreat === 'investigated' || currentThreat === 'reviewed' || currentThreat === 'arrested') &&
-      this.lastThreatLevel !== 'investigated' &&
-      this.lastThreatLevel !== 'reviewed' &&
-      this.lastThreatLevel !== 'arrested'
-    ) {
-      this.scoring.onInvestigation();
-    }
-    this.lastThreatLevel = currentThreat;
-
-    // Autopilot bribery: when KGB threat escalates, attempt bribe if chairman recommends it
-    if (this.agentManager.isAutopilot()) {
-      const chairman = this.agentManager.getChairman();
-      if (chairman) {
-        const bribeDecision = chairman.shouldAttemptBribe();
-        if (bribeDecision.shouldBribe) {
-          const res = getResourceEntity();
-          if (res && res.resources.blat >= 2) {
-            this.kgbAgent.handleBribeOffer(bribeDecision.amount);
-            res.resources.blat = Math.max(0, res.resources.blat - 2);
-            this.callbacks.onToast('Autopilot: blat exchanged to reduce KGB suspicion', 'warning');
-          }
-        }
-      }
-    }
-
-    // Arrest check
-    if (this.kgbAgent.isArrested()) {
-      const consequenceConfig = CONSEQUENCE_PRESETS[this.scoring.getConsequence()];
-      if (consequenceConfig.permadeath) {
-        this.endGame(
-          false,
-          'Your personnel file has been reviewed. You have been declared an Enemy of the People. No further correspondence is expected.',
-        );
-      } else {
-        this.applyRehabilitation(consequenceConfig);
-      }
-    }
-
-    // ── 25. Tutorial + directives + achievements ──
-    tickTutorialHelper(this.getAchievementContext());
-    tickDirectivesHelper({ callbacks: this.callbacks });
-    tickAchievementsHelper(this.getAchievementContext());
-
-    // ── 26. Autopilot ──
-    if (this.agentManager.isAutopilot()) {
-      const chairman = this.agentManager.getChairman();
-      if (chairman) {
-        const res = getResourceEntity();
-        const pop = res?.resources.population ?? 0;
-        const food = res?.resources.food ?? 0;
-        const meta = getMetaEntity();
-        chairman.assessGameState(
-          { food, population: pop },
-          {
-            quotaProgress: this.quota.target > 0 ? this.quota.current / this.quota.target : 1,
-            quotaDeadlineMonths: (this.quota.deadlineYear - (meta?.gameMeta.date.year ?? 1917)) * 12,
-            blackMarks: this.kgbAgent.getBlackMarks(),
-            commendations: this.kgbAgent.getCommendations(),
-            blat: res?.resources.blat ?? 0,
-          },
-        );
-        this.workerSystem.setCollectiveFocus(chairman.getRecommendedDirective());
-      }
-    }
-
-    // ── 27. Sync + loss check ──
-    this.syncSystemsToMeta();
-    storeRef.resources.population = this.workerSystem.getPopulation();
-
-    if (
-      storeRef.resources.population <= 0 &&
-      this.chronologyAgent.getDate().totalTicks > TICKS_PER_YEAR &&
-      buildingsLogic.entities.length > 0
-    ) {
-      this.endGame(false, 'All citizens have perished. The settlement is abandoned.');
-    }
-
-    this.callbacks.onStateChange();
+    this.syncStateFromContext(ctx);
   }
 
   // ── Context builders ────────────────────────────────────────────────────────
@@ -1186,76 +692,6 @@ export class SimulationEngine {
       personnelFile: this.kgbAgent,
       callbacks: this.callbacks,
     };
-  }
-
-  private getAchievementContext() {
-    return {
-      chronology: this.chronologyAgent,
-      achievements: this.achievements,
-      tutorial: this.tutorial,
-      callbacks: this.callbacks,
-    };
-  }
-
-  // ── Scheduled Population Inflows ────────────────────────────────────────────
-
-  /**
-   * Process scheduled population inflows based on the current era.
-   * Called on year boundaries to provide era-appropriate workforce reinforcements.
-   */
-  private processScheduledInflows(): void {
-    const currentEraId = this.politicalAgent.getCurrentEra().id;
-    const currentYear = this.chronologyAgent.getDate().year;
-    const schedule = political.doctrine.inflowSchedule as Record<string, InflowScheduleEntry>;
-    const entry = schedule[currentEraId];
-    if (!entry) return;
-
-    // Handle one-shot inflows (great_patriotic evacuee influx)
-    if (entry.once) {
-      if (this.evacueeInfluxFired) return;
-      const [minCount, maxCount] = entry.count ?? [10, 30];
-      const count = this.rng.int(minCount, maxCount);
-      this.workerSystem.spawnInflowDvor(count, 'evacuee_influx', { morale: 25, loyalty: 40 });
-      this.evacueeInfluxFired = true;
-      this.callbacks.onToast(`War evacuees arrive: ${count} displaced persons seeking refuge.`, 'warning');
-      return;
-    }
-
-    // Interval-based inflows
-    const intervalYears = entry.intervalYears ?? 3;
-    const lastYear = this.lastInflowYear[currentEraId] ?? 0;
-    if (lastYear > 0 && currentYear - lastYear < intervalYears) return;
-
-    this.lastInflowYear[currentEraId] = currentYear;
-
-    switch (entry.type) {
-      case 'forced_resettlement': {
-        const result = this.workerSystem.forcedResettlement();
-        this.callbacks.onToast(`${result.count} families forcibly resettled to your settlement.`, 'warning');
-        break;
-      }
-      case 'moscow_assignment': {
-        const result = this.workerSystem.moscowAssignment();
-        this.callbacks.onToast(`Moscow sends ${result.count} new workers to the collective.`, 'warning');
-        break;
-      }
-      case 'veteran_return': {
-        const [minCount, maxCount] = entry.count ?? [5, 20];
-        const count = this.rng.int(minCount, maxCount);
-        this.workerSystem.spawnInflowDvor(count, 'veteran_return', { morale: 35, skill: 40 });
-        this.callbacks.onToast(`Veterans return from the front: ${count} scarred workers rejoin.`, 'warning');
-        break;
-      }
-      case 'algorithmic_assignment': {
-        const [minCount, maxCount] = entry.count ?? [1, 50];
-        const count = this.rng.int(minCount, maxCount);
-        this.workerSystem.spawnInflowDvor(count, 'algorithmic');
-        this.callbacks.onToast(`The Algorithm assigns ${count} new workers to your sector.`, 'warning');
-        break;
-      }
-      default:
-        break;
-    }
   }
 
   private getSerializableEngine() {
@@ -1367,14 +803,58 @@ export class SimulationEngine {
         lastWeather: this.lastWeather,
         lastDayPhase: this.lastDayPhase,
       },
+      modifiers: null as any, // Filled by computeTickModifiers() after phaseChronology
       rng: this.rng,
       grid: this.grid,
       governor: this.governor,
       callbacks: this.callbacks,
+      endGame: (v: boolean, r: string) => this.endGame(v, r),
+    };
+  }
+
+  /** Compute per-tick modifiers and store on context. Must be called after phaseChronology. */
+  private computeTickModifiers(ctx: TickContext): void {
+    const weatherProfile = getWeatherProfile(ctx.tickResult.weather as WeatherType);
+    const politburoMods = this.politburo.getModifiers();
+    const eraMods = this.politicalAgent.getModifiers();
+    const heatingPenalty = this.economyAgent.getHeating().failing ? 0.5 : 1.0;
+    const seasonFarmMult = ctx.tickResult.season.farmMultiplier;
+    const farmMod =
+      seasonFarmMult *
+      weatherProfile.farmModifier *
+      politburoMods.foodProductionMult *
+      eraMods.productionMult *
+      heatingPenalty *
+      ctx.state.mtsGrainMultiplier;
+    const vodkaMod = politburoMods.vodkaProductionMult * eraMods.productionMult * heatingPenalty;
+
+    ctx.modifiers = {
+      farmMod,
+      vodkaMod,
+      eraMods,
+      politburoMods,
+      weatherProfile,
     };
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────
+
+  /** Sync mutable state from TickContext back to engine fields after all phases. */
+  private syncStateFromContext(ctx: TickContext): void {
+    this.lastSeason = ctx.state.lastSeason;
+    this.lastWeather = ctx.state.lastWeather;
+    this.lastDayPhase = ctx.state.lastDayPhase;
+    this.lastThreatLevel = ctx.state.lastThreatLevel;
+    this.consecutiveQuotaFailures = ctx.state.consecutiveQuotaFailures;
+    this.pendingReport = ctx.state.pendingReport;
+    this.pendingReportSinceTick = ctx.state.pendingReportSinceTick;
+    this.mandateState = ctx.state.mandateState;
+    this.pripiskiCount = ctx.state.pripiskiCount;
+    this.mtsGrainMultiplier = ctx.state.mtsGrainMultiplier;
+    // endGame() may have set this.ended directly; don't overwrite with stale ctx value
+    this.ended = this.ended || ctx.state.ended;
+    this.evacueeInfluxFired = ctx.state.evacueeInfluxFired;
+  }
 
   private syncSystemsToMeta(): void {
     const meta = getMetaEntity();
@@ -1393,29 +873,6 @@ export class SimulationEngine {
     meta.gameMeta.currentEra = this.politicalAgent.getCurrentEraId();
     meta.gameMeta.roadQuality = this.transport.getQuality();
     meta.gameMeta.roadCondition = this.transport.getCondition();
-  }
-
-  /** Average building condition factor (0.0 - 1.0). Durability 100 = 1.0. */
-  private getAverageBuildingCondition(): number {
-    let totalCondition = 0;
-    let count = 0;
-    for (const entity of decayableBuildings) {
-      totalCondition += entity.durability.current / 100;
-      count++;
-    }
-    return count === 0 ? 1.0 : totalCondition / count;
-  }
-
-  /** Thin delegate — calls KGBAgent.applyRehabilitation(). */
-  private applyRehabilitation(config: ConsequenceConfig): void {
-    this.kgbAgent.applyRehabilitation(config, {
-      grid: this.grid,
-      rng: this.rng,
-      workers: this.workerSystem,
-      scoring: this.scoring,
-      chronology: this.chronologyAgent,
-      callbacks: this.callbacks,
-    });
   }
 
   /** Apply a GameEvent's resource effects to ECS (for PolitburoSystem events). */

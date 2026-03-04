@@ -32,6 +32,9 @@ import type { DefenseAgent, FireSystem } from '../../ai/agents/social/DefenseAge
 import type { DemographicAgent } from '../../ai/agents/social/DemographicAgent';
 import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
 import type { AgentManager } from '../../ai/AgentManager';
+import type { WeatherProfile } from '../../ai/agents/core/weather-types';
+import type { MinistryModifiers } from '../../ai/agents/narrative/politburo/types';
+import type { EraModifiers } from '../../game/era/types';
 import type { SimCallbacks } from './types';
 import type { GameGrid } from '../GameGrid';
 import type { GameRng } from '../SeedSystem';
@@ -39,7 +42,7 @@ import type { RaionPool } from '../../ecs/world';
 
 export interface TickContext {
   /** ECS resource store ref */
-  storeRef: { resources: Record<string, any> & { food: number; money: number; vodka: number; population: number; power: number; blat: number; raion?: RaionPool } };
+  storeRef: { resources: Record<string, any> & { food: number; money: number; vodka: number; population: number; power: number; blat: number; timber: number; steel: number; raion?: RaionPool } };
   /** Chronology tick result (computed at start of tick) */
   tickResult: TickResult;
   /** Current population mode */
@@ -108,8 +111,25 @@ export interface TickContext {
     lastDayPhase: string;
   };
 
+  // ── Per-tick computed modifiers (set by engine before phase calls) ──
+  modifiers: {
+    /** Combined farm production modifier (season × weather × politburo × era × heating × MTS) */
+    farmMod: number;
+    /** Combined vodka production modifier (politburo × era × heating) */
+    vodkaMod: number;
+    /** Era modifiers from PoliticalAgent */
+    eraMods: EraModifiers;
+    /** Politburo modifiers */
+    politburoMods: Readonly<MinistryModifiers>;
+    /** Weather profile */
+    weatherProfile: WeatherProfile;
+  };
+
   rng: GameRng;
   grid: GameGrid;
   governor: IGovernor | null;
   callbacks: SimCallbacks;
+
+  /** Delegate to SimulationEngine.endGame() — handles tally, meta, and gameOver callback. */
+  endGame: (victory: boolean, reason: string) => void;
 }
