@@ -80,7 +80,7 @@ export function createCitizen(
 ): Entity {
   const citizen: CitizenComponent = {
     class: citizenClass,
-    happiness: 50,
+    happiness: 70,
     hunger: 0,
     home: homeX != null && homeY != null ? { gridX: homeX, gridY: homeY } : undefined,
     gender,

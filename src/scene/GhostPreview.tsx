@@ -25,8 +25,10 @@ import { GRID_SIZE } from '../engine/GridTypes';
 import { showToast } from '../engine/helpers';
 import { getSeason } from '../engine/WeatherSystem';
 import {
+  closeBuildingPanel,
   type InspectBuildingType,
   type InspectMenuOccupant,
+  openBuildingPanel,
   openInspectMenu,
   openPoliticalPanel,
   setCursorTooltip,
@@ -285,7 +287,7 @@ const GhostPreview: React.FC = () => {
     };
     canvas.addEventListener('mousedown', onMouseDown);
 
-    // Tap to place
+    // Tap to place / inspect
     const onClick = (e: MouseEvent) => {
       if (e.button !== 0) return;
       if (longPressFired.current) {
@@ -294,17 +296,27 @@ const GhostPreview: React.FC = () => {
       }
 
       const tool = gameState.selectedTool;
-      if (tool === 'none') return;
-
       const pick = pickGrid(e.clientX, e.clientY);
       if (!pick) return;
 
+      if (tool === 'none') {
+        // Check if there's a building at this cell — open panel
+        const cell = gameState.grid[pick.gridZ]?.[pick.gridX];
+        if (cell?.type) {
+          openBuildingPanel(pick.gridX, pick.gridZ);
+        } else {
+          // Clicking empty ground dismisses the panel
+          closeBuildingPanel();
+        }
+        return;
+      }
+
       if (tool === 'bulldoze') {
         bulldozeECSBuilding(pick.gridX, pick.gridZ);
-      } else if (tool === 'road' || tool === 'pipe') {
-        showToast(gameState, 'INFRASTRUCTURE DEVELOPMENT PENDING APPROVAL');
+        closeBuildingPanel();
       } else {
-        placeECSBuilding(tool, pick.gridX, pick.gridZ);
+        // Direct placement disabled — settlement builds autonomously
+        showToast(gameState, 'THE COLLECTIVE DECIDES WHERE TO BUILD, COMRADE');
       }
     };
     canvas.addEventListener('click', onClick);

@@ -29,6 +29,8 @@ import {
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
+import { getBuildInterval } from '../../../growth/GrowthPacing';
+import { findBestPlacement, type PlacementContext } from '../../../growth/SiteSelectionRules';
 import type { GameRng } from '../../../game/SeedSystem';
 import type { PlanMandateState } from '../political/PoliticalAgent';
 import type { WorkerStats } from '../workforce/types';
@@ -94,6 +96,7 @@ export interface CollectiveAgentState {
   lastBuildTick: number;
   buildQueue: ConstructionRequest[];
   pendingDemands: ConstructionDemand[];
+  bootstrapped?: boolean;
 }
 
 // ── Governor Constants (from config/infrastructure.json) ─────────────────────
@@ -185,6 +188,9 @@ export class CollectiveAgent extends Vehicle {
 
   /** Game tick of the last autonomous build action. */
   private lastBuildTick = 0;
+
+  /** Whether the early game bootstrap has already run. */
+  private bootstrapped = false;
 
   /** Current sorted construction queue (mandates + demands merged). */
   private buildQueue: ConstructionRequest[] = [];
@@ -414,20 +420,37 @@ export class CollectiveAgent extends Vehicle {
   /**
    * Finds a valid grid cell near existing buildings for autonomous placement.
    *
-   * Algorithm:
-   * 1. Gather all existing building positions
-   * 2. If no buildings exist, return null
-   * 3. Build a set of occupied cells (buildings + impassable terrain)
-   * 4. For each building, scan cells within MAX_PLACEMENT_DISTANCE
-   * 5. Deduplicate candidates, sort by distance, pick randomly from top CANDIDATE_LIMIT
+   * Uses era-aware site selection when eraId is available, falling back
+   * to distance-based random selection otherwise.
+   *
+   * If no candidates are found within MAX_PLACEMENT_DISTANCE, expands
+   * the search to cover the full grid.
    */
-  findPlacementCell(rng: GameRng): { gridX: number; gridY: number } | null {
+  findPlacementCell(rng: GameRng, defId?: string, eraId?: string): { gridX: number; gridY: number } | null {
     const buildingEntities = buildings.entities;
     if (buildingEntities.length === 0) {
       return null;
     }
 
     const occupied = this.buildOccupiedSet();
+
+    // Try era-aware placement if we have context
+    if (defId && eraId) {
+      const ctx = this.buildPlacementContext(eraId, occupied);
+      // Try normal range first
+      const result = findBestPlacement(defId, ctx, MAX_PLACEMENT_DISTANCE);
+      if (result) {
+        return { gridX: result.x, gridY: result.z };
+      }
+      // Expand search to full grid (GRID_SIZE * 2 ensures full Manhattan coverage)
+      const expanded = findBestPlacement(defId, ctx, GRID_SIZE * 2);
+      if (expanded) {
+        return { gridX: expanded.x, gridY: expanded.z };
+      }
+      return null;
+    }
+
+    // Legacy fallback: distance-based random selection
     const candidateMap = new Map<string, { gridX: number; gridY: number; distance: number }>();
 
     for (const entity of buildingEntities) {
@@ -471,9 +494,13 @@ export class CollectiveAgent extends Vehicle {
   /**
    * Autonomously places a building near existing buildings.
    * Returns the placed entity, or null if placement fails.
+   *
+   * @param defId - Building definition ID to place
+   * @param rng - Seeded RNG for placement randomness
+   * @param eraId - Current era for era-aware placement (optional)
    */
-  autoPlaceBuilding(defId: string, rng: GameRng): Entity | null {
-    const cell = this.findPlacementCell(rng);
+  autoPlaceBuilding(defId: string, rng: GameRng, eraId?: string): Entity | null {
+    const cell = this.findPlacementCell(rng, defId, eraId);
     if (!cell) {
       return null;
     }
@@ -545,6 +572,100 @@ export class CollectiveAgent extends Vehicle {
   // ── Absorbed SimulationEngine Methods ──────────────────────────────────────
 
   /**
+   * Place essential starter buildings on the very first autonomous tick.
+   * Runs once: government-hq near water (or center), 2 izbas nearby, 1 farm.
+   */
+  public earlyGameBootstrap(rng: GameRng, eraId?: string): void {
+    if (this.bootstrapped) return;
+
+    // Require minimum materials and no existing buildings for bootstrap
+    const storeRef = getResourceEntity();
+    if (!storeRef || storeRef.resources.timber < 30) return;
+    if (buildings.entities.length > 0) return; // settlement already has buildings
+
+    const occupied = this.buildOccupiedSet();
+
+    // Place Government HQ — prefer near water, fallback to center
+    const ctx = eraId ? this.buildPlacementContext(eraId, occupied) : null;
+    let hqCell: { gridX: number; gridY: number } | null = null;
+
+    if (ctx) {
+      const result = findBestPlacement('government-hq', ctx, GRID_SIZE);
+      if (result) hqCell = { gridX: result.x, gridY: result.z };
+    }
+    if (!hqCell) {
+      // Fallback: center of map
+      const center = Math.floor(GRID_SIZE / 2);
+      hqCell = { gridX: center, gridY: center };
+    }
+
+    try {
+      const hq = placeNewBuilding(hqCell.gridX, hqCell.gridY, 'government-hq');
+      if (hq) occupied.add(`${hqCell.gridX},${hqCell.gridY}`);
+    } catch {
+      /* placement failed — not fatal */
+    }
+
+    // Place 2-3 izbas near the party-hq
+    const izbaCount = 2 + (rng.pickIndex(2)); // 2 or 3
+    for (let i = 0; i < izbaCount; i++) {
+      const defId = i % 2 === 0 ? 'workers-house-a' : 'workers-house-b';
+      const cell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng);
+      if (cell) {
+        try {
+          const entity = placeNewBuilding(cell.gridX, cell.gridY, defId);
+          if (entity) occupied.add(`${cell.gridX},${cell.gridY}`);
+        } catch {
+          /* placement failed */
+        }
+      }
+    }
+
+    // Place 1 farm near the settlement
+    const farmCell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng, 4);
+    if (farmCell) {
+      try {
+        placeNewBuilding(farmCell.gridX, farmCell.gridY, 'collective-farm-hq');
+      } catch {
+        /* placement failed */
+      }
+    }
+
+    this.bootstrapped = true;
+  }
+
+  /** Find an empty cell within radius of (cx, cy), avoiding occupied cells. */
+  private findNearbyEmpty(
+    cx: number,
+    cy: number,
+    occupied: Set<string>,
+    rng: GameRng,
+    minDist = 2,
+  ): { gridX: number; gridY: number } | null {
+    const candidates: Array<{ gridX: number; gridY: number; dist: number }> = [];
+    const maxDist = minDist + 3;
+
+    for (let dx = -maxDist; dx <= maxDist; dx++) {
+      for (let dy = -maxDist; dy <= maxDist; dy++) {
+        const dist = Math.abs(dx) + Math.abs(dy);
+        if (dist < minDist || dist > maxDist) continue;
+
+        const nx = cx + dx;
+        const ny = cy + dy;
+        if (!this.isInBounds(nx, ny)) continue;
+        if (occupied.has(`${nx},${ny}`)) continue;
+
+        candidates.push({ gridX: nx, gridY: ny, dist });
+      }
+    }
+
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => a.dist - b.dist);
+    const top = candidates.slice(0, Math.min(5, candidates.length));
+    return top[rng.pickIndex(top.length)]!;
+  }
+
+  /**
    * Full autonomous construction pipeline: detect demands, merge mandates, auto-place.
    * Absorbs SimulationEngine.tickCollectiveViaAgent().
    */
@@ -552,10 +673,13 @@ export class CollectiveAgent extends Vehicle {
     totalTicks: number;
     rng: GameRng | undefined;
     mandateState: PlanMandateState | null;
+    eraId?: string;
     callbacks: { onToast: (msg: string, severity?: string) => void; onAdvisor: (msg: string) => void };
     recordBuildingForMandates: (defId: string) => void;
   }): void {
-    if (deps.totalTicks % COLLECTIVE_CHECK_INTERVAL !== 0) return;
+    // Use era-based interval if eraId is provided, otherwise use config default
+    const interval = deps.eraId ? getBuildInterval(deps.eraId) : COLLECTIVE_CHECK_INTERVAL;
+    if (deps.totalTicks % interval !== 0) return;
     if (deps.totalTicks < 60) return;
     if (underConstruction.entities.length >= 3) return;
 
@@ -586,11 +710,11 @@ export class CollectiveAgent extends Vehicle {
       return;
     }
 
-    // Step 3: Auto-place via CollectiveAgent
+    // Step 3: Auto-place via CollectiveAgent with era-aware placement
     const rng = this.rng ?? deps.rng;
     if (!rng) return;
 
-    const entity = this.autoPlaceBuilding(request.defId, rng);
+    const entity = this.autoPlaceBuilding(request.defId, rng, deps.eraId);
     if (entity) {
       deps.recordBuildingForMandates(request.defId);
 
@@ -622,6 +746,7 @@ export class CollectiveAgent extends Vehicle {
       lastBuildTick: this.lastBuildTick,
       buildQueue: [...this.buildQueue],
       pendingDemands: [...this.pendingDemands],
+      bootstrapped: this.bootstrapped,
     };
   }
 
@@ -631,6 +756,7 @@ export class CollectiveAgent extends Vehicle {
     this.lastBuildTick = state.lastBuildTick;
     this.buildQueue = [...state.buildQueue];
     this.pendingDemands = [...state.pendingDemands];
+    this.bootstrapped = state.bootstrapped ?? false;
   }
 
   // ── Private Helpers: Governor ───────────────────────────────────────────────
@@ -824,6 +950,38 @@ export class CollectiveAgent extends Vehicle {
   }
 
   // ── Private Helpers: AutoBuilder ────────────────────────────────────────────
+
+  /** Build a PlacementContext from current ECS state for era-aware placement. */
+  private buildPlacementContext(eraId: string, occupied: Set<string>): PlacementContext {
+    const buildingList: Array<{ x: number; z: number; defId: string }> = [];
+    for (const entity of buildings.entities) {
+      buildingList.push({
+        x: entity.position.gridX,
+        z: entity.position.gridY,
+        defId: entity.building.defId,
+      });
+    }
+
+    const waterCells: Array<{ x: number; z: number }> = [];
+    const treeCells: Array<{ x: number; z: number }> = [];
+    for (const entity of terrainFeatures.entities) {
+      const ft = entity.terrainFeature.featureType;
+      if (ft === 'river' || ft === 'water') {
+        waterCells.push({ x: entity.position.gridX, z: entity.position.gridY });
+      } else if (ft === 'forest') {
+        treeCells.push({ x: entity.position.gridX, z: entity.position.gridY });
+      }
+    }
+
+    return {
+      gridSize: GRID_SIZE,
+      buildings: buildingList,
+      eraId,
+      waterCells,
+      treeCells,
+      occupiedCells: occupied,
+    };
+  }
 
   private buildOccupiedSet(): Set<string> {
     const occupied = new Set<string>();

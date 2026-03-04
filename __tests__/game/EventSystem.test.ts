@@ -182,7 +182,7 @@ describe('EventSystem', () => {
 
   describe('tick-based generation', () => {
     it('does not fire events if cooldown has not elapsed', () => {
-      // Force random to always trigger (< 0.08)
+      // Force random to always trigger (< 0.04)
       jest.spyOn(Math, 'random').mockReturnValue(0.01);
 
       // lastEventTick starts at 0, cooldown is 60 ticks
@@ -199,8 +199,8 @@ describe('EventSystem', () => {
       expect(firedEvents).toHaveLength(1);
     });
 
-    it('respects the 8% probability check', () => {
-      // random returns 0.5 which is > 0.08, so no event
+    it('respects the 4% probability check', () => {
+      // random returns 0.5 which is > 0.04, so no event
       jest.spyOn(Math, 'random').mockReturnValue(0.5);
 
       eventSystem.tick(65);

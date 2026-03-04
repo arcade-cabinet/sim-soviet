@@ -105,6 +105,8 @@ import { DefenseAgent, FireSystem, initDiseaseSystem } from '../ai/agents/social
 import { DemographicAgent } from '../ai/agents/social/DemographicAgent';
 import { collapseEntitiesToBuildings, getPopulationMode } from '../ai/agents/workforce/collectiveTransition';
 import { WorkerSystem } from '../ai/agents/workforce/WorkerSystem';
+import { FreeformGovernor } from '../ai/agents/crisis/FreeformGovernor';
+import { INDUSTRIAL_BUILDING_IDS } from '../growth/OrganicUnlocks';
 import { TICKS_PER_YEAR } from './Chronology';
 import {
   restoreSubsystems as restoreSubsystemsHelper,
@@ -277,6 +279,8 @@ export class SimulationEngine {
 
     this.scoring = new ScoringSystem(difficulty ?? 'comrade', consequence ?? 'permadeath');
     this.tutorial = new TutorialSystem();
+    // Skip tutorial — settlement builds organically via CollectiveAgent bootstrap
+    this.tutorial.skip();
     this.achievements = new AchievementTracker();
 
     this.transport = new TransportSystem(this.eraSystem.getCurrentEraId());
@@ -461,6 +465,9 @@ export class SimulationEngine {
   public getCollectiveAgent(): CollectiveAgent {
     return this.collectiveAgent;
   }
+  public getRng(): GameRng {
+    return this.rng;
+  }
   public getDemographicAgent(): DemographicAgent {
     return this.demographicAgent;
   }
@@ -492,6 +499,12 @@ export class SimulationEngine {
       }
       return false;
     });
+    // Tell PoliticalAgent what mode we're in so it uses the right era transition logic
+    if (gov.constructor.name === 'HistoricalGovernor') {
+      this.politicalAgent.setGameMode('historical');
+    } else if (gov.constructor.name === 'FreeformGovernor') {
+      this.politicalAgent.setGameMode('freeform');
+    }
   }
   public getGovernor(): IGovernor | null {
     return this.governor;
@@ -674,6 +687,28 @@ export class SimulationEngine {
           'The collective has grown. Individual records are now maintained by the raion.',
           'warning',
         );
+      }
+
+      // In Freeform mode, provide organic unlock context for condition-based era transitions
+      if (this.governor instanceof FreeformGovernor) {
+        const activeCrises = this.governor.getActiveCrises();
+        const hasActiveWar = activeCrises.some((id) => id.startsWith('war') || id.includes('war'));
+        const counters = this.governor.getYearsSinceCounters();
+        const industrialCount = buildingsLogic.entities.filter((e) =>
+          INDUSTRIAL_BUILDING_IDS.includes(e.building.defId),
+        ).length;
+
+        this.politicalAgent.setOrganicUnlockContext({
+          population: storeRef.resources.population,
+          industrialBuildingCount: industrialCount,
+          hasActiveWar,
+          hasExperiencedWar: this.governor.getTotalCrisesExperienced() > 0 && counters.war < Infinity,
+          yearsSinceLastWar: counters.war,
+          recentGrowthRate: 0, // simplified: not tracked precisely
+          lowGrowthYears: 0, // will be enhanced later
+          simulationYearsElapsed: this.chronologyAgent.getDate().year - this.startYear,
+          currentEraId: this.politicalAgent.getCurrentEraId(),
+        });
       }
 
       this.politicalAgent.handleEraTransitionFull({
@@ -1092,6 +1127,7 @@ export class SimulationEngine {
       totalTicks: this.chronologyAgent.getDate().totalTicks,
       rng: this.rng,
       mandateState: this.mandateState,
+      eraId: this.politicalAgent.getCurrentEraId(),
       callbacks: this.callbacks as Parameters<typeof this.collectiveAgent.tickAutonomous>[0]['callbacks'],
       recordBuildingForMandates: (defId: string) => this.recordBuildingForMandates(defId),
     });

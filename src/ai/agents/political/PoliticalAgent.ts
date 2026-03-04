@@ -40,8 +40,10 @@ export type {
 
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../../ecs/archetypes';
 import { TICKS_PER_YEAR } from '../../../game/Chronology';
+import type { GovernorMode } from '../../../ai/agents/crisis/Governor';
 import type { SimCallbacks } from '../../../game/engine/types';
 import { ALL_BUILDING_IDS, ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from '../../../game/era/definitions';
+import { type UnlockContext, evaluateOrganicUnlocks } from '../../../growth/OrganicUnlocks';
 import { getBuildingTierRequirement, tierMeetsRequirement } from '../../../game/era/tiers';
 import type {
   ConstructionMethod,
@@ -407,6 +409,15 @@ export class PoliticalAgent extends Vehicle {
   /** Seeded RNG (set via setRng). */
   private rng?: GameRng;
 
+  /** Game mode — freeform uses OrganicUnlocks for era transitions. */
+  private gameMode: GovernorMode = 'classic';
+
+  /** Cached organic unlock context for Freeform mode era transitions. */
+  private organicCtx: UnlockContext | null = null;
+
+  /** Freeform mode: current era tracked independently of year. */
+  private freeformEraId: EraId | null = null;
+
   constructor(startYear = 1917) {
     super();
     this.name = 'PoliticalAgent';
@@ -431,16 +442,41 @@ export class PoliticalAgent extends Vehicle {
     this.rng = rng;
   }
 
+  /** Set game mode (freeform uses OrganicUnlocks for era transitions). */
+  setGameMode(mode: GovernorMode): void {
+    this.gameMode = mode;
+    if (mode === 'freeform') {
+      this.freeformEraId = this.getCurrentEraId();
+    }
+  }
+
+  /** Get current game mode. */
+  getGameMode(): GovernorMode {
+    return this.gameMode;
+  }
+
+  /**
+   * Update the organic unlock context. Called by SimulationEngine each tick
+   * when in Freeform mode so era transitions are condition-based.
+   */
+  setOrganicUnlockContext(ctx: UnlockContext): void {
+    this.organicCtx = ctx;
+  }
+
   // =========================================================================
   // Era management (absorbed from EraSystem)
   // =========================================================================
 
   /**
    * Get the full definition of the current era based on the tracked year.
+   * In Freeform mode, uses the organic era override if set.
    *
    * @returns Current era definition
    */
   getCurrentEraDefinition(): EraDefinition {
+    if (this.gameMode === 'freeform' && this.freeformEraId) {
+      return ERA_DEFINITIONS[this.freeformEraId];
+    }
     const idx = eraIndexForYear(this.state.currentYear);
     const eraId = ERA_ORDER[idx]!;
     return ERA_DEFINITIONS[eraId];
@@ -461,6 +497,9 @@ export class PoliticalAgent extends Vehicle {
    * @returns Index into ERA_ORDER
    */
   getCurrentEraIndex(): number {
+    if (this.gameMode === 'freeform' && this.freeformEraId) {
+      return ERA_ORDER.indexOf(this.freeformEraId);
+    }
     return eraIndexForYear(this.state.currentYear);
   }
 
@@ -476,18 +515,33 @@ export class PoliticalAgent extends Vehicle {
 
   /**
    * Check whether advancing to the given year crosses into a new era.
-   * Updates internal year, starts modifier blend, returns new era or null.
+   * In Freeform mode, uses OrganicUnlocks conditions instead of year boundaries.
+   * In Historical/Classic mode, uses year-based era transitions.
    *
    * Absorbed from EraSystem.checkTransition().
    *
    * @param year - Calendar year to advance to
    * @returns New EraDefinition if transition occurred, null otherwise.
-   *          Also returns the new era index (0-7) for backward compat via overload.
    */
   checkEraTransition(year: number): EraDefinition | null {
+    // Capture old era BEFORE updating year (year-based path needs the delta)
     const oldEra = this.getCurrentEraDefinition();
     this.state.currentYear = year;
-    const newEra = this.getCurrentEraDefinition();
+
+    if (this.gameMode === 'freeform') {
+      return this.checkFreeformEraTransition();
+    }
+
+    return this.checkYearBasedEraTransition(oldEra);
+  }
+
+  /**
+   * Year-based era transition (Historical/Classic mode).
+   */
+  private checkYearBasedEraTransition(oldEra: EraDefinition): EraDefinition | null {
+    const idx = eraIndexForYear(this.state.currentYear);
+    const newEraId = ERA_ORDER[idx]!;
+    const newEra = ERA_DEFINITIONS[newEraId];
 
     if (newEra.id !== oldEra.id) {
       this.state.previousEraId = oldEra.id;
@@ -497,6 +551,33 @@ export class PoliticalAgent extends Vehicle {
     }
 
     return null;
+  }
+
+  /**
+   * Condition-based era transition (Freeform mode).
+   * Uses OrganicUnlocks to determine when to advance eras.
+   */
+  private checkFreeformEraTransition(): EraDefinition | null {
+    if (!this.organicCtx) return null;
+
+    const currentEraId = this.freeformEraId ?? 'revolution';
+    const ctx: UnlockContext = {
+      ...this.organicCtx,
+      currentEraId,
+    };
+
+    const nextEra = evaluateOrganicUnlocks(ctx);
+    if (!nextEra) return null;
+
+    const oldEra = ERA_DEFINITIONS[currentEraId];
+    const newEra = ERA_DEFINITIONS[nextEra];
+
+    this.state.previousEraId = currentEraId;
+    this.freeformEraId = nextEra;
+    this.transitionFromModifiers = { ...oldEra.modifiers };
+    this.state.transitionTicksRemaining = TRANSITION_TICKS;
+
+    return newEra;
   }
 
   /**

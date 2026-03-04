@@ -51,7 +51,16 @@ function createAgentForType(type: string): ICrisisAgent | null {
 // ─── HistoricalGovernor ─────────────────────────────────────────────────────
 
 export class HistoricalGovernor implements IGovernor {
-  private entries: AgentEntry[] = [];
+  /**
+   * Entries waiting to be activated (startYear not yet reached).
+   * Sorted by startYear — only need to check the front of the list.
+   */
+  private pendingEntries: AgentEntry[] = [];
+  /**
+   * Entries currently producing impacts (activated + still active).
+   * Typically 0-3 entries — never grows large.
+   */
+  private activeEntries: AgentEntry[] = [];
   private currentYear = 0;
 
   constructor() {
@@ -60,14 +69,16 @@ export class HistoricalGovernor implements IGovernor {
 
   /**
    * Load crisis definitions and create agent instances.
-   * Public for testing — normally called from constructor.
+   * Sorted by startYear so we only check the front of pending list.
    */
   private loadCrises(crises: readonly CrisisDefinition[]): void {
-    this.entries = [];
-    for (const def of crises) {
+    this.pendingEntries = [];
+    this.activeEntries = [];
+    const sorted = [...crises].sort((a, b) => a.startYear - b.startYear);
+    for (const def of sorted) {
       const agent = createAgentForType(def.type);
       if (agent) {
-        this.entries.push({
+        this.pendingEntries.push({
           definition: def,
           agent,
           activated: false,
@@ -79,65 +90,61 @@ export class HistoricalGovernor implements IGovernor {
   /**
    * Evaluate the current tick and return a GovernorDirective.
    *
-   * For each crisis:
-   * 1. If startYear <= ctx.year and not yet activated → configure + activate
-   * 2. If ctx.year > endYear and agent is in peak → transition to aftermath
-   * 3. Collect impacts from all active agents
-   * 4. Merge impacts into DynamicModifiers
+   * Only touches:
+   * 1. Front of pendingEntries (sorted by startYear) — promote when ready
+   * 2. activeEntries (typically 0-3) — evaluate impacts
+   * Never scans the full historical crisis database every tick.
    */
   evaluate(ctx: GovernorContext): GovernorDirective {
     this.currentYear = ctx.year;
 
+    // ── Promote pending → active (sorted, so stop at first future entry) ──
+    while (this.pendingEntries.length > 0 && ctx.year >= this.pendingEntries[0]!.definition.startYear) {
+      const entry = this.pendingEntries.shift()!;
+      entry.agent.configure(entry.definition);
+      entry.activated = true;
+      this.activeEntries.push(entry);
+    }
+
+    // ── Evaluate only active entries ────────────────────────────────────
     const allImpacts: CrisisImpact[] = [];
-    const activeCriseIds = this.getActiveCrises();
+    const activeCrisisIds = this.getActiveCrises();
 
-    for (const entry of this.entries) {
-      // Activate crises when their start year arrives
-      if (!entry.activated && ctx.year >= entry.definition.startYear) {
-        entry.agent.configure(entry.definition);
-        entry.activated = true;
-      }
-
+    for (const entry of this.activeEntries) {
       // If past end year and agent is still in peak, transition to aftermath
-      if (entry.activated && ctx.year > entry.definition.endYear && entry.agent.getPhase() === 'peak') {
-        // WarAgent has a special transitionToAftermath method
+      if (ctx.year > entry.definition.endYear && entry.agent.getPhase() === 'peak') {
         if (entry.agent instanceof WarAgent) {
           entry.agent.transitionToAftermath();
         }
-        // FamineAgent and DisasterAgent manage their own peak→aftermath
-        // transitions internally via tick counts, so no action needed.
       }
 
-      // Evaluate all activated agents — some (DisasterAgent) self-activate
-      // inside evaluate() so we cannot gate on isActive() alone.
-      if (entry.activated) {
-        const crisisCtx: CrisisContext = {
-          year: ctx.year,
-          month: ctx.month,
-          population: ctx.population,
-          food: ctx.food,
-          money: ctx.money,
-          rng: ctx.rng,
-          activeCrises: activeCriseIds,
-        };
+      const crisisCtx: CrisisContext = {
+        year: ctx.year,
+        month: ctx.month,
+        population: ctx.population,
+        food: ctx.food,
+        money: ctx.money,
+        rng: ctx.rng,
+        activeCrises: activeCrisisIds,
+      };
 
-        const impacts = entry.agent.evaluate(crisisCtx);
-        allImpacts.push(...impacts);
-      }
+      const impacts = entry.agent.evaluate(crisisCtx);
+      allImpacts.push(...impacts);
     }
 
-    // Merge impacts into DynamicModifiers
-    const modifiers = this.mergeModifiers(allImpacts);
+    // ── Prune resolved entries (aftermath complete) ─────────────────────
+    // Only check yearly to avoid per-tick overhead
+    if (ctx.month === 1) {
+      this.activeEntries = this.activeEntries.filter((entry) => entry.agent.isActive());
+    }
 
-    return {
-      crisisImpacts: allImpacts,
-      modifiers,
-    };
+    const modifiers = this.mergeModifiers(allImpacts);
+    return { crisisImpacts: allImpacts, modifiers };
   }
 
   /** Return IDs of all currently active crises. */
   getActiveCrises(): string[] {
-    return this.entries.filter((e) => e.activated && e.agent.isActive()).map((e) => e.definition.id);
+    return this.activeEntries.filter((e) => e.agent.isActive()).map((e) => e.definition.id);
   }
 
   /** Called at the start of each new game year. */
@@ -150,11 +157,9 @@ export class HistoricalGovernor implements IGovernor {
     const agentStates: Record<string, CrisisAgentSaveData> = {};
     const activatedSet: string[] = [];
 
-    for (const entry of this.entries) {
-      if (entry.activated) {
-        agentStates[entry.definition.id] = entry.agent.serialize();
-        activatedSet.push(entry.definition.id);
-      }
+    for (const entry of this.activeEntries) {
+      agentStates[entry.definition.id] = entry.agent.serialize();
+      activatedSet.push(entry.definition.id);
     }
 
     return {
@@ -174,7 +179,9 @@ export class HistoricalGovernor implements IGovernor {
     const agentStates = (data.state.agentStates as Record<string, CrisisAgentSaveData>) ?? {};
     const activatedSet = new Set((data.state.activatedSet as string[]) ?? []);
 
-    for (const entry of this.entries) {
+    // Re-partition: activated entries move from pending → active
+    const stillPending: AgentEntry[] = [];
+    for (const entry of this.pendingEntries) {
       if (activatedSet.has(entry.definition.id)) {
         entry.activated = true;
         const savedState = agentStates[entry.definition.id];
@@ -182,8 +189,12 @@ export class HistoricalGovernor implements IGovernor {
           entry.agent.configure(entry.definition);
           entry.agent.restore(savedState);
         }
+        this.activeEntries.push(entry);
+      } else {
+        stillPending.push(entry);
       }
     }
+    this.pendingEntries = stillPending;
   }
 
   // ─── Impact Merging ─────────────────────────────────────────────────────

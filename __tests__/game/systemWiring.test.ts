@@ -492,7 +492,7 @@ describe('GAP-024: Minigame trigger routing', () => {
     router.resolveChoice(def.choices[0]!.id);
     router.clearResolved();
 
-    // At tick 361, neither periodic condition fires (361 % 60 !== 0, 361 % 180 !== 0)
+    // At tick 361, neither periodic condition fires (361 % 360 !== 0, 361 % 720 !== 0)
     const result = router.checkTrigger('periodic', { totalTicks: 361, population: 100 });
     expect(result).toBeNull();
 

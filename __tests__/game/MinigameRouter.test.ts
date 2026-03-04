@@ -252,9 +252,9 @@ describe('MinigameRouter', () => {
       expect(def!.id).toBe('interrogation');
     });
 
-    it('matches periodic trigger for the_queue when population >= 30 and tick % 60 === 0', () => {
+    it('matches periodic trigger for the_queue when population >= 30 and tick % 360 === 0', () => {
       const def = router.checkTrigger('periodic', {
-        totalTicks: 120,
+        totalTicks: 360,
         population: 30,
       });
       expect(def).not.toBeNull();
@@ -263,7 +263,7 @@ describe('MinigameRouter', () => {
 
     it('does NOT match the_queue when population < 30', () => {
       const def = router.checkTrigger('periodic', {
-        totalTicks: 120,
+        totalTicks: 360,
         population: 29,
       });
       // Should not match the_queue, might match inspection
@@ -272,7 +272,7 @@ describe('MinigameRouter', () => {
       }
     });
 
-    it('does NOT match the_queue when tick is not divisible by 60', () => {
+    it('does NOT match the_queue when tick is not divisible by 360', () => {
       const def = router.checkTrigger('periodic', {
         totalTicks: 121,
         population: 50,
@@ -283,13 +283,12 @@ describe('MinigameRouter', () => {
       }
     });
 
-    it('matches periodic trigger for the_inspection at tick % 180 === 0', () => {
+    it('matches periodic trigger for the_inspection at tick % 720 === 0', () => {
       const def = router.checkTrigger('periodic', {
-        totalTicks: 180,
+        totalTicks: 720,
         population: 10,
       });
-      // At tick 180, both queue (if pop >= 30) and inspection could match
-      // With population 10, only inspection should match
+      // With population 10, only inspection should match (queue requires >= 30)
       expect(def).not.toBeNull();
       expect(def!.id).toBe('the_inspection');
     });

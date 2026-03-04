@@ -27,7 +27,7 @@ export const MAP_SIZE_CONFIG: Record<MapSize, { label: string; gridSize: number;
   large: { label: 'Large', gridSize: 50, desc: 'Sprawling industrial zone. 50x50 grid.' },
 };
 
-/** Game mode — historical follows real Soviet timeline, freeform diverges at a chosen year, classic uses difficulty presets. */
+/** Game mode — historical follows real Soviet timeline, freeform uses organic divergence, classic uses difficulty presets. */
 export type GameMode = 'historical' | 'classic' | 'freeform';
 
 /** Player-selected options for starting a new game session. */
@@ -37,7 +37,7 @@ export interface NewGameConfig {
   seed: string;
   mapSize: MapSize;
   gameMode: GameMode;
-  /** Year at which history diverges in freeform mode (1917-1991). */
+  /** @deprecated Divergence is now organic. Kept for old save compat. */
   divergenceYear?: number;
 }
 
@@ -61,7 +61,7 @@ const CONSEQUENCE_FLAVOR: Record<ConsequenceLevel, string> = {
 const GAME_MODE_FLAVOR: Record<GameMode, string> = {
   historical: 'History IS the difficulty. Survive the actual Soviet timeline.',
   freeform:
-    'Play through history to your chosen year, then forge your own Soviet timeline. What if the revolution had gone differently?',
+    'Same forces, different timing. Historical events happen probabilistically. The timeline diverges naturally. What if?',
   classic: 'Choose your own difficulty. Standard city-builder experience.',
 };
 
@@ -78,6 +78,7 @@ function getEraLabel(year: number): string {
   if (year <= 1985) return 'Interregnum (1982\u20131985)';
   return 'Perestroika & Collapse (1986\u20131991)';
 }
+
 
 /** Soviet dossier-styled game configuration screen for difficulty, consequence, seed, and map size. */
 export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) => {

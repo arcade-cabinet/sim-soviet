@@ -1,6 +1,7 @@
 /**
- * TopBar — Resource bar, calendar, speed controls.
- * Thin chrome: essential indicators only, secondary panels in overflow menu.
+ * TopBar — Minimal resource bar, calendar, speed controls.
+ * Phase 1: stripped to essentials — food, timber, population, date, threat, speed.
+ * Includes overflow menu for accessing deep panels.
  */
 
 import type React from 'react';
@@ -9,28 +10,16 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { Colors, monoFont, SharedStyles } from './styles';
 import { useResponsive } from './useResponsive';
 
-const ERA_LABELS: Record<string, string> = {
-  revolution: 'REVOLUTION',
-  collectivization: 'COLLECTIVIZATION',
-  industrialization: 'INDUSTRIALIZATION',
-  great_patriotic: 'GREAT PATRIOTIC WAR',
-  reconstruction: 'RECONSTRUCTION',
-  thaw_and_freeze: 'THAW & FREEZE',
-  stagnation: 'ERA OF STAGNATION',
-  the_eternal: 'THE ETERNAL SOVIET',
-};
+/** Overflow menu item definition. */
+interface OverflowItem {
+  icon: string;
+  label: string;
+  handler: () => void;
+}
 
 export interface TopBarProps {
-  season: string;
-  weather: string;
-  timber: number;
-  steel: number;
-  cement: number;
-  powerUsed: number;
-  powerGen: number;
-  currentEra: string;
   food: number;
-  vodka: number;
+  timber: number;
   population: number;
   dateLabel: string;
   monthProgress: number;
@@ -67,26 +56,10 @@ export interface TopBarProps {
   autopilot?: boolean;
 }
 
-// ── Overflow menu item definition ─────────────────────────────────────────
-
-interface OverflowItem {
-  icon: string;
-  label: string;
-  handler?: () => void;
-}
-
-/** Top resource bar displaying money, food, vodka, power, population, calendar, speed, and threat. */
+/** Minimal top bar: food, timber, population, date, threat indicator, speed controls, overflow menu. */
 export const TopBar: React.FC<TopBarProps> = ({
-  season,
-  weather,
-  timber,
-  steel,
-  cement,
-  powerUsed,
-  powerGen,
-  currentEra,
   food,
-  vodka,
+  timber,
   population,
   dateLabel,
   monthProgress,
@@ -165,25 +138,6 @@ export const TopBar: React.FC<TopBarProps> = ({
     <View style={styles.wrapper}>
       <View style={[SharedStyles.panel, styles.container, { height: containerHeight }]}>
         <View style={styles.leftGroup}>
-          {!isCompact && (
-            <Text style={styles.title}>
-              <Text style={{ color: Colors.sovietRed }}>SIM</Text>
-              <Text style={{ color: Colors.white }}>SOVIET</Text> <Text style={styles.titleYear}>1917</Text>
-            </Text>
-          )}
-          {!isCompact && (
-            <View style={styles.seasonBox}>
-              <Text style={styles.seasonLabel}>{season}</Text>
-              <Text style={styles.weatherLabel}>{weather}</Text>
-            </View>
-          )}
-          {!isCompact && (
-            <View style={styles.eraBox}>
-              <Text testID="era-label" style={styles.eraLabel}>
-                {ERA_LABELS[currentEra] ?? currentEra.toUpperCase()}
-              </Text>
-            </View>
-          )}
           <ThreatIndicator
             threatLevel={threatLevel}
             blackMarks={blackMarks}
@@ -227,31 +181,6 @@ export const TopBar: React.FC<TopBarProps> = ({
             contentContainerStyle={styles.compactRightContent}
           >
             <ResourceStat
-              label="TIMBER"
-              emoji={'\u{1FAB5}'}
-              value={String(timber)}
-              color="#a1887f"
-              testID="timber-value"
-              compact
-            />
-            <ResourceStat
-              label="STEEL"
-              emoji={'\u{1F529}'}
-              value={String(steel)}
-              color="#90a4ae"
-              testID="steel-value"
-              compact
-            />
-            <ResourceStat label="CEMENT" value={String(cement)} color="#bdbdbd" testID="cement-value" compact />
-            <ResourceStat
-              label="POWER"
-              emoji={'\u26A1'}
-              value={`${powerUsed}/${powerGen}`}
-              color={Colors.sovietGold}
-              testID="power-value"
-              compact
-            />
-            <ResourceStat
               label="FOOD"
               emoji={'\u{1F954}'}
               value={String(food)}
@@ -260,11 +189,11 @@ export const TopBar: React.FC<TopBarProps> = ({
               compact
             />
             <ResourceStat
-              label="VODKA"
-              emoji={'\u{1F37E}'}
-              value={String(vodka)}
-              color={Colors.termBlue}
-              testID="vodka-value"
+              label="TIMBER"
+              emoji={'\u{1FAB5}'}
+              value={String(timber)}
+              color="#a1887f"
+              testID="timber-value"
               compact
             />
             <ResourceStat
@@ -297,35 +226,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           </ScrollView>
         ) : (
           <View style={styles.rightGroup}>
+            <ResourceStat label="FOOD" emoji={'\u{1F954}'} value={String(food)} color="#fdba74" testID="food-value" />
             <ResourceStat
               label="TIMBER"
               emoji={'\u{1FAB5}'}
               value={String(timber)}
               color="#a1887f"
               testID="timber-value"
-            />
-            <ResourceStat
-              label="STEEL"
-              emoji={'\u{1F529}'}
-              value={String(steel)}
-              color="#90a4ae"
-              testID="steel-value"
-            />
-            <ResourceStat label="CEMENT" value={String(cement)} color="#bdbdbd" testID="cement-value" />
-            <ResourceStat
-              label="POWER"
-              emoji={'\u26A1'}
-              value={`${powerUsed}/${powerGen}`}
-              color={Colors.sovietGold}
-              testID="power-value"
-            />
-            <ResourceStat label="FOOD" emoji={'\u{1F954}'} value={String(food)} color="#fdba74" testID="food-value" />
-            <ResourceStat
-              label="VODKA"
-              emoji={'\u{1F37E}'}
-              value={String(vodka)}
-              color={Colors.termBlue}
-              testID="vodka-value"
             />
             <ResourceStat label="POP" value={String(population)} color={Colors.white} borderRight testID="pop-value" />
 
@@ -497,59 +404,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    fontFamily: monoFont,
-    letterSpacing: -1,
-  },
-  titleYear: {
-    color: '#9e9e9e',
-    fontSize: 16,
-    fontWeight: 'normal',
-  },
-  seasonBox: {
-    borderLeftWidth: 1,
-    borderLeftColor: '#555',
-    paddingLeft: 12,
-  },
-  eraBox: {
-    borderLeftWidth: 1,
-    borderLeftColor: '#555',
-    paddingLeft: 12,
-    paddingRight: 4,
-  },
-  seasonText: {
-    fontSize: 10,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-  },
-  seasonLabel: {
-    fontSize: 10,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-    color: Colors.white,
-  },
-  weatherLabel: {
-    fontSize: 10,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-    color: Colors.termBlue,
-  },
-  eraLabel: {
-    fontSize: 10,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-    color: Colors.sovietGold,
-  },
   threatBox: {
-    borderLeftWidth: 1,
-    borderLeftColor: '#555',
-    paddingLeft: 12,
+    paddingHorizontal: 12,
     alignItems: 'center',
   },
   threatRow: {
@@ -767,20 +623,20 @@ const styles = StyleSheet.create({
   overflowItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    gap: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
-    gap: 8,
   },
   overflowIcon: {
-    fontSize: 14,
-    width: 22,
+    fontSize: 16,
+    width: 24,
     textAlign: 'center',
   },
   overflowLabel: {
-    fontSize: 10,
     fontFamily: monoFont,
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#ccc',
     letterSpacing: 1,

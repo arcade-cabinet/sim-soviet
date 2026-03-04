@@ -75,7 +75,7 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   createResourceStore({
     food: Math.round(500 * resMult),
     timber: Math.round(200 * resMult),
-    steel: 0,
+    steel: Math.round(50 * resMult),
     cement: 0,
     population: 0,
   });
@@ -116,7 +116,7 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
     const governor = new HistoricalGovernor();
     engine.setGovernor(governor);
   } else if (options?.gameMode === 'freeform') {
-    const governor = new FreeformGovernor(options.divergenceYear ?? 1945);
+    const governor = new FreeformGovernor();
     engine.setGovernor(governor);
   }
   // 'classic' or undefined: no governor (backward compat — uses DIFFICULTY_PRESETS)
@@ -130,6 +130,9 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   saveSystem = new SaveSystem(grid);
   saveSystem.setEngine(engine);
   stopAutoSave = saveSystem.startAutoSave();
+
+  // Bootstrap the settlement: place starter buildings (government-hq, housing, farm)
+  engine.getCollectiveAgent().earlyGameBootstrap(engine.getRng(), 'revolution');
 
   // Generate initial dirt paths between starter buildings
   recalculatePaths();

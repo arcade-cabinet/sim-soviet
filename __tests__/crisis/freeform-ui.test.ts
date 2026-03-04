@@ -1,9 +1,9 @@
 /**
  * @fileoverview Tests for Freeform mode UI integration.
  *
- * Validates that NewGameConfig and GameInitOptions include divergenceYear,
- * that FreeformGovernor is correctly wired on the engine, and that
- * freeform mode uses the correct resource multiplier.
+ * Validates that NewGameConfig and GameInitOptions type shapes are correct,
+ * that FreeformGovernor is correctly wired on the engine (no divergenceYear
+ * in new games), and that freeform mode uses the correct resource multiplier.
  */
 
 import { FreeformGovernor } from '@/ai/agents/crisis/FreeformGovernor';
@@ -48,8 +48,8 @@ function makeMockCallbacks(): any {
 
 // ── NewGameConfig type checks ────────────────────────────────────────────────
 
-describe('NewGameConfig includes divergenceYear', () => {
-  it('accepts divergenceYear as optional field', () => {
+describe('NewGameConfig type shape', () => {
+  it('accepts divergenceYear as deprecated optional field', () => {
     const config: NewGameConfig = {
       difficulty: 'comrade',
       consequence: 'permadeath',
@@ -63,13 +63,13 @@ describe('NewGameConfig includes divergenceYear', () => {
     expect(config.gameMode).toBe('freeform');
   });
 
-  it('divergenceYear is optional (not required for classic/historical)', () => {
+  it('divergenceYear is optional (not required for any mode)', () => {
     const config: NewGameConfig = {
       difficulty: 'comrade',
       consequence: 'permadeath',
       seed: 'test-seed',
       mapSize: 'medium',
-      gameMode: 'classic',
+      gameMode: 'freeform',
     };
 
     expect(config.divergenceYear).toBeUndefined();
@@ -83,8 +83,8 @@ describe('NewGameConfig includes divergenceYear', () => {
 
 // ── GameInitOptions type checks ──────────────────────────────────────────────
 
-describe('GameInitOptions includes divergenceYear', () => {
-  it('accepts divergenceYear as optional field', () => {
+describe('GameInitOptions type shape', () => {
+  it('accepts divergenceYear as deprecated optional field', () => {
     const options: GameInitOptions = {
       difficulty: 'comrade',
       consequence: 'permadeath',
@@ -110,7 +110,7 @@ describe('GameInitOptions includes divergenceYear', () => {
 // ── Freeform mode: FreeformGovernor wiring ───────────────────────────────────
 
 describe('Freeform mode governor wiring', () => {
-  it('FreeformGovernor set on engine with correct divergenceYear', () => {
+  it('FreeformGovernor set on engine (no divergenceYear in new games)', () => {
     const engine = new SimulationEngine(
       makeMockGrid(),
       makeMockCallbacks(),
@@ -119,37 +119,28 @@ describe('Freeform mode governor wiring', () => {
       'permadeath',
     );
 
-    // Wire governor as GameInit would for freeform mode
-    const divergenceYear = 1962;
-    const governor = new FreeformGovernor(divergenceYear);
+    // Wire governor as GameInit would for freeform mode (no divergenceYear)
+    const governor = new FreeformGovernor();
     engine.setGovernor(governor);
 
     expect(engine.getGovernor()).toBe(governor);
     expect(engine.getGovernor()).toBeInstanceOf(FreeformGovernor);
-    expect(governor.getDivergenceYear()).toBe(1962);
+    expect(governor.getDivergenceYear()).toBe(1917);
   });
 
-  it('FreeformGovernor clamps divergenceYear to valid range', () => {
-    const tooEarly = new FreeformGovernor(1900);
-    expect(tooEarly.getDivergenceYear()).toBe(1917);
+  it('FreeformGovernor stores divergenceYear as-is for backward compat', () => {
+    // Old saves may pass a divergenceYear — it is stored but not used
+    const withYear = new FreeformGovernor(1945);
+    expect(withYear.getDivergenceYear()).toBe(1945);
 
-    const tooLate = new FreeformGovernor(2050);
-    expect(tooLate.getDivergenceYear()).toBe(1991);
-
-    const justRight = new FreeformGovernor(1945);
-    expect(justRight.getDivergenceYear()).toBe(1945);
+    // New games default to 1917
+    const noYear = new FreeformGovernor();
+    expect(noYear.getDivergenceYear()).toBe(1917);
   });
 
-  it('default divergenceYear is 1945 when not specified', () => {
-    // Simulate the GameInit fallback: options.divergenceYear ?? 1945
-    const options: GameInitOptions = {
-      gameMode: 'freeform',
-    };
-
-    const year = options.divergenceYear ?? 1945;
-    const governor = new FreeformGovernor(year);
-
-    expect(governor.getDivergenceYear()).toBe(1945);
+  it('default FreeformGovernor() has isDiverged=true from tick 0', () => {
+    const governor = new FreeformGovernor();
+    expect(governor.isDiverged()).toBe(true);
   });
 });
 

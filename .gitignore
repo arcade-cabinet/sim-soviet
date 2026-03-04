@@ -1,3 +1,6 @@
+# Playthrough diagnostic output
+__tests__/playthrough/output/
+
 # Logs
 logs
 *.log

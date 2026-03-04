@@ -8,6 +8,7 @@
 
 import type { ConsequenceLevel, DifficultyLevel } from '../../src/ai/agents/political/ScoringSystem';
 import { getMetaEntity, getResourceEntity, operationalBuildings } from '../../src/ecs/archetypes';
+import { GameRng } from '../../src/game/SeedSystem';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { createDvor } from '../../src/ecs/factories/settlementFactories';
 import type { Entity, GameMeta, Resources } from '../../src/ecs/world';
@@ -57,7 +58,17 @@ export interface PlaythroughOptions {
   meta?: Partial<GameMeta>;
   difficulty?: DifficultyLevel;
   consequence?: ConsequenceLevel;
-  /** When true, mocks Math.random to 0.99 to suppress stochastic events. */
+  /**
+   * Fixed seed phrase for deterministic RNG (e.g. 'glorious-frozen-tractor').
+   * When set, passes a seeded GameRng to the engine — no Math.random mocking.
+   * Prefer this over deterministicRandom for realistic stochastic behavior.
+   */
+  seed?: string;
+  /**
+   * @deprecated Use `seed` instead. Mocking Math.random()==0.99 kills all
+   * stochastic behavior and produces unrealistic simulations.
+   * Kept for backward compat with existing tests.
+   */
   deterministicRandom?: boolean;
 }
 
@@ -108,13 +119,17 @@ export function createPlaythroughEngine(options: PlaythroughOptions = {}): Playt
     createTestDvory(requestedPop);
   }
 
-  // Mock Math.random BEFORE engine construction so GameRng seed generation
-  // is deterministic (generateSeedPhrase uses Math.random internally)
-  if (options.deterministicRandom !== false) {
+  // Seed strategy: prefer explicit seed phrase → seeded GameRng.
+  // Fall back to legacy deterministicRandom for backward compat.
+  let rng: GameRng | undefined;
+  if (options.seed) {
+    rng = new GameRng(options.seed);
+  } else if (options.deterministicRandom !== false) {
+    // Legacy: mock Math.random so generateSeedPhrase() is deterministic
     jest.spyOn(Math, 'random').mockReturnValue(0.99);
   }
 
-  const engine = new SimulationEngine(grid, callbacks, undefined, options.difficulty, options.consequence);
+  const engine = new SimulationEngine(grid, callbacks, rng, options.difficulty, options.consequence);
 
   return { engine, callbacks, grid };
 }

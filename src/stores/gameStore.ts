@@ -141,11 +141,13 @@ export function useGameSnapshot(): GameSnapshot {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-/** Set selected building tool and notify React. */
+/** Set selected building tool and notify React. Only 'none' and 'bulldoze' are allowed (Phase 1). */
 export function selectTool(tool: string): void {
+  // Phase 1: direct building placement disabled — only allow none and bulldoze
+  const allowed = tool === 'none' || tool === 'bulldoze' ? tool : 'none';
   const meta = getMetaEntity();
   if (meta) {
-    meta.gameMeta.selectedTool = tool;
+    meta.gameMeta.selectedTool = allowed;
   }
   notifyStateChange();
 }
@@ -821,6 +823,74 @@ function subscribeMinimap(listener: () => void): () => void {
     _minimapListeners.delete(listener);
   };
 }
+
+// ── Building Panel (click-to-inspect side panel) ──────────────────────────
+
+let _selectedBuildingCell: { x: number; z: number } | null = null;
+const _buildingPanelListeners = new Set<() => void>();
+
+/** Get the currently selected building cell for the side panel (null if closed). */
+function getSelectedBuildingCell(): { x: number; z: number } | null {
+  return _selectedBuildingCell;
+}
+
+/** Open the building info side panel for the building at (x, z). */
+export function openBuildingPanel(x: number, z: number): void {
+  _selectedBuildingCell = { x, z };
+  setCameraTarget(x, z);
+  for (const listener of _buildingPanelListeners) {
+    listener();
+  }
+}
+
+/** Close the building info side panel. */
+export function closeBuildingPanel(): void {
+  _selectedBuildingCell = null;
+  clearCameraTarget();
+  for (const listener of _buildingPanelListeners) {
+    listener();
+  }
+}
+
+/** React hook -- subscribe to the building panel cell state. */
+export function useBuildingPanel(): { x: number; z: number } | null {
+  return useSyncExternalStore(subscribeBuildingPanel, getSelectedBuildingCell, getSelectedBuildingCell);
+}
+
+function subscribeBuildingPanel(listener: () => void): () => void {
+  _buildingPanelListeners.add(listener);
+  return () => {
+    _buildingPanelListeners.delete(listener);
+  };
+}
+
+// ── Camera Target (click-to-zoom street level) ───────────────────────────
+
+/** Camera target state for smooth zoom-to-building animation. */
+export interface CameraTargetState {
+  x: number;
+  z: number;
+  returnPos?: [number, number, number];
+  returnTarget?: [number, number, number];
+}
+
+let _cameraTarget: CameraTargetState | null = null;
+
+/** Get the current camera target (null if no zoom animation active). */
+export function getCameraTarget(): CameraTargetState | null {
+  return _cameraTarget;
+}
+
+/** Set camera target to zoom toward a building at grid (x, z). */
+export function setCameraTarget(x: number, z: number): void {
+  _cameraTarget = { x, z };
+}
+
+/** Clear camera target to trigger return animation. */
+export function clearCameraTarget(): void {
+  _cameraTarget = null;
+}
+
 
 // ── Lens Cycling ──────────────────────────────────────────────────────────
 
