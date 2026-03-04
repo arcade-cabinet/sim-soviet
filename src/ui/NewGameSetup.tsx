@@ -27,7 +27,7 @@ export const MAP_SIZE_CONFIG: Record<MapSize, { label: string; gridSize: number;
   large: { label: 'Large', gridSize: 50, desc: 'Sprawling industrial zone. 50x50 grid.' },
 };
 
-/** Game mode — historical follows real Soviet timeline, freeform diverges at a chosen year, classic uses difficulty presets. */
+/** Game mode — historical follows real Soviet timeline, freeform uses organic divergence, classic uses difficulty presets. */
 export type GameMode = 'historical' | 'classic' | 'freeform';
 
 /** Player-selected options for starting a new game session. */
@@ -37,7 +37,7 @@ export interface NewGameConfig {
   seed: string;
   mapSize: MapSize;
   gameMode: GameMode;
-  /** Year at which history diverges in freeform mode (1917-1991). */
+  /** @deprecated Divergence is now organic. Kept for old save compat. */
   divergenceYear?: number;
 }
 
@@ -61,23 +61,9 @@ const CONSEQUENCE_FLAVOR: Record<ConsequenceLevel, string> = {
 const GAME_MODE_FLAVOR: Record<GameMode, string> = {
   historical: 'History IS the difficulty. Survive the actual Soviet timeline.',
   freeform:
-    'Play through history to your chosen year, then forge your own Soviet timeline. What if the revolution had gone differently?',
+    'Same forces, different timing. Historical events happen probabilistically. The timeline diverges naturally. What if?',
   classic: 'Choose your own difficulty. Standard city-builder experience.',
 };
-
-/** Map divergence year to its Soviet-era label for display. */
-function getEraLabel(year: number): string {
-  if (year <= 1921) return 'Revolution & Civil War (1917\u20131921)';
-  if (year <= 1928) return 'NEP & Early USSR (1922\u20131928)';
-  if (year <= 1933) return 'Collectivization (1929\u20131933)';
-  if (year <= 1940) return 'Great Terror & Industrialization (1934\u20131940)';
-  if (year <= 1945) return 'Great Patriotic War (1941\u20131945)';
-  if (year <= 1953) return 'Late Stalinism (1946\u20131953)';
-  if (year <= 1964) return 'Khrushchev Thaw (1954\u20131964)';
-  if (year <= 1982) return 'Brezhnev Stagnation (1965\u20131982)';
-  if (year <= 1985) return 'Interregnum (1982\u20131985)';
-  return 'Perestroika & Collapse (1986\u20131991)';
-}
 
 /** Soviet dossier-styled game configuration screen for difficulty, consequence, seed, and map size. */
 export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) => {
@@ -86,8 +72,6 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
   const [consequence, setConsequence] = useState<ConsequenceLevel>('permadeath');
   const [seed, setSeed] = useState('');
   const [mapSize, setMapSize] = useState<MapSize>('medium');
-  const [divergenceYear, setDivergenceYear] = useState(1945);
-
   const diffConfig = DIFFICULTY_PRESETS[difficulty];
   const consConfig = CONSEQUENCE_PRESETS[consequence];
 
@@ -119,31 +103,6 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
           </View>
           <Text style={styles.flavor}>{GAME_MODE_FLAVOR[gameMode]}</Text>
         </View>
-
-        {gameMode === 'freeform' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>DIVERGENCE YEAR</Text>
-            <View style={styles.yearSelector}>
-              <TouchableOpacity
-                onPress={() => setDivergenceYear(Math.max(1917, divergenceYear - 1))}
-                style={styles.yearButton}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.yearButtonText}>{'<'}</Text>
-              </TouchableOpacity>
-              <Text style={styles.yearDisplay}>{divergenceYear}</Text>
-              <TouchableOpacity
-                onPress={() => setDivergenceYear(Math.min(1991, divergenceYear + 1))}
-                style={styles.yearButton}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.yearButtonText}>{'>'}</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.eraLabel}>{getEraLabel(divergenceYear)}</Text>
-            <Text style={styles.flavor}>History diverges in {divergenceYear}. After that, anything can happen.</Text>
-          </View>
-        )}
 
         {gameMode === 'classic' && (
           <View style={styles.section}>
@@ -265,7 +224,6 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
                 seed: seed.trim() || `simsoviet-${Date.now()}`,
                 mapSize,
                 gameMode,
-                ...(gameMode === 'freeform' ? { divergenceYear } : {}),
               })
             }
             style={styles.btnStart}
@@ -401,45 +359,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: '#78909c',
     marginTop: 4,
-  },
-  yearSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 8,
-  },
-  yearButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2a2a2a',
-    borderWidth: 1,
-    borderColor: '#444',
-  },
-  yearButtonText: {
-    fontSize: 18,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    color: Colors.sovietGold,
-  },
-  yearDisplay: {
-    fontSize: 30,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    color: Colors.sovietGold,
-    letterSpacing: 3,
-    minWidth: 100,
-    textAlign: 'center',
-  },
-  eraLabel: {
-    fontSize: 10,
-    fontFamily: monoFont,
-    color: '#90a4ae',
-    textAlign: 'center',
-    marginBottom: 6,
-    letterSpacing: 1,
   },
   statsRow: {
     flexDirection: 'row',

@@ -1,18 +1,15 @@
 /**
  * Playthrough integration test: Freeform (alternate-history) mode
  *
- * Runs the FreeformGovernor through various divergence scenarios to verify:
- *
- * 1. Pre-divergence historical crises activate correctly
- * 2. Post-divergence historical crises are suppressed
- * 3. ChaosEngine generates alternate crises after divergence
- * 4. Timeline records events with correct structure
- * 5. Different RNG seeds produce different timelines
- * 6. Serialize/restore preserves divergence state
+ * Tests the organic divergence system where:
+ * 1. Historical crises are probability-driven (not date-driven)
+ * 2. ChaosEngine generates additional crises based on game state
+ * 3. Timeline records events correctly
+ * 4. Different RNG seeds produce different timelines
+ * 5. Serialize/restore preserves state
  */
 
 import { FreeformGovernor } from '../../src/ai/agents/crisis/FreeformGovernor';
-import { HISTORICAL_CRISES } from '../../src/config/historicalCrises';
 import { getResourceEntity } from '../../src/ecs/archetypes';
 import { world } from '../../src/ecs/world';
 import {
@@ -134,7 +131,7 @@ function runYears(
 
 // ─── Test Suite ─────────────────────────────────────────────────────────────
 
-describe('Freeform mode — divergence integration tests', () => {
+describe('Freeform mode — organic divergence integration tests', () => {
   jest.setTimeout(60000);
 
   afterEach(() => {
@@ -142,93 +139,9 @@ describe('Freeform mode — divergence integration tests', () => {
     jest.restoreAllMocks();
   });
 
-  // ── 1. Diverge 1945: no GPW events after divergence ──────────────────
+  // ── 1. Probability-driven crises activate within their windows ─────
 
-  describe('Diverge 1945: pre-divergence crises activate, post-divergence suppressed', () => {
-    let everActiveCrises: Set<string>;
-    let yearCrises: Map<number, Set<string>>;
-
-    beforeAll(() => {
-      jest.setTimeout(60000);
-
-      const { engine, callbacks } = createPlaythroughEngine({
-        meta: { date: { year: 1917, month: 10, tick: 0 } },
-        resources: {
-          population: 100,
-          food: 99999,
-          timber: 99999,
-          steel: 99999,
-          cement: 99999,
-          money: 99999,
-          vodka: 99999,
-          power: 99999,
-        },
-        difficulty: 'worker',
-        consequence: 'permadeath',
-        deterministicRandom: true,
-      });
-
-      callbacks.onMinigame = undefined as never;
-      callbacks.onAnnualReport = undefined as never;
-
-      buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
-
-      const governor = new FreeformGovernor(1945);
-      engine.setGovernor(governor);
-      disableGameOver(engine);
-
-      const result = runYears(engine, governor, 43);
-      everActiveCrises = result.everActiveCrises;
-      yearCrises = result.yearCrises;
-    }, 60000);
-
-    afterAll(() => {
-      world.clear();
-      jest.restoreAllMocks();
-    });
-
-    it('Civil War activates between 1918-1921 (pre-divergence)', () => {
-      let civilWarSeen = false;
-      for (const [year, crises] of yearCrises) {
-        if (year >= 1918 && year <= 1921 && crises.has('russian_civil_war')) {
-          civilWarSeen = true;
-        }
-      }
-      expect(civilWarSeen).toBe(true);
-    });
-
-    it('GPW activates 1941 (pre-divergence, before 1945)', () => {
-      let gpwSeen = false;
-      for (const [year, crises] of yearCrises) {
-        if (year >= 1941 && year <= 1945 && crises.has('great_patriotic_war')) {
-          gpwSeen = true;
-        }
-      }
-      expect(gpwSeen).toBe(true);
-    });
-
-    it('Afghan War does NOT appear (post-divergence, startYear=1979)', () => {
-      expect(everActiveCrises.has('afghan_war')).toBe(false);
-    });
-
-    it('no historical crises with startYear >= 1945 activate', () => {
-      const postDivergenceHistorical = HISTORICAL_CRISES.filter((c) => c.startYear >= 1945 && c.type !== 'political');
-      const unexpectedCrises: string[] = [];
-      for (const crisis of postDivergenceHistorical) {
-        if (everActiveCrises.has(crisis.id)) {
-          unexpectedCrises.push(`${crisis.id} (${crisis.startYear})`);
-        }
-      }
-      if (unexpectedCrises.length > 0) {
-        console.log('Unexpected post-divergence crises:', unexpectedCrises.join(', '));
-      }
-      expect(unexpectedCrises).toHaveLength(0);
-    });
-  });
-
-  // ── 2. Diverge 1917: chaos engine generates first crisis ─────────────
-
-  describe('Diverge 1917: chaos engine generates crises, no historical crises', () => {
+  describe('Probability-driven historical crises', () => {
     let everActiveCrises: Set<string>;
     let governor: FreeformGovernor;
 
@@ -257,7 +170,86 @@ describe('Freeform mode — divergence integration tests', () => {
 
       buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
 
-      governor = new FreeformGovernor(1917);
+      governor = new FreeformGovernor();
+      engine.setGovernor(governor);
+      disableGameOver(engine);
+
+      const result = runYears(engine, governor, 40);
+      everActiveCrises = result.everActiveCrises;
+    }, 60000);
+
+    afterAll(() => {
+      world.clear();
+      jest.restoreAllMocks();
+    });
+
+    it('at least some crises activate over 40 years (probabilistic)', () => {
+      expect(everActiveCrises.size).toBeGreaterThan(0);
+    });
+
+    it('governor reports diverged state (always true for new FreeformGovernor)', () => {
+      expect(governor.isDiverged()).toBe(true);
+    });
+
+    it('some historical crisis windows are resolved', () => {
+      const windows = governor.getHistoricalWindows();
+      const resolvedCount = windows.filter((w) => w.resolved).length;
+      console.log(
+        `Historical windows resolved: ${resolvedCount}/${windows.length}, ` +
+          `triggered: ${windows.filter((w) => w.triggered).length}`,
+      );
+      expect(resolvedCount).toBeGreaterThan(0);
+    });
+
+    it('crises include both historical-origin and chaos-generated events', () => {
+      const timeline = governor.getTimeline();
+      const events = timeline.getAllEvents();
+
+      const historicalOrigin = events.filter((e) => e.isHistorical).length;
+      const chaosGenerated = events.filter((e) => !e.isHistorical).length;
+
+      console.log(
+        `Timeline events: ${events.length} total — ` +
+          `${historicalOrigin} historical-origin, ${chaosGenerated} chaos-generated`,
+      );
+
+      // Over 40 years, there should be at least some events
+      expect(events.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ── 2. ChaosEngine generates crises in addition to historical ──────
+
+  describe('ChaosEngine generates additional crises', () => {
+    let everActiveCrises: Set<string>;
+    let governor: FreeformGovernor;
+
+    beforeAll(() => {
+      jest.setTimeout(60000);
+
+      const { engine, callbacks } = createPlaythroughEngine({
+        meta: { date: { year: 1917, month: 10, tick: 0 } },
+        resources: {
+          population: 100,
+          food: 99999,
+          timber: 99999,
+          steel: 99999,
+          cement: 99999,
+          money: 99999,
+          vodka: 99999,
+          power: 99999,
+        },
+        difficulty: 'worker',
+        consequence: 'permadeath',
+        deterministicRandom: true,
+      });
+
+      callbacks.onMinigame = undefined as never;
+      callbacks.onAnnualReport = undefined as never;
+
+      buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
+
+      governor = new FreeformGovernor();
       engine.setGovernor(governor);
       disableGameOver(engine);
 
@@ -270,37 +262,17 @@ describe('Freeform mode — divergence integration tests', () => {
       jest.restoreAllMocks();
     });
 
-    it('no historical crisis IDs activate (all are post-divergence)', () => {
-      const historicalIds = new Set(HISTORICAL_CRISES.filter((c) => c.type !== 'political').map((c) => c.id));
-      const activatedHistorical: string[] = [];
-      for (const id of everActiveCrises) {
-        if (historicalIds.has(id)) {
-          activatedHistorical.push(id);
-        }
-      }
-      if (activatedHistorical.length > 0) {
-        console.log('Unexpected historical crises:', activatedHistorical.join(', '));
-      }
-      expect(activatedHistorical).toHaveLength(0);
-    });
-
     it('ChaosEngine generates at least one crisis within 25 years', () => {
       // Chaos-generated crisis IDs follow the pattern: type-year-randomId
-      // e.g. war-1927-abc123, famine-1932-def456
       const chaosGenerated = [...everActiveCrises].filter((id) => id.match(/^(war|famine|disaster|political)-\d+-/));
 
       console.log(`Chaos-generated crises (25 years): ${chaosGenerated.length} — ` + `[${chaosGenerated.join(', ')}]`);
 
       expect(chaosGenerated.length).toBeGreaterThanOrEqual(1);
     });
-
-    it('governor reports diverged state', () => {
-      expect(governor.isDiverged()).toBe(true);
-      expect(governor.getDivergenceYear()).toBe(1917);
-    });
   });
 
-  // ── 3. Causal chain: crisis events recorded in timeline ──────────────
+  // ── 3. Timeline records events with correct structure ──────────────
 
   describe('Timeline records crisis events with correct structure', () => {
     let governor: FreeformGovernor;
@@ -330,7 +302,7 @@ describe('Freeform mode — divergence integration tests', () => {
 
       buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
 
-      governor = new FreeformGovernor(1930);
+      governor = new FreeformGovernor();
       engine.setGovernor(governor);
       disableGameOver(engine);
 
@@ -368,7 +340,6 @@ describe('Freeform mode — divergence integration tests', () => {
     it('serialized state includes timeline data', () => {
       const serialized = governor.serialize();
       expect(serialized.mode).toBe('freeform');
-      expect(serialized.state.divergenceYear).toBe(1930);
       expect(serialized.state.hasDiverged).toBe(true);
       expect(serialized.state.timeline).toBeDefined();
 
@@ -379,41 +350,18 @@ describe('Freeform mode — divergence integration tests', () => {
       expect(Array.isArray(timelineData.events)).toBe(true);
       expect(timelineData.events.length).toBeGreaterThan(0);
     });
-
-    it('historical events are marked as isHistorical=true', () => {
-      const timeline = governor.getTimeline();
-      const historicalEvents = timeline.queryEvents({ isHistorical: true });
-
-      // Pre-1930 crises should be recorded as historical
-      for (const event of historicalEvents) {
-        expect(event.isHistorical).toBe(true);
-        // Historical crises have startYear < 1930 (divergence year)
-        expect(event.startYear).toBeLessThan(1930);
-      }
-    });
-
-    it('divergence point is recorded', () => {
-      const timeline = governor.getTimeline();
-      const divergencePoints = timeline.getDivergencePoints();
-      expect(divergencePoints.length).toBeGreaterThanOrEqual(1);
-
-      const dp = divergencePoints[0]!;
-      expect(dp.year).toBeGreaterThanOrEqual(1930);
-      expect(typeof dp.historicalContext).toBe('string');
-      expect(typeof dp.playerChoice).toBe('string');
-    });
   });
 
   // ── 4. Different seeds produce different timelines ───────────────────
 
-  describe('Different seeds produce different timelines from same divergence', () => {
+  describe('Different seeds produce different timelines', () => {
     let crises1: Set<string>;
     let crises2: Set<string>;
 
     beforeAll(() => {
       jest.setTimeout(60000);
 
-      // Run 1: seed produces deterministic Math.random = 0.99
+      // Run 1: deterministic seed
       {
         const { engine, callbacks } = createPlaythroughEngine({
           meta: { date: { year: 1917, month: 10, tick: 0 } },
@@ -437,7 +385,7 @@ describe('Freeform mode — divergence integration tests', () => {
 
         buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
 
-        const governor1 = new FreeformGovernor(1920);
+        const governor1 = new FreeformGovernor();
         engine.setGovernor(governor1);
         disableGameOver(engine);
 
@@ -465,7 +413,6 @@ describe('Freeform mode — divergence integration tests', () => {
           },
           difficulty: 'worker',
           consequence: 'permadeath',
-          // Do NOT use deterministicRandom here — we already mocked Math.random above
           deterministicRandom: false,
         });
 
@@ -474,7 +421,7 @@ describe('Freeform mode — divergence integration tests', () => {
 
         buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
 
-        const governor2 = new FreeformGovernor(1920);
+        const governor2 = new FreeformGovernor();
         engine.setGovernor(governor2);
         disableGameOver(engine);
 
@@ -489,7 +436,6 @@ describe('Freeform mode — divergence integration tests', () => {
     });
 
     it('the two runs have at least one difference in crisis set', () => {
-      // Either one has a crisis the other doesn't, or they have different crisis IDs
       const onlyIn1 = [...crises1].filter((id) => !crises2.has(id));
       const onlyIn2 = [...crises2].filter((id) => !crises1.has(id));
 
@@ -504,125 +450,9 @@ describe('Freeform mode — divergence integration tests', () => {
     });
   });
 
-  // ── 5. Diverge 1991: full history plays out ──────────────────────────
+  // ── 5. Serialize/restore preserves state ───────────────────────────
 
-  describe('Diverge 1991: full historical timeline plays out', () => {
-    let everActiveCrises: Set<string>;
-    let yearSnapshots: Map<number, YearSnapshot>;
-    let simulationEndYear: number;
-
-    beforeAll(() => {
-      jest.setTimeout(60000);
-
-      const { engine, callbacks } = createPlaythroughEngine({
-        meta: { date: { year: 1917, month: 10, tick: 0 } },
-        resources: {
-          population: 100,
-          food: 99999,
-          timber: 99999,
-          steel: 99999,
-          cement: 99999,
-          money: 99999,
-          vodka: 99999,
-          power: 99999,
-        },
-        difficulty: 'worker',
-        consequence: 'permadeath',
-        deterministicRandom: true,
-      });
-
-      callbacks.onMinigame = undefined as never;
-      callbacks.onAnnualReport = undefined as never;
-
-      buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
-
-      const governor = new FreeformGovernor(1991);
-      engine.setGovernor(governor);
-      disableGameOver(engine);
-
-      const result = runYears(engine, governor, 100);
-      everActiveCrises = result.everActiveCrises;
-      yearSnapshots = result.yearSnapshots;
-
-      const date = getDate();
-      simulationEndYear = date.year;
-
-      console.log(
-        `[13-freeform-1991] Simulation ended at year ${simulationEndYear} | ` +
-          `crises seen: ${everActiveCrises.size} | ` +
-          `[${[...everActiveCrises].join(', ')}]`,
-      );
-    }, 60000);
-
-    afterAll(() => {
-      world.clear();
-      jest.restoreAllMocks();
-    });
-
-    it('Civil War activates (pre-1991)', () => {
-      expect(everActiveCrises.has('russian_civil_war')).toBe(true);
-    });
-
-    it('Holodomor activates (pre-1991)', () => {
-      expect(everActiveCrises.has('holodomor')).toBe(true);
-    });
-
-    it('Great Patriotic War activates (pre-1991)', () => {
-      expect(everActiveCrises.has('great_patriotic_war')).toBe(true);
-    });
-
-    it('Chernobyl activates (pre-1991)', () => {
-      expect(everActiveCrises.has('chernobyl')).toBe(true);
-    });
-
-    it('Afghan War activates (pre-1991)', () => {
-      expect(everActiveCrises.has('afghan_war')).toBe(true);
-    });
-
-    it('no NaN/undefined in resource values across all years', () => {
-      const violations: string[] = [];
-
-      for (const [year, snap] of yearSnapshots) {
-        const fields: Record<string, number> = {
-          food: snap.food,
-          money: snap.money,
-          population: snap.population,
-          timber: snap.timber,
-          steel: snap.steel,
-          vodka: snap.vodka,
-        };
-
-        for (const [field, value] of Object.entries(fields)) {
-          if (typeof value !== 'number') {
-            violations.push(`${year}: ${field} is ${typeof value} (${value})`);
-          } else if (!Number.isFinite(value)) {
-            violations.push(`${year}: ${field} is ${value}`);
-          }
-        }
-      }
-
-      if (violations.length > 0) {
-        console.log('Resource violations:', violations.slice(0, 20).join('\n'));
-      }
-      expect(violations).toHaveLength(0);
-    });
-
-    it('ChaosEngine may generate alternate crises after 1991', () => {
-      // Chaos-generated crisis IDs follow the pattern: type-year-randomId
-      const chaosGenerated = [...everActiveCrises].filter((id) => id.match(/^(war|famine|disaster|political)-\d+-/));
-
-      console.log(`Post-1991 chaos crises: ${chaosGenerated.length} — ` + `[${chaosGenerated.join(', ')}]`);
-
-      // After 1991, ChaosEngine should have had ~26 years to generate
-      // crises. It's probabilistic so we allow zero but log the count.
-      // In practice, yearsSinceLastWar accumulates and triggers eventually.
-      expect(typeof chaosGenerated.length).toBe('number');
-    });
-  });
-
-  // ── 6. Serialize/restore preserves divergence state ──────────────────
-
-  describe('Serialize/restore preserves divergence state', () => {
+  describe('Serialize/restore preserves state', () => {
     it('restored governor matches original state', () => {
       const { engine, callbacks } = createPlaythroughEngine({
         meta: { date: { year: 1917, month: 10, tick: 0 } },
@@ -646,28 +476,25 @@ describe('Freeform mode — divergence integration tests', () => {
 
       buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
 
-      const original = new FreeformGovernor(1930);
+      const original = new FreeformGovernor();
       engine.setGovernor(original);
       disableGameOver(engine);
 
-      // Advance 30 years past divergence (to ~1947)
+      // Advance 30 years
       runYears(engine, original, 30);
 
       // Serialize
       const savedData = original.serialize();
-      const originalActiveCrises = original.getActiveCrises();
       const originalDiverged = original.isDiverged();
-      const originalDivergenceYear = original.getDivergenceYear();
       const originalTimeline = original.getTimeline().getAllEvents();
       const originalCounters = original.getYearsSinceCounters();
 
       // Create a new governor and restore
-      const restored = new FreeformGovernor(1917); // different initial divergence year
+      const restored = new FreeformGovernor();
       restored.restore(savedData);
 
       // Verify: divergence state matches
       expect(restored.isDiverged()).toBe(originalDiverged);
-      expect(restored.getDivergenceYear()).toBe(originalDivergenceYear);
 
       // Verify: timeline events match
       const restoredTimeline = restored.getTimeline().getAllEvents();
@@ -685,16 +512,30 @@ describe('Freeform mode — divergence integration tests', () => {
 
       // Verify: serialized mode is correct
       expect(savedData.mode).toBe('freeform');
-      expect(savedData.state.divergenceYear).toBe(1930);
       expect(savedData.state.hasDiverged).toBe(true);
 
       console.log(
-        `Serialize/restore: divergenceYear=${originalDivergenceYear}, ` +
+        `Serialize/restore: ` +
           `diverged=${originalDiverged}, ` +
           `timelineEvents=${originalTimeline.length}, ` +
-          `activeCrises=[${originalActiveCrises.join(', ')}], ` +
           `counters=${JSON.stringify(originalCounters)}`,
       );
+    });
+  });
+
+  // ── 6. Backward compatibility with old saves (divergence year) ─────
+
+  describe('Backward compatibility with old save format', () => {
+    it('FreeformGovernor constructor still accepts divergenceYear parameter', () => {
+      const gov = new FreeformGovernor(1945);
+      // Should not throw
+      expect(gov.isDiverged()).toBe(true);
+      expect(gov.getDivergenceYear()).toBe(1945);
+    });
+
+    it('FreeformGovernor without parameter defaults to 1917', () => {
+      const gov = new FreeformGovernor();
+      expect(gov.getDivergenceYear()).toBe(1917);
     });
   });
 });

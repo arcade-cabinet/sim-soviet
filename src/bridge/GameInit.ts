@@ -116,7 +116,7 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
     const governor = new HistoricalGovernor();
     engine.setGovernor(governor);
   } else if (options?.gameMode === 'freeform') {
-    const governor = new FreeformGovernor(options.divergenceYear ?? 1945);
+    const governor = new FreeformGovernor();
     engine.setGovernor(governor);
   }
   // 'classic' or undefined: no governor (backward compat — uses DIFFICULTY_PRESETS)
