@@ -307,7 +307,7 @@ export class DefenseAgent extends Vehicle {
    * @param totalTicks - Absolute simulation tick counter
    * @param month - Current game month (1-12, for seasonal disease modifiers)
    */
-  update(_delta: number, weather: WeatherType, grid: GameGrid, totalTicks: number, month: number): void {
+  tickDefense(_delta: number, weather: WeatherType, grid: GameGrid, totalTicks: number, month: number): void {
     this.tickFire(weather, grid);
     const outbreakTypes = this.tickDisease(totalTicks, month);
 

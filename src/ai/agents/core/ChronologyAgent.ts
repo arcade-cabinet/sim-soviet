@@ -31,6 +31,7 @@ import {
   type WeatherState,
   type WeatherType,
 } from './weather-types';
+import { MSG, type NewTickPayload } from '../../telegrams';
 
 // ─────────────────────────────────────────────────────────
 //  TICK RESULT
@@ -87,6 +88,7 @@ export class ChronologyAgent extends Vehicle {
   private season: SeasonProfile;
   private weather: WeatherState;
   private tickWithinDay: number;
+  private _lastTickResult: TickResult = { newDay: false, newMonth: false, newYear: false, season: {} as any, weather: 'clear' as WeatherType, dayPhase: 'midday' as DayPhase, dayProgress: 0.5 };
 
   /**
    * @param rng - Seeded RNG for weather rolls
@@ -159,6 +161,34 @@ export class ChronologyAgent extends Vehicle {
   // ── Core tick ────────────────────────────────────────
 
   /**
+   * Yuka's update loop hook.
+   * Called automatically by entityManager.update(delta).
+   */
+  update(delta: number): this {
+    const result = this.tick();
+
+    // Dispatch the NEW_TICK telegram
+    if (this.manager) {
+      const payload: NewTickPayload = {
+        totalTicks: this.date.totalTicks,
+        delta,
+      };
+      
+      // Dispatch immediately to all agents
+      this.manager.sendMessage(this, this, MSG.NEW_TICK, 0, payload);
+
+      if (result.newMonth) {
+        this.manager.sendMessage(this, this, MSG.NEW_MONTH, 0, null);
+      }
+      if (result.newYear) {
+        this.manager.sendMessage(this, this, MSG.NEW_YEAR, 0, null);
+      }
+    }
+
+    return this;
+  }
+
+  /**
    * Advances the clock by one tick and returns a TickResult
    * describing which boundaries were crossed.
    *
@@ -210,7 +240,7 @@ export class ChronologyAgent extends Vehicle {
     const dayPhase = this.getDayPhase();
     const dayProgress = this.getDayProgress();
 
-    return {
+    this._lastTickResult = {
       newDay,
       newMonth,
       newYear,
@@ -219,6 +249,13 @@ export class ChronologyAgent extends Vehicle {
       dayPhase,
       dayProgress,
     };
+
+    return this._lastTickResult;
+  }
+
+  /** Get the result of the most recent tick computation. */
+  getLastTickResult(): TickResult {
+    return this._lastTickResult;
   }
 
   // ── Serialization (for save/load) ────────────────────

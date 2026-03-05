@@ -28,6 +28,7 @@ import {
   operationalBuildings,
   terrainFeatures,
   underConstruction,
+  getMetaEntity,
 } from '@/ecs/archetypes';
 import { setCaravanTarget } from '@/stores/gameStore';
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
@@ -43,6 +44,7 @@ import { cascadeDisplacement } from './displacementSystem';
 import { checkScaleUpTrigger, scaleUpBuilding } from './megaScalingSystem';
 import { getLocationResources, type LocationResources } from '../../../game/engine/locationResources';
 import type { DvorNeedsState } from '../social/DvorNeedsAgent';
+import { MSG, type NewTickPayload } from '../../telegrams';
 
 // ── Re-exported types (absorbed from governor.ts) ─────────────────────────────
 
@@ -220,6 +222,43 @@ export class CollectiveAgent extends Vehicle {
     this.name = 'CollectiveAgent';
   }
 
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.NEW_TICK) {
+      const payload = telegram.data as NewTickPayload;
+      this.evaluateConstructionTick(payload.totalTicks);
+      return true;
+    }
+    return false;
+  }
+
+  /** Triggered autonomously via NEW_TICK */
+  private evaluateConstructionTick(totalTicks: number): void {
+    // Requires DvorNeedsAgent to have evaluated first
+    const needsAgent = this.manager?.entities.find(e => e.name === 'DvorNeedsAgent') as import('../social/DvorNeedsAgent').DvorNeedsAgent | undefined;
+    if (!needsAgent) return;
+
+    const needsState = needsAgent.getNeedsState();
+    const meta = getMetaEntity()?.gameMeta;
+    
+    const deps = {
+      totalTicks,
+      rng: this.rng,
+      mandateState: null, // TODO: Fetch from PoliticalAgent
+      needsState,
+      eraId: meta?.currentEra ?? 'revolution',
+      callbacks: {
+        onToast: (msg: string) => console.log(msg),
+        onAdvisor: (msg: string) => console.log(msg),
+      },
+      recordBuildingForMandates: () => {},
+      gridSize: GRID_SIZE,
+      celestialBody: meta?.currentEra === 'post_soviet' ? 'mars' : 'earth',
+    };
+
+    this.tickAutonomous(deps);
+  }
+
   /** Set the seeded RNG for deterministic collective rolls. */
   setRng(rng: GameRng): void {
     this.rng = rng;
@@ -270,7 +309,7 @@ export class CollectiveAgent extends Vehicle {
    * @param currentTick - Current simulation tick (for throttling builds)
    * @param needsState - The current Dvor hierarchy of needs state
    */
-  update(
+  tickCollective(
     _delta: number,
     resources: Resources,
     rng: GameRng,

@@ -105,7 +105,7 @@ export class StorageAgent extends Vehicle {
    *
    * @param month - Current game month (1-12) for seasonal spoilage modifier
    */
-  update(month: number): void {
+  tickStorage(month: number): void {
     const store = getResourceEntity();
     if (!store) return;
 

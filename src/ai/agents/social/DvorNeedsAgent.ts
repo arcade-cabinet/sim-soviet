@@ -2,6 +2,8 @@ import { Vehicle } from 'yuka';
 import { dvory, getResourceEntity, housing } from '../../../ecs/archetypes';
 import { getLocationResources } from '../../../game/engine/locationResources';
 import type { HexMetadata } from '../../../game/map/global/GlobalHexManager';
+import { MSG, type NewTickPayload } from '../../telegrams';
+import { getMetaEntity } from '../../../ecs/archetypes';
 
 export type DvorPrimaryNeed = 'shelter' | 'warmth' | 'food' | 'quota' | 'survival';
 
@@ -27,6 +29,35 @@ export class DvorNeedsAgent extends Vehicle {
   constructor() {
     super();
     this.name = 'DvorNeedsAgent';
+  }
+
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.NEW_TICK) {
+      const payload = telegram.data as NewTickPayload;
+      this.evaluateNeedsTick(payload.totalTicks);
+      return true;
+    }
+    return false;
+  }
+
+  /** Triggered by NEW_TICK telegram */
+  private evaluateNeedsTick(currentTick: number): void {
+    if (currentTick - this.lastEvaluationTick < 10) return;
+    
+    // Get location metadata for scarcity scaling
+    const meta = getMetaEntity()?.gameMeta;
+    // We assume Earth for now if no meta, until the Engine passes this into ECS
+    const celestialBody = meta?.currentEra === 'post_soviet' ? 'mars' : 'earth';
+    
+    let hexMeta: HexMetadata | undefined = undefined;
+    // Try to retrieve hex meta globally
+    const manager = (globalThis as any).simulationEngine?.getGlobalHexManager();
+    if (manager && meta?.currentHex) {
+      hexMeta = manager.getHexMetadata(meta.currentHex);
+    }
+
+    this.updateNeeds(currentTick, celestialBody, hexMeta);
   }
 
   /**

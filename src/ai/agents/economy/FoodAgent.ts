@@ -122,7 +122,7 @@ export class FoodAgent extends Vehicle {
    * @param opts   - Modifiers and era context for this tick
    * @returns Number of starvation deaths the caller should route through WorkerSystem
    */
-  update(
+  tickFood(
     _delta: number,
     opts: {
       farmModifier?: number;

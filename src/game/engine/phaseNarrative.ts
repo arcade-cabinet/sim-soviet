@@ -55,7 +55,7 @@ export function phaseNarrative(ctx: TickContext): void {
     callbacks,
   });
   eventSystem.tick(chronology.getDate().totalTicks, eraMods.eventFrequencyMult);
-  defenseAgent.update(
+  defenseAgent.tickDefense(
     1,
     tickResult.weather as WeatherType,
     ctx.grid,

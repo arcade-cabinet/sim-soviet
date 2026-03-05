@@ -65,7 +65,7 @@ export function phaseConsumption(ctx: TickContext, snapshot: PreProductionSnapsh
   const diffConfig = ctx.diffConfig;
 
   // ── 8. Storage ──
-  storageAgent.update(chronology.getDate().month);
+  storageAgent.tickStorage(chronology.getDate().month);
 
   // ── 9. Economy system (fondy, trudodni, blat, stakhanovite, MTS, heating, reforms) ──
   const econResult = economyAgent.applyTickResults({

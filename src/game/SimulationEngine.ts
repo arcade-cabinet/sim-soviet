@@ -823,8 +823,11 @@ export class SimulationEngine {
     const storeRef = getResourceEntity();
     if (!storeRef) return;
 
-    // Build context for all phases
-    const tickResult = this.chronologyAgent.tick();
+    // Yuka Entity Manager update step (handles telegrams and autonomous agent ticks)
+    this.agentManager.update(1);
+
+    // Fetch the tick result computed by the ChronologyAgent during the Yuka update phase
+    const tickResult = this.chronologyAgent.getLastTickResult();
     const ctx = this.buildTickContext(tickResult, storeRef);
 
     // Phase 0: Arrival caravan — spawn queued families and bootstrap buildings
