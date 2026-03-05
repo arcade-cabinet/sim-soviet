@@ -29,9 +29,11 @@ import {
   terrainFeatures,
   underConstruction,
 } from '@/ecs/archetypes';
+import { setCaravanTarget } from '@/stores/gameStore';
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
+import type { AgentParameterProfile } from '../../../game/engine/agentParameterMatrix';
 import type { GameRng } from '../../../game/SeedSystem';
 import { getBuildInterval } from '../../../growth/GrowthPacing';
 import { findBestPlacement, type PlacementContext } from '../../../growth/SiteSelectionRules';
@@ -206,6 +208,9 @@ export class CollectiveAgent extends Vehicle {
   /** Seeded RNG (set via setRng). */
   private rng?: GameRng;
 
+  /** Active terrain profile — controls construction type for off-world settlements. */
+  private profile: Readonly<AgentParameterProfile> | null = null;
+
   /** Cached fertility map for resource-proximity placement. Rebuilt each tickAutonomous. */
   private fertilityCache?: Map<string, number>;
 
@@ -220,6 +225,19 @@ export class CollectiveAgent extends Vehicle {
   /** Set the seeded RNG for deterministic collective rolls. */
   setRng(rng: GameRng): void {
     this.rng = rng;
+  }
+
+  /**
+   * Set the active agent parameter profile.
+   * constructionType determines building class (standard, pressurized_dome, underground, orbital).
+   */
+  setProfile(profile: Readonly<AgentParameterProfile>): void {
+    this.profile = profile;
+  }
+
+  /** Get the active construction type from the profile ('standard' if no profile set). */
+  getConstructionType(): AgentParameterProfile['constructionType'] {
+    return this.profile?.constructionType ?? 'standard';
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────
@@ -633,7 +651,11 @@ export class CollectiveAgent extends Vehicle {
 
     try {
       const hq = placeNewBuilding(hqCell.gridX, hqCell.gridY, 'government-hq');
-      if (hq) occupied.add(`${hqCell.gridX},${hqCell.gridY}`);
+      if (hq) {
+        occupied.add(`${hqCell.gridX},${hqCell.gridY}`);
+        // Signal camera to follow caravan toward the settlement center
+        setCaravanTarget(hqCell.gridX, hqCell.gridY);
+      }
     } catch {
       /* placement failed — not fatal */
     }

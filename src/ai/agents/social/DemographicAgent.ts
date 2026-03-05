@@ -18,6 +18,7 @@ import { laborCapacityForAge, memberRoleForAge } from '../../../ecs/factories';
 import type { DvorComponent, DvorMember, RaionPool } from '../../../ecs/world';
 import { world } from '../../../ecs/world';
 import { TICKS_PER_MONTH, TICKS_PER_YEAR } from '../../../game/Chronology';
+import type { AgentParameterProfile } from '../../../game/engine/agentParameterMatrix';
 import type { GameRng } from '../../../game/SeedSystem';
 import { FEMALE_GIVEN_NAMES, MALE_GIVEN_NAMES, PATRONYMIC_RULES, SURNAMES_RAW } from '../../names';
 import { statisticalAgingTick, statisticalBirthTick, statisticalDeathTick } from './statisticalDemographics';
@@ -257,6 +258,9 @@ export class DemographicAgent extends Vehicle {
   /** Last population milestone reached (multiple of POPULATION_MILESTONE_STEP). */
   private lastMilestone = 0;
 
+  /** Active terrain profile — controls gravity birth rate modifier and radiation health. */
+  private profile: Readonly<AgentParameterProfile> | null = null;
+
   constructor() {
     super();
     this.name = 'DemographicAgent';
@@ -265,6 +269,14 @@ export class DemographicAgent extends Vehicle {
   /** Set the seeded RNG for deterministic demographic rolls. */
   setRng(rng: GameRng): void {
     this.rng = rng;
+  }
+
+  /**
+   * Set the active agent parameter profile.
+   * Birth rate is multiplied by gravityBirthRateModifier; death rate by radiationHealthModifier.
+   */
+  setProfile(profile: Readonly<AgentParameterProfile>): void {
+    this.profile = profile;
   }
 
   // ── Core tick ──────────────────────────────────────────────────────────────
@@ -488,7 +500,8 @@ export class DemographicAgent extends Vehicle {
     else if (foodLevel > 0.8) foodMod = 1.2;
 
     const eraMod = eraId ? (ERA_BIRTH_RATE_MULTIPLIER[eraId] ?? 1.0) : 1.0;
-    const threshold = MONTHLY_BIRTH_RATE * foodMod * eraMod;
+    const gravityMod = this.profile?.gravityBirthRateModifier ?? 1.0;
+    const threshold = MONTHLY_BIRTH_RATE * foodMod * eraMod * gravityMod;
 
     for (const entity of dvory) {
       const dvor = entity.dvor;
@@ -563,6 +576,7 @@ export class DemographicAgent extends Vehicle {
    */
   deathCheck(rng: GameRng | null, foodLevel: number, result: DemographicTickResult): void {
     const starvationMod = foodLevel <= 0 ? STARVATION_MONTHLY_RATE : 0;
+    const radiationMod = this.profile?.radiationHealthModifier ?? 1.0;
     const emptyDvory: (typeof dvory.entities)[number][] = [];
 
     for (const entity of dvory) {
@@ -571,7 +585,7 @@ export class DemographicAgent extends Vehicle {
 
       for (const member of dvor.members) {
         const annualRate = getAnnualMortality(member.age);
-        const monthlyRate = annualRate / 12;
+        const monthlyRate = (annualRate / 12) * radiationMod;
         const totalRate = monthlyRate + starvationMod;
 
         const roll = rng ? rng.random() : Math.random();

@@ -65,10 +65,23 @@ let _snapshot: GameSnapshot | null = null;
 
 // ── Arrival state (set by SimulationEngine) ──
 let _arrivalInProgress = false;
+/** Grid position the caravan is heading toward (for camera follow). */
+let _caravanTarget: { x: number; z: number } | null = null;
 
 /** Set by SimulationEngine each tick to indicate if the caravan is still arriving. */
 export function setArrivalInProgress(inProgress: boolean): void {
   _arrivalInProgress = inProgress;
+  if (!inProgress) _caravanTarget = null; // clear when arrival completes
+}
+
+/** Set the caravan target position (where the Party Barracks was placed). */
+export function setCaravanTarget(x: number, z: number): void {
+  _caravanTarget = { x, z };
+}
+
+/** Get the caravan target position (null if no arrival in progress). */
+export function getCaravanTarget(): { x: number; z: number } | null {
+  return _caravanTarget;
 }
 
 function createSnapshot(): GameSnapshot {
@@ -889,6 +902,7 @@ export interface CameraTargetState {
 }
 
 let _cameraTarget: CameraTargetState | null = null;
+let _cameraAnimating: 'zoom' | 'return' | null = null;
 
 /** Get the current camera target (null if no zoom animation active). */
 export function getCameraTarget(): CameraTargetState | null {
@@ -903,6 +917,16 @@ export function setCameraTarget(x: number, z: number): void {
 /** Clear camera target to trigger return animation. */
 export function clearCameraTarget(): void {
   _cameraTarget = null;
+}
+
+/** Get whether the camera is currently animating ('zoom', 'return', or null). */
+export function getCameraAnimating(): 'zoom' | 'return' | null {
+  return _cameraAnimating;
+}
+
+/** Set camera animation state (called by CameraController during transitions). */
+export function setCameraAnimating(state: 'zoom' | 'return' | null): void {
+  _cameraAnimating = state;
 }
 
 // ── Lens Cycling ──────────────────────────────────────────────────────────

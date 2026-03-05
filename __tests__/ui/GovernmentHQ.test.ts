@@ -22,13 +22,13 @@ import { AGENCY_TABS, type AgencyTab, type AgencyTabDef, type GovernmentHQProps 
 
 describe('GovernmentHQ', () => {
   describe('AGENCY_TABS definitions', () => {
-    it('exports exactly 6 agency tabs', () => {
-      expect(AGENCY_TABS).toHaveLength(6);
+    it('exports exactly 7 agency tabs', () => {
+      expect(AGENCY_TABS).toHaveLength(7);
     });
 
     it('tabs are in correct order', () => {
       const keys = AGENCY_TABS.map((t: AgencyTabDef) => t.key);
-      expect(keys).toEqual(['gosplan', 'central_committee', 'kgb', 'military', 'politburo', 'reports']);
+      expect(keys).toEqual(['gosplan', 'central_committee', 'kgb', 'military', 'politburo', 'reports', 'law_enforcement']);
     });
 
     it('all tab keys are unique', () => {
@@ -56,6 +56,7 @@ describe('GovernmentHQ', () => {
         military: 'MILITARY',
         politburo: 'POLITBURO',
         reports: 'REPORTS',
+        law_enforcement: 'LAW ENFORCEMENT',
       };
       for (const tab of AGENCY_TABS) {
         expect(tab.label).toBe(expected[tab.key]);

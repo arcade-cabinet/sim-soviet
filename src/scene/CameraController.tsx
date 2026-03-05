@@ -21,18 +21,21 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { getCurrentGridSize } from '../engine/GridTypes';
 import { InputManager } from '../input/InputManager';
-import { clearCameraTarget, getCameraTarget, getCameraResetVersion } from '../stores/gameStore';
+import { clearCameraTarget, getCaravanTarget, getCameraTarget, getCameraResetVersion, setCameraAnimating } from '../stores/gameStore';
 
 /** Speed constants for keyboard/gamepad-driven camera movement. */
 const PAN_SPEED = 0.3;
 const ROTATE_SPEED = 0.02;
 const ZOOM_SPEED = 0.5;
 
-/** Lerp factor per frame for camera zoom animation (~1.5s transition at 60fps). */
-const CAMERA_LERP_FACTOR = 0.03;
+/** Duration (seconds) for zoom-in animation to street level. */
+const ZOOM_IN_DURATION = 0.5;
 
-/** Distance threshold to consider the camera "arrived" at its target. */
-const ARRIVAL_THRESHOLD = 0.1;
+/** Duration (seconds) for return animation back to saved position. */
+const RETURN_DURATION = 0.3;
+
+/** Duration (seconds) for caravan arrival camera pan. */
+const CARAVAN_DURATION = 2.5;
 
 /** Temp vector to avoid per-frame allocation. */
 const _panOffset = new THREE.Vector3();
@@ -55,8 +58,14 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
   // Saved camera position/target for return animation
   const returnPosRef = useRef<THREE.Vector3 | null>(null);
   const returnTargetRef = useRef<THREE.Vector3 | null>(null);
-  // Track whether we are currently animating (zoom-in or return)
-  const animatingRef = useRef<'zoom' | 'return' | null>(null);
+  // Track whether we are currently animating (zoom-in, return, or caravan)
+  const animatingRef = useRef<'zoom' | 'return' | 'caravan' | null>(null);
+  // Track whether the caravan animation has already been triggered this game
+  const caravanDoneRef = useRef(false);
+  // Animation start position/target and elapsed time for time-based lerp
+  const animStartPosRef = useRef(new THREE.Vector3());
+  const animStartTargetRef = useRef(new THREE.Vector3());
+  const animElapsedRef = useRef(0);
   // Track the last cameraTarget to detect transitions
   const lastCameraTargetRef = useRef<{ x: number; z: number } | null>(null);
   // Track camera reset version to detect settlement switches
@@ -82,7 +91,7 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
   }, [disabled]);
 
   // Camera animation: zoom-to-building and return
-  useFrame(() => {
+  useFrame((_state, delta) => {
     if (disabled) return;
     const controls = controlsRef.current;
     if (!controls) return;
@@ -97,9 +106,58 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
       controls.update();
       // Clear any active animation state
       animatingRef.current = null;
+      setCameraAnimating(null);
       returnPosRef.current = null;
       returnTargetRef.current = null;
+      caravanDoneRef.current = false;
       controls.enabled = true;
+    }
+
+    // Caravan arrival: start camera at map edge, pan toward settlement target
+    const caravanTarget = getCaravanTarget();
+    if (caravanTarget && !caravanDoneRef.current && animatingRef.current !== 'caravan') {
+      // Start camera at southwest map edge looking inward
+      const gridSize = getCurrentGridSize();
+      camera.position.set(-2, 8, gridSize + 2);
+      controls.target.set(0, 0, gridSize);
+      controls.update();
+      animStartPosRef.current.copy(camera.position);
+      animStartTargetRef.current.copy(controls.target);
+      animElapsedRef.current = 0;
+      animatingRef.current = 'caravan';
+      setCameraAnimating('zoom');
+      controls.enabled = false;
+      caravanDoneRef.current = true;
+    }
+
+    if (animatingRef.current === 'caravan') {
+      if (!caravanTarget) {
+        // Arrival finished — snap to final position and release controls
+        animatingRef.current = null;
+        setCameraAnimating(null);
+        controls.enabled = true;
+      } else {
+        _targetPos.set(caravanTarget.x + 8, 12, caravanTarget.z + 8);
+        _targetLookAt.set(caravanTarget.x, 0, caravanTarget.z);
+
+        animElapsedRef.current += delta;
+        const t = Math.min(animElapsedRef.current / CARAVAN_DURATION, 1);
+        const eased = 1 - (1 - t) * (1 - t);
+
+        camera.position.lerpVectors(animStartPosRef.current, _targetPos, eased);
+        controls.target.lerpVectors(animStartTargetRef.current, _targetLookAt, eased);
+        controls.update();
+
+        if (t >= 1) {
+          camera.position.copy(_targetPos);
+          controls.target.copy(_targetLookAt);
+          controls.update();
+          animatingRef.current = null;
+          setCameraAnimating(null);
+          controls.enabled = true;
+        }
+        return;
+      }
     }
 
     const cameraTarget = getCameraTarget();
@@ -109,13 +167,21 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
       // Save current position and target for return
       returnPosRef.current = camera.position.clone();
       returnTargetRef.current = controls.target.clone();
+      animStartPosRef.current.copy(camera.position);
+      animStartTargetRef.current.copy(controls.target);
+      animElapsedRef.current = 0;
       animatingRef.current = 'zoom';
+      setCameraAnimating('zoom');
       controls.enabled = false;
     }
 
     // Detect transition: cameraTarget just cleared (return)
     if (!cameraTarget && lastCameraTargetRef.current && returnPosRef.current) {
+      animStartPosRef.current.copy(camera.position);
+      animStartTargetRef.current.copy(controls.target);
+      animElapsedRef.current = 0;
       animatingRef.current = 'return';
+      setCameraAnimating('return');
       controls.enabled = false;
     }
 
@@ -123,19 +189,25 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
 
     // Animate zoom-in to building street level
     if (animatingRef.current === 'zoom' && cameraTarget) {
-      _targetPos.set(cameraTarget.x + 0.5, 2.5, cameraTarget.z + 2.5);
-      _targetLookAt.set(cameraTarget.x + 0.5, 1.5, cameraTarget.z + 0.5);
+      _targetPos.set(cameraTarget.x + 0.5, 2, cameraTarget.z + 2);
+      _targetLookAt.set(cameraTarget.x + 0.5, 3, cameraTarget.z + 0.5);
 
-      camera.position.lerp(_targetPos, CAMERA_LERP_FACTOR);
-      controls.target.lerp(_targetLookAt, CAMERA_LERP_FACTOR);
+      animElapsedRef.current += delta;
+      const t = Math.min(animElapsedRef.current / ZOOM_IN_DURATION, 1);
+      // Smooth ease-out for natural deceleration
+      const eased = 1 - (1 - t) * (1 - t);
+
+      camera.position.lerpVectors(animStartPosRef.current, _targetPos, eased);
+      controls.target.lerpVectors(animStartTargetRef.current, _targetLookAt, eased);
       controls.update();
 
-      // Check if arrived
-      if (camera.position.distanceTo(_targetPos) < ARRIVAL_THRESHOLD) {
+      // Animation complete
+      if (t >= 1) {
         camera.position.copy(_targetPos);
         controls.target.copy(_targetLookAt);
         controls.update();
         animatingRef.current = null;
+        setCameraAnimating(null);
         // Keep controls disabled while panel is open
       }
       return; // Skip normal input processing during animation
@@ -143,18 +215,24 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
 
     // Animate return to saved position
     if (animatingRef.current === 'return' && returnPosRef.current && returnTargetRef.current) {
-      camera.position.lerp(returnPosRef.current, CAMERA_LERP_FACTOR);
-      controls.target.lerp(returnTargetRef.current, CAMERA_LERP_FACTOR);
+      animElapsedRef.current += delta;
+      const t = Math.min(animElapsedRef.current / RETURN_DURATION, 1);
+      // Smooth ease-out
+      const eased = 1 - (1 - t) * (1 - t);
+
+      camera.position.lerpVectors(animStartPosRef.current, returnPosRef.current, eased);
+      controls.target.lerpVectors(animStartTargetRef.current, returnTargetRef.current, eased);
       controls.update();
 
-      // Check if arrived
-      if (camera.position.distanceTo(returnPosRef.current) < ARRIVAL_THRESHOLD) {
+      // Animation complete
+      if (t >= 1) {
         camera.position.copy(returnPosRef.current);
         controls.target.copy(returnTargetRef.current);
         controls.update();
         returnPosRef.current = null;
         returnTargetRef.current = null;
         animatingRef.current = null;
+        setCameraAnimating(null);
         controls.enabled = true;
       }
       return; // Skip normal input processing during animation

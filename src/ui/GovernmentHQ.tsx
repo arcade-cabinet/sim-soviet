@@ -6,8 +6,9 @@
  */
 
 import type React from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
 import { getEngine } from '../bridge/GameInit';
 import { getResourceEntity } from '../ecs/archetypes';
 import { setActiveDirective, setDefensePosture, setGosplanAllocations, useActiveDirective, useDefensePosture, useGosplanAllocations } from '../stores/gameStore';
@@ -19,6 +20,7 @@ import {
 import { GosplanTab } from './hq-tabs/GosplanTab';
 import type { ArrestRecord } from './hq-tabs/KGBTab';
 import { KGBTab } from './hq-tabs/KGBTab';
+import { LawEnforcementTab } from './hq-tabs/LawEnforcementTab';
 import { type DefensePosture, MilitaryTab } from './hq-tabs/MilitaryTab';
 import type { PolitburoDemand, PrestigeProjectStatus } from './hq-tabs/PolitburoTab';
 import { PolitburoTab } from './hq-tabs/PolitburoTab';
@@ -29,22 +31,48 @@ import { Colors, monoFont } from './styles';
 // ── Types ───────────────────────────────────────────────────────────────────
 
 /** Agency tab identifiers for the GovernmentHQ panel. */
-export type AgencyTab = 'gosplan' | 'central_committee' | 'kgb' | 'military' | 'politburo' | 'reports';
+export type AgencyTab = 'gosplan' | 'central_committee' | 'kgb' | 'military' | 'politburo' | 'reports' | 'law_enforcement';
 
 export interface AgencyTabDef {
   key: AgencyTab;
   label: string;
+  /** Minimum settlement tier required for this tab to be visible. */
+  minTier?: SettlementTier;
 }
 
-/** Ordered tab definitions for the GovernmentHQ panel. */
+/** All possible tab definitions for the GovernmentHQ panel. */
 export const AGENCY_TABS: AgencyTabDef[] = [
   { key: 'gosplan', label: 'GOSPLAN' },
   { key: 'central_committee', label: 'CENTRAL COMMITTEE' },
-  { key: 'kgb', label: 'KGB' },
-  { key: 'military', label: 'MILITARY' },
-  { key: 'politburo', label: 'POLITBURO' },
-  { key: 'reports', label: 'REPORTS' },
+  { key: 'kgb', label: 'KGB', minTier: 'posyolok' },
+  { key: 'military', label: 'MILITARY', minTier: 'posyolok' },
+  { key: 'politburo', label: 'POLITBURO', minTier: 'pgt' },
+  { key: 'reports', label: 'REPORTS', minTier: 'pgt' },
+  { key: 'law_enforcement', label: 'LAW ENFORCEMENT', minTier: 'gorod' },
 ];
+
+/** Settlement tier ordering for comparison. */
+const TIER_RANK: Record<SettlementTier, number> = {
+  selo: 0,
+  posyolok: 1,
+  pgt: 2,
+  gorod: 3,
+};
+
+/**
+ * Returns the visible tabs for a given settlement tier.
+ * - Selo (pop < 200): Gosplan + Central Committee
+ * - Posyolok (200-2000): + KGB + Military
+ * - PGT (2000-50000): all 6 base tabs
+ * - Gorod (50000+): all + Law Enforcement
+ */
+export function getVisibleTabs(tier: SettlementTier): AgencyTabDef[] {
+  const rank = TIER_RANK[tier];
+  return AGENCY_TABS.filter((tab) => {
+    if (!tab.minTier) return true;
+    return rank >= TIER_RANK[tab.minTier];
+  });
+}
 
 // ── Props ───────────────────────────────────────────────────────────────────
 
@@ -58,6 +86,10 @@ export interface GovernmentHQProps {
 export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) => {
   const [activeTab, setActiveTab] = useState<AgencyTab>('gosplan');
   const allocations = useGosplanAllocations();
+
+  // Determine visible tabs based on settlement tier
+  const tier: SettlementTier = getEngine()?.getSettlement().getCurrentTier() ?? 'selo';
+  const visibleTabs = useMemo(() => getVisibleTabs(tier), [tier]);
 
   // Military posture — stored in gameStore, read by tick pipeline
   const militaryPosture = useDefensePosture();
@@ -121,6 +153,10 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
     case 'reports':
       tabContent = renderReportsTab(engine);
       break;
+
+    case 'law_enforcement':
+      tabContent = renderLawEnforcementTab(engine);
+      break;
   }
 
   return (
@@ -141,7 +177,7 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
 
         {/* Tab bar */}
         <View style={styles.tabBar}>
-          {AGENCY_TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <TouchableOpacity
@@ -368,6 +404,17 @@ function renderReportsTab(
       currentQuota={quotaForTab}
     />
   );
+}
+
+function renderLawEnforcementTab(
+  engine: ReturnType<typeof getEngine>,
+): React.ReactNode {
+  if (!engine) return <Text style={styles.placeholder}>Engine not initialized</Text>;
+
+  const kgb = engine.getKGBAgent();
+  const state = kgb.getLawEnforcementState();
+
+  return <LawEnforcementTab state={state} />;
 }
 
 // ── Styles ──────────────────────────────────────────────────────────────────

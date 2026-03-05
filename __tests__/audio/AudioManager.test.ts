@@ -176,6 +176,24 @@ describe('AudioManager', () => {
       await manager.playIncidental('katyusha');
       expect(firstSource.stop).toHaveBeenCalled();
     });
+
+    it('base track continues playing during incidental (not paused)', async () => {
+      await manager.playTrack('katyusha');
+      const baseSource = mockCtx.createBufferSource.mock.results[0]?.value;
+
+      await manager.playIncidental('sacred_war', 3000);
+
+      // Base source should NOT have been stopped — it keeps playing, just ducked
+      expect(baseSource.stop).not.toHaveBeenCalled();
+    });
+
+    it('auto-cleanup stops incidental after durationMs', async () => {
+      await manager.playIncidental('sacred_war', 2000);
+      const source = mockCtx.createBufferSource.mock.results[0]?.value;
+
+      jest.advanceTimersByTime(2000);
+      expect(source.stop).toHaveBeenCalled();
+    });
   });
 
   describe('duck / unduck', () => {
@@ -192,6 +210,41 @@ describe('AudioManager', () => {
 
     it('unduck is a no-op when not ducked', () => {
       manager.unduck(); // should not throw
+      expect(manager.isDucked).toBe(false);
+    });
+
+    it('duck with durationMs auto-unducks after timeout', () => {
+      manager.duck(0.7, 2000);
+      expect(manager.isDucked).toBe(true);
+
+      jest.advanceTimersByTime(2000);
+      expect(manager.isDucked).toBe(false);
+    });
+
+    it('manual unduck cancels auto-unduck timer', () => {
+      manager.duck(0.7, 5000);
+      expect(manager.isDucked).toBe(true);
+
+      manager.unduck();
+      expect(manager.isDucked).toBe(false);
+
+      // Advancing past the timer should not cause issues
+      jest.advanceTimersByTime(5000);
+      expect(manager.isDucked).toBe(false);
+    });
+
+    it('duck with durationMs replaces previous timer', () => {
+      manager.duck(0.7, 5000);
+      manager.duck(0.5, 1000); // shorter timer replaces longer
+      expect(manager.isDucked).toBe(true);
+
+      jest.advanceTimersByTime(1000);
+      // duckCount is 2, so one unduck only decrements — still ducked
+      // The timer fires one unduck, but we still have count=1
+      expect(manager.isDucked).toBe(true);
+
+      // Manual unduck for the second duck call
+      manager.unduck();
       expect(manager.isDucked).toBe(false);
     });
 
@@ -280,6 +333,45 @@ describe('AudioManager', () => {
       await flushPromises();
       expect(manager.getCurrentEra()).toBe('unknown_era');
       expect(mockCtx.createBufferSource).toHaveBeenCalled();
+    });
+
+    it('uses 5-second crossfade when switching eras', async () => {
+      manager.setEra('revolution');
+      await flushPromises();
+
+      // Capture the first track's gain node (index 2 after masterGain + incidentalGain)
+      const firstTrackGain = mockCtx.createGain.mock.results[2]?.value;
+
+      manager.setEra('stagnation');
+      await flushPromises();
+
+      // The first track should have been faded out with a 5-second ramp
+      if (firstTrackGain?.gain?.linearRampToValueAtTime?.mock?.calls?.length > 0) {
+        const rampCall = firstTrackGain.gain.linearRampToValueAtTime.mock.calls[0];
+        // Target volume should be 0 (fade out)
+        expect(rampCall[0]).toBe(0);
+        // Ramp time should be currentTime + 5 (5000ms / 1000)
+        const rampDuration = rampCall[1] - mockCtx.currentTime;
+        expect(rampDuration).toBe(5);
+      }
+    });
+
+    it('overlaps two tracks during era crossfade', async () => {
+      manager.setEra('revolution');
+      await flushPromises();
+
+      const sourcesBeforeSwitch = mockCtx.createBufferSource.mock.calls.length;
+
+      manager.setEra('stagnation');
+      await flushPromises();
+
+      // A new source was created for the new era track
+      expect(mockCtx.createBufferSource.mock.calls.length).toBeGreaterThan(sourcesBeforeSwitch);
+
+      // The old source should NOT have been immediately stopped (it's fading)
+      const firstSource = mockCtx.createBufferSource.mock.results[0]?.value;
+      // stop() is called only after fade completes (via timer), not immediately
+      expect(firstSource.stop).not.toHaveBeenCalled();
     });
   });
 

@@ -17,6 +17,7 @@ import { WeatherType } from '../core/weather-types';
 import type { PressureDomain } from './pressure/PressureDomains';
 import type { CrisisImpact } from './types';
 import climateEventsData from '@/config/climateEvents.json';
+import marsClimateEventsData from '@/config/climateEventsMars.json';
 
 // ─── Climate Event Definition ────────────────────────────────────────────────
 
@@ -115,15 +116,50 @@ export const CLIMATE_EVENTS: readonly ClimateEventDef[] = parseClimateEvents(
   climateEventsData as unknown as RawClimateEvent[],
 );
 
+/** Mars-specific climate events (terraforming progress + Mars disasters). */
+export const MARS_CLIMATE_EVENTS: readonly ClimateEventDef[] = parseClimateEvents(
+  marsClimateEventsData as unknown as RawClimateEvent[],
+);
+
+/** Per-world climate event catalogs keyed by profile id. */
+const WORLD_CLIMATE_CATALOGS: Readonly<Record<string, readonly ClimateEventDef[]>> = {
+  earth_temperate: CLIMATE_EVENTS,
+  earth_arctic: CLIMATE_EVENTS,
+  earth_desert: CLIMATE_EVENTS,
+  martian: MARS_CLIMATE_EVENTS,
+};
+
+/**
+ * Get the climate event catalog for a given world profile id.
+ * Defaults to Earth events for unknown worlds.
+ */
+export function getClimateEventsForWorld(profileId: string): readonly ClimateEventDef[] {
+  return WORLD_CLIMATE_CATALOGS[profileId] ?? CLIMATE_EVENTS;
+}
+
 // ─── ClimateEventSystem ──────────────────────────────────────────────────────
+
+/** Result of climate event evaluation including terraforming progress tracking. */
+export interface ClimateEvalResult {
+  impacts: CrisisImpact[];
+  pressureSpikes: Partial<Record<PressureDomain, number>>;
+  /** Terraforming progress delta (only non-zero when warmingPolarity = -1). */
+  terraformingProgress: number;
+}
 
 /**
  * Evaluates climate events every tick. Season/weather gates ensure
  * events only fire when climatically appropriate.
+ *
+ * Supports climate polarity: on worlds with warmingPolarity = -1 (Mars),
+ * the effective climate trend is inverted, and pressure spikes from
+ * warming-dependent events become beneficial (negative = pressure relief).
  */
 export class ClimateEventSystem {
   /** Cooldown tracking: event ID → ticks remaining. */
   private cooldowns: Map<string, number> = new Map();
+  /** Accumulated terraforming progress (for worlds with polarity -1). */
+  private terraformingProgress = 0;
 
   /**
    * Evaluate all climate events for the current tick.
@@ -132,16 +168,32 @@ export class ClimateEventSystem {
    * @param weather - Current weather type
    * @param climateTrend - World climate trend (-1 to +1)
    * @param rng - Seeded RNG
-   * @returns Array of triggered event impacts + pressure spikes
+   * @param warmingPolarity - Climate polarity: 1 = warming is bad (Earth), -1 = warming is good (Mars). Defaults to 1.
+   * @param catalog - Climate event catalog to use. Defaults to Earth events.
+   * @returns Triggered event impacts, pressure spikes, and terraforming progress
    */
   evaluate(
     season: Season,
     weather: WeatherType,
     climateTrend: number,
     rng: GameRng,
-  ): { impacts: CrisisImpact[]; pressureSpikes: Partial<Record<PressureDomain, number>> } {
+    warmingPolarity: 1 | -1 = 1,
+    catalog?: readonly ClimateEventDef[],
+  ): ClimateEvalResult {
     const impacts: CrisisImpact[] = [];
     const aggregateSpikes: Partial<Record<PressureDomain, number>> = {};
+    let tickTerraformingDelta = 0;
+
+    // Polarity determines whether warming is beneficial or harmful.
+    // Per-world catalogs already encode the correct trend semantics,
+    // so trend range checks use raw climateTrend. Polarity affects:
+    // (1) which events qualify as "beneficial" for terraforming tracking
+    // (2) how pressure spikes feed back into the pressure system
+    // For the Earth catalog with polarity -1 (arctic warming = good),
+    // effectiveTrend inverts to enable cold-weather events:
+    const effectiveTrend = catalog ? climateTrend : climateTrend * warmingPolarity;
+
+    const events = catalog ?? CLIMATE_EVENTS;
 
     // Decrement all cooldowns
     for (const [id, remaining] of this.cooldowns) {
@@ -152,7 +204,7 @@ export class ClimateEventSystem {
       }
     }
 
-    for (const event of CLIMATE_EVENTS) {
+    for (const event of events) {
       // Cooldown check
       if (this.cooldowns.has(event.id)) continue;
 
@@ -160,8 +212,11 @@ export class ClimateEventSystem {
       if (!event.validSeasons.includes(season)) continue;
 
       // Climate trend gate
+      // World-specific catalogs use raw climateTrend (events encode their own semantics)
+      // Earth catalog uses effectiveTrend (polarity inverts for arctic settlements)
+      const trendForGate = catalog ? climateTrend : effectiveTrend;
       if (event.climateTrendRange) {
-        if (climateTrend < event.climateTrendRange.min || climateTrend > event.climateTrendRange.max) continue;
+        if (trendForGate < event.climateTrendRange.min || trendForGate > event.climateTrendRange.max) continue;
       }
 
       // Compute probability with weather boost
@@ -176,9 +231,21 @@ export class ClimateEventSystem {
         impacts.push(event.impact);
 
         // Aggregate pressure spikes
+        // On negative-polarity worlds, negative spikes in the catalog
+        // represent beneficial pressure relief (terraforming progress)
         for (const [domain, spike] of Object.entries(event.pressureSpikes)) {
           const d = domain as PressureDomain;
           aggregateSpikes[d] = (aggregateSpikes[d] ?? 0) + spike;
+        }
+
+        // Track terraforming progress from beneficial events on negative-polarity worlds
+        if (warmingPolarity === -1) {
+          // Sum negative pressure spikes as terraforming progress (inverted: relief = progress)
+          for (const spike of Object.values(event.pressureSpikes)) {
+            if (spike < 0) {
+              tickTerraformingDelta += Math.abs(spike);
+            }
+          }
         }
 
         // Set cooldown
@@ -186,16 +253,32 @@ export class ClimateEventSystem {
       }
     }
 
-    return { impacts, pressureSpikes: aggregateSpikes };
+    this.terraformingProgress += tickTerraformingDelta;
+    return { impacts, pressureSpikes: aggregateSpikes, terraformingProgress: tickTerraformingDelta };
   }
 
-  /** Serialize cooldown state. */
-  serialize(): Array<[string, number]> {
-    return [...this.cooldowns.entries()];
+  /** Get accumulated terraforming progress. */
+  getTerraformingProgress(): number {
+    return this.terraformingProgress;
   }
 
-  /** Restore cooldown state. */
-  restore(data: Array<[string, number]>): void {
-    this.cooldowns = new Map(data);
+  /** Serialize cooldown state + terraforming progress. */
+  serialize(): { cooldowns: Array<[string, number]>; terraformingProgress: number } {
+    return {
+      cooldowns: [...this.cooldowns.entries()],
+      terraformingProgress: this.terraformingProgress,
+    };
+  }
+
+  /** Restore cooldown state + terraforming progress. */
+  restore(data: Array<[string, number]> | { cooldowns: Array<[string, number]>; terraformingProgress: number }): void {
+    if (Array.isArray(data)) {
+      // Backward compat: old saves only had cooldown array
+      this.cooldowns = new Map(data);
+      this.terraformingProgress = 0;
+    } else {
+      this.cooldowns = new Map(data.cooldowns);
+      this.terraformingProgress = data.terraformingProgress ?? 0;
+    }
   }
 }

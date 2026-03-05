@@ -653,7 +653,9 @@ describe('Freeform mode — organic divergence integration tests', () => {
       const climateSystem = governor.getClimateEventSystem();
       // ClimateEventSystem is evaluated every tick — verify it exists and can serialize
       expect(climateSystem).toBeDefined();
-      const cooldowns = climateSystem.serialize();
+      const serialized = climateSystem.serialize();
+      // New format: { cooldowns: Array, terraformingProgress: number }
+      const cooldowns = Array.isArray(serialized) ? serialized : serialized.cooldowns;
       expect(Array.isArray(cooldowns)).toBe(true);
 
       // Verify the system can evaluate without errors

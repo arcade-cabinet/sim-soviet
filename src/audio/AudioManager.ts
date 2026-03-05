@@ -54,6 +54,7 @@ class AudioManager {
   private ducked = false;
   private duckLevel = 1;
   private duckCount = 0;
+  private duckTimer: ReturnType<typeof setTimeout> | null = null;
 
   private playlist: string[] = [];
   private playlistIndex = 0;
@@ -264,10 +265,12 @@ class AudioManager {
 
   /**
    * Duck the base layer volume by a multiplier (0-1).
+   * Optionally auto-unducks after `durationMs` milliseconds.
    *
    * @param amount - Volume multiplier (e.g., 0.7 = 30% reduction)
+   * @param durationMs - If provided, automatically unducks after this many ms
    */
-  duck(amount: number): void {
+  duck(amount: number, durationMs?: number): void {
     this.duckCount++;
     this.ducked = true;
     this.duckLevel = Math.max(0, Math.min(1, amount));
@@ -282,6 +285,15 @@ class AudioManager {
         trackGain.gain.linearRampToValueAtTime(baseVol * this.duckLevel, now + 0.3);
       }
     }
+
+    // Auto-unduck after duration
+    if (durationMs != null && durationMs > 0) {
+      if (this.duckTimer) clearTimeout(this.duckTimer);
+      this.duckTimer = setTimeout(() => {
+        this.duckTimer = null;
+        this.unduck();
+      }, durationMs);
+    }
   }
 
   /** Restore base layer volume after ducking. */
@@ -291,6 +303,11 @@ class AudioManager {
     if (this.duckCount > 0) return;
     this.ducked = false;
     this.duckLevel = 1;
+
+    if (this.duckTimer) {
+      clearTimeout(this.duckTimer);
+      this.duckTimer = null;
+    }
 
     if (this.currentSource && this.audioCtx) {
       const trackGain: GainNode | undefined = (this.currentSource as any)._trackGain;
@@ -524,6 +541,10 @@ class AudioManager {
     this.ducked = false;
     this.duckLevel = 1;
     this.duckCount = 0;
+    if (this.duckTimer) {
+      clearTimeout(this.duckTimer);
+      this.duckTimer = null;
+    }
     this.bufferCache.clear();
     this.playlist = [];
     this.playlistIndex = 0;

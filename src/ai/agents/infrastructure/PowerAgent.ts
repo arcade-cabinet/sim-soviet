@@ -19,6 +19,7 @@ import { Vehicle } from 'yuka';
 import { buildingsLogic, getResourceEntity } from '../../../ecs/archetypes';
 import type { Entity } from '../../../ecs/world';
 import { world } from '../../../ecs/world';
+import type { AgentParameterProfile } from '../../../game/engine/agentParameterMatrix';
 import { MSG } from '../../telegrams';
 
 // ---------------------------------------------------------------------------
@@ -80,6 +81,9 @@ export class PowerAgent extends Vehicle {
     unpoweredCount: 0,
   };
 
+  /** Active terrain profile — controls solar efficiency and nuclear availability. */
+  private profile: Readonly<AgentParameterProfile> | null = null;
+
   /** Callbacks emitted when events are detected. */
   private onPowerShortage: ((deficit: number) => void) | null = null;
   private onBuildingUnpowered: ((buildingId: string) => void) | null = null;
@@ -93,6 +97,14 @@ export class PowerAgent extends Vehicle {
   constructor() {
     super();
     this.name = 'PowerAgent';
+  }
+
+  /**
+   * Set the active agent parameter profile.
+   * Solar output is multiplied by solarEfficiency; nuclear plants are skipped if !nuclearAvailable.
+   */
+  setProfile(profile: Readonly<AgentParameterProfile>): void {
+    this.profile = profile;
   }
 
   // -------------------------------------------------------------------------
@@ -171,8 +183,15 @@ export class PowerAgent extends Vehicle {
   // Phase 1: Calculate total supply
   // -------------------------------------------------------------------------
 
+  /** DefIds classified as nuclear power sources. */
+  private static readonly NUCLEAR_DEFIDS = new Set(['cooling-tower']);
+
+  /** DefIds classified as solar power sources. */
+  private static readonly SOLAR_DEFIDS = new Set(['solar-panel', 'solar-array']);
+
   /**
    * Sum power output from all generator buildings.
+   * Applies profile modifiers: solarEfficiency for solar, nuclearAvailable gate for nuclear.
    *
    * @returns Total available power units
    */
@@ -180,6 +199,21 @@ export class PowerAgent extends Vehicle {
     let total = 0;
     for (const entity of buildingsLogic) {
       if (entity.building.powerOutput > 0) {
+        const defId = entity.building.defId;
+
+        // Nuclear gate: skip nuclear plants if profile disallows them
+        if (PowerAgent.NUCLEAR_DEFIDS.has(defId)) {
+          if (this.profile && !this.profile.nuclearAvailable) continue;
+          total += entity.building.powerOutput;
+          continue;
+        }
+
+        // Solar efficiency: multiply solar panel output by profile factor
+        if (PowerAgent.SOLAR_DEFIDS.has(defId)) {
+          total += entity.building.powerOutput * (this.profile?.solarEfficiency ?? 1.0);
+          continue;
+        }
+
         total += entity.building.powerOutput;
       }
     }

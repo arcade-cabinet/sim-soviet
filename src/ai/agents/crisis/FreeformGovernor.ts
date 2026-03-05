@@ -28,7 +28,7 @@ import {
 import type { WeatherType } from '../core/weather-types';
 import { BlackSwanSystem, type BlackSwanResult } from './BlackSwanSystem';
 import { ChaosEngine, type ChaosState } from './ChaosEngine';
-import { ClimateEventSystem } from './ClimateEventSystem';
+import { ClimateEventSystem, getClimateEventsForWorld } from './ClimateEventSystem';
 import { DisasterAgent } from './DisasterAgent';
 import { FamineAgent } from './FamineAgent';
 import type { DynamicModifiers, GovernorContext, GovernorDirective, GovernorSaveData, IGovernor } from './Governor';
@@ -186,6 +186,12 @@ export class FreeformGovernor implements IGovernor {
   private climateEventSystem: ClimateEventSystem;
   private blackSwanSystem: BlackSwanSystem;
 
+  // ── Climate Polarity ────────────────────────────────────────────────────
+  /** Warming polarity: 1 = bad (Earth), -1 = good (Mars terraforming). */
+  private warmingPolarity: 1 | -1 = 1;
+  /** World profile ID for per-world disaster catalogs. */
+  private worldProfileId = 'earth_temperate';
+
   // ── Cold Branch State ────────────────────────────────────────────────────
   private activatedBranches: Set<string> = new Set();
   private branchTrackers: Map<string, BranchTracker> = new Map();
@@ -267,7 +273,8 @@ export class FreeformGovernor implements IGovernor {
       const weather = ctx.pressureReadings.weather as WeatherType;
       const climateTrend = ctx.pressureReadings.climateTrend ?? 0;
 
-      const climateResult = this.climateEventSystem.evaluate(season, weather, climateTrend, ctx.rng);
+      const catalog = getClimateEventsForWorld(this.worldProfileId);
+      const climateResult = this.climateEventSystem.evaluate(season, weather, climateTrend, ctx.rng, this.warmingPolarity, catalog);
       allImpacts.push(...climateResult.impacts);
 
       // Feed climate pressure spikes into pressure system
@@ -282,9 +289,31 @@ export class FreeformGovernor implements IGovernor {
     this.lastMeteorEvent = null;
     const gridSize = 30; // default grid size
     const blackSwanResult = this.blackSwanSystem.roll(ctx.year, ctx.rng, gridSize);
-    allImpacts.push(...blackSwanResult.impacts);
-    if (blackSwanResult.meteorEvent) {
+
+    if (blackSwanResult.meteorEvent && this.warmingPolarity === -1) {
+      // Meteor strike on a negative-polarity world (Mars): ice delivery, constructive
       this.lastMeteorEvent = blackSwanResult.meteorEvent;
+      const meteor = blackSwanResult.meteorEvent;
+      allImpacts.push({
+        crisisId: `ice-delivery-${ctx.year}`,
+        economy: { productionMult: 1.05 },
+        narrative: {
+          pravdaHeadlines: [
+            `ASTEROID ICE DELIVERY: Impact near (${meteor.targetX}, ${meteor.targetY}) delivers ${Math.round(meteor.magnitude * 50)}kt of water ice to surface.`,
+          ],
+          toastMessages: [
+            { text: `Asteroid ice delivery: +${Math.round(meteor.magnitude * 50)}kt water ice.`, severity: 'warning' },
+          ],
+        },
+      });
+      // Beneficial pressure relief instead of damage
+      blackSwanResult.pressureSpikes.infrastructure = -0.05;
+      blackSwanResult.pressureSpikes.morale = -0.03;
+    } else {
+      allImpacts.push(...blackSwanResult.impacts);
+      if (blackSwanResult.meteorEvent) {
+        this.lastMeteorEvent = blackSwanResult.meteorEvent;
+      }
     }
 
     // Feed black swan pressure spikes into pressure system
@@ -625,7 +654,9 @@ export class FreeformGovernor implements IGovernor {
         // New pressure-valve pipeline state
         pressureState: this.pressureSystem.serialize(),
         pressureCrisisEngine: this.pressureCrisisEngine.serialize(),
-        climateEventCooldowns: this.climateEventSystem.serialize(),
+        climateEventState: this.climateEventSystem.serialize(),
+        warmingPolarity: this.warmingPolarity,
+        worldProfileId: this.worldProfileId,
         branchSystem: serializeBranchSystem(this.activatedBranches, this.branchTrackers),
       },
     };
@@ -701,8 +732,18 @@ export class FreeformGovernor implements IGovernor {
     if (s.pressureCrisisEngine) {
       this.pressureCrisisEngine.restore(s.pressureCrisisEngine as Parameters<PressureCrisisEngine['restore']>[0]);
     }
-    if (s.climateEventCooldowns) {
+    // Restore climate event state (new format or legacy cooldown array)
+    if (s.climateEventState) {
+      this.climateEventSystem.restore(s.climateEventState as Parameters<ClimateEventSystem['restore']>[0]);
+    } else if (s.climateEventCooldowns) {
+      // Backward compat: old saves only had cooldown array
       this.climateEventSystem.restore(s.climateEventCooldowns as Array<[string, number]>);
+    }
+    if (s.warmingPolarity !== undefined) {
+      this.warmingPolarity = s.warmingPolarity as 1 | -1;
+    }
+    if (s.worldProfileId !== undefined) {
+      this.worldProfileId = s.worldProfileId as string;
     }
     if (s.branchSystem) {
       const branchData = restoreBranchSystem(s.branchSystem as BranchSystemSaveData);
@@ -832,6 +873,28 @@ export class FreeformGovernor implements IGovernor {
   /** Get activated cold branches (for testing/inspection). */
   getActivatedBranches(): ReadonlySet<string> {
     return this.activatedBranches;
+  }
+
+  /**
+   * Set climate polarity for the current world.
+   * Call when switching active world (multi-world colonies).
+   *
+   * @param polarity - 1 = warming bad (Earth), -1 = warming good (Mars)
+   * @param profileId - World profile id from AgentParameterProfile
+   */
+  setWorldClimateProfile(polarity: 1 | -1, profileId: string): void {
+    this.warmingPolarity = polarity;
+    this.worldProfileId = profileId;
+  }
+
+  /** Get current warming polarity. */
+  getWarmingPolarity(): 1 | -1 {
+    return this.warmingPolarity;
+  }
+
+  /** Get accumulated terraforming progress from climate system. */
+  getTerraformingProgress(): number {
+    return this.climateEventSystem.getTerraformingProgress();
   }
 
   // ─── Private: ChaosEngine Crisis Generation ────────────────────────────

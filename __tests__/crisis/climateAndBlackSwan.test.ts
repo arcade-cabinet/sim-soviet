@@ -38,9 +38,10 @@ describe('ClimateEventSystem', () => {
   describe('constructor', () => {
     it('creates system with empty cooldown state', () => {
       const system = new ClimateEventSystem();
-      // serialize() returns the cooldown map as an array; it must be empty on creation
+      // serialize() returns cooldowns + terraformingProgress; cooldowns must be empty on creation
       const serialized = system.serialize();
-      expect(serialized).toHaveLength(0);
+      expect(serialized.cooldowns).toHaveLength(0);
+      expect(serialized.terraformingProgress).toBe(0);
     });
   });
 
@@ -698,7 +699,7 @@ describe('ClimateEventSystem', () => {
       system.evaluate(Season.WINTER, WeatherType.OVERCAST, -0.5, stubRng(0.0));
 
       const serialized = system.serialize();
-      const frostCooldown = serialized.find(([id]) => id === 'severe_frost');
+      const frostCooldown = serialized.cooldowns.find(([id]) => id === 'severe_frost');
       expect(frostCooldown).toBeDefined();
       expect(frostCooldown![1]).toBe(24);
     });
@@ -709,7 +710,7 @@ describe('ClimateEventSystem', () => {
       system.evaluate(Season.WINTER, WeatherType.OVERCAST, -0.5, stubRng(0.0));
 
       const afterFirst = system.serialize();
-      const cooldownAfterFire = afterFirst.find(([id]) => id === 'severe_frost')![1];
+      const cooldownAfterFire = afterFirst.cooldowns.find(([id]) => id === 'severe_frost')![1];
       expect(cooldownAfterFire).toBe(24);
 
       // Two more evaluations with RNG=1.0 (won't fire again, just decrement)
@@ -717,7 +718,7 @@ describe('ClimateEventSystem', () => {
       system.evaluate(Season.WINTER, WeatherType.OVERCAST, -0.5, stubRng(1.0));
 
       const afterThird = system.serialize();
-      const cooldownAfterTwo = afterThird.find(([id]) => id === 'severe_frost')![1];
+      const cooldownAfterTwo = afterThird.cooldowns.find(([id]) => id === 'severe_frost')![1];
       expect(cooldownAfterTwo).toBe(22);
     });
 
@@ -733,7 +734,7 @@ describe('ClimateEventSystem', () => {
 
       // Now cooldown should be gone — can fire again
       const serialized = system.serialize();
-      const hasCooldown = serialized.some(([id]) => id === 'severe_frost');
+      const hasCooldown = serialized.cooldowns.some(([id]) => id === 'severe_frost');
       expect(hasCooldown).toBe(false);
 
       const afterCooldown = system.evaluate(Season.WINTER, WeatherType.OVERCAST, -0.5, stubRng(0.0));
@@ -809,20 +810,22 @@ describe('ClimateEventSystem', () => {
       expect(fired).toBe(false);
     });
 
-    it('serialize returns empty array for fresh system with no fired events', () => {
+    it('serialize returns empty cooldowns for fresh system with no fired events', () => {
       const system = new ClimateEventSystem();
-      expect(system.serialize()).toEqual([]);
+      const serialized = system.serialize();
+      expect(serialized.cooldowns).toEqual([]);
+      expect(serialized.terraformingProgress).toBe(0);
     });
 
     it('restore with empty array leaves system in clean state', () => {
       const system = new ClimateEventSystem();
       // Fire something first
       system.evaluate(Season.WINTER, WeatherType.OVERCAST, -0.5, stubRng(0.0));
-      expect(system.serialize().length).toBeGreaterThan(0);
+      expect(system.serialize().cooldowns.length).toBeGreaterThan(0);
 
-      // Restore with empty — should clear all cooldowns
+      // Restore with empty (backward compat format) — should clear all cooldowns
       system.restore([]);
-      expect(system.serialize()).toHaveLength(0);
+      expect(system.serialize().cooldowns).toHaveLength(0);
     });
   });
 

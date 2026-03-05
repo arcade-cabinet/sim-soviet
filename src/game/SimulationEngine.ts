@@ -81,6 +81,11 @@ import {
 import type { TickContext } from './engine/tickContext';
 import type { SimCallbacks, SubsystemSaveData } from './engine/types';
 import { EraSystem } from './era';
+import {
+  type AgentParameterProfile,
+  getParameterProfile,
+  PROFILE_EARTH_TEMPERATE,
+} from './engine/agentParameterMatrix';
 import type { GameGrid } from './GameGrid';
 import { createGameTally } from './GameTally';
 import { RelocationEngine } from './relocation/RelocationEngine';
@@ -516,6 +521,18 @@ export class SimulationEngine {
   }
   public getDesirePaths(): import('../growth/DesirePathSystem').DesirePathRoad[] {
     return this.desirePaths;
+  }
+
+  /**
+   * Returns the AgentParameterProfile for the currently active settlement.
+   * Agents read from this to adapt behavior to different worlds (Earth, Moon, Mars, etc.).
+   */
+  public getActiveProfile(): Readonly<AgentParameterProfile> {
+    const active = this.relocationEngine.getRegistry().getActive();
+    if (active?.terrain) {
+      return getParameterProfile(active.terrain);
+    }
+    return PROFILE_EARTH_TEMPERATE;
   }
   public getArcologies(): import('../game/arcology/ArcologySystem').Arcology[] {
     return this.arcologies;
