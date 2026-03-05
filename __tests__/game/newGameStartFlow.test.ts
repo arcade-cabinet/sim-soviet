@@ -3,10 +3,10 @@
  *
  * Validates:
  * 1. ArrivalSequence staggers families over ~30 ticks
- * 2. CollectiveAgent.earlyGameBootstrap places Party Barracks (prefers water)
+ * 2. CollectiveAgent determines starting needs dynamically (bootstrap removed)
  * 3. Starting morale = 70 for arriving families
  * 4. No divergence year selector in freeform (NewGameConfig has no divergenceYear)
- * 5. Caravan target set during bootstrap
+ * 5. Caravan target set during agent arrival evaluation
  */
 
 import { ArrivalSequence } from '../../src/game/arrivalSequence';
@@ -153,87 +153,6 @@ describe('Starting morale for arriving families', () => {
       const overrides = call[4]; // 5th argument is { morale, loyalty }
       expect(overrides).toEqual({ morale: 70, loyalty: 60 });
     }
-  });
-});
-
-// ── CollectiveAgent earlyGameBootstrap ──────────────────────────────────
-
-describe('CollectiveAgent.earlyGameBootstrap', () => {
-  beforeEach(() => {
-    world.clear();
-    setCurrentGridSize(20);
-    createResourceStore({ timber: 200, steel: 50, population: 0 });
-    createMetaStore({ seed: 'test-bootstrap', date: { year: 1917, month: 10, tick: 0 } });
-    createGrid(20);
-
-    // Generate terrain with a river for water-adjacent placement
-    const mapSystem = new MapSystem({ seed: 'test-bootstrap', size: 'small', riverCount: 1 });
-    mapSystem.generate();
-  });
-
-  afterEach(() => {
-    world.clear();
-    setArrivalInProgress(false);
-  });
-
-  it('places government-hq as first building', () => {
-    const grid = new GameGrid(20);
-    const agent = new CollectiveAgent(grid);
-    const rng = new GameRng('test-bootstrap');
-
-    agent.earlyGameBootstrap(rng, 'revolution');
-
-    const buildings = buildingsLogic.entities;
-    expect(buildings.length).toBeGreaterThanOrEqual(1);
-
-    const hq = buildings.find(e => e.building.defId === 'government-hq');
-    expect(hq).toBeDefined();
-  });
-
-  it('places izbas and farm near HQ', () => {
-    const grid = new GameGrid(20);
-    const agent = new CollectiveAgent(grid);
-    const rng = new GameRng('test-bootstrap');
-
-    agent.earlyGameBootstrap(rng, 'revolution');
-
-    const buildings = buildingsLogic.entities;
-    // HQ + 2-3 izbas + 1 farm = 4-5 buildings
-    expect(buildings.length).toBeGreaterThanOrEqual(4);
-
-    const housing = buildings.filter(e =>
-      e.building.defId === 'workers-house-a' || e.building.defId === 'workers-house-b'
-    );
-    expect(housing.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it('sets caravan target when HQ is placed', () => {
-    const grid = new GameGrid(20);
-    const agent = new CollectiveAgent(grid);
-    const rng = new GameRng('test-bootstrap');
-
-    agent.earlyGameBootstrap(rng, 'revolution');
-
-    const target = getCaravanTarget();
-    expect(target).not.toBeNull();
-
-    // Target should be within the grid
-    expect(target!.x).toBeGreaterThanOrEqual(0);
-    expect(target!.x).toBeLessThan(20);
-    expect(target!.z).toBeGreaterThanOrEqual(0);
-    expect(target!.z).toBeLessThan(20);
-  });
-
-  it('only bootstraps once', () => {
-    const grid = new GameGrid(20);
-    const agent = new CollectiveAgent(grid);
-    const rng = new GameRng('test-bootstrap');
-
-    agent.earlyGameBootstrap(rng, 'revolution');
-    const countAfterFirst = buildingsLogic.entities.length;
-
-    agent.earlyGameBootstrap(rng, 'revolution');
-    expect(buildingsLogic.entities.length).toBe(countAfterFirst);
   });
 });
 

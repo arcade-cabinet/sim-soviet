@@ -300,15 +300,15 @@ describe('Playthrough: First Year Survival', () => {
 
     const initialBuildingCount = getBuildingCount();
 
-    // Tick through early game — CollectiveAgent.earlyGameBootstrap runs in first 60 ticks
+    // Tick through early game — CollectiveAgent.tickAutonomous runs organically
     advanceTicks(engine, 60);
 
     const afterBuildingCount = getBuildingCount();
 
-    // The collective should have bootstrapped some buildings
+    // The collective should have organically placed some buildings to meet needs
     // (government-hq, izbas, etc.) — at minimum the engine should not crash
     console.log(
-      `Bootstrap buildings: before=${initialBuildingCount}, after=${afterBuildingCount}`,
+      `Organic buildings: before=${initialBuildingCount}, after=${afterBuildingCount}`,
     );
     // If families arrived and pop > 0, the collective may have placed buildings
     expect(afterBuildingCount).toBeGreaterThanOrEqual(initialBuildingCount);
