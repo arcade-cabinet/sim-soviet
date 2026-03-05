@@ -177,7 +177,8 @@ export class HistoricalGovernor implements IGovernor {
 
     // ── Tick pressure system (if readings available) ─────────────────────
     if (ctx.pressureReadings) {
-      this.pressureSystem.tick(ctx.pressureReadings);
+      const worldModifiers = ctx.worldAgent?.computePressureModifiers() ?? {};
+      this.pressureSystem.tick(ctx.pressureReadings, worldModifiers);
     }
 
     // ── Promote pending → active (sorted, so stop at first future entry) ──

@@ -16,6 +16,7 @@
 
 import type { SettlementSummary } from '@/game/engine/SettlementSummary';
 import type { GameRng } from '@/game/SeedSystem';
+import type { WorldAgent } from '../core/WorldAgent';
 import type { PressureReadContext } from './pressure/PressureDomains';
 import type { CrisisImpact } from './types';
 
@@ -94,6 +95,8 @@ export interface GovernorContext {
   settlement?: SettlementSummary;
   /** Pressure system readings for pressure-based crisis generation. Optional for backward compat. */
   pressureReadings?: PressureReadContext;
+  /** WorldAgent reference for computing per-domain pressure modifiers. Optional for backward compat. */
+  worldAgent?: WorldAgent;
 }
 
 // ─── Governor Directive ────────────────────────────────────────────────────
