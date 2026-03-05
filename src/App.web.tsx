@@ -109,6 +109,9 @@ import { Toast } from './ui/Toast';
 import { TopBar } from './ui/TopBar';
 import { ViewportFrame } from './ui/ViewportFrame';
 import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
+import { USSRDissolutionModal } from './ui/USSRDissolutionModal';
+import { MilestoneTimelineScreen } from './ui/MilestoneTimelineScreen';
+import { buildMilestoneSummary, type MilestoneSummaryEntry } from './ui/milestoneSummary';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
 
@@ -223,9 +226,14 @@ const App: React.FC = () => {
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
   const [gameTally, setGameTally] = useState<TallyData | null>(null);
   const [rehabilitation, setRehabilitation] = useState<RehabilitationData | null>(null);
+  const [showDissolutionModal, setShowDissolutionModal] = useState(false);
+  const resolveDissolutionRef = useRef<((continueInFreeform: boolean) => void) | null>(null);
+  const [showMilestoneScreen, setShowMilestoneScreen] = useState(false);
+  const [milestoneEntries, setMilestoneEntries] = useState<MilestoneSummaryEntry[]>([]);
+  const [milestoneScreenYear, setMilestoneScreenYear] = useState(1991);
 
   // Auto-pause when interactive modals are open (restore prior state on close)
-  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver || !!rehabilitation;
+  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver || !!rehabilitation || showDissolutionModal;
   const wasPausedBeforeModal = useRef(false);
   useEffect(() => {
     if (hasInteractiveModal) {
@@ -396,6 +404,10 @@ const App: React.FC = () => {
           onNarrativeEvent: (event, resolve) => {
             setActiveNarrativeEvent(event);
             resolveNarrativeEventRef.current = resolve;
+          },
+          onHistoricalEraEnd: (resolve) => {
+            resolveDissolutionRef.current = resolve;
+            setShowDissolutionModal(true);
           },
           onTutorialMilestone: (milestone) => {
             showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
@@ -681,6 +693,24 @@ const App: React.FC = () => {
     submitReportRef.current = null;
     setAnnualReport(null);
   }, []);
+  const handleDissolutionResolve = useCallback((continueInFreeform: boolean) => {
+    setShowDissolutionModal(false);
+    resolveDissolutionRef.current?.(continueInFreeform);
+
+    if (!continueInFreeform) {
+      // Build milestone timeline for end screen
+      const engine = getEngine();
+      if (engine) {
+        const subsystems = engine.serializeSubsystems();
+        const registeredTimelines = engine.getRegisteredTimelines();
+        const entries = buildMilestoneSummary(subsystems.timelines ?? [], registeredTimelines);
+        const year = engine.getChronology().getDate().year;
+        setMilestoneEntries(entries);
+        setMilestoneScreenYear(year);
+        setShowMilestoneScreen(true);
+      }
+    }
+  }, []);
   const handleDismissSettlement = useCallback(() => setSettlementEvent(null), []);
   const handleAcceptPlan = useCallback(() => setPlanDirective(null), []);
   const handleRestart = useCallback(() => {
@@ -689,6 +719,9 @@ const App: React.FC = () => {
     setXrMode(null);
     setRehabilitation(null);
     setActiveMinigame(null);
+    setShowDissolutionModal(false);
+    resolveDissolutionRef.current = null;
+    setShowMilestoneScreen(false);
     resolveMinigameRef.current = null;
     submitReportRef.current = null;
     // Reset all module-level singletons so a fresh game can be initialized
@@ -887,6 +920,18 @@ const App: React.FC = () => {
             resolveNarrativeEventRef.current?.(choiceId);
             setActiveNarrativeEvent(null);
           }}
+        />
+
+        <USSRDissolutionModal
+          visible={showDissolutionModal}
+          onResolve={handleDissolutionResolve}
+        />
+
+        <MilestoneTimelineScreen
+          visible={showMilestoneScreen}
+          entries={milestoneEntries}
+          finalYear={milestoneScreenYear}
+          onDismiss={() => setShowMilestoneScreen(false)}
         />
 
         <PersonnelFilePanel visible={showPersonnelFile} onDismiss={() => setShowPersonnelFile(false)} />

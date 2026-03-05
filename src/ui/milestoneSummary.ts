@@ -18,11 +18,11 @@ export interface MilestoneSummaryEntry {
 /** Minimal interface for what we need from registered timelines. */
 interface TimelineRef {
   id: string;
-  milestones: Array<{
+  milestones: readonly {
     id: string;
     name: string;
     effects?: { narrative?: { pravdaHeadline?: string } };
-  }>;
+  }[];
 }
 
 /**

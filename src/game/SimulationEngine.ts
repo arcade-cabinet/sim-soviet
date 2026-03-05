@@ -404,6 +404,9 @@ export class SimulationEngine {
   public getDeliveries(): CompulsoryDeliveries {
     return this.deliveries;
   }
+  public getRegisteredTimelines(): RegisteredTimeline[] {
+    return this.registeredTimelines;
+  }
   public getSettlement(): SettlementSystem {
     return this.settlement;
   }
