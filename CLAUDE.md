@@ -34,7 +34,7 @@ For agentic memory bank, see `memory-bank/AGENTS.md`.
 
 ## Project Overview
 
-Built with **React Three Fiber** (R3F + Three.js r183 + React Native 0.81 + Expo 54).
+Built with **React Three Fiber** (R3F + Three.js r183 + React Native 0.83.2 + Expo 55).
 
 The `archive/` directory contains the previous 2D Canvas version (SimSoviet 2000) for reference. The current codebase is a full 3D rewrite.
 
@@ -52,11 +52,11 @@ npm run lint               # Biome lint
 ## Tech Stack
 
 - **3D Engine**: Three.js r183 via React Three Fiber (R3F v9.5) + drei helpers
-- **UI**: React Native 0.81 + Expo 54 overlay components (absolute-positioned on 3D canvas)
+- **UI**: React Native 0.83.2 + Expo 55 overlay components (absolute-positioned on 3D canvas)
 - **State**: ECS world (`SimulationEngine`) + legacy `GameState` singleton, bridged via `useSyncExternalStore`
 - **AI**: Yuka-style agent system (9 subpackages, 169 files, 39k+ lines under `src/ai/agents/`)
 - **Audio**: Web Audio API via AudioManager (47 Soviet-era public domain OGG tracks)
-- **Build**: Expo, Metro bundler, TypeScript 5.7
+- **Build**: Expo, Metro bundler, TypeScript 5.9
 - **Database**: sql.js (Wasm-based SQLite) + Drizzle ORM, persisted to IndexedDB
 - **Models**: 56 GLB models in `assets/models/soviet/` with manifest.json
 - **XR**: @react-three/xr v6 (WebXR support for AR/VR)
@@ -108,7 +108,7 @@ src/ai/agents/
 
 ### Engine decomposition
 
-`SimulationEngine.ts` (~910 lines) is a thin orchestrator. The 27-step tick is decomposed into 7 phase modules in `src/game/engine/`:
+`SimulationEngine.ts` (~966 lines) is a thin orchestrator. The 27-step tick is decomposed into 7 phase modules in `src/game/engine/`:
 - `phaseChronology.ts` — era transitions, governor evaluation, crisis impacts
 - `phaseProduction.ts` — production modifiers, power, transport, construction
 - `phaseConsumption.ts` — storage, economy, deliveries, food/vodka consumption
@@ -150,13 +150,15 @@ Two state systems coexist:
 - Protected building classes (government/military never demolished)
 - Classic mode removed, Soviet consequence nomenclature (rehabilitated/gulag/rasstrelyat)
 
+### DONE (recently completed):
+- **Soviet Allocation Engine** — directives, posture, prestige, DB-backed tick, dvory motivation, land grants
+- **Dynamic map expansion** — grid starts small, expands via settlement tier upgrades (land grants)
+- **Autonomous collective full pipeline** — demand→site-selection→queue→build (CollectiveAgent.tickAutonomous)
+
 ### NOT YET DONE (planned, documented — see docs/plans/):
 - **Organic settlement growth** — buildings auto-placed by agent demand pipeline (docs/plans/2026-03-03-buildings-are-the-ui-design.md)
-- **Buildings-as-UI** — click buildings for contextual panels, remove build toolbar
-- **Soviet Allocation Engine** — DB-backed tick, dvory motivation, land grants, terrain prestige
-- **Dynamic map expansion** — grid starts small, expands via settlement tier upgrades
+- **Buildings-as-UI** — partially done (BuildingPanel + FactoryContent/FarmContent exist), build toolbar not yet removed
 - **Remove direct building placement** — HUD strip, directive-only player control
-- **Autonomous collective full pipeline** — demand→site-selection→queue→build
 
 ## Assets
 

@@ -317,9 +317,13 @@ describe('FoodAgent', () => {
       expect(agent.calculatePrivatePlotProduction('revolution')).toBe(0);
     });
 
-    it('calculatePrivatePlotProduction returns 0 for great_patriotic era', () => {
+    it('calculatePrivatePlotProduction returns reduced output for great_patriotic era (0.7x)', () => {
       addDvor(0.5);
-      expect(agent.calculatePrivatePlotProduction('great_patriotic')).toBe(0);
+      const warOutput = agent.calculatePrivatePlotProduction('great_patriotic');
+      const normalOutput = agent.calculatePrivatePlotProduction('revolution');
+      // WWII private plots were critical to food production (0.7x multiplier, not banned)
+      expect(warOutput).toBeGreaterThan(0);
+      expect(warOutput).toBeCloseTo(normalOutput * 0.7, 4);
     });
 
     it('calculatePrivatePlotProduction returns positive for revolution era', () => {

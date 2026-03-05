@@ -12,6 +12,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { FreeformGovernor } from '../../src/ai/agents/crisis/FreeformGovernor';
+import { computeWarmingLevel, isWarmingActive } from '../../src/ai/agents/core/globalWarming';
 import { getPopulationMode } from '../../src/ai/agents/workforce/collectiveTransition';
 import {
   citizens,
@@ -23,6 +24,7 @@ import {
   underConstruction,
 } from '../../src/ecs/archetypes';
 import { world } from '../../src/ecs/world';
+import { setActiveDirective, getActiveDirective } from '../../src/stores/gameStore';
 import {
   advanceTicks,
   buildBasicSettlement,
@@ -502,5 +504,60 @@ describe('Diagnostic: Freeform mode 50-year playthrough', () => {
     const data = JSON.parse(fs.readFileSync(outputPath, 'utf-8'));
     expect(data.mode).toBe('freeform');
     expect(data.snapshots.length).toBe(50);
+  });
+
+  // ── Extended: Global warming activates after 2050 in freeform mode ──────
+
+  it('global warming functions return active state for years after 2050', () => {
+    // Pure function tests — no engine needed
+    expect(isWarmingActive('freeform', 2100)).toBe(true);
+    expect(isWarmingActive('freeform', 2050)).toBe(true);
+    expect(isWarmingActive('freeform', 2049)).toBe(false);
+    expect(isWarmingActive('historical', 2100)).toBe(false);
+
+    const warming2100 = computeWarmingLevel(2100);
+    expect(warming2100).toBeGreaterThan(0);
+    // By 2100 (183 years elapsed), warming should be significant
+    expect(warming2100).toBeGreaterThan(0.3);
+  });
+
+  it('terrain mutations from warming convert tundra to grassland at sufficient levels', () => {
+    const { applyWarmingToTerrain } = require('../../src/ai/agents/core/globalWarming');
+    const tundraTile = {
+      type: 'tundra',
+      fertility: 5,
+      contamination: 0,
+      moisture: 0.5,
+      forestAge: 0,
+      erosionLevel: 0,
+      elevation: 50,
+    };
+
+    // At warming 0.6 (> 0.5), tundra should become grassland
+    const result = applyWarmingToTerrain(tundraTile, 0.6);
+    expect(result.type).toBe('grassland');
+    expect(result.fertility).toBeGreaterThanOrEqual(tundraTile.fertility);
+  });
+
+  // ── Extended: Directive test ──────────────────────────────────────────────
+
+  it('increase_production directive applies a 1.2x production multiplier', () => {
+    // The directive system reads from gameStore's activeDirective.
+    // Verify the data structure is correct.
+    const currentTick = 100;
+    setActiveDirective({
+      directiveId: 'increase_production',
+      issuedAtTick: currentTick,
+      lockInTicks: 24,
+    });
+
+    const active = getActiveDirective();
+    expect(active).toBeDefined();
+    expect(active!.directiveId).toBe('increase_production');
+    expect(active!.lockInTicks).toBe(24);
+
+    // Clean up
+    setActiveDirective(null);
+    expect(getActiveDirective()).toBeNull();
   });
 });

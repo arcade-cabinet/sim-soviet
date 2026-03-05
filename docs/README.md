@@ -72,7 +72,7 @@ Deep reference documents for complex subsystems.
 |----------|-------------|
 | [Politburo System](reference/politburo-system.md) | Ministry simulation — 10 ministries, 80-cell matrix, 29 events |
 | [Yuka AI Research](reference/research-yuka-ai.md) | AI library capabilities mapping |
-| [Audio Assets](reference/audio-assets.md) | 52 Soviet-era music tracks inventory |
+| [Audio Assets](reference/audio-assets.md) | 47 Soviet-era music tracks inventory |
 
 ---
 
@@ -101,4 +101,4 @@ Deep reference documents for complex subsystems.
 
 ---
 
-*42 documentation files | Last updated: February 2026*
+*42 documentation files | Last updated: March 2026*

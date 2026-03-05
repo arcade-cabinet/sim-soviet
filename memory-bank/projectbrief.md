@@ -20,9 +20,9 @@ You are a low-level Soviet bureaucrat trying not to end up in Siberia. Workers s
 
 - **3D Engine**: Three.js r183 via React Three Fiber (R3F v9.5) + drei
 - **UI**: React Native 0.83.2 + Expo 55
-- **AI**: Yuka-style agent system (8 subpackages, 123+ files)
+- **AI**: Yuka-style agent system (9 subpackages, 169+ files, 39k+ lines)
 - **State**: Miniplex ECS world + legacy GameState singleton
-- **Audio**: Web Audio API (52 Soviet-era public domain tracks)
+- **Audio**: Web Audio API (47 Soviet-era public domain tracks)
 - **Database**: sql.js (Wasm SQLite) + Drizzle ORM → IndexedDB
 - **Build**: Expo, Metro bundler, TypeScript 5.9
 
@@ -39,7 +39,7 @@ You are a low-level Soviet bureaucrat trying not to end up in Siberia. Workers s
 ## Game Modes
 
 - **Historical** (default) — real Soviet timeline, governor fires crises by year
-- **Freeform** — PressureSystem + WorldAgent + ColdBranches drive emergent alternate history
+- **Freeform** — PressureSystem (10 domains) + WorldAgent (sphere dynamics) + ColdBranches (19 branches) drive emergent alternate history
 - No classic/manual difficulty mode
 
 ## Consequence Levels (Soviet nomenclature)

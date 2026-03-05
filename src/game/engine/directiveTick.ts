@@ -13,7 +13,7 @@ import {
 } from '../../ui/hq-tabs/CentralCommitteeTab';
 import { getActiveDirective, setActiveDirective } from '../../stores/gameStore';
 import { buildingsLogic } from '../../ecs/archetypes';
-import type { RaionPool } from '../../ecs/world';
+import type { RaionPool, Resources } from '../../ecs/world';
 import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
 import type { SimCallbacks } from './types';
 
@@ -46,7 +46,7 @@ const NO_DIRECTIVE: DirectiveTickResult = { productionMult: 1.0, laborHoliday: f
 export function tickDirective(
   currentTick: number,
   workerSystem: WorkerSystem,
-  storeResources: Record<string, any> & { food: number; emergencyReserve: number },
+  storeResources: Resources,
   raion: RaionPool | undefined,
   callbacks: SimCallbacks,
 ): DirectiveTickResult {
@@ -78,7 +78,7 @@ export function tickDirective(
 function applyIssuanceEffects(
   directive: Directive,
   workerSystem: WorkerSystem,
-  storeResources: Record<string, any> & { food: number; emergencyReserve: number },
+  storeResources: Resources,
   raion: RaionPool | undefined,
   callbacks: SimCallbacks,
 ): void {

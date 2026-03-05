@@ -564,6 +564,29 @@ export const HISTORICAL_CRISES: readonly CrisisDefinition[] = [
   },
 
   {
+    id: 'cuban_missile_crisis',
+    type: 'political',
+    name: 'Cuban Missile Crisis',
+    startYear: 1962,
+    endYear: 1962,
+    severity: 'national',
+    peakParams: {
+      kgbAggressionMult: 1.5,
+      moraleModifier: -0.25,
+      conscriptionRate: 0.03,
+      productionMult: 0.9,
+      moneyDelta: -60,
+    },
+    buildupTicks: 1,
+    aftermathTicks: 6,
+    description:
+      'The world teeters on the brink of nuclear war. Moscow demands maximum ' +
+      'military readiness from all settlements. For thirteen days in October, ' +
+      'every citizen lives under the shadow of annihilation.',
+    eraAlignment: 'thaw_and_freeze',
+  },
+
+  {
     id: 'august_coup',
     type: 'political',
     name: 'August Coup',

@@ -42,6 +42,9 @@ function createBaseCtx(): PressureReadContext {
     sickCount: 0,
     quotaDeficit: 0,
     productionTrend: 1.0,
+    carryingCapacity: 10000,
+    season: 'summer',
+    weather: 'clear',
   };
 }
 
@@ -233,8 +236,9 @@ describe('normalizeDemographic', () => {
     ctx.laborRatio = 0.6;
     // growthPressure = clamp01(-0.02 * 20) = 0
     // laborPressure = 1 - 0.6 = 0.4
-    // 0 * 0.5 + 0.4 * 0.5 = 0.2
-    expect(normalizeDemographic(ctx)).toBeCloseTo(0.2);
+    // capacityPressure = 0 (pop 100 < 0.85 * 10000)
+    // 0 * 0.4 + 0.4 * 0.3 + 0 * 0.3 = 0.12
+    expect(normalizeDemographic(ctx)).toBeCloseTo(0.12);
   });
 
   it('returns high pressure for declining population', () => {
@@ -243,8 +247,22 @@ describe('normalizeDemographic', () => {
     ctx.laborRatio = 0.3;
     // growthPressure = clamp01(0.8) = 0.8
     // laborPressure = 1 - 0.3 = 0.7
-    // 0.8 * 0.5 + 0.7 * 0.5 = 0.75
-    expect(normalizeDemographic(ctx)).toBeCloseTo(0.75);
+    // capacityPressure = 0 (pop 100 < 0.85 * 10000)
+    // 0.8 * 0.4 + 0.7 * 0.3 + 0 * 0.3 = 0.32 + 0.21 = 0.53
+    expect(normalizeDemographic(ctx)).toBeCloseTo(0.53);
+  });
+
+  it('returns capacity pressure when population approaches carrying capacity', () => {
+    const ctx = createBaseCtx();
+    ctx.growthRate = 0.02;
+    ctx.laborRatio = 0.6;
+    ctx.population = 950;
+    ctx.carryingCapacity = 1000;
+    // growthPressure = 0
+    // laborPressure = 0.4
+    // ratio = 0.95, capacityPressure = (0.95 - 0.85) / 0.15 = 0.667
+    // 0 * 0.4 + 0.4 * 0.3 + 0.667 * 0.3 = 0.12 + 0.2 = 0.32
+    expect(normalizeDemographic(ctx)).toBeCloseTo(0.32, 1);
   });
 });
 

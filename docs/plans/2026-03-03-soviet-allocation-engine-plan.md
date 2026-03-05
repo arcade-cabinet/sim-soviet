@@ -6,7 +6,7 @@
 
 **Architecture:** Six incremental phases. Each phase leaves the game playable. Phase 1 lays DB foundations. Phase 2 converts the core tick to stateless. Phase 3 adds building lifecycle and dvory motivation. Phase 4 adds terrain and prestige. Phase 5 adds the policy UI (Government HQ). Phase 6 delivers performance at scale. All tests are TDD — write the failing test first.
 
-**Tech Stack:** TypeScript 5.7, expo-sqlite (Drizzle ORM), Miniplex ECS, React Three Fiber, Jest, GameRng (seeded)
+**Tech Stack:** TypeScript 5.9, expo-sqlite (Drizzle ORM), Miniplex ECS, React Three Fiber, Jest, GameRng (seeded)
 
 **Design doc:** `docs/plans/2026-03-03-soviet-allocation-engine-design.md`
 

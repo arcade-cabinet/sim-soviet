@@ -693,7 +693,8 @@ describe('ERA_BIRTH_RATE_MULTIPLIER', () => {
     for (const era of eras) {
       expect(ERA_BIRTH_RATE_MULTIPLIER[era]).toBeDefined();
       expect(ERA_BIRTH_RATE_MULTIPLIER[era]).toBeGreaterThan(0);
-      expect(ERA_BIRTH_RATE_MULTIPLIER[era]).toBeLessThanOrEqual(1.0);
+      // reconstruction is 1.1 (post-war baby boom), so upper bound is 1.5
+      expect(ERA_BIRTH_RATE_MULTIPLIER[era]).toBeLessThanOrEqual(1.5);
     }
   });
 

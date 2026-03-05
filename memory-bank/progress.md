@@ -6,9 +6,9 @@
 ## What's Complete (Implemented & Tested)
 
 ### Engine Architecture
-- [x] SimulationEngine decomposed into 7 phase modules (thin orchestrator, ~890 lines)
+- [x] SimulationEngine decomposed into 7 phase modules (thin orchestrator, ~966 lines)
 - [x] TickContext shared type for all phases
-- [x] Yuka agent architecture (8 subpackages, 123+ files, 28k+ lines)
+- [x] Yuka agent architecture (9 subpackages, 169+ files, 39k+ lines)
 - [x] Governor/crisis system (HistoricalGovernor + FreeformGovernor + ChaosEngine → PressureSystem + WorldAgent)
 - [x] Pressure-valve crisis system (PressureSystem, ClimateEventSystem, BlackSwanSystem, ColdBranches)
 - [x] Soviet Allocation Engine (organic growth, demand pipeline, site selection, HQ splitting)
@@ -50,23 +50,23 @@
 - [x] Succession/coup mechanics
 
 ### Rendering & UI
-- [x] R3F 3D rendering (55 GLB models, terrain, weather FX, lighting)
+- [x] R3F 3D rendering (56 GLB models, terrain, weather FX, lighting)
 - [x] 22+ UI overlay components (Soviet aesthetic)
-- [x] Audio system (52 tracks, mood playlists)
+- [x] Audio system (47 tracks, mood playlists)
 - [x] Save/load (full serialization to IndexedDB)
 - [x] WebXR support (AR tabletop, VR walkthrough)
 
 ### Infrastructure
 - [x] CI (lint + typecheck + tests on PR)
 - [x] CD (Release Please → GitHub Pages + Android APK)
-- [x] 5,579+ tests across 229 suites
+- [x] 5,641+ tests across 170+ suites
 - [x] Documentation overhaul (41 docs with YAML frontmatter)
 - [x] JSDoc completion (~273/283 source files)
 
 ## Recently Completed (feat/allocation-engine branch, PR #44)
 
 ### Pressure-Valve Crisis System + WorldAgent
-- [x] PressureSystem with 6 domains (food, housing, power, loyalty, health, economy)
+- [x] PressureSystem with 10 domains
 - [x] WorldAgent (core agent coordinating world-level state)
 - [x] ClimateEventSystem (weather-driven crises)
 - [x] BlackSwanSystem (rare catastrophic events)
@@ -83,6 +83,9 @@
 - [x] Off-screen building tick for DB-only state updates
 - [x] Freeform endless mode with unlimited map expansion
 - [x] Global warming terrain effects for freeform centuries
+- [x] RelocationEngine data model for multi-settlement support
+- [x] Expanded playthrough tests and historical accuracy fixes
+- [x] WorldAgent sphere dynamics (19 cold branches)
 
 ## Version History
 

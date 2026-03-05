@@ -19,6 +19,8 @@ import {
   assertResourceInvariants,
   buildBasicSettlement,
   createPlaythroughEngine,
+  createTestDvory,
+  getBuildingCount,
   getDate,
   getResources,
   isGameOver,
@@ -159,5 +161,124 @@ describe('Playthrough: Full 1917->2117 Timeline', () => {
     expect(run1.eraCount).toBe(run2.eraCount);
 
     console.log(`Determinism check: pop=${run1.finalPop} year=${run1.finalYear} eras=${run1.eraCount}`);
+  }, 120000);
+
+  // ── Prestige project lifecycle ──────────────────────────────────────────
+
+  it('prestige project demand is announced during the timeline', () => {
+    world.clear();
+    jest.restoreAllMocks();
+
+    const { engine, callbacks } = createPlaythroughEngine({
+      meta: { date: { year: 1917, month: 10, tick: 0 } },
+      resources: {
+        population: 50,
+        food: 99999,
+        vodka: 99999,
+        money: 99999,
+        timber: 99999,
+        steel: 99999,
+        cement: 99999,
+        power: 99999,
+      },
+      difficulty: 'worker',
+      consequence: 'rehabilitated',
+      seed: 'prestige-project-test',
+    });
+
+    callbacks.onMinigame = undefined as never;
+    callbacks.onAnnualReport = undefined as never;
+
+    buildBasicSettlement({ housing: 3, farms: 2, power: 2 });
+
+    (engine as Record<string, unknown>).endGame = () => {};
+
+    let prestigeDemandSeen = false;
+
+    for (let year = 0; year < 100; year++) {
+      const res = getResources();
+      res.food = Math.max(res.food, 50000);
+      res.vodka = Math.max(res.vodka, 50000);
+      res.money = Math.max(res.money, 50000);
+
+      // Replenish population
+      const eng = engine as unknown as {
+        workerSystem: { getPopulation: () => number; syncPopulationFromDvory: () => number };
+      };
+      if (eng.workerSystem.getPopulation() < 20) {
+        createTestDvory(80);
+        eng.workerSystem.syncPopulationFromDvory();
+      }
+
+      advanceTicks(engine, TICKS_PER_YEAR);
+
+      // Check if prestige demand was announced
+      const demand = engine.getPrestigeDemand();
+      if (demand) {
+        prestigeDemandSeen = true;
+      }
+
+      if (isGameOver()) break;
+    }
+
+    // Over 100 years spanning multiple eras, a prestige project demand should be announced
+    console.log(`Prestige project demand seen: ${prestigeDemandSeen}`);
+    expect(prestigeDemandSeen).toBe(true);
+  }, 120000);
+
+  // ── No nuclear/space buildings before their historical era ──────────────
+
+  it('no late-era buildings appear in early eras', () => {
+    world.clear();
+    jest.restoreAllMocks();
+
+    const { engine, callbacks } = createPlaythroughEngine({
+      meta: { date: { year: 1917, month: 10, tick: 0 } },
+      resources: {
+        population: 50,
+        food: 99999,
+        vodka: 99999,
+        money: 99999,
+        timber: 99999,
+        steel: 99999,
+        cement: 99999,
+        power: 99999,
+      },
+      difficulty: 'worker',
+      consequence: 'rehabilitated',
+      seed: 'era-building-test',
+    });
+
+    callbacks.onMinigame = undefined as never;
+    callbacks.onAnnualReport = undefined as never;
+
+    buildBasicSettlement({ housing: 3, farms: 2, power: 2 });
+
+    (engine as Record<string, unknown>).endGame = () => {};
+
+    // Run only through early eras (revolution + collectivization, ~20 years)
+    for (let year = 0; year < 20; year++) {
+      const res = getResources();
+      res.food = Math.max(res.food, 50000);
+      res.money = Math.max(res.money, 50000);
+
+      advanceTicks(engine, TICKS_PER_YEAR);
+      if (isGameOver()) break;
+    }
+
+    // Check that no late-era buildings exist
+    const allBuildings = [...world.with('building', 'isBuilding').entities];
+    const lateEraBuildings = allBuildings.filter((e) => {
+      const defId = e.building.defId;
+      return (
+        defId.includes('nuclear') ||
+        defId.includes('cosmodrome') ||
+        defId.includes('space') ||
+        defId.includes('metro') ||
+        defId.includes('television')
+      );
+    });
+
+    expect(lateEraBuildings).toHaveLength(0);
   }, 120000);
 });

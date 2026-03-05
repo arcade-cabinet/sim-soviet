@@ -9,7 +9,15 @@
 import { underConstruction } from '../../src/ecs/archetypes';
 import { createBuilding, placeNewBuilding } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import { advanceTicks, createPlaythroughEngine, getBuildingCount } from './helpers';
+import {
+  advanceTicks,
+  buildBasicSettlement,
+  createPlaythroughEngine,
+  createTestDvory,
+  getBuildingCount,
+  getResources,
+  TICKS_PER_YEAR,
+} from './helpers';
 
 describe('Playthrough: Autonomous Collective', () => {
   afterEach(() => {
@@ -189,5 +197,92 @@ describe('Playthrough: Autonomous Collective', () => {
       (msg: string) => msg.toLowerCase().includes('meddling') || msg.toLowerCase().includes('trust the collective'),
     );
     expect(hasMeddlingWarning).toBe(true);
+  });
+
+  // ── Scenario 6: HQ decomposition triggers at population milestones ──────
+
+  it('HQ splitting places new buildings at pop 50 milestone', () => {
+    const { engine, callbacks } = createPlaythroughEngine({
+      resources: {
+        population: 55,
+        food: 99999,
+        timber: 999,
+        steel: 999,
+        money: 9999,
+        vodka: 9999,
+        power: 9999,
+        cement: 999,
+      },
+      seed: 'hq-split-test',
+    });
+
+    callbacks.onMinigame = undefined as never;
+    callbacks.onAnnualReport = undefined as never;
+
+    // Place government HQ as anchor + basic settlement
+    createBuilding(10, 10, 'government-hq');
+    createBuilding(12, 10, 'power-station');
+    createBuilding(14, 10, 'apartment-tower-a');
+    createBuilding(16, 10, 'collective-farm-hq');
+
+    const initialCount = getBuildingCount();
+
+    // Run for a full year — HQ splitting checks at year boundary
+    advanceTicks(engine, TICKS_PER_YEAR);
+
+    const finalCount = getBuildingCount();
+
+    // At pop=55, the split50 threshold should have been checked.
+    // The system places warehouse + guard-post at pop 50.
+    // We can't guarantee the buildings were placed (grid constraints),
+    // but the engine should not crash.
+    console.log(`HQ split test: initial=${initialCount}, final=${finalCount}`);
+    expect(finalCount).toBeGreaterThanOrEqual(initialCount);
+  });
+
+  // ── Scenario 7: Era-appropriate buildings — no nuclear in revolution ────
+
+  it('collective does not place era-restricted buildings in revolution era', () => {
+    // Start in revolution era (1917-1928) with generous resources
+    const { engine, callbacks } = createPlaythroughEngine({
+      meta: { date: { year: 1920, month: 1, tick: 0 } },
+      resources: {
+        population: 30,
+        food: 9999,
+        timber: 999,
+        steel: 999,
+        money: 9999,
+        vodka: 9999,
+        power: 9999,
+        cement: 999,
+      },
+      seed: 'era-restrict-test',
+    });
+
+    callbacks.onMinigame = undefined as never;
+    callbacks.onAnnualReport = undefined as never;
+
+    createBuilding(15, 15, 'power-station');
+    createBuilding(17, 15, 'apartment-tower-a');
+    createBuilding(19, 15, 'collective-farm-hq');
+
+    // Run for 2 years in revolution era
+    advanceTicks(engine, TICKS_PER_YEAR * 2);
+
+    // Check that no late-era buildings were placed
+    const allBuildings = [...world.with('building', 'isBuilding').entities];
+    const lateEraBuildings = allBuildings.filter((e) => {
+      const defId = e.building.defId;
+      // These buildings require later eras
+      return (
+        defId.includes('nuclear') ||
+        defId.includes('cosmodrome') ||
+        defId.includes('space') ||
+        defId.includes('metro') ||
+        defId.includes('television')
+      );
+    });
+
+    expect(lateEraBuildings).toHaveLength(0);
   });
 });

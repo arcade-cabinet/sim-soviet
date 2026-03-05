@@ -39,7 +39,7 @@ import type { DifficultyConfig, DifficultyLevel, ScoringSystem } from '../../ai/
 import type { DefenseAgent, FireSystem } from '../../ai/agents/social/DefenseAgent';
 import type { DemographicAgent } from '../../ai/agents/social/DemographicAgent';
 import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
-import type { RaionPool } from '../../ecs/world';
+import type { RaionPool, Resources } from '../../ecs/world';
 import type { EraModifiers } from '../../game/era/types';
 import type { HQSplitState } from '../../growth/HQSplitting';
 import type { GameGrid } from '../GameGrid';
@@ -49,17 +49,7 @@ import type { SimCallbacks } from './types';
 export interface TickContext {
   /** ECS resource store ref */
   storeRef: {
-    resources: Record<string, any> & {
-      food: number;
-      money: number;
-      vodka: number;
-      population: number;
-      power: number;
-      blat: number;
-      timber: number;
-      steel: number;
-      raion?: RaionPool;
-    };
+    resources: Resources;
   };
   /** Chronology tick result (computed at start of tick) */
   tickResult: TickResult;

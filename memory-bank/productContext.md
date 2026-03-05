@@ -43,20 +43,21 @@ The satirical tone (dark comedy about bureaucracy, propaganda, and survival) pro
 | **Demographics** | Dvory (households), births/deaths/aging, gendered labor, private plots |
 | **Political Apparatus** | Politruks, KGB informants, military, personnel file with black marks |
 | **Politburo** | 10 ministries, interaction matrix, coups, purges, succession |
-| **Governor/Crisis** | PressureSystem + WorldAgent + ClimateEventSystem + BlackSwanSystem + ColdBranches |
+| **Governor/Crisis** | PressureSystem (10 domains) + WorldAgent (sphere dynamics) + ClimateEventSystem + BlackSwanSystem + ColdBranches (19 branches) |
 | **Eras** | 8 campaigns (Revolution → The Eternal) with doctrine integration |
 | **Scoring** | Medals, achievements, consequence multipliers |
 
 ## Current Feature Set (Implemented)
 
-- SimulationEngine with 7 phase modules (thin orchestrator)
-- Yuka agent architecture (8 subpackages, 123+ files)
+- SimulationEngine with 7 phase modules (thin orchestrator, ~966 lines)
+- Yuka agent architecture (9 subpackages, 169+ files, 39k+ lines)
 - Building-as-Container (dual population modes: entity < 200, aggregate >= 200)
-- Pressure-valve crisis system (PressureSystem + WorldAgent + ClimateEventSystem + BlackSwanSystem + ColdBranches)
-- Soviet Allocation Engine (organic growth, demand pipeline, site selection, HQ splitting)
+- Pressure-valve crisis system (PressureSystem with 10 domains + WorldAgent sphere dynamics + ClimateEventSystem + BlackSwanSystem + ColdBranches with 19 branches)
+- Soviet Allocation Engine (organic growth, demand pipeline, site selection, HQ splitting, directives, posture, prestige)
 - Buildings-as-UI (click buildings for contextual panels: FactoryContent, FarmContent, GovernmentHQ)
-- Dynamic map expansion (grid expands via settlement tier upgrades)
+- Dynamic map expansion (grid expands via settlement tier upgrades, land grants)
+- RelocationEngine data model for multi-settlement support (gameplay/UI viewport switching NOT yet implemented)
 - Demographics (dvory, births/deaths/aging, gendered retirement)
 - Full political apparatus (KGB, politruks, loyalty, trudodni)
-- 55 3D models, 52 music tracks, 22 scene components
-- 5,579+ tests across 229 suites
+- 56 3D models, 47 music tracks, 22 scene components
+- 5,641+ tests across 170+ suites

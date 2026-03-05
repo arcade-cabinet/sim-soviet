@@ -73,8 +73,8 @@
       "collectivization": 0.8,
       "industrialization": 0.75,
       "great_patriotic": 0.4,
-      "reconstruction": 0.6,
-      "thaw_and_freeze": 0.5,
+      "reconstruction": 1.1,
+      "thaw_and_freeze": 0.7,
       "stagnation": 0.4,
       "the_eternal": 0.3
     },

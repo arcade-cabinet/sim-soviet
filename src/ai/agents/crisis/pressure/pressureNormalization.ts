@@ -104,16 +104,31 @@ export function normalizeInfrastructure(ctx: PressureReadContext): number {
 }
 
 /**
- * Demographic pressure: combination of negative growth and labor shortage.
- * - 50% weight: inverse growth rate (negative growth → pressure)
- * - 50% weight: inverse labor ratio (low labor = more pressure)
+ * Demographic pressure: combination of negative growth, labor shortage,
+ * and carrying capacity proximity.
+ *
+ * - 40% weight: inverse growth rate (negative growth → pressure)
+ * - 30% weight: inverse labor ratio (low labor = more pressure)
+ * - 30% weight: carrying capacity pressure (pop/K ratio above 0.85 → pressure)
+ *
+ * The carrying capacity component is the INEVITABLE FORCE that makes
+ * expansion necessary. You can't avoid it — it's mathematical.
  */
 export function normalizeDemographic(ctx: PressureReadContext): number {
   // Growth component: negative growth mapped to pressure via ×20 scale
   const growthPressure = clamp01(-ctx.growthRate * 20);
   // Labor component: ideal ratio ~0.5-0.6, below that = pressure
   const laborPressure = clamp01(1 - ctx.laborRatio);
-  return growthPressure * 0.5 + laborPressure * 0.5;
+  // Carrying capacity component: accelerates past 85% of K
+  let capacityPressure = 0;
+  if (ctx.carryingCapacity > 0) {
+    const ratio = ctx.population / ctx.carryingCapacity;
+    if (ratio > 0.85) {
+      // Linear ramp from 0 at 85% to 1 at 100% of K
+      capacityPressure = clamp01((ratio - 0.85) / 0.15);
+    }
+  }
+  return growthPressure * 0.4 + laborPressure * 0.3 + capacityPressure * 0.3;
 }
 
 /**

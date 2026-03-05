@@ -1,0 +1,93 @@
+{
+  "tileResourceProfiles": {
+    "grass": {
+      "timber": { "base": 20, "variance": 15 },
+      "soilFertility": { "base": 70, "variance": 20 },
+      "waterTable": { "base": 60, "variance": 20 },
+      "permafrost": { "base": 40, "variance": 30 }
+    },
+    "water": {
+      "waterTable": { "base": 100, "variance": 0 },
+      "soilFertility": { "base": 0, "variance": 0 }
+    },
+    "forest": {
+      "timber": { "base": 85, "variance": 10 },
+      "soilFertility": { "base": 50, "variance": 15 },
+      "waterTable": { "base": 70, "variance": 15 },
+      "permafrost": { "base": 50, "variance": 25 },
+      "minerals": { "base": 5, "variance": 10 }
+    },
+    "mountain": {
+      "minerals": { "base": 60, "variance": 30 },
+      "timber": { "base": 15, "variance": 10 },
+      "soilFertility": { "base": 10, "variance": 10 },
+      "waterTable": { "base": 30, "variance": 20 },
+      "permafrost": { "base": 70, "variance": 20 }
+    },
+    "marsh": {
+      "peat": { "base": 70, "variance": 20 },
+      "waterTable": { "base": 95, "variance": 5 },
+      "soilFertility": { "base": 30, "variance": 15 },
+      "timber": { "base": 10, "variance": 10 },
+      "permafrost": { "base": 20, "variance": 20 }
+    },
+    "tundra": {
+      "permafrost": { "base": 90, "variance": 10 },
+      "soilFertility": { "base": 5, "variance": 5 },
+      "waterTable": { "base": 40, "variance": 20 },
+      "minerals": { "base": 30, "variance": 25 }
+    }
+  },
+  "depletionRates": {
+    "timber": {
+      "perLoggingTick": 0.5,
+      "naturalRegenPerYear": 2.0,
+      "maxRegenLevel": 80
+    },
+    "minerals": {
+      "perMiningTick": 0.3,
+      "naturalRegenPerYear": 0.0,
+      "maxRegenLevel": 0
+    },
+    "waterTable": {
+      "perIrrigationTick": 0.1,
+      "perIndustrialTick": 0.2,
+      "riverRechargePerYear": 5.0,
+      "noRiverRechargePerYear": 0.5
+    },
+    "soilFertility": {
+      "perFarmingTick": 0.05,
+      "erosionContribution": 0.02,
+      "naturalRegenPerYear": 1.0,
+      "maxRegenLevel": 60
+    },
+    "peat": {
+      "perExtractionTick": 0.4,
+      "naturalRegenPerYear": 0.1,
+      "maxRegenLevel": 30
+    },
+    "permafrost": {
+      "perWarmingDegreePerYear": 1.5,
+      "methaneReleaseThreshold": 30,
+      "anthraxRiskThreshold": 20,
+      "infrastructureDamageThreshold": 40
+    }
+  },
+  "pollutionRules": {
+    "perFactoryTick": 0.3,
+    "perPowerStationTick": 0.2,
+    "perMiningTick": 0.4,
+    "diffusionRatePerTick": 0.02,
+    "naturalDecayPerYear": 1.0,
+    "healthImpactThreshold": 50,
+    "waterContaminationThreshold": 60,
+    "soilDamageThreshold": 70
+  },
+  "erosionRules": {
+    "triggerWhenTimberBelow": 20,
+    "slopeMultiplier": 1.5,
+    "floodRiskThreshold": 60,
+    "buildingDamageThreshold": 70,
+    "soilFertilityDamageRate": 0.1
+  }
+}

@@ -280,18 +280,61 @@ export interface Resources {
   /** Storage capacity — total food storage across all buildings */
   storageCapacity: number;
 
+  // ── Atmospheric & Advanced Resources (era-gated, tracked when relevant) ──
+
+  /** Oxygen units — tracked inside domes or off-Earth (infinite on open-air Earth) */
+  oxygen: number;
+  /** Oxygen production capacity per tick. */
+  oxygenProduction: number;
+  /** Hydrogen units — fuel, industrial, electrolysis from water. Available from industrialization. */
+  hydrogen: number;
+  /** Clean water units — on Earth with rivers: auto-replenished; off-Earth: extracted/recycled. */
+  water: number;
+  /** Water recycling capacity per tick. */
+  waterRecycling: number;
+  /** Rare earth elements — electronics, advanced construction. Available from thaw era. */
+  rareEarths: number;
+  /** Uranium — nuclear power, weapons program. Available from industrialization. */
+  uranium: number;
+  /** Rocket fuel — space launches. Available post-2030 via cold branch tech. */
+  rocketFuel: number;
+
   /** District population pool — undefined means entity mode, defined means aggregate mode */
   raion?: RaionPool;
 }
 
 /**
  * Grid tile component — describes the terrain type of a grid cell.
+ * Each tile has natural resource deposits that deplete with extraction
+ * and ecological health that degrades with industrial activity.
  */
 export interface TileComponent {
   /** Current terrain type */
   terrain: 'grass' | 'road' | 'foundation' | 'water';
   /** Elevation offset for visual rendering */
   elevation: number;
+
+  // ── Natural Resources (per-tile, depletable) ──
+
+  /** Timber reserve (0-100). Forests deplete with logging, regenerate slowly. */
+  timber?: number;
+  /** Mineral ore deposit (0-100). Mountains/hills. Depletes with mining, never regenerates. */
+  minerals?: number;
+  /** Water table level (0-100). Depletes with over-irrigation, replenishes from rivers. */
+  waterTable?: number;
+  /** Soil fertility (0-100). Degrades with over-farming, erosion. Regenerates very slowly. */
+  soilFertility?: number;
+  /** Peat/bog resource (0-100). Marshes only. Fuel source, depletes with extraction. */
+  peat?: number;
+  /** Permafrost depth (0-100). Degrades with warming. Releases methane, anthrax risk. */
+  permafrost?: number;
+
+  // ── Ecological Health ──
+
+  /** Pollution level (0-100). Accumulates from industry, spreads to neighbors. */
+  pollution?: number;
+  /** Erosion level (0-100). Increases when timber depleted on slopes. */
+  erosion?: number;
 }
 
 /**

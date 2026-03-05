@@ -81,6 +81,14 @@ export function createResourceStore(
     seedFund: number;
     emergencyReserve: number;
     storageCapacity: number;
+    oxygen: number;
+    oxygenProduction: number;
+    hydrogen: number;
+    water: number;
+    waterRecycling: number;
+    rareEarths: number;
+    uranium: number;
+    rocketFuel: number;
   }>,
 ): Entity {
   // Check for existing store
@@ -106,6 +114,15 @@ export function createResourceStore(
       seedFund: initialValues?.seedFund ?? 1.0,
       emergencyReserve: initialValues?.emergencyReserve ?? 0,
       storageCapacity: initialValues?.storageCapacity ?? 200,
+      // Atmospheric & advanced resources — default 0 (era-gated, tracked when relevant)
+      oxygen: initialValues?.oxygen ?? 0,
+      oxygenProduction: initialValues?.oxygenProduction ?? 0,
+      hydrogen: initialValues?.hydrogen ?? 0,
+      water: initialValues?.water ?? 0,
+      waterRecycling: initialValues?.waterRecycling ?? 0,
+      rareEarths: initialValues?.rareEarths ?? 0,
+      uranium: initialValues?.uranium ?? 0,
+      rocketFuel: initialValues?.rocketFuel ?? 0,
     },
     isResourceStore: true,
   };

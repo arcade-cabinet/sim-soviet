@@ -148,6 +148,15 @@ export interface PressureReadContext {
   /** Production trend: 0-1 (1 = growing or stable, 0 = declining). */
   productionTrend: number;
 
+  // ── Carrying Capacity (drives expansion pressure) ──
+  /**
+   * Settlement carrying capacity — the mathematical population ceiling.
+   * min(housingCapacity, foodCapacity, waterCapacity, oxygenCapacity, powerCapacity, terrainLimit).
+   * When population > 0.85 * K, demographic pressure builds automatically.
+   * When population > 0.95 * K, expansion becomes inevitable.
+   */
+  carryingCapacity: number;
+
   // ── Environmental context (for climate events + cold branches) ──
   /** Current season enum value. */
   season: string;

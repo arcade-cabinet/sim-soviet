@@ -120,10 +120,11 @@ describe('Era Integration', () => {
       expect(available).toContain('workers-house-c');
       expect(available).toContain('bread-factory');
       expect(available).toContain('school');
+      expect(available).toContain('power-station'); // now in collectivization
+      expect(available).toContain('kgb-office'); // now in collectivization
 
       // But not industrialization buildings
       expect(available).not.toContain('factory-office');
-      expect(available).not.toContain('power-station');
     });
 
     it('settlement tier filters buildings correctly', () => {
@@ -149,8 +150,8 @@ describe('Era Integration', () => {
       // In revolution, factory-office should be locked
       const locked = eraSys.getLockedBuildings();
       expect(locked).toContain('factory-office');
-      expect(locked).toContain('kgb-office');
-      expect(locked).toContain('power-station'); // now in industrialization
+      expect(locked).toContain('kgb-office'); // now in collectivization
+      expect(locked).toContain('power-station'); // now in collectivization
     });
 
     it('isBuildingAvailable correctly checks individual buildings', () => {

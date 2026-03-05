@@ -16,7 +16,7 @@ coverage: full
 
 **Architecture:** UI-layer only transformation. The ECS data layer already exposes trudodni, blat, timber, steel, cement, prefab, mandates, and worker governor state through `GameSnapshot` and `useGameSnapshot()`. We replace 4 UI components (TopBar, RadialBuildMenu, BuildingPlacement, Toolbar) and create 1 new one (WorkerStatusBar). No engine/simulation changes.
 
-**Tech Stack:** React Native 0.81, TypeScript 5.7, Reactylon (BabylonJS 8), react-native-svg, Miniplex ECS
+**Tech Stack:** React Native 0.83.2, TypeScript 5.9, React Three Fiber (R3F v9.5), react-native-svg, Miniplex ECS
 
 ---
 

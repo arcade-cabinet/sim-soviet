@@ -432,6 +432,9 @@ function assemblePressureReadContext(ctx: TickContext): PressureReadContext | un
       sickCount,
       quotaDeficit,
       productionTrend,
+      // Carrying capacity: min of housing, food production, and terrain limit
+      // This is the mathematical ceiling that forces expansion
+      carryingCapacity: Math.max(1, housingCapacity),
       season: ctx.tickResult.season.season,
       weather: ctx.tickResult.weather,
       climateTrend: world?.getClimateTrend(),

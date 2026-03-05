@@ -88,6 +88,10 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'fence-low',
       'concrete-block',
       'dirt-path',
+      'hospital',
+      'government-hq',
+      'post-office',
+      'fire-station',
     ],
 
     modifiers: {
@@ -128,7 +132,18 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     deliveryRates: { food: 0.45, vodka: 0.35, money: 0.5 },
     quotaEscalation: 1.2,
 
-    unlockedBuildings: ['workers-house-c', 'bread-factory', 'warehouse', 'school', 'barracks', 'road-depot'],
+    unlockedBuildings: [
+      'workers-house-c',
+      'bread-factory',
+      'warehouse',
+      'school',
+      'barracks',
+      'road-depot',
+      'workers-club',
+      'cultural-palace',
+      'kgb-office',
+      'power-station',
+    ],
 
     modifiers: {
       productionMult: 1.1,
@@ -174,7 +189,6 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
     quotaEscalation: 1.3,
 
     unlockedBuildings: [
-      'power-station',
       'factory-office',
       'rail-depot',
       'vodka-distillery',
@@ -273,8 +287,6 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
 
     unlockedBuildings: [
       'apartment-tower-a',
-      'hospital',
-      'government-hq',
       'ministry-office',
       'train-station',
       'motor-pool',
@@ -323,11 +335,6 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = {
       'apartment-tower-b',
       'apartment-tower-c',
       'polyclinic',
-      'workers-club',
-      'post-office',
-      'cultural-palace',
-      'kgb-office',
-      'fire-station',
     ],
 
     modifiers: {
