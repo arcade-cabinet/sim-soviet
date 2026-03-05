@@ -10,26 +10,34 @@ The AI system uses [Yuka](https://mugen87.github.io/yuka/) autonomous agents ext
 
 ```
 src/ai/
-  AgentManager.ts       # Registers 14 agents, drives EntityManager tick loop
+  AgentManager.ts       # Registers agents, drives EntityManager tick loop
   telegrams.ts          # MSG enum — inter-agent message types
-  agents/               # 14 domain agents organized into 5 subpackages
+  agents/               # Domain agents organized into 9 subpackages
     ChairmanAgent.ts    # Top-level orchestrator (not in a subpackage)
-    core/               # Time and weather
+    core/               # Time, weather, WorldAgent, sphere dynamics, cold branches
     economy/            # Production, food, vodka, storage, trudodni
-    political/          # Eras, KGB, loyalty
-    infrastructure/     # Power, collective construction
+    political/          # Eras, KGB, loyalty, megacity law enforcement
+    infrastructure/     # Power, collective construction, settlement, transport
     social/             # Demographics, defense (fire + disease)
+    workforce/          # Worker system, private plots, loyalty, trudodni
+    narrative/          # Events, pravda, politburo
+    meta/               # Achievements, tutorials, minigames, chairman
+    crisis/             # Governor, pressure system (15 domains), climate, black swan
 ```
 
 ## Agent Subpackages
 
 | Subpackage       | Agents                                         | Domain                        |
 |------------------|-------------------------------------------------|-------------------------------|
-| `core/`          | ChronologyAgent, WeatherAgent                   | Time, seasons, weather        |
+| `core/`          | ChronologyAgent, WeatherAgent, WorldAgent        | Time, weather, geopolitics, sphere dynamics, 42 cold branches |
 | `economy/`       | EconomyAgent, FoodAgent, VodkaAgent, StorageAgent| Production, trade, storage    |
-| `political/`     | PoliticalAgent, KGBAgent, LoyaltyAgent           | Eras, quotas, surveillance    |
-| `infrastructure/`| PowerAgent, CollectiveAgent                      | Power grid, auto-construction |
+| `political/`     | PoliticalAgent, KGBAgent, LoyaltyAgent           | Eras, quotas, surveillance, megacity law enforcement |
+| `infrastructure/`| PowerAgent, CollectiveAgent, SettlementSystem, TransportSystem | Power, construction, settlement, transport |
 | `social/`        | DemographicAgent, DefenseAgent                   | Population, fire, disease     |
+| `workforce/`     | WorkerSystem, PrivatePlotSystem, LoyaltySystem, TrudodniSystem | Labor, private plots, loyalty |
+| `narrative/`     | NarrativeAgent, EventSystem, Pravda, Politburo   | Events, propaganda, politics  |
+| `meta/`          | AchievementTracker, TutorialSystem, ChairmanAgent | Achievements, tutorials, minigames |
+| `crisis/`        | Governor, PressureSystem, ClimateEventSystem, BlackSwanSystem | 15-domain pressure, climate, rare events |
 
 ## Key Files
 

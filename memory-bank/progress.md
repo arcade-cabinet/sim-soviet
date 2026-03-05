@@ -59,7 +59,7 @@
 ### Infrastructure
 - [x] CI (lint + typecheck + tests on PR)
 - [x] CD (Release Please → GitHub Pages + Android APK)
-- [x] 5,641+ tests across 170+ suites
+- [x] 6,730 tests across 283 suites
 - [x] Documentation overhaul (41 docs with YAML frontmatter)
 - [x] JSDoc completion (~273/283 source files)
 
@@ -75,7 +75,7 @@
 
 ### Soviet Allocation Engine + Organic Growth
 - [x] Organic settlement growth (demand pipeline → site selection → construction)
-- [x] Buildings-as-UI (click buildings for contextual panels: FactoryContent, FarmContent)
+- [x] Buildings-as-UI (all 7 phases complete — HUD stripped through toolbar removed)
 - [x] HQ splitting (multi-function HQ → dedicated buildings as pop grows)
 - [x] GrowthPacing, OrganicUnlocks, SiteSelectionRules
 - [x] Government HQ with ReportsTab
@@ -85,13 +85,26 @@
 - [x] Global warming terrain effects for freeform centuries
 - [x] RelocationEngine data model for multi-settlement support
 - [x] Expanded playthrough tests and historical accuracy fixes
-- [x] WorldAgent sphere dynamics (19 cold branches)
+- [x] WorldAgent sphere dynamics (42 cold branches)
+
+### Kardashev Expansion (2026-03-05 session — ~16K lines, 20 commits)
+- [x] 8 Kardashev sub-eras replacing flat the_eternal
+- [x] Post-scarcity pressure (5 new domains: meaning, density, entropy, legacy, ennui)
+- [x] Multi-settlement tick loop + viewport switching
+- [x] MegaCity law enforcement (KGB → Sector Judges → Megacity Arbiters)
+- [x] Adaptive agent matrix (10 terrain profiles wired to 6 agents, climate polarity)
+- [x] 3 procedural shaders (Dyson sphere, Mars atmosphere, O'Neill interior)
+- [x] Celestial Body Factory (sphere↔flat morphing, 4 body types, MegastructureShell)
+- [x] ZonePreloader (zone-specific asset preloading with progress phases)
+- [x] Zone-aware LoadingScreen + SettlementTransitionOverlay (flavor text)
+- [x] Poly Haven declarative pipeline (7 HDRIs, 15 terrain textures, all CC0)
+- [x] 13 load zones by celestial body + era
 
 ## Version History
 
 | Version | Date | Highlights |
 |---------|------|-----------|
-| v1.2.0 | 2026-03 | Engine decomposition, allocation engine, pressure-valve crisis system, organic growth |
+| v1.2.0 | 2026-03 | Engine decomposition, allocation engine, pressure-valve crisis, organic growth, Kardashev expansion, celestial factory, zone-aware loading |
 | v1.1.3 | 2026-02 | Docs-vs-code alignment audit |
 | v1.1.2 | 2026-02 | 3D rendering fix, political entity tap interaction |
 | v1.1.0 | 2026-02 | R3F migration from BabylonJS |

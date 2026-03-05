@@ -8,24 +8,28 @@
 - SimulationEngine decomposed into 7 phase modules (phaseChronology through phaseFinalize)
 - Classic mode removed entirely (GovernorMode is now `'historical' | 'freeform'` only)
 - Consequence levels renamed to Soviet nomenclature: rehabilitated, gulag, rasstrelyat
-- **Pressure-valve crisis system**: PressureSystem (10 domains) + WorldAgent + ClimateEventSystem + BlackSwanSystem + ColdBranches (19 branches)
+- **Pressure-valve crisis system**: PressureSystem (15 domains: 10 classical + 5 post-scarcity) + WorldAgent + ClimateEventSystem + BlackSwanSystem + ColdBranches (42 branches)
 - **Soviet Allocation Engine**: organic growth pipeline (demand → site selection → construction), directives, posture, prestige
-- **Buildings-as-UI**: click buildings for contextual panels (FactoryContent, FarmContent, GovernmentHQ ReportsTab)
+- **Buildings-as-UI**: all 7 phases complete (HUD stripped → organic growth → building-click → directive-only → tiers → upgrades → toolbar removed)
 - **HQ splitting**: multi-function HQ → dedicated buildings as population grows
 - **Dynamic map expansion**: grid expands via settlement tier upgrades
 - **WorldAgent**: sphere dynamics coordinating world-level state
-- **RelocationEngine**: data model for multi-settlement support (gameplay/UI not yet implemented)
-- Off-screen building tick for DB-only state updates
-- Freeform endless mode with unlimited map expansion
-- Global warming terrain effects for freeform centuries
-- Expanded playthrough tests and historical accuracy fixes
-- All operational docs updated
-- 5,641+ tests across 170+ suites
+- **Multi-settlement tick loop**: per-settlement agent tree, background aggregate math, viewport switching
+- **Kardashev sub-eras (8)**: post_soviet → planetary → solar_engineering → type_one → deconstruction → dyson_swarm → megaearth → type_two_peak
+- **Post-scarcity pressure**: 5 new domains (meaning, density, entropy, legacy, ennui)
+- **MegaCity law enforcement**: KGB → Security → Sector Judges → Megacity Arbiters
+- **Adaptive agent matrix**: 10 terrain profiles wired to 6 core agents, climate polarity
+- **Celestial Body Factory**: sphere↔flat morphing (4 body types), MegastructureShell (Dyson)
+- **ZonePreloader**: zone-specific asset preloading with progress phases
+- **Zone-aware loading screens**: LoadingScreen + SettlementTransitionOverlay with zone flavor text
+- **Poly Haven pipeline**: declarative asset fetcher (7 HDRIs, 15 terrain textures, all CC0)
+- **3 procedural shaders**: Dyson sphere, Mars atmosphere, O'Neill interior
+- 6,730 tests across 283 suites, 0 TypeScript errors
+- 20 commits, ~16K lines new code
 
 ### In Progress
 - PR #44 open — cleanup and merge into main
-- Multi-settlement gameplay and UI viewport switching (NOT yet implemented, data model only)
-- Historical accuracy alignment for playthrough tests
+- Dyson sphere viewport: user has generator to port (DEFERRED)
 
 ## Key Design Docs (now implemented)
 - `docs/plans/2026-03-03-buildings-are-the-ui-design.md` — UX paradigm shift (DONE)
