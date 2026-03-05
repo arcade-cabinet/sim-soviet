@@ -6,6 +6,7 @@
  */
 
 import { ERA_MODEL_MAP, getModelName, getTierVariant, BUILDING_TYPES } from '../../src/scene/ModelMapping';
+import manifest from '../../assets/models/soviet/manifest.json';
 
 describe('getModelName', () => {
   // ── Default (no era) ────────────────────────────────────────────────────
@@ -123,5 +124,38 @@ describe('BUILDING_TYPES', () => {
     expect(BUILDING_TYPES).toContain('factory');
     expect(BUILDING_TYPES).toContain('space');
     expect(BUILDING_TYPES).toContain('nuke');
+  });
+});
+
+describe('Colony models in manifest', () => {
+  it('all ERA_MODEL_MAP the_eternal models exist in manifest.json', () => {
+    const eternal = ERA_MODEL_MAP.the_eternal!;
+    const manifestNames = Object.keys(manifest.assets);
+
+    for (const [type, models] of Object.entries(eternal)) {
+      for (const modelName of models) {
+        expect(manifestNames).toContain(modelName);
+      }
+    }
+  });
+
+  it('colony manifest entries have era field set to the_eternal', () => {
+    const colonyAssets = Object.entries(manifest.assets).filter(
+      ([name]) => name.startsWith('colony-'),
+    );
+    expect(colonyAssets.length).toBeGreaterThanOrEqual(12);
+
+    for (const [name, asset] of colonyAssets) {
+      expect((asset as any).era).toBe('the_eternal');
+    }
+  });
+
+  it('colony roles are listed in manifest roles section', () => {
+    const roles = manifest.roles as Record<string, string[]>;
+    expect(roles.colony_housing).toBeDefined();
+    expect(roles.colony_housing.length).toBe(3);
+    expect(roles.colony_industry).toBeDefined();
+    expect(roles.colony_power).toBeDefined();
+    expect(roles.colony_government).toBeDefined();
   });
 });

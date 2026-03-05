@@ -337,6 +337,90 @@
       "source": "bpy-procedural",
       "role": "power",
       "texture": "none"
+    },
+    "colony-habitat-a": {
+      "file": "models/soviet/colony-habitat-a.glb",
+      "source": "Quaternius/Ultimate Spaceships/Bob",
+      "role": "colony_housing",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-habitat-b": {
+      "file": "models/soviet/colony-habitat-b.glb",
+      "source": "Quaternius/Ultimate Spaceships/Pancake",
+      "role": "colony_housing",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-habitat-c": {
+      "file": "models/soviet/colony-habitat-c.glb",
+      "source": "Quaternius/Ultimate Spaceships/Imperial",
+      "role": "colony_housing",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-workshop": {
+      "file": "models/soviet/colony-workshop.glb",
+      "source": "Quaternius/Ultimate Spaceships/Striker",
+      "role": "colony_industry",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-factory": {
+      "file": "models/soviet/colony-factory.glb",
+      "source": "Quaternius/Ultimate Spaceships/Dispatcher",
+      "role": "colony_industry",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-megafactory": {
+      "file": "models/soviet/colony-megafactory.glb",
+      "source": "Quaternius/Ultimate Spaceships/Challenger",
+      "role": "colony_industry",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-synthplant": {
+      "file": "models/soviet/colony-synthplant.glb",
+      "source": "Quaternius/Ultimate Modular Sci-Fi/Props_Pod",
+      "role": "colony_industry",
+      "texture": "none",
+      "era": "the_eternal"
+    },
+    "colony-hydroponics": {
+      "file": "models/soviet/colony-hydroponics.glb",
+      "source": "Quaternius/Ultimate Modular Sci-Fi/Props_Pod",
+      "role": "colony_agriculture",
+      "texture": "none",
+      "era": "the_eternal"
+    },
+    "colony-reactor": {
+      "file": "models/soviet/colony-reactor.glb",
+      "source": "Quaternius/Ultimate Spaceships/Omen",
+      "role": "colony_power",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-fusion": {
+      "file": "models/soviet/colony-fusion.glb",
+      "source": "Quaternius/Ultimate Spaceships/Omen",
+      "role": "colony_power",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-antenna": {
+      "file": "models/soviet/colony-antenna.glb",
+      "source": "Quaternius/Ultimate Modular Sci-Fi/Props_Computer",
+      "role": "colony_comms",
+      "texture": "none",
+      "era": "the_eternal"
+    },
+    "colony-command": {
+      "file": "models/soviet/colony-command.glb",
+      "source": "Quaternius/Ultimate Spaceships/Imperial",
+      "role": "colony_government",
+      "texture": "embedded",
+      "era": "the_eternal"
     }
   },
   "roles": {
@@ -385,6 +469,12 @@
       "roof-pipe"
     ],
     "utility": ["concrete-block"],
-    "environment": ["fence", "fence-low"]
+    "environment": ["fence", "fence-low"],
+    "colony_housing": ["colony-habitat-a", "colony-habitat-b", "colony-habitat-c"],
+    "colony_industry": ["colony-workshop", "colony-factory", "colony-megafactory", "colony-synthplant"],
+    "colony_agriculture": ["colony-hydroponics"],
+    "colony_power": ["colony-reactor", "colony-fusion"],
+    "colony_comms": ["colony-antenna"],
+    "colony_government": ["colony-command"]
   }
 }
