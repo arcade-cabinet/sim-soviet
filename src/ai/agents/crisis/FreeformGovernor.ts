@@ -40,6 +40,7 @@ import { PressureSystem } from './pressure/PressureSystem';
 import { type TimelineEvent, TimelineSystem } from './TimelineSystem';
 import type { CrisisAgentSaveData, CrisisContext, CrisisDefinition, CrisisImpact, ICrisisAgent } from './types';
 import { WarAgent } from './WarAgent';
+import { activateClimateMilestone } from '@/stores/gameStore';
 
 // ─── Agent Entry ────────────────────────────────────────────────────────────
 
@@ -236,10 +237,7 @@ export class FreeformGovernor implements IGovernor {
 
     // ── Tier 1: Pressure System tick + crisis emergence ─────────────────
     if (ctx.pressureReadings) {
-      // Get world modifiers if WorldAgent is available
-      const worldModifiers: Partial<Record<PressureDomain, number>> = {};
-      // World modifiers are applied via the PressureReadContext's worldModifiers field
-      // which is computed upstream by WorldAgent.computePressureModifiers()
+      const worldModifiers = ctx.worldAgent?.computePressureModifiers() ?? {};
 
       this.pressureSystem.tick(ctx.pressureReadings, worldModifiers);
 
@@ -350,6 +348,9 @@ export class FreeformGovernor implements IGovernor {
               toastMessages: [{ text: branch.effects.narrative.toast, severity: 'critical' }],
             },
           });
+
+          // Activate climate visual milestone for scene components
+          activateClimateMilestone(branch.id);
         }
       }
     }

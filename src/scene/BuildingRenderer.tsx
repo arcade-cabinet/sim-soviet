@@ -390,6 +390,7 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({
   settlementTier = 'selo',
   season = 'summer',
   currentEra,
+  subsidenceTilt,
 }) => {
   // Partition buildings into constructing vs operational
   const { constructing, operationalByModel } = useMemo(() => {
@@ -436,6 +437,7 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({
             buildings={group.buildings}
             settlementTier={settlementTier}
             season={season}
+            subsidenceTilt={subsidenceTilt}
           />
         </Suspense>
       ))}

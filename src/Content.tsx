@@ -19,7 +19,7 @@ import AudioManager from './audio/AudioManager';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
 import { useGameSnapshot } from './hooks/useGameState';
-import { notifyStateChange, useSpaceVisualState, useTerrainVersion } from './stores/gameStore';
+import { notifyStateChange, useClimateMilestones, useSpaceVisualState, useTerrainVersion } from './stores/gameStore';
 
 // Import ModelPreloader for its side-effect (calls useGLTF.preload)
 import './scene/ModelPreloader';
@@ -64,6 +64,8 @@ interface ContentProps {
 const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disableCamera }) => {
   const snap = useGameSnapshot();
   const spaceVisual = useSpaceVisualState();
+  const climateMilestones = useClimateMilestones();
+  const hasPermafrost = climateMilestones.has('permafrost_collapse') || climateMilestones.has('ecological_permafrost_collapse');
 
   // Track drei loading progress (useGLTF.preload triggers this)
   const { loaded, total, item } = useProgress();
@@ -132,6 +134,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
         settlementTier={snap.settlementTier as SettlementTier}
         season={snap.season}
         currentEra={snap.currentEra}
+        subsidenceTilt={hasPermafrost}
       />
       <BuildingStatusBadges buildings={buildings} />
       <SceneProps season={snap.season} />
