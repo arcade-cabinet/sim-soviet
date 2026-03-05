@@ -75,6 +75,20 @@ export interface SimCallbacks {
    * If not handled, auto-resolves as continue (freeform) after 60 ticks.
    */
   onHistoricalEraEnd?: (resolve: (continueInFreeform: boolean) => void) => void;
+  /** Fired when a crisis impact triggers a one-shot visual effect. */
+  onVisualEvent?: (event: VisualEvent) => void;
+}
+
+/** A one-shot visual event triggered by a crisis impact. */
+export interface VisualEvent {
+  /** Effect type. */
+  effect: 'nuclear_flash' | 'earthquake_shake' | 'famine_haze' | 'dust_storm';
+  /** Effect intensity (0–1). */
+  intensity: number;
+  /** Duration in ticks. */
+  durationTicks: number;
+  /** Crisis that triggered this event. */
+  crisisId: string;
 }
 
 /** Data passed to the rehabilitation modal after gulag return. */

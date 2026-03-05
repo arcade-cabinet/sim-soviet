@@ -159,6 +159,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
       <ZeppelinRenderer />
       <MeteorRenderer />
       <CrisisVFXRenderer />
+      <WWIIOverlay active={isWartime} />
       <MassGraveRenderer />
       <FloatingText />
       <CitizenRenderer />

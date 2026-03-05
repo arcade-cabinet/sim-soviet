@@ -11,7 +11,7 @@
  *   - Narrative callbacks fire for each impact
  */
 
-import { pushCrisisVFX } from '@/stores/gameStore';
+import type { VisualEvent } from '@/game/engine/types';
 import type { CrisisImpact } from './types';
 
 // ─── Dependencies Interface ────────────────────────────────────────────────
@@ -27,6 +27,7 @@ export interface ApplicatorDeps {
   callbacks: {
     onPravda: (msg: string) => void;
     onToast: (msg: string, severity?: 'warning' | 'critical' | 'evacuation') => void;
+    onVisualEvent?: (event: VisualEvent) => void;
   };
   workerSystem?: {
     removeWorkersByCountMaleFirst: (count: number, reason: string) => number;
@@ -100,7 +101,7 @@ export function applyCrisisImpacts(impacts: CrisisImpact[], deps: ApplicatorDeps
     applyPolitical(impact, result);
     applySocial(impact, result);
     applyNarrative(impact, deps);
-    applyVisual(impact);
+    applyVisual(impact, deps);
   }
 
   return result;
@@ -200,18 +201,14 @@ function applyNarrative(impact: CrisisImpact, deps: ApplicatorDeps): void {
   }
 }
 
-/** Default durations (seconds) per visual effect type. */
-const DEFAULT_VFX_DURATIONS: Record<string, number> = {
-  meteor_flash: 2,
-  nuclear_haze: 60,
-  famine_desat: 30,
-};
-
-function applyVisual(impact: CrisisImpact): void {
+function applyVisual(impact: CrisisImpact, deps: ApplicatorDeps): void {
   const vis = impact.visual;
   if (!vis) return;
 
-  const intensity = vis.intensity ?? 1.0;
-  const duration = vis.duration ?? DEFAULT_VFX_DURATIONS[vis.effectType] ?? 5;
-  pushCrisisVFX(vis.effectType, intensity, duration);
+  deps.callbacks.onVisualEvent?.({
+    effect: vis.effect,
+    intensity: vis.intensity,
+    durationTicks: vis.durationTicks,
+    crisisId: impact.crisisId,
+  });
 }
