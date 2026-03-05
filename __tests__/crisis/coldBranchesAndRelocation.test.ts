@@ -81,8 +81,8 @@ function makeSpheres(
 // ─── Cold Branches — Catalog ─────────────────────────────────────────────────
 
 describe('COLD_BRANCHES catalog', () => {
-  it('contains exactly 19 branches', () => {
-    expect(COLD_BRANCHES).toHaveLength(19);
+  it('contains exactly 27 branches', () => {
+    expect(COLD_BRANCHES).toHaveLength(27);
   });
 
   it('every branch has a non-empty id string', () => {

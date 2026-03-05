@@ -2,7 +2,7 @@
  * @module ai/agents/political
  *
  * Political agents: era management, KGB surveillance, loyalty tracking,
- * quota enforcement, compulsory deliveries, and scoring.
+ * quota enforcement, compulsory deliveries, prestige projects, and scoring.
  */
 
 export type { AnnualReportContext, AnnualReportEngineState } from './annualReportTick';
@@ -86,6 +86,24 @@ export {
 } from './military';
 export type { PoliticalState, ReportStrategy } from './PoliticalAgent';
 export { PoliticalAgent } from './PoliticalAgent';
+// Prestige project system
+export type {
+  PrestigeContext,
+  PrestigeProject,
+  PrestigeProjectState,
+  PrestigeTickResult,
+} from './PrestigeProjectSystem';
+export {
+  canAffordProject,
+  createPrestigeState,
+  getAllProjects,
+  getAvailableProjects as getAvailablePrestigeProjects,
+  getProjectById,
+  restorePrestigeState,
+  serializePrestigeState,
+  startProject as startPrestigeProject,
+  tickPrestigeProjects,
+} from './PrestigeProjectSystem';
 // Political entity system + supporting modules (moved from src/game/political/)
 export { PoliticalEntitySystem } from './PoliticalEntitySystem';
 export {

@@ -432,5 +432,276 @@
       }
     },
     "oneShot": true
+  },
+  {
+    "id": "ecological_permafrost_collapse",
+    "name": "Permafrost Catastrophe",
+    "conditions": {
+      "worldStateConditions": { "climateTrend": { "min": 0.5 } },
+      "yearRange": { "min": 2050 },
+      "sustainedTicks": 50
+    },
+    "effects": {
+      "pressureSpikes": { "infrastructure": 0.35, "health": 0.2, "food": 0.15, "housing": 0.1 },
+      "crisisDefinition": {
+        "id": "ecological_permafrost",
+        "type": "climate",
+        "name": "Permafrost Catastrophe",
+        "startYear": 0,
+        "endYear": 0,
+        "severity": "regional",
+        "peakParams": {
+          "infrastructureDamageRate": 0.04,
+          "diseaseOutbreakChance": 0.01,
+          "relocationPressure": 0.3
+        },
+        "buildupTicks": 50,
+        "aftermathTicks": 120,
+        "description": "Catastrophic permafrost thaw destabilizes all foundations"
+      },
+      "narrative": {
+        "pravdaHeadline": "PERMAFROST SITUATION UNDER CONTROL — Ministry reports minor subsidence in 94% of structures.",
+        "toast": "Ground collapsing beneath settlement. Ancient diseases emerging from thawed soil."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "ecological_ozone_crisis",
+    "name": "Ozone Crisis",
+    "conditions": {
+      "yearRange": { "min": 2100 },
+      "pressureThresholds": { "health": 0.4 },
+      "sustainedTicks": 30
+    },
+    "effects": {
+      "pressureSpikes": { "health": 0.3, "food": 0.2, "economic": 0.15, "morale": 0.15 },
+      "crisisDefinition": {
+        "id": "ecological_ozone",
+        "type": "climate",
+        "name": "Ozone Depletion Crisis",
+        "startYear": 0,
+        "endYear": 0,
+        "severity": "national",
+        "peakParams": {
+          "healthPressureMult": 1.5,
+          "farmingEfficiencyDrop": 0.3,
+          "domesRequired": 1.0
+        },
+        "buildupTicks": 30,
+        "aftermathTicks": 240,
+        "description": "UV radiation makes open-air habitation dangerous"
+      },
+      "narrative": {
+        "pravdaHeadline": "DOME CONSTRUCTION PROGRAM EXCEEDS TARGETS — Outdoor recreation reclassified as counter-revolutionary.",
+        "toast": "Ozone depleted. Dome construction now mandatory. Outdoor exposure causes radiation burns."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "ecological_atmospheric_toxicity",
+    "name": "Atmospheric Toxicity",
+    "conditions": {
+      "yearRange": { "min": 2200 },
+      "pressureThresholds": { "health": 0.5 },
+      "sustainedTicks": 40
+    },
+    "effects": {
+      "pressureSpikes": { "health": 0.35, "demographic": 0.25, "morale": 0.2, "infrastructure": 0.1 },
+      "crisisDefinition": {
+        "id": "ecological_atmosphere",
+        "type": "climate",
+        "name": "Atmospheric Toxicity Event",
+        "startYear": 0,
+        "endYear": 0,
+        "severity": "existential",
+        "peakParams": {
+          "outdoorSurvivalPenalty": 0.1,
+          "oxygenTrackingEnabled": 1.0,
+          "domeRequired": 1.0
+        },
+        "buildupTicks": 40,
+        "aftermathTicks": 600,
+        "description": "Earth's atmosphere becomes unbreathable without filtration"
+      },
+      "narrative": {
+        "pravdaHeadline": "AIR QUALITY IMPROVED 200% — Citizens reminded that breathing is a privilege, not a right.",
+        "toast": "Atmosphere toxic. Oxygen now a tracked resource. Seal the domes or perish."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "ecological_soil_exhaustion_crisis",
+    "name": "Soil Exhaustion Crisis",
+    "conditions": {
+      "yearRange": { "min": 2500 },
+      "pressureThresholds": { "food": 0.5 },
+      "sustainedTicks": 60
+    },
+    "effects": {
+      "pressureSpikes": { "food": 0.4, "economic": 0.2, "morale": 0.15, "demographic": 0.1 },
+      "crisisDefinition": {
+        "id": "ecological_soil",
+        "type": "climate",
+        "name": "Total Soil Exhaustion",
+        "startYear": 0,
+        "endYear": 0,
+        "severity": "national",
+        "peakParams": {
+          "foodProductionDrop": 0.5,
+          "hydroponicsRequired": 1.0
+        },
+        "buildupTicks": 60,
+        "aftermathTicks": 480,
+        "description": "Topsoil completely depleted, traditional agriculture impossible"
+      },
+      "narrative": {
+        "pravdaHeadline": "HYDROPONICS PROGRAM TRIUMPHANT — Soil declared bourgeois remnant of agrarian past.",
+        "toast": "Soil exhausted. Food production halved. Hydroponics or starvation."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "ecological_water_collapse",
+    "name": "Water Table Collapse",
+    "conditions": {
+      "yearRange": { "min": 3000 },
+      "pressureThresholds": { "food": 0.4, "health": 0.3 },
+      "sustainedTicks": 80
+    },
+    "effects": {
+      "pressureSpikes": { "food": 0.3, "health": 0.25, "demographic": 0.2, "infrastructure": 0.1 },
+      "crisisDefinition": {
+        "id": "ecological_water",
+        "type": "climate",
+        "name": "Water Table Collapse",
+        "startYear": 0,
+        "endYear": 0,
+        "severity": "existential",
+        "peakParams": {
+          "waterTrackingOnEarth": 1.0,
+          "waterRecyclingRequired": 1.0
+        },
+        "buildupTicks": 80,
+        "aftermathTicks": 600,
+        "description": "Groundwater reserves exhausted, water becomes tracked resource"
+      },
+      "narrative": {
+        "pravdaHeadline": "WATER RECYCLING QUOTA MET — Comrades reminded that thirst is counter-revolutionary sentiment.",
+        "toast": "Water table collapsed. Water is now a tracked resource. Recycling mandatory."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "ecological_solar_luminosity_crisis",
+    "name": "Solar Luminosity Crisis",
+    "conditions": {
+      "worldStateConditions": { "climateTrend": { "min": 0.6 } },
+      "yearRange": { "min": 5000 },
+      "sustainedTicks": 100
+    },
+    "effects": {
+      "pressureSpikes": { "food": 0.3, "infrastructure": 0.25, "health": 0.2, "demographic": 0.15 },
+      "crisisDefinition": {
+        "id": "ecological_solar",
+        "type": "climate",
+        "name": "Solar Luminosity Intensification",
+        "startYear": 0,
+        "endYear": 0,
+        "severity": "existential",
+        "peakParams": {
+          "temperatureRisePerCentury": 0.2,
+          "equatorialUninhabitable": 1.0
+        },
+        "buildupTicks": 100,
+        "aftermathTicks": 1200,
+        "description": "Solar output increase renders equatorial zones uninhabitable"
+      },
+      "narrative": {
+        "pravdaHeadline": "EQUATORIAL ZONES RECLASSIFIED — Comrade Sun fulfills five-year heating plan ahead of schedule.",
+        "toast": "Solar luminosity rising. Equatorial zones uninhabitable. Northern retreat advised."
+      },
+      "relocation": {
+        "type": "climate_exodus",
+        "targetTerrain": {
+          "gravity": 1.0,
+          "atmosphere": "breathable",
+          "water": "rivers",
+          "farming": "greenhouse",
+          "construction": "standard",
+          "baseSurvivalCost": "very_high"
+        }
+      },
+      "newSettlement": true
+    },
+    "oneShot": true
+  },
+  {
+    "id": "ecological_ice_age_return",
+    "name": "Ice Age Return",
+    "conditions": {
+      "worldStateConditions": { "climateTrend": { "max": -0.8 } },
+      "yearRange": { "min": 10000 },
+      "sustainedTicks": 200
+    },
+    "effects": {
+      "pressureSpikes": { "food": 0.4, "infrastructure": 0.3, "demographic": 0.2, "morale": 0.2, "power": 0.15 },
+      "crisisDefinition": {
+        "id": "ecological_ice_age",
+        "type": "climate",
+        "name": "Glacial Return",
+        "startYear": 0,
+        "endYear": 0,
+        "severity": "existential",
+        "peakParams": {
+          "temperatureDropAtPeak": -3.0,
+          "foodProductionMult": 0.3,
+          "heatingDemandMult": 3.0
+        },
+        "buildupTicks": 200,
+        "aftermathTicks": 2400,
+        "description": "Full glacial period returns, continental ice sheets advance"
+      },
+      "narrative": {
+        "pravdaHeadline": "GLACIAL ADVANCE REPELLED BY SOVIET DETERMINATION — Ice sheets retreating before socialist willpower.",
+        "toast": "Ice age returns. Continental glaciers advancing. Food and heating crisis."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "ecological_magnetic_field_weakening",
+    "name": "Magnetic Field Weakening",
+    "conditions": {
+      "yearRange": { "min": 100000 },
+      "sustainedTicks": 120
+    },
+    "effects": {
+      "pressureSpikes": { "health": 0.35, "demographic": 0.25, "infrastructure": 0.15, "morale": 0.15 },
+      "crisisDefinition": {
+        "id": "ecological_magnetic",
+        "type": "climate",
+        "name": "Magnetic Field Collapse",
+        "startYear": 0,
+        "endYear": 0,
+        "severity": "existential",
+        "peakParams": {
+          "radiationExposureMult": 3.0,
+          "domeOpacityRequired": 0.5
+        },
+        "buildupTicks": 120,
+        "aftermathTicks": 6000,
+        "description": "Earth's magnetic field weakens, tripling radiation exposure"
+      },
+      "narrative": {
+        "pravdaHeadline": "MAGNETIC FIELD SITUATION NOMINAL — Comrades advised that glowing is sign of revolutionary fervor.",
+        "toast": "Magnetic field failing. Radiation exposure tripled. Opaque dome shielding required."
+      }
+    },
+    "oneShot": true
   }
 ]
