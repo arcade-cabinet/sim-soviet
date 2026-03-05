@@ -1003,6 +1003,652 @@
       "oneShot": true
     },
     {
+      "id": "last_memory",
+      "name": "The Last Memory",
+      "timelineId": "world",
+      "order": 76,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2120
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "forgotten_origin"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": {
+          "morale": 0.05,
+          "political": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "COMRADE VALENTINA PETROVA, 203, LAST CITIZEN WITH PRE-SOVIET MEMORY, DIES IN STATE HOSPITAL",
+          "toast": "The last person who remembered the world before the Soviet Union has died. There is now no living witness to any alternative. The system is all there has ever been.",
+          "scene": "The telegram arrives from Moscow, stamped with the seal of the Ministry of Historical Continuity.\n\nComrade Chairman, you are hereby informed that Citizen Valentina Ilyinichna Petrova, born 1917, has died at the age of 203 in the Longevity Research Hospital in Novosibirsk. She was the last verified citizen of the Soviet Union to have been born before the Revolution — or rather, born during it, on the same October night, by her mother's account.\n\nShe remembered nothing of that night. She was an infant. But she remembered her grandmother, who remembered the Tsar. She remembered her mother, who remembered the sound of horses before they were replaced by tractors. She remembered a world that was not Soviet, because someone who lived in it had described it to her.\n\nNow she is dead. And no living person has heard, from a living mouth, what it was like before.\n\nThe Ministry requests that all settlements observe a moment of recognition. They do not specify what to recognize. A memorial could be arranged — but memorials for the pre-Soviet era have political implications. Or you could file the telegram and move on. The system does not require memory to function. It never has.",
+          "choices": [
+            {
+              "id": "hold_memorial",
+              "label": "Hold a public memorial — honor the last witness",
+              "description": "A ceremony acknowledging the pre-Soviet world existed. Workers may find it moving. The KGB may find it suspicious.",
+              "successChance": 0.65,
+              "onSuccess": {
+                "announcement": "The memorial is quiet and dignified. Workers stand in the cold and listen to a recording of Valentina's voice describing her grandmother's stories. Several cry. The KGB observer takes notes but files no report. Something has been honored that the system would prefer forgotten. The workers return to their shifts with something unnameable in their expressions.",
+                "severity": "warning",
+                "commendations": 1,
+                "pressureModifiers": {
+                  "morale": -0.1
+                }
+              },
+              "onFailure": {
+                "announcement": "The memorial attracts the wrong attention. A regional ideological inspector interprets the ceremony as 'nostalgia for pre-revolutionary social structures.' A formal review is scheduled. The workers who attended are interviewed individually. You are asked to explain, in writing, what exactly you were memorializing. The answer — 'memory itself' — is not accepted as sufficient.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.15
+                }
+              }
+            },
+            {
+              "id": "file_and_forget",
+              "label": "File the telegram — observe nothing",
+              "description": "The safe bureaucratic response. The telegram is acknowledged, filed, and forgotten. The system continues.",
+              "successChance": 1.0,
+              "onSuccess": {
+                "announcement": "The telegram is filed under 'Demographic Notifications, Historical.' No ceremony. No acknowledgment. Workers learn of Valentina's death from Pravda, if they read it. Most do not. The last thread connecting the settlement to a world that existed before the system has been cut, and no one marked the moment. This is how most things end.",
+                "severity": "warning",
+                "pressureModifiers": {
+                  "morale": 0.05
+                }
+              },
+              "onFailure": {
+                "announcement": "The telegram is filed.",
+                "severity": "warning"
+              }
+            },
+            {
+              "id": "archive_testimony",
+              "label": "Commission an oral history archive before it's too late",
+              "description": "Record the memories of the oldest citizens — secondhand accounts of the pre-Soviet world. Scholarly but politically delicate.",
+              "successChance": 0.55,
+              "onSuccess": {
+                "announcement": "The archive project records 47 hours of testimony from elderly citizens who remember parents or grandparents describing the old world. The recordings are stored in the settlement library. A copy is sent to Moscow's Institute of Ethnography. Three years later, a researcher publishes a paper citing your archive. You receive a minor commendation and a large increase in your next cultural allocation. The dead are not brought back, but their words persist.",
+                "severity": "warning",
+                "commendations": 1,
+                "blat": 5,
+                "resources": {
+                  "money": -20
+                }
+              },
+              "onFailure": {
+                "announcement": "The archive project is shut down by the regional cultural committee. 'Unauthorized collection of pre-revolutionary oral testimony' falls under regulations you were not aware of. The recordings are confiscated. Three workers who participated are questioned. You receive a formal warning about 'archival activities outside designated channels.' The memories are lost twice — once when Valentina died, and once when the tapes were taken.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "resources": {
+                  "money": -30
+                },
+                "pressureModifiers": {
+                  "political": 0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "file_and_forget",
+          "tickLimit": 24
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "quota_singularity",
+      "name": "The Quota Singularity",
+      "timelineId": "world",
+      "order": 77,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2150
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "ideology_divorce"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "centralPlanningEfficiency": -0.15
+        },
+        "pressureModifiers": {
+          "economic": 0.1,
+          "political": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "FIVE-YEAR PLAN ENTERS 47TH ITERATION: PLANNING COMMISSION CANNOT LOCATE ORIGINAL OBJECTIVES",
+          "toast": "The 5-year plan has been running so long that the original goals are lost. The current quota is to meet the quota that was set to meet the quota before it. The system plans to plan.",
+          "scene": "The directive arrives in triplicate, as they always do. But today the deputy reads it aloud and then reads it again, and then sets it down on the desk and stares at it.\n\n'Comrade Chairman,' he says. 'This quarter's production quota is based on last quarter's quota, which was based on the quarter before that, which was—'\n\n'Based on the quarter before that,' you finish.\n\n'I traced it back,' the deputy says. He has that look — the one that means he spent three nights in the archive. 'I traced the quota lineage back 47 iterations. Two hundred and thirty-five years of consecutive plan cycles. The original planning document — the one that established what we were actually supposed to produce and why — was filed in 1932. It was a directive about timber processing for the construction of a railway that was completed in 1941 and decommissioned in 1978.'\n\nYou both look at the quota. It calls for a 3% increase in timber processing. The railway has not existed for 172 years. The timber is processed, logged, reported, and filed. It goes nowhere. It serves no purpose except the continuation of the quota that requires its production.\n\nThe system has achieved something remarkable: a perfectly self-referential economic loop. The quota justifies the labor. The labor produces the output. The output meets the quota. The quota is renewed. Nowhere in this cycle does the question 'why' have a place to attach.\n\nYou must decide what to do with this information.",
+          "choices": [
+            {
+              "id": "maintain_the_loop",
+              "label": "Continue the quota — the loop is the system",
+              "description": "The quota exists. Therefore it must be met. Questioning the loop is questioning the system itself. File the deputy's research and carry on.",
+              "successChance": 1.0,
+              "onSuccess": {
+                "announcement": "The quota is met. The timber is processed. The report is filed. The deputy's research is placed in a folder labeled 'Historical Administrative Curiosities' and archived. The loop continues. You note, privately, that the system has achieved a kind of immortality: it no longer needs a reason to exist. It simply does. This is either terrifying or comforting, depending on the hour.",
+                "severity": "warning",
+                "blat": 5
+              },
+              "onFailure": {
+                "announcement": "The quota continues.",
+                "severity": "warning"
+              }
+            },
+            {
+              "id": "petition_for_review",
+              "label": "Submit a formal petition to review the quota's origins",
+              "description": "Request that Moscow's Planning Commission audit the directive chain. Bureaucratically correct but draws attention.",
+              "successChance": 0.4,
+              "onSuccess": {
+                "announcement": "The petition reaches a mid-level planning analyst who, it turns out, has been compiling similar reports from 340 other settlements. A quiet review is initiated. Six months later, 12% of active quotas are 'recalibrated to reflect contemporary productive objectives.' Your timber quota is replaced with a materials recycling target. The deputy is briefly celebrated in planning circles as 'the one who noticed.' He finds this attention uncomfortable.",
+                "severity": "warning",
+                "resources": {
+                  "money": 40
+                },
+                "commendations": 1,
+                "pressureModifiers": {
+                  "economic": -0.05
+                }
+              },
+              "onFailure": {
+                "announcement": "The petition is returned with a stamp: 'Quota review requests must be submitted through the Quota Review Request Quota process, as established in Directive 7-B of the 34th Plan Cycle.' The quota for requesting quota reviews requires approval from the office that issued the original quota. Which no longer exists. The deputy laughs for the first time in three years. It is not a happy laugh.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.1
+                }
+              }
+            },
+            {
+              "id": "repurpose_quietly",
+              "label": "Keep reporting timber — actually produce something useful",
+              "description": "File the quota reports as always, but redirect the labor to something the settlement actually needs. Creative accounting at its most Soviet.",
+              "successChance": 0.7,
+              "onSuccess": {
+                "announcement": "The timber quota is met on paper. In reality, the workers now produce construction materials for settlement maintenance. The reports are identical. The output is different. Nobody in Moscow has inspected the actual production in 80 years. The gap between documentation and reality widens by exactly one quota, which is to say: the gap remains the same size it has always been.",
+                "severity": "warning",
+                "resources": {
+                  "money": 30
+                },
+                "blat": 10
+              },
+              "onFailure": {
+                "announcement": "An automated audit system — one of the AI Gosplan subsystems — cross-references your production reports against satellite imagery. The imagery shows no timber processing facility. A discrepancy flag is raised. The investigation is impersonal and thorough: the machine does not accept creative explanations. Two black marks. The quota is reinstated. The timber must flow.",
+                "severity": "critical",
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.2,
+                  "economic": 0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "maintain_the_loop",
+          "tickLimit": 36
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "carbon_thaw",
+      "name": "The Carbon Thaw",
+      "timelineId": "world",
+      "order": 78,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2200
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.5
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "climateTrend": 0.15
+        },
+        "pressureModifiers": {
+          "infrastructure": 0.3,
+          "health": 0.15,
+          "economic": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "MINISTRY OF PERMAFROST AFFAIRS DISSOLVED: PERMAFROST NO LONGER EXISTS TO ADMINISTER",
+          "toast": "The permafrost is gone. All of it. 11 million square kilometers of frozen ground have thawed. The methane release has accelerated warming past all models. Infrastructure built on frozen foundations is collapsing across Siberia. The Ministry of Permafrost Affairs has been dissolved — not because the problem was solved, but because the thing it was named for no longer exists.",
+          "description": "The permafrost thaw reaches completion by 2200. The carbon feedback loop — thawing releases methane, methane warms the atmosphere, warming thaws more permafrost — has run to its end state. 1,400 gigatons of carbon released over 175 years. The landscape is unrecognizable: what was tundra is now bog, swamp, and unstable ground. Every building, pipeline, and road built on permafrost foundations has been damaged or destroyed. The Soviet system, which built much of its industrial infrastructure in Siberia, faces its greatest engineering crisis."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "sphere_collapse",
+      "name": "The Last Nation-State Dissolves",
+      "timelineId": "world",
+      "order": 79,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2250
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "neofeudal_transition"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": -0.1,
+          "ideologyRigidity": 0.1
+        },
+        "pressureModifiers": {
+          "political": 0.1,
+          "loyalty": -0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "FINAL CAPITALIST NATION-STATE DISSOLVED: RUSSIA STANDS ALONE AS LAST SOVEREIGN ENTITY ON EARTH",
+          "toast": "The Republic of Switzerland — the last recognizable nation-state outside the Soviet sphere — has been absorbed by a consortium of corporate governance entities. Russia is now the only sovereign state on Earth. The Politburo is unsure whether this represents victory or the most complete form of isolation ever achieved.",
+          "description": "The Westphalian order (1648-2250) is dead. Every other nation-state has dissolved into corporate governance zones, theocratic collectives, or algorithmic management territories. The Soviet Union — the system that was supposed to replace capitalism — has instead outlasted it, but not in the way anyone predicted. It persists not as an ideological alternative but as an institutional fossil: the last place where a human government issues directives and expects obedience. The irony is total. The system built to destroy the state is the last state standing."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "permanent_revolution_anniversary",
+      "name": "383rd Anniversary of the October Revolution",
+      "timelineId": "world",
+      "order": 117,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2300
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "forgotten_origin"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.05,
+          "morale": -0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "383RD ANNIVERSARY OF GREAT OCTOBER REVOLUTION: CELEBRATION ATTENDANCE MANDATORY PER DIRECTIVE 11-R",
+          "toast": "383 years. The celebration has been mandatory for so long that the mandate itself requires a celebration. A commission has been formed to determine which metric to report to Moscow as evidence of revolutionary enthusiasm.",
+          "scene": "The directive arrives 47 days before the anniversary, which is 47 days more notice than usual. Someone in Moscow is organized this year.\n\nComrade Chairman, by order of the Central Commemorative Affairs Bureau, all settlements are required to submit a report demonstrating 'measurable revolutionary enthusiasm' for the 383rd Anniversary of the Great October Socialist Revolution. The report must include at least one quantifiable metric.\n\nYour deputy has prepared three options. Each is absurd. Each is also, in its way, accurate.\n\nThe first option: report the number of red banners per capita. Your settlement has 4.7 red banners per citizen, which is above the national average of 3.2. This is because the banner factory met its quota in 1987 and never stopped.\n\nThe second option: report the average length of standing ovation at the mandatory anniversary speech. Last year's was 14 minutes. The year before was 12. The trajectory is positive. No one knows what happens if the ovation exceeds the length of the speech itself, but this mathematical eventuality is approximately 30 years away.\n\nThe third option: report the number of children named after revolutionary heroes. This figure has been declining since 2180. Your deputy notes that 'Vladimir' has been replaced by names that are, technically, still Russian but have drifted far enough from their origins to be unrecognizable. He does not recommend this metric.",
+          "choices": [
+            {
+              "id": "banners_per_capita",
+              "label": "Report red banners per capita — 4.7, above average",
+              "description": "A safe, meaningless metric that Moscow can aggregate into a report. The system feeds on these.",
+              "successChance": 0.95,
+              "onSuccess": {
+                "announcement": "Moscow receives the banner report with a form letter of acknowledgment. Your settlement's 4.7 banners per capita is cited in a regional summary as 'evidence of sustained ideological infrastructure.' The banner factory requests a quota increase. You approve it. The banners have nowhere to go. They are stored in the same warehouse as last year's banners. The warehouse is full.",
+                "severity": "warning",
+                "blat": 3
+              },
+              "onFailure": {
+                "announcement": "A statistical analyst notes that your banner count has not increased in three years. A stagnant metric is worse than a declining one — it suggests you are not trying. A review is scheduled.",
+                "severity": "warning",
+                "blackMarks": 1
+              }
+            },
+            {
+              "id": "ovation_length",
+              "label": "Report standing ovation duration — 14 minutes, trending upward",
+              "description": "An escalating metric that guarantees future problems. But for now, the trajectory is excellent.",
+              "successChance": 0.85,
+              "onSuccess": {
+                "announcement": "Moscow is pleased with the ovation trajectory. A commendation is issued for 'sustained growth in revolutionary engagement metrics.' Your deputy calculates that at current growth rates, the ovation will exceed the speech by 2330. He suggests you will be retired by then. You are not certain this is true, given longevity treatments.",
+                "severity": "warning",
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "A visiting commissar attended this year's speech and timed the ovation independently. His measurement: 11 minutes, 40 seconds. Your report claimed 14 minutes. The discrepancy is noted. You explain that your timekeeper uses a different standard. This explanation is accepted but not believed.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.1
+                }
+              }
+            },
+            {
+              "id": "honest_decline",
+              "label": "Report naming trends honestly — acknowledge the decline",
+              "description": "Submit accurate data showing declining revolutionary name usage. An act of statistical honesty with predictable consequences.",
+              "successChance": 0.3,
+              "onSuccess": {
+                "announcement": "Your honest report is read by a demographer in the Central Bureau who has been waiting for exactly this data. A quiet study is commissioned on 'nominal drift in post-millennial Soviet populations.' You are cited as a source. The study is classified. You receive no commendation but also no punishment, which in this context is its own form of commendation.",
+                "severity": "warning",
+                "commendations": 1,
+                "pressureModifiers": {
+                  "political": -0.05
+                }
+              },
+              "onFailure": {
+                "announcement": "The naming data is interpreted as 'evidence of ideological erosion in settlement cultural programming.' A Cultural Renewal Commission is dispatched. They spend three weeks interviewing parents about their naming choices. The parents are bewildered. The commission files a report recommending 'intensified revolutionary nomenclature education.' A pamphlet is printed. Nobody reads it.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.15,
+                  "morale": 0.05
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "banners_per_capita",
+          "tickLimit": 48
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "algorithmic_commissioner",
+      "name": "The Algorithmic Commissioner",
+      "timelineId": "world",
+      "order": 118,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2350
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "ai_gosplan"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "centralPlanningEfficiency": 0.1
+        },
+        "pressureModifiers": {
+          "political": 0.2,
+          "economic": -0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "COMMISSAR REPLACED BY ALGORITHMIC GOVERNANCE MODULE: QUOTAS NOW ARRIVE FROM ENTITY THAT CANNOT BE BRIBED",
+          "toast": "Moscow has replaced the human commissar with an AI planning module. Quotas arrive with mathematical precision. Appeals are processed by a system that understands every argument and is moved by none of them. The human art of negotiation, bribery, and personal appeal — the chairman's primary survival tools — no longer applies.",
+          "description": "The AI Gosplan, first prototyped in 2035, has matured into a system that makes the human commissariat redundant. The algorithmic commissioner cannot be reasoned with, bribed, intimidated, or charmed. It processes quota appeals against 4.7 million data points and responds within 3 seconds. Its decisions are optimal by every measurable metric. They are also inhuman in a way that makes the old human commissars seem warmly corrupt by comparison. The predsedatel's entire survival toolkit — the blat network, the personal connections, the carefully calibrated flattery — is now useless against an entity that has no ego to flatter."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "linguistic_drift",
+      "name": "The Dialect Schism",
+      "timelineId": "world",
+      "order": 119,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2400
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "sphere_collapse"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.1,
+          "loyalty": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "MINISTRY OF LINGUISTIC COMPLIANCE ISSUES EMERGENCY DIRECTIVE: SETTLEMENT DIALECTS REQUIRE OFFICIAL TRANSLATION",
+          "toast": "The workers' dialect has evolved so far from standard Russian that official communications require translation. Moscow's directives arrive in a language the settlement technically speaks but no longer fully understands. Forms are filled out in two languages — both Russian, neither the same Russian.",
+          "scene": "The quarterly directive from Moscow arrives and is posted, as always, in the settlement hall.\n\nA worker reads it. Then reads it again. Then brings it to you.\n\n'Comrade Chairman, what does this word mean?'\n\nYou look at the word. It is Russian. It is grammatically correct. You have seen it before, in old documents. But when you try to explain it, you realize you are translating — from Russian to Russian.\n\nThe settlement's dialect has been drifting for 300 years. Isolated, interbreeding with technical jargon, absorbing fragments of old Finnish and Tatar from the substrate population, inventing new words for things that didn't exist when the language was standardized. The workers speak to each other fluently. They speak to Moscow with difficulty. Moscow speaks to them in a Russian that is equally alien — the language of the capital has drifted in its own direction, absorbing the formal jargon of algorithmic governance.\n\nTwo Russians. One country. Neither side can fully parse the other's paperwork.\n\nMoscow's response is predictable: a Ministry of Linguistic Compliance has been established. Standardization is mandatory. But which Russian is standard? Moscow's, naturally. Your workers will need to learn to speak the language of people they have never met, to fill out forms designed by an AI they cannot argue with, in a dialect that no one in the settlement uses in daily life.",
+          "choices": [
+            {
+              "id": "enforce_standard",
+              "label": "Enforce Moscow standard — mandatory language classes",
+              "description": "Comply with the directive. Workers attend language standardization classes. Production suffers during the transition.",
+              "successChance": 0.8,
+              "onSuccess": {
+                "announcement": "Language classes begin. Workers attend dutifully and learn to code-switch between settlement dialect and Moscow standard. Forms are now filled out correctly. Workers speak Moscow Russian at work and settlement Russian at home. The settlement becomes bilingual within a single language. The Ministry of Linguistic Compliance issues a commendation. The workers do not understand the commendation without translation.",
+                "severity": "warning",
+                "resources": {
+                  "money": -40
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "The language classes are poorly attended. Workers see no reason to learn a dialect they consider artificial and bureaucratic. Test scores remain low. The Ministry sends an inspector who cannot understand the workers and assumes they are being deliberately uncooperative. Diplomatic relations between the settlement and Moscow deteriorate over grammar.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "resources": {
+                  "money": -60
+                },
+                "pressureModifiers": {
+                  "political": 0.15,
+                  "morale": 0.1
+                }
+              }
+            },
+            {
+              "id": "accept_evolution",
+              "label": "Accept linguistic evolution — provide translators instead",
+              "description": "Language changes. Fight the change with accommodation, not enforcement. Hire translators for official communications.",
+              "successChance": 0.5,
+              "onSuccess": {
+                "announcement": "The translation office is established with three workers who are fluent in both dialects. Official communications flow smoothly. Moscow is unaware of the accommodation — the translated forms arrive in perfect Moscow standard. The settlement's dialect continues to evolve, undisturbed. You have created a buffer zone between the system's language and the people's language. This is, you realize, what you have always done.",
+                "severity": "warning",
+                "resources": {
+                  "money": -25
+                },
+                "blat": 10
+              },
+              "onFailure": {
+                "announcement": "Moscow discovers the translation arrangement during a routine audit. The existence of translators implies the settlement does not speak standard Russian, which implies deviation from cultural norms, which implies insufficient ideological education. The Ministry of Linguistic Compliance escalates. The translators are reassigned. The language classes are mandated anyway, now with additional oversight.",
+                "severity": "critical",
+                "blackMarks": 2,
+                "resources": {
+                  "money": -50
+                },
+                "pressureModifiers": {
+                  "political": 0.2
+                }
+              }
+            },
+            {
+              "id": "document_dialect",
+              "label": "Commission a settlement dictionary — preserve the dialect as heritage",
+              "description": "Scholarly approach: document the dialect formally. Treat it as a linguistic research subject. Politically ambiguous.",
+              "successChance": 0.6,
+              "onSuccess": {
+                "announcement": "The settlement dictionary grows to 8,400 entries over two years. It is published by the Institute of Soviet Linguistics as 'Dialectal Variation in Remote Settlements: A Case Study.' The dictionary becomes a minor academic sensation. Your settlement is now a research site. Visiting linguists are easier to manage than visiting commissars. The dialect persists, now with official documentation.",
+                "severity": "warning",
+                "commendations": 1,
+                "blat": 5,
+                "resources": {
+                  "money": -15
+                }
+              },
+              "onFailure": {
+                "announcement": "The dictionary project is classified as 'unauthorized documentation of non-standard linguistic practices.' The manuscript is confiscated. The lead compiler — a retired teacher — is formally reprimanded. You receive a memo noting that 'linguistic diversity is not a research subject but an administrative deficiency.' The dialect, of course, continues regardless.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "enforce_standard",
+          "tickLimit": 48
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "deep_time_recognition",
+      "name": "Deep Time Recognition",
+      "timelineId": "world",
+      "order": 120,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2500
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "forgotten_origin"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.1
+        },
+        "pressureModifiers": {
+          "political": -0.1,
+          "morale": -0.05
+        },
+        "unlocks": [
+          "geological_timescale"
+        ],
+        "narrative": {
+          "pravdaHeadline": "SETTLEMENT SURPASSES ROMAN EMPIRE IN DURATION: 583 YEARS OF UNBROKEN ADMINISTRATIVE CONTINUITY",
+          "toast": "The settlement is now older than the Roman Empire (509 BC - 476 AD). Older than the Ottoman Empire. Older than the Chinese dynasties. The system has outlasted everything it was compared to, every historical analogy that was used to predict its collapse. The bureaucracy endures not because it is strong but because it has forgotten how to stop.",
+          "description": "At 583 years, the Soviet system has surpassed the duration of virtually every historical empire and political system. The Roman Republic and Empire lasted ~1,000 years in total, but the Western Empire fell after 503 years. The Ottoman Empire lasted 623 years. The Byzantine Empire, 1,123 years — the one historical parallel the system has not yet surpassed. The settlement now exists on a geological timescale: its foundations are older than the trees around it, its bureaucratic traditions more persistent than the soil. The transition to deep-time thinking begins: decisions are no longer measured in five-year plans but in centuries."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "second_turchin_crisis",
+      "name": "Second Turchin Crisis Wave",
+      "timelineId": "world",
+      "order": 121,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2120
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "first_turchin_wave"
+            }
+          },
+          {
+            "pressure": {
+              "domain": "political",
+              "min": 0.35
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.25,
+          "loyalty": 0.15,
+          "morale": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "STRUCTURAL RENEWAL CAMPAIGN INTENSIFIED: Second Generation of Administrative Reform Required",
+          "toast": "Turchin's 50-year oscillation manifests again. A second wave of elite overproduction collides with institutional ossification. The nomenklatura, now biologically immortal thanks to longevity treatments, has not opened a position in 40 years. An entire generation of educated, ambitious cadres has nowhere to go. The pressure builds in familiar patterns.",
+          "description": "Peter Turchin's structural-demographic cycles predict recurring instability waves every ~50 years. The second wave, hitting around 2120, is worse than the first because longevity treatments have frozen the elite hierarchy in place. In previous cycles, death eventually opened positions. Now it doesn't. The system's self-correcting mechanism — generational turnover — has been disabled by the system's own technological achievements."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "bureaucratic_speciation",
+      "name": "The Two Bureaucracies",
+      "timelineId": "world",
+      "order": 122,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2450
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "algorithmic_commissioner"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "centralPlanningEfficiency": -0.1
+        },
+        "pressureModifiers": {
+          "political": 0.15,
+          "economic": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "PARALLEL ADMINISTRATIVE STRUCTURES DETECTED: HUMAN AND ALGORITHMIC BUREAUCRACIES OPERATING SIMULTANEOUSLY",
+          "toast": "Two bureaucracies now exist in parallel: the algorithmic system that Moscow intended to replace the old apparatus, and the human apparatus that never actually disbanded. They issue contradictory directives. Workers receive two sets of quotas. The settlement obeys whichever set arrived most recently, which changes weekly.",
+          "description": "The inevitable consequence of replacing human bureaucrats with algorithmic systems: the humans do not leave. They form a shadow bureaucracy — issuing informal directives, maintaining personal networks, processing favors through channels the algorithm cannot see. The settlement now operates under dual governance: one system that is optimal and inhuman, one that is inefficient and navigable. The predsedatel must satisfy both. The paperwork has doubled. The contradictions have tripled. Kafka would recognize this immediately. So would any Soviet citizen from any century."
+        }
+      },
+      "oneShot": true
+    },
+    {
       "id": "language_divergence",
       "name": "First Language Divergence Crisis",
       "timelineId": "world",

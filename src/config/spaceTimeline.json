@@ -704,6 +704,70 @@
       "oneShot": true
     },
     {
+      "id": "deep_space_probe_lost",
+      "name": "Deep Space Probe Lost",
+      "timelineId": "space",
+      "order": 90.1,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "europa_probe" } },
+        { "year": { "min": 2200 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": { "morale": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "PROBE KONTAKT-7 CEASES TRANSMISSION: Last Signal Received From Beyond Neptune Orbit",
+          "toast": "Deep space probe Kontakt-7, launched 80 years ago toward the Kuiper Belt, has stopped transmitting. Its final signal was a status report indicating all systems nominal. Then silence. The probe did not malfunction — it simply stopped talking. Engineers cannot explain a probe that is working and not transmitting. Some systems, it appears, choose their own ending.",
+          "description": "The Kontakt-7 probe, a Soviet deep-space surveillance platform launched to survey trans-Neptunian objects, transmitted reliably for 80 years before ceasing all communication. Radioisotope power systems had 140 years of fuel remaining. Antenna alignment was nominal. The silence is not consistent with any known failure mode. The probe joins the Pioneer anomaly and Voyager silence in the growing catalog of spacecraft that simply stopped."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "exoplanet_survey_broadcast",
+      "name": "First Soviet Exoplanet Survey Broadcast",
+      "timelineId": "space",
+      "order": 90.2,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "titan_colony" } },
+        { "techLevel": { "min": 0.87 } },
+        { "year": { "min": 2300 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "pressureModifiers": { "morale": -0.1 },
+        "unlocks": ["exoplanet_data"],
+        "narrative": {
+          "pravdaHeadline": "FIRST EXOPLANET SURVEY BROADCAST RECEIVED: 47 Candidate Worlds Catalogued by Orbital Array",
+          "toast": "The Soviet Exoplanet Survey Array — a distributed interferometer spanning the inner solar system — has completed its first catalog. 47 worlds within 50 light-years show atmospheric signatures consistent with biology. None have responded to any signal. But something is breathing out there. The catalog has been filed with the Ministry of Extraterrestrial Planning. They have requested additional staff.",
+          "description": "A baseline interferometer distributed across multiple orbital platforms achieves angular resolution sufficient to directly image exoplanet atmospheres within 50 light-years. Spectroscopic analysis reveals biosignatures (O2/CH4 disequilibrium) on 47 candidate worlds. The survey does not confirm intelligent life — only chemistry that is consistent with it. The distinction is everything. The catalog becomes the basis for future interstellar probe targeting."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "long_silence",
+      "name": "The Long Silence",
+      "timelineId": "space",
+      "order": 91,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "exoplanet_survey_broadcast" } },
+        { "year": { "min": 2450 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "pressureModifiers": { "morale": 0.1 },
+        "worldStateDeltas": { "globalTension": -0.05 },
+        "narrative": {
+          "pravdaHeadline": "150 YEARS OF SETI MONITORING: NO ARTIFICIAL SIGNALS DETECTED FROM ANY CATALOGUED BIOSIGNATURE WORLD",
+          "toast": "150 years of continuous monitoring across 47 biosignature worlds. Radio, optical, gravitational wave, neutrino — every band, every protocol. Automated listeners orbiting Saturn where interference is minimal. Nothing. The chemistry of life is everywhere. The sound of intelligence is nowhere. The settlement's SETI department has been reduced to a single automated relay. The workers who remain check the feed out of habit. The habit is 150 years old.",
+          "description": "A century and a half of SETI monitoring from optimally positioned deep-space arrays — beyond Mars orbit, where solar and terrestrial radio interference is negligible. 47 worlds with biosignatures, monitored continuously across every electromagnetic band and beyond. Not one artificial signal. The Drake Equation's optimistic terms collapse one by one. Life may be common. Intelligence may be common. Communication may not be. Or the answer is simpler: they are there, and they are quiet, and quiet may be the only survival strategy the universe rewards."
+        }
+      },
+      "oneShot": true
+    },
+    {
       "id": "mars_blue_phase",
       "name": "Mars Terraforming: Blue Phase",
       "timelineId": "space",
