@@ -33,6 +33,7 @@ import BuildingStatusBadges from './scene/BuildingStatusBadges';
 import CameraController from './scene/CameraController';
 import CitizenRenderer from './scene/CitizenRenderer';
 import Environment from './scene/Environment';
+import { getLoadZone } from './scene/loadZones';
 import FireRenderer from './scene/FireRenderer';
 import FloatingText from './scene/FloatingText';
 import GhostPreview from './scene/GhostPreview';
@@ -132,7 +133,19 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
   return (
     <>
       <CameraController disabled={disableCamera} />
-      <Environment season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} techLevel={spaceVisual.techLevel} />
+      <Environment
+        season={snap.season}
+        era={snap.currentEra as import('./game/era/types').EraId}
+        techLevel={spaceVisual.techLevel}
+        {...(() => {
+          const zone = getLoadZone('earth', snap.currentEra);
+          return {
+            loadZoneHdri: zone.hdri !== 'snowy_field_1k.hdr' ? zone.hdri : undefined,
+            loadZoneShader: zone.shader,
+            marsPhase: zone.marsPhase,
+          };
+        })()}
+      />
       <SkyProgression state={spaceVisual} />
       <AlienFaunaRenderer />
       <Lighting timeOfDay={snap.timeOfDay} season={snap.season} isStorm={snap.weatherLabel === 'STORM'} isWartime={isWartime} />
