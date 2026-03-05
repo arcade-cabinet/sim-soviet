@@ -4,7 +4,10 @@
  * Renders celestial objects that appear as space milestones activate:
  *   - Sputnik orbit streak (thin arc line, brief flash)
  *   - Space station moving dot (ISS-like, slow orbit via useFrame)
+ *   - Satellite constellation (5 dots on varied orbits)
  *   - Moon disc (grows slightly after lunar landing)
+ *   - Mars point (reddish dot, interplanetary era)
+ *   - Dyson ring arc (partial torus, megastructure era)
  *   - Starfield particles (intensifies with techLevel)
  *
  * All objects are placed on a large sky sphere above the scene.
@@ -15,6 +18,9 @@ import { useFrame } from '@react-three/fiber';
 import type React from 'react';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
+
+/** Discrete sky state tiers derived from space milestone progression. */
+export type SkyState = 'pre_space' | 'orbital' | 'lunar' | 'interplanetary' | 'megastructure' | 'interstellar';
 
 /** Which space milestones have been reached — drives visual elements. */
 export interface SpaceVisualState {
@@ -28,6 +34,32 @@ export interface SpaceVisualState {
   techLevel: number;
   /** Current era ID — drives sky color shift for the_eternal. */
   era: string;
+}
+
+/**
+ * Pure function: derive discrete SkyState tier from activated space milestone IDs.
+ * Higher tiers override lower ones (interstellar > megastructure > ... > pre_space).
+ */
+export function getSpaceSkyState(activatedMilestones: string[]): SkyState {
+  const set = new Set(activatedMilestones);
+
+  if (set.has('generation_ship') || set.has('exoplanet_colony') || set.has('kardashev_two')) {
+    return 'interstellar';
+  }
+  if (set.has('oneill_cylinder') || set.has('dyson_swarm_start') || set.has('kardashev_one')) {
+    return 'megastructure';
+  }
+  if (set.has('mars_colony') || set.has('ceres_mining_station') || set.has('asteroid_mining')) {
+    return 'interplanetary';
+  }
+  if (set.has('permanent_lunar_base') || set.has('lunokhod')) {
+    return 'lunar';
+  }
+  if (set.has('salyut_station') || set.has('mir_station') || set.has('sputnik') || set.has('vostok_gagarin')) {
+    return 'orbital';
+  }
+
+  return 'pre_space';
 }
 
 const SKY_RADIUS = 180;
@@ -174,6 +206,79 @@ const Starfield: React.FC<{ intensity: number }> = ({ intensity }) => {
   );
 };
 
+/** Satellite constellation — 5 dots on varied orbits (orbital tier+). */
+const SatelliteConstellation: React.FC = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const timeRef = useRef(0);
+
+  // Pre-compute orbit parameters for 5 satellites
+  const orbits = useMemo(() => [
+    { speed: 0.12, radius: 0.78, inclination: 0.3, phase: 0 },
+    { speed: 0.09, radius: 0.72, inclination: 0.5, phase: 1.2 },
+    { speed: 0.15, radius: 0.82, inclination: 0.2, phase: 2.4 },
+    { speed: 0.07, radius: 0.68, inclination: 0.6, phase: 3.6 },
+    { speed: 0.11, radius: 0.76, inclination: 0.4, phase: 5.0 },
+  ], []);
+
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+    timeRef.current += delta;
+    const children = groupRef.current.children;
+    for (let i = 0; i < orbits.length && i < children.length; i++) {
+      const o = orbits[i];
+      const t = timeRef.current * o.speed + o.phase;
+      const r = SKY_RADIUS * o.radius;
+      children[i].position.set(
+        Math.cos(t) * r,
+        SKY_RADIUS * 0.45 + Math.sin(t * o.inclination) * 25,
+        Math.sin(t) * r,
+      );
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {orbits.map((_, i) => (
+        <mesh key={i}>
+          <sphereGeometry args={[0.4, 6, 6]} />
+          <meshBasicMaterial color="#ccddff" transparent opacity={0.6} />
+        </mesh>
+      ))}
+    </group>
+  );
+};
+
+/** Mars point — reddish dot visible in interplanetary+ tiers. */
+const MarsPoint: React.FC = () => {
+  return (
+    <mesh position={[SKY_RADIUS * 0.5, SKY_RADIUS * 0.55, SKY_RADIUS * 0.3]}>
+      <sphereGeometry args={[2.5, 12, 12]} />
+      <meshBasicMaterial color="#cc4422" transparent opacity={0.7} />
+    </mesh>
+  );
+};
+
+/** Dyson ring arc — partial torus visible in megastructure+ tiers. */
+const DysonArc: React.FC = () => {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  useFrame((_, delta) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.z += delta * 0.005;
+    }
+  });
+
+  const geometry = useMemo(() => {
+    return new THREE.TorusGeometry(SKY_RADIUS * 0.6, 0.8, 8, 64, Math.PI * 0.7);
+  }, []);
+
+  return (
+    <mesh ref={meshRef} geometry={geometry} rotation={[0.8, 0, 0]}>
+      <meshBasicMaterial color="#ffdd88" transparent opacity={0.25} side={THREE.DoubleSide} />
+    </mesh>
+  );
+};
+
 /** Main sky progression component — conditionally renders celestial overlays. */
 const SkyProgression: React.FC<{ state: SpaceVisualState }> = ({ state }) => {
   // Don't render anything if no space milestones reached and low tech
@@ -181,11 +286,25 @@ const SkyProgression: React.FC<{ state: SpaceVisualState }> = ({ state }) => {
     return null;
   }
 
+  // Derive tier for conditional rendering of advanced layers
+  const milestones: string[] = [];
+  if (state.sputnik) milestones.push('sputnik');
+  if (state.spaceStation) milestones.push('salyut_station');
+  if (state.lunarBase) milestones.push('permanent_lunar_base');
+  const tier = getSpaceSkyState(milestones);
+
+  const isOrbitalPlus = tier !== 'pre_space';
+  const isInterplanetaryPlus = tier === 'interplanetary' || tier === 'megastructure' || tier === 'interstellar';
+  const isMegastructurePlus = tier === 'megastructure' || tier === 'interstellar';
+
   return (
     <group>
       {state.sputnik && <SputnikStreak />}
       {state.spaceStation && <StationDot />}
+      {isOrbitalPlus && <SatelliteConstellation />}
       {state.lunarBase && <MoonDisc />}
+      {isInterplanetaryPlus && <MarsPoint />}
+      {isMegastructurePlus && <DysonArc />}
       {state.techLevel > 0.05 && <Starfield intensity={state.techLevel} />}
     </group>
   );
