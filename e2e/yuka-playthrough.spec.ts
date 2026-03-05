@@ -75,6 +75,10 @@ interface EngineDiagnostics extends GameSnapshotData {
   season: string;
   // Game over details
   gameOverReason: string;
+  // Timeline milestones
+  activatedWorldMilestones: string[];
+  activatedSpaceMilestones: string[];
+  totalMilestonesActivated: number;
 }
 
 async function extractFullDiagnostics(page: Page): Promise<EngineDiagnostics> {
@@ -109,6 +113,8 @@ async function extractFullDiagnostics(page: Page): Promise<EngineDiagnostics> {
       populationMode: 'unknown', totalHouseholds: 0, laborForce: 0,
       activeCrises: [], governorMode: 'unknown',
       totalTicks: 0, season: 'unknown', gameOverReason: '',
+      activatedWorldMilestones: [], activatedSpaceMilestones: [],
+      totalMilestonesActivated: 0,
     };
 
     if (!engine) return result;
@@ -196,6 +202,19 @@ async function extractFullDiagnostics(page: Page): Promise<EngineDiagnostics> {
       if (!result.gameOverReason && engine.ended) {
         // Try to get from engine callbacks
         result.gameOverReason = 'ended (reason not captured in DOM)';
+      }
+    } catch { /* */ }
+
+    // Timeline milestones
+    try {
+      const subsystems = engine.serializeSubsystems?.();
+      if (subsystems?.timelines) {
+        result.activatedWorldMilestones = subsystems.timelines
+          .find((t: any) => t.timelineId === 'world')?.activatedMilestones ?? [];
+        result.activatedSpaceMilestones = subsystems.timelines
+          .find((t: any) => t.timelineId === 'space')?.activatedMilestones ?? [];
+        result.totalMilestonesActivated = subsystems.timelines
+          .reduce((sum: number, t: any) => sum + (t.activatedMilestones?.length ?? 0), 0);
       }
     } catch { /* */ }
 
@@ -398,6 +417,14 @@ async function runPlaythrough(
 
     // Dismiss blocking modals
     await dismissAnyModal(page);
+
+    // Dismiss dissolution modal — auto-continue into freeform
+    const dissolutionModal = page.getByText('CONTINUE INTO ALTERNATE HISTORY');
+    if (await dissolutionModal.isVisible({ timeout: 100 }).catch(() => false)) {
+      await dissolutionModal.click({ force: true, timeout: 1000 }).catch(() => {});
+      await page.waitForTimeout(500);
+    }
+
     await page.waitForTimeout(1000);
   }
 
@@ -490,5 +517,76 @@ test.describe('Yuka Playthrough — Freeform Mode', () => {
     if (result.gameOverReason) console.log(`  Game over: ${result.gameOverReason}`);
 
     expect(result.finalYear).toBeGreaterThanOrEqual(START_YEAR + 10);
+  });
+});
+
+// ── Extended E2E: 1991 Divergence + 100-Year Freeform ────────────────────────
+
+test.describe('Historical Mode — 1991 divergence', () => {
+  // 76-year run needs up to 10 minutes
+  test.describe.configure({ timeout: 600_000 });
+
+  test.beforeAll(() => {
+    mkdirSync(`${SCREENSHOT_DIR}/historical-1991`, { recursive: true });
+  });
+
+  test('historical — survives to 1993 and crosses 1991 divergence', async ({ page }) => {
+    const result = await runPlaythrough(
+      page, 'historical', 'rehabilitated', 76,
+      `${SCREENSHOT_DIR}/historical-1991`,
+    );
+
+    console.log('\n  === Historical 1991 Divergence Results ===');
+    console.log(`  Survived: ${result.survived}`);
+    console.log(`  Final year: ${result.finalYear}`);
+    const finalDiag = result.captures[result.captures.length - 1]?.diagnostics;
+    if (finalDiag) {
+      console.log(`  World milestones: ${finalDiag.activatedWorldMilestones?.join(', ')}`);
+      console.log(`  Space milestones: ${finalDiag.activatedSpaceMilestones?.join(', ')}`);
+      console.log(`  Total milestones: ${finalDiag.totalMilestonesActivated}`);
+    }
+
+    // Should survive past 1991 (modal dismissed, continued in freeform)
+    expect(result.finalYear).toBeGreaterThanOrEqual(1991);
+    expect(result.survived).toBe(true);
+
+    // World milestones should include cold_war_start
+    const worldMilestones = finalDiag?.activatedWorldMilestones ?? [];
+    expect(worldMilestones).toContain('cold_war_start');
+  });
+});
+
+test.describe('Freeform Mode — 100-year narrative coherence', () => {
+  // 100-year run needs up to 10 minutes
+  test.describe.configure({ timeout: 600_000 });
+
+  test.beforeAll(() => {
+    mkdirSync(`${SCREENSHOT_DIR}/freeform-100yr`, { recursive: true });
+  });
+
+  test('freeform — 100-year run forms coherent narrative (>=5 distinct milestones)', async ({ page }) => {
+    const result = await runPlaythrough(
+      page, 'freeform', 'rehabilitated', 100,
+      `${SCREENSHOT_DIR}/freeform-100yr`,
+    );
+
+    console.log('\n  === Freeform 100-Year Narrative Coherence ===');
+    console.log(`  Survived: ${result.survived}`);
+    console.log(`  Final year: ${result.finalYear}`);
+    const finalDiag = result.captures[result.captures.length - 1]?.diagnostics;
+    if (finalDiag) {
+      console.log(`  World milestones: ${finalDiag.activatedWorldMilestones?.join(', ')}`);
+      console.log(`  Space milestones: ${finalDiag.activatedSpaceMilestones?.join(', ')}`);
+      console.log(`  Total milestones: ${finalDiag.totalMilestonesActivated}`);
+    }
+
+    // Should survive at least 60 years
+    expect(result.finalYear).toBeGreaterThanOrEqual(START_YEAR + 60);
+
+    // Narrative coherence: at least 5 distinct milestones across timelines
+    expect(finalDiag?.totalMilestonesActivated ?? 0).toBeGreaterThanOrEqual(5);
+
+    // World timeline should have fired at least cold_war_start
+    expect(finalDiag?.activatedWorldMilestones ?? []).toContain('cold_war_start');
   });
 });
