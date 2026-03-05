@@ -138,27 +138,64 @@ Two state systems coexist:
 
 ## Implementation Status
 
-### DONE (implemented, tested):
+### Core Systems (implemented, tested, 6,606 tests across 275 suites):
 - SimulationEngine decomposition (7 phase modules)
-- Building-as-Container architecture (dual population modes)
+- Building-as-Container architecture (dual population modes: entity < 200, aggregate >= 200)
 - RNG purge (seeded GameRng everywhere)
-- Yuka agent architecture (9 subpackages)
-- Demographics (dvory, births/deaths/aging, gendered labor)
-- Governor/crisis system (historical + freeform + ChaosEngine)
+- Yuka agent architecture (9 subpackages, 170+ files, 40k+ lines under `src/ai/agents/`)
+- Demographics (dvory, births/deaths/aging, gendered labor, conscription)
+- Governor/crisis system (historical + freeform modes)
 - SettlementSummary + settlement_state DB schema
 - Per-building tick, per-tile terrain tick pure functions
 - Protected building classes (government/military never demolished)
-- Classic mode removed, Soviet consequence nomenclature (rehabilitated/gulag/rasstrelyat)
+- Soviet consequence nomenclature (rehabilitated/gulag/rasstrelyat)
 
-### DONE (recently completed):
+### Allocation Engine (all 6 phases complete):
 - **Soviet Allocation Engine** — directives, posture, prestige, DB-backed tick, dvory motivation, land grants
-- **Dynamic map expansion** — grid starts small, expands via settlement tier upgrades (land grants)
-- **Autonomous collective full pipeline** — demand→site-selection→queue→build (CollectiveAgent.tickAutonomous)
+- **Dynamic map expansion** — grid starts small, expands via settlement tier upgrades
+- **Autonomous collective pipeline** — demand→site-selection→queue→build (CollectiveAgent.tickAutonomous)
+- **Government HQ** — 6 agency tabs (Gosplan, Central Committee, KGB, Military, Politburo, Reports)
+- **Gosplan allocation sliders** — two-layer distribution (baseline uniform + merit spike)
 
-### NOT YET DONE (planned, documented — see docs/plans/):
-- **Organic settlement growth** — buildings auto-placed by agent demand pipeline (docs/plans/2026-03-03-buildings-are-the-ui-design.md)
-- **Buildings-as-UI** — partially done (BuildingPanel + FactoryContent/FarmContent exist), build toolbar not yet removed
-- **Remove direct building placement** — HUD strip, directive-only player control
+### Pressure-Valve Crisis System (replaces ChaosEngine):
+- **PressureSystem** — 10 domains (food, morale, loyalty, housing, political, power, infrastructure, demographic, health, economic), dual-spread accumulation
+- **PressureCrisisEngine** — emergent crises from sustained pressure (minor warnings + major crises)
+- **ClimateEventSystem** — seasonal/weather-gated natural events
+- **BlackSwanSystem** — truly probabilistic rare events (meteor, earthquake, solar storm, nuclear accident)
+- **WorldAgent** — geopolitical context: 14 countries aggregating into 6 spheres, Khaldun/Turchin cycles, governance transitions
+- **42 Cold Branches** — dormant divergence points that activate on pressure conditions (WWIII, EU dissolution, planetary deconstruction, FTL discovery, Type V+ transcendence)
+- **Ecological collapse timeline** — 9 inevitable events from 2050 permafrost through 100K magnetic field weakening
+
+### 100,000-Year Gameplay (Kardashev sub-eras):
+- **8 Kardashev sub-eras** replacing flat "the_eternal": post_soviet (K 0.72) → planetary → solar_engineering → type_one → deconstruction → dyson_swarm → megaearth → type_two_peak (K 2.0)
+- **Post-scarcity pressure transformation** — at K >= 1.0, food/housing/power/economic zeroed; replaced by meaning, density, entropy, legacy, ennui
+- **Carrying capacity** — K formula drives expansion pressure, breach crises at 0.85K/0.95K
+- **Expanded resources** — oxygen, hydrogen, water, rareEarths, uranium, rocketFuel (gated by terrain)
+
+### Multi-Settlement + Expansion:
+- **Per-settlement agent tree** — each settlement has independent ECS world, pressure system, building grid
+- **Background ticks** — inactive settlements tick with O(1) aggregate math
+- **Viewport switching** — settlement selector, fade transitions, keyboard 1-9
+- **Cross-settlement quotas** — Moscow's demands span ALL settlements
+- **Resource transfer** — distance-based logistics cost (5% base + distance factor)
+
+### Buildings-as-UI (Phase 1-3 complete):
+- **HUD stripped** — build toolbar removed, all non-essential overlays removed, TopBar minimized with overflow menu
+- **Organic growth** — fertility-aware placement, desire-path roads (traffic → dirt → gravel → paved)
+- **Building interaction** — click→panel with production/worker data, health tinting (durability-based color shift)
+
+### Scene + Visuals:
+- **WarOverlay** — parameterized for 6 scales (skirmish → stellar), era-specific aesthetics
+- **DomeMesh** — procedural translucent R3F domes with Fresnel glass effect, 4 tint profiles
+- **Arcology merging** — buildings merge at pop > 50K, dome auto-placement at 500K
+- **Adaptive agent matrix** — 10 terrain profiles (earth variants, lunar, martian, venusian, titan, asteroid, orbital, exoplanet)
+- **MegaCity law enforcement** — KGB → Security → Sector Judges → Megacity Arbiters, crime rate model, undercity decay, iso-cubes
+
+### Timelines:
+- **Space timeline** — 39 milestones (Sputnik → interstellar), 9 settlement-creating
+- **World timeline** — 52 milestones (civilizational backbone, Turchin/Khaldun grounded)
+- **Historical divergence** — 1991 one-shot modal, freeform continuation
+- **Milestone timeline screen** — chronological record of activated milestones
 
 ## Assets
 
