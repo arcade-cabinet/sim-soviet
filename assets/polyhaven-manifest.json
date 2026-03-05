@@ -171,5 +171,157 @@
       "aerial"
     ],
     "fetchedAt": "2026-03-05T13:06:56.490Z"
+  },
+  {
+    "id": "metal_plate",
+    "type": "texture",
+    "name": "Metal Plate",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/metal_plate/",
+    "categories": [
+      "metal",
+      "floor",
+      "man made",
+      "indoor",
+      "outdoor",
+      "dirty"
+    ],
+    "fetchedAt": "2026-03-05T14:04:41.288Z"
+  },
+  {
+    "id": "rusty_metal_02",
+    "type": "texture",
+    "name": "Rusty Metal 02",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/rusty_metal_02/",
+    "categories": [
+      "metal",
+      "man made",
+      "dirty",
+      "wall",
+      "indoor",
+      "outdoor"
+    ],
+    "fetchedAt": "2026-03-05T14:04:44.961Z"
+  },
+  {
+    "id": "factory_wall",
+    "type": "texture",
+    "name": "Factory Wall",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/factory_wall/",
+    "categories": [
+      "metal",
+      "outdoor",
+      "wall",
+      "clean",
+      "roofing",
+      "man made"
+    ],
+    "fetchedAt": "2026-03-05T14:04:47.439Z"
+  },
+  {
+    "id": "blue_metal_plate",
+    "type": "texture",
+    "name": "Blue Metal Plate",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/blue_metal_plate/",
+    "categories": [
+      "metal",
+      "industrial"
+    ],
+    "fetchedAt": "2026-03-05T14:04:51.156Z"
+  },
+  {
+    "id": "corrugated_iron",
+    "type": "texture",
+    "name": "Corrugated Iron",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/corrugated_iron/",
+    "categories": [
+      "man made",
+      "roofing",
+      "wall",
+      "metal"
+    ],
+    "fetchedAt": "2026-03-05T14:07:38.591Z"
+  },
+  {
+    "id": "rust_coarse_01",
+    "type": "texture",
+    "name": "Rust Coarse 01",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/rust_coarse_01/",
+    "categories": [
+      "metal",
+      "outdoor",
+      "man made",
+      "dirty",
+      "wall"
+    ],
+    "fetchedAt": "2026-03-05T14:07:42.083Z"
+  },
+  {
+    "id": "concrete_wall_008",
+    "type": "texture",
+    "name": "Concrete Wall 008",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/concrete_wall_008/",
+    "categories": [
+      "outdoor",
+      "man made",
+      "wall",
+      "plaster-concrete",
+      "concrete",
+      "plaster"
+    ],
+    "fetchedAt": "2026-03-05T14:07:44.645Z"
+  },
+  {
+    "id": "painted_metal_shutter",
+    "type": "texture",
+    "name": "Painted Metal Shutter",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/painted_metal_shutter/",
+    "categories": [
+      "man made",
+      "metal"
+    ],
+    "fetchedAt": "2026-03-05T14:07:47.556Z"
+  },
+  {
+    "id": "metal_grate_rusty",
+    "type": "texture",
+    "name": "Metal Grate Rusty",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/metal_grate_rusty/",
+    "categories": [
+      "man made",
+      "metal",
+      "outdoor"
+    ],
+    "fetchedAt": "2026-03-05T14:07:50.827Z"
+  },
+  {
+    "id": "container_side",
+    "type": "texture",
+    "name": "Container Side",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/container_side/",
+    "categories": [
+      "man made",
+      "metal"
+    ],
+    "fetchedAt": "2026-03-05T14:07:54.365Z"
   }
 ]

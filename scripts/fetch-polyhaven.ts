@@ -227,20 +227,40 @@ async function syncFromRequirements(): Promise<void> {
     return;
   }
 
-  const req: Requirements = JSON.parse(readFileSync(reqPath, 'utf8'));
+  const req = JSON.parse(readFileSync(reqPath, 'utf8'));
   let fetched = 0;
   let skipped = 0;
   let failed = 0;
+  let updated = false;
 
   console.log('\n═══ Syncing from polyhaven-requirements.json ═══\n');
 
+  // Helper: compute md5 of a file
+  const { createHash } = await import('crypto');
+  function md5File(path: string): string {
+    return createHash('md5').update(readFileSync(path)).digest('hex');
+  }
+
   // Sync HDRIs
-  for (const entry of req.hdris) {
+  for (const entry of req.hdris ?? []) {
     if (entry.existing) { skipped++; continue; }
-    const dest = join(HDRI_DIR, `${entry.id}_${entry.resolution}.hdr`);
-    if (existsSync(dest)) { skipped++; continue; }
+    const localPath = `assets/hdri/${entry.id}_${entry.resolution ?? '1k'}.hdr`;
+    const dest = join(PROJECT_ROOT, localPath);
+    if (existsSync(dest)) {
+      // Update entry with resolved path + checksum if missing
+      if (!entry.localPath || !entry.md5) {
+        entry.localPath = localPath;
+        entry.md5 = md5File(dest);
+        updated = true;
+      }
+      skipped++;
+      continue;
+    }
     try {
-      await fetchHDRI(entry.id, entry.resolution);
+      await fetchHDRI(entry.id, entry.resolution ?? '1k');
+      entry.localPath = localPath;
+      if (existsSync(dest)) entry.md5 = md5File(dest);
+      updated = true;
       fetched++;
     } catch (err) {
       console.error(`  ✗ HDRI ${entry.id}: ${(err as Error).message}`);
@@ -248,18 +268,76 @@ async function syncFromRequirements(): Promise<void> {
     }
   }
 
-  // Sync textures (Poly Haven source only — AmbientCG ones are existing/manual)
-  for (const entry of req.textures) {
-    if (entry.existing || entry.source === 'ambientcg') { skipped++; continue; }
-    const destDir = join(TEXTURE_DIR, entry.id);
-    if (existsSync(destDir)) { skipped++; continue; }
+  // Sync textures
+  for (const entry of req.textures ?? []) {
+    if (entry.existing || entry.source === 'ambientcg') {
+      // Still resolve local path for AmbientCG textures if they exist on disk
+      const localPath = `assets/textures/terrain/${entry.id}/`;
+      const destDir = join(PROJECT_ROOT, localPath);
+      if (existsSync(destDir) && !entry.localPath) {
+        entry.localPath = localPath;
+        updated = true;
+      }
+      skipped++;
+      continue;
+    }
+    const localPath = `assets/textures/terrain/${entry.id}/`;
+    const destDir = join(PROJECT_ROOT, localPath);
+    if (existsSync(destDir)) {
+      if (!entry.localPath) { entry.localPath = localPath; updated = true; }
+      skipped++;
+      continue;
+    }
     try {
-      await fetchTexture(entry.id, entry.resolution);
+      await fetchTexture(entry.id, entry.resolution ?? '1k');
+      entry.localPath = localPath;
+      updated = true;
       fetched++;
     } catch (err) {
       console.error(`  ✗ Texture ${entry.id}: ${(err as Error).message}`);
       failed++;
     }
+  }
+
+  // Sync models (download GLB via Poly Haven files API)
+  const MODEL_DIR = join(PROJECT_ROOT, 'assets', 'models', 'polyhaven');
+  for (const entry of req.models ?? []) {
+    if (entry.existing) { skipped++; continue; }
+    const localPath = `assets/models/polyhaven/${entry.id}.glb`;
+    const dest = join(PROJECT_ROOT, localPath);
+    if (existsSync(dest)) {
+      if (!entry.localPath) { entry.localPath = localPath; updated = true; }
+      skipped++;
+      continue;
+    }
+    try {
+      console.log(`\nFetching model: ${entry.id}`);
+      const files = (await fetchJSON(`${API}/files/${entry.id}`)) as Record<string, unknown>;
+      // Models: { "gltf": { "1k": { "gltf": { url, size } } } } or { "blend": ... }
+      const gltfFiles = files.gltf as Record<string, Record<string, PHFileInfo>> | undefined;
+      const resolution = '1k';
+      const gltfFile = gltfFiles?.[resolution]?.gltf;
+      if (!gltfFile) {
+        console.error(`  No GLB/GLTF file found for ${entry.id}. Skipping.`);
+        failed++;
+        continue;
+      }
+      mkdirSync(MODEL_DIR, { recursive: true });
+      await downloadFile(gltfFile.url, dest);
+      entry.localPath = localPath;
+      if (existsSync(dest)) entry.md5 = md5File(dest);
+      updated = true;
+      fetched++;
+    } catch (err) {
+      console.error(`  ✗ Model ${entry.id}: ${(err as Error).message}`);
+      failed++;
+    }
+  }
+
+  // Write back resolved paths + checksums to requirements
+  if (updated) {
+    writeFileSync(reqPath, JSON.stringify(req, null, 2) + '\n');
+    console.log(`\n  ✓ Updated polyhaven-requirements.json with resolved paths + checksums`);
   }
 
   console.log(`\n═══ Sync complete: ${fetched} fetched, ${skipped} skipped, ${failed} failed ═══\n`);
