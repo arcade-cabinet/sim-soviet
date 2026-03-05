@@ -16,6 +16,8 @@ import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { GridCell, TerrainType } from '../engine/GridTypes';
+import type { EraId } from '../game/era/types';
+import { type TerrainVisualState, eraToTerrainState } from './terrainEraMapping';
 
 /** Seeded PRNG (mulberry32) for deterministic scatter */
 function mulberry32(seed: number) {
@@ -34,7 +36,22 @@ export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 interface TerrainGridProps {
   grid: GridCell[][];
   season?: Season;
+  /** Current historical era — shifts terrain color palette. */
+  era?: EraId;
 }
+
+/**
+ * Era-based color tint applied as a multiplicative overlay on per-vertex terrain colors.
+ * Each RGB channel is a multiplier (1.0 = no change).
+ */
+const ERA_COLOR_TINT: Record<TerrainVisualState, [number, number, number]> = {
+  snowy_taiga: [1.0, 1.0, 1.0], // pristine — no shift
+  muddy_earth: [0.85, 0.75, 0.6], // warm brown shift
+  scorched_ash: [0.5, 0.45, 0.45], // dark grey-brown desaturation
+  recovering_green: [0.85, 0.95, 0.8], // slight green boost
+  concrete_dust: [0.7, 0.68, 0.65], // grey desaturation
+  permafrost_thaw: [0.9, 0.6, 0.4], // orange-red tint
+};
 
 /** Color palette per terrain type, varying by season */
 function getTerrainColor(terrain: TerrainType, season: Season): [number, number, number] {
@@ -103,8 +120,9 @@ function getTerrainColor(terrain: TerrainType, season: Season): [number, number,
 /**
  * Build a PlaneGeometry with per-vertex colors and elevation from grid data.
  * Each tile is a 1x1 quad on the XZ plane, offset by cell elevation.
+ * Era tint is applied as a multiplicative overlay on the season colors.
  */
-function buildTerrainGeometry(grid: GridCell[][], season: Season): THREE.BufferGeometry {
+function buildTerrainGeometry(grid: GridCell[][], season: Season, eraTint: [number, number, number] = [1, 1, 1]): THREE.BufferGeometry {
   const positions: number[] = [];
   const indices: number[] = [];
   const colors: number[] = [];
@@ -119,7 +137,10 @@ function buildTerrainGeometry(grid: GridCell[][], season: Season): THREE.BufferG
       if (!cell) continue;
 
       const y = cell.z * 0.5; // elevation
-      const [cr, cg, cb] = getTerrainColor(cell.terrain, season);
+      const [br, bg, bb] = getTerrainColor(cell.terrain, season);
+      const cr = br * eraTint[0];
+      const cg = bg * eraTint[1];
+      const cb = bb * eraTint[2];
 
       // Quad corners (XZ plane, Y = elevation)
       // v0---v1
@@ -495,9 +516,12 @@ const ScatterInstance: React.FC<ScatterInstanceProps> = ({
 // ── Component ───────────────────────────────────────────────────────────────
 
 /** Renders the terrain grid with per-vertex colors and GPU-instanced procedural scatter. */
-const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer' }) => {
-  // Build terrain geometry with per-vertex colors
-  const terrainGeometry = useMemo(() => buildTerrainGeometry(grid, season), [grid, season]);
+const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer', era = 'revolution' }) => {
+  // Compute era-based color tint for per-vertex terrain colors
+  const eraTint = ERA_COLOR_TINT[eraToTerrainState(era)];
+
+  // Build terrain geometry with per-vertex colors + era tint
+  const terrainGeometry = useMemo(() => buildTerrainGeometry(grid, season, eraTint), [grid, season, eraTint]);
 
   // Season-dependent colors as THREE.Color objects
   const canopyColor = useMemo(() => new THREE.Color(getCanopyColor(season)), [season]);

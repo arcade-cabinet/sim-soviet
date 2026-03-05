@@ -120,9 +120,9 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
   return (
     <>
       <CameraController disabled={disableCamera} />
-      <Environment season={snap.season} />
+      <Environment season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} />
       <Lighting timeOfDay={snap.timeOfDay} season={snap.season} isStorm={snap.weatherLabel === 'STORM'} />
-      <TerrainGrid grid={ecsGrid} season={snap.season} />
+      <TerrainGrid grid={ecsGrid} season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} />
       <BuildingRenderer
         buildings={buildings}
         settlementTier={snap.settlementTier as SettlementTier}

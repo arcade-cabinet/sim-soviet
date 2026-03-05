@@ -8,16 +8,27 @@
  * - useTexture from drei for loading snow/grass textures
  * - <mesh> with <sphereGeometry> for perimeter hills
  *
+ * Era-driven terrain: Ground textures swap based on the current historical era,
+ * providing 6 distinct visual states across the 8 game eras.
+ *
  * HDRI credits: Poly Haven (CC0) — snowy_field, winter_sky, snowy_park_01
+ * Terrain textures: AmbientCG (CC0)
  */
 
 import { Environment as DreiEnvironment, Sky, useTexture } from '@react-three/drei';
 import type React from 'react';
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import type { EraId } from '../game/era/types';
 import { getCurrentGridSize } from '../engine/GridTypes';
 import { assetUrl } from '../utils/assetPath';
 import type { Season } from './TerrainGrid';
+import {
+  TERRAIN_HILL_COLORS,
+  TERRAIN_STATE_COLORS,
+  eraToTerrainState,
+  getTerrainTextureFiles,
+} from './terrainEraMapping';
 
 const GROUND_SIZE = 400;
 const GROUND_Y = -0.05;
@@ -68,32 +79,6 @@ function getSkyParams(season: Season) {
   }
 }
 
-/** Ground tint per season */
-function getGroundColor(season: Season): string {
-  switch (season) {
-    case 'winter':
-      return '#e6ebf2'; // cold white (0.9, 0.92, 0.95)
-    case 'autumn':
-      return '#a69980'; // muddy brown-gray (0.65, 0.60, 0.50)
-    case 'spring':
-      return '#8ca673'; // muted fresh green (0.55, 0.65, 0.45)
-    default: // summer
-      return '#809466'; // subdued green (0.50, 0.58, 0.40)
-  }
-}
-
-/** Hill color per season */
-function getHillColor(season: Season): string {
-  switch (season) {
-    case 'winter':
-      return '#d1d6e0'; // (0.82, 0.84, 0.88)
-    case 'autumn':
-      return '#736647'; // (0.45, 0.40, 0.28)
-    default:
-      return '#526b38'; // (0.32, 0.42, 0.22)
-  }
-}
-
 /** Hill definitions — positions and scales for perimeter framing */
 const HILLS = [
   { x: -15, z: -25, sx: 20, sy: 4, sz: 12 },
@@ -111,20 +96,16 @@ const HILLS = [
   { x: -15, z: 45, sx: 14, sy: 3, sz: 16 },
 ];
 
-/** PBR Ground plane with tiled snow/grass textures */
-const Ground: React.FC<{ season: Season }> = ({ season }) => {
+/** PBR Ground plane with era-driven tiled textures. */
+const Ground: React.FC<{ season: Season; era: EraId }> = ({ season, era }) => {
   const center = getCurrentGridSize() / 2;
-  const useSnow = season === 'winter' || season === 'autumn';
+  const terrainState = eraToTerrainState(era);
+  const textureFiles = getTerrainTextureFiles(terrainState);
 
-  const colorFile = useSnow
-    ? assetUrl('assets/textures/snow/Snow003_1K-JPG_Color.jpg')
-    : assetUrl('assets/textures/grass/Grass001_1K-JPG_Color.jpg');
-  const normalFile = useSnow
-    ? assetUrl('assets/textures/snow/Snow003_1K-JPG_NormalGL.jpg')
-    : assetUrl('assets/textures/grass/Grass001_1K-JPG_NormalGL.jpg');
-  const roughFile = useSnow
-    ? assetUrl('assets/textures/snow/Snow003_1K-JPG_Roughness.jpg')
-    : assetUrl('assets/textures/grass/Grass001_1K-JPG_Roughness.jpg');
+  // Era-driven PBR textures from AmbientCG terrain packs
+  const colorFile = assetUrl(textureFiles.color);
+  const normalFile = assetUrl(textureFiles.normal);
+  const roughFile = assetUrl(textureFiles.roughness);
 
   const [colorMap, normalMap, roughnessMap] = useTexture([colorFile, normalFile, roughFile]);
 
@@ -137,6 +118,9 @@ const Ground: React.FC<{ season: Season }> = ({ season }) => {
     }
   }, [colorMap, normalMap, roughnessMap]);
 
+  // Blend era color tint with season color for visual coherence
+  const groundColor = TERRAIN_STATE_COLORS[terrainState];
+
   return (
     <mesh position={[center, GROUND_Y, center]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[GROUND_SIZE, GROUND_SIZE, 4, 4]} />
@@ -144,7 +128,7 @@ const Ground: React.FC<{ season: Season }> = ({ season }) => {
         map={colorMap}
         normalMap={normalMap}
         roughnessMap={roughnessMap}
-        color={getGroundColor(season)}
+        color={groundColor}
         metalness={0}
         roughness={1}
       />
@@ -154,14 +138,17 @@ const Ground: React.FC<{ season: Season }> = ({ season }) => {
 
 interface EnvironmentProps {
   season?: Season;
+  /** Current historical era — drives terrain texture selection. */
+  era?: EraId;
 }
 
 /** Renders the procedural sky, HDRI image-based lighting, PBR ground plane, and perimeter hills. */
-const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
+const Environment: React.FC<EnvironmentProps> = ({ season = 'winter', era = 'revolution' }) => {
   const center = getCurrentGridSize() / 2;
   const skyParams = getSkyParams(season);
   const hdriFile = getHdriFile(season);
-  const hillColor = getHillColor(season);
+  const terrainState = eraToTerrainState(era);
+  const hillColor = TERRAIN_HILL_COLORS[terrainState];
 
   // Pre-compute hill positions (offset by grid center)
   const hillsData = useMemo(
@@ -188,10 +175,10 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
       {/* HDRI for image-based lighting (IBL) */}
       <DreiEnvironment files={hdriFile} />
 
-      {/* PBR ground plane */}
-      <Ground season={season} />
+      {/* PBR ground plane — era-driven textures */}
+      <Ground season={season} era={era} />
 
-      {/* Perimeter hills */}
+      {/* Perimeter hills — era-driven colors */}
       {hillsData.map((hill, i) => (
         <mesh key={i} position={hill.position} scale={hill.scale}>
           <sphereGeometry args={[0.5, 8, 8]} />
