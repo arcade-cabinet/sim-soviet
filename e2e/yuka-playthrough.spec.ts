@@ -33,7 +33,11 @@ import {
 test.describe.configure({ timeout: 300_000 });
 
 const SCREENSHOT_DIR = 'e2e/screenshots/playthrough';
+const MILESTONE_DIR = 'test-results/screenshots';
 const START_YEAR = 1917;
+
+/** Year markers that trigger milestone screenshots when crossed. */
+const YEAR_MARKERS = [1991, 2100, 2500];
 
 // ── Deep engine diagnostics extracted from window.__simEngine ────────────
 
@@ -327,13 +331,65 @@ async function startGameWithConfig(
 
 // ── Playthrough runner ──────────────────────────────────────────────────
 
+interface MilestoneCapture {
+  milestoneId: string;
+  year: number;
+  screenshotPath: string;
+  trigger: 'milestone' | 'year_marker' | 'divergence' | 'narrative' | 'end_of_run';
+}
+
 interface PlaythroughResult {
   survived: boolean;
   finalYear: number;
   finalPop: number;
   captures: CaptureResult[];
+  milestoneCaptures: MilestoneCapture[];
   gameOverYear?: number;
   gameOverReason?: string;
+}
+
+/**
+ * Capture a milestone screenshot into the milestone directory.
+ * Returns a MilestoneCapture record for tracking.
+ */
+async function captureMilestoneScreenshot(
+  page: Page,
+  milestoneDir: string,
+  milestoneId: string,
+  year: number,
+  trigger: MilestoneCapture['trigger'],
+  seqNum: number,
+): Promise<MilestoneCapture> {
+  const slug = milestoneId.replace(/[^a-z0-9_-]/gi, '-').toLowerCase();
+  const screenshotPath = `${milestoneDir}/milestone-${slug}-${year}.png`;
+
+  // Inject milestone label overlay for context
+  await page.evaluate(
+    ({ id, yr, trig }) => {
+      document.getElementById('e2e-milestone-overlay')?.remove();
+      const overlay = document.createElement('div');
+      overlay.id = 'e2e-milestone-overlay';
+      Object.assign(overlay.style, {
+        position: 'fixed', bottom: '30px', right: '10px', zIndex: '10001',
+        background: 'rgba(198,40,40,0.9)', color: '#fbc02d',
+        fontFamily: 'monospace', fontSize: '13px', padding: '6px 12px',
+        fontWeight: 'bold', letterSpacing: '1px',
+        border: '2px solid #fbc02d',
+      });
+      overlay.textContent = `MILESTONE: ${id} [${yr}] (${trig})`;
+      document.body.appendChild(overlay);
+    },
+    { id: milestoneId, yr: year, trig: trigger },
+  );
+
+  await page.screenshot({ path: screenshotPath });
+
+  // Clean up overlay
+  await page.evaluate(() => document.getElementById('e2e-milestone-overlay')?.remove());
+
+  console.log(`  [MILESTONE] ${trigger}: ${milestoneId} year=${year} → ${screenshotPath}`);
+
+  return { milestoneId, year, screenshotPath, trigger };
 }
 
 async function runPlaythrough(
@@ -343,14 +399,22 @@ async function runPlaythrough(
   targetYears: number,
   screenshotDir: string,
 ): Promise<PlaythroughResult> {
+  const milestoneDir = MILESTONE_DIR;
   mkdirSync(screenshotDir, { recursive: true });
+  mkdirSync(milestoneDir, { recursive: true });
 
   await startGameWithConfig(page, mode, consequence);
   await enableAutopilot(page);
   await setTurboSpeed(page);
 
   const captures: CaptureResult[] = [];
+  const milestoneCaptures: MilestoneCapture[] = [];
   let seqNum = 0;
+
+  // Track which milestones and year markers have already been screenshotted
+  const capturedMilestones = new Set<string>();
+  const capturedYearMarkers = new Set<number>();
+  let divergenceCaptured = false;
 
   // Capture every 2 years for fine-grained diagnostics
   const captureInterval = 2;
@@ -367,20 +431,72 @@ async function runPlaythrough(
   while (Date.now() < deadline) {
     const currentYear = await getGameYear(page);
 
+    // ── Milestone screenshot: check for newly activated milestones ──
+    try {
+      const diag = await extractFullDiagnostics(page);
+
+      // Check for new space milestones (capture first one)
+      const allMilestones = [
+        ...(diag.activatedSpaceMilestones ?? []),
+        ...(diag.activatedWorldMilestones ?? []),
+      ];
+      for (const msId of allMilestones) {
+        if (!capturedMilestones.has(msId)) {
+          capturedMilestones.add(msId);
+          const mc = await captureMilestoneScreenshot(
+            page, milestoneDir, msId, diag.year, 'milestone', seqNum++,
+          );
+          milestoneCaptures.push(mc);
+        }
+      }
+
+      // Check for year markers (1991, 2100, 2500)
+      for (const marker of YEAR_MARKERS) {
+        if (currentYear >= marker && !capturedYearMarkers.has(marker)) {
+          capturedYearMarkers.add(marker);
+          const label = marker === 1991 ? 'divergence-1991' : `year-${marker}`;
+          const trigger: MilestoneCapture['trigger'] = marker === 1991 ? 'divergence' : 'year_marker';
+          const mc = await captureMilestoneScreenshot(
+            page, milestoneDir, label, currentYear, trigger, seqNum++,
+          );
+          milestoneCaptures.push(mc);
+        }
+      }
+
+      // Check for narrative event modal (visible choices indicate NarrativeEvent)
+      const narrativeVisible = await page.getByText('IGNORE (AUTO-RESOLVE)').isVisible({ timeout: 50 }).catch(() => false);
+      if (narrativeVisible && !capturedMilestones.has(`narrative-${currentYear}`)) {
+        capturedMilestones.add(`narrative-${currentYear}`);
+        const mc = await captureMilestoneScreenshot(
+          page, milestoneDir, `narrative-event-${currentYear}`, currentYear, 'narrative', seqNum++,
+        );
+        milestoneCaptures.push(mc);
+      }
+    } catch {
+      // Non-critical: milestone capture failure shouldn't stop the run
+    }
+
     // Game over?
     if (await isGameOverVisible(page)) {
       const cap = await captureFullSnapshot(page, screenshotDir, 'game-over', seqNum++);
       captures.push(cap);
       console.log(`  [${mode}] GAME OVER year=${cap.diagnostics.year} pop=${cap.diagnostics.population} reason=${cap.diagnostics.gameOverReason}`);
 
+      // End-of-run milestone screenshot
+      const mc = await captureMilestoneScreenshot(
+        page, milestoneDir, 'end-of-run', cap.diagnostics.year, 'end_of_run', seqNum++,
+      );
+      milestoneCaptures.push(mc);
+
       // Write full run summary
-      writeSummary(screenshotDir, mode, captures);
+      writeSummary(screenshotDir, mode, captures, milestoneCaptures);
 
       return {
         survived: false,
         finalYear: cap.diagnostics.year,
         finalPop: cap.diagnostics.population,
         captures,
+        milestoneCaptures,
         gameOverYear: cap.diagnostics.year,
         gameOverReason: cap.diagnostics.gameOverReason,
       };
@@ -405,13 +521,20 @@ async function runPlaythrough(
       captures.push(cap);
       console.log(`  [${mode}] FINAL year=${cap.diagnostics.year} pop=${cap.diagnostics.population}`);
 
-      writeSummary(screenshotDir, mode, captures);
+      // End-of-run milestone screenshot
+      const mc = await captureMilestoneScreenshot(
+        page, milestoneDir, 'end-of-run', cap.diagnostics.year, 'end_of_run', seqNum++,
+      );
+      milestoneCaptures.push(mc);
+
+      writeSummary(screenshotDir, mode, captures, milestoneCaptures);
 
       return {
         survived: cap.diagnostics.population > 0,
         finalYear: cap.diagnostics.year,
         finalPop: cap.diagnostics.population,
         captures,
+        milestoneCaptures,
       };
     }
 
@@ -421,6 +544,14 @@ async function runPlaythrough(
     // Dismiss dissolution modal — auto-continue into freeform
     const dissolutionModal = page.getByText('CONTINUE INTO ALTERNATE HISTORY');
     if (await dissolutionModal.isVisible({ timeout: 100 }).catch(() => false)) {
+      // Capture the dissolution moment before dismissing
+      if (!divergenceCaptured) {
+        divergenceCaptured = true;
+        const mc = await captureMilestoneScreenshot(
+          page, milestoneDir, 'ussr-dissolution-modal', currentYear, 'divergence', seqNum++,
+        );
+        milestoneCaptures.push(mc);
+      }
       await dissolutionModal.click({ force: true, timeout: 1000 }).catch(() => {});
       await page.waitForTimeout(500);
     }
@@ -433,21 +564,35 @@ async function runPlaythrough(
   captures.push(cap);
   console.log(`  [${mode}] TIMEOUT year=${cap.diagnostics.year} pop=${cap.diagnostics.population}`);
 
-  writeSummary(screenshotDir, mode, captures);
+  // End-of-run milestone screenshot
+  const mc = await captureMilestoneScreenshot(
+    page, milestoneDir, 'end-of-run', cap.diagnostics.year, 'end_of_run', seqNum++,
+  );
+  milestoneCaptures.push(mc);
+
+  writeSummary(screenshotDir, mode, captures, milestoneCaptures);
 
   return {
     survived: cap.diagnostics.population > 0 && !cap.diagnostics.isGameOver,
     finalYear: cap.diagnostics.year,
     finalPop: cap.diagnostics.population,
     captures,
+    milestoneCaptures,
   };
 }
 
 /** Write a summary JSON with all capture data for post-run analysis. */
-function writeSummary(dir: string, mode: string, captures: CaptureResult[]): void {
+function writeSummary(dir: string, mode: string, captures: CaptureResult[], milestoneCaptures: MilestoneCapture[] = []): void {
   const summary = {
     mode,
     captureCount: captures.length,
+    milestoneCaptureCount: milestoneCaptures.length,
+    milestones: milestoneCaptures.map((mc) => ({
+      milestoneId: mc.milestoneId,
+      year: mc.year,
+      trigger: mc.trigger,
+      screenshot: mc.screenshotPath,
+    })),
     timeline: captures.map((c) => ({
       year: c.diagnostics.year,
       population: c.diagnostics.population,
@@ -490,6 +635,10 @@ test.describe('Yuka Playthrough — Historical Mode', () => {
     console.log(`  Final year: ${result.finalYear}`);
     console.log(`  Final pop: ${result.finalPop}`);
     console.log(`  Captures: ${result.captures.length}`);
+    console.log(`  Milestone captures: ${result.milestoneCaptures.length}`);
+    for (const mc of result.milestoneCaptures) {
+      console.log(`    ${mc.trigger}: ${mc.milestoneId} (year ${mc.year})`);
+    }
     if (result.gameOverReason) console.log(`  Game over: ${result.gameOverReason}`);
 
     // Autopilot + rehabilitated should survive at least 10 years.
@@ -514,6 +663,10 @@ test.describe('Yuka Playthrough — Freeform Mode', () => {
     console.log(`  Final year: ${result.finalYear}`);
     console.log(`  Final pop: ${result.finalPop}`);
     console.log(`  Captures: ${result.captures.length}`);
+    console.log(`  Milestone captures: ${result.milestoneCaptures.length}`);
+    for (const mc of result.milestoneCaptures) {
+      console.log(`    ${mc.trigger}: ${mc.milestoneId} (year ${mc.year})`);
+    }
     if (result.gameOverReason) console.log(`  Game over: ${result.gameOverReason}`);
 
     expect(result.finalYear).toBeGreaterThanOrEqual(START_YEAR + 10);
@@ -539,6 +692,10 @@ test.describe('Historical Mode — 1991 divergence', () => {
     console.log('\n  === Historical 1991 Divergence Results ===');
     console.log(`  Survived: ${result.survived}`);
     console.log(`  Final year: ${result.finalYear}`);
+    console.log(`  Milestone captures: ${result.milestoneCaptures.length}`);
+    for (const mc of result.milestoneCaptures) {
+      console.log(`    ${mc.trigger}: ${mc.milestoneId} (year ${mc.year})`);
+    }
     const finalDiag = result.captures[result.captures.length - 1]?.diagnostics;
     if (finalDiag) {
       console.log(`  World milestones: ${finalDiag.activatedWorldMilestones?.join(', ')}`);
@@ -553,6 +710,10 @@ test.describe('Historical Mode — 1991 divergence', () => {
     // World milestones should include cold_war_start
     const worldMilestones = finalDiag?.activatedWorldMilestones ?? [];
     expect(worldMilestones).toContain('cold_war_start');
+
+    // At least 3 milestone screenshots captured during the 76-year run
+    // (cold_war_start + 1991 divergence + end_of_run at minimum)
+    expect(result.milestoneCaptures.length).toBeGreaterThanOrEqual(3);
   });
 });
 
@@ -573,6 +734,10 @@ test.describe('Freeform Mode — 100-year narrative coherence', () => {
     console.log('\n  === Freeform 100-Year Narrative Coherence ===');
     console.log(`  Survived: ${result.survived}`);
     console.log(`  Final year: ${result.finalYear}`);
+    console.log(`  Milestone captures: ${result.milestoneCaptures.length}`);
+    for (const mc of result.milestoneCaptures) {
+      console.log(`    ${mc.trigger}: ${mc.milestoneId} (year ${mc.year})`);
+    }
     const finalDiag = result.captures[result.captures.length - 1]?.diagnostics;
     if (finalDiag) {
       console.log(`  World milestones: ${finalDiag.activatedWorldMilestones?.join(', ')}`);
@@ -588,5 +753,8 @@ test.describe('Freeform Mode — 100-year narrative coherence', () => {
 
     // World timeline should have fired at least cold_war_start
     expect(finalDiag?.activatedWorldMilestones ?? []).toContain('cold_war_start');
+
+    // At least 3 milestone screenshots captured during the 100-year run
+    expect(result.milestoneCaptures.length).toBeGreaterThanOrEqual(3);
   });
 });
