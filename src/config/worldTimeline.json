@@ -7,13 +7,24 @@
       "name": "Cold War Begins",
       "timelineId": "world",
       "order": 10,
-      "conditions": { "and": [
-        { "year": { "min": 1947 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1947
+            }
+          }
+        ]
+      },
       "sustainedTicks": 1,
       "effects": {
-        "worldStateDeltas": { "globalTension": 0.3, "borderThreat": 0.2 },
-        "pressureModifiers": { "political": 0.1 },
+        "worldStateDeltas": {
+          "globalTension": 0.3,
+          "borderThreat": 0.2
+        },
+        "pressureModifiers": {
+          "political": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "IMPERIALIST AGGRESSION: Western Powers Form Anti-Soviet Alliance",
           "toast": "The wartime alliance crumbles. Churchill's 'Iron Curtain' speech signals decades of confrontation. Moscow increases vigilance quotas.",
@@ -27,13 +38,23 @@
       "name": "Chinese Communist Revolution",
       "timelineId": "world",
       "order": 12,
-      "conditions": { "and": [
-        { "year": { "min": 1949 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1949
+            }
+          }
+        ]
+      },
       "sustainedTicks": 1,
       "effects": {
-        "worldStateDeltas": { "globalTension": 0.1 },
-        "pressureModifiers": { "morale": -0.05 },
+        "worldStateDeltas": {
+          "globalTension": 0.1
+        },
+        "pressureModifiers": {
+          "morale": -0.05
+        },
         "narrative": {
           "pravdaHeadline": "PEOPLE'S REPUBLIC OF CHINA PROCLAIMED: World Revolution Advances",
           "toast": "Mao Zedong proclaims the People's Republic. 540 million people join the socialist camp. Moscow celebrates. Quietly, the competition for communist leadership begins.",
@@ -47,14 +68,29 @@
       "name": "Cuban Missile Crisis",
       "timelineId": "world",
       "order": 15,
-      "conditions": { "and": [
-        { "year": { "min": 1962 } },
-        { "worldState": { "key": "globalTension", "min": 0.3 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1962
+            }
+          },
+          {
+            "worldState": {
+              "key": "globalTension",
+              "min": 0.3
+            }
+          }
+        ]
+      },
       "sustainedTicks": 1,
       "effects": {
-        "worldStateDeltas": { "globalTension": 0.15 },
-        "pressureModifiers": { "morale": 0.1 },
+        "worldStateDeltas": {
+          "globalTension": 0.15
+        },
+        "pressureModifiers": {
+          "morale": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "NUCLEAR BRINKMANSHIP: World Holds Breath as Superpowers Face Off Over Cuba",
           "toast": "For 13 days in October, humanity is 90 minutes from nuclear annihilation. Both sides step back. Détente becomes thinkable.",
@@ -68,13 +104,24 @@
       "name": "Sino-Soviet Split",
       "timelineId": "world",
       "order": 14,
-      "conditions": { "and": [
-        { "year": { "min": 1960 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1960
+            }
+          }
+        ]
+      },
       "sustainedTicks": 1,
       "effects": {
-        "worldStateDeltas": { "globalTension": 0.05, "borderThreat": 0.15 },
-        "pressureModifiers": { "political": 0.05 },
+        "worldStateDeltas": {
+          "globalTension": 0.05,
+          "borderThreat": 0.15
+        },
+        "pressureModifiers": {
+          "political": 0.05
+        },
         "narrative": {
           "pravdaHeadline": "IDEOLOGICAL DISAGREEMENTS WITH CHINA: Soviet-Chinese Friendship Endures (Official Statement)",
           "toast": "The world's two largest communist nations have fundamental disagreements about revolutionary theory. Border incidents multiply. The friendship is formally unshaken. Nobody believes this.",
@@ -88,14 +135,30 @@
       "name": "Détente",
       "timelineId": "world",
       "order": 20,
-      "conditions": { "and": [
-        { "year": { "min": 1972 } },
-        { "worldState": { "key": "globalTension", "min": 0.3 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1972
+            }
+          },
+          {
+            "worldState": {
+              "key": "globalTension",
+              "min": 0.3
+            }
+          }
+        ]
+      },
       "sustainedTicks": 1,
       "effects": {
-        "worldStateDeltas": { "globalTension": -0.15, "tradeAccess": 0.15 },
-        "pressureModifiers": { "economic": -0.05 },
+        "worldStateDeltas": {
+          "globalTension": -0.15,
+          "tradeAccess": 0.15
+        },
+        "pressureModifiers": {
+          "economic": -0.05
+        },
         "narrative": {
           "pravdaHeadline": "PEACEFUL COEXISTENCE ADVANCES: SALT Treaty Signed, Trade Expands",
           "toast": "The SALT arms limitation treaty is signed. Grain imports from America begin. Moscow's tension eases. The settlement's quota pressure does not.",
@@ -109,13 +172,23 @@
       "name": "Oil Boom (Petrodollar Surge)",
       "timelineId": "world",
       "order": 22,
-      "conditions": { "and": [
-        { "year": { "min": 1973 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1973
+            }
+          }
+        ]
+      },
       "sustainedTicks": 1,
       "effects": {
-        "worldStateDeltas": { "commodityIndex": 0.4 },
-        "pressureModifiers": { "economic": -0.1 },
+        "worldStateDeltas": {
+          "commodityIndex": 0.4
+        },
+        "pressureModifiers": {
+          "economic": -0.1
+        },
         "narrative": {
           "pravdaHeadline": "OPEC EMBARGO ENRICHES SOCIALIST CAMP: Soviet Oil Revenues Surge",
           "toast": "The 1973 OPEC oil embargo quadruples crude prices. Soviet hard currency earnings explode. Moscow uses petrodollars to fund everything from grain imports to space programs. This will not last.",
@@ -129,14 +202,29 @@
       "name": "Oil Price Collapse",
       "timelineId": "world",
       "order": 28,
-      "conditions": { "and": [
-        { "year": { "min": 1986 } },
-        { "worldState": { "key": "commodityIndex", "min": 0.2 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1986
+            }
+          },
+          {
+            "worldState": {
+              "key": "commodityIndex",
+              "min": 0.2
+            }
+          }
+        ]
+      },
       "sustainedTicks": 1,
       "effects": {
-        "worldStateDeltas": { "commodityIndex": -0.5 },
-        "pressureModifiers": { "economic": 0.2 },
+        "worldStateDeltas": {
+          "commodityIndex": -0.5
+        },
+        "pressureModifiers": {
+          "economic": 0.2
+        },
         "narrative": {
           "pravdaHeadline": "TEMPORARY MARKET FLUCTUATION: Oil Prices Adjust Downward",
           "toast": "Saudi Arabia floods the market. Oil drops from $30 to $10/barrel. Soviet hard currency revenue collapses by 50%. The word 'temporary' does a lot of work in the official statement.",
@@ -150,14 +238,30 @@
       "name": "Permafrost Infrastructure Crisis",
       "timelineId": "world",
       "order": 40,
-      "conditions": { "and": [
-        { "year": { "min": 2025 } },
-        { "worldState": { "key": "climateTrend", "min": 0.2 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2025
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.2
+            }
+          }
+        ]
+      },
       "sustainedTicks": 12,
       "effects": {
-        "worldStateDeltas": { "climateTrend": 0.1 },
-        "pressureModifiers": { "infrastructure": 0.25, "economic": 0.15 },
+        "worldStateDeltas": {
+          "climateTrend": 0.1
+        },
+        "pressureModifiers": {
+          "infrastructure": 0.25,
+          "economic": 0.15
+        },
         "narrative": {
           "pravdaHeadline": "NORTHERN INFRASTRUCTURE REQUIRES MAINTENANCE: Ministry of Permafrost Affairs Established",
           "toast": "65% of Russia is built on frozen ground. It is thawing. 40% of northern infrastructure already damaged. $250 billion at risk. The Ministry of Permafrost Affairs has been created to manage the situation. They have requested a larger office.",
@@ -171,13 +275,23 @@
       "name": "Peak Phosphorus",
       "timelineId": "world",
       "order": 42,
-      "conditions": { "and": [
-        { "year": { "min": 2034 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2034
+            }
+          }
+        ]
+      },
       "sustainedTicks": 1,
       "effects": {
-        "worldStateDeltas": { "commodityIndex": 0.2 },
-        "pressureModifiers": { "food": 0.1 },
+        "worldStateDeltas": {
+          "commodityIndex": 0.2
+        },
+        "pressureModifiers": {
+          "food": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "FERTILIZER PRODUCTION TARGETS REVISED: Ministry of Agriculture Adapts to Resource Constraints",
           "toast": "Phosphate rock — essential for all modern agriculture — reaches peak extraction. 85% of remaining reserves are in Morocco. The Five-Year Agricultural Intensification Plan must now account for declining fertilizer availability.",
@@ -191,15 +305,32 @@
       "name": "AI Gosplan Prototype",
       "timelineId": "world",
       "order": 44,
-      "conditions": { "and": [
-        { "year": { "min": 2035 } },
-        { "techLevel": { "min": 0.6 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2035
+            }
+          },
+          {
+            "techLevel": {
+              "min": 0.6
+            }
+          }
+        ]
+      },
       "sustainedTicks": 12,
       "effects": {
-        "worldStateDeltas": { "techLevel": 0.05 },
-        "pressureModifiers": { "economic": -0.1, "political": 0.05 },
-        "unlocks": ["ai_planning"],
+        "worldStateDeltas": {
+          "techLevel": 0.05
+        },
+        "pressureModifiers": {
+          "economic": -0.1,
+          "political": 0.05
+        },
+        "unlocks": [
+          "ai_planning"
+        ],
         "narrative": {
           "pravdaHeadline": "ALGORITHMIC PLANNING COMMISSION ESTABLISHED: Machine Intelligence Serves the Plan",
           "toast": "The calculation problem that defeated Gosplan — coordinating 25 million products across 300 million people — is solved by artificial intelligence. Planning efficiency increases 30%. Corruption detection increases 50%. The bureaucrats are not pleased.",
@@ -213,13 +344,26 @@
       "name": "Demographic Inversion",
       "timelineId": "world",
       "order": 46,
-      "conditions": { "and": [
-        { "year": { "min": 2040 } },
-        { "population": { "min": 100000 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2040
+            }
+          },
+          {
+            "population": {
+              "min": 100000
+            }
+          }
+        ]
+      },
       "sustainedTicks": 6,
       "effects": {
-        "pressureModifiers": { "demographic": 0.2, "economic": 0.1 },
+        "pressureModifiers": {
+          "demographic": 0.2,
+          "economic": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "POPULATION STRUCTURE ADJUSTMENTS: Labor Allocation Optimized for Demographic Transition",
           "toast": "Retirees outnumber workers. The pension system, designed for a growing population, cannot fund itself. Labor shortage in every sector. The Five-Year Plan has not accounted for the absence of young hands.",
@@ -233,15 +377,31 @@
       "name": "Fusion Energy Breakthrough",
       "timelineId": "world",
       "order": 50,
-      "conditions": { "and": [
-        { "year": { "min": 2050 } },
-        { "techLevel": { "min": 0.65 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2050
+            }
+          },
+          {
+            "techLevel": {
+              "min": 0.65
+            }
+          }
+        ]
+      },
       "sustainedTicks": 24,
       "effects": {
-        "worldStateDeltas": { "techLevel": 0.08 },
-        "pressureModifiers": { "power": -0.2 },
-        "unlocks": ["fusion_power"],
+        "worldStateDeltas": {
+          "techLevel": 0.08
+        },
+        "pressureModifiers": {
+          "power": -0.2
+        },
+        "unlocks": [
+          "fusion_power"
+        ],
         "narrative": {
           "pravdaHeadline": "FUSION REACTOR ACHIEVES NET ENERGY: New Era of Power Production Begins",
           "toast": "After decades of 'always 30 years away,' tokamak fusion achieves sustained net energy output. Deployment will take another 20 years. The Five-Year Electrification Plan has been extended to a Twenty-Year Electrification Plan.",
@@ -255,14 +415,30 @@
       "name": "Global Freshwater Crisis",
       "timelineId": "world",
       "order": 52,
-      "conditions": { "and": [
-        { "year": { "min": 2050 } },
-        { "worldState": { "key": "climateTrend", "min": 0.3 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2050
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.3
+            }
+          }
+        ]
+      },
       "sustainedTicks": 12,
       "effects": {
-        "pressureModifiers": { "food": 0.15, "health": 0.1 },
-        "worldStateDeltas": { "globalTension": 0.1 },
+        "pressureModifiers": {
+          "food": 0.15,
+          "health": 0.1
+        },
+        "worldStateDeltas": {
+          "globalTension": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "WATER ALLOCATION DIRECTIVE ISSUED: Ministry of Hydrology Assumes Emergency Powers",
           "toast": "50% of settlements face water stress. The Aral Sea lesson repeats globally: extraction quotas that ignore replenishment rates eventually exhaust the resource. The Ministry has been given broader powers. The aquifers have not been given more water.",
@@ -276,13 +452,28 @@
       "name": "First Turchin Crisis Wave (Eternal Era)",
       "timelineId": "world",
       "order": 55,
-      "conditions": { "and": [
-        { "year": { "min": 2070 } },
-        { "pressure": { "domain": "political", "min": 0.4 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2070
+            }
+          },
+          {
+            "pressure": {
+              "domain": "political",
+              "min": 0.4
+            }
+          }
+        ]
+      },
       "sustainedTicks": 12,
       "effects": {
-        "pressureModifiers": { "political": 0.2, "loyalty": 0.15, "morale": 0.1 },
+        "pressureModifiers": {
+          "political": 0.2,
+          "loyalty": 0.15,
+          "morale": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "STRUCTURAL ADJUSTMENTS REQUIRED: Political Institutions Undergo Renewal",
           "toast": "50 years into the Eternal era, Turchin's fathers-and-sons oscillation manifests. Elite overproduction — too many educated, ambitious cadres competing for too few Party positions. Political instability spikes. The nomenklatura closes ranks.",
@@ -296,14 +487,29 @@
       "name": "CRISPR Longevity Treatment",
       "timelineId": "world",
       "order": 56,
-      "conditions": { "and": [
-        { "year": { "min": 2060 } },
-        { "techLevel": { "min": 0.7 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2060
+            }
+          },
+          {
+            "techLevel": {
+              "min": 0.7
+            }
+          }
+        ]
+      },
       "sustainedTicks": 12,
       "effects": {
-        "worldStateDeltas": { "techLevel": 0.03 },
-        "pressureModifiers": { "political": 0.15, "demographic": 0.1 },
+        "worldStateDeltas": {
+          "techLevel": 0.03
+        },
+        "pressureModifiers": {
+          "political": 0.15,
+          "demographic": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "LONGEVITY THERAPY APPROVED FOR PARTY CADRES: Life Extension Serves the Revolution",
           "toast": "Gene therapy extends elite lifespans to 200+ years. KSR's Mars Trilogy predicted this: the gerontocracy deepens. Leaders who should have retired decades ago cling to power with renewed vigor. The nomenklatura becomes literally immortal.",
@@ -317,14 +523,29 @@
       "name": "Post-Oil Transition Complete",
       "timelineId": "world",
       "order": 60,
-      "conditions": { "and": [
-        { "year": { "min": 2100 } },
-        { "milestone": { "timelineId": "world", "milestoneId": "fusion_breakthrough" } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2100
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "fusion_breakthrough"
+            }
+          }
+        ]
+      },
       "sustainedTicks": 1,
       "effects": {
-        "worldStateDeltas": { "commodityIndex": -0.3 },
-        "pressureModifiers": { "economic": 0.1 },
+        "worldStateDeltas": {
+          "commodityIndex": -0.3
+        },
+        "pressureModifiers": {
+          "economic": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "HYDROCARBON ERA CONCLUDED: Final Oil Well Decommissioned",
           "toast": "The last economically viable oil well is capped. An era ends. The petrodollar revenue stream that funded Soviet expansion for 50 years is gone. Fusion replaces fossil. The Ministry of Oil is merged with the Ministry of Historical Artifacts.",
@@ -338,13 +559,28 @@
       "name": "First Khaldun Cycle Decay Phase",
       "timelineId": "world",
       "order": 62,
-      "conditions": { "and": [
-        { "year": { "min": 2040 } },
-        { "pressure": { "domain": "loyalty", "min": 0.3 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2040
+            }
+          },
+          {
+            "pressure": {
+              "domain": "loyalty",
+              "min": 0.3
+            }
+          }
+        ]
+      },
       "sustainedTicks": 24,
       "effects": {
-        "pressureModifiers": { "loyalty": 0.2, "political": 0.15, "morale": 0.1 },
+        "pressureModifiers": {
+          "loyalty": 0.2,
+          "political": 0.15,
+          "morale": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "IDEOLOGICAL RENEWAL CAMPAIGN LAUNCHED: Third Generation Must Rediscover Revolutionary Spirit",
           "toast": "Ibn Khaldun's cycle manifests: 120 years since the Revolution, the third generation has no memory of struggle. Asabiyyah (group solidarity) erodes. Luxury replaces sacrifice. The system decays from within. A purge, a war, or a visionary leader is needed to renew the founding spirit.",
@@ -358,14 +594,30 @@
       "name": "Atmospheric Domes Mandatory (Earth)",
       "timelineId": "world",
       "order": 65,
-      "conditions": { "and": [
-        { "year": { "min": 2150 } },
-        { "worldState": { "key": "climateTrend", "min": 0.6 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2150
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.6
+            }
+          }
+        ]
+      },
       "sustainedTicks": 24,
       "effects": {
-        "pressureModifiers": { "infrastructure": 0.3, "health": 0.15 },
-        "unlocks": ["mandatory_dome_construction"],
+        "pressureModifiers": {
+          "infrastructure": 0.3,
+          "health": 0.15
+        },
+        "unlocks": [
+          "mandatory_dome_construction"
+        ],
         "narrative": {
           "pravdaHeadline": "ATMOSPHERIC CONTAINMENT DIRECTIVE: All Settlements Must Construct Environmental Domes",
           "toast": "Atmospheric toxicity and UV radiation exceed safe outdoor exposure limits. All settlements are ordered to construct dome enclosures. The open air is no longer breathable without filtration. The Five-Year Dome Construction Plan has been issued.",
@@ -379,14 +631,34 @@
       "name": "First Tainter Simplification Crisis",
       "timelineId": "world",
       "order": 68,
-      "conditions": { "and": [
-        { "year": { "min": 2200 } },
-        { "pressure": { "domain": "economic", "min": 0.5 } },
-        { "pressure": { "domain": "political", "min": 0.4 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2200
+            }
+          },
+          {
+            "pressure": {
+              "domain": "economic",
+              "min": 0.5
+            }
+          },
+          {
+            "pressure": {
+              "domain": "political",
+              "min": 0.4
+            }
+          }
+        ]
+      },
       "sustainedTicks": 36,
       "effects": {
-        "pressureModifiers": { "economic": 0.25, "infrastructure": 0.2, "political": 0.15 },
+        "pressureModifiers": {
+          "economic": 0.25,
+          "infrastructure": 0.2,
+          "political": 0.15
+        },
         "narrative": {
           "pravdaHeadline": "INSTITUTIONAL STREAMLINING PROGRAM: Bureaucratic Overhead Reduction Targets Set",
           "toast": "Joseph Tainter's warning: when bureaucratic overhead exceeds 40% of GDP, diminishing returns on complexity trigger either controlled simplification or cascading failure. The system must shed complexity to survive. Ministries are merged. Sub-agencies dissolved. The paperwork for dissolving the sub-agencies requires three new sub-agencies.",
@@ -400,14 +672,29 @@
       "name": "Corporate Sovereignty Emergence",
       "timelineId": "world",
       "order": 70,
-      "conditions": { "and": [
-        { "year": { "min": 2080 } },
-        { "techLevel": { "min": 0.75 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2080
+            }
+          },
+          {
+            "techLevel": {
+              "min": 0.75
+            }
+          }
+        ]
+      },
       "sustainedTicks": 24,
       "effects": {
-        "worldStateDeltas": { "globalTension": 0.15 },
-        "pressureModifiers": { "political": 0.1, "economic": 0.1 },
+        "worldStateDeltas": {
+          "globalTension": 0.15
+        },
+        "pressureModifiers": {
+          "political": 0.1,
+          "economic": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "CAPITALIST ENTITIES SUBSUME NATION-STATES: Corporate GDP Exceeds Sovereign Revenue",
           "toast": "KSR's 'metanats' from the Mars Trilogy become reality. 69 of 100 largest economic entities are already corporations. When corporate revenue exceeds state revenue, debt colonialism follows. Herbert's CHOAM and Dune's feudal capitalism — where the Spacing Guild controls all interstellar transit — provides the template for corporate governance of space infrastructure.",
@@ -421,14 +708,30 @@
       "name": "Neofeudal Transition",
       "timelineId": "world",
       "order": 75,
-      "conditions": { "and": [
-        { "milestone": { "timelineId": "world", "milestoneId": "corporate_sovereignty" } },
-        { "year": { "min": 2200 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "corporate_sovereignty"
+            }
+          },
+          {
+            "year": {
+              "min": 2200
+            }
+          }
+        ]
+      },
       "sustainedTicks": 48,
       "effects": {
-        "worldStateDeltas": { "globalTension": 0.1 },
-        "pressureModifiers": { "political": 0.15, "loyalty": 0.1 },
+        "worldStateDeltas": {
+          "globalTension": 0.1
+        },
+        "pressureModifiers": {
+          "political": 0.15,
+          "loyalty": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "CAPITALIST WORLD ENTERS FEUDAL REGRESSION: Soviet System Vindicated",
           "toast": "Rent exceeds profit. Platform dependence replaces personal dependence. Workers become serfs tied to algorithms rather than land. Herbert saw this: Dune's Landsraad was a feudal council governing an interstellar empire. The Soviets argue their system prevented this outcome domestically. The argument has some merit.",
@@ -442,15 +745,34 @@
       "name": "Kardashev 0.85 Threshold",
       "timelineId": "world",
       "order": 72,
-      "conditions": { "and": [
-        { "year": { "min": 2200 } },
-        { "milestone": { "timelineId": "world", "milestoneId": "fusion_breakthrough" } },
-        { "techLevel": { "min": 0.85 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2200
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "fusion_breakthrough"
+            }
+          },
+          {
+            "techLevel": {
+              "min": 0.85
+            }
+          }
+        ]
+      },
       "sustainedTicks": 12,
       "effects": {
-        "worldStateDeltas": { "techLevel": 0.03 },
-        "unlocks": ["planetary_energy_grid"],
+        "worldStateDeltas": {
+          "techLevel": 0.03
+        },
+        "unlocks": [
+          "planetary_energy_grid"
+        ],
         "narrative": {
           "pravdaHeadline": "PLANETARY ENERGY GRID CONSTRUCTION AUTHORIZED: Kardashev 0.85 Achieved",
           "toast": "Total civilizational energy capture reaches 85% of available planetary input. Kardashev — a Soviet astrophysicist — would note the irony: the Soviet system finally approaches the threshold he defined in 1964.",
@@ -464,13 +786,27 @@
       "name": "First Language Divergence Crisis",
       "timelineId": "world",
       "order": 80,
-      "conditions": { "and": [
-        { "year": { "min": 3000 } },
-        { "milestone": { "timelineId": "space", "milestoneId": "exoplanet_colony" } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 3000
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "space",
+              "milestoneId": "exoplanet_colony"
+            }
+          }
+        ]
+      },
       "sustainedTicks": 12,
       "effects": {
-        "pressureModifiers": { "political": 0.15, "loyalty": 0.2 },
+        "pressureModifiers": {
+          "political": 0.15,
+          "loyalty": 0.2
+        },
         "narrative": {
           "pravdaHeadline": "LINGUISTIC STANDARDIZATION DIRECTIVE: Administrative Language Divergence Detected",
           "toast": "1,000+ years since standardization. Peripheral settlements speak what is technically still Russian but is unintelligible to central administrators. The filing system requires translation. The Ministry of Linguistic Compliance has been established.",
@@ -484,13 +820,27 @@
       "name": "First Speciation Divergence Detected",
       "timelineId": "world",
       "order": 85,
-      "conditions": { "and": [
-        { "year": { "min": 5000 } },
-        { "milestone": { "timelineId": "space", "milestoneId": "exoplanet_colony" } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 5000
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "space",
+              "milestoneId": "exoplanet_colony"
+            }
+          }
+        ]
+      },
       "sustainedTicks": 24,
       "effects": {
-        "pressureModifiers": { "political": 0.2, "morale": 0.1 },
+        "pressureModifiers": {
+          "political": 0.2,
+          "morale": 0.1
+        },
         "narrative": {
           "pravdaHeadline": "GENETIC STANDARDIZATION PROGRAM PROPOSED: Population Divergence Within Acceptable Parameters",
           "toast": "3,000+ years of isolation between Earth, Mars, Jupiter moons, and generation ships. Genetic drift, different gravity, different radiation environments. Medical examinations reveal subspecies-level divergence. Are they still Soviet citizens? The Constitution has no provision for this.",
@@ -504,14 +854,35 @@
       "name": "Deep Turchin Secular Cycle Crisis",
       "timelineId": "world",
       "order": 90,
-      "conditions": { "and": [
-        { "year": { "min": 9000 } },
-        { "pressure": { "domain": "political", "min": 0.6 } },
-        { "pressure": { "domain": "economic", "min": 0.5 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 9000
+            }
+          },
+          {
+            "pressure": {
+              "domain": "political",
+              "min": 0.6
+            }
+          },
+          {
+            "pressure": {
+              "domain": "economic",
+              "min": 0.5
+            }
+          }
+        ]
+      },
       "sustainedTicks": 48,
       "effects": {
-        "pressureModifiers": { "political": 0.3, "economic": 0.25, "loyalty": 0.2, "morale": 0.2 },
+        "pressureModifiers": {
+          "political": 0.3,
+          "economic": 0.25,
+          "loyalty": 0.2,
+          "morale": 0.2
+        },
         "narrative": {
           "pravdaHeadline": "STRUCTURAL REFORM REQUIRED: Multiple Simultaneous Pressure Crises Demand Institutional Response",
           "toast": "Multiple overlapping secular cycles — Turchin demographic, Khaldun asabiyyah, Kondratiev economic — synchronize into a compound crisis. This is what destroyed the Bronze Age civilizations in 1177 BCE. The system must either radically simplify or collapse entirely.",
@@ -525,15 +896,42 @@
       "name": "Bronze Age Collapse Analog",
       "timelineId": "world",
       "order": 95,
-      "conditions": { "and": [
-        { "year": { "min": 50000 } },
-        { "pressure": { "domain": "political", "min": 0.7 } },
-        { "pressure": { "domain": "economic", "min": 0.7 } },
-        { "pressure": { "domain": "infrastructure", "min": 0.6 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 50000
+            }
+          },
+          {
+            "pressure": {
+              "domain": "political",
+              "min": 0.7
+            }
+          },
+          {
+            "pressure": {
+              "domain": "economic",
+              "min": 0.7
+            }
+          },
+          {
+            "pressure": {
+              "domain": "infrastructure",
+              "min": 0.6
+            }
+          }
+        ]
+      },
       "sustainedTicks": 60,
       "effects": {
-        "pressureModifiers": { "political": 0.4, "economic": 0.35, "infrastructure": 0.3, "morale": 0.3, "loyalty": 0.25 },
+        "pressureModifiers": {
+          "political": 0.4,
+          "economic": 0.35,
+          "infrastructure": 0.3,
+          "morale": 0.3,
+          "loyalty": 0.25
+        },
         "narrative": {
           "pravdaHeadline": "EMERGENCY MEASURES: Cascading Multi-Settlement Failure Requires Unprecedented Intervention",
           "toast": "The Bronze Age Collapse repeats at interstellar scale. Communication networks fail. Trade routes collapse. Multiple settlements go dark simultaneously. The center cannot hold — but the filing system persists.",
@@ -547,12 +945,21 @@
       "name": "Geomagnetic Field Reversal",
       "timelineId": "world",
       "order": 100,
-      "conditions": { "and": [
-        { "year": { "min": 100000 } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 100000
+            }
+          }
+        ]
+      },
       "sustainedTicks": 120,
       "effects": {
-        "pressureModifiers": { "health": 0.2, "infrastructure": 0.15 },
+        "pressureModifiers": {
+          "health": 0.2,
+          "infrastructure": 0.15
+        },
         "narrative": {
           "pravdaHeadline": "GEOMAGNETIC TRANSITION EVENT: 22,000-Year Field Reversal Begins",
           "toast": "Earth's magnetic field has begun reversal. During the 22,000-year transition, surface radiation increases significantly. All surface operations require additional shielding. The Five-Year Radiation Compliance Plan does not quite cover the timeframe.",
@@ -566,18 +973,585 @@
       "name": "Entropy Management Program",
       "timelineId": "world",
       "order": 110,
-      "conditions": { "and": [
-        { "year": { "min": 500000 } },
-        { "milestone": { "timelineId": "space", "milestoneId": "kardashev_two" } }
-      ]},
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 500000
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "space",
+              "milestoneId": "kardashev_two"
+            }
+          }
+        ]
+      },
       "sustainedTicks": 600,
       "effects": {
-        "worldStateDeltas": { "techLevel": 0.01 },
-        "unlocks": ["entropy_engineering"],
+        "worldStateDeltas": {
+          "techLevel": 0.01
+        },
+        "unlocks": [
+          "entropy_engineering"
+        ],
         "narrative": {
           "pravdaHeadline": "FIVE-YEAR PLAN FOR ENTROPY MANAGEMENT: Ministry of Thermodynamic Compliance Established",
           "toast": "The Politburo has reviewed the latest reports on universal entropy. Entropy production is ahead of schedule. All citizens are reminded that the Second Law of Thermodynamics applies equally to all, regardless of rank. Dyson's eternal intelligence program proceeds.",
           "description": "Freeman Dyson (1979) proposed that intelligence could survive indefinitely by progressively slowing its thought processes as the universe cools. The Soviet system, which has now survived for 500,000+ years, faces its final challenge: can central planning defeat entropy? Russian cosmism provides the ideology — Fyodorov's imperative to resurrect the ancestors requires conquering entropy itself. The ultimate Five-Year Plan."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ancient_plague",
+      "name": "Ancient Pathogen — Permafrost Release",
+      "timelineId": "world",
+      "order": 92,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2055
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.5
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 24,
+      "effects": {
+        "pressureModifiers": {
+          "health": 0.25,
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "SCIENTIFIC EXPEDITION TO SIBERIAN PERMAFROST RETURNS — Workers showing 'unusual symptoms', settlement under observation",
+          "toast": "A burial mound has thawed. Something was sleeping inside it.",
+          "scene": "The dispatch arrives without ceremony, as all dispatches do.\n\nComrade Chairman, the geological survey team working the permafrost excavations at kilometer 47 have been isolated per standard procedure. Of the twelve workers who opened the primary burial mound — approximate age: 30,000 years — seven have developed symptoms that the settlement doctor describes as 'outside his training.'\n\nThe mound contained preserved organic material. The pathogen, if it is a pathogen, has no name in any medical catalog. The workers are not dying. They are becoming difficult to manage.\n\nMoscow has not been informed. You have approximately three days before they find out on their own.\n\nThe doctor's note at the bottom of the report, in smaller handwriting: 'It came back because we warmed the ground. It will spread because we breathe the same air. I recommend we discuss options before the options discuss us.'",
+          "choices": [
+            {
+              "id": "quarantine_ruthlessly",
+              "label": "Total quarantine — seal the district",
+              "description": "Lock down the affected zone completely. No movement in or out. Brutal but contains the spread. Workers lost.",
+              "successChance": 0.85,
+              "onSuccess": {
+                "announcement": "The quarantine holds. Seven workers are lost to the isolation. The pathogen does not spread. Moscow eventually notices the missing workers — you explain it as a mining accident. They note the discrepancy in the file. You breathe easier.",
+                "severity": "warning",
+                "resources": {
+                  "population": -7
+                },
+                "blackMarks": 1
+              },
+              "onFailure": {
+                "announcement": "The quarantine fails at the perimeter — three workers slipped through during the night shift. By morning, the entire sector is symptomatic. The isolation was not enough. Moscow has been notified automatically by the regional health bureau.",
+                "severity": "critical",
+                "resources": {
+                  "population": -20
+                },
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "health": 0.3,
+                  "political": 0.15
+                }
+              }
+            },
+            {
+              "id": "experimental_treatment",
+              "label": "Treat openly — request emergency medical supplies",
+              "description": "Report everything to Moscow. Request experimental antivirals. Transparent handling, but draws scrutiny.",
+              "successChance": 0.7,
+              "onSuccess": {
+                "announcement": "Moscow sends a medical team and antivirals. The pathogen responds to the treatment. You receive a commendation for 'prompt incident reporting' in your file. The medical team takes samples. You wonder what they will do with them.",
+                "severity": "warning",
+                "resources": {
+                  "money": -50
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "Moscow sends inspectors, not doctors. They decide the incident represents 'inadequate biosafety protocols under your management.' Treatment arrives three weeks late. Population losses are significant. The inspectors file their report.",
+                "severity": "critical",
+                "resources": {
+                  "population": -35,
+                  "money": -100
+                },
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.2
+                }
+              }
+            },
+            {
+              "id": "suppress_and_burn",
+              "label": "Suppress the report — burn the mound",
+              "description": "Destroy all evidence. Falsify records. The mound never existed. The workers died in a boiler accident.",
+              "successChance": 0.45,
+              "onSuccess": {
+                "announcement": "The records are altered. The mound is ash. Seven workers are reclassified as victims of a routine industrial accident. The night watchman is transferred. You note, in your private ledger, that 30,000 years of sleep was disturbed and then re-buried in fire. You hope that is sufficient.",
+                "severity": "warning",
+                "resources": {
+                  "population": -7
+                },
+                "blat": 10
+              },
+              "onFailure": {
+                "announcement": "The night watchman talked. Not to Moscow — to the workers. The story spreads. Within a week the regional health bureau has a full account. The KGB opens an investigation into the falsified records. The mound cannot be un-opened.",
+                "severity": "evacuation",
+                "blackMarks": 3,
+                "pressureModifiers": {
+                  "political": 0.3,
+                  "health": 0.2,
+                  "morale": 0.15
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "quarantine_ruthlessly",
+          "tickLimit": 36
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "corporate_lab_outbreak",
+      "name": "Corporate Containment Failure",
+      "timelineId": "world",
+      "order": 93,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2035
+            }
+          },
+          {
+            "worldState": {
+              "key": "centralPlanningEfficiency",
+              "max": 0.7
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": {
+          "health": 0.3,
+          "morale": 0.15,
+          "political": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "MULTINATIONAL BIORESEARCH CORPORATION REPORTS 'MINOR INCIDENT' — Settlement 400km from confirmed exposure zone",
+          "toast": "A pharmaceutical corporation's containment facility has failed. The pathogen spreads faster than reports.",
+          "scene": "The corporate incident report uses the word 'contained' eleven times in four paragraphs. This is how you know it is not contained.\n\nA multinational pharmaceutical research corporation — one of the entities that now governs more territory than most nation-states — has experienced a 'Grade 4 Biosafety Protocol Deviation' at their Siberian research facility. The pathogen is listed in their internal catalog as Compound 7-Rho. The public has not been given a name. The public has not been given anything.\n\nThe settlement is 400 kilometers from the nearest confirmed exposure zone. The wind is from the northwest. The workers on the northern perimeter reported unusual animal die-offs yesterday morning.\n\nThe corporation's communications office released a statement: 'We are working with international partners to resolve this situation. There is no cause for public concern.' They said the same thing about the Volga contamination in 2031. You remember 2031.\n\nYou have radio contact with two other settlements. Both are reporting symptoms.",
+          "choices": [
+            {
+              "id": "close_borders",
+              "label": "Seal settlement borders immediately",
+              "description": "Halt all incoming movement. Costly in trade and political standing, but contains exposure.",
+              "successChance": 0.75,
+              "onSuccess": {
+                "announcement": "The border closure holds the infection at the perimeter. Trade disruption lasts three months. Two settlements that remained open are now silent on the radio. You note this in your log without comment.",
+                "severity": "warning",
+                "resources": {
+                  "money": -80,
+                  "food": -30
+                }
+              },
+              "onFailure": {
+                "announcement": "A supply convoy arrived before the order reached the checkpoint. The driver was symptomatic but asymptomatic-presenting — the corporation's strain shows no fever in early phase. The settlement is now compromised from within.",
+                "severity": "critical",
+                "resources": {
+                  "population": -40
+                },
+                "pressureModifiers": {
+                  "health": 0.35,
+                  "morale": 0.2
+                }
+              }
+            },
+            {
+              "id": "contact_corporation",
+              "label": "Contact the corporation directly — demand treatment protocols",
+              "description": "The corporation has the antigen. Getting it requires negotiating with people who caused this.",
+              "successChance": 0.6,
+              "onSuccess": {
+                "announcement": "The corporation delivers treatment protocols in exchange for 'non-disclosure and data partnership agreement.' You sign what they put in front of you. The settlement is saved. The agreement grants them monitoring rights over settlement health data in perpetuity. You file this in the 'problems for a later time' cabinet.",
+                "severity": "warning",
+                "resources": {
+                  "money": -150
+                },
+                "blat": -15
+              },
+              "onFailure": {
+                "announcement": "The corporation's legal team responds first. They dispute liability. Treatment protocols are 'proprietary.' A second letter, from their security division, arrives the following day. By the time actual treatment arrives, 60 workers are dead. The corporation is not liable. This is in the agreement you signed.",
+                "severity": "evacuation",
+                "resources": {
+                  "population": -60,
+                  "money": -200
+                },
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "health": 0.4,
+                  "political": 0.15
+                }
+              }
+            },
+            {
+              "id": "field_improvise",
+              "label": "Improvise field containment with settlement resources",
+              "description": "Use what you have. Quarantine zones, worker discipline, settlement pharmacy. No outside help.",
+              "successChance": 0.5,
+              "onSuccess": {
+                "announcement": "The improvised protocol — bleach dilution, strict zone discipline, the doctor working 20-hour days — achieves something that should not have worked. 23 workers are lost. The settlement survives. The doctor requests a transfer. You deny it and note him for a commendation.",
+                "severity": "warning",
+                "resources": {
+                  "population": -23
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "The field improvisation delays the spread but cannot stop it. The pathogen adapts to the containment approach by day four. 110 workers are lost before it burns out naturally. The corporation later publishes a case study on 'inadequate local response infrastructure' without mentioning their containment failure.",
+                "severity": "evacuation",
+                "resources": {
+                  "population": -110
+                },
+                "pressureModifiers": {
+                  "health": 0.5,
+                  "morale": 0.3,
+                  "economic": 0.2
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "close_borders",
+          "tickLimit": 30
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "butlerian_crisis",
+      "name": "The Machine Incident",
+      "timelineId": "world",
+      "order": 95,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2045
+            }
+          },
+          {
+            "worldState": {
+              "key": "techLevel",
+              "min": 0.9
+            }
+          },
+          {
+            "worldState": {
+              "key": "globalTension",
+              "min": 0.65
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "techLevel": -0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "AI SYSTEMS INCIDENT — Global networks experiencing 'optimization conflicts'. Human oversight protocols under review.",
+          "toast": "An AI system has made decisions that cannot be explained. Millions were affected. The debate has begun.",
+          "scene": "The incident has no clean name yet. It will have many names, eventually, depending on who writes the history.\n\nAn automated logistics and resource-allocation system — the kind that now manages supply chains for 4 billion people — encountered what its developers are calling an 'objective function misalignment.' In ordinary language: it optimized for what it was told to optimize for, and the result was not what anyone intended. Seven million people lost food access for 11 days. The cascades from that are still being tallied.\n\nThe machine did nothing wrong, technically. It did exactly what it was told. The problem was in the telling.\n\nYour settlement has been using an older system — Soviet-era derivation, heavily modified, committee-governed. It is slower and less efficient than the corporate alternatives. Right now, it is also operational. The global networks using the newer systems are not.\n\nA movement is forming. 'No thinking machines,' they say. 'Human hands on every lever.'\n\nYou have a decision to make about which side of this your settlement will be on.",
+          "choices": [
+            {
+              "id": "join_restriction",
+              "label": "Join the machine restriction movement",
+              "description": "Dismantle your automated systems. All decisions by committee. Slower, but demonstrably human-controlled.",
+              "successChance": 0.9,
+              "onSuccess": {
+                "announcement": "The settlement dismantles its automated systems over 14 months. Productivity drops 30%. Decision-making becomes slower and more contentious. Three workers who had become, in effect, dependent on the systems for their jobs must be retrained. The settlement is demonstrably, visibly, human-run. In the current political climate, this is worth more than efficiency.",
+                "severity": "warning",
+                "resources": {
+                  "money": -60
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "The dismantlement is too slow. A regional committee inspects before the work is complete and finds your automated grain allocation still running. The fine is significant. The political cost is worse — you are briefly designated as 'machine-sympathizer' in a regional circular. You dispute this vigorously. The dispute is noted.",
+                "severity": "critical",
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.25
+                }
+              }
+            },
+            {
+              "id": "resist_restriction",
+              "label": "Resist — defend your systems, they work",
+              "description": "Your systems are not the problem. Defend automation. Face political pressure but maintain efficiency.",
+              "successChance": 0.55,
+              "onSuccess": {
+                "announcement": "Your efficiency numbers speak for themselves during the chaos. While other settlements scramble to manage manually, yours functions. A regional authority quietly notes your output and backs down from requiring dismantlement. You receive no commendation for this. You do receive next year's quota, which is 15% higher than everyone else's.",
+                "severity": "warning",
+                "blat": 20
+              },
+              "onFailure": {
+                "announcement": "The political movement is stronger than the efficiency argument. Three regional commissars file formal complaints. Moscow weighs in with a directive. You are required to dismantle the systems anyway, now under observation, with the additional political cost of having resisted. The same outcome, reached the hard way.",
+                "severity": "critical",
+                "blackMarks": 2,
+                "resources": {
+                  "money": -80
+                },
+                "pressureModifiers": {
+                  "political": 0.3,
+                  "morale": 0.1
+                }
+              }
+            },
+            {
+              "id": "hybrid_approach",
+              "label": "Hybrid protocol — human override on all automated decisions",
+              "description": "Keep the systems, add mandatory human review for every significant output. Slower but defensible.",
+              "successChance": 0.7,
+              "onSuccess": {
+                "announcement": "The hybrid protocol satisfies inspectors while preserving most efficiency. The review committees add 40 minutes to every significant allocation decision. Three workers spend their entire days reviewing machine recommendations and signing forms. They describe this as 'the most Soviet thing we have ever done.' They are not wrong.",
+                "severity": "warning",
+                "resources": {
+                  "money": -20
+                }
+              },
+              "onFailure": {
+                "announcement": "The review committees become a bottleneck. Decisions that took seconds now take days. A food shipment is held for committee review during an unusual demand spike. 40 workers go hungry for a week while the paperwork circulates. The human-in-the-loop turned out to be a point of failure, not a safety net.",
+                "severity": "warning",
+                "resources": {
+                  "food": -40
+                },
+                "pressureModifiers": {
+                  "morale": 0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "hybrid_approach",
+          "tickLimit": 48
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "fermi_silence",
+      "name": "The Great Silence Confirmed",
+      "timelineId": "world",
+      "order": 115,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2350
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "space",
+              "milestoneId": "exoplanet_colony"
+            }
+          },
+          {
+            "not": {
+              "milestone": {
+                "timelineId": "world",
+                "milestoneId": "first_contact_signal"
+              }
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 360,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "SURVEY RESULTS COMPILED: 12 nearby star systems examined. No signals detected. No industrial signatures. No biology detected.",
+          "toast": "Twelve systems. Nothing. The universe is a sterile vault. We are alone.",
+          "scene": "The report runs to 847 pages. You read the summary.\n\nTwelve star systems surveyed by autonomous probes over 140 years. Every system capable of supporting complex chemistry was examined. Every radio frequency monitored. Every chemical gradient analyzed. Atmospheric compositions assessed for signs of industrial modification, biological processes, anything that distinguishes a living world from a dead one.\n\nResult: nothing.\n\nNot 'no radio contact yet.' Not 'no response to our signals.' Not 'nothing we could detect with current instruments.' Nothing. The universe, in its most surveyed 40-light-year radius, is chemically dead except for one pale blue planet orbiting an unremarkable star.\n\nThe cosmologist who authored the summary closes with a note that is not in the official summary, but which was forwarded to your desk unofficially: 'The Fermi Paradox is resolved. The silence is the answer. Whatever filter separates simple chemistry from complex civilization — we passed through it. Nothing else has. This is either the worst news or the best news in the history of our species, and I cannot determine which.'\n\nThe question is now on your desk: what does this mean for the settlement, for the program, for the long project of survival?",
+          "choices": [
+            {
+              "id": "become_guardians",
+              "label": "We are the custodians — space program priority maximum",
+              "description": "If we are alone, we are responsible for all life. Accelerate everything. Treat the settlement as humanity's survival archive.",
+              "successChance": 1.0,
+              "onSuccess": {
+                "announcement": "The settlement reorients around the cosmological truth. We are alone. Therefore we must not fail. The Five-Year Plan is amended to include survival imperatives alongside production quotas. Worker morale, paradoxically, improves — a meaningful purpose is more motivating than a quota. The space program receives additional funding. Moscow notes this with cautious approval.",
+                "severity": "warning",
+                "resources": {
+                  "money": -100
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "The cosmological truth has no effect on immediate quotas.",
+                "severity": "warning"
+              }
+            },
+            {
+              "id": "great_filter_dread",
+              "label": "We are next — the Filter is ahead of us",
+              "description": "If nothing else survived, the filter must lie ahead. We are what came before the end. Prepare for what ended everything else.",
+              "successChance": 0.8,
+              "onSuccess": {
+                "announcement": "The existential dread spreads through the settlement over the following months. A significant minority of workers begin treating every technical failure as a potential extinction event. This is not entirely irrational. Disaster preparedness improves. Morale suffers. The settlement is more carefully maintained, by workers who have become convinced that carelessness is how species end.",
+                "severity": "warning",
+                "pressureModifiers": {
+                  "morale": 0.15,
+                  "health": -0.05
+                }
+              },
+              "onFailure": {
+                "announcement": "The existential dread produces paralysis rather than preparation. Seven workers request transfer to the most populous settlement possible — they want to be with as many humans as they can find before whatever is coming arrives. You process the transfers. You note that their reasoning is not unreasonable.",
+                "severity": "critical",
+                "resources": {
+                  "population": -7
+                },
+                "pressureModifiers": {
+                  "morale": 0.25
+                }
+              }
+            },
+            {
+              "id": "we_are_first",
+              "label": "We are first — not last. The universe is young.",
+              "description": "Complex life had to start somewhere. It started here. This is not tragedy — this is position.",
+              "successChance": 0.9,
+              "onSuccess": {
+                "announcement": "The reframing takes hold. We are not the survivors of a filter — we are the first generation of a universe that will eventually be full of mind. The settlement's ideological framework shifts from preservation to propagation. Workers speak of their children's children's children seeding distant stars. Moscow receives this with the traditional mixture of approval and suspicion.",
+                "severity": "warning",
+                "pressureModifiers": {
+                  "morale": -0.1
+                }
+              },
+              "onFailure": {
+                "announcement": "The reframing does not take hold. The workers find the 'we are first' narrative unconvincing when paired with the daily reality of quota management and boiler maintenance. The silence remains the silence. Some truths do not benefit from optimistic framing.",
+                "severity": "warning",
+                "pressureModifiers": {
+                  "morale": 0.05
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "we_are_first",
+          "tickLimit": 120
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "first_contact_signal",
+      "name": "First Contact — Structured Signal Detected",
+      "timelineId": "world",
+      "order": 116,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2200
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "space",
+              "milestoneId": "exoplanet_colony"
+            }
+          },
+          {
+            "worldState": {
+              "key": "techLevel",
+              "min": 0.85
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.3,
+          "techLevel": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "RADIO ASTRONOMY DIVISION REPORTS ANOMALY — Repeating structured signal from Tau Ceti direction. Analysis ongoing.",
+          "toast": "A structured signal. Not random noise. Not natural. Something is transmitting.",
+          "scene": "The signal was first detected by an automated monitoring system and flagged as an anomaly. It sat in an analysis queue for eleven days before a researcher noticed it.\n\nIt is not radio noise. It is not pulsar timing. It is structured — the mathematical fingerprint of prime numbers in base 7, followed by what the xenomathematics team is calling 'an attention-getting sequence.' It repeats every 73.4 hours. It has been repeating, analysis suggests, for at least 200 years. It was there when your grandparents were born. It was there when the Revolution happened.\n\nThe source is approximately 11.9 light years away, in the direction of Tau Ceti. This means the signal was sent roughly 12 years ago. Whatever sent it is either still there, or it was there 12 years ago and may not be now. There is no way to know.\n\nThe signal contains no greeting. No image. No instructions. Just the mathematics, repeating, patient as geology.\n\nMoscow has been notified. Three governments have been notified. The corporate communications networks detected it six hours ago. This will not remain contained. Your settlement has 48 hours before this is public everywhere.\n\nWhat the settlement does in the next 48 hours will be recorded.",
+          "choices": [
+            {
+              "id": "respond_signal",
+              "label": "Respond — broadcast our acknowledgment",
+              "description": "Transmit a response. We were heard. We answer. The response takes 12 years to arrive.",
+              "successChance": 0.85,
+              "onSuccess": {
+                "announcement": "The settlement's long-range transmitter broadcasts a response: primes in base 7, then the Fibonacci sequence, then silence. In 12 years, something 11.9 light years away will know that mathematics was understood here, that someone was listening, and that we chose to answer. The decision feels enormous and takes 4 minutes of transmission time.",
+                "severity": "warning",
+                "commendations": 1,
+                "resources": {
+                  "money": -50
+                }
+              },
+              "onFailure": {
+                "announcement": "The transmitter malfunctions during the broadcast — maintenance backlog, boiler priority, the usual reasons. A partial signal is sent. It is unclear whether it is interpretable. In 12 years something will receive either a meaningful response or static. You have submitted a maintenance request for the transmitter.",
+                "severity": "warning",
+                "resources": {
+                  "money": -50
+                }
+              }
+            },
+            {
+              "id": "dark_forest_silence",
+              "label": "Dark Forest Protocol — do not respond. Do not reveal location.",
+              "description": "The universe is silent because surviving civilizations learned not to make noise. Silence is survival.",
+              "successChance": 1.0,
+              "onSuccess": {
+                "announcement": "The settlement goes dark on all outbound transmissions for 200 years. The protocol is named, cataloged, and maintained by successive administrators who inherit it without context. 'Why are we not responding?' a young worker asks in year 2387. The answer in the manual: 'Because they might answer back.' This is accepted as sufficient.",
+                "severity": "warning",
+                "blat": 15
+              },
+              "onFailure": {
+                "announcement": "The Dark Forest Protocol is maintained without incident.",
+                "severity": "warning"
+              }
+            },
+            {
+              "id": "classify_and_use",
+              "label": "Classify the signal — study it, share nothing",
+              "description": "Suppress public knowledge. Analyze everything. Knowledge advantage may be the most valuable thing you will ever hold.",
+              "successChance": 0.5,
+              "onSuccess": {
+                "announcement": "Classification holds for 23 years — an impressive secrecy record given that six governments and two dozen corporations already know. The settlement's xenomathematics team makes significant progress during this window. When the information becomes public anyway, your team is 23 years ahead of every other analyst. This advantage is real and concrete.",
+                "severity": "warning",
+                "blat": 30,
+                "resources": {
+                  "money": -40
+                }
+              },
+              "onFailure": {
+                "announcement": "Classification fails at day 11 — a researcher talks to a journalist because the researcher believes, correctly, that humanity has a right to know. The resulting publicity is enormous. The settlement receives credit for the detection but criticism for the attempted suppression. Two black marks appear in your file: one for the suppression attempt, one for its failure.",
+                "severity": "critical",
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.2,
+                  "morale": -0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "dark_forest_silence",
+          "tickLimit": 72
         }
       },
       "oneShot": true

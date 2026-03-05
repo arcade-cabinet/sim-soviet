@@ -31,6 +31,8 @@ import { shouldExpand } from './endlessMode';
 import { expandGrid, getCurrentTier, initializeNewTiles } from './mapExpansion';
 import { buildSettlementSummary, type SettlementSummary } from './SettlementSummary';
 import type { TickContext } from './tickContext';
+import { evaluateAllTimelines } from '../timeline/TimelineLayer';
+import { discoverNewTimelines } from '../timeline/perWorldTimelines';
 
 /** Result of the chronology phase — engine-owned state that must be written back. */
 export interface ChronologyResult {
@@ -148,6 +150,9 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
     ctx.agents.world.setEra(politicalAgent.getCurrentEraId());
     ctx.agents.world.tickYear(date.year);
   }
+
+  // ── 2.5c Timeline evaluation ──
+  runTimelineEvaluation(ctx);
 
   // ── 2.5b Governor evaluation ──
   if (ctx.governor) {
@@ -480,5 +485,125 @@ function runTerrainTick(ctx: TickContext): void {
     }
 
     tiles[i] = updated;
+  }
+}
+
+// ── Timeline evaluation ───────────────────────────────────────────────────
+
+/**
+ * Evaluate all registered timeline layers and apply newly activated milestone effects.
+ *
+ * Runs every tick so sustained-tick tracking works correctly.
+ * WorldAgent worldState keys map directly to TimelineContext.worldState for cross-references.
+ */
+function runTimelineEvaluation(ctx: TickContext): void {
+  const { registeredTimelines } = ctx.state;
+  if (registeredTimelines.length === 0) return;
+
+  const date = ctx.agents.chronology.getDate();
+  const resources = ctx.storeRef.resources;
+  const worldAgentState = ctx.agents.world?.getState();
+
+  // Build worldState map from WorldAgent (defaults for missing keys)
+  const worldState: Record<string, number> = {
+    globalTension: worldAgentState?.globalTension ?? 0.5,
+    borderThreat: worldAgentState?.borderThreat ?? 0.3,
+    tradeAccess: worldAgentState?.tradeAccess ?? 0.3,
+    commodityIndex: worldAgentState?.commodityIndex ?? 1.0,
+    centralPlanningEfficiency: worldAgentState?.centralPlanningEfficiency ?? 1.0,
+    climateTrend: worldAgentState?.climateTrend ?? 0.0,
+    moscowAttention: worldAgentState?.moscowAttention ?? 0.5,
+    ideologyRigidity: worldAgentState?.ideologyRigidity ?? 0.8,
+    techLevel: worldAgentState?.techLevel ?? 0.0,
+  };
+
+  const timelineCtx = {
+    year: date.year,
+    population: resources.population,
+    techLevel: worldAgentState?.techLevel ?? 0.0,
+    worldState,
+    pressureLevels: {} as Record<string, number>,
+    resources: {
+      food: resources.food,
+      power: resources.power,
+      population: resources.population,
+      vodka: resources.vodka ?? 0,
+      money: resources.money ?? 0,
+    },
+  };
+
+  const { allActivated, allEffects } = evaluateAllTimelines(registeredTimelines, timelineCtx);
+
+  // Apply effects for each newly activated milestone
+  for (let i = 0; i < allActivated.length; i++) {
+    const milestone = allActivated[i];
+    const effects = allEffects[i];
+    const { narrative } = effects;
+
+    // Always emit pravda headline
+    ctx.callbacks.onPravda(narrative.pravdaHeadline);
+
+    if (narrative.choices && narrative.choices.length > 0 && ctx.callbacks.onNarrativeEvent) {
+      // Narrative choice event — fires interactive modal instead of plain toast
+      const event = {
+        milestoneId: milestone.id,
+        timelineId: milestone.timelineId,
+        title: milestone.name,
+        scene: narrative.scene ?? narrative.description ?? narrative.toast,
+        headline: narrative.pravdaHeadline,
+        choices: narrative.choices,
+        autoResolveChoiceId: narrative.autoResolveChoiceId ?? narrative.choices[0].id,
+        tickLimit: narrative.tickLimit ?? 120,
+      };
+      ctx.callbacks.onNarrativeEvent(event, (choiceId) => {
+        const choice = narrative.choices!.find((c) => c.id === choiceId);
+        if (!choice) return;
+        const roll = ctx.rng.random();
+        const outcome = roll < choice.successChance ? choice.onSuccess : choice.onFailure;
+        ctx.callbacks.onToast(outcome.announcement, outcome.severity ?? 'warning');
+        if (outcome.resources) {
+          const r = resources as unknown as Record<string, number>;
+          for (const [k, v] of Object.entries(outcome.resources)) {
+            if (v !== undefined && k in r) r[k] = Math.max(0, (r[k] ?? 0) + v);
+          }
+        }
+        if (outcome.blackMarks) {
+          // Map blackMarks count to appropriate KGB mark source
+          const src = outcome.blackMarks >= 2 ? 'report_falsified' : 'suppressing_news';
+          for (let m = 0; m < outcome.blackMarks; m++) {
+            ctx.agents.kgb.addMark(src, date.totalTicks);
+          }
+        }
+        if (outcome.blat) {
+          const res = resources as unknown as Record<string, number>;
+          res.blat = Math.max(0, (res.blat ?? 0) + outcome.blat);
+        }
+      });
+    } else {
+      // Plain toast — no interaction needed
+      ctx.callbacks.onToast(narrative.toast, 'warning');
+    }
+
+    // Resource deltas (unconditional, regardless of choices)
+    if (effects.resourceDeltas) {
+      for (const [key, delta] of Object.entries(effects.resourceDeltas)) {
+        const r = resources as unknown as Record<string, number>;
+        if (key in r) r[key] = Math.max(0, (r[key] ?? 0) + delta);
+      }
+    }
+  }
+
+  // Discover per-world timelines from newly activated space milestones
+  const newSpaceIds = allActivated
+    .filter((m) => m.timelineId === 'space')
+    .map((m) => m.id);
+
+  if (newSpaceIds.length > 0) {
+    const registeredIds = new Set(registeredTimelines.map((t) => t.id));
+    const newTimelines = discoverNewTimelines(newSpaceIds, registeredIds);
+    for (const tl of newTimelines) {
+      registeredTimelines.push(tl);
+      ctx.callbacks.onToast(`New world discovered: ${tl.id} — timeline unlocked.`, 'warning');
+    }
   }
 }

@@ -46,6 +46,66 @@ export type MilestoneCondition =
   | { or: MilestoneCondition[] }
   | { not: MilestoneCondition };
 
+// ─── Narrative Choice System ─────────────────────────────────────────────────
+
+/**
+ * Outcome of a narrative milestone choice.
+ * Applied to resources and personnel file after the player resolves.
+ */
+export interface NarrativeChoiceOutcome {
+  /** Toast/announcement text shown after the choice resolves. */
+  announcement: string;
+  /** Toast severity. */
+  severity?: 'warning' | 'critical' | 'evacuation';
+  /** Resource changes. Positive = gain, negative = loss. */
+  resources?: Partial<{ money: number; food: number; vodka: number; population: number }>;
+  /** Black marks added to KGB file. */
+  blackMarks?: number;
+  /** Commendations added to KGB file. */
+  commendations?: number;
+  /** Blat (favor network) delta. */
+  blat?: number;
+  /** Immediate pressure domain changes on this outcome. */
+  pressureModifiers?: Partial<Record<PressureDomain, number>>;
+}
+
+/**
+ * A single player-facing choice in a narrative event.
+ * Uses successChance for probabilistic outcomes — some choices are safe,
+ * some are gambles (Soviet bureaucracy rarely gives clean options).
+ */
+export interface NarrativeChoice {
+  /** Stable ID (used for auto-resolve and save). */
+  id: string;
+  /** Short button label: "Quarantine the district". */
+  label: string;
+  /** Tooltip description: "Seal off the contaminated zone. Workers will be lost." */
+  description: string;
+  /** 0-1. 1.0 = always succeeds, 0.5 = coin flip, 0.3 = risky. */
+  successChance: number;
+  onSuccess: NarrativeChoiceOutcome;
+  onFailure: NarrativeChoiceOutcome;
+}
+
+/**
+ * A narrative event fired when a milestone with player choices activates.
+ * Presented as a full-screen dispatch the player must respond to.
+ */
+export interface NarrativeEvent {
+  milestoneId: string;
+  timelineId: string;
+  title: string;
+  /** Multi-paragraph prose — the "living story" scene. */
+  scene: string;
+  /** Pravda headline for the ticker. */
+  headline: string;
+  choices: NarrativeChoice[];
+  /** Which choice ID auto-fires if player ignores (default: first choice). */
+  autoResolveChoiceId: string;
+  /** Ticks before auto-resolve (default 120 ≈ 10 years). */
+  tickLimit: number;
+}
+
 // ─── Milestone Effects ──────────────────────────────────────────────────────
 
 /** Effects applied when a milestone activates. */
@@ -66,6 +126,17 @@ export interface MilestoneEffects {
     toast: string;
     /** Optional longer description for timeline view. */
     description?: string;
+    /**
+     * Multi-paragraph scene prose for narrative choice events.
+     * If present along with `choices`, fires onNarrativeEvent instead of just a toast.
+     */
+    scene?: string;
+    /** Player choices presented when this milestone activates. */
+    choices?: NarrativeChoice[];
+    /** Auto-resolve choice ID (default: first choice). */
+    autoResolveChoiceId?: string;
+    /** Ticks before auto-resolve (default 120). */
+    tickLimit?: number;
   };
   /** IDs of cold branches this milestone can trigger. */
   triggerBranches?: string[];

@@ -85,6 +85,9 @@ import type { GameGrid } from './GameGrid';
 import { createGameTally } from './GameTally';
 import { RelocationEngine } from './relocation/RelocationEngine';
 import { GameRng } from './SeedSystem';
+import { createSpaceTimeline } from './timeline/spaceTimeline';
+import { createWorldTimeline } from './timeline/worldTimeline';
+import type { RegisteredTimeline } from './timeline/TimelineLayer';
 
 /** Maps game EraSystem IDs → EconomySystem EraIds. */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -192,6 +195,9 @@ export class SimulationEngine {
     split150: false,
     split400: false,
   };
+
+  // ── Timeline layers ──
+  private registeredTimelines: RegisteredTimeline[] = [];
 
   // ── Arrival caravan — staggered dvor creation ──
   private arrivalSequence: import('./arrivalSequence').ArrivalSequence | null = null;
@@ -358,6 +364,9 @@ export class SimulationEngine {
 
     this.worldAgent = new WorldAgent();
     this.worldAgent.setRng(this.rng);
+
+    // ── Initialize timeline layers ──
+    this.registeredTimelines = [createSpaceTimeline(), createWorldTimeline()];
 
     // Wire ECS callbacks
     setStarvationCallback(() => {
@@ -810,6 +819,7 @@ export class SimulationEngine {
       governor: this.governor,
       worldAgent: this.worldAgent,
       relocationEngine: this.relocationEngine,
+      registeredTimelines: this.registeredTimelines,
     };
   }
 
@@ -879,6 +889,7 @@ export class SimulationEngine {
         gameMode: this.gameMode,
         terrainTiles: this.terrainTiles,
         hqSplitState: this.hqSplitState,
+        registeredTimelines: this.registeredTimelines,
       },
       modifiers: null as any, // Filled by computeTickModifiers() after phaseChronology
       rng: this.rng,

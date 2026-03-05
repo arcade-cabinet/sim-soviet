@@ -48,6 +48,15 @@ import type { EraSystem } from '../era';
 import { EraSystem as EraSystemClass } from '../era';
 import type { GameRng } from '../SeedSystem';
 import type { RelocationEngine } from '../relocation/RelocationEngine';
+import type { RegisteredTimeline } from '../timeline/TimelineLayer';
+import {
+  serializeLayerState,
+  restoreLayerState,
+  createLayerState,
+} from '../timeline/TimelineLayer';
+import { createSpaceTimeline } from '../timeline/spaceTimeline';
+import { createWorldTimeline } from '../timeline/worldTimeline';
+import { createPerWorldTimeline, getExpectedTimelines } from '../timeline/perWorldTimelines';
 import type {
   BuildingWorkforceSaveEntry,
   DvorSaveEntry,
@@ -108,6 +117,7 @@ export interface SerializableEngine {
   governor: IGovernor | null;
   worldAgent?: import('../../ai/agents/core/WorldAgent').WorldAgent;
   relocationEngine?: RelocationEngine;
+  registeredTimelines: RegisteredTimeline[];
 }
 
 /**
@@ -161,6 +171,7 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
     governor: engine.governor?.serialize() ?? undefined,
     worldAgent: engine.worldAgent?.serialize(),
     relocation: engine.relocationEngine?.serialize(),
+    timelines: engine.registeredTimelines?.map((tl) => serializeLayerState(tl.state)),
   };
 
   if (isAggregate) {
@@ -360,6 +371,36 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
   // Restore relocation engine (multi-settlement state)
   if (data.relocation && engine.relocationEngine) {
     engine.relocationEngine.restore(data.relocation);
+  }
+
+  // Restore timeline layers (old saves → fresh space + world timelines, no per-world)
+  if (data.timelines && data.timelines.length > 0) {
+    // Map saved states by timelineId for fast lookup
+    const savedByid = new Map(data.timelines.map((s) => [s.timelineId, s]));
+
+    // Always ensure space + world timelines exist
+    const spaceBase = createSpaceTimeline();
+    const worldBase = createWorldTimeline();
+    const restored: RegisteredTimeline[] = [spaceBase, worldBase];
+
+    for (const tl of restored) {
+      const saved = savedByid.get(tl.id);
+      if (saved) tl.state = restoreLayerState(saved);
+    }
+
+    // Reconstruct per-world timelines based on activated space milestones
+    const activatedSpaceMilestones = spaceBase.state.activatedMilestones;
+    const expectedPerWorld = getExpectedTimelines(activatedSpaceMilestones);
+    for (const timelineId of expectedPerWorld) {
+      const perWorld = createPerWorldTimeline(timelineId);
+      if (perWorld) {
+        const saved = savedByid.get(timelineId);
+        if (saved) perWorld.state = restoreLayerState(saved);
+        restored.push(perWorld);
+      }
+    }
+
+    engine.registeredTimelines = restored;
   }
 
   // Update economy system to match restored era (fallback for saves without economy data)

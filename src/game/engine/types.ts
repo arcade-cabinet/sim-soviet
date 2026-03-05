@@ -6,6 +6,7 @@
  */
 
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
+import type { NarrativeEvent } from '../timeline/TimelineLayer';
 import type { ChronologyState } from '../../ai/agents/core/ChronologyAgent';
 import type { GovernorSaveData } from '../../ai/agents/crisis/Governor';
 import type { EconomySaveData } from '../../ai/agents/economy/EconomyAgent';
@@ -62,6 +63,12 @@ export interface SimCallbacks {
   onGameTally?: (tally: TallyData) => void;
   /** Fired when player is rehabilitated (non-permadeath consequence modes). */
   onRehabilitation?: (data: RehabilitationData) => void;
+  /**
+   * Fired when a timeline milestone with player choices activates.
+   * Presents a full scene + 2-4 choices. Call resolve(choiceId) to apply consequences.
+   * If not handled, the milestone auto-resolves after tickLimit ticks.
+   */
+  onNarrativeEvent?: (event: NarrativeEvent, resolve: (choiceId: string) => void) => void;
 }
 
 /** Data passed to the rehabilitation modal after gulag return. */
@@ -186,4 +193,6 @@ export interface SubsystemSaveData {
   worldAgent?: import('../../ai/agents/core/WorldAgent').WorldStateSaveData;
   /** RelocationEngine multi-settlement state (optional for backward compat with old saves) */
   relocation?: { settlements: import('../relocation/Settlement').SettlementSaveData[] };
+  /** Timeline layer states: space, world, and discovered per-world timelines. */
+  timelines?: import('../timeline/TimelineLayer').TimelineLayerSaveData[];
 }

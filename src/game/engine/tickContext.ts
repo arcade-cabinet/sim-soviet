@@ -42,6 +42,7 @@ import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
 import type { RaionPool, Resources } from '../../ecs/world';
 import type { EraModifiers } from '../../game/era/types';
 import type { HQSplitState } from '../../growth/HQSplitting';
+import type { RegisteredTimeline } from '../timeline/TimelineLayer';
 import type { GameGrid } from '../GameGrid';
 import type { GameRng } from '../SeedSystem';
 import type { SimCallbacks } from './types';
@@ -129,6 +130,8 @@ export interface TickContext {
     terrainTiles: TerrainTileState[];
     /** HQ splitting milestone tracker. */
     hqSplitState: HQSplitState;
+    /** All active timeline layers (space, world, per-world). Mutated in-place each tick. */
+    registeredTimelines: RegisteredTimeline[];
   };
 
   // ── Per-tick computed modifiers (set by engine before phase calls) ──
