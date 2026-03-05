@@ -26,6 +26,7 @@ import './scene/ModelPreloader';
 import AlienFaunaRenderer from './scene/AlienFaunaRenderer';
 import AuraRenderer from './scene/AuraRenderer';
 import CrisisVFXRenderer from './scene/CrisisVFXRenderer';
+import CollapseOverlay from './scene/CollapseOverlay';
 import BuildingRenderer from './scene/BuildingRenderer';
 import BuildingStatusBadges from './scene/BuildingStatusBadges';
 import CameraController from './scene/CameraController';
@@ -52,6 +53,7 @@ import TerrainGrid from './scene/TerrainGrid';
 import TrainRenderer from './scene/TrainRenderer';
 import VehicleRenderer from './scene/VehicleRenderer';
 import WeatherFX from './scene/WeatherFX';
+import WWIIOverlay from './scene/WWIIOverlay';
 import ZeppelinRenderer from './scene/ZeppelinRenderer';
 
 /** Progress callback: (loaded, total, currentModelName) */
@@ -69,6 +71,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
   const spaceVisual = useSpaceVisualState();
   const climateMilestones = useClimateMilestones();
   const hasPermafrost = climateMilestones.has('permafrost_collapse') || climateMilestones.has('ecological_permafrost_collapse');
+  const isWartime = snap.currentEra === 'great_patriotic';
 
   // Track drei loading progress (useGLTF.preload triggers this)
   const { loaded, total, item } = useProgress();
@@ -131,7 +134,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
       <Environment season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} techLevel={spaceVisual.techLevel} />
       <SkyProgression state={spaceVisual} />
       <AlienFaunaRenderer />
-      <Lighting timeOfDay={snap.timeOfDay} season={snap.season} isStorm={snap.weatherLabel === 'STORM'} />
+      <Lighting timeOfDay={snap.timeOfDay} season={snap.season} isStorm={snap.weatherLabel === 'STORM'} isWartime={isWartime} />
       <TerrainGrid grid={ecsGrid} season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} />
       <BuildingRenderer
         buildings={buildings}
@@ -141,6 +144,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
         subsidenceTilt={hasPermafrost}
       />
       <BuildingStatusBadges buildings={buildings} />
+      <CollapseOverlay />
       <SceneProps season={snap.season} />
 
       <WeatherFX />
