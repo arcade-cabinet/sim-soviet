@@ -1,0 +1,75 @@
+[
+  {
+    "id": "dikhololo_night",
+    "type": "hdri",
+    "name": "Dikhololo Night",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/dikhololo_night_1k.hdr",
+    "categories": [
+      "outdoor",
+      "nature",
+      "night",
+      "clear",
+      "low contrast",
+      "natural light"
+    ],
+    "fetchedAt": "2026-03-05T13:03:07.385Z"
+  },
+  {
+    "id": "kloppenheim_02_puresky",
+    "type": "hdri",
+    "name": "Kloppenheim 02 (Pure Sky)",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/kloppenheim_02_puresky_1k.hdr",
+    "categories": [
+      "outdoor",
+      "skies",
+      "nature",
+      "night",
+      "clear",
+      "high contrast",
+      "natural light",
+      "pure skies"
+    ],
+    "fetchedAt": "2026-03-05T13:03:18.075Z"
+  },
+  {
+    "id": "autumn_field_puresky",
+    "type": "hdri",
+    "name": "Autumn Field (Pure Sky)",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/autumn_field_puresky_1k.hdr",
+    "categories": [
+      "outdoor",
+      "natural light",
+      "nature",
+      "skies",
+      "high contrast",
+      "clear",
+      "morning-afternoon",
+      "pure skies"
+    ],
+    "fetchedAt": "2026-03-05T13:03:18.887Z"
+  },
+  {
+    "id": "abandoned_tank_farm_04",
+    "type": "hdri",
+    "name": "Abandoned Tank Farm 04",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/abandoned_tank_farm_04_1k.hdr",
+    "categories": [
+      "outdoor",
+      "skies",
+      "nature",
+      "morning-afternoon",
+      "partly cloudy",
+      "high contrast",
+      "natural light"
+    ],
+    "fetchedAt": "2026-03-05T13:03:20.218Z"
+  }
+]
