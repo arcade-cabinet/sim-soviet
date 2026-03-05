@@ -45,164 +45,6 @@ interface TerrainGridProps {
   flatten?: number;
 }
 
-/**
- * Era-based color tint applied as a multiplicative overlay on per-vertex terrain colors.
- * Each RGB channel is a multiplier (1.0 = no change).
- */
-const ERA_COLOR_TINT: Record<TerrainVisualState, [number, number, number]> = {
-  snowy_taiga: [1.0, 1.0, 1.0], // pristine — no shift
-  muddy_earth: [0.85, 0.75, 0.6], // warm brown shift
-  scorched_ash: [0.5, 0.45, 0.45], // dark grey-brown desaturation
-  recovering_green: [0.85, 0.95, 0.8], // slight green boost
-  concrete_dust: [0.7, 0.68, 0.65], // grey desaturation
-  permafrost_thaw: [0.9, 0.6, 0.4], // orange-red tint
-  warm_grassland: [0.9, 1.0, 0.85], // warm green post-permafrost
-  industrial_metal: [0.6, 0.63, 0.68], // blue-steel tint
-  dyson_plate: [0.45, 0.47, 0.52], // dark gunmetal
-};
-
-/** Color palette per terrain type, varying by season */
-function getTerrainColor(terrain: TerrainType, season: Season): [number, number, number] {
-  switch (terrain) {
-    case 'grass':
-      switch (season) {
-        case 'winter':
-          return [0.75, 0.78, 0.82]; // snow-covered
-        case 'autumn':
-          return [0.55, 0.5, 0.3]; // brown-yellow
-        case 'spring':
-          return [0.4, 0.55, 0.3]; // fresh green
-        default:
-          return [0.35, 0.5, 0.28]; // green-gray Soviet grass
-      }
-    case 'water':
-      if (season === 'winter') return [0.65, 0.7, 0.75]; // frozen
-      return [0.2, 0.35, 0.55]; // dark blue
-    case 'rail':
-      return [0.3, 0.3, 0.32]; // dark gray
-    case 'tree':
-      switch (season) {
-        case 'winter':
-          return [0.7, 0.73, 0.76]; // snow
-        case 'autumn':
-          return [0.6, 0.4, 0.2]; // orange-brown
-        default:
-          return [0.25, 0.42, 0.2]; // dark green
-      }
-    case 'crater':
-      return [0.25, 0.1, 0.3]; // dark purple
-    case 'irradiated':
-      return [0.4, 0.55, 0.15]; // sickly green
-    case 'mountain':
-      switch (season) {
-        case 'winter':
-          return [0.8, 0.82, 0.85]; // snow-capped
-        default:
-          return [0.42, 0.38, 0.35]; // rocky gray-brown
-      }
-    case 'marsh':
-      switch (season) {
-        case 'winter':
-          return [0.6, 0.65, 0.68]; // frozen mud
-        default:
-          return [0.3, 0.38, 0.25]; // dark boggy green
-      }
-    case 'path':
-      switch (season) {
-        case 'winter':
-          return [0.58, 0.55, 0.5]; // snow-dusted dirt
-        case 'autumn':
-          return [0.42, 0.35, 0.25]; // muddy brown
-        case 'spring':
-          return [0.45, 0.38, 0.28]; // wet earth
-        default:
-          return [0.48, 0.4, 0.3]; // packed earth brown
-      }
-    default:
-      return [0.35, 0.5, 0.28];
-  }
-}
-
-// ── Terrain Mesh ────────────────────────────────────────────────────────────
-
-/**
- * Build a PlaneGeometry with per-vertex colors and elevation from grid data.
- * Each tile is a 1x1 quad on the XZ plane, offset by cell elevation.
- * Era tint is applied as a multiplicative overlay on the season colors.
- */
-function buildTerrainGeometry(grid: GridCell[][], season: Season, eraTint: [number, number, number] = [1, 1, 1]): THREE.BufferGeometry {
-  const positions: number[] = [];
-  const indices: number[] = [];
-  const colors: number[] = [];
-  const normals: number[] = [];
-  const uvs: number[] = [];
-  const gridSize = grid.length;
-
-  let vertIdx = 0;
-
-  for (let row = 0; row < gridSize; row++) {
-    for (let col = 0; col < gridSize; col++) {
-      const cell = grid[row]?.[col];
-      if (!cell) continue;
-
-      const y = cell.z * 0.5; // elevation
-      const [br, bg, bb] = getTerrainColor(cell.terrain, season);
-      const cr = br * eraTint[0];
-      const cg = bg * eraTint[1];
-      const cb = bb * eraTint[2];
-
-      // Quad corners (XZ plane, Y = elevation)
-      // v0---v1
-      // |  / |
-      // v2---v3
-      const x0 = col;
-      const z0 = row;
-
-      positions.push(
-        x0,
-        y,
-        z0, // v0
-        x0 + 1,
-        y,
-        z0, // v1
-        x0,
-        y,
-        z0 + 1, // v2
-        x0 + 1,
-        y,
-        z0 + 1, // v3
-      );
-
-      // UVs — tile from world position so texture tiles across the grid
-      const u0 = col / gridSize;
-      const u1 = (col + 1) / gridSize;
-      const v0 = row / gridSize;
-      const v1 = (row + 1) / gridSize;
-      uvs.push(u0, v0, u1, v0, u0, v1, u1, v1);
-
-      // Up-facing normals
-      for (let i = 0; i < 4; i++) {
-        normals.push(0, 1, 0);
-        colors.push(cr, cg, cb);
-      }
-
-      // Two triangles (CCW winding for Three.js front face)
-      indices.push(vertIdx, vertIdx + 2, vertIdx + 1, vertIdx + 1, vertIdx + 2, vertIdx + 3);
-
-      vertIdx += 4;
-    }
-  }
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-  geometry.setIndex(indices);
-
-  return geometry;
-}
-
 // ── Instanced Scatter Data ─────────────────────────────────────────────────
 
 /** Per-instance data: matrix + color for InstancedMesh */
@@ -620,13 +462,8 @@ const TerrainTextureMesh: React.FC<{
 
 // ── Component ───────────────────────────────────────────────────────────────
 
-/** Renders the terrain grid with per-vertex colors and GPU-instanced procedural scatter. */
-const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer', era = 'revolution', flatten = 1 }) => {
-  // Compute era-based color tint for per-vertex terrain colors
-  const eraTint = ERA_COLOR_TINT[eraToTerrainState(era)];
-
-  // Build terrain geometry with per-vertex colors + era tint + UVs
-  const terrainGeometry = useMemo(() => buildTerrainGeometry(grid, season, eraTint), [grid, season, eraTint]);
+/** Renders the GPU-instanced procedural scatter (trees, rocks, marshes, rail) ON TOP of the celestial shader. */
+const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer', flatten = 1 }) => {
 
   // Season-dependent colors as THREE.Color objects
   const canopyColor = useMemo(() => new THREE.Color(getCanopyColor(season)), [season]);
@@ -652,9 +489,6 @@ const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer', era 
 
   return (
     <group>
-      {/* Main terrain mesh with per-vertex colors + era PBR textures */}
-      <TerrainTextureMesh geometry={terrainGeometry} era={era} flatten={flatten} />
-
       {/* Trees — 3 instanced batches: trunks, lower cones, upper cones */}
       <ScatterInstance geometry={UNIT_CYLINDER} batch={treeInstances.trunks} transparent={flatten < 1} opacity={flatten} />
       <ScatterInstance geometry={UNIT_CONE} batch={treeInstances.lowerCones} roughness={0.85} transparent={flatten < 1} opacity={flatten} />
