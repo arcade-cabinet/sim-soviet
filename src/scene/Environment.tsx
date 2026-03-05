@@ -16,6 +16,9 @@
  */
 
 import { Environment as DreiEnvironment, Sky, useTexture } from '@react-three/drei';
+import DysonSphereBackdrop from './shaders/DysonSphereBackdrop';
+import MarsAtmosphere from './shaders/MarsAtmosphere';
+import ONeillInterior from './shaders/ONeillInterior';
 import type React from 'react';
 import { useMemo } from 'react';
 import * as THREE from 'three';
@@ -37,8 +40,15 @@ import {
 const GROUND_SIZE = 400;
 const GROUND_Y = -0.05;
 
-/** Map season to HDRI for image-based lighting */
-function getHdriFile(season: Season): string {
+/** Map season + load zone to HDRI for image-based lighting.
+ * Load zone takes priority — if the active settlement has a specific HDRI, use it.
+ * Falls back to season-based selection for Earth settlements. */
+function getHdriFile(season: Season, loadZoneHdri?: string): string {
+  // If a load zone specifies an HDRI, use it (non-Earth settlements, advanced eras)
+  if (loadZoneHdri) {
+    return assetUrl(`assets/hdri/${loadZoneHdri}`);
+  }
+  // Default: season-based for Earth historical eras
   switch (season) {
     case 'winter':
       return assetUrl('assets/hdri/snowy_field_1k.hdr');
@@ -208,13 +218,19 @@ interface EnvironmentProps {
   era?: EraId;
   /** Tech level (0-1) — drives sky clarity shift for space progression. */
   techLevel?: number;
+  /** HDRI filename override from load zone (for non-Earth settlements). */
+  loadZoneHdri?: string;
+  /** Procedural sky shader override from load zone. */
+  loadZoneShader?: 'DysonSphereBackdrop' | 'MarsAtmosphere' | 'ONeillInterior';
+  /** Mars terraforming progress for MarsAtmosphere shader (0-1). */
+  marsPhase?: number;
 }
 
 /** Renders the procedural sky, HDRI image-based lighting, PBR ground plane, and perimeter hills. */
-const Environment: React.FC<EnvironmentProps> = ({ season = 'winter', era = 'revolution', techLevel = 0 }) => {
+const Environment: React.FC<EnvironmentProps> = ({ season = 'winter', era = 'revolution', techLevel = 0, loadZoneHdri, loadZoneShader, marsPhase = 0 }) => {
   const center = getCurrentGridSize() / 2;
   const skyParams = getSkyParams(season, techLevel);
-  const hdriFile = getHdriFile(season);
+  const hdriFile = getHdriFile(season, loadZoneHdri);
   const terrainState = eraToTerrainState(era);
   const hillColor = TERRAIN_HILL_COLORS[terrainState];
 
@@ -230,17 +246,25 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter', era = 'rev
 
   return (
     <>
-      {/* Procedural sky (Preetham model via drei Sky — GLSL ShaderMaterial) */}
-      <Sky
-        turbidity={skyParams.turbidity}
-        rayleigh={skyParams.rayleigh}
-        mieCoefficient={skyParams.mieCoefficient}
-        mieDirectionalG={skyParams.mieDirectionalG}
-        inclination={skyParams.inclination}
-        azimuth={skyParams.azimuth}
-      />
+      {/* Sky: procedural shader override for non-Earth, or Preetham model for Earth */}
+      {loadZoneShader === 'MarsAtmosphere' ? (
+        <MarsAtmosphere terraformingProgress={marsPhase} />
+      ) : loadZoneShader === 'ONeillInterior' ? (
+        <ONeillInterior />
+      ) : loadZoneShader === 'DysonSphereBackdrop' ? (
+        <DysonSphereBackdrop />
+      ) : (
+        <Sky
+          turbidity={skyParams.turbidity}
+          rayleigh={skyParams.rayleigh}
+          mieCoefficient={skyParams.mieCoefficient}
+          mieDirectionalG={skyParams.mieDirectionalG}
+          inclination={skyParams.inclination}
+          azimuth={skyParams.azimuth}
+        />
+      )}
 
-      {/* HDRI for image-based lighting (IBL) */}
+      {/* HDRI for image-based lighting (IBL) — always active for PBR materials */}
       <DreiEnvironment files={hdriFile} />
 
       {/* PBR ground plane — era-driven textures */}
