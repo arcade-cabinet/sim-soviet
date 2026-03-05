@@ -41,6 +41,7 @@ import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
 import { useInputManager } from './input/useInputManager';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
+import { getLoadZone } from './scene/loadZones';
 import {
   closeBuildingInspector,
   closeCitizenDossierByIndex,
@@ -918,6 +919,10 @@ const App: React.FC = () => {
             currentModel={loadProgress.name}
             complete={assetsReady}
             onFadeComplete={handleLoadingFadeComplete}
+            {...(() => {
+              const zone = getLoadZone('earth', snap.currentEra);
+              return { zoneName: zone.name, flavorText: zone.flavorText };
+            })()}
           />
         )}
 
