@@ -77,8 +77,8 @@ describe('terrainEraMapping', () => {
   });
 
   describe('TERRAIN_STATE_ORDER', () => {
-    it('contains exactly 6 states', () => {
-      expect(TERRAIN_STATE_ORDER).toHaveLength(6);
+    it('contains exactly 9 states', () => {
+      expect(TERRAIN_STATE_ORDER).toHaveLength(9);
     });
 
     it('starts with snowy_taiga and ends with permafrost_thaw', () => {

@@ -54,6 +54,9 @@ const ERA_COLOR_TINT: Record<TerrainVisualState, [number, number, number]> = {
   recovering_green: [0.85, 0.95, 0.8], // slight green boost
   concrete_dust: [0.7, 0.68, 0.65], // grey desaturation
   permafrost_thaw: [0.9, 0.6, 0.4], // orange-red tint
+  warm_grassland: [0.9, 1.0, 0.85], // warm green post-permafrost
+  industrial_metal: [0.6, 0.63, 0.68], // blue-steel tint
+  dyson_plate: [0.45, 0.47, 0.52], // dark gunmetal
 };
 
 /** Color palette per terrain type, varying by season */

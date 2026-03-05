@@ -262,9 +262,19 @@ describe('Sub-era building models', () => {
 });
 
 describe('Sub-era terrain mapping', () => {
-  it('all sub-eras map to permafrost_thaw', () => {
+  it('sub-eras map to distinct terrain states based on Kardashev progression', () => {
+    const expected: Record<string, string> = {
+      post_soviet: 'permafrost_thaw',
+      planetary: 'warm_grassland',
+      solar_engineering: 'industrial_metal',
+      type_one: 'industrial_metal',
+      deconstruction: 'dyson_plate',
+      dyson_swarm: 'dyson_plate',
+      megaearth: 'dyson_plate',
+      type_two_peak: 'dyson_plate',
+    };
     for (const subEra of KARDASHEV_ORDER) {
-      expect(eraToTerrainState(subEra)).toBe('permafrost_thaw');
+      expect(eraToTerrainState(subEra)).toBe(expected[subEra]);
     }
   });
 });

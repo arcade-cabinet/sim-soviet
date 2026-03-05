@@ -26,9 +26,12 @@ export type TerrainVisualState =
   | 'scorched_ash'
   | 'recovering_green'
   | 'concrete_dust'
-  | 'permafrost_thaw';
+  | 'permafrost_thaw'
+  | 'warm_grassland'
+  | 'industrial_metal'
+  | 'dyson_plate';
 
-/** All 6 terrain visual states in chronological progression order. */
+/** All 9 terrain visual states in chronological progression order. */
 export const TERRAIN_STATE_ORDER: readonly TerrainVisualState[] = [
   'snowy_taiga',
   'muddy_earth',
@@ -36,6 +39,9 @@ export const TERRAIN_STATE_ORDER: readonly TerrainVisualState[] = [
   'recovering_green',
   'concrete_dust',
   'permafrost_thaw',
+  'warm_grassland',
+  'industrial_metal',
+  'dyson_plate',
 ] as const;
 
 /**
@@ -59,14 +65,17 @@ export function eraToTerrainState(era: EraId): TerrainVisualState {
       return 'concrete_dust';
     case 'the_eternal':
     case 'post_soviet':
+      return 'permafrost_thaw';
     case 'planetary':
+      return 'warm_grassland';
     case 'solar_engineering':
     case 'type_one':
+      return 'industrial_metal';
     case 'deconstruction':
     case 'dyson_swarm':
     case 'megaearth':
     case 'type_two_peak':
-      return 'permafrost_thaw';
+      return 'dyson_plate';
   }
 }
 
@@ -81,6 +90,9 @@ export const TERRAIN_STATE_COLORS: Record<TerrainVisualState, string> = {
   recovering_green: '#7a9966', // muted green recovery
   concrete_dust: '#9a9590', // grey-brown industrial
   permafrost_thaw: '#c45a30', // orange-red cracked earth
+  warm_grassland: '#8aaa66', // warm green (post-permafrost recovery)
+  industrial_metal: '#707880', // blue-gray steel
+  dyson_plate: '#505560', // dark gunmetal (Dyson swarm panel)
 };
 
 /**
@@ -93,6 +105,9 @@ export const TERRAIN_HILL_COLORS: Record<TerrainVisualState, string> = {
   recovering_green: '#526b38',
   concrete_dust: '#6b6560',
   permafrost_thaw: '#8a4a25',
+  warm_grassland: '#4a7030', // verdant green hills
+  industrial_metal: '#555a62', // steel-gray structures
+  dyson_plate: '#3a3e45', // dark metal horizon
 };
 
 /**
@@ -106,6 +121,9 @@ export const TERRAIN_TEXTURE_PREFIX: Record<TerrainVisualState, string> = {
   recovering_green: 'Ground003',
   concrete_dust: 'Concrete034',
   permafrost_thaw: 'Lava004',
+  warm_grassland: 'Grass001',
+  industrial_metal: 'metal_plate',
+  dyson_plate: 'Metal038',
 };
 
 /**
