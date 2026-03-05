@@ -49,7 +49,11 @@ Completed and abandoned plans in `archive/`. See [`archive/`](archive/) for hist
 
 ## Summary
 
-- **5 active** plans — in progress or partially complete
+- **5 active** plans — in progress or partially complete (all 7 Buildings-UI phases done, Eternal Expansion ~95%)
 - **5 reference** documents — research, no implementation needed
 - **12 completed** plans — all successfully implemented (archived)
 - **2 abandoned** plans — superseded by the R3F migration (archived)
+
+## Recent Session Notes (2026-03-05)
+
+All Buildings-UI phases (1-7) are now complete. Celestial Body Factory, ZonePreloader, and zone-aware loading screens added. Poly Haven pipeline operational. 6730 tests passing.

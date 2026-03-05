@@ -1,0 +1,596 @@
+{
+  "$schema": "./celestialBodies.schema.json",
+  "description": "Seed-based celestial body definitions for SimSoviet 1917. Each body defines physical properties, visual config, gameplay parameters, and procedural generation rules.",
+  "version": 1,
+
+  "stellarBodies": {
+    "sol": {
+      "name": "Sol",
+      "type": "star",
+      "class": "G2V",
+      "radius": 696340,
+      "luminosity": 1.0,
+      "temperature": 5778,
+      "visual": {
+        "bodyType": "sun",
+        "shader": "DysonSphereBackdrop",
+        "hdri": "kloppenheim_02_puresky_1k.hdr",
+        "bloomIntensity": 1.5,
+        "coronaColor": "#ffe8b0"
+      },
+      "megastructure": {
+        "type": "dyson_swarm",
+        "maxProgress": 1.0,
+        "shellRadius": 1.215,
+        "panelStyle": "hex_solar"
+      }
+    }
+  },
+
+  "planets": {
+    "earth": {
+      "name": "Earth",
+      "type": "terran",
+      "parent": "sol",
+      "orbitalRadius": 1.0,
+      "physical": {
+        "radius": 6371,
+        "gravity": 1.0,
+        "atmosphere": "breathable",
+        "atmosphereDensity": 1.0,
+        "dayLength": 24,
+        "axialTilt": 23.4,
+        "hasSeasons": true,
+        "hasMagneticField": true
+      },
+      "visual": {
+        "bodyType": "terran",
+        "hdri": "snowy_field_1k.hdr",
+        "groundTexture": "Grass001",
+        "oceanTexture": "water_default",
+        "snowTexture": "Snow003",
+        "atmosphereColor": "#6699cc",
+        "atmosphereRim": true,
+        "cloudLayer": true
+      },
+      "terrain": {
+        "profile": "earth_temperate",
+        "seaLevel": 0.40,
+        "mountainAmplitude": 1.0,
+        "noiseOctaves": 6,
+        "noiseScale": 1.5,
+        "continentBias": 0.3,
+        "polarIce": true,
+        "biomes": ["tundra", "taiga", "temperate", "steppe", "desert", "tropical", "ocean", "mountain", "ice"]
+      },
+      "gameplay": {
+        "farmingMethod": "soil",
+        "farmYieldMultiplier": 1.0,
+        "privatePlotsAvailable": true,
+        "solarEfficiency": 1.0,
+        "nuclearAvailable": true,
+        "fusionAvailable": true,
+        "hasWeather": true,
+        "climateModel": "earth",
+        "warmingPolarity": 1,
+        "atmosphericDecayRate": 1.0,
+        "radiationDecayBonus": 0.0,
+        "gravityBirthRateModifier": 1.0,
+        "radiationHealthModifier": 1.0,
+        "constructionType": "standard",
+        "constructionCostMultiplier": 1.0,
+        "baseSurvivalCost": "low"
+      },
+      "resources": {
+        "oxygenTracked": false,
+        "waterTracked": false,
+        "abundantMinerals": true
+      }
+    },
+
+    "moon": {
+      "name": "Luna",
+      "type": "rocky",
+      "parent": "earth",
+      "orbitalRadius": 0.00257,
+      "physical": {
+        "radius": 1737,
+        "gravity": 0.166,
+        "atmosphere": "none",
+        "atmosphereDensity": 0.0,
+        "dayLength": 708,
+        "axialTilt": 1.5,
+        "hasSeasons": false,
+        "hasMagneticField": false
+      },
+      "visual": {
+        "bodyType": "terran",
+        "hdri": "dikhololo_night_1k.hdr",
+        "groundTexture": "Ground031",
+        "atmosphereColor": null,
+        "atmosphereRim": false,
+        "cloudLayer": false
+      },
+      "terrain": {
+        "profile": "lunar",
+        "seaLevel": -1.0,
+        "mountainAmplitude": 0.3,
+        "noiseOctaves": 4,
+        "noiseScale": 2.0,
+        "continentBias": 0.0,
+        "polarIce": false,
+        "biomes": ["regolith", "crater", "highland", "mare"],
+        "craterDensity": 0.6
+      },
+      "gameplay": {
+        "farmingMethod": "hydroponics",
+        "farmYieldMultiplier": 0.6,
+        "privatePlotsAvailable": false,
+        "solarEfficiency": 1.0,
+        "nuclearAvailable": true,
+        "fusionAvailable": true,
+        "hasWeather": false,
+        "climateModel": "none",
+        "warmingPolarity": 0,
+        "atmosphericDecayRate": 0.1,
+        "radiationDecayBonus": 0.3,
+        "gravityBirthRateModifier": 0.8,
+        "radiationHealthModifier": 1.5,
+        "constructionType": "pressurized_dome",
+        "constructionCostMultiplier": 3.0,
+        "baseSurvivalCost": "extreme"
+      },
+      "resources": {
+        "oxygenTracked": true,
+        "waterTracked": true,
+        "abundantMinerals": true,
+        "helium3": true
+      }
+    },
+
+    "mars": {
+      "name": "Mars",
+      "type": "terran",
+      "parent": "sol",
+      "orbitalRadius": 1.524,
+      "physical": {
+        "radius": 3390,
+        "gravity": 0.376,
+        "atmosphere": "thin_co2",
+        "atmosphereDensity": 0.006,
+        "dayLength": 24.6,
+        "axialTilt": 25.2,
+        "hasSeasons": true,
+        "hasMagneticField": false
+      },
+      "visual": {
+        "bodyType": "martian",
+        "hdri": "clarens_night_02_1k.hdr",
+        "groundTexture": "Ground039",
+        "atmosphereColor": "#cc7744",
+        "atmosphereRim": true,
+        "cloudLayer": false,
+        "skyShader": "MarsAtmosphere"
+      },
+      "terrain": {
+        "profile": "martian",
+        "seaLevel": -0.5,
+        "mountainAmplitude": 1.5,
+        "noiseOctaves": 5,
+        "noiseScale": 2.0,
+        "continentBias": 0.0,
+        "polarIce": true,
+        "biomes": ["dust", "rock", "crater", "canyon", "polar_ice"],
+        "craterDensity": 0.4
+      },
+      "terraforming": {
+        "enabled": true,
+        "phases": [
+          { "id": "red", "name": "Red Mars", "atmospherePressure": 0.006, "temperature": -60, "groundTexture": "Ground039", "hdri": "clarens_night_02_1k.hdr", "marsPhase": 0.0 },
+          { "id": "green", "name": "Green Mars", "atmospherePressure": 0.1, "temperature": -20, "groundTexture": "Moss002", "hdri": "autumn_field_puresky_1k.hdr", "marsPhase": 0.5 },
+          { "id": "blue", "name": "Blue Mars", "atmospherePressure": 0.8, "temperature": 10, "groundTexture": "aerial_beach_01", "hdri": "belfast_sunset_puresky_1k.hdr", "marsPhase": 1.0 }
+        ]
+      },
+      "gameplay": {
+        "farmingMethod": "greenhouse",
+        "farmYieldMultiplier": 0.3,
+        "privatePlotsAvailable": false,
+        "solarEfficiency": 0.43,
+        "nuclearAvailable": true,
+        "fusionAvailable": true,
+        "hasWeather": true,
+        "climateModel": "mars",
+        "warmingPolarity": -1,
+        "atmosphericDecayRate": 0.5,
+        "radiationDecayBonus": 0.2,
+        "gravityBirthRateModifier": 0.85,
+        "radiationHealthModifier": 1.3,
+        "constructionType": "pressurized_dome",
+        "constructionCostMultiplier": 2.0,
+        "baseSurvivalCost": "very_high"
+      },
+      "resources": {
+        "oxygenTracked": true,
+        "waterTracked": true,
+        "abundantMinerals": true,
+        "ironOxide": true
+      }
+    },
+
+    "venus": {
+      "name": "Venus",
+      "type": "terran",
+      "parent": "sol",
+      "orbitalRadius": 0.723,
+      "physical": {
+        "radius": 6052,
+        "gravity": 0.904,
+        "atmosphere": "dense_co2",
+        "atmosphereDensity": 92.0,
+        "dayLength": 5832,
+        "axialTilt": 177.4,
+        "hasSeasons": false,
+        "hasMagneticField": false
+      },
+      "visual": {
+        "bodyType": "terran",
+        "hdri": "belfast_sunset_puresky_1k.hdr",
+        "groundTexture": "rock_ground_02",
+        "atmosphereColor": "#ddaa44",
+        "atmosphereRim": true,
+        "cloudLayer": true
+      },
+      "terrain": {
+        "profile": "venusian",
+        "seaLevel": -0.3,
+        "mountainAmplitude": 0.8,
+        "noiseOctaves": 4,
+        "noiseScale": 1.8,
+        "continentBias": 0.0,
+        "polarIce": false,
+        "biomes": ["volcanic", "basalt", "highland", "corona"]
+      },
+      "gameplay": {
+        "farmingMethod": "impossible",
+        "farmYieldMultiplier": 0.0,
+        "privatePlotsAvailable": false,
+        "solarEfficiency": 1.9,
+        "nuclearAvailable": true,
+        "fusionAvailable": true,
+        "hasWeather": true,
+        "climateModel": "venus",
+        "warmingPolarity": 0,
+        "atmosphericDecayRate": 3.0,
+        "radiationDecayBonus": 0.0,
+        "gravityBirthRateModifier": 0.95,
+        "radiationHealthModifier": 1.0,
+        "constructionType": "pressurized_dome",
+        "constructionCostMultiplier": 4.0,
+        "baseSurvivalCost": "extreme"
+      },
+      "resources": {
+        "oxygenTracked": true,
+        "waterTracked": true,
+        "sulfuricAcid": true
+      },
+      "settlement": {
+        "type": "cloud_colony",
+        "altitude": 55,
+        "notes": "Settlements float in the upper atmosphere at ~55km where temperature and pressure are Earth-like"
+      }
+    },
+
+    "mercury": {
+      "name": "Mercury",
+      "type": "rocky",
+      "parent": "sol",
+      "orbitalRadius": 0.387,
+      "physical": {
+        "radius": 2440,
+        "gravity": 0.378,
+        "atmosphere": "trace",
+        "atmosphereDensity": 0.0,
+        "dayLength": 4222,
+        "axialTilt": 0.03,
+        "hasSeasons": false,
+        "hasMagneticField": true
+      },
+      "visual": {
+        "bodyType": "terran",
+        "hdri": "dikhololo_night_1k.hdr",
+        "groundTexture": "Ground031",
+        "atmosphereColor": null,
+        "atmosphereRim": false,
+        "cloudLayer": false
+      },
+      "terrain": {
+        "profile": "lunar",
+        "seaLevel": -1.0,
+        "mountainAmplitude": 0.2,
+        "noiseOctaves": 3,
+        "noiseScale": 2.5,
+        "polarIce": false,
+        "biomes": ["regolith", "crater", "scarp"],
+        "craterDensity": 0.8
+      },
+      "gameplay": {
+        "farmingMethod": "impossible",
+        "farmYieldMultiplier": 0.0,
+        "privatePlotsAvailable": false,
+        "solarEfficiency": 6.7,
+        "nuclearAvailable": true,
+        "fusionAvailable": true,
+        "hasWeather": false,
+        "climateModel": "none",
+        "warmingPolarity": 0,
+        "atmosphericDecayRate": 0.05,
+        "radiationDecayBonus": 0.5,
+        "gravityBirthRateModifier": 0.7,
+        "radiationHealthModifier": 2.0,
+        "constructionType": "underground",
+        "constructionCostMultiplier": 5.0,
+        "baseSurvivalCost": "extreme"
+      },
+      "resources": {
+        "oxygenTracked": true,
+        "waterTracked": true,
+        "ironCore": true
+      },
+      "deconstruction": {
+        "massEarths": 0.055,
+        "dysonMaterial": "iron_silicate",
+        "priority": 2,
+        "notes": "Second body to deconstruct after Moon. Iron is Dyson swarm backbone material."
+      }
+    },
+
+    "jupiter": {
+      "name": "Jupiter",
+      "type": "gas_giant",
+      "parent": "sol",
+      "orbitalRadius": 5.203,
+      "physical": {
+        "radius": 69911,
+        "gravity": 2.528,
+        "atmosphere": "hydrogen_helium",
+        "atmosphereDensity": 999,
+        "dayLength": 9.9,
+        "axialTilt": 3.1,
+        "hasSeasons": false,
+        "hasMagneticField": true
+      },
+      "visual": {
+        "bodyType": "jovian",
+        "hdri": "dikhololo_night_1k.hdr",
+        "atmosphereColor": "#cc9966",
+        "atmosphereRim": true,
+        "bandingColor1": "#aa8855",
+        "bandingColor2": "#664422",
+        "bandingColor3": "#ddbb88"
+      },
+      "terrain": {
+        "profile": "none",
+        "notes": "No solid surface. Gas harvesting only."
+      },
+      "gameplay": {
+        "farmingMethod": "impossible",
+        "farmYieldMultiplier": 0.0,
+        "privatePlotsAvailable": false,
+        "solarEfficiency": 0.037,
+        "nuclearAvailable": true,
+        "fusionAvailable": true,
+        "hasWeather": true,
+        "climateModel": "jovian",
+        "warmingPolarity": 0,
+        "constructionType": "orbital",
+        "constructionCostMultiplier": 8.0,
+        "baseSurvivalCost": "extreme"
+      },
+      "resources": {
+        "hydrogen": true,
+        "helium3": true,
+        "notes": "Gas harvesting — endless fuel supply"
+      },
+      "moons": ["ganymede", "europa", "callisto", "io"]
+    },
+
+    "titan": {
+      "name": "Titan",
+      "type": "ice_moon",
+      "parent": "saturn",
+      "orbitalRadius": 0.00817,
+      "physical": {
+        "radius": 2575,
+        "gravity": 0.138,
+        "atmosphere": "thick_nitrogen_methane",
+        "atmosphereDensity": 1.5,
+        "dayLength": 382,
+        "axialTilt": 0.3,
+        "hasSeasons": true,
+        "hasMagneticField": false
+      },
+      "visual": {
+        "bodyType": "terran",
+        "hdri": "dikhololo_night_1k.hdr",
+        "groundTexture": "Ice002",
+        "atmosphereColor": "#aa8844",
+        "atmosphereRim": true,
+        "cloudLayer": true
+      },
+      "terrain": {
+        "profile": "titan",
+        "seaLevel": 0.35,
+        "mountainAmplitude": 0.3,
+        "noiseOctaves": 4,
+        "noiseScale": 1.5,
+        "polarIce": false,
+        "biomes": ["methane_sea", "ice_plain", "hydrocarbon_dune", "cryovolcano"],
+        "liquidType": "methane"
+      },
+      "gameplay": {
+        "farmingMethod": "impossible",
+        "farmYieldMultiplier": 0.0,
+        "privatePlotsAvailable": false,
+        "solarEfficiency": 0.011,
+        "nuclearAvailable": true,
+        "fusionAvailable": true,
+        "hasWeather": true,
+        "climateModel": "titan",
+        "warmingPolarity": 1,
+        "atmosphericDecayRate": 1.5,
+        "radiationDecayBonus": 0.0,
+        "gravityBirthRateModifier": 0.5,
+        "radiationHealthModifier": 1.0,
+        "constructionType": "pressurized_dome",
+        "constructionCostMultiplier": 6.0,
+        "baseSurvivalCost": "extreme"
+      },
+      "resources": {
+        "oxygenTracked": true,
+        "waterTracked": true,
+        "methane": true,
+        "ethane": true
+      }
+    },
+
+    "ceres": {
+      "name": "Ceres",
+      "type": "dwarf_planet",
+      "parent": "sol",
+      "orbitalRadius": 2.77,
+      "physical": {
+        "radius": 473,
+        "gravity": 0.029,
+        "atmosphere": "trace",
+        "atmosphereDensity": 0.0,
+        "dayLength": 9.1,
+        "axialTilt": 4.0,
+        "hasSeasons": false,
+        "hasMagneticField": false
+      },
+      "visual": {
+        "bodyType": "terran",
+        "hdri": "dikhololo_night_1k.hdr",
+        "groundTexture": "Ground031"
+      },
+      "terrain": {
+        "profile": "asteroid",
+        "seaLevel": -1.0,
+        "mountainAmplitude": 0.1,
+        "noiseOctaves": 3,
+        "craterDensity": 0.9,
+        "biomes": ["regolith", "ice_deposit", "crater"]
+      },
+      "gameplay": {
+        "farmingMethod": "impossible",
+        "farmYieldMultiplier": 0.0,
+        "solarEfficiency": 0.13,
+        "constructionType": "underground",
+        "constructionCostMultiplier": 4.0,
+        "baseSurvivalCost": "extreme"
+      },
+      "resources": {
+        "waterIce": true,
+        "minerals": true
+      }
+    }
+  },
+
+  "megastructures": {
+    "dyson_swarm": {
+      "name": "Dyson Swarm",
+      "type": "orbital_array",
+      "parent": "sol",
+      "visual": {
+        "bodyType": "sun",
+        "shader": "DysonSphereBackdrop",
+        "shellVisible": true,
+        "groundTexture": "Metal038",
+        "hdri": "kloppenheim_02_puresky_1k.hdr"
+      },
+      "terrain": {
+        "profile": "orbital",
+        "biomes": ["panel_surface", "maintenance_corridor", "gap"]
+      },
+      "gameplay": {
+        "farmingMethod": "hydroponics",
+        "solarEfficiency": 999.0,
+        "constructionType": "orbital",
+        "baseSurvivalCost": "high"
+      }
+    },
+    "oneill_cylinder": {
+      "name": "O'Neill Cylinder",
+      "type": "habitat",
+      "visual": {
+        "shader": "ONeillInterior",
+        "groundTexture": "blue_metal_plate",
+        "hdri": "kloppenheim_02_puresky_1k.hdr"
+      },
+      "terrain": {
+        "profile": "orbital",
+        "biomes": ["habitat_floor", "window_strip", "endcap"]
+      },
+      "gameplay": {
+        "farmingMethod": "soil",
+        "farmYieldMultiplier": 0.8,
+        "solarEfficiency": 1.0,
+        "constructionType": "standard",
+        "baseSurvivalCost": "high"
+      }
+    }
+  },
+
+  "exoplanetTemplates": {
+    "terran_temperate": {
+      "name": "Temperate Terran",
+      "type": "terran",
+      "terrain": { "seaLevel": 0.35, "mountainAmplitude": 0.8, "noiseOctaves": 5, "biomes": ["ocean", "land", "mountain", "ice"] },
+      "gameplay": { "farmingMethod": "soil", "farmYieldMultiplier": 0.7, "baseSurvivalCost": "high" }
+    },
+    "desert_world": {
+      "name": "Desert World",
+      "type": "terran",
+      "terrain": { "seaLevel": 0.15, "mountainAmplitude": 1.2, "noiseOctaves": 4, "biomes": ["sand", "rock", "canyon", "oasis"] },
+      "visual": { "groundTexture": "sand_01", "atmosphereColor": "#ddaa66" },
+      "gameplay": { "farmingMethod": "greenhouse", "farmYieldMultiplier": 0.2, "baseSurvivalCost": "extreme" }
+    },
+    "ice_world": {
+      "name": "Ice World",
+      "type": "terran",
+      "terrain": { "seaLevel": 0.4, "mountainAmplitude": 0.5, "noiseOctaves": 4, "biomes": ["ice_sheet", "glacier", "frozen_ocean", "tundra"] },
+      "visual": { "groundTexture": "Ice002", "atmosphereColor": "#aaccee" },
+      "gameplay": { "farmingMethod": "hydroponics", "farmYieldMultiplier": 0.3, "baseSurvivalCost": "extreme" }
+    },
+    "ocean_world": {
+      "name": "Ocean World",
+      "type": "terran",
+      "terrain": { "seaLevel": 0.85, "mountainAmplitude": 0.3, "biomes": ["deep_ocean", "shallow_ocean", "archipelago", "reef"] },
+      "gameplay": { "farmingMethod": "hydroponics", "constructionType": "pressurized_dome", "baseSurvivalCost": "very_high" }
+    },
+    "super_earth": {
+      "name": "Super-Earth",
+      "type": "terran",
+      "terrain": { "seaLevel": 0.45, "mountainAmplitude": 2.0, "noiseOctaves": 7, "biomes": ["ocean", "continent", "mega_mountain", "deep_valley"] },
+      "gameplay": { "gravityBirthRateModifier": 0.6, "constructionCostMultiplier": 2.5, "baseSurvivalCost": "very_high" }
+    }
+  },
+
+  "generation": {
+    "notes": "Exoplanets are generated from seed. Seed encodes: planet type (4 bits) + variation (28 bits). The type selects an exoplanetTemplate, the variation seeds the noise for unique terrain.",
+    "seedEncoding": {
+      "typeBits": 4,
+      "variationBits": 28,
+      "types": {
+        "0": "terran_temperate",
+        "1": "desert_world",
+        "2": "ice_world",
+        "3": "ocean_world",
+        "4": "super_earth",
+        "5": "martian",
+        "6": "jovian",
+        "7": "rocky"
+      }
+    }
+  }
+}

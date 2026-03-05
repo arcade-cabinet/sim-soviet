@@ -10,6 +10,7 @@ Devlog entries are chronological records of major development milestones. Read n
 
 | Entry | Title | Date | Category | Commits |
 |-------|-------|------|----------|---------|
+| `006-kardashev-expansion.md` | Kardashev Expansion — Eternal Era Systems + Multi-Settlement | 2026-03-05 | feature | 20 commits on `feat/allocation-engine` |
 | `005-gap-closure.md` | Gap Closure — All GDD Systems Implemented | 2026-02-10 | feature | `87854ce..HEAD` |
 | `004-ecs-unification.md` | ECS Unification — GameState Eliminated | 2026-02-09 | refactor | `af54f48..5cbceee` |
 | `003-ui-wiring.md` | UI Design System & Prototype Wiring | 2026-02-09 | feature | `98bce2d..43ce8cf` |
@@ -23,3 +24,4 @@ Devlog entries are chronological records of major development milestones. Read n
 - **003**: 22 UI overlay components, Soviet aesthetic, modal system
 - **004**: Miniplex ECS replaces legacy GameState as canonical state
 - **005**: All GDD gaps closed — full feature parity with design docs
+- **006**: Kardashev sub-eras (8), post-scarcity pressure (5 domains), multi-settlement, 42 cold branches, celestial body factory (sphere↔flat morphing), zone-aware loading, Poly Haven pipeline, megacity law enforcement, adaptive agent matrix (10 profiles), 3 procedural shaders. ~16K lines, 6730 tests.

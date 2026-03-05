@@ -96,6 +96,9 @@ commits:
 | HQ Splitting | growth | `src/growth/HQSplitting.ts` | Milestone-based building spawns at population thresholds |
 | Building Panel Content | ui | `src/ui/BuildingPanelContent/` (7 files) | Per-role building panels (Factory, Farm, Housing, Service, etc.) |
 | HQ Agency Tabs | ui | `src/ui/hq-tabs/` (6 files) | Government HQ tabs (Gosplan, KGB, Military, Politburo, Reports, etc.) |
+| Celestial Body Factory | scene | `src/scene/celestial/` (5 files) | Sphere↔flat morphing viewport, 4 body types (Sun/Terran/Martian/Jovian), MegastructureShell |
+| ZonePreloader | scene | `src/scene/ZonePreloader.ts` | Zone-specific asset preloading (models, textures, HDRIs) with progress phases |
+| Zone-Aware Loading | ui | `src/ui/LoadingScreen.tsx`, `src/ui/SettlementTransitionOverlay.tsx` | Zone-specific loading screens with flavor text + settlement transition overlay |
 
 ### Active (In use, ongoing)
 | Document | Type |

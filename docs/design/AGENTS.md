@@ -40,6 +40,12 @@ These systems are implemented in code but do not yet have corresponding design d
 | Cold Branches | `src/ai/agents/core/worldBranches.ts` | Dormant divergence points that activate organically from pressure conditions |
 | Multi-Settlement / Relocation | `src/game/relocation/` (3 files) | Settlement type, RelocationEngine, terrain profiles from Siberia to Mars |
 | HQ Splitting | `src/growth/HQSplitting.ts` | Milestone-based building spawns at population thresholds (50/150/400) |
+| Kardashev Sub-Eras (8) | `src/game/era/kardashev.ts`, `src/config/kardashevSubEras.json` | post_soviet → planetary → solar_engineering → type_one → deconstruction → dyson_swarm → megaearth → type_two_peak |
+| Post-Scarcity Pressure (5 domains) | `src/ai/agents/crisis/pressure/PressureDomains.ts` | meaning, density, entropy, legacy, ennui — crises from abundance |
+| Celestial Body Factory | `src/scene/celestial/` (5 files) | Sphere↔flat morphing viewport, 4 body types, MegastructureShell with Dyson shell |
+| ZonePreloader | `src/scene/ZonePreloader.ts` | Zone-specific asset preloading with model/texture/HDRI progress phases |
+| Adaptive Agent Matrix (10 profiles) | `src/ai/agents/core/agentProfiles.ts` | 10 terrain profiles wired to 6 core agents, climate polarity |
+| MegaCity Law Enforcement | `src/ai/agents/political/` | KGB → Security → Sector Judges → Megacity Arbiters, crime rate model |
 
 ## Canonical vs Aspirational
 

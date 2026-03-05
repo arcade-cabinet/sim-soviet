@@ -53,6 +53,20 @@ Deep reference documents for complex subsystems.
 | [Power Transitions](design/power-transitions.md) | 7 leadership succession types, probability engine |
 | [Leader Archetypes](design/leader-archetypes.md) | 11 procedural leader personalities |
 
+### Eternal Era & Expansion Systems
+
+| System | Description |
+|--------|-------------|
+| Kardashev Sub-Eras | 8 stages from Type 0 to Type III+ with distinct mechanics and building sets |
+| Post-Scarcity Pressure | 5 pressure domains for abundance-driven crises (identity, meaning, computation) |
+| Multi-Settlement | Tick loop across multiple worlds, RelocationEngine, inter-settlement transport |
+| Cold Branches | 42 narrative divergence points with cascading consequences |
+| Adaptive Agent Matrix | 10 terrain profiles (Siberia to Venus) with per-world parameter swaps |
+| Climate Polarity | Ecological collapse timeline vs. terraforming mechanics |
+| Procedural Shaders | Dyson sphere, Mars dome, O'Neill cylinder visualization |
+| Celestial Body Factory | Sphere-to-flat morph for planet landing transitions |
+| Load Zones | 13 zone-aware configurations controlling LOD and memory budgets |
+
 ---
 
 ## Content & Creative
@@ -101,4 +115,4 @@ Deep reference documents for complex subsystems.
 
 ---
 
-*42 documentation files | Last updated: March 2026*
+*43 documentation files | Last updated: March 2026*

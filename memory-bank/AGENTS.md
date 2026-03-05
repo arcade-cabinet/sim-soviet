@@ -41,6 +41,13 @@ Key new systems that agents should be aware of:
 | **HQ Splitting** | `src/growth/HQSplitting.ts` | Population milestones spawn buildings from Government HQ (50/150/400). |
 | **Building Panel Content** | `src/ui/BuildingPanelContent/` | Per-role building panels (Factory, Farm, Housing, Service, etc.). |
 | **HQ Agency Tabs** | `src/ui/hq-tabs/` | Government HQ tabs (Gosplan, KGB, Military, Politburo, Reports). |
+| **Kardashev Sub-Eras** | `src/game/era/kardashev.ts` | 8 sub-eras replacing flat the_eternal (post_soviet → type_two_peak). |
+| **Post-Scarcity Pressure** | `src/ai/agents/crisis/pressure/PressureDomains.ts` | 5 new domains: meaning, density, entropy, legacy, ennui. |
+| **Celestial Body Factory** | `src/scene/celestial/` (5 files) | Sphere↔flat morphing, 4 body types (Sun/Terran/Martian/Jovian), MegastructureShell. |
+| **ZonePreloader** | `src/scene/ZonePreloader.ts` | Zone-specific asset preloading (models, textures, HDRIs) with progress phases. |
+| **Zone-Aware Loading** | `src/ui/LoadingScreen.tsx`, `src/ui/SettlementTransitionOverlay.tsx` | Zone-specific loading screens + settlement transition overlay with flavor text. |
+| **MegaCity Law Enforcement** | `src/ai/agents/political/` | KGB → Security → Sector Judges → Megacity Arbiters at mega-scale. |
+| **Adaptive Agent Matrix** | `src/ai/agents/core/agentProfiles.ts` | 10 terrain profiles, 6 agents wired, climate polarity. |
 
 ## Coordination
 
