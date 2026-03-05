@@ -64,6 +64,7 @@ import type { ConsequenceLevel, DifficultyLevel } from '../ai/agents/political/S
 import { DIFFICULTY_PRESETS, ScoringSystem } from '../ai/agents/political/ScoringSystem';
 import { DefenseAgent, FireSystem, initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
 import { DemographicAgent } from '../ai/agents/social/DemographicAgent';
+import { DvorNeedsAgent } from '../ai/agents/social/DvorNeedsAgent';
 import { getPopulationMode } from '../ai/agents/workforce/collectiveTransition';
 import { WorkerSystem } from '../ai/agents/workforce/WorkerSystem';
 import { applyEventEffects } from './engine/eventEffects';
@@ -162,6 +163,7 @@ export class SimulationEngine {
   private economyAgent!: EconomyAgent;
   private collectiveAgent!: CollectiveAgent;
   private demographicAgent!: DemographicAgent;
+  private dvorNeedsAgent!: DvorNeedsAgent;
   private kgbAgent!: KGBAgent;
   private politicalAgent!: PoliticalAgent;
   private defenseAgent!: DefenseAgent;
@@ -372,6 +374,9 @@ export class SimulationEngine {
     this.demographicAgent = new DemographicAgent();
     this.demographicAgent.setRng(this.rng);
     this.agentManager.registerDemographic(this.demographicAgent);
+
+    this.dvorNeedsAgent = new DvorNeedsAgent();
+    this.agentManager.registerDvorNeeds(this.dvorNeedsAgent);
 
     this.kgbAgent = new KGBAgent(this.difficulty);
     this.kgbAgent.setRng(this.rng);
@@ -955,6 +960,7 @@ export class SimulationEngine {
         economy: this.economyAgent,
         collective: this.collectiveAgent,
         demographic: this.demographicAgent,
+        dvorNeeds: this.dvorNeedsAgent,
         kgb: this.kgbAgent,
         political: this.politicalAgent,
         defense: this.defenseAgent,

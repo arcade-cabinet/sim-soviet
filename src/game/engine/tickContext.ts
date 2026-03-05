@@ -38,6 +38,7 @@ import type { PoliticalEntitySystem } from '../../ai/agents/political/PoliticalE
 import type { DifficultyConfig, DifficultyLevel, ScoringSystem } from '../../ai/agents/political/ScoringSystem';
 import type { DefenseAgent, FireSystem } from '../../ai/agents/social/DefenseAgent';
 import type { DemographicAgent } from '../../ai/agents/social/DemographicAgent';
+import type { DvorNeedsAgent } from '../../ai/agents/social/DvorNeedsAgent';
 import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
 import type { RaionPool, Resources } from '../../ecs/world';
 import type { EraModifiers } from '../../game/era/types';
@@ -76,6 +77,7 @@ export interface TickContext {
     economy: EconomyAgent;
     collective: CollectiveAgent;
     demographic: DemographicAgent;
+    dvorNeeds: DvorNeedsAgent;
     kgb: KGBAgent;
     political: PoliticalAgent;
     defense: DefenseAgent;

@@ -60,10 +60,15 @@ export function phasePolitical(ctx: TickContext): void {
   }
 
   // ── 17. Collective autonomous construction ──
+  // TODO: Retrieve actual celestial body from RelocationEngine or Context when multi-planet is fully hooked up
+  const celestialBody = 'earth';
+  ctx.agents.dvorNeeds.updateNeeds(chronology.getDate().totalTicks, celestialBody);
+
   collectiveAgent.tickAutonomous({
     totalTicks: chronology.getDate().totalTicks,
     rng,
     mandateState: ctx.state.mandateState,
+    needsState: ctx.agents.dvorNeeds.getNeedsState(),
     eraId: politicalAgent.getCurrentEraId(),
     callbacks: callbacks as Parameters<typeof collectiveAgent.tickAutonomous>[0]['callbacks'],
     recordBuildingForMandates: (defId: string) => {

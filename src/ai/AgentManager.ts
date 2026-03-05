@@ -27,6 +27,7 @@ import type { PoliticalAgent } from './agents/political/PoliticalAgent';
 import type { QuotaAgent } from './agents/political/QuotaAgent';
 import type { DefenseAgent } from './agents/social/DefenseAgent';
 import type { DemographicAgent } from './agents/social/DemographicAgent';
+import type { DvorNeedsAgent } from './agents/social/DvorNeedsAgent';
 import type { WorkerAgent } from './agents/workforce/WorkerAgent';
 
 /** Serialized AgentManager state for save/load. */
@@ -58,6 +59,7 @@ export class AgentManager {
   private _economy: EconomyAgent | null = null;
   private _collective: CollectiveAgent | null = null;
   private _demographic: DemographicAgent | null = null;
+  private _dvorNeeds: DvorNeedsAgent | null = null;
   private _kgb: KGBAgent | null = null;
   private _political: PoliticalAgent | null = null;
   private _defense: DefenseAgent | null = null;
@@ -119,6 +121,10 @@ export class AgentManager {
 
   registerDemographic(agent: DemographicAgent): void {
     this._demographic = agent;
+  }
+
+  registerDvorNeeds(agent: DvorNeedsAgent): void {
+    this._dvorNeeds = agent;
   }
 
   registerKGB(agent: KGBAgent): void {
@@ -205,6 +211,10 @@ export class AgentManager {
 
   getDemographic(): DemographicAgent | null {
     return this._demographic;
+  }
+
+  getDvorNeeds(): DvorNeedsAgent | null {
+    return this._dvorNeeds;
   }
 
   getKGB(): KGBAgent | null {
