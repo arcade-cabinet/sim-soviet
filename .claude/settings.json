@@ -17,8 +17,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '=== PRE-COMPACT CONTEXT SAVE ===' && date -Iseconds >> /Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory/compact-log.md && echo 'Tests:' >> /Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory/compact-log.md && cd /Users/jbogaty/src/arcade-cabinet/sim-soviet && git log --oneline -5 >> /Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory/compact-log.md && git diff --stat HEAD >> /Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory/compact-log.md && echo '---' >> /Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory/compact-log.md",
-            "timeout": 10000
+            "command": "MEMDIR=/Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory && LOG=$MEMDIR/compact-log.md && cd /Users/jbogaty/src/arcade-cabinet/sim-soviet && echo '## Pre-Compact Snapshot' >> $LOG && date -Iseconds >> $LOG && echo '### Last 10 commits' >> $LOG && git log --oneline -10 >> $LOG && echo '### Uncommitted changes' >> $LOG && git diff --stat HEAD >> $LOG && echo '### Test status' >> $LOG && npx jest --no-coverage --silent 2>&1 | tail -3 >> $LOG && echo '### Branch' >> $LOG && git branch --show-current >> $LOG && echo '---' >> $LOG",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/jbogaty/src/arcade-cabinet/sim-soviet && echo 'resume hook success: Success'"
           }
         ]
       }
