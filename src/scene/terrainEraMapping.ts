@@ -9,10 +9,12 @@
  *   State 5: stagnation → grey concrete dust (AsphaltDamageSet001 decay overlay)
  *   State 6: the_eternal → permafrost thaw (orange-red cracked earth)
  *
- * Decay overlay textures (AmbientCG ATLAS packs):
+ * Decay overlay textures (AmbientCG packs):
  *   - AsphaltDamageSet001: cracked pavement overlay for stagnation
  *   - AsphaltDamageSet002: heavier damage for post-collapse events
  *   - Foliage001: dead winter ground vegetation for early eras
+ *   - Ground054: cratered/pockmarked bomb damage for great_patriotic
+ *   - Concrete022: weathered cracked concrete for stagnation
  */
 
 import type { EraId } from '../game/era/types';
@@ -127,7 +129,12 @@ export function terrainStateIndex(state: TerrainVisualState): number {
 // ── Decay overlay textures (AmbientCG ATLAS packs) ─────────────────────────
 
 /** Decay overlay identifier for terrain damage effects. */
-export type DecayOverlayId = 'cracked_pavement' | 'heavy_damage' | 'dead_foliage';
+export type DecayOverlayId =
+  | 'cracked_pavement'
+  | 'heavy_damage'
+  | 'dead_foliage'
+  | 'bomb_craters'
+  | 'weathered_concrete';
 
 /** Configuration for a decay overlay texture layer. */
 export interface DecayOverlayConfig {
@@ -165,6 +172,18 @@ export const DECAY_OVERLAYS: Record<DecayOverlayId, DecayOverlayConfig> = {
     dir: 'Foliage001',
     opacity: 0.5,
   },
+  bomb_craters: {
+    prefix: 'Ground054',
+    dir: 'decay/Ground054',
+    opacity: 0.65,
+    emissiveTint: '#2a1a0a',
+    emissiveIntensity: 0.15,
+  },
+  weathered_concrete: {
+    prefix: 'Concrete022',
+    dir: 'decay/Concrete022',
+    opacity: 0.5,
+  },
 };
 
 /**
@@ -173,7 +192,8 @@ export const DECAY_OVERLAYS: Record<DecayOverlayId, DecayOverlayConfig> = {
  */
 export const TERRAIN_DECAY_OVERLAYS: Partial<Record<TerrainVisualState, DecayOverlayId[]>> = {
   snowy_taiga: ['dead_foliage'],
-  concrete_dust: ['cracked_pavement'],
+  scorched_ash: ['bomb_craters'],
+  concrete_dust: ['weathered_concrete', 'cracked_pavement'],
   permafrost_thaw: ['heavy_damage'],
 };
 
