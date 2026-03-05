@@ -17,9 +17,9 @@ import { ALL_BUILDING_IDS } from '@/game/era/definitions';
 // ─────────────────────────────────────────────────────────
 
 describe('ERA_DEFINITIONS', () => {
-  it('defines exactly 8 eras', () => {
-    expect(Object.keys(ERA_DEFINITIONS)).toHaveLength(8);
-    expect(ERA_ORDER).toHaveLength(8);
+  it('defines 8 historical eras + 8 Kardashev sub-eras', () => {
+    expect(Object.keys(ERA_DEFINITIONS)).toHaveLength(16);
+    expect(ERA_ORDER).toHaveLength(8); // ERA_ORDER is historical only
   });
 
   it('ERA_ORDER matches ERA_DEFINITIONS keys', () => {
@@ -816,10 +816,10 @@ describe('Era-specific event templates', () => {
   });
 
   it('all eraFilter values reference valid era IDs', () => {
-    const validEraIds = new Set(ERA_ORDER);
+    const validEraIds = new Set(Object.keys(ERA_DEFINITIONS));
     for (const event of ERA_SPECIFIC_EVENTS) {
       for (const eraId of event.eraFilter!) {
-        expect(validEraIds.has(eraId as EraId)).toBe(true);
+        expect(validEraIds.has(eraId)).toBe(true);
       }
     }
   });

@@ -102,6 +102,8 @@ import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { ScoringPanel } from './ui/ScoringPanel';
 import { SettingsModal } from './ui/SettingsModal';
 import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
+import { SettlementSelectorPanel } from './ui/SettlementSelectorPanel';
+import { SettlementTransitionOverlay } from './ui/SettlementTransitionOverlay';
 import { Colors } from './ui/styles';
 import { PravdaTicker } from './ui/PravdaTicker';
 import { Toast } from './ui/Toast';
@@ -115,6 +117,7 @@ import { MilestoneTimelineScreen } from './ui/MilestoneTimelineScreen';
 import { buildMilestoneSummary, type MilestoneSummaryEntry } from './ui/milestoneSummary';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
+import { switchSettlementByIndex, syncSettlementList } from './game/settlement/switchSettlement';
 
 // WorkerStatusBar removed — Phase 1 minimal HUD
 
@@ -211,6 +214,7 @@ const App: React.FC = () => {
   const [showSaveLoad, setShowSaveLoad] = useState(false);
   const [showMarket, setShowMarket] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSettlementSelector, setShowSettlementSelector] = useState(false);
 
   // ── XR mode state ──
   const [xrMode, setXrMode] = useState<'ar' | 'vr' | null>(null);
@@ -267,6 +271,23 @@ const App: React.FC = () => {
 
   // Universal input system (keyboard + gamepad)
   useInputManager(screen === 'game' && loadingFaded);
+
+  // Keyboard shortcuts: 1-9 for settlement switching, S for selector panel
+  useEffect(() => {
+    if (screen !== 'game' || !loadingFaded) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Don't capture when typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      // Number keys 1-9: switch to settlement by index
+      const digit = Number.parseInt(e.key, 10);
+      if (digit >= 1 && digit <= 9 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        switchSettlementByIndex(digit);
+        return;
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [screen, loadingFaded]);
 
   // Start ECS game loop (replaces old flat-state game loop)
   useECSGameLoop();
@@ -333,6 +354,9 @@ const App: React.FC = () => {
             pushCrisisVFX(event.effect, event.intensity, durationSec);
           },
           onStateChange: () => {
+            // Sync settlement list for viewport switching
+            syncSettlementList();
+
             // Sync ECS building powered state to old GameState for 3D effects
             for (const e of ecsBuildingsArchetype.entities) {
               const b = gameState.buildings.find((bi) => bi.x === e.position.gridX && bi.y === e.position.gridY);
@@ -611,6 +635,10 @@ const App: React.FC = () => {
   const handleShowNotifications = useCallback(() => {
     setShowNotifications(true);
   }, []);
+  const handleShowSettlementSelector = useCallback(() => {
+    syncSettlementList();
+    setShowSettlementSelector(true);
+  }, []);
   // ── Save/Load state ──
   const [saveNames, setSaveNames] = useState<string[]>([]);
   const [lastSaveTime, setLastSaveTime] = useState<number | undefined>(undefined);
@@ -848,8 +876,10 @@ const App: React.FC = () => {
               onShowSaveLoad={handleShowSaveLoad}
               onShowMarket={handleShowMarket}
               onShowNotifications={handleShowNotifications}
+              onShowSettlementSelector={handleShowSettlementSelector}
               unreadNotifications={unreadNotifications}
               autopilot={getEngine()?.getAgentManager().isAutopilot() ?? false}
+              settlementCount={getEngine()?.getRelocationEngine().getRegistry().count() ?? 1}
             />
 
             <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
@@ -1004,6 +1034,13 @@ const App: React.FC = () => {
         <NotificationHistory visible={showNotifications} onDismiss={() => setShowNotifications(false)} />
 
         <GovernmentHQ visible={showGovHQ} onClose={closeGovernmentHQ} />
+
+        <SettlementSelectorPanel
+          visible={showSettlementSelector}
+          onDismiss={() => setShowSettlementSelector(false)}
+        />
+
+        <SettlementTransitionOverlay />
 
         <BuildingInspectorPanel
           visible={!!buildingInspector}

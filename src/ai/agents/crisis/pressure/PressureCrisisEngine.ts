@@ -15,11 +15,20 @@
  */
 
 import type { CrisisDefinition, CrisisImpact } from '../types';
-import { PRESSURE_DOMAINS, type PressureDomain, type PressureState } from './PressureDomains';
+import {
+  POST_SCARCITY_DOMAINS,
+  PRESSURE_DOMAINS,
+  type PostScarcityDomain,
+  type PostScarcityPressureState,
+  type PressureDomain,
+  type PressureState,
+} from './PressureDomains';
 import {
   generateCrisisFromTemplate,
   MAJOR_CRISES,
   MINOR_INCIDENTS,
+  POST_SCARCITY_MAJOR_CRISES,
+  POST_SCARCITY_MINOR_INCIDENTS,
 } from './pressureCrisisMapping';
 import { SUSTAIN_TICKS, THRESHOLDS } from './pressureThresholds';
 
@@ -118,12 +127,70 @@ export class PressureCrisisEngine {
     return result;
   }
 
-  /** Get IDs of all active pressure-driven major crises. */
+  /**
+   * Check post-scarcity domains for crisis emergence.
+   * Called after domain transformation when post-scarcity state exists.
+   */
+  checkPostScarcityEmergence(
+    postScarcityState: PostScarcityPressureState,
+    year: number,
+    activeCrisisIds: string[],
+  ): EmergenceResult {
+    const result: EmergenceResult = { minorImpacts: [], majorCrises: [] };
+
+    for (const domain of POST_SCARCITY_DOMAINS) {
+      const gauge = postScarcityState[domain];
+      const key = `ps_${domain}` as PressureDomain;
+
+      // Initialize tracking state if needed
+      if (!this.domainStates[key]) {
+        this.domainStates[key] = { minorActive: false, majorActive: false, activeCrisisId: null };
+      }
+      const ds = this.domainStates[key];
+
+      if (ds.activeCrisisId && !activeCrisisIds.includes(ds.activeCrisisId)) {
+        ds.majorActive = false;
+        ds.activeCrisisId = null;
+      }
+
+      if (!ds.majorActive) {
+        const emergencyTriggered = gauge.level >= THRESHOLDS.EMERGENCY && gauge.criticalTicks >= SUSTAIN_TICKS.EMERGENCY_MAJOR;
+        const criticalTriggered = gauge.level >= THRESHOLDS.CRITICAL && gauge.criticalTicks >= SUSTAIN_TICKS.CRITICAL_MAJOR;
+
+        if (emergencyTriggered || criticalTriggered) {
+          const template = POST_SCARCITY_MAJOR_CRISES[domain];
+          const crisisId = `pressure-ps-${domain}-${year}-${++this.crisisCounter}`;
+          const crisis = generateCrisisFromTemplate(template, year, gauge.level, crisisId);
+          result.majorCrises.push(crisis);
+          ds.majorActive = true;
+          ds.activeCrisisId = crisisId;
+          ds.minorActive = false;
+        }
+      }
+
+      if (!ds.majorActive && !ds.minorActive) {
+        if (gauge.level >= THRESHOLDS.WARNING && gauge.warningTicks >= SUSTAIN_TICKS.WARNING_MINOR) {
+          const template = POST_SCARCITY_MINOR_INCIDENTS[domain];
+          result.minorImpacts.push(template.impact);
+          ds.minorActive = true;
+        }
+      }
+
+      if (ds.minorActive && gauge.level < THRESHOLDS.WARNING) {
+        ds.minorActive = false;
+      }
+    }
+
+    return result;
+  }
+
+  /** Get IDs of all active pressure-driven major crises (classical + post-scarcity). */
   getActiveCrisisIds(): string[] {
     const ids: string[] = [];
-    for (const domain of PRESSURE_DOMAINS) {
-      if (this.domainStates[domain].activeCrisisId) {
-        ids.push(this.domainStates[domain].activeCrisisId!);
+    for (const key of Object.keys(this.domainStates)) {
+      const ds = this.domainStates[key as PressureDomain];
+      if (ds?.activeCrisisId) {
+        ids.push(ds.activeCrisisId);
       }
     }
     return ids;
@@ -131,10 +198,11 @@ export class PressureCrisisEngine {
 
   /** Mark a crisis as resolved (agent finished its lifecycle). */
   resolveCrisis(crisisId: string): void {
-    for (const domain of PRESSURE_DOMAINS) {
-      if (this.domainStates[domain].activeCrisisId === crisisId) {
-        this.domainStates[domain].majorActive = false;
-        this.domainStates[domain].activeCrisisId = null;
+    for (const key of Object.keys(this.domainStates)) {
+      const ds = this.domainStates[key as PressureDomain];
+      if (ds?.activeCrisisId === crisisId) {
+        ds.majorActive = false;
+        ds.activeCrisisId = null;
         break;
       }
     }
@@ -142,6 +210,7 @@ export class PressureCrisisEngine {
 
   /** Reset all domain states (new game). */
   reset(): void {
+    this.domainStates = {} as Record<PressureDomain, DomainCrisisState>;
     for (const domain of PRESSURE_DOMAINS) {
       this.domainStates[domain] = { minorActive: false, majorActive: false, activeCrisisId: null };
     }
@@ -149,19 +218,20 @@ export class PressureCrisisEngine {
   }
 
   /** Serialize for save/load. */
-  serialize(): { domainStates: Record<PressureDomain, DomainCrisisState>; crisisCounter: number } {
-    const states = {} as Record<PressureDomain, DomainCrisisState>;
-    for (const domain of PRESSURE_DOMAINS) {
-      states[domain] = { ...this.domainStates[domain] };
+  serialize(): { domainStates: Record<string, DomainCrisisState>; crisisCounter: number } {
+    const states: Record<string, DomainCrisisState> = {};
+    for (const key of Object.keys(this.domainStates)) {
+      states[key] = { ...this.domainStates[key as PressureDomain] };
     }
     return { domainStates: states, crisisCounter: this.crisisCounter };
   }
 
   /** Restore from saved data. */
-  restore(data: { domainStates: Record<PressureDomain, DomainCrisisState>; crisisCounter: number }): void {
-    for (const domain of PRESSURE_DOMAINS) {
-      if (data.domainStates[domain]) {
-        this.domainStates[domain] = { ...data.domainStates[domain] };
+  restore(data: { domainStates: Record<string, DomainCrisisState>; crisisCounter: number }): void {
+    this.domainStates = {} as Record<PressureDomain, DomainCrisisState>;
+    for (const key of Object.keys(data.domainStates)) {
+      if (data.domainStates[key]) {
+        this.domainStates[key as PressureDomain] = { ...data.domainStates[key]! };
       }
     }
     this.crisisCounter = data.crisisCounter;

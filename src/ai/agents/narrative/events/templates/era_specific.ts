@@ -321,7 +321,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'absurdist',
     severity: 'minor',
     effects: { money: -25 },
-    eraFilter: ['the_eternal'],
+    eraFilter: ['the_eternal', 'post_soviet', 'planetary', 'solar_engineering', 'type_one', 'deconstruction', 'dyson_swarm', 'megaearth', 'type_two_peak'],
     weight: 2.0,
   },
   {
@@ -335,7 +335,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'absurdist',
     severity: 'minor',
     effects: {},
-    eraFilter: ['the_eternal'],
+    eraFilter: ['the_eternal', 'post_soviet', 'planetary', 'solar_engineering', 'type_one', 'deconstruction', 'dyson_swarm', 'megaearth', 'type_two_peak'],
     weight: 1.5,
   },
   {
@@ -353,7 +353,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
       const roll = gs.date.tick % 2;
       return roll === 0 ? { food: 20 } : { food: -20 };
     },
-    eraFilter: ['the_eternal'],
+    eraFilter: ['the_eternal', 'post_soviet', 'planetary', 'solar_engineering', 'type_one', 'deconstruction', 'dyson_swarm', 'megaearth', 'type_two_peak'],
     weight: 1.2,
   },
   {
@@ -367,7 +367,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     category: 'absurdist',
     severity: 'catastrophic',
     effects: { money: -50 },
-    eraFilter: ['the_eternal'],
+    eraFilter: ['the_eternal', 'post_soviet', 'planetary', 'solar_engineering', 'type_one', 'deconstruction', 'dyson_swarm', 'megaearth', 'type_two_peak'],
     weight: 0.5,
   },
 ];

@@ -41,6 +41,8 @@ import type { DemographicAgent } from '../../ai/agents/social/DemographicAgent';
 import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
 import type { RaionPool, Resources } from '../../ecs/world';
 import type { EraModifiers } from '../../game/era/types';
+import type { Arcology } from '../../game/arcology/ArcologySystem';
+import type { TrafficGrid, DesirePathRoad } from '../../growth/DesirePathSystem';
 import type { HQSplitState } from '../../growth/HQSplitting';
 import type { RegisteredTimeline } from '../timeline/TimelineLayer';
 import type { GameGrid } from '../GameGrid';
@@ -134,6 +136,12 @@ export interface TickContext {
     historicalDivergenceFired: boolean;
     /** All active timeline layers (space, world, per-world). Mutated in-place each tick. */
     registeredTimelines: RegisteredTimeline[];
+    /** Traffic accumulation grid for desire-path road formation. */
+    trafficGrid: TrafficGrid;
+    /** Formed desire-path roads (updated monthly). */
+    desirePaths: DesirePathRoad[];
+    /** Active arcologies — building clusters that have merged into mega-structures. */
+    arcologies: Arcology[];
   };
 
   // ── Per-tick computed modifiers (set by engine before phase calls) ──

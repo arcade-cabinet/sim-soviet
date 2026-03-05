@@ -48,7 +48,15 @@
       "reconstruction": 3,
       "thaw_and_freeze": 5,
       "stagnation": 4,
-      "the_eternal": 3
+      "the_eternal": 3,
+      "post_soviet": 4,
+      "planetary": 5,
+      "solar_engineering": 6,
+      "type_one": 7,
+      "deconstruction": 8,
+      "dyson_swarm": 9,
+      "megaearth": 9,
+      "type_two_peak": 10
     },
     "mitigation": {
       "none": 0.0,

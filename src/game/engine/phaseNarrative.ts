@@ -174,6 +174,7 @@ function tickPrestigeProjects(ctx: TickContext): void {
   // If no demand yet for this era, announce it
   if (!ctx.state.prestigeDemand || ctx.state.prestigeDemand.era !== currentEra) {
     const demand = demandPrestigeProject(currentEra, rng);
+    if (!demand) return; // Sub-eras have no prestige projects
     ctx.state.prestigeDemand = demand;
     ctx.state.prestigeConstruction = null;
     callbacks.onPravda(
@@ -182,6 +183,7 @@ function tickPrestigeProjects(ctx: TickContext): void {
   }
 
   const demand = ctx.state.prestigeDemand;
+  if (!demand) return;
 
   // If construction hasn't started and we've reached the announcement year, try to start
   if (!ctx.state.prestigeConstruction && year >= demand.announcementYear) {

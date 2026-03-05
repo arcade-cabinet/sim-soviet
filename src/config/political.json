@@ -159,6 +159,26 @@
       "conscription_officer": [1, 1]
     }
   },
+  "lawEnforcement": {
+    "baseCrime": {
+      "kgb": 0.05,
+      "security_services": 0.08,
+      "sector_judges": 0.12,
+      "megacity_arbiters": 0.15
+    },
+    "judgesPer10K": 5,
+    "sectorSubdivisionThreshold": 1000000,
+    "isoCubeCapacity": 500,
+    "isoCubeLaborEfficiency": 0.4,
+    "isoCubeMortalityRate": 0.002,
+    "undercityDecayRate": {
+      "kgb": 0,
+      "security_services": 0,
+      "sector_judges": 0.001,
+      "megacity_arbiters": 0.003
+    },
+    "undercityCrimeAmplifier": 0.5
+  },
   "highCorruptionThreshold": 50,
   "compulsoryDeliveries": {
     "rates": {
@@ -221,7 +241,15 @@
       "reconstruction": { "productionMult": 1.1, "consumptionMult": 0.85 },
       "thaw_and_freeze": { "productionMult": 1.2, "consumptionMult": 0.85 },
       "stagnation": { "productionMult": 1.0, "consumptionMult": 1.0 },
-      "the_eternal": { "productionMult": 1.0, "consumptionMult": 1.0 }
+      "the_eternal": { "productionMult": 1.0, "consumptionMult": 1.0 },
+      "post_soviet": { "productionMult": 1.1, "consumptionMult": 0.95 },
+      "planetary": { "productionMult": 1.3, "consumptionMult": 0.9 },
+      "solar_engineering": { "productionMult": 1.5, "consumptionMult": 0.85 },
+      "type_one": { "productionMult": 2.0, "consumptionMult": 0.8 },
+      "deconstruction": { "productionMult": 2.5, "consumptionMult": 0.75 },
+      "dyson_swarm": { "productionMult": 3.0, "consumptionMult": 0.7 },
+      "megaearth": { "productionMult": 4.0, "consumptionMult": 0.6 },
+      "type_two_peak": { "productionMult": 5.0, "consumptionMult": 0.5 }
     },
     "inflowSchedule": {
       "collectivization": { "type": "forced_resettlement", "intervalYears": 3 },
@@ -230,7 +258,15 @@
       "reconstruction": { "type": "veteran_return", "intervalYears": 2, "count": [5, 20] },
       "thaw_and_freeze": { "type": "moscow_assignment", "intervalYears": 3 },
       "stagnation": { "type": "forced_resettlement", "intervalYears": 5 },
-      "the_eternal": { "type": "algorithmic_assignment", "intervalYears": 2, "count": [1, 50] }
+      "the_eternal": { "type": "algorithmic_assignment", "intervalYears": 2, "count": [1, 50] },
+      "post_soviet": { "type": "algorithmic_assignment", "intervalYears": 2, "count": [1, 80] },
+      "planetary": { "type": "algorithmic_assignment", "intervalYears": 2, "count": [5, 100] },
+      "solar_engineering": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [10, 200] },
+      "type_one": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [20, 500] },
+      "deconstruction": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [50, 1000] },
+      "dyson_swarm": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [100, 2000] },
+      "megaearth": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [200, 5000] },
+      "type_two_peak": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [500, 10000] }
     }
   }
 }

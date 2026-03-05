@@ -58,6 +58,14 @@ export function eraToTerrainState(era: EraId): TerrainVisualState {
     case 'stagnation':
       return 'concrete_dust';
     case 'the_eternal':
+    case 'post_soviet':
+    case 'planetary':
+    case 'solar_engineering':
+    case 'type_one':
+    case 'deconstruction':
+    case 'dyson_swarm':
+    case 'megaearth':
+    case 'type_two_peak':
       return 'permafrost_thaw';
   }
 }

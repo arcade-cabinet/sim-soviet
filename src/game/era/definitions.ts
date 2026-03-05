@@ -14,6 +14,7 @@ import { getBuildingTierRequirement, tierMeetsRequirement } from './tiers';
 import type { EraCondition, EraDefinition, EraId } from './types';
 
 import eraData from '../../config/eras.json';
+import { KARDASHEV_ERA_DEFINITIONS, KARDASHEV_ORDER } from '../../config/kardashevSubEras';
 
 // ─── Rule Evaluator ─────────────────────────────────────────────────────────
 
@@ -91,7 +92,7 @@ export const ERA_ORDER: readonly EraId[] = eraData.eraOrder as EraId[];
 /** Every building defId in the game, used to validate era assignments. */
 export const ALL_BUILDING_IDS: readonly string[] = eraData.allBuildingIds;
 
-/** Complete definitions for all 8 historical eras: modifiers, buildings, doctrine, and flavor. */
+/** Complete definitions for all 8 historical eras + 8 Kardashev sub-eras. */
 export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = (() => {
   const result = {} as Record<EraId, EraDefinition>;
   for (const [eraId, raw] of Object.entries(eraData.eras)) {
@@ -115,8 +116,19 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = (() => {
       briefingFlavor: era.briefingFlavor,
     };
   }
+  // Merge Kardashev sub-era definitions (freeform-only, NOT in ERA_ORDER)
+  for (const [subEraId, def] of Object.entries(KARDASHEV_ERA_DEFINITIONS)) {
+    result[subEraId as EraId] = def;
+  }
   return result;
 })();
+
+/**
+ * Full era order including Kardashev sub-eras (16 entries).
+ * Used for organic unlock transitions in freeform mode.
+ * Historical mode should use ERA_ORDER (8 entries) instead.
+ */
+export const FULL_ERA_ORDER: readonly EraId[] = [...ERA_ORDER, ...KARDASHEV_ORDER];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

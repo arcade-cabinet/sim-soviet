@@ -48,6 +48,8 @@ import type { EraSystem } from '../era';
 import { EraSystem as EraSystemClass } from '../era';
 import type { GameRng } from '../SeedSystem';
 import type { RelocationEngine } from '../relocation/RelocationEngine';
+import type { SettlementRuntime, SettlementRuntimeSaveData } from '../settlement/SettlementRuntime';
+import { serializeRuntime as serializeSettlementRuntime } from '../settlement/SettlementRuntime';
 import type { RegisteredTimeline } from '../timeline/TimelineLayer';
 import {
   serializeLayerState,
@@ -75,6 +77,14 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
   thaw_and_freeze: 'thaw',
   stagnation: 'stagnation',
   the_eternal: 'eternal',
+  post_soviet: 'eternal',
+  planetary: 'eternal',
+  solar_engineering: 'eternal',
+  type_one: 'eternal',
+  deconstruction: 'eternal',
+  dyson_swarm: 'eternal',
+  megaearth: 'eternal',
+  type_two_peak: 'eternal',
 };
 
 /** All mutable subsystem references that serialization reads/writes. */
@@ -118,6 +128,8 @@ export interface SerializableEngine {
   worldAgent?: import('../../ai/agents/core/WorldAgent').WorldAgent;
   relocationEngine?: RelocationEngine;
   registeredTimelines: RegisteredTimeline[];
+  settlementRuntimes?: SettlementRuntime[];
+  arcologies: import('../../game/arcology/ArcologySystem').Arcology[];
 }
 
 /**
@@ -172,6 +184,11 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
     worldAgent: engine.worldAgent?.serialize(),
     relocation: engine.relocationEngine?.serialize(),
     timelines: engine.registeredTimelines?.map((tl) => serializeLayerState(tl.state)),
+    settlementRuntimes: engine.settlementRuntimes?.map(serializeSettlementRuntime),
+    arcologies: engine.arcologies.length > 0
+      ? engine.arcologies.map((a) => ({ ...a, footprint: a.footprint.map((f) => ({ ...f })), center: { ...a.center }, componentEntityIds: [...a.componentEntityIds], componentDefIds: [...a.componentDefIds] }))
+      : undefined,
+    lawEnforcement: engine.personnelFile.serializeLawEnforcement(),
   };
 
   if (isAggregate) {
@@ -264,6 +281,11 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
 
   // Restore Personnel File
   engine.personnelFile = PersonnelFileClass.deserialize(data.personnel);
+
+  // Restore law enforcement state (backward compat: absent in old saves)
+  if (data.lawEnforcement) {
+    engine.personnelFile.restoreLawEnforcement(data.lawEnforcement);
+  }
 
   // Restore Settlement System
   engine.settlement = SettlementSystemClass.deserialize(data.settlement);
@@ -402,6 +424,9 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
 
     engine.registeredTimelines = restored;
   }
+
+  // Restore arcologies (backward compat: default to empty array for old saves)
+  engine.arcologies = data.arcologies ?? [];
 
   // Update economy system to match restored era (fallback for saves without economy data)
   if (!data.economy) {

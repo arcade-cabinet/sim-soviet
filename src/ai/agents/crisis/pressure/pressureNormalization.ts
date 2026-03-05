@@ -11,7 +11,7 @@
  * Convention: 0 = no stress, 1 = maximum stress.
  */
 
-import type { PressureDomain, PressureReadContext } from './PressureDomains';
+import type { PostScarcityDomain, PressureDomain, PressureReadContext } from './PressureDomains';
 
 // ─── Utility ─────────────────────────────────────────────────────────────────
 
@@ -76,13 +76,15 @@ export function normalizeHousing(ctx: PressureReadContext): number {
 }
 
 /**
- * Political pressure: max of suspicion, marks rate, and blat exposure.
+ * Political pressure: max of suspicion, marks rate, blat exposure, and crime rate.
  * - Suspicion level (0-1 from KGBAgent)
  * - Marks severity (7 marks = max)
  * - Blat exposure (30 blat = max)
+ * - Crime rate (0-1 from LawEnforcementSystem, only in megacity eras)
  */
 export function normalizePolitical(ctx: PressureReadContext): number {
-  return clamp01(Math.max(ctx.suspicionLevel, ctx.blackMarks / 7, ctx.blat / 30));
+  const crimeComponent = ctx.crimeRate ?? 0;
+  return clamp01(Math.max(ctx.suspicionLevel, ctx.blackMarks / 7, ctx.blat / 30, crimeComponent));
 }
 
 /**
@@ -177,13 +179,108 @@ export function normalizeDomain(domain: PressureDomain, ctx: PressureReadContext
 }
 
 /**
- * Compute raw pressure readings for ALL domains.
+ * Compute raw pressure readings for ALL classical domains.
  * Returns a Record of domain → 0-1 reading.
  */
 export function normalizeAllDomains(ctx: PressureReadContext): Record<PressureDomain, number> {
   const result = {} as Record<PressureDomain, number>;
   for (const [domain, fn] of Object.entries(NORMALIZERS)) {
     result[domain as PressureDomain] = fn(ctx);
+  }
+  return result;
+}
+
+// ─── Post-Scarcity Normalization ────────────────────────────────────────────
+
+/**
+ * Meaning pressure (replaces food): inverse of purpose fulfillment.
+ * In a world without material needs, the crisis is existential — why go on?
+ * Many factions pursuing different purposes raises pressure (disagreement).
+ *
+ * - 60% weight: inverse purpose fulfillment (low purpose = high pressure)
+ * - 40% weight: faction fragmentation (more factions = more competing meanings)
+ */
+export function normalizeMeaning(ctx: PressureReadContext): number {
+  const purposePressure = clamp01(1 - (ctx.purposeFulfillment ?? 0.5));
+  const factionPressure = clamp01((ctx.factionCount ?? 2) / 20); // 20 factions = max
+  return purposePressure * 0.6 + factionPressure * 0.4;
+}
+
+/**
+ * Density pressure (replaces housing): population density at megacity scale.
+ * Not about shelter (infinite) but about the social pressure of billions
+ * sharing space — even in a Dyson swarm.
+ *
+ * Components:
+ * - 60% weight: raw density (log scale: 100/km^2 = 0, 1M/km^2 = 1.0)
+ * - 20% weight: undercity decay (abandoned lower layers breed social problems)
+ * - 20% weight: crime rate (lawlessness amplifies density stress)
+ */
+export function normalizeDensity(ctx: PressureReadContext): number {
+  const density = ctx.populationDensity ?? 100;
+  // Log scale: 100/km^2 = 0, 1M/km^2 = 1.0
+  const rawDensity = density <= 100 ? 0 : clamp01(Math.log10(density / 100) / 4);
+  const undercity = clamp01(ctx.undercityDecay ?? 0);
+  const crime = clamp01(ctx.crimeRate ?? 0);
+  return rawDensity * 0.6 + undercity * 0.2 + crime * 0.2;
+}
+
+/**
+ * Entropy pressure (replaces power): stellar-scale maintenance bureaucracy.
+ * The Dyson swarm requires constant maintenance. Neglect = cascade failures.
+ * The Committee must manage entropy at stellar scale. Paperwork is literal energy.
+ *
+ * Ramps based on maintenance backlog.
+ */
+export function normalizeEntropy(ctx: PressureReadContext): number {
+  return clamp01(ctx.stellarMaintenanceBacklog ?? 0);
+}
+
+/**
+ * Legacy pressure (replaces economic): civilizational direction pressure.
+ * Without scarcity, the question becomes "what does this civilization DO?"
+ * Low consensus on direction = high pressure. Inverse of consensus.
+ */
+export function normalizeLegacy(ctx: PressureReadContext): number {
+  return clamp01(1 - (ctx.civilizationalConsensus ?? 0.5));
+}
+
+/**
+ * Ennui pressure (transforms morale): existential boredom at civilization scale.
+ * Vodka at civilizational scale — hedonistic decay when there's nothing to strive for.
+ *
+ * - 50% weight: ennui index (direct existential boredom)
+ * - 50% weight: civilizational vodka consumption (hedonistic escape)
+ */
+export function normalizeEnnui(ctx: PressureReadContext): number {
+  const ennui = clamp01(ctx.ennuiIndex ?? 0.3);
+  const vodka = clamp01(ctx.civilizationalVodka ?? 0.2);
+  return ennui * 0.5 + vodka * 0.5;
+}
+
+/** Map of post-scarcity domain → normalization function. */
+const POST_SCARCITY_NORMALIZERS: Record<PostScarcityDomain, (ctx: PressureReadContext) => number> = {
+  meaning: normalizeMeaning,
+  density: normalizeDensity,
+  entropy: normalizeEntropy,
+  legacy: normalizeLegacy,
+  ennui: normalizeEnnui,
+};
+
+/**
+ * Compute raw pressure reading for a single post-scarcity domain.
+ */
+export function normalizePostScarcityDomain(domain: PostScarcityDomain, ctx: PressureReadContext): number {
+  return POST_SCARCITY_NORMALIZERS[domain](ctx);
+}
+
+/**
+ * Compute raw pressure readings for ALL post-scarcity domains.
+ */
+export function normalizeAllPostScarcityDomains(ctx: PressureReadContext): Record<PostScarcityDomain, number> {
+  const result = {} as Record<PostScarcityDomain, number>;
+  for (const [domain, fn] of Object.entries(POST_SCARCITY_NORMALIZERS)) {
+    result[domain as PostScarcityDomain] = fn(ctx);
   }
   return result;
 }

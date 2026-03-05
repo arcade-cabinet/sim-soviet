@@ -92,6 +92,59 @@ export const ERA_MODEL_MAP: Readonly<
     station: ['launch-pad', 'launch-pad', 'launch-pad'],
     space: ['spacestation-06', 'colony-command', 'colony-command'],
   },
+
+  // Kardashev sub-eras — progressively mix brutalist + colony + spacestation models
+  post_soviet: {
+    housing: ['apartment-tower-d', 'colony-dome', 'spacestation-01'],
+    factory: ['factory-office', 'colony-workshop', 'spacestation-02'],
+    power: ['power-station', 'colony-solar', 'colony-reactor'],
+    space: ['government-hq', 'colony-command', 'colony-command'],
+  },
+  planetary: {
+    housing: ['colony-dome', 'spacestation-01', 'spacestation-03'],
+    factory: ['colony-workshop', 'spacestation-02', 'spacestation-04'],
+    farm: ['colony-hydroponics', 'colony-hydroponics', 'colony-hydroponics'],
+    power: ['colony-solar', 'colony-reactor', 'colony-fusion'],
+    space: ['colony-command', 'colony-command', 'colony-command'],
+  },
+  solar_engineering: {
+    housing: ['spacestation-01', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-02', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-reactor', 'colony-fusion', 'colony-fusion'],
+    tower: ['colony-antenna', 'colony-antenna', 'colony-antenna'],
+    space: ['spacestation-06', 'colony-command', 'colony-command'],
+  },
+  type_one: {
+    housing: ['spacestation-01', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-02', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    tower: ['colony-antenna', 'comms-array', 'comms-array'],
+    space: ['spacestation-06', 'colony-command', 'colony-command'],
+  },
+  deconstruction: {
+    housing: ['spacestation-03', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-04', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    space: ['colony-command', 'colony-command', 'colony-command'],
+  },
+  dyson_swarm: {
+    housing: ['spacestation-01', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-02', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    space: ['spacestation-06', 'colony-command', 'colony-command'],
+  },
+  megaearth: {
+    housing: ['spacestation-03', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-04', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    space: ['colony-command', 'colony-command', 'colony-command'],
+  },
+  type_two_peak: {
+    housing: ['spacestation-03', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-04', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    space: ['colony-command', 'colony-command', 'colony-command'],
+  },
 };
 
 // ── Tier-based model variant overrides ──────────────────────────────────────

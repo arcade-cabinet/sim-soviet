@@ -215,4 +215,10 @@ export interface SubsystemSaveData {
   relocation?: { settlements: import('../relocation/Settlement').SettlementSaveData[] };
   /** Timeline layer states: space, world, and discovered per-world timelines. */
   timelines?: import('../timeline/TimelineLayer').TimelineLayerSaveData[];
+  /** Per-settlement runtime states (optional for backward compat with old saves). */
+  settlementRuntimes?: import('../settlement/SettlementRuntime').SettlementRuntimeSaveData[];
+  /** Arcology mega-structures (optional for backward compat with old saves). */
+  arcologies?: import('../arcology/ArcologySystem').Arcology[];
+  /** MegaCity law enforcement state (optional for backward compat with old saves). */
+  lawEnforcement?: import('../../ai/agents/political/LawEnforcementSystem').LawEnforcementSaveData;
 }

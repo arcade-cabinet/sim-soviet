@@ -92,6 +92,7 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
         lowGrowthYears: 0, // will be enhanced later
         simulationYearsElapsed: chronoAgent.getDate().year - ctx.state.startYear,
         currentEraId: politicalAgent.getCurrentEraId(),
+        techLevel: ctx.agents.world?.getState().techLevel ?? 0,
       });
     }
 
@@ -488,6 +489,12 @@ function assemblePressureReadContext(ctx: TickContext): PressureReadContext | un
         )
       : undefined;
 
+    // Law enforcement metrics (crime rate, judge coverage, undercity)
+    const lawState = kgb.getLawEnforcementState();
+    const avgUndercity = lawState.sectors.length > 0
+      ? lawState.sectors.reduce((sum, s) => sum + s.undercityDecay, 0) / lawState.sectors.length
+      : 0;
+
     return {
       foodState: food.getFoodState(),
       starvationCounter: food.getStarvationCounter(),
@@ -518,6 +525,10 @@ function assemblePressureReadContext(ctx: TickContext): PressureReadContext | un
       climateTrend: world?.getClimateTrend(),
       worldState,
       spheres,
+      // MegaCity law enforcement
+      crimeRate: lawState.aggregateCrimeRate,
+      judgeCoverage: lawState.totalJudges > 0 ? Math.min(1, lawState.totalJudges / Math.max(1, population / 2000)) : 0,
+      undercityDecay: avgUndercity,
     };
   } catch {
     // If any agent API isn't available (old saves, missing agents), return undefined

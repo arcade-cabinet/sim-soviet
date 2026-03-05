@@ -49,8 +49,9 @@ export interface CompletionResult {
  * @param era - The era to demand a project for
  * @param rng - Seeded RNG for deterministic announcement year
  */
-export function demandPrestigeProject(era: EraId, rng: GameRng): PrestigeProjectDemand {
+export function demandPrestigeProject(era: EraId, rng: GameRng): PrestigeProjectDemand | null {
   const project = PRESTIGE_PROJECTS[era];
+  if (!project) return null; // Sub-eras have no prestige projects
   const eraDef = ERA_DEFINITIONS[era];
   const startYear = eraDef.startYear;
   const endYear = eraDef.endYear === -1 ? startYear + 20 : eraDef.endYear;

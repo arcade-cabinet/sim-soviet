@@ -6,9 +6,12 @@
 
 import type { InflowScheduleEntry } from '@/config';
 import { political } from '@/config';
+import { citizens } from '../../ecs/archetypes';
+import { buildingsLogic } from '../../ecs/archetypes';
 import { getDefensePosture } from '../../stores/gameStore';
 import { getPostureEffects } from '../../ui/hq-tabs/MilitaryTab';
 import { populationSystem } from '../../ecs/systems';
+import { recordCommute, decayTraffic, extractDesirePaths } from '../../growth/DesirePathSystem';
 import type { TickContext } from './tickContext';
 
 /**
@@ -107,6 +110,9 @@ export function phaseSocial(ctx: TickContext): void {
     callbacks.onAdvisor('Comrade Mayor! Workers are deeply unhappy. If conditions do not improve, they WILL flee!');
   }
 
+  // ── 14b. Desire-path traffic recording (every 10 ticks in entity mode) ──
+  recordDesirePathTraffic(ctx);
+
   // ── 15. Demographics ──
   const effectivePop = ctx.raion?.totalPopulation ?? workerResult.population;
   let normalizedFood = Math.min(1, storeRef.resources.food / Math.max(1, effectivePop * 2));
@@ -199,5 +205,73 @@ function processScheduledInflows(ctx: TickContext): void {
     }
     default:
       break;
+  }
+}
+
+// ── Desire-Path Traffic Recording ──────────────────────────────────────────
+
+/** Throttle interval: record commutes every N ticks to reduce overhead. */
+const TRAFFIC_RECORD_INTERVAL = 10;
+
+/**
+ * Record worker commutes to build desire-path traffic patterns.
+ *
+ * In entity mode: iterate assigned citizens with homes, find their workplace
+ * building positions, and record Manhattan commutes on the traffic grid.
+ * Decay traffic every tick. Extract formed roads monthly.
+ */
+function recordDesirePathTraffic(ctx: TickContext): void {
+  const { tickResult } = ctx;
+  const totalTicks = ctx.agents.chronology.getDate().totalTicks;
+  const grid = ctx.state.trafficGrid;
+
+  // Decay traffic every tick (lightweight — just a Map iteration)
+  decayTraffic(grid);
+
+  // Record commutes only every N ticks (entity mode only)
+  if (ctx.popMode === 'entity' && totalTicks % TRAFFIC_RECORD_INTERVAL === 0) {
+    // Build defId→position lookup for occupied buildings
+    const buildingPositions = new Map<string, Array<{ x: number; z: number }>>();
+    for (const b of buildingsLogic.entities) {
+      const defId = b.building.defId;
+      let arr = buildingPositions.get(defId);
+      if (!arr) {
+        arr = [];
+        buildingPositions.set(defId, arr);
+      }
+      arr.push({ x: b.position.gridX, z: b.position.gridY });
+    }
+
+    // Record commute for each assigned citizen with a home
+    for (const c of citizens.entities) {
+      if (!c.citizen.home || !c.citizen.assignment) continue;
+      const homeX = c.citizen.home.gridX;
+      const homeZ = c.citizen.home.gridY;
+      const workPositions = buildingPositions.get(c.citizen.assignment);
+      if (!workPositions || workPositions.length === 0) continue;
+
+      // Find nearest matching workplace
+      let nearest = workPositions[0]!;
+      let bestDist = Math.abs(homeX - nearest.x) + Math.abs(homeZ - nearest.z);
+      for (let i = 1; i < workPositions.length; i++) {
+        const wp = workPositions[i]!;
+        const dist = Math.abs(homeX - wp.x) + Math.abs(homeZ - wp.z);
+        if (dist < bestDist) {
+          bestDist = dist;
+          nearest = wp;
+        }
+      }
+
+      recordCommute(grid, homeX, homeZ, nearest.x, nearest.z);
+    }
+  }
+
+  // Extract desire-path roads monthly
+  if (tickResult.newMonth) {
+    const occupied = new Set<string>();
+    for (const b of buildingsLogic.entities) {
+      occupied.add(`${b.position.gridX},${b.position.gridY}`);
+    }
+    ctx.state.desirePaths = extractDesirePaths(grid, occupied);
   }
 }

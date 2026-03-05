@@ -85,6 +85,14 @@ import type { GameGrid } from './GameGrid';
 import { createGameTally } from './GameTally';
 import { RelocationEngine } from './relocation/RelocationEngine';
 import { GameRng } from './SeedSystem';
+import {
+  createSettlementRuntime,
+  restoreRuntime,
+  serializeRuntime,
+  type SettlementRuntime,
+  type SettlementRuntimeSaveData,
+} from './settlement/SettlementRuntime';
+import { backgroundSettlementTick } from './settlement/backgroundTick';
 import { createSpaceTimeline } from './timeline/spaceTimeline';
 import { createWorldTimeline } from './timeline/worldTimeline';
 import type { RegisteredTimeline } from './timeline/TimelineLayer';
@@ -99,6 +107,14 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
   thaw_and_freeze: 'thaw',
   stagnation: 'stagnation',
   the_eternal: 'eternal',
+  post_soviet: 'eternal',
+  planetary: 'eternal',
+  solar_engineering: 'eternal',
+  type_one: 'eternal',
+  deconstruction: 'eternal',
+  dyson_swarm: 'eternal',
+  megaearth: 'eternal',
+  type_two_peak: 'eternal',
 };
 
 /** Event IDs that should ignite a building when triggered. */
@@ -129,6 +145,7 @@ export class SimulationEngine {
   private transport: TransportSystem;
   private fireSystem: FireSystem;
   private relocationEngine: RelocationEngine;
+  private settlementRuntimes: SettlementRuntime[] = [];
 
   // ── Yuka agents ──
   private chronologyAgent!: ChronologyAgent;
@@ -188,6 +205,13 @@ export class SimulationEngine {
   // ── Terrain simulation state ──
   private terrainTiles: TerrainTileState[] = [];
   private gameMode: GovernorMode = 'historical';
+
+  // ── Desire-path traffic system ──
+  private trafficGrid: import('../growth/DesirePathSystem').TrafficGrid = { cells: new Map() };
+  private desirePaths: import('../growth/DesirePathSystem').DesirePathRoad[] = [];
+
+  // ── Arcology mega-structure system ──
+  private arcologies: import('../game/arcology/ArcologySystem').Arcology[] = [];
 
   // ── HQ splitting milestone tracker ──
   private hqSplitState: import('../growth/HQSplitting').HQSplitState = {
@@ -296,6 +320,12 @@ export class SimulationEngine {
     // ── Relocation engine (multi-settlement support) ──
     this.relocationEngine = new RelocationEngine();
     this.relocationEngine.getRegistry().createPrimary('Settlement', 20, startYear);
+
+    // Create primary settlement runtime
+    const primarySettlement = this.relocationEngine.getRegistry().getActive();
+    if (primarySettlement) {
+      this.settlementRuntimes = [createSettlementRuntime(primarySettlement, this.rng)];
+    }
 
     // Check if we're restoring into aggregate mode (save/load)
     this.raion = initialStore?.resources.raion;
@@ -449,11 +479,46 @@ export class SimulationEngine {
   public getRelocationEngine(): RelocationEngine {
     return this.relocationEngine;
   }
+  public getSettlementRuntimes(): SettlementRuntime[] {
+    return this.settlementRuntimes;
+  }
+  /**
+   * Switch the active settlement viewport.
+   *
+   * Delegates to SettlementRegistry.switchTo() to mark the new settlement
+   * as active. The ECS world stays associated with the primary settlement
+   * in entity mode; background settlements tick with aggregate math.
+   *
+   * @returns true if the switch succeeded
+   */
+  public setActiveSettlement(id: string): boolean {
+    return this.relocationEngine.getRegistry().switchTo(id);
+  }
+  /**
+   * Sync settlement runtimes to match the SettlementRegistry.
+   * Creates new runtimes for settlements added since last sync.
+   * Call after adding settlements via RelocationEngine.
+   */
+  public syncSettlementRuntimes(): void {
+    const settlements = this.relocationEngine.getRegistry().getAll();
+    for (const s of settlements) {
+      const exists = this.settlementRuntimes.some((r) => r.settlement.id === s.id);
+      if (!exists) {
+        this.settlementRuntimes.push(createSettlementRuntime(s, this.rng));
+      }
+    }
+  }
   public getPrestigeDemand(): TickContext['state']['prestigeDemand'] {
     return this.prestigeDemand;
   }
   public getPrestigeConstruction(): TickContext['state']['prestigeConstruction'] {
     return this.prestigeConstruction;
+  }
+  public getDesirePaths(): import('../growth/DesirePathSystem').DesirePathRoad[] {
+    return this.desirePaths;
+  }
+  public getArcologies(): import('../game/arcology/ArcologySystem').Arcology[] {
+    return this.arcologies;
   }
 
   // ── Agent getters ───────────────────────────────────────────────────────────
@@ -648,6 +713,7 @@ export class SimulationEngine {
     this.lastInflowYear = se.lastInflowYear;
     this.evacueeInfluxFired = se.evacueeInfluxFired;
     this.foragingState = se.foragingState;
+    this.arcologies = se.arcologies;
 
     this.eventSystem.setPersonnelFile(this.personnelFile);
 
@@ -673,6 +739,25 @@ export class SimulationEngine {
     // Restore relocation engine (multi-settlement state)
     if (data.relocation) {
       this.relocationEngine.restore(data.relocation);
+    }
+
+    // Restore settlement runtimes from save data
+    if (data.settlementRuntimes && data.settlementRuntimes.length > 0) {
+      const registry = this.relocationEngine.getRegistry();
+      this.settlementRuntimes = data.settlementRuntimes.map((saved) => {
+        const settlement = registry.getById(saved.settlementId);
+        if (settlement) {
+          return restoreRuntime(saved, settlement, this.rng);
+        }
+        // Fallback: create fresh runtime if settlement not found in registry
+        return createSettlementRuntime(
+          { id: saved.settlementId, name: saved.settlementId, gridSize: 20, terrain: { gravity: 1.0, atmosphere: 'breathable', water: 'rivers', farming: 'soil', construction: 'standard', baseSurvivalCost: 'low' }, population: 0, distance: 0, celestialBody: 'earth', foundedYear: 1917, isActive: false },
+          this.rng,
+        );
+      });
+    } else {
+      // Old save without runtimes — sync from registry
+      this.syncSettlementRuntimes();
     }
   }
 
@@ -752,6 +837,13 @@ export class SimulationEngine {
     // Phase 7: Autopilot, sync, loss check
     phaseFinalize(ctx);
 
+    // Phase 8: Background settlement ticks (inactive settlements)
+    for (const runtime of this.settlementRuntimes) {
+      if (!runtime.settlement.isActive) {
+        backgroundSettlementTick(runtime, this.rng);
+      }
+    }
+
     // Sync mutable state back from context
     this.syncStateFromContext(ctx);
   }
@@ -823,6 +915,8 @@ export class SimulationEngine {
       worldAgent: this.worldAgent,
       relocationEngine: this.relocationEngine,
       registeredTimelines: this.registeredTimelines,
+      settlementRuntimes: this.settlementRuntimes,
+      arcologies: this.arcologies,
     };
   }
 
@@ -894,6 +988,9 @@ export class SimulationEngine {
         hqSplitState: this.hqSplitState,
         historicalDivergenceFired: false,
         registeredTimelines: this.registeredTimelines,
+        trafficGrid: this.trafficGrid,
+        desirePaths: this.desirePaths,
+        arcologies: this.arcologies,
       },
       modifiers: null as any, // Filled by computeTickModifiers() after phaseChronology
       rng: this.rng,
@@ -950,6 +1047,8 @@ export class SimulationEngine {
     this.prestigeDemand = ctx.state.prestigeDemand;
     this.prestigeConstruction = ctx.state.prestigeConstruction;
     this.terrainTiles = ctx.state.terrainTiles;
+    this.desirePaths = ctx.state.desirePaths;
+    this.arcologies = ctx.state.arcologies;
   }
 
   private endGame(victory: boolean, reason: string): void {

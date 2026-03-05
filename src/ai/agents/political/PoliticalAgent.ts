@@ -77,6 +77,15 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
   thaw_and_freeze: 'thaw',
   stagnation: 'stagnation',
   the_eternal: 'eternal',
+  // Kardashev sub-eras all map to eternal economy mode
+  post_soviet: 'eternal',
+  planetary: 'eternal',
+  solar_engineering: 'eternal',
+  type_one: 'eternal',
+  deconstruction: 'eternal',
+  dyson_swarm: 'eternal',
+  megaearth: 'eternal',
+  type_two_peak: 'eternal',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -237,6 +246,47 @@ const ERA_MANDATE_TEMPLATES: Record<string, MandateTemplate[]> = {
     { defId: 'government-hq', label: 'Government HQ', baseRequired: 1 },
     { defId: 'kgb-office', label: 'KGB Office', baseRequired: 1 },
     { defId: 'train-station', label: 'Train Station', baseRequired: 1 },
+  ],
+  // Kardashev sub-era mandates (escalating requirements)
+  post_soviet: [
+    { defId: 'apartment-tower-d', label: 'Apartment Tower D', baseRequired: 4 },
+    { defId: 'power-station', label: 'Power Station', baseRequired: 2 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 2 },
+  ],
+  planetary: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 3 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 3 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 2 },
+  ],
+  solar_engineering: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 5 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 4 },
+    { defId: 'radio-station', label: 'Radio Station', baseRequired: 2 },
+  ],
+  type_one: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 6 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 5 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 3 },
+  ],
+  deconstruction: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 7 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 6 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 3 },
+  ],
+  dyson_swarm: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 8 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 7 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 4 },
+  ],
+  megaearth: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 9 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 8 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 4 },
+  ],
+  type_two_peak: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 10 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 10 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 5 },
   ],
 };
 

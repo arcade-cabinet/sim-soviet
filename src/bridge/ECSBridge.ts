@@ -50,6 +50,7 @@ export function getBuildingStates(): BuildingState[] {
       onFire: entity.building.onFire === true,
       housingCap: building.housingCap,
       workerCount: building.workerCount,
+      durability: 'durability' in entity && entity.durability ? entity.durability.current : undefined,
       ...(isUnderConstruction && {
         constructionPhase: phase as 'foundation' | 'building',
         constructionProgress: building.constructionProgress ?? 0,

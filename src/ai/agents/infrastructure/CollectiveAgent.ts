@@ -206,6 +206,12 @@ export class CollectiveAgent extends Vehicle {
   /** Seeded RNG (set via setRng). */
   private rng?: GameRng;
 
+  /** Cached fertility map for resource-proximity placement. Rebuilt each tickAutonomous. */
+  private fertilityCache?: Map<string, number>;
+
+  /** Cached arcology footprint cells ("x,y" → mergeGroup) for adjacency-aware placement. */
+  private arcologyCellsCache?: Map<string, string>;
+
   constructor() {
     super();
     this.name = 'CollectiveAgent';
@@ -703,6 +709,12 @@ export class CollectiveAgent extends Vehicle {
     eraId?: string;
     callbacks: { onToast: (msg: string, severity?: string) => void; onAdvisor: (msg: string) => void };
     recordBuildingForMandates: (defId: string) => void;
+    /** Terrain tiles for fertility-aware placement. */
+    terrainTiles?: Array<{ type: string; fertility: number }>;
+    /** Grid size for terrain tile indexing. */
+    gridSize?: number;
+    /** Active arcologies for adjacency-aware placement. */
+    arcologies?: Array<{ footprint: Array<{ x: number; y: number }>; mergeGroup: string }>;
   }): void {
     // Use era-based interval if eraId is provided, otherwise use config default
     const interval = deps.eraId ? getBuildInterval(deps.eraId) : COLLECTIVE_CHECK_INTERVAL;
@@ -744,6 +756,23 @@ export class CollectiveAgent extends Vehicle {
         );
       }
       return;
+    }
+
+    // Build fertility cache from terrain tiles for resource-proximity placement
+    if (deps.terrainTiles && deps.gridSize) {
+      this.fertilityCache = buildFertilityMap(deps.terrainTiles, deps.gridSize);
+    }
+
+    // Build arcology cells cache for adjacency-aware placement
+    if (deps.arcologies && deps.arcologies.length > 0) {
+      this.arcologyCellsCache = new Map();
+      for (const arc of deps.arcologies) {
+        for (const cell of arc.footprint) {
+          this.arcologyCellsCache.set(`${cell.x},${cell.y}`, arc.mergeGroup);
+        }
+      }
+    } else {
+      this.arcologyCellsCache = undefined;
     }
 
     // Step 3: Auto-place via CollectiveAgent with era-aware placement
@@ -1060,6 +1089,8 @@ export class CollectiveAgent extends Vehicle {
       waterCells,
       treeCells,
       occupiedCells: occupied,
+      fertilityCells: this.fertilityCache,
+      arcologyCells: this.arcologyCellsCache,
     };
   }
 
@@ -1082,6 +1113,25 @@ export class CollectiveAgent extends Vehicle {
   private isInBounds(gridX: number, gridY: number): boolean {
     return gridX >= 1 && gridX < GRID_SIZE - 1 && gridY >= 1 && gridY < GRID_SIZE - 1;
   }
+}
+
+// ── Fertility Map Builder ──────────────────────────────────────────────────
+
+/**
+ * Build a fertility lookup map from flat terrain tile array.
+ * Tiles are stored in row-major order: index = z * gridSize + x.
+ */
+function buildFertilityMap(
+  tiles: Array<{ type: string; fertility: number }>,
+  gridSize: number,
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (let i = 0; i < tiles.length; i++) {
+    const x = i % gridSize;
+    const z = Math.floor(i / gridSize);
+    map.set(`${x},${z}`, tiles[i]!.fertility);
+  }
+  return map;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

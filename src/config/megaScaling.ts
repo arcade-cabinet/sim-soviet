@@ -27,6 +27,15 @@ const ERA_MAX_TIER: Record<string, number> = {
   stagnation: 4,
   perestroika: 4,
   the_eternal: 5,
+  // Kardashev sub-eras unlock progressively higher scaling tiers
+  post_soviet: 5,
+  planetary: 5,
+  solar_engineering: 5,
+  type_one: 5,
+  deconstruction: 5,
+  dyson_swarm: 5,
+  megaearth: 5,
+  type_two_peak: 5,
 };
 
 export function getMaxBuildingTier(eraId: string): number {

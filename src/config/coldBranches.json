@@ -703,5 +703,259 @@
       }
     },
     "oneShot": true
+  },
+  {
+    "id": "moon_deconstruction",
+    "name": "Lunar Deconstruction",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.85 } },
+      "yearRange": { "min": 3000 }
+    },
+    "effects": {
+      "newSettlement": true,
+      "pressureSpikes": { "demographic": 0.1 },
+      "narrative": {
+        "pravdaHeadline": "LUNA REDESIGNATED INDUSTRIAL ZONE — Moon reclassified as raw material reserve by Central Committee decree.",
+        "toast": "Lunar deconstruction authorized. Silicates and rare earths for Dyson swarm construction."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "mercury_deconstruction",
+    "name": "Mercury Deconstruction",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.9 } },
+      "yearRange": { "min": 5000 }
+    },
+    "effects": {
+      "newSettlement": true,
+      "pressureSpikes": { "infrastructure": 0.15 },
+      "narrative": {
+        "pravdaHeadline": "MERCURY SURRENDERS TO PROGRESS — Closest planet to Sun redesignated Dyson Swarm Staging Area One.",
+        "toast": "Mercury deconstruction: iron for Dyson swarm backbone. Extreme heat operations."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "venus_deconstruction",
+    "name": "Venus Deconstruction",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.92 } },
+      "yearRange": { "min": 8000 }
+    },
+    "effects": {
+      "newSettlement": true,
+      "crisisDefinition": {
+        "id": "venus_evacuation",
+        "type": "disaster",
+        "name": "Venus Cloud Colony Evacuation",
+        "startYear": 0,
+        "endYear": 0,
+        "severity": "existential",
+        "peakParams": { "evacuationScale": 500000 },
+        "buildupTicks": 24,
+        "aftermathTicks": 48,
+        "description": "500,000 cloud colonists must be evacuated before Venus is deconstructed"
+      },
+      "pressureSpikes": { "political": 0.3, "morale": 0.2 },
+      "narrative": {
+        "pravdaHeadline": "VENUS CLOUD COLONIES REPORT VOLUNTARY RELOCATION ENTHUSIASM — All 500,000 residents express joy at contributing to Dyson construction.",
+        "toast": "CRISIS: Venus deconstruction mandate. 500K cloud colonists must evacuate. Where do they go?"
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "mars_deconstruction",
+    "name": "Mars Deconstruction",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.95 } },
+      "yearRange": { "min": 12000 }
+    },
+    "effects": {
+      "newSettlement": true,
+      "relocation": { "type": "forced_transfer" },
+      "pressureSpikes": { "political": 0.4, "loyalty": 0.3, "morale": 0.3 },
+      "narrative": {
+        "pravdaHeadline": "MARS COLONY CELEBRATES GLORIOUS RETURN TO MOTHEREARTH — Red Planet materials vital for People's Dyson Sphere.",
+        "toast": "Mars deconstruction: entire colony must relocate BACK to MegaEarth. Political crisis."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "jupiter_gas_harvesting",
+    "name": "Jupiter Gas Harvesting",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.95 } },
+      "yearRange": { "min": 10000 }
+    },
+    "effects": {
+      "newSettlement": true,
+      "narrative": {
+        "pravdaHeadline": "JUPITER ATMOSPHERE NATIONALIZED — Gas giant declared collective property of all Soviet peoples.",
+        "toast": "Jupiter gas harvesting: endless hydrogen and He-3 fuel supply for fusion reactors."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "saturn_ring_mining",
+    "name": "Saturn Ring Mining",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.96 } },
+      "yearRange": { "min": 15000 }
+    },
+    "effects": {
+      "newSettlement": true,
+      "narrative": {
+        "pravdaHeadline": "SATURN'S RINGS REDESIGNATED PEOPLE'S ICE RESERVE — Water ice and silicates for construction.",
+        "toast": "Saturn ring mining: pure water ice and silicates. A new resource frontier."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "ice_giant_mining",
+    "name": "Ice Giant Mining (Uranus/Neptune)",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.97 } },
+      "yearRange": { "min": 18000 }
+    },
+    "effects": {
+      "newSettlement": true,
+      "narrative": {
+        "pravdaHeadline": "OUTER SYSTEM BROUGHT INTO GLORIOUS SOVIET FOLD — Ice giants yield exotic ices and heavy metals.",
+        "toast": "Ice giant mining operations: heavy metals and exotic ices from the outer system."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "wormhole_discovery",
+    "name": "Wormhole Discovery",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.99 } },
+      "yearRange": { "min": 30000 }
+    },
+    "effects": {
+      "pressureSpikes": { "political": 0.2 },
+      "narrative": {
+        "pravdaHeadline": "SOVIET PHYSICISTS ACHIEVE IMPOSSIBLE — Stable wormhole opens path beyond solar system.",
+        "toast": "Wormhole discovered. Interstellar travel now theoretically possible. The trap may have an exit."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "stargate_network",
+    "name": "Stargate Network",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.995 } },
+      "yearRange": { "min": 35000 }
+    },
+    "effects": {
+      "newSettlement": true,
+      "relocation": { "type": "interstellar" },
+      "narrative": {
+        "pravdaHeadline": "PEOPLE'S STARGATE OPENS — First permanent interstellar connection established.",
+        "toast": "Stargate network online. Interstellar settlement now possible. The universe awaits Soviet governance."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "ftl_drive",
+    "name": "FTL Drive",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.995 } },
+      "yearRange": { "min": 50000 }
+    },
+    "effects": {
+      "narrative": {
+        "pravdaHeadline": "FASTER THAN LIGHT — Soviet engineering conquers Einstein's prohibition. Type III civilization within reach.",
+        "toast": "FTL drive achieved. Galactic colonization now possible. The Kardashev ceiling is broken."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "communist_universe",
+    "name": "Communist Universe",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.99 } },
+      "sphereConditions": [{ "sphere": "eurasian", "governance": "communist" }],
+      "yearRange": { "min": 40000 }
+    },
+    "effects": {
+      "narrative": {
+        "pravdaHeadline": "MARXIST PROPHECY FULFILLED — Communist governance persists to interstellar age. From each according to ability, to each according to need — across the stars.",
+        "toast": "Communist Universe achieved. The Soviet system has endured to govern the cosmos."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "multiverse_discovery",
+    "name": "Multiverse Discovery",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.999 } },
+      "yearRange": { "min": 80000 }
+    },
+    "effects": {
+      "narrative": {
+        "pravdaHeadline": "PARALLEL REALITIES CONFIRMED — Soviet science peers beyond the veil. Infinite Soviet Unions exist in parallel.",
+        "toast": "Multiverse discovery. Parallel realities confirmed. Type V transcendence path opened."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "type_three",
+    "name": "Type III Civilization (Galactic)",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.999 } },
+      "yearRange": { "min": 60000 }
+    },
+    "effects": {
+      "newSettlement": true,
+      "narrative": {
+        "pravdaHeadline": "GALACTIC SOVIET ESTABLISHED — Dyson spheres around multiple stars. The galaxy bends to collective will.",
+        "toast": "Type III civilization. Galactic-scale energy harvesting. Soviet governance across star systems."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "type_four",
+    "name": "Type IV Civilization (Universal)",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.9999 } },
+      "yearRange": { "min": 75000 }
+    },
+    "effects": {
+      "narrative": {
+        "pravdaHeadline": "UNIVERSAL ENERGY HARNESSED — The entire cosmos is a Soviet resource. All matter and energy serve the collective.",
+        "toast": "Type IV civilization. Universal energy. The cosmos is the Soviet Union."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "type_five_plus",
+    "name": "Type V+ Transcendence",
+    "conditions": {
+      "worldStateConditions": { "techLevel": { "min": 0.99999 } },
+      "yearRange": { "min": 90000 }
+    },
+    "effects": {
+      "narrative": {
+        "pravdaHeadline": "BEYOND CLASSIFICATION — Humanity transcends known physics. The Chairman's file is sealed forever.",
+        "toast": "Type V+ transcendence. Multiverse mastery. Humanity is unrecognizable. The game continues."
+      }
+    },
+    "oneShot": true
   }
 ]

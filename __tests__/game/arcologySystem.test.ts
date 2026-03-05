@@ -490,4 +490,96 @@ describe('ArcologySystem', () => {
       expect(result1.arcologies[0].id).toBe(result2.arcologies[0].id);
     });
   });
+
+  // ── Serialization round-trip ──────────────────────────────────
+
+  describe('serialization round-trip', () => {
+    it('arcology data survives JSON serialize/deserialize', () => {
+      addBuilding(world, 'workers-house-a', 0, 0, {
+        residentCount: 100,
+        workerCount: 50,
+      });
+      addBuilding(world, 'workers-house-a', 1, 0, {
+        residentCount: 200,
+        workerCount: 80,
+      });
+      addBuilding(world, 'workers-house-a', 2, 0, {
+        residentCount: 150,
+        workerCount: 60,
+      });
+
+      const result = evaluateArcologies(makeContext(world, 100000));
+      expect(result.arcologies).toHaveLength(1);
+
+      // Simulate save/load round-trip via JSON
+      const serialized = JSON.stringify(result.arcologies);
+      const deserialized: Arcology[] = JSON.parse(serialized);
+
+      expect(deserialized).toHaveLength(1);
+      const arc = deserialized[0];
+      expect(arc.id).toBe(result.arcologies[0].id);
+      expect(arc.mergeGroup).toBe('residential');
+      expect(arc.componentDefIds).toEqual(result.arcologies[0].componentDefIds);
+      expect(arc.footprint).toEqual(result.arcologies[0].footprint);
+      expect(arc.center).toEqual(result.arcologies[0].center);
+      expect(arc.population).toBe(450);
+      expect(arc.workers).toBe(190);
+      expect(arc.productionBonus).toBeCloseTo(1.05);
+      expect(arc.containment).toBeCloseTo(0.15);
+      expect(arc.hasDome).toBe(false);
+      expect(arc.domeRadius).toBeGreaterThan(0);
+
+      // Deserialized data can be fed back as existing arcologies
+      const result2 = evaluateArcologies(makeContext(world, 100000, deserialized));
+      expect(result2.arcologies).toHaveLength(1);
+      expect(result2.newMerges).toHaveLength(0);
+    });
+
+    it('dome assignment persists through serialize/deserialize', () => {
+      for (let i = 0; i < 16; i++) {
+        addBuilding(world, 'workers-house-a', i, 0);
+      }
+
+      const result1 = evaluateArcologies(makeContext(world, 500000));
+      expect(result1.domeThresholdReached).toBe(true);
+
+      // Assign dome
+      result1.arcologies[0].hasDome = true;
+
+      // Serialize and restore
+      const serialized = JSON.stringify(result1.arcologies);
+      const restored: Arcology[] = JSON.parse(serialized);
+
+      // Re-evaluate with restored data
+      const result2 = evaluateArcologies(makeContext(world, 500000, restored));
+      expect(result2.arcologies[0].hasDome).toBe(true);
+    });
+  });
+
+  // ── Dome auto-placement ──────────────────────────────────────
+
+  describe('dome auto-placement', () => {
+    it('arcologies at 500K+ with containment >= 0.8 are dome-eligible', () => {
+      // 16 buildings = containment 0.80
+      for (let i = 0; i < 16; i++) {
+        addBuilding(world, 'workers-house-a', i, 0);
+      }
+
+      const result = evaluateArcologies(makeContext(world, 500000));
+
+      expect(result.domeThresholdReached).toBe(true);
+      expect(result.arcologies[0].containment).toBeCloseTo(0.80);
+      expect(result.arcologies[0].domeRadius).toBeGreaterThan(0);
+    });
+
+    it('arcologies below 500K do not trigger dome threshold', () => {
+      for (let i = 0; i < 20; i++) {
+        addBuilding(world, 'workers-house-a', i, 0);
+      }
+
+      const result = evaluateArcologies(makeContext(world, 499999));
+
+      expect(result.domeThresholdReached).toBe(false);
+    });
+  });
 });

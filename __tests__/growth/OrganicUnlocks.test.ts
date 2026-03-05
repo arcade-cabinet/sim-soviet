@@ -237,11 +237,20 @@ describe('OrganicUnlocks', () => {
   // ── Edge cases ────────────────────────────────────────────────────
 
   describe('Edge cases', () => {
-    it('returns null for the_eternal (no further transitions)', () => {
+    it('the_eternal transitions to post_soviet (Kardashev sub-era)', () => {
       const ctx = createContext({
         currentEraId: 'the_eternal',
         population: 10000,
         simulationYearsElapsed: 200,
+      });
+      expect(evaluateOrganicUnlocks(ctx)).toBe('post_soviet');
+    });
+
+    it('returns null for type_two_peak (final sub-era, no further transitions)', () => {
+      const ctx = createContext({
+        currentEraId: 'type_two_peak',
+        population: 1000000,
+        simulationYearsElapsed: 100000,
       });
       expect(evaluateOrganicUnlocks(ctx)).toBeNull();
     });

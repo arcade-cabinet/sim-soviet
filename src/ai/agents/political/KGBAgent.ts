@@ -23,6 +23,17 @@ import type { ChronologyAgent } from '../core/ChronologyAgent';
 import type { WorkerSystem } from '../workforce/WorkerSystem';
 import type { ConsequenceConfig, ScoringSystem } from './ScoringSystem';
 import type { KGBInformant, KGBInvestigation, PoliticalEntityStats, PoliticalTickResult } from './types';
+import {
+  type LawEnforcementMode,
+  type LawEnforcementState,
+  type LawEnforcementTickContext,
+  type LawEnforcementSaveData,
+  createLawEnforcementState,
+  getEnforcementMode,
+  tickLawEnforcement,
+  serializeLawEnforcement,
+  restoreLawEnforcement,
+} from './LawEnforcementSystem';
 
 // ─────────────────────────────────────────────────────────
 //  Re-export types from PersonnelFile so callers can migrate
@@ -262,6 +273,9 @@ export class KGBAgent extends Vehicle {
 
   /** Optional RNG reference (set via setRng). */
   private rng: KGBRng | null = null;
+
+  /** MegaCity law enforcement state (sectors, crime, iso-cubes). */
+  private lawEnforcement: LawEnforcementState = createLawEnforcementState();
 
   constructor(difficulty: string = 'comrade') {
     super();
@@ -584,6 +598,46 @@ export class KGBAgent extends Vehicle {
   }
 
   // ─────────────────────────────────────────────────────
+  //  Law Enforcement API (MegaCity system)
+  // ─────────────────────────────────────────────────────
+
+  /**
+   * Tick the law enforcement system once.
+   * Call once per simulation tick after era-dependent metrics are known.
+   *
+   * In KGB/security_services mode, this is a lightweight no-op (no sectors).
+   * In sector_judges/megacity_arbiters mode, it runs the full crime model.
+   */
+  tickLawEnforcement(ctx: LawEnforcementTickContext): void {
+    this.lawEnforcement = tickLawEnforcement(this.lawEnforcement, ctx);
+  }
+
+  /** Get the current law enforcement mode. */
+  getLawEnforcementMode(): LawEnforcementMode {
+    return this.lawEnforcement.mode;
+  }
+
+  /** Get the full law enforcement state (read-only). */
+  getLawEnforcementState(): Readonly<LawEnforcementState> {
+    return this.lawEnforcement;
+  }
+
+  /** Get aggregate crime rate across all sectors (0-1). */
+  getAggregateCrimeRate(): number {
+    return this.lawEnforcement.aggregateCrimeRate;
+  }
+
+  /** Get total iso-cube labor output. */
+  getIsoCubeLabor(): number {
+    return this.lawEnforcement.totalIsoCubeLabor;
+  }
+
+  /** Get total iso-cube population. */
+  getIsoCubePopulation(): number {
+    return this.lawEnforcement.totalIsoCubePopulation;
+  }
+
+  // ─────────────────────────────────────────────────────
   //  Telegram handling
   // ─────────────────────────────────────────────────────
 
@@ -601,15 +655,27 @@ export class KGBAgent extends Vehicle {
   /**
    * Handle an ERA_TRANSITION telegram from PoliticalAgent.
    * Later eras ratchet aggression upward toward 'high'.
-   * @param toEra - Target era index (0-7)
+   *
+   * Also updates the law enforcement mode for the new era.
+   *
+   * @param toEra - Target era index (0-15 for full era range)
+   * @param eraId - Optional era ID string for direct mode lookup
    */
-  handleEraTransition(toEra: number): void {
+  handleEraTransition(toEra: number, eraId?: string): void {
     if (toEra >= 4) {
       this.state.aggression = 'high';
     } else if (toEra >= 2) {
       // Only escalate, never de-escalate
       if (this.state.aggression === 'low') {
         this.state.aggression = 'medium';
+      }
+    }
+
+    // Update law enforcement mode if era ID is provided
+    if (eraId) {
+      const newMode = getEnforcementMode(eraId as import('../../../game/era/types').EraId);
+      if (newMode !== this.lawEnforcement.mode) {
+        this.lawEnforcement = { ...this.lawEnforcement, mode: newMode };
       }
     }
   }
@@ -632,6 +698,16 @@ export class KGBAgent extends Vehicle {
       ...data,
       history: [...data.history],
     };
+  }
+
+  /** Serialize law enforcement state for save/load. */
+  serializeLawEnforcement(): LawEnforcementSaveData {
+    return serializeLawEnforcement(this.lawEnforcement);
+  }
+
+  /** Restore law enforcement state from save data. */
+  restoreLawEnforcement(data: LawEnforcementSaveData): void {
+    this.lawEnforcement = restoreLawEnforcement(data);
   }
 
   /** Serialize the personnel file state. Alias: serializePersonnelFile(). */

@@ -14,7 +14,7 @@
  */
 
 import { Vehicle } from 'yuka';
-import type { PressureDomain } from '../crisis/pressure/PressureDomains';
+import type { PostScarcityDomain, PressureDomain } from '../crisis/pressure/PressureDomains';
 import type { GameRng } from '@/game/SeedSystem';
 import {
   type Sphere,
@@ -168,6 +168,29 @@ export class WorldAgent extends Vehicle {
     };
   }
 
+  /**
+   * Compute pressure modifiers for post-scarcity domains.
+   * Only meaningful after domain transformation (Kardashev >= 1.0).
+   *
+   * At civilizational scale, the world state still matters:
+   * - meaning: tech plateau + ideology rigidity → purpose crisis
+   * - density: population pressure (always internal, minimal world effect)
+   * - entropy: tech level inversely affects maintenance (higher tech = less entropy)
+   * - legacy: global tension + ideology → civilizational schism risk
+   * - ennui: inverse of global tension (peace = boredom at cosmic scale)
+   */
+  computePostScarcityPressureModifiers(): Partial<Record<PostScarcityDomain, number>> {
+    const { globalTension, ideologyRigidity, techLevel } = this.state;
+
+    return {
+      meaning: 1.0 + ideologyRigidity * 0.4 + (1 - techLevel) * 0.2,
+      density: 1.0, // density is purely internal
+      entropy: 1.0 + (1 - techLevel) * 0.5, // lower tech = harder to maintain
+      legacy: 1.0 + globalTension * 0.3 + ideologyRigidity * 0.3,
+      ennui: 1.0 + (1 - globalTension) * 0.4, // peace breeds boredom
+    };
+  }
+
   // ── Serialization ──────────────────────────────────────────────────────────
 
   serialize(): WorldStateSaveData {
@@ -266,7 +289,29 @@ export class WorldAgent extends Vehicle {
   private advanceTech(year: number): void {
     // Slow linear advancement + era-specific rates
     const baseRate = 0.003; // ~0.3% per year
-    const eraBoost = this.currentEraId === 'industrialization' ? 0.005 : this.currentEraId === 'the_eternal' ? 0.004 : 0;
+    let eraBoost = 0;
+    switch (this.currentEraId) {
+      case 'industrialization':
+        eraBoost = 0.005;
+        break;
+      case 'the_eternal':
+      case 'post_soviet':
+        eraBoost = 0.004;
+        break;
+      case 'planetary':
+        eraBoost = 0.005;
+        break;
+      case 'solar_engineering':
+        eraBoost = 0.006;
+        break;
+      case 'type_one':
+      case 'deconstruction':
+      case 'dyson_swarm':
+      case 'megaearth':
+      case 'type_two_peak':
+        eraBoost = 0.002; // diminishing returns at civilization scale
+        break;
+    }
     this.state.techLevel = Math.min(1, this.state.techLevel + baseRate + eraBoost);
   }
 
@@ -281,12 +326,30 @@ export class WorldAgent extends Vehicle {
   private advanceCentralPlanning(): void {
     // Efficiency degrades in stagnation, improves in reform eras
     let delta = 0;
-    if (this.currentEraId === 'stagnation') {
-      delta = -0.005;
-    } else if (this.currentEraId === 'thaw_and_freeze') {
-      delta = 0.002;
-    } else if (this.currentEraId === 'the_eternal') {
-      delta = -0.002; // slow bureaucratic entropy
+    switch (this.currentEraId) {
+      case 'stagnation':
+        delta = -0.005;
+        break;
+      case 'thaw_and_freeze':
+        delta = 0.002;
+        break;
+      case 'the_eternal':
+      case 'post_soviet':
+        delta = -0.002; // slow bureaucratic entropy
+        break;
+      case 'planetary':
+        delta = -0.001;
+        break;
+      case 'solar_engineering':
+      case 'type_one':
+        delta = 0.001; // automation improves efficiency
+        break;
+      case 'deconstruction':
+      case 'dyson_swarm':
+      case 'megaearth':
+      case 'type_two_peak':
+        delta = 0.002; // highly automated, near-perfect planning
+        break;
     }
     this.state.centralPlanningEfficiency = Math.max(0.3, Math.min(1.0, this.state.centralPlanningEfficiency + delta));
   }

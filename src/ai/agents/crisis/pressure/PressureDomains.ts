@@ -3,15 +3,20 @@
  *
  * Core types for the pressure-valve crisis system.
  *
- * 10 pressure domains map to game subsystems already computed each tick.
+ * 10 classical pressure domains map to game subsystems already computed each tick.
  * Each domain is normalized to 0-1 (0 = no stress, 1 = maximum stress).
  * Pressure accumulates via dual-spread model and triggers crises when
  * thresholds are crossed for sustained durations.
+ *
+ * At post-scarcity (Kardashev >= 1.0, techLevel > 0.95), classical domains
+ * transform: food/housing/power/economic are ZEROED (infinite supply) and
+ * replaced by 5 post-scarcity domains that represent civilizational-scale
+ * pressures: meaning, density, entropy, legacy, ennui.
  */
 
-// ─── Pressure Domains ────────────────────────────────────────────────────────
+// ─── Classical Pressure Domains ─────────────────────────────────────────────
 
-/** The 10 pressure domains tracked by the system. */
+/** The 10 classical pressure domains tracked by the system. */
 export type PressureDomain =
   | 'food'
   | 'morale'
@@ -24,7 +29,7 @@ export type PressureDomain =
   | 'health'
   | 'economic';
 
-/** All domain keys as a readonly array (iteration order). */
+/** All classical domain keys as a readonly array (iteration order). */
 export const PRESSURE_DOMAINS: readonly PressureDomain[] = [
   'food',
   'morale',
@@ -37,6 +42,66 @@ export const PRESSURE_DOMAINS: readonly PressureDomain[] = [
   'health',
   'economic',
 ] as const;
+
+// ─── Post-Scarcity Domains ──────────────────────────────────────────────────
+
+/** 5 post-scarcity domains that replace zeroed classical domains. */
+export type PostScarcityDomain =
+  | 'meaning'   // replaces food — purpose crisis (why eat when nothing matters?)
+  | 'density'   // replaces housing — megacity population pressure
+  | 'entropy'   // replaces power — stellar-scale maintenance bureaucracy
+  | 'legacy'    // replaces economic — civilizational direction pressure
+  | 'ennui';    // transforms morale — existential boredom at civilization scale
+
+/** All post-scarcity domain keys. */
+export const POST_SCARCITY_DOMAINS: readonly PostScarcityDomain[] = [
+  'meaning',
+  'density',
+  'entropy',
+  'legacy',
+  'ennui',
+] as const;
+
+/** Any domain — classical or post-scarcity. */
+export type AnyPressureDomain = PressureDomain | PostScarcityDomain;
+
+/** All domain keys (classical + post-scarcity). */
+export const ALL_PRESSURE_DOMAINS: readonly AnyPressureDomain[] = [
+  ...PRESSURE_DOMAINS,
+  ...POST_SCARCITY_DOMAINS,
+] as const;
+
+/**
+ * Which classical domains are ZEROED at post-scarcity (infinite supply).
+ * These become inert — their gauges freeze at 0.
+ */
+export const ZEROED_AT_POST_SCARCITY: readonly PressureDomain[] = [
+  'food',
+  'housing',
+  'power',
+  'economic',
+] as const;
+
+/**
+ * Which classical domains are AMPLIFIED at post-scarcity.
+ * Power never goes away — Turchin cycles at cosmic scale.
+ */
+export const AMPLIFIED_AT_POST_SCARCITY: readonly PressureDomain[] = [
+  'political',
+  'loyalty',
+] as const;
+
+/**
+ * Mapping: which post-scarcity domain replaces which classical domain.
+ * morale is TRANSFORMED (not zeroed) into ennui.
+ */
+export const DOMAIN_REPLACEMENT_MAP: ReadonlyMap<PressureDomain, PostScarcityDomain> = new Map([
+  ['food', 'meaning'],
+  ['housing', 'density'],
+  ['power', 'entropy'],
+  ['economic', 'legacy'],
+  ['morale', 'ennui'],
+]);
 
 // ─── Pressure Gauge ──────────────────────────────────────────────────────────
 
@@ -67,8 +132,26 @@ export function createGauge(): PressureGauge {
 
 // ─── Pressure State ──────────────────────────────────────────────────────────
 
-/** Full pressure state across all domains. */
+/** Full pressure state across classical domains. */
 export type PressureState = Record<PressureDomain, PressureGauge>;
+
+/** Post-scarcity pressure state (5 additional gauges). */
+export type PostScarcityPressureState = Record<PostScarcityDomain, PressureGauge>;
+
+/**
+ * Extended pressure state that includes both classical and post-scarcity domains.
+ * The post-scarcity gauges are only active after domain transformation.
+ */
+export interface ExtendedPressureState {
+  /** Classical 10-domain gauges (always present). */
+  classical: PressureState;
+  /** Post-scarcity 5-domain gauges (null before transformation). */
+  postScarcity: PostScarcityPressureState | null;
+  /** Whether domain transformation has occurred. */
+  transformed: boolean;
+  /** Kardashev level at which transformation occurred (for serialization). */
+  transformedAtKardashev: number;
+}
 
 /** Create a fresh PressureState with all gauges at zero. */
 export function createPressureState(): PressureState {
@@ -77,6 +160,25 @@ export function createPressureState(): PressureState {
     state[domain] = createGauge();
   }
   return state;
+}
+
+/** Create a fresh PostScarcityPressureState with all gauges at zero. */
+export function createPostScarcityPressureState(): PostScarcityPressureState {
+  const state = {} as PostScarcityPressureState;
+  for (const domain of POST_SCARCITY_DOMAINS) {
+    state[domain] = createGauge();
+  }
+  return state;
+}
+
+/** Create a fresh ExtendedPressureState (pre-transformation). */
+export function createExtendedPressureState(): ExtendedPressureState {
+  return {
+    classical: createPressureState(),
+    postScarcity: null,
+    transformed: false,
+    transformedAtKardashev: 0,
+  };
 }
 
 // ─── Pressure Read Context ───────────────────────────────────────────────────
@@ -168,6 +270,32 @@ export interface PressureReadContext {
   worldState?: Record<string, unknown>;
   /** Sphere data from WorldAgent (for cold branch evaluation). */
   spheres?: Record<string, { governance: string; aggregateHostility: number }>;
+
+  // ── MegaCity Law Enforcement context ──
+
+  /** Aggregate crime rate from LawEnforcementSystem (0-1). */
+  crimeRate?: number;
+  /** Judge coverage ratio from LawEnforcementSystem (0-1). */
+  judgeCoverage?: number;
+  /** Undercity decay level (0-1, average across sectors). */
+  undercityDecay?: number;
+
+  // ── Post-Scarcity context (only populated after domain transformation) ──
+
+  /** Purpose fulfillment index (0=total nihilism, 1=fully engaged). Only meaningful post-scarcity. */
+  purposeFulfillment?: number;
+  /** Faction count — number of identity factions competing for direction. */
+  factionCount?: number;
+  /** Population density (people per habitable km^2). */
+  populationDensity?: number;
+  /** Stellar maintenance backlog (0=perfect, 1=critical — Dyson swarm neglect). */
+  stellarMaintenanceBacklog?: number;
+  /** Civilizational consensus (0=total disagreement on direction, 1=unified). */
+  civilizationalConsensus?: number;
+  /** Ennui index: existential boredom (0=engaged, 1=total ennui). Replaces morale. */
+  ennuiIndex?: number;
+  /** Vodka-equivalent consumption at civilizational scale (0=sober, 1=hedonistic collapse). */
+  civilizationalVodka?: number;
 }
 
 // ─── Serialization ───────────────────────────────────────────────────────────
@@ -177,9 +305,30 @@ export interface PressureStateSaveData {
   gauges: Record<PressureDomain, PressureGauge>;
 }
 
+/** Extended serialized state (includes post-scarcity domains). */
+export interface ExtendedPressureStateSaveData {
+  gauges: Record<PressureDomain, PressureGauge>;
+  postScarcityGauges?: Record<PostScarcityDomain, PressureGauge>;
+  transformed?: boolean;
+  transformedAtKardashev?: number;
+}
+
 /** Serialize a PressureState. */
 export function serializePressureState(state: PressureState): PressureStateSaveData {
   return { gauges: { ...state } };
+}
+
+/** Serialize an ExtendedPressureState. */
+export function serializeExtendedPressureState(state: ExtendedPressureState): ExtendedPressureStateSaveData {
+  const data: ExtendedPressureStateSaveData = {
+    gauges: { ...state.classical },
+    transformed: state.transformed,
+    transformedAtKardashev: state.transformedAtKardashev,
+  };
+  if (state.postScarcity) {
+    data.postScarcityGauges = { ...state.postScarcity };
+  }
+  return data;
 }
 
 /** Restore a PressureState from saved data. */
@@ -188,6 +337,27 @@ export function restorePressureState(data: PressureStateSaveData): PressureState
   for (const domain of PRESSURE_DOMAINS) {
     if (data.gauges[domain]) {
       state[domain] = { ...data.gauges[domain] };
+    }
+  }
+  return state;
+}
+
+/** Restore an ExtendedPressureState from saved data. */
+export function restoreExtendedPressureState(data: ExtendedPressureStateSaveData): ExtendedPressureState {
+  const state = createExtendedPressureState();
+  for (const domain of PRESSURE_DOMAINS) {
+    if (data.gauges[domain]) {
+      state.classical[domain] = { ...data.gauges[domain] };
+    }
+  }
+  state.transformed = data.transformed ?? false;
+  state.transformedAtKardashev = data.transformedAtKardashev ?? 0;
+  if (data.postScarcityGauges) {
+    state.postScarcity = createPostScarcityPressureState();
+    for (const domain of POST_SCARCITY_DOMAINS) {
+      if (data.postScarcityGauges[domain]) {
+        state.postScarcity[domain] = { ...data.postScarcityGauges[domain] };
+      }
     }
   }
   return state;

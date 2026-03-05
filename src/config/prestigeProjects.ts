@@ -28,8 +28,8 @@ export interface PrestigeProject {
   failurePenalty: { politicalCapitalLoss: number; arrestRisk: number };
 }
 
-/** One prestige project per era, keyed by EraId. */
-export const PRESTIGE_PROJECTS: Readonly<Record<EraId, PrestigeProject>> = {
+/** One prestige project per historical era, keyed by EraId. Sub-eras have no prestige projects. */
+export const PRESTIGE_PROJECTS: Readonly<Partial<Record<EraId, PrestigeProject>>> = {
   revolution: {
     id: 'monument-to-revolution',
     name: 'Monument to Revolution',

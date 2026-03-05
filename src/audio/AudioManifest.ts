@@ -186,6 +186,15 @@ export const ERA_PLAYLIST_MAP: Record<string, string[]> = {
   thaw_and_freeze: ['katyusha', 'moskva_majskaia', 'glavnoe_rebiata', 'tachanka', 'smuglianka', 'my_krasnye_soldaty'],
   stagnation: ['dubinushka', 'varshavjanka', 'krasnoe_znamia', 'white_army_black_baron', 'smelo_tovarishchi'],
   the_eternal: ['internationale', 'moskva_majskaia', 'glavnoe_rebiata', 'white_army_black_baron', 'my_krasnye_soldaty'],
+  // Kardashev sub-eras reuse eternal playlist
+  post_soviet: ['internationale', 'moskva_majskaia', 'glavnoe_rebiata', 'white_army_black_baron', 'my_krasnye_soldaty'],
+  planetary: ['internationale', 'moskva_majskaia', 'glavnoe_rebiata', 'white_army_black_baron', 'my_krasnye_soldaty'],
+  solar_engineering: ['internationale', 'moskva_majskaia', 'glavnoe_rebiata', 'white_army_black_baron', 'my_krasnye_soldaty'],
+  type_one: ['internationale', 'moskva_majskaia', 'glavnoe_rebiata', 'white_army_black_baron', 'my_krasnye_soldaty'],
+  deconstruction: ['internationale', 'moskva_majskaia', 'glavnoe_rebiata', 'white_army_black_baron', 'my_krasnye_soldaty'],
+  dyson_swarm: ['internationale', 'moskva_majskaia', 'glavnoe_rebiata', 'white_army_black_baron', 'my_krasnye_soldaty'],
+  megaearth: ['internationale', 'moskva_majskaia', 'glavnoe_rebiata', 'white_army_black_baron', 'my_krasnye_soldaty'],
+  type_two_peak: ['internationale', 'moskva_majskaia', 'glavnoe_rebiata', 'white_army_black_baron', 'my_krasnye_soldaty'],
 };
 
 /**

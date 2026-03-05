@@ -1236,6 +1236,102 @@ function subscribeGraves(listener: () => void): () => void {
   return () => { _graveListeners.delete(listener); };
 }
 
+// ── Active Settlement (viewport switching) ───────────────────────────────
+
+/** Summary of a settlement for the selector UI. */
+export interface SettlementSummaryEntry {
+  id: string;
+  name: string;
+  population: number;
+  celestialBody: string;
+  isActive: boolean;
+  /** Per-settlement threat level (from pressure system). */
+  threatLevel?: string;
+}
+
+let _activeSettlementId: string = 'primary';
+let _settlementList: SettlementSummaryEntry[] = [];
+/** Whether a settlement transition animation is in progress. */
+let _settlementTransitioning = false;
+const _settlementListeners = new Set<() => void>();
+
+/** Get the currently active settlement ID. */
+export function getActiveSettlementId(): string {
+  return _activeSettlementId;
+}
+
+/** Get the list of all settlements for the selector UI. */
+export function getSettlementList(): readonly SettlementSummaryEntry[] {
+  return _settlementList;
+}
+
+/** Whether the viewport is currently transitioning between settlements. */
+export function isSettlementTransitioning(): boolean {
+  return _settlementTransitioning;
+}
+
+/** Set the active settlement ID (called by switchSettlement coordinator). */
+export function setActiveSettlementId(id: string): void {
+  _activeSettlementId = id;
+  for (const listener of _settlementListeners) listener();
+}
+
+/** Update the settlement list (called each tick or on settlement changes). */
+export function updateSettlementList(list: SettlementSummaryEntry[]): void {
+  _settlementList = list;
+  for (const listener of _settlementListeners) listener();
+}
+
+/** Set the transitioning flag (for fade overlay). */
+export function setSettlementTransitioning(transitioning: boolean): void {
+  _settlementTransitioning = transitioning;
+  for (const listener of _settlementListeners) listener();
+}
+
+/** Monotonically increasing counter — incremented on settlement switch to signal camera reset. */
+let _cameraResetVersion = 0;
+
+/** Get the current camera reset version. CameraController watches this for changes. */
+export function getCameraResetVersion(): number {
+  return _cameraResetVersion;
+}
+
+/** Signal the camera to reset to the new grid center. Called by switchSettlement(). */
+export function signalCameraReset(): void {
+  _cameraResetVersion++;
+}
+
+/** React hook -- subscribe to active settlement state. */
+export function useActiveSettlement(): {
+  activeId: string;
+  settlements: readonly SettlementSummaryEntry[];
+  transitioning: boolean;
+} {
+  const state = useSyncExternalStore(subscribeSettlement, getSettlementState, getSettlementState);
+  return state;
+}
+
+let _cachedSettlementState: { activeId: string; settlements: readonly SettlementSummaryEntry[]; transitioning: boolean } | null = null;
+
+function getSettlementState() {
+  if (!_cachedSettlementState
+    || _cachedSettlementState.activeId !== _activeSettlementId
+    || _cachedSettlementState.settlements !== _settlementList
+    || _cachedSettlementState.transitioning !== _settlementTransitioning) {
+    _cachedSettlementState = {
+      activeId: _activeSettlementId,
+      settlements: _settlementList,
+      transitioning: _settlementTransitioning,
+    };
+  }
+  return _cachedSettlementState;
+}
+
+function subscribeSettlement(listener: () => void): () => void {
+  _settlementListeners.add(listener);
+  return () => { _settlementListeners.delete(listener); };
+}
+
 // ── Internal ──────────────────────────────────────────────────────────────
 
 function subscribe(listener: () => void): () => void {
