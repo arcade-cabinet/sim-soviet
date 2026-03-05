@@ -69,6 +69,12 @@ export interface SimCallbacks {
    * If not handled, the milestone auto-resolves after tickLimit ticks.
    */
   onNarrativeEvent?: (event: NarrativeEvent, resolve: (choiceId: string) => void) => void;
+  /**
+   * Fired once when historical mode reaches the 1991 divergence year.
+   * Call resolve(true) to continue in freeform mode, resolve(false) to end the game.
+   * If not handled, auto-resolves as continue (freeform) after 60 ticks.
+   */
+  onHistoricalEraEnd?: (resolve: (continueInFreeform: boolean) => void) => void;
 }
 
 /** Data passed to the rehabilitation modal after gulag return. */

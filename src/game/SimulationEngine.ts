@@ -889,6 +889,7 @@ export class SimulationEngine {
         gameMode: this.gameMode,
         terrainTiles: this.terrainTiles,
         hqSplitState: this.hqSplitState,
+        historicalDivergenceFired: false,
         registeredTimelines: this.registeredTimelines,
       },
       modifiers: null as any, // Filled by computeTickModifiers() after phaseChronology
@@ -897,6 +898,7 @@ export class SimulationEngine {
       governor: this.governor,
       callbacks: this.callbacks,
       endGame: (v: boolean, r: string) => this.endGame(v, r),
+      switchToFreeformMode: () => this.setGovernor(new FreeformGovernor(1991)),
     };
   }
 

@@ -130,6 +130,8 @@ export interface TickContext {
     terrainTiles: TerrainTileState[];
     /** HQ splitting milestone tracker. */
     hqSplitState: HQSplitState;
+    /** True once the 1991 historical-mode divergence callback has fired. Never resets. */
+    historicalDivergenceFired: boolean;
     /** All active timeline layers (space, world, per-world). Mutated in-place each tick. */
     registeredTimelines: RegisteredTimeline[];
   };
@@ -155,4 +157,6 @@ export interface TickContext {
 
   /** Delegate to SimulationEngine.endGame() — handles tally, meta, and gameOver callback. */
   endGame: (victory: boolean, reason: string) => void;
+  /** Switch the engine from historical to freeform governor (divergence continuation). */
+  switchToFreeformMode: () => void;
 }
