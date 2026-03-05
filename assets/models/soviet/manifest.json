@@ -421,6 +421,133 @@
       "role": "colony_government",
       "texture": "embedded",
       "era": "the_eternal"
+    },
+    "grave-cross-a": {
+      "file": "models/soviet/grave-cross-a.glb",
+      "source": "Graveyard/Cross_1",
+      "role": "mass_grave",
+      "texture": "embedded"
+    },
+    "grave-cross-b": {
+      "file": "models/soviet/grave-cross-b.glb",
+      "source": "Graveyard/Cross_3",
+      "role": "mass_grave",
+      "texture": "embedded"
+    },
+    "grave-cross-c": {
+      "file": "models/soviet/grave-cross-c.glb",
+      "source": "Graveyard/Cross_5",
+      "role": "mass_grave",
+      "texture": "embedded"
+    },
+    "grave-stone-a": {
+      "file": "models/soviet/grave-stone-a.glb",
+      "source": "Graveyard/GraveStone_2",
+      "role": "mass_grave",
+      "texture": "embedded"
+    },
+    "grave-stone-b": {
+      "file": "models/soviet/grave-stone-b.glb",
+      "source": "Graveyard/GraveStone_4",
+      "role": "mass_grave",
+      "texture": "embedded"
+    },
+    "grave-mound": {
+      "file": "models/soviet/grave-mound.glb",
+      "source": "Graveyard/GraveMound",
+      "role": "mass_grave",
+      "texture": "embedded"
+    },
+    "industrial-furnace": {
+      "file": "models/soviet/industrial-furnace.glb",
+      "source": "PSX Mega Pack II/Structures/boiler_hx_4",
+      "role": "industrial_heavy",
+      "texture": "embedded",
+      "era": "industrialization"
+    },
+    "pipe-system": {
+      "file": "models/soviet/pipe-system.glb",
+      "source": "PSX Mega Pack II/Large Props & Machinery/tank_system_mx_1",
+      "role": "industrial_heavy",
+      "texture": "embedded",
+      "era": "industrialization"
+    },
+    "power-equipment": {
+      "file": "models/soviet/power-equipment.glb",
+      "source": "PSX Mega Pack II/Large Props & Machinery/electrical_equipment_1",
+      "role": "industrial_power",
+      "texture": "embedded",
+      "era": "industrialization"
+    },
+    "industrial-warehouse": {
+      "file": "models/soviet/industrial-warehouse.glb",
+      "source": "PSX Mega Pack II/Structures/warehouse_hl_1",
+      "role": "industrial_storage",
+      "texture": "embedded",
+      "era": "industrialization"
+    },
+    "chimney-stack": {
+      "file": "models/soviet/chimney-stack.glb",
+      "source": "PSX Mega Pack II/Large Props & Machinery/chimney_a_3",
+      "role": "industrial_heavy",
+      "texture": "embedded",
+      "era": "industrialization"
+    },
+    "industrial-machinery": {
+      "file": "models/soviet/industrial-machinery.glb",
+      "source": "PSX Mega Pack II/Large Props & Machinery/machinery_mx_1",
+      "role": "industrial_heavy",
+      "texture": "embedded",
+      "era": "industrialization"
+    },
+    "storage-tank": {
+      "file": "models/soviet/storage-tank.glb",
+      "source": "PSX Mega Pack II/Large Props & Machinery/storage_tank_mx_1",
+      "role": "industrial_storage",
+      "texture": "embedded",
+      "era": "industrialization"
+    },
+    "water-tower": {
+      "file": "models/soviet/water-tower.glb",
+      "source": "PSX Mega Pack II/Structures/water_tower_hm_1",
+      "role": "industrial_infrastructure",
+      "texture": "embedded",
+      "era": "industrialization"
+    },
+    "alien-fauna-flying": {
+      "file": "models/soviet/alien-fauna-flying.glb",
+      "source": "AlienPackVol1/flyingalien",
+      "role": "alien_fauna_flying",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "alien-fauna-scout": {
+      "file": "models/soviet/alien-fauna-scout.glb",
+      "source": "AlienPackVol1/scout",
+      "role": "alien_fauna_ground",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "alien-fauna-spider": {
+      "file": "models/soviet/alien-fauna-spider.glb",
+      "source": "AlienPackVol1/spider",
+      "role": "alien_fauna_ground",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "alien-fauna-tentacle": {
+      "file": "models/soviet/alien-fauna-tentacle.glb",
+      "source": "AlienPackVol1/tentakel",
+      "role": "alien_fauna_ground",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "alien-threat-soldier": {
+      "file": "models/soviet/alien-threat-soldier.glb",
+      "source": "AlienPackVol1/soldier",
+      "role": "alien_threat",
+      "texture": "embedded",
+      "era": "the_eternal"
     }
   },
   "roles": {
@@ -475,6 +602,14 @@
     "colony_agriculture": ["colony-hydroponics"],
     "colony_power": ["colony-reactor", "colony-fusion"],
     "colony_comms": ["colony-antenna"],
-    "colony_government": ["colony-command"]
+    "colony_government": ["colony-command"],
+    "mass_grave": ["grave-cross-a", "grave-cross-b", "grave-cross-c", "grave-stone-a", "grave-stone-b", "grave-mound"],
+    "industrial_heavy": ["industrial-furnace", "pipe-system", "chimney-stack", "industrial-machinery"],
+    "industrial_power": ["power-equipment"],
+    "industrial_storage": ["industrial-warehouse", "storage-tank"],
+    "industrial_infrastructure": ["water-tower"],
+    "alien_fauna_flying": ["alien-fauna-flying"],
+    "alien_fauna_ground": ["alien-fauna-scout", "alien-fauna-spider", "alien-fauna-tentacle"],
+    "alien_threat": ["alien-threat-soldier"]
   }
 }

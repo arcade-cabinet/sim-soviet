@@ -63,6 +63,23 @@ const MODEL_MAP: Record<BuildingType, readonly [string, string, string]> = {
 export const ERA_MODEL_MAP: Readonly<
   Partial<Record<string, Partial<Record<BuildingType, readonly [string, string, string]>>>>
 > = {
+  industrialization: {
+    factory: ['industrial-machinery', 'industrial-furnace', 'pipe-system'],
+    power: ['power-equipment', 'power-equipment', 'power-equipment'],
+    distillery: ['storage-tank', 'storage-tank', 'storage-tank'],
+    pump: ['chimney-stack', 'chimney-stack', 'chimney-stack'],
+    station: ['industrial-warehouse', 'industrial-warehouse', 'industrial-warehouse'],
+  },
+  great_patriotic: {
+    factory: ['industrial-machinery', 'industrial-furnace', 'pipe-system'],
+    power: ['power-equipment', 'power-equipment', 'power-equipment'],
+    pump: ['chimney-stack', 'chimney-stack', 'chimney-stack'],
+  },
+  reconstruction: {
+    factory: ['industrial-machinery', 'industrial-furnace', 'pipe-system'],
+    pump: ['chimney-stack', 'chimney-stack', 'chimney-stack'],
+    station: ['industrial-warehouse', 'industrial-warehouse', 'industrial-warehouse'],
+  },
   the_eternal: {
     housing: ['colony-habitat-a', 'colony-habitat-b', 'colony-habitat-c'],
     factory: ['colony-workshop', 'colony-factory', 'colony-megafactory'],

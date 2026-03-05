@@ -67,8 +67,8 @@ describe('getModelName', () => {
     expect(getModelName('power', 0, 'revolution')).toBe('power-station');
   });
 
-  it('returns standard soviet models for all non-eternal eras', () => {
-    const sovietEras = [
+  it('returns standard soviet housing for all eras (housing never overridden)', () => {
+    const allEras = [
       'revolution',
       'collectivization',
       'industrialization',
@@ -77,9 +77,46 @@ describe('getModelName', () => {
       'thaw_and_freeze',
       'stagnation',
     ];
-    for (const era of sovietEras) {
+    for (const era of allEras) {
       expect(getModelName('housing', 0, era)).toBe('workers-house-a');
     }
+  });
+
+  // ── Industrialization-era overrides ───────────────────────────────────
+
+  it('returns PSX industrial models for factory in industrialization era', () => {
+    expect(getModelName('factory', 0, 'industrialization')).toBe('industrial-machinery');
+    expect(getModelName('factory', 1, 'industrialization')).toBe('industrial-furnace');
+    expect(getModelName('factory', 2, 'industrialization')).toBe('pipe-system');
+  });
+
+  it('returns PSX power model for power in industrialization era', () => {
+    expect(getModelName('power', 0, 'industrialization')).toBe('power-equipment');
+  });
+
+  it('returns chimney for pump in industrialization era', () => {
+    expect(getModelName('pump', 0, 'industrialization')).toBe('chimney-stack');
+  });
+
+  it('returns industrial warehouse for station in industrialization era', () => {
+    expect(getModelName('station', 0, 'industrialization')).toBe('industrial-warehouse');
+  });
+
+  it('returns PSX factory models for great_patriotic era', () => {
+    expect(getModelName('factory', 0, 'great_patriotic')).toBe('industrial-machinery');
+    expect(getModelName('factory', 1, 'great_patriotic')).toBe('industrial-furnace');
+  });
+
+  it('returns PSX factory models for reconstruction era', () => {
+    expect(getModelName('factory', 0, 'reconstruction')).toBe('industrial-machinery');
+    expect(getModelName('station', 0, 'reconstruction')).toBe('industrial-warehouse');
+  });
+
+  it('falls back to default for building types not overridden in industrial eras', () => {
+    // farm, gulag, tower, mast are not in industrialization ERA_MODEL_MAP
+    expect(getModelName('farm', 0, 'industrialization')).toBe('collective-farm-hq');
+    expect(getModelName('gulag', 0, 'industrialization')).toBe('gulag-admin');
+    expect(getModelName('tower', 0, 'great_patriotic')).toBe('radio-station');
   });
 });
 
@@ -157,5 +194,46 @@ describe('Colony models in manifest', () => {
     expect(roles.colony_industry).toBeDefined();
     expect(roles.colony_power).toBeDefined();
     expect(roles.colony_government).toBeDefined();
+  });
+});
+
+describe('Industrial models in manifest', () => {
+  it('all ERA_MODEL_MAP industrialization models exist in manifest.json', () => {
+    const industrial = ERA_MODEL_MAP.industrialization!;
+    const manifestNames = Object.keys(manifest.assets);
+
+    for (const [_type, models] of Object.entries(industrial)) {
+      for (const modelName of models) {
+        expect(manifestNames).toContain(modelName);
+      }
+    }
+  });
+
+  it('industrial manifest entries have era field set to industrialization', () => {
+    const industrialAssets = Object.entries(manifest.assets).filter(
+      ([name]) => name.startsWith('industrial-') || name === 'pipe-system' || name === 'power-equipment' || name === 'chimney-stack' || name === 'storage-tank' || name === 'water-tower',
+    );
+    expect(industrialAssets.length).toBe(8);
+
+    for (const [_name, asset] of industrialAssets) {
+      expect((asset as any).era).toBe('industrialization');
+    }
+  });
+
+  it('industrial roles are listed in manifest roles section', () => {
+    const roles = manifest.roles as Record<string, string[]>;
+    expect(roles.industrial_heavy).toBeDefined();
+    expect(roles.industrial_heavy.length).toBe(4);
+    expect(roles.industrial_power).toBeDefined();
+    expect(roles.industrial_storage).toBeDefined();
+    expect(roles.industrial_infrastructure).toBeDefined();
+  });
+
+  it('great_patriotic and reconstruction eras share industrial factory models', () => {
+    const gp = ERA_MODEL_MAP.great_patriotic!;
+    const recon = ERA_MODEL_MAP.reconstruction!;
+    // Both use the same factory models
+    expect(gp.factory).toEqual(ERA_MODEL_MAP.industrialization!.factory);
+    expect(recon.factory).toEqual(ERA_MODEL_MAP.industrialization!.factory);
   });
 });
