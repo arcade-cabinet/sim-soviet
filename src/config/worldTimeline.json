@@ -1106,6 +1106,375 @@
       "oneShot": true
     },
     {
+      "id": "great_depression_ii",
+      "name": "The Second Great Depression",
+      "timelineId": "world",
+      "order": 76.1,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2130
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "post_oil_transition"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "commodityIndex": -0.3,
+          "tradeAccess": -0.2
+        },
+        "pressureModifiers": {
+          "economic": 0.3,
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "GLOBAL CAPITALIST MARKETS COLLAPSE: SECOND GREAT DEPRESSION VINDICATES PLANNED ECONOMY",
+          "toast": "The post-oil transition has broken the global financial architecture. Markets that traded in fossil futures for 200 years have nothing to trade. Derivatives built on derivatives built on oil that no longer matters have evaporated. 40% of the world's nominal wealth has ceased to exist in three weeks.",
+          "scene": "The news arrives piecemeal, as it always does when the outside world is falling apart.\n\nFirst: the London Exchange has suspended trading. Then: the Shanghai Commodities Board has declared force majeure on all energy contracts. Then: the corporate sovereign entities that replaced national currencies are experiencing 'liquidity harmonization events,' which is a new phrase for bank runs conducted by algorithms.\n\nYour settlement is insulated from most of this. The Soviet planned economy does not trade on global markets — it produces what Moscow demands, consumes what Moscow allocates, and files reports about both. The collapse of capitalism is, officially, confirmation of historical inevitability.\n\nUnofficially, the settlement depends on imported components for its fusion reactor maintenance, medical supplies from the European pharmaceutical combines, and the occasional black-market luxury that keeps the nomenklatura cooperative. All of these supply chains have just seized.\n\nThe deputy has prepared three responses.",
+          "choices": [
+            {
+              "id": "autarky_pivot",
+              "label": "Full autarky — cut all external dependencies",
+              "description": "Sever all trade connections. Produce everything locally. Accept lower quality and capability in exchange for total self-sufficiency.",
+              "successChance": 0.7,
+              "onSuccess": {
+                "announcement": "The settlement achieves functional self-sufficiency within 18 months. The fusion reactor maintenance team reverse-engineers the imported components from local materials. Medical supplies are replaced with settlement-grown pharmaceuticals that are 60% as effective. The nomenklatura complains about the absence of imported cognac. You note that Soviet vodka is an adequate substitute. They disagree but comply.",
+                "severity": "warning",
+                "resources": {
+                  "money": -80
+                },
+                "commendations": 1,
+                "pressureModifiers": {
+                  "economic": -0.1
+                }
+              },
+              "onFailure": {
+                "announcement": "Self-sufficiency proves harder than projected. The reactor maintenance fails twice before the team masters the replacement components. Medical shortages cause preventable deaths. The settlement operates at 70% capacity for two years. Moscow notes the production shortfall without noting the global collapse that caused it.",
+                "severity": "critical",
+                "resources": {
+                  "population": -15,
+                  "money": -120
+                },
+                "pressureModifiers": {
+                  "economic": 0.2,
+                  "health": 0.15
+                }
+              }
+            },
+            {
+              "id": "exploit_collapse",
+              "label": "Buy distressed assets — expand while others contract",
+              "description": "Use settlement reserves to acquire resources, equipment, and talent from collapsing corporate entities at pennies on the ruble.",
+              "successChance": 0.55,
+              "onSuccess": {
+                "announcement": "The settlement acquires three fusion reactor spare-parts inventories, a pharmaceutical production line, and 47 skilled workers fleeing corporate territories — all for less than one quarter's normal procurement budget. The deputy notes that this is exactly what Marx predicted: capital concentrates during crisis. You note that Marx did not predict the Soviet Union would be the one doing the concentrating. Both observations are correct.",
+                "severity": "warning",
+                "resources": {
+                  "money": -60,
+                  "population": 47
+                },
+                "blat": 15
+              },
+              "onFailure": {
+                "announcement": "The acquisitions are contested by three corporate sovereign entities that claim prior liens on the assets. A legal dispute — conducted in a legal system that no longer has courts — consumes six months and considerable resources. The assets arrive damaged. The skilled workers arrive traumatized. The deputy's optimism has been recalibrated.",
+                "severity": "warning",
+                "resources": {
+                  "money": -150
+                },
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "economic": 0.1
+                }
+              }
+            },
+            {
+              "id": "wait_it_out",
+              "label": "Do nothing — let the storm pass",
+              "description": "The planned economy has survived every external shock for 213 years. File the reports. Meet the quotas. Wait.",
+              "successChance": 0.85,
+              "onSuccess": {
+                "announcement": "The settlement continues as it always has. The global depression rages for four years. Supply chains eventually reform around new structures. The settlement's reports are filed on time throughout. Moscow commends your 'stability during external perturbation.' You accept the commendation and file it alongside the 47 others you have received for doing nothing in particular.",
+                "severity": "warning",
+                "blat": 5
+              },
+              "onFailure": {
+                "announcement": "Doing nothing works until it doesn't. A critical supply shipment fails to arrive and there is no backup. The reactor runs on reduced output for three months. Moscow notices the production dip and schedules an inspection. You explain global economic collapse. They note that the Five-Year Plan does not have a line item for global economic collapse.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "economic": 0.15
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "wait_it_out",
+          "tickLimit": 36
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "eu_dissolution",
+      "name": "European Sphere Fractures",
+      "timelineId": "world",
+      "order": 76.2,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2140
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "corporate_sovereignty"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.1,
+          "tradeAccess": -0.1
+        },
+        "pressureModifiers": {
+          "political": 0.05,
+          "economic": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "EUROPEAN SPHERE DISSOLVES INTO THREE SUB-ENTITIES: Nordic, Mediterranean, and Central Governance Zones Established",
+          "toast": "The European governance sphere — the last entity that resembled a continental federation — has fractured along its oldest fault lines. The Nordic states formed a technocratic bloc. The Mediterranean states reverted to city-state networks. Central Europe defaulted to corporate administration. Borders are back, but they are drawn by shareholders, not diplomats. The Pravda editorial notes that European unity lasted exactly 188 years, which is 72 years less than the Soviet Union.",
+          "description": "The European project, which survived the Soviet Union's persistence as a unified governance sphere for nearly two centuries, finally fragments. The causes are structural: no shared fiscal authority, no common language of administration, no institutional memory deep enough to override regional identity. The Nordic Technocratic League prioritizes AI governance and social engineering. The Mediterranean Free Cities return to a model last seen in the 14th century. Central Europe becomes a patchwork of corporate administrative zones. For the Soviet settlement, this means three separate trade negotiations where one used to suffice, and three separate sets of regulations for imported medical supplies."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "religious_renaissance",
+      "name": "The Religious Renaissance",
+      "timelineId": "world",
+      "order": 76.3,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2170
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "eu_dissolution"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.15,
+          "ideologyRigidity": 0.1
+        },
+        "pressureModifiers": {
+          "political": 0.1,
+          "loyalty": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "FUNDAMENTALIST MOVEMENTS SWEEP WESTERN GOVERNANCE ZONES: Moscow Issues Warning Against 'Mystical Deviation'",
+          "toast": "In the vacuum left by collapsed nation-states and corporate governance failures, organized religion has returned with force. Neo-Orthodox movements in the Mediterranean, techno-Protestantism in the Nordic sphere, syncretic faith-corporations in Central Europe. 250 years of secularization reversed in a generation. Moscow, which officially eliminated religion in 1927, issues a memorandum reminding all settlements that 'superstitious activity remains incompatible with scientific materialism.' The settlement's underground chapel has been operating since 1943. Nobody mentions this.",
+          "description": "Turchin's structural-demographic theory predicts religious revival during periods of elite overproduction and institutional decay — people seek meaning when material systems fail. The pattern repeats: Rome's crisis of the 3rd century produced Christianity's explosive growth; the Black Death produced both flagellant movements and the Reformation's seeds; the Soviet collapse of the 1990s produced an Orthodox revival. Now, as corporate governance fails to provide identity or purpose, religious movements fill the void. The Soviet system's enforced atheism has kept this pressure contained domestically — but containment is not elimination, and 250 years of suppression has produced a faith that is deep, quiet, and patient."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "siberian_exodus_wave",
+      "name": "The Siberian Exodus",
+      "timelineId": "world",
+      "order": 76.4,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2190
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.5
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "climateTrend": 0.05
+        },
+        "pressureModifiers": {
+          "demographic": 0.2,
+          "infrastructure": 0.15,
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "POPULATION REDISTRIBUTION DIRECTIVE ISSUED: Southern Siberian Settlements Ordered to Relocate Northward",
+          "toast": "The southern Siberian steppe is becoming desert. Temperatures exceeding 45°C for 60 consecutive days have made agriculture impossible south of the 58th parallel. 12 million people must move north. The settlement is in the path of the migration.",
+          "scene": "The migration column arrives on a Tuesday.\n\nYou see them from the watchtower first — a line of vehicles, carts, and people on foot stretching to the horizon along the northern road. The Ministry of Population Redistribution has been issuing relocation directives for three years, but directives are paper and this is 40,000 people who need food, shelter, and something to do.\n\nThe column's commissar presents his credentials and a folder of transfer documents. The documents assign 8,000 of these people to your settlement. Your settlement has housing for 200 additional residents. The commissar is aware of this discrepancy. He is also aware that his column has 32,000 people still to place and seven more settlements on his list, none of which have adequate housing either.\n\n'The directive is clear, Comrade Chairman,' he says. 'These citizens are to be absorbed into existing settlement infrastructure. The Ministry acknowledges that temporary housing challenges may arise.' He pauses. 'I recommend tents.'\n\nYour deputy has calculated the food requirements. They exceed your current surplus by 400%.",
+          "choices": [
+            {
+              "id": "accept_full_quota",
+              "label": "Accept the full 8,000 — honor the directive",
+              "description": "Take all assigned refugees. Strain every resource. Build emergency housing. This is what the system demands.",
+              "successChance": 0.5,
+              "onSuccess": {
+                "announcement": "The settlement expands by 8,000 in six months. Emergency housing is built from salvaged materials. Food rationing drops to subsistence levels. Three workers die from overwork during construction. But the settlement holds. Moscow commends your compliance. The new residents, traumatized and grateful, prove to be hard workers. Within two years, the settlement's productive capacity has doubled. The pain was real. The growth is also real.",
+                "severity": "critical",
+                "resources": {
+                  "population": 8000,
+                  "food": -500,
+                  "money": -200
+                },
+                "commendations": 1,
+                "pressureModifiers": {
+                  "health": 0.2,
+                  "morale": 0.15
+                }
+              },
+              "onFailure": {
+                "announcement": "The settlement cannot absorb 8,000 people. Food runs out in month three. A typhoid outbreak spreads through the tent city. 340 people die before Moscow sends emergency supplies. The commissar files a report blaming 'inadequate local preparation.' You file a report blaming 'unrealistic allocation quotas.' Both reports are accurate. Both are filed. Neither changes anything.",
+                "severity": "evacuation",
+                "resources": {
+                  "population": 7660,
+                  "food": -800,
+                  "money": -300
+                },
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "health": 0.35,
+                  "morale": 0.25,
+                  "political": 0.15
+                }
+              }
+            },
+            {
+              "id": "negotiate_reduction",
+              "label": "Negotiate down — accept 3,000, redirect the rest",
+              "description": "Present capacity data to the commissar. Accept what you can handle. Redirect the remainder to other settlements. Bureaucratically defensible but politically risky.",
+              "successChance": 0.65,
+              "onSuccess": {
+                "announcement": "The commissar reviews your capacity data and agrees to reduce the allocation to 3,000. The remainder are redirected to two settlements further north. Your settlement absorbs the newcomers with difficulty but without catastrophe. Food rationing is tight but survivable. The commissar notes your 'pragmatic approach to resource management' in his report. This is neither praise nor criticism — it is the most Soviet of all possible assessments.",
+                "severity": "warning",
+                "resources": {
+                  "population": 3000,
+                  "food": -200,
+                  "money": -80
+                },
+                "blat": 10
+              },
+              "onFailure": {
+                "announcement": "The commissar rejects your capacity data. 'The directive is not a negotiation, Comrade Chairman.' The full 8,000 are assigned. You have additionally earned a black mark for 'attempted deviation from Population Redistribution Directive 7-R.' The refugees arrive anyway. You manage, because there is no alternative.",
+                "severity": "critical",
+                "resources": {
+                  "population": 8000,
+                  "food": -500,
+                  "money": -200
+                },
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "health": 0.2,
+                  "morale": 0.2
+                }
+              }
+            },
+            {
+              "id": "divert_column",
+              "label": "Misdirect the column — falsify settlement coordinates",
+              "description": "Report your settlement as 'temporarily inaccessible due to infrastructure failure.' The column moves on. This is a lie and will be discovered.",
+              "successChance": 0.3,
+              "onSuccess": {
+                "announcement": "The column bypasses your settlement. The commissar radios his confusion to Moscow. Moscow radios you. You explain that the access road collapsed due to permafrost thaw. Moscow accepts this — permafrost collapse is credible in 2190. The column is redistributed among other settlements. You have saved your settlement at the cost of burdening others. The road, which is fine, is now officially collapsed. You assign a work crew to make it look collapsed, just in case.",
+                "severity": "warning",
+                "blat": 15
+              },
+              "onFailure": {
+                "announcement": "The column's commissar checks satellite imagery. Your access road is clearly intact. He radios Moscow. Moscow radios you. The conversation is brief and unpleasant. The column is redirected to your settlement with an additional 2,000 people from the original allocation as 'administrative penalty for false reporting.' You now have 10,000 refugees. The KGB opens a file. Your deputy says nothing, which is the loudest thing he has ever said.",
+                "severity": "evacuation",
+                "resources": {
+                  "population": 10000,
+                  "food": -600,
+                  "money": -250
+                },
+                "blackMarks": 3,
+                "pressureModifiers": {
+                  "political": 0.3,
+                  "health": 0.25,
+                  "morale": 0.2
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "negotiate_reduction",
+          "tickLimit": 24
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "eurasian_consolidation",
+      "name": "Eurasian Consolidation",
+      "timelineId": "world",
+      "order": 79.5,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2260
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "eu_dissolution"
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "sphere_collapse"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "tradeAccess": 0.2,
+          "globalTension": -0.1
+        },
+        "pressureModifiers": {
+          "economic": -0.15,
+          "political": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "EURASIAN BLOC FORMALIZED: Weakened Neighboring States Absorbed Into Soviet Administrative Framework",
+          "toast": "With the European sphere fractured and corporate governance failing across Central Asia, Russia has absorbed its weakened neighbors into a unified Eurasian administrative bloc. The Central Asian republics, the Caucasus governance zones, and fragments of the former Central European sphere have been integrated under Moscow's planning commission. The Soviet Union is, for the first time in its history, larger than the Russian Empire at its peak. The paperwork for administering this territory has increased by 340%.",
+          "description": "The vacuum left by collapsing corporate governance and fragmenting nation-states creates an opportunity that the Soviet system is uniquely positioned to exploit. Central planning, for all its inefficiencies, provides something the corporate zones cannot: institutional continuity and administrative infrastructure. The neighboring territories do not join willingly — they join because the alternative is no governance at all. Russia absorbs them not through conquest but through the simple fact of still existing when everything else has stopped. The settlement benefits from expanded trade networks and resource access. The settlement also receives 340% more forms to fill out."
+        }
+      },
+      "oneShot": true
+    },
+    {
       "id": "quota_singularity",
       "name": "The Quota Singularity",
       "timelineId": "world",
