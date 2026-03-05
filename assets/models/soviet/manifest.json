@@ -548,6 +548,48 @@
       "role": "alien_threat",
       "texture": "embedded",
       "era": "the_eternal"
+    },
+    "space-module": {
+      "file": "models/soviet/space-module.glb",
+      "source": "Quaternius/Ultimate Space Kit/Environment/Building_L",
+      "role": "space_module",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "launch-pad": {
+      "file": "models/soviet/launch-pad.glb",
+      "source": "Quaternius/Ultimate Space Kit/Environment/Base_Large",
+      "role": "launch_pad",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-dome": {
+      "file": "models/soviet/colony-dome.glb",
+      "source": "Quaternius/Ultimate Space Kit/Environment/GeodesicDome",
+      "role": "colony_dome",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-rover": {
+      "file": "models/soviet/colony-rover.glb",
+      "source": "Quaternius/Ultimate Space Kit/Vehicles/Rover_1",
+      "role": "colony_vehicle",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "comms-array": {
+      "file": "models/soviet/comms-array.glb",
+      "source": "Quaternius/Ultimate Space Kit/Environment/Roof_Radar",
+      "role": "comms_array",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "colony-solar": {
+      "file": "models/soviet/colony-solar.glb",
+      "source": "Quaternius/Ultimate Space Kit/Environment/SolarPanel_Structure",
+      "role": "colony_power",
+      "texture": "embedded",
+      "era": "the_eternal"
     }
   },
   "roles": {
@@ -600,9 +642,14 @@
     "colony_housing": ["colony-habitat-a", "colony-habitat-b", "colony-habitat-c"],
     "colony_industry": ["colony-workshop", "colony-factory", "colony-megafactory", "colony-synthplant"],
     "colony_agriculture": ["colony-hydroponics"],
-    "colony_power": ["colony-reactor", "colony-fusion"],
-    "colony_comms": ["colony-antenna"],
+    "colony_power": ["colony-reactor", "colony-fusion", "colony-solar"],
+    "colony_comms": ["colony-antenna", "comms-array"],
     "colony_government": ["colony-command"],
+    "space_module": ["space-module"],
+    "launch_pad": ["launch-pad"],
+    "colony_dome": ["colony-dome"],
+    "colony_vehicle": ["colony-rover"],
+    "comms_array": ["comms-array"],
     "mass_grave": ["grave-cross-a", "grave-cross-b", "grave-cross-c", "grave-stone-a", "grave-stone-b", "grave-mound"],
     "industrial_heavy": ["industrial-furnace", "pipe-system", "chimney-stack", "industrial-machinery"],
     "industrial_power": ["power-equipment"],

@@ -81,13 +81,15 @@ export const ERA_MODEL_MAP: Readonly<
     station: ['industrial-warehouse', 'industrial-warehouse', 'industrial-warehouse'],
   },
   the_eternal: {
-    housing: ['colony-habitat-a', 'colony-habitat-b', 'colony-habitat-c'],
+    housing: ['colony-dome', 'colony-habitat-a', 'colony-habitat-c'],
     factory: ['colony-workshop', 'colony-factory', 'colony-megafactory'],
     distillery: ['colony-synthplant', 'colony-synthplant', 'colony-synthplant'],
     farm: ['colony-hydroponics', 'colony-hydroponics', 'colony-hydroponics'],
-    power: ['colony-reactor', 'colony-reactor', 'colony-reactor'],
+    power: ['colony-solar', 'colony-reactor', 'colony-fusion'],
     nuke: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
-    tower: ['colony-antenna', 'colony-antenna', 'colony-antenna'],
+    tower: ['comms-array', 'colony-antenna', 'colony-antenna'],
+    pump: ['space-module', 'space-module', 'space-module'],
+    station: ['launch-pad', 'launch-pad', 'launch-pad'],
     space: ['colony-command', 'colony-command', 'colony-command'],
   },
 };
