@@ -63,6 +63,7 @@ import { PoliticalEntitySystem } from '../ai/agents/political/PoliticalEntitySys
 import type { ConsequenceLevel, DifficultyLevel } from '../ai/agents/political/ScoringSystem';
 import { DIFFICULTY_PRESETS, ScoringSystem } from '../ai/agents/political/ScoringSystem';
 import { DefenseAgent, FireSystem, initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
+import { GlobalHexManager } from './map/global/GlobalHexManager';
 import { DemographicAgent } from '../ai/agents/social/DemographicAgent';
 import { DvorNeedsAgent } from '../ai/agents/social/DvorNeedsAgent';
 import { getPopulationMode } from '../ai/agents/workforce/collectiveTransition';
@@ -189,6 +190,7 @@ export class SimulationEngine {
   private eventHandler!: (event: GameEvent) => void;
   private politburoEventHandler!: (event: GameEvent) => void;
   private agentManager: AgentManager;
+  private hexManager: GlobalHexManager;
   private _originalOnMinigame?: SimCallbacks['onMinigame'];
   private _originalOnAnnualReport?: SimCallbacks['onAnnualReport'];
   /** Cached RaionPool reference — non-null when in aggregate population mode. */
@@ -284,6 +286,14 @@ export class SimulationEngine {
 
     this.personnelFile = new PersonnelFile(this.difficulty);
     this.eventSystem.setPersonnelFile(this.personnelFile);
+
+    let planetProfile: import('./map/global/GlobalHexManager').PlanetProfile = 'terran';
+    const body: string = meta?.gameMeta.currentEra === 'post_soviet' ? 'mars' : 'earth'; 
+    if (body === 'mars') planetProfile = 'martian';
+    else if (body === 'moon') planetProfile = 'lunar';
+    else if (body === 'dyson') planetProfile = 'dyson';
+
+    this.hexManager = new GlobalHexManager(meta?.gameMeta.seed ?? 'sim-soviet', planetProfile);
 
     const deliveryRateMult = DIFFICULTY_MULTIPLIERS[this.difficulty]?.deliveryRate ?? 1.0;
     this.deliveries = new CompulsoryDeliveries(this.eraSystem.getDoctrine(), deliveryRateMult);
@@ -464,6 +474,9 @@ export class SimulationEngine {
   }
   public getAgentManager(): AgentManager {
     return this.agentManager;
+  }
+  public getGlobalHexManager(): GlobalHexManager {
+    return this.hexManager;
   }
   public getMinigameRouter(): MinigameRouter {
     return this.minigameRouter;
@@ -982,6 +995,7 @@ export class SimulationEngine {
         politburo: this.politburo,
         eventSystem: this.eventSystem,
         agentManager: this.agentManager,
+        hexManager: this.hexManager,
       },
       state: {
         quota: this.quota,

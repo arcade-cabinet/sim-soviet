@@ -1,9 +1,7 @@
 import { Vehicle } from 'yuka';
 import { dvory, getResourceEntity, housing } from '../../../ecs/archetypes';
-import { world } from '../../../ecs/world';
-import type { DvorComponent } from '../../../ecs/world';
-import { TICKS_PER_MONTH } from '../../../game/Chronology';
 import { getLocationResources } from '../../../game/engine/locationResources';
+import type { HexMetadata } from '../../../game/map/global/GlobalHexManager';
 
 export type DvorPrimaryNeed = 'shelter' | 'warmth' | 'food' | 'quota' | 'survival';
 
@@ -16,18 +14,6 @@ export interface DvorNeedsState {
 
 /**
  * DvorNeedsAgent — The beating heart of the "Stagnant Solidarity" loop.
- * 
- * Instead of a global omniscient system detecting shortages, each Dvor (household)
- * evaluates its own Maslow's Hierarchy of Needs. 
- * 
- * Hierarchy of Needs:
- * 1. Shelter: If they have no home, their primary impulse is to seek or build one.
- * 2. Warmth: If they are housed but the environment is hostile/cold, they need heat/power.
- * 3. Food: If they are starving, they will seek food (forage, or demand farms).
- * 4. Quota (Production): If basic needs are met, their impulse is to fulfill the State's quota.
- * 
- * If their needs are unmet for too long, loyalty drops, reports are doctored, and the
- * simulation self-corrects through attrition (death) rather than a "Game Over".
  */
 export class DvorNeedsAgent extends Vehicle {
   private lastEvaluationTick = 0;
@@ -43,8 +29,11 @@ export class DvorNeedsAgent extends Vehicle {
     this.name = 'DvorNeedsAgent';
   }
 
-  public updateNeeds(currentTick: number, celestialBody: string): void {
-    // Evaluate needs once per day (or a reasonable interval) to avoid heavy computation every tick
+  /**
+   * Evaluate the hierarchy of needs for all Dvory.
+   * Influenced by the local biome and global resources of the assigned Hex.
+   */
+  public updateNeeds(currentTick: number, celestialBody: string, hexMeta?: HexMetadata): void {
     if (currentTick - this.lastEvaluationTick < 10) return;
     this.lastEvaluationTick = currentTick;
 
@@ -58,8 +47,12 @@ export class DvorNeedsAgent extends Vehicle {
     let freezing = 0;
     let idle = 0;
 
-    // We can evaluate housing by checking the global housing capacity vs population for now,
-    // or eventually map exact dvory to exact houses.
+    // Environmental difficulty scales based on global hex resources
+    // If biomass is scarce (0.1), food requirements are 10x stricter than Earth-normal (1.0).
+    const biomassFactor = hexMeta ? Math.max(0.1, hexMeta.resources.biomass) : 1.0;
+    // If fuel is scarce, freezing is more likely during power shortages.
+    const fuelFactor = hexMeta ? Math.max(0.1, hexMeta.resources.fuel) : 1.0;
+
     let totalHousingCapacity = 0;
     for (const h of housing.entities) {
       totalHousingCapacity += h.building.housingCap || 0;
@@ -74,7 +67,7 @@ export class DvorNeedsAgent extends Vehicle {
 
       let primaryNeed: DvorPrimaryNeed = 'quota';
 
-      // 1. Shelter
+      // 1. Shelter (Eminent Domain might have bulldozed their home)
       if (housedAssigned + size > totalHousingCapacity) {
         primaryNeed = 'shelter';
         unhoused += size;
@@ -82,19 +75,19 @@ export class DvorNeedsAgent extends Vehicle {
         housedAssigned += size;
       }
 
-      // 2. Warmth / Environment Survival
-      // If the planet is unbreathable or freezing and they aren't properly sheltered/powered
+      // 2. Warmth / Environment Survival (Freezing/Unbreathable)
       if (primaryNeed !== 'shelter' && (!loc.atmosphereBreathable || loc.temperatureRange[0] < -10)) {
-        // Assume for now that if they are housed, we need to check if the house has power/heat
-        // This is a simplified check: if power is short globally, they are freezing
-        if (storeRef.resources.power !== undefined && storeRef.resources.power < 0) {
+        // Starving solidarity: if power is short and fuel is scarce, the cold is lethal.
+        const freezeThreshold = -10 * fuelFactor;
+        if (storeRef.resources.power !== undefined && storeRef.resources.power < freezeThreshold) {
            primaryNeed = 'warmth';
            freezing += size;
         }
       }
 
-      // 3. Food
-      if (primaryNeed === 'quota' && foodAvailable < dvory.entities.length * 2) {
+      // 3. Food (Famines self-correct imbalances)
+      const starvationThreshold = dvory.entities.length * (2 / biomassFactor);
+      if (primaryNeed === 'quota' && foodAvailable < starvationThreshold) {
         primaryNeed = 'food';
         starving += size;
       }
@@ -103,9 +96,6 @@ export class DvorNeedsAgent extends Vehicle {
       if (primaryNeed === 'quota') {
         idle += size;
       }
-
-      // We could store the primary need on the DvorComponent itself if we expand the ECS schema,
-      // but for now we aggregate it to drive the CollectiveAgent.
     }
 
     this.state = {

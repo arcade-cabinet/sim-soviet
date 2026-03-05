@@ -7,7 +7,7 @@
  */
 
 import { accrueTrudodni } from '../../ai/agents/economy/EconomyAgent';
-import { buildingsLogic, citizens } from '../../ecs/archetypes';
+import { buildingsLogic, citizens, getMetaEntity } from '../../ecs/archetypes';
 import { world } from '../../ecs/world';
 import { decaySystem, quotaSystem } from '../../ecs/systems';
 import { evaluateArcologies } from '../../game/arcology/ArcologySystem';
@@ -60,9 +60,12 @@ export function phasePolitical(ctx: TickContext): void {
   }
 
   // ── 17. Collective autonomous construction ──
-  // TODO: Retrieve actual celestial body from RelocationEngine or Context when multi-planet is fully hooked up
+  const meta = getMetaEntity()?.gameMeta;
+  const currentHex = meta?.currentHex ?? '';
+  const hexMeta = currentHex ? ctx.systems.hexManager.getHexMetadata(currentHex) : undefined;
   const celestialBody = 'earth';
-  ctx.agents.dvorNeeds.updateNeeds(chronology.getDate().totalTicks, celestialBody);
+
+  ctx.agents.dvorNeeds.updateNeeds(chronology.getDate().totalTicks, celestialBody, hexMeta);
 
   collectiveAgent.tickAutonomous({
     totalTicks: chronology.getDate().totalTicks,
