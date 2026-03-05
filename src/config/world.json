@@ -1,0 +1,130 @@
+{
+  "sphereIds": [
+    "european",
+    "sinosphere",
+    "western",
+    "middle_eastern",
+    "eurasian",
+    "corporate"
+  ],
+  "startingCountries": [
+    { "id": "germany", "name": "Germany", "sphere": "european", "hostility": 0.9, "tradeVolume": 0.3, "militaryStrength": 0.85, "mergeYear": 2050 },
+    { "id": "austria_hungary", "name": "Austria-Hungary", "sphere": "european", "hostility": 0.7, "tradeVolume": 0.2, "militaryStrength": 0.6, "mergeYear": 1920 },
+    { "id": "france", "name": "France", "sphere": "european", "hostility": 0.4, "tradeVolume": 0.4, "militaryStrength": 0.7, "mergeYear": 2050 },
+    { "id": "britain", "name": "Britain", "sphere": "european", "hostility": 0.5, "tradeVolume": 0.5, "militaryStrength": 0.8, "mergeYear": 2050 },
+    { "id": "italy", "name": "Italy", "sphere": "european", "hostility": 0.3, "tradeVolume": 0.3, "militaryStrength": 0.4, "mergeYear": 2050 },
+    { "id": "spain", "name": "Spain", "sphere": "european", "hostility": 0.2, "tradeVolume": 0.1, "militaryStrength": 0.3, "mergeYear": 2050 },
+    { "id": "portugal", "name": "Portugal", "sphere": "european", "hostility": 0.1, "tradeVolume": 0.1, "militaryStrength": 0.2, "mergeYear": 2050 },
+    { "id": "china", "name": "China", "sphere": "sinosphere", "hostility": 0.3, "tradeVolume": 0.2, "militaryStrength": 0.4, "mergeYear": 2080 },
+    { "id": "japan", "name": "Japan", "sphere": "sinosphere", "hostility": 0.6, "tradeVolume": 0.3, "militaryStrength": 0.7, "mergeYear": 2080 },
+    { "id": "usa", "name": "United States", "sphere": "western", "hostility": 0.4, "tradeVolume": 0.3, "militaryStrength": 0.6, "mergeYear": 2100 },
+    { "id": "canada", "name": "Canada", "sphere": "western", "hostility": 0.2, "tradeVolume": 0.2, "militaryStrength": 0.2, "mergeYear": 2100 },
+    { "id": "australia", "name": "Australia", "sphere": "western", "hostility": 0.2, "tradeVolume": 0.1, "militaryStrength": 0.2, "mergeYear": 2100 },
+    { "id": "ottoman_empire", "name": "Ottoman Empire", "sphere": "middle_eastern", "hostility": 0.6, "tradeVolume": 0.2, "militaryStrength": 0.5, "mergeYear": 1925 },
+    { "id": "poland", "name": "Poland", "sphere": "eurasian", "hostility": 0.7, "tradeVolume": 0.2, "militaryStrength": 0.3, "mergeYear": 2050 }
+  ],
+  "governanceTransitions": [
+    {
+      "from": "democratic",
+      "to": "authoritarian",
+      "baseProbability": 0.02,
+      "conditions": { "turchinRange": { "min": 0.6, "max": 1.0 } },
+      "precedent": "Weimar \u2192 Nazi Germany, Latin American coups"
+    },
+    {
+      "from": "democratic",
+      "to": "oligarchic",
+      "baseProbability": 0.015,
+      "conditions": { "turchinRange": { "min": 0.5, "max": 1.0 }, "khaldunRange": { "min": 0.5, "max": 1.0 } },
+      "precedent": "Late Roman Republic, Gilded Age USA"
+    },
+    {
+      "from": "democratic",
+      "to": "theocratic",
+      "baseProbability": 0.01,
+      "conditions": { "minReligiousIntensity": 0.6 },
+      "precedent": "Iran 1979, Taliban Afghanistan"
+    },
+    {
+      "from": "authoritarian",
+      "to": "oligarchic",
+      "baseProbability": 0.02,
+      "conditions": { "khaldunRange": { "min": 0.7, "max": 1.0 } },
+      "precedent": "USSR \u2192 Russian Federation 1991"
+    },
+    {
+      "from": "authoritarian",
+      "to": "democratic",
+      "baseProbability": 0.015,
+      "conditions": { "turchinRange": { "min": 0.0, "max": 0.3 } },
+      "precedent": "Post-WWII Japan/Germany, Color Revolutions"
+    },
+    {
+      "from": "oligarchic",
+      "to": "corporate",
+      "baseProbability": 0.01,
+      "conditions": { "minCorporateShare": 0.5 },
+      "precedent": "VOC Dutch East Indies, British East India Company"
+    },
+    {
+      "from": "corporate",
+      "to": "feudal",
+      "baseProbability": 0.008,
+      "conditions": { "khaldunRange": { "min": 0.8, "max": 1.0 } },
+      "precedent": "Neofeudalism thesis: rent > profit, algorithmic serfdom"
+    },
+    {
+      "from": "communist",
+      "to": "oligarchic",
+      "baseProbability": 0.01,
+      "conditions": { "turchinRange": { "min": 0.7, "max": 1.0 }, "khaldunRange": { "min": 0.6, "max": 1.0 } },
+      "precedent": "USSR 1991, post-Soviet states"
+    },
+    {
+      "from": "authoritarian",
+      "to": "theocratic",
+      "baseProbability": 0.01,
+      "conditions": { "minReligiousIntensity": 0.7 },
+      "precedent": "Saudi founding (Wahhabi), Iran 1979"
+    },
+    {
+      "from": "oligarchic",
+      "to": "authoritarian",
+      "baseProbability": 0.02,
+      "conditions": { "turchinRange": { "min": 0.5, "max": 1.0 } },
+      "precedent": "Many historical oligarchies centralize under threat"
+    },
+    {
+      "from": "technocratic",
+      "to": "authoritarian",
+      "baseProbability": 0.015,
+      "conditions": { "khaldunRange": { "min": 0.6, "max": 1.0 } },
+      "precedent": "Singapore model drift, technocratic capture"
+    },
+    {
+      "from": "democratic",
+      "to": "technocratic",
+      "baseProbability": 0.01,
+      "conditions": { "turchinRange": { "min": 0.0, "max": 0.4 } },
+      "precedent": "EU institutional drift, expert governance aspiration"
+    }
+  ],
+  "eraWorldProfiles": {
+    "revolution":        { "globalTension": [0.7, 0.4], "borderThreat": [0.6, 0.3], "tradeAccess": 0.2, "moscowAttention": 0.5, "ideologyRigidity": 0.9 },
+    "collectivization":  { "globalTension": [0.3, 0.5], "borderThreat": [0.2, 0.2], "tradeAccess": 0.3, "moscowAttention": 0.8, "ideologyRigidity": 0.95 },
+    "industrialization": { "globalTension": [0.6, 0.85], "borderThreat": [0.4, 0.8], "tradeAccess": 0.3, "moscowAttention": 0.9, "ideologyRigidity": 0.85 },
+    "great_patriotic":   { "globalTension": [1.0, 1.0], "borderThreat": [1.0, 1.0], "tradeAccess": 0.4, "moscowAttention": 0.7, "ideologyRigidity": 0.6 },
+    "reconstruction":    { "globalTension": [0.5, 0.7], "borderThreat": [0.3, 0.3], "tradeAccess": 0.3, "moscowAttention": 0.85, "ideologyRigidity": 0.8 },
+    "thaw_and_freeze":   { "globalTension": [0.6, 0.6], "borderThreat": [0.4, 0.4], "tradeAccess": 0.4, "moscowAttention": 0.6, "ideologyRigidity": 0.6 },
+    "stagnation":        { "globalTension": [0.5, 0.5], "borderThreat": [0.3, 0.3], "tradeAccess": 0.4, "moscowAttention": 0.6, "ideologyRigidity": 0.5 },
+    "the_eternal":       { "globalTension": [0.5, 0.5], "borderThreat": [0.3, 0.3], "tradeAccess": 0.5, "moscowAttention": 0.5, "ideologyRigidity": 0.4 },
+    "post_soviet":       { "globalTension": [0.4, 0.4], "borderThreat": [0.2, 0.2], "tradeAccess": 0.6, "moscowAttention": 0.4, "ideologyRigidity": 0.35 },
+    "planetary":         { "globalTension": [0.3, 0.3], "borderThreat": [0.15, 0.15], "tradeAccess": 0.7, "moscowAttention": 0.35, "ideologyRigidity": 0.3 },
+    "solar_engineering": { "globalTension": [0.25, 0.25], "borderThreat": [0.1, 0.1], "tradeAccess": 0.8, "moscowAttention": 0.3, "ideologyRigidity": 0.25 },
+    "type_one":          { "globalTension": [0.2, 0.2], "borderThreat": [0.08, 0.08], "tradeAccess": 0.85, "moscowAttention": 0.25, "ideologyRigidity": 0.2 },
+    "deconstruction":    { "globalTension": [0.15, 0.15], "borderThreat": [0.05, 0.05], "tradeAccess": 0.9, "moscowAttention": 0.2, "ideologyRigidity": 0.18 },
+    "dyson_swarm":       { "globalTension": [0.1, 0.1], "borderThreat": [0.03, 0.03], "tradeAccess": 0.95, "moscowAttention": 0.15, "ideologyRigidity": 0.15 },
+    "megaearth":         { "globalTension": [0.05, 0.05], "borderThreat": [0.02, 0.02], "tradeAccess": 0.98, "moscowAttention": 0.12, "ideologyRigidity": 0.12 },
+    "type_two_peak":     { "globalTension": [0.02, 0.02], "borderThreat": [0.0, 0.0], "tradeAccess": 1.0, "moscowAttention": 0.1, "ideologyRigidity": 0.1 }
+  }
+}

@@ -2,59 +2,51 @@
 
 ## Current Development Focus
 
-Building-as-Container architecture + RNG purge — replacing per-citizen entities with aggregate workforce on buildings:
+**Branch: `feat/allocation-engine`** — PR #44 open. All planned features implemented.
 
-- **RNG Purge COMPLETE**: GameRng mandatory on SimulationEngine, all 80+ simulation-critical Math.random() replaced with seeded rng
-- **Building-as-Container COMPLETE**: Dual population modes (entity < 200, aggregate >= 200), RaionPool demographics, building production functions
-- **Integration Gaps COMPLETE**: Aggregate mode guards on disease, trudodni, UI snapshot; shared poissonSample utility extracted
-- **Agent Architecture COMPLETE**: 8 agent subpackages under `src/ai/agents/` (123+ files, 28k+ lines)
+### Completed in This Branch
+- SimulationEngine decomposed into 7 phase modules (phaseChronology through phaseFinalize)
+- Classic mode removed entirely (GovernorMode is now `'historical' | 'freeform'` only)
+- Consequence levels renamed to Soviet nomenclature: rehabilitated, gulag, rasstrelyat
+- **Pressure-valve crisis system**: PressureSystem (15 domains: 10 classical + 5 post-scarcity) + WorldAgent + ClimateEventSystem + BlackSwanSystem + ColdBranches (42 branches)
+- **Soviet Allocation Engine**: organic growth pipeline (demand → site selection → construction), directives, posture, prestige
+- **Buildings-as-UI**: all 7 phases complete (HUD stripped → organic growth → building-click → directive-only → tiers → upgrades → toolbar removed)
+- **HQ splitting**: multi-function HQ → dedicated buildings as population grows
+- **Dynamic map expansion**: grid expands via settlement tier upgrades
+- **WorldAgent**: sphere dynamics coordinating world-level state
+- **Multi-settlement tick loop**: per-settlement agent tree, background aggregate math, viewport switching
+- **Kardashev sub-eras (8)**: post_soviet → planetary → solar_engineering → type_one → deconstruction → dyson_swarm → megaearth → type_two_peak
+- **Post-scarcity pressure**: 5 new domains (meaning, density, entropy, legacy, ennui)
+- **MegaCity law enforcement**: KGB → Security → Sector Judges → Megacity Arbiters
+- **Adaptive agent matrix**: 10 terrain profiles wired to 6 core agents, climate polarity
+- **Celestial Body Factory**: sphere↔flat morphing (4 body types), MegastructureShell (Dyson)
+- **ZonePreloader**: zone-specific asset preloading with progress phases
+- **Zone-aware loading screens**: LoadingScreen + SettlementTransitionOverlay with zone flavor text
+- **Poly Haven pipeline**: declarative asset fetcher (7 HDRIs, 15 terrain textures, all CC0)
+- **3 procedural shaders**: Dyson sphere, Mars atmosphere, O'Neill interior
+- 6,730 tests across 283 suites, 0 TypeScript errors
+- 20 commits, ~16K lines new code
 
-## Recent Changes
+### In Progress
+- PR #44 open — cleanup and merge into main
+- Dyson sphere viewport: user has generator to port (DEFERRED)
 
-### Building-as-Container Architecture (feat/game-completion branch)
-
-- **Dual population modes**: `entity` (pop < 200, early game) and `aggregate` (pop >= 200, one-way transition)
-- **RaionPool**: District-level age-sex demographics (20 buckets per gender), class counts, vital stats, labor tracking
-- **Building workforce fields**: 8 new fields on BuildingComponent (workerCount, residentCount, avgMorale, avgSkill, avgLoyalty, avgVodkaDep, trudodniAccrued, householdCount)
-- **Statistical demographics**: Poisson-sampled births/deaths/aging on RaionPool (O(20) per bucket, not O(population))
-- **Building production function**: Pure `computeBuildingProduction()` with formula: baseRate × effectiveWorkers × skillFactor × moraleFactor × conditionFactor × powerFactor × eraMod × weatherFactor
-- **Brutalist scaling**: Same 55 GLB models scaled proportionally to capacity (no new assets). Base=1.0, mega-block=~5.5, arcology=~8.0
-- **Collapse transition**: `collapseEntitiesToBuildings()` removes all citizen/dvor entities, builds RaionPool, populates building workforces
-- **Serialization**: Save/load supports both modes with backward compatibility
-
-### RNG Purge
-
-- GameRng mandatory on SimulationEngine (no more Math.random fallbacks)
-- All 14 agents receive seeded GameRng via `setRng()` or constructor
-- 80+ Math.random() calls replaced across ~20 simulation files
-- Population growth gated to yearly immigration (3% housing cap)
-- Fixed infinite loop in `generateSeedPhrase()` with constant RNG mock
-
-### Integration Gap Fixes
-
-- Disease system (DefenseAgent, disease.ts): aggregate mode early-returns
-- Trudodni accrual (EconomyAgent, trudodni.ts): building-level aggregate path
-- UI snapshot (useGameState.ts): raion fallback for population stats
-- Shared `poissonSample()` extracted to `src/math/poissonSampling.ts`
-- Entity GC sweeps: `sweepOrphanCitizens()`, `sweepEmptyDvory()` on year boundary
-
-### Previous Major Work
-
-- Yuka agent architecture (8 subpackages, 12 methods moved from SimEngine)
-- Demographics overhaul (PR #39 — merged)
-- Documentation/JSDoc/.claude overhaul (PR #39 — merged)
-- Game completion sprint (PR #40 — 22 features)
-- R3F migration from BabylonJS/Reactylon (completed)
+## Key Design Docs (now implemented)
+- `docs/plans/2026-03-03-buildings-are-the-ui-design.md` — UX paradigm shift (DONE)
+- `docs/plans/2026-03-03-buildings-are-the-ui-plan.md` — 7-phase implementation (DONE)
+- `docs/plans/2026-03-03-soviet-allocation-engine-design.md` — DB-backed engine (DONE)
+- `docs/plans/2026-03-03-soviet-allocation-engine-plan.md` — 6-phase implementation (DONE)
+- `docs/plans/2026-02-28-autonomous-collective-plan.md` — Collective self-organization (DONE)
 
 ## Active Branches
 
 | Branch | Purpose | Status |
 |--------|---------|--------|
-| `main` | Release branch | Current |
-| `feat/game-completion` | Building-as-container + RNG purge + agent architecture | In progress |
+| `main` | Release branch | Current release |
+| `feat/allocation-engine` | Allocation engine + pressure-valve crisis + organic growth | PR #44 open |
 
 ## Known Issues
 
 - tsconfig: `module: "commonjs"` conflicts with `moduleResolution: "bundler"` — pre-existing, doesn't block builds
-- 50 pre-existing TypeScript errors from yuka type declarations (`.name` property, `override` modifier) — tests pass because Jest doesn't check types
+- Pre-existing TypeScript errors from yuka type declarations — tests pass because Jest doesn't check types
 - Branch protection: main requires PRs — cannot push directly

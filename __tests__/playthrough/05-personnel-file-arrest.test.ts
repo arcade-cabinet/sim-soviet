@@ -47,7 +47,7 @@ describe('Playthrough: Personnel File & Arrest', () => {
   // ── Scenario 2: Arrest triggers game over ────────────────────────────────
 
   it('arrest triggers game over on next engine tick', () => {
-    const { engine, callbacks } = createPlaythroughEngine();
+    const { engine, callbacks } = createPlaythroughEngine({ consequence: 'rasstrelyat' });
     const pf = engine.getPersonnelFile();
 
     // Accumulate 7 effective marks (3+2+1+1 = 7)
@@ -58,7 +58,7 @@ describe('Playthrough: Personnel File & Arrest', () => {
     expect(pf.getEffectiveMarks()).toBe(7);
     expect(pf.isArrested()).toBe(true);
 
-    // One engine tick triggers the arrest check → endGame
+    // One engine tick triggers the arrest check → endGame (rasstrelyat = permadeath)
     engine.tick();
 
     expect(callbacks.onGameOver).toHaveBeenCalledWith(false, expect.stringContaining('Enemy'));

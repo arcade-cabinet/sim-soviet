@@ -52,7 +52,7 @@ describe('Population Diagnostic', () => {
     (callbacks as Record<string, unknown>).onAnnualReport = undefined;
     (callbacks as Record<string, unknown>).onMinigame = undefined;
     const rng = new GameRng(seed);
-    const engine = new SimulationEngine(grid, callbacks as never, rng, difficulty, 'forgiving');
+    const engine = new SimulationEngine(grid, callbacks as never, rng, difficulty, 'rehabilitated');
 
     // Build settlement
     createBuilding(0, 0, 'power-station');

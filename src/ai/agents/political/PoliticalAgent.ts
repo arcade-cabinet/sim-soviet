@@ -38,12 +38,11 @@ export type {
   EraSystemSaveData,
 } from '../../../game/era/types';
 
+import type { GovernorMode } from '../../../ai/agents/crisis/Governor';
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../../ecs/archetypes';
 import { TICKS_PER_YEAR } from '../../../game/Chronology';
-import type { GovernorMode } from '../../../ai/agents/crisis/Governor';
 import type { SimCallbacks } from '../../../game/engine/types';
 import { ALL_BUILDING_IDS, ERA_DEFINITIONS, ERA_ORDER, eraIndexForYear } from '../../../game/era/definitions';
-import { type UnlockContext, evaluateOrganicUnlocks } from '../../../growth/OrganicUnlocks';
 import { getBuildingTierRequirement, tierMeetsRequirement } from '../../../game/era/tiers';
 import type {
   ConstructionMethod,
@@ -54,6 +53,7 @@ import type {
   EraSystemSaveData,
 } from '../../../game/era/types';
 import type { GameRng } from '../../../game/SeedSystem';
+import { evaluateOrganicUnlocks, type UnlockContext } from '../../../growth/OrganicUnlocks';
 import type { ChronologyAgent } from '../core/ChronologyAgent';
 import type { EconomyAgent, EraId as EconomyEraId } from '../economy/EconomyAgent';
 import type { SettlementSystem, SettlementTier } from '../infrastructure/SettlementSystem';
@@ -63,7 +63,29 @@ import type { WorkerSystem } from '../workforce/WorkerSystem';
 import type { CompulsoryDeliveries, Doctrine } from './CompulsoryDeliveries';
 import { addPaperwork, getPaperwork } from './doctrine';
 import type { KGBAgent } from './KGBAgent';
+import {
+  type MoscowPromotionState,
+  type PromotionPoliticalContext,
+  type PromotionResponse,
+  type BribeResult,
+  createPromotionState,
+  evaluatePromotionRisk,
+  tickPromotionYearly,
+  handlePromotionResponse,
+} from './moscowPromotion';
 import type { PoliticalEntitySystem } from './PoliticalEntitySystem';
+import {
+  type ResettlementDirectiveState,
+  type ResettlementOutcome,
+  type ResettlementBribeResult,
+  createResettlementState,
+  evaluateResettlementRisk,
+  tickResettlementYearly,
+  tickWarningPeriod,
+  enactDisassembly,
+  attemptResettlementBribe,
+  calculateResettlementOutcome,
+} from './resettlementDirective';
 import type { DifficultyLevel, ScoringSystem } from './ScoringSystem';
 import { eraIdToIndex } from './ScoringSystem';
 
@@ -77,6 +99,15 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
   thaw_and_freeze: 'thaw',
   stagnation: 'stagnation',
   the_eternal: 'eternal',
+  // Kardashev sub-eras all map to eternal economy mode
+  post_soviet: 'eternal',
+  planetary: 'eternal',
+  solar_engineering: 'eternal',
+  type_one: 'eternal',
+  deconstruction: 'eternal',
+  dyson_swarm: 'eternal',
+  megaearth: 'eternal',
+  type_two_peak: 'eternal',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -237,6 +268,47 @@ const ERA_MANDATE_TEMPLATES: Record<string, MandateTemplate[]> = {
     { defId: 'government-hq', label: 'Government HQ', baseRequired: 1 },
     { defId: 'kgb-office', label: 'KGB Office', baseRequired: 1 },
     { defId: 'train-station', label: 'Train Station', baseRequired: 1 },
+  ],
+  // Kardashev sub-era mandates (escalating requirements)
+  post_soviet: [
+    { defId: 'apartment-tower-d', label: 'Apartment Tower D', baseRequired: 4 },
+    { defId: 'power-station', label: 'Power Station', baseRequired: 2 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 2 },
+  ],
+  planetary: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 3 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 3 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 2 },
+  ],
+  solar_engineering: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 5 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 4 },
+    { defId: 'radio-station', label: 'Radio Station', baseRequired: 2 },
+  ],
+  type_one: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 6 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 5 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 3 },
+  ],
+  deconstruction: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 7 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 6 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 3 },
+  ],
+  dyson_swarm: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 8 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 7 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 4 },
+  ],
+  megaearth: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 9 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 8 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 4 },
+  ],
+  type_two_peak: [
+    { defId: 'power-station', label: 'Power Station', baseRequired: 10 },
+    { defId: 'factory-office', label: 'Factory Office', baseRequired: 10 },
+    { defId: 'government-hq', label: 'Government HQ', baseRequired: 5 },
   ],
 };
 
@@ -410,13 +482,19 @@ export class PoliticalAgent extends Vehicle {
   private rng?: GameRng;
 
   /** Game mode — freeform uses OrganicUnlocks for era transitions. */
-  private gameMode: GovernorMode = 'classic';
+  private gameMode: GovernorMode = 'historical';
 
   /** Cached organic unlock context for Freeform mode era transitions. */
   private organicCtx: UnlockContext | null = null;
 
   /** Freeform mode: current era tracked independently of year. */
   private freeformEraId: EraId | null = null;
+
+  /** Moscow promotion tracking (competence attracts attention). */
+  private promotionState: MoscowPromotionState = createPromotionState();
+
+  /** Resettlement directive tracking (punitive forced relocation). */
+  private resettlementState: ResettlementDirectiveState = createResettlementState();
 
   constructor(startYear = 1917) {
     super();
@@ -1065,6 +1143,130 @@ export class PoliticalAgent extends Vehicle {
   }
 
   // =========================================================================
+  // Moscow Promotion (competence attracts attention)
+  // =========================================================================
+
+  /** Get current Moscow promotion state (read-only). */
+  getPromotionState(): Readonly<MoscowPromotionState> {
+    return this.promotionState;
+  }
+
+  /**
+   * Evaluate and tick yearly promotion risk.
+   *
+   * Call once per year (from handleEraTransitionFull or a yearly tick hook).
+   *
+   * @param summary - Settlement summary for the current year
+   * @param political - Political context for risk evaluation
+   * @returns Whether a new promotion notification was emitted
+   */
+  tickPromotionYearly(
+    summary: import('../../../game/engine/SettlementSummary').SettlementSummary,
+    political: PromotionPoliticalContext,
+  ): boolean {
+    const risk = evaluatePromotionRisk(summary, political);
+    return tickPromotionYearly(this.promotionState, risk, this.state.currentYear);
+  }
+
+  /**
+   * Handle player's response to a Moscow promotion notification.
+   *
+   * @param response - 'accept' | 'bribe' | 'delay'
+   * @returns BribeResult if bribe was attempted, null otherwise
+   */
+  handlePromotionResponse(response: PromotionResponse): BribeResult | null {
+    const rng = this.rng ? this.rng.random() : Math.random();
+    const store = getResourceEntity();
+    const blat = store?.resources.blat ?? 0;
+    const result = handlePromotionResponse(this.promotionState, response, rng, blat);
+
+    // Deduct blat if bribe succeeded
+    if (result?.success && result.blatCost > 0 && store) {
+      store.resources.blat = Math.max(0, store.resources.blat - result.blatCost);
+    }
+
+    return result;
+  }
+
+  // =========================================================================
+  // Resettlement Directive (punitive forced relocation)
+  // =========================================================================
+
+  /** Get current resettlement state (read-only). */
+  getResettlementState(): Readonly<ResettlementDirectiveState> {
+    return this.resettlementState;
+  }
+
+  /**
+   * Evaluate and tick yearly resettlement risk.
+   *
+   * @param politicalPressure - Political domain pressure (0-1)
+   * @param loyaltyPressure - Loyalty domain pressure (0-1)
+   * @param moscowAttention - Moscow attention from WorldAgent (0-1)
+   * @param suspicionLevel - KGB suspicion level (0-1)
+   * @param ethnicDeportationActive - Whether ethnic deportation cold branch is active
+   * @returns Whether a new directive was just issued
+   */
+  tickResettlementYearly(
+    politicalPressure: number,
+    loyaltyPressure: number,
+    moscowAttention: number,
+    suspicionLevel: number,
+    ethnicDeportationActive: boolean,
+  ): boolean {
+    const store = getResourceEntity();
+    const risk = evaluateResettlementRisk(
+      { politicalPressure, loyaltyPressure },
+      { moscowAttention, suspicionLevel, blat: store?.resources.blat ?? 0 },
+      { ethnicDeportationActive },
+    );
+    return tickResettlementYearly(this.resettlementState, risk);
+  }
+
+  /**
+   * Tick the resettlement warning period (call per simulation tick).
+   *
+   * @returns Whether execution should happen this tick
+   */
+  tickResettlementWarning(): boolean {
+    return tickWarningPeriod(this.resettlementState);
+  }
+
+  /** Enact disassembly policy during warning period. */
+  enactResettlementDisassembly(): boolean {
+    return enactDisassembly(this.resettlementState);
+  }
+
+  /**
+   * Attempt to bribe Moscow to cancel the resettlement directive.
+   *
+   * @returns Bribe result with success/detection/cost
+   */
+  attemptResettlementBribe(): ResettlementBribeResult {
+    const rng = this.rng ? this.rng.random() : Math.random();
+    const store = getResourceEntity();
+    const blat = store?.resources.blat ?? 0;
+    const result = attemptResettlementBribe(this.resettlementState, rng, blat);
+
+    // Deduct blat if bribe succeeded
+    if (result.success && result.blatCost > 0 && store) {
+      store.resources.blat = Math.max(0, store.resources.blat - result.blatCost);
+    }
+
+    return result;
+  }
+
+  /**
+   * Calculate the outcome if resettlement executes now.
+   *
+   * @param currentPopulation - Current settlement population
+   * @returns Outcome with mortality rate, population lost, resources salvaged
+   */
+  calculateResettlementOutcome(currentPopulation: number): ResettlementOutcome {
+    return calculateResettlementOutcome(this.resettlementState, currentPopulation);
+  }
+
+  // =========================================================================
   // Building mandates (absorbed from PlanMandates.ts)
   // =========================================================================
 
@@ -1166,11 +1368,13 @@ export class PoliticalAgent extends Vehicle {
    *
    * @returns Plain object suitable for JSON.stringify
    */
-  toJSON(): PoliticalState {
+  toJSON(): PoliticalState & { promotion?: MoscowPromotionState; resettlement?: ResettlementDirectiveState } {
     return {
       ...this.state,
       mandates: [...this.state.mandates],
       resourceQuotas: this.state.resourceQuotas ? { ...this.state.resourceQuotas } : undefined,
+      promotion: { ...this.promotionState },
+      resettlement: { ...this.resettlementState },
     };
   }
 
@@ -1179,7 +1383,7 @@ export class PoliticalAgent extends Vehicle {
    *
    * @param data - Previously returned from toJSON()
    */
-  fromJSON(data: PoliticalState): void {
+  fromJSON(data: PoliticalState & { promotion?: MoscowPromotionState; resettlement?: ResettlementDirectiveState }): void {
     this.state = {
       ...data,
       mandates: data.mandates ? [...data.mandates] : [],
@@ -1191,6 +1395,13 @@ export class PoliticalAgent extends Vehicle {
       if (prevDef) {
         this.transitionFromModifiers = { ...prevDef.modifiers };
       }
+    }
+    // Restore promotion/resettlement state (backward compat: missing = fresh)
+    if (data.promotion) {
+      this.promotionState = { ...data.promotion };
+    }
+    if (data.resettlement) {
+      this.resettlementState = { ...data.resettlement };
     }
   }
 

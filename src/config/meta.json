@@ -1,6 +1,6 @@
 {
   "minigames": {
-    "defaultCooldown": 60,
+    "defaultCooldown": 360,
     "queuePopulationThreshold": 30
   }
 }

@@ -40,9 +40,9 @@ const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {
 };
 
 const CONSEQUENCE_LABELS: Record<ConsequenceLevel, string> = {
-  forgiving: 'FORGIVING',
-  permadeath: 'PERMADEATH',
-  harsh: 'HARSH',
+  rehabilitated: 'REHABILITATED',
+  gulag: 'GULAG',
+  rasstrelyat: 'RASSTRELYAT',
 };
 
 const MEDAL_TIER_COLORS: Record<string, string> = {
@@ -134,7 +134,7 @@ export const ScoringPanel: React.FC<ScoringPanelProps> = ({ visible, onDismiss }
   const breakdown = scoring?.getScoreBreakdown() ?? null;
   const finalScore = breakdown?.finalScore ?? 0;
   const difficulty = scoring?.getDifficulty() ?? 'comrade';
-  const consequence = scoring?.getConsequence() ?? 'permadeath';
+  const consequence = scoring?.getConsequence() ?? 'gulag';
   const settingsMultiplier = breakdown?.settingsMultiplier ?? 1;
   const medals = scoring?.getAwardedMedals() ?? [];
   const eras = breakdown?.eras ?? [];

@@ -62,7 +62,17 @@ export const DOCTRINE_MECHANICS: Record<DoctrineMechanicId, DoctrineMechanicConf
   },
   eternal_bureaucracy: {
     id: 'eternal_bureaucracy',
-    activeEras: ['the_eternal'],
+    activeEras: [
+      'the_eternal',
+      'post_soviet',
+      'planetary',
+      'solar_engineering',
+      'type_one',
+      'deconstruction',
+      'dyson_swarm',
+      'megaearth',
+      'type_two_peak',
+    ],
     intervalTicks: dcfg.mechanicIntervals.eternal_bureaucracy,
   },
 };

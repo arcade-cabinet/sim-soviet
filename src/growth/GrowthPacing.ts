@@ -22,7 +22,7 @@ import type { EraId } from '../game/era/types';
  * - Stagnation: mass khrushchyovka production
  * - The Eternal: bureaucratic inertia but continued building
  */
-export const ERA_BUILD_INTERVALS: Record<EraId, number> = {
+export const ERA_BUILD_INTERVALS: Partial<Record<EraId, number>> & Record<string, number> = {
   revolution: 120,
   collectivization: 90,
   industrialization: 60,
@@ -31,6 +31,15 @@ export const ERA_BUILD_INTERVALS: Record<EraId, number> = {
   thaw_and_freeze: 40,
   stagnation: 30,
   the_eternal: 30,
+  // Kardashev sub-eras — progressively faster autonomous construction
+  post_soviet: 25,
+  planetary: 20,
+  solar_engineering: 15,
+  type_one: 10,
+  deconstruction: 8,
+  dyson_swarm: 5,
+  megaearth: 3,
+  type_two_peak: 2,
 };
 
 /** Default interval when era is unknown. */

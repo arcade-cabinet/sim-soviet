@@ -1,6 +1,6 @@
 # Agent Directory
 
-14 Yuka `Vehicle`-based agents organized into 5 domain subpackages.
+Yuka `Vehicle`-based agents organized into 9 domain subpackages (~169 files, 39k+ lines).
 
 ## Agent Inventory
 
@@ -50,9 +50,41 @@
 
 ### social/ — Population and Defense
 
-- **DemographicAgent** — Wraps the ECS demographic tick system for agent-based orchestration. Tracks births, deaths, aging, pregnancy, household formation.
+- **DemographicAgent** — Wraps the ECS demographic tick system for agent-based orchestration. Tracks births, deaths, aging, pregnancy, household formation. Dual-mode: entity (pop < 200) and aggregate (pop >= 200, statistical demographics).
 - **DefenseAgent** — Fire system (spread, damage, zeppelin AI) and disease system (4 types: typhus, cholera, influenza, scurvy). Monthly outbreak checks with environmental modifiers.
 - **disease.ts** — Standalone disease outbreak and recovery system. 4 disease types with spread/mortality rates, medical building prevention, seasonal modifiers.
+
+### workforce/ — Labor and Household Systems
+
+- **WorkerSystem** — Dual-mode worker management (entity vs aggregate). Auto-assigns workers based on era-appropriate priorities.
+- **PrivatePlotSystem** — Food from private plots, era-dependent yield multipliers.
+- **LoyaltySystem** — Per-dvor loyalty, sabotage, flight risk.
+- **TrudodniSystem** — 7-category labor accounting (1930-1966 system).
+
+### narrative/ — Events and Propaganda
+
+- **NarrativeAgent** — Orchestrates events, pravda headlines, politburo interactions.
+- **EventSystem** — Event queue with cooldowns and prerequisite checks.
+- **Pravda** — 145K+ headline combinations, mood-based spin.
+- **Politburo** — 10 ministries, 80-cell interaction matrix.
+
+### meta/ — Achievements and Tutorials
+
+- **AchievementTracker** — 31 achievements with tracking.
+- **TutorialSystem** — Progressive tutorial hints.
+- **ChairmanAgent** — Top-level meta-orchestrator.
+- **minigames/** — 9 text-choice minigames (Hunt, Factory Emergency, Inspection, etc.).
+
+### crisis/ — Governor and Pressure System
+
+- **Governor** — HistoricalGovernor (real dates) + FreeformGovernor (pressure-driven).
+- **PressureSystem** — 15 domains: 10 classical (food, morale, loyalty, housing, political, power, infrastructure, demographic, health, economic) + 5 post-scarcity (meaning, density, entropy, legacy, ennui). Dual-spread accumulation.
+- **PressureCrisisEngine** — Emergent crises from sustained pressure above thresholds.
+- **ClimateEventSystem** — Tier 2: seasonal/weather-gated natural events that spike pressure.
+- **BlackSwanSystem** — Tier 3: ultra-rare events (earthquakes, solar storms, nuclear accidents).
+- **ColdBranches** — 42 dormant divergence points activated by pressure conditions.
+- **WarAgent, FamineAgent, DisasterAgent** — Crisis-specific agents.
+- **CrisisImpactApplicator** — Applies crisis effects to game state.
 
 ## Backward Compatibility
 

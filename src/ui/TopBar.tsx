@@ -52,8 +52,10 @@ export interface TopBarProps {
   onShowSaveLoad?: () => void;
   onShowMarket?: () => void;
   onShowNotifications?: () => void;
+  onShowSettlementSelector?: () => void;
   unreadNotifications?: number;
   autopilot?: boolean;
+  settlementCount?: number;
 }
 
 /** Minimal top bar: food, timber, population, date, threat indicator, speed controls, overflow menu. */
@@ -92,8 +94,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   onShowSaveLoad,
   onShowMarket,
   onShowNotifications,
+  onShowSettlementSelector,
   unreadNotifications = 0,
   autopilot = false,
+  settlementCount = 1,
 }) => {
   const [showOverflow, setShowOverflow] = useState(false);
   const { isCompact } = useResponsive();
@@ -130,6 +134,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   if (onShowMinigames) overflowItems.push({ icon: '\u{1F3B2}', label: 'MINIGAMES', handler: onShowMinigames });
   if (onShowPravda) overflowItems.push({ icon: '\u{1F4F0}', label: 'PRAVDA', handler: onShowPravda });
   if (onShowMarket) overflowItems.push({ icon: '\u{1F6D2}', label: 'MARKET', handler: onShowMarket });
+  if (onShowSettlementSelector && settlementCount > 1)
+    overflowItems.push({ icon: '\u{1F30D}', label: 'SWITCH SETTLEMENT', handler: onShowSettlementSelector });
   if (onShowSaveLoad) overflowItems.push({ icon: '\u{1F4BE}', label: 'SAVE / LOAD', handler: onShowSaveLoad });
 
   const containerHeight = isCompact ? 44 : 60;

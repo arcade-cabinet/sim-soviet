@@ -40,6 +40,8 @@ export interface UnlockContext {
   simulationYearsElapsed: number;
   /** Current era ID (to prevent backward transitions). */
   currentEraId: EraId;
+  /** Technology level from WorldAgent (0-1), used for Kardashev sub-era transitions. */
+  techLevel?: number;
 }
 
 // ─── Era Index Map ───────────────────────────────────────────────────────────
@@ -53,6 +55,15 @@ const ERA_INDEX: Record<EraId, number> = {
   thaw_and_freeze: 5,
   stagnation: 6,
   the_eternal: 7,
+  // Kardashev sub-eras (freeform only)
+  post_soviet: 8,
+  planetary: 9,
+  solar_engineering: 10,
+  type_one: 11,
+  deconstruction: 12,
+  dyson_swarm: 13,
+  megaearth: 14,
+  type_two_peak: 15,
 };
 
 // ─── Unlock Conditions ───────────────────────────────────────────────────────
@@ -110,6 +121,56 @@ const ORGANIC_UNLOCK_RULES: readonly OrganicUnlockRule[] = [
   {
     targetEra: 'the_eternal',
     check: (ctx) => ctx.simulationYearsElapsed >= 50,
+  },
+
+  // ── Kardashev sub-era transitions (freeform only) ────────────────────────
+
+  // the_eternal → post_soviet: techLevel > 0.72 OR 100+ simulation years
+  {
+    targetEra: 'post_soviet',
+    check: (ctx) => (ctx.techLevel ?? 0) > 0.72 || ctx.simulationYearsElapsed >= 100,
+  },
+
+  // post_soviet → planetary: techLevel > 0.80 AND population > 10,000
+  {
+    targetEra: 'planetary',
+    check: (ctx) => (ctx.techLevel ?? 0) > 0.8 && ctx.population > 10_000,
+  },
+
+  // planetary → solar_engineering: techLevel > 0.90 AND 200+ simulation years
+  {
+    targetEra: 'solar_engineering',
+    check: (ctx) => (ctx.techLevel ?? 0) > 0.9 && ctx.simulationYearsElapsed >= 200,
+  },
+
+  // solar_engineering → type_one: techLevel >= 0.99 AND population > 100,000
+  {
+    targetEra: 'type_one',
+    check: (ctx) => (ctx.techLevel ?? 0) >= 0.99 && ctx.population > 100_000,
+  },
+
+  // type_one → deconstruction: 500+ simulation years
+  {
+    targetEra: 'deconstruction',
+    check: (ctx) => ctx.simulationYearsElapsed >= 500,
+  },
+
+  // deconstruction → dyson_swarm: 2,000+ simulation years
+  {
+    targetEra: 'dyson_swarm',
+    check: (ctx) => ctx.simulationYearsElapsed >= 2_000,
+  },
+
+  // dyson_swarm → megaearth: 5,000+ simulation years
+  {
+    targetEra: 'megaearth',
+    check: (ctx) => ctx.simulationYearsElapsed >= 5_000,
+  },
+
+  // megaearth → type_two_peak: 10,000+ simulation years
+  {
+    targetEra: 'type_two_peak',
+    check: (ctx) => ctx.simulationYearsElapsed >= 10_000,
   },
 ];
 

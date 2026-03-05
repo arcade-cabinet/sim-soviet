@@ -1,10 +1,25 @@
 # Progress
 
-## What's Complete
+## CRITICAL REMINDER
+**This is NOT a city builder.** The player is a predsedatel (chairman). The settlement grows organically. Player does NOT freely place buildings. See CLAUDE.md and docs/GAME_VISION.md.
 
-### Core Game Systems
-- [x] SimulationEngine with full tick orchestration
-- [x] 16 building types × 3 levels with placement/bulldoze
+## What's Complete (Implemented & Tested)
+
+### Engine Architecture
+- [x] SimulationEngine decomposed into 7 phase modules (thin orchestrator, ~966 lines)
+- [x] TickContext shared type for all phases
+- [x] Yuka agent architecture (9 subpackages, 169+ files, 39k+ lines)
+- [x] Governor/crisis system (HistoricalGovernor + FreeformGovernor + ChaosEngine → PressureSystem + WorldAgent)
+- [x] Pressure-valve crisis system (PressureSystem, ClimateEventSystem, BlackSwanSystem, ColdBranches)
+- [x] Soviet Allocation Engine (organic growth, demand pipeline, site selection, HQ splitting)
+- [x] Building-as-Container (dual population modes: entity < 200, aggregate >= 200)
+- [x] Seeded GameRng mandatory (80+ Math.random replaced)
+- [x] SettlementSummary type + settlement_state DB schema
+- [x] Per-building tick, per-tile terrain tick pure functions
+- [x] Condition-based crisis state machine
+- [x] Protected building classes (government/military never demolished)
+
+### Game Systems
 - [x] Resource tracking (food, vodka, power, water, money, population)
 - [x] 5-year plan quotas with annual reviews
 - [x] 8 era campaigns with transitions and doctrine integration
@@ -12,20 +27,21 @@
 - [x] Settlement tiers (selo → posyolok → PGT → gorod)
 - [x] 31 achievements with tracking
 - [x] 9 text-choice minigames
-- [x] Scoring system with 3×3 difficulty/consequence matrix
-- [x] Tutorial system (12 sequential directives)
+- [x] Scoring system with consequence multipliers (rehabilitated/gulag/rasstrelyat)
+- [x] Classic mode REMOVED — only historical and freeform
+- [x] Soviet consequence nomenclature (rehabilitated/gulag/rasstrelyat)
 
 ### Demographics & Workers
 - [x] Dvor (household) system with family structures
 - [x] Birth/death/aging lifecycle
 - [x] Gender-differentiated retirement (55F/60M)
 - [x] Male-first conscription (18-51)
-- [x] Era birth rate multipliers
 - [x] Private plot food production
 - [x] Loyalty/sabotage system
 - [x] Trudodni (7-category labor accounting)
 - [x] Worker AI (6 behavior classes)
-- [x] Autonomous collective self-organization
+- [x] Statistical demographics (Poisson-sampled)
+- [x] Entity GC sweeps (orphan citizens, empty dvory)
 
 ### Political Systems
 - [x] Politburo with 10 ministries
@@ -34,64 +50,62 @@
 - [x] Succession/coup mechanics
 
 ### Rendering & UI
-- [x] R3F 3D rendering (55 GLB models, terrain, weather FX, lighting)
+- [x] R3F 3D rendering (56 GLB models, terrain, weather FX, lighting)
 - [x] 22+ UI overlay components (Soviet aesthetic)
-- [x] Audio system (52 tracks, mood playlists)
+- [x] Audio system (47 tracks, mood playlists)
 - [x] Save/load (full serialization to IndexedDB)
 - [x] WebXR support (AR tabletop, VR walkthrough)
 
-### Building-as-Container Architecture
-- [x] Dual population modes (entity < 200, aggregate >= 200)
-- [x] RaionPool district demographics (age-sex buckets, vital stats)
-- [x] Building workforce fields (8 new fields on BuildingComponent)
-- [x] Statistical demographics (Poisson-sampled births/deaths/aging)
-- [x] Building production function (computeBuildingProduction)
-- [x] Collapse transition (collapseEntitiesToBuildings)
-- [x] Brutalist building scaling (capacity-based, no new assets)
-- [x] Seeded GameRng mandatory (80+ Math.random replaced)
-- [x] Population growth gated yearly (3% housing cap)
-- [x] Aggregate mode guards (disease, trudodni, UI snapshot)
-- [x] Serialization with backward compatibility
-- [x] Entity GC sweeps (orphan citizens, empty dvory)
-- [x] Shared poissonSample utility (src/math/poissonSampling.ts)
-
 ### Infrastructure
-- [x] CI (typecheck + tests on PR)
+- [x] CI (lint + typecheck + tests on PR)
 - [x] CD (Release Please → GitHub Pages + Android APK)
-- [x] 3,381+ tests across 128 suites
-
-### Health & Safety
-- [x] Disease events (DiseaseSystem with seasonal epidemics)
-- [x] Workplace accidents (WorkerSystem accident mechanics)
-
-### Documentation & Tooling
+- [x] 6,730 tests across 283 suites
 - [x] Documentation overhaul (41 docs with YAML frontmatter)
 - [x] JSDoc completion (~273/283 source files)
-- [x] AGENTS.md index hierarchy (8 files)
-- [x] Memory bank (Cline-style, 7 files)
-- [x] .claude agent/command architecture (6 agents, 5 commands)
-- [x] TypeDoc generation pipeline (`npm run docs:api`)
 
-## What's In Progress
+## Recently Completed (feat/allocation-engine branch, PR #44)
 
-- [ ] E2E Playwright test expansion (6 spec files)
+### Pressure-Valve Crisis System + WorldAgent
+- [x] PressureSystem with 10 domains
+- [x] WorldAgent (core agent coordinating world-level state)
+- [x] ClimateEventSystem (weather-driven crises)
+- [x] BlackSwanSystem (rare catastrophic events)
+- [x] ColdBranches (worldBranches.ts — alternate timeline forking)
+- [x] PressureCrisisEngine + pressure accumulation pipeline
 
-## What's Planned
+### Soviet Allocation Engine + Organic Growth
+- [x] Organic settlement growth (demand pipeline → site selection → construction)
+- [x] Buildings-as-UI (all 7 phases complete — HUD stripped through toolbar removed)
+- [x] HQ splitting (multi-function HQ → dedicated buildings as pop grows)
+- [x] GrowthPacing, OrganicUnlocks, SiteSelectionRules
+- [x] Government HQ with ReportsTab
+- [x] Dynamic map expansion (grid expands via settlement tier upgrades)
+- [x] Off-screen building tick for DB-only state updates
+- [x] Freeform endless mode with unlimited map expansion
+- [x] Global warming terrain effects for freeform centuries
+- [x] RelocationEngine data model for multi-settlement support
+- [x] Expanded playthrough tests and historical accuracy fixes
+- [x] WorldAgent sphere dynamics (42 cold branches)
 
-- [ ] Leader archetype behavioral modifiers (11 types designed)
-- [ ] Era doctrine full mechanics (thaw/freeze, stagnation rot, eternal bureaucracy)
-- [ ] Power transition mechanics full implementation
-- [ ] Late-era building definitions (mega-blocks, arcologies with large housingCap/staffCap)
-- [ ] Native minimap
-- [ ] WebXR entry point UI
-- [ ] iOS build pipeline + E2E CI
+### Kardashev Expansion (2026-03-05 session — ~16K lines, 20 commits)
+- [x] 8 Kardashev sub-eras replacing flat the_eternal
+- [x] Post-scarcity pressure (5 new domains: meaning, density, entropy, legacy, ennui)
+- [x] Multi-settlement tick loop + viewport switching
+- [x] MegaCity law enforcement (KGB → Sector Judges → Megacity Arbiters)
+- [x] Adaptive agent matrix (10 terrain profiles wired to 6 agents, climate polarity)
+- [x] 3 procedural shaders (Dyson sphere, Mars atmosphere, O'Neill interior)
+- [x] Celestial Body Factory (sphere↔flat morphing, 4 body types, MegastructureShell)
+- [x] ZonePreloader (zone-specific asset preloading with progress phases)
+- [x] Zone-aware LoadingScreen + SettlementTransitionOverlay (flavor text)
+- [x] Poly Haven declarative pipeline (7 HDRIs, 15 terrain textures, all CC0)
+- [x] 13 load zones by celestial body + era
 
 ## Version History
 
 | Version | Date | Highlights |
 |---------|------|-----------|
-| v1.2.0 | 2026-03 | Demographics overhaul, docs overhaul, game completion sprint (pending release) |
-| v1.1.3 | 2026-02 | Docs-vs-code alignment audit (83 findings) |
+| v1.2.0 | 2026-03 | Engine decomposition, allocation engine, pressure-valve crisis, organic growth, Kardashev expansion, celestial factory, zone-aware loading |
+| v1.1.3 | 2026-02 | Docs-vs-code alignment audit |
 | v1.1.2 | 2026-02 | 3D rendering fix, political entity tap interaction |
 | v1.1.0 | 2026-02 | R3F migration from BabylonJS |
 | v1.0.0 | 2026-02 | Initial release — all core systems |

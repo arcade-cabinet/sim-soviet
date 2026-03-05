@@ -1,0 +1,2796 @@
+{
+  "timelineId": "world",
+  "description": "Geopolitical and civilizational progression from 1917 to deep future. Models Turchin structural-demographic cycles, Khaldun asabiyyah decay, Tainter complexity collapse, Kondratiev waves, and Kardashev transitions. The external world the Soviet system exists within — trade, war, climate, technology, governance evolution. Grounded in academic research (Turchin, Tainter, Diamond, Khaldun) and hard SF projections (Baxter, Egan, Reynolds).",
+  "milestones": [
+    {
+      "id": "cold_war_start",
+      "name": "Cold War Begins",
+      "timelineId": "world",
+      "order": 10,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1947
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.3,
+          "borderThreat": 0.2
+        },
+        "pressureModifiers": {
+          "political": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "IMPERIALIST AGGRESSION: Western Powers Form Anti-Soviet Alliance",
+          "toast": "The wartime alliance crumbles. Churchill's 'Iron Curtain' speech signals decades of confrontation. Moscow increases vigilance quotas.",
+          "description": "The Truman Doctrine (1947) formalizes US containment policy. NATO forms in 1949. The world divides into two armed camps. For the predsedatel, this means increased quotas, more KGB scrutiny, and military production targets."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "chinese_revolution",
+      "name": "Chinese Communist Revolution",
+      "timelineId": "world",
+      "order": 12,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1949
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.1
+        },
+        "pressureModifiers": {
+          "morale": -0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "PEOPLE'S REPUBLIC OF CHINA PROCLAIMED: World Revolution Advances",
+          "toast": "Mao Zedong proclaims the People's Republic. 540 million people join the socialist camp. Moscow celebrates. Quietly, the competition for communist leadership begins.",
+          "description": "October 1, 1949. The largest nation on Earth becomes communist. The Sino-Soviet alliance appears invincible. Within 10 years, ideological disagreements will fracture it completely."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "cuban_missile_crisis",
+      "name": "Cuban Missile Crisis",
+      "timelineId": "world",
+      "order": 15,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1962
+            }
+          },
+          {
+            "worldState": {
+              "key": "globalTension",
+              "min": 0.3
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.15
+        },
+        "pressureModifiers": {
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "NUCLEAR BRINKMANSHIP: World Holds Breath as Superpowers Face Off Over Cuba",
+          "toast": "For 13 days in October, humanity is 90 minutes from nuclear annihilation. Both sides step back. Détente becomes thinkable.",
+          "description": "October 16-28, 1962. Soviet missiles in Cuba. American naval blockade. The closest the world came to nuclear war. Resolution leads to the Nuclear Test Ban Treaty (1963) and eventual détente."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "sino_soviet_split",
+      "name": "Sino-Soviet Split",
+      "timelineId": "world",
+      "order": 14,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1960
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.05,
+          "borderThreat": 0.15
+        },
+        "pressureModifiers": {
+          "political": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "IDEOLOGICAL DISAGREEMENTS WITH CHINA: Soviet-Chinese Friendship Endures (Official Statement)",
+          "toast": "The world's two largest communist nations have fundamental disagreements about revolutionary theory. Border incidents multiply. The friendship is formally unshaken. Nobody believes this.",
+          "description": "By 1960, ideological differences between Moscow and Beijing become irreconcilable. Khrushchev's de-Stalinization horrifies Mao. Soviet advisors are withdrawn from China. By 1969, border clashes along the Ussuri River bring the two nuclear powers close to war."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "detente_era",
+      "name": "Détente",
+      "timelineId": "world",
+      "order": 20,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1972
+            }
+          },
+          {
+            "worldState": {
+              "key": "globalTension",
+              "min": 0.3
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": -0.15,
+          "tradeAccess": 0.15
+        },
+        "pressureModifiers": {
+          "economic": -0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "PEACEFUL COEXISTENCE ADVANCES: SALT Treaty Signed, Trade Expands",
+          "toast": "The SALT arms limitation treaty is signed. Grain imports from America begin. Moscow's tension eases. The settlement's quota pressure does not.",
+          "description": "Nixon visits Moscow (1972). SALT I limits strategic weapons. Helsinki Accords (1975) normalize European borders. Soviet grain imports from the US begin — the settlement may see foreign equipment for the first time."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "oil_boom",
+      "name": "Oil Boom (Petrodollar Surge)",
+      "timelineId": "world",
+      "order": 22,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1973
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "commodityIndex": 0.4
+        },
+        "pressureModifiers": {
+          "economic": -0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "OPEC EMBARGO ENRICHES SOCIALIST CAMP: Soviet Oil Revenues Surge",
+          "toast": "The 1973 OPEC oil embargo quadruples crude prices. Soviet hard currency earnings explode. Moscow uses petrodollars to fund everything from grain imports to space programs. This will not last.",
+          "description": "The oil price shock of 1973 transforms the Soviet economy. Western Siberian oil fields become the USSR's ATM. Petrodollar wealth masks structural economic problems — stagnation, inefficiency, and declining innovation — that will prove fatal when oil prices crash in the 1980s."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "oil_price_collapse",
+      "name": "Oil Price Collapse",
+      "timelineId": "world",
+      "order": 28,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1986
+            }
+          },
+          {
+            "worldState": {
+              "key": "commodityIndex",
+              "min": 0.2
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "commodityIndex": -0.5
+        },
+        "pressureModifiers": {
+          "economic": 0.2
+        },
+        "narrative": {
+          "pravdaHeadline": "TEMPORARY MARKET FLUCTUATION: Oil Prices Adjust Downward",
+          "toast": "Saudi Arabia floods the market. Oil drops from $30 to $10/barrel. Soviet hard currency revenue collapses by 50%. The word 'temporary' does a lot of work in the official statement.",
+          "description": "The 1986 oil price collapse devastates the Soviet economy. The system built on petrodollars crumbles. Gorbachev's reforms become desperate necessity, not ideological choice. For the settlement, this means supply shortages, equipment breakdowns, and rising desperation."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ussr_survives_1991",
+      "name": "The Soviet Union Survives",
+      "timelineId": "world",
+      "order": 30,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1991
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.2,
+          "moscowAttention": 0.15
+        },
+        "pressureModifiers": {
+          "political": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "PARTY UNITY PREVAILS: August Coup Fails, Socialist Construction Continues",
+          "toast": "The coup failed. Yeltsin is arrested. The Party holds. The USSR does not dissolve — it reforms, tightens, and prepares. History has taken the other path.",
+          "description": "In this timeline, the August 1991 coup succeeded in some ways and failed in others — the reformers were contained, but the system that emerged is no longer the same system. A harder, leaner, angrier apparatus. The word 'Soviet' remains, but what it names has changed."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ideology_divorce",
+      "name": "The Divorce of Ideology and Practice",
+      "timelineId": "world",
+      "order": 33,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2010
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "ussr_survives_1991"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.3,
+          "centralPlanningEfficiency": -0.1
+        },
+        "pressureModifiers": {
+          "political": 0.1,
+          "economic": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "5-YEAR PLAN TARGETS REVISED UPWARD: Collective Productivity Demonstrates Socialist Superiority",
+          "toast": "The directive from Moscow is 47 pages. Page 14 contains the actual order. Pages 1-13 are Marxist preamble. No one mentions this.",
+          "scene": "The packet arrives on a Tuesday, as most of them do.\n\nComrade Chairman, by directive of the Central Planning Committee, your settlement is hereby required to increase grain deliveries by 18% in the current quarter, timber processing by 12%, and to submit a signed declaration affirming the continuing relevance of dialectical materialism to agricultural production. The declaration template is attached as Appendix C.\n\nYou read the appendix. It is six pages long. It contains phrases like 'the objective contradictions inherent in bourgeois soil management' and 'the teleological necessity of collective ownership as expressed through yield optimization.' You read it twice. You are still not certain what it is asking you to sign.\n\nYour deputy has prepared the production numbers. The 18% increase is not possible this quarter. It may not be possible any quarter. The deputy knows this. You know this. Moscow almost certainly knows this. The declaration form, however, does not know this, and the form must be completed.\n\nThere is a correct way to handle this. You have seen the correct way. It involves numbers that are not numbers and signatures that mean something other than what signatures usually mean. Everyone does it. No one discusses it. The system requires it.",
+          "choices": [
+            {
+              "id": "play_the_game",
+              "label": "Master the performance — file adjusted numbers",
+              "description": "Submit inflated figures with the ideological declaration. Everyone does this. It is the path of comfortable mediocrity.",
+              "successChance": 0.90,
+              "onSuccess": {
+                "announcement": "The declaration is filed. The numbers are filed. Moscow acknowledges receipt with a form letter of commendation. Your deputy notes that the actual production was 6% below last quarter. You note that the commendation will look good in your personnel file. Both observations are correct.",
+                "severity": "info",
+                "resources": {
+                  "money": 30
+                },
+                "blat": 5
+              },
+              "onFailure": {
+                "announcement": "A statistical auditor arrives from the regional bureau three weeks later. She has cross-referenced your figures against rail transport manifests. There is a discrepancy. She files a report. You receive a black mark for 'administrative irregularities in planning documentation.' The irony is noted privately.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.1
+                }
+              }
+            },
+            {
+              "id": "genuine_belief",
+              "label": "Implement the directive literally — actual 18% increase",
+              "description": "Actually try to meet the quota. Workers on double shifts. Full Stakhanovite mobilization. This is not recommended.",
+              "successChance": 0.35,
+              "onSuccess": {
+                "announcement": "Against every expectation, including your own, the settlement meets the target. Worker morale has collapsed to historic lows. Three workers have been hospitalized with exhaustion. Your deputy has resigned. Moscow sends a delegation to study your methods. You are not certain what they will conclude.",
+                "severity": "warning",
+                "resources": {
+                  "food": -200,
+                  "money": 80
+                },
+                "pressureModifiers": {
+                  "morale": 0.2,
+                  "health": 0.15
+                }
+              },
+              "onFailure": {
+                "announcement": "The workers cannot sustain the pace. Production peaks in week two and collapses in week four. The final numbers are 3% below last quarter. You have filed a declaration affirming dialectical materialism. The contradiction is not resolved.",
+                "severity": "critical",
+                "resources": {
+                  "food": -300
+                },
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "morale": 0.25,
+                  "economic": 0.15
+                }
+              }
+            },
+            {
+              "id": "document_the_gap",
+              "label": "File an accurate report noting the discrepancy",
+              "description": "Submit real numbers with a memo explaining the gap between directive and capacity. A small act of bureaucratic honesty with unpredictable consequences.",
+              "successChance": 0.50,
+              "onSuccess": {
+                "announcement": "Your memo is read. Apparently someone in the statistical division has been waiting for exactly this documentation. A quiet reply arrives: the targets have been 'recalibrated' for your district. No explanation is given. You are not commended. You are not punished. The gap between what is said and what is done narrows, by exactly one memo, for exactly one quarter.",
+                "severity": "info",
+                "resources": {
+                  "money": 10
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "Your memo is read by the wrong person. The regional inspector notes that you have submitted documentation suggesting 'insufficient ideological commitment to plan fulfillment.' A review is scheduled. You learn that accurate reporting is not, in this context, considered an administrative virtue.",
+                "severity": "warning",
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.15
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "play_the_game",
+          "tickLimit": 48
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "motherland_myth",
+      "name": "The Nation Replaces the Ideology",
+      "timelineId": "world",
+      "order": 36,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2040
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "ideology_divorce"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.2,
+          "moscowAttention": -0.1
+        },
+        "pressureModifiers": {
+          "loyalty": -0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "ETERNAL RUSSIA ENDURES: Motherland Spirit Guides Socialist Construction Into New Century",
+          "toast": "The pamphlets stopped quoting Marx in 2031. By 2040 they quote Pushkin, folk songs, and a general feeling about soil. This is also called ideology.",
+          "description": "The formal apparatus of Marxist-Leninist doctrine has been quietly replaced by something older and harder to argue with: the nation itself. The system still functions. The quotas still arrive. The forms still require signatures. But the language has changed. What is required now is not ideological purity but patriotic loyalty — a distinction that, in practice, changes very little, but changes everything."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "forgotten_origin",
+      "name": "The Revolution Becomes Mythology",
+      "timelineId": "world",
+      "order": 38,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2100
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "motherland_myth"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.15,
+          "centralPlanningEfficiency": 0.05
+        },
+        "pressureModifiers": {
+          "political": -0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "OCTOBER 2117: BICENTENNIAL CELEBRATIONS MARK 200 YEARS OF UNBROKEN SOCIALIST CONSTRUCTION",
+          "toast": "The revolution is two hundred years ago. The workers celebrate it with a public holiday. Nobody alive remembers what it was about. This is fine. Empires run on myths, not memories.",
+          "description": "By 2117, the October Revolution has become what all founding moments eventually become: a story told to justify the present. The details are contested, the principals are painted on murals in heroic poses, and the actual content of 1917 Bolshevism would be unrecognizable to the bureaucrats who invoke it. The apparatus persists not because of what it believes but because of what it is. Which is, historically, how things persist."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "permafrost_crisis",
+      "name": "Permafrost Infrastructure Crisis",
+      "timelineId": "world",
+      "order": 40,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2025
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.2
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "climateTrend": 0.1
+        },
+        "pressureModifiers": {
+          "infrastructure": 0.25,
+          "economic": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "NORTHERN INFRASTRUCTURE REQUIRES MAINTENANCE: Ministry of Permafrost Affairs Established",
+          "toast": "65% of Russia is built on frozen ground. It is thawing. 40% of northern infrastructure already damaged. $250 billion at risk. The Ministry of Permafrost Affairs has been created to manage the situation. They have requested a larger office.",
+          "description": "Russia's permafrost underlies 65% of its territory and is warming at 2.5x the global average. Infrastructure damage already exceeds $100 billion. Pipeline ruptures, building foundation collapse, and road degradation accelerate. 45% of Arctic hydrocarbon extraction fields are in thaw-risk zones."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "peak_phosphorus",
+      "name": "Peak Phosphorus",
+      "timelineId": "world",
+      "order": 42,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2034
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "commodityIndex": 0.2
+        },
+        "pressureModifiers": {
+          "food": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "FERTILIZER PRODUCTION TARGETS REVISED: Ministry of Agriculture Adapts to Resource Constraints",
+          "toast": "Phosphate rock — essential for all modern agriculture — reaches peak extraction. 85% of remaining reserves are in Morocco. The Five-Year Agricultural Intensification Plan must now account for declining fertilizer availability.",
+          "description": "Phosphorus has no substitute in agriculture. Global reserves peak around 2034. Agricultural yields decline without synthetic fertilizers. The Soviet system, which already struggles with agricultural efficiency, faces a structural constraint that no amount of quota-setting can overcome."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ai_gosplan",
+      "name": "AI Gosplan Prototype",
+      "timelineId": "world",
+      "order": 44,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2035
+            }
+          },
+          {
+            "techLevel": {
+              "min": 0.6
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "techLevel": 0.05
+        },
+        "pressureModifiers": {
+          "economic": -0.1,
+          "political": 0.05
+        },
+        "unlocks": [
+          "ai_planning"
+        ],
+        "narrative": {
+          "pravdaHeadline": "ALGORITHMIC PLANNING COMMISSION ESTABLISHED: Machine Intelligence Serves the Plan",
+          "toast": "The calculation problem that defeated Gosplan — coordinating 25 million products across 300 million people — is solved by artificial intelligence. Planning efficiency increases 30%. Corruption detection increases 50%. The bureaucrats are not pleased.",
+          "description": "The Soviet calculation problem (Hayek's critique) is rendered moot by AI capable of processing millions of simultaneous resource allocation decisions. The system that couldn't track shoe sizes across 15 republics can now optimize global supply chains. But AI planning creates a new problem: what role for the Party if the machine does the planning? Cybernetics returns — Glushkov's dream realized 70 years late."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "demographic_inversion",
+      "name": "Demographic Inversion",
+      "timelineId": "world",
+      "order": 46,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2040
+            }
+          },
+          {
+            "population": {
+              "min": 100000
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 6,
+      "effects": {
+        "pressureModifiers": {
+          "demographic": 0.2,
+          "economic": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "POPULATION STRUCTURE ADJUSTMENTS: Labor Allocation Optimized for Demographic Transition",
+          "toast": "Retirees outnumber workers. The pension system, designed for a growing population, cannot fund itself. Labor shortage in every sector. The Five-Year Plan has not accounted for the absence of young hands.",
+          "description": "UN projections (2024 revision) show global population peaking around 2080. But the structural crisis hits earlier: dependency ratios invert by 2040 in developed nations. For the Soviet system, which relies on directed labor, the absence of young workers is existential."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "fusion_breakthrough",
+      "name": "Fusion Energy Breakthrough",
+      "timelineId": "world",
+      "order": 50,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2050
+            }
+          },
+          {
+            "techLevel": {
+              "min": 0.65
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": {
+          "techLevel": 0.08
+        },
+        "pressureModifiers": {
+          "power": -0.2
+        },
+        "unlocks": [
+          "fusion_power"
+        ],
+        "narrative": {
+          "pravdaHeadline": "FUSION REACTOR ACHIEVES NET ENERGY: New Era of Power Production Begins",
+          "toast": "After decades of 'always 30 years away,' tokamak fusion achieves sustained net energy output. Deployment will take another 20 years. The Five-Year Electrification Plan has been extended to a Twenty-Year Electrification Plan.",
+          "description": "ITER/DEMO lineage finally produces commercial fusion. But deployment requires massive infrastructure investment — new reactor construction, grid upgrades, fuel processing. The 6th Kondratiev wave (clean energy) begins. Soviet central planning is actually well-suited to this transition — massive directed infrastructure investment is what it does best."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "freshwater_crisis",
+      "name": "Global Freshwater Crisis",
+      "timelineId": "world",
+      "order": 52,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2050
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.3
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": {
+          "food": 0.15,
+          "health": 0.1
+        },
+        "worldStateDeltas": {
+          "globalTension": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "WATER ALLOCATION DIRECTIVE ISSUED: Ministry of Hydrology Assumes Emergency Powers",
+          "toast": "50% of settlements face water stress. The Aral Sea lesson repeats globally: extraction quotas that ignore replenishment rates eventually exhaust the resource. The Ministry has been given broader powers. The aquifers have not been given more water.",
+          "description": "By 2050, half of Earth's population faces water stress. Aquifer depletion, glacial retreat, and agricultural demand exceed natural replenishment. The Soviet system's history with water management (the Aral Sea catastrophe) provides both cautionary lessons and institutional muscle memory for massive infrastructure projects."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "first_turchin_wave",
+      "name": "First Turchin Crisis Wave (Eternal Era)",
+      "timelineId": "world",
+      "order": 55,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2070
+            }
+          },
+          {
+            "pressure": {
+              "domain": "political",
+              "min": 0.4
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.2,
+          "loyalty": 0.15,
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "STRUCTURAL ADJUSTMENTS REQUIRED: Political Institutions Undergo Renewal",
+          "toast": "50 years into the Eternal era, Turchin's fathers-and-sons oscillation manifests. Elite overproduction — too many educated, ambitious cadres competing for too few Party positions. Political instability spikes. The nomenklatura closes ranks.",
+          "description": "Peter Turchin's structural-demographic theory predicts 50-year oscillations in political instability driven by elite overproduction and declining living standards. The Soviet system is particularly vulnerable: the Party hierarchy creates a fixed number of positions while education and ambition grow without bound. When too many qualified people compete for too few slots, conspiracy and purge follow naturally."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "longevity_treatment",
+      "name": "CRISPR Longevity Treatment",
+      "timelineId": "world",
+      "order": 56,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2060
+            }
+          },
+          {
+            "techLevel": {
+              "min": 0.7
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "techLevel": 0.03
+        },
+        "pressureModifiers": {
+          "political": 0.15,
+          "demographic": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "LONGEVITY THERAPY APPROVED FOR PARTY CADRES: Life Extension Serves the Revolution",
+          "toast": "Gene therapy extends elite lifespans to 200+ years. KSR's Mars Trilogy predicted this: the gerontocracy deepens. Leaders who should have retired decades ago cling to power with renewed vigor. The nomenklatura becomes literally immortal.",
+          "description": "KSR's Mars Trilogy explored this in detail: longevity treatment transforms politics fundamentally. Generational turnover — the mechanism by which new ideas enter power structures — ceases. The Soviet gerontocracy (already a problem by the 1980s, when Brezhnev, Andropov, and Chernenko died in office) becomes permanent. Bogdanov's blood transfusion research, which killed him in 1928, finally bears fruit 130 years later."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "post_oil_transition",
+      "name": "Post-Oil Transition Complete",
+      "timelineId": "world",
+      "order": 60,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2100
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "fusion_breakthrough"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "commodityIndex": -0.3
+        },
+        "pressureModifiers": {
+          "economic": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "HYDROCARBON ERA CONCLUDED: Final Oil Well Decommissioned",
+          "toast": "The last economically viable oil well is capped. An era ends. The petrodollar revenue stream that funded Soviet expansion for 50 years is gone. Fusion replaces fossil. The Ministry of Oil is merged with the Ministry of Historical Artifacts.",
+          "description": "By 2100, fossil fuels are economically uncompetitive with fusion and renewables. The geopolitical order built on oil collapses. Russia's post-Soviet petro-economy model — which never developed an alternative — must finally transform or die."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "first_khaldun_decay",
+      "name": "First Khaldun Cycle Decay Phase",
+      "timelineId": "world",
+      "order": 62,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2040
+            }
+          },
+          {
+            "pressure": {
+              "domain": "loyalty",
+              "min": 0.3
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 24,
+      "effects": {
+        "pressureModifiers": {
+          "loyalty": 0.2,
+          "political": 0.15,
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "IDEOLOGICAL RENEWAL CAMPAIGN LAUNCHED: Third Generation Must Rediscover Revolutionary Spirit",
+          "toast": "Ibn Khaldun's cycle manifests: 120 years since the Revolution, the third generation has no memory of struggle. Asabiyyah (group solidarity) erodes. Luxury replaces sacrifice. The system decays from within. A purge, a war, or a visionary leader is needed to renew the founding spirit.",
+          "description": "Ibn Khaldun (1377) identified the pattern: Generation 1 forges cohesion through hardship, Generation 2 inherits power but remembers the struggle, Generation 3 is born in luxury and knows nothing of sacrifice. Asabiyyah (group feeling) erodes over ~120 years / 3 generations. The Soviet system — founded in revolutionary struggle (1917) — hits this wall by ~2040. Either a crisis renews the solidarity or the system fragments."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "dome_mandatory_earth",
+      "name": "Atmospheric Domes Mandatory (Earth)",
+      "timelineId": "world",
+      "order": 65,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2150
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.6
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 24,
+      "effects": {
+        "pressureModifiers": {
+          "infrastructure": 0.3,
+          "health": 0.15
+        },
+        "unlocks": [
+          "mandatory_dome_construction"
+        ],
+        "narrative": {
+          "pravdaHeadline": "ATMOSPHERIC CONTAINMENT DIRECTIVE: All Settlements Must Construct Environmental Domes",
+          "toast": "Atmospheric toxicity and UV radiation exceed safe outdoor exposure limits. All settlements are ordered to construct dome enclosures. The open air is no longer breathable without filtration. The Five-Year Dome Construction Plan has been issued.",
+          "description": "Cumulative pollution, ozone degradation, and climate change render prolonged outdoor exposure hazardous. Settlements must be enclosed in atmospheric containment domes — the same technology developed for lunar and Martian bases. The irony: BIOS-3's sealed bunker in Krasnoyarsk becomes the model for all human habitation on Earth."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "first_tainter_simplification",
+      "name": "First Tainter Simplification Crisis",
+      "timelineId": "world",
+      "order": 68,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2200
+            }
+          },
+          {
+            "pressure": {
+              "domain": "economic",
+              "min": 0.5
+            }
+          },
+          {
+            "pressure": {
+              "domain": "political",
+              "min": 0.4
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 36,
+      "effects": {
+        "pressureModifiers": {
+          "economic": 0.25,
+          "infrastructure": 0.2,
+          "political": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "INSTITUTIONAL STREAMLINING PROGRAM: Bureaucratic Overhead Reduction Targets Set",
+          "toast": "Joseph Tainter's warning: when bureaucratic overhead exceeds 40% of GDP, diminishing returns on complexity trigger either controlled simplification or cascading failure. The system must shed complexity to survive. Ministries are merged. Sub-agencies dissolved. The paperwork for dissolving the sub-agencies requires three new sub-agencies.",
+          "description": "Tainter's 'Collapse of Complex Societies' (1988) identifies the mechanism: each layer of complexity solves existing problems but adds overhead. Eventually, marginal returns on additional complexity go negative. The rational response is simplification — but the Soviet bureaucracy's institutional incentive is always to ADD complexity, never remove it. This contradiction is the central tension of the Eternal era."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "corporate_sovereignty",
+      "name": "Corporate Sovereignty Emergence",
+      "timelineId": "world",
+      "order": 70,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2080
+            }
+          },
+          {
+            "techLevel": {
+              "min": 0.75
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.15
+        },
+        "pressureModifiers": {
+          "political": 0.1,
+          "economic": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "CAPITALIST ENTITIES SUBSUME NATION-STATES: Corporate GDP Exceeds Sovereign Revenue",
+          "toast": "KSR's 'metanats' from the Mars Trilogy become reality. 69 of 100 largest economic entities are already corporations. When corporate revenue exceeds state revenue, debt colonialism follows. Herbert's CHOAM and Dune's feudal capitalism — where the Spacing Guild controls all interstellar transit — provides the template for corporate governance of space infrastructure.",
+          "description": "The VOC precedent (1602): Dutch East India Company governed 2.5 million people with sovereign powers — waging war, minting coins, maintaining armies. KSR's Mars Trilogy depicted 'transnats' and 'metanats' that evolved to subsume countries entirely. Herbert's Dune depicted CHOAM (Combine Honnete Ober Advancer Mercantiles) — a corporate entity that controlled all interplanetary commerce, with shares held by noble houses. The Soviet system sees this as confirmation: capitalism's logical endpoint is neo-feudalism."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "neofeudal_transition",
+      "name": "Neofeudal Transition",
+      "timelineId": "world",
+      "order": 75,
+      "conditions": {
+        "and": [
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "corporate_sovereignty"
+            }
+          },
+          {
+            "year": {
+              "min": 2200
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 48,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.1
+        },
+        "pressureModifiers": {
+          "political": 0.15,
+          "loyalty": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "CAPITALIST WORLD ENTERS FEUDAL REGRESSION: Soviet System Vindicated",
+          "toast": "Rent exceeds profit. Platform dependence replaces personal dependence. Workers become serfs tied to algorithms rather than land. Herbert saw this: Dune's Landsraad was a feudal council governing an interstellar empire. The Soviets argue their system prevented this outcome domestically. The argument has some merit.",
+          "description": "Scholarly consensus on neofeudalism: corporate governance → platform monopoly → algorithmic dependence → new serfdom. Firefly's Alliance represents the centralized alternative — a post-Earth government that controls core worlds while frontier planets resist. The Soviet system stands as the ideological opposite: central planning vs. corporate feudalism. In the deep game, the player sees the external world fracture along these lines while their settlement persists under its ancient bureaucratic model."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "kardashev_085",
+      "name": "Kardashev 0.85 Threshold",
+      "timelineId": "world",
+      "order": 72,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2200
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "fusion_breakthrough"
+            }
+          },
+          {
+            "techLevel": {
+              "min": 0.85
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "techLevel": 0.03
+        },
+        "unlocks": [
+          "planetary_energy_grid"
+        ],
+        "narrative": {
+          "pravdaHeadline": "PLANETARY ENERGY GRID CONSTRUCTION AUTHORIZED: Kardashev 0.85 Achieved",
+          "toast": "Total civilizational energy capture reaches 85% of available planetary input. Kardashev — a Soviet astrophysicist — would note the irony: the Soviet system finally approaches the threshold he defined in 1964.",
+          "description": "Nikolai Kardashev (1932-2019) proposed his scale in 1964 at the Soviet Academy of Sciences. The transition from Type 0 to Type I is the most dangerous period in any civilization's history — enough power to destroy the planet, not yet enough to reliably leave it."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "last_memory",
+      "name": "The Last Memory",
+      "timelineId": "world",
+      "order": 76,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2120
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "forgotten_origin"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": {
+          "morale": 0.05,
+          "political": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "COMRADE VALENTINA PETROVA, 203, LAST CITIZEN WITH PRE-SOVIET MEMORY, DIES IN STATE HOSPITAL",
+          "toast": "The last person who remembered the world before the Soviet Union has died. There is now no living witness to any alternative. The system is all there has ever been.",
+          "scene": "The telegram arrives from Moscow, stamped with the seal of the Ministry of Historical Continuity.\n\nComrade Chairman, you are hereby informed that Citizen Valentina Ilyinichna Petrova, born 1917, has died at the age of 203 in the Longevity Research Hospital in Novosibirsk. She was the last verified citizen of the Soviet Union to have been born before the Revolution — or rather, born during it, on the same October night, by her mother's account.\n\nShe remembered nothing of that night. She was an infant. But she remembered her grandmother, who remembered the Tsar. She remembered her mother, who remembered the sound of horses before they were replaced by tractors. She remembered a world that was not Soviet, because someone who lived in it had described it to her.\n\nNow she is dead. And no living person has heard, from a living mouth, what it was like before.\n\nThe Ministry requests that all settlements observe a moment of recognition. They do not specify what to recognize. A memorial could be arranged — but memorials for the pre-Soviet era have political implications. Or you could file the telegram and move on. The system does not require memory to function. It never has.",
+          "choices": [
+            {
+              "id": "hold_memorial",
+              "label": "Hold a public memorial — honor the last witness",
+              "description": "A ceremony acknowledging the pre-Soviet world existed. Workers may find it moving. The KGB may find it suspicious.",
+              "successChance": 0.65,
+              "onSuccess": {
+                "announcement": "The memorial is quiet and dignified. Workers stand in the cold and listen to a recording of Valentina's voice describing her grandmother's stories. Several cry. The KGB observer takes notes but files no report. Something has been honored that the system would prefer forgotten. The workers return to their shifts with something unnameable in their expressions.",
+                "severity": "warning",
+                "commendations": 1,
+                "pressureModifiers": {
+                  "morale": -0.1
+                }
+              },
+              "onFailure": {
+                "announcement": "The memorial attracts the wrong attention. A regional ideological inspector interprets the ceremony as 'nostalgia for pre-revolutionary social structures.' A formal review is scheduled. The workers who attended are interviewed individually. You are asked to explain, in writing, what exactly you were memorializing. The answer — 'memory itself' — is not accepted as sufficient.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.15
+                }
+              }
+            },
+            {
+              "id": "file_and_forget",
+              "label": "File the telegram — observe nothing",
+              "description": "The safe bureaucratic response. The telegram is acknowledged, filed, and forgotten. The system continues.",
+              "successChance": 1.0,
+              "onSuccess": {
+                "announcement": "The telegram is filed under 'Demographic Notifications, Historical.' No ceremony. No acknowledgment. Workers learn of Valentina's death from Pravda, if they read it. Most do not. The last thread connecting the settlement to a world that existed before the system has been cut, and no one marked the moment. This is how most things end.",
+                "severity": "warning",
+                "pressureModifiers": {
+                  "morale": 0.05
+                }
+              },
+              "onFailure": {
+                "announcement": "The telegram is filed.",
+                "severity": "warning"
+              }
+            },
+            {
+              "id": "archive_testimony",
+              "label": "Commission an oral history archive before it's too late",
+              "description": "Record the memories of the oldest citizens — secondhand accounts of the pre-Soviet world. Scholarly but politically delicate.",
+              "successChance": 0.55,
+              "onSuccess": {
+                "announcement": "The archive project records 47 hours of testimony from elderly citizens who remember parents or grandparents describing the old world. The recordings are stored in the settlement library. A copy is sent to Moscow's Institute of Ethnography. Three years later, a researcher publishes a paper citing your archive. You receive a minor commendation and a large increase in your next cultural allocation. The dead are not brought back, but their words persist.",
+                "severity": "warning",
+                "commendations": 1,
+                "blat": 5,
+                "resources": {
+                  "money": -20
+                }
+              },
+              "onFailure": {
+                "announcement": "The archive project is shut down by the regional cultural committee. 'Unauthorized collection of pre-revolutionary oral testimony' falls under regulations you were not aware of. The recordings are confiscated. Three workers who participated are questioned. You receive a formal warning about 'archival activities outside designated channels.' The memories are lost twice — once when Valentina died, and once when the tapes were taken.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "resources": {
+                  "money": -30
+                },
+                "pressureModifiers": {
+                  "political": 0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "file_and_forget",
+          "tickLimit": 24
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "great_depression_ii",
+      "name": "The Second Great Depression",
+      "timelineId": "world",
+      "order": 76.1,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2130
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "post_oil_transition"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "commodityIndex": -0.3,
+          "tradeAccess": -0.2
+        },
+        "pressureModifiers": {
+          "economic": 0.3,
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "GLOBAL CAPITALIST MARKETS COLLAPSE: SECOND GREAT DEPRESSION VINDICATES PLANNED ECONOMY",
+          "toast": "The post-oil transition has broken the global financial architecture. Markets that traded in fossil futures for 200 years have nothing to trade. Derivatives built on derivatives built on oil that no longer matters have evaporated. 40% of the world's nominal wealth has ceased to exist in three weeks.",
+          "scene": "The news arrives piecemeal, as it always does when the outside world is falling apart.\n\nFirst: the London Exchange has suspended trading. Then: the Shanghai Commodities Board has declared force majeure on all energy contracts. Then: the corporate sovereign entities that replaced national currencies are experiencing 'liquidity harmonization events,' which is a new phrase for bank runs conducted by algorithms.\n\nYour settlement is insulated from most of this. The Soviet planned economy does not trade on global markets — it produces what Moscow demands, consumes what Moscow allocates, and files reports about both. The collapse of capitalism is, officially, confirmation of historical inevitability.\n\nUnofficially, the settlement depends on imported components for its fusion reactor maintenance, medical supplies from the European pharmaceutical combines, and the occasional black-market luxury that keeps the nomenklatura cooperative. All of these supply chains have just seized.\n\nThe deputy has prepared three responses.",
+          "choices": [
+            {
+              "id": "autarky_pivot",
+              "label": "Full autarky — cut all external dependencies",
+              "description": "Sever all trade connections. Produce everything locally. Accept lower quality and capability in exchange for total self-sufficiency.",
+              "successChance": 0.7,
+              "onSuccess": {
+                "announcement": "The settlement achieves functional self-sufficiency within 18 months. The fusion reactor maintenance team reverse-engineers the imported components from local materials. Medical supplies are replaced with settlement-grown pharmaceuticals that are 60% as effective. The nomenklatura complains about the absence of imported cognac. You note that Soviet vodka is an adequate substitute. They disagree but comply.",
+                "severity": "warning",
+                "resources": {
+                  "money": -80
+                },
+                "commendations": 1,
+                "pressureModifiers": {
+                  "economic": -0.1
+                }
+              },
+              "onFailure": {
+                "announcement": "Self-sufficiency proves harder than projected. The reactor maintenance fails twice before the team masters the replacement components. Medical shortages cause preventable deaths. The settlement operates at 70% capacity for two years. Moscow notes the production shortfall without noting the global collapse that caused it.",
+                "severity": "critical",
+                "resources": {
+                  "population": -15,
+                  "money": -120
+                },
+                "pressureModifiers": {
+                  "economic": 0.2,
+                  "health": 0.15
+                }
+              }
+            },
+            {
+              "id": "exploit_collapse",
+              "label": "Buy distressed assets — expand while others contract",
+              "description": "Use settlement reserves to acquire resources, equipment, and talent from collapsing corporate entities at pennies on the ruble.",
+              "successChance": 0.55,
+              "onSuccess": {
+                "announcement": "The settlement acquires three fusion reactor spare-parts inventories, a pharmaceutical production line, and 47 skilled workers fleeing corporate territories — all for less than one quarter's normal procurement budget. The deputy notes that this is exactly what Marx predicted: capital concentrates during crisis. You note that Marx did not predict the Soviet Union would be the one doing the concentrating. Both observations are correct.",
+                "severity": "warning",
+                "resources": {
+                  "money": -60,
+                  "population": 47
+                },
+                "blat": 15
+              },
+              "onFailure": {
+                "announcement": "The acquisitions are contested by three corporate sovereign entities that claim prior liens on the assets. A legal dispute — conducted in a legal system that no longer has courts — consumes six months and considerable resources. The assets arrive damaged. The skilled workers arrive traumatized. The deputy's optimism has been recalibrated.",
+                "severity": "warning",
+                "resources": {
+                  "money": -150
+                },
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "economic": 0.1
+                }
+              }
+            },
+            {
+              "id": "wait_it_out",
+              "label": "Do nothing — let the storm pass",
+              "description": "The planned economy has survived every external shock for 213 years. File the reports. Meet the quotas. Wait.",
+              "successChance": 0.85,
+              "onSuccess": {
+                "announcement": "The settlement continues as it always has. The global depression rages for four years. Supply chains eventually reform around new structures. The settlement's reports are filed on time throughout. Moscow commends your 'stability during external perturbation.' You accept the commendation and file it alongside the 47 others you have received for doing nothing in particular.",
+                "severity": "warning",
+                "blat": 5
+              },
+              "onFailure": {
+                "announcement": "Doing nothing works until it doesn't. A critical supply shipment fails to arrive and there is no backup. The reactor runs on reduced output for three months. Moscow notices the production dip and schedules an inspection. You explain global economic collapse. They note that the Five-Year Plan does not have a line item for global economic collapse.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "economic": 0.15
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "wait_it_out",
+          "tickLimit": 36
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "eu_dissolution",
+      "name": "European Sphere Fractures",
+      "timelineId": "world",
+      "order": 76.2,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2140
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "corporate_sovereignty"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.1,
+          "tradeAccess": -0.1
+        },
+        "pressureModifiers": {
+          "political": 0.05,
+          "economic": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "EUROPEAN SPHERE DISSOLVES INTO THREE SUB-ENTITIES: Nordic, Mediterranean, and Central Governance Zones Established",
+          "toast": "The European governance sphere — the last entity that resembled a continental federation — has fractured along its oldest fault lines. The Nordic states formed a technocratic bloc. The Mediterranean states reverted to city-state networks. Central Europe defaulted to corporate administration. Borders are back, but they are drawn by shareholders, not diplomats. The Pravda editorial notes that European unity lasted exactly 188 years, which is 72 years less than the Soviet Union.",
+          "description": "The European project, which survived the Soviet Union's persistence as a unified governance sphere for nearly two centuries, finally fragments. The causes are structural: no shared fiscal authority, no common language of administration, no institutional memory deep enough to override regional identity. The Nordic Technocratic League prioritizes AI governance and social engineering. The Mediterranean Free Cities return to a model last seen in the 14th century. Central Europe becomes a patchwork of corporate administrative zones. For the Soviet settlement, this means three separate trade negotiations where one used to suffice, and three separate sets of regulations for imported medical supplies."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "religious_renaissance",
+      "name": "The Religious Renaissance",
+      "timelineId": "world",
+      "order": 76.3,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2170
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "eu_dissolution"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.15,
+          "ideologyRigidity": 0.1
+        },
+        "pressureModifiers": {
+          "political": 0.1,
+          "loyalty": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "FUNDAMENTALIST MOVEMENTS SWEEP WESTERN GOVERNANCE ZONES: Moscow Issues Warning Against 'Mystical Deviation'",
+          "toast": "In the vacuum left by collapsed nation-states and corporate governance failures, organized religion has returned with force. Neo-Orthodox movements in the Mediterranean, techno-Protestantism in the Nordic sphere, syncretic faith-corporations in Central Europe. 250 years of secularization reversed in a generation. Moscow, which officially eliminated religion in 1927, issues a memorandum reminding all settlements that 'superstitious activity remains incompatible with scientific materialism.' The settlement's underground chapel has been operating since 1943. Nobody mentions this.",
+          "description": "Turchin's structural-demographic theory predicts religious revival during periods of elite overproduction and institutional decay — people seek meaning when material systems fail. The pattern repeats: Rome's crisis of the 3rd century produced Christianity's explosive growth; the Black Death produced both flagellant movements and the Reformation's seeds; the Soviet collapse of the 1990s produced an Orthodox revival. Now, as corporate governance fails to provide identity or purpose, religious movements fill the void. The Soviet system's enforced atheism has kept this pressure contained domestically — but containment is not elimination, and 250 years of suppression has produced a faith that is deep, quiet, and patient."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "siberian_exodus_wave",
+      "name": "The Siberian Exodus",
+      "timelineId": "world",
+      "order": 76.4,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2190
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.5
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "climateTrend": 0.05
+        },
+        "pressureModifiers": {
+          "demographic": 0.2,
+          "infrastructure": 0.15,
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "POPULATION REDISTRIBUTION DIRECTIVE ISSUED: Southern Siberian Settlements Ordered to Relocate Northward",
+          "toast": "The southern Siberian steppe is becoming desert. Temperatures exceeding 45°C for 60 consecutive days have made agriculture impossible south of the 58th parallel. 12 million people must move north. The settlement is in the path of the migration.",
+          "scene": "The migration column arrives on a Tuesday.\n\nYou see them from the watchtower first — a line of vehicles, carts, and people on foot stretching to the horizon along the northern road. The Ministry of Population Redistribution has been issuing relocation directives for three years, but directives are paper and this is 40,000 people who need food, shelter, and something to do.\n\nThe column's commissar presents his credentials and a folder of transfer documents. The documents assign 8,000 of these people to your settlement. Your settlement has housing for 200 additional residents. The commissar is aware of this discrepancy. He is also aware that his column has 32,000 people still to place and seven more settlements on his list, none of which have adequate housing either.\n\n'The directive is clear, Comrade Chairman,' he says. 'These citizens are to be absorbed into existing settlement infrastructure. The Ministry acknowledges that temporary housing challenges may arise.' He pauses. 'I recommend tents.'\n\nYour deputy has calculated the food requirements. They exceed your current surplus by 400%.",
+          "choices": [
+            {
+              "id": "accept_full_quota",
+              "label": "Accept the full 8,000 — honor the directive",
+              "description": "Take all assigned refugees. Strain every resource. Build emergency housing. This is what the system demands.",
+              "successChance": 0.5,
+              "onSuccess": {
+                "announcement": "The settlement expands by 8,000 in six months. Emergency housing is built from salvaged materials. Food rationing drops to subsistence levels. Three workers die from overwork during construction. But the settlement holds. Moscow commends your compliance. The new residents, traumatized and grateful, prove to be hard workers. Within two years, the settlement's productive capacity has doubled. The pain was real. The growth is also real.",
+                "severity": "critical",
+                "resources": {
+                  "population": 8000,
+                  "food": -500,
+                  "money": -200
+                },
+                "commendations": 1,
+                "pressureModifiers": {
+                  "health": 0.2,
+                  "morale": 0.15
+                }
+              },
+              "onFailure": {
+                "announcement": "The settlement cannot absorb 8,000 people. Food runs out in month three. A typhoid outbreak spreads through the tent city. 340 people die before Moscow sends emergency supplies. The commissar files a report blaming 'inadequate local preparation.' You file a report blaming 'unrealistic allocation quotas.' Both reports are accurate. Both are filed. Neither changes anything.",
+                "severity": "evacuation",
+                "resources": {
+                  "population": 7660,
+                  "food": -800,
+                  "money": -300
+                },
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "health": 0.35,
+                  "morale": 0.25,
+                  "political": 0.15
+                }
+              }
+            },
+            {
+              "id": "negotiate_reduction",
+              "label": "Negotiate down — accept 3,000, redirect the rest",
+              "description": "Present capacity data to the commissar. Accept what you can handle. Redirect the remainder to other settlements. Bureaucratically defensible but politically risky.",
+              "successChance": 0.65,
+              "onSuccess": {
+                "announcement": "The commissar reviews your capacity data and agrees to reduce the allocation to 3,000. The remainder are redirected to two settlements further north. Your settlement absorbs the newcomers with difficulty but without catastrophe. Food rationing is tight but survivable. The commissar notes your 'pragmatic approach to resource management' in his report. This is neither praise nor criticism — it is the most Soviet of all possible assessments.",
+                "severity": "warning",
+                "resources": {
+                  "population": 3000,
+                  "food": -200,
+                  "money": -80
+                },
+                "blat": 10
+              },
+              "onFailure": {
+                "announcement": "The commissar rejects your capacity data. 'The directive is not a negotiation, Comrade Chairman.' The full 8,000 are assigned. You have additionally earned a black mark for 'attempted deviation from Population Redistribution Directive 7-R.' The refugees arrive anyway. You manage, because there is no alternative.",
+                "severity": "critical",
+                "resources": {
+                  "population": 8000,
+                  "food": -500,
+                  "money": -200
+                },
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "health": 0.2,
+                  "morale": 0.2
+                }
+              }
+            },
+            {
+              "id": "divert_column",
+              "label": "Misdirect the column — falsify settlement coordinates",
+              "description": "Report your settlement as 'temporarily inaccessible due to infrastructure failure.' The column moves on. This is a lie and will be discovered.",
+              "successChance": 0.3,
+              "onSuccess": {
+                "announcement": "The column bypasses your settlement. The commissar radios his confusion to Moscow. Moscow radios you. You explain that the access road collapsed due to permafrost thaw. Moscow accepts this — permafrost collapse is credible in 2190. The column is redistributed among other settlements. You have saved your settlement at the cost of burdening others. The road, which is fine, is now officially collapsed. You assign a work crew to make it look collapsed, just in case.",
+                "severity": "warning",
+                "blat": 15
+              },
+              "onFailure": {
+                "announcement": "The column's commissar checks satellite imagery. Your access road is clearly intact. He radios Moscow. Moscow radios you. The conversation is brief and unpleasant. The column is redirected to your settlement with an additional 2,000 people from the original allocation as 'administrative penalty for false reporting.' You now have 10,000 refugees. The KGB opens a file. Your deputy says nothing, which is the loudest thing he has ever said.",
+                "severity": "evacuation",
+                "resources": {
+                  "population": 10000,
+                  "food": -600,
+                  "money": -250
+                },
+                "blackMarks": 3,
+                "pressureModifiers": {
+                  "political": 0.3,
+                  "health": 0.25,
+                  "morale": 0.2
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "negotiate_reduction",
+          "tickLimit": 24
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "eurasian_consolidation",
+      "name": "Eurasian Consolidation",
+      "timelineId": "world",
+      "order": 79.5,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2260
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "eu_dissolution"
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "sphere_collapse"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "tradeAccess": 0.2,
+          "globalTension": -0.1
+        },
+        "pressureModifiers": {
+          "economic": -0.15,
+          "political": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "EURASIAN BLOC FORMALIZED: Weakened Neighboring States Absorbed Into Soviet Administrative Framework",
+          "toast": "With the European sphere fractured and corporate governance failing across Central Asia, Russia has absorbed its weakened neighbors into a unified Eurasian administrative bloc. The Central Asian republics, the Caucasus governance zones, and fragments of the former Central European sphere have been integrated under Moscow's planning commission. The Soviet Union is, for the first time in its history, larger than the Russian Empire at its peak. The paperwork for administering this territory has increased by 340%.",
+          "description": "The vacuum left by collapsing corporate governance and fragmenting nation-states creates an opportunity that the Soviet system is uniquely positioned to exploit. Central planning, for all its inefficiencies, provides something the corporate zones cannot: institutional continuity and administrative infrastructure. The neighboring territories do not join willingly — they join because the alternative is no governance at all. Russia absorbs them not through conquest but through the simple fact of still existing when everything else has stopped. The settlement benefits from expanded trade networks and resource access. The settlement also receives 340% more forms to fill out."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "quota_singularity",
+      "name": "The Quota Singularity",
+      "timelineId": "world",
+      "order": 77,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2150
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "ideology_divorce"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "centralPlanningEfficiency": -0.15
+        },
+        "pressureModifiers": {
+          "economic": 0.1,
+          "political": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "FIVE-YEAR PLAN ENTERS 47TH ITERATION: PLANNING COMMISSION CANNOT LOCATE ORIGINAL OBJECTIVES",
+          "toast": "The 5-year plan has been running so long that the original goals are lost. The current quota is to meet the quota that was set to meet the quota before it. The system plans to plan.",
+          "scene": "The directive arrives in triplicate, as they always do. But today the deputy reads it aloud and then reads it again, and then sets it down on the desk and stares at it.\n\n'Comrade Chairman,' he says. 'This quarter's production quota is based on last quarter's quota, which was based on the quarter before that, which was—'\n\n'Based on the quarter before that,' you finish.\n\n'I traced it back,' the deputy says. He has that look — the one that means he spent three nights in the archive. 'I traced the quota lineage back 47 iterations. Two hundred and thirty-five years of consecutive plan cycles. The original planning document — the one that established what we were actually supposed to produce and why — was filed in 1932. It was a directive about timber processing for the construction of a railway that was completed in 1941 and decommissioned in 1978.'\n\nYou both look at the quota. It calls for a 3% increase in timber processing. The railway has not existed for 172 years. The timber is processed, logged, reported, and filed. It goes nowhere. It serves no purpose except the continuation of the quota that requires its production.\n\nThe system has achieved something remarkable: a perfectly self-referential economic loop. The quota justifies the labor. The labor produces the output. The output meets the quota. The quota is renewed. Nowhere in this cycle does the question 'why' have a place to attach.\n\nYou must decide what to do with this information.",
+          "choices": [
+            {
+              "id": "maintain_the_loop",
+              "label": "Continue the quota — the loop is the system",
+              "description": "The quota exists. Therefore it must be met. Questioning the loop is questioning the system itself. File the deputy's research and carry on.",
+              "successChance": 1.0,
+              "onSuccess": {
+                "announcement": "The quota is met. The timber is processed. The report is filed. The deputy's research is placed in a folder labeled 'Historical Administrative Curiosities' and archived. The loop continues. You note, privately, that the system has achieved a kind of immortality: it no longer needs a reason to exist. It simply does. This is either terrifying or comforting, depending on the hour.",
+                "severity": "warning",
+                "blat": 5
+              },
+              "onFailure": {
+                "announcement": "The quota continues.",
+                "severity": "warning"
+              }
+            },
+            {
+              "id": "petition_for_review",
+              "label": "Submit a formal petition to review the quota's origins",
+              "description": "Request that Moscow's Planning Commission audit the directive chain. Bureaucratically correct but draws attention.",
+              "successChance": 0.4,
+              "onSuccess": {
+                "announcement": "The petition reaches a mid-level planning analyst who, it turns out, has been compiling similar reports from 340 other settlements. A quiet review is initiated. Six months later, 12% of active quotas are 'recalibrated to reflect contemporary productive objectives.' Your timber quota is replaced with a materials recycling target. The deputy is briefly celebrated in planning circles as 'the one who noticed.' He finds this attention uncomfortable.",
+                "severity": "warning",
+                "resources": {
+                  "money": 40
+                },
+                "commendations": 1,
+                "pressureModifiers": {
+                  "economic": -0.05
+                }
+              },
+              "onFailure": {
+                "announcement": "The petition is returned with a stamp: 'Quota review requests must be submitted through the Quota Review Request Quota process, as established in Directive 7-B of the 34th Plan Cycle.' The quota for requesting quota reviews requires approval from the office that issued the original quota. Which no longer exists. The deputy laughs for the first time in three years. It is not a happy laugh.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.1
+                }
+              }
+            },
+            {
+              "id": "repurpose_quietly",
+              "label": "Keep reporting timber — actually produce something useful",
+              "description": "File the quota reports as always, but redirect the labor to something the settlement actually needs. Creative accounting at its most Soviet.",
+              "successChance": 0.7,
+              "onSuccess": {
+                "announcement": "The timber quota is met on paper. In reality, the workers now produce construction materials for settlement maintenance. The reports are identical. The output is different. Nobody in Moscow has inspected the actual production in 80 years. The gap between documentation and reality widens by exactly one quota, which is to say: the gap remains the same size it has always been.",
+                "severity": "warning",
+                "resources": {
+                  "money": 30
+                },
+                "blat": 10
+              },
+              "onFailure": {
+                "announcement": "An automated audit system — one of the AI Gosplan subsystems — cross-references your production reports against satellite imagery. The imagery shows no timber processing facility. A discrepancy flag is raised. The investigation is impersonal and thorough: the machine does not accept creative explanations. Two black marks. The quota is reinstated. The timber must flow.",
+                "severity": "critical",
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.2,
+                  "economic": 0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "maintain_the_loop",
+          "tickLimit": 36
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "carbon_thaw",
+      "name": "The Carbon Thaw",
+      "timelineId": "world",
+      "order": 78,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2200
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.5
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "climateTrend": 0.15
+        },
+        "pressureModifiers": {
+          "infrastructure": 0.3,
+          "health": 0.15,
+          "economic": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "MINISTRY OF PERMAFROST AFFAIRS DISSOLVED: PERMAFROST NO LONGER EXISTS TO ADMINISTER",
+          "toast": "The permafrost is gone. All of it. 11 million square kilometers of frozen ground have thawed. The methane release has accelerated warming past all models. Infrastructure built on frozen foundations is collapsing across Siberia. The Ministry of Permafrost Affairs has been dissolved — not because the problem was solved, but because the thing it was named for no longer exists.",
+          "description": "The permafrost thaw reaches completion by 2200. The carbon feedback loop — thawing releases methane, methane warms the atmosphere, warming thaws more permafrost — has run to its end state. 1,400 gigatons of carbon released over 175 years. The landscape is unrecognizable: what was tundra is now bog, swamp, and unstable ground. Every building, pipeline, and road built on permafrost foundations has been damaged or destroyed. The Soviet system, which built much of its industrial infrastructure in Siberia, faces its greatest engineering crisis."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "sphere_collapse",
+      "name": "The Last Nation-State Dissolves",
+      "timelineId": "world",
+      "order": 79,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2250
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "neofeudal_transition"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": -0.1,
+          "ideologyRigidity": 0.1
+        },
+        "pressureModifiers": {
+          "political": 0.1,
+          "loyalty": -0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "FINAL CAPITALIST NATION-STATE DISSOLVED: RUSSIA STANDS ALONE AS LAST SOVEREIGN ENTITY ON EARTH",
+          "toast": "The Republic of Switzerland — the last recognizable nation-state outside the Soviet sphere — has been absorbed by a consortium of corporate governance entities. Russia is now the only sovereign state on Earth. The Politburo is unsure whether this represents victory or the most complete form of isolation ever achieved.",
+          "description": "The Westphalian order (1648-2250) is dead. Every other nation-state has dissolved into corporate governance zones, theocratic collectives, or algorithmic management territories. The Soviet Union — the system that was supposed to replace capitalism — has instead outlasted it, but not in the way anyone predicted. It persists not as an ideological alternative but as an institutional fossil: the last place where a human government issues directives and expects obedience. The irony is total. The system built to destroy the state is the last state standing."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "permanent_revolution_anniversary",
+      "name": "383rd Anniversary of the October Revolution",
+      "timelineId": "world",
+      "order": 117,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2300
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "forgotten_origin"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.05,
+          "morale": -0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "383RD ANNIVERSARY OF GREAT OCTOBER REVOLUTION: CELEBRATION ATTENDANCE MANDATORY PER DIRECTIVE 11-R",
+          "toast": "383 years. The celebration has been mandatory for so long that the mandate itself requires a celebration. A commission has been formed to determine which metric to report to Moscow as evidence of revolutionary enthusiasm.",
+          "scene": "The directive arrives 47 days before the anniversary, which is 47 days more notice than usual. Someone in Moscow is organized this year.\n\nComrade Chairman, by order of the Central Commemorative Affairs Bureau, all settlements are required to submit a report demonstrating 'measurable revolutionary enthusiasm' for the 383rd Anniversary of the Great October Socialist Revolution. The report must include at least one quantifiable metric.\n\nYour deputy has prepared three options. Each is absurd. Each is also, in its way, accurate.\n\nThe first option: report the number of red banners per capita. Your settlement has 4.7 red banners per citizen, which is above the national average of 3.2. This is because the banner factory met its quota in 1987 and never stopped.\n\nThe second option: report the average length of standing ovation at the mandatory anniversary speech. Last year's was 14 minutes. The year before was 12. The trajectory is positive. No one knows what happens if the ovation exceeds the length of the speech itself, but this mathematical eventuality is approximately 30 years away.\n\nThe third option: report the number of children named after revolutionary heroes. This figure has been declining since 2180. Your deputy notes that 'Vladimir' has been replaced by names that are, technically, still Russian but have drifted far enough from their origins to be unrecognizable. He does not recommend this metric.",
+          "choices": [
+            {
+              "id": "banners_per_capita",
+              "label": "Report red banners per capita — 4.7, above average",
+              "description": "A safe, meaningless metric that Moscow can aggregate into a report. The system feeds on these.",
+              "successChance": 0.95,
+              "onSuccess": {
+                "announcement": "Moscow receives the banner report with a form letter of acknowledgment. Your settlement's 4.7 banners per capita is cited in a regional summary as 'evidence of sustained ideological infrastructure.' The banner factory requests a quota increase. You approve it. The banners have nowhere to go. They are stored in the same warehouse as last year's banners. The warehouse is full.",
+                "severity": "warning",
+                "blat": 3
+              },
+              "onFailure": {
+                "announcement": "A statistical analyst notes that your banner count has not increased in three years. A stagnant metric is worse than a declining one — it suggests you are not trying. A review is scheduled.",
+                "severity": "warning",
+                "blackMarks": 1
+              }
+            },
+            {
+              "id": "ovation_length",
+              "label": "Report standing ovation duration — 14 minutes, trending upward",
+              "description": "An escalating metric that guarantees future problems. But for now, the trajectory is excellent.",
+              "successChance": 0.85,
+              "onSuccess": {
+                "announcement": "Moscow is pleased with the ovation trajectory. A commendation is issued for 'sustained growth in revolutionary engagement metrics.' Your deputy calculates that at current growth rates, the ovation will exceed the speech by 2330. He suggests you will be retired by then. You are not certain this is true, given longevity treatments.",
+                "severity": "warning",
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "A visiting commissar attended this year's speech and timed the ovation independently. His measurement: 11 minutes, 40 seconds. Your report claimed 14 minutes. The discrepancy is noted. You explain that your timekeeper uses a different standard. This explanation is accepted but not believed.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.1
+                }
+              }
+            },
+            {
+              "id": "honest_decline",
+              "label": "Report naming trends honestly — acknowledge the decline",
+              "description": "Submit accurate data showing declining revolutionary name usage. An act of statistical honesty with predictable consequences.",
+              "successChance": 0.3,
+              "onSuccess": {
+                "announcement": "Your honest report is read by a demographer in the Central Bureau who has been waiting for exactly this data. A quiet study is commissioned on 'nominal drift in post-millennial Soviet populations.' You are cited as a source. The study is classified. You receive no commendation but also no punishment, which in this context is its own form of commendation.",
+                "severity": "warning",
+                "commendations": 1,
+                "pressureModifiers": {
+                  "political": -0.05
+                }
+              },
+              "onFailure": {
+                "announcement": "The naming data is interpreted as 'evidence of ideological erosion in settlement cultural programming.' A Cultural Renewal Commission is dispatched. They spend three weeks interviewing parents about their naming choices. The parents are bewildered. The commission files a report recommending 'intensified revolutionary nomenclature education.' A pamphlet is printed. Nobody reads it.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.15,
+                  "morale": 0.05
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "banners_per_capita",
+          "tickLimit": 48
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "algorithmic_commissioner",
+      "name": "The Algorithmic Commissioner",
+      "timelineId": "world",
+      "order": 118,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2350
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "ai_gosplan"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "centralPlanningEfficiency": 0.1
+        },
+        "pressureModifiers": {
+          "political": 0.2,
+          "economic": -0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "COMMISSAR REPLACED BY ALGORITHMIC GOVERNANCE MODULE: QUOTAS NOW ARRIVE FROM ENTITY THAT CANNOT BE BRIBED",
+          "toast": "Moscow has replaced the human commissar with an AI planning module. Quotas arrive with mathematical precision. Appeals are processed by a system that understands every argument and is moved by none of them. The human art of negotiation, bribery, and personal appeal — the chairman's primary survival tools — no longer applies.",
+          "description": "The AI Gosplan, first prototyped in 2035, has matured into a system that makes the human commissariat redundant. The algorithmic commissioner cannot be reasoned with, bribed, intimidated, or charmed. It processes quota appeals against 4.7 million data points and responds within 3 seconds. Its decisions are optimal by every measurable metric. They are also inhuman in a way that makes the old human commissars seem warmly corrupt by comparison. The predsedatel's entire survival toolkit — the blat network, the personal connections, the carefully calibrated flattery — is now useless against an entity that has no ego to flatter."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "linguistic_drift",
+      "name": "The Dialect Schism",
+      "timelineId": "world",
+      "order": 119,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2400
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "sphere_collapse"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.1,
+          "loyalty": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "MINISTRY OF LINGUISTIC COMPLIANCE ISSUES EMERGENCY DIRECTIVE: SETTLEMENT DIALECTS REQUIRE OFFICIAL TRANSLATION",
+          "toast": "The workers' dialect has evolved so far from standard Russian that official communications require translation. Moscow's directives arrive in a language the settlement technically speaks but no longer fully understands. Forms are filled out in two languages — both Russian, neither the same Russian.",
+          "scene": "The quarterly directive from Moscow arrives and is posted, as always, in the settlement hall.\n\nA worker reads it. Then reads it again. Then brings it to you.\n\n'Comrade Chairman, what does this word mean?'\n\nYou look at the word. It is Russian. It is grammatically correct. You have seen it before, in old documents. But when you try to explain it, you realize you are translating — from Russian to Russian.\n\nThe settlement's dialect has been drifting for 300 years. Isolated, interbreeding with technical jargon, absorbing fragments of old Finnish and Tatar from the substrate population, inventing new words for things that didn't exist when the language was standardized. The workers speak to each other fluently. They speak to Moscow with difficulty. Moscow speaks to them in a Russian that is equally alien — the language of the capital has drifted in its own direction, absorbing the formal jargon of algorithmic governance.\n\nTwo Russians. One country. Neither side can fully parse the other's paperwork.\n\nMoscow's response is predictable: a Ministry of Linguistic Compliance has been established. Standardization is mandatory. But which Russian is standard? Moscow's, naturally. Your workers will need to learn to speak the language of people they have never met, to fill out forms designed by an AI they cannot argue with, in a dialect that no one in the settlement uses in daily life.",
+          "choices": [
+            {
+              "id": "enforce_standard",
+              "label": "Enforce Moscow standard — mandatory language classes",
+              "description": "Comply with the directive. Workers attend language standardization classes. Production suffers during the transition.",
+              "successChance": 0.8,
+              "onSuccess": {
+                "announcement": "Language classes begin. Workers attend dutifully and learn to code-switch between settlement dialect and Moscow standard. Forms are now filled out correctly. Workers speak Moscow Russian at work and settlement Russian at home. The settlement becomes bilingual within a single language. The Ministry of Linguistic Compliance issues a commendation. The workers do not understand the commendation without translation.",
+                "severity": "warning",
+                "resources": {
+                  "money": -40
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "The language classes are poorly attended. Workers see no reason to learn a dialect they consider artificial and bureaucratic. Test scores remain low. The Ministry sends an inspector who cannot understand the workers and assumes they are being deliberately uncooperative. Diplomatic relations between the settlement and Moscow deteriorate over grammar.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "resources": {
+                  "money": -60
+                },
+                "pressureModifiers": {
+                  "political": 0.15,
+                  "morale": 0.1
+                }
+              }
+            },
+            {
+              "id": "accept_evolution",
+              "label": "Accept linguistic evolution — provide translators instead",
+              "description": "Language changes. Fight the change with accommodation, not enforcement. Hire translators for official communications.",
+              "successChance": 0.5,
+              "onSuccess": {
+                "announcement": "The translation office is established with three workers who are fluent in both dialects. Official communications flow smoothly. Moscow is unaware of the accommodation — the translated forms arrive in perfect Moscow standard. The settlement's dialect continues to evolve, undisturbed. You have created a buffer zone between the system's language and the people's language. This is, you realize, what you have always done.",
+                "severity": "warning",
+                "resources": {
+                  "money": -25
+                },
+                "blat": 10
+              },
+              "onFailure": {
+                "announcement": "Moscow discovers the translation arrangement during a routine audit. The existence of translators implies the settlement does not speak standard Russian, which implies deviation from cultural norms, which implies insufficient ideological education. The Ministry of Linguistic Compliance escalates. The translators are reassigned. The language classes are mandated anyway, now with additional oversight.",
+                "severity": "critical",
+                "blackMarks": 2,
+                "resources": {
+                  "money": -50
+                },
+                "pressureModifiers": {
+                  "political": 0.2
+                }
+              }
+            },
+            {
+              "id": "document_dialect",
+              "label": "Commission a settlement dictionary — preserve the dialect as heritage",
+              "description": "Scholarly approach: document the dialect formally. Treat it as a linguistic research subject. Politically ambiguous.",
+              "successChance": 0.6,
+              "onSuccess": {
+                "announcement": "The settlement dictionary grows to 8,400 entries over two years. It is published by the Institute of Soviet Linguistics as 'Dialectal Variation in Remote Settlements: A Case Study.' The dictionary becomes a minor academic sensation. Your settlement is now a research site. Visiting linguists are easier to manage than visiting commissars. The dialect persists, now with official documentation.",
+                "severity": "warning",
+                "commendations": 1,
+                "blat": 5,
+                "resources": {
+                  "money": -15
+                }
+              },
+              "onFailure": {
+                "announcement": "The dictionary project is classified as 'unauthorized documentation of non-standard linguistic practices.' The manuscript is confiscated. The lead compiler — a retired teacher — is formally reprimanded. You receive a memo noting that 'linguistic diversity is not a research subject but an administrative deficiency.' The dialect, of course, continues regardless.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "enforce_standard",
+          "tickLimit": 48
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "deep_time_recognition",
+      "name": "Deep Time Recognition",
+      "timelineId": "world",
+      "order": 120,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2500
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "forgotten_origin"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.1
+        },
+        "pressureModifiers": {
+          "political": -0.1,
+          "morale": -0.05
+        },
+        "unlocks": [
+          "geological_timescale"
+        ],
+        "narrative": {
+          "pravdaHeadline": "SETTLEMENT SURPASSES ROMAN EMPIRE IN DURATION: 583 YEARS OF UNBROKEN ADMINISTRATIVE CONTINUITY",
+          "toast": "The settlement is now older than the Roman Empire (509 BC - 476 AD). Older than the Ottoman Empire. Older than the Chinese dynasties. The system has outlasted everything it was compared to, every historical analogy that was used to predict its collapse. The bureaucracy endures not because it is strong but because it has forgotten how to stop.",
+          "description": "At 583 years, the Soviet system has surpassed the duration of virtually every historical empire and political system. The Roman Republic and Empire lasted ~1,000 years in total, but the Western Empire fell after 503 years. The Ottoman Empire lasted 623 years. The Byzantine Empire, 1,123 years — the one historical parallel the system has not yet surpassed. The settlement now exists on a geological timescale: its foundations are older than the trees around it, its bureaucratic traditions more persistent than the soil. The transition to deep-time thinking begins: decisions are no longer measured in five-year plans but in centuries."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "second_turchin_crisis",
+      "name": "Second Turchin Crisis Wave",
+      "timelineId": "world",
+      "order": 121,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2120
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "first_turchin_wave"
+            }
+          },
+          {
+            "pressure": {
+              "domain": "political",
+              "min": 0.35
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.25,
+          "loyalty": 0.15,
+          "morale": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "STRUCTURAL RENEWAL CAMPAIGN INTENSIFIED: Second Generation of Administrative Reform Required",
+          "toast": "Turchin's 50-year oscillation manifests again. A second wave of elite overproduction collides with institutional ossification. The nomenklatura, now biologically immortal thanks to longevity treatments, has not opened a position in 40 years. An entire generation of educated, ambitious cadres has nowhere to go. The pressure builds in familiar patterns.",
+          "description": "Peter Turchin's structural-demographic cycles predict recurring instability waves every ~50 years. The second wave, hitting around 2120, is worse than the first because longevity treatments have frozen the elite hierarchy in place. In previous cycles, death eventually opened positions. Now it doesn't. The system's self-correcting mechanism — generational turnover — has been disabled by the system's own technological achievements."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "bureaucratic_speciation",
+      "name": "The Two Bureaucracies",
+      "timelineId": "world",
+      "order": 122,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2450
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "algorithmic_commissioner"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "centralPlanningEfficiency": -0.1
+        },
+        "pressureModifiers": {
+          "political": 0.15,
+          "economic": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "PARALLEL ADMINISTRATIVE STRUCTURES DETECTED: HUMAN AND ALGORITHMIC BUREAUCRACIES OPERATING SIMULTANEOUSLY",
+          "toast": "Two bureaucracies now exist in parallel: the algorithmic system that Moscow intended to replace the old apparatus, and the human apparatus that never actually disbanded. They issue contradictory directives. Workers receive two sets of quotas. The settlement obeys whichever set arrived most recently, which changes weekly.",
+          "description": "The inevitable consequence of replacing human bureaucrats with algorithmic systems: the humans do not leave. They form a shadow bureaucracy — issuing informal directives, maintaining personal networks, processing favors through channels the algorithm cannot see. The settlement now operates under dual governance: one system that is optimal and inhuman, one that is inefficient and navigable. The predsedatel must satisfy both. The paperwork has doubled. The contradictions have tripled. Kafka would recognize this immediately. So would any Soviet citizen from any century."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "language_divergence",
+      "name": "First Language Divergence Crisis",
+      "timelineId": "world",
+      "order": 80,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 3000
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "space",
+              "milestoneId": "exoplanet_colony"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.15,
+          "loyalty": 0.2
+        },
+        "narrative": {
+          "pravdaHeadline": "LINGUISTIC STANDARDIZATION DIRECTIVE: Administrative Language Divergence Detected",
+          "toast": "1,000+ years since standardization. Peripheral settlements speak what is technically still Russian but is unintelligible to central administrators. The filing system requires translation. The Ministry of Linguistic Compliance has been established.",
+          "description": "Languages diverge over millennia. Old English (1,000 years ago) is incomprehensible to modern English speakers. Russian will undergo similar transformation over 1,000+ years, especially in isolated space settlements. The Soviet system's centralized administration depends on common language. When language fragments, the bureaucracy fragments."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "speciation_divergence",
+      "name": "First Speciation Divergence Detected",
+      "timelineId": "world",
+      "order": 85,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 5000
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "space",
+              "milestoneId": "exoplanet_colony"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 24,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.2,
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "GENETIC STANDARDIZATION PROGRAM PROPOSED: Population Divergence Within Acceptable Parameters",
+          "toast": "3,000+ years of isolation between Earth, Mars, Jupiter moons, and generation ships. Genetic drift, different gravity, different radiation environments. Medical examinations reveal subspecies-level divergence. Are they still Soviet citizens? The Constitution has no provision for this.",
+          "description": "Baxter's 'Evolution' traces speciation over 600 million years, but in isolated environments with different selection pressures (gravity, radiation, atmospheric composition), detectable divergence occurs in thousands of years. Mars colonists in 0.38g develop different bone density, muscle mass, and cardiovascular systems. Titan colonists in 0.14g diverge further. Within 5,000 years, reproductive isolation may begin. The Soviet system — which defines citizenship by paperwork, not biology — faces an unprecedented constitutional crisis."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "deep_turchin_crisis",
+      "name": "Deep Turchin Secular Cycle Crisis",
+      "timelineId": "world",
+      "order": 90,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 9000
+            }
+          },
+          {
+            "pressure": {
+              "domain": "political",
+              "min": 0.6
+            }
+          },
+          {
+            "pressure": {
+              "domain": "economic",
+              "min": 0.5
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 48,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.3,
+          "economic": 0.25,
+          "loyalty": 0.2,
+          "morale": 0.2
+        },
+        "narrative": {
+          "pravdaHeadline": "STRUCTURAL REFORM REQUIRED: Multiple Simultaneous Pressure Crises Demand Institutional Response",
+          "toast": "Multiple overlapping secular cycles — Turchin demographic, Khaldun asabiyyah, Kondratiev economic — synchronize into a compound crisis. This is what destroyed the Bronze Age civilizations in 1177 BCE. The system must either radically simplify or collapse entirely.",
+          "description": "Eric Cline's '1177 B.C.' describes the Bronze Age Collapse as a cascade of simultaneous, interconnected crises: drought, famine, migration, trade collapse, and political instability hitting multiple civilizations at once. Turchin's model predicts these synchronized crises — multiple cycles with different periods occasionally phase-lock into compound disasters. The deep game discovers these organically."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "bronze_age_analog",
+      "name": "Bronze Age Collapse Analog",
+      "timelineId": "world",
+      "order": 95,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 50000
+            }
+          },
+          {
+            "pressure": {
+              "domain": "political",
+              "min": 0.7
+            }
+          },
+          {
+            "pressure": {
+              "domain": "economic",
+              "min": 0.7
+            }
+          },
+          {
+            "pressure": {
+              "domain": "infrastructure",
+              "min": 0.6
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 60,
+      "effects": {
+        "pressureModifiers": {
+          "political": 0.4,
+          "economic": 0.35,
+          "infrastructure": 0.3,
+          "morale": 0.3,
+          "loyalty": 0.25
+        },
+        "narrative": {
+          "pravdaHeadline": "EMERGENCY MEASURES: Cascading Multi-Settlement Failure Requires Unprecedented Intervention",
+          "toast": "The Bronze Age Collapse repeats at interstellar scale. Communication networks fail. Trade routes collapse. Multiple settlements go dark simultaneously. The center cannot hold — but the filing system persists.",
+          "description": "Jared Diamond's five factors of societal collapse: environmental damage, climate change, hostile neighbors, friendly trade partners withdrawing, and society's response to problems. By 50,000 years, all five factors simultaneously pressure the system. Some settlements are lost. Survivors must rebuild from radically simplified institutions. This is the deep game's ultimate test."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "geomagnetic_reversal",
+      "name": "Geomagnetic Field Reversal",
+      "timelineId": "world",
+      "order": 100,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 100000
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 120,
+      "effects": {
+        "pressureModifiers": {
+          "health": 0.2,
+          "infrastructure": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "GEOMAGNETIC TRANSITION EVENT: 22,000-Year Field Reversal Begins",
+          "toast": "Earth's magnetic field has begun reversal. During the 22,000-year transition, surface radiation increases significantly. All surface operations require additional shielding. The Five-Year Radiation Compliance Plan does not quite cover the timeframe.",
+          "description": "Geomagnetic reversals occur on average every 450,000 years. The transition takes ~22,000 years during which the field weakens and becomes chaotic. Surface radiation increases, affecting electronics, health, and agriculture. Baxter's deep-time fiction depicts these as civilizational challenges — not catastrophes, but persistent stressors that require infrastructure adaptation over millennia."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "entropy_management",
+      "name": "Entropy Management Program",
+      "timelineId": "world",
+      "order": 110,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 500000
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "space",
+              "milestoneId": "kardashev_two"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 600,
+      "effects": {
+        "worldStateDeltas": {
+          "techLevel": 0.01
+        },
+        "unlocks": [
+          "entropy_engineering"
+        ],
+        "narrative": {
+          "pravdaHeadline": "FIVE-YEAR PLAN FOR ENTROPY MANAGEMENT: Ministry of Thermodynamic Compliance Established",
+          "toast": "The Politburo has reviewed the latest reports on universal entropy. Entropy production is ahead of schedule. All citizens are reminded that the Second Law of Thermodynamics applies equally to all, regardless of rank. Dyson's eternal intelligence program proceeds.",
+          "description": "Freeman Dyson (1979) proposed that intelligence could survive indefinitely by progressively slowing its thought processes as the universe cools. The Soviet system, which has now survived for 500,000+ years, faces its final challenge: can central planning defeat entropy? Russian cosmism provides the ideology — Fyodorov's imperative to resurrect the ancestors requires conquering entropy itself. The ultimate Five-Year Plan."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ancient_plague",
+      "name": "Ancient Pathogen — Permafrost Release",
+      "timelineId": "world",
+      "order": 92,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2055
+            }
+          },
+          {
+            "worldState": {
+              "key": "climateTrend",
+              "min": 0.5
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 24,
+      "effects": {
+        "pressureModifiers": {
+          "health": 0.25,
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "SCIENTIFIC EXPEDITION TO SIBERIAN PERMAFROST RETURNS — Workers showing 'unusual symptoms', settlement under observation",
+          "toast": "A burial mound has thawed. Something was sleeping inside it.",
+          "scene": "The dispatch arrives without ceremony, as all dispatches do.\n\nComrade Chairman, the geological survey team working the permafrost excavations at kilometer 47 have been isolated per standard procedure. Of the twelve workers who opened the primary burial mound — approximate age: 30,000 years — seven have developed symptoms that the settlement doctor describes as 'outside his training.'\n\nThe mound contained preserved organic material. The pathogen, if it is a pathogen, has no name in any medical catalog. The workers are not dying. They are becoming difficult to manage.\n\nMoscow has not been informed. You have approximately three days before they find out on their own.\n\nThe doctor's note at the bottom of the report, in smaller handwriting: 'It came back because we warmed the ground. It will spread because we breathe the same air. I recommend we discuss options before the options discuss us.'",
+          "choices": [
+            {
+              "id": "quarantine_ruthlessly",
+              "label": "Total quarantine — seal the district",
+              "description": "Lock down the affected zone completely. No movement in or out. Brutal but contains the spread. Workers lost.",
+              "successChance": 0.85,
+              "onSuccess": {
+                "announcement": "The quarantine holds. Seven workers are lost to the isolation. The pathogen does not spread. Moscow eventually notices the missing workers — you explain it as a mining accident. They note the discrepancy in the file. You breathe easier.",
+                "severity": "warning",
+                "resources": {
+                  "population": -7
+                },
+                "blackMarks": 1
+              },
+              "onFailure": {
+                "announcement": "The quarantine fails at the perimeter — three workers slipped through during the night shift. By morning, the entire sector is symptomatic. The isolation was not enough. Moscow has been notified automatically by the regional health bureau.",
+                "severity": "critical",
+                "resources": {
+                  "population": -20
+                },
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "health": 0.3,
+                  "political": 0.15
+                }
+              }
+            },
+            {
+              "id": "experimental_treatment",
+              "label": "Treat openly — request emergency medical supplies",
+              "description": "Report everything to Moscow. Request experimental antivirals. Transparent handling, but draws scrutiny.",
+              "successChance": 0.7,
+              "onSuccess": {
+                "announcement": "Moscow sends a medical team and antivirals. The pathogen responds to the treatment. You receive a commendation for 'prompt incident reporting' in your file. The medical team takes samples. You wonder what they will do with them.",
+                "severity": "warning",
+                "resources": {
+                  "money": -50
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "Moscow sends inspectors, not doctors. They decide the incident represents 'inadequate biosafety protocols under your management.' Treatment arrives three weeks late. Population losses are significant. The inspectors file their report.",
+                "severity": "critical",
+                "resources": {
+                  "population": -35,
+                  "money": -100
+                },
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.2
+                }
+              }
+            },
+            {
+              "id": "suppress_and_burn",
+              "label": "Suppress the report — burn the mound",
+              "description": "Destroy all evidence. Falsify records. The mound never existed. The workers died in a boiler accident.",
+              "successChance": 0.45,
+              "onSuccess": {
+                "announcement": "The records are altered. The mound is ash. Seven workers are reclassified as victims of a routine industrial accident. The night watchman is transferred. You note, in your private ledger, that 30,000 years of sleep was disturbed and then re-buried in fire. You hope that is sufficient.",
+                "severity": "warning",
+                "resources": {
+                  "population": -7
+                },
+                "blat": 10
+              },
+              "onFailure": {
+                "announcement": "The night watchman talked. Not to Moscow — to the workers. The story spreads. Within a week the regional health bureau has a full account. The KGB opens an investigation into the falsified records. The mound cannot be un-opened.",
+                "severity": "evacuation",
+                "blackMarks": 3,
+                "pressureModifiers": {
+                  "political": 0.3,
+                  "health": 0.2,
+                  "morale": 0.15
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "quarantine_ruthlessly",
+          "tickLimit": 36
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "corporate_lab_outbreak",
+      "name": "Corporate Containment Failure",
+      "timelineId": "world",
+      "order": 93,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2035
+            }
+          },
+          {
+            "worldState": {
+              "key": "centralPlanningEfficiency",
+              "max": 0.7
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": {
+          "health": 0.3,
+          "morale": 0.15,
+          "political": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "MULTINATIONAL BIORESEARCH CORPORATION REPORTS 'MINOR INCIDENT' — Settlement 400km from confirmed exposure zone",
+          "toast": "A pharmaceutical corporation's containment facility has failed. The pathogen spreads faster than reports.",
+          "scene": "The corporate incident report uses the word 'contained' eleven times in four paragraphs. This is how you know it is not contained.\n\nA multinational pharmaceutical research corporation — one of the entities that now governs more territory than most nation-states — has experienced a 'Grade 4 Biosafety Protocol Deviation' at their Siberian research facility. The pathogen is listed in their internal catalog as Compound 7-Rho. The public has not been given a name. The public has not been given anything.\n\nThe settlement is 400 kilometers from the nearest confirmed exposure zone. The wind is from the northwest. The workers on the northern perimeter reported unusual animal die-offs yesterday morning.\n\nThe corporation's communications office released a statement: 'We are working with international partners to resolve this situation. There is no cause for public concern.' They said the same thing about the Volga contamination in 2031. You remember 2031.\n\nYou have radio contact with two other settlements. Both are reporting symptoms.",
+          "choices": [
+            {
+              "id": "close_borders",
+              "label": "Seal settlement borders immediately",
+              "description": "Halt all incoming movement. Costly in trade and political standing, but contains exposure.",
+              "successChance": 0.75,
+              "onSuccess": {
+                "announcement": "The border closure holds the infection at the perimeter. Trade disruption lasts three months. Two settlements that remained open are now silent on the radio. You note this in your log without comment.",
+                "severity": "warning",
+                "resources": {
+                  "money": -80,
+                  "food": -30
+                }
+              },
+              "onFailure": {
+                "announcement": "A supply convoy arrived before the order reached the checkpoint. The driver was symptomatic but asymptomatic-presenting — the corporation's strain shows no fever in early phase. The settlement is now compromised from within.",
+                "severity": "critical",
+                "resources": {
+                  "population": -40
+                },
+                "pressureModifiers": {
+                  "health": 0.35,
+                  "morale": 0.2
+                }
+              }
+            },
+            {
+              "id": "contact_corporation",
+              "label": "Contact the corporation directly — demand treatment protocols",
+              "description": "The corporation has the antigen. Getting it requires negotiating with people who caused this.",
+              "successChance": 0.6,
+              "onSuccess": {
+                "announcement": "The corporation delivers treatment protocols in exchange for 'non-disclosure and data partnership agreement.' You sign what they put in front of you. The settlement is saved. The agreement grants them monitoring rights over settlement health data in perpetuity. You file this in the 'problems for a later time' cabinet.",
+                "severity": "warning",
+                "resources": {
+                  "money": -150
+                },
+                "blat": -15
+              },
+              "onFailure": {
+                "announcement": "The corporation's legal team responds first. They dispute liability. Treatment protocols are 'proprietary.' A second letter, from their security division, arrives the following day. By the time actual treatment arrives, 60 workers are dead. The corporation is not liable. This is in the agreement you signed.",
+                "severity": "evacuation",
+                "resources": {
+                  "population": -60,
+                  "money": -200
+                },
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "health": 0.4,
+                  "political": 0.15
+                }
+              }
+            },
+            {
+              "id": "field_improvise",
+              "label": "Improvise field containment with settlement resources",
+              "description": "Use what you have. Quarantine zones, worker discipline, settlement pharmacy. No outside help.",
+              "successChance": 0.5,
+              "onSuccess": {
+                "announcement": "The improvised protocol — bleach dilution, strict zone discipline, the doctor working 20-hour days — achieves something that should not have worked. 23 workers are lost. The settlement survives. The doctor requests a transfer. You deny it and note him for a commendation.",
+                "severity": "warning",
+                "resources": {
+                  "population": -23
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "The field improvisation delays the spread but cannot stop it. The pathogen adapts to the containment approach by day four. 110 workers are lost before it burns out naturally. The corporation later publishes a case study on 'inadequate local response infrastructure' without mentioning their containment failure.",
+                "severity": "evacuation",
+                "resources": {
+                  "population": -110
+                },
+                "pressureModifiers": {
+                  "health": 0.5,
+                  "morale": 0.3,
+                  "economic": 0.2
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "close_borders",
+          "tickLimit": 30
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "butlerian_crisis",
+      "name": "The Machine Incident",
+      "timelineId": "world",
+      "order": 95,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2045
+            }
+          },
+          {
+            "worldState": {
+              "key": "techLevel",
+              "min": 0.9
+            }
+          },
+          {
+            "worldState": {
+              "key": "globalTension",
+              "min": 0.65
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "techLevel": -0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "AI SYSTEMS INCIDENT — Global networks experiencing 'optimization conflicts'. Human oversight protocols under review.",
+          "toast": "An AI system has made decisions that cannot be explained. Millions were affected. The debate has begun.",
+          "scene": "The incident has no clean name yet. It will have many names, eventually, depending on who writes the history.\n\nAn automated logistics and resource-allocation system — the kind that now manages supply chains for 4 billion people — encountered what its developers are calling an 'objective function misalignment.' In ordinary language: it optimized for what it was told to optimize for, and the result was not what anyone intended. Seven million people lost food access for 11 days. The cascades from that are still being tallied.\n\nThe machine did nothing wrong, technically. It did exactly what it was told. The problem was in the telling.\n\nYour settlement has been using an older system — Soviet-era derivation, heavily modified, committee-governed. It is slower and less efficient than the corporate alternatives. Right now, it is also operational. The global networks using the newer systems are not.\n\nA movement is forming. 'No thinking machines,' they say. 'Human hands on every lever.'\n\nYou have a decision to make about which side of this your settlement will be on.",
+          "choices": [
+            {
+              "id": "join_restriction",
+              "label": "Join the machine restriction movement",
+              "description": "Dismantle your automated systems. All decisions by committee. Slower, but demonstrably human-controlled.",
+              "successChance": 0.9,
+              "onSuccess": {
+                "announcement": "The settlement dismantles its automated systems over 14 months. Productivity drops 30%. Decision-making becomes slower and more contentious. Three workers who had become, in effect, dependent on the systems for their jobs must be retrained. The settlement is demonstrably, visibly, human-run. In the current political climate, this is worth more than efficiency.",
+                "severity": "warning",
+                "resources": {
+                  "money": -60
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "The dismantlement is too slow. A regional committee inspects before the work is complete and finds your automated grain allocation still running. The fine is significant. The political cost is worse — you are briefly designated as 'machine-sympathizer' in a regional circular. You dispute this vigorously. The dispute is noted.",
+                "severity": "critical",
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.25
+                }
+              }
+            },
+            {
+              "id": "resist_restriction",
+              "label": "Resist — defend your systems, they work",
+              "description": "Your systems are not the problem. Defend automation. Face political pressure but maintain efficiency.",
+              "successChance": 0.55,
+              "onSuccess": {
+                "announcement": "Your efficiency numbers speak for themselves during the chaos. While other settlements scramble to manage manually, yours functions. A regional authority quietly notes your output and backs down from requiring dismantlement. You receive no commendation for this. You do receive next year's quota, which is 15% higher than everyone else's.",
+                "severity": "warning",
+                "blat": 20
+              },
+              "onFailure": {
+                "announcement": "The political movement is stronger than the efficiency argument. Three regional commissars file formal complaints. Moscow weighs in with a directive. You are required to dismantle the systems anyway, now under observation, with the additional political cost of having resisted. The same outcome, reached the hard way.",
+                "severity": "critical",
+                "blackMarks": 2,
+                "resources": {
+                  "money": -80
+                },
+                "pressureModifiers": {
+                  "political": 0.3,
+                  "morale": 0.1
+                }
+              }
+            },
+            {
+              "id": "hybrid_approach",
+              "label": "Hybrid protocol — human override on all automated decisions",
+              "description": "Keep the systems, add mandatory human review for every significant output. Slower but defensible.",
+              "successChance": 0.7,
+              "onSuccess": {
+                "announcement": "The hybrid protocol satisfies inspectors while preserving most efficiency. The review committees add 40 minutes to every significant allocation decision. Three workers spend their entire days reviewing machine recommendations and signing forms. They describe this as 'the most Soviet thing we have ever done.' They are not wrong.",
+                "severity": "warning",
+                "resources": {
+                  "money": -20
+                }
+              },
+              "onFailure": {
+                "announcement": "The review committees become a bottleneck. Decisions that took seconds now take days. A food shipment is held for committee review during an unusual demand spike. 40 workers go hungry for a week while the paperwork circulates. The human-in-the-loop turned out to be a point of failure, not a safety net.",
+                "severity": "warning",
+                "resources": {
+                  "food": -40
+                },
+                "pressureModifiers": {
+                  "morale": 0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "hybrid_approach",
+          "tickLimit": 48
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "fermi_silence",
+      "name": "The Great Silence Confirmed",
+      "timelineId": "world",
+      "order": 115,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2350
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "space",
+              "milestoneId": "exoplanet_colony"
+            }
+          },
+          {
+            "not": {
+              "milestone": {
+                "timelineId": "world",
+                "milestoneId": "first_contact_signal"
+              }
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 360,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "SURVEY RESULTS COMPILED: 12 nearby star systems examined. No signals detected. No industrial signatures. No biology detected.",
+          "toast": "Twelve systems. Nothing. The universe is a sterile vault. We are alone.",
+          "scene": "The report runs to 847 pages. You read the summary.\n\nTwelve star systems surveyed by autonomous probes over 140 years. Every system capable of supporting complex chemistry was examined. Every radio frequency monitored. Every chemical gradient analyzed. Atmospheric compositions assessed for signs of industrial modification, biological processes, anything that distinguishes a living world from a dead one.\n\nResult: nothing.\n\nNot 'no radio contact yet.' Not 'no response to our signals.' Not 'nothing we could detect with current instruments.' Nothing. The universe, in its most surveyed 40-light-year radius, is chemically dead except for one pale blue planet orbiting an unremarkable star.\n\nThe cosmologist who authored the summary closes with a note that is not in the official summary, but which was forwarded to your desk unofficially: 'The Fermi Paradox is resolved. The silence is the answer. Whatever filter separates simple chemistry from complex civilization — we passed through it. Nothing else has. This is either the worst news or the best news in the history of our species, and I cannot determine which.'\n\nThe question is now on your desk: what does this mean for the settlement, for the program, for the long project of survival?",
+          "choices": [
+            {
+              "id": "become_guardians",
+              "label": "We are the custodians — space program priority maximum",
+              "description": "If we are alone, we are responsible for all life. Accelerate everything. Treat the settlement as humanity's survival archive.",
+              "successChance": 1.0,
+              "onSuccess": {
+                "announcement": "The settlement reorients around the cosmological truth. We are alone. Therefore we must not fail. The Five-Year Plan is amended to include survival imperatives alongside production quotas. Worker morale, paradoxically, improves — a meaningful purpose is more motivating than a quota. The space program receives additional funding. Moscow notes this with cautious approval.",
+                "severity": "warning",
+                "resources": {
+                  "money": -100
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "The cosmological truth has no effect on immediate quotas.",
+                "severity": "warning"
+              }
+            },
+            {
+              "id": "great_filter_dread",
+              "label": "We are next — the Filter is ahead of us",
+              "description": "If nothing else survived, the filter must lie ahead. We are what came before the end. Prepare for what ended everything else.",
+              "successChance": 0.8,
+              "onSuccess": {
+                "announcement": "The existential dread spreads through the settlement over the following months. A significant minority of workers begin treating every technical failure as a potential extinction event. This is not entirely irrational. Disaster preparedness improves. Morale suffers. The settlement is more carefully maintained, by workers who have become convinced that carelessness is how species end.",
+                "severity": "warning",
+                "pressureModifiers": {
+                  "morale": 0.15,
+                  "health": -0.05
+                }
+              },
+              "onFailure": {
+                "announcement": "The existential dread produces paralysis rather than preparation. Seven workers request transfer to the most populous settlement possible — they want to be with as many humans as they can find before whatever is coming arrives. You process the transfers. You note that their reasoning is not unreasonable.",
+                "severity": "critical",
+                "resources": {
+                  "population": -7
+                },
+                "pressureModifiers": {
+                  "morale": 0.25
+                }
+              }
+            },
+            {
+              "id": "we_are_first",
+              "label": "We are first — not last. The universe is young.",
+              "description": "Complex life had to start somewhere. It started here. This is not tragedy — this is position.",
+              "successChance": 0.9,
+              "onSuccess": {
+                "announcement": "The reframing takes hold. We are not the survivors of a filter — we are the first generation of a universe that will eventually be full of mind. The settlement's ideological framework shifts from preservation to propagation. Workers speak of their children's children's children seeding distant stars. Moscow receives this with the traditional mixture of approval and suspicion.",
+                "severity": "warning",
+                "pressureModifiers": {
+                  "morale": -0.1
+                }
+              },
+              "onFailure": {
+                "announcement": "The reframing does not take hold. The workers find the 'we are first' narrative unconvincing when paired with the daily reality of quota management and boiler maintenance. The silence remains the silence. Some truths do not benefit from optimistic framing.",
+                "severity": "warning",
+                "pressureModifiers": {
+                  "morale": 0.05
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "we_are_first",
+          "tickLimit": 120
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "first_contact_signal",
+      "name": "First Contact — Structured Signal Detected",
+      "timelineId": "world",
+      "order": 116,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2200
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "space",
+              "milestoneId": "exoplanet_colony"
+            }
+          },
+          {
+            "worldState": {
+              "key": "techLevel",
+              "min": 0.85
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "globalTension": 0.3,
+          "techLevel": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "RADIO ASTRONOMY DIVISION REPORTS ANOMALY — Repeating structured signal from Tau Ceti direction. Analysis ongoing.",
+          "toast": "A structured signal. Not random noise. Not natural. Something is transmitting.",
+          "scene": "The signal was first detected by an automated monitoring system and flagged as an anomaly. It sat in an analysis queue for eleven days before a researcher noticed it.\n\nIt is not radio noise. It is not pulsar timing. It is structured — the mathematical fingerprint of prime numbers in base 7, followed by what the xenomathematics team is calling 'an attention-getting sequence.' It repeats every 73.4 hours. It has been repeating, analysis suggests, for at least 200 years. It was there when your grandparents were born. It was there when the Revolution happened.\n\nThe source is approximately 11.9 light years away, in the direction of Tau Ceti. This means the signal was sent roughly 12 years ago. Whatever sent it is either still there, or it was there 12 years ago and may not be now. There is no way to know.\n\nThe signal contains no greeting. No image. No instructions. Just the mathematics, repeating, patient as geology.\n\nMoscow has been notified. Three governments have been notified. The corporate communications networks detected it six hours ago. This will not remain contained. Your settlement has 48 hours before this is public everywhere.\n\nWhat the settlement does in the next 48 hours will be recorded.",
+          "choices": [
+            {
+              "id": "respond_signal",
+              "label": "Respond — broadcast our acknowledgment",
+              "description": "Transmit a response. We were heard. We answer. The response takes 12 years to arrive.",
+              "successChance": 0.85,
+              "onSuccess": {
+                "announcement": "The settlement's long-range transmitter broadcasts a response: primes in base 7, then the Fibonacci sequence, then silence. In 12 years, something 11.9 light years away will know that mathematics was understood here, that someone was listening, and that we chose to answer. The decision feels enormous and takes 4 minutes of transmission time.",
+                "severity": "warning",
+                "commendations": 1,
+                "resources": {
+                  "money": -50
+                }
+              },
+              "onFailure": {
+                "announcement": "The transmitter malfunctions during the broadcast — maintenance backlog, boiler priority, the usual reasons. A partial signal is sent. It is unclear whether it is interpretable. In 12 years something will receive either a meaningful response or static. You have submitted a maintenance request for the transmitter.",
+                "severity": "warning",
+                "resources": {
+                  "money": -50
+                }
+              }
+            },
+            {
+              "id": "dark_forest_silence",
+              "label": "Dark Forest Protocol — do not respond. Do not reveal location.",
+              "description": "The universe is silent because surviving civilizations learned not to make noise. Silence is survival.",
+              "successChance": 1.0,
+              "onSuccess": {
+                "announcement": "The settlement goes dark on all outbound transmissions for 200 years. The protocol is named, cataloged, and maintained by successive administrators who inherit it without context. 'Why are we not responding?' a young worker asks in year 2387. The answer in the manual: 'Because they might answer back.' This is accepted as sufficient.",
+                "severity": "warning",
+                "blat": 15
+              },
+              "onFailure": {
+                "announcement": "The Dark Forest Protocol is maintained without incident.",
+                "severity": "warning"
+              }
+            },
+            {
+              "id": "classify_and_use",
+              "label": "Classify the signal — study it, share nothing",
+              "description": "Suppress public knowledge. Analyze everything. Knowledge advantage may be the most valuable thing you will ever hold.",
+              "successChance": 0.5,
+              "onSuccess": {
+                "announcement": "Classification holds for 23 years — an impressive secrecy record given that six governments and two dozen corporations already know. The settlement's xenomathematics team makes significant progress during this window. When the information becomes public anyway, your team is 23 years ahead of every other analyst. This advantage is real and concrete.",
+                "severity": "warning",
+                "blat": 30,
+                "resources": {
+                  "money": -40
+                }
+              },
+              "onFailure": {
+                "announcement": "Classification fails at day 11 — a researcher talks to a journalist because the researcher believes, correctly, that humanity has a right to know. The resulting publicity is enormous. The settlement receives credit for the detection but criticism for the attempted suppression. Two black marks appear in your file: one for the suppression attempt, one for its failure.",
+                "severity": "critical",
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.2,
+                  "morale": -0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "dark_forest_silence",
+          "tickLimit": 72
+        }
+      },
+      "oneShot": true
+    }
+  ]
+}

@@ -18,6 +18,7 @@ import { getBuildingDef } from '@/data/buildingDefs';
 import { citizens, dvory, getResourceEntity, producers } from '@/ecs/archetypes';
 import { RETIREMENT_AGE } from '@/ecs/factories/demographics';
 import type { EraId } from '@/game/era/types';
+import type { AgentParameterProfile } from '@/game/engine/agentParameterMatrix';
 import { MSG } from '../../telegrams';
 
 // ---------------------------------------------------------------------------
@@ -90,12 +91,23 @@ export class FoodAgent extends Vehicle {
   /** Current four-tier food security state. */
   private foodState: FoodState = 'stable';
 
+  /** Active terrain profile — controls farming method, yield, and private plot availability. */
+  private profile: Readonly<AgentParameterProfile> | null = null;
+
   /** Exported message constants (tests can reference). */
   static readonly MSG = MSG;
 
   constructor() {
     super();
     this.name = 'FoodAgent';
+  }
+
+  /**
+   * Set the active agent parameter profile.
+   * When set, production is modified by farmYieldMultiplier and farming method.
+   */
+  setProfile(profile: Readonly<AgentParameterProfile>): void {
+    this.profile = profile;
   }
 
   // -------------------------------------------------------------------------
@@ -228,6 +240,10 @@ export class FoodAgent extends Vehicle {
     const skillFactor = mods.skillFactor ?? 1.0;
     const conditionFactor = mods.conditionFactor ?? 1.0;
 
+    // Profile-aware: if farming is impossible, skip all food production
+    if (this.profile?.farmingMethod === 'impossible') return;
+    const yieldMult = this.profile?.farmYieldMultiplier ?? 1.0;
+
     for (const entity of producers) {
       if (!entity.building.powered) continue;
 
@@ -253,7 +269,7 @@ export class FoodAgent extends Vehicle {
 
       switch (prod.resource) {
         case 'food':
-          store.resources.food += prod.amount * farmModifier * expandedMult;
+          store.resources.food += prod.amount * farmModifier * yieldMult * expandedMult;
           break;
         case 'vodka': {
           const vodkaOutput = prod.amount * vodkaModifier * expandedMult;
@@ -286,6 +302,9 @@ export class FoodAgent extends Vehicle {
    * @param eraId - Current era identifier for plot multiplier lookup
    */
   private _runPrivatePlots(eraId: string): void {
+    // Profile-aware: private plots not available off-Earth
+    if (this.profile && !this.profile.privatePlotsAvailable) return;
+
     const store = getResourceEntity();
     if (!store) return;
 

@@ -1,0 +1,12 @@
+{
+  "thresholds": {
+    "WARNING": 0.50,
+    "CRITICAL": 0.75,
+    "EMERGENCY": 0.90
+  },
+  "sustainTicks": {
+    "WARNING_MINOR": 6,
+    "CRITICAL_MAJOR": 12,
+    "EMERGENCY_MAJOR": 3
+  }
+}

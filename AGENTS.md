@@ -1,6 +1,6 @@
 # SimSoviet 1917 — Agent Navigation
 
-> Satirical 3D city-builder set in the Soviet Union (starting 1917).
+> Soviet bureaucrat survival sim (NOT a city builder). The player is the predsedatel — the settlement grows organically via autonomous agents. The player does NOT freely place buildings.
 > Built with React Three Fiber + Three.js r183 + React Native + Expo.
 
 ## Quick Start for Agents
@@ -23,12 +23,17 @@
 
 | Directory | What | Files |
 |-----------|------|-------|
-| `src/ai/agents/` | **Yuka domain agents** (8 subpackages: core, economy, political, infrastructure, social, workforce, narrative, meta) | ~123 |
-| `src/game/` | Thin orchestrator (SimulationEngine ~1126 lines) + shared infra (era, Chronology, SeedSystem, SaveSystem) | ~15 |
+| `src/ai/agents/` | **Yuka domain agents** (9 subpackages: core, economy, political, infrastructure, social, workforce, narrative, meta, crisis) | ~169 |
+| `src/ai/agents/crisis/pressure/` | **Pressure-valve crisis system** — 15-domain accumulation (10 classical + 5 post-scarcity), threshold-based crisis emergence | 7 |
+| `src/ai/agents/core/` | ChronologyAgent, WeatherAgent, **WorldAgent** (geopolitical sim), sphere dynamics, 42 cold branches | 12 |
+| `src/game/` | Thin orchestrator (SimulationEngine) + shared infra (era, Chronology, SeedSystem, SaveSystem) | ~38 |
+| `src/game/relocation/` | **Multi-settlement system** — Settlement type, RelocationEngine, terrain profiles (Siberia→Mars) | 3 |
+| `src/growth/` | **Organic growth** — HQSplitting, GrowthPacing, OrganicUnlocks, SiteSelectionRules | 4 |
 | `src/ecs/` | Miniplex ECS world, archetypes, systems, factories | ~20 |
 | `src/engine/` | Legacy game logic (GameState, SimTick) | ~13 |
 | `src/scene/` | R3F/drei 3D components | ~25 |
-| `src/ui/` | React Native overlay components | ~55 |
+| `src/scene/celestial/` | **Celestial Body Factory** — sphere↔flat morphing, 4 body types, Dyson shell | 5 |
+| `src/ui/` | React Native overlay components + **BuildingPanelContent/** + **hq-tabs/** | ~70 |
 | `src/content/` | Dialogue pools, worldbuilding content | ~20 |
 | `src/bridge/` | ECS ↔ React bridge | 3 |
 | `src/hooks/` | React hooks (useGameState, useGameLoop) | 3 |

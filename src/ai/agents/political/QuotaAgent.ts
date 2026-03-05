@@ -34,7 +34,7 @@ export class QuotaAgent extends Vehicle {
   private deliveries: CompulsoryDeliveries;
   private scoring: ScoringSystem;
 
-  constructor(difficulty: DifficultyLevel = 'comrade', consequence: ConsequenceLevel = 'permadeath') {
+  constructor(difficulty: DifficultyLevel = 'comrade', consequence: ConsequenceLevel = 'gulag') {
     super();
     this.name = 'QuotaAgent';
     this.deliveries = new CompulsoryDeliveries();

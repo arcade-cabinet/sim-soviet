@@ -17,6 +17,7 @@ function makeDeps(overrides?: Partial<ApplicatorDeps>): ApplicatorDeps {
     callbacks: {
       onPravda: jest.fn(),
       onToast: jest.fn(),
+      onVisualEvent: jest.fn(),
     },
     workerSystem: {
       removeWorkersByCountMaleFirst: jest.fn().mockImplementation((count: number) => count),
@@ -580,5 +581,122 @@ describe('applyCrisisImpacts — full multi-domain impact', () => {
     // Narrative
     expect(deps.callbacks.onPravda).toHaveBeenCalledWith('GREAT PATRIOTIC WAR BEGINS');
     expect(deps.callbacks.onToast).toHaveBeenCalledWith('Enemy at the gates!', 'critical');
+  });
+});
+
+// ─── Visual Slot ──────────────────────────────────────────────────────────
+
+describe('applyCrisisImpacts — visual effects', () => {
+  it('calls onVisualEvent for nuclear_flash visual impact', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'disaster',
+      visual: { effect: 'nuclear_flash', intensity: 1.0, durationTicks: 12 },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    expect(deps.callbacks.onVisualEvent).toHaveBeenCalledWith({
+      effect: 'nuclear_flash',
+      intensity: 1.0,
+      durationTicks: 12,
+      crisisId: 'disaster',
+    });
+  });
+
+  it('calls onVisualEvent for earthquake_shake', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'earthquake',
+      visual: { effect: 'earthquake_shake', intensity: 0.8, durationTicks: 6 },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    expect(deps.callbacks.onVisualEvent).toHaveBeenCalledWith({
+      effect: 'earthquake_shake',
+      intensity: 0.8,
+      durationTicks: 6,
+      crisisId: 'earthquake',
+    });
+  });
+
+  it('calls onVisualEvent for famine_haze', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'holodomor',
+      visual: { effect: 'famine_haze', intensity: 0.85, durationTicks: 30 },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    expect(deps.callbacks.onVisualEvent).toHaveBeenCalledWith({
+      effect: 'famine_haze',
+      intensity: 0.85,
+      durationTicks: 30,
+      crisisId: 'holodomor',
+    });
+  });
+
+  it('calls onVisualEvent for dust_storm', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'aral_sea',
+      visual: { effect: 'dust_storm', intensity: 0.7, durationTicks: 24 },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    expect(deps.callbacks.onVisualEvent).toHaveBeenCalledWith({
+      effect: 'dust_storm',
+      intensity: 0.7,
+      durationTicks: 24,
+      crisisId: 'aral_sea',
+    });
+  });
+
+  it('does not call onVisualEvent when visual slot is absent', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'noop',
+      economy: { productionMult: 0.9 },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    expect(deps.callbacks.onVisualEvent).not.toHaveBeenCalled();
+  });
+
+  it('calls onVisualEvent for each impact with visual slot', () => {
+    const deps = makeDeps();
+    const impact1: CrisisImpact = {
+      crisisId: 'disaster1',
+      visual: { effect: 'nuclear_flash', intensity: 0.5, durationTicks: 12 },
+    };
+    const impact2: CrisisImpact = {
+      crisisId: 'disaster2',
+      visual: { effect: 'earthquake_shake', intensity: 1.0, durationTicks: 6 },
+    };
+
+    applyCrisisImpacts([impact1, impact2], deps);
+
+    expect(deps.callbacks.onVisualEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it('works when onVisualEvent callback is undefined', () => {
+    const deps = makeDeps({
+      callbacks: {
+        onPravda: jest.fn(),
+        onToast: jest.fn(),
+        // onVisualEvent intentionally omitted
+      },
+    });
+    const impact: CrisisImpact = {
+      crisisId: 'disaster',
+      visual: { effect: 'nuclear_flash', intensity: 1.0, durationTicks: 12 },
+    };
+
+    // Should not throw
+    expect(() => applyCrisisImpacts([impact], deps)).not.toThrow();
   });
 });

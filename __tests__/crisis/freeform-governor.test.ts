@@ -32,7 +32,7 @@ function makeCtx(overrides?: Partial<GovernorContext>): GovernorContext {
  * Helper: advance the governor through multiple ticks at a given year/month.
  * Returns the last directive.
  */
-function advanceTicks(gov: FreeformGovernor, ticks: number, ctxOverrides: Partial<GovernorContext>) {
+function _advanceTicks(gov: FreeformGovernor, ticks: number, ctxOverrides: Partial<GovernorContext>) {
   let directive: ReturnType<FreeformGovernor['evaluate']> | undefined;
   for (let i = 0; i < ticks; i++) {
     directive = gov.evaluate(makeCtx(ctxOverrides));
@@ -65,15 +65,17 @@ describe('FreeformGovernor: probability-driven crises', () => {
 
     for (let year = 1917; year <= 1967; year++) {
       gov.onYearBoundary(year);
-      gov.evaluate(makeCtx({
-        year,
-        month: 1,
-        population: 3000,
-        food: 2000,
-        money: 1000,
-        rng: new GameRng(`prob-${year}`),
-        totalTicks: (year - 1917) * 12,
-      }));
+      gov.evaluate(
+        makeCtx({
+          year,
+          month: 1,
+          population: 3000,
+          food: 2000,
+          money: 1000,
+          rng: new GameRng(`prob-${year}`),
+          totalTicks: (year - 1917) * 12,
+        }),
+      );
     }
 
     const windows = gov.getHistoricalWindows();
@@ -104,15 +106,17 @@ describe('FreeformGovernor: ChaosEngine crisis generation', () => {
     // Run many years with conditions that trigger crises
     for (let year = 1917; year <= 1970; year++) {
       gov.onYearBoundary(year);
-      gov.evaluate(makeCtx({
-        year,
-        month: 1,
-        population: 3000,
-        food: 200,
-        money: 5000,
-        rng: new GameRng(`chaos-${year}`),
-        totalTicks: (year - 1917) * 12 + 1,
-      }));
+      gov.evaluate(
+        makeCtx({
+          year,
+          month: 1,
+          population: 3000,
+          food: 200,
+          money: 5000,
+          rng: new GameRng(`chaos-${year}`),
+          totalTicks: (year - 1917) * 12 + 1,
+        }),
+      );
     }
 
     const events = gov.getTimeline().getAllEvents();
@@ -126,12 +130,14 @@ describe('FreeformGovernor: ChaosEngine crisis generation', () => {
     const gov = new FreeformGovernor();
 
     // Only evaluate at month=6 — no crisis generation
-    gov.evaluate(makeCtx({
-      year: 1917,
-      month: 6,
-      rng: new GameRng('no-gen'),
-      totalTicks: 6,
-    }));
+    gov.evaluate(
+      makeCtx({
+        year: 1917,
+        month: 6,
+        rng: new GameRng('no-gen'),
+        totalTicks: 6,
+      }),
+    );
 
     const events = gov.getTimeline().getAllEvents();
     expect(events.length).toBe(0);
@@ -149,15 +155,17 @@ describe('FreeformGovernor: merge modifiers', () => {
     for (let year = 1917; year <= 1960 && !hasImpacts; year++) {
       gov.onYearBoundary(year);
       for (let month = 1; month <= 12; month++) {
-        const directive = gov.evaluate(makeCtx({
-          year,
-          month,
-          population: 3000,
-          food: 200,
-          money: 1000,
-          rng: new GameRng(`merge-${year}-${month}`),
-          totalTicks: (year - 1917) * 12 + month,
-        }));
+        const directive = gov.evaluate(
+          makeCtx({
+            year,
+            month,
+            population: 3000,
+            food: 200,
+            money: 1000,
+            rng: new GameRng(`merge-${year}-${month}`),
+            totalTicks: (year - 1917) * 12 + month,
+          }),
+        );
 
         if (directive.crisisImpacts.length > 0) {
           hasImpacts = true;
@@ -188,12 +196,14 @@ describe('FreeformGovernor: serialization', () => {
     // Run a few years
     for (let year = 1917; year <= 1930; year++) {
       gov1.onYearBoundary(year);
-      gov1.evaluate(makeCtx({
-        year,
-        month: 1,
-        rng: new GameRng(`ser-${year}`),
-        totalTicks: (year - 1917) * 12,
-      }));
+      gov1.evaluate(
+        makeCtx({
+          year,
+          month: 1,
+          rng: new GameRng(`ser-${year}`),
+          totalTicks: (year - 1917) * 12,
+        }),
+      );
     }
 
     const savedData = gov1.serialize();
@@ -327,15 +337,17 @@ describe('FreeformGovernor: getActiveCrises()', () => {
     // Run years until something activates
     for (let year = 1917; year <= 1960; year++) {
       gov.onYearBoundary(year);
-      gov.evaluate(makeCtx({
-        year,
-        month: 1,
-        population: 3000,
-        food: 200,
-        money: 5000,
-        rng: new GameRng(`active-${year}`),
-        totalTicks: (year - 1917) * 12 + 1,
-      }));
+      gov.evaluate(
+        makeCtx({
+          year,
+          month: 1,
+          population: 3000,
+          food: 200,
+          money: 5000,
+          rng: new GameRng(`active-${year}`),
+          totalTicks: (year - 1917) * 12 + 1,
+        }),
+      );
     }
 
     const events = gov.getTimeline().getAllEvents();
@@ -369,15 +381,17 @@ describe('FreeformGovernor: totalCrisesExperienced', () => {
     // Run until something fires
     for (let year = 1917; year <= 1960; year++) {
       gov.onYearBoundary(year);
-      gov.evaluate(makeCtx({
-        year,
-        month: 1,
-        population: 3000,
-        food: 200,
-        money: 5000,
-        rng: new GameRng(`total-${year}`),
-        totalTicks: (year - 1917) * 12 + 1,
-      }));
+      gov.evaluate(
+        makeCtx({
+          year,
+          month: 1,
+          population: 3000,
+          food: 200,
+          money: 5000,
+          rng: new GameRng(`total-${year}`),
+          totalTicks: (year - 1917) * 12 + 1,
+        }),
+      );
     }
 
     expect(gov.getTotalCrisesExperienced()).toBeGreaterThan(0);

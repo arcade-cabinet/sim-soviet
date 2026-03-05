@@ -6,7 +6,7 @@
 
 **Architecture:** 7 sequential phases, each independently shippable. Phase 1 strips the HUD to minimal. Phase 2 enhances CollectiveAgent for organic growth. Phase 3 adds building-click interaction. Phase 4 overhauls audio. Phase 5 adds camera zoom. Phase 6 redesigns the start flow. Phase 7 refactors Freeform mode.
 
-**Tech Stack:** React Three Fiber v9.5, Three.js r183, React Native 0.81, Expo 54, TypeScript 5.7, Miniplex ECS, Yuka AI
+**Tech Stack:** React Three Fiber v9.5, Three.js r183, React Native 0.83.2, Expo 55, TypeScript 5.9, Miniplex ECS, Yuka AI
 
 **Key Discovery:** `CollectiveAgent` (src/ai/agents/infrastructure/CollectiveAgent.ts) already has autonomous construction: demand detection, queue generation, site selection, and auto-placement. Organic growth is an enhancement, not a rewrite.
 

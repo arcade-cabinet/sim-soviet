@@ -6,6 +6,7 @@
  */
 
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
+import type { NarrativeEvent } from '../timeline/TimelineLayer';
 import type { ChronologyState } from '../../ai/agents/core/ChronologyAgent';
 import type { GovernorSaveData } from '../../ai/agents/crisis/Governor';
 import type { EconomySaveData } from '../../ai/agents/economy/EconomyAgent';
@@ -62,6 +63,32 @@ export interface SimCallbacks {
   onGameTally?: (tally: TallyData) => void;
   /** Fired when player is rehabilitated (non-permadeath consequence modes). */
   onRehabilitation?: (data: RehabilitationData) => void;
+  /**
+   * Fired when a timeline milestone with player choices activates.
+   * Presents a full scene + 2-4 choices. Call resolve(choiceId) to apply consequences.
+   * If not handled, the milestone auto-resolves after tickLimit ticks.
+   */
+  onNarrativeEvent?: (event: NarrativeEvent, resolve: (choiceId: string) => void) => void;
+  /**
+   * Fired once when historical mode reaches the 1991 divergence year.
+   * Call resolve(true) to continue in freeform mode, resolve(false) to end the game.
+   * If not handled, auto-resolves as continue (freeform) after 60 ticks.
+   */
+  onHistoricalEraEnd?: (resolve: (continueInFreeform: boolean) => void) => void;
+  /** Fired when a crisis impact triggers a one-shot visual effect. */
+  onVisualEvent?: (event: VisualEvent) => void;
+}
+
+/** A one-shot visual event triggered by a crisis impact. */
+export interface VisualEvent {
+  /** Effect type. */
+  effect: 'nuclear_flash' | 'earthquake_shake' | 'famine_haze' | 'dust_storm';
+  /** Effect intensity (0–1). */
+  intensity: number;
+  /** Duration in ticks. */
+  durationTicks: number;
+  /** Crisis that triggered this event. */
+  crisisId: string;
 }
 
 /** Data passed to the rehabilitation modal after gulag return. */
@@ -182,4 +209,16 @@ export interface SubsystemSaveData {
   buildingWorkforce?: BuildingWorkforceSaveEntry[];
   /** Governor state (optional — null when no governor is active) */
   governor?: GovernorSaveData;
+  /** WorldAgent geopolitical state (optional for backward compat with old saves) */
+  worldAgent?: import('../../ai/agents/core/WorldAgent').WorldStateSaveData;
+  /** RelocationEngine multi-settlement state (optional for backward compat with old saves) */
+  relocation?: { settlements: import('../relocation/Settlement').SettlementSaveData[] };
+  /** Timeline layer states: space, world, and discovered per-world timelines. */
+  timelines?: import('../timeline/TimelineLayer').TimelineLayerSaveData[];
+  /** Per-settlement runtime states (optional for backward compat with old saves). */
+  settlementRuntimes?: import('../settlement/SettlementRuntime').SettlementRuntimeSaveData[];
+  /** Arcology mega-structures (optional for backward compat with old saves). */
+  arcologies?: import('../arcology/ArcologySystem').Arcology[];
+  /** MegaCity law enforcement state (optional for backward compat with old saves). */
+  lawEnforcement?: import('../../ai/agents/political/LawEnforcementSystem').LawEnforcementSaveData;
 }

@@ -2,7 +2,7 @@
  * Unit tests for GrowthPacing — era-based build intervals.
  */
 
-import { ERA_BUILD_INTERVALS, DEFAULT_BUILD_INTERVAL, getBuildInterval } from '../../src/growth/GrowthPacing';
+import { DEFAULT_BUILD_INTERVAL, ERA_BUILD_INTERVALS, getBuildInterval } from '../../src/growth/GrowthPacing';
 
 describe('GrowthPacing', () => {
   it('defines intervals for all 8 eras', () => {

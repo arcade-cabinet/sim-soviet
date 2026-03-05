@@ -541,6 +541,15 @@ describe('GAP-027: Event era filtering', () => {
       'thaw_and_freeze',
       'stagnation',
       'the_eternal',
+      // Kardashev sub-eras
+      'post_soviet',
+      'planetary',
+      'solar_engineering',
+      'type_one',
+      'deconstruction',
+      'dyson_swarm',
+      'megaearth',
+      'type_two_peak',
     ];
     for (const template of ALL_EVENT_TEMPLATES) {
       if (!template.eraFilter) continue;

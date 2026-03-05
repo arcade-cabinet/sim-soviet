@@ -3,19 +3,28 @@
  * Reads the building entity from the ECS world and renders the appropriate content type.
  */
 
-import React, { useEffect } from 'react';
+import type React from 'react';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import AudioManager from '../audio/AudioManager';
 import { getBuildingDef } from '../data/buildingDefs';
 import type { Role } from '../data/buildingDefs.schema';
 import { buildingsLogic } from '../ecs/archetypes';
-import { closeBuildingPanel, useBuildingPanel } from '../stores/gameStore';
-import { GenericContent, HousingContent, PartyHQContent, ProductionContent, ServiceContent } from './BuildingPanelContent';
+import { closeBuildingPanel, openGovernmentHQ, useBuildingPanel } from '../stores/gameStore';
+import {
+  FactoryContent,
+  FarmContent,
+  GenericContent,
+  HousingContent,
+  PartyHQContent,
+  ProductionContent,
+  ServiceContent,
+} from './BuildingPanelContent';
 import { Colors, monoFont } from './styles';
 import { useResponsive } from './useResponsive';
 
-/** Roles that map to ProductionContent. */
-const PRODUCTION_ROLES: ReadonlySet<Role> = new Set(['industry', 'agriculture', 'power']);
+/** Roles that map to ProductionContent (fallback for power/other production). */
+const PRODUCTION_ROLES: ReadonlySet<Role> = new Set(['power']);
 
 /** Roles that map to ServiceContent. */
 const SERVICE_ROLES: ReadonlySet<Role> = new Set(['services', 'culture', 'propaganda', 'military']);
@@ -31,7 +40,7 @@ export const BuildingPanel: React.FC = () => {
   // Audio ducking
   useEffect(() => {
     if (cell) {
-      AudioManager.getInstance().duck(0.8);
+      AudioManager.getInstance().duck(0.2);
     } else {
       AudioManager.getInstance().unduck();
     }
@@ -39,9 +48,7 @@ export const BuildingPanel: React.FC = () => {
 
   // Find the building entity at this cell
   const entity = cell
-    ? buildingsLogic.entities.find(
-        (e) => e.position.gridX === cell.x && e.position.gridY === cell.z,
-      )
+    ? buildingsLogic.entities.find((e) => e.position.gridX === cell.x && e.position.gridY === cell.z)
     : undefined;
 
   // Close panel if the target building no longer exists
@@ -51,9 +58,22 @@ export const BuildingPanel: React.FC = () => {
     }
   }, [cell, entity]);
 
+  // Intercept government-hq clicks: open the GovernmentHQ panel instead
+  useEffect(() => {
+    if (cell && entity && entity.building.defId === PARTY_HQ_DEF_ID) {
+      closeBuildingPanel();
+      openGovernmentHQ();
+    }
+  }, [cell, entity]);
+
   if (!cell) return null;
 
   if (!entity) {
+    return null;
+  }
+
+  // Government HQ is handled by the GovernmentHQ overlay, not the side panel
+  if (entity.building.defId === PARTY_HQ_DEF_ID) {
     return null;
   }
 
@@ -65,25 +85,19 @@ export const BuildingPanel: React.FC = () => {
   // Select content component based on role and defId
   let ContentComponent: React.ReactNode;
   if (entity.building.defId === PARTY_HQ_DEF_ID) {
-    ContentComponent = (
-      <PartyHQContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />
-    );
+    ContentComponent = <PartyHQContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else if (def.role === 'housing') {
-    ContentComponent = (
-      <HousingContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />
-    );
+    ContentComponent = <HousingContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
+  } else if (def.role === 'agriculture') {
+    ContentComponent = <FarmContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
+  } else if (def.role === 'industry') {
+    ContentComponent = <FactoryContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else if (PRODUCTION_ROLES.has(def.role)) {
-    ContentComponent = (
-      <ProductionContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />
-    );
+    ContentComponent = <ProductionContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else if (SERVICE_ROLES.has(def.role)) {
-    ContentComponent = (
-      <ServiceContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />
-    );
+    ContentComponent = <ServiceContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   } else {
-    ContentComponent = (
-      <GenericContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />
-    );
+    ContentComponent = <GenericContent def={def} building={entity.building} gridX={cell.x} gridZ={cell.z} />;
   }
 
   return (

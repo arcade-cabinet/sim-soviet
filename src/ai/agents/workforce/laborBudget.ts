@@ -32,7 +32,7 @@ export interface LaborBudgetConfig {
   /** Minimum fraction of total time that must be reserved for rest. */
   restMinimum: number;
   /** Per-era state demand fractions. */
-  eraStateDemand: Record<EraId, number>;
+  eraStateDemand: Partial<Record<EraId, number>>;
 }
 
 /** Default labor budget configuration. */
@@ -51,6 +51,15 @@ export const LABOR_BUDGET_CONFIG: LaborBudgetConfig = {
     thaw_and_freeze: 0.55,
     stagnation: 0.65,
     the_eternal: 0.7,
+    // Kardashev sub-eras: state demand decreases as automation increases
+    post_soviet: 0.65,
+    planetary: 0.55,
+    solar_engineering: 0.45,
+    type_one: 0.4,
+    deconstruction: 0.35,
+    dyson_swarm: 0.3,
+    megaearth: 0.28,
+    type_two_peak: 0.25,
   },
 };
 

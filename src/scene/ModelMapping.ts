@@ -5,6 +5,10 @@
  * have visual variants that change based on settlement tier. For example,
  * workers-house-a (selo) can visually upgrade to workers-house-b (posyolok)
  * without changing the underlying game entity.
+ *
+ * Era-driven overrides allow different historical eras to use entirely
+ * different model sets for the same building type (e.g. space-colony
+ * housing in the_eternal era).
  */
 
 import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
@@ -37,6 +41,110 @@ const MODEL_MAP: Record<BuildingType, readonly [string, string, string]> = {
   station: ['train-station', 'train-station', 'train-station'],
   mast: ['guard-post', 'guard-post', 'guard-post'],
   space: ['government-hq', 'government-hq', 'government-hq'],
+};
+
+// ── Era-based model overrides ────────────────────────────────────────────────
+
+/**
+ * Era-keyed overrides for building type → model name.
+ *
+ * When the game is in a specific era, these override MODEL_MAP entries.
+ * Only eras with distinct visual identities need entries here —
+ * missing eras fall through to the default MODEL_MAP.
+ *
+ * Each entry maps BuildingType → [level0, level1, level2] model names,
+ * same structure as MODEL_MAP.
+ *
+ * Placeholder model names (prefixed with era) are used until GLB
+ * conversions are complete. The pipeline resolves them through
+ * getModelUrl() which returns '' for unknown models, causing
+ * BuildingRenderer to skip rendering — graceful degradation.
+ */
+export const ERA_MODEL_MAP: Readonly<
+  Partial<Record<string, Partial<Record<BuildingType, readonly [string, string, string]>>>>
+> = {
+  industrialization: {
+    factory: ['industrial-machinery', 'industrial-furnace', 'pipe-system'],
+    power: ['power-equipment', 'power-equipment', 'power-equipment'],
+    distillery: ['storage-tank', 'storage-tank', 'storage-tank'],
+    pump: ['chimney-stack', 'chimney-stack', 'chimney-stack'],
+    station: ['industrial-warehouse', 'industrial-warehouse', 'industrial-warehouse'],
+  },
+  great_patriotic: {
+    factory: ['industrial-machinery', 'industrial-furnace', 'pipe-system'],
+    power: ['power-equipment', 'power-equipment', 'power-equipment'],
+    pump: ['chimney-stack', 'chimney-stack', 'chimney-stack'],
+  },
+  reconstruction: {
+    factory: ['industrial-machinery', 'industrial-furnace', 'pipe-system'],
+    pump: ['chimney-stack', 'chimney-stack', 'chimney-stack'],
+    station: ['industrial-warehouse', 'industrial-warehouse', 'industrial-warehouse'],
+  },
+  the_eternal: {
+    housing: ['colony-dome', 'spacestation-01', 'spacestation-03'],
+    factory: ['colony-workshop', 'spacestation-02', 'spacestation-04'],
+    distillery: ['colony-synthplant', 'colony-synthplant', 'colony-synthplant'],
+    farm: ['colony-hydroponics', 'colony-hydroponics', 'colony-hydroponics'],
+    power: ['colony-solar', 'colony-reactor', 'colony-fusion'],
+    nuke: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    tower: ['comms-array', 'colony-antenna', 'colony-antenna'],
+    pump: ['space-module', 'space-module', 'space-module'],
+    station: ['launch-pad', 'launch-pad', 'launch-pad'],
+    space: ['spacestation-06', 'colony-command', 'colony-command'],
+  },
+
+  // Kardashev sub-eras — progressively mix brutalist + colony + spacestation models
+  post_soviet: {
+    housing: ['apartment-tower-d', 'colony-dome', 'spacestation-01'],
+    factory: ['factory-office', 'colony-workshop', 'spacestation-02'],
+    power: ['power-station', 'colony-solar', 'colony-reactor'],
+    space: ['government-hq', 'colony-command', 'colony-command'],
+  },
+  planetary: {
+    housing: ['colony-dome', 'spacestation-01', 'spacestation-03'],
+    factory: ['colony-workshop', 'spacestation-02', 'spacestation-04'],
+    farm: ['colony-hydroponics', 'colony-hydroponics', 'colony-hydroponics'],
+    power: ['colony-solar', 'colony-reactor', 'colony-fusion'],
+    space: ['colony-command', 'colony-command', 'colony-command'],
+  },
+  solar_engineering: {
+    housing: ['spacestation-01', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-02', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-reactor', 'colony-fusion', 'colony-fusion'],
+    tower: ['colony-antenna', 'colony-antenna', 'colony-antenna'],
+    space: ['spacestation-06', 'colony-command', 'colony-command'],
+  },
+  type_one: {
+    housing: ['spacestation-01', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-02', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    tower: ['colony-antenna', 'comms-array', 'comms-array'],
+    space: ['spacestation-06', 'colony-command', 'colony-command'],
+  },
+  deconstruction: {
+    housing: ['spacestation-03', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-04', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    space: ['colony-command', 'colony-command', 'colony-command'],
+  },
+  dyson_swarm: {
+    housing: ['spacestation-01', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-02', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    space: ['spacestation-06', 'colony-command', 'colony-command'],
+  },
+  megaearth: {
+    housing: ['spacestation-03', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-04', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    space: ['colony-command', 'colony-command', 'colony-command'],
+  },
+  type_two_peak: {
+    housing: ['spacestation-03', 'spacestation-03', 'spacestation-03'],
+    factory: ['spacestation-04', 'spacestation-04', 'spacestation-04'],
+    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
+    space: ['colony-command', 'colony-command', 'colony-command'],
+  },
 };
 
 // ── Tier-based model variant overrides ──────────────────────────────────────
@@ -101,16 +209,29 @@ export function getTierVariant(defId: string, tier: SettlementTier): string {
 }
 
 /**
- * Get the GLB model name for a building type and density level.
+ * Get the GLB model name for a building type, density level, and era.
+ *
+ * Resolution order: ERA_MODEL_MAP[era][type] > MODEL_MAP[type] > null.
+ * Era overrides only apply when both the era and building type have an
+ * entry in ERA_MODEL_MAP.
  *
  * @param type - Building type string (e.g. 'housing', 'factory')
  * @param level - Density level 0-2 (default 0)
+ * @param era - Optional era identifier for era-specific model sets
  * @returns GLB model name, or null if the building type is not recognized
  */
-export function getModelName(type: string, level: number = 0): string | null {
+export function getModelName(type: string, level: number = 0, era?: string): string | null {
+  const clamped = Math.max(0, Math.min(2, Math.floor(level)));
+
+  // Check era-specific override first
+  if (era) {
+    const eraEntry = ERA_MODEL_MAP[era]?.[type as BuildingType];
+    if (eraEntry) return eraEntry[clamped];
+  }
+
+  // Fall back to default MODEL_MAP
   const entry = MODEL_MAP[type as BuildingType];
   if (!entry) return null;
-  const clamped = Math.max(0, Math.min(2, Math.floor(level)));
   return entry[clamped];
 }
 

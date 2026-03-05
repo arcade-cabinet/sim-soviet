@@ -16,6 +16,7 @@ import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import { getGridCells } from '../bridge/ECSBridge';
 import type { GridCell } from '../engine/GridTypes';
 import { getCurrentGridSize, type TerrainType } from '../engine/GridTypes';
+import { useActiveSettlement } from '../stores/gameStore';
 import { Colors, monoFont, SharedStyles } from './styles';
 import { useResponsive } from './useResponsive';
 
@@ -164,10 +165,26 @@ const WebMinimap: React.FC = () => {
   );
 };
 
+/** Settlement dot list shown below minimap when multiple settlements exist. */
+const SettlementDots: React.FC<{
+  settlements: readonly { id: string; name: string; celestialBody: string; isActive: boolean }[];
+}> = ({ settlements }) => (
+  <View style={styles.dotList}>
+    {settlements.map((s) => (
+      <View key={s.id} style={styles.dotRow}>
+        <View style={[styles.dot, s.isActive && styles.dotActive]} />
+        <Text style={[styles.dotName, s.isActive && styles.dotNameActive]}>{s.name}</Text>
+      </View>
+    ))}
+  </View>
+);
+
 /** Canvas-based minimap (web) or View-based minimap (native) rendering real grid data. */
 export const Minimap: React.FC = () => {
   const { isCompact } = useResponsive();
   const [visible, setVisible] = useState(!isCompact);
+  const { settlements, activeId } = useActiveSettlement();
+  const showDots = settlements.length > 1;
 
   if (isCompact && !visible) {
     return (
@@ -183,6 +200,7 @@ export const Minimap: React.FC = () => {
     return (
       <View>
         {content}
+        {showDots && <SettlementDots settlements={settlements} />}
         <TouchableOpacity style={styles.closeBtnCompact} onPress={() => setVisible(false)} activeOpacity={0.7}>
           <Text style={styles.closeBtnText}>X</Text>
         </TouchableOpacity>
@@ -190,7 +208,12 @@ export const Minimap: React.FC = () => {
     );
   }
 
-  return content;
+  return (
+    <View>
+      {content}
+      {showDots && <SettlementDots settlements={settlements} />}
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -240,5 +263,40 @@ const styles = StyleSheet.create({
     fontFamily: monoFont,
     fontWeight: 'bold',
     color: Colors.textSecondary,
+  },
+  dotList: {
+    position: 'absolute',
+    top: 60,
+    left: 10,
+    width: 120,
+    marginTop: 124,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    backgroundColor: 'rgba(42,46,51,0.85)',
+    zIndex: 50,
+  },
+  dotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 1,
+  },
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: Colors.textMuted,
+  },
+  dotActive: {
+    backgroundColor: Colors.sovietGold,
+  },
+  dotName: {
+    fontFamily: monoFont,
+    fontSize: 7,
+    color: Colors.textMuted,
+  },
+  dotNameActive: {
+    color: Colors.sovietGold,
+    fontWeight: 'bold',
   },
 });

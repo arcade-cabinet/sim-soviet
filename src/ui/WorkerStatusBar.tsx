@@ -54,21 +54,6 @@ export const WorkerStatusBar: React.FC<WorkerStatusBarProps> = ({ onShowWorkers 
         <Text style={styles.sublabel}>{snap.idleWorkers} idle</Text>
       </TouchableOpacity>
 
-      <View style={styles.statBox}>
-        <Text style={styles.label}>MORALE</Text>
-        <Text
-          style={[
-            styles.value,
-            {
-              color:
-                snap.avgMorale > 60 ? Colors.termGreen : snap.avgMorale > 30 ? Colors.sovietGold : Colors.sovietRed,
-            },
-          ]}
-        >
-          {snap.avgMorale}%
-        </Text>
-      </View>
-
       <View style={styles.divider} />
 
       <View style={styles.focusRow}>

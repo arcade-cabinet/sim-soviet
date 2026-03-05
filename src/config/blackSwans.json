@@ -1,0 +1,64 @@
+[
+  {
+    "id": "earthquake",
+    "name": "Earthquake",
+    "probabilityPerTick": 0.0008,
+    "pressureSpikes": { "infrastructure": 0.2, "housing": 0.15, "health": 0.1, "morale": 0.1 },
+    "impactTemplate": {
+      "magnitudeMin": 4,
+      "magnitudeMax": 8,
+      "infrastructureDecayBase": 1.0,
+      "infrastructureDecayPerMagnitude": 0.15,
+      "socialGrowthMult": 0.9,
+      "baseMoraleModifier": -0.2,
+      "moralePerMagnitude": -0.05,
+      "headlineTemplate": "EARTHQUAKE MAGNITUDE {magnitude} STRIKES REGION",
+      "toastTemplate": "Earthquake! Magnitude {magnitude}",
+      "toastSeverity": "critical"
+    }
+  },
+  {
+    "id": "solar_storm",
+    "name": "Solar Storm",
+    "probabilityPerTick": 0.0005,
+    "pressureSpikes": { "power": 0.25, "infrastructure": 0.1, "economic": 0.1 },
+    "impactTemplate": {
+      "productionMult": 0.6,
+      "headline": "SOLAR ACTIVITY DISRUPTS ELECTRICAL SYSTEMS — Power grid strained.",
+      "toast": "Solar storm! Power grid devastated.",
+      "toastSeverity": "critical"
+    }
+  },
+  {
+    "id": "nuclear_accident",
+    "name": "Nuclear Accident",
+    "probabilityPerTick": 0.0003,
+    "minYear": 1954,
+    "pressureSpikes": { "health": 0.3, "infrastructure": 0.15, "morale": 0.2, "political": 0.15 },
+    "impactTemplate": {
+      "diseaseMult": 3.0,
+      "socialGrowthMult": 0.7,
+      "infrastructureDecayMult": 1.5,
+      "moraleModifier": -0.4,
+      "headline": "NUCLEAR INCIDENT AT POWER FACILITY — Exclusion zone established.",
+      "toast": "Nuclear accident! Radiation spreading.",
+      "toastSeverity": "critical"
+    }
+  },
+  {
+    "id": "supervolcanic_ash",
+    "name": "Supervolcanic Ash Cloud",
+    "probabilityPerTick": 0.0001,
+    "pressureSpikes": { "food": 0.25, "health": 0.15, "economic": 0.1, "morale": 0.1 },
+    "impactTemplate": {
+      "productionMult": 0.5,
+      "foodDelta": -50,
+      "diseaseMult": 2.0,
+      "socialGrowthMult": 0.6,
+      "moraleModifier": -0.3,
+      "headline": "VOLCANIC ASH CLOUD DARKENS SKIES — Crop failure expected.",
+      "toast": "Volcanic ash! Global cooling imminent.",
+      "toastSeverity": "critical"
+    }
+  }
+]

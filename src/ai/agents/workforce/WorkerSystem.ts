@@ -761,7 +761,13 @@ export class WorkerSystem {
    * Skips infants/toddlers under age 5 — they're tracked in dvor members
    * but don't need citizen entities.
    */
-  spawnWorkerFromDvor(member: DvorMember, dvorId: string, homeX?: number, homeY?: number): Entity | null {
+  spawnWorkerFromDvor(
+    member: DvorMember,
+    dvorId: string,
+    homeX?: number,
+    homeY?: number,
+    overrides?: Partial<Pick<WorkerStats, 'morale' | 'loyalty'>>,
+  ): Entity | null {
     if (member.age < 5) return null;
 
     const capacity = laborCapacityForAge(member.age, member.gender);
@@ -775,8 +781,8 @@ export class WorkerSystem {
 
     const rng = this.rng;
     const stats: WorkerStats = {
-      morale: 50,
-      loyalty: rng ? rng.int(40, 80) : 60,
+      morale: overrides?.morale ?? 50,
+      loyalty: overrides?.loyalty ?? (rng ? rng.int(40, 80) : 60),
       skill: rng ? rng.int(10, 40) : 25,
       vodkaDependency: rng ? rng.int(5, 30) : 15,
       ticksSinceVodka: 0,

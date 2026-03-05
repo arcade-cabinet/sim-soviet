@@ -9,7 +9,7 @@ import type { Doctrine } from '../../ai/agents/political/CompulsoryDeliveries';
 
 // ─── Era Identifiers ────────────────────────────────────────────────────────
 
-/** The 8 historical eras of the Soviet campaign. */
+/** The 8 historical eras of the Soviet campaign + 8 Kardashev sub-eras (freeform only). */
 export type EraId =
   | 'revolution'
   | 'collectivization'
@@ -18,7 +18,16 @@ export type EraId =
   | 'reconstruction'
   | 'thaw_and_freeze'
   | 'stagnation'
-  | 'the_eternal';
+  | 'the_eternal'
+  // Kardashev sub-eras (freeform mode only, after the_eternal)
+  | 'post_soviet'
+  | 'planetary'
+  | 'solar_engineering'
+  | 'type_one'
+  | 'deconstruction'
+  | 'dyson_swarm'
+  | 'megaearth'
+  | 'type_two_peak';
 
 // ─── Era Modifiers ──────────────────────────────────────────────────────────
 
@@ -103,7 +112,7 @@ export interface EraDefinition {
  * Construction method progression across eras.
  * Affects build time for all buildings.
  */
-export type ConstructionMethod = 'manual' | 'mechanized' | 'industrial' | 'decaying';
+export type ConstructionMethod = 'manual' | 'mechanized' | 'industrial' | 'decaying' | 'automated' | 'nanoscale';
 
 // ─── Serialization ──────────────────────────────────────────────────────────
 

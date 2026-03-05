@@ -1,0 +1,689 @@
+{
+  "$schema": "./polyhaven-requirements.schema.json",
+  "description": "Declarative manifest of ALL Poly Haven assets required by SimSoviet 1917. Run `pnpm tsx scripts/fetch-polyhaven.ts sync` to download missing assets.",
+  "version": 2,
+  "hdris": [
+    {
+      "id": "snowy_field",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": {
+        "loadZone": "earth_winter",
+        "season": [
+          "winter",
+          "early_frost"
+        ]
+      },
+      "notes": "Primary winter IBL. Soft overcast snow light.",
+      "existing": true
+    },
+    {
+      "id": "snowy_park_01",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": {
+        "loadZone": "earth_winter",
+        "season": [
+          "rasputitsa_spring",
+          "rasputitsa_autumn"
+        ]
+      },
+      "notes": "Transitional season IBL. Park with melting snow.",
+      "existing": true
+    },
+    {
+      "id": "winter_sky",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": {
+        "loadZone": "earth_winter",
+        "season": [
+          "short_summer",
+          "golden_week"
+        ]
+      },
+      "notes": "Summer/warm IBL. Bright clear sky.",
+      "existing": true
+    },
+    {
+      "id": "dikhololo_night",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": {
+        "loadZone": [
+          "moon",
+          "titan"
+        ],
+        "celestialBody": [
+          "moon",
+          "asteroid",
+          "titan"
+        ]
+      },
+      "notes": "Clear African night sky with Milky Way. Starfield for airless bodies.",
+      "localPath": "assets/hdri/dikhololo_night_1k.hdr",
+      "md5": "4a760813214ec4d97da8e1739bb616a5"
+    },
+    {
+      "id": "kloppenheim_02_puresky",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": {
+        "loadZone": [
+          "orbital",
+          "dyson",
+          "exoplanet"
+        ],
+        "subEra": [
+          "dyson_swarm",
+          "type_two_peak"
+        ]
+      },
+      "notes": "Pure starfield — no ground, no horizon. Deep space, Dyson interior.",
+      "localPath": "assets/hdri/kloppenheim_02_puresky_1k.hdr",
+      "md5": "283ef04d37153527e5407df494eaf339"
+    },
+    {
+      "id": "autumn_field_puresky",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": {
+        "loadZone": [
+          "earth_warm",
+          "mars_green"
+        ],
+        "subEra": [
+          "post_soviet",
+          "planetary"
+        ]
+      },
+      "notes": "Warm golden-hour sky. Post-permafrost Earth. Green Mars atmosphere.",
+      "localPath": "assets/hdri/autumn_field_puresky_1k.hdr",
+      "md5": "f9a6bd6d95a55e2d677b8a84b7f53673"
+    },
+    {
+      "id": "abandoned_tank_farm_04",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": {
+        "loadZone": "earth_industrial",
+        "subEra": [
+          "solar_engineering",
+          "type_one"
+        ]
+      },
+      "notes": "Industrial overcast with visible structures. Megastructure construction era.",
+      "localPath": "assets/hdri/abandoned_tank_farm_04_1k.hdr",
+      "md5": "10a8664f281943307eaa3ecfa0a9b885"
+    },
+    {
+      "id": "clarens_night_02",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": {
+        "loadZone": "mars_red",
+        "celestialBody": "mars",
+        "marsPhase": "red"
+      },
+      "notes": "Partly cloudy night with warm horizon glow. Thin Martian atmosphere at dusk.",
+      "localPath": "assets/hdri/clarens_night_02_1k.hdr",
+      "md5": "e012b135e429a026e8736de33c05d604"
+    },
+    {
+      "id": "belfast_sunset_puresky",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": {
+        "loadZone": [
+          "mars_blue",
+          "venus"
+        ],
+        "marsPhase": "blue"
+      },
+      "notes": "Sunset with blue/orange gradient. Blue Mars or Venus cloud colony.",
+      "localPath": "assets/hdri/belfast_sunset_puresky_1k.hdr",
+      "md5": "38890f597727936a44d17a97f7f73354"
+    },
+    {
+      "id": "cobblestone_street_night",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": {
+        "loadZone": "megaearth",
+        "context": "megacity_undercity"
+      },
+      "notes": "Urban night with artificial lighting. MegaEarth undercity — perpetual artificial night.",
+      "localPath": "assets/hdri/cobblestone_street_night_1k.hdr",
+      "md5": "38d828b13e9ac07ab6fa80a1255c4459"
+    }
+  ],
+  "textures": [
+    {
+      "id": "metal_plate",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": [
+          "orbital",
+          "dyson"
+        ],
+        "terrain": "orbital",
+        "context": "station_floor"
+      },
+      "notes": "Diamond plate industrial flooring. Space station walkways, orbital platform decking.",
+      "localPath": "assets/textures/terrain/metal_plate/"
+    },
+    {
+      "id": "blue_metal_plate",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": "orbital",
+        "terrain": "orbital",
+        "context": "clean_station_floor"
+      },
+      "notes": "Blue painted metal plate. Clean space station interiors, O'Neill habitat floors.",
+      "localPath": "assets/textures/terrain/blue_metal_plate/"
+    },
+    {
+      "id": "rusty_metal_02",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": "megaearth",
+        "context": "undercity_decay"
+      },
+      "notes": "Heavily rusted metal. MegaEarth undercity decay, abandoned lower arcology levels.",
+      "localPath": "assets/textures/terrain/rusty_metal_02/"
+    },
+    {
+      "id": "factory_wall",
+      "resolution": "1k",
+      "role": "building_wall",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "industrialization",
+          "reconstruction"
+        ],
+        "buildingType": "factory"
+      },
+      "notes": "Corrugated factory wall panels. Soviet industrial era buildings.",
+      "localPath": "assets/textures/terrain/factory_wall/"
+    },
+    {
+      "id": "red_laterite_soil_stones",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": "venus",
+        "celestialBody": "venus",
+        "terrain": "venusian"
+      },
+      "notes": "Red-brown laterite with stone debris. Sulfur-stained basaltic surface under Venus atmosphere.",
+      "localPath": "assets/textures/terrain/red_laterite_soil_stones/"
+    },
+    {
+      "id": "sand_01",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": "exoplanet",
+        "terrain": "exoplanet_desert"
+      },
+      "notes": "Fine desert sand. Exoplanet desert variant.",
+      "localPath": "assets/textures/terrain/sand_01/"
+    },
+    {
+      "id": "aerial_beach_01",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": "mars_blue",
+        "marsPhase": "blue",
+        "context": "shoreline"
+      },
+      "notes": "Wet rippled beach sand. Blue Mars — new oceans forming on terraformed surface.",
+      "localPath": "assets/textures/terrain/aerial_beach_01/"
+    },
+    {
+      "id": "corrugated_iron",
+      "resolution": "1k",
+      "role": "building_roof",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "revolution",
+          "collectivization",
+          "industrialization"
+        ],
+        "buildingType": [
+          "housing",
+          "farm"
+        ]
+      },
+      "notes": "Corrugated iron roofing. Early Soviet era buildings — izbas, kolkhoz barns.",
+      "localPath": "assets/textures/terrain/corrugated_iron/"
+    },
+    {
+      "id": "rust_coarse_01",
+      "resolution": "1k",
+      "role": "building_decay",
+      "source": "polyhaven",
+      "mapping": {
+        "context": "decay_overlay",
+        "durability": [
+          0,
+          40
+        ]
+      },
+      "notes": "Coarse heavy rust. Applied as decay overlay on buildings with < 40% durability.",
+      "localPath": "assets/textures/terrain/rust_coarse_01/"
+    },
+    {
+      "id": "concrete_wall_008",
+      "resolution": "1k",
+      "role": "building_wall",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "reconstruction",
+          "thaw_and_freeze",
+          "stagnation"
+        ],
+        "buildingType": [
+          "housing",
+          "government"
+        ]
+      },
+      "notes": "Soviet brutalist concrete wall. Khrushchyovka apartment blocks, government buildings.",
+      "localPath": "assets/textures/terrain/concrete_wall_008/"
+    },
+    {
+      "id": "painted_metal_shutter",
+      "resolution": "1k",
+      "role": "building_detail",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "industrialization",
+          "reconstruction"
+        ],
+        "buildingType": "factory"
+      },
+      "notes": "Painted metal shutters. Factory loading bays, warehouse doors.",
+      "localPath": "assets/textures/terrain/painted_metal_shutter/"
+    },
+    {
+      "id": "metal_grate_rusty",
+      "resolution": "1k",
+      "role": "terrain_detail",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": "dyson",
+        "context": "maintenance_walkway"
+      },
+      "notes": "Rusty metal grating. Dyson sphere maintenance catwalks, MegaEarth ventilation.",
+      "localPath": "assets/textures/terrain/metal_grate_rusty/"
+    },
+    {
+      "id": "container_side",
+      "resolution": "1k",
+      "role": "building_detail",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "stagnation",
+          "post_soviet"
+        ],
+        "buildingType": "storage"
+      },
+      "notes": "Shipping container side panels. Storage yards, makeshift buildings.",
+      "localPath": "assets/textures/terrain/container_side/"
+    }
+  ],
+  "models": [
+    {
+      "id": "Barrel_01",
+      "role": "prop_industrial",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "factory_yard"
+      },
+      "notes": "Industrial barrel. Factory yards, storage areas, fuel depots.",
+      "localPath": "assets/models/polyhaven/Barrel_01.glb",
+      "md5": "45c109401126ea3e5df2fe2c6b6f6d39"
+    },
+    {
+      "id": "Barrel_02",
+      "role": "prop_industrial",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "factory_yard"
+      },
+      "notes": "Alternative barrel design. Visual variety.",
+      "localPath": "assets/models/polyhaven/Barrel_02.glb",
+      "md5": "f95584ab7cc325d8be4884ca2935e019"
+    },
+    {
+      "id": "concrete_road_barrier",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "industrialization",
+          "reconstruction",
+          "stagnation"
+        ],
+        "context": "road_edge"
+      },
+      "notes": "Jersey barrier. Road construction, settlement perimeter, military checkpoint.",
+      "localPath": "assets/models/polyhaven/concrete_road_barrier.glb",
+      "md5": "6d6feaf068f434e8dc163a1a9d983f4a"
+    },
+    {
+      "id": "fire_hydrant",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "reconstruction",
+          "stagnation",
+          "post_soviet"
+        ],
+        "context": "street"
+      },
+      "notes": "Fire hydrant. Urban street furniture for settlements above posyolok tier.",
+      "localPath": "assets/models/polyhaven/fire_hydrant.glb",
+      "md5": "85c3205fe0cdb2b23390ee1205d035c3"
+    },
+    {
+      "id": "modular_urban_apartments_facade",
+      "role": "building_facade",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "reconstruction",
+          "stagnation",
+          "post_soviet"
+        ],
+        "buildingType": "housing"
+      },
+      "notes": "Urban apartment facade. Khrushchyovka-style concrete apartment blocks.",
+      "localPath": "assets/models/polyhaven/modular_urban_apartments_facade.glb",
+      "md5": "81f4252c7816d0e93149c1ca814134ff"
+    },
+    {
+      "id": "modular_factory_facade",
+      "role": "building_facade",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "industrialization",
+          "reconstruction"
+        ],
+        "buildingType": "factory"
+      },
+      "notes": "Factory facade with roller shutters. Industrial-era factories.",
+      "localPath": "assets/models/polyhaven/modular_factory_facade.glb",
+      "md5": "0633b294fcc02eac73cfd7be32ab5dce"
+    },
+    {
+      "id": "modular_chainlink_fence",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "perimeter"
+      },
+      "notes": "Chain-link fence sections. Settlement perimeter, factory yards, gulag boundary.",
+      "localPath": "assets/models/polyhaven/modular_chainlink_fence.glb",
+      "md5": "8c8f0c91cf48ba68fb32178bcbd6351a"
+    },
+    {
+      "id": "covered_car",
+      "role": "prop_decorative",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "stagnation",
+          "post_soviet"
+        ],
+        "context": "street"
+      },
+      "notes": "Tarp-covered vehicle. Urban decay prop. Stagnation-era street detail.",
+      "localPath": "assets/models/polyhaven/covered_car.glb",
+      "md5": "c38cd2ddf3fe2abe7ed8df2fd6020b84"
+    },
+    {
+      "id": "barrel_stove",
+      "role": "prop_heating",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "revolution",
+          "collectivization"
+        ],
+        "context": "outdoor"
+      },
+      "notes": "Barrel stove for outdoor heating. Early settlement warming, construction sites.",
+      "localPath": "assets/models/polyhaven/barrel_stove.glb",
+      "md5": "a8d7092ddb16690f467e282e5615645f"
+    },
+    {
+      "id": "moon_rock_01",
+      "role": "prop_terrain",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": "moon",
+        "celestialBody": "moon"
+      },
+      "notes": "Lunar rock scatter. Moon settlement terrain detail.",
+      "localPath": "assets/models/polyhaven/moon_rock_01.glb",
+      "md5": "86c6b4f7792f9600ae33cb3b4d42bb20"
+    },
+    {
+      "id": "moon_rock_03",
+      "role": "prop_terrain",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": "moon",
+        "celestialBody": "moon"
+      },
+      "notes": "Large lunar boulder. Moon settlement landmark.",
+      "localPath": "assets/models/polyhaven/moon_rock_03.glb",
+      "md5": "147dd843eeb4dd7fb661e26befca7f62"
+    },
+    {
+      "id": "moon_rock_06",
+      "role": "prop_terrain",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": "moon",
+        "celestialBody": "moon"
+      },
+      "notes": "Medium lunar rock. Terrain variety for Moon settlement.",
+      "localPath": "assets/models/polyhaven/moon_rock_06.glb",
+      "md5": "64167a15b24a13e34ecbd2c8ff291d02"
+    },
+    {
+      "id": "modular_industrial_pipes_01",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "colony_infrastructure"
+      },
+      "notes": "Modular industrial pipe sections. Colony life support, factory plumbing, settlement infrastructure.",
+      "localPath": "assets/models/polyhaven/modular_industrial_pipes_01.glb",
+      "md5": "cb30fdf4d471374ba439bfd5a0c8105d"
+    },
+    {
+      "id": "modular_pipes",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "colony_plumbing"
+      },
+      "notes": "Metal/plastic pipe segments. Water supply, drainage, maintenance tunnels.",
+      "localPath": "assets/models/polyhaven/modular_pipes.glb",
+      "md5": "993502b4d8c371bc38a03cba6d6f4008"
+    },
+    {
+      "id": "modular_airduct_rectangular_01",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": [
+          "orbital",
+          "dyson",
+          "megaearth"
+        ],
+        "context": "ventilation"
+      },
+      "notes": "Rectangular ventilation ducts. Orbital habitats, sealed colony HVAC systems.",
+      "localPath": "assets/models/polyhaven/modular_airduct_rectangular_01.glb",
+      "md5": "80509f1d78f7853669d6f7d101cececd"
+    },
+    {
+      "id": "wooden_crate_01",
+      "role": "prop_storage",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "revolution",
+          "collectivization",
+          "industrialization"
+        ],
+        "context": "storage_yard"
+      },
+      "notes": "Wooden supply crate. Early-era storage depots, kolkhoz supply deliveries.",
+      "localPath": "assets/models/polyhaven/wooden_crate_01.glb",
+      "md5": "33df4d2ae00186d4b64e878466c9e22e"
+    },
+    {
+      "id": "utility_box_02",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "reconstruction",
+          "stagnation",
+          "post_soviet"
+        ],
+        "context": "power_distribution"
+      },
+      "notes": "Electrical utility box. Settlement power grid junction, transformer stations.",
+      "localPath": "assets/models/polyhaven/utility_box_02.glb",
+      "md5": "e73af61886eedd147d66e7e295543142"
+    },
+    {
+      "id": "power_box_01",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "electrical"
+      },
+      "notes": "Circuit breaker panel. Building interiors, factory electrical rooms.",
+      "localPath": "assets/models/polyhaven/power_box_01.glb",
+      "md5": "9fbd7f7049a13eb25213f5038c1ef42c"
+    },
+    {
+      "id": "concrete_road_barrier_02",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "industrialization",
+          "reconstruction",
+          "stagnation"
+        ],
+        "context": "road_construction"
+      },
+      "notes": "Alternative jersey barrier. Construction zones, military checkpoints, settlement perimeter.",
+      "localPath": "assets/models/polyhaven/concrete_road_barrier_02.glb",
+      "md5": "4e6ba4903224a56a2dc3ce4126529c1e"
+    },
+    {
+      "id": "russian_food_cans_01",
+      "role": "prop_decorative",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "food_storage"
+      },
+      "notes": "Soviet-era food tins. Canteen props, storage depot detail, ration distribution.",
+      "localPath": "assets/models/polyhaven/russian_food_cans_01.glb",
+      "md5": "a9bc79ca5c80203ebc5e602aa31075fb"
+    }
+  ],
+  "shaders": [
+    {
+      "id": "dyson_sphere_backdrop",
+      "role": "environment_procedural",
+      "source": "custom",
+      "file": "src/scene/shaders/DysonSphereBackdrop.tsx",
+      "mapping": {
+        "loadZone": "dyson",
+        "subEra": [
+          "dyson_swarm",
+          "megaearth",
+          "type_two_peak"
+        ]
+      },
+      "notes": "Hexagonal metal panels, FBM energy veins, starfield through gaps, solar collection pulse. IMPLEMENTED."
+    },
+    {
+      "id": "mars_atmosphere",
+      "role": "sky_procedural",
+      "source": "custom",
+      "file": "src/scene/shaders/MarsAtmosphere.tsx",
+      "mapping": {
+        "loadZone": [
+          "mars_red",
+          "mars_green",
+          "mars_blue"
+        ],
+        "celestialBody": "mars"
+      },
+      "notes": "Butterscotch→salmon→blue sky transition. terraformingProgress uniform. IMPLEMENTED."
+    },
+    {
+      "id": "oneill_interior",
+      "role": "environment_procedural",
+      "source": "custom",
+      "file": "src/scene/shaders/ONeillInterior.tsx",
+      "mapping": {
+        "loadZone": "orbital",
+        "subEra": [
+          "solar_engineering"
+        ]
+      },
+      "notes": "Rotating cylinder interior. Sun stripe, land/window strips, overhead landscape. IMPLEMENTED."
+    }
+  ]
+}

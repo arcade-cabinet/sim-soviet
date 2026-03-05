@@ -317,6 +317,8 @@ export async function dismissAnyModal(page: Page): Promise<boolean> {
     'LONG LIVE THE PARTY',
     'ACCEPT MANDATE',
     'ACKNOWLEDGED',
+    'Resume Service',
+    'CONTINUE INTO ALTERNATE HISTORY',
     'CONTINUE',
     'DISMISS',
     'CLOSE',

@@ -1,0 +1,276 @@
+{
+  "timelineId": "jupiter",
+  "description": "Jovian System Colonization → Multi-Moon Civilization. Triggered by Ganymede colony establishment. Inspired by Charles Sheffield's 'Cold as Ice' series, Arthur C. Clarke's '2010: Odyssey Two', and actual NASA/ESA science. Jupiter system: 95 known moons, 4 Galilean moons (Io, Europa, Ganymede, Callisto), lethal radiation belts, and the most powerful magnetic field in the solar system. The radiation gradient defines everything: Io is instant death, Europa is slow death, Ganymede is manageable death, Callisto is almost safe. Soviet bureaucracy must coordinate across a system where 'commute to work' means 'multi-day orbital transfer between moons.'",
+  "milestones": [
+    {
+      "id": "jupiter_io_mining",
+      "name": "Io Remote Mining Operations",
+      "timelineId": "jupiter",
+      "order": 10,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "ganymede_colony" } },
+        { "techLevel": { "min": 0.83 } }
+      ]},
+      "sustainedTicks": 18,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "resourceDeltas": { "minerals": 1500 },
+        "pressureModifiers": { "economic": -0.1 },
+        "unlocks": ["io_sulfur_extraction", "extreme_radiation_robotics"],
+        "narrative": {
+          "pravdaHeadline": "HEROIC ROBOTS MINE IO: Sulfur Extraction Proceeds Under 36 Sv/Day Radiation",
+          "toast": "Io: the most volcanically active body in the solar system. 400 active volcanoes. Sulfur geysers erupting 500 km high. Surface radiation: 36 Sieverts per day — lethal dose in 15 minutes. No human sets foot on Io. Robots do the mining. The robots do not complain about working conditions. The robots do not file union grievances. The Ministry of Labor is considering wider robot deployment.",
+          "description": "Io orbits Jupiter at 421,700 km — deep inside the lethal radiation belts. Its volcanic activity (driven by tidal heating from Jupiter and the orbital resonance with Europa and Ganymede) deposits enormous quantities of sulfur, sulfur dioxide, and trace metals on the surface. Remote-operated mining drones from Ganymede extract sulfur for the Jovian system's chemical industry. Each drone lasts approximately 72 hours before radiation degrades its electronics beyond repair. The replacement rate is factored into the production quota. The quota was set by a committee on Earth. The committee has never seen Io. The committee has requested photographs. The photographs are terrifying. The committee has requested fewer photographs."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_europa_research_station",
+      "name": "Europa Subsurface Research Station",
+      "timelineId": "jupiter",
+      "order": 15,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_io_mining" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "ganymede_colony" } },
+        { "techLevel": { "min": 0.84 } }
+      ]},
+      "sustainedTicks": 30,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "pressureModifiers": { "political": 0.05, "economic": 0.1 },
+        "unlocks": ["europa_subsurface_access", "ice_boring_technology"],
+        "narrative": {
+          "pravdaHeadline": "EUROPA ICE PENETRATED: Research Station Established 15 km Below Surface",
+          "toast": "The ice shell of Europa is 15-30 km thick. Beneath it: a liquid water ocean containing more water than all of Earth's oceans combined. A thermal bore has reached the ocean-ice interface after 4 years of continuous drilling. The drilling crew has requested shore leave. There is no shore.",
+          "description": "Europa's ice shell presents an engineering challenge without precedent: boring through 15-30 km of water ice at -160°C, in a radiation environment of 5.4 Sv/day on the surface (reduced to near-zero beneath 1 meter of ice — water is excellent radiation shielding). The research station is embedded at the base of the ice shell, where the ice meets the liquid ocean. Pressure at this depth: approximately 200 atmospheres. Temperature at the ocean-ice interface: approximately -3°C (the ocean is kept liquid by tidal heating). The station is crewed by rotating teams from Ganymede — each rotation requires a multi-day transit through Europa's radiation zone, carefully timed to minimize exposure. Total allowable surface time: 47 minutes per transit. The workers' radiation dosimeters are checked by the medical officer. The medical officer's dosimeter is checked by the political officer. The political officer does not have a dosimeter. He has a Party card. The Party card does not stop gamma rays."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_radiation_engineering",
+      "name": "Radiation Engineering Breakthrough",
+      "timelineId": "jupiter",
+      "order": 20,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_europa_research_station" } },
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_io_mining" } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "pressureModifiers": { "health": -0.15 },
+        "unlocks": ["advanced_radiation_shielding", "active_magnetic_deflection"],
+        "narrative": {
+          "pravdaHeadline": "RADIATION MASTERY: Jovian Engineering Yields Breakthrough Shielding Technology",
+          "toast": "Operating in Jupiter's magnetosphere — the largest structure in the solar system, visible from Saturn if you had magnetic-field eyes — has forced advances in radiation shielding that benefit every settlement everywhere. Active magnetic deflection, developed for Ganymede EVA suits, now protects interplanetary ships. The engineers note that necessity is the mother of invention. The Party notes that the Five-Year Plan is the mother of necessity.",
+          "description": "Jupiter's magnetosphere extends 3 million km sunward and 1 billion km tailward — a radiation environment so intense it was discovered by ground-based radio telescopes before any probe arrived. Operating within it has driven a revolution in radiation engineering: active superconducting magnetic shields (miniaturized versions of Ganymede's natural magnetosphere), graded-Z composite materials (layered atomic-number shielding that stops both particle and electromagnetic radiation), and biological radioprotectants (derived from Deinococcus radiodurans, the bacterium that survives 15,000 Gy). These technologies apply everywhere humans go in space. The Jovian system, which nearly killed the first crews, becomes the training ground for all extreme-environment engineering. The engineering school on Ganymede adopts a motto: 'What does not kill us makes us better at filling out incident reports.'"
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_magnetosphere_power_tap",
+      "name": "Magnetosphere Power Tap",
+      "timelineId": "jupiter",
+      "order": 25,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_radiation_engineering" } },
+        { "techLevel": { "min": 0.86 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "resourceDeltas": { "power": 50000 },
+        "pressureModifiers": { "power": -0.25 },
+        "unlocks": ["jupiter_tether_power", "virtually_unlimited_energy"],
+        "narrative": {
+          "pravdaHeadline": "JUPITER'S MAGNETIC FIELD HARNESSED: Conducting Tether Generates Power From Planetary Rotation",
+          "toast": "A 100 km conducting tether, deployed in Jupiter orbit, generates 1 gigawatt continuously by cutting through Jupiter's magnetic field lines. Jupiter's rotational energy: 7 × 10³⁴ joules. At current extraction rates, the power supply will last longer than the Sun. The Ministry of Energy has achieved the dream of every Soviet planner: a power source that cannot be exhausted through overuse. They are trying anyway.",
+          "description": "Electrodynamic tethers in planetary magnetic fields generate power through the motional EMF effect: a conductor moving through a magnetic field induces a voltage. Jupiter's magnetic field is 20,000 times stronger than Earth's, and its rotational period is 10 hours — producing enormous relative velocities between the field and any orbiting conductor. A 100 km superconducting tether in low Jupiter orbit generates approximately 1 GW continuously. Multiple tethers provide the entire Jovian system with effectively unlimited electrical power. The energy source is Jupiter's rotation — extracting energy slows the planet's spin, but Jupiter's rotational kinetic energy is 7 × 10³⁴ J. At 1 GW extraction, measurable slowdown would take approximately 10²⁸ years. The Five-Year Plan for Jovian Energy has been revised to a Forever Plan. The word 'forever' required three committee meetings to approve."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_callisto_ganymede_transit",
+      "name": "Callisto-Ganymede Commuter Route",
+      "timelineId": "jupiter",
+      "order": 30,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "callisto_outpost" } },
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_magnetosphere_power_tap" } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": { "infrastructure": -0.1, "morale": -0.05, "health": -0.05 },
+        "unlocks": ["jovian_shuttle_service"],
+        "narrative": {
+          "pravdaHeadline": "INTER-MOON SHUTTLE SERVICE INAUGURATED: Regular Transit Between Callisto and Ganymede",
+          "toast": "Callisto (radiation-safe, 0.0001 Sv/day) to Ganymede (resources, 0.08 Sv/day): 1.2 million km, transit time 3 days. Regular shuttle service established. Workers commute between the radiation-safe dormitory moon and the resource-rich but irradiated workplace moon. The commute is 3 days each way. The workers' union has filed a complaint about commute times. The complaint has been forwarded to the Inter-Moon Transit Committee, which meets on alternate Thursdays, alternating between moons.",
+          "description": "Callisto orbits at 1.88 million km from Jupiter — outside the worst of the radiation belts. Surface radiation: 0.0001 Sv/day (safe for extended habitation). Ganymede orbits at 1.07 million km — inside the belts but partially shielded by its own magnetosphere. Surface radiation: 0.08 Sv/day (dangerous for prolonged exposure, manageable with shielding). The logical architecture: residential and agricultural infrastructure on Callisto, mining and industrial operations on Ganymede, with regular shuttle transit between them. The shuttle schedule has been published. The schedule has been revised. The schedule has been classified. The schedule has been declassified with redactions. The Callisto Workers' Soviet has requested schedule reliability improvements. The Ganymede Workers' Soviet has counter-requested that Callisto send more workers. Both requests are under review. The review committee commutes between moons and has not yet achieved a quorum."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_fuel_depot",
+      "name": "Jovian Atmospheric Fuel Depot",
+      "timelineId": "jupiter",
+      "order": 35,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_magnetosphere_power_tap" } },
+        { "techLevel": { "min": 0.87 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "resourceDeltas": { "hydrogen": 5000 },
+        "pressureModifiers": { "economic": -0.1 },
+        "unlocks": ["jupiter_hydrogen_export", "atmospheric_scoop_technology"],
+        "narrative": {
+          "pravdaHeadline": "HYDROGEN FROM JUPITER: Atmospheric Scoop Ships Harvest Fuel From Gas Giant",
+          "toast": "Jupiter is 90% hydrogen by number, 75% by mass. The planet contains more hydrogen than the rest of the solar system combined. Atmospheric scoop ships dive into the upper cloud layers, compress hydrogen, and return to orbit. The gravity well is deep — escape velocity 59.5 km/s — but the fuel is free and infinite. The accountants are deeply confused by the concept of 'infinite raw material.' Their spreadsheets have run out of columns.",
+          "description": "Jupiter's atmosphere contains approximately 1.5 × 10²⁷ kg of hydrogen — fuel for fusion reactors, chemical propulsion, and industrial chemistry. Atmospheric scoop ships (essentially automated ramjets with thermal protection) descend to the 1-bar level, compress hydrogen, and boost back to orbit using the collected hydrogen as reaction mass. The deep gravity well (escape velocity 59.5 km/s vs. Earth's 11.2 km/s) makes each scoop run expensive in energy — but the magnetosphere power taps provide the energy, and the hydrogen provides the fuel for further scooping. A self-sustaining cycle. The Jupiter Fuel Authority has been established with responsibility for setting extraction quotas. The irony of setting quotas on an infinite resource has not been lost on the workers. It has, however, been lost on the quota committee."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_europa_life_discovery",
+      "name": "Europa Life Discovery",
+      "timelineId": "jupiter",
+      "order": 40,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_europa_research_station" } },
+        { "techLevel": { "min": 0.88 } },
+        { "population": { "min": 2000 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.06 },
+        "pressureModifiers": { "political": 0.2, "morale": -0.15 },
+        "unlocks": ["extraterrestrial_biology", "europa_biosphere_quarantine"],
+        "narrative": {
+          "pravdaHeadline": "LIFE DISCOVERED ON EUROPA: Classification Level SUPREME. All Personnel Reminded of State Secrecy Obligations",
+          "toast": "Microbial life in Europa's subsurface ocean. Chemosynthetic organisms clustered around hydrothermal vents at the ocean floor, 80 km below the ice surface. The greatest scientific discovery in human history. Classification: STATE SECRET. The discoverers have been congratulated. They have also been debriefed by the KGB. The congratulations were warmer.",
+          "description": "The subsurface ocean of Europa — 100 km deep, containing twice the water of Earth's oceans — harbors life. Chemosynthetic microorganisms, analogous to Earth's extremophiles found at hydrothermal vents, derive energy from the chemical gradients produced by volcanic activity on Europa's ocean floor. The organisms use hydrogen sulfide and molecular hydrogen as energy sources. They are not complex. They are not intelligent. They are not even multicellular. But they are alive, and they are not from Earth. The implications are staggering: if life arose independently on Europa, it implies life is common in the universe. The Presidium has classified the discovery at the highest level. The official reason: 'preventing panic.' The actual reason: controlling the narrative. The scientific team has been awarded the Order of Lenin. They have also been assigned permanent KGB minders. The minders have biology degrees. The minders are taking notes. The notes are classified."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_system_governance",
+      "name": "Jovian Soviet Established",
+      "timelineId": "jupiter",
+      "order": 45,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_callisto_ganymede_transit" } },
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_fuel_depot" } },
+        { "population": { "min": 3000 } }
+      ]},
+      "sustainedTicks": 18,
+      "effects": {
+        "pressureModifiers": { "political": 0.15, "loyalty": 0.1 },
+        "unlocks": ["jovian_governance_council", "multi_moon_administration"],
+        "narrative": {
+          "pravdaHeadline": "JOVIAN SOVIET CONSTITUTED: Four-Moon Governing Council Convenes for First Plenary Session",
+          "toast": "Ganymede, Callisto, Europa, and Io (represented by its robots' maintenance crew on Ganymede) now require coordinated governance. The Jovian Soviet has been established with delegates from each moon. The first plenary session lasted 14 hours. 11 hours were procedural. The remaining 3 hours were spent arguing about which moon hosts the permanent secretariat. The secretariat remains on Ganymede. Callisto has filed a formal objection. The objection is under review.",
+          "description": "Four major moons, each with distinct environments, populations, and economic functions, require a governing structure beyond simple colonial administration from Earth. Signal delay to Earth (33-54 minutes one way) makes real-time governance from Moscow impossible — decisions must be made locally. The Jovian Soviet is structured as a council of delegates from each moon, with representation proportional to population (Ganymede majority) and economic contribution (Io's robot mines are productive but representation of robots is ideologically problematic). The constitutional question — can a robot mining operation have delegates? — produces a 200-page legal analysis. The analysis concludes that robots cannot hold Party membership. The robots have not objected. The question of whether the Jovian Soviet is subordinate to the Presidium on Earth or constitutes a parallel governing body is deliberately left ambiguous. All parties prefer ambiguity to a definitive answer that would displease someone. This is Soviet governance at its most refined."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_europa_ocean_city",
+      "name": "Europa Ocean City",
+      "timelineId": "jupiter",
+      "order": 50,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_europa_life_discovery" } },
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_system_governance" } },
+        { "techLevel": { "min": 0.89 } }
+      ]},
+      "sustainedTicks": 36,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "pressureModifiers": { "housing": -0.1, "infrastructure": 0.15, "morale": -0.1 },
+        "unlocks": ["europa_permanent_settlement", "subsurface_city_architecture"],
+        "narrative": {
+          "pravdaHeadline": "EUROPA CITY FOUNDED: Permanent Settlement at Ice-Ocean Interface, 15 km Below Surface",
+          "toast": "A permanent city at the base of Europa's ice shell, where solid ice meets liquid ocean. Above: 15 km of radiation-shielding ice. Below: 80 km of liquid water ocean containing alien life. The city is pressurized to 200 atmospheres. The view from the observation deck is pitch black in every direction. The tourism bureau has described it as 'intimate.' The city's official name is 'Soviet Undersea Research Settlement No. 1.' The colonists call it 'the Submarine.' Nobody corrects them because they are technically correct.",
+          "description": "Europa City exists in perhaps the most extraordinary environment humans have ever inhabited: embedded at the base of a 15 km ice shell, at the interface between solid ice and a liquid water ocean that is 80 km deep and contains more water than all of Earth's oceans. The pressure is 200 atmospheres. The temperature is -3°C (the ocean is kept from freezing by tidal heating). The city is completely dark — no sunlight penetrates 15 km of ice. Power comes from nuclear reactors and from thermal gradient generators exploiting the temperature difference between the cold ice above and the warm volcanic vents below. The alien microbes discovered in the ocean are kept strictly quarantined from the city — biological contamination protocols are more rigorous than any laboratory on Earth. The colonists live in constant awareness that they are surrounded by alien life in an ocean on a moon of Jupiter, beneath 15 km of ice, 628 million km from Earth. The psychological services division is the largest department in the city. The vodka ration is the largest in the solar system. Both facts are related."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_outer_relay",
+      "name": "Jovian Communication Relay Network",
+      "timelineId": "jupiter",
+      "order": 55,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_system_governance" } },
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_callisto_ganymede_transit" } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "pressureModifiers": { "infrastructure": -0.1, "political": -0.05 },
+        "unlocks": ["jovian_communications_grid", "deep_space_relay"],
+        "narrative": {
+          "pravdaHeadline": "COMMUNICATION RELAY NETWORK OPERATIONAL: All Jovian Moons Connected in Real-Time",
+          "toast": "Signal delay between Jovian moons: 2-8 seconds (tolerable). Signal delay to Earth: 33-54 minutes (intolerable for bureaucratic purposes). The relay network enables real-time coordination within the Jupiter system. Moscow's instructions now arrive with a minimum 66-minute round-trip delay. The Jovian Soviet has learned to make decisions and apologize for unauthorized initiative later. The apologies travel at the speed of light. The forgiveness does not.",
+          "description": "The Jupiter system spans 1.88 million km from Io to Callisto. Light-speed delays between moons range from 2 seconds (Io-Europa) to 8 seconds (Io-Callisto). A constellation of relay satellites in Jovian orbit provides continuous high-bandwidth communication between all four major moons and the orbital fuel depot. Within the system, video conferencing and real-time data sharing are routine. Communication with Earth is another matter: the 33-54 minute one-way delay (depending on orbital positions) means every exchange takes over an hour for a single question-and-answer. Bureaucratic processes that require Moscow's approval now take weeks for what should be minutes of administrative work. The Jovian Soviet has adopted a policy of 'anticipatory compliance' — making decisions they believe Moscow would approve and filing the paperwork retroactively. Moscow has not approved this policy. The approval request is in transit. It has been in transit for 47 minutes."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_population_10000",
+      "name": "Jovian System: Population 10,000",
+      "timelineId": "jupiter",
+      "order": 60,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_europa_ocean_city" } },
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_outer_relay" } },
+        { "population": { "min": 10000 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": { "demographic": 0.1, "political": 0.1, "morale": -0.05 },
+        "unlocks": ["jovian_society", "jovian_cultural_identity"],
+        "narrative": {
+          "pravdaHeadline": "JOVIAN POPULATION REACHES TEN THOUSAND: Full Soviet Society Now Functions Across Four Moons",
+          "toast": "Ten thousand Soviet citizens live in the Jupiter system. Ganymede: 5,200 (administrative center). Callisto: 3,100 (residential and agricultural). Europa: 1,400 (research and the Submarine). Io: 0 humans, 12,000 robots (unmanned mining). A third generation is being born — children who have never experienced Earth gravity, Earth sky, or Earth bureaucracy. They have, however, experienced Jovian bureaucracy, which they report is identical.",
+          "description": "A population of 10,000 across four moons constitutes a society, not an outpost. The Jupiter system now has its own schools (curriculum adapted for children who have never seen open sky), hospitals (specializing in low-gravity medicine and radiation treatment), courts (the first Jovian murder trial — a dispute over water rations on Europa — is handled by a local judge, not remanded to Earth), and cultural institutions (the Ganymede Theater Company's production of 'The Cherry Orchard' is performed in 0.14g, giving the falling cherry blossoms an ethereal quality that Chekhov could never have imagined). Birth rates on Callisto exceed death rates — the system is growing organically. The demographic profile is young and educated. The political profile is restive. Children born on Ganymede or Callisto (gravitational fields 0.14g and 0.13g respectively) cannot visit Earth without months of gravitational acclimation. They are Soviet citizens who will never see the Motherland. The implications of this are discussed in political education classes. The conclusions drawn are not the ones the instructors intended."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "jupiter_gateway_to_saturn",
+      "name": "Gateway to Saturn",
+      "timelineId": "jupiter",
+      "order": 65,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_population_10000" } },
+        { "milestone": { "timelineId": "jupiter", "milestoneId": "jupiter_fuel_depot" } },
+        { "techLevel": { "min": 0.9 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "pressureModifiers": { "economic": 0.1, "morale": -0.1 },
+        "unlocks": ["saturn_trajectory", "outer_system_staging", "titan_mission_planning"],
+        "narrative": {
+          "pravdaHeadline": "JUPITER SYSTEM DESIGNATED OUTER SOLAR SYSTEM STAGING POINT: Saturn/Titan Missions Authorized",
+          "toast": "Jupiter's gravity well provides the slingshot. Jupiter's fuel depots provide the hydrogen. Jupiter's shipyards provide the vessels. Saturn is 4.3 AU from Jupiter at closest approach — a 2-year transit with continuous thrust. Titan awaits: the only moon with a thick atmosphere, the only body besides Earth with stable surface liquids (methane lakes), and the only place in the outer solar system where you can walk outside in a warm coat and an oxygen mask instead of a full pressure suit. The Five-Year Plan for Saturn has been filed. It is optimistic.",
+          "description": "Jupiter-to-Saturn gravity assist trajectories reduce transit energy by 40% compared to direct Earth-to-Saturn transfers. The Jovian fuel depot provides virtually unlimited hydrogen for fusion drives. The Ganymede shipyards (subsurface dry docks in excavated ice caverns) can construct vessels optimized for outer solar system transit — no need for atmospheric entry capability, just radiation shielding and life support. The first target: Titan, Saturn's largest moon. Titan has a 1.5 atm nitrogen atmosphere (denser than Earth's), surface temperature of -179°C, and methane/ethane lakes. Unlike any other body in the outer system, humans can walk on Titan's surface with relatively simple equipment: the atmosphere provides pressure (no pressure suit needed), the low gravity (0.14g) reduces physical strain, and only oxygen supply and thermal protection are required. The Five-Year Plan for Titan Colonization has been submitted from the Jovian Soviet without waiting for Moscow's authorization. By the time Moscow's response arrives (minimum 66 minutes, plus committee deliberation time estimated at 6-8 months), the first survey ship will already be in transit. The Jovian Soviet has included an apology for unauthorized initiative in the mission plan. The apology is on page 847. Nobody reads to page 847."
+        }
+      },
+      "oneShot": true
+    }
+  ]
+}

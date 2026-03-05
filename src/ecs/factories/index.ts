@@ -17,7 +17,7 @@ export {
 export { computeRenderSlot, createCitizen } from './citizenFactories';
 export { ageCategoryFromAge, laborCapacityForAge, memberRoleForAge } from './demographics';
 export type { Difficulty, DvorMemberSeed } from './settlementFactories';
-export { createDvor, createStartingSettlement } from './settlementFactories';
+export { createDvor, createStartingSettlement, generateStartingDvorData } from './settlementFactories';
 export { createGrid, createMetaStore, createResourceStore, createTile } from './storeFactories';
 export {
   clearTerrainFeatures,

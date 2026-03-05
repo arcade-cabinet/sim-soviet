@@ -9,8 +9,9 @@
  * - 1955+ (thaw/stagnation/eternal): Grid-aligned, services near housing (SNiP walking distances)
  */
 
-import type { EraId } from '../game/era/types';
+import arcologyConfig from '../config/arcology.json';
 import { getBuildingDef } from '../data/buildingDefs';
+import type { EraId } from '../game/era/types';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,12 @@ export interface PlacementContext {
   waterCells: Array<{ x: number; z: number }>;
   treeCells: Array<{ x: number; z: number }>;
   occupiedCells: Set<string>;
+  /** Optional fertility data per cell ("x,z" → 0-100). Used for resource-proximity clustering. */
+  fertilityCells?: Map<string, number>;
+  /** Optional traffic data per cell ("x,z" → count). Used for desire-path awareness. */
+  trafficCells?: Map<string, number>;
+  /** Optional arcology footprint cells ("x,z" → mergeGroup). Buildings prefer adjacency to matching arcologies. */
+  arcologyCells?: Map<string, string>;
 }
 
 interface ScoredCandidate {
@@ -42,7 +49,25 @@ const ERA_GROUP: Record<EraId, EraGroup> = {
   thaw_and_freeze: 'late',
   stagnation: 'late',
   the_eternal: 'late',
+  // Kardashev sub-eras — all use late (grid-aligned, SNiP-style) placement
+  post_soviet: 'late',
+  planetary: 'late',
+  solar_engineering: 'late',
+  type_one: 'late',
+  deconstruction: 'late',
+  dyson_swarm: 'late',
+  megaearth: 'late',
+  type_two_peak: 'late',
 };
+
+// ── Arcology merge group lookup (for adjacency-aware placement) ──────────────
+
+const DEF_TO_MERGE_GROUP: Map<string, string> = new Map();
+for (const [group, defIds] of Object.entries(arcologyConfig.mergeGroups as Record<string, string[]>)) {
+  for (const defId of defIds) {
+    DEF_TO_MERGE_GROUP.set(defId, group);
+  }
+}
 
 // ── Role classification helpers ─────────────────────────────────────────────
 
@@ -96,6 +121,26 @@ function distToCenter(x: number, z: number, gridSize: number): number {
   return manhattan(x, z, center, center);
 }
 
+// ── Fertility scoring ────────────────────────────────────────────────────────
+
+/**
+ * Score bonus/penalty based on soil fertility data.
+ * Farms strongly prefer high-fertility cells; housing avoids contaminated ground.
+ */
+function scoreFertility(x: number, z: number, defId: string, ctx: PlacementContext): number {
+  if (!ctx.fertilityCells) return 0;
+  const fertility = ctx.fertilityCells.get(`${x},${z}`) ?? 50;
+  if (isFarmOrAgriculture(defId)) {
+    // 0-4 score bonus based on fertility (0-100 mapped to 0-4)
+    return (fertility / 100) * 4;
+  }
+  if (isHousing(defId) && fertility < 20) {
+    // Housing avoids contaminated/infertile ground
+    return -1;
+  }
+  return 0;
+}
+
 // ── Scoring functions by era group ──────────────────────────────────────────
 
 function scoreEarly(x: number, z: number, defId: string, ctx: PlacementContext): number {
@@ -125,6 +170,9 @@ function scoreEarly(x: number, z: number, defId: string, ctx: PlacementContext):
   const existingDist = minDistTo(x, z, ctx.buildings);
   if (existingDist <= 4) score += 1;
 
+  // Fertility-aware placement
+  score += scoreFertility(x, z, defId, ctx);
+
   return score;
 }
 
@@ -149,6 +197,9 @@ function scoreMiddle(x: number, z: number, defId: string, ctx: PlacementContext)
     const existingDist = minDistTo(x, z, ctx.buildings);
     if (existingDist <= 3) score += 2;
   }
+
+  // Fertility-aware placement (farms prefer fertile land in any era)
+  score += scoreFertility(x, z, defId, ctx);
 
   return score;
 }
@@ -195,6 +246,20 @@ function scoreLate(x: number, z: number, defId: string, ctx: PlacementContext): 
   // General proximity to existing buildings
   const existingDist = minDistTo(x, z, ctx.buildings);
   if (existingDist <= 3) score += 1;
+
+  // Arcology adjacency bonus: prefer cells next to matching arcology footprints
+  if (ctx.arcologyCells && ctx.arcologyCells.size > 0) {
+    const mergeGroup = DEF_TO_MERGE_GROUP.get(defId);
+    if (mergeGroup) {
+      for (const [dx, dz] of [[0, 1], [0, -1], [1, 0], [-1, 0]] as const) {
+        const nKey = `${x + dx},${z + dz}`;
+        if (ctx.arcologyCells.get(nKey) === mergeGroup) {
+          score += 5; // strong preference to grow arcologies
+          break;
+        }
+      }
+    }
+  }
 
   return score;
 }

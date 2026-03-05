@@ -8,22 +8,47 @@
  * - useTexture from drei for loading snow/grass textures
  * - <mesh> with <sphereGeometry> for perimeter hills
  *
+ * Era-driven terrain: Ground textures swap based on the current historical era,
+ * providing 6 distinct visual states across the 8 game eras.
+ *
  * HDRI credits: Poly Haven (CC0) — snowy_field, winter_sky, snowy_park_01
+ * Terrain textures: AmbientCG (CC0)
  */
 
 import { Environment as DreiEnvironment, Sky, useTexture } from '@react-three/drei';
+import DysonSphereBackdrop from './shaders/DysonSphereBackdrop';
+import MarsAtmosphere from './shaders/MarsAtmosphere';
+import ONeillInterior from './shaders/ONeillInterior';
 import type React from 'react';
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import type { EraId } from '../game/era/types';
 import { getCurrentGridSize } from '../engine/GridTypes';
 import { assetUrl } from '../utils/assetPath';
 import type { Season } from './TerrainGrid';
+import {
+  DECAY_OVERLAYS,
+  TERRAIN_DECAY_OVERLAYS,
+  TERRAIN_HILL_COLORS,
+  TERRAIN_STATE_COLORS,
+  eraToTerrainState,
+  getDecayOverlayFiles,
+  getTerrainTextureFiles,
+  type DecayOverlayId,
+} from './terrainEraMapping';
 
 const GROUND_SIZE = 400;
 const GROUND_Y = -0.05;
 
-/** Map season to HDRI for image-based lighting */
-function getHdriFile(season: Season): string {
+/** Map season + load zone to HDRI for image-based lighting.
+ * Load zone takes priority — if the active settlement has a specific HDRI, use it.
+ * Falls back to season-based selection for Earth settlements. */
+function getHdriFile(season: Season, loadZoneHdri?: string): string {
+  // If a load zone specifies an HDRI, use it (non-Earth settlements, advanced eras)
+  if (loadZoneHdri) {
+    return assetUrl(`assets/hdri/${loadZoneHdri}`);
+  }
+  // Default: season-based for Earth historical eras
   switch (season) {
     case 'winter':
       return assetUrl('assets/hdri/snowy_field_1k.hdr');
@@ -35,11 +60,16 @@ function getHdriFile(season: Season): string {
   }
 }
 
-/** Sky parameters per season (Preetham model) */
-function getSkyParams(season: Season) {
+/**
+ * Sky parameters per season (Preetham model).
+ * When techLevel > 0, gradually shifts toward deeper, clearer skies
+ * (lower turbidity = less atmospheric scattering = more stars visible).
+ */
+function getSkyParams(season: Season, techLevel = 0) {
+  let params: { turbidity: number; rayleigh: number; mieCoefficient: number; mieDirectionalG: number; inclination: number; azimuth: number };
   switch (season) {
     case 'winter':
-      return {
+      params = {
         turbidity: 20,
         rayleigh: 1,
         mieCoefficient: 0.01,
@@ -47,8 +77,9 @@ function getSkyParams(season: Season) {
         inclination: 0.42,
         azimuth: 0.25,
       };
+      break;
     case 'autumn':
-      return {
+      params = {
         turbidity: 15,
         rayleigh: 2,
         mieCoefficient: 0.008,
@@ -56,8 +87,9 @@ function getSkyParams(season: Season) {
         inclination: 0.45,
         azimuth: 0.25,
       };
+      break;
     default:
-      return {
+      params = {
         turbidity: 10,
         rayleigh: 2,
         mieCoefficient: 0.005,
@@ -66,32 +98,16 @@ function getSkyParams(season: Season) {
         azimuth: 0.25,
       };
   }
-}
 
-/** Ground tint per season */
-function getGroundColor(season: Season): string {
-  switch (season) {
-    case 'winter':
-      return '#e6ebf2'; // cold white (0.9, 0.92, 0.95)
-    case 'autumn':
-      return '#a69980'; // muddy brown-gray (0.65, 0.60, 0.50)
-    case 'spring':
-      return '#8ca673'; // muted fresh green (0.55, 0.65, 0.45)
-    default: // summer
-      return '#809466'; // subdued green (0.50, 0.58, 0.40)
+  // Tech-driven sky shift: clearer atmosphere as civilization advances
+  if (techLevel > 0.1) {
+    const t = Math.min(1, (techLevel - 0.1) / 0.9);
+    params.turbidity = params.turbidity * (1 - t * 0.4); // up to 40% reduction
+    params.rayleigh = params.rayleigh + t * 1.5; // deeper blue-violet
+    params.mieCoefficient = params.mieCoefficient * (1 - t * 0.3);
   }
-}
 
-/** Hill color per season */
-function getHillColor(season: Season): string {
-  switch (season) {
-    case 'winter':
-      return '#d1d6e0'; // (0.82, 0.84, 0.88)
-    case 'autumn':
-      return '#736647'; // (0.45, 0.40, 0.28)
-    default:
-      return '#526b38'; // (0.32, 0.42, 0.22)
-  }
+  return params;
 }
 
 /** Hill definitions — positions and scales for perimeter framing */
@@ -111,20 +127,16 @@ const HILLS = [
   { x: -15, z: 45, sx: 14, sy: 3, sz: 16 },
 ];
 
-/** PBR Ground plane with tiled snow/grass textures */
-const Ground: React.FC<{ season: Season }> = ({ season }) => {
+/** PBR Ground plane with era-driven tiled textures. */
+const Ground: React.FC<{ season: Season; era: EraId }> = ({ season, era }) => {
   const center = getCurrentGridSize() / 2;
-  const useSnow = season === 'winter' || season === 'autumn';
+  const terrainState = eraToTerrainState(era);
+  const textureFiles = getTerrainTextureFiles(terrainState);
 
-  const colorFile = useSnow
-    ? assetUrl('assets/textures/snow/Snow003_1K-JPG_Color.jpg')
-    : assetUrl('assets/textures/grass/Grass001_1K-JPG_Color.jpg');
-  const normalFile = useSnow
-    ? assetUrl('assets/textures/snow/Snow003_1K-JPG_NormalGL.jpg')
-    : assetUrl('assets/textures/grass/Grass001_1K-JPG_NormalGL.jpg');
-  const roughFile = useSnow
-    ? assetUrl('assets/textures/snow/Snow003_1K-JPG_Roughness.jpg')
-    : assetUrl('assets/textures/grass/Grass001_1K-JPG_Roughness.jpg');
+  // Era-driven PBR textures from AmbientCG terrain packs
+  const colorFile = assetUrl(textureFiles.color);
+  const normalFile = assetUrl(textureFiles.normal);
+  const roughFile = assetUrl(textureFiles.roughness);
 
   const [colorMap, normalMap, roughnessMap] = useTexture([colorFile, normalFile, roughFile]);
 
@@ -137,6 +149,9 @@ const Ground: React.FC<{ season: Season }> = ({ season }) => {
     }
   }, [colorMap, normalMap, roughnessMap]);
 
+  // Blend era color tint with season color for visual coherence
+  const groundColor = TERRAIN_STATE_COLORS[terrainState];
+
   return (
     <mesh position={[center, GROUND_Y, center]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[GROUND_SIZE, GROUND_SIZE, 4, 4]} />
@@ -144,7 +159,7 @@ const Ground: React.FC<{ season: Season }> = ({ season }) => {
         map={colorMap}
         normalMap={normalMap}
         roughnessMap={roughnessMap}
-        color={getGroundColor(season)}
+        color={groundColor}
         metalness={0}
         roughness={1}
       />
@@ -152,16 +167,72 @@ const Ground: React.FC<{ season: Season }> = ({ season }) => {
   );
 };
 
+/** Single decay overlay plane — transparent textured layer above the ground. */
+const DecayOverlayPlane: React.FC<{ overlayId: DecayOverlayId }> = ({ overlayId }) => {
+  const center = getCurrentGridSize() / 2;
+  const config = DECAY_OVERLAYS[overlayId];
+  const files = getDecayOverlayFiles(config);
+
+  const colorFile = assetUrl(files.color);
+  const normalFile = assetUrl(files.normal);
+  const roughFile = assetUrl(files.roughness);
+
+  const [colorMap, normalMap, roughnessMap] = useTexture([colorFile, normalFile, roughFile]);
+
+  useMemo(() => {
+    const tileScale = 20;
+    for (const tex of [colorMap, normalMap, roughnessMap]) {
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(tileScale, tileScale);
+    }
+  }, [colorMap, normalMap, roughnessMap]);
+
+  const emissiveColor = config.emissiveTint ?? '#000000';
+
+  return (
+    <mesh
+      position={[center, GROUND_Y + 0.01, center]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      receiveShadow
+    >
+      <planeGeometry args={[GROUND_SIZE, GROUND_SIZE, 4, 4]} />
+      <meshStandardMaterial
+        map={colorMap}
+        normalMap={normalMap}
+        roughnessMap={roughnessMap}
+        transparent
+        opacity={config.opacity}
+        depthWrite={false}
+        metalness={0}
+        roughness={1}
+        emissive={emissiveColor}
+        emissiveIntensity={config.emissiveIntensity ?? 0}
+      />
+    </mesh>
+  );
+};
+
 interface EnvironmentProps {
   season?: Season;
+  /** Current historical era — drives terrain texture selection. */
+  era?: EraId;
+  /** Tech level (0-1) — drives sky clarity shift for space progression. */
+  techLevel?: number;
+  /** HDRI filename override from load zone (for non-Earth settlements). */
+  loadZoneHdri?: string;
+  /** Procedural sky shader override from load zone. */
+  loadZoneShader?: 'DysonSphereBackdrop' | 'MarsAtmosphere' | 'ONeillInterior';
+  /** Mars terraforming progress for MarsAtmosphere shader (0-1). */
+  marsPhase?: number;
 }
 
 /** Renders the procedural sky, HDRI image-based lighting, PBR ground plane, and perimeter hills. */
-const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
+const Environment: React.FC<EnvironmentProps> = ({ season = 'winter', era = 'revolution', techLevel = 0, loadZoneHdri, loadZoneShader, marsPhase = 0 }) => {
   const center = getCurrentGridSize() / 2;
-  const skyParams = getSkyParams(season);
-  const hdriFile = getHdriFile(season);
-  const hillColor = getHillColor(season);
+  const skyParams = getSkyParams(season, techLevel);
+  const hdriFile = getHdriFile(season, loadZoneHdri);
+  const terrainState = eraToTerrainState(era);
+  const hillColor = TERRAIN_HILL_COLORS[terrainState];
 
   // Pre-compute hill positions (offset by grid center)
   const hillsData = useMemo(
@@ -175,23 +246,36 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter' }) => {
 
   return (
     <>
-      {/* Procedural sky (Preetham model via drei Sky — GLSL ShaderMaterial) */}
-      <Sky
-        turbidity={skyParams.turbidity}
-        rayleigh={skyParams.rayleigh}
-        mieCoefficient={skyParams.mieCoefficient}
-        mieDirectionalG={skyParams.mieDirectionalG}
-        inclination={skyParams.inclination}
-        azimuth={skyParams.azimuth}
-      />
+      {/* Sky: procedural shader override for non-Earth, or Preetham model for Earth */}
+      {loadZoneShader === 'MarsAtmosphere' ? (
+        <MarsAtmosphere terraformingProgress={marsPhase} />
+      ) : loadZoneShader === 'ONeillInterior' ? (
+        <ONeillInterior />
+      ) : loadZoneShader === 'DysonSphereBackdrop' ? (
+        <DysonSphereBackdrop />
+      ) : (
+        <Sky
+          turbidity={skyParams.turbidity}
+          rayleigh={skyParams.rayleigh}
+          mieCoefficient={skyParams.mieCoefficient}
+          mieDirectionalG={skyParams.mieDirectionalG}
+          inclination={skyParams.inclination}
+          azimuth={skyParams.azimuth}
+        />
+      )}
 
-      {/* HDRI for image-based lighting (IBL) */}
+      {/* HDRI for image-based lighting (IBL) — always active for PBR materials */}
       <DreiEnvironment files={hdriFile} />
 
-      {/* PBR ground plane */}
-      <Ground season={season} />
+      {/* PBR ground plane — era-driven textures */}
+      <Ground season={season} era={era} />
 
-      {/* Perimeter hills */}
+      {/* Decay overlay planes — transparent textured layers for stagnation/collapse */}
+      {(TERRAIN_DECAY_OVERLAYS[terrainState] ?? []).map((overlayId) => (
+        <DecayOverlayPlane key={overlayId} overlayId={overlayId} />
+      ))}
+
+      {/* Perimeter hills — era-driven colors */}
       {hillsData.map((hill, i) => (
         <mesh key={i} position={hill.position} scale={hill.scale}>
           <sphereGeometry args={[0.5, 8, 8]} />

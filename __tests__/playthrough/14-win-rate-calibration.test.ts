@@ -71,9 +71,9 @@ interface DifficultyConfig {
 // ── Constants ─────────────────────────────────────────────────────────────
 
 const DIFFICULTY_CONFIGS: DifficultyConfig[] = [
-  { difficulty: 'worker', consequence: 'forgiving', seedCount: 5, aspirationalWinRate: 0.8, label: 'Worker' },
-  { difficulty: 'comrade', consequence: 'forgiving', seedCount: 10, aspirationalWinRate: 0.5, label: 'Comrade' },
-  { difficulty: 'tovarish', consequence: 'forgiving', seedCount: 10, aspirationalWinRate: 0.2, label: 'Tovarish' },
+  { difficulty: 'worker', consequence: 'rehabilitated', seedCount: 5, aspirationalWinRate: 0.8, label: 'Worker' },
+  { difficulty: 'comrade', consequence: 'rehabilitated', seedCount: 10, aspirationalWinRate: 0.5, label: 'Comrade' },
+  { difficulty: 'tovarish', consequence: 'rehabilitated', seedCount: 10, aspirationalWinRate: 0.2, label: 'Tovarish' },
 ];
 
 const TARGET_YEARS = 200;
@@ -144,7 +144,7 @@ function buildRobustSettlement(): void {
 function runCalibrationRun(
   seed: string,
   difficulty: DifficultyLevel,
-  consequence: ConsequenceLevel = 'forgiving',
+  consequence: ConsequenceLevel = 'rehabilitated',
 ): RunResult {
   const result: RunResult = {
     seed,

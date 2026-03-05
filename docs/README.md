@@ -9,7 +9,7 @@ last_verified: 2026-03-01
 
 > *"All documentation is accurate. Discrepancies are the reader's fault."*
 
-This directory contains the design specifications, reference documents, and development logs for **SimSoviet 1917** — a satirical 3D city-builder set in an alternate-history Soviet Union that never collapses. Built with React Three Fiber (Three.js r183 + React Native + Expo).
+This directory contains the design specifications, reference documents, and development logs for **SimSoviet 1917** — a Soviet bureaucrat survival sim (NOT a city builder) set in an alternate-history Soviet Union that never collapses. The player is the predsedatel; the settlement grows organically via autonomous agents. Built with React Three Fiber (Three.js r183 + React Native + Expo).
 
 ---
 
@@ -53,6 +53,20 @@ Deep reference documents for complex subsystems.
 | [Power Transitions](design/power-transitions.md) | 7 leadership succession types, probability engine |
 | [Leader Archetypes](design/leader-archetypes.md) | 11 procedural leader personalities |
 
+### Eternal Era & Expansion Systems
+
+| System | Description |
+|--------|-------------|
+| Kardashev Sub-Eras | 8 stages from Type 0 to Type III+ with distinct mechanics and building sets |
+| Post-Scarcity Pressure | 5 pressure domains for abundance-driven crises (identity, meaning, computation) |
+| Multi-Settlement | Tick loop across multiple worlds, RelocationEngine, inter-settlement transport |
+| Cold Branches | 42 narrative divergence points with cascading consequences |
+| Adaptive Agent Matrix | 10 terrain profiles (Siberia to Venus) with per-world parameter swaps |
+| Climate Polarity | Ecological collapse timeline vs. terraforming mechanics |
+| Procedural Shaders | Dyson sphere, Mars dome, O'Neill cylinder visualization |
+| Celestial Body Factory | Sphere-to-flat morph for planet landing transitions |
+| Load Zones | 13 zone-aware configurations controlling LOD and memory budgets |
+
 ---
 
 ## Content & Creative
@@ -72,7 +86,7 @@ Deep reference documents for complex subsystems.
 |----------|-------------|
 | [Politburo System](reference/politburo-system.md) | Ministry simulation — 10 ministries, 80-cell matrix, 29 events |
 | [Yuka AI Research](reference/research-yuka-ai.md) | AI library capabilities mapping |
-| [Audio Assets](reference/audio-assets.md) | 52 Soviet-era music tracks inventory |
+| [Audio Assets](reference/audio-assets.md) | 47 Soviet-era music tracks inventory |
 
 ---
 
@@ -101,4 +115,4 @@ Deep reference documents for complex subsystems.
 
 ---
 
-*42 documentation files | Last updated: February 2026*
+*43 documentation files | Last updated: March 2026*

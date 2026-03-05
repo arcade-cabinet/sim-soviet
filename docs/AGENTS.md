@@ -1,13 +1,13 @@
 # Documentation — Master Agent Index
 
-> **SimSoviet 1917** — Satirical 3D city-builder (R3F + Three.js r183 + React Native + Expo)
+> **SimSoviet 1917** — Soviet bureaucrat survival sim (NOT a city builder). R3F + Three.js r183 + React Native + Expo.
 
 ## Quick Navigation
 
 | Index | Domain | Docs |
 |-------|--------|------|
 | [`design/AGENTS.md`](design/AGENTS.md) | Game systems design docs | 15 docs |
-| [`plans/AGENTS.md`](plans/AGENTS.md) | Implementation plans & PRDs | 9 docs |
+| [`plans/AGENTS.md`](plans/AGENTS.md) | Implementation plans & PRDs | 4 active + 11 archived |
 | [`devlog/AGENTS.md`](devlog/AGENTS.md) | Development milestones | 5 entries |
 | [`reference/AGENTS.md`](reference/AGENTS.md) | Subsystem reference docs | 6 docs |
 | [`audits/AGENTS.md`](audits/AGENTS.md) | Code-vs-docs audits | 1 audit |
@@ -43,7 +43,7 @@ commits:
 | Type | Purpose | Count |
 |------|---------|-------|
 | `design` | Game system specifications | 16 |
-| `plan` | Implementation strategies & PRDs | 9 |
+| `plan` | Implementation strategies & PRDs | 4 active + 11 archived |
 | `devlog` | Chronological development milestones | 5 |
 | `reference` | Subsystem data structure documentation | 6 |
 | `audit` | Code-vs-docs alignment assessments | 1 |
@@ -82,6 +82,24 @@ commits:
 | `design/scoring.md` | design | `src/game/ScoringSystem.ts` |
 | `design/ecs-architecture.md` | design | `src/ecs/` |
 
+### New Systems (feat/allocation-engine)
+| System | Type | Implementation | Description |
+|--------|------|---------------|-------------|
+| Pressure-Valve Crisis | crisis | `src/ai/agents/crisis/pressure/` (7 files) | 10-domain pressure accumulation, dual-spread model, threshold-based crisis emergence |
+| Climate Events | crisis | `src/ai/agents/crisis/ClimateEventSystem.ts` | Tier 2: season/weather-gated natural events that add pressure |
+| Black Swan Events | crisis | `src/ai/agents/crisis/BlackSwanSystem.ts` | Tier 3: ultra-rare events (earthquakes, solar storms, nuclear accidents) |
+| World Agent | core | `src/ai/agents/core/WorldAgent.ts` | Geopolitical backdrop: spheres of influence, trade, tension, climate trends |
+| Sphere Dynamics | core | `src/ai/agents/core/sphereDynamics.ts` | Khaldun + Turchin empire lifecycle cycles, governance drift |
+| World Countries | core | `src/ai/agents/core/worldCountries.ts` | Country/sphere data, governance types, 1917 starting state |
+| Cold Branches | core | `src/ai/agents/core/worldBranches.ts` | Dormant divergence points activated by pressure conditions |
+| Multi-Settlement | game | `src/game/relocation/` (3 files) | Settlement type, RelocationEngine, terrain profiles (Siberia → Mars) |
+| HQ Splitting | growth | `src/growth/HQSplitting.ts` | Milestone-based building spawns at population thresholds |
+| Building Panel Content | ui | `src/ui/BuildingPanelContent/` (7 files) | Per-role building panels (Factory, Farm, Housing, Service, etc.) |
+| HQ Agency Tabs | ui | `src/ui/hq-tabs/` (6 files) | Government HQ tabs (Gosplan, KGB, Military, Politburo, Reports, etc.) |
+| Celestial Body Factory | scene | `src/scene/celestial/` (5 files) | Sphere↔flat morphing viewport, 4 body types (Sun/Terran/Martian/Jovian), MegastructureShell |
+| ZonePreloader | scene | `src/scene/ZonePreloader.ts` | Zone-specific asset preloading (models, textures, HDRIs) with progress phases |
+| Zone-Aware Loading | ui | `src/ui/LoadingScreen.tsx`, `src/ui/SettlementTransitionOverlay.tsx` | Zone-specific loading screens with flavor text + settlement transition overlay |
+
 ### Active (In use, ongoing)
 | Document | Type |
 |----------|------|
@@ -103,8 +121,8 @@ commits:
 | `design/leadership-architecture.md` | design |
 | `design/power-transitions.md` | design |
 
-### Superseded
+### Superseded (Archived)
 | Document | Replaced By |
 |----------|-------------|
-| `plans/2026-02-26-reactylon-native-3d-design.md` | `plans/2026-02-27-r3f-migration-design.md` |
-| `plans/2026-02-26-simSoviet1917-reactylon-native.md` | `plans/2026-02-27-r3f-migration-plan.md` |
+| `plans/archive/2026-02-26-reactylon-native-3d-design.md` | `plans/archive/2026-02-27-r3f-migration-design.md` |
+| `plans/archive/2026-02-26-simSoviet1917-reactylon-native.md` | `plans/archive/2026-02-27-r3f-migration-plan.md` |

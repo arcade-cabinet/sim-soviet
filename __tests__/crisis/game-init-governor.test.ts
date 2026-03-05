@@ -45,19 +45,19 @@ function makeMockCallbacks(): any {
   };
 }
 
-// ── Classic mode (default): no governor ──────────────────────────────────────
+// ── Default mode: no governor ────────────────────────────────────────────────
 
 describe('GameInit governor wiring', () => {
-  it('classic mode: no governor set on engine', () => {
+  it('default mode: no governor set on engine', () => {
     const engine = new SimulationEngine(
       makeMockGrid(),
       makeMockCallbacks(),
       new GameRng('classic-test'),
       'comrade',
-      'permadeath',
+      'rasstrelyat',
     );
 
-    // Classic mode — no governor wired
+    // Default — no governor wired
     expect(engine.getGovernor()).toBeNull();
   });
 
@@ -67,7 +67,7 @@ describe('GameInit governor wiring', () => {
       makeMockCallbacks(),
       new GameRng('historical-test'),
       'comrade',
-      'permadeath',
+      'rasstrelyat',
     );
 
     // Wire governor as GameInit would
@@ -91,7 +91,7 @@ describe('GameInit governor wiring', () => {
     expect(DIFFICULTY_PRESETS.worker.resourceMultiplier).toBe(2.0);
   });
 
-  it('classic mode: resourceMultiplier uses DIFFICULTY_PRESETS', () => {
+  it('freeform mode: resourceMultiplier uses DIFFICULTY_PRESETS', () => {
     const testCases: Array<{ difficulty: 'worker' | 'comrade' | 'tovarish'; expected: number }> = [
       { difficulty: 'worker', expected: 2.0 },
       { difficulty: 'comrade', expected: 1.0 },
@@ -99,7 +99,7 @@ describe('GameInit governor wiring', () => {
     ];
 
     for (const { difficulty, expected } of testCases) {
-      const gameMode = 'classic' as const;
+      const gameMode = 'freeform' as const;
 
       const resMult = gameMode === 'historical' ? 1.0 : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
 
@@ -114,7 +114,7 @@ describe('NewGameConfig', () => {
   it('includes gameMode field', () => {
     const config: NewGameConfig = {
       difficulty: 'comrade',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       seed: 'test-seed',
       mapSize: 'medium',
       gameMode: 'historical',
@@ -123,15 +123,15 @@ describe('NewGameConfig', () => {
     expect(config.gameMode).toBe('historical');
   });
 
-  it('accepts classic game mode', () => {
+  it('accepts freeform game mode', () => {
     const config: NewGameConfig = {
       difficulty: 'tovarish',
-      consequence: 'harsh',
-      seed: 'classic-seed',
+      consequence: 'gulag',
+      seed: 'freeform-seed',
       mapSize: 'large',
-      gameMode: 'classic',
+      gameMode: 'freeform',
     };
 
-    expect(config.gameMode).toBe('classic');
+    expect(config.gameMode).toBe('freeform');
   });
 });

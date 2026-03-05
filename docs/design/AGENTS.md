@@ -26,6 +26,27 @@ Each design document specifies one game system. Read the `implementation` frontm
 | `power-transitions.md` | 7 Succession Mechanics | draft | `src/game/politburo/coups.ts` | partial |
 | `dialog-bible.md` | In-Game Voice Guide | active | `src/content/dialogue/` | partial |
 
+## New Systems (feat/allocation-engine — not yet design-doc'd)
+
+These systems are implemented in code but do not yet have corresponding design documents:
+
+| System | Implementation | Description |
+|--------|---------------|-------------|
+| Pressure-Valve Crisis | `src/ai/agents/crisis/pressure/` (7 files) | 10-domain pressure accumulation with dual-spread model, threshold-based crisis emergence (replaces ChaosEngine dice rolls) |
+| Climate Events (Tier 2) | `src/ai/agents/crisis/ClimateEventSystem.ts` | Seasonal/geographic natural events gated by weather and climate trends |
+| Black Swan Events (Tier 3) | `src/ai/agents/crisis/BlackSwanSystem.ts` | Ultra-rare events (earthquakes, solar storms, nuclear accidents) with no artificial intervals |
+| World Agent | `src/ai/agents/core/WorldAgent.ts` | Geopolitical backdrop — spheres, trade, tension, climate cycles, Moscow scrutiny |
+| Sphere Dynamics | `src/ai/agents/core/sphereDynamics.ts` | Khaldun + Turchin overlapping empire lifecycle cycles |
+| Cold Branches | `src/ai/agents/core/worldBranches.ts` | Dormant divergence points that activate organically from pressure conditions |
+| Multi-Settlement / Relocation | `src/game/relocation/` (3 files) | Settlement type, RelocationEngine, terrain profiles from Siberia to Mars |
+| HQ Splitting | `src/growth/HQSplitting.ts` | Milestone-based building spawns at population thresholds (50/150/400) |
+| Kardashev Sub-Eras (8) | `src/game/era/kardashev.ts`, `src/config/kardashevSubEras.json` | post_soviet → planetary → solar_engineering → type_one → deconstruction → dyson_swarm → megaearth → type_two_peak |
+| Post-Scarcity Pressure (5 domains) | `src/ai/agents/crisis/pressure/PressureDomains.ts` | meaning, density, entropy, legacy, ennui — crises from abundance |
+| Celestial Body Factory | `src/scene/celestial/` (5 files) | Sphere↔flat morphing viewport, 4 body types, MegastructureShell with Dyson shell |
+| ZonePreloader | `src/scene/ZonePreloader.ts` | Zone-specific asset preloading with model/texture/HDRI progress phases |
+| Adaptive Agent Matrix (10 profiles) | `src/ai/agents/core/agentProfiles.ts` | 10 terrain profiles wired to 6 core agents, climate polarity |
+| MegaCity Law Enforcement | `src/ai/agents/political/` | KGB → Security → Sector Judges → Megacity Arbiters, crime rate model |
+
 ## Canonical vs Aspirational
 
 **Canonical** (implemented — reflects actual code):

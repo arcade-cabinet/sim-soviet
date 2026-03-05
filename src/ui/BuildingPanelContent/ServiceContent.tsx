@@ -3,7 +3,7 @@
  * (school, hospital, militia, dom-kultura, etc.).
  */
 
-import React from 'react';
+import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { BuildingDef } from '../../data/buildingDefs';
 import type { BuildingComponent } from '../../ecs/world';

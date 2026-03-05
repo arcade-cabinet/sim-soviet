@@ -15,6 +15,7 @@ import { world } from '@/ecs/world';
 import { gameState } from '@/engine/GameState';
 import { clearToast, dismissAdvisor } from '@/engine/helpers';
 import {
+  clearMassGraves,
   closeBuildingInspector,
   closeCitizenDossierByIndex,
   closeInspectMenu,
@@ -99,6 +100,9 @@ export function resetAllSingletons(): void {
   closeRadialMenu();
   closeInspectMenu();
   closePoliticalPanel();
+
+  // 6b. Clear mass grave markers
+  clearMassGraves();
 
   // 7. Reset doctrine module-level state (thaw/freeze + paperwork)
   resetThawFreezeState();

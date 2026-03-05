@@ -1,0 +1,113 @@
+[
+  {
+    "id": "mars_ice_cap_recession",
+    "name": "Ice Cap Recession",
+    "validSeasons": ["SHORT_SUMMER", "STIFLING_HEAT", "GOLDEN_WEEK"],
+    "weatherBoosts": { "HEATWAVE": 1.5, "CLEAR": 1.2 },
+    "climateTrendRange": { "min": 0.1, "max": 1.0 },
+    "baseProbability": 0.006,
+    "cooldownTicks": 24,
+    "pressureSpikes": { "food": -0.05, "morale": -0.03 },
+    "impact": {
+      "crisisId": "climate-mars-ice-cap-recession",
+      "economy": { "productionMult": 1.05 },
+      "narrative": {
+        "pravdaHeadlines": ["TERRAFORMING PROGRESS: Polar ice receding, liquid water detected at southern cap."],
+        "toastMessages": [{ "text": "Ice cap recession: water resources expanding.", "severity": "warning" }]
+      }
+    }
+  },
+  {
+    "id": "mars_dust_storm_clearing",
+    "name": "Dust Storm Clearing",
+    "validSeasons": ["RASPUTITSA_SPRING", "RASPUTITSA_AUTUMN"],
+    "weatherBoosts": { "CLEAR": 2.0, "MIRACULOUS_SUN": 1.5 },
+    "climateTrendRange": { "min": 0.0, "max": 1.0 },
+    "baseProbability": 0.005,
+    "cooldownTicks": 30,
+    "pressureSpikes": { "infrastructure": -0.03, "morale": -0.02 },
+    "impact": {
+      "crisisId": "climate-mars-dust-clearing",
+      "economy": { "productionMult": 1.08 },
+      "narrative": {
+        "pravdaHeadlines": ["ATMOSPHERIC PROGRESS: Dust levels declining, solar efficiency improving across settlements."],
+        "toastMessages": [{ "text": "Dust clearing: solar panels at higher efficiency.", "severity": "warning" }]
+      }
+    }
+  },
+  {
+    "id": "mars_atmosphere_thickening",
+    "name": "Atmosphere Thickening",
+    "validSeasons": ["SHORT_SUMMER", "GOLDEN_WEEK", "STIFLING_HEAT"],
+    "weatherBoosts": { "HEATWAVE": 1.3 },
+    "climateTrendRange": { "min": 0.2, "max": 1.0 },
+    "baseProbability": 0.004,
+    "cooldownTicks": 48,
+    "pressureSpikes": { "health": -0.05, "food": -0.03 },
+    "impact": {
+      "crisisId": "climate-mars-atmosphere-thickening",
+      "economy": { "productionMult": 1.1 },
+      "narrative": {
+        "pravdaHeadlines": ["TERRAFORMING MILESTONE: Atmospheric pressure rising, outdoor pressure suits may become optional within decades."],
+        "toastMessages": [{ "text": "Atmosphere thickening: terraforming on track.", "severity": "warning" }]
+      }
+    }
+  },
+  {
+    "id": "mars_dust_storm",
+    "name": "Planet-Wide Dust Storm",
+    "validSeasons": ["WINTER", "EARLY_FROST", "RASPUTITSA_AUTUMN"],
+    "weatherBoosts": { "BLIZZARD": 2.0, "MUD_STORM": 1.8 },
+    "climateTrendRange": null,
+    "baseProbability": 0.007,
+    "cooldownTicks": 36,
+    "pressureSpikes": { "infrastructure": 0.1, "power": 0.08, "food": 0.05 },
+    "impact": {
+      "crisisId": "climate-mars-dust-storm",
+      "economy": { "productionMult": 0.7 },
+      "infrastructure": { "decayMult": 1.3 },
+      "narrative": {
+        "pravdaHeadlines": ["PLANET-WIDE DUST STORM: Orbital mirrors obscured, solar power halted. All settlements on emergency reserves."],
+        "toastMessages": [{ "text": "Global dust storm! Solar power offline.", "severity": "critical" }]
+      }
+    }
+  },
+  {
+    "id": "mars_perchlorate_resurgence",
+    "name": "Perchlorate Resurgence",
+    "validSeasons": ["SHORT_SUMMER", "GOLDEN_WEEK"],
+    "weatherBoosts": { "HEATWAVE": 1.5 },
+    "climateTrendRange": { "min": 0.3, "max": 1.0 },
+    "baseProbability": 0.003,
+    "cooldownTicks": 48,
+    "pressureSpikes": { "health": 0.1, "food": 0.08 },
+    "impact": {
+      "crisisId": "climate-mars-perchlorate",
+      "social": { "diseaseMult": 1.8 },
+      "economy": { "foodDelta": -15 },
+      "narrative": {
+        "pravdaHeadlines": ["PERCHLORATE CONTAMINATION: Soil remediation setback, food supply compromised."],
+        "toastMessages": [{ "text": "Perchlorate resurgence: food contamination.", "severity": "critical" }]
+      }
+    }
+  },
+  {
+    "id": "mars_subsurface_ice_collapse",
+    "name": "Subsurface Ice Collapse",
+    "validSeasons": ["STIFLING_HEAT", "SHORT_SUMMER"],
+    "weatherBoosts": { "HEATWAVE": 2.0 },
+    "climateTrendRange": { "min": 0.4, "max": 1.0 },
+    "baseProbability": 0.002,
+    "cooldownTicks": 60,
+    "pressureSpikes": { "infrastructure": 0.15, "housing": 0.1 },
+    "impact": {
+      "crisisId": "climate-mars-ice-collapse",
+      "infrastructure": { "decayMult": 1.8 },
+      "social": { "growthMult": 0.9 },
+      "narrative": {
+        "pravdaHeadlines": ["SUBSURFACE ICE COLLAPSE: Ground subsidence detected, evacuation of affected sectors ordered."],
+        "toastMessages": [{ "text": "Ice collapse: ground subsidence, evacuate!", "severity": "critical" }]
+      }
+    }
+  }
+]

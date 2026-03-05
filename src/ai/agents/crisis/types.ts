@@ -23,7 +23,7 @@ export type CrisisSeverity = 'localized' | 'regional' | 'national' | 'existentia
 // ─── Crisis Type ────────────────────────────────────────────────────────────
 
 /** High-level crisis category. */
-export type CrisisType = 'war' | 'famine' | 'disaster' | 'political';
+export type CrisisType = 'war' | 'famine' | 'disaster' | 'political' | 'climate' | 'black_swan' | 'cold_branch';
 
 // ─── Crisis Impact ──────────────────────────────────────────────────────────
 
@@ -91,6 +91,16 @@ export interface CrisisImpact {
       text: string;
       severity?: 'warning' | 'critical' | 'evacuation';
     }>;
+  };
+
+  /** Visual effects — one-shot VFX triggered in the 3D scene. */
+  visual?: {
+    /** Effect type matching the CrisisVFXRenderer pipeline. */
+    effect: 'nuclear_flash' | 'earthquake_shake' | 'famine_haze' | 'dust_storm';
+    /** Effect intensity (0–1). */
+    intensity: number;
+    /** Duration in ticks. */
+    durationTicks: number;
   };
 }
 

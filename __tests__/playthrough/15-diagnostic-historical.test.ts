@@ -9,17 +9,19 @@
  * Output: __tests__/playthrough/output/historical-80yr.json
  */
 
-import { HistoricalGovernor } from '../../src/ai/agents/crisis/HistoricalGovernor';
+import * as fs from 'fs';
+import * as path from 'path';
 import type { IGovernor } from '../../src/ai/agents/crisis/Governor';
+import { HistoricalGovernor } from '../../src/ai/agents/crisis/HistoricalGovernor';
 import { getPopulationMode } from '../../src/ai/agents/workforce/collectiveTransition';
 import {
-  getResourceEntity,
-  operationalBuildings,
-  underConstruction,
-  housing,
-  producers,
-  dvory,
   citizens,
+  dvory,
+  getResourceEntity,
+  housing,
+  operationalBuildings,
+  producers,
+  underConstruction,
 } from '../../src/ecs/archetypes';
 import { world } from '../../src/ecs/world';
 import {
@@ -32,9 +34,6 @@ import {
   TICKS_PER_MONTH,
   TICKS_PER_YEAR,
 } from './helpers';
-
-import * as fs from 'fs';
-import * as path from 'path';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -291,7 +290,7 @@ describe('Diagnostic: Historical mode 1917-1997 playthrough', () => {
         power: 99999,
       },
       difficulty: 'worker',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       deterministicRandom: true,
     });
 

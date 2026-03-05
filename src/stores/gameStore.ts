@@ -36,6 +36,9 @@ export interface GameSnapshot {
   roadQuality: string;
   roadCondition: number;
 
+  // ── Arrival Caravan ──
+  arrivalInProgress: boolean;
+
   // ── Population Breakdown ──
   dvorCount: number;
   avgMorale: number;
@@ -59,6 +62,27 @@ export interface GameSnapshot {
 
 const _listeners = new Set<() => void>();
 let _snapshot: GameSnapshot | null = null;
+
+// ── Arrival state (set by SimulationEngine) ──
+let _arrivalInProgress = false;
+/** Grid position the caravan is heading toward (for camera follow). */
+let _caravanTarget: { x: number; z: number } | null = null;
+
+/** Set by SimulationEngine each tick to indicate if the caravan is still arriving. */
+export function setArrivalInProgress(inProgress: boolean): void {
+  _arrivalInProgress = inProgress;
+  if (!inProgress) _caravanTarget = null; // clear when arrival completes
+}
+
+/** Set the caravan target position (where the Party Barracks was placed). */
+export function setCaravanTarget(x: number, z: number): void {
+  _caravanTarget = { x, z };
+}
+
+/** Get the caravan target position (null if no arrival in progress). */
+export function getCaravanTarget(): { x: number; z: number } | null {
+  return _caravanTarget;
+}
 
 function createSnapshot(): GameSnapshot {
   const res = getResourceEntity();
@@ -105,6 +129,9 @@ function createSnapshot(): GameSnapshot {
     currentEra: m?.currentEra ?? 'revolution',
     roadQuality: m?.roadQuality ?? 'none',
     roadCondition: m?.roadCondition ?? 100,
+
+    // Arrival caravan
+    arrivalInProgress: _arrivalInProgress,
 
     // Population breakdown
     dvorCount: dvory.entities.length,
@@ -875,6 +902,7 @@ export interface CameraTargetState {
 }
 
 let _cameraTarget: CameraTargetState | null = null;
+let _cameraAnimating: 'zoom' | 'return' | null = null;
 
 /** Get the current camera target (null if no zoom animation active). */
 export function getCameraTarget(): CameraTargetState | null {
@@ -891,6 +919,15 @@ export function clearCameraTarget(): void {
   _cameraTarget = null;
 }
 
+/** Get whether the camera is currently animating ('zoom', 'return', or null). */
+export function getCameraAnimating(): 'zoom' | 'return' | null {
+  return _cameraAnimating;
+}
+
+/** Set camera animation state (called by CameraController during transitions). */
+export function setCameraAnimating(state: 'zoom' | 'return' | null): void {
+  _cameraAnimating = state;
+}
 
 // ── Lens Cycling ──────────────────────────────────────────────────────────
 
@@ -907,6 +944,416 @@ export function cycleLens(): void {
   const next = LENS_CYCLE[(idx + 1) % LENS_CYCLE.length];
   setLens(gameState, next);
   notifyStateChange();
+}
+
+// ── Gosplan Allocations (resource distribution) ──────────────────────────
+
+import type { Allocations } from '@/ui/hq-tabs/GosplanTab';
+import { DEFAULT_ALLOCATIONS } from '@/ui/hq-tabs/GosplanTab';
+
+let _gosplanAllocations: Allocations = { ...DEFAULT_ALLOCATIONS };
+const _allocationListeners = new Set<() => void>();
+
+/** Get the current Gosplan allocations (read by tick pipeline). */
+export function getGosplanAllocations(): Readonly<Allocations> {
+  return _gosplanAllocations;
+}
+
+/** Update Gosplan allocations (called from GovernmentHQ UI). */
+export function setGosplanAllocations(alloc: Allocations): void {
+  _gosplanAllocations = { ...alloc };
+  for (const listener of _allocationListeners) listener();
+}
+
+/** React hook -- subscribe to Gosplan allocation state. */
+export function useGosplanAllocations(): Readonly<Allocations> {
+  return useSyncExternalStore(subscribeAllocations, getGosplanAllocations, getGosplanAllocations);
+}
+
+function subscribeAllocations(listener: () => void): () => void {
+  _allocationListeners.add(listener);
+  return () => { _allocationListeners.delete(listener); };
+}
+
+// ── Active Directive (Central Committee decrees) ──────────────────────────
+
+import type { ActiveDirective } from '@/ui/hq-tabs/CentralCommitteeTab';
+
+let _activeDirective: ActiveDirective | null = null;
+const _directiveListeners = new Set<() => void>();
+
+/** Get the currently active Central Committee directive (null if none). */
+export function getActiveDirective(): ActiveDirective | null {
+  return _activeDirective;
+}
+
+/** Set the active directive (called from GovernmentHQ UI). */
+export function setActiveDirective(directive: ActiveDirective | null): void {
+  _activeDirective = directive;
+  for (const listener of _directiveListeners) listener();
+}
+
+/** React hook -- subscribe to the active directive state. */
+export function useActiveDirective(): ActiveDirective | null {
+  return useSyncExternalStore(subscribeDirective, getActiveDirective, getActiveDirective);
+}
+
+function subscribeDirective(listener: () => void): () => void {
+  _directiveListeners.add(listener);
+  return () => { _directiveListeners.delete(listener); };
+}
+
+// ── Defense Posture (Military tab → engine) ──────────────────────────────
+
+import type { DefensePosture } from '@/ui/hq-tabs/MilitaryTab';
+
+let _defensePosture: DefensePosture = 'peacetime';
+const _defensePostureListeners = new Set<() => void>();
+
+/** Get the current defense posture (read by tick pipeline). */
+export function getDefensePosture(): DefensePosture {
+  return _defensePosture;
+}
+
+/** Update defense posture (called from GovernmentHQ Military tab). */
+export function setDefensePosture(posture: DefensePosture): void {
+  _defensePosture = posture;
+  for (const listener of _defensePostureListeners) listener();
+}
+
+/** React hook -- subscribe to defense posture state. */
+export function useDefensePosture(): DefensePosture {
+  return useSyncExternalStore(subscribeDefensePosture, getDefensePosture, getDefensePosture);
+}
+
+function subscribeDefensePosture(listener: () => void): () => void {
+  _defensePostureListeners.add(listener);
+  return () => { _defensePostureListeners.delete(listener); };
+}
+
+// ── Government HQ Panel ──────────────────────────────────────────────────
+
+let _showGovernmentHQ = false;
+const _govHQListeners = new Set<() => void>();
+
+function getGovernmentHQState(): boolean {
+  return _showGovernmentHQ;
+}
+
+/** Open the Government HQ panel. */
+export function openGovernmentHQ(): void {
+  _showGovernmentHQ = true;
+  for (const listener of _govHQListeners) listener();
+}
+
+/** Close the Government HQ panel. */
+export function closeGovernmentHQ(): void {
+  _showGovernmentHQ = false;
+  for (const listener of _govHQListeners) listener();
+}
+
+/** React hook -- subscribe to Government HQ visibility. */
+export function useGovernmentHQ(): boolean {
+  return useSyncExternalStore(subscribeGovHQ, getGovernmentHQState, getGovernmentHQState);
+}
+
+function subscribeGovHQ(listener: () => void): () => void {
+  _govHQListeners.add(listener);
+  return () => { _govHQListeners.delete(listener); };
+}
+
+// ── Climate Milestones (permafrost collapse, siberian exodus, etc.) ───────
+
+/** Active climate milestone IDs from cold branch activations. Scene components react to these. */
+let _activeClimateMilestones: Set<string> = new Set();
+const _climateListeners = new Set<() => void>();
+
+/** Get the set of currently active climate milestone IDs. */
+export function getActiveClimateMilestones(): ReadonlySet<string> {
+  return _activeClimateMilestones;
+}
+
+/** Add an active climate milestone (called when cold branch fires). */
+export function activateClimateMilestone(milestoneId: string): void {
+  if (_activeClimateMilestones.has(milestoneId)) return;
+  _activeClimateMilestones = new Set(_activeClimateMilestones);
+  _activeClimateMilestones.add(milestoneId);
+  for (const listener of _climateListeners) listener();
+}
+
+/** Clear all climate milestones (called on game reset). */
+export function clearClimateMilestones(): void {
+  _activeClimateMilestones = new Set();
+  for (const listener of _climateListeners) listener();
+}
+
+/** Restore climate milestones from save data. */
+export function restoreClimateMilestones(ids: string[]): void {
+  _activeClimateMilestones = new Set(ids);
+  for (const listener of _climateListeners) listener();
+}
+
+/** Serialize active climate milestones for save data. */
+export function serializeClimateMilestones(): string[] {
+  return [..._activeClimateMilestones];
+}
+
+/** React hook -- subscribe to climate milestone changes. */
+export function useClimateMilestones(): ReadonlySet<string> {
+  return useSyncExternalStore(subscribeClimate, getActiveClimateMilestones, getActiveClimateMilestones);
+}
+
+function subscribeClimate(listener: () => void): () => void {
+  _climateListeners.add(listener);
+  return () => { _climateListeners.delete(listener); };
+}
+
+// ── Space Progress (milestone-driven sky visual state) ────────────────────
+
+import type { SpaceVisualState } from '@/scene/SkyProgression';
+
+let _spaceVisualState: SpaceVisualState = {
+  sputnik: false,
+  spaceStation: false,
+  lunarBase: false,
+  techLevel: 0,
+  era: 'revolution',
+};
+const _spaceListeners = new Set<() => void>();
+
+/** Get the current space visual state for sky rendering. */
+export function getSpaceVisualState(): SpaceVisualState {
+  return _spaceVisualState;
+}
+
+/** Update space visual state from timeline milestone activations. */
+export function updateSpaceVisualState(state: Partial<SpaceVisualState>): void {
+  _spaceVisualState = { ..._spaceVisualState, ...state };
+  for (const listener of _spaceListeners) listener();
+}
+
+/** Reset space visual state (called on game reset). */
+export function clearSpaceVisualState(): void {
+  _spaceVisualState = { sputnik: false, spaceStation: false, lunarBase: false, techLevel: 0, era: 'revolution' };
+  for (const listener of _spaceListeners) listener();
+}
+
+/** React hook -- subscribe to space visual state changes. */
+export function useSpaceVisualState(): SpaceVisualState {
+  return useSyncExternalStore(subscribeSpace, getSpaceVisualState, getSpaceVisualState);
+}
+
+function subscribeSpace(listener: () => void): () => void {
+  _spaceListeners.add(listener);
+  return () => { _spaceListeners.delete(listener); };
+}
+
+// ── Crisis Visual Effects (one-shot VFX triggered by crisis impacts) ──────
+
+/** Type of one-shot visual effect triggered by a crisis. */
+export type CrisisVFXType = 'nuclear_flash' | 'earthquake_shake' | 'famine_haze' | 'dust_storm';
+
+/** An active visual effect with remaining duration. */
+export interface CrisisVFXEvent {
+  type: CrisisVFXType;
+  /** Effect intensity (0–1). */
+  intensity: number;
+  /** Total duration in seconds. */
+  duration: number;
+  /** Timestamp when the effect started (Date.now()). */
+  startedAt: number;
+}
+
+let _activeVFX: CrisisVFXEvent[] = [];
+const _vfxListeners = new Set<() => void>();
+
+/** Get all currently active visual effects. */
+export function getActiveVFX(): readonly CrisisVFXEvent[] {
+  return _activeVFX;
+}
+
+/** Push a new visual effect onto the queue. Deduplicates by type. */
+export function pushCrisisVFX(type: CrisisVFXType, intensity: number, duration: number): void {
+  // Replace existing effect of same type (restart it)
+  _activeVFX = _activeVFX.filter((e) => e.type !== type);
+  _activeVFX.push({ type, intensity, duration, startedAt: Date.now() });
+  for (const listener of _vfxListeners) listener();
+}
+
+/** Remove expired effects. Called by the VFX renderer each frame. */
+export function pruneExpiredVFX(): void {
+  const now = Date.now();
+  const before = _activeVFX.length;
+  _activeVFX = _activeVFX.filter((e) => now - e.startedAt < e.duration * 1000);
+  if (_activeVFX.length !== before) {
+    for (const listener of _vfxListeners) listener();
+  }
+}
+
+/** Clear all visual effects (called on game reset). */
+export function clearCrisisVFX(): void {
+  _activeVFX = [];
+  for (const listener of _vfxListeners) listener();
+}
+
+/** React hook -- subscribe to active crisis VFX state. */
+export function useCrisisVFX(): readonly CrisisVFXEvent[] {
+  return useSyncExternalStore(subscribeVFX, getActiveVFX, getActiveVFX);
+}
+
+function subscribeVFX(listener: () => void): () => void {
+  _vfxListeners.add(listener);
+  return () => { _vfxListeners.delete(listener); };
+}
+
+// ── Mass Graves (persistent visual markers for mass casualty events) ──────
+
+/** A cluster of grave markers placed at the settlement edge. */
+export interface MassGraveCluster {
+  /** Unique ID for this cluster */
+  id: string;
+  /** Grid X position (settlement periphery) */
+  gridX: number;
+  /** Grid Y position (settlement periphery) */
+  gridY: number;
+  /** Year the graves were placed */
+  year: number;
+  /** Number of markers in this cluster (3-5) */
+  markerCount: number;
+  /** Cause of the mass grave */
+  cause: 'purge' | 'famine' | 'gulag' | 'war' | 'plague';
+}
+
+let _massGraves: MassGraveCluster[] = [];
+const _graveListeners = new Set<() => void>();
+
+/** Get all mass grave clusters. */
+export function getMassGraves(): readonly MassGraveCluster[] {
+  return _massGraves;
+}
+
+/** Add a new mass grave cluster at the settlement edge. */
+export function addMassGrave(cluster: MassGraveCluster): void {
+  _massGraves = [..._massGraves, cluster];
+  for (const listener of _graveListeners) listener();
+}
+
+/** Clear all mass graves (called on game reset). */
+export function clearMassGraves(): void {
+  _massGraves = [];
+  for (const listener of _graveListeners) listener();
+}
+
+/** Restore mass graves from save data. */
+export function restoreMassGraves(clusters: MassGraveCluster[]): void {
+  _massGraves = clusters;
+  for (const listener of _graveListeners) listener();
+}
+
+/** React hook -- subscribe to mass grave state changes. */
+export function useMassGraves(): readonly MassGraveCluster[] {
+  return useSyncExternalStore(subscribeGraves, getMassGraves, getMassGraves);
+}
+
+function subscribeGraves(listener: () => void): () => void {
+  _graveListeners.add(listener);
+  return () => { _graveListeners.delete(listener); };
+}
+
+// ── Active Settlement (viewport switching) ───────────────────────────────
+
+/** Summary of a settlement for the selector UI. */
+export interface SettlementSummaryEntry {
+  id: string;
+  name: string;
+  population: number;
+  celestialBody: string;
+  isActive: boolean;
+  /** Per-settlement threat level (from pressure system). */
+  threatLevel?: string;
+}
+
+let _activeSettlementId: string = 'primary';
+let _settlementList: SettlementSummaryEntry[] = [];
+/** Whether a settlement transition animation is in progress. */
+let _settlementTransitioning = false;
+const _settlementListeners = new Set<() => void>();
+
+/** Get the currently active settlement ID. */
+export function getActiveSettlementId(): string {
+  return _activeSettlementId;
+}
+
+/** Get the list of all settlements for the selector UI. */
+export function getSettlementList(): readonly SettlementSummaryEntry[] {
+  return _settlementList;
+}
+
+/** Whether the viewport is currently transitioning between settlements. */
+export function isSettlementTransitioning(): boolean {
+  return _settlementTransitioning;
+}
+
+/** Set the active settlement ID (called by switchSettlement coordinator). */
+export function setActiveSettlementId(id: string): void {
+  _activeSettlementId = id;
+  for (const listener of _settlementListeners) listener();
+}
+
+/** Update the settlement list (called each tick or on settlement changes). */
+export function updateSettlementList(list: SettlementSummaryEntry[]): void {
+  _settlementList = list;
+  for (const listener of _settlementListeners) listener();
+}
+
+/** Set the transitioning flag (for fade overlay). */
+export function setSettlementTransitioning(transitioning: boolean): void {
+  _settlementTransitioning = transitioning;
+  for (const listener of _settlementListeners) listener();
+}
+
+/** Monotonically increasing counter — incremented on settlement switch to signal camera reset. */
+let _cameraResetVersion = 0;
+
+/** Get the current camera reset version. CameraController watches this for changes. */
+export function getCameraResetVersion(): number {
+  return _cameraResetVersion;
+}
+
+/** Signal the camera to reset to the new grid center. Called by switchSettlement(). */
+export function signalCameraReset(): void {
+  _cameraResetVersion++;
+}
+
+/** React hook -- subscribe to active settlement state. */
+export function useActiveSettlement(): {
+  activeId: string;
+  settlements: readonly SettlementSummaryEntry[];
+  transitioning: boolean;
+} {
+  const state = useSyncExternalStore(subscribeSettlement, getSettlementState, getSettlementState);
+  return state;
+}
+
+let _cachedSettlementState: { activeId: string; settlements: readonly SettlementSummaryEntry[]; transitioning: boolean } | null = null;
+
+function getSettlementState() {
+  if (!_cachedSettlementState
+    || _cachedSettlementState.activeId !== _activeSettlementId
+    || _cachedSettlementState.settlements !== _settlementList
+    || _cachedSettlementState.transitioning !== _settlementTransitioning) {
+    _cachedSettlementState = {
+      activeId: _activeSettlementId,
+      settlements: _settlementList,
+      transitioning: _settlementTransitioning,
+    };
+  }
+  return _cachedSettlementState;
+}
+
+function subscribeSettlement(listener: () => void): () => void {
+  _settlementListeners.add(listener);
+  return () => { _settlementListeners.delete(listener); };
 }
 
 // ── Internal ──────────────────────────────────────────────────────────────

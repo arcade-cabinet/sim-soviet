@@ -3,7 +3,7 @@
  * Shows economy summary, directive, morale/loyalty, advisor message, quota.
  */
 
-import React from 'react';
+import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { BuildingDef } from '../../data/buildingDefs';
 import { getMetaEntity, getResourceEntity } from '../../ecs/archetypes';

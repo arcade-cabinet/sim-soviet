@@ -1,0 +1,1072 @@
+{
+  "timelineId": "space",
+  "description": "Soviet Space Program → Interstellar Colonization. A parallel progression track from Sputnik to Dyson swarms. Grounded in real Soviet space history, hard SF (KSR Mars Trilogy, Sheffield Jupiter system, Clarke space elevator, Baxter deep time), and actual physics. No FTL. No magic. Central planning all the way down.",
+  "milestones": [
+    {
+      "id": "sputnik",
+      "name": "Sputnik Launch",
+      "timelineId": "space",
+      "order": 10,
+      "conditions": { "and": [
+        { "year": { "min": 1957 } },
+        { "techLevel": { "min": 0.15 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "globalTension": 0.1, "techLevel": 0.02 },
+        "unlocks": ["orbital_capability"],
+        "narrative": {
+          "pravdaHeadline": "BEEP BEEP BEEP: Soviet Satellite Orbits Earth, Capitalists Look Up in Terror",
+          "toast": "A metal sphere the size of a beach ball circles the planet every 96 minutes. The Americans are not taking it well.",
+          "description": "On October 4, 1957, the Soviet Union launched humanity's first artificial satellite. It did nothing useful. It beeped. The beeping changed everything."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "laika",
+      "name": "First Living Creature in Orbit",
+      "timelineId": "space",
+      "order": 15,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "sputnik" } },
+        { "year": { "min": 1957 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": { "morale": -0.05 },
+        "worldStateDeltas": { "techLevel": 0.01 },
+        "narrative": {
+          "pravdaHeadline": "HEROIC DOG SERVES MOTHERLAND IN SPACE: Laika Pioneers Orbital Travel",
+          "toast": "Laika will not return. This was always the plan. The plan is classified.",
+          "description": "Laika, a stray from the streets of Moscow, became the first animal to orbit Earth aboard Sputnik 2. Her one-way ticket was not disclosed to the public."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "vostok_gagarin",
+      "name": "First Human in Space",
+      "timelineId": "space",
+      "order": 20,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "sputnik" } },
+        { "year": { "min": 1961 } },
+        { "techLevel": { "min": 0.18 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": { "morale": -0.15 },
+        "worldStateDeltas": { "globalTension": 0.05, "techLevel": 0.03 },
+        "unlocks": ["human_spaceflight"],
+        "narrative": {
+          "pravdaHeadline": "POYEKHALI! GAGARIN ORBITS EARTH: Communism Proven Superior Even in Vacuum",
+          "toast": "Yuri Alexeyevich Gagarin has seen the Earth from space. He reports that it is round, blue, and entirely classless from that altitude.",
+          "description": "April 12, 1961. Vostok 1. 108 minutes. One orbit. The first human to leave Earth was a Soviet citizen. Gagarin's 'Poyekhali!' ('Let's go!') became immortal."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "voskhod_spacewalk",
+      "name": "First Spacewalk",
+      "timelineId": "space",
+      "order": 25,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "vostok_gagarin" } },
+        { "year": { "min": 1965 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "unlocks": ["eva_capability"],
+        "narrative": {
+          "pravdaHeadline": "LEONOV WALKS IN VOID: Soviet Cosmonaut First to Leave Spacecraft",
+          "toast": "Alexei Leonov spent 12 minutes outside the capsule. His suit inflated so much he nearly couldn't get back in. This detail was classified for 20 years.",
+          "description": "Voskhod 2, March 18, 1965. Alexei Leonov performed humanity's first extravehicular activity. He nearly died when his suit ballooned in vacuum. Soviet engineering: ambitious, terrifying, effective."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "salyut_station",
+      "name": "First Space Station",
+      "timelineId": "space",
+      "order": 30,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "vostok_gagarin" } },
+        { "year": { "min": 1971 } },
+        { "techLevel": { "min": 0.25 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "unlocks": ["orbital_habitation"],
+        "narrative": {
+          "pravdaHeadline": "SALYUT-1 OPERATIONAL: Permanent Soviet Presence in Orbit Established",
+          "toast": "The station is small, cramped, and smells of cabbage. The cosmonauts report that it reminds them of home.",
+          "description": "Salyut 1, launched April 19, 1971 — the world's first space station. The first crew died during reentry when a valve opened prematurely. The program continued."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunokhod",
+      "name": "First Lunar Rover",
+      "timelineId": "space",
+      "order": 32,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "sputnik" } },
+        { "year": { "min": 1970 } },
+        { "techLevel": { "min": 0.22 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "unlocks": ["lunar_surface_ops"],
+        "narrative": {
+          "pravdaHeadline": "LUNOKHOD-1 ROLLS ON MOON: Remote-Controlled Soviet Vehicle Explores Lunar Surface",
+          "toast": "The rover has traveled 10.5 km on the Moon's surface. It is operated by a team of five who drive it like a very slow, very expensive remote-control car.",
+          "description": "Lunokhod 1 (November 1970) was the first successful robotic rover on another world. It operated for 11 months, traveling 10.54 km across the Sea of Rains."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venera_landing",
+      "name": "First Landing on Another Planet",
+      "timelineId": "space",
+      "order": 35,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "sputnik" } },
+        { "year": { "min": 1970 } },
+        { "techLevel": { "min": 0.22 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["planetary_landing"],
+        "narrative": {
+          "pravdaHeadline": "VENERA-7 LANDS ON VENUS: Soviet Probe Survives 462°C Surface",
+          "toast": "The probe transmitted for 23 minutes before succumbing to 462 degrees, 90 atmospheres, and sulfuric acid rain. It sent temperature data. We consider this a complete success.",
+          "description": "The Venera program was perhaps the Soviet Union's greatest space achievement. Between 1961-1984, they sent 16 probes to Venus, landing 10 on the surface. No other nation has soft-landed on Venus."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "bios3_closed_ecosystem",
+      "name": "BIOS-3 Closed Ecosystem Mastery",
+      "timelineId": "space",
+      "order": 38,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "salyut_station" } },
+        { "year": { "min": 1972 } },
+        { "techLevel": { "min": 0.28 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "unlocks": ["closed_life_support"],
+        "narrative": {
+          "pravdaHeadline": "BIOS-3 EXPERIMENT SUCCESS: Soviet Scientists Achieve Closed Ecosystem in Siberia",
+          "toast": "Three crew lived for 6 months in a sealed bunker in Krasnoyarsk, growing their own food and recycling their own air. They report the experience was 'adequate.'",
+          "description": "BIOS-3 at the Institute of Biophysics in Krasnoyarsk (1972-1985) was the most successful closed ecosystem experiment in history. It achieved 100% air and water recycling and up to 80% food self-sufficiency — data NASA still references for Mars mission planning."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mir_station",
+      "name": "Mir Space Station",
+      "timelineId": "space",
+      "order": 40,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "salyut_station" } },
+        { "year": { "min": 1986 } },
+        { "techLevel": { "min": 0.35 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["long_duration_habitation", "modular_station_assembly"],
+        "narrative": {
+          "pravdaHeadline": "MIR STATION LAUNCHED: Modular Orbital Complex Demonstrates Soviet Engineering Supremacy",
+          "toast": "Mir will be humanity's home in space for 15 years. It will also catch fire, lose power, collide with a supply ship, and grow mold in places mold should not exist. It will endure regardless.",
+          "description": "Mir (1986-2001): the first modular space station. 28,000 orbits. 15 years. It proved humans could live in space long-term. The station's problems — fires, collisions, computer failures — proved humans could survive anything."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "space_prohibition",
+      "name": "The Space Prohibition",
+      "timelineId": "space",
+      "order": 42,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mir_station" } },
+        { "worldState": { "key": "globalTension", "min": 0.65 } },
+        { "worldState": { "key": "ideologyRigidity", "min": 0.55 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": {
+          "techLevel": -0.05,
+          "moscowAttention": 0.2
+        },
+        "pressureModifiers": {
+          "political": 0.15,
+          "morale": 0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "CENTRAL COMMITTEE REVIEW: Space Expenditure Questioned — 'Resources Required for Socialist Construction at Home'",
+          "toast": "The space program costs 3% of Soviet GDP. The directive arrives: justify this. The cosmonauts read the directive in orbit.",
+          "scene": "The review commission is not hostile. It is thorough, which is worse.\n\nComrade Chairman, your settlement has provided 11 workers to the regional aerospace support infrastructure over the past seven years. This is being evaluated. The commission notes that these workers produce no grain, process no timber, and manufacture no consumer goods meeting current quota requirements. Their work — described in internal documents as 'essential technical support for the Soviet space program' — does not appear on any production ledger.\n\nThe commission has been tasked with identifying 'non-essential expenditures that could be redirected to socialist construction priorities.' They have a list. Your aerospace workers are on it.\n\nThe cosmonauts are still in orbit. They have been informed of the review. They continue their duties. The station requires approximately seven people to function. There are seven people on the station. You note this in the margin of the commission's report.\n\nThe commission is not interested in the mathematics of orbital maintenance.",
+          "choices": [
+            {
+              "id": "defend_program",
+              "label": "Defend the space program — mobilize political allies",
+              "description": "Fight the prohibition directly. Use political capital and connections to protect space workers. High risk, potential commendation if successful.",
+              "successChance": 0.55,
+              "onSuccess": {
+                "announcement": "The defense works. Several marshals and the scientific directorate push back against the commission. The review is concluded 'without specific recommendations.' Your aerospace workers remain. Your file notes 'demonstrated initiative in defense of state technical interests.' The commission is disbanded. The cosmonauts are not informed of how close it came.",
+                "severity": "info",
+                "commendations": 1,
+                "pressureModifiers": {
+                  "political": -0.1
+                }
+              },
+              "onFailure": {
+                "announcement": "The defense fails. The commission's recommendations are approved. Six of your eleven aerospace workers are reassigned to agricultural support roles. The station crew is quietly reduced. Three months later, an orbital maneuver is performed incorrectly due to understaffing. The incident is classified. Your file receives a note: 'excessive attachment to non-productive infrastructure.'",
+                "severity": "critical",
+                "resources": {
+                  "population": -6
+                },
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.2,
+                  "morale": 0.15
+                }
+              }
+            },
+            {
+              "id": "comply_and_hide",
+              "label": "Comply publicly — maintain covert research",
+              "description": "Accept the prohibition officially. Reclassify space workers as 'engineering support.' Continue work under different names.",
+              "successChance": 0.70,
+              "onSuccess": {
+                "announcement": "The workers are reclassified. The work continues under new nomenclature. The commission is satisfied with the paperwork. What was called 'orbital dynamics research' is now called 'atmospheric measurement support.' The math is identical. Moscow receives compliant reports. The station receives capable people. No one examines the exact job descriptions.",
+                "severity": "info",
+                "blat": 15,
+                "pressureModifiers": {
+                  "political": -0.05
+                }
+              },
+              "onFailure": {
+                "announcement": "The reclassification is discovered during a routine KGB audit. An inspector notes that the 'atmospheric measurement support' staff are using trajectory calculation equipment. An investigation is opened into administrative falsification. You explain that atmospheric measurements require orbital parameters. The investigator files this explanation as 'evasive.'",
+                "severity": "warning",
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.25
+                }
+              }
+            },
+            {
+              "id": "redirect_to_weapons",
+              "label": "Channel space research into military program",
+              "description": "Reframe everything as defense research. Military programs are untouchable. The orbital work continues, reclassified as strategic.",
+              "successChance": 0.80,
+              "onSuccess": {
+                "announcement": "The workers transfer to 'special technical directorate support.' Their work is now classified. The commission cannot review classified programs. The military directorate receives the paperwork. They do not read it closely — they have their own paperwork. The space program continues, painted in khaki.",
+                "severity": "info",
+                "pressureModifiers": {
+                  "political": -0.1,
+                  "morale": -0.05
+                },
+                "resources": {
+                  "money": -40
+                }
+              },
+              "onFailure": {
+                "announcement": "The military directorate is unenthusiastic about inheriting civilian engineers whose expertise is orbital mechanics. They assign the workers to missile trajectory calculations, which is adjacent but not identical. Two engineers resign. Three are transferred to Siberia. The space program loses its most experienced technicians to bureaucratic friction.",
+                "severity": "warning",
+                "resources": {
+                  "population": -5
+                },
+                "pressureModifiers": {
+                  "morale": 0.15,
+                  "economic": 0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "comply_and_hide",
+          "tickLimit": 60
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "permanent_lunar_base",
+      "name": "Permanent Lunar Base (Zvezda)",
+      "timelineId": "space",
+      "order": 50,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mir_station" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "lunokhod" } },
+        { "techLevel": { "min": 0.45 } },
+        { "population": { "min": 1000 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "lunar",
+        "worldStateDeltas": { "techLevel": 0.06 },
+        "pressureModifiers": { "economic": 0.15 },
+        "unlocks": ["lunar_settlement", "helium3_mining", "low_gravity_manufacturing"],
+        "narrative": {
+          "pravdaHeadline": "ZVEZDA BASE ESTABLISHED: Soviet Flag Planted on Permanent Lunar Facility",
+          "toast": "The lunar base is operational. Six cosmonauts live in pressurized modules beneath the regolith. Their supply shipments arrive monthly. Their paperwork arrives daily.",
+          "description": "The Zvezda (Star) lunar base represents the USSR's first permanent off-Earth settlement. Based on Soviet plans from the 1960s DLB (Long-Duration Lunar Base) program, it houses 6-12 cosmonauts in underground habitation modules shielded by 1.5-2m of regolith. Water ice mining from permanently shadowed craters provides oxygen and propellant."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "orbital_shipyard",
+      "name": "Orbital Construction Facility",
+      "timelineId": "space",
+      "order": 55,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mir_station" } },
+        { "techLevel": { "min": 0.55 } },
+        { "year": { "min": 2020 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["orbital_construction", "large_vessel_assembly"],
+        "narrative": {
+          "pravdaHeadline": "ORBITAL SHIPYARD OPERATIONAL: Heavy Industry Reaches Zero Gravity",
+          "toast": "The shipyard assembles vessels too large to launch from Earth. Workers in spacesuits weld steel in silence. The union has filed a grievance about break room conditions.",
+          "description": "Building ships in orbit eliminates the tyranny of the rocket equation. The Soviet Orbital Shipyard can assemble vessels of arbitrary size, constrained only by material supply."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_expedition",
+      "name": "Mars Crewed Expedition",
+      "timelineId": "space",
+      "order": 60,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "permanent_lunar_base" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "bios3_closed_ecosystem" } },
+        { "techLevel": { "min": 0.6 } },
+        { "year": { "min": 2030 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05, "globalTension": 0.05 },
+        "pressureModifiers": { "economic": 0.1 },
+        "unlocks": ["mars_surface_ops", "interplanetary_transit"],
+        "narrative": {
+          "pravdaHeadline": "MARS EXPEDITION LAUNCHES: Six Cosmonauts Begin 9-Month Journey to Red Planet",
+          "toast": "Transit time: 260 days. Crew of six. Delta-v budget: 11.5 km/s. Entertainment budget: one chess set and complete works of Lenin.",
+          "description": "Based on Soviet TMK (Heavy Interplanetary Ship) designs from the 1960s. The crew endures 9 months of transit, 18 months on surface, 9 months return. Hohmann transfer orbit — the mathematics haven't changed since Tsiolkovsky."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_isru_operations",
+      "name": "Mars ISRU Operations",
+      "timelineId": "space",
+      "order": 63,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_expedition" } },
+        { "techLevel": { "min": 0.62 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "resourceDeltas": { "water": 200, "hydrogen": 100 },
+        "unlocks": ["in_situ_resource_utilization", "mars_propellant_production"],
+        "narrative": {
+          "pravdaHeadline": "MARS RESOURCE EXTRACTION BEGINS: Sabatier Reactors Convert Atmosphere to Propellant",
+          "toast": "The Sabatier reactor combines 6 tons of imported hydrogen with Martian CO2 to produce 24 tons of methane and 84 tons of oxygen. The Five-Year Propellant Plan is on schedule.",
+          "description": "In-Situ Resource Utilization is the key to sustainable Mars presence. Rather than launching everything from Earth, ISRU converts Mars's 95% CO2 atmosphere and subsurface water ice into rocket propellant, breathable oxygen, and drinking water. Zubrin's Mars Direct concept made real by Soviet engineering."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_colony",
+      "name": "Permanent Mars Settlement (Red Mars Phase)",
+      "timelineId": "space",
+      "order": 68,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_isru_operations" } },
+        { "techLevel": { "min": 0.7 } },
+        { "population": { "min": 5000 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "mars",
+        "worldStateDeltas": { "techLevel": 0.08 },
+        "pressureModifiers": { "economic": 0.2 },
+        "unlocks": ["mars_settlement", "mars_agriculture"],
+        "narrative": {
+          "pravdaHeadline": "MARS COLONY ESTABLISHED: Red Planet Finally Under Red Flag",
+          "toast": "The Mars colony has 24 residents, three pressurized greenhouses, and one bureaucratic office. The office was built first. Priorities are clear.",
+          "description": "KSR's 'Red Mars' phase: raw colonization. Pressurized domes, greenhouse agriculture, ISRU for water/oxygen. Gravity: 0.38g. Supply runs from Earth: every 26 months. Martian regolith contains toxic perchlorates — must be washed before agricultural use. The kolkhoz model maps naturally: communal labor, shared output, mandatory deliveries to the settlement administration."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_greenhouse_phase",
+      "name": "Mars Terraforming: Greenhouse Phase",
+      "timelineId": "space",
+      "order": 72,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_colony" } },
+        { "techLevel": { "min": 0.75 } },
+        { "year": { "min": 2100 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["mars_terraforming", "orbital_mirrors", "atmospheric_engineering"],
+        "narrative": {
+          "pravdaHeadline": "MARS TERRAFORMING BEGINS: Orbital Mirrors and Greenhouse Factories Deployed",
+          "toast": "Soletta mirrors redirect sunlight to the polar caps. Perfluorocarbon factories pump super-greenhouse gases. Mean temperature has risen 4°C. The Five-Year Warming Plan proceeds.",
+          "description": "Following the Mars Trilogy model: orbital soletta mirrors focus sunlight on polar CO2 ice caps, releasing greenhouse gases. Perfluorocarbon factories (PFC-14, PFC-116) augment warming — these super-greenhouse gases are 10,000x more potent than CO2 per molecule. Surface pressure rises from 6 mbar toward 100+ mbar over decades. Liquid water begins appearing in equatorial valleys during summer. The process takes centuries — the first Five-Year Plan of many."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "asteroid_mining",
+      "name": "Asteroid Mining Operations",
+      "timelineId": "space",
+      "order": 73,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "orbital_shipyard" } },
+        { "techLevel": { "min": 0.65 } },
+        { "year": { "min": 2060 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "resourceDeltas": { "rareEarths": 500, "minerals": 1000 },
+        "worldStateDeltas": { "commodityIndex": -0.3, "techLevel": 0.03 },
+        "unlocks": ["asteroid_resources", "space_manufacturing"],
+        "narrative": {
+          "pravdaHeadline": "ASTEROID MINING QUOTA ACHIEVED: Space Minerals Serve Five-Year Plan",
+          "toast": "A single metallic asteroid contains more platinum than has ever been mined on Earth. The quota for extracting it has been set at 150% of capacity. Standard procedure.",
+          "description": "Near-Earth asteroid mining provides rare earth elements, platinum group metals, and construction materials. 16 Psyche alone contains an estimated $10,000 quadrillion in metals. Each asteroid is assigned a production quota. Worker rotation: 6-month shifts (radiation exposure limits)."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ceres_mining_station",
+      "name": "Ceres Mining Station",
+      "timelineId": "space",
+      "order": 76,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "asteroid_mining" } },
+        { "techLevel": { "min": 0.72 } },
+        { "year": { "min": 2080 } }
+      ]},
+      "sustainedTicks": 18,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "resourceDeltas": { "water": 1000, "minerals": 500 },
+        "unlocks": ["belt_waystation", "ice_mining_at_scale"],
+        "narrative": {
+          "pravdaHeadline": "CERES STATION OPERATIONAL: Asteroid Belt Waystation Serves Outer System Expansion",
+          "toast": "Ceres contains more freshwater ice than all of Earth's freshwater combined. The extraction quota has been set. The irony of mining water in the asteroid belt while Earth's aquifers deplete is not discussed at party meetings.",
+          "description": "Ceres — the largest body in the asteroid belt (940 km diameter) — serves as the waystation between the inner and outer solar system. Its vast water ice reserves (estimated 200 million cubic km) make it the fuel depot and life support refinery for all outer system missions. Low gravity (0.03g) makes surface operations feasible but habitation requires rotation facilities. KSR's '2312' depicts these hollowed-asteroid settlements as 'terraria' — we call them kommunalki."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "europa_probe",
+      "name": "Europa Subsurface Ocean Discovery",
+      "timelineId": "space",
+      "order": 77,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_expedition" } },
+        { "techLevel": { "min": 0.7 } },
+        { "year": { "min": 2070 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["subsurface_ocean_access", "jupiter_system_ops"],
+        "narrative": {
+          "pravdaHeadline": "EUROPA PROBE PENETRATES ICE: Subsurface Ocean Confirmed, Life Detection Pending",
+          "toast": "A nuclear-heated melt probe has descended through 15 km of ice into Europa's global ocean. The water is warm, salty, and contains complex organic molecules. The probe's hydrophones have detected... something. Classification: STATE SECRET.",
+          "description": "Europa's subsurface ocean contains 2-3 times the volume of Earth's oceans, heated by tidal forces from Jupiter. Sheffield's 'Cold as Ice' depicted this as the solar system's greatest discovery. Jupiter's magnetosphere delivers 540 rem/day to Europa's surface — lethal in hours. All operations must be subsurface. The probe operates via tethered communication through the ice shell."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_cloud_colony",
+      "name": "Venus Cloud Colony",
+      "timelineId": "space",
+      "order": 80,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "venera_landing" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_colony" } },
+        { "techLevel": { "min": 0.8 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "venus_cloud",
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["venus_settlement", "atmospheric_habitation"],
+        "narrative": {
+          "pravdaHeadline": "VENERA COLONY FLOATS: Soviet Habitat Suspended in Venusian Atmosphere",
+          "toast": "At 50 km altitude, Venus is the most Earth-like environment in the solar system: 1 atm pressure, 75°C, breathable density. Below that: hell. The colonists do not look down.",
+          "description": "Venus at 50-55 km altitude: 1 atmosphere, ~75°C, Earth-like gravity (0.9g). Breathable air (N2/O2) is a lifting gas in Venus's dense CO2 atmosphere — a habitat filled with Earth air literally floats. Soviet research from the Venera program (16 probes, 10 successful landings — no other nation has even tried) makes this the logical next step. The cloud colony is a floating city of pressurized envelopes."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ganymede_colony",
+      "name": "Ganymede Colony",
+      "timelineId": "space",
+      "order": 82,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "europa_probe" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "ceres_mining_station" } },
+        { "techLevel": { "min": 0.82 } }
+      ]},
+      "sustainedTicks": 30,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "ganymede",
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["ganymede_settlement", "magnetosphere_shielding", "outer_system_habitation"],
+        "narrative": {
+          "pravdaHeadline": "GANYMEDE COLONY ESTABLISHED: Jupiter's Largest Moon Under Soviet Administration",
+          "toast": "Ganymede is the only moon in the solar system with its own magnetic field. This protects the colony from Jupiter's lethal radiation belt — barely. The shielding margin is classified. Workers are not told the margin.",
+          "description": "Sheffield's 'Cold as Ice' series envisioned Ganymede as the prime colony site in the Jupiter system: the solar system's largest moon (larger than Mercury), the only moon with an intrinsic magnetosphere (protecting against Jupiter's 540 rem/day radiation), subsurface liquid water ocean, and ice crust suitable for underground construction. At -160°C surface temperature, all habitation is subsurface. Nuclear reactors provide heat and power. The trudodni accounting system now tracks radiation exposure as a labor category."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "callisto_outpost",
+      "name": "Callisto Radiation-Safe Outpost",
+      "timelineId": "space",
+      "order": 83,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "ganymede_colony" } },
+        { "techLevel": { "min": 0.83 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "unlocks": ["callisto_ops", "radiation_safe_construction"],
+        "narrative": {
+          "pravdaHeadline": "CALLISTO OUTPOST OPERATIONAL: Workers Enjoy Unprecedented Radiation Safety",
+          "toast": "Callisto orbits far enough from Jupiter that surface radiation is only 0.01 rem/day — lower than Earth orbit. Workers can walk the surface in standard suits without cumulative dose concerns. This is considered a luxury.",
+          "description": "Callisto: the outermost Galilean moon, geologically dead but radiation-safe. Jupiter's magnetosphere barely reaches it (0.01 rem/day vs. 540 rem/day at Europa). Sheffield identified it as the ideal staging base for outer system operations precisely because workers can operate on the surface without lethal exposure. The tradeoff: no tidal heating, no subsurface ocean, no geological interest. Pure industrial function."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "titan_colony",
+      "name": "Titan Hydrocarbon Colony",
+      "timelineId": "space",
+      "order": 85,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_colony" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "ceres_mining_station" } },
+        { "techLevel": { "min": 0.85 } },
+        { "year": { "min": 2150 } }
+      ]},
+      "sustainedTicks": 36,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "titan",
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "resourceDeltas": { "hydrogen": 10000 },
+        "unlocks": ["titan_settlement", "hydrocarbon_extraction", "methane_ocean_shipping"],
+        "narrative": {
+          "pravdaHeadline": "TITAN COLONY OPERATIONAL: Methane Lakes Serve Industrial Plan",
+          "toast": "Saturn's largest moon has more hydrocarbons than all of Earth's reserves combined. The Five-Year Extraction Plan has been filed. Saturn is 1.2 billion km away. The filing system has not been optimized for this distance.",
+          "description": "Titan: thick atmosphere (1.5 atm N2/CH4), low gravity (0.14g), methane rain, -179°C. Lakes and seas of liquid methane and ethane — more hydrocarbons than all known reserves on Earth. Methane is rocket propellant when burned with oxygen. Problem: no free oxygen on Titan. Water ice crust provides O2 via electrolysis. Sheffield and Baxter both depicted Titan as the fuel reserve of the outer system. The irony: Soviet bureaucracy destroyed the Aral Sea for cotton quotas. On Titan, the resource is genuinely inexhaustible."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "space_elevator",
+      "name": "Space Elevator Construction",
+      "timelineId": "space",
+      "order": 87,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "asteroid_mining" } },
+        { "techLevel": { "min": 0.88 } },
+        { "year": { "min": 2200 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.06 },
+        "unlocks": ["space_elevator", "cheap_orbital_access", "carbon_nanotube_manufacturing"],
+        "narrative": {
+          "pravdaHeadline": "SPACE ELEVATOR OPERATIONAL: 100,000 KM TETHER CONNECTS EARTH TO ORBIT",
+          "toast": "Clarke wrote it. Sheffield engineered it. The Soviets built it. A graphene super-laminate tether from equatorial anchor to geostationary counterweight. Launch cost reduced 100-fold. The elevator operators' union is already on strike.",
+          "description": "Arthur C. Clarke's 'The Fountains of Paradise' (1979) and Sheffield's 'The Web Between the Worlds' (1979, published weeks apart) both independently described the space elevator concept. The engineering: a 100,000 km tether of graphene super-laminate (tensile strength >50 GPa, density 1,300 kg/m³) extending from equatorial surface through geostationary orbit to a counterweight beyond. Climber vehicles ascend electrically. Reduces surface-to-orbit cost from $10,000/kg to $100/kg. KSR's Mars Trilogy had it built and destroyed — a political target as much as an engineering one."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mercury_mining",
+      "name": "Mercury Mining Operations",
+      "timelineId": "space",
+      "order": 88,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "asteroid_mining" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "orbital_shipyard" } },
+        { "techLevel": { "min": 0.87 } },
+        { "year": { "min": 2200 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "resourceDeltas": { "minerals": 5000 },
+        "unlocks": ["mercury_resources", "solar_proximity_ops"],
+        "narrative": {
+          "pravdaHeadline": "MERCURY MINING AUTHORIZED: Innermost Planet Stripped for Dyson Swarm Materials",
+          "toast": "Mercury's iron core comprises 85% of its radius — the largest metal-to-planet ratio in the solar system. Dayside temperature: 430°C. Nightside: -180°C. Mining operations alternate with planetary rotation. The 176-day work schedule has been filed.",
+          "description": "Mercury is the raw material source for Dyson swarm construction. Its enormous iron core (proportionally the largest in the solar system) provides the metal for billions of thin-film solar collectors. Mining operations exploit the extreme day/night temperature differential: work the nightside, smelt on the dayside. KSR's '2312' depicts Mercury's 'city on rails' — a settlement that perpetually circles the planet, staying ahead of the dawn."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_green_phase",
+      "name": "Mars Terraforming: Green Phase",
+      "timelineId": "space",
+      "order": 89,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_greenhouse_phase" } },
+        { "techLevel": { "min": 0.85 } },
+        { "year": { "min": 2250 } }
+      ]},
+      "sustainedTicks": 120,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["mars_biology", "open_air_lichen", "areological_engineering"],
+        "narrative": {
+          "pravdaHeadline": "MARS GREENS: Engineered Lichen Survives in Open Martian Atmosphere",
+          "toast": "Cyanobacteria and engineered extremophile lichen grow on bare Martian rock for the first time. Surface pressure has reached 200 mbar. Not breathable, but no longer instantly lethal. Progress.",
+          "description": "KSR's 'Green Mars' — the biological phase. After a century of greenhouse warming, surface pressure reaches levels where liquid water persists in equatorial lowlands. Engineered extremophile organisms (lichen, cyanobacteria, cold-adapted algae) begin converting CO2 to O2 at planetary scale. Mars's soil must be detoxified of perchlorates zone by zone. The Reds (who want Mars pristine) clash with the Greens (who want terraforming). The Central Committee has no patience for such debate — the Five-Year Terraforming Quota must be met."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "oneill_cylinder",
+      "name": "O'Neill Cylinder Construction",
+      "timelineId": "space",
+      "order": 90,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "orbital_shipyard" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "asteroid_mining" } },
+        { "techLevel": { "min": 0.88 } },
+        { "population": { "min": 50000 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "orbital_habitat",
+        "worldStateDeltas": { "techLevel": 0.06 },
+        "unlocks": ["artificial_gravity_habitats", "space_agriculture_at_scale"],
+        "narrative": {
+          "pravdaHeadline": "O'NEILL CYLINDER COMPLETE: Artificial World Rotates for Soviet Citizens",
+          "toast": "8 km long, 1 km radius, rotating at 0.53 rpm for 1g. Population capacity: 10,000. Inside, there are fields, rivers, and a bureau for cylinder maintenance permits.",
+          "description": "Gerard O'Neill's 1976 design realized with Soviet central planning. Island Three configuration: 8 km × 1 km counter-rotating cylinders with 1g at the rim. Interior landscapes, weather systems, and agriculture. Seveneves (Stephenson) showed how orbital debris can threaten all orbital infrastructure — the cylinder's hull is 3m of asteroid-derived steel. The agricultural strips run the full 32 km length — the largest collective farm ever built. The bureaucracy for allocating apartments is identical to Earth's."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "deep_space_probe_lost",
+      "name": "Deep Space Probe Lost",
+      "timelineId": "space",
+      "order": 90.1,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "europa_probe" } },
+        { "year": { "min": 2200 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": { "morale": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "PROBE KONTAKT-7 CEASES TRANSMISSION: Last Signal Received From Beyond Neptune Orbit",
+          "toast": "Deep space probe Kontakt-7, launched 80 years ago toward the Kuiper Belt, has stopped transmitting. Its final signal was a status report indicating all systems nominal. Then silence. The probe did not malfunction — it simply stopped talking. Engineers cannot explain a probe that is working and not transmitting. Some systems, it appears, choose their own ending.",
+          "description": "The Kontakt-7 probe, a Soviet deep-space surveillance platform launched to survey trans-Neptunian objects, transmitted reliably for 80 years before ceasing all communication. Radioisotope power systems had 140 years of fuel remaining. Antenna alignment was nominal. The silence is not consistent with any known failure mode. The probe joins the Pioneer anomaly and Voyager silence in the growing catalog of spacecraft that simply stopped."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "exoplanet_survey_broadcast",
+      "name": "First Soviet Exoplanet Survey Broadcast",
+      "timelineId": "space",
+      "order": 90.2,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "titan_colony" } },
+        { "techLevel": { "min": 0.87 } },
+        { "year": { "min": 2300 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "pressureModifiers": { "morale": -0.1 },
+        "unlocks": ["exoplanet_data"],
+        "narrative": {
+          "pravdaHeadline": "FIRST EXOPLANET SURVEY BROADCAST RECEIVED: 47 Candidate Worlds Catalogued by Orbital Array",
+          "toast": "The Soviet Exoplanet Survey Array — a distributed interferometer spanning the inner solar system — has completed its first catalog. 47 worlds within 50 light-years show atmospheric signatures consistent with biology. None have responded to any signal. But something is breathing out there. The catalog has been filed with the Ministry of Extraterrestrial Planning. They have requested additional staff.",
+          "description": "A baseline interferometer distributed across multiple orbital platforms achieves angular resolution sufficient to directly image exoplanet atmospheres within 50 light-years. Spectroscopic analysis reveals biosignatures (O2/CH4 disequilibrium) on 47 candidate worlds. The survey does not confirm intelligent life — only chemistry that is consistent with it. The distinction is everything. The catalog becomes the basis for future interstellar probe targeting."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "long_silence",
+      "name": "The Long Silence",
+      "timelineId": "space",
+      "order": 91,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "exoplanet_survey_broadcast" } },
+        { "year": { "min": 2450 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "pressureModifiers": { "morale": 0.1 },
+        "worldStateDeltas": { "globalTension": -0.05 },
+        "narrative": {
+          "pravdaHeadline": "150 YEARS OF SETI MONITORING: NO ARTIFICIAL SIGNALS DETECTED FROM ANY CATALOGUED BIOSIGNATURE WORLD",
+          "toast": "150 years of continuous monitoring across 47 biosignature worlds. Radio, optical, gravitational wave, neutrino — every band, every protocol. Automated listeners orbiting Saturn where interference is minimal. Nothing. The chemistry of life is everywhere. The sound of intelligence is nowhere. The settlement's SETI department has been reduced to a single automated relay. The workers who remain check the feed out of habit. The habit is 150 years old.",
+          "description": "A century and a half of SETI monitoring from optimally positioned deep-space arrays — beyond Mars orbit, where solar and terrestrial radio interference is negligible. 47 worlds with biosignatures, monitored continuously across every electromagnetic band and beyond. Not one artificial signal. The Drake Equation's optimistic terms collapse one by one. Life may be common. Intelligence may be common. Communication may not be. Or the answer is simpler: they are there, and they are quiet, and quiet may be the only survival strategy the universe rewards."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_blue_phase",
+      "name": "Mars Terraforming: Blue Phase",
+      "timelineId": "space",
+      "order": 92,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_green_phase" } },
+        { "techLevel": { "min": 0.9 } },
+        { "year": { "min": 2500 } }
+      ]},
+      "sustainedTicks": 240,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["mars_oceans", "breathable_mars_atmosphere", "planetary_scale_engineering"],
+        "narrative": {
+          "pravdaHeadline": "MARS HAS OCEANS: Hellas Basin Fills With Liquid Water, Atmosphere Approaches Breathability",
+          "toast": "After centuries of greenhouse warming, ice cap melting, and biological oxygen production, Mars now has open oceans in the northern lowlands and Hellas basin. Atmospheric pressure: 350 mbar. O2 content: 14%. Humans can walk outside with supplemental oxygen. Full breathability estimated within another century.",
+          "description": "KSR's 'Blue Mars' — the culmination of centuries of terraforming. The northern ocean (Oceanus Borealis) fills the vast depression that covers 40% of Mars. The Hellas basin becomes an inland sea. Atmospheric pressure reaches 350 mbar — enough for liquid water everywhere. Oxygen content rises toward breathability (14% and climbing, vs. Earth's 21%). Humans can walk outside with an oxygen mask and warm clothing. Full terraforming (unassisted breathing) requires another 100-200 years. The Five-Year Oceanic Expansion Plan is filed. It will take fifty such plans."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "interstellar_probe",
+      "name": "Interstellar Probe Launch",
+      "timelineId": "space",
+      "order": 95,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "space_elevator" } },
+        { "techLevel": { "min": 0.92 } },
+        { "year": { "min": 2500 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "unlocks": ["interstellar_propulsion", "laser_sail_technology"],
+        "narrative": {
+          "pravdaHeadline": "INTERSTELLAR PROBE LAUNCHED: Light Sail Accelerated to 20% of Light Speed",
+          "toast": "A gram-scale probe accelerated by a ground-based laser array to 0.2c. Destination: Proxima Centauri. Transit: 21 years. Data return: 4.24 years after arrival. Total mission time: 25 years. The Five-Year Plan covers the first fifth.",
+          "description": "Based on Breakthrough Starshot concept: a laser array (100 GW peak) accelerates a gram-scale probe with a light sail to 20% of the speed of light. At 0.2c, the probe reaches Proxima Centauri in 21 years. It cannot slow down — it performs a flyby, transmitting data during its brief encounter. The return signal takes 4.24 years. The probe confirms Proxima Centauri b's habitability parameters. Generation ship planning begins immediately."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "dyson_swarm_start",
+      "name": "Dyson Swarm Construction Begins",
+      "timelineId": "space",
+      "order": 100,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "oneill_cylinder" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "mercury_mining" } },
+        { "techLevel": { "min": 0.95 } },
+        { "year": { "min": 3000 } }
+      ]},
+      "sustainedTicks": 120,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.1 },
+        "resourceDeltas": { "power": 100000 },
+        "unlocks": ["stellar_engineering", "dyson_swarm", "type_ii_civilization"],
+        "narrative": {
+          "pravdaHeadline": "DYSON SWARM CONSTRUCTION AUTHORIZED: Five-Year Plan for Stellar Engineering Approved",
+          "toast": "The Five-Year Plan for Stellar Engineering has been approved. Estimated completion: 50,000 years. This is within acceptable tolerances.",
+          "description": "Not a solid shell (physically impossible — Larry Niven's Ringworld notwithstanding) but a swarm of orbiting thin-film solar collectors. Mercury is disassembled for raw materials (its iron core is the largest proportional to any planet). Each collector is a thin-film mirror on a self-correcting orbit. At completion, the swarm captures a significant fraction of the Sun's 3.8 × 10²⁶ watt output. Phys.org notes the irony: a completed swarm would make Earth uninhabitable by blocking sunlight. The Five-Year Plan does not address this contradiction."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "kardashev_one",
+      "name": "Kardashev Type I Civilization",
+      "timelineId": "space",
+      "order": 105,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "dyson_swarm_start" } },
+        { "techLevel": { "min": 0.96 } },
+        { "year": { "min": 3500 } }
+      ]},
+      "sustainedTicks": 60,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["planetary_energy_capture", "kardashev_one"],
+        "narrative": {
+          "pravdaHeadline": "KARDASHEV TYPE I ACHIEVED: Soviet Civilization Harnesses Full Planetary Energy Output",
+          "toast": "Total energy capture now equals the Sun's input to Earth: 1.7 × 10¹⁷ watts. Nikolai Kardashev — Soviet astrophysicist — defined this scale in 1964. He would be proud. He would also be confused by the paperwork.",
+          "description": "Kardashev's scale was proposed by Soviet astrophysicist Nikolai Kardashev in 1964 — making it doubly appropriate for this game. Type I harnesses all energy available to a planet (~1.7 × 10¹⁷ W for Earth). The current human civilization is approximately Type 0.73. The transition from 0.73 to 1.0 is the most dangerous period — enough power to destroy the planet, not yet enough to leave it reliably. The Soviet system's centralized energy allocation may actually be better suited to this transition than market-based systems."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "generation_ship",
+      "name": "Generation Ship Launch",
+      "timelineId": "space",
+      "order": 110,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "oneill_cylinder" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "bios3_closed_ecosystem" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "interstellar_probe" } },
+        { "techLevel": { "min": 0.97 } },
+        { "or": [
+          { "year": { "min": 5000 } },
+          { "pressure": { "domain": "demographic", "min": 0.9 } }
+        ]}
+      ]},
+      "sustainedTicks": 120,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "generation_ship",
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["interstellar_transit", "generation_ship_culture", "multi_generational_planning"],
+        "narrative": {
+          "pravdaHeadline": "GENERATION SHIP LAUNCHES: 10,000 Soviet Citizens Begin Journey to Alpha Centauri",
+          "toast": "Transit time: approximately 400 years at 1% c. The passengers' great-great-great-great-great-great-great-great-grandchildren will arrive. Their personnel files will arrive first.",
+          "description": "A self-sustaining worldship based on O'Neill cylinder technology. 10,000 initial population (minimum viable genetic population per academic research: ~10,000 for 20 generations). BIOS-3 derived closed ecosystem, artificial gravity from rotation. Destination: Proxima Centauri b (4.24 light-years, confirmed habitable by interstellar probe). At 1% c: 424 years transit. KSR's 'Aurora' warns generation ships probably fail — ecosystem degradation, social fragmentation, genetic drift. The Soviet model's answer: rigid hierarchical control across generations. The crew manifest is filed in triplicate. The ship's Five-Year Plan is a 400-Year Plan filed as eighty consecutive installments."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "second_generation_ship",
+      "name": "Second Generation Ship (Redundancy)",
+      "timelineId": "space",
+      "order": 115,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "generation_ship" } },
+        { "techLevel": { "min": 0.97 } },
+        { "year": { "min": 5500 } }
+      ]},
+      "sustainedTicks": 60,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "generation_ship",
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "unlocks": ["multi_star_colonization"],
+        "narrative": {
+          "pravdaHeadline": "SECOND ARK LAUNCHED: Backup Generation Ship Targets Tau Ceti",
+          "toast": "Soviet redundancy doctrine applies to interstellar colonization. If one ship fails, the species survives. If both fail, the paperwork for both is already filed and archived in triplicate on the Moon.",
+          "description": "Reynolds' 'Revelation Space' universe depicts interstellar civilization as inherently fragile — light-speed communication delay makes coordination impossible. The Soviet answer: launch multiple ships to different stars. Tau Ceti (11.9 light-years) is the second target. Transit time at 1% c: ~1,200 years. The ship's political structure will evolve beyond recognition during transit. The filing system will not."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "exoplanet_colony",
+      "name": "Exoplanet Colony Established",
+      "timelineId": "space",
+      "order": 120,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "generation_ship" } },
+        { "year": { "min": 6000 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "exoplanet",
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "unlocks": ["interstellar_civilization", "exoplanet_terraforming"],
+        "narrative": {
+          "pravdaHeadline": "SIGNAL RECEIVED FROM PROXIMA: Colony Established, Five-Year Plan Filed",
+          "toast": "After 400+ years of transit, the generation ship has arrived. The first message home: 'Colony established. Requesting updated quota assignments.' It will take 4.24 years to arrive.",
+          "description": "Proxima Centauri b: 1.17 Earth masses, potentially habitable zone, tidally locked (one face always toward the star). The colony establishes on the terminator zone where temperatures are moderate. Light-speed communication delay means the colony is effectively autonomous — Moscow's directives arrive 4.24 years late. The colonists have adapted their bureaucratic procedures accordingly. They still file the paperwork. Watts' 'Blindsight' warns that alien environments may be fundamentally hostile in ways we cannot predict. The Central Committee has no contingency for this."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "long_dark",
+      "name": "The Long Dark",
+      "timelineId": "space",
+      "order": 125,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "exoplanet_colony" } },
+        { "year": { "min": 5000 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "tradeAccess": -0.6,
+          "globalTension": -0.4,
+          "moscowAttention": -0.8
+        },
+        "pressureModifiers": {
+          "morale": 0.25,
+          "economic": 0.2,
+          "political": -0.3
+        },
+        "unlocks": ["self_reliance_doctrine", "archival_priority", "signal_watch"],
+        "narrative": {
+          "pravdaHeadline": "COMMUNICATIONS RELAY SECTOR 7 REPORTS EXTENDED SILENCE — Analysis Ongoing",
+          "toast": "The last message from the inner system was 340 years ago. It was a quota revision. The quotas have since become meaningless. The silence has become permanent.",
+          "scene": "There is no single moment when the Long Dark begins.\n\nThe relay stations fail one by one, over centuries. First the automated probes, then the communication arrays that required maintenance no one was funded to provide, then the light-speed messages that stopped being answered. The last confirmed contact with the inner solar system was a directive from a bureaucratic body that may no longer exist, staffed by people who are certainly dead, concerning a quota that no longer maps onto any resource this settlement produces.\n\nYour settlement is not alone in the galaxy. It may not even be alone in this system. But it is alone in the way that matters: there is no one to file reports with, no commission to approve or deny, no five-year plan arriving from a center that has gone silent.\n\nThe archivist brings you three options, written on actual paper. She says: we have all the knowledge we have accumulated. We have the people we have. We have the infrastructure we have built. What we do not have is instruction. The question is what comes next.\n\nThe paper is soft with age. You notice that the stamp at the top — CLASSIFIED: EYES ONLY — is from a classification system that no longer exists, from an authority that no longer exists, filed according to procedures that no one alive was trained in.\n\nYou pick up the pen.",
+          "choices": [
+            {
+              "id": "maintain_archives",
+              "label": "Become the library — preserve everything",
+              "description": "Declare the settlement a civilization archive. Redirect resources to preservation, replication, and education. Humanity's memory survives here.",
+              "successChance": 0.80,
+              "onSuccess": {
+                "announcement": "The archive project proceeds over three generations. The settlement's purpose shifts from production to preservation. Every record, every technique, every cultural artifact is catalogued, duplicated, and secured in the deep vaults. Generations later, when signals begin returning from elsewhere in the dark, this settlement is the most complete record of what humanity was. The quota ledgers are preserved alongside the poetry.",
+                "severity": "info",
+                "pressureModifiers": {
+                  "morale": -0.2,
+                  "political": -0.2
+                },
+                "unlocks": ["civilization_archive", "deep_vault_construction"]
+              },
+              "onFailure": {
+                "announcement": "The archive project fragments over disagreements about what is worth preserving. Factions form around different conceptions of civilization. A generation is lost to cultural disputes. Some records are destroyed deliberately. Others simply decay faster than the archivists can work. The settlement survives. The completeness does not.",
+                "severity": "warning",
+                "pressureModifiers": {
+                  "morale": 0.15,
+                  "political": 0.1
+                }
+              }
+            },
+            {
+              "id": "send_signal",
+              "label": "Broadcast into the dark — spend everything on transmission",
+              "description": "Build the most powerful transmitter possible. Announce that humanity exists here, has endured, and wants to be found. Enormous resource cost. Unknown return.",
+              "successChance": 0.45,
+              "onSuccess": {
+                "announcement": "The transmitter takes forty years to build. It broadcasts for six hundred years. In the four hundredth year of broadcast, a response arrives from the direction of what was once called the Tau Ceti exoplanet colony — a tight-beam signal, clearly technological, using a cipher based on a mathematical protocol that appears to be a descendant of early twenty-first century cryptography. You are not alone. The message takes eleven years to arrive. You begin composing the reply.",
+                "severity": "info",
+                "pressureModifiers": {
+                  "morale": -0.3,
+                  "economic": 0.1
+                },
+                "resources": {
+                  "money": -500,
+                  "steel": -200
+                },
+                "unlocks": ["interstellar_contact", "reply_protocol"]
+              },
+              "onFailure": {
+                "announcement": "The transmitter is built. It broadcasts. For 800 years, nothing responds. The equipment requires maintenance that becomes increasingly difficult across generations. Eventually the last active antenna goes silent. The broadcast was heard, possibly, by something. The something has not replied. The resources spent are not returned.",
+                "severity": "critical",
+                "resources": {
+                  "money": -500,
+                  "steel": -200
+                },
+                "pressureModifiers": {
+                  "morale": 0.2,
+                  "economic": 0.25
+                }
+              }
+            },
+            {
+              "id": "build_alone",
+              "label": "Accept the silence — optimize for self-sufficiency",
+              "description": "Stop looking outward. Redesign all systems for complete independence. No reliance on external supply chains. The settlement becomes its own civilization.",
+              "successChance": 0.90,
+              "onSuccess": {
+                "announcement": "The decision is made with surprisingly little resistance. The generation that grew up in the silence has no expectation of anything from outside. They build for themselves with a thoroughness that their ancestors — who always assumed support would arrive — never managed. Within a century, the settlement produces everything it requires. The word 'quota' disappears from the administrative vocabulary. There is no one to send quotas to.",
+                "severity": "info",
+                "pressureModifiers": {
+                  "morale": -0.25,
+                  "economic": -0.3,
+                  "political": -0.25
+                },
+                "unlocks": ["full_autarky", "new_constitution"]
+              },
+              "onFailure": {
+                "announcement": "Self-sufficiency proves harder than expected. Several critical technologies require materials or expertise that the settlement cannot produce internally. The attempt to close all external loops fails at three separate points. The settlement survives, but in a diminished state — capable of subsistence but not of the civilization-scale ambitions that full autarky requires. A compromise emerges: partial self-sufficiency, partial hope.",
+                "severity": "warning",
+                "pressureModifiers": {
+                  "economic": 0.15,
+                  "morale": 0.1
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "build_alone",
+          "tickLimit": 120
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "kardashev_two",
+      "name": "Kardashev Type II Civilization",
+      "timelineId": "space",
+      "order": 130,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "dyson_swarm_start" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "exoplanet_colony" } },
+        { "techLevel": { "min": 0.99 } },
+        { "year": { "min": 50000 } }
+      ]},
+      "sustainedTicks": 600,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["stellar_energy_capture", "kardashev_two", "star_lifting"],
+        "narrative": {
+          "pravdaHeadline": "KARDASHEV TYPE II ACHIEVED: Full Stellar Energy Output Harnessed by Soviet Civilization",
+          "toast": "Total energy capture: 3.8 × 10²⁶ watts — the Sun's entire output. The Dyson swarm is operational after 47,000 years of construction. The original Five-Year Plan was filed 9,400 consecutive times.",
+          "description": "Kardashev Type II: a civilization that harnesses the total energy output of its star. The Dyson swarm around Sol is complete — billions of thin-film collectors in self-correcting orbits capture 3.8 × 10²⁶ watts. Star lifting (extracting stellar material for construction) extends the Sun's main-sequence lifetime. Baxter's 'Xeelee Sequence' depicts civilizations at this scale as fundamentally different from anything we recognize — yet the Soviet bureaucratic form persists. There is still a plan. There are still quotas."
+        }
+      },
+      "oneShot": true
+    }
+  ]
+}

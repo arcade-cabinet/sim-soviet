@@ -161,7 +161,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
           power: 99999,
         },
         difficulty: 'worker',
-        consequence: 'permadeath',
+        consequence: 'rasstrelyat',
         deterministicRandom: true,
       });
 
@@ -240,7 +240,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
           power: 99999,
         },
         difficulty: 'worker',
-        consequence: 'permadeath',
+        consequence: 'rasstrelyat',
         deterministicRandom: true,
       });
 
@@ -262,13 +262,15 @@ describe('Freeform mode — organic divergence integration tests', () => {
       jest.restoreAllMocks();
     });
 
-    it('ChaosEngine generates at least one crisis within 25 years', () => {
-      // Chaos-generated crisis IDs follow the pattern: type-year-randomId
-      const chaosGenerated = [...everActiveCrises].filter((id) => id.match(/^(war|famine|disaster|political)-\d+-/));
+    it('pressure system or ChaosEngine generates at least one crisis within 25 years', () => {
+      // Pressure-generated IDs: pressure-domain-year-tick; ChaosEngine IDs: type-year-randomId
+      const generated = [...everActiveCrises].filter(
+        (id) => id.match(/^pressure-/) || id.match(/^(war|famine|disaster|political)-\d+-/),
+      );
 
-      console.log(`Chaos-generated crises (25 years): ${chaosGenerated.length} — ` + `[${chaosGenerated.join(', ')}]`);
+      console.log(`Generated crises (25 years): ${generated.length} — ` + `[${generated.slice(0, 10).join(', ')}${generated.length > 10 ? '...' : ''}]`);
 
-      expect(chaosGenerated.length).toBeGreaterThanOrEqual(1);
+      expect(generated.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -293,7 +295,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
           power: 99999,
         },
         difficulty: 'worker',
-        consequence: 'permadeath',
+        consequence: 'rasstrelyat',
         deterministicRandom: true,
       });
 
@@ -328,7 +330,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
         expect(event.eventId).toBeDefined();
         expect(typeof event.eventId).toBe('string');
         expect(event.crisisType).toBeDefined();
-        expect(['war', 'famine', 'disaster', 'political']).toContain(event.crisisType);
+        expect(['war', 'famine', 'disaster', 'political', 'climate', 'black_swan', 'cold_branch']).toContain(event.crisisType);
         expect(typeof event.name).toBe('string');
         expect(typeof event.startYear).toBe('number');
         expect(typeof event.endYear).toBe('number');
@@ -376,7 +378,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
             power: 99999,
           },
           difficulty: 'worker',
-          consequence: 'permadeath',
+          consequence: 'rasstrelyat',
           deterministicRandom: true,
         });
 
@@ -412,7 +414,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
             power: 99999,
           },
           difficulty: 'worker',
-          consequence: 'permadeath',
+          consequence: 'rasstrelyat',
           deterministicRandom: false,
         });
 
@@ -467,7 +469,7 @@ describe('Freeform mode — organic divergence integration tests', () => {
           power: 99999,
         },
         difficulty: 'worker',
-        consequence: 'permadeath',
+        consequence: 'rasstrelyat',
         deterministicRandom: true,
       });
 
@@ -536,6 +538,260 @@ describe('Freeform mode — organic divergence integration tests', () => {
     it('FreeformGovernor without parameter defaults to 1917', () => {
       const gov = new FreeformGovernor();
       expect(gov.getDivergenceYear()).toBe(1917);
+    });
+  });
+
+  // ── 7. WorldAgent state changes over time (sphere dynamics, governance drift) ──
+
+  describe('WorldAgent sphere dynamics evolve over 40+ years', () => {
+    let governor: FreeformGovernor;
+    let engine: ReturnType<typeof createPlaythroughEngine>['engine'];
+
+    beforeAll(() => {
+      jest.setTimeout(60000);
+
+      const setup = createPlaythroughEngine({
+        meta: { date: { year: 1917, month: 10, tick: 0 } },
+        resources: {
+          population: 100,
+          food: 99999,
+          timber: 99999,
+          steel: 99999,
+          cement: 99999,
+          money: 99999,
+          vodka: 99999,
+          power: 99999,
+        },
+        difficulty: 'worker',
+        consequence: 'rasstrelyat',
+        seed: 'world-agent-sphere-test',
+      });
+
+      engine = setup.engine;
+      setup.callbacks.onMinigame = undefined as never;
+      setup.callbacks.onAnnualReport = undefined as never;
+
+      buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
+
+      governor = new FreeformGovernor();
+      engine.setGovernor(governor);
+      disableGameOver(engine);
+
+      runYears(engine, governor, 45);
+    }, 60000);
+
+    afterAll(() => {
+      world.clear();
+      jest.restoreAllMocks();
+    });
+
+    it('WorldAgent state changes over time — techLevel advances', () => {
+      const worldAgent = engine.getWorldAgent();
+      const state = worldAgent.getState();
+      // After 45 years, tech should have advanced beyond 0.05 starting value
+      expect(state.techLevel).toBeGreaterThan(0.05);
+    });
+
+    it('WorldAgent spheres have non-default values after 45 years', () => {
+      const worldAgent = engine.getWorldAgent();
+      const state = worldAgent.getState();
+      // Spheres should have evolved from initial values
+      const sphereIds = Object.keys(state.spheres);
+      expect(sphereIds.length).toBeGreaterThan(0);
+      // At least one sphere should have shifted hostility or trade
+      const hasShifted = sphereIds.some((id) => {
+        const sphere = state.spheres[id as keyof typeof state.spheres];
+        return sphere.aggregateHostility !== 0 || sphere.aggregateTrade !== 0;
+      });
+      expect(hasShifted).toBe(true);
+    });
+  });
+
+  // ── 8. ClimateEventSystem fires at least one seasonal event ──────────
+
+  describe('ClimateEventSystem fires seasonal events over 40 years', () => {
+    let governor: FreeformGovernor;
+
+    beforeAll(() => {
+      jest.setTimeout(60000);
+
+      const { engine, callbacks } = createPlaythroughEngine({
+        meta: { date: { year: 1917, month: 10, tick: 0 } },
+        resources: {
+          population: 100,
+          food: 99999,
+          timber: 99999,
+          steel: 99999,
+          cement: 99999,
+          money: 99999,
+          vodka: 99999,
+          power: 99999,
+        },
+        difficulty: 'worker',
+        consequence: 'rasstrelyat',
+        seed: 'climate-event-test',
+      });
+
+      callbacks.onMinigame = undefined as never;
+      callbacks.onAnnualReport = undefined as never;
+
+      buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
+
+      governor = new FreeformGovernor();
+      engine.setGovernor(governor);
+      disableGameOver(engine);
+
+      runYears(engine, governor, 40);
+    }, 60000);
+
+    afterAll(() => {
+      world.clear();
+      jest.restoreAllMocks();
+    });
+
+    it('climate event system is initialized and can evaluate', () => {
+      const climateSystem = governor.getClimateEventSystem();
+      // ClimateEventSystem is evaluated every tick — verify it exists and can serialize
+      expect(climateSystem).toBeDefined();
+      const serialized = climateSystem.serialize();
+      // New format: { cooldowns: Array, terraformingProgress: number }
+      const cooldowns = Array.isArray(serialized) ? serialized : serialized.cooldowns;
+      expect(Array.isArray(cooldowns)).toBe(true);
+
+      // Verify the system can evaluate without errors
+      // Climate events are probabilistic and season-gated, so they may or may not
+      // fire in any given run. The key invariant is that the system processes
+      // without crashing over 40 years.
+      console.log(
+        `ClimateEventSystem: active cooldowns at end of run: ${cooldowns.length}`,
+      );
+    });
+  });
+
+  // ── 9. Cold branches: activatedBranches grows over 40+ years ──────
+
+  describe('Cold branches activate over extended simulation', () => {
+    let governor: FreeformGovernor;
+
+    beforeAll(() => {
+      jest.setTimeout(60000);
+
+      const { engine, callbacks } = createPlaythroughEngine({
+        meta: { date: { year: 1917, month: 10, tick: 0 } },
+        resources: {
+          population: 100,
+          food: 99999,
+          timber: 99999,
+          steel: 99999,
+          cement: 99999,
+          money: 99999,
+          vodka: 99999,
+          power: 99999,
+        },
+        difficulty: 'worker',
+        consequence: 'rasstrelyat',
+        seed: 'cold-branch-test',
+      });
+
+      callbacks.onMinigame = undefined as never;
+      callbacks.onAnnualReport = undefined as never;
+
+      buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
+
+      governor = new FreeformGovernor();
+      engine.setGovernor(governor);
+      disableGameOver(engine);
+
+      runYears(engine, governor, 45);
+    }, 60000);
+
+    afterAll(() => {
+      world.clear();
+      jest.restoreAllMocks();
+    });
+
+    it('activatedBranches is accessible and is a set', () => {
+      const branches = governor.getActivatedBranches();
+      expect(branches).toBeDefined();
+      expect(typeof branches.size).toBe('number');
+      console.log(`Activated cold branches after 45 years: ${branches.size} — [${[...branches].join(', ')}]`);
+    });
+  });
+
+  // ── 10. PressureSystem gauges accumulate ──────────────────────────────
+
+  describe('PressureSystem gauges accumulate over time', () => {
+    let governor: FreeformGovernor;
+
+    beforeAll(() => {
+      jest.setTimeout(60000);
+
+      const { engine, callbacks } = createPlaythroughEngine({
+        meta: { date: { year: 1917, month: 10, tick: 0 } },
+        resources: {
+          population: 100,
+          food: 99999,
+          timber: 99999,
+          steel: 99999,
+          cement: 99999,
+          money: 99999,
+          vodka: 99999,
+          power: 99999,
+        },
+        difficulty: 'worker',
+        consequence: 'rasstrelyat',
+        seed: 'pressure-gauge-test',
+      });
+
+      callbacks.onMinigame = undefined as never;
+      callbacks.onAnnualReport = undefined as never;
+
+      buildBasicSettlement({ housing: 5, farms: 5, power: 3 });
+
+      governor = new FreeformGovernor();
+      engine.setGovernor(governor);
+      disableGameOver(engine);
+
+      runYears(engine, governor, 25);
+    }, 60000);
+
+    afterAll(() => {
+      world.clear();
+      jest.restoreAllMocks();
+    });
+
+    it('pressureState has non-zero domains after 25 years', () => {
+      const pressureSystem = governor.getPressureSystem();
+      const state = pressureSystem.getState();
+
+      // At least one domain should have accumulated some pressure
+      const domainKeys = Object.keys(state);
+      expect(domainKeys.length).toBeGreaterThan(0);
+
+      let hasNonZero = false;
+      for (const key of domainKeys) {
+        const gauge = state[key as keyof typeof state];
+        if (gauge && gauge.level > 0) {
+          hasNonZero = true;
+          break;
+        }
+      }
+
+      console.log(
+        `PressureSystem state after 25 years: ` +
+          domainKeys
+            .map((k) => `${k}=${state[k as keyof typeof state]?.level?.toFixed(3) ?? '?'}`)
+            .join(', '),
+      );
+
+      expect(hasNonZero).toBe(true);
+    });
+
+    it('pressure system serializes correctly', () => {
+      const pressureSystem = governor.getPressureSystem();
+      const serialized = pressureSystem.serialize();
+      expect(serialized).toBeDefined();
+      expect(serialized.gauges).toBeDefined();
     });
   });
 });

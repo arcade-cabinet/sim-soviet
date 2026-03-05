@@ -60,12 +60,15 @@ describe('PrivatePlotSystem', () => {
     expect(thawFood).toBeCloseTo(normalFood * 1.5, 1);
   });
 
-  it('produces zero during great_patriotic era', () => {
+  it('produces reduced output during great_patriotic era (0.7x)', () => {
     makeDvor('d1', { privatePlotSize: 0.5 });
 
-    const food = calculatePrivatePlotProduction('great_patriotic');
+    const normalFood = calculatePrivatePlotProduction('collectivization');
+    const warFood = calculatePrivatePlotProduction('great_patriotic');
 
-    expect(food).toBe(0);
+    // WWII private plots were critical to food production (0.7x multiplier, not banned)
+    expect(warFood).toBeGreaterThan(0);
+    expect(warFood).toBeCloseTo(normalFood * 0.7, 1);
   });
 
   it('applies stagnation era modifier (0.8x)', () => {

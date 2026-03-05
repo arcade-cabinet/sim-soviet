@@ -11,7 +11,7 @@ import { Canvas } from '@react-three/fiber';
 import React, { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AudioManager from './audio/AudioManager';
-import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
+import { SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
 import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitialized } from './bridge/GameInit';
@@ -32,14 +32,9 @@ import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualR
 import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import { gameState } from './engine/GameState';
-import {
-  clearToast,
-  getToast,
-  setSpeed,
-  showAdvisor,
-  showToast,
-} from './engine/helpers';
+import { clearToast, getToast, setSpeed, showAdvisor, showToast } from './engine/helpers';
 import type { RehabilitationData } from './game/engine/types';
+import type { NarrativeEvent } from './game/timeline/TimelineLayer';
 import type { EraDefinition } from './game/era';
 import type { TallyData } from './game/GameTally';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
@@ -48,7 +43,6 @@ import { useInputManager } from './input/useInputManager';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import {
   closeBuildingInspector,
-  closeBuildingPanel,
   closeCitizenDossierByIndex,
   closePoliticalPanel,
   type GameSpeed,
@@ -60,7 +54,10 @@ import {
   useBuildingPanel,
   useCitizenDossierIndex,
   useCursorTooltip,
+  useGovernmentHQ,
+  closeGovernmentHQ,
   usePoliticalPanel,
+  pushCrisisVFX,
 } from './stores/gameStore';
 import { AchievementsPanel } from './ui/AchievementsPanel';
 // Advisor removed — Phase 1 minimal HUD
@@ -79,6 +76,7 @@ import { EdgeIndicators } from './ui/EdgeIndicators';
 import { EraTechTreePanel } from './ui/EraTechTreePanel';
 import { EventHistoryPanel } from './ui/EventHistoryPanel';
 import { GameModals, type GameOverInfo, type PlanDirective } from './ui/GameModals';
+import { GovernmentHQ } from './ui/GovernmentHQ';
 import { InfrastructurePanel } from './ui/InfrastructurePanel';
 import { IntroModal } from './ui/IntroModal';
 import { LeadershipPanel } from './ui/LeadershipPanel';
@@ -87,6 +85,7 @@ import { LoadingScreen } from './ui/LoadingScreen';
 import { MainMenu } from './ui/MainMenu';
 import { MandateProgressPanel } from './ui/MandateProgressPanel';
 import { MinigameOverlay } from './ui/MinigameOverlay';
+import { NarrativeEventOverlay } from './ui/NarrativeEventOverlay';
 import { MinigameReferencePanel } from './ui/MinigameReferencePanel';
 import { Minimap } from './ui/Minimap';
 import { type NewGameConfig, NewGameSetup } from './ui/NewGameSetup';
@@ -103,16 +102,23 @@ import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { ScoringPanel } from './ui/ScoringPanel';
 import { SettingsModal } from './ui/SettingsModal';
 import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
+import { SettlementSelectorPanel } from './ui/SettlementSelectorPanel';
+import { SettlementTransitionOverlay } from './ui/SettlementTransitionOverlay';
 import { Colors } from './ui/styles';
-// Ticker removed — Phase 1 minimal HUD
+import { PravdaTicker } from './ui/PravdaTicker';
 import { Toast } from './ui/Toast';
 // Toolbar removed — Phase 1 minimal HUD
 // UI components
 import { TopBar } from './ui/TopBar';
 import { ViewportFrame } from './ui/ViewportFrame';
 import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
+import { USSRDissolutionModal } from './ui/USSRDissolutionModal';
+import { MilestoneTimelineScreen } from './ui/MilestoneTimelineScreen';
+import { buildMilestoneSummary, type MilestoneSummaryEntry } from './ui/milestoneSummary';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
+import { switchSettlementByIndex, syncSettlementList } from './game/settlement/switchSettlement';
+
 // WorkerStatusBar removed — Phase 1 minimal HUD
 
 /**
@@ -180,7 +186,8 @@ const App: React.FC = () => {
     name: '',
   });
 
-  // Ticker is not rendered in Phase 1 — state removed to avoid accumulation
+  // Pravda ticker headlines (scrolling news bar)
+  const [pravdaHeadlines, setPravdaHeadlines] = useState<string[]>([]);
 
   // ── Panel state ──
   const [showPersonnelFile, setShowPersonnelFile] = useState(false);
@@ -207,6 +214,7 @@ const App: React.FC = () => {
   const [showSaveLoad, setShowSaveLoad] = useState(false);
   const [showMarket, setShowMarket] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSettlementSelector, setShowSettlementSelector] = useState(false);
 
   // ── XR mode state ──
   const [xrMode, setXrMode] = useState<'ar' | 'vr' | null>(null);
@@ -215,6 +223,8 @@ const App: React.FC = () => {
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
   const [activeMinigame, setActiveMinigame] = useState<ActiveMinigame | null>(null);
   const resolveMinigameRef = useRef<((choiceId: string) => void) | null>(null);
+  const [activeNarrativeEvent, setActiveNarrativeEvent] = useState<NarrativeEvent | null>(null);
+  const resolveNarrativeEventRef = useRef<((choiceId: string) => void) | null>(null);
   const [annualReport, setAnnualReport] = useState<AnnualReportData | null>(null);
   const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
   const [settlementEvent, setSettlementEvent] = useState<SettlementEvent | null>(null);
@@ -222,9 +232,14 @@ const App: React.FC = () => {
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
   const [gameTally, setGameTally] = useState<TallyData | null>(null);
   const [rehabilitation, setRehabilitation] = useState<RehabilitationData | null>(null);
+  const [showDissolutionModal, setShowDissolutionModal] = useState(false);
+  const resolveDissolutionRef = useRef<((continueInFreeform: boolean) => void) | null>(null);
+  const [showMilestoneScreen, setShowMilestoneScreen] = useState(false);
+  const [milestoneEntries, setMilestoneEntries] = useState<MilestoneSummaryEntry[]>([]);
+  const [milestoneScreenYear, setMilestoneScreenYear] = useState(1991);
 
   // Auto-pause when interactive modals are open (restore prior state on close)
-  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver || !!rehabilitation;
+  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver || !!rehabilitation || showDissolutionModal;
   const wasPausedBeforeModal = useRef(false);
   useEffect(() => {
     if (hasInteractiveModal) {
@@ -257,6 +272,23 @@ const App: React.FC = () => {
   // Universal input system (keyboard + gamepad)
   useInputManager(screen === 'game' && loadingFaded);
 
+  // Keyboard shortcuts: 1-9 for settlement switching, S for selector panel
+  useEffect(() => {
+    if (screen !== 'game' || !loadingFaded) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Don't capture when typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      // Number keys 1-9: switch to settlement by index
+      const digit = Number.parseInt(e.key, 10);
+      if (digit >= 1 && digit <= 9 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        switchSettlementByIndex(digit);
+        return;
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [screen, loadingFaded]);
+
   // Start ECS game loop (replaces old flat-state game loop)
   useECSGameLoop();
 
@@ -268,7 +300,8 @@ const App: React.FC = () => {
   const citizenDossierIdx = useCitizenDossierIndex();
   const cursorTooltip = useCursorTooltip();
   const politicalPanelFromScene = usePoliticalPanel();
-  const buildingPanelCell = useBuildingPanel();
+  const _buildingPanelCell = useBuildingPanel();
+  const showGovHQ = useGovernmentHQ();
 
   // ── Notification history (store-driven unread count) ──
   const unreadNotifications = useSyncExternalStore(subscribeNotifications, getUnreadCount, getUnreadCount);
@@ -312,10 +345,18 @@ const App: React.FC = () => {
             showAdvisor(gameState, msg);
             SFXManager.getInstance().play('advisor_message');
           },
-          onPravda: (_msg) => {
-            // Ticker is not rendered in Phase 1 — do not accumulate text in state
+          onPravda: (msg) => {
+            setPravdaHeadlines((prev) => [msg, ...prev].slice(0, 5));
+          },
+          onVisualEvent: (event) => {
+            // Convert tick-based duration to seconds (assume ~12 ticks/year, ~1 tick/month ≈ 2.5s)
+            const durationSec = Math.max(1, event.durationTicks * 2.5);
+            pushCrisisVFX(event.effect, event.intensity, durationSec);
           },
           onStateChange: () => {
+            // Sync settlement list for viewport switching
+            syncSettlementList();
+
             // Sync ECS building powered state to old GameState for 3D effects
             for (const e of ecsBuildingsArchetype.entities) {
               const b = gameState.buildings.find((bi) => bi.x === e.position.gridX && bi.y === e.position.gridY);
@@ -376,10 +417,8 @@ const App: React.FC = () => {
           onEraChanged: (era) => {
             setEraTransition(era);
             SFXManager.getInstance().play('era_transition');
-            const ctx = ERA_CONTEXTS[era.id];
-            if (ctx) {
-              AudioManager.getInstance().playContext(ctx, 5000);
-            }
+            // Switch playlist to era-appropriate tracks with crossfade
+            AudioManager.getInstance().setEra(era.id);
             // Notify store so RadialMenu re-renders with newly unlocked buildings
             notifyStateChange();
           },
@@ -390,6 +429,14 @@ const App: React.FC = () => {
           onMinigame: (active, resolveChoice) => {
             setActiveMinigame(active);
             resolveMinigameRef.current = resolveChoice;
+          },
+          onNarrativeEvent: (event, resolve) => {
+            setActiveNarrativeEvent(event);
+            resolveNarrativeEventRef.current = resolve;
+          },
+          onHistoricalEraEnd: (resolve) => {
+            resolveDissolutionRef.current = resolve;
+            setShowDissolutionModal(true);
           },
           onTutorialMilestone: (milestone) => {
             showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
@@ -444,9 +491,8 @@ const App: React.FC = () => {
     // expo-sqlite handles persistence automatically — no beforeunload needed
   }, [screen]);
 
-  // Ticker messages now come exclusively from PravdaSystem via
-  // the onPravda callback (event-reactive + ambient headlines).
-  // The old static setInterval fallback has been removed.
+  // Pravda headlines accumulate via the onPravda callback and display
+  // in the PravdaTicker scrolling bar at the bottom of the screen.
 
   // --- Loading callbacks ---
   const handleLoadProgress = useCallback((loaded: number, total: number, name: string) => {
@@ -589,6 +635,10 @@ const App: React.FC = () => {
   const handleShowNotifications = useCallback(() => {
     setShowNotifications(true);
   }, []);
+  const handleShowSettlementSelector = useCallback(() => {
+    syncSettlementList();
+    setShowSettlementSelector(true);
+  }, []);
   // ── Save/Load state ──
   const [saveNames, setSaveNames] = useState<string[]>([]);
   const [lastSaveTime, setLastSaveTime] = useState<number | undefined>(undefined);
@@ -675,6 +725,24 @@ const App: React.FC = () => {
     submitReportRef.current = null;
     setAnnualReport(null);
   }, []);
+  const handleDissolutionResolve = useCallback((continueInFreeform: boolean) => {
+    setShowDissolutionModal(false);
+    resolveDissolutionRef.current?.(continueInFreeform);
+
+    if (!continueInFreeform) {
+      // Build milestone timeline for end screen
+      const engine = getEngine();
+      if (engine) {
+        const subsystems = engine.serializeSubsystems();
+        const registeredTimelines = engine.getRegisteredTimelines();
+        const entries = buildMilestoneSummary(subsystems.timelines ?? [], registeredTimelines);
+        const year = engine.getChronology().getDate().year;
+        setMilestoneEntries(entries);
+        setMilestoneScreenYear(year);
+        setShowMilestoneScreen(true);
+      }
+    }
+  }, []);
   const handleDismissSettlement = useCallback(() => setSettlementEvent(null), []);
   const handleAcceptPlan = useCallback(() => setPlanDirective(null), []);
   const handleRestart = useCallback(() => {
@@ -683,6 +751,9 @@ const App: React.FC = () => {
     setXrMode(null);
     setRehabilitation(null);
     setActiveMinigame(null);
+    setShowDissolutionModal(false);
+    resolveDissolutionRef.current = null;
+    setShowMilestoneScreen(false);
     resolveMinigameRef.current = null;
     submitReportRef.current = null;
     // Reset all module-level singletons so a fresh game can be initialized
@@ -805,8 +876,10 @@ const App: React.FC = () => {
               onShowSaveLoad={handleShowSaveLoad}
               onShowMarket={handleShowMarket}
               onShowNotifications={handleShowNotifications}
+              onShowSettlementSelector={handleShowSettlementSelector}
               unreadNotifications={unreadNotifications}
               autopilot={getEngine()?.getAgentManager().isAutopilot() ?? false}
+              settlementCount={getEngine()?.getRelocationEngine().getRegistry().count() ?? 1}
             />
 
             <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
@@ -834,6 +907,8 @@ const App: React.FC = () => {
             />
           </View>
         )}
+
+        {loadingFaded && <PravdaTicker headlines={pravdaHeadlines} year={snap.dateLabel} />}
 
         {!loadingFaded && (
           <LoadingScreen
@@ -873,6 +948,26 @@ const App: React.FC = () => {
           visible={!!rehabilitation}
           data={rehabilitation}
           onResume={() => setRehabilitation(null)}
+        />
+
+        <NarrativeEventOverlay
+          event={activeNarrativeEvent}
+          onResolve={(choiceId) => {
+            resolveNarrativeEventRef.current?.(choiceId);
+            setActiveNarrativeEvent(null);
+          }}
+        />
+
+        <USSRDissolutionModal
+          visible={showDissolutionModal}
+          onResolve={handleDissolutionResolve}
+        />
+
+        <MilestoneTimelineScreen
+          visible={showMilestoneScreen}
+          entries={milestoneEntries}
+          finalYear={milestoneScreenYear}
+          onDismiss={() => setShowMilestoneScreen(false)}
         />
 
         <PersonnelFilePanel visible={showPersonnelFile} onDismiss={() => setShowPersonnelFile(false)} />
@@ -937,6 +1032,15 @@ const App: React.FC = () => {
         <ConsumerGoodsMarketPanel visible={showMarket} onDismiss={() => setShowMarket(false)} />
 
         <NotificationHistory visible={showNotifications} onDismiss={() => setShowNotifications(false)} />
+
+        <GovernmentHQ visible={showGovHQ} onClose={closeGovernmentHQ} />
+
+        <SettlementSelectorPanel
+          visible={showSettlementSelector}
+          onDismiss={() => setShowSettlementSelector(false)}
+        />
+
+        <SettlementTransitionOverlay />
 
         <BuildingInspectorPanel
           visible={!!buildingInspector}

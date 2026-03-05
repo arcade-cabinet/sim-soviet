@@ -17,9 +17,9 @@ import { ALL_BUILDING_IDS } from '@/game/era/definitions';
 // ─────────────────────────────────────────────────────────
 
 describe('ERA_DEFINITIONS', () => {
-  it('defines exactly 8 eras', () => {
-    expect(Object.keys(ERA_DEFINITIONS)).toHaveLength(8);
-    expect(ERA_ORDER).toHaveLength(8);
+  it('defines 8 historical eras + 8 Kardashev sub-eras', () => {
+    expect(Object.keys(ERA_DEFINITIONS)).toHaveLength(16);
+    expect(ERA_ORDER).toHaveLength(8); // ERA_ORDER is historical only
   });
 
   it('ERA_ORDER matches ERA_DEFINITIONS keys', () => {
@@ -305,21 +305,27 @@ describe('Era transitions', () => {
 // ─────────────────────────────────────────────────────────
 
 describe('EraSystem.getAvailableBuildings', () => {
-  it('revolution has only its 8 buildings', () => {
+  it('revolution has only its 12 buildings', () => {
     const sys = new EraSystem(1917);
     const available = sys.getAvailableBuildings();
-    expect(available).toHaveLength(8);
+    expect(available).toHaveLength(12);
     expect(available).toContain('workers-house-a');
+    expect(available).toContain('hospital');
+    expect(available).toContain('government-hq');
+    expect(available).toContain('post-office');
+    expect(available).toContain('fire-station');
     expect(available).not.toContain('power-station');
   });
 
   it('collectivization accumulates revolution + its own', () => {
     const sys = new EraSystem(1925);
     const available = sys.getAvailableBuildings();
-    // 8 (revolution) + 6 (collectivization) = 14
-    expect(available).toHaveLength(14);
+    // 12 (revolution) + 10 (collectivization) = 22
+    expect(available).toHaveLength(22);
     expect(available).toContain('workers-house-a'); // from revolution
     expect(available).toContain('bread-factory'); // from collectivization
+    expect(available).toContain('power-station'); // now in collectivization
+    expect(available).toContain('kgb-office'); // now in collectivization
   });
 
   it('the_eternal has all 35 buildings', () => {
@@ -420,7 +426,7 @@ describe('Settlement tier gating', () => {
     const gorod = sys.getAvailableBuildings('gorod');
 
     // Even with gorod tier, can only see revolution buildings
-    expect(gorod).toHaveLength(8);
+    expect(gorod).toHaveLength(12);
     expect(gorod).toContain('workers-house-a');
     expect(gorod).not.toContain('bread-factory'); // collectivization era
   });
@@ -810,10 +816,10 @@ describe('Era-specific event templates', () => {
   });
 
   it('all eraFilter values reference valid era IDs', () => {
-    const validEraIds = new Set(ERA_ORDER);
+    const validEraIds = new Set(Object.keys(ERA_DEFINITIONS));
     for (const event of ERA_SPECIFIC_EVENTS) {
       for (const eraId of event.eraFilter!) {
-        expect(validEraIds.has(eraId as EraId)).toBe(true);
+        expect(validEraIds.has(eraId)).toBe(true);
       }
     }
   });

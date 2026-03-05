@@ -383,7 +383,7 @@
     },
     "eraMultiplier": {
       "thaw_and_freeze": 1.5,
-      "great_patriotic": 0.0,
+      "great_patriotic": 0.7,
       "stagnation": 0.8
     }
   },

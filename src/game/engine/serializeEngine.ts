@@ -47,6 +47,18 @@ import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
 import type { EraSystem } from '../era';
 import { EraSystem as EraSystemClass } from '../era';
 import type { GameRng } from '../SeedSystem';
+import type { RelocationEngine } from '../relocation/RelocationEngine';
+import type { SettlementRuntime, SettlementRuntimeSaveData } from '../settlement/SettlementRuntime';
+import { serializeRuntime as serializeSettlementRuntime } from '../settlement/SettlementRuntime';
+import type { RegisteredTimeline } from '../timeline/TimelineLayer';
+import {
+  serializeLayerState,
+  restoreLayerState,
+  createLayerState,
+} from '../timeline/TimelineLayer';
+import { createSpaceTimeline } from '../timeline/spaceTimeline';
+import { createWorldTimeline } from '../timeline/worldTimeline';
+import { createPerWorldTimeline, getExpectedTimelines } from '../timeline/perWorldTimelines';
 import type {
   BuildingWorkforceSaveEntry,
   DvorSaveEntry,
@@ -65,6 +77,14 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
   thaw_and_freeze: 'thaw',
   stagnation: 'stagnation',
   the_eternal: 'eternal',
+  post_soviet: 'eternal',
+  planetary: 'eternal',
+  solar_engineering: 'eternal',
+  type_one: 'eternal',
+  deconstruction: 'eternal',
+  dyson_swarm: 'eternal',
+  megaearth: 'eternal',
+  type_two_peak: 'eternal',
 };
 
 /** All mutable subsystem references that serialization reads/writes. */
@@ -105,6 +125,11 @@ export interface SerializableEngine {
   politburoEventHandler: (event: GameEvent) => void;
   syncSystemsToMeta: () => void;
   governor: IGovernor | null;
+  worldAgent?: import('../../ai/agents/core/WorldAgent').WorldAgent;
+  relocationEngine?: RelocationEngine;
+  registeredTimelines: RegisteredTimeline[];
+  settlementRuntimes?: SettlementRuntime[];
+  arcologies: import('../../game/arcology/ArcologySystem').Arcology[];
 }
 
 /**
@@ -156,6 +181,14 @@ export function serializeSubsystems(engine: SerializableEngine): SubsystemSaveDa
     foraging: { ...engine.foragingState },
     populationMode: isAggregate ? 'aggregate' : 'entity',
     governor: engine.governor?.serialize() ?? undefined,
+    worldAgent: engine.worldAgent?.serialize(),
+    relocation: engine.relocationEngine?.serialize(),
+    timelines: engine.registeredTimelines?.map((tl) => serializeLayerState(tl.state)),
+    settlementRuntimes: engine.settlementRuntimes?.map(serializeSettlementRuntime),
+    arcologies: engine.arcologies.length > 0
+      ? engine.arcologies.map((a) => ({ ...a, footprint: a.footprint.map((f) => ({ ...f })), center: { ...a.center }, componentEntityIds: [...a.componentEntityIds], componentDefIds: [...a.componentDefIds] }))
+      : undefined,
+    lawEnforcement: engine.personnelFile.serializeLawEnforcement(),
   };
 
   if (isAggregate) {
@@ -248,6 +281,11 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
 
   // Restore Personnel File
   engine.personnelFile = PersonnelFileClass.deserialize(data.personnel);
+
+  // Restore law enforcement state (backward compat: absent in old saves)
+  if (data.lawEnforcement) {
+    engine.personnelFile.restoreLawEnforcement(data.lawEnforcement);
+  }
 
   // Restore Settlement System
   engine.settlement = SettlementSystemClass.deserialize(data.settlement);
@@ -346,6 +384,49 @@ export function restoreSubsystems(engine: SerializableEngine, data: SubsystemSav
   if (data.governor && engine.governor) {
     engine.governor.restore(data.governor);
   }
+
+  // Restore WorldAgent geopolitical state (old saves → default 1917 state)
+  if (data.worldAgent && engine.worldAgent) {
+    engine.worldAgent.restore(data.worldAgent);
+  }
+
+  // Restore relocation engine (multi-settlement state)
+  if (data.relocation && engine.relocationEngine) {
+    engine.relocationEngine.restore(data.relocation);
+  }
+
+  // Restore timeline layers (old saves → fresh space + world timelines, no per-world)
+  if (data.timelines && data.timelines.length > 0) {
+    // Map saved states by timelineId for fast lookup
+    const savedByid = new Map(data.timelines.map((s) => [s.timelineId, s]));
+
+    // Always ensure space + world timelines exist
+    const spaceBase = createSpaceTimeline();
+    const worldBase = createWorldTimeline();
+    const restored: RegisteredTimeline[] = [spaceBase, worldBase];
+
+    for (const tl of restored) {
+      const saved = savedByid.get(tl.id);
+      if (saved) tl.state = restoreLayerState(saved);
+    }
+
+    // Reconstruct per-world timelines based on activated space milestones
+    const activatedSpaceMilestones = spaceBase.state.activatedMilestones;
+    const expectedPerWorld = getExpectedTimelines(activatedSpaceMilestones);
+    for (const timelineId of expectedPerWorld) {
+      const perWorld = createPerWorldTimeline(timelineId);
+      if (perWorld) {
+        const saved = savedByid.get(timelineId);
+        if (saved) perWorld.state = restoreLayerState(saved);
+        restored.push(perWorld);
+      }
+    }
+
+    engine.registeredTimelines = restored;
+  }
+
+  // Restore arcologies (backward compat: default to empty array for old saves)
+  engine.arcologies = data.arcologies ?? [];
 
   // Update economy system to match restored era (fallback for saves without economy data)
   if (!data.economy) {

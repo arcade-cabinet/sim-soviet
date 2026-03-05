@@ -18,6 +18,9 @@
 
 import { Vehicle } from 'yuka';
 import { GRID_SIZE, infrastructure } from '@/config';
+import { classifyBuilding } from '@/config/buildingClassification';
+import { isProtected } from '@/config/protectedClasses';
+import { getBuildingDef } from '@/data/buildingDefs';
 import {
   buildings,
   buildingsLogic,
@@ -26,14 +29,19 @@ import {
   terrainFeatures,
   underConstruction,
 } from '@/ecs/archetypes';
+import { setCaravanTarget } from '@/stores/gameStore';
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
+import type { AgentParameterProfile } from '../../../game/engine/agentParameterMatrix';
+import type { GameRng } from '../../../game/SeedSystem';
 import { getBuildInterval } from '../../../growth/GrowthPacing';
 import { findBestPlacement, type PlacementContext } from '../../../growth/SiteSelectionRules';
-import type { GameRng } from '../../../game/SeedSystem';
 import type { PlanMandateState } from '../political/PoliticalAgent';
 import type { WorkerStats } from '../workforce/types';
+import { cascadeDisplacement } from './displacementSystem';
+import { checkScaleUpTrigger, scaleUpBuilding } from './megaScalingSystem';
+import { getLocationResources, type LocationResources } from '../../../game/engine/locationResources';
 
 // ── Re-exported types (absorbed from governor.ts) ─────────────────────────────
 
@@ -201,6 +209,15 @@ export class CollectiveAgent extends Vehicle {
   /** Seeded RNG (set via setRng). */
   private rng?: GameRng;
 
+  /** Active terrain profile — controls construction type for off-world settlements. */
+  private profile: Readonly<AgentParameterProfile> | null = null;
+
+  /** Cached fertility map for resource-proximity placement. Rebuilt each tickAutonomous. */
+  private fertilityCache?: Map<string, number>;
+
+  /** Cached arcology footprint cells ("x,y" → mergeGroup) for adjacency-aware placement. */
+  private arcologyCellsCache?: Map<string, string>;
+
   constructor() {
     super();
     this.name = 'CollectiveAgent';
@@ -209,6 +226,19 @@ export class CollectiveAgent extends Vehicle {
   /** Set the seeded RNG for deterministic collective rolls. */
   setRng(rng: GameRng): void {
     this.rng = rng;
+  }
+
+  /**
+   * Set the active agent parameter profile.
+   * constructionType determines building class (standard, pressurized_dome, underground, orbital).
+   */
+  setProfile(profile: Readonly<AgentParameterProfile>): void {
+    this.profile = profile;
+  }
+
+  /** Get the active construction type from the profile ('standard' if no profile set). */
+  getConstructionType(): AgentParameterProfile['constructionType'] {
+    return this.profile?.constructionType ?? 'standard';
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────
@@ -495,20 +525,41 @@ export class CollectiveAgent extends Vehicle {
    * Autonomously places a building near existing buildings.
    * Returns the placed entity, or null if placement fails.
    *
+   * For protected-class buildings (government/military), if no open cell
+   * is available, attempts displacement cascade — demolishing the lowest-priority
+   * expendable building to free a tile.
+   *
    * @param defId - Building definition ID to place
    * @param rng - Seeded RNG for placement randomness
    * @param eraId - Current era for era-aware placement (optional)
    */
   autoPlaceBuilding(defId: string, rng: GameRng, eraId?: string): Entity | null {
     const cell = this.findPlacementCell(rng, defId, eraId);
-    if (!cell) {
+    if (cell) {
+      try {
+        return placeNewBuilding(cell.gridX, cell.gridY, defId);
+      } catch (e) {
+        console.warn(`[CollectiveAgent] Failed to place ${defId} at (${cell.gridX}, ${cell.gridY}):`, e);
+        return null;
+      }
+    }
+
+    // No open cell found — try displacement for protected-class buildings
+    const demandClass = classifyBuilding(defId);
+    if (!isProtected(demandClass)) {
       return null;
     }
 
+    const result = cascadeDisplacement(demandClass, buildings.entities);
+    if (!result.success || !result.demolished) {
+      return null;
+    }
+
+    const { gridX, gridY } = result.demolished.freedTile;
     try {
-      return placeNewBuilding(cell.gridX, cell.gridY, defId);
+      return placeNewBuilding(gridX, gridY, defId);
     } catch (e) {
-      console.warn(`[CollectiveAgent] Failed to place ${defId} at (${cell.gridX}, ${cell.gridY}):`, e);
+      console.warn(`[CollectiveAgent] Failed to place ${defId} at displaced tile (${gridX}, ${gridY}):`, e);
       return null;
     }
   }
@@ -575,8 +626,12 @@ export class CollectiveAgent extends Vehicle {
    * Place essential starter buildings on the very first autonomous tick.
    * Runs once: government-hq near water (or center), 2 izbas nearby, 1 farm.
    */
-  public earlyGameBootstrap(rng: GameRng, eraId?: string): void {
+  public earlyGameBootstrap(rng: GameRng, eraId?: string, arrivalComplete?: boolean): void {
     if (this.bootstrapped) return;
+
+    // Don't bootstrap until arrival sequence has had time to start (first 30 ticks)
+    // This prevents buildings appearing before the caravan reaches the settlement
+    if (arrivalComplete === false) return;
 
     // Require minimum materials and no existing buildings for bootstrap
     const storeRef = getResourceEntity();
@@ -601,13 +656,17 @@ export class CollectiveAgent extends Vehicle {
 
     try {
       const hq = placeNewBuilding(hqCell.gridX, hqCell.gridY, 'government-hq');
-      if (hq) occupied.add(`${hqCell.gridX},${hqCell.gridY}`);
+      if (hq) {
+        occupied.add(`${hqCell.gridX},${hqCell.gridY}`);
+        // Signal camera to follow caravan toward the settlement center
+        setCaravanTarget(hqCell.gridX, hqCell.gridY);
+      }
     } catch {
       /* placement failed — not fatal */
     }
 
     // Place 2-3 izbas near the party-hq
-    const izbaCount = 2 + (rng.pickIndex(2)); // 2 or 3
+    const izbaCount = 2 + rng.pickIndex(2); // 2 or 3
     for (let i = 0; i < izbaCount; i++) {
       const defId = i % 2 === 0 ? 'workers-house-a' : 'workers-house-b';
       const cell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng);
@@ -629,6 +688,87 @@ export class CollectiveAgent extends Vehicle {
       } catch {
         /* placement failed */
       }
+    }
+
+    this.bootstrapped = true;
+  }
+
+  /**
+   * Universal settlement bootstrap — works for ANY celestial body.
+   *
+   * Reads the environment from locationResources and places the correct
+   * first buildings:
+   *   - Non-breathable atmosphere: pressurized dome (government-hq) FIRST
+   *   - Breathable: government-hq near water
+   *   - soilValue > 0.3: farm after shelter
+   *   - soilValue === 0: no farm at bootstrap (hydroponics via demand system)
+   *   - Always: housing near the HQ
+   */
+  private universalBootstrap(
+    rng: GameRng,
+    celestialBody: string,
+    eraId?: string,
+    callbacks?: { onToast: (msg: string, severity?: string) => void; onAdvisor: (msg: string) => void },
+  ): void {
+    const loc = getLocationResources(celestialBody);
+    const occupied = this.buildOccupiedSet();
+
+    // Step 1: Place Government HQ (or pressurized dome variant)
+    const ctx = eraId ? this.buildPlacementContext(eraId, occupied) : null;
+    let hqCell: { gridX: number; gridY: number } | null = null;
+
+    if (ctx) {
+      const result = findBestPlacement('government-hq', ctx, GRID_SIZE);
+      if (result) hqCell = { gridX: result.x, gridY: result.z };
+    }
+    if (!hqCell) {
+      const center = Math.floor(GRID_SIZE / 2);
+      hqCell = { gridX: center, gridY: center };
+    }
+
+    try {
+      const hq = placeNewBuilding(hqCell.gridX, hqCell.gridY, 'government-hq');
+      if (hq) {
+        occupied.add(`${hqCell.gridX},${hqCell.gridY}`);
+        setCaravanTarget(hqCell.gridX, hqCell.gridY);
+      }
+    } catch {
+      /* placement failed — not fatal */
+    }
+
+    // Step 2: Housing — 2-3 izbas near the HQ
+    const izbaCount = 2 + rng.pickIndex(2);
+    for (let i = 0; i < izbaCount; i++) {
+      const defId = i % 2 === 0 ? 'workers-house-a' : 'workers-house-b';
+      const cell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng);
+      if (cell) {
+        try {
+          const entity = placeNewBuilding(cell.gridX, cell.gridY, defId);
+          if (entity) occupied.add(`${cell.gridX},${cell.gridY}`);
+        } catch {
+          /* placement failed */
+        }
+      }
+    }
+
+    // Step 3: Food production — depends on soil value
+    if (loc.soilValue > 0.3) {
+      // Viable soil: place a farm
+      const farmCell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng, 4);
+      if (farmCell) {
+        try {
+          placeNewBuilding(farmCell.gridX, farmCell.gridY, 'collective-farm-hq');
+        } catch {
+          /* placement failed */
+        }
+      }
+    }
+    // soilValue === 0: no farm at bootstrap. The demand system will detect
+    // food shortage and trigger construction via the normal tickAutonomous
+    // pipeline (hydroponics buildings when they become available).
+
+    if (!loc.atmosphereBreathable) {
+      callbacks?.onToast('EMERGENCY: Atmosphere not breathable — pressurized shelters deployed');
     }
 
     this.bootstrapped = true;
@@ -667,6 +807,7 @@ export class CollectiveAgent extends Vehicle {
 
   /**
    * Full autonomous construction pipeline: detect demands, merge mandates, auto-place.
+   * Also checks for mega-scaling opportunities on housing buildings.
    * Absorbs SimulationEngine.tickCollectiveViaAgent().
    */
   public tickAutonomous(deps: {
@@ -676,11 +817,41 @@ export class CollectiveAgent extends Vehicle {
     eraId?: string;
     callbacks: { onToast: (msg: string, severity?: string) => void; onAdvisor: (msg: string) => void };
     recordBuildingForMandates: (defId: string) => void;
+    /** Terrain tiles for fertility-aware placement. */
+    terrainTiles?: Array<{ type: string; fertility: number }>;
+    /** Grid size for terrain tile indexing. */
+    gridSize?: number;
+    /** Active arcologies for adjacency-aware placement. */
+    arcologies?: Array<{ footprint: Array<{ x: number; y: number }>; mergeGroup: string }>;
+    /** Celestial body key (e.g. 'earth', 'moon', 'mars') for location-aware bootstrap. */
+    celestialBody?: string;
   }): void {
+    // ── Universal Settlement Bootstrap ────────────────────────────────────────
+    // On first tick with population > 0 and no buildings, place essential
+    // starter structures based on the celestial body's environment.
+    // Same code path for Earth, Moon, Mars, Dyson swarm — everything.
+    if (!this.bootstrapped && buildings.entities.length === 0) {
+      const rng = this.rng ?? deps.rng;
+      const storeRef = getResourceEntity();
+      if (rng && storeRef && storeRef.resources.population > 0 && storeRef.resources.timber >= 10) {
+        this.universalBootstrap(rng, deps.celestialBody ?? 'earth', deps.eraId, deps.callbacks);
+        return;
+      }
+    }
+
     // Use era-based interval if eraId is provided, otherwise use config default
     const interval = deps.eraId ? getBuildInterval(deps.eraId) : COLLECTIVE_CHECK_INTERVAL;
     if (deps.totalTicks % interval !== 0) return;
     if (deps.totalTicks < 60) return;
+
+    // Check mega-scaling before construction (population pressure may scale existing buildings)
+    if (deps.eraId) {
+      const storeCheck = getResourceEntity();
+      if (storeCheck) {
+        this.checkMegaScaling(deps.eraId, storeCheck.resources.population, deps.callbacks);
+      }
+    }
+
     if (underConstruction.entities.length >= 3) return;
 
     const storeRef = getResourceEntity();
@@ -710,6 +881,23 @@ export class CollectiveAgent extends Vehicle {
       return;
     }
 
+    // Build fertility cache from terrain tiles for resource-proximity placement
+    if (deps.terrainTiles && deps.gridSize) {
+      this.fertilityCache = buildFertilityMap(deps.terrainTiles, deps.gridSize);
+    }
+
+    // Build arcology cells cache for adjacency-aware placement
+    if (deps.arcologies && deps.arcologies.length > 0) {
+      this.arcologyCellsCache = new Map();
+      for (const arc of deps.arcologies) {
+        for (const cell of arc.footprint) {
+          this.arcologyCellsCache.set(`${cell.x},${cell.y}`, arc.mergeGroup);
+        }
+      }
+    } else {
+      this.arcologyCellsCache = undefined;
+    }
+
     // Step 3: Auto-place via CollectiveAgent with era-aware placement
     const rng = this.rng ?? deps.rng;
     if (!rng) return;
@@ -724,6 +912,50 @@ export class CollectiveAgent extends Vehicle {
         deps.callbacks.onToast(`WORKERS' INITIATIVE: The collective begins ${request.label}`);
         deps.callbacks.onAdvisor(`The workers have started building on their own, Comrade. ${request.reason}.`);
       }
+    }
+  }
+
+  // ── Mega-Scaling: Population Pressure Scale-Up ──────────────────────────────
+
+  /**
+   * Checks all operational housing buildings for mega-scaling opportunities.
+   *
+   * When total population exceeds a building's effective capacity * 1.5
+   * and the current era allows a higher tier, the building is scaled up.
+   * Uses the building definition's base housingCap as the tier-0 reference.
+   *
+   * @param eraId - Current era identifier for max tier lookup
+   * @param population - Current total population (demand signal)
+   * @param callbacks - Toast/advisor callbacks for UI notification
+   */
+  checkMegaScaling(
+    eraId: string,
+    population: number,
+    callbacks: { onToast: (msg: string, severity?: string) => void },
+  ): void {
+    for (const entity of operationalBuildings.entities) {
+      const bldg = entity.building;
+      if (bldg.housingCap <= 0) continue;
+
+      const def = getBuildingDef(bldg.defId);
+      if (!def) continue;
+
+      const tier: number = (bldg as any).tier ?? 0;
+      const baseCapacity = def.stats.housingCap;
+
+      // Current effective capacity is the tier-scaled value
+      if (!checkScaleUpTrigger(bldg.housingCap, population, eraId, tier)) continue;
+
+      const result = scaleUpBuilding(baseCapacity, tier);
+      if (!result) continue;
+
+      // Apply scale-up to the ECS component
+      (bldg as any).tier = result.newTier;
+      bldg.housingCap = result.newCapacity;
+
+      callbacks.onToast(
+        `EXPANSION: ${bldg.defId} scaled to Tier ${result.newTier} (capacity: ${Math.floor(result.newCapacity)})`,
+      );
     }
   }
 
@@ -980,6 +1212,8 @@ export class CollectiveAgent extends Vehicle {
       waterCells,
       treeCells,
       occupiedCells: occupied,
+      fertilityCells: this.fertilityCache,
+      arcologyCells: this.arcologyCellsCache,
     };
   }
 
@@ -1002,6 +1236,25 @@ export class CollectiveAgent extends Vehicle {
   private isInBounds(gridX: number, gridY: number): boolean {
     return gridX >= 1 && gridX < GRID_SIZE - 1 && gridY >= 1 && gridY < GRID_SIZE - 1;
   }
+}
+
+// ── Fertility Map Builder ──────────────────────────────────────────────────
+
+/**
+ * Build a fertility lookup map from flat terrain tile array.
+ * Tiles are stored in row-major order: index = z * gridSize + x.
+ */
+function buildFertilityMap(
+  tiles: Array<{ type: string; fertility: number }>,
+  gridSize: number,
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (let i = 0; i < tiles.length; i++) {
+    const x = i % gridSize;
+    const z = Math.floor(i / gridSize);
+    map.set(`${x},${z}`, tiles[i]!.fertility);
+  }
+  return map;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

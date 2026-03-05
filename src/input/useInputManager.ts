@@ -5,7 +5,14 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { closeBuildingPanel, cycleGameSpeed, cycleLens, selectTool, toggleMinimap, togglePause } from '@/stores/gameStore';
+import {
+  closeBuildingPanel,
+  cycleGameSpeed,
+  cycleLens,
+  selectTool,
+  toggleMinimap,
+  togglePause,
+} from '@/stores/gameStore';
 import { GamepadHandler } from './GamepadHandler';
 import type { InputAction } from './InputManager';
 import { InputManager } from './InputManager';

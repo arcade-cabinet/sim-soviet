@@ -54,6 +54,8 @@ export {
   TIER_DEFINITIONS,
   TIER_ORDER,
 } from './SettlementSystem';
+export type { CascadeResult, DisplacementResult } from './displacementSystem';
+export { cascadeDisplacement, executeDisplacement, findDisplaceable } from './displacementSystem';
 export { TransportAgent } from './TransportAgent';
 export type { TransportSaveData, TransportTickResult } from './TransportSystem';
 export {

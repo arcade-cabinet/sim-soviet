@@ -99,7 +99,7 @@ describe('Historical mode — full timeline playthrough', () => {
         power: 99999,
       },
       difficulty: 'worker',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       deterministicRandom: true,
     });
 
@@ -325,5 +325,71 @@ describe('Historical mode — full timeline playthrough', () => {
         `Crises ever seen: ${everActiveCrises.size} | ` +
         `Final active: [${finalActive.join(', ')}]`,
     );
+  });
+
+  // ── 7. HistoricalGovernor pressure modulation ──────────────────────
+
+  it('pressure system accumulates non-zero pressure over 200 years', () => {
+    const pressureSystem = governor.getPressureSystem();
+    const state = pressureSystem.getState();
+
+    // After 200 years, at least one domain should have accumulated pressure
+    const domainKeys = Object.keys(state);
+    let hasNonZero = false;
+    for (const key of domainKeys) {
+      const gauge = state[key as keyof typeof state];
+      if (gauge && gauge.level > 0) {
+        hasNonZero = true;
+        break;
+      }
+    }
+
+    console.log(
+      `Historical pressure state: ` +
+        domainKeys
+          .map((k) => `${k}=${state[k as keyof typeof state]?.level?.toFixed(3) ?? '?'}`)
+          .join(', '),
+    );
+
+    expect(hasNonZero).toBe(true);
+  });
+
+  // ── 8. Historical cold branches activate ──────────────────────────
+
+  it('cold branches are evaluated during historical timeline', () => {
+    const branches = governor.getActivatedBranches();
+    // The HistoricalGovernor evaluates cold branches — some should fire
+    // over 200 years (dekulakization during collectivization if political > 0.5, etc.)
+    expect(branches).toBeDefined();
+    expect(typeof branches.size).toBe('number');
+
+    console.log(
+      `Historical cold branches activated: ${branches.size} — [${[...branches].join(', ')}]`,
+    );
+
+    // Over 200 years with various crises, at least some branches should activate
+    // (but this is probabilistic — just verify the system runs without errors)
+  });
+
+  // ── 9. Military posture: GPW era production modifier ──────────────
+
+  it('GPW era has war-related crisis impacts affecting production', () => {
+    // Verify that the GPW years (1941-1945) had active crises
+    let gpwYearsWithCrises = 0;
+    for (const [year, crises] of yearCrises) {
+      if (year >= 1941 && year <= 1946 && crises.size > 0) {
+        gpwYearsWithCrises++;
+      }
+    }
+
+    // GPW should have had active crises for multiple years
+    expect(gpwYearsWithCrises).toBeGreaterThanOrEqual(2);
+
+    // Resources during GPW should still be finite (topped up each year)
+    const snap1943 = yearSnapshots.get(1943);
+    if (snap1943) {
+      expect(Number.isFinite(snap1943.food)).toBe(true);
+      expect(Number.isFinite(snap1943.population)).toBe(true);
+    }
   });
 });

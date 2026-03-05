@@ -7,9 +7,9 @@ import { getAvailableBuildingsForYear } from '../../src/game/era/definitions';
 describe('getAvailableBuildingsForYear', () => {
   it('returns limited buildings for Era 1 (1922)', () => {
     const buildings = getAvailableBuildingsForYear(1922);
-    // War Communism should have basic buildings only
+    // Collectivization: 12 (revolution) + 10 (collectivization) = 22
     expect(buildings.length).toBeGreaterThan(0);
-    expect(buildings.length).toBeLessThan(20);
+    expect(buildings.length).toBeLessThan(30);
   });
 
   it('returns more buildings for later eras', () => {

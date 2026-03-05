@@ -1,3 +1,6 @@
+# Claude Code worktrees
+.claude/worktrees/
+
 # Playthrough diagnostic output
 __tests__/playthrough/output/
 

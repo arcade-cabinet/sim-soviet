@@ -3,7 +3,7 @@
  * (farm, factory, vodka-distillery, bread-factory, etc.).
  */
 
-import React from 'react';
+import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { BuildingDef } from '../../data/buildingDefs';
 import { citizens } from '../../ecs/archetypes';
@@ -26,9 +26,7 @@ export const ProductionContent: React.FC<Props> = ({ def, building }) => {
   const isOperational = !building.constructionPhase || building.constructionPhase === 'complete';
 
   const produces = building.produces ?? def.stats.produces;
-  const productionLabel = produces
-    ? `${produces.amount} ${produces.resource.toUpperCase()}/tick`
-    : 'NONE';
+  const productionLabel = produces ? `${produces.amount} ${produces.resource.toUpperCase()}/tick` : 'NONE';
 
   return (
     <View style={styles.container}>
@@ -37,10 +35,7 @@ export const ProductionContent: React.FC<Props> = ({ def, building }) => {
       <Row label="WORKERS" value={`${workerCount} / ${staffCap}`} />
       <View style={styles.barBg}>
         <View
-          style={[
-            styles.barFill,
-            { width: `${staffCap > 0 ? Math.min((workerCount / staffCap) * 100, 100) : 0}%` },
-          ]}
+          style={[styles.barFill, { width: `${staffCap > 0 ? Math.min((workerCount / staffCap) * 100, 100) : 0}%` }]}
         />
       </View>
 
@@ -60,9 +55,7 @@ export const ProductionContent: React.FC<Props> = ({ def, building }) => {
 
       {building.onFire && <Row label="FIRE" value="BURNING" valueColor={Colors.sovietRed} />}
 
-      {building.trudodniAccrued > 0 && (
-        <Row label="TRUDODNI" value={String(Math.round(building.trudodniAccrued))} />
-      )}
+      {building.trudodniAccrued > 0 && <Row label="TRUDODNI" value={String(Math.round(building.trudodniAccrued))} />}
     </View>
   );
 };

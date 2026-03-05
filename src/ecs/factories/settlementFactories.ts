@@ -366,6 +366,80 @@ export function createStartingSettlement(difficulty: Difficulty = 'comrade'): vo
 }
 
 /**
+ * Generates dvor seed data for the starting settlement WITHOUT creating ECS entities.
+ * Used by ArrivalSequence to queue families for staggered arrival.
+ *
+ * @param difficulty - Difficulty level (determines dvor count)
+ * @returns Array of dvor seed data ready for createDvor()
+ */
+export function generateStartingDvorData(difficulty: Difficulty = 'comrade'): Array<{
+  id: string;
+  surname: string;
+  memberSeeds: DvorMemberSeed[];
+  isChairman?: boolean;
+}> {
+  const dvorCount = DVOR_COUNTS[difficulty];
+  const usedSurnames = new Set<string>();
+  const result: Array<{ id: string; surname: string; memberSeeds: DvorMemberSeed[]; isChairman?: boolean }> = [];
+
+  for (let i = 0; i < dvorCount; i++) {
+    const template = HOUSEHOLD_TEMPLATES[i % HOUSEHOLD_TEMPLATES.length]!;
+
+    let surnameIdx = i;
+    while (usedSurnames.has(SURNAMES_MALE[surnameIdx % SURNAMES_MALE.length]!)) {
+      surnameIdx++;
+    }
+    const surname = SURNAMES_MALE[surnameIdx % SURNAMES_MALE.length]!;
+    usedSurnames.add(surname);
+
+    const headAge = template.headAge[0] + (i % (template.headAge[1] - template.headAge[0] + 1));
+    const headGiven = pickGivenName(template.headGender, i * 10);
+    const headFatherName = pickFatherName(i * 7);
+
+    const memberSeeds: DvorMemberSeed[] = [
+      {
+        name: buildRussianName(headGiven, headFatherName, surname, template.headGender),
+        gender: template.headGender,
+        age: headAge,
+      },
+    ];
+
+    for (let j = 0; j < template.others.length; j++) {
+      const other = template.others[j]!;
+      const age = Math.max(0, headAge + other.ageDelta);
+      const otherGiven = pickGivenName(other.gender, i * 10 + j + 1);
+
+      const isChild = age < headAge - 10;
+      const isElder = other.ageDelta > 10;
+      let fatherNameForPatronymic: string;
+      if (isChild && !isElder) {
+        fatherNameForPatronymic = template.headGender === 'male' ? headGiven : pickFatherName(i * 7 + 50);
+      } else {
+        fatherNameForPatronymic = pickFatherName(i * 7 + j + 20);
+      }
+
+      memberSeeds.push({
+        name: buildRussianName(otherGiven, fatherNameForPatronymic, surname, other.gender),
+        gender: other.gender,
+        age,
+      });
+    }
+
+    result.push({ id: `dvor-${i + 1}`, surname, memberSeeds });
+  }
+
+  // Chairman dvor — always first to arrive
+  result.push({
+    id: 'dvor-chairman',
+    surname: 'Orlov',
+    memberSeeds: [{ name: 'Grigory Petrovich Orlov', gender: 'male', age: 42 }],
+    isChairman: true,
+  });
+
+  return result;
+}
+
+/**
  * Creates the chairman's dvor — Comrade Orlov, the Party-appointed authority figure.
  * This is a special single-member household representing the settlement leader.
  */
