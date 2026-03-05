@@ -1,0 +1,229 @@
+{
+  "timelineId": "venus",
+  "description": "Venus Cloud Colony → Floating Industrial Civilization. Triggered by colonization of Venus's cloud layer at 50-55 km altitude. The Soviets landed on Venus 10 times (Venera program, 1970-1985) — no other nation has even attempted it. At this altitude: 1 atm pressure, ~75°C, 0.9g. Breathable air (N2/O2) is a lifting gas in CO2 atmosphere — habitats literally float. The Venice of the solar system, except the canals are sulfuric acid and the gondoliers have radiation badges.",
+  "milestones": [
+    {
+      "id": "venus_cloud_expansion",
+      "name": "Cloud Habitat Expansion",
+      "timelineId": "venus",
+      "order": 10,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "venus_cloud_colony" } },
+        { "population": { "min": 50 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "pressureModifiers": { "housing": -0.1, "infrastructure": 0.05 },
+        "narrative": {
+          "pravdaHeadline": "FLOATING HABITATS MULTIPLY: Venus Colony Tethers Additional Envelopes to Cloud Platform",
+          "toast": "Additional pressurized envelopes are inflated and tethered to the original platform. Population target: 200. The tether failure rate is acceptable. The definition of 'acceptable' has been revised three times.",
+          "description": "The initial cloud colony proves the concept: a habitat filled with breathable Earth air floats in Venus's CO2 atmosphere like a balloon. Expansion means inflating more envelopes — each one a pressurized bubble of nitrogen and oxygen suspended at 52 km altitude. The engineering is straightforward. The bureaucratic approval process for each new envelope requires 14 forms, 3 committee reviews, and the signature of a commissar who is on Earth, 261 million kilometers away. Signal delay: 4-13 minutes one way."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_atmospheric_processing",
+      "name": "Atmospheric CO2 Processing",
+      "timelineId": "venus",
+      "order": 15,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_cloud_expansion" } },
+        { "techLevel": { "min": 0.81 } }
+      ]},
+      "sustainedTicks": 18,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "resourceDeltas": { "minerals": 500 },
+        "pressureModifiers": { "economic": -0.05 },
+        "unlocks": ["venus_carbon_processing"],
+        "narrative": {
+          "pravdaHeadline": "CO2 CRACKING PLANT OPERATIONAL: Venus Atmosphere Yields Oxygen and Carbon Fiber",
+          "toast": "The atmosphere of Venus is 96.5% CO2. Every cubic meter of outside air contains raw material for oxygen and carbon. The factory inhales poison and exhales building materials. The Ministry of Atmospheric Resources has been established. It already has a deputy minister.",
+          "description": "Electrochemical CO2 splitting produces oxygen (for breathing and oxidizer) and solid carbon (for construction material). Venus's atmosphere is essentially an infinite feedstock of carbon — the same element that forms diamond, graphene, and carbon nanotubes. The colony becomes self-sufficient in oxygen within one Five-Year Plan. Carbon fiber structural elements replace imported steel. The import manifest shrinks. The export manifest grows. Gosplan is confused by a colony that produces more than it consumes — this is not how Soviet economics is supposed to work."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_floating_archipelago",
+      "name": "Floating Archipelago",
+      "timelineId": "venus",
+      "order": 20,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_atmospheric_processing" } },
+        { "population": { "min": 100 } },
+        { "pressure": { "domain": "housing", "max": 0.6 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "pressureModifiers": { "housing": -0.15, "morale": -0.1 },
+        "unlocks": ["venus_inter_platform_transit"],
+        "narrative": {
+          "pravdaHeadline": "CLOUD VENICE ACHIEVED: Interconnected Floating Platforms Form Aerial Archipelago",
+          "toast": "Sixteen pressurized platforms now float in formation, connected by enclosed walkways. The colonists have begun calling it 'Cloud Venice.' The Party has officially renamed it 'Soviet Atmospheric Settlement Complex No. 1.' The colonists continue calling it Cloud Venice.",
+          "description": "The archipelago architecture solves the fundamental problem of floating habitats: a single massive structure is vulnerable to envelope failure, while distributed platforms provide redundancy. Flexible tethers and enclosed transit tubes connect platforms at 52 km altitude. Wind shear at this level averages 100 m/s — the entire archipelago drifts around Venus every 4 Earth days, completing a full circumnavigation. The view is permanent sulfuric acid haze in every direction. Morale officers have been instructed to describe it as 'atmospheric character.' The colonists are not fooled, but they appreciate the effort."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_upper_agriculture",
+      "name": "Cloud Agriculture Program",
+      "timelineId": "venus",
+      "order": 25,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_floating_archipelago" } },
+        { "pressure": { "domain": "food", "min": 0.3 } }
+      ]},
+      "sustainedTicks": 18,
+      "effects": {
+        "pressureModifiers": { "food": -0.2 },
+        "resourceDeltas": { "food": 1000 },
+        "narrative": {
+          "pravdaHeadline": "VENUS BREADBASKET: Greenhouse Envelopes Produce Record Harvest Using 1.9x Solar Intensity",
+          "toast": "Venus receives 1.9 times the solar energy of Earth. Pressurized greenhouse envelopes grow crops in continuous sunlight. Tomatoes ripen in half the time. The Agricultural Commissar has filed a report claiming Venus is outperforming Ukrainian collective farms. Nobody has corrected him. It may actually be true.",
+          "description": "At 50 km altitude, Venus receives 2,601 W/m² of solar radiation — 1.91 times Earth's solar constant. Translucent pressurized envelopes serve as floating greenhouses. CO2 is freely available from outside. Water is recycled internally. The growing season is perpetual — there are no seasons on Venus, only the eternal slow rotation (243 Earth days, retrograde). Crop yields per square meter exceed any Earth farm. The irony is exquisite: Venus, the planet named for the goddess of love, with a surface that melts lead, produces better tomatoes than Krasnodar. The Agricultural Ministry has classified this comparison."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_sulfuric_acid_mining",
+      "name": "Sulfuric Acid Cloud Mining",
+      "timelineId": "venus",
+      "order": 30,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_upper_agriculture" } },
+        { "techLevel": { "min": 0.83 } }
+      ]},
+      "sustainedTicks": 18,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "resourceDeltas": { "minerals": 800 },
+        "pressureModifiers": { "economic": -0.1 },
+        "unlocks": ["venus_industrial_chemistry"],
+        "narrative": {
+          "pravdaHeadline": "HEROIC WORKERS HARVEST ACID CLOUDS: Venus Chemical Industry Exceeds Plan Targets",
+          "toast": "The sulfuric acid clouds that would dissolve an unprotected human in minutes are now a chemical feedstock. Acid-resistant collectors dip into the cloud layer and extract H2SO4 for industrial processing. The safety briefing is 47 pages. The workers' summary version reads: 'Do not open windows.'",
+          "description": "Venus's cloud layer (48-70 km altitude) consists primarily of sulfuric acid droplets (H2SO4) with concentrations of 75-98%. On Earth, sulfuric acid is the world's most-produced industrial chemical — essential for fertilizers, metal processing, petroleum refining, and chemical synthesis. On Venus, it falls from the sky. Acid-resistant drone collectors descend into the denser cloud layers and return with concentrated H2SO4. The colony now produces its own fertilizer, processes its own metals, and manufactures its own batteries. The supply chain from Earth becomes optional. The bureaucratic chain from Moscow does not."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_observation_network",
+      "name": "Atmospheric Observation Network",
+      "timelineId": "venus",
+      "order": 35,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_sulfuric_acid_mining" } },
+        { "worldState": { "key": "techLevel", "min": 0.84 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "unlocks": ["venus_weather_prediction", "runaway_greenhouse_data"],
+        "narrative": {
+          "pravdaHeadline": "VENUS WEATHER SERVICE ESTABLISHED: Continuous Atmospheric Monitoring Prevents Altitude Excursions",
+          "toast": "A network of 200 weather stations maps Venus's atmosphere in real-time. Critical function: predicting vertical wind shear that could push habitats into the death zone below 47 km. Also useful: understanding how a runaway greenhouse effect works, in case Earth needs the lesson. Earth increasingly needs the lesson.",
+          "description": "Venus is Earth's twin gone wrong — same size, same composition, but a runaway greenhouse effect raised surface temperatures to 462°C and surface pressure to 90 atmospheres. Understanding this process in detail is not merely academic: Earth's own CO2 is rising. The Venus observation network provides the most detailed atmospheric dataset ever collected on any planet, with direct relevance to climate modeling. The data suggests Earth is not close to a runaway greenhouse, but 'not close' and 'impossible' are different words. The Presidium has requested these findings be summarized in a one-page memo. The atmospheric scientists have tried. The memo is 340 pages."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_carbon_export",
+      "name": "Carbon Materials Export Economy",
+      "timelineId": "venus",
+      "order": 40,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_atmospheric_processing" } },
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_observation_network" } },
+        { "techLevel": { "min": 0.85 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "resourceDeltas": { "minerals": 2000 },
+        "pressureModifiers": { "economic": -0.15 },
+        "unlocks": ["venus_carbon_factory", "carbon_nanotube_export"],
+        "narrative": {
+          "pravdaHeadline": "VENUS BECOMES SOLAR SYSTEM'S CARBON FACTORY: Export Quotas Set for Nanotubes, Graphene, Diamond",
+          "toast": "Venus's atmosphere contains 4.8 × 10²⁰ kg of CO2. At current processing rates, the supply will last approximately forever. Carbon nanotubes, graphene sheets, and industrial diamond are manufactured from literal air and shipped to every settlement in the solar system. The export quota has been set. It is ambitious. Venusian workers suspect it was calculated by someone who has never manufactured a nanotube.",
+          "description": "The carbon economy transforms Venus from a colony requiring support into a net exporter. The atmosphere is an effectively infinite feedstock: 4.8 × 10²⁰ kg of CO2, yielding 1.3 × 10²⁰ kg of carbon. Carbon nanotubes (100x stronger than steel at 1/6 the weight), graphene (best electrical conductor known), and synthetic diamond (hardest material, supreme thermal conductor) are manufactured in cloud-level facilities powered by concentrated solar energy. The export economics are remarkable: raw material cost is zero (you pump in air), energy cost is near-zero (solar constant 1.9x Earth), and the product-to-mass ratio is exceptional. Venus becomes the solar system's Donbas — an industrial heartland whose output enables construction everywhere else. Gosplan finally has a colony that overfulfills its plan. They have assigned additional plan targets."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_population_1000",
+      "name": "Cloud City: Population 1,000",
+      "timelineId": "venus",
+      "order": 45,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_floating_archipelago" } },
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_upper_agriculture" } },
+        { "population": { "min": 1000 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": { "morale": -0.1, "political": 0.1, "housing": 0.05 },
+        "unlocks": ["venus_social_infrastructure"],
+        "narrative": {
+          "pravdaHeadline": "VENUS SETTLEMENT REACHES ONE THOUSAND SOULS: Full Social Infrastructure Mandated",
+          "toast": "One thousand Soviet citizens now live permanently in the clouds of Venus. The settlement requires a school, a clinic, a Party headquarters, a cultural center, and — the colonists insist — a proper bar. The cultural center and the bar are the same building. This is efficient. The Party approves efficiency.",
+          "description": "A population of 1,000 represents a critical threshold: the community is too large for informal governance but too small for full institutional overhead. It needs a school (children are being born in the clouds — the first generation that has never known solid ground beneath their feet), medical facilities (the 75°C ambient temperature outside the envelopes means heat management is a constant medical concern), and social infrastructure (isolation at 261 million kilometers from Earth produces psychological effects that vodka alone cannot address, though this has not stopped the colonists from trying). The Party committee has been formally constituted. Its first resolution: a request for better vodka shipments. Its second resolution: a complaint about the first resolution being filed improperly."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_surface_probe_factory",
+      "name": "Surface Probe Manufacturing",
+      "timelineId": "venus",
+      "order": 55,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_carbon_export" } },
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_population_1000" } },
+        { "techLevel": { "min": 0.87 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "resourceDeltas": { "minerals": 1500 },
+        "unlocks": ["venus_surface_exploration", "extreme_environment_engineering"],
+        "narrative": {
+          "pravdaHeadline": "SURFACE EXPLORATION RESUMES: Cloud-Manufactured Probes Descend to Venusian Hell",
+          "toast": "The original Venera probes survived the surface for 23-127 minutes before being crushed, melted, or corroded. The new probes, manufactured from Venusian carbon composites in cloud-level factories, survive for weeks. The surface: 462°C, 90 atmospheres, sulfuric acid rain that evaporates before reaching the ground because it is too hot for liquid acid. The probes send back geological data. The geologists send back requests for hazard pay.",
+          "description": "Manufacturing probes in the cloud colony eliminates the need to launch them from Earth — a savings of 261 million km of transit. Carbon-carbon composites, silicon carbide electronics, and high-temperature superconductors enable probes that operate for weeks on the surface instead of minutes. The surface of Venus is a genuine alien landscape: basaltic plains, volcanic mountains (Maxwell Montes rises 11 km above mean radius), and mysterious tessera terrain. Radar mapping from orbit revealed the geology, but ground truth requires probes that can survive conditions that would destroy a submarine. The engineering heritage of the original Venera program — Soviet engineers who solved the problem of landing on Venus when no one else could — provides institutional knowledge. The new probes carry a small plaque: 'Built in the clouds of Venus by Soviet workers. Venera program, continued.'"
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_terraforming_debate",
+      "name": "The Venus Terraforming Debate",
+      "timelineId": "venus",
+      "order": 65,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_surface_probe_factory" } },
+        { "milestone": { "timelineId": "venus", "milestoneId": "venus_observation_network" } },
+        { "population": { "min": 5000 } }
+      ]},
+      "sustainedTicks": 36,
+      "effects": {
+        "pressureModifiers": { "political": 0.15, "morale": 0.05 },
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "narrative": {
+          "pravdaHeadline": "FIVE-YEAR PLAN FOR VENUS TERRAFORMING SUBMITTED: Estimated Completion Date Classified",
+          "toast": "Terraforming Venus requires removing 4.8 × 10²⁰ kg of CO2 from the atmosphere, cooling the surface by 400°C, and slowing the planet's rotation from 243 days to something reasonable. Estimated timeline: 100,000 years minimum. The Five-Year Plan Subcommittee has submitted a 100,000-year plan anyway. It has been approved in principle. The next 99,995 annual reviews have been pre-scheduled.",
+          "description": "The terraforming debate is scientifically fascinating and practically absurd. Venus has 90 atmospheres of CO2 that must be removed (where do you put 4.8 × 10²⁰ kg of gas?), a surface temperature of 462°C that must be cooled (the thermal inertia alone takes millennia), and a day longer than its year (243 vs 225 Earth days) that should ideally be shortened (how do you spin a planet faster?). Proposals include: orbital sunshades to reduce solar input, atmospheric mining to export carbon, bioengineered microorganisms to convert CO2, and simply waiting for the Sun's luminosity to decline (estimated timeline: 500 million years). The Venusian colonists, who live quite comfortably in their floating habitats, are divided. Some argue terraforming is the ultimate Soviet megaproject — the Belomor Canal of planetary engineering. Others argue that the floating civilization is superior to any surface civilization and that terraforming would destroy their unique culture. The debate produces 12,000 pages of position papers. The Presidium reads the one-page summary. The summary recommends 'further study.' The 100,000-year plan is filed alongside the 100,000-year plans from every other era. The filing cabinet for 100,000-year plans is the largest in the solar system."
+        }
+      },
+      "oneShot": true
+    }
+  ]
+}

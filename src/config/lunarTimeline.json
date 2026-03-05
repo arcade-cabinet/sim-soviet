@@ -1,0 +1,279 @@
+{
+  "timelineId": "lunar",
+  "description": "Lunar development from initial Zvezda base to deep-space staging hub. Triggered by space milestone permanent_lunar_base. Covers mining, industrialization, population growth, political divergence, and the Moon's role as gateway to the solar system. All milestones assume 1/6g, 2-week day/night cycles, and a 1.3-second communication delay to Earth.",
+  "milestones": [
+    {
+      "id": "lunar_regolith_mining",
+      "name": "Regolith Mining Operations",
+      "timelineId": "lunar",
+      "order": 10,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "permanent_lunar_base" } },
+        { "techLevel": { "min": 0.45 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "worldStateDeltas": { "lunarIndustry": 0.1 },
+        "pressureModifiers": { "economic": -0.05 },
+        "resourceDeltas": { "water": 500 },
+        "unlocks": ["lunar_water_extraction", "regolith_processing"],
+        "narrative": {
+          "pravdaHeadline": "LUNAR MINING BEGINS: Permanently Shadowed Craters Yield Water Ice for Motherland",
+          "toast": "Autonomous excavators scrape frozen regolith in craters that have not seen sunlight in 2 billion years. The water ice is filthy, irradiated, and mixed with metallic hydrogen. The Ministry of Lunar Resources has declared it 'within acceptable parameters.'",
+          "description": "The permanently shadowed craters near the lunar south pole contain an estimated 600 million metric tons of water ice, confirmed by LCROSS (2009) and Chandrayaan-1. Soviet excavators operate in permanent darkness at -230C. The extracted water provides drinking water, breathable oxygen (electrolysis), and rocket propellant (H2/O2). The predsedatel receives a commendation and a 15% increase in delivery quotas."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_helium3_extraction",
+      "name": "Helium-3 Extraction Program",
+      "timelineId": "lunar",
+      "order": 15,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_regolith_mining" } },
+        { "techLevel": { "min": 0.55 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "lunarIndustry": 0.15, "techLevel": 0.02 },
+        "pressureModifiers": { "power": -0.1 },
+        "resourceDeltas": { "helium3": 100 },
+        "unlocks": ["helium3_fuel"],
+        "narrative": {
+          "pravdaHeadline": "HE-3 EXTRACTION EXCEEDS QUOTA: Lunar Soil Contains Fuel for Ten Thousand Years",
+          "toast": "Solar wind has been implanting helium-3 into the lunar regolith for 4.5 billion years. We must now heat 150 tons of dirt to extract 1 gram of fuel. The Five-Year Lunar Heating Plan has been approved. Comrade Thermodynamics has not objected.",
+          "description": "Helium-3, deposited by solar wind into the upper regolith over eons, is the ideal fuel for aneutronic fusion (D-He3 reaction: no neutron radiation, direct energy conversion). The Moon contains an estimated 1.1 million metric tons of He-3 -- enough to power Earth for 10,000 years. Extraction requires heating regolith to 700C and collecting the outgassed isotope. As KSR noted in 2312: 'Mining the Moon for helium-3 was like mining a beach for gold dust -- possible, but you needed a very large beach.'"
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_underground_city",
+      "name": "Underground Habitation Complex",
+      "timelineId": "lunar",
+      "order": 20,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_regolith_mining" } },
+        { "population": { "min": 100 } },
+        { "techLevel": { "min": 0.5 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "lunarPopCapacity": 0.3 },
+        "pressureModifiers": { "housing": -0.15, "health": -0.1 },
+        "unlocks": ["lunar_underground_construction"],
+        "narrative": {
+          "pravdaHeadline": "UNDERGROUND LUNAR CITY CONSTRUCTION APPROVED: Moscow Metro Experience Applied to Regolith",
+          "toast": "Surface radiation: 380 millisieverts per year. Underground: 0.5 millisieverts. The choice is obvious. Soviet tunnel-boring expertise -- refined in the Moscow Metro, perfected in the Kola Superdeep Borehole -- now carves habitation from basalt. The apartments are small, dark, and windowless. So, familiar.",
+          "description": "Lunar surface radiation (galactic cosmic rays + solar particle events) delivers ~380 mSv/year -- well above the 20 mSv/year occupational limit. Underground habitation beneath 2-3 meters of regolith reduces exposure to background levels. The lava tubes detected by GRAIL (2012) offer natural caverns up to 1 km wide. Soviet engineers apply decades of metro and mine construction expertise. The resulting city looks remarkably like Norilsk, which the cosmonauts find oddly comforting."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_algae_farms",
+      "name": "BIOS-3 Heritage Algae Cultivation",
+      "timelineId": "lunar",
+      "order": 25,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_underground_city" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "bios3_closed_ecosystem" } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "lunarFoodSelfSufficiency": 0.5 },
+        "pressureModifiers": { "food": -0.15 },
+        "resourceDeltas": { "food": 2000 },
+        "unlocks": ["lunar_agriculture"],
+        "narrative": {
+          "pravdaHeadline": "LUNAR ALGAE FARMS ACHIEVE 50% FOOD SELF-SUFFICIENCY: Chlorella Thrives Under LED",
+          "toast": "The Krasnoyarsk BIOS-3 experiments of 1972 finally find their true purpose: feeding cosmonauts algae paste 384,400 km from the nearest bakery. Chlorella vulgaris grows 10x faster than wheat under optimized LED spectra. The taste has been officially classified as 'nutritionally adequate.' No further comment is permitted.",
+          "description": "BIOS-3 (Institute of Biophysics, Krasnoyarsk, 1972) demonstrated that Chlorella algae + wheat could provide 80% of a crew's dietary needs in a sealed environment. Lunar farms scale this to industrial production: underground LED-lit cultivation chambers growing Chlorella, Spirulina, and wheat under precisely controlled atmospheres. 50% food self-sufficiency means half the mass that must be launched from Earth. The savings in propellant are substantial. The savings in flavor are not."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_far_side_observatory",
+      "name": "Far Side Radio Observatory",
+      "timelineId": "lunar",
+      "order": 30,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_underground_city" } },
+        { "techLevel": { "min": 0.55 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03, "scienceOutput": 0.2 },
+        "unlocks": ["far_side_radio_astronomy"],
+        "narrative": {
+          "pravdaHeadline": "LUNAR FAR SIDE OBSERVATORY OPERATIONAL: 3,474 km of Moon Shields Telescope from Earth's Noise",
+          "toast": "The far side of the Moon is the quietest place in the inner solar system -- shielded from Earth's electromagnetic cacophony by 3,474 km of basalt. The radio telescope detects signals from the cosmic dark ages, 13 billion years ago. The data is extraordinary. The isolation drives the staff to compose poetry. Both outputs are filed with equal priority.",
+          "description": "Earth's electromagnetic pollution renders ground-based radio astronomy increasingly impossible. The lunar far side, permanently shielded from terrestrial interference, offers a pristine radio environment for observing the 21-cm hydrogen line from the cosmic dark ages (z > 30). The observatory detects signals from before the first stars formed. Soviet astronomers publish findings in Astronomicheskii Zhurnal. The peer review process takes 2.6 seconds round-trip (1.3s each way). This is faster than peer review on Earth."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_mass_driver",
+      "name": "Electromagnetic Mass Driver",
+      "timelineId": "lunar",
+      "order": 35,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_regolith_mining" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "orbital_shipyard" } },
+        { "techLevel": { "min": 0.6 } }
+      ]},
+      "sustainedTicks": 18,
+      "effects": {
+        "worldStateDeltas": { "lunarIndustry": 0.2, "orbitalMaterialFlow": 0.3 },
+        "pressureModifiers": { "economic": -0.1 },
+        "unlocks": ["mass_driver_launch", "cheap_orbital_material"],
+        "narrative": {
+          "pravdaHeadline": "LUNAR MASS DRIVER OPERATIONAL: 2 km Electromagnetic Catapult Hurls Material to Orbit",
+          "toast": "Gerard O'Neill proposed this in 1976: a linear electromagnetic accelerator launching refined lunar material to orbit at 2.4 km/s (lunar escape velocity). No propellant required. Each 20 kg payload bucket launches every 30 seconds. The Five-Year Orbital Construction Plan just became affordable. The mass driver's energy comes from solar arrays. Its political energy comes from the fact that whoever controls it controls orbital construction.",
+          "description": "O'Neill's 1976 mass driver concept, refined by MIT's Space Systems Laboratory: a 2 km linear induction motor accelerates 20 kg payloads to 2.4 km/s along a track on the lunar surface. Lunar escape velocity is only 2.38 km/s (vs Earth's 11.2 km/s), making electromagnetic launch feasible with 1970s technology. The mass driver catapults refined aluminum, silicon, titanium, and oxygen to a catcher station at L2 for orbital construction. Cost per kg to orbit drops from $10,000 (Earth launch) to $20 (lunar mass driver). The economics of space colonization transform overnight."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_industrial_complex",
+      "name": "Lunar Industrial Complex",
+      "timelineId": "lunar",
+      "order": 40,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_mass_driver" } },
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_helium3_extraction" } },
+        { "techLevel": { "min": 0.65 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "lunarIndustry": 0.4, "lunarImportDependency": -0.8 },
+        "pressureModifiers": { "economic": -0.15, "infrastructure": -0.1 },
+        "unlocks": ["lunar_manufacturing", "lunar_self_sufficiency"],
+        "narrative": {
+          "pravdaHeadline": "LUNAR INDUSTRIAL COMPLEX ACHIEVES 80% SELF-SUFFICIENCY: Import Dependency Below 20%",
+          "toast": "The Moon produces its own aluminum (from anorthite), titanium (from ilmenite), silicon (from regolith), oxygen (from everything), and glass (from regolith again). Only complex electronics and certain biologicals still require Earth import. The Ministry of Lunar Industry has requested reclassification from 'outpost' to 'industrial zone.' The paperwork for this reclassification weighs more than the first lunar lander.",
+          "description": "Lunar regolith is 42% oxygen by mass, 21% silicon, 13% iron, 8% calcium, 6% aluminum, plus titanium, magnesium, and trace elements. Processing via electrolysis, carbothermic reduction, and vacuum refining produces construction-grade metals, glass, ceramics, and breathing oxygen from local materials. Import dependency drops below 20% (complex electronics, pharmaceuticals, biological starter cultures). The kolkhoz has become a kombinat."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_population_1000",
+      "name": "First Lunar City: Population 1,000",
+      "timelineId": "lunar",
+      "order": 45,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_underground_city" } },
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_algae_farms" } },
+        { "population": { "min": 10000 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "worldStateDeltas": { "lunarPopCapacity": 0.5 },
+        "pressureModifiers": { "demographic": -0.05, "morale": -0.05 },
+        "narrative": {
+          "pravdaHeadline": "LUNAR SETTLEMENT ACHIEVES 1,000 PERMANENT RESIDENTS: Social Services Expanded",
+          "toast": "One thousand people now live permanently on the Moon. The settlement has a school, a clinic, a commissary, a Party office, and -- inevitably -- a drinking problem. Social dynamics shift from 'research outpost' to 'small town with no atmosphere.' Literally. The first lunar divorce has been filed. The first lunar black market has been discovered. The first lunar poet has been published. Civilization is unmistakable.",
+          "description": "Dunbar's number (150) was passed long ago. At 1,000 residents, the lunar settlement develops the social complexity of a small town: cliques, factions, informal hierarchies, generational tensions between 'founders' and newcomers. Children born on the Moon have never experienced rain, wind, or open sky. Their bone density is adapted to 1/6g -- they may never be able to visit Earth. The first generation of true lunarians is emerging. The Party cell has split into three factions arguing about interpretations of Marx in low gravity."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_earth_transit",
+      "name": "Regular Earth-Moon Transit Service",
+      "timelineId": "lunar",
+      "order": 50,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_population_1000" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "orbital_shipyard" } },
+        { "techLevel": { "min": 0.65 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "lunarTradeVolume": 0.4 },
+        "pressureModifiers": { "economic": -0.1, "morale": -0.05 },
+        "unlocks": ["earth_moon_shuttle"],
+        "narrative": {
+          "pravdaHeadline": "EARTH-MOON SHUTTLE SERVICE INAUGURATED: 3-Day Transit, Monthly Schedule",
+          "toast": "The Molniya-class shuttle departs Earth orbit every 28 days, arriving at Zvezda in 72 hours. Passengers include replacement personnel, Party inspectors, and one (1) crate of Georgian wine per trip -- classified as 'medical supplies.' The supply chain stabilizes. So does the KGB's ability to conduct surprise inspections.",
+          "description": "Regular Earth-Moon transit transforms the relationship between the settlements. A 3-day journey (comparable to Age of Sail coastal voyaging) makes lunar posting a hardship assignment rather than exile. Personnel rotation every 18 months reduces psychological strain. Supply reliability enables long-term infrastructure planning. The shuttle also carries mail, which means the predsedatel can no longer claim delayed paperwork as an excuse. This is considered the shuttle's primary function by Moscow."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_independence_movement",
+      "name": "Lunar Independence Movement",
+      "timelineId": "lunar",
+      "order": 60,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_population_1000" } },
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_industrial_complex" } },
+        { "pressure": { "domain": "political", "min": 0.3 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "lunarAutonomy": 0.3 },
+        "pressureModifiers": { "political": 0.2, "loyalty": 0.15 },
+        "narrative": {
+          "pravdaHeadline": "ANTI-SOCIAL ELEMENTS DETECTED IN LUNAR SETTLEMENT: Ideological Reeducation Program Initiated",
+          "toast": "The communication delay is only 1.3 seconds. Barely noticeable. And yet, somehow, over generations, 'we' has stopped meaning 'we and Earth.' Lunar-born citizens who have never breathed unfiltered air or felt rain ask a reasonable question: why does Moscow control resource allocation for a settlement that is 80% self-sufficient? The KGB's answer is, as always, a question in return: 'Why do you ask?'",
+          "description": "Communication delay: 1.3 seconds. Negligible for conversation, significant for identity. The Moon is close enough to see Earth with naked eyes, close enough for real-time phone calls with only a slight lag. And yet cultural divergence begins. Lunar-born citizens develop distinct customs, humor, and grievances. Self-sufficiency at 80%+ means Moscow's primary leverage is political, not economic. The Heinlein scenario ('The Moon Is a Harsh Mistress') becomes plausible -- but this is a Soviet moon, and the KGB has read Heinlein too."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_solar_power_satellite",
+      "name": "Orbital Solar Power Station",
+      "timelineId": "lunar",
+      "order": 65,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_mass_driver" } },
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_industrial_complex" } },
+        { "techLevel": { "min": 0.7 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "orbitalPowerOutput": 0.3, "techLevel": 0.03 },
+        "pressureModifiers": { "power": -0.2 },
+        "unlocks": ["orbital_solar_power", "microwave_power_beaming"],
+        "narrative": {
+          "pravdaHeadline": "ORBITAL SOLAR POWER STATION TRANSMITS FIRST BEAM: Lunar-Built, Earth-Powering",
+          "toast": "A 10 km solar array, constructed entirely from lunar aluminum and silicon launched by mass driver, orbits at GEO beaming 5 GW of microwave power to a rectenna farm in Kazakhstan. The Five-Year Electrification Plan of 1920 -- 'Communism is Soviet power plus electrification of the whole country' -- is now interpreted as 'electrification of the whole planet from the Moon.' Lenin would have approved. Probably.",
+          "description": "Peter Glaser proposed solar power satellites in 1968. The concept was always economically viable but launch costs made it prohibitive. Lunar mass drivers change the equation: launching solar panel material from the Moon costs $20/kg vs $10,000/kg from Earth. A 10 km^2 GEO solar array produces 5 GW continuously (no night, no weather). Microwave power beaming to ground rectennas achieves 85% efficiency. The construction uses no Earth-launched material -- 100% lunar aluminum, silicon, and glass. Glushkov's cybernetic dream meets Lenin's electrification program at Lagrange point 1."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunar_gateway_to_mars",
+      "name": "Lunar Gateway: Deep-Space Staging Hub",
+      "timelineId": "lunar",
+      "order": 70,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_solar_power_satellite" } },
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_earth_transit" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_colony" } },
+        { "techLevel": { "min": 0.75 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "lunarIndustry": 0.2, "deepSpaceInfrastructure": 0.4 },
+        "pressureModifiers": { "economic": -0.1, "infrastructure": -0.1 },
+        "unlocks": ["deep_space_staging", "lunar_fuel_depot", "lunar_shipyard"],
+        "narrative": {
+          "pravdaHeadline": "LUNAR GATEWAY DESIGNATION: All Deep-Space Missions Now Stage Through Moon",
+          "toast": "Every ship bound for Mars, the Belt, or beyond now stops at Luna for fuel, crew rotation, and -- inevitably -- paperwork review. The fuel depot holds 10,000 tons of LOX/LH2 produced from lunar water ice. The shipyard assembles interplanetary vessels from lunar-manufactured components. The crew training facility simulates Mars gravity by rotating a centrifuge. The bureaucratic processing facility simulates Moscow by rotating paperwork. Transit through the Gateway adds 4 days to any mission. 3 days for orbital mechanics. 1 day for stamp collection.",
+          "description": "The Moon's shallow gravity well (2.38 km/s escape velocity vs Earth's 11.2 km/s), abundant propellant feedstock (water ice), and industrial manufacturing base make it the natural staging point for all deep-space operations. Launching from lunar surface to Mars transfer orbit requires 60% less delta-v than from Earth's surface. The Gateway complex includes: fuel depot (LOX/LH2 from electrolyzed water ice), shipyard (mass-driver-supplied materials), crew quarantine and training, and supply warehousing. The predsedatel's domain now extends from a frozen Soviet settlement to a bustling interplanetary transit hub. The paperwork has scaled accordingly."
+        }
+      },
+      "oneShot": true
+    }
+  ]
+}

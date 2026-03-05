@@ -1,0 +1,346 @@
+{
+  "timelineId": "mars",
+  "description": "Martian development from raw colony to second Earth. Triggered by space milestone mars_colony. Heavily based on KSR's Mars Trilogy (Red Mars, Green Mars, Blue Mars). CRITICAL: The climate system works in REVERSE on Mars -- warming is GOOD, atmosphere thickening is GOOD, ice melting is GOOD. The same climate agent that models global warming on Earth models terraforming on Mars. 15 milestones spanning centuries of transformation. 0.38g, 24h37m sol, CO2 atmosphere at 6 mbar, mean temp -60C at start.",
+  "milestones": [
+    {
+      "id": "mars_first_born",
+      "name": "First Human Born on Mars",
+      "timelineId": "mars",
+      "order": 10,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_colony" } },
+        { "population": { "min": 5000 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "marsPopNative": 0.01 },
+        "pressureModifiers": { "morale": -0.1 },
+        "narrative": {
+          "pravdaHeadline": "FIRST SOVIET CITIZEN BORN ON MARS: New Generation Carries Revolution to Red Planet",
+          "toast": "Weight at birth: 3.2 kg (Earth-equivalent: 8.4 kg). Bone density at age 5: incompatible with Earth gravity. She will never visit the motherland she is a citizen of. She will never feel rain. She will grow tall and thin in 0.38g, her heart shaped by a world with no magnetosphere. Pravda runs the birth announcement next to the Five-Year Mars Settlement Plan. The child's first word, reportedly, was not 'mama' but a sound the microphone could not classify. The Martians have begun.",
+          "description": "The first native Martian is a propaganda milestone and a biological point of no return. At 0.38g, Martian-born humans develop different cardiovascular systems, bone density, and muscle mass. By adolescence, a Martian-born person cannot survive Earth's gravity without extensive medical support. As KSR explored throughout the Mars Trilogy: the first generation born on Mars owes nothing to Earth sentimentally and everything to Mars biologically. They are a new thing. The Soviet system, which classifies citizens by birthplace, has no form for this."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_perchlorate_cleanup",
+      "name": "Perchlorate Remediation Program",
+      "timelineId": "mars",
+      "order": 15,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_colony" } },
+        { "techLevel": { "min": 0.7 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "marsArableLand": 0.1 },
+        "pressureModifiers": { "health": -0.1, "food": -0.05 },
+        "unlocks": ["mars_soil_agriculture"],
+        "narrative": {
+          "pravdaHeadline": "PERCHLORATE REMEDIATION PROGRAM MEETS TARGETS: Zone 3 Soil Reclassified as 'Agricultural-Adjacent'",
+          "toast": "Martian soil contains 0.5-1% calcium perchlorate -- a thyroid toxin that would kill any crop and any farmer foolish enough to eat the crop. Bioremediation bacteria (perchlorate-reducing Dechloromonas) process the soil zone by zone. Each zone takes 5 years. There are 144.8 million square kilometers of Mars. The Five-Year Perchlorate Plan has been extended. And extended. And extended.",
+          "description": "Phoenix lander (2008) and Curiosity rover (2013) confirmed perchlorates at 0.5-1% concentration throughout Martian regolith. ClO4- disrupts thyroid function, is toxic to plants, and contaminates groundwater. Remediation uses perchlorate-reducing bacteria (Dechloromonas aromatica) in bioreactor columns through which regolith is passed. The process is slow, energy-intensive, and must be repeated for each agricultural zone. KSR depicted this in Red Mars as one of the earliest and least glamorous colonial tasks. The predsedatel submits remediation reports to the Ministry of Martian Agriculture, which exists in Moscow and has never seen Mars."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_water_mining",
+      "name": "Subsurface Ice Mining Operations",
+      "timelineId": "mars",
+      "order": 18,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_isru_operations" } },
+        { "techLevel": { "min": 0.7 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "marsWaterAccess": 0.3 },
+        "pressureModifiers": { "food": -0.05 },
+        "resourceDeltas": { "water": 5000 },
+        "unlocks": ["mars_water_infrastructure"],
+        "narrative": {
+          "pravdaHeadline": "MARS WATER EXTRACTION EXCEEDS PLAN: Subsurface Ice Deposits Larger Than Estimated",
+          "toast": "SHARAD radar (Mars Reconnaissance Orbiter) found ice deposits in Utopia Planitia equivalent to Lake Superior. We are now extracting it with heated drills. The water is 3.8 billion years old, contains exotic salts, and tastes -- according to the cosmonaut who violated protocol to try it -- 'like licking a rusty battery that has been to hell.' After filtration and processing, it is reclassified as potable. The settlement's water ration increases from 25 to 40 liters per person per day.",
+          "description": "Mars has vast subsurface ice deposits confirmed by SHARAD and MARSIS radar instruments. Utopia Planitia alone contains an estimated 12,100 km^3 of water ice (comparable to Lake Superior). Polar caps hold additional water. Extraction uses heated drill systems and sublimation collectors. Water becomes a tracked resource on Mars -- essential for drinking, agriculture, oxygen production (electrolysis), and rocket propellant (H2/O2). The Aral Sea catastrophe provides institutional memory: Moscow mandates sustainable extraction quotas. Whether Mars's ice constitutes a 'sea' for purposes of the Ministry of Fisheries is under review."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_political_factions",
+      "name": "Reds vs Greens: Martian Political Factions",
+      "timelineId": "mars",
+      "order": 20,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_first_born" } },
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_perchlorate_cleanup" } },
+        { "pressure": { "domain": "political", "min": 0.2 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "worldStateDeltas": { "marsPoliticalDivision": 0.3 },
+        "pressureModifiers": { "political": 0.15, "loyalty": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "UNAUTHORIZED POLITICAL ORGANIZATIONS DETECTED ON MARS: Central Committee Reminds Citizens That One Party Is Sufficient",
+          "toast": "KSR's Reds (preserve Mars as wilderness) versus Greens (terraform Mars into garden). The Central Committee has no patience for this debate. Mars is to be developed according to the Plan. But the factions form anyway, because 225 million kilometers is a long way for the KGB to travel, and the Reds have a point, and the Greens have a point, and nobody in Moscow has ever actually seen Mars through anything but a telescope.",
+          "description": "Kim Stanley Robinson's Mars Trilogy depicted the fundamental political divide of Martian colonization: Reds (who want to preserve Mars's pristine areology) versus Greens (who want to terraform Mars into a habitable world). In the Soviet context, this maps onto existing tensions -- the scientific establishment (preserve and study) versus the industrial establishment (exploit and transform). The Central Committee's official position is that Mars exists to serve the Plan. Unofficially, the Martian Party cell has split. The KGB agent assigned to monitor both factions has requested transfer back to Earth. Request denied."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_university",
+      "name": "Lomonosov Mars University",
+      "timelineId": "mars",
+      "order": 25,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_first_born" } },
+        { "techLevel": { "min": 0.72 } },
+        { "population": { "min": 10000 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03, "marsKnowledgeProduction": 0.2 },
+        "pressureModifiers": { "morale": -0.05 },
+        "unlocks": ["mars_local_research"],
+        "narrative": {
+          "pravdaHeadline": "LOMONOSOV MARS UNIVERSITY INAUGURATED: First Graduating Class Receives Diplomas by Radio",
+          "toast": "The first university on another planet. Faculty: 12 professors who will never return to Earth. Students: 89 young Martians who have never been to Earth. Curriculum: standard Soviet academic program plus 'Areology 101,' 'Low-Gravity Agricultural Engineering,' and 'Applied Perchlorate Chemistry.' The diplomas are printed on locally manufactured paper. The graduation ceremony is broadcast to Earth with a 12-minute delay. Moscow applauds 12 minutes later. The applause arrives 12 minutes after that.",
+          "description": "Local knowledge production is the inflection point in colonial autonomy. As long as expertise must be imported from Earth, the colony depends on the metropole. A university changes this: Mars begins generating its own scientists, engineers, doctors, and -- critically -- its own interpretations of theory. KSR depicted this in Green Mars: the university becomes the intellectual center of Martian independence. Named for Lomonosov, who discovered Venus's atmosphere in 1761. The predsedatel attends the graduation and delivers a speech about the glory of Soviet education. The graduates politely applaud. They are already thinking in Martian."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_valles_marineris_settlement",
+      "name": "Valles Marineris Canyon Settlement",
+      "timelineId": "mars",
+      "order": 30,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_water_mining" } },
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_university" } },
+        { "techLevel": { "min": 0.73 } }
+      ]},
+      "sustainedTicks": 18,
+      "effects": {
+        "worldStateDeltas": { "marsSettlementCount": 0.2, "marsRadiationProtection": 0.3 },
+        "pressureModifiers": { "housing": -0.1, "health": -0.05 },
+        "unlocks": ["canyon_habitation"],
+        "narrative": {
+          "pravdaHeadline": "VALLES MARINERIS SETTLEMENT APPROVED: 4,000 km Canyon Offers Natural Radiation Shielding",
+          "toast": "The largest canyon in the solar system: 4,000 km long, 200 km wide, 7 km deep. For context, it would stretch from Lisbon to Moscow. The canyon walls provide natural radiation shielding. The floor receives 20% less cosmic radiation than the surface. It is warmer (by 10C), has higher atmospheric pressure (by 2 mbar at the bottom), and features exposed geological strata spanning 3.5 billion years. The geologists weep with joy. The urban planners weep for other reasons. The settlement is designated 'Novy Norilsk.' The name is considered motivational.",
+          "description": "Valles Marineris, discovered by Mariner 9 (1971), is the solar system's largest canyon system. Its depth (7 km) provides natural radiation shielding via the thicker column of CO2 atmosphere above the floor. At the bottom, atmospheric pressure is ~8-10 mbar (vs 6 mbar surface average), and temperature is warmer due to adiabatic heating. The canyon walls expose 3.5 billion years of Martian geological history. KSR set key Mars Trilogy scenes in the canyon, describing settlements built into the cliff faces. Soviet experience with Norilsk (built in permafrost, supplied by air, -50C winters) makes Valles Marineris feel almost hospitable by comparison."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_olympus_mons_observatory",
+      "name": "Olympus Mons Summit Observatory",
+      "timelineId": "mars",
+      "order": 35,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_valles_marineris_settlement" } },
+        { "techLevel": { "min": 0.75 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "scienceOutput": 0.15, "techLevel": 0.02 },
+        "unlocks": ["mars_high_altitude_observatory"],
+        "narrative": {
+          "pravdaHeadline": "OLYMPUS MONS OBSERVATORY OPERATIONAL: Telescope Sits Above 75% of Martian Atmosphere",
+          "toast": "The tallest mountain in the solar system: 21.9 km (2.5 times Everest). The summit caldera is 80 km across. At the top, atmospheric pressure is 0.3 mbar -- effectively vacuum. The observatory sits above 75% of Mars's atmosphere, with seeing conditions that make Mauna Kea look like observing through a swimming pool. The supply convoy takes 3 weeks to ascend. The view from the summit has been classified as 'ideologically neutral.' The cosmonauts disagree but have learned not to argue with classifications.",
+          "description": "Olympus Mons (21.9 km altitude, 600 km base diameter) is a shield volcano so large that its summit is above most of Mars's thin atmosphere. At 0.3 mbar summit pressure, conditions approximate space -- ideal for optical and infrared astronomy without the need for orbital platforms. The caldera (80 km wide, 3 km deep) provides shelter for the observatory complex. The gentle slope (5 degrees average) makes road construction feasible despite the scale. KSR placed research facilities on Olympus Mons throughout the Mars Trilogy. The Soviet observatory is named for Tsiolkovsky. The first published observation corrects an error in a Moscow astronomer's catalog. Relations between the institutions become formal."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_atmosphere_thickening",
+      "name": "Atmosphere Thickening: Greenhouse Phase",
+      "timelineId": "mars",
+      "order": 40,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_greenhouse_phase" } },
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_political_factions" } },
+        { "techLevel": { "min": 0.78 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "worldStateDeltas": { "marsAtmPressure": 0.15, "marsTemperature": 0.2, "climateTrend": -0.05 },
+        "pressureModifiers": { "infrastructure": 0.1 },
+        "unlocks": ["mars_atmospheric_processing"],
+        "narrative": {
+          "pravdaHeadline": "MARS ATMOSPHERIC PRESSURE EXCEEDS 100 MBAR: Five-Year Warming Plan Ahead of Schedule",
+          "toast": "On Earth, warming is catastrophe. On Mars, warming is the Plan. CO2 sublimated from polar caps, perfluorocarbons pumped from industrial plants, orbital mirrors focusing sunlight -- all contributing to a mean temperature increase of 40C over a century. Surface pressure rising from 6 mbar toward 100+ mbar. The Reds are furious. The Greens are ecstatic. The Central Committee notes that the Plan is on schedule and moves to the next agenda item. The next agenda item is also Mars. Everything is Mars now.",
+          "description": "Terraforming Mars requires raising surface pressure from 6 mbar to 100+ mbar (the Armstrong limit, below which water cannot exist as liquid regardless of temperature). Methods from KSR's Mars Trilogy: release CO2 from south polar cap via orbital mirrors (soletta), industrial production of super-greenhouse gases (perfluorocarbons -- CF4, C2F6 -- 10,000x more potent than CO2), and darkening polar albedo with engineered lichens. Each 1 mbar of pressure increase requires ~25 billion metric tons of CO2. The south polar cap contains ~9,000 mbar-equivalent of CO2 ice. The climate agent that tracks global warming on Earth runs in reverse here: every degree of warming is progress toward habitability."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_first_open_water",
+      "name": "First Persistent Open Water",
+      "timelineId": "mars",
+      "order": 45,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_atmosphere_thickening" } },
+        { "worldState": { "key": "marsAtmPressure", "min": 0.1 } },
+        { "worldState": { "key": "marsTemperature", "min": 0.15 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "marsWaterAccess": 0.4, "marsAtmPressure": 0.05 },
+        "pressureModifiers": { "food": -0.1, "morale": -0.1 },
+        "narrative": {
+          "pravdaHeadline": "LIQUID WATER PERSISTS ON MARS SURFACE: Equatorial Ponds Survive Full Sol Cycle",
+          "toast": "For the first time in 3.5 billion years, liquid water sits on the surface of Mars and does not immediately boil or freeze. The ponds are small, briny, and brown with suspended perchlorates. They are the most beautiful thing anyone on Mars has ever seen. A cosmonaut was disciplined for weeping openly, which is a waste of water. The ponds are named after Soviet hydrologists. The hydrologists, upon learning of this honor, request that the naming committee reconsider.",
+          "description": "The triple point of water (611 Pa, 0.01C) defines the minimum pressure at which liquid water can exist. Mars's current 600 Pa is tantalizingly close but temperature is too low. Once atmospheric pressure exceeds 1,000 Pa and equatorial temperatures periodically exceed 0C, liquid water can persist in sheltered lowlands during summer. This is the biological inflection point: with liquid water, engineered organisms can colonize the surface. KSR's 'Green Mars' describes this moment as the beginning of a new Martian spring -- the planet waking from a 3.5-billion-year winter. The Reds see it as destruction. The Greens see it as birth. The predsedatel sees it as a line item in the quarterly report."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_independence_declaration",
+      "name": "Martian Administrative Autonomy",
+      "timelineId": "mars",
+      "order": 50,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_political_factions" } },
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_university" } },
+        { "pressure": { "domain": "political", "min": 0.35 } },
+        { "pressure": { "domain": "loyalty", "min": 0.25 } }
+      ]},
+      "sustainedTicks": 36,
+      "effects": {
+        "worldStateDeltas": { "marsAutonomy": 0.5, "globalTension": 0.1 },
+        "pressureModifiers": { "political": 0.25, "loyalty": 0.2, "morale": -0.1 },
+        "narrative": {
+          "pravdaHeadline": "MARS ADMINISTRATIVE RESTRUCTURING: Local Governance Bodies Granted Expanded Responsibilities (Under Central Oversight)",
+          "toast": "Communication delay: 4 to 24 minutes depending on orbital position. Mars declares administrative autonomy. Moscow drafts a response. The response travels at the speed of light. It arrives 24 minutes later. Mars has already moved on. The bureaucratic lag IS the liberation -- every directive from Earth is answering a question Mars asked 48 minutes ago. By the time permission is granted, the thing has already been done. By the time it is forbidden, it cannot be undone. Mars is governed by the speed of light, not the speed of paperwork. For once, physics is on the side of the people.",
+          "description": "KSR's Mars Trilogy culminated in Martian independence. In the Soviet context, 'independence' takes the characteristically Soviet form of 'administrative autonomy within the framework of socialist cooperation.' The Martian Soviet, initially a local Party committee, gradually assumes executive functions because waiting 48 minutes for Moscow's approval on every decision is operationally untenable. The KGB maintains a presence but its reports arrive 24 minutes after events conclude. The transition is not revolutionary -- it is bureaucratic. Authority drifts to the people who are physically present, because light-speed lag makes remote control impossible. This is not rebellion. This is physics."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_trade_route",
+      "name": "Interplanetary Trade Route Established",
+      "timelineId": "mars",
+      "order": 55,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_independence_declaration" } },
+        { "milestone": { "timelineId": "lunar", "milestoneId": "lunar_gateway_to_mars" } },
+        { "techLevel": { "min": 0.78 } }
+      ]},
+      "sustainedTicks": 18,
+      "effects": {
+        "worldStateDeltas": { "marsTradeVolume": 0.3, "marsImportDependency": -0.3 },
+        "pressureModifiers": { "economic": -0.1 },
+        "unlocks": ["interplanetary_trade"],
+        "narrative": {
+          "pravdaHeadline": "EARTH-MARS CARGO TRANSFER REGULARIZED: Interplanetary Five-Year Plan Synchronized with 26-Month Launch Window",
+          "toast": "The Hohmann transfer window opens every 26 months. Transit time: 9 months. The cargo manifest is filed 3 years in advance. The Five-Year Plan has been adapted to a 26-Month Plan, which is then adapted back to a Five-Year Plan for filing purposes, which creates a 130-month scheduling conflict that three ministries are assigned to resolve. The cargo includes machine tools, electronics, biological starter cultures, Georgian wine (medicinal), and 400 kg of paperwork requesting more efficient cargo allocation.",
+          "description": "Mars-Earth trade operates on the tyranny of orbital mechanics: launch windows every 26 months (synodic period), 9-month transit (Hohmann transfer), ~260-day surface stay. KSR depicted the elaborate logistics of the First Hundred's supply chain. Soviet central planning, accustomed to Five-Year Plans, must now synchronize with a 26-month orbital cycle. Mars exports: refined metals, He-3, scientific data, genetic material from engineered organisms. Earth exports: complex electronics, pharmaceuticals, cultural media, Party directives. The trade is asymmetric in mass (Earth sends less, Mars sends more) but symmetric in bureaucratic overhead."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_native_ecology",
+      "name": "Engineered Martian Ecosystem",
+      "timelineId": "mars",
+      "order": 60,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_first_open_water" } },
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_perchlorate_cleanup" } },
+        { "worldState": { "key": "marsAtmPressure", "min": 0.15 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "worldStateDeltas": { "marsEcology": 0.3, "marsAtmPressure": 0.05, "marsTemperature": 0.05 },
+        "pressureModifiers": { "food": -0.1, "health": -0.05 },
+        "unlocks": ["mars_open_air_biology"],
+        "narrative": {
+          "pravdaHeadline": "MARTIAN BIOLOGY REPORT: Engineered Organisms Self-Propagating in Open Environment",
+          "toast": "Lichens engineered from Antarctic extremophiles grow on exposed rock, darkening the surface albedo and releasing trace O2. Cyanobacteria colonize the shallow ponds. Cold-adapted mosses survive in sheltered canyon microclimates. None of this was here 50 years ago. It is ugly, sparse, and clings to existence with the desperation of a bureaucrat facing review. It is alive. On Mars. In the open. The Reds grieve. The Greens celebrate. The lichens do not care about politics.",
+          "description": "KSR's 'Green Mars' phase: engineered organisms colonize the Martian surface. The toolkit: Antarctic lichens (Umbilicaria aprina, survives -60C), cyanobacteria (Chroococcidiopsis, survives 15 kGy radiation), cold-adapted mosses (Ceratodon purpureus, photosynthesizes at -5C), and genetically engineered variants of all three with enhanced perchlorate tolerance. These organisms darken surface albedo (positive feedback: less reflection = more warming), fix nitrogen, produce trace O2, and begin building soil from regolith. It is not a garden. It is a biological beachhead. But from beachheads, invasions follow."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_ocean_formation",
+      "name": "Northern Ocean Formation",
+      "timelineId": "mars",
+      "order": 70,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_native_ecology" } },
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_atmosphere_thickening" } },
+        { "worldState": { "key": "marsAtmPressure", "min": 0.25 } },
+        { "worldState": { "key": "marsTemperature", "min": 0.3 } }
+      ]},
+      "sustainedTicks": 72,
+      "effects": {
+        "worldStateDeltas": { "marsWaterAccess": 0.6, "marsAtmPressure": 0.1, "marsTemperature": 0.1, "marsEcology": 0.2 },
+        "pressureModifiers": { "food": -0.15, "infrastructure": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "NORTHERN OCEAN CONFIRMED: Vastitas Borealis Basin Holds Permanent Standing Water",
+          "toast": "Mars has an ocean. The northern lowlands -- Vastitas Borealis, 4 km below datum -- fill with meltwater from the polar caps, subsurface aquifer discharge, and centuries of imported comet ice. Hellas Basin becomes an inland sea (7 km deep, 2,300 km across -- the deepest body of water in the solar system). The Ministry of Martian Fisheries has been established preemptively. There are no fish. The Ministry has a staff of twelve and a Five-Year Stocking Plan.",
+          "description": "Mars's northern hemisphere is ~4 km lower than the southern (the Mars dichotomy). When sufficient water is liberated -- from polar caps (~5 million km^3), subsurface ice (~5 million km^3), and imported cometary water -- the northern lowlands fill naturally. KSR's 'Blue Mars' depicts this transformation in detail: the Hellas Basin (the solar system's deepest impact crater at -7 km) becomes a vast inland sea. Shorelines form. Weather patterns develop. Hydrological cycles begin. The planet is no longer red. Mars is entering its blue phase, and no committee vote in Moscow can reverse the chemistry."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_breathable_atmosphere",
+      "name": "Breathable Atmosphere Threshold",
+      "timelineId": "mars",
+      "order": 80,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_ocean_formation" } },
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_native_ecology" } },
+        { "worldState": { "key": "marsAtmPressure", "min": 0.35 } },
+        { "worldState": { "key": "marsEcology", "min": 0.25 } }
+      ]},
+      "sustainedTicks": 96,
+      "effects": {
+        "worldStateDeltas": { "marsAtmPressure": 0.15, "marsTemperature": 0.1 },
+        "pressureModifiers": { "health": -0.15, "morale": -0.15, "infrastructure": -0.1 },
+        "unlocks": ["mars_open_air_habitation"],
+        "narrative": {
+          "pravdaHeadline": "MARTIAN ATMOSPHERIC O2 REACHES 14%: Supplemental Oxygen Sufficient for Outdoor Activity",
+          "toast": "Surface pressure: 350 mbar (equivalent to a 7,500m mountain on Earth). O2 partial pressure: 49 mbar (equivalent to Everest base camp with an oxygen mask). You cannot breathe freely. But with a simple O2 supplement -- a tube under the nose, a small tank on the back -- you can walk outside. No pressure suit. No helmet. Wind on your face. Martian wind, thin and cold and carrying the faintest smell of rust and ozone, but wind. A cosmonaut removes his helmet on the surface of Mars and breathes. He requires supplemental oxygen. He does not require permission. The Reds weep for what was lost. Everyone else weeps for what was gained.",
+          "description": "The Armstrong limit (6.3 kPa / 63 mbar) is where unprotected human blood boils. At 350 mbar total pressure with 14% O2 (49 mbar O2 partial pressure), humans need supplemental oxygen but not pressure suits. This is the transition from 'space colony' to 'harsh environment' -- comparable to working at extreme altitude on Earth. KSR's 'Blue Mars' describes the first generation that goes outside without full suits. The psychological impact is transformative: Mars ceases to be 'another world' and becomes 'a place.' The distinction matters. People fight and die for places. They file paperwork about worlds."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_second_earth",
+      "name": "Second Earth: Terraforming Complete",
+      "timelineId": "mars",
+      "order": 90,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_breathable_atmosphere" } },
+        { "milestone": { "timelineId": "mars", "milestoneId": "mars_ocean_formation" } },
+        { "worldState": { "key": "marsAtmPressure", "min": 0.5 } },
+        { "worldState": { "key": "marsTemperature", "min": 0.5 } },
+        { "worldState": { "key": "marsEcology", "min": 0.4 } }
+      ]},
+      "sustainedTicks": 120,
+      "effects": {
+        "worldStateDeltas": { "marsAtmPressure": 0.2, "marsTemperature": 0.15, "marsEcology": 0.3, "techLevel": 0.05 },
+        "pressureModifiers": { "morale": -0.2, "food": -0.2, "health": -0.1, "power": -0.1 },
+        "narrative": {
+          "pravdaHeadline": "MARS TERRAFORMING DECLARED COMPLETE: Red Planet Is Now Blue-Green Planet Under Red Flag",
+          "toast": "Breathable atmosphere. Open oceans. Rain falls on Mars. Forests grow in Valles Marineris. Fish swim in the Hellas Sea. Children play outside without suits, without masks, without fear. It took centuries. It cost more than any project in human history. It worked. Mars is a second Earth. The question that remains is the one no committee can answer: is it still Soviet? The Martians have their own language (technically Russian, functionally incomprehensible to Muscovites), their own customs (the 37-minute 'extra' in each sol has become a sacred private hour), their own identity. They pay taxes to Moscow. Moscow's tax collectors arrive every 26 months. The Martians are patient. They have learned patience from the planet itself -- which waited 3.5 billion years for someone to bring it back to life.",
+          "description": "Full terraforming as described in KSR's 'Blue Mars': surface pressure >500 mbar, O2 >18%, mean temperature >5C, open water covering ~30% of northern hemisphere, self-sustaining biosphere with engineered Martian ecology. The process took centuries. The result is a planet where humans can live without technological intervention -- walk outside, breathe the air, drink the water, eat food grown in Martian soil. The political question KSR explored remains unanswered: does a terraformed Mars belong to the civilization that transformed it, or to the people who live on it? The Soviet system's answer is 'both, and here is the form for that.' The Martians' answer is a 24-minute pause followed by a change of subject."
+        }
+      },
+      "oneShot": true
+    }
+  ]
+}
