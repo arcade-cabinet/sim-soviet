@@ -7,6 +7,8 @@
  * Each event has valid seasons, weather boosts, climate trend ranges,
  * and pressure contributions. Evaluated every tick — season/weather gates
  * ensure events only fire when climatically appropriate.
+ *
+ * Event catalog sourced from src/config/climateEvents.json.
  */
 
 import type { GameRng } from '@/game/SeedSystem';
@@ -14,6 +16,7 @@ import { Season } from '@/game/Chronology';
 import { WeatherType } from '../core/weather-types';
 import type { PressureDomain } from './pressure/PressureDomains';
 import type { CrisisImpact } from './types';
+import climateEventsData from '@/config/climateEvents.json';
 
 // ─── Climate Event Definition ────────────────────────────────────────────────
 
@@ -36,120 +39,81 @@ export interface ClimateEventDef {
   cooldownTicks: number;
 }
 
+// ─── Enum Mapping ────────────────────────────────────────────────────────────
+
+/** Map Season enum key strings (e.g. "WINTER") to Season enum values (e.g. "winter"). */
+const SEASON_KEY_MAP: Record<string, Season> = {
+  WINTER: Season.WINTER,
+  RASPUTITSA_SPRING: Season.RASPUTITSA_SPRING,
+  SHORT_SUMMER: Season.SHORT_SUMMER,
+  GOLDEN_WEEK: Season.GOLDEN_WEEK,
+  STIFLING_HEAT: Season.STIFLING_HEAT,
+  EARLY_FROST: Season.EARLY_FROST,
+  RASPUTITSA_AUTUMN: Season.RASPUTITSA_AUTUMN,
+};
+
+/** Map WeatherType enum key strings (e.g. "BLIZZARD") to WeatherType enum values (e.g. "blizzard"). */
+const WEATHER_KEY_MAP: Record<string, WeatherType> = {
+  CLEAR: WeatherType.CLEAR,
+  OVERCAST: WeatherType.OVERCAST,
+  SNOW: WeatherType.SNOW,
+  BLIZZARD: WeatherType.BLIZZARD,
+  RAIN: WeatherType.RAIN,
+  MUD_STORM: WeatherType.MUD_STORM,
+  HEATWAVE: WeatherType.HEATWAVE,
+  MIRACULOUS_SUN: WeatherType.MIRACULOUS_SUN,
+  FOG: WeatherType.FOG,
+};
+
+// ─── JSON → Typed Conversion ─────────────────────────────────────────────────
+
+/** Raw shape of a single climate event entry in JSON. */
+interface RawClimateEvent {
+  id: string;
+  name: string;
+  validSeasons: string[];
+  weatherBoosts: Record<string, number>;
+  climateTrendRange: { min: number; max: number } | null;
+  baseProbability: number;
+  cooldownTicks: number;
+  pressureSpikes: Record<string, number>;
+  impact: CrisisImpact;
+}
+
+function parseClimateEvents(raw: readonly RawClimateEvent[]): ClimateEventDef[] {
+  return raw.map((entry) => {
+    const validSeasons = entry.validSeasons.map((key) => {
+      const season = SEASON_KEY_MAP[key];
+      if (!season) throw new Error(`Unknown season key in climateEvents.json: ${key}`);
+      return season;
+    });
+
+    const weatherBoosts: Partial<Record<WeatherType, number>> = {};
+    for (const [key, value] of Object.entries(entry.weatherBoosts)) {
+      const wt = WEATHER_KEY_MAP[key];
+      if (!wt) throw new Error(`Unknown weather key in climateEvents.json: ${key}`);
+      weatherBoosts[wt] = value;
+    }
+
+    return {
+      id: entry.id,
+      name: entry.name,
+      validSeasons,
+      weatherBoosts,
+      climateTrendRange: entry.climateTrendRange,
+      baseProbability: entry.baseProbability,
+      cooldownTicks: entry.cooldownTicks,
+      pressureSpikes: entry.pressureSpikes as Partial<Record<PressureDomain, number>>,
+      impact: entry.impact,
+    };
+  });
+}
+
 // ─── Event Catalog ───────────────────────────────────────────────────────────
 
-export const CLIMATE_EVENTS: readonly ClimateEventDef[] = [
-  {
-    id: 'severe_frost',
-    name: 'Severe Frost',
-    validSeasons: [Season.WINTER, Season.EARLY_FROST],
-    weatherBoosts: { [WeatherType.BLIZZARD]: 2.0, [WeatherType.SNOW]: 1.3 },
-    climateTrendRange: { min: -1.0, max: -0.2 },
-    baseProbability: 0.008,
-    cooldownTicks: 24,
-    pressureSpikes: { food: 0.1, infrastructure: 0.05, health: 0.08, power: 0.06 },
-    impact: {
-      crisisId: 'climate-severe-frost',
-      economy: { productionMult: 0.8 },
-      social: { diseaseMult: 1.5 },
-      narrative: {
-        pravdaHeadlines: ['SEVERE FROST GRIPS THE SETTLEMENT — Citizens urged to conserve fuel.'],
-        toastMessages: [{ text: 'Severe frost! Increased heating costs.', severity: 'warning' }],
-      },
-    },
-  },
-  {
-    id: 'summer_drought',
-    name: 'Summer Drought',
-    validSeasons: [Season.STIFLING_HEAT, Season.GOLDEN_WEEK],
-    weatherBoosts: { [WeatherType.HEATWAVE]: 2.5, [WeatherType.CLEAR]: 1.3 },
-    climateTrendRange: { min: -0.8, max: -0.1 },
-    baseProbability: 0.006,
-    cooldownTicks: 36,
-    pressureSpikes: { food: 0.15, health: 0.05 },
-    impact: {
-      crisisId: 'climate-summer-drought',
-      economy: { productionMult: 0.85, foodDelta: -20 },
-      narrative: {
-        pravdaHeadlines: ['DROUGHT CONDITIONS AFFECTING CROPS — Harvest projections revised.'],
-        toastMessages: [{ text: 'Drought is destroying crops.', severity: 'warning' }],
-      },
-    },
-  },
-  {
-    id: 'spring_flood',
-    name: 'Spring Flood',
-    validSeasons: [Season.RASPUTITSA_SPRING],
-    weatherBoosts: { [WeatherType.MUD_STORM]: 2.0, [WeatherType.RAIN]: 1.5 },
-    climateTrendRange: { min: 0.2, max: 1.0 },
-    baseProbability: 0.007,
-    cooldownTicks: 24,
-    pressureSpikes: { infrastructure: 0.1, housing: 0.05 },
-    impact: {
-      crisisId: 'climate-spring-flood',
-      infrastructure: { decayMult: 1.5 },
-      narrative: {
-        pravdaHeadlines: ['SPRING FLOODING DAMAGES INFRASTRUCTURE — Repair brigades deployed.'],
-        toastMessages: [{ text: 'Spring floods damaging buildings.', severity: 'warning' }],
-      },
-    },
-  },
-  {
-    id: 'seasonal_epidemic',
-    name: 'Seasonal Epidemic',
-    validSeasons: [Season.WINTER, Season.RASPUTITSA_AUTUMN],
-    weatherBoosts: { [WeatherType.FOG]: 1.5, [WeatherType.SNOW]: 1.2 },
-    climateTrendRange: null,
-    baseProbability: 0.005,
-    cooldownTicks: 36,
-    pressureSpikes: { health: 0.12, morale: 0.05, demographic: 0.03 },
-    impact: {
-      crisisId: 'climate-seasonal-epidemic',
-      social: { diseaseMult: 2.0, growthMult: 0.9 },
-      narrative: {
-        pravdaHeadlines: ['SEASONAL ILLNESS SPREADING — Clinics operating at capacity.'],
-        toastMessages: [{ text: 'Seasonal epidemic spreading.', severity: 'warning' }],
-      },
-    },
-  },
-  {
-    id: 'wildfire',
-    name: 'Wildfire',
-    validSeasons: [Season.STIFLING_HEAT],
-    weatherBoosts: { [WeatherType.HEATWAVE]: 3.0, [WeatherType.CLEAR]: 1.5 },
-    climateTrendRange: { min: -1.0, max: 0.0 },
-    baseProbability: 0.004,
-    cooldownTicks: 48,
-    pressureSpikes: { infrastructure: 0.12, food: 0.08 },
-    impact: {
-      crisisId: 'climate-wildfire',
-      infrastructure: { decayMult: 2.0 },
-      economy: { productionMult: 0.75 },
-      narrative: {
-        pravdaHeadlines: ['WILDFIRE THREATENS SETTLEMENT — Firefighting efforts underway.'],
-        toastMessages: [{ text: 'Wildfire approaching!', severity: 'critical' }],
-      },
-    },
-  },
-  {
-    id: 'hailstorm',
-    name: 'Hailstorm',
-    validSeasons: [Season.SHORT_SUMMER],
-    weatherBoosts: { [WeatherType.RAIN]: 2.0 },
-    climateTrendRange: null,
-    baseProbability: 0.005,
-    cooldownTicks: 24,
-    pressureSpikes: { food: 0.08, infrastructure: 0.04 },
-    impact: {
-      crisisId: 'climate-hailstorm',
-      economy: { productionMult: 0.88, foodDelta: -10 },
-      narrative: {
-        pravdaHeadlines: ['HAILSTORM BATTERS FIELDS — Crop damage reported.'],
-        toastMessages: [{ text: 'Hailstorm damaged crops.', severity: 'warning' }],
-      },
-    },
-  },
-];
+export const CLIMATE_EVENTS: readonly ClimateEventDef[] = parseClimateEvents(
+  climateEventsData as unknown as RawClimateEvent[],
+);
 
 // ─── ClimateEventSystem ──────────────────────────────────────────────────────
 

@@ -7,7 +7,11 @@
  *
  * Governance types and transition rules are research-grounded:
  * each transition has historical precedent documented inline.
+ *
+ * Data is loaded from config/world.json; types remain here.
  */
+
+import worldData from '../../../config/world.json';
 
 // ─── Governance Types ────────────────────────────────────────────────────────
 
@@ -29,15 +33,6 @@ export type GovernanceType =
 
 export type SphereId = 'european' | 'sinosphere' | 'western' | 'middle_eastern' | 'eurasian' | 'corporate';
 
-export const SPHERE_IDS: readonly SphereId[] = [
-  'european',
-  'sinosphere',
-  'western',
-  'middle_eastern',
-  'eurasian',
-  'corporate',
-] as const;
-
 // ─── Country ─────────────────────────────────────────────────────────────────
 
 /** Individual country (used in historical mode and early freeform). */
@@ -54,34 +49,6 @@ export interface Country {
   /** Year this country merges into its sphere (freeform only). */
   mergeYear?: number;
 }
-
-// ─── Starting Countries (1917) ───────────────────────────────────────────────
-
-export const STARTING_COUNTRIES: readonly Country[] = [
-  // European sphere
-  { id: 'germany', name: 'Germany', sphere: 'european', hostility: 0.9, tradeVolume: 0.3, militaryStrength: 0.85, mergeYear: 2050 },
-  { id: 'austria_hungary', name: 'Austria-Hungary', sphere: 'european', hostility: 0.7, tradeVolume: 0.2, militaryStrength: 0.6, mergeYear: 1920 },
-  { id: 'france', name: 'France', sphere: 'european', hostility: 0.4, tradeVolume: 0.4, militaryStrength: 0.7, mergeYear: 2050 },
-  { id: 'britain', name: 'Britain', sphere: 'european', hostility: 0.5, tradeVolume: 0.5, militaryStrength: 0.8, mergeYear: 2050 },
-  { id: 'italy', name: 'Italy', sphere: 'european', hostility: 0.3, tradeVolume: 0.3, militaryStrength: 0.4, mergeYear: 2050 },
-  { id: 'spain', name: 'Spain', sphere: 'european', hostility: 0.2, tradeVolume: 0.1, militaryStrength: 0.3, mergeYear: 2050 },
-  { id: 'portugal', name: 'Portugal', sphere: 'european', hostility: 0.1, tradeVolume: 0.1, militaryStrength: 0.2, mergeYear: 2050 },
-
-  // Sinosphere
-  { id: 'china', name: 'China', sphere: 'sinosphere', hostility: 0.3, tradeVolume: 0.2, militaryStrength: 0.4, mergeYear: 2080 },
-  { id: 'japan', name: 'Japan', sphere: 'sinosphere', hostility: 0.6, tradeVolume: 0.3, militaryStrength: 0.7, mergeYear: 2080 },
-
-  // Western sphere
-  { id: 'usa', name: 'United States', sphere: 'western', hostility: 0.4, tradeVolume: 0.3, militaryStrength: 0.6, mergeYear: 2100 },
-  { id: 'canada', name: 'Canada', sphere: 'western', hostility: 0.2, tradeVolume: 0.2, militaryStrength: 0.2, mergeYear: 2100 },
-  { id: 'australia', name: 'Australia', sphere: 'western', hostility: 0.2, tradeVolume: 0.1, militaryStrength: 0.2, mergeYear: 2100 },
-
-  // Middle Eastern
-  { id: 'ottoman_empire', name: 'Ottoman Empire', sphere: 'middle_eastern', hostility: 0.6, tradeVolume: 0.2, militaryStrength: 0.5, mergeYear: 1925 },
-
-  // Eurasian (contested)
-  { id: 'poland', name: 'Poland', sphere: 'eurasian', hostility: 0.7, tradeVolume: 0.2, militaryStrength: 0.3, mergeYear: 2050 },
-] as const;
 
 // ─── Governance Transitions ──────────────────────────────────────────────────
 
@@ -106,81 +73,6 @@ export interface GovernanceTransition {
   precedent: string;
 }
 
-export const GOVERNANCE_TRANSITIONS: readonly GovernanceTransition[] = [
-  {
-    from: 'democratic', to: 'authoritarian',
-    baseProbability: 0.02,
-    conditions: { turchinRange: { min: 0.6, max: 1.0 } },
-    precedent: 'Weimar → Nazi Germany, Latin American coups',
-  },
-  {
-    from: 'democratic', to: 'oligarchic',
-    baseProbability: 0.015,
-    conditions: { turchinRange: { min: 0.5, max: 1.0 }, khaldunRange: { min: 0.5, max: 1.0 } },
-    precedent: 'Late Roman Republic, Gilded Age USA',
-  },
-  {
-    from: 'democratic', to: 'theocratic',
-    baseProbability: 0.01,
-    conditions: { minReligiousIntensity: 0.6 },
-    precedent: 'Iran 1979, Taliban Afghanistan',
-  },
-  {
-    from: 'authoritarian', to: 'oligarchic',
-    baseProbability: 0.02,
-    conditions: { khaldunRange: { min: 0.7, max: 1.0 } },
-    precedent: 'USSR → Russian Federation 1991',
-  },
-  {
-    from: 'authoritarian', to: 'democratic',
-    baseProbability: 0.015,
-    conditions: { turchinRange: { min: 0.0, max: 0.3 } },
-    precedent: 'Post-WWII Japan/Germany, Color Revolutions',
-  },
-  {
-    from: 'oligarchic', to: 'corporate',
-    baseProbability: 0.01,
-    conditions: { minCorporateShare: 0.5 },
-    precedent: 'VOC Dutch East Indies, British East India Company',
-  },
-  {
-    from: 'corporate', to: 'feudal',
-    baseProbability: 0.008,
-    conditions: { khaldunRange: { min: 0.8, max: 1.0 } },
-    precedent: 'Neofeudalism thesis: rent > profit, algorithmic serfdom',
-  },
-  {
-    from: 'communist', to: 'oligarchic',
-    baseProbability: 0.01,
-    conditions: { turchinRange: { min: 0.7, max: 1.0 }, khaldunRange: { min: 0.6, max: 1.0 } },
-    precedent: 'USSR 1991, post-Soviet states',
-  },
-  {
-    from: 'authoritarian', to: 'theocratic',
-    baseProbability: 0.01,
-    conditions: { minReligiousIntensity: 0.7 },
-    precedent: 'Saudi founding (Wahhabi), Iran 1979',
-  },
-  {
-    from: 'oligarchic', to: 'authoritarian',
-    baseProbability: 0.02,
-    conditions: { turchinRange: { min: 0.5, max: 1.0 } },
-    precedent: 'Many historical oligarchies centralize under threat',
-  },
-  {
-    from: 'technocratic', to: 'authoritarian',
-    baseProbability: 0.015,
-    conditions: { khaldunRange: { min: 0.6, max: 1.0 } },
-    precedent: 'Singapore model drift, technocratic capture',
-  },
-  {
-    from: 'democratic', to: 'technocratic',
-    baseProbability: 0.01,
-    conditions: { turchinRange: { min: 0.0, max: 0.4 } },
-    precedent: 'EU institutional drift, expert governance aspiration',
-  },
-] as const;
-
 // ─── Era Profiles ────────────────────────────────────────────────────────────
 
 /** World state defaults per era (interpolated within era). */
@@ -192,13 +84,9 @@ export interface EraWorldProfile {
   ideologyRigidity: number;
 }
 
-export const ERA_WORLD_PROFILES: Record<string, EraWorldProfile> = {
-  revolution:        { globalTension: [0.7, 0.4], borderThreat: [0.6, 0.3], tradeAccess: 0.2, moscowAttention: 0.5, ideologyRigidity: 0.9 },
-  collectivization:  { globalTension: [0.3, 0.5], borderThreat: [0.2, 0.2], tradeAccess: 0.3, moscowAttention: 0.8, ideologyRigidity: 0.95 },
-  industrialization: { globalTension: [0.6, 0.85], borderThreat: [0.4, 0.8], tradeAccess: 0.3, moscowAttention: 0.9, ideologyRigidity: 0.85 },
-  great_patriotic:   { globalTension: [1.0, 1.0], borderThreat: [1.0, 1.0], tradeAccess: 0.4, moscowAttention: 0.7, ideologyRigidity: 0.6 },
-  reconstruction:    { globalTension: [0.5, 0.7], borderThreat: [0.3, 0.3], tradeAccess: 0.3, moscowAttention: 0.85, ideologyRigidity: 0.8 },
-  thaw_and_freeze:   { globalTension: [0.6, 0.6], borderThreat: [0.4, 0.4], tradeAccess: 0.4, moscowAttention: 0.6, ideologyRigidity: 0.6 },
-  stagnation:        { globalTension: [0.5, 0.5], borderThreat: [0.3, 0.3], tradeAccess: 0.4, moscowAttention: 0.6, ideologyRigidity: 0.5 },
-  the_eternal:       { globalTension: [0.5, 0.5], borderThreat: [0.3, 0.3], tradeAccess: 0.5, moscowAttention: 0.5, ideologyRigidity: 0.4 },
-};
+// ─── Data Exports (from JSON) ────────────────────────────────────────────────
+
+export const SPHERE_IDS = worldData.sphereIds as readonly SphereId[];
+export const STARTING_COUNTRIES = worldData.startingCountries as readonly Country[];
+export const GOVERNANCE_TRANSITIONS = worldData.governanceTransitions as readonly GovernanceTransition[];
+export const ERA_WORLD_PROFILES = worldData.eraWorldProfiles as unknown as Record<string, EraWorldProfile>;

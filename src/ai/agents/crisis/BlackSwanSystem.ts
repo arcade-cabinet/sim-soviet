@@ -9,12 +9,16 @@
  * Absorbs meteor strike logic from FreeformGovernor and adds additional
  * black swan events: earthquakes, solar storms, nuclear accidents,
  * supervolcanic ash.
+ *
+ * Static catalog data sourced from src/config/blackSwans.json.
+ * Impact generation functions remain in TypeScript (require RNG + dynamic logic).
  */
 
 import type { GameRng } from '@/game/SeedSystem';
 import { applyMeteorImpact, convertCraterToMine, rollMeteorStrike, type MeteorEvent } from './meteorStrike';
 import type { PressureDomain } from './pressure/PressureDomains';
 import type { CrisisImpact } from './types';
+import blackSwansData from '@/config/blackSwans.json';
 
 // ─── Black Swan Definition ───────────────────────────────────────────────────
 
@@ -31,77 +35,105 @@ export interface BlackSwanDef {
   generateImpact: (year: number, rng: GameRng) => CrisisImpact;
 }
 
+// ─── Raw JSON shape ──────────────────────────────────────────────────────────
+
+interface RawBlackSwan {
+  id: string;
+  name: string;
+  probabilityPerTick: number;
+  minYear?: number;
+  pressureSpikes: Record<string, number>;
+  impactTemplate: Record<string, unknown>;
+}
+
+// ─── Impact Generators ───────────────────────────────────────────────────────
+
+/** Build generateImpact functions keyed by event ID, using imported template data. */
+function buildImpactGenerators(raw: readonly RawBlackSwan[]): Map<string, (year: number, rng: GameRng) => CrisisImpact> {
+  const generators = new Map<string, (year: number, rng: GameRng) => CrisisImpact>();
+
+  for (const entry of raw) {
+    const t = entry.impactTemplate;
+
+    switch (entry.id) {
+      case 'earthquake':
+        generators.set(entry.id, (year, rng) => {
+          const magnitudeMin = t.magnitudeMin as number;
+          const magnitudeMax = t.magnitudeMax as number;
+          const magnitude = magnitudeMin + rng.random() * (magnitudeMax - magnitudeMin);
+          return {
+            crisisId: `earthquake-${year}`,
+            infrastructure: { decayMult: (t.infrastructureDecayBase as number) + magnitude * (t.infrastructureDecayPerMagnitude as number) },
+            social: { growthMult: t.socialGrowthMult as number },
+            workforce: { moraleModifier: (t.baseMoraleModifier as number) + magnitude * (t.moralePerMagnitude as number) },
+            narrative: {
+              pravdaHeadlines: [(t.headlineTemplate as string).replace('{magnitude}', magnitude.toFixed(1))],
+              toastMessages: [{ text: (t.toastTemplate as string).replace('{magnitude}', magnitude.toFixed(1)), severity: t.toastSeverity as 'critical' }],
+            },
+          };
+        });
+        break;
+
+      case 'solar_storm':
+        generators.set(entry.id, (year, _rng) => ({
+          crisisId: `solar-storm-${year}`,
+          economy: { productionMult: t.productionMult as number },
+          narrative: {
+            pravdaHeadlines: [t.headline as string],
+            toastMessages: [{ text: t.toast as string, severity: t.toastSeverity as 'critical' }],
+          },
+        }));
+        break;
+
+      case 'nuclear_accident':
+        generators.set(entry.id, (year, _rng) => ({
+          crisisId: `nuclear-accident-${year}`,
+          social: { diseaseMult: t.diseaseMult as number, growthMult: t.socialGrowthMult as number },
+          infrastructure: { decayMult: t.infrastructureDecayMult as number },
+          workforce: { moraleModifier: t.moraleModifier as number },
+          narrative: {
+            pravdaHeadlines: [t.headline as string],
+            toastMessages: [{ text: t.toast as string, severity: t.toastSeverity as 'critical' }],
+          },
+        }));
+        break;
+
+      case 'supervolcanic_ash':
+        generators.set(entry.id, (year, _rng) => ({
+          crisisId: `supervolcanic-ash-${year}`,
+          economy: { productionMult: t.productionMult as number, foodDelta: t.foodDelta as number },
+          social: { diseaseMult: t.diseaseMult as number, growthMult: t.socialGrowthMult as number },
+          workforce: { moraleModifier: t.moraleModifier as number },
+          narrative: {
+            pravdaHeadlines: [t.headline as string],
+            toastMessages: [{ text: t.toast as string, severity: t.toastSeverity as 'critical' }],
+          },
+        }));
+        break;
+    }
+  }
+
+  return generators;
+}
+
 // ─── Event Catalog ───────────────────────────────────────────────────────────
 
-const BLACK_SWAN_CATALOG: readonly BlackSwanDef[] = [
-  {
-    id: 'earthquake',
-    name: 'Earthquake',
-    probabilityPerTick: 0.0008,
-    pressureSpikes: { infrastructure: 0.2, housing: 0.15, health: 0.1, morale: 0.1 },
-    generateImpact: (year, rng) => {
-      const magnitude = 4 + rng.random() * 4; // 4-8 Richter
-      const destructionCount = Math.floor(magnitude - 3);
-      return {
-        crisisId: `earthquake-${year}`,
-        infrastructure: { decayMult: 1.0 + magnitude * 0.15 },
-        social: { growthMult: 0.9 },
-        workforce: { moraleModifier: -0.2 - magnitude * 0.05 },
-        narrative: {
-          pravdaHeadlines: [`EARTHQUAKE MAGNITUDE ${magnitude.toFixed(1)} STRIKES REGION`],
-          toastMessages: [{ text: `Earthquake! Magnitude ${magnitude.toFixed(1)}`, severity: 'critical' }],
-        },
-      };
-    },
-  },
-  {
-    id: 'solar_storm',
-    name: 'Solar Storm',
-    probabilityPerTick: 0.0005,
-    pressureSpikes: { power: 0.25, infrastructure: 0.1, economic: 0.1 },
-    generateImpact: (year, _rng) => ({
-      crisisId: `solar-storm-${year}`,
-      economy: { productionMult: 0.6 },
-      narrative: {
-        pravdaHeadlines: ['SOLAR ACTIVITY DISRUPTS ELECTRICAL SYSTEMS — Power grid strained.'],
-        toastMessages: [{ text: 'Solar storm! Power grid devastated.', severity: 'critical' }],
-      },
-    }),
-  },
-  {
-    id: 'nuclear_accident',
-    name: 'Nuclear Accident',
-    probabilityPerTick: 0.0003,
-    minYear: 1954, // post-Obninsk
-    pressureSpikes: { health: 0.3, infrastructure: 0.15, morale: 0.2, political: 0.15 },
-    generateImpact: (year, _rng) => ({
-      crisisId: `nuclear-accident-${year}`,
-      social: { diseaseMult: 3.0, growthMult: 0.7 },
-      infrastructure: { decayMult: 1.5 },
-      workforce: { moraleModifier: -0.4 },
-      narrative: {
-        pravdaHeadlines: ['NUCLEAR INCIDENT AT POWER FACILITY — Exclusion zone established.'],
-        toastMessages: [{ text: 'Nuclear accident! Radiation spreading.', severity: 'critical' }],
-      },
-    }),
-  },
-  {
-    id: 'supervolcanic_ash',
-    name: 'Supervolcanic Ash Cloud',
-    probabilityPerTick: 0.0001,
-    pressureSpikes: { food: 0.25, health: 0.15, economic: 0.1, morale: 0.1 },
-    generateImpact: (year, _rng) => ({
-      crisisId: `supervolcanic-ash-${year}`,
-      economy: { productionMult: 0.5, foodDelta: -50 },
-      social: { diseaseMult: 2.0, growthMult: 0.6 },
-      workforce: { moraleModifier: -0.3 },
-      narrative: {
-        pravdaHeadlines: ['VOLCANIC ASH CLOUD DARKENS SKIES — Crop failure expected.'],
-        toastMessages: [{ text: 'Volcanic ash! Global cooling imminent.', severity: 'critical' }],
-      },
-    }),
-  },
-];
+const rawCatalog = blackSwansData as unknown as RawBlackSwan[];
+const impactGenerators = buildImpactGenerators(rawCatalog);
+
+const BLACK_SWAN_CATALOG: readonly BlackSwanDef[] = rawCatalog.map((entry) => {
+  const generator = impactGenerators.get(entry.id);
+  if (!generator) throw new Error(`No impact generator for black swan: ${entry.id}`);
+
+  return {
+    id: entry.id,
+    name: entry.name,
+    probabilityPerTick: entry.probabilityPerTick,
+    minYear: entry.minYear,
+    pressureSpikes: entry.pressureSpikes as Partial<Record<PressureDomain, number>>,
+    generateImpact: generator,
+  };
+});
 
 // ─── BlackSwanSystem ─────────────────────────────────────────────────────────
 
