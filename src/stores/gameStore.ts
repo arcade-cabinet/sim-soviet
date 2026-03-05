@@ -1038,6 +1038,92 @@ function subscribeGovHQ(listener: () => void): () => void {
   return () => { _govHQListeners.delete(listener); };
 }
 
+// ── Climate Milestones (permafrost collapse, siberian exodus, etc.) ───────
+
+/** Active climate milestone IDs from cold branch activations. Scene components react to these. */
+let _activeClimateMilestones: Set<string> = new Set();
+const _climateListeners = new Set<() => void>();
+
+/** Get the set of currently active climate milestone IDs. */
+export function getActiveClimateMilestones(): ReadonlySet<string> {
+  return _activeClimateMilestones;
+}
+
+/** Add an active climate milestone (called when cold branch fires). */
+export function activateClimateMilestone(milestoneId: string): void {
+  if (_activeClimateMilestones.has(milestoneId)) return;
+  _activeClimateMilestones = new Set(_activeClimateMilestones);
+  _activeClimateMilestones.add(milestoneId);
+  for (const listener of _climateListeners) listener();
+}
+
+/** Clear all climate milestones (called on game reset). */
+export function clearClimateMilestones(): void {
+  _activeClimateMilestones = new Set();
+  for (const listener of _climateListeners) listener();
+}
+
+/** Restore climate milestones from save data. */
+export function restoreClimateMilestones(ids: string[]): void {
+  _activeClimateMilestones = new Set(ids);
+  for (const listener of _climateListeners) listener();
+}
+
+/** Serialize active climate milestones for save data. */
+export function serializeClimateMilestones(): string[] {
+  return [..._activeClimateMilestones];
+}
+
+/** React hook -- subscribe to climate milestone changes. */
+export function useClimateMilestones(): ReadonlySet<string> {
+  return useSyncExternalStore(subscribeClimate, getActiveClimateMilestones, getActiveClimateMilestones);
+}
+
+function subscribeClimate(listener: () => void): () => void {
+  _climateListeners.add(listener);
+  return () => { _climateListeners.delete(listener); };
+}
+
+// ── Space Progress (milestone-driven sky visual state) ────────────────────
+
+import type { SpaceVisualState } from '@/scene/SkyProgression';
+
+let _spaceVisualState: SpaceVisualState = {
+  sputnik: false,
+  spaceStation: false,
+  lunarBase: false,
+  techLevel: 0,
+  era: 'revolution',
+};
+const _spaceListeners = new Set<() => void>();
+
+/** Get the current space visual state for sky rendering. */
+export function getSpaceVisualState(): SpaceVisualState {
+  return _spaceVisualState;
+}
+
+/** Update space visual state from timeline milestone activations. */
+export function updateSpaceVisualState(state: Partial<SpaceVisualState>): void {
+  _spaceVisualState = { ..._spaceVisualState, ...state };
+  for (const listener of _spaceListeners) listener();
+}
+
+/** Reset space visual state (called on game reset). */
+export function clearSpaceVisualState(): void {
+  _spaceVisualState = { sputnik: false, spaceStation: false, lunarBase: false, techLevel: 0, era: 'revolution' };
+  for (const listener of _spaceListeners) listener();
+}
+
+/** React hook -- subscribe to space visual state changes. */
+export function useSpaceVisualState(): SpaceVisualState {
+  return useSyncExternalStore(subscribeSpace, getSpaceVisualState, getSpaceVisualState);
+}
+
+function subscribeSpace(listener: () => void): () => void {
+  _spaceListeners.add(listener);
+  return () => { _spaceListeners.delete(listener); };
+}
+
 // ── Internal ──────────────────────────────────────────────────────────────
 
 function subscribe(listener: () => void): () => void {

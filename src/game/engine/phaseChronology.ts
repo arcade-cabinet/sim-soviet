@@ -26,12 +26,14 @@ import { buildingsLogic, getMetaEntity, operationalBuildings } from '../../ecs/a
 import type { RaionPool } from '../../ecs/world';
 import { checkHQSplitting } from '../../growth/HQSplitting';
 import { INDUSTRIAL_BUILDING_IDS } from '../../growth/OrganicUnlocks';
-import { notifyTerrainDirty } from '../../stores/gameStore';
+import { notifyTerrainDirty, updateSpaceVisualState } from '../../stores/gameStore';
 import { shouldExpand } from './endlessMode';
 import { expandGrid, getCurrentTier, initializeNewTiles } from './mapExpansion';
 import { buildSettlementSummary, type SettlementSummary } from './SettlementSummary';
 import type { TickContext } from './tickContext';
+import type { RegisteredTimeline } from '../timeline/TimelineLayer';
 import { evaluateAllTimelines } from '../timeline/TimelineLayer';
+import { SPACE_TIMELINE_ID } from '../timeline/spaceTimeline';
 import { discoverNewTimelines } from '../timeline/perWorldTimelines';
 
 /** Result of the chronology phase — engine-owned state that must be written back. */
@@ -197,6 +199,7 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
       eraId: politicalAgent.getCurrentEra().id,
       settlement,
       pressureReadings,
+      worldAgent: ctx.agents.world ?? undefined,
     };
     cachedDirective = ctx.governor.evaluate(govCtx);
     if (cachedDirective.crisisImpacts.length > 0) {
@@ -617,6 +620,9 @@ function runTimelineEvaluation(ctx: TickContext): void {
     }
   }
 
+  // Update space visual state for sky rendering
+  syncSpaceVisualState(registeredTimelines, timelineCtx.techLevel, ctx.agents.political.getCurrentEraId());
+
   // Discover per-world timelines from newly activated space milestones
   const newSpaceIds = allActivated
     .filter((m) => m.timelineId === 'space')
@@ -630,4 +636,23 @@ function runTimelineEvaluation(ctx: TickContext): void {
       ctx.callbacks.onToast(`New world discovered: ${tl.id} — timeline unlocked.`, 'warning');
     }
   }
+}
+
+/**
+ * Sync space visual state to the reactive store for sky rendering.
+ * Reads activated milestones from the space timeline layer and maps
+ * key milestones to visual flags (sputnik streak, station dot, moon disc).
+ */
+function syncSpaceVisualState(timelines: RegisteredTimeline[], techLevel: number, era: string): void {
+  const spaceTl = timelines.find((t) => t.id === SPACE_TIMELINE_ID);
+  if (!spaceTl) return;
+
+  const activated = spaceTl.state.activatedMilestones;
+  updateSpaceVisualState({
+    sputnik: activated.has('sputnik'),
+    spaceStation: activated.has('salyut_station') || activated.has('mir_station'),
+    lunarBase: activated.has('permanent_lunar_base') || activated.has('lunokhod'),
+    techLevel,
+    era,
+  });
 }
