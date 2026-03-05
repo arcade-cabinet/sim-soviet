@@ -1,0 +1,471 @@
+{
+  "timelineId": "space",
+  "description": "Soviet Space Program → Interstellar Colonization. A parallel progression track from Sputnik to Dyson swarms.",
+  "milestones": [
+    {
+      "id": "sputnik",
+      "name": "Sputnik Launch",
+      "timelineId": "space",
+      "order": 10,
+      "conditions": { "and": [
+        { "year": { "min": 1957 } },
+        { "techLevel": { "min": 0.15 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "globalTension": 0.1, "techLevel": 0.02 },
+        "unlocks": ["orbital_capability"],
+        "narrative": {
+          "pravdaHeadline": "BEEP BEEP BEEP: Soviet Satellite Orbits Earth, Capitalists Look Up in Terror",
+          "toast": "A metal sphere the size of a beach ball circles the planet every 96 minutes. The Americans are not taking it well.",
+          "description": "On October 4, 1957, the Soviet Union launched humanity's first artificial satellite. It did nothing useful. It beeped. The beeping changed everything."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "laika",
+      "name": "First Living Creature in Orbit",
+      "timelineId": "space",
+      "order": 15,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "sputnik" } },
+        { "year": { "min": 1957 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": { "morale": -0.05 },
+        "worldStateDeltas": { "techLevel": 0.01 },
+        "narrative": {
+          "pravdaHeadline": "HEROIC DOG SERVES MOTHERLAND IN SPACE: Laika Pioneers Orbital Travel",
+          "toast": "Laika will not return. This was always the plan. The plan is classified.",
+          "description": "Laika, a stray from the streets of Moscow, became the first animal to orbit Earth aboard Sputnik 2. Her one-way ticket was not disclosed to the public."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "vostok_gagarin",
+      "name": "First Human in Space",
+      "timelineId": "space",
+      "order": 20,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "sputnik" } },
+        { "year": { "min": 1961 } },
+        { "techLevel": { "min": 0.18 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "pressureModifiers": { "morale": -0.15 },
+        "worldStateDeltas": { "globalTension": 0.05, "techLevel": 0.03 },
+        "unlocks": ["human_spaceflight"],
+        "narrative": {
+          "pravdaHeadline": "POYEKHALI! GAGARIN ORBITS EARTH: Communism Proven Superior Even in Vacuum",
+          "toast": "Yuri Alexeyevich Gagarin has seen the Earth from space. He reports that it is round, blue, and entirely classless from that altitude.",
+          "description": "April 12, 1961. Vostok 1. 108 minutes. One orbit. The first human to leave Earth was a Soviet citizen. Gagarin's 'Poyekhali!' ('Let's go!') became immortal."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "voskhod_spacewalk",
+      "name": "First Spacewalk",
+      "timelineId": "space",
+      "order": 25,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "vostok_gagarin" } },
+        { "year": { "min": 1965 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "unlocks": ["eva_capability"],
+        "narrative": {
+          "pravdaHeadline": "LEONOV WALKS IN VOID: Soviet Cosmonaut First to Leave Spacecraft",
+          "toast": "Alexei Leonov spent 12 minutes outside the capsule. His suit inflated so much he nearly couldn't get back in. This detail was classified for 20 years.",
+          "description": "Voskhod 2, March 18, 1965. Alexei Leonov performed humanity's first extravehicular activity. He nearly died when his suit ballooned in vacuum. Soviet engineering: ambitious, terrifying, effective."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "salyut_station",
+      "name": "First Space Station",
+      "timelineId": "space",
+      "order": 30,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "vostok_gagarin" } },
+        { "year": { "min": 1971 } },
+        { "techLevel": { "min": 0.25 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "unlocks": ["orbital_habitation"],
+        "narrative": {
+          "pravdaHeadline": "SALYUT-1 OPERATIONAL: Permanent Soviet Presence in Orbit Established",
+          "toast": "The station is small, cramped, and smells of cabbage. The cosmonauts report that it reminds them of home.",
+          "description": "Salyut 1, launched April 19, 1971 — the world's first space station. The first crew died during reentry when a valve opened prematurely. The program continued."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venera_landing",
+      "name": "First Landing on Another Planet",
+      "timelineId": "space",
+      "order": 35,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "sputnik" } },
+        { "year": { "min": 1970 } },
+        { "techLevel": { "min": 0.22 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["planetary_landing"],
+        "narrative": {
+          "pravdaHeadline": "VENERA-7 LANDS ON VENUS: Soviet Probe Survives 462°C Surface",
+          "toast": "The probe transmitted for 23 minutes before succumbing to 462 degrees, 90 atmospheres, and sulfuric acid rain. It sent temperature data. We consider this a complete success.",
+          "description": "The Venera program was perhaps the Soviet Union's greatest space achievement. Between 1961-1984, they sent 16 probes to Venus, landing 10 on the surface. No other nation has soft-landed on Venus."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "lunokhod",
+      "name": "First Lunar Rover",
+      "timelineId": "space",
+      "order": 32,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "sputnik" } },
+        { "year": { "min": 1970 } },
+        { "techLevel": { "min": 0.22 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "unlocks": ["lunar_surface_ops"],
+        "narrative": {
+          "pravdaHeadline": "LUNOKHOD-1 ROLLS ON MOON: Remote-Controlled Soviet Vehicle Explores Lunar Surface",
+          "toast": "The rover has traveled 10.5 km on the Moon's surface. It is operated by a team of five who drive it like a very slow, very expensive remote-control car.",
+          "description": "Lunokhod 1 (November 1970) was the first successful robotic rover on another world. It operated for 11 months, traveling 10.54 km across the Sea of Rains."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mir_station",
+      "name": "Mir Space Station",
+      "timelineId": "space",
+      "order": 40,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "salyut_station" } },
+        { "year": { "min": 1986 } },
+        { "techLevel": { "min": 0.35 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["long_duration_habitation", "modular_station_assembly"],
+        "narrative": {
+          "pravdaHeadline": "MIR STATION LAUNCHED: Modular Orbital Complex Demonstrates Soviet Engineering Supremacy",
+          "toast": "Mir will be humanity's home in space for 15 years. It will also catch fire, lose power, collide with a supply ship, and grow mold in places mold should not exist. It will endure regardless.",
+          "description": "Mir (1986-2001): the first modular space station. 28,000 orbits. 15 years. It proved humans could live in space long-term. The station's problems — fires, collisions, computer failures — proved humans could survive anything."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "bios3_closed_ecosystem",
+      "name": "BIOS-3 Closed Ecosystem Mastery",
+      "timelineId": "space",
+      "order": 38,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "salyut_station" } },
+        { "year": { "min": 1972 } },
+        { "techLevel": { "min": 0.28 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "unlocks": ["closed_life_support"],
+        "narrative": {
+          "pravdaHeadline": "BIOS-3 EXPERIMENT SUCCESS: Soviet Scientists Achieve Closed Ecosystem in Siberia",
+          "toast": "Three crew lived for 6 months in a sealed bunker in Krasnoyarsk, growing their own food and recycling their own air. They report the experience was 'adequate.'",
+          "description": "BIOS-3 at the Institute of Biophysics in Krasnoyarsk (1972-1985) was the most successful closed ecosystem experiment in history. It achieved 100% air and water recycling and up to 80% food self-sufficiency — data NASA still references for Mars mission planning."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "permanent_lunar_base",
+      "name": "Permanent Lunar Base (Zvezda)",
+      "timelineId": "space",
+      "order": 50,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mir_station" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "lunokhod" } },
+        { "techLevel": { "min": 0.45 } },
+        { "population": { "min": 1000 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "lunar",
+        "worldStateDeltas": { "techLevel": 0.06 },
+        "pressureModifiers": { "economic": 0.15 },
+        "unlocks": ["lunar_settlement", "helium3_mining", "low_gravity_manufacturing"],
+        "narrative": {
+          "pravdaHeadline": "ZVEZDA BASE ESTABLISHED: Soviet Flag Planted on Permanent Lunar Facility",
+          "toast": "The lunar base is operational. Six cosmonauts live in pressurized modules beneath the regolith. Their supply shipments arrive monthly. Their paperwork arrives daily.",
+          "description": "The Zvezda (Star) lunar base represents the USSR's first permanent off-Earth settlement. Based on Soviet plans from the 1960s DLB (Long-Duration Lunar Base) program, it houses 6-12 cosmonauts in underground habitation modules."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "orbital_shipyard",
+      "name": "Orbital Construction Facility",
+      "timelineId": "space",
+      "order": 55,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mir_station" } },
+        { "techLevel": { "min": 0.55 } },
+        { "year": { "min": 2020 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["orbital_construction", "large_vessel_assembly"],
+        "narrative": {
+          "pravdaHeadline": "ORBITAL SHIPYARD OPERATIONAL: Heavy Industry Reaches Zero Gravity",
+          "toast": "The shipyard assembles vessels too large to launch from Earth. Workers in spacesuits weld steel in silence. The union has filed a grievance about break room conditions.",
+          "description": "Building ships in orbit eliminates the tyranny of the rocket equation. The Soviet Orbital Shipyard can assemble vessels of arbitrary size, constrained only by material supply."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_expedition",
+      "name": "Mars Crewed Expedition",
+      "timelineId": "space",
+      "order": 60,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "permanent_lunar_base" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "bios3_closed_ecosystem" } },
+        { "techLevel": { "min": 0.6 } },
+        { "year": { "min": 2030 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05, "globalTension": 0.05 },
+        "pressureModifiers": { "economic": 0.1 },
+        "unlocks": ["mars_surface_ops", "interplanetary_transit"],
+        "narrative": {
+          "pravdaHeadline": "MARS EXPEDITION LAUNCHES: Six Cosmonauts Begin 9-Month Journey to Red Planet",
+          "toast": "Transit time: 260 days. Crew of six. Delta-v budget: 11.5 km/s. Entertainment budget: one chess set and complete works of Lenin.",
+          "description": "Based on Soviet TMK (Heavy Interplanetary Ship) designs from the 1960s. The crew endures 9 months of transit, 18 months on surface, 9 months return. Hohmann transfer orbit — the mathematics haven't changed since Tsiolkovsky."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_colony",
+      "name": "Permanent Mars Settlement",
+      "timelineId": "space",
+      "order": 70,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_expedition" } },
+        { "techLevel": { "min": 0.7 } },
+        { "population": { "min": 5000 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "mars",
+        "worldStateDeltas": { "techLevel": 0.08 },
+        "pressureModifiers": { "economic": 0.2 },
+        "unlocks": ["mars_settlement", "in_situ_resource_utilization"],
+        "narrative": {
+          "pravdaHeadline": "MARS COLONY ESTABLISHED: Red Planet Finally Under Red Flag",
+          "toast": "The Mars colony has 24 residents, three greenhouses, and one bureaucratic office. The office was built first. Priorities are clear.",
+          "description": "The permanent Mars settlement uses pressurized domes, greenhouse agriculture, and in-situ resource utilization (ISRU) for water and oxygen extraction. Gravity: 0.38g. Supply runs from Earth: every 26 months."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "asteroid_mining",
+      "name": "Asteroid Mining Operations",
+      "timelineId": "space",
+      "order": 75,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "orbital_shipyard" } },
+        { "techLevel": { "min": 0.65 } },
+        { "year": { "min": 2060 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "resourceDeltas": { "rareEarths": 500, "minerals": 1000 },
+        "worldStateDeltas": { "commodityIndex": -0.3, "techLevel": 0.03 },
+        "unlocks": ["asteroid_resources", "space_manufacturing"],
+        "narrative": {
+          "pravdaHeadline": "ASTEROID MINING QUOTA ACHIEVED: Space Minerals Serve Five-Year Plan",
+          "toast": "A single metallic asteroid contains more platinum than has ever been mined on Earth. The quota for extracting it has been set at 150% of capacity. Standard procedure.",
+          "description": "Near-Earth asteroid mining provides rare earth elements, platinum group metals, and construction materials without the ecological cost of terrestrial extraction."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "venus_cloud_colony",
+      "name": "Venus Cloud Colony",
+      "timelineId": "space",
+      "order": 80,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "venera_landing" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_colony" } },
+        { "techLevel": { "min": 0.8 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "venus_cloud",
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["venus_settlement", "atmospheric_habitation"],
+        "narrative": {
+          "pravdaHeadline": "VENERA COLONY FLOATS: Soviet Habitat Suspended in Venusian Atmosphere",
+          "toast": "At 50 km altitude, Venus is the most Earth-like environment in the solar system: 1 atm pressure, 75°C, breathable density. Below that: hell. The colonists do not look down.",
+          "description": "Venus at 50-55 km altitude: 1 atmosphere, ~75°C, Earth-like gravity (0.9g). Breathable air (N2/O2) is a lifting gas in Venus's dense CO2 atmosphere. Soviet research from the Venera program makes this the logical next step. The Soviets landed on Venus 10 times — no one else has even tried."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "titan_colony",
+      "name": "Titan Hydrocarbon Colony",
+      "timelineId": "space",
+      "order": 85,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_colony" } },
+        { "techLevel": { "min": 0.85 } },
+        { "year": { "min": 2150 } }
+      ]},
+      "sustainedTicks": 36,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "titan",
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "resourceDeltas": { "hydrogen": 10000 },
+        "unlocks": ["titan_settlement", "hydrocarbon_extraction"],
+        "narrative": {
+          "pravdaHeadline": "TITAN COLONY OPERATIONAL: Methane Lakes Serve Industrial Plan",
+          "toast": "Saturn's largest moon has more hydrocarbons than all of Earth's reserves combined. The Five-Year Extraction Plan has been filed. Saturn is 1.2 billion km away. The filing system has not been optimized for this distance.",
+          "description": "Titan: thick atmosphere (1.5 atm), low gravity (0.14g), methane rain, -179°C. Lakes of liquid methane and ethane. No oxygen. But the hydrocarbons are effectively infinite. Pressurized habitats with nuclear heating."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "oneill_cylinder",
+      "name": "O'Neill Cylinder Construction",
+      "timelineId": "space",
+      "order": 90,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "orbital_shipyard" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "asteroid_mining" } },
+        { "techLevel": { "min": 0.88 } },
+        { "population": { "min": 50000 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "orbital_habitat",
+        "worldStateDeltas": { "techLevel": 0.06 },
+        "unlocks": ["artificial_gravity_habitats", "space_agriculture_at_scale"],
+        "narrative": {
+          "pravdaHeadline": "O'NEILL CYLINDER COMPLETE: Artificial World Rotates for Soviet Citizens",
+          "toast": "8 km long, 1 km radius, rotating at 0.53 rpm for 1g. Population capacity: 10,000. Inside, there are fields, rivers, and a bureau for cylinder maintenance permits.",
+          "description": "Gerard O'Neill's 1976 design realized with Soviet central planning. Island Three configuration: 8 km × 1 km counter-rotating cylinders with 1g at the rim. Interior landscapes, weather systems, and agriculture. The bureaucracy for allocating apartments is identical to Earth's."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "dyson_swarm_start",
+      "name": "Dyson Swarm Construction Begins",
+      "timelineId": "space",
+      "order": 100,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "oneill_cylinder" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "asteroid_mining" } },
+        { "techLevel": { "min": 0.95 } },
+        { "year": { "min": 3000 } }
+      ]},
+      "sustainedTicks": 120,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.1 },
+        "resourceDeltas": { "power": 100000 },
+        "unlocks": ["stellar_engineering", "dyson_swarm", "type_ii_civilization"],
+        "narrative": {
+          "pravdaHeadline": "DYSON SWARM CONSTRUCTION AUTHORIZED: Five-Year Plan for Stellar Engineering Approved",
+          "toast": "The Five-Year Plan for Stellar Engineering has been approved. Estimated completion: 50,000 years. This is within acceptable tolerances.",
+          "description": "Not a solid shell (physically impossible) but a swarm of orbiting solar collectors. Mercury is disassembled for raw materials. Each collector is a thin-film mirror redirecting solar energy. Completion requires millennia. The paperwork has already begun."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "generation_ship",
+      "name": "Generation Ship Launch",
+      "timelineId": "space",
+      "order": 110,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "oneill_cylinder" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "bios3_closed_ecosystem" } },
+        { "techLevel": { "min": 0.97 } },
+        { "or": [
+          { "year": { "min": 5000 } },
+          { "pressure": { "domain": "demographic", "min": 0.9 } }
+        ]}
+      ]},
+      "sustainedTicks": 120,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "generation_ship",
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["interstellar_transit", "generation_ship_culture"],
+        "narrative": {
+          "pravdaHeadline": "GENERATION SHIP LAUNCHES: 10,000 Soviet Citizens Begin Journey to Alpha Centauri",
+          "toast": "Transit time: approximately 400 years at 1% c. The passengers' great-great-great-great-great-great-great-great-grandchildren will arrive. Their personnel files will arrive first.",
+          "description": "A self-sustaining worldship based on O'Neill cylinder technology. 10,000 initial population, BIOS-3 derived closed ecosystem, artificial gravity. Destination: Proxima Centauri b (4.24 light-years). At 1% the speed of light: 424 years transit. The crew manifest is filed in triplicate."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "exoplanet_colony",
+      "name": "Exoplanet Colony Established",
+      "timelineId": "space",
+      "order": 120,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "generation_ship" } },
+        { "year": { "min": 6000 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "exoplanet",
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "unlocks": ["interstellar_civilization", "exoplanet_terraforming"],
+        "narrative": {
+          "pravdaHeadline": "SIGNAL RECEIVED FROM PROXIMA: Colony Established, Five-Year Plan Filed",
+          "toast": "After 400+ years of transit, the generation ship has arrived. The first message home: 'Colony established. Requesting updated quota assignments.' It will take 4.24 years to arrive.",
+          "description": "The light-speed communication delay means the colony is effectively autonomous. Moscow's directives arrive 4.24 years late. The colonists have adapted. They still file the paperwork."
+        }
+      },
+      "oneShot": true
+    }
+  ]
+}
