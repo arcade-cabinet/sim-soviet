@@ -17,7 +17,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import type React from 'react';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import type { Season } from './TerrainGrid';
+import type { Season } from '../engine/WeatherSystem';
 
 interface LightingProps {
   /** 0-1: 0=midnight, 0.25=dawn, 0.5=noon, 0.75=dusk */

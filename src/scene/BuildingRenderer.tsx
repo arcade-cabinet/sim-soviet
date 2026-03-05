@@ -20,7 +20,7 @@ import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSyste
 import { BUILDING_TYPES, GROWN_TYPES } from '../engine/BuildingTypes';
 import { getModelName, getTierVariant } from './ModelMapping';
 import { getModelUrl } from './ModelPreloader';
-import type { Season } from './TerrainGrid';
+import type { Season } from '../engine/WeatherSystem';
 import {
   applyConstructionState,
   applyFireTint,

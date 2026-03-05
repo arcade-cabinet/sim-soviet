@@ -16,7 +16,7 @@ import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import type { SettlementTier } from './ai/agents/infrastructure/SettlementSystem';
 import AudioManager from './audio/AudioManager';
-import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
+import { getBuildingStates } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
 import { getCurrentGridSize } from './engine/GridTypes';
 import { useGameSnapshot } from './hooks/useGameState';
@@ -49,11 +49,9 @@ import MeteorRenderer from './scene/MeteorRenderer';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import PoliticalEntityRenderer from './scene/PoliticalEntityRenderer';
 import PostProcessing from './scene/PostProcessing';
-import SceneProps from './scene/SceneProps';
 import SkyProgression from './scene/SkyProgression';
 import PermafrostOverlay from './scene/PermafrostOverlay';
 import SmogOverlay from './scene/SmogOverlay';
-import TerrainGrid from './scene/TerrainGrid';
 import TrainRenderer from './scene/TrainRenderer';
 import VehicleRenderer from './scene/VehicleRenderer';
 import WeatherFX from './scene/WeatherFX';
@@ -145,7 +143,6 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
   // Derive building states from ECS (archive merge)
   // The ECS building defIds match GLB model names directly
   const buildings = getBuildingStates();
-  const ecsGrid = getGridCells();
 
   // Grid center for positioning the celestial body under the settlement
   const center = getCurrentGridSize() / 2;
@@ -181,10 +178,6 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
           onFlattenChange={setFlatten}
         />
       </group>
-      {/* Local Settlement Grid — fades in as camera zooms into flat mode */}
-      <group position={[0, 0.01, 0]}>
-        <TerrainGrid grid={ecsGrid} season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} flatten={flatten} />
-      </group>
       <BuildingRenderer
         buildings={buildings}
         settlementTier={snap.settlementTier as SettlementTier}
@@ -195,7 +188,6 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
       <BuildingStatusBadges buildings={buildings} />
       <ArcologyDomes />
       <CollapseOverlay />
-      <SceneProps season={snap.season} />
 
       <WeatherFX />
       <SmogOverlay />

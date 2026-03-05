@@ -13,8 +13,7 @@ import { getGameSpeed } from '@/stores/gameStore';
 import { DIRECTIVES } from '../engine/Directives';
 import { type GameState, gameState } from '../engine/GameState';
 import { TICKS_PER_MONTH } from '../engine/GridTypes';
-import { getSeason } from '../engine/WeatherSystem';
-import type { Season } from '../scene/TerrainGrid';
+import { getSeason, type Season } from '../engine/WeatherSystem';
 
 /** Immutable snapshot of derived values for UI consumption. */
 export interface GameSnapshot {

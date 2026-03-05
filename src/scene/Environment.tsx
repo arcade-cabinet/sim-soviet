@@ -25,7 +25,7 @@ import * as THREE from 'three';
 import type { EraId } from '../game/era/types';
 import { getCurrentGridSize } from '../engine/GridTypes';
 import { assetUrl } from '../utils/assetPath';
-import type { Season } from './TerrainGrid';
+import type { Season } from '../engine/WeatherSystem';
 import {
   DECAY_OVERLAYS,
   TERRAIN_DECAY_OVERLAYS,
@@ -56,6 +56,7 @@ function getHdriFile(season: Season, loadZoneHdri?: string): string {
       return assetUrl('assets/hdri/snowy_park_01_1k.hdr');
     case 'spring':
     case 'summer':
+    default:
       return assetUrl('assets/hdri/winter_sky_1k.hdr');
   }
 }
