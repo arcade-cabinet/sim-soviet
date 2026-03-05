@@ -13,7 +13,7 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { NarrativeEvent } from '../game/timeline/TimelineLayer';
-import { enrichSceneWithGemini } from '../ai/narrative/GeminiNarrativeEnricher';
+import { getEnrichedScene } from '../ai/narrative/GeminiNarrativeEnricher';
 import { Colors, monoFont } from './styles';
 
 export interface NarrativeEventOverlayProps {
@@ -50,8 +50,6 @@ export const NarrativeEventOverlay: React.FC<NarrativeEventOverlayProps> = ({
   const [typewriterDone, setTypewriterDone] = useState(false);
   const [ticksRemaining, setTicksRemaining] = useState(0);
   const [resolved, setResolved] = useState(false);
-  const [enrichedScene, setEnrichedScene] = useState<string | null>(null);
-  const [enriching, setEnriching] = useState(false);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typewriterRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -65,8 +63,6 @@ export const NarrativeEventOverlay: React.FC<NarrativeEventOverlayProps> = ({
     setResolved(false);
     setDisplayedScene('');
     setTypewriterDone(false);
-    setEnrichedScene(null);
-    setEnriching(false);
     setTicksRemaining(event.tickLimit);
 
     Animated.timing(fadeAnim, {
@@ -74,27 +70,13 @@ export const NarrativeEventOverlay: React.FC<NarrativeEventOverlayProps> = ({
       duration: 600,
       useNativeDriver: true,
     }).start();
-
-    // Optional Gemini enrichment (no-op if API key absent)
-    const runEnrichment = async () => {
-      setEnriching(true);
-      const enriched = await enrichSceneWithGemini(event);
-      setEnriching(false);
-      if (enriched && enriched !== event.scene) {
-        setEnrichedScene(enriched);
-        // Restart typewriter with enriched text
-        setDisplayedScene('');
-        setTypewriterDone(false);
-      }
-    };
-    runEnrichment().catch(() => setEnriching(false));
   }, [event]);
 
   // Typewriter effect
   useEffect(() => {
     if (!event) return;
 
-    const sourceText = enrichedScene ?? event.scene;
+    const sourceText = getEnrichedScene(event.milestoneId) ?? event.scene;
 
     if (typewriterDone) return;
 
@@ -113,7 +95,7 @@ export const NarrativeEventOverlay: React.FC<NarrativeEventOverlayProps> = ({
     return () => {
       if (typewriterRef.current) clearInterval(typewriterRef.current);
     };
-  }, [event, enrichedScene, typewriterDone]);
+  }, [event, typewriterDone]);
 
   // Auto-resolve countdown (~800ms ≈ 1 display tick)
   useEffect(() => {
@@ -184,9 +166,6 @@ export const NarrativeEventOverlay: React.FC<NarrativeEventOverlayProps> = ({
         >
           <Text style={styles.sceneText}>{displayedScene}</Text>
           {!typewriterDone && <Text style={styles.cursor}>█</Text>}
-          {enriching && typewriterDone && (
-            <Text style={styles.enrichingNote}>[ Gemini enriching... ]</Text>
-          )}
         </ScrollView>
 
         <View style={styles.divider} />
@@ -360,13 +339,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.termGreen,
     opacity: 0.9,
-  },
-  enrichingNote: {
-    fontFamily: monoFont,
-    fontSize: 9,
-    color: Colors.textMuted,
-    fontStyle: 'italic',
-    marginTop: 8,
   },
   choicesSection: {
     marginTop: 4,

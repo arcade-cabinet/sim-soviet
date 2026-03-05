@@ -16,6 +16,7 @@
     "lint:fix": "biome check --fix .",
     "format": "biome format --write .",
     "optimize-assets": "node scripts/optimize-assets.mjs",
+    "enrich-narratives": "tsx scripts/enrich-narratives.ts",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "docs:api": "typedoc",
@@ -67,6 +68,7 @@
     "jest-expo": "~55.0.9",
     "ktx-parse": "^1.1.0",
     "sharp": "^0.34.5",
+    "tsx": "^4.21.0",
     "typedoc": "^0.28.17",
     "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "^5.9.3"
