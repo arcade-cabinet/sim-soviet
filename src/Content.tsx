@@ -33,7 +33,6 @@ import BuildingStatusBadges from './scene/BuildingStatusBadges';
 import CameraController from './scene/CameraController';
 import CitizenRenderer from './scene/CitizenRenderer';
 import Environment from './scene/Environment';
-import { getLoadZone } from './scene/loadZones';
 import FireRenderer from './scene/FireRenderer';
 import FloatingText from './scene/FloatingText';
 import GhostPreview from './scene/GhostPreview';
@@ -81,11 +80,13 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
 
   useEffect(() => {
     if (total > 0) {
-      // Map drei progress to our progress callback
-      // Use TOTAL_MODEL_COUNT as a stable "total" since drei's total can fluctuate
-      const displayTotal = Math.max(total, TOTAL_MODEL_COUNT);
+      // Use TOTAL_MODEL_COUNT as the stable display total — drei's total
+      // fluctuates as Poly Haven GLBs and prop models are discovered.
+      // Cap loaded at displayTotal to prevent "401/98" display.
+      const displayTotal = TOTAL_MODEL_COUNT;
+      const displayLoaded = Math.min(loaded, displayTotal);
       const modelName = item ? (item.split('/').pop()?.replace('.glb', '') ?? '') : '';
-      onLoadProgress?.(loaded, displayTotal, modelName);
+      onLoadProgress?.(displayLoaded, displayTotal, modelName);
     }
 
     if (total > 0 && loaded === total && !completedRef.current) {
@@ -137,14 +138,6 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
         season={snap.season}
         era={snap.currentEra as import('./game/era/types').EraId}
         techLevel={spaceVisual.techLevel}
-        {...(() => {
-          const zone = getLoadZone('earth', snap.currentEra);
-          return {
-            loadZoneHdri: zone.hdri !== 'snowy_field_1k.hdr' ? zone.hdri : undefined,
-            loadZoneShader: zone.shader,
-            marsPhase: zone.marsPhase,
-          };
-        })()}
       />
       <SkyProgression state={spaceVisual} />
       <AlienFaunaRenderer />
