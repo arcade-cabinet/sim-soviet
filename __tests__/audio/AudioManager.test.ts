@@ -242,12 +242,121 @@ describe('AudioManager', () => {
     });
   });
 
+  describe('setEra', () => {
+    // Helper to flush microtasks (playTrack is async internally)
+    const flushPromises = () => new Promise((r) => jest.requireActual<typeof globalThis>('timers').setImmediate(r));
+
+    it('sets the current era', () => {
+      manager.setEra('revolution');
+      expect(manager.getCurrentEra()).toBe('revolution');
+    });
+
+    it('routes to era-specific playlist tracks', async () => {
+      manager.setEra('revolution');
+      await flushPromises();
+      expect(mockCtx.createBufferSource).toHaveBeenCalled();
+    });
+
+    it('does not restart playlist when same era is set', async () => {
+      manager.setEra('revolution');
+      await flushPromises();
+      const callCount = mockCtx.createBufferSource.mock.calls.length;
+      manager.setEra('revolution');
+      await flushPromises();
+      expect(mockCtx.createBufferSource.mock.calls.length).toBe(callCount);
+    });
+
+    it('switches playlist when era changes', async () => {
+      manager.setEra('revolution');
+      await flushPromises();
+      const firstCallCount = mockCtx.createBufferSource.mock.calls.length;
+      manager.setEra('stagnation');
+      await flushPromises();
+      expect(mockCtx.createBufferSource.mock.calls.length).toBeGreaterThan(firstCallCount);
+    });
+
+    it('falls back to full playlist for unknown era', async () => {
+      manager.setEra('unknown_era');
+      await flushPromises();
+      expect(manager.getCurrentEra()).toBe('unknown_era');
+      expect(mockCtx.createBufferSource).toHaveBeenCalled();
+    });
+  });
+
+  describe('node cleanup', () => {
+    it('disconnects source and trackGain when track ends naturally', async () => {
+      await manager.playTrack('katyusha');
+      const source = mockCtx.createBufferSource.mock.results[0]?.value;
+      const trackGain = mockCtx.createGain.mock.results[2]?.value; // index 2: after masterGain + incidentalGain
+
+      // Simulate track ending
+      if (source?.onended) {
+        source.onended();
+      }
+
+      expect(source.disconnect).toHaveBeenCalled();
+      expect(trackGain.disconnect).toHaveBeenCalled();
+    });
+
+    it('decrements active node count after track ends', async () => {
+      await manager.playTrack('katyusha');
+      const initialCount = manager.getActiveNodeCount();
+      expect(initialCount).toBe(2); // source + trackGain
+
+      const source = mockCtx.createBufferSource.mock.results[0]?.value;
+      if (source?.onended) {
+        source.onended();
+      }
+
+      expect(manager.getActiveNodeCount()).toBe(0);
+    });
+
+    it('disconnects incidental source and gain when incidental ends', async () => {
+      await manager.playIncidental('sacred_war');
+      const source = mockCtx.createBufferSource.mock.results[0]?.value;
+
+      if (source?.onended) {
+        source.onended();
+      }
+
+      expect(source.disconnect).toHaveBeenCalled();
+    });
+  });
+
+  describe('context health', () => {
+    it('resumes suspended AudioContext on playTrack', async () => {
+      mockCtx.state = 'suspended';
+      await manager.playTrack('katyusha');
+      expect(mockCtx.resume).toHaveBeenCalled();
+    });
+
+    it('resumes suspended AudioContext on playIncidental', async () => {
+      mockCtx.state = 'suspended';
+      await manager.playIncidental('sacred_war');
+      expect(mockCtx.resume).toHaveBeenCalled();
+    });
+
+    it('tracks active node count', async () => {
+      expect(manager.getActiveNodeCount()).toBe(0);
+      await manager.playTrack('katyusha');
+      expect(manager.getActiveNodeCount()).toBe(2); // source + gain
+    });
+  });
+
   describe('dispose', () => {
     it('cleans up incidental state', async () => {
       await manager.playIncidental('sacred_war');
       manager.dispose();
       expect(manager.isDucked).toBe(false);
       expect(manager.getSavedPosition()).toBe(0);
+    });
+
+    it('resets era and node count', async () => {
+      manager.setEra('revolution');
+      await manager.playTrack('katyusha');
+      manager.dispose();
+      expect(manager.getCurrentEra()).toBeNull();
+      expect(manager.getActiveNodeCount()).toBe(0);
     });
   });
 });

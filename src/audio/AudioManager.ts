@@ -13,13 +13,15 @@
  */
 
 import { assetUrl } from '../utils/assetPath';
-import { GAMEPLAY_PLAYLIST, getTrack, MUSIC_CONTEXTS } from './AudioManifest';
+import { GAMEPLAY_PLAYLIST, getEraPlaylist, getTrack, MUSIC_CONTEXTS } from './AudioManifest';
 
 const AUDIO_BASE_PATH = `${assetUrl('assets/audio/music')}/`;
 const DEFAULT_CROSSFADE_MS = 5000;
 const MASTER_VOLUME = 0.5;
 const MAX_BUFFER_CACHE_SIZE = 50;
 const DUCK_AMOUNT = 0.7;
+/** Warn when active node count exceeds this threshold. */
+const NODE_CAP_WARNING = 500;
 
 /**
  * Web Audio API-based music playback manager (singleton).
@@ -55,6 +57,8 @@ class AudioManager {
   private playlistIndex = 0;
   private masterVolume = MASTER_VOLUME;
   private muted = false;
+  private currentEra: string | null = null;
+  private activeNodeCount = 0;
 
   /** Get or create the singleton AudioManager instance. */
   static getInstance(): AudioManager {
@@ -100,14 +104,8 @@ class AudioManager {
     const track = getTrack(trackId);
     if (!track) return;
 
-    // Resume AudioContext if suspended (autoplay policy)
-    if (this.audioCtx.state === 'suspended') {
-      try {
-        await this.audioCtx.resume();
-      } catch {
-        // Ignore -- will retry on next user gesture
-      }
-    }
+    // Health check: resume suspended context + warn on high node count
+    await this.ensureContextHealth();
 
     // Fade out current track
     this.fadeOutCurrent(fadeMs);
@@ -123,15 +121,20 @@ class AudioManager {
       const baseVol = this.muted ? 0 : track.volume;
       trackGain.gain.value = baseVol * this.duckLevel;
       trackGain.connect(this.masterGain);
+      this.activeNodeCount++;
 
       // Create source
       const source = this.audioCtx.createBufferSource();
       source.buffer = buffer;
       source.loop = track.loop;
       source.connect(trackGain);
+      this.activeNodeCount++;
 
-      // On ended, advance playlist (for non-looping tracks)
+      // On ended, disconnect nodes for GC and advance playlist
       source.onended = () => {
+        source.disconnect();
+        trackGain.disconnect();
+        this.activeNodeCount = Math.max(0, this.activeNodeCount - 2);
         if (!track.loop && this.currentSource === source) {
           this.currentSource = null;
           this.currentTrackId = null;
@@ -164,6 +167,32 @@ class AudioManager {
   }
 
   /**
+   * Set the current era and switch the playlist to era-appropriate tracks.
+   * Crossfades to the first track of the new era playlist.
+   *
+   * @param era - Era identifier (e.g. 'revolution', 'stagnation', 'the_eternal')
+   */
+  setEra(era: string): void {
+    if (era === this.currentEra) return;
+    this.currentEra = era;
+
+    const eraTracks = getEraPlaylist(era);
+    this.playlist = [...eraTracks].sort(() => Math.random() - 0.5);
+    this.playlistIndex = 0;
+    this.playNext();
+  }
+
+  /** Get the current era, if set. */
+  getCurrentEra(): string | null {
+    return this.currentEra;
+  }
+
+  /** Get the active Web Audio node count. */
+  getActiveNodeCount(): number {
+    return this.activeNodeCount;
+  }
+
+  /**
    * Play a short incidental cue over the base layer.
    * Ducks the base layer by 30% during playback.
    *
@@ -175,14 +204,8 @@ class AudioManager {
     const track = getTrack(trackId);
     if (!track) return;
 
-    // Resume AudioContext if suspended
-    if (this.audioCtx.state === 'suspended') {
-      try {
-        await this.audioCtx.resume();
-      } catch {
-        // Ignore
-      }
-    }
+    // Health check: resume suspended context + warn on high node count
+    await this.ensureContextHealth();
 
     // Stop any existing incidental
     this.stopIncidental();
@@ -209,8 +232,12 @@ class AudioManager {
       trackVolumeGain.gain.value = track.volume ?? 1.0;
       source.connect(trackVolumeGain);
       trackVolumeGain.connect(this.incidentalGain);
+      this.activeNodeCount += 2;
 
       source.onended = () => {
+        source.disconnect();
+        trackVolumeGain.disconnect();
+        this.activeNodeCount = Math.max(0, this.activeNodeCount - 2);
         if (this.incidentalSource === source) {
           this.cleanupIncidental();
         }
@@ -289,8 +316,9 @@ class AudioManager {
   private playNext(): void {
     if (this.playlist.length === 0) return;
     if (this.playlistIndex >= this.playlist.length) {
-      // Reshuffle and restart
-      this.playlist = [...GAMEPLAY_PLAYLIST].sort(() => Math.random() - 0.5);
+      // Reshuffle and restart — use era playlist if era is set
+      const source = this.currentEra ? getEraPlaylist(this.currentEra) : GAMEPLAY_PLAYLIST;
+      this.playlist = [...source].sort(() => Math.random() - 0.5);
       this.playlistIndex = 0;
     }
     const trackId = this.playlist[this.playlistIndex];
@@ -320,6 +348,7 @@ class AudioManager {
         }
         source.disconnect();
         trackGain.disconnect();
+        this.activeNodeCount = Math.max(0, this.activeNodeCount - 2);
       }, fadeMs + 100);
     } else {
       try {
@@ -328,6 +357,7 @@ class AudioManager {
         // Already stopped
       }
       source.disconnect();
+      this.activeNodeCount = Math.max(0, this.activeNodeCount - 1);
     }
   }
 
@@ -353,6 +383,27 @@ class AudioManager {
     }
     this.incidentalSource = null;
     this.unduck();
+  }
+
+  /**
+   * Ensure the AudioContext is healthy: resume if suspended, warn if node count is high.
+   * Called before creating new audio nodes.
+   */
+  private async ensureContextHealth(): Promise<void> {
+    if (!this.audioCtx) return;
+
+    if (this.audioCtx.state === 'suspended') {
+      try {
+        await this.audioCtx.resume();
+        console.warn('[AudioManager] AudioContext was suspended — resumed.');
+      } catch {
+        // Will retry on next user gesture
+      }
+    }
+
+    if (this.activeNodeCount > NODE_CAP_WARNING) {
+      console.warn(`[AudioManager] High node count: ${this.activeNodeCount}. Potential memory pressure.`);
+    }
   }
 
   /** Fetch and decode an audio file, with caching. */
@@ -440,6 +491,8 @@ class AudioManager {
     this.bufferCache.clear();
     this.playlist = [];
     this.playlistIndex = 0;
+    this.currentEra = null;
+    this.activeNodeCount = 0;
 
     AudioManager.instance = null;
   }

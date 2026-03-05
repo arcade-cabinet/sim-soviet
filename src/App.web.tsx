@@ -11,7 +11,7 @@ import { Canvas } from '@react-three/fiber';
 import React, { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AudioManager from './audio/AudioManager';
-import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
+import { SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
 import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitialized } from './bridge/GameInit';
@@ -102,7 +102,7 @@ import { ScoringPanel } from './ui/ScoringPanel';
 import { SettingsModal } from './ui/SettingsModal';
 import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
 import { Colors } from './ui/styles';
-// Ticker removed — Phase 1 minimal HUD
+import { PravdaTicker } from './ui/PravdaTicker';
 import { Toast } from './ui/Toast';
 // Toolbar removed — Phase 1 minimal HUD
 // UI components
@@ -182,7 +182,8 @@ const App: React.FC = () => {
     name: '',
   });
 
-  // Ticker is not rendered in Phase 1 — state removed to avoid accumulation
+  // Pravda ticker headlines (scrolling news bar)
+  const [pravdaHeadlines, setPravdaHeadlines] = useState<string[]>([]);
 
   // ── Panel state ──
   const [showPersonnelFile, setShowPersonnelFile] = useState(false);
@@ -322,8 +323,8 @@ const App: React.FC = () => {
             showAdvisor(gameState, msg);
             SFXManager.getInstance().play('advisor_message');
           },
-          onPravda: (_msg) => {
-            // Ticker is not rendered in Phase 1 — do not accumulate text in state
+          onPravda: (msg) => {
+            setPravdaHeadlines((prev) => [msg, ...prev].slice(0, 20));
           },
           onStateChange: () => {
             // Sync ECS building powered state to old GameState for 3D effects
@@ -386,10 +387,8 @@ const App: React.FC = () => {
           onEraChanged: (era) => {
             setEraTransition(era);
             SFXManager.getInstance().play('era_transition');
-            const ctx = ERA_CONTEXTS[era.id];
-            if (ctx) {
-              AudioManager.getInstance().playContext(ctx, 5000);
-            }
+            // Switch playlist to era-appropriate tracks with crossfade
+            AudioManager.getInstance().setEra(era.id);
             // Notify store so RadialMenu re-renders with newly unlocked buildings
             notifyStateChange();
           },
@@ -462,9 +461,8 @@ const App: React.FC = () => {
     // expo-sqlite handles persistence automatically — no beforeunload needed
   }, [screen]);
 
-  // Ticker messages now come exclusively from PravdaSystem via
-  // the onPravda callback (event-reactive + ambient headlines).
-  // The old static setInterval fallback has been removed.
+  // Pravda headlines accumulate via the onPravda callback and display
+  // in the PravdaTicker scrolling bar at the bottom of the screen.
 
   // --- Loading callbacks ---
   const handleLoadProgress = useCallback((loaded: number, total: number, name: string) => {
@@ -873,6 +871,8 @@ const App: React.FC = () => {
             />
           </View>
         )}
+
+        {loadingFaded && <PravdaTicker headlines={pravdaHeadlines} />}
 
         {!loadingFaded && (
           <LoadingScreen
