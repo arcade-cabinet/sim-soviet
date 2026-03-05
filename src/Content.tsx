@@ -19,7 +19,7 @@ import AudioManager from './audio/AudioManager';
 import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
 import { useGameSnapshot } from './hooks/useGameState';
-import { notifyStateChange, useTerrainVersion } from './stores/gameStore';
+import { notifyStateChange, useSpaceVisualState, useTerrainVersion } from './stores/gameStore';
 
 // Import ModelPreloader for its side-effect (calls useGLTF.preload)
 import './scene/ModelPreloader';
@@ -41,6 +41,8 @@ import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import PoliticalEntityRenderer from './scene/PoliticalEntityRenderer';
 import PostProcessing from './scene/PostProcessing';
 import SceneProps from './scene/SceneProps';
+import SkyProgression from './scene/SkyProgression';
+import PermafrostOverlay from './scene/PermafrostOverlay';
 import SmogOverlay from './scene/SmogOverlay';
 // Scene components
 import TerrainGrid from './scene/TerrainGrid';
@@ -61,6 +63,7 @@ interface ContentProps {
 
 const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disableCamera }) => {
   const snap = useGameSnapshot();
+  const spaceVisual = useSpaceVisualState();
 
   // Track drei loading progress (useGLTF.preload triggers this)
   const { loaded, total, item } = useProgress();
@@ -120,13 +123,15 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
   return (
     <>
       <CameraController disabled={disableCamera} />
-      <Environment season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} />
+      <Environment season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} techLevel={spaceVisual.techLevel} />
+      <SkyProgression state={spaceVisual} />
       <Lighting timeOfDay={snap.timeOfDay} season={snap.season} isStorm={snap.weatherLabel === 'STORM'} />
       <TerrainGrid grid={ecsGrid} season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} />
       <BuildingRenderer
         buildings={buildings}
         settlementTier={snap.settlementTier as SettlementTier}
         season={snap.season}
+        currentEra={snap.currentEra}
       />
       <BuildingStatusBadges buildings={buildings} />
       <SceneProps season={snap.season} />
@@ -136,6 +141,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
       <FireRenderer />
       <AuraRenderer />
       <HeatingOverlay />
+      <PermafrostOverlay />
       <LightningRenderer />
       <TrainRenderer />
       <VehicleRenderer />
