@@ -113,6 +113,30 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
     }
     syncAnnualReportState(ctx, reportCtx.engineState);
 
+    // ── 1991 Historical Divergence ──────────────────────────────────────────
+    if (
+      ctx.state.gameMode === 'historical' &&
+      !ctx.state.historicalDivergenceFired &&
+      chronoAgent.getDate().year >= 1991
+    ) {
+      ctx.state.historicalDivergenceFired = true;
+
+      const resolve = (continueInFreeform: boolean) => {
+        if (continueInFreeform) {
+          ctx.switchToFreeformMode();
+        } else {
+          ctx.endGame(false, 'ussr_dissolved');
+        }
+      };
+
+      if (ctx.callbacks.onHistoricalEraEnd) {
+        ctx.callbacks.onHistoricalEraEnd(resolve);
+      } else {
+        // No UI handler — auto-continue into freeform
+        ctx.switchToFreeformMode();
+      }
+    }
+
     // ── 2.1 Dynamic map expansion ──
     runMapExpansion(ctx);
 
