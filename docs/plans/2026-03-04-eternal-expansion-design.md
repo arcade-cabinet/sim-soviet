@@ -331,6 +331,121 @@ All these timelines, thresholds, and parameters should live in:
 4. Extract historical crises to config/crises.json (already partially done)
 5. Loader functions that parse JSON → typed objects
 
+## Decomposing "the_eternal" — Kardashev Sub-Eras
+
+"The_eternal" as a SINGLE era is a design failure. A civilization going from year 2000 to year 100,000 undergoes MORE dramatic transformation than 1917-1991. The Kardashev scale provides the perfect sub-era framework — each 0.1 increment IS a distinct phase with its own resource management, construction types, societal pressures, and aesthetics.
+
+### Sub-Era Progression
+
+| Sub-Era | K-Scale | Years | Key Mechanic | Aesthetic |
+|---------|---------|-------|-------------|-----------|
+| **Post-Soviet** | 0.72→0.80 | 1991-2100 | Climate adaptation, first domes, sphere dynamics | Brutalist + glass |
+| **Planetary** | 0.80→0.90 | 2100-2500 | Multi-settlement, Moon/Mars colonies, dome mandatory | Space station industrial |
+| **Solar Engineering** | 0.90→1.00 | 2500-5000 | Orbital megastructures, asteroid mining, O'Neill cylinders | Orbital habitat |
+| **Type I (Planetary Mastery)** | 1.0 | ~5000 | Full planetary energy capture, weather/geology control | Pristine controlled |
+| **Deconstruction** | 1.0→1.5 | 5000-20000 | Disassemble Mercury, Venus, Moon for Dyson swarm | Industrial solar |
+| **Dyson Swarm** | 1.5→1.8 | 20000-50000 | Partial star enclosure, Jupiter gas harvesting | Swarm habitat |
+| **MegaEarth** | 1.8→2.0 | 50000-100000 | Consume outer planets to expand habitable surface | Planetary engineering |
+| **Type II Peak (The Trap)** | 2.0 | 100000+ | Full solar output captured. NO FTL. The ceiling. | Dyson interior |
+
+Each sub-era transition triggers the same mechanism as historical era transitions: new building types, new pressure dynamics, new cold branches, new prestige projects, visual changes.
+
+### The Type II Trap — "The Soviet Paradox"
+
+**The most interesting gameplay happens when you've WON.** Full Dyson sphere. Every planet deconstructed. Every resource in the solar system being used. Effectively infinite energy within the solar system. But:
+
+- **No FTL**: Generation ships take 10,000-100,000 years. You've sent them. You'll never hear back.
+- **No expansion**: Hard ceiling. Everything in the solar system IS you.
+- **Bureaucratic singularity**: The Soviet system that got you here is now managing a Dyson sphere. 50 billion souls in a MegaEarth arcology run by committees. Peak absurdity.
+- **Internal pressure only**: All the pressure domains that used to come from external sources (border threat, trade, war) now come entirely from WITHIN. Elite overproduction at civilizational scale. Turchin's cycles compressed because there's nowhere to emigrate to.
+- **Energy abundance ≠ happiness**: The Sun produces 3.8 × 10²⁶ watts. You have ALL of it. People are still miserable, still sabotaging vodka rations, still bribing their sector commissar. The game's core thesis proven at cosmic scale.
+- **The Long Wait**: Generation ships sent to Alpha Centauri 40,000 years ago. Radio silence. Cold branch: "The Long Dark" — did they make it? Will they ever call back? This is the endgame's central tension.
+
+### Planetary Deconstruction as Gameplay
+
+Each planet deconstructed is a SETTLEMENT that transforms into a RESOURCE SUPPLY. The player manages the political crisis of evacuation, the engineering of dismantlement, and the construction of Dyson swarm components.
+
+**Deconstruction order** (optimal engineering sequence):
+
+| Order | Target | Mass (Earth=1) | Resources Gained | Gameplay Drama |
+|-------|--------|----------------|-----------------|----------------|
+| 1 | **Moon** | 0.012 | Silicates, rare earths, He-3 | First — closest, lowest gravity. Lunar colony becomes mining operation. Politically easy (small population). |
+| 2 | **Mercury** | 0.055 | Iron, solar proximity metals | Closest to Sun = ideal Dyson swarm staging. Extreme heat settlement evacuated. Iron is Dyson swarm backbone. |
+| 3 | **Venus** | 0.815 | CO2 (carbon), metals, atmosphere | Cloud colonies must evacuate. MASSIVE political crisis — Venus colony may be 500K people. Where do they go? |
+| 4 | **Mars** | 0.107 | Iron oxide, water ice | Politically devastating — Mars colony (potentially millions) must relocate BACK to MegaEarth. Wars have been fought over less. |
+| 5 | **Jupiter** | 317.8 | Hydrogen, helium-3 (fuel) | NOT full deconstruction — too massive. Gas HARVESTING for fusion fuel. Endless supply. Atmospheric mining colonies. |
+| 6 | **Saturn** | 95.2 | Hydrogen, exotic ices | Gas harvesting + ring material (pure water ice, silicates). Ring mining is its own sub-economy. |
+| 7 | **Uranus/Neptune** | 14.5/17.1 | Heavy metals, exotic ices, methane | Ice giant mining for fusion fuel + exotic materials. Extreme-distance settlements. |
+
+Each deconstruction is a COLD BRANCH — it fires when resource pressure + tech level + political conditions align. Moscow (or whatever central authority exists) mandates it as a 5-year plan. You choose HOW to manage the evacuation.
+
+**Material math** (grounding in reality):
+- Sun output: 3.8 × 10²⁶ watts
+- Mercury's mass: 3.3 × 10²³ kg (enough for ~10⁻³ AU² of Dyson swarm)
+- Venus's mass: 4.87 × 10²⁴ kg (enough for ~10⁻² AU² of Dyson swarm)
+- To fully enclose the Sun at 1 AU: ~2.8 × 10²³ m² surface area, requiring ~10²⁶ kg of material
+- Earth + all rocky planets: ~6 × 10²⁴ kg total. NOT ENOUGH for a solid Dyson shell.
+- Hence: Dyson SWARM (individual collectors), not solid shell. Even Type II still has limitations.
+
+### MegaEarth Concept
+
+As planets are deconstructed, their material is used for TWO purposes:
+1. **Dyson swarm collectors** orbiting the Sun
+2. **MegaEarth expansion** — literally ADDING surface area to Earth
+
+MegaEarth is built by:
+- Extending the planetary surface outward with deconstructed planetary material
+- Building upward in arcology layers (Judge Dredd megacity structure)
+- Filling oceans with platform structures (new "land" at sea level)
+- Expanding the Moon's orbit outward (or consuming the Moon for material)
+
+At full MegaEarth, the habitable surface is 10-100× original Earth. Population: 50-500 billion. All under domes/arcologies. All still governed by Soviet committee structure. All still receiving 5-year plans from whatever Moscow has become.
+
+### MegaCity Law Enforcement (Judge Dredd Mechanic)
+
+At MegaEarth scale (population > 1 billion), law enforcement becomes a full gameplay domain. This extends the existing KGB/political agent architecture — the SAME systems, scaled to megacity proportions.
+
+**New pressure domain**: `density` — population per habitable area unit
+
+**Sector Blocks**: MegaEarth divided into administrative sectors (like dvory scale up to buildings, buildings to arcologies, arcologies to sectors). Each sector is a mini-settlement within the MegaEarth.
+
+**KGB → Judge Corps evolution**:
+| Era | Law Enforcement | Mechanic |
+|-----|----------------|----------|
+| 1917-1991 | KGB, politruks | Suspicion, marks, blat |
+| 1991-2500 | Security services | Same mechanics, less ideological |
+| 2500-10000 | Sector Judges | Crime rate per sector, patrol coverage |
+| 10000-100000 | Megacity Arbiters | Population density drives crime; undercity exploration |
+
+**Crime rate model**:
+```
+crimeRate = baseCrime * (1 + densityPressure) * (1 - employmentRate) * (1 - morale/100)
+           * (1 + inequalityIndex) * (1 - judgeCoverage)
+```
+
+**Undercity**: Below the arcology layers, abandoned infrastructure becomes criminal territory. This is emergent — as arcologies build upward, lower levels are left to decay. The player can invest in undercity maintenance (expensive, reduces crime) or let it rot (cheap, crime pressure increases).
+
+**Iso-Cubes**: Gulag system at megacity scale. Solves overcrowding AND provides forced labor. Same moral choice as historical gulags, just at cosmic scale. The game's thesis remains consistent: the system is the antagonist.
+
+## Long-Running Gameplay Loop (100x for 1 Hour)
+
+### The Math
+
+At 100x speed: 1 real second = 100 game ticks. 1 game year ≈ 12 ticks = 0.12 real seconds.
+- 1 hour at 100x = 3600 seconds = 360,000 ticks = ~30,000 game years.
+- So an hour-long session starting in 1917 reaches **year ~32,000** — deep into the Deconstruction/Dyson Swarm sub-era.
+
+### What the Player DOES at 100x
+
+At high speed, the player is NOT micromanaging. They're watching civilizational evolution and responding to:
+1. **Cold branch activations** — "Alert: Mercury Deconstruction Mandate received" → choose HOW to manage it
+2. **Sphere dynamics shifts** — "Western sphere has fragmented into 3 sub-spheres" → affects trade/tension
+3. **Pressure crisis emergence** — demographic pressure at Dyson Swarm scale → new settlement mandate
+4. **Governance transitions** — "Corporate sphere attempting Type II energy monopoly" → political response
+5. **The Long Dark** — generation ship radio silence → hope/despair toggle on morale
+
+The game at 100x should feel like watching a CIVILIZATION unfold, with occasional moments where the player makes high-stakes decisions about the direction of cosmic-scale Soviet planning.
+
 ## Verification
 
 1. `npx tsc --noEmit` — zero type errors
@@ -341,4 +456,7 @@ All these timelines, thresholds, and parameters should live in:
 6. Multi-settlement tick completes without crash
 7. Cold branches activate in 1000-year freeform run
 8. Ecological collapse timeline fires correctly
-9. Save/load preserves all new state
+9. Planetary deconstruction sequence works (Moon → Mercury → Venus → Mars → gas giants)
+10. MegaEarth population scales to billions without performance regression
+11. Save/load preserves all new state
+12. 100x speed for 1 hour (30,000 years) completes without crash or stall

@@ -39,8 +39,8 @@ describe('getModelName', () => {
 
   it('returns era-specific model for factory in the_eternal', () => {
     expect(getModelName('factory', 0, 'the_eternal')).toBe('colony-workshop');
-    expect(getModelName('factory', 1, 'the_eternal')).toBe('colony-factory');
-    expect(getModelName('factory', 2, 'the_eternal')).toBe('colony-megafactory');
+    expect(getModelName('factory', 1, 'the_eternal')).toBe('spacestation-02');
+    expect(getModelName('factory', 2, 'the_eternal')).toBe('spacestation-04');
   });
 
   it('falls back to default MODEL_MAP when era has no override for type', () => {
@@ -192,7 +192,7 @@ describe('Colony models in manifest', () => {
   it('colony roles are listed in manifest roles section', () => {
     const roles = manifest.roles as Record<string, string[]>;
     expect(roles.colony_housing).toBeDefined();
-    expect(roles.colony_housing.length).toBe(3);
+    expect(roles.colony_housing.length).toBe(5);
     expect(roles.colony_industry).toBeDefined();
     expect(roles.colony_power).toBeDefined();
     expect(roles.colony_government).toBeDefined();

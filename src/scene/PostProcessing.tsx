@@ -30,7 +30,7 @@ const PostProcessing: React.FC = () => {
 
   // Calculate famine desaturation amount from active VFX
   const famineDesat = useMemo(() => {
-    const famine = vfx.find((e) => e.type === 'famine_desat');
+    const famine = vfx.find((e) => e.type === 'famine_haze');
     if (!famine) return 0;
     const t = effectProgress(famine);
     // Ramp up over first 10%, hold, then fade out over last 20%

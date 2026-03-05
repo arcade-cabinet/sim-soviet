@@ -264,7 +264,7 @@ export class FamineAgent implements ICrisisAgent {
         toastMessages: [{ text: 'STARVATION SPREADING — GRAIN RESERVES DEPLETED', severity: 'critical' as const }],
       },
       // Desaturate the scene during famine — only fire on first peak tick to avoid restart
-      ...(this.ticksInPhase === 0 ? { visual: { effectType: 'famine_desat' as const, intensity: 0.85, duration: desatDuration } } : {}),
+      ...(this.ticksInPhase === 0 ? { visual: { effect: 'famine_haze' as const, intensity: 0.85, durationTicks: Math.ceil(desatDuration) } } : {}),
     };
   }
 

@@ -57,6 +57,7 @@ import {
   useGovernmentHQ,
   closeGovernmentHQ,
   usePoliticalPanel,
+  pushCrisisVFX,
 } from './stores/gameStore';
 import { AchievementsPanel } from './ui/AchievementsPanel';
 // Advisor removed — Phase 1 minimal HUD
@@ -325,6 +326,11 @@ const App: React.FC = () => {
           },
           onPravda: (msg) => {
             setPravdaHeadlines((prev) => [msg, ...prev].slice(0, 5));
+          },
+          onVisualEvent: (event) => {
+            // Convert tick-based duration to seconds (assume ~12 ticks/year, ~1 tick/month ≈ 2.5s)
+            const durationSec = Math.max(1, event.durationTicks * 2.5);
+            pushCrisisVFX(event.effect, event.intensity, durationSec);
           },
           onStateChange: () => {
             // Sync ECS building powered state to old GameState for 3D effects
