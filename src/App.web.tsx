@@ -324,7 +324,7 @@ const App: React.FC = () => {
             SFXManager.getInstance().play('advisor_message');
           },
           onPravda: (msg) => {
-            setPravdaHeadlines((prev) => [msg, ...prev].slice(0, 20));
+            setPravdaHeadlines((prev) => [msg, ...prev].slice(0, 5));
           },
           onStateChange: () => {
             // Sync ECS building powered state to old GameState for 3D effects
@@ -872,7 +872,7 @@ const App: React.FC = () => {
           </View>
         )}
 
-        {loadingFaded && <PravdaTicker headlines={pravdaHeadlines} />}
+        {loadingFaded && <PravdaTicker headlines={pravdaHeadlines} year={snap.dateLabel} />}
 
         {!loadingFaded && (
           <LoadingScreen
