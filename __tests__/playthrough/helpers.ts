@@ -48,6 +48,8 @@ export function createMockCallbacks(): SimCallbacks & Record<string, jest.Mock> 
     onTutorialMilestone: jest.fn(),
     onAchievement: jest.fn(),
     onGameTally: jest.fn(),
+    onRehabilitation: jest.fn(),
+    onNarrativeEvent: jest.fn(),
   };
 }
 
