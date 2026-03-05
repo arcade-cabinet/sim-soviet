@@ -11,6 +11,17 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '=== PRE-COMPACT CONTEXT SAVE ===' && date -Iseconds >> /Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory/compact-log.md && echo 'Tests:' >> /Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory/compact-log.md && cd /Users/jbogaty/src/arcade-cabinet/sim-soviet && git log --oneline -5 >> /Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory/compact-log.md && git diff --stat HEAD >> /Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory/compact-log.md && echo '---' >> /Users/jbogaty/.claude/projects/-Users-jbogaty-src-arcade-cabinet-sim-soviet/memory/compact-log.md",
+            "timeout": 10000
+          }
+        ]
+      }
     ]
   }
 }
