@@ -249,6 +249,43 @@ export class RelocationEngine {
     return names[Math.floor(rng.random() * names.length)]!;
   }
 
+  /**
+   * Create a new settlement from a cold branch activation.
+   * Uses the branch ID to determine terrain profile and naming.
+   */
+  createFromBranch(branchId: string, year: number): void {
+    const BRANCH_TERRAIN: Record<string, { terrain: string; body: string }> = {
+      moon_deconstruction: { terrain: 'lunar', body: 'moon' },
+      mercury_deconstruction: { terrain: 'earth_desert', body: 'earth' },
+      venus_deconstruction: { terrain: 'venusian', body: 'earth' },
+      mars_deconstruction: { terrain: 'earth_temperate', body: 'earth' },
+      jupiter_gas_harvesting: { terrain: 'orbital', body: 'earth' },
+      saturn_ring_mining: { terrain: 'asteroid', body: 'earth' },
+      ice_giant_mining: { terrain: 'asteroid', body: 'earth' },
+      lunar_colony_directive: { terrain: 'lunar', body: 'moon' },
+      mars_colonization: { terrain: 'martian', body: 'mars' },
+      interstellar_ark: { terrain: 'exoplanet', body: 'exoplanet' },
+      stargate_network: { terrain: 'exoplanet', body: 'exoplanet' },
+      type_three: { terrain: 'orbital', body: 'earth' },
+      siberian_exodus: { terrain: 'earth_arctic', body: 'earth' },
+      virgin_lands_assignment: { terrain: 'earth_desert', body: 'earth' },
+      moscow_promotion: { terrain: 'earth_temperate', body: 'earth' },
+    };
+
+    const config = BRANCH_TERRAIN[branchId];
+    if (!config) return; // Branch doesn't create settlements
+
+    const { getTerrainProfile } = require('./terrainProfiles');
+    const terrain = getTerrainProfile(config.terrain);
+    if (!terrain) return;
+
+    const name = `${branchId.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())} (${year})`;
+    const celestialBody = config.body as 'earth' | 'moon' | 'mars' | 'titan' | 'exoplanet';
+    const distance = computeDistance(celestialBody);
+
+    this.registry.addSettlement(name, terrain, celestialBody, distance, year);
+  }
+
   // ── Serialization ──────────────────────────────────────────────────────────
 
   serialize(): { settlements: ReturnType<SettlementRegistry['serialize']> } {

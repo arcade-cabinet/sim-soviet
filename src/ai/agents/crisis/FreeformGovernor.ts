@@ -378,6 +378,14 @@ export class FreeformGovernor implements IGovernor {
             },
           });
 
+          // Create new settlement if branch triggers expansion/relocation
+          if (branch.effects.newSettlement && ctx.pressureReadings) {
+            const relocationEngine = (ctx as unknown as Record<string, unknown>).relocationEngine;
+            if (relocationEngine && typeof (relocationEngine as { createFromBranch?: Function }).createFromBranch === 'function') {
+              (relocationEngine as { createFromBranch: (branchId: string, year: number) => void }).createFromBranch(branch.id, ctx.year);
+            }
+          }
+
           // Activate climate visual milestone for scene components
           activateClimateMilestone(branch.id);
         }

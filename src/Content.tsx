@@ -24,6 +24,7 @@ import { notifyStateChange, useClimateMilestones, useSpaceVisualState, useTerrai
 // Import ModelPreloader for its side-effect (calls useGLTF.preload)
 import './scene/ModelPreloader';
 import AlienFaunaRenderer from './scene/AlienFaunaRenderer';
+import ArcologyDomes from './scene/ArcologyDomes';
 import AuraRenderer from './scene/AuraRenderer';
 import CrisisVFXRenderer from './scene/CrisisVFXRenderer';
 import CollapseOverlay from './scene/CollapseOverlay';
@@ -53,7 +54,7 @@ import TerrainGrid from './scene/TerrainGrid';
 import TrainRenderer from './scene/TrainRenderer';
 import VehicleRenderer from './scene/VehicleRenderer';
 import WeatherFX from './scene/WeatherFX';
-import WWIIOverlay from './scene/WWIIOverlay';
+import WarOverlay from './scene/WarOverlay';
 import ZeppelinRenderer from './scene/ZeppelinRenderer';
 
 /** Progress callback: (loaded, total, currentModelName) */
@@ -144,6 +145,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
         subsidenceTilt={hasPermafrost}
       />
       <BuildingStatusBadges buildings={buildings} />
+      <ArcologyDomes />
       <CollapseOverlay />
       <SceneProps season={snap.season} />
 
@@ -159,7 +161,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
       <ZeppelinRenderer />
       <MeteorRenderer />
       <CrisisVFXRenderer />
-      <WWIIOverlay active={isWartime} />
+      <WarOverlay active={isWartime} scale="continental" era={snap.currentEra} intensity={1} />
       <MassGraveRenderer />
       <FloatingText />
       <CitizenRenderer />
