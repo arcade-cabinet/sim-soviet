@@ -34,6 +34,7 @@ import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatur
 import { gameState } from './engine/GameState';
 import { clearToast, getToast, setSpeed, showAdvisor, showToast } from './engine/helpers';
 import type { RehabilitationData } from './game/engine/types';
+import type { NarrativeEvent } from './game/timeline/TimelineLayer';
 import type { EraDefinition } from './game/era';
 import type { TallyData } from './game/GameTally';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
@@ -83,6 +84,7 @@ import { LoadingScreen } from './ui/LoadingScreen';
 import { MainMenu } from './ui/MainMenu';
 import { MandateProgressPanel } from './ui/MandateProgressPanel';
 import { MinigameOverlay } from './ui/MinigameOverlay';
+import { NarrativeEventOverlay } from './ui/NarrativeEventOverlay';
 import { MinigameReferencePanel } from './ui/MinigameReferencePanel';
 import { Minimap } from './ui/Minimap';
 import { type NewGameConfig, NewGameSetup } from './ui/NewGameSetup';
@@ -212,6 +214,8 @@ const App: React.FC = () => {
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
   const [activeMinigame, setActiveMinigame] = useState<ActiveMinigame | null>(null);
   const resolveMinigameRef = useRef<((choiceId: string) => void) | null>(null);
+  const [activeNarrativeEvent, setActiveNarrativeEvent] = useState<NarrativeEvent | null>(null);
+  const resolveNarrativeEventRef = useRef<((choiceId: string) => void) | null>(null);
   const [annualReport, setAnnualReport] = useState<AnnualReportData | null>(null);
   const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
   const [settlementEvent, setSettlementEvent] = useState<SettlementEvent | null>(null);
@@ -388,6 +392,10 @@ const App: React.FC = () => {
           onMinigame: (active, resolveChoice) => {
             setActiveMinigame(active);
             resolveMinigameRef.current = resolveChoice;
+          },
+          onNarrativeEvent: (event, resolve) => {
+            setActiveNarrativeEvent(event);
+            resolveNarrativeEventRef.current = resolve;
           },
           onTutorialMilestone: (milestone) => {
             showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
@@ -871,6 +879,14 @@ const App: React.FC = () => {
           visible={!!rehabilitation}
           data={rehabilitation}
           onResume={() => setRehabilitation(null)}
+        />
+
+        <NarrativeEventOverlay
+          event={activeNarrativeEvent}
+          onResolve={(choiceId) => {
+            resolveNarrativeEventRef.current?.(choiceId);
+            setActiveNarrativeEvent(null);
+          }}
         />
 
         <PersonnelFilePanel visible={showPersonnelFile} onDismiss={() => setShowPersonnelFile(false)} />
