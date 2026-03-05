@@ -28,9 +28,9 @@ interface CelestialBodyProps {
   bodyType: CelestialBodyType;
   /** Morph factor: 0 = full sphere, 1 = flat UV-unrolled surface. */
   flatten: number;
-  /** Body radius. Default 7. */
+  /** Body radius. Default 10. */
   radius?: number;
-  /** Shell radius (for flat projection alignment). Default 8.5. */
+  /** Shell radius (for flat projection alignment). Default 12. */
   shellRadius?: number;
   /** Geometry detail. Default 128 segments. */
   segments?: number;
@@ -43,8 +43,8 @@ interface CelestialBodyProps {
 const CelestialBody: React.FC<CelestialBodyProps> = ({
   bodyType,
   flatten,
-  radius = 7,
-  shellRadius = 8.5,
+  radius = 10,
+  shellRadius = 12,
   segments = 128,
   groundTint,
   terrain,
@@ -69,6 +69,7 @@ const CelestialBody: React.FC<CelestialBodyProps> = ({
       time: { value: 0 },
       uFlatten: { value: flatten },
       uBodyType: { value: BODY_TYPE_VALUE[bodyType] },
+      uBodyRadius: { value: radius },
       uShellRadius: { value: shellRadius },
       uGroundTint: { value: tintColor.clone() },
       uSeed: { value: seed },
@@ -88,6 +89,7 @@ const CelestialBody: React.FC<CelestialBodyProps> = ({
     matRef.current.uniforms.time.value += delta;
     matRef.current.uniforms.uFlatten.value = flatten;
     matRef.current.uniforms.uBodyType.value = BODY_TYPE_VALUE[bodyType];
+    matRef.current.uniforms.uBodyRadius.value = radius;
     matRef.current.uniforms.uShellRadius.value = shellRadius;
     matRef.current.uniforms.uGroundTint.value.copy(tintColor);
     matRef.current.uniforms.uSeed.value = seed;

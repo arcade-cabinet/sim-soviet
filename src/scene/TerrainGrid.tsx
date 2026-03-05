@@ -41,6 +41,8 @@ interface TerrainGridProps {
   season?: Season;
   /** Current historical era — shifts terrain color palette. */
   era?: EraId;
+  /** 0 = completely hidden (sphere mode), 1 = fully visible (flat local grid) */
+  flatten?: number;
 }
 
 /**
@@ -565,7 +567,8 @@ function useTerrainTextures(state: TerrainVisualState): [THREE.Texture, THREE.Te
 const TerrainTextureMesh: React.FC<{
   geometry: THREE.BufferGeometry;
   era: EraId;
-}> = ({ geometry, era }) => {
+  flatten: number;
+}> = ({ geometry, era, flatten }) => {
   const currentState = eraToTerrainState(era);
   const [colorMap, normalMap, roughnessMap] = useTerrainTextures(currentState);
 
@@ -582,21 +585,21 @@ const TerrainTextureMesh: React.FC<{
     }
   }, [currentState]);
 
-  // Animate crossfade
+  // Animate crossfade and apply flatten opacity
   useFrame(() => {
     const mat = matRef.current;
     if (!mat) return;
 
     if (fadeProgressRef.current < 1) {
       fadeProgressRef.current = Math.min(1, fadeProgressRef.current + 1 / CROSSFADE_FRAMES);
-      mat.opacity = fadeProgressRef.current;
-      mat.transparent = fadeProgressRef.current < 1;
-      mat.needsUpdate = true;
-    } else if (mat.transparent) {
-      mat.transparent = false;
-      mat.opacity = 1;
-      mat.needsUpdate = true;
     }
+    
+    // Combine crossfade with flatten opacity
+    const targetOpacity = fadeProgressRef.current * flatten;
+    
+    mat.opacity = targetOpacity;
+    mat.transparent = targetOpacity < 1;
+    mat.needsUpdate = true;
   });
 
   return (
@@ -618,7 +621,7 @@ const TerrainTextureMesh: React.FC<{
 // ── Component ───────────────────────────────────────────────────────────────
 
 /** Renders the terrain grid with per-vertex colors and GPU-instanced procedural scatter. */
-const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer', era = 'revolution' }) => {
+const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer', era = 'revolution', flatten = 1 }) => {
   // Compute era-based color tint for per-vertex terrain colors
   const eraTint = ERA_COLOR_TINT[eraToTerrainState(era)];
 
@@ -645,18 +648,20 @@ const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer', era 
   );
   const railInstances = useMemo(() => buildRailInstances(grid), [grid]);
 
+  if (flatten <= 0) return null;
+
   return (
     <group>
       {/* Main terrain mesh with per-vertex colors + era PBR textures */}
-      <TerrainTextureMesh geometry={terrainGeometry} era={era} />
+      <TerrainTextureMesh geometry={terrainGeometry} era={era} flatten={flatten} />
 
       {/* Trees — 3 instanced batches: trunks, lower cones, upper cones */}
-      <ScatterInstance geometry={UNIT_CYLINDER} batch={treeInstances.trunks} />
-      <ScatterInstance geometry={UNIT_CONE} batch={treeInstances.lowerCones} roughness={0.85} />
-      <ScatterInstance geometry={UNIT_CONE} batch={treeInstances.upperCones} roughness={0.85} />
+      <ScatterInstance geometry={UNIT_CYLINDER} batch={treeInstances.trunks} transparent={flatten < 1} opacity={flatten} />
+      <ScatterInstance geometry={UNIT_CONE} batch={treeInstances.lowerCones} roughness={0.85} transparent={flatten < 1} opacity={flatten} />
+      <ScatterInstance geometry={UNIT_CONE} batch={treeInstances.upperCones} roughness={0.85} transparent={flatten < 1} opacity={flatten} />
 
       {/* Mountains — instanced cone peaks */}
-      <ScatterInstance geometry={UNIT_CONE_5} batch={mountainInstances} roughness={0.95} />
+      <ScatterInstance geometry={UNIT_CONE_5} batch={mountainInstances} roughness={0.95} transparent={flatten < 1} opacity={flatten} />
 
       {/* Marshes — puddles, reed stalks, cattail tufts */}
       <ScatterInstance
@@ -664,14 +669,14 @@ const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer', era 
         batch={marshInstances.puddles}
         roughness={0.3}
         transparent
-        opacity={0.7}
+        opacity={0.7 * flatten}
         depthWrite={false}
       />
-      <ScatterInstance geometry={UNIT_CYLINDER} batch={marshInstances.reeds} />
-      <ScatterInstance geometry={UNIT_CONE_5} batch={marshInstances.tufts} />
+      <ScatterInstance geometry={UNIT_CYLINDER} batch={marshInstances.reeds} transparent={flatten < 1} opacity={flatten} />
+      <ScatterInstance geometry={UNIT_CONE_5} batch={marshInstances.tufts} transparent={flatten < 1} opacity={flatten} />
 
       {/* Rail markers */}
-      <ScatterInstance geometry={RAIL_BOX} batch={railInstances} roughness={0.7} metalness={0.3} />
+      <ScatterInstance geometry={RAIL_BOX} batch={railInstances} roughness={0.7} metalness={0.3} transparent={flatten < 1} opacity={flatten} />
     </group>
   );
 };

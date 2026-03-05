@@ -37,6 +37,7 @@ const MegastructureShell: React.FC<MegastructureShellProps> = ({
       time: { value: 0 },
       uProgress: { value: progress },
       uFlatten: { value: flatten },
+      uShellRadius: { value: radius },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -47,6 +48,7 @@ const MegastructureShell: React.FC<MegastructureShellProps> = ({
     matRef.current.uniforms.time.value += delta;
     matRef.current.uniforms.uProgress.value = progress;
     matRef.current.uniforms.uFlatten.value = flatten;
+    matRef.current.uniforms.uShellRadius.value = radius;
   });
 
   if (!visible) return null;

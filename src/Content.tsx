@@ -16,7 +16,7 @@ import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import type { SettlementTier } from './ai/agents/infrastructure/SettlementSystem';
 import AudioManager from './audio/AudioManager';
-import { getBuildingStates } from './bridge/ECSBridge';
+import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
 import { getCurrentGridSize } from './engine/GridTypes';
 import { useGameSnapshot } from './hooks/useGameState';
@@ -53,11 +53,13 @@ import SceneProps from './scene/SceneProps';
 import SkyProgression from './scene/SkyProgression';
 import PermafrostOverlay from './scene/PermafrostOverlay';
 import SmogOverlay from './scene/SmogOverlay';
+import TerrainGrid from './scene/TerrainGrid';
 import TrainRenderer from './scene/TrainRenderer';
 import VehicleRenderer from './scene/VehicleRenderer';
 import WeatherFX from './scene/WeatherFX';
 import WarOverlay from './scene/WarOverlay';
 import ZeppelinRenderer from './scene/ZeppelinRenderer';
+import { useState } from 'react';
 
 /** Progress callback: (loaded, total, currentModelName) */
 type ModelLoadProgress = (loaded: number, total: number, name: string) => void;
@@ -86,6 +88,9 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
   const activeSettlement = useActiveSettlement();
   const hasPermafrost = climateMilestones.has('permafrost_collapse') || climateMilestones.has('ecological_permafrost_collapse');
   const isWartime = snap.currentEra === 'great_patriotic';
+
+  // Local state to track how flat the viewport is (0 = sphere, 1 = flat)
+  const [flatten, setFlatten] = useState(1);
 
   // Derive zone-specific visual props from active settlement + era
   const zoneProps = useMemo(() => {
@@ -140,13 +145,14 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
   // Derive building states from ECS (archive merge)
   // The ECS building defIds match GLB model names directly
   const buildings = getBuildingStates();
+  const ecsGrid = getGridCells();
 
   // Grid center for positioning the celestial body under the settlement
   const center = getCurrentGridSize() / 2;
 
-  // Body radius must match CelestialBody default (7) so the flat surface
+  // Body radius must match CelestialBody default (10) so the flat surface
   // sits at Y=0 when the outer group is offset by -bodyRadius on Y.
-  const bodyRadius = 7;
+  const bodyRadius = 10;
 
   // Core scene + VFX layers + Interaction
   return (
@@ -172,7 +178,12 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
           flattenFar={50}
           rotateSpeed={0.015}
           shellVisible={zoneProps.shellVisible}
+          onFlattenChange={setFlatten}
         />
+      </group>
+      {/* Local Settlement Grid — fades in as camera zooms into flat mode */}
+      <group position={[0, 0.01, 0]}>
+        <TerrainGrid grid={ecsGrid} season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} flatten={flatten} />
       </group>
       <BuildingRenderer
         buildings={buildings}

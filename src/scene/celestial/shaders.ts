@@ -69,6 +69,7 @@ export const bodyVertexShader = /* glsl */ `
   uniform float time;
   uniform float uFlatten;
   uniform float uBodyType; // 0=Sun, 1=Terran, 2=Martian, 3=Jovian
+  uniform float uBodyRadius; // Sphere radius
   uniform float uShellRadius; // Outer shell radius for flat projection
   uniform float uSeed; // Game seed for deterministic terrain
   uniform float uSeaLevel; // Sea level threshold for ocean/land
@@ -145,7 +146,7 @@ export const bodyVertexShader = /* glsl */ `
     // 2. UV-unrolled flat position
     float width = 2.0 * 3.14159 * uShellRadius;
     float height = 3.14159 * uShellRadius;
-    vec3 flatPos = vec3((uv.x - 0.5) * width, (uv.y - 0.5) * height, 7.0);
+    vec3 flatPos = vec3((uv.x - 0.5) * width, (uv.y - 0.5) * height, uBodyRadius);
 
     // 3. Morph
     vec3 finalPos = mix(sphericalPos, flatPos, uFlatten);
@@ -295,6 +296,7 @@ export const bodyFragmentShader = /* glsl */ `
 
 export const shellVertexShader = /* glsl */ `
   uniform float uFlatten;
+  uniform float uShellRadius;
 
   varying vec3 vSpherePosition;
   varying vec3 vWorldPosition;
@@ -308,10 +310,9 @@ export const shellVertexShader = /* glsl */ `
     vec3 sphericalPos = position;
     vec3 sphericalNorm = normal;
 
-    float radius = 8.5;
-    float width = 2.0 * 3.14159 * radius;
-    float height = 3.14159 * radius;
-    vec3 flatPos = vec3((uv.x - 0.5) * width, (uv.y - 0.5) * height, radius);
+    float width = 2.0 * 3.14159 * uShellRadius;
+    float height = 3.14159 * uShellRadius;
+    vec3 flatPos = vec3((uv.x - 0.5) * width, (uv.y - 0.5) * height, uShellRadius);
     vec3 flatNorm = vec3(0.0, 0.0, 1.0);
 
     vec3 finalPos = mix(sphericalPos, flatPos, uFlatten);
@@ -331,6 +332,7 @@ export const shellFragmentShader = /* glsl */ `
   uniform float time;
   uniform float uProgress;
   uniform float uFlatten;
+  uniform float uShellRadius;
 
   varying vec3 vSpherePosition;
   varying vec3 vWorldPosition;
@@ -358,7 +360,7 @@ export const shellFragmentShader = /* glsl */ `
     float hexDist = max(abs(gv.x), dot(abs(gv), normalize(vec2(1.0, 1.73205081))));
 
     // Build progress per-panel
-    float macroBuild = (vSpherePosition.y + 8.5) / 17.0;
+    float macroBuild = (vSpherePosition.y + uShellRadius) / (uShellRadius * 2.0);
     float localRandom = hash(id * 7.77);
     float hexBuildOrder = mix(localRandom, macroBuild, 0.4);
     float frameThreshold = hexBuildOrder * 0.75;

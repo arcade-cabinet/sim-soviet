@@ -266,22 +266,6 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter', era = 'rev
 
       {/* HDRI for image-based lighting (IBL) — always active for PBR materials */}
       <DreiEnvironment files={hdriFile} />
-
-      {/* PBR ground plane — era-driven textures */}
-      <Ground season={season} era={era} />
-
-      {/* Decay overlay planes — transparent textured layers for stagnation/collapse */}
-      {(TERRAIN_DECAY_OVERLAYS[terrainState] ?? []).map((overlayId) => (
-        <DecayOverlayPlane key={overlayId} overlayId={overlayId} />
-      ))}
-
-      {/* Perimeter hills — era-driven colors */}
-      {hillsData.map((hill, i) => (
-        <mesh key={i} position={hill.position} scale={hill.scale}>
-          <sphereGeometry args={[0.5, 8, 8]} />
-          <meshStandardMaterial color={hillColor} roughness={1} metalness={0} />
-        </mesh>
-      ))}
     </>
   );
 };
