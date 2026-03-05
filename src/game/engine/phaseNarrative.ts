@@ -19,9 +19,11 @@ import {
   startConstruction,
   tickConstruction,
 } from '../../ai/agents/narrative/prestigeLifecycle';
+import { MORALE_CRITICAL_THRESHOLD, MORALE_WARNING_THRESHOLD } from '../../ai/agents/political/KGBAgent';
 import { CONSEQUENCE_PRESETS } from '../../ai/agents/political/ScoringSystem';
 import { getCurrentGridSize } from '../../config';
 import { buildingsLogic, getResourceEntity } from '../../ecs/archetypes';
+import { createGameView } from '../../game/GameView';
 import type { TickContext } from './tickContext';
 
 /**
@@ -66,6 +68,22 @@ export function phaseNarrative(ctx: TickContext): void {
   // Pravda ambient headlines
   const headline = pravdaSystem.generateAmbientHeadline();
   if (headline) callbacks.onPravda(headline.headline);
+
+  // Morale-reactive Pravda: when KGB morale reports indicate trouble,
+  // force a morale-themed headline (bypasses the normal cooldown)
+  {
+    const moraleReports = kgbAgent.getMoraleReports();
+    if (moraleReports.length > 0) {
+      const latest = moraleReports[moraleReports.length - 1]!;
+      if (latest.timestamp === chronology.getDate().totalTicks) {
+        if (latest.severity === 'critical') {
+          callbacks.onPravda('ISOLATED INCIDENTS OF COUNTER-REVOLUTIONARY SENTIMENT REPORTED');
+        } else if (latest.severity === 'warning') {
+          callbacks.onPravda('WORKERS EXPRESS GRATITUDE FOR PARTY LEADERSHIP');
+        }
+      }
+    }
+  }
 
   // KGB personnel file tick
   const totalTicks = chronology.getDate().totalTicks;

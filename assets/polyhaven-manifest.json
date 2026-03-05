@@ -323,5 +323,22 @@
       "metal"
     ],
     "fetchedAt": "2026-03-05T14:07:54.365Z"
+  },
+  {
+    "id": "red_laterite_soil_stones",
+    "type": "texture",
+    "name": "Red Laterite Soil Stones",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/red_laterite_soil_stones/",
+    "categories": [
+      "outdoor",
+      "natural",
+      "terrain",
+      "rock",
+      "road",
+      "sand"
+    ],
+    "fetchedAt": "2026-03-05T16:44:23.222Z"
   }
 ]

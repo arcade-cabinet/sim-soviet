@@ -9,6 +9,8 @@ import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
+import type { PromotionResponse } from '../ai/agents/political/moscowPromotion';
+import type { ResettlementPreparationAction } from '../ai/agents/political/resettlementDirective';
 import { getEngine } from '../bridge/GameInit';
 import { getResourceEntity } from '../ecs/archetypes';
 import { setActiveDirective, setDefensePosture, setGosplanAllocations, useActiveDirective, useDefensePosture, useGosplanAllocations } from '../stores/gameStore';
@@ -116,6 +118,29 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
     [],
   );
 
+  const handlePromotionRespond = useCallback((response: PromotionResponse) => {
+    const engine = getEngine();
+    if (!engine) return;
+    engine.getPoliticalAgent().handlePromotionResponse(response);
+  }, []);
+
+  const handleResettlementAction = useCallback((action: ResettlementPreparationAction) => {
+    const engine = getEngine();
+    if (!engine) return;
+    const political = engine.getPoliticalAgent();
+    switch (action) {
+      case 'disassemble':
+        political.enactResettlementDisassembly();
+        break;
+      case 'bribe':
+        political.attemptResettlementBribe();
+        break;
+      case 'accept':
+        // Accept is passive — preparation continues automatically
+        break;
+    }
+  }, []);
+
   if (!visible) return null;
 
   const engine = getEngine();
@@ -147,7 +172,7 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
       break;
 
     case 'central_committee':
-      tabContent = renderCentralCommitteeTab(engine, activeDirective, handleIssueDirective);
+      tabContent = renderCentralCommitteeTab(engine, activeDirective, handleIssueDirective, handlePromotionRespond);
       break;
 
     case 'reports':
@@ -174,6 +199,72 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
             <Text style={styles.closeText}>X</Text>
           </Pressable>
         </View>
+
+        {/* Resettlement alert banner */}
+        {engine && (() => {
+          const resState = engine.getPoliticalAgent().getResettlementState();
+          if (!resState.directiveIssued || resState.executed) return null;
+          const remaining = resState.warningTicksRemaining;
+          const prepPct = Math.round(resState.preparationLevel * 100);
+          return (
+            <View style={resettleStyles.container} testID="resettlement-alert">
+              <View style={resettleStyles.headerRow}>
+                <Text style={resettleStyles.warningIcon}>!!</Text>
+                <Text style={resettleStyles.title}>RESETTLEMENT DIRECTIVE</Text>
+                <Text style={resettleStyles.warningIcon}>!!</Text>
+              </View>
+              <Text style={resettleStyles.countdown}>
+                RELOCATION IN {remaining} MONTH{remaining !== 1 ? 'S' : ''}
+              </Text>
+
+              {/* Preparation gauge */}
+              <View style={resettleStyles.gaugeRow}>
+                <Text style={resettleStyles.gaugeLabel}>PREPARATION:</Text>
+                <View style={resettleStyles.gaugeBg}>
+                  <View style={[resettleStyles.gaugeFill, { width: `${prepPct}%` }]} />
+                </View>
+                <Text style={resettleStyles.gaugeValue}>{prepPct}%</Text>
+              </View>
+
+              {resState.disassemblyActive && (
+                <Text style={resettleStyles.disassemblyActive}>DISASSEMBLY PROTOCOL ACTIVE</Text>
+              )}
+
+              {/* Action buttons */}
+              <View style={resettleStyles.buttonRow}>
+                {!resState.disassemblyActive && (
+                  <Pressable
+                    style={resettleStyles.disassembleBtn}
+                    onPress={() => handleResettlementAction('disassemble')}
+                    testID="resettlement-disassemble"
+                    accessibilityRole="button"
+                    accessibilityLabel="Enact disassembly protocol"
+                  >
+                    <Text style={resettleStyles.btnText}>ENACT DISASSEMBLY PROTOCOL</Text>
+                  </Pressable>
+                )}
+                <Pressable
+                  style={resettleStyles.bribeBtn}
+                  onPress={() => handleResettlementAction('bribe')}
+                  testID="resettlement-bribe"
+                  accessibilityRole="button"
+                  accessibilityLabel="Arrange special consideration to cancel resettlement"
+                >
+                  <Text style={resettleStyles.btnText}>ARRANGE SPECIAL CONSIDERATION</Text>
+                </Pressable>
+                <Pressable
+                  style={resettleStyles.complyBtn}
+                  onPress={() => handleResettlementAction('accept')}
+                  testID="resettlement-comply"
+                  accessibilityRole="button"
+                  accessibilityLabel="Comply with resettlement directive"
+                >
+                  <Text style={resettleStyles.btnText}>COMPLY WITH DIRECTIVE</Text>
+                </Pressable>
+              </View>
+            </View>
+          );
+        })()}
 
         {/* Tab bar */}
         <View style={styles.tabBar}>
@@ -331,10 +422,12 @@ function renderCentralCommitteeTab(
   engine: ReturnType<typeof getEngine>,
   activeDirective: ActiveDirective | null,
   onIssueDirective: (id: string) => void,
+  onPromotionRespond: (response: PromotionResponse) => void,
 ): React.ReactNode {
   if (!engine) return <Text style={styles.placeholder}>Engine not initialized</Text>;
 
   const tick = engine.getChronology().getDate().totalTicks;
+  const promotionState = engine.getPoliticalAgent().getPromotionState();
 
   return (
     <CentralCommitteeTab
@@ -343,6 +436,8 @@ function renderCentralCommitteeTab(
       onIssueDirective={onIssueDirective}
       currentTick={tick}
       politicalCapital={0}
+      promotionState={promotionState}
+      onPromotionRespond={onPromotionRespond}
     />
   );
 }
@@ -506,5 +601,121 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
     marginTop: 40,
+  },
+});
+
+// ── Resettlement Alert Styles ─────────────────────────────────────────────
+
+const resettleStyles = StyleSheet.create({
+  container: {
+    backgroundColor: '#3d1a1a',
+    borderWidth: 2,
+    borderColor: Colors.sovietRed,
+    padding: 10,
+    marginBottom: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  warningIcon: {
+    fontFamily: monoFont,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.sovietRed,
+  },
+  title: {
+    fontFamily: monoFont,
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.sovietRed,
+    letterSpacing: 2,
+  },
+  countdown: {
+    fontFamily: monoFont,
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.sovietGold,
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: 1,
+  },
+  gaugeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 6,
+  },
+  gaugeLabel: {
+    fontFamily: monoFont,
+    fontSize: 9,
+    color: Colors.textMuted,
+  },
+  gaugeBg: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#333',
+    borderWidth: 1,
+    borderColor: '#555',
+  },
+  gaugeFill: {
+    height: '100%',
+    backgroundColor: Colors.termGreen,
+  },
+  gaugeValue: {
+    fontFamily: monoFont,
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: Colors.termGreen,
+    width: 30,
+    textAlign: 'right',
+  },
+  disassemblyActive: {
+    fontFamily: monoFont,
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: Colors.sovietGold,
+    textAlign: 'center',
+    marginBottom: 6,
+    letterSpacing: 1,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  disassembleBtn: {
+    flex: 1,
+    backgroundColor: '#e65100',
+    paddingVertical: 6,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#bf360c',
+  },
+  bribeBtn: {
+    flex: 1,
+    backgroundColor: Colors.sovietRed,
+    paddingVertical: 6,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.sovietDarkRed,
+  },
+  complyBtn: {
+    flex: 1,
+    backgroundColor: '#424242',
+    paddingVertical: 6,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  btnText: {
+    fontFamily: monoFont,
+    fontSize: 7,
+    fontWeight: 'bold',
+    color: Colors.white,
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
 });

@@ -2,10 +2,12 @@
  * phasePolitical — tick steps 16, 17, 18, 19, 20, 21, 22, 23
  *
  * Loyalty, trudodni, collective construction, chairman meddling,
- * decay, gulag, settlement, era conditions, political entities.
+ * decay, gulag, settlement, era conditions, political entities,
+ * KGB morale sampling.
  */
 
 import { accrueTrudodni } from '../../ai/agents/economy/EconomyAgent';
+import { buildingsLogic, citizens } from '../../ecs/archetypes';
 import { world } from '../../ecs/world';
 import { decaySystem, quotaSystem } from '../../ecs/systems';
 import { evaluateArcologies } from '../../game/arcology/ArcologySystem';
@@ -131,7 +133,16 @@ export function phasePolitical(ctx: TickContext): void {
     chronologyTotalTicks: chronology.getDate().totalTicks,
   });
 
-  // ── 23b. MegaCity law enforcement (crime, sectors, iso-cubes) ──
+  // ── 23b. KGB morale sampling ──
+  {
+    const totalTicks = chronology.getDate().totalTicks;
+    const samples = collectMoraleSamples(ctx);
+    if (samples.length > 0) {
+      kgbAgent.sampleMorale(samples, totalTicks);
+    }
+  }
+
+  // ── 23c. MegaCity law enforcement (crime, sectors, iso-cubes) ──
   {
     const eraId = politicalAgent.getCurrentEraId();
     const pop = storeRef.resources.population;
@@ -152,6 +163,55 @@ export function phasePolitical(ctx: TickContext): void {
       infrastructurePressure: approxInfraPressure,
     });
   }
+}
+
+// ── KGB Morale Sampling ─────────────────────────────────────────────────────
+
+/**
+ * Collect per-building morale readings for KGB intelligence.
+ *
+ * Entity mode (pop < 200): groups citizens by their home building, averages happiness.
+ * Aggregate mode (pop >= 200): reads avgMorale directly from building components.
+ */
+function collectMoraleSamples(
+  ctx: TickContext,
+): Array<{ sectorId: { gridX: number; gridY: number }; avgMorale: number }> {
+  const samples: Array<{ sectorId: { gridX: number; gridY: number }; avgMorale: number }> = [];
+
+  if (ctx.popMode === 'entity') {
+    // Group citizen happiness by home building position
+    const buildingMorale = new Map<string, { sum: number; count: number; gridX: number; gridY: number }>();
+    for (const c of citizens) {
+      const home = c.citizen.home;
+      if (!home) continue;
+      const key = `${home.gridX},${home.gridY}`;
+      const entry = buildingMorale.get(key);
+      if (entry) {
+        entry.sum += c.citizen.happiness;
+        entry.count++;
+      } else {
+        buildingMorale.set(key, { sum: c.citizen.happiness, count: 1, gridX: home.gridX, gridY: home.gridY });
+      }
+    }
+    for (const entry of buildingMorale.values()) {
+      samples.push({
+        sectorId: { gridX: entry.gridX, gridY: entry.gridY },
+        avgMorale: entry.sum / entry.count,
+      });
+    }
+  } else {
+    // Aggregate mode: read avgMorale from building components
+    for (const entity of buildingsLogic) {
+      if (entity.building.workerCount > 0 || entity.building.residentCount > 0) {
+        samples.push({
+          sectorId: { gridX: entity.position.gridX, gridY: entity.position.gridY },
+          avgMorale: entity.building.avgMorale,
+        });
+      }
+    }
+  }
+
+  return samples;
 }
 
 // ── Arcology Evaluation ─────────────────────────────────────────────────────

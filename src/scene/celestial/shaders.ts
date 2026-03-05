@@ -70,13 +70,33 @@ export const bodyVertexShader = /* glsl */ `
   uniform float uFlatten;
   uniform float uBodyType; // 0=Sun, 1=Terran, 2=Martian, 3=Jovian
   uniform float uShellRadius; // Outer shell radius for flat projection
+  uniform float uSeed; // Game seed for deterministic terrain
+  uniform float uSeaLevel; // Sea level threshold for ocean/land
+  uniform float uMountainAmplitude; // Height scaling factor
+  uniform float uNoiseScale; // Noise frequency multiplier
+  uniform int uNoiseOctaves; // FBM octave count
+  uniform float uContinentBias; // Low-freq continent strength
 
   varying vec2 vUv;
   varying vec3 vSpherePosition;
   varying vec3 vWorldPosition;
   varying vec3 vNormal;
+  varying float vHeight; // Normalized height for fragment biome classification
 
   ${noiseChunks}
+
+  // Seed-aware FBM: offsets noise input by seed for per-planet uniqueness
+  float seededFbm(vec3 p, int octaves) {
+    vec3 seedOffset = vec3(uSeed * 100.0, uSeed * 37.0, uSeed * 73.0);
+    float v = 0.0; float a = 0.5; vec3 shift = vec3(100.0);
+    for (int i = 0; i < 8; ++i) {
+      if (i >= octaves) break;
+      v += a * snoise(p + seedOffset);
+      p = p * 2.0 + shift;
+      a *= 0.5;
+    }
+    return v;
+  }
 
   void main() {
     vUv = uv;
@@ -84,17 +104,41 @@ export const bodyVertexShader = /* glsl */ `
 
     // 1. Topology displacement per body type
     float displacement = 0.0;
+    float heightNorm = 0.5; // default mid-height
+
     if (uBodyType < 0.5) {
-      displacement = snoise(position * 0.5 + time * 0.2) * 0.3; // Sun: boiling plasma
+      // ── Sun: boiling plasma (animated, ignores seed terrain) ──
+      displacement = snoise(position * 0.5 + time * 0.2) * 0.3;
     } else if (uBodyType < 1.5) {
-      float n = snoise(position * 1.5) * 0.25;
-      displacement = max(n, 0.01); // Terran: landmasses up, oceans flat
+      // ── Terran: seed-driven FBM terrain ──
+      float terrain = seededFbm(position * uNoiseScale, uNoiseOctaves);
+      // Continent bias: low-freq layer
+      if (uContinentBias > 0.0) {
+        float continent = seededFbm(position * uNoiseScale * 0.3 + vec3(uSeed * 50.0), 3);
+        terrain += continent * uContinentBias;
+      }
+      terrain *= uMountainAmplitude;
+      heightNorm = (terrain + uMountainAmplitude) / (2.0 * uMountainAmplitude);
+      heightNorm = clamp(heightNorm, 0.0, 1.0);
+      // Oceans are flat at sea level; land rises above
+      if (heightNorm < uSeaLevel) {
+        displacement = 0.01;
+      } else {
+        displacement = (heightNorm - uSeaLevel) * 0.25;
+      }
     } else if (uBodyType < 2.5) {
-      displacement = abs(snoise(position * 2.0)) * 0.2 + snoise(position * 5.0) * 0.05; // Mars: jagged
+      // ── Martian: seed-driven FBM + jagged detail ──
+      float terrain = seededFbm(position * uNoiseScale, uNoiseOctaves);
+      terrain *= uMountainAmplitude;
+      heightNorm = (terrain + uMountainAmplitude) / (2.0 * uMountainAmplitude);
+      heightNorm = clamp(heightNorm, 0.0, 1.0);
+      displacement = abs(heightNorm - 0.5) * 0.2 + seededFbm(position * 5.0, 2) * 0.05;
     } else {
-      displacement = snoise(position * 1.0 + time * 0.05) * 0.03; // Jovian: smooth banding
+      // ── Jovian: smooth banding (animated, seed varies bands) ──
+      displacement = snoise(position * 1.0 + time * 0.05 + vec3(uSeed * 10.0)) * 0.03;
     }
 
+    vHeight = heightNorm;
     vec3 sphericalPos = position + normal * displacement;
     vSpherePosition = sphericalPos;
 
@@ -120,11 +164,15 @@ export const bodyFragmentShader = /* glsl */ `
   uniform float time;
   uniform float uFlatten;
   uniform float uBodyType;
+  uniform float uSeed;
+  uniform float uSeaLevel;
+  uniform vec3 uGroundTint;
 
   varying vec2 vUv;
   varying vec3 vSpherePosition;
   varying vec3 vWorldPosition;
   varying vec3 vNormal;
+  varying float vHeight;
 
   ${noiseChunks}
 
@@ -145,39 +193,87 @@ export const bodyFragmentShader = /* glsl */ `
       finalColor += vec3(1.0, 0.8, 0.0) * rim * 1.5 * (1.0 - uFlatten);
 
     } else if (uBodyType < 1.5) {
-      // ── TERRAN ──
-      float n = fbm(vSpherePosition * 2.0);
+      // ── TERRAN — height + latitude biome classification ──
+      float h = vHeight;
+      float lat = abs(normalize(vSpherePosition).y); // latitude: 0 at equator, 1 at pole
+
+      // Biome colors
       vec3 deepWater = vec3(0.02, 0.1, 0.3);
       vec3 shallowWater = vec3(0.05, 0.4, 0.5);
+      vec3 shore = vec3(0.6, 0.55, 0.35);
       vec3 land = vec3(0.1, 0.4, 0.15);
       vec3 mountain = vec3(0.5, 0.4, 0.3);
       vec3 snow = vec3(0.9, 0.9, 0.9);
-      if (n < 0.45) finalColor = mix(deepWater, shallowWater, n / 0.45);
-      else if (n < 0.65) finalColor = mix(land, mountain, (n - 0.45) / 0.2);
-      else finalColor = mix(mountain, snow, (n - 0.65) / 0.35);
-      // Clouds
-      float c = fbm(vSpherePosition * 3.0 + time * 0.02);
+      vec3 ice = vec3(0.85, 0.9, 0.95);
+
+      // Polar ice override
+      if (lat > 0.7) {
+        float iceFade = smoothstep(0.7, 0.85, lat);
+        vec3 baseColor;
+        if (h < uSeaLevel) {
+          baseColor = mix(deepWater, shallowWater, h / max(uSeaLevel, 0.01));
+        } else {
+          baseColor = land;
+        }
+        finalColor = mix(baseColor, ice, iceFade);
+      } else if (h < uSeaLevel - 0.1) {
+        // Deep ocean
+        float depth = h / max(uSeaLevel - 0.1, 0.01);
+        finalColor = mix(deepWater, shallowWater, depth);
+      } else if (h < uSeaLevel) {
+        // Shore/shallow water
+        float shoreT = (h - (uSeaLevel - 0.1)) / 0.1;
+        finalColor = mix(shallowWater, shore, shoreT);
+      } else if (h < uSeaLevel + 0.2) {
+        // Lowland
+        float landT = (h - uSeaLevel) / 0.2;
+        finalColor = mix(shore, land, landT);
+      } else if (h < 0.75) {
+        // Mid altitude
+        float midT = (h - (uSeaLevel + 0.2)) / (0.75 - (uSeaLevel + 0.2));
+        finalColor = mix(land, mountain, midT);
+      } else {
+        // High altitude — snow caps
+        float snowT = (h - 0.75) / 0.25;
+        finalColor = mix(mountain, snow, snowT);
+      }
+
+      // Clouds (seed-varied)
+      float c = fbm(vSpherePosition * 3.0 + time * 0.02 + vec3(uSeed * 20.0));
       finalColor = mix(finalColor, vec3(0.9), smoothstep(0.55, 0.8, c) * 0.8);
-      // Atmosphere
+      // Atmosphere rim
       finalColor += vec3(0.3, 0.6, 1.0) * pow(rim, 3.0) * (1.0 - uFlatten);
       float diffuse = max(dot(normalize(vNormal), viewDirection), 0.1);
       finalColor *= (diffuse * 0.8 + 0.2);
 
     } else if (uBodyType < 2.5) {
-      // ── MARTIAN ──
-      float n = fbm(vSpherePosition * 2.5);
-      vec3 dust = vec3(0.7, 0.3, 0.1);
-      vec3 rock = vec3(0.3, 0.1, 0.05);
-      finalColor = mix(rock, dust, n);
+      // ── MARTIAN — dust colors + polar ice caps ──
+      float h = vHeight;
+      float lat = abs(normalize(vSpherePosition).y);
+
+      vec3 dustLight = vec3(0.76, 0.45, 0.2);
+      vec3 dustDark = vec3(0.55, 0.25, 0.1);
+      vec3 rock = vec3(0.3, 0.15, 0.08);
+      vec3 polarIce = vec3(0.9, 0.88, 0.85);
+
+      if (lat > 0.85) {
+        float iceFade = smoothstep(0.85, 0.95, lat);
+        finalColor = mix(mix(dustDark, dustLight, h), polarIce, iceFade);
+      } else if (h > 0.7) {
+        finalColor = mix(rock, dustDark, (h - 0.7) / 0.3);
+      } else {
+        finalColor = mix(dustDark, dustLight, h / 0.7);
+      }
+
       finalColor += vec3(0.8, 0.4, 0.1) * pow(rim, 4.0) * 0.5 * (1.0 - uFlatten);
       float diffuse = max(dot(normalize(vNormal), viewDirection), 0.1);
       finalColor *= (diffuse * 0.9 + 0.1);
 
     } else {
-      // ── JOVIAN ──
+      // ── JOVIAN — banding with seed variation ──
       vec3 p = vSpherePosition;
-      float warp = fbm(p * 1.5 + time * 0.03);
-      float band = sin(p.y * 8.0 + warp * 3.0);
+      float warp = fbm(p * 1.5 + time * 0.03 + vec3(uSeed * 10.0));
+      float band = sin(p.y * 8.0 + warp * 3.0 + uSeed * 5.0);
       vec3 c1 = vec3(0.7, 0.6, 0.5);
       vec3 c2 = vec3(0.6, 0.3, 0.1);
       vec3 c3 = vec3(0.8, 0.7, 0.6);
@@ -186,6 +282,10 @@ export const bodyFragmentShader = /* glsl */ `
       float diffuse = max(dot(normalize(vNormal), viewDirection), 0.1);
       finalColor *= (diffuse * 0.8 + 0.2);
     }
+
+    // Ground tint: blend procedural color with era-appropriate tint when flattened
+    float tintFactor = smoothstep(0.8, 1.0, uFlatten);
+    finalColor = mix(finalColor, finalColor * uGroundTint, tintFactor);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }

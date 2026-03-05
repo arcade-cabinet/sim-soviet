@@ -13,14 +13,16 @@
 
 import { useProgress } from '@react-three/drei';
 import type React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { SettlementTier } from './ai/agents/infrastructure/SettlementSystem';
 import AudioManager from './audio/AudioManager';
 import { getBuildingStates } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
 import { getCurrentGridSize } from './engine/GridTypes';
 import { useGameSnapshot } from './hooks/useGameState';
-import { notifyStateChange, useClimateMilestones, useSpaceVisualState } from './stores/gameStore';
+import { notifyStateChange, useActiveSettlement, useClimateMilestones, useSpaceVisualState } from './stores/gameStore';
+import type { CelestialBodyType } from './scene/celestial';
+import { getLoadZone } from './scene/loadZones';
 
 // Import ModelPreloader for its side-effect (calls useGLTF.preload)
 import './scene/ModelPreloader';
@@ -67,12 +69,38 @@ interface ContentProps {
   disableCamera?: boolean;
 }
 
+/** Map celestialBody string (from settlement data) to CelestialBodyType (shader enum). */
+function toCelestialBodyType(body: string): CelestialBodyType {
+  switch (body) {
+    case 'mars': return 'martian';
+    case 'orbital':
+    case 'dyson': return 'sun';
+    default: return 'terran'; // earth, moon, titan, exoplanet, venus
+  }
+}
+
 const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disableCamera }) => {
   const snap = useGameSnapshot();
   const spaceVisual = useSpaceVisualState();
   const climateMilestones = useClimateMilestones();
+  const activeSettlement = useActiveSettlement();
   const hasPermafrost = climateMilestones.has('permafrost_collapse') || climateMilestones.has('ecological_permafrost_collapse');
   const isWartime = snap.currentEra === 'great_patriotic';
+
+  // Derive zone-specific visual props from active settlement + era
+  const zoneProps = useMemo(() => {
+    const active = activeSettlement.settlements.find(s => s.isActive);
+    const body = active?.celestialBody ?? 'earth';
+    const zone = getLoadZone(body, snap.currentEra);
+    return {
+      bodyType: toCelestialBodyType(body),
+      // Only override HDRI when not the default Earth winter HDRI
+      loadZoneHdri: zone.hdri !== 'snowy_field_1k.hdr' ? zone.hdri : undefined,
+      loadZoneShader: zone.shader,
+      marsPhase: zone.marsPhase,
+      shellVisible: body === 'dyson' || body === 'orbital',
+    };
+  }, [activeSettlement.activeId, snap.currentEra]);
 
   // Track drei loading progress (useGLTF.preload triggers this)
   const { loaded, total, item } = useProgress();
@@ -128,6 +156,9 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
         season={snap.season}
         era={snap.currentEra as import('./game/era/types').EraId}
         techLevel={spaceVisual.techLevel}
+        loadZoneHdri={zoneProps.loadZoneHdri}
+        loadZoneShader={zoneProps.loadZoneShader}
+        marsPhase={zoneProps.marsPhase}
       />
       <SkyProgression state={spaceVisual} />
       <AlienFaunaRenderer />
@@ -135,7 +166,13 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
       {/* Celestial body as ground surface — rotated so flat projection aligns
           with the XZ plane and offset so the flat surface sits at Y=0. */}
       <group position={[center, -bodyRadius, center]} rotation={[-Math.PI / 2, 0, 0]}>
-        <CelestialViewport bodyType="terran" flattenNear={25} flattenFar={50} rotateSpeed={0.015} />
+        <CelestialViewport
+          bodyType={zoneProps.bodyType}
+          flattenNear={25}
+          flattenFar={50}
+          rotateSpeed={0.015}
+          shellVisible={zoneProps.shellVisible}
+        />
       </group>
       <BuildingRenderer
         buildings={buildings}

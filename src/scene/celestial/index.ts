@@ -21,5 +21,7 @@
 export { default as CelestialViewport } from './CelestialViewport';
 export type { CelestialViewportProps } from './CelestialViewport';
 export { default as CelestialBody } from './CelestialBody';
+export type { TerrainConfig } from './CelestialBody';
 export { default as MegastructureShell } from './MegastructureShell';
 export { BODY_TYPE_VALUE, type CelestialBodyType } from './shaders';
+export { sampleHeight, classifyBiome, type PlanetConfig } from './planetGenerator';

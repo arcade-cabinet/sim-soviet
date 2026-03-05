@@ -235,7 +235,7 @@
       "visual": {
         "bodyType": "terran",
         "hdri": "belfast_sunset_puresky_1k.hdr",
-        "groundTexture": "rock_ground_02",
+        "groundTexture": "red_laterite_soil_stones",
         "atmosphereColor": "#ddaa44",
         "atmosphereRim": true,
         "cloudLayer": true

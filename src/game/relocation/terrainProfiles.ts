@@ -110,3 +110,23 @@ export const CONSTRUCTION_MULTIPLIER: Readonly<Record<TerrainProfile['constructi
   pressurized_domes: 3.0,
   variable: 2.0,
 });
+
+// ─── Profile Lookup ──────────────────────────────────────────────────────────
+
+/** Named terrain profile lookup (used by RelocationEngine.createFromBranch). */
+const TERRAIN_PROFILES: Readonly<Record<string, Readonly<TerrainProfile>>> = {
+  lunar: TERRAIN_LUNAR,
+  martian: TERRAIN_MARS,
+  exoplanet: TERRAIN_EXOPLANET,
+  earth_temperate: TERRAIN_SIBERIA,
+  earth_desert: TERRAIN_STEPPE,
+  earth_arctic: TERRAIN_ARCTIC,
+  orbital: TERRAIN_EXOPLANET,
+  asteroid: TERRAIN_EXOPLANET,
+  venusian: TERRAIN_TITAN,
+};
+
+/** Get a terrain profile by name string. Returns undefined for unknown names. */
+export function getTerrainProfile(name: string): Readonly<TerrainProfile> | undefined {
+  return TERRAIN_PROFILES[name];
+}

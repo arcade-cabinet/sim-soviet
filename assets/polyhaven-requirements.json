@@ -215,7 +215,7 @@
       "localPath": "assets/textures/terrain/factory_wall/"
     },
     {
-      "id": "rock_ground_02",
+      "id": "red_laterite_soil_stones",
       "resolution": "1k",
       "role": "terrain_ground",
       "source": "polyhaven",
@@ -224,8 +224,8 @@
         "celestialBody": "venus",
         "terrain": "venusian"
       },
-      "notes": "Rocky volcanic ground. Venus surface under crushing atmosphere.",
-      "localPath": "assets/textures/terrain/rock_ground_02/"
+      "notes": "Red-brown laterite with stone debris. Sulfur-stained basaltic surface under Venus atmosphere.",
+      "localPath": "assets/textures/terrain/red_laterite_soil_stones/"
     },
     {
       "id": "sand_01",
@@ -519,6 +519,126 @@
       "notes": "Medium lunar rock. Terrain variety for Moon settlement.",
       "localPath": "assets/models/polyhaven/moon_rock_06.glb",
       "md5": "64167a15b24a13e34ecbd2c8ff291d02"
+    },
+    {
+      "id": "modular_industrial_pipes_01",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "colony_infrastructure"
+      },
+      "notes": "Modular industrial pipe sections. Colony life support, factory plumbing, settlement infrastructure.",
+      "localPath": "assets/models/polyhaven/modular_industrial_pipes_01.glb",
+      "md5": "cb30fdf4d471374ba439bfd5a0c8105d"
+    },
+    {
+      "id": "modular_pipes",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "colony_plumbing"
+      },
+      "notes": "Metal/plastic pipe segments. Water supply, drainage, maintenance tunnels.",
+      "localPath": "assets/models/polyhaven/modular_pipes.glb",
+      "md5": "993502b4d8c371bc38a03cba6d6f4008"
+    },
+    {
+      "id": "modular_airduct_rectangular_01",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "loadZone": [
+          "orbital",
+          "dyson",
+          "megaearth"
+        ],
+        "context": "ventilation"
+      },
+      "notes": "Rectangular ventilation ducts. Orbital habitats, sealed colony HVAC systems.",
+      "localPath": "assets/models/polyhaven/modular_airduct_rectangular_01.glb",
+      "md5": "80509f1d78f7853669d6f7d101cececd"
+    },
+    {
+      "id": "wooden_crate_01",
+      "role": "prop_storage",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "revolution",
+          "collectivization",
+          "industrialization"
+        ],
+        "context": "storage_yard"
+      },
+      "notes": "Wooden supply crate. Early-era storage depots, kolkhoz supply deliveries.",
+      "localPath": "assets/models/polyhaven/wooden_crate_01.glb",
+      "md5": "33df4d2ae00186d4b64e878466c9e22e"
+    },
+    {
+      "id": "utility_box_02",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "reconstruction",
+          "stagnation",
+          "post_soviet"
+        ],
+        "context": "power_distribution"
+      },
+      "notes": "Electrical utility box. Settlement power grid junction, transformer stations.",
+      "localPath": "assets/models/polyhaven/utility_box_02.glb",
+      "md5": "e73af61886eedd147d66e7e295543142"
+    },
+    {
+      "id": "power_box_01",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "electrical"
+      },
+      "notes": "Circuit breaker panel. Building interiors, factory electrical rooms.",
+      "localPath": "assets/models/polyhaven/power_box_01.glb",
+      "md5": "9fbd7f7049a13eb25213f5038c1ef42c"
+    },
+    {
+      "id": "concrete_road_barrier_02",
+      "role": "prop_infrastructure",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "industrialization",
+          "reconstruction",
+          "stagnation"
+        ],
+        "context": "road_construction"
+      },
+      "notes": "Alternative jersey barrier. Construction zones, military checkpoints, settlement perimeter.",
+      "localPath": "assets/models/polyhaven/concrete_road_barrier_02.glb",
+      "md5": "4e6ba4903224a56a2dc3ce4126529c1e"
+    },
+    {
+      "id": "russian_food_cans_01",
+      "role": "prop_decorative",
+      "source": "polyhaven",
+      "mapping": {
+        "era": [
+          "all"
+        ],
+        "context": "food_storage"
+      },
+      "notes": "Soviet-era food tins. Canteen props, storage depot detail, ration distribution.",
+      "localPath": "assets/models/polyhaven/russian_food_cans_01.glb",
+      "md5": "a9bc79ca5c80203ebc5e602aa31075fb"
     }
   ],
   "shaders": [

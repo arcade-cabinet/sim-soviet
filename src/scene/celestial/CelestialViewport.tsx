@@ -48,6 +48,8 @@ interface CelestialViewportProps {
   flattenFar?: number;
   /** Callback when flatten state changes (for UI updates). */
   onFlattenChange?: (flatten: number) => void;
+  /** Era-based ground tint color (hex string). Passed to CelestialBody for close-up realism. */
+  groundTint?: string;
 }
 
 const CelestialViewport: React.FC<CelestialViewportProps> = ({
@@ -61,6 +63,7 @@ const CelestialViewport: React.FC<CelestialViewportProps> = ({
   flattenNear = 12,
   flattenFar = 25,
   onFlattenChange,
+  groundTint,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const [flatten, setFlatten] = useState(0);
@@ -98,6 +101,7 @@ const CelestialViewport: React.FC<CelestialViewportProps> = ({
         flatten={flatten}
         radius={bodyRadius}
         shellRadius={shellRadius}
+        groundTint={groundTint}
       />
       <MegastructureShell
         progress={shellProgress}

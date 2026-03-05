@@ -16,7 +16,7 @@ import type { TerrainProfile } from '../../ai/agents/core/worldBranches';
 import type { GameRng } from '../SeedSystem';
 import type { CelestialBody, Settlement } from './Settlement';
 import { SettlementRegistry } from './Settlement';
-import { SURVIVAL_COST_MULTIPLIER } from './terrainProfiles';
+import { SURVIVAL_COST_MULTIPLIER, getTerrainProfile } from './terrainProfiles';
 
 // ─── Relocation Event ───────────────────────────────────────────────────────
 
@@ -275,7 +275,6 @@ export class RelocationEngine {
     const config = BRANCH_TERRAIN[branchId];
     if (!config) return; // Branch doesn't create settlements
 
-    const { getTerrainProfile } = require('./terrainProfiles');
     const terrain = getTerrainProfile(config.terrain);
     if (!terrain) return;
 

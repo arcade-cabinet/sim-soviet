@@ -128,7 +128,7 @@ const LOAD_ZONES: Record<string, LoadZone> = {
     name: 'Venus Cloud Colony',
     modelRoles: ['colony_housing', 'colony_industry', 'colony_power'],
     hdri: 'belfast_sunset_puresky_1k.hdr',
-    terrainTexture: 'rock_ground_02',
+    terrainTexture: 'red_laterite_soil_stones',
     flavorText: 'Floating above sulfuric acid. The Party floats above accountability.',
   },
 
