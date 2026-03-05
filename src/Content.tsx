@@ -24,6 +24,7 @@ import { notifyStateChange, useClimateMilestones, useSpaceVisualState, useTerrai
 // Import ModelPreloader for its side-effect (calls useGLTF.preload)
 import './scene/ModelPreloader';
 import AuraRenderer from './scene/AuraRenderer';
+import CrisisVFXRenderer from './scene/CrisisVFXRenderer';
 import BuildingRenderer from './scene/BuildingRenderer';
 import BuildingStatusBadges from './scene/BuildingStatusBadges';
 import CameraController from './scene/CameraController';
@@ -36,6 +37,7 @@ import HeatingOverlay from './scene/HeatingOverlay';
 import LensSystem from './scene/LensSystem';
 import Lighting from './scene/Lighting';
 import LightningRenderer from './scene/LightningRenderer';
+import MassGraveRenderer from './scene/MassGraveRenderer';
 import MeteorRenderer from './scene/MeteorRenderer';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import PoliticalEntityRenderer from './scene/PoliticalEntityRenderer';
@@ -150,6 +152,8 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
       <VehicleRenderer />
       <ZeppelinRenderer />
       <MeteorRenderer />
+      <CrisisVFXRenderer />
+      <MassGraveRenderer />
       <FloatingText />
       <CitizenRenderer />
       <PoliticalEntityRenderer />

@@ -92,6 +92,16 @@ export interface CrisisImpact {
       severity?: 'warning' | 'critical' | 'evacuation';
     }>;
   };
+
+  /** Visual effects — one-shot VFX triggered in the 3D scene. */
+  visual?: {
+    /** Effect type: 'meteor_flash' | 'nuclear_haze' | 'famine_desat'. */
+    effectType: 'meteor_flash' | 'nuclear_haze' | 'famine_desat';
+    /** Effect intensity (0–1). Default 1.0. */
+    intensity?: number;
+    /** Duration in seconds. Default varies by type. */
+    duration?: number;
+  };
 }
 
 // ─── Crisis Definition ──────────────────────────────────────────────────────

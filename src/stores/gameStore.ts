@@ -1124,6 +1124,118 @@ function subscribeSpace(listener: () => void): () => void {
   return () => { _spaceListeners.delete(listener); };
 }
 
+// ── Crisis Visual Effects (one-shot VFX triggered by crisis impacts) ──────
+
+/** Type of one-shot visual effect triggered by a crisis. */
+export type CrisisVFXType = 'meteor_flash' | 'nuclear_haze' | 'famine_desat';
+
+/** An active visual effect with remaining duration. */
+export interface CrisisVFXEvent {
+  type: CrisisVFXType;
+  /** Effect intensity (0–1). */
+  intensity: number;
+  /** Total duration in seconds. */
+  duration: number;
+  /** Timestamp when the effect started (Date.now()). */
+  startedAt: number;
+}
+
+let _activeVFX: CrisisVFXEvent[] = [];
+const _vfxListeners = new Set<() => void>();
+
+/** Get all currently active visual effects. */
+export function getActiveVFX(): readonly CrisisVFXEvent[] {
+  return _activeVFX;
+}
+
+/** Push a new visual effect onto the queue. Deduplicates by type. */
+export function pushCrisisVFX(type: CrisisVFXType, intensity: number, duration: number): void {
+  // Replace existing effect of same type (restart it)
+  _activeVFX = _activeVFX.filter((e) => e.type !== type);
+  _activeVFX.push({ type, intensity, duration, startedAt: Date.now() });
+  for (const listener of _vfxListeners) listener();
+}
+
+/** Remove expired effects. Called by the VFX renderer each frame. */
+export function pruneExpiredVFX(): void {
+  const now = Date.now();
+  const before = _activeVFX.length;
+  _activeVFX = _activeVFX.filter((e) => now - e.startedAt < e.duration * 1000);
+  if (_activeVFX.length !== before) {
+    for (const listener of _vfxListeners) listener();
+  }
+}
+
+/** Clear all visual effects (called on game reset). */
+export function clearCrisisVFX(): void {
+  _activeVFX = [];
+  for (const listener of _vfxListeners) listener();
+}
+
+/** React hook -- subscribe to active crisis VFX state. */
+export function useCrisisVFX(): readonly CrisisVFXEvent[] {
+  return useSyncExternalStore(subscribeVFX, getActiveVFX, getActiveVFX);
+}
+
+function subscribeVFX(listener: () => void): () => void {
+  _vfxListeners.add(listener);
+  return () => { _vfxListeners.delete(listener); };
+}
+
+// ── Mass Graves (persistent visual markers for mass casualty events) ──────
+
+/** A cluster of grave markers placed at the settlement edge. */
+export interface MassGraveCluster {
+  /** Unique ID for this cluster */
+  id: string;
+  /** Grid X position (settlement periphery) */
+  gridX: number;
+  /** Grid Y position (settlement periphery) */
+  gridY: number;
+  /** Year the graves were placed */
+  year: number;
+  /** Number of markers in this cluster (3-5) */
+  markerCount: number;
+  /** Cause of the mass grave */
+  cause: 'purge' | 'famine' | 'gulag' | 'war' | 'plague';
+}
+
+let _massGraves: MassGraveCluster[] = [];
+const _graveListeners = new Set<() => void>();
+
+/** Get all mass grave clusters. */
+export function getMassGraves(): readonly MassGraveCluster[] {
+  return _massGraves;
+}
+
+/** Add a new mass grave cluster at the settlement edge. */
+export function addMassGrave(cluster: MassGraveCluster): void {
+  _massGraves = [..._massGraves, cluster];
+  for (const listener of _graveListeners) listener();
+}
+
+/** Clear all mass graves (called on game reset). */
+export function clearMassGraves(): void {
+  _massGraves = [];
+  for (const listener of _graveListeners) listener();
+}
+
+/** Restore mass graves from save data. */
+export function restoreMassGraves(clusters: MassGraveCluster[]): void {
+  _massGraves = clusters;
+  for (const listener of _graveListeners) listener();
+}
+
+/** React hook -- subscribe to mass grave state changes. */
+export function useMassGraves(): readonly MassGraveCluster[] {
+  return useSyncExternalStore(subscribeGraves, getMassGraves, getMassGraves);
+}
+
+function subscribeGraves(listener: () => void): () => void {
+  _graveListeners.add(listener);
+  return () => { _graveListeners.delete(listener); };
+}
+
 // ── Internal ──────────────────────────────────────────────────────────────
 
 function subscribe(listener: () => void): () => void {

@@ -11,6 +11,7 @@
  *   - Narrative callbacks fire for each impact
  */
 
+import { pushCrisisVFX } from '@/stores/gameStore';
 import type { CrisisImpact } from './types';
 
 // ─── Dependencies Interface ────────────────────────────────────────────────
@@ -99,6 +100,7 @@ export function applyCrisisImpacts(impacts: CrisisImpact[], deps: ApplicatorDeps
     applyPolitical(impact, result);
     applySocial(impact, result);
     applyNarrative(impact, deps);
+    applyVisual(impact);
   }
 
   return result;
@@ -196,4 +198,20 @@ function applyNarrative(impact: CrisisImpact, deps: ApplicatorDeps): void {
       deps.callbacks.onToast(toast.text, toast.severity);
     }
   }
+}
+
+/** Default durations (seconds) per visual effect type. */
+const DEFAULT_VFX_DURATIONS: Record<string, number> = {
+  meteor_flash: 2,
+  nuclear_haze: 60,
+  famine_desat: 30,
+};
+
+function applyVisual(impact: CrisisImpact): void {
+  const vis = impact.visual;
+  if (!vis) return;
+
+  const intensity = vis.intensity ?? 1.0;
+  const duration = vis.duration ?? DEFAULT_VFX_DURATIONS[vis.effectType] ?? 5;
+  pushCrisisVFX(vis.effectType, intensity, duration);
 }

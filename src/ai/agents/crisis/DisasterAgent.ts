@@ -290,6 +290,16 @@ export class DisasterAgent implements ICrisisAgent {
       pravdaHeadlines: [`MINOR INCIDENT AT ${this.definition.name.toUpperCase()} POSES NO THREAT TO HEROIC WORKERS`],
     };
 
+    // Visual effects — nuclear haze for radiation disasters, flash for others
+    const peakDisease = param(pp, 'diseaseMult', 1.0);
+    if (peakDisease >= 2.0) {
+      // Radiation disaster (Chernobyl-level) — persistent orange haze
+      impact.visual = { effectType: 'nuclear_haze', intensity: 0.8, duration: 60 };
+    } else {
+      // Standard disaster — bright impact flash
+      impact.visual = { effectType: 'meteor_flash', intensity: 1.0, duration: 2 };
+    }
+
     return [impact];
   }
 

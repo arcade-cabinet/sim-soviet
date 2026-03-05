@@ -8,6 +8,7 @@
 
 import { type ApplicatorDeps, applyCrisisImpacts } from '@/ai/agents/crisis/CrisisImpactApplicator';
 import type { CrisisImpact } from '@/ai/agents/crisis/types';
+import { clearCrisisVFX, getActiveVFX } from '@/stores/gameStore';
 
 // ─── Test Helpers ──────────────────────────────────────────────────────────
 
@@ -580,5 +581,125 @@ describe('applyCrisisImpacts — full multi-domain impact', () => {
     // Narrative
     expect(deps.callbacks.onPravda).toHaveBeenCalledWith('GREAT PATRIOTIC WAR BEGINS');
     expect(deps.callbacks.onToast).toHaveBeenCalledWith('Enemy at the gates!', 'critical');
+  });
+});
+
+// ─── Visual Slot ──────────────────────────────────────────────────────────
+
+describe('applyCrisisImpacts — visual effects', () => {
+  beforeEach(() => {
+    clearCrisisVFX();
+  });
+
+  afterEach(() => {
+    clearCrisisVFX();
+  });
+
+  it('pushes meteor_flash VFX for visual impact', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'disaster',
+      visual: { effectType: 'meteor_flash', intensity: 1.0, duration: 2 },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    const vfx = getActiveVFX();
+    expect(vfx).toHaveLength(1);
+    expect(vfx[0].type).toBe('meteor_flash');
+    expect(vfx[0].intensity).toBe(1.0);
+    expect(vfx[0].duration).toBe(2);
+  });
+
+  it('pushes nuclear_haze VFX for radiation disasters', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'chernobyl',
+      visual: { effectType: 'nuclear_haze', intensity: 0.8, duration: 60 },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    const vfx = getActiveVFX();
+    expect(vfx).toHaveLength(1);
+    expect(vfx[0].type).toBe('nuclear_haze');
+    expect(vfx[0].intensity).toBe(0.8);
+    expect(vfx[0].duration).toBe(60);
+  });
+
+  it('pushes famine_desat VFX for famine crises', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'holodomor',
+      visual: { effectType: 'famine_desat', intensity: 0.85, duration: 30 },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    const vfx = getActiveVFX();
+    expect(vfx).toHaveLength(1);
+    expect(vfx[0].type).toBe('famine_desat');
+    expect(vfx[0].intensity).toBe(0.85);
+  });
+
+  it('uses default duration when not specified', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'test',
+      visual: { effectType: 'meteor_flash' },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    const vfx = getActiveVFX();
+    expect(vfx).toHaveLength(1);
+    expect(vfx[0].duration).toBe(2); // Default for meteor_flash
+  });
+
+  it('uses default intensity when not specified', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'test',
+      visual: { effectType: 'nuclear_haze' },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    const vfx = getActiveVFX();
+    expect(vfx).toHaveLength(1);
+    expect(vfx[0].intensity).toBe(1.0); // Default intensity
+    expect(vfx[0].duration).toBe(60); // Default for nuclear_haze
+  });
+
+  it('does not push VFX when visual slot is absent', () => {
+    const deps = makeDeps();
+    const impact: CrisisImpact = {
+      crisisId: 'noop',
+      economy: { productionMult: 0.9 },
+    };
+
+    applyCrisisImpacts([impact], deps);
+
+    const vfx = getActiveVFX();
+    expect(vfx).toHaveLength(0);
+  });
+
+  it('deduplicates VFX by type (restart on re-push)', () => {
+    const deps = makeDeps();
+    const impact1: CrisisImpact = {
+      crisisId: 'disaster1',
+      visual: { effectType: 'meteor_flash', intensity: 0.5, duration: 2 },
+    };
+    const impact2: CrisisImpact = {
+      crisisId: 'disaster2',
+      visual: { effectType: 'meteor_flash', intensity: 1.0, duration: 3 },
+    };
+
+    applyCrisisImpacts([impact1, impact2], deps);
+
+    const vfx = getActiveVFX();
+    expect(vfx).toHaveLength(1);
+    expect(vfx[0].intensity).toBe(1.0); // Second impact replaces first
+    expect(vfx[0].duration).toBe(3);
   });
 });
