@@ -6,8 +6,13 @@
  *   State 2: industrialization → muddy churned earth
  *   State 3: great_patriotic → scorched ash
  *   State 4: reconstruction + thaw_and_freeze → recovering green
- *   State 5: stagnation → grey concrete dust
+ *   State 5: stagnation → grey concrete dust (AsphaltDamageSet001 decay overlay)
  *   State 6: the_eternal → permafrost thaw (orange-red cracked earth)
+ *
+ * Decay overlay textures (AmbientCG ATLAS packs):
+ *   - AsphaltDamageSet001: cracked pavement overlay for stagnation
+ *   - AsphaltDamageSet002: heavier damage for post-collapse events
+ *   - Foliage001: dead winter ground vegetation for early eras
  */
 
 import type { EraId } from '../game/era/types';
@@ -117,4 +122,96 @@ export function getTerrainTextureFiles(state: TerrainVisualState): {
  */
 export function terrainStateIndex(state: TerrainVisualState): number {
   return TERRAIN_STATE_ORDER.indexOf(state);
+}
+
+// ── Decay overlay textures (AmbientCG ATLAS packs) ─────────────────────────
+
+/** Decay overlay identifier for terrain damage effects. */
+export type DecayOverlayId = 'cracked_pavement' | 'heavy_damage' | 'dead_foliage';
+
+/** Configuration for a decay overlay texture layer. */
+export interface DecayOverlayConfig {
+  /** AmbientCG pack prefix (directory + file prefix). */
+  prefix: string;
+  /** Base directory under assets/textures/terrain/. */
+  dir: string;
+  /** Opacity of the overlay (0-1). */
+  opacity: number;
+  /** Optional emissive tint color (hex). Applied to damage textures for scorch effects. */
+  emissiveTint?: string;
+  /** Emissive intensity (0-1). */
+  emissiveIntensity?: number;
+}
+
+/**
+ * Decay overlay textures — layered on top of the base terrain state.
+ * Used for stagnation-era cracking, post-collapse scorching, and dead vegetation.
+ */
+export const DECAY_OVERLAYS: Record<DecayOverlayId, DecayOverlayConfig> = {
+  cracked_pavement: {
+    prefix: 'AsphaltDamageSet001',
+    dir: 'AsphaltDamageSet001',
+    opacity: 0.6,
+  },
+  heavy_damage: {
+    prefix: 'AsphaltDamageSet002',
+    dir: 'AsphaltDamageSet002',
+    opacity: 0.75,
+    emissiveTint: '#c45a30',
+    emissiveIntensity: 0.3,
+  },
+  dead_foliage: {
+    prefix: 'Foliage001',
+    dir: 'Foliage001',
+    opacity: 0.5,
+  },
+};
+
+/**
+ * Which decay overlays apply to each terrain visual state (if any).
+ * Overlays are rendered as additional transparent texture planes on top of the base.
+ */
+export const TERRAIN_DECAY_OVERLAYS: Partial<Record<TerrainVisualState, DecayOverlayId[]>> = {
+  snowy_taiga: ['dead_foliage'],
+  concrete_dust: ['cracked_pavement'],
+  permafrost_thaw: ['heavy_damage'],
+};
+
+/**
+ * Get texture file paths for a decay overlay.
+ * @param overlay - The decay overlay configuration
+ * @returns Object with color, normal, roughness file paths (relative to assets/)
+ */
+export function getDecayOverlayFiles(overlay: DecayOverlayConfig): {
+  color: string;
+  normal: string;
+  roughness: string;
+} {
+  const { prefix, dir } = overlay;
+  const base = `assets/textures/terrain/${dir}`;
+  return {
+    color: `${base}/${prefix}_1K-JPG_Color.jpg`,
+    normal: `${base}/${prefix}_1K-JPG_NormalGL.jpg`,
+    roughness: `${base}/${prefix}_1K-JPG_Roughness.jpg`,
+  };
+}
+
+/**
+ * Collect all texture paths that should be preloaded for a given terrain visual state.
+ * Includes base textures + any decay overlays.
+ */
+export function getAllTexturePathsForState(state: TerrainVisualState): string[] {
+  const base = getTerrainTextureFiles(state);
+  const paths = [base.color, base.normal, base.roughness];
+
+  const overlayIds = TERRAIN_DECAY_OVERLAYS[state];
+  if (overlayIds) {
+    for (const id of overlayIds) {
+      const overlay = DECAY_OVERLAYS[id];
+      const files = getDecayOverlayFiles(overlay);
+      paths.push(files.color, files.normal, files.roughness);
+    }
+  }
+
+  return paths;
 }

@@ -24,10 +24,14 @@ import { getCurrentGridSize } from '../engine/GridTypes';
 import { assetUrl } from '../utils/assetPath';
 import type { Season } from './TerrainGrid';
 import {
+  DECAY_OVERLAYS,
+  TERRAIN_DECAY_OVERLAYS,
   TERRAIN_HILL_COLORS,
   TERRAIN_STATE_COLORS,
   eraToTerrainState,
+  getDecayOverlayFiles,
   getTerrainTextureFiles,
+  type DecayOverlayId,
 } from './terrainEraMapping';
 
 const GROUND_SIZE = 400;
@@ -46,11 +50,16 @@ function getHdriFile(season: Season): string {
   }
 }
 
-/** Sky parameters per season (Preetham model) */
-function getSkyParams(season: Season) {
+/**
+ * Sky parameters per season (Preetham model).
+ * When techLevel > 0, gradually shifts toward deeper, clearer skies
+ * (lower turbidity = less atmospheric scattering = more stars visible).
+ */
+function getSkyParams(season: Season, techLevel = 0) {
+  let params: { turbidity: number; rayleigh: number; mieCoefficient: number; mieDirectionalG: number; inclination: number; azimuth: number };
   switch (season) {
     case 'winter':
-      return {
+      params = {
         turbidity: 20,
         rayleigh: 1,
         mieCoefficient: 0.01,
@@ -58,8 +67,9 @@ function getSkyParams(season: Season) {
         inclination: 0.42,
         azimuth: 0.25,
       };
+      break;
     case 'autumn':
-      return {
+      params = {
         turbidity: 15,
         rayleigh: 2,
         mieCoefficient: 0.008,
@@ -67,8 +77,9 @@ function getSkyParams(season: Season) {
         inclination: 0.45,
         azimuth: 0.25,
       };
+      break;
     default:
-      return {
+      params = {
         turbidity: 10,
         rayleigh: 2,
         mieCoefficient: 0.005,
@@ -77,6 +88,16 @@ function getSkyParams(season: Season) {
         azimuth: 0.25,
       };
   }
+
+  // Tech-driven sky shift: clearer atmosphere as civilization advances
+  if (techLevel > 0.1) {
+    const t = Math.min(1, (techLevel - 0.1) / 0.9);
+    params.turbidity = params.turbidity * (1 - t * 0.4); // up to 40% reduction
+    params.rayleigh = params.rayleigh + t * 1.5; // deeper blue-violet
+    params.mieCoefficient = params.mieCoefficient * (1 - t * 0.3);
+  }
+
+  return params;
 }
 
 /** Hill definitions — positions and scales for perimeter framing */
@@ -136,16 +157,63 @@ const Ground: React.FC<{ season: Season; era: EraId }> = ({ season, era }) => {
   );
 };
 
+/** Single decay overlay plane — transparent textured layer above the ground. */
+const DecayOverlayPlane: React.FC<{ overlayId: DecayOverlayId }> = ({ overlayId }) => {
+  const center = getCurrentGridSize() / 2;
+  const config = DECAY_OVERLAYS[overlayId];
+  const files = getDecayOverlayFiles(config);
+
+  const colorFile = assetUrl(files.color);
+  const normalFile = assetUrl(files.normal);
+  const roughFile = assetUrl(files.roughness);
+
+  const [colorMap, normalMap, roughnessMap] = useTexture([colorFile, normalFile, roughFile]);
+
+  useMemo(() => {
+    const tileScale = 20;
+    for (const tex of [colorMap, normalMap, roughnessMap]) {
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(tileScale, tileScale);
+    }
+  }, [colorMap, normalMap, roughnessMap]);
+
+  const emissiveColor = config.emissiveTint ?? '#000000';
+
+  return (
+    <mesh
+      position={[center, GROUND_Y + 0.01, center]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      receiveShadow
+    >
+      <planeGeometry args={[GROUND_SIZE, GROUND_SIZE, 4, 4]} />
+      <meshStandardMaterial
+        map={colorMap}
+        normalMap={normalMap}
+        roughnessMap={roughnessMap}
+        transparent
+        opacity={config.opacity}
+        depthWrite={false}
+        metalness={0}
+        roughness={1}
+        emissive={emissiveColor}
+        emissiveIntensity={config.emissiveIntensity ?? 0}
+      />
+    </mesh>
+  );
+};
+
 interface EnvironmentProps {
   season?: Season;
   /** Current historical era — drives terrain texture selection. */
   era?: EraId;
+  /** Tech level (0-1) — drives sky clarity shift for space progression. */
+  techLevel?: number;
 }
 
 /** Renders the procedural sky, HDRI image-based lighting, PBR ground plane, and perimeter hills. */
-const Environment: React.FC<EnvironmentProps> = ({ season = 'winter', era = 'revolution' }) => {
+const Environment: React.FC<EnvironmentProps> = ({ season = 'winter', era = 'revolution', techLevel = 0 }) => {
   const center = getCurrentGridSize() / 2;
-  const skyParams = getSkyParams(season);
+  const skyParams = getSkyParams(season, techLevel);
   const hdriFile = getHdriFile(season);
   const terrainState = eraToTerrainState(era);
   const hillColor = TERRAIN_HILL_COLORS[terrainState];
@@ -177,6 +245,11 @@ const Environment: React.FC<EnvironmentProps> = ({ season = 'winter', era = 'rev
 
       {/* PBR ground plane — era-driven textures */}
       <Ground season={season} era={era} />
+
+      {/* Decay overlay planes — transparent textured layers for stagnation/collapse */}
+      {(TERRAIN_DECAY_OVERLAYS[terrainState] ?? []).map((overlayId) => (
+        <DecayOverlayPlane key={overlayId} overlayId={overlayId} />
+      ))}
 
       {/* Perimeter hills — era-driven colors */}
       {hillsData.map((hill, i) => (
