@@ -13,13 +13,14 @@
 
 import { useProgress } from '@react-three/drei';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { SettlementTier } from './ai/agents/infrastructure/SettlementSystem';
 import AudioManager from './audio/AudioManager';
-import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
+import { getBuildingStates } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
+import { getCurrentGridSize } from './engine/GridTypes';
 import { useGameSnapshot } from './hooks/useGameState';
-import { notifyStateChange, useClimateMilestones, useSpaceVisualState, useTerrainVersion } from './stores/gameStore';
+import { notifyStateChange, useClimateMilestones, useSpaceVisualState } from './stores/gameStore';
 
 // Import ModelPreloader for its side-effect (calls useGLTF.preload)
 import './scene/ModelPreloader';
@@ -31,6 +32,7 @@ import CollapseOverlay from './scene/CollapseOverlay';
 import BuildingRenderer from './scene/BuildingRenderer';
 import BuildingStatusBadges from './scene/BuildingStatusBadges';
 import CameraController from './scene/CameraController';
+import { CelestialViewport } from './scene/celestial';
 import CitizenRenderer from './scene/CitizenRenderer';
 import Environment from './scene/Environment';
 import FireRenderer from './scene/FireRenderer';
@@ -49,8 +51,6 @@ import SceneProps from './scene/SceneProps';
 import SkyProgression from './scene/SkyProgression';
 import PermafrostOverlay from './scene/PermafrostOverlay';
 import SmogOverlay from './scene/SmogOverlay';
-// Scene components
-import TerrainGrid from './scene/TerrainGrid';
 import TrainRenderer from './scene/TrainRenderer';
 import VehicleRenderer from './scene/VehicleRenderer';
 import WeatherFX from './scene/WeatherFX';
@@ -113,22 +113,12 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
   // The ECS building defIds match GLB model names directly
   const buildings = getBuildingStates();
 
-  // Cache the terrain grid — it only needs to rebuild when season changes
-  // or when buildings are placed/demolished (path recalculation changes tiles).
-  // Without this, getGridCells() returns a new array every render, causing
-  // TerrainGrid to dispose and rebuild all meshes on every tick.
-  const terrainVersion = useTerrainVersion();
-  const lastSeasonRef = useRef(snap.season);
-  const lastTerrainVersionRef = useRef(terrainVersion);
-  const [ecsGrid, setEcsGrid] = useState(() => getGridCells());
+  // Grid center for positioning the celestial body under the settlement
+  const center = getCurrentGridSize() / 2;
 
-  useEffect(() => {
-    if (lastSeasonRef.current !== snap.season || lastTerrainVersionRef.current !== terrainVersion) {
-      lastSeasonRef.current = snap.season;
-      lastTerrainVersionRef.current = terrainVersion;
-      setEcsGrid(getGridCells());
-    }
-  }, [snap.season, terrainVersion]);
+  // Body radius must match CelestialBody default (7) so the flat surface
+  // sits at Y=0 when the outer group is offset by -bodyRadius on Y.
+  const bodyRadius = 7;
 
   // Core scene + VFX layers + Interaction
   return (
@@ -142,7 +132,11 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
       <SkyProgression state={spaceVisual} />
       <AlienFaunaRenderer />
       <Lighting timeOfDay={snap.timeOfDay} season={snap.season} isStorm={snap.weatherLabel === 'STORM'} isWartime={isWartime} />
-      <TerrainGrid grid={ecsGrid} season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} />
+      {/* Celestial body as ground surface — rotated so flat projection aligns
+          with the XZ plane and offset so the flat surface sits at Y=0. */}
+      <group position={[center, -bodyRadius, center]} rotation={[-Math.PI / 2, 0, 0]}>
+        <CelestialViewport bodyType="terran" flattenNear={25} flattenFar={50} rotateSpeed={0.015} />
+      </group>
       <BuildingRenderer
         buildings={buildings}
         settlementTier={snap.settlementTier as SettlementTier}

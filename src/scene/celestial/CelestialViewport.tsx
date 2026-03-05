@@ -6,13 +6,16 @@
  * 2. Morphs to flat surface as camera zooms in (settlement view)
  * 3. Optionally shows Dyson shell with build progress
  *
- * The flatten value is driven by camera distance — as the user zooms in,
- * the sphere smoothly unrolls into a flat plane for settlement gameplay.
+ * The flatten value is driven by camera distance to the group's world position —
+ * as the user zooms in, the sphere smoothly unrolls into a flat plane for
+ * settlement gameplay. When used as the primary ground surface, the group should
+ * be positioned at the grid center and rotated so the flat projection aligns
+ * with the XZ ground plane.
  *
- * Zoom levels:
- * - distance > 20: full sphere (flatten = 0)
- * - 20 > distance > 12: morphing zone (flatten interpolated)
- * - distance < 12: fully flat (flatten = 1) — settlement placement mode
+ * Zoom levels (default thresholds):
+ * - distance > flattenFar: full sphere (flatten = 0)
+ * - flattenFar > distance > flattenNear: morphing zone (flatten interpolated)
+ * - distance < flattenNear: fully flat (flatten = 1) — settlement placement mode
  */
 
 import React, { useRef, useState } from 'react';
@@ -21,6 +24,9 @@ import * as THREE from 'three';
 import CelestialBody from './CelestialBody';
 import MegastructureShell from './MegastructureShell';
 import type { CelestialBodyType } from './shaders';
+
+/** Reusable vector for distance calculation (avoids per-frame allocation). */
+const _groupWorldPos = new THREE.Vector3();
 
 interface CelestialViewportProps {
   /** Which celestial body to render. */
@@ -37,7 +43,7 @@ interface CelestialViewportProps {
   shellRadius?: number;
   /** Auto-rotate speed (radians/sec). Set to 0 to disable. */
   rotateSpeed?: number;
-  /** Zoom distance thresholds for auto-flatten. */
+  /** Zoom distance thresholds for auto-flatten (camera-to-group distance). */
   flattenNear?: number;
   flattenFar?: number;
   /** Callback when flatten state changes (for UI updates). */
@@ -53,7 +59,7 @@ const CelestialViewport: React.FC<CelestialViewportProps> = ({
   shellRadius = 8.5,
   rotateSpeed = 0.015,
   flattenNear = 12,
-  flattenFar = 20,
+  flattenFar = 25,
   onFlattenChange,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
@@ -63,12 +69,14 @@ const CelestialViewport: React.FC<CelestialViewportProps> = ({
   useFrame((_, delta) => {
     if (!groupRef.current) return;
 
-    // Auto-flatten based on camera distance
+    // Auto-flatten based on camera distance to the group's world position
+    // (not distance from origin — the group may be offset to grid center)
     let f: number;
     if (flattenOverride !== undefined) {
       f = flattenOverride;
     } else {
-      const dist = camera.position.length();
+      groupRef.current.getWorldPosition(_groupWorldPos);
+      const dist = camera.position.distanceTo(_groupWorldPos);
       f = 1 - THREE.MathUtils.clamp((dist - flattenNear) / (flattenFar - flattenNear), 0, 1);
     }
 
@@ -77,7 +85,7 @@ const CelestialViewport: React.FC<CelestialViewportProps> = ({
       onFlattenChange?.(f);
     }
 
-    // Auto-rotate (slows as flattening increases)
+    // Auto-rotate (slows as flattening increases — fully stopped when flat)
     const rotMult = 1 - f;
     groupRef.current.rotation.y += rotateSpeed * rotMult * delta * 60;
     groupRef.current.rotation.z += rotateSpeed * 0.3 * rotMult * delta * 60;

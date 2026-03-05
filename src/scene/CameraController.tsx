@@ -283,7 +283,7 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
     if (hasZoom) {
       const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
       const dist = offset.length();
-      const newDist = THREE.MathUtils.clamp(dist + axes.camera_zoom * ZOOM_SPEED, 3, 80);
+      const newDist = THREE.MathUtils.clamp(dist + axes.camera_zoom * ZOOM_SPEED, 3, 50);
       offset.normalize().multiplyScalar(newDist);
       camera.position.copy(controls.target).add(offset);
     }
@@ -298,7 +298,7 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
       ref={controlsRef}
       target={[center, 0, center]}
       minDistance={3}
-      maxDistance={80}
+      maxDistance={50}
       maxPolarAngle={Math.PI / 2.2}
       enableDamping
       dampingFactor={0.1}

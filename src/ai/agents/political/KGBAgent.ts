@@ -22,7 +22,7 @@ import { MSG } from '../../telegrams';
 import type { ChronologyAgent } from '../core/ChronologyAgent';
 import type { WorkerSystem } from '../workforce/WorkerSystem';
 import type { ConsequenceConfig, ScoringSystem } from './ScoringSystem';
-import type { KGBInformant, KGBInvestigation, PoliticalEntityStats, PoliticalTickResult } from './types';
+import type { KGBInformant, KGBInvestigation, KGBMoraleReport, MoraleReportSeverity, PoliticalEntityStats, PoliticalTickResult } from './types';
 import {
   type LawEnforcementMode,
   type LawEnforcementState,
@@ -173,6 +173,18 @@ export const INFORMANT_FLAG_CHANCE = cfg.informantFlagChance;
 /** How many existing marks before investigation priority is escalated. */
 export const ESCALATION_MARK_THRESHOLD = cfg.escalationMarkThreshold;
 
+/** Morale threshold below which KGB generates a 'concern' report. */
+export const MORALE_CONCERN_THRESHOLD = 40;
+
+/** Morale threshold below which KGB generates a 'warning' report. */
+export const MORALE_WARNING_THRESHOLD = 25;
+
+/** Morale threshold below which KGB generates a 'critical' report. */
+export const MORALE_CRITICAL_THRESHOLD = 15;
+
+/** Maximum morale reports retained in memory. */
+const MAX_MORALE_REPORTS = 20;
+
 // ─────────────────────────────────────────────────────────
 //  Constants (from assessThreat / wrapper)
 // ─────────────────────────────────────────────────────────
@@ -270,6 +282,9 @@ export class KGBAgent extends Vehicle {
 
   /** Informant network embedded in buildings. */
   private informants: KGBInformant[] = [];
+
+  /** Morale intelligence reports generated from citizen sampling. */
+  private moraleReports: KGBMoraleReport[] = [];
 
   /** Optional RNG reference (set via setRng). */
   private rng: KGBRng | null = null;
@@ -595,6 +610,56 @@ export class KGBAgent extends Vehicle {
   /** Get all informants (read-only). */
   getInformants(): readonly KGBInformant[] {
     return this.informants;
+  }
+
+  // ─────────────────────────────────────────────────────
+  //  Morale Intelligence Reports
+  // ─────────────────────────────────────────────────────
+
+  /**
+   * Sample morale at specific locations and generate intelligence reports
+   * when morale drops below thresholds. Called once per tick by the engine.
+   *
+   * @param samples - Array of { sectorId, avgMorale } readings from buildings/sectors
+   * @param tick - Current simulation tick
+   */
+  sampleMorale(samples: ReadonlyArray<{ sectorId: { gridX: number; gridY: number }; avgMorale: number }>, tick: number): void {
+    for (const sample of samples) {
+      if (sample.avgMorale >= MORALE_CONCERN_THRESHOLD) continue;
+
+      let severity: MoraleReportSeverity;
+      if (sample.avgMorale < MORALE_CRITICAL_THRESHOLD) {
+        severity = 'critical';
+      } else if (sample.avgMorale < MORALE_WARNING_THRESHOLD) {
+        severity = 'warning';
+      } else {
+        severity = 'concern';
+      }
+
+      this.moraleReports.push({
+        sectorId: { ...sample.sectorId },
+        avgMorale: Math.round(sample.avgMorale),
+        timestamp: tick,
+        severity,
+      });
+    }
+
+    // Trim to max capacity (keep most recent)
+    if (this.moraleReports.length > MAX_MORALE_REPORTS) {
+      this.moraleReports = this.moraleReports.slice(-MAX_MORALE_REPORTS);
+    }
+  }
+
+  /** Get all morale intelligence reports (read-only, most recent last). */
+  getMoraleReports(): readonly KGBMoraleReport[] {
+    return this.moraleReports;
+  }
+
+  /** Get only reports matching a minimum severity level. */
+  getMoraleReportsBySeverity(minSeverity: MoraleReportSeverity): readonly KGBMoraleReport[] {
+    const severityOrder: Record<MoraleReportSeverity, number> = { concern: 0, warning: 1, critical: 2 };
+    const minLevel = severityOrder[minSeverity];
+    return this.moraleReports.filter(r => severityOrder[r.severity] >= minLevel);
   }
 
   // ─────────────────────────────────────────────────────

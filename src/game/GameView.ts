@@ -6,7 +6,7 @@
  * GameState so ~90 lambda bodies remain unchanged.
  */
 import { getBuildingDef } from '@/data/buildingDefs';
-import { buildingsLogic, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
+import { buildingsLogic, citizens, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 
 /** Minimal building snapshot for event/headline system lambdas. */
 export interface Building {
@@ -35,6 +35,8 @@ export interface GameView {
     deadlineYear: number;
   }>;
   readonly currentEra: string;
+  /** Settlement-wide average morale (0-100). Used internally by Pravda generators. */
+  readonly avgMorale: number;
 }
 
 /**
@@ -64,6 +66,15 @@ export function createGameView(): GameView {
     });
   }
 
+  // Compute average morale from citizen entities
+  let moraleSum = 0;
+  let citizenCount = 0;
+  for (const c of citizens) {
+    moraleSum += c.citizen.happiness;
+    citizenCount++;
+  }
+  const avgMorale = citizenCount > 0 ? Math.round(moraleSum / citizenCount) : 50;
+
   return {
     money: res.resources.money,
     pop: res.resources.population,
@@ -75,6 +86,7 @@ export function createGameView(): GameView {
     date: meta.gameMeta.date,
     quota: meta.gameMeta.quota,
     currentEra: meta.gameMeta.currentEra,
+    avgMorale,
   };
 }
 

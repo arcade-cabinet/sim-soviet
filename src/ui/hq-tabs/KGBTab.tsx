@@ -10,6 +10,7 @@
 
 import type React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { KGBMoraleReport } from '../../ai/agents/political/types';
 import { Colors, monoFont } from '../styles';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -31,6 +32,8 @@ export interface KGBTabProps {
   recentArrests: ArrestRecord[];
   /** Whether active surveillance operations are running. */
   surveillanceActive: boolean;
+  /** KGB morale intelligence reports (most recent last). */
+  moraleReports?: readonly KGBMoraleReport[];
 }
 
 // ── Constants ───────────────────────────────────────────────────────────────
@@ -68,7 +71,31 @@ function loyaltyColor(level: number): string {
 
 // ── Component ───────────────────────────────────────────────────────────────
 
-export const KGBTab: React.FC<KGBTabProps> = ({ loyaltyLevel, dissidentCount, recentArrests, surveillanceActive }) => {
+/** Get display color for morale report severity. */
+function severityColor(severity: KGBMoraleReport['severity']): string {
+  switch (severity) {
+    case 'critical':
+      return '#ff1744';
+    case 'warning':
+      return '#ff9100';
+    case 'concern':
+      return Colors.sovietGold;
+  }
+}
+
+/** Get Soviet-style label for morale report severity. */
+function severityLabel(severity: KGBMoraleReport['severity']): string {
+  switch (severity) {
+    case 'critical':
+      return 'CRITICAL — COUNTER-REVOLUTIONARY RISK';
+    case 'warning':
+      return 'WARNING — DETERIORATING CONDITIONS';
+    case 'concern':
+      return 'CONCERN — BELOW ACCEPTABLE STANDARDS';
+  }
+}
+
+export const KGBTab: React.FC<KGBTabProps> = ({ loyaltyLevel, dissidentCount, recentArrests, surveillanceActive, moraleReports = [] }) => {
   const status = formatLoyaltyStatus(loyaltyLevel);
   const color = loyaltyColor(loyaltyLevel);
 
@@ -179,6 +206,38 @@ export const KGBTab: React.FC<KGBTabProps> = ({ loyaltyLevel, dissidentCount, re
           </View>
         ) : (
           <Text style={styles.noDataText}>Surveillance operations temporarily suspended. Awaiting authorization.</Text>
+        )}
+      </View>
+
+      <View style={styles.separator} />
+
+      {/* Section 5: Morale Intelligence */}
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>V. MORALE INTELLIGENCE</Text>
+        {moraleReports.length === 0 ? (
+          <Text style={styles.noDataText}>No morale anomalies detected. All sectors within acceptable parameters.</Text>
+        ) : (
+          moraleReports.slice(-5).reverse().map((report, i) => (
+            <View key={`${report.timestamp}-${report.sectorId.gridX}-${report.sectorId.gridY}-${i}`} style={styles.moraleReport}>
+              <View style={styles.arrestHeader}>
+                <Text style={[styles.fieldValue, { color: severityColor(report.severity) }]}>
+                  {severityLabel(report.severity)}
+                </Text>
+              </View>
+              <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabel}>Sector:</Text>
+                <Text style={styles.fieldValue}>({report.sectorId.gridX}, {report.sectorId.gridY})</Text>
+              </View>
+              <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabel}>Observed Index:</Text>
+                <Text style={[styles.fieldValue, { color: severityColor(report.severity) }]}>{report.avgMorale}%</Text>
+              </View>
+              <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabel}>Report Tick:</Text>
+                <Text style={styles.fieldValue}>{report.timestamp}</Text>
+              </View>
+            </View>
+          ))
         )}
       </View>
 
@@ -346,5 +405,13 @@ const styles = StyleSheet.create({
     fontFamily: monoFont,
     fontSize: 9,
     color: Colors.textMuted,
+  },
+  moraleReport: {
+    backgroundColor: '#1a1a1a',
+    padding: 6,
+    marginVertical: 3,
+    marginHorizontal: 4,
+    borderLeftWidth: 2,
+    borderLeftColor: Colors.sovietRed,
   },
 });

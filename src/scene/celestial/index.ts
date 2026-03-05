@@ -13,9 +13,9 @@
  * - CelestialBody: Procedural body renderer (Sun/Terran/Martian/Jovian)
  * - MegastructureShell: Hex-panel Dyson shell with build progress
  *
- * Future: Replace the current flat TerrainGrid with CelestialViewport as the
- * default rendering surface. Settlement buildings sit ON the celestial body's
- * surface, which curves when zoomed out and flattens when zoomed in.
+ * CelestialViewport is the DEFAULT ground surface (replaces TerrainGrid).
+ * Settlement buildings sit ON the celestial body's surface, which curves
+ * when zoomed out and flattens when zoomed in.
  */
 
 export { default as CelestialViewport } from './CelestialViewport';

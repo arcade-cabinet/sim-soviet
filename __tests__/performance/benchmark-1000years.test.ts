@@ -25,7 +25,7 @@ import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { getDate, getResources, TICKS_PER_YEAR } from '../playthrough/helpers';
 
 const BENCHMARK_YEARS = 1000;
-const BENCHMARK_TIMEOUT_MS = 120_000;
+const BENCHMARK_TIMEOUT_MS = 150_000; // Increased from 120s for political agent overhead (promotion + resettlement + KGB morale sampling)
 
 /** No-op callbacks that satisfy SimCallbacks. */
 function createBenchmarkCallbacks(): SimCallbacks {

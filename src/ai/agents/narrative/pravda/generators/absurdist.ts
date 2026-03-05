@@ -168,4 +168,53 @@ export const contextualGenerators: ContextualGenerator[] = [
       };
     },
   },
+
+  // ── Morale-reactive headlines ──────────────────────────────────────────
+  // High morale — genuine (but still propagandistic) celebration
+  {
+    condition: (gs) => gs.avgMorale > 70,
+    weight: 1.5,
+    generate: () => ({
+      headline: `WORKER MORALE EXCELLENT IN ALL SECTORS`,
+      subtext: pick([
+        'Ministry of Labor confirms: smiles detected across the collective.',
+        'Productivity naturally follows from socialist contentment.',
+        'Comrades report: life has never been better. (Quote verified by 3 supervisors.)',
+      ]),
+      reality: 'For once, the headline is approximately true. This makes the editors nervous.',
+      category: 'triumph',
+    }),
+  },
+
+  // Low morale — the system LIES (classic Soviet euphemism)
+  {
+    condition: (gs) => gs.avgMorale < 30 && gs.avgMorale >= 15,
+    weight: 2.5,
+    generate: () => ({
+      headline: `WORKERS EXPRESS GRATITUDE FOR PARTY LEADERSHIP`,
+      subtext: pick([
+        'Spontaneous displays of appreciation noted in all districts.',
+        '"We have never been more motivated," says worker (name withheld for modesty).',
+        'Satisfaction surveys return 97.3% approval. Remaining 2.7%: clerical error.',
+      ]),
+      reality: 'Morale is collapsing. The gratitude is fictional. The surveys were pre-filled.',
+      category: 'spin',
+    }),
+  },
+
+  // Critical morale — careful euphemism for near-revolt conditions
+  {
+    condition: (gs) => gs.avgMorale < 15,
+    weight: 3.5,
+    generate: () => ({
+      headline: `ISOLATED INCIDENTS OF COUNTER-REVOLUTIONARY SENTIMENT REPORTED`,
+      subtext: pick([
+        'KGB assures: situation contained. Additional containment measures authorized.',
+        'Handful of provocateurs identified. The collective remains resolute.',
+        'Ministry of Internal Affairs: "This is not a trend. This is weather."',
+      ]),
+      reality: 'The collective is on the verge of revolt. "Isolated" means "everywhere." "Incidents" means "the whole settlement."',
+      category: 'crisis',
+    }),
+  },
 ];

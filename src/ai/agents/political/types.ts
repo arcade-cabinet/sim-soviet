@@ -223,6 +223,23 @@ export interface DoctrineMechanicConfig {
   intervalTicks: number;
 }
 
+// ─── KGB Morale Reports ─────────────────────────────────────────────────────
+
+/** Severity of a KGB morale intelligence report. */
+export type MoraleReportSeverity = 'concern' | 'warning' | 'critical';
+
+/** A KGB intelligence report on morale conditions in a sector/building. */
+export interface KGBMoraleReport {
+  /** Building grid position that was sampled. */
+  sectorId: { gridX: number; gridY: number };
+  /** Average morale observed at the location (0-100). */
+  avgMorale: number;
+  /** Simulation tick when the report was generated. */
+  timestamp: number;
+  /** Severity classification based on morale thresholds. */
+  severity: MoraleReportSeverity;
+}
+
 // ─── Save Data ──────────────────────────────────────────────────────────────
 
 /** Shape used for JSON serialization roundtrip. */

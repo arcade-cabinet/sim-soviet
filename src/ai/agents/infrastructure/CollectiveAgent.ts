@@ -41,6 +41,7 @@ import type { PlanMandateState } from '../political/PoliticalAgent';
 import type { WorkerStats } from '../workforce/types';
 import { cascadeDisplacement } from './displacementSystem';
 import { checkScaleUpTrigger, scaleUpBuilding } from './megaScalingSystem';
+import { getLocationResources, type LocationResources } from '../../../game/engine/locationResources';
 
 // ── Re-exported types (absorbed from governor.ts) ─────────────────────────────
 
@@ -692,6 +693,87 @@ export class CollectiveAgent extends Vehicle {
     this.bootstrapped = true;
   }
 
+  /**
+   * Universal settlement bootstrap — works for ANY celestial body.
+   *
+   * Reads the environment from locationResources and places the correct
+   * first buildings:
+   *   - Non-breathable atmosphere: pressurized dome (government-hq) FIRST
+   *   - Breathable: government-hq near water
+   *   - soilValue > 0.3: farm after shelter
+   *   - soilValue === 0: no farm at bootstrap (hydroponics via demand system)
+   *   - Always: housing near the HQ
+   */
+  private universalBootstrap(
+    rng: GameRng,
+    celestialBody: string,
+    eraId?: string,
+    callbacks?: { onToast: (msg: string, severity?: string) => void; onAdvisor: (msg: string) => void },
+  ): void {
+    const loc = getLocationResources(celestialBody);
+    const occupied = this.buildOccupiedSet();
+
+    // Step 1: Place Government HQ (or pressurized dome variant)
+    const ctx = eraId ? this.buildPlacementContext(eraId, occupied) : null;
+    let hqCell: { gridX: number; gridY: number } | null = null;
+
+    if (ctx) {
+      const result = findBestPlacement('government-hq', ctx, GRID_SIZE);
+      if (result) hqCell = { gridX: result.x, gridY: result.z };
+    }
+    if (!hqCell) {
+      const center = Math.floor(GRID_SIZE / 2);
+      hqCell = { gridX: center, gridY: center };
+    }
+
+    try {
+      const hq = placeNewBuilding(hqCell.gridX, hqCell.gridY, 'government-hq');
+      if (hq) {
+        occupied.add(`${hqCell.gridX},${hqCell.gridY}`);
+        setCaravanTarget(hqCell.gridX, hqCell.gridY);
+      }
+    } catch {
+      /* placement failed — not fatal */
+    }
+
+    // Step 2: Housing — 2-3 izbas near the HQ
+    const izbaCount = 2 + rng.pickIndex(2);
+    for (let i = 0; i < izbaCount; i++) {
+      const defId = i % 2 === 0 ? 'workers-house-a' : 'workers-house-b';
+      const cell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng);
+      if (cell) {
+        try {
+          const entity = placeNewBuilding(cell.gridX, cell.gridY, defId);
+          if (entity) occupied.add(`${cell.gridX},${cell.gridY}`);
+        } catch {
+          /* placement failed */
+        }
+      }
+    }
+
+    // Step 3: Food production — depends on soil value
+    if (loc.soilValue > 0.3) {
+      // Viable soil: place a farm
+      const farmCell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng, 4);
+      if (farmCell) {
+        try {
+          placeNewBuilding(farmCell.gridX, farmCell.gridY, 'collective-farm-hq');
+        } catch {
+          /* placement failed */
+        }
+      }
+    }
+    // soilValue === 0: no farm at bootstrap. The demand system will detect
+    // food shortage and trigger construction via the normal tickAutonomous
+    // pipeline (hydroponics buildings when they become available).
+
+    if (!loc.atmosphereBreathable) {
+      callbacks?.onToast('EMERGENCY: Atmosphere not breathable — pressurized shelters deployed');
+    }
+
+    this.bootstrapped = true;
+  }
+
   /** Find an empty cell within radius of (cx, cy), avoiding occupied cells. */
   private findNearbyEmpty(
     cx: number,
@@ -741,7 +823,22 @@ export class CollectiveAgent extends Vehicle {
     gridSize?: number;
     /** Active arcologies for adjacency-aware placement. */
     arcologies?: Array<{ footprint: Array<{ x: number; y: number }>; mergeGroup: string }>;
+    /** Celestial body key (e.g. 'earth', 'moon', 'mars') for location-aware bootstrap. */
+    celestialBody?: string;
   }): void {
+    // ── Universal Settlement Bootstrap ────────────────────────────────────────
+    // On first tick with population > 0 and no buildings, place essential
+    // starter structures based on the celestial body's environment.
+    // Same code path for Earth, Moon, Mars, Dyson swarm — everything.
+    if (!this.bootstrapped && buildings.entities.length === 0) {
+      const rng = this.rng ?? deps.rng;
+      const storeRef = getResourceEntity();
+      if (rng && storeRef && storeRef.resources.population > 0 && storeRef.resources.timber >= 10) {
+        this.universalBootstrap(rng, deps.celestialBody ?? 'earth', deps.eraId, deps.callbacks);
+        return;
+      }
+    }
+
     // Use era-based interval if eraId is provided, otherwise use config default
     const interval = deps.eraId ? getBuildInterval(deps.eraId) : COLLECTIVE_CHECK_INTERVAL;
     if (deps.totalTicks % interval !== 0) return;
