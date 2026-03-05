@@ -1,6 +1,6 @@
 {
   "timelineId": "space",
-  "description": "Soviet Space Program → Interstellar Colonization. A parallel progression track from Sputnik to Dyson swarms.",
+  "description": "Soviet Space Program → Interstellar Colonization. A parallel progression track from Sputnik to Dyson swarms. Grounded in real Soviet space history, hard SF (KSR Mars Trilogy, Sheffield Jupiter system, Clarke space elevator, Baxter deep time), and actual physics. No FTL. No magic. Central planning all the way down.",
   "milestones": [
     {
       "id": "sputnik",
@@ -111,28 +111,6 @@
       "oneShot": true
     },
     {
-      "id": "venera_landing",
-      "name": "First Landing on Another Planet",
-      "timelineId": "space",
-      "order": 35,
-      "conditions": { "and": [
-        { "milestone": { "timelineId": "space", "milestoneId": "sputnik" } },
-        { "year": { "min": 1970 } },
-        { "techLevel": { "min": 0.22 } }
-      ]},
-      "sustainedTicks": 1,
-      "effects": {
-        "worldStateDeltas": { "techLevel": 0.04 },
-        "unlocks": ["planetary_landing"],
-        "narrative": {
-          "pravdaHeadline": "VENERA-7 LANDS ON VENUS: Soviet Probe Survives 462°C Surface",
-          "toast": "The probe transmitted for 23 minutes before succumbing to 462 degrees, 90 atmospheres, and sulfuric acid rain. It sent temperature data. We consider this a complete success.",
-          "description": "The Venera program was perhaps the Soviet Union's greatest space achievement. Between 1961-1984, they sent 16 probes to Venus, landing 10 on the surface. No other nation has soft-landed on Venus."
-        }
-      },
-      "oneShot": true
-    },
-    {
       "id": "lunokhod",
       "name": "First Lunar Rover",
       "timelineId": "space",
@@ -155,23 +133,23 @@
       "oneShot": true
     },
     {
-      "id": "mir_station",
-      "name": "Mir Space Station",
+      "id": "venera_landing",
+      "name": "First Landing on Another Planet",
       "timelineId": "space",
-      "order": 40,
+      "order": 35,
       "conditions": { "and": [
-        { "milestone": { "timelineId": "space", "milestoneId": "salyut_station" } },
-        { "year": { "min": 1986 } },
-        { "techLevel": { "min": 0.35 } }
+        { "milestone": { "timelineId": "space", "milestoneId": "sputnik" } },
+        { "year": { "min": 1970 } },
+        { "techLevel": { "min": 0.22 } }
       ]},
       "sustainedTicks": 1,
       "effects": {
         "worldStateDeltas": { "techLevel": 0.04 },
-        "unlocks": ["long_duration_habitation", "modular_station_assembly"],
+        "unlocks": ["planetary_landing"],
         "narrative": {
-          "pravdaHeadline": "MIR STATION LAUNCHED: Modular Orbital Complex Demonstrates Soviet Engineering Supremacy",
-          "toast": "Mir will be humanity's home in space for 15 years. It will also catch fire, lose power, collide with a supply ship, and grow mold in places mold should not exist. It will endure regardless.",
-          "description": "Mir (1986-2001): the first modular space station. 28,000 orbits. 15 years. It proved humans could live in space long-term. The station's problems — fires, collisions, computer failures — proved humans could survive anything."
+          "pravdaHeadline": "VENERA-7 LANDS ON VENUS: Soviet Probe Survives 462°C Surface",
+          "toast": "The probe transmitted for 23 minutes before succumbing to 462 degrees, 90 atmospheres, and sulfuric acid rain. It sent temperature data. We consider this a complete success.",
+          "description": "The Venera program was perhaps the Soviet Union's greatest space achievement. Between 1961-1984, they sent 16 probes to Venus, landing 10 on the surface. No other nation has soft-landed on Venus."
         }
       },
       "oneShot": true
@@ -199,6 +177,28 @@
       "oneShot": true
     },
     {
+      "id": "mir_station",
+      "name": "Mir Space Station",
+      "timelineId": "space",
+      "order": 40,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "salyut_station" } },
+        { "year": { "min": 1986 } },
+        { "techLevel": { "min": 0.35 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["long_duration_habitation", "modular_station_assembly"],
+        "narrative": {
+          "pravdaHeadline": "MIR STATION LAUNCHED: Modular Orbital Complex Demonstrates Soviet Engineering Supremacy",
+          "toast": "Mir will be humanity's home in space for 15 years. It will also catch fire, lose power, collide with a supply ship, and grow mold in places mold should not exist. It will endure regardless.",
+          "description": "Mir (1986-2001): the first modular space station. 28,000 orbits. 15 years. It proved humans could live in space long-term. The station's problems — fires, collisions, computer failures — proved humans could survive anything."
+        }
+      },
+      "oneShot": true
+    },
+    {
       "id": "permanent_lunar_base",
       "name": "Permanent Lunar Base (Zvezda)",
       "timelineId": "space",
@@ -219,7 +219,7 @@
         "narrative": {
           "pravdaHeadline": "ZVEZDA BASE ESTABLISHED: Soviet Flag Planted on Permanent Lunar Facility",
           "toast": "The lunar base is operational. Six cosmonauts live in pressurized modules beneath the regolith. Their supply shipments arrive monthly. Their paperwork arrives daily.",
-          "description": "The Zvezda (Star) lunar base represents the USSR's first permanent off-Earth settlement. Based on Soviet plans from the 1960s DLB (Long-Duration Lunar Base) program, it houses 6-12 cosmonauts in underground habitation modules."
+          "description": "The Zvezda (Star) lunar base represents the USSR's first permanent off-Earth settlement. Based on Soviet plans from the 1960s DLB (Long-Duration Lunar Base) program, it houses 6-12 cosmonauts in underground habitation modules shielded by 1.5-2m of regolith. Water ice mining from permanently shadowed craters provides oxygen and propellant."
         }
       },
       "oneShot": true
@@ -271,12 +271,34 @@
       "oneShot": true
     },
     {
-      "id": "mars_colony",
-      "name": "Permanent Mars Settlement",
+      "id": "mars_isru_operations",
+      "name": "Mars ISRU Operations",
       "timelineId": "space",
-      "order": 70,
+      "order": 63,
       "conditions": { "and": [
         { "milestone": { "timelineId": "space", "milestoneId": "mars_expedition" } },
+        { "techLevel": { "min": 0.62 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "resourceDeltas": { "water": 200, "hydrogen": 100 },
+        "unlocks": ["in_situ_resource_utilization", "mars_propellant_production"],
+        "narrative": {
+          "pravdaHeadline": "MARS RESOURCE EXTRACTION BEGINS: Sabatier Reactors Convert Atmosphere to Propellant",
+          "toast": "The Sabatier reactor combines 6 tons of imported hydrogen with Martian CO2 to produce 24 tons of methane and 84 tons of oxygen. The Five-Year Propellant Plan is on schedule.",
+          "description": "In-Situ Resource Utilization is the key to sustainable Mars presence. Rather than launching everything from Earth, ISRU converts Mars's 95% CO2 atmosphere and subsurface water ice into rocket propellant, breathable oxygen, and drinking water. Zubrin's Mars Direct concept made real by Soviet engineering."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_colony",
+      "name": "Permanent Mars Settlement (Red Mars Phase)",
+      "timelineId": "space",
+      "order": 68,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_isru_operations" } },
         { "techLevel": { "min": 0.7 } },
         { "population": { "min": 5000 } }
       ]},
@@ -286,11 +308,33 @@
         "settlementTerrain": "mars",
         "worldStateDeltas": { "techLevel": 0.08 },
         "pressureModifiers": { "economic": 0.2 },
-        "unlocks": ["mars_settlement", "in_situ_resource_utilization"],
+        "unlocks": ["mars_settlement", "mars_agriculture"],
         "narrative": {
           "pravdaHeadline": "MARS COLONY ESTABLISHED: Red Planet Finally Under Red Flag",
-          "toast": "The Mars colony has 24 residents, three greenhouses, and one bureaucratic office. The office was built first. Priorities are clear.",
-          "description": "The permanent Mars settlement uses pressurized domes, greenhouse agriculture, and in-situ resource utilization (ISRU) for water and oxygen extraction. Gravity: 0.38g. Supply runs from Earth: every 26 months."
+          "toast": "The Mars colony has 24 residents, three pressurized greenhouses, and one bureaucratic office. The office was built first. Priorities are clear.",
+          "description": "KSR's 'Red Mars' phase: raw colonization. Pressurized domes, greenhouse agriculture, ISRU for water/oxygen. Gravity: 0.38g. Supply runs from Earth: every 26 months. Martian regolith contains toxic perchlorates — must be washed before agricultural use. The kolkhoz model maps naturally: communal labor, shared output, mandatory deliveries to the settlement administration."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_greenhouse_phase",
+      "name": "Mars Terraforming: Greenhouse Phase",
+      "timelineId": "space",
+      "order": 72,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_colony" } },
+        { "techLevel": { "min": 0.75 } },
+        { "year": { "min": 2100 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["mars_terraforming", "orbital_mirrors", "atmospheric_engineering"],
+        "narrative": {
+          "pravdaHeadline": "MARS TERRAFORMING BEGINS: Orbital Mirrors and Greenhouse Factories Deployed",
+          "toast": "Soletta mirrors redirect sunlight to the polar caps. Perfluorocarbon factories pump super-greenhouse gases. Mean temperature has risen 4°C. The Five-Year Warming Plan proceeds.",
+          "description": "Following the Mars Trilogy model: orbital soletta mirrors focus sunlight on polar CO2 ice caps, releasing greenhouse gases. Perfluorocarbon factories (PFC-14, PFC-116) augment warming — these super-greenhouse gases are 10,000x more potent than CO2 per molecule. Surface pressure rises from 6 mbar toward 100+ mbar over decades. Liquid water begins appearing in equatorial valleys during summer. The process takes centuries — the first Five-Year Plan of many."
         }
       },
       "oneShot": true
@@ -299,7 +343,7 @@
       "id": "asteroid_mining",
       "name": "Asteroid Mining Operations",
       "timelineId": "space",
-      "order": 75,
+      "order": 73,
       "conditions": { "and": [
         { "milestone": { "timelineId": "space", "milestoneId": "orbital_shipyard" } },
         { "techLevel": { "min": 0.65 } },
@@ -313,7 +357,52 @@
         "narrative": {
           "pravdaHeadline": "ASTEROID MINING QUOTA ACHIEVED: Space Minerals Serve Five-Year Plan",
           "toast": "A single metallic asteroid contains more platinum than has ever been mined on Earth. The quota for extracting it has been set at 150% of capacity. Standard procedure.",
-          "description": "Near-Earth asteroid mining provides rare earth elements, platinum group metals, and construction materials without the ecological cost of terrestrial extraction."
+          "description": "Near-Earth asteroid mining provides rare earth elements, platinum group metals, and construction materials. 16 Psyche alone contains an estimated $10,000 quadrillion in metals. Each asteroid is assigned a production quota. Worker rotation: 6-month shifts (radiation exposure limits)."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ceres_mining_station",
+      "name": "Ceres Mining Station",
+      "timelineId": "space",
+      "order": 76,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "asteroid_mining" } },
+        { "techLevel": { "min": 0.72 } },
+        { "year": { "min": 2080 } }
+      ]},
+      "sustainedTicks": 18,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "resourceDeltas": { "water": 1000, "minerals": 500 },
+        "unlocks": ["belt_waystation", "ice_mining_at_scale"],
+        "narrative": {
+          "pravdaHeadline": "CERES STATION OPERATIONAL: Asteroid Belt Waystation Serves Outer System Expansion",
+          "toast": "Ceres contains more freshwater ice than all of Earth's freshwater combined. The extraction quota has been set. The irony of mining water in the asteroid belt while Earth's aquifers deplete is not discussed at party meetings.",
+          "description": "Ceres — the largest body in the asteroid belt (940 km diameter) — serves as the waystation between the inner and outer solar system. Its vast water ice reserves (estimated 200 million cubic km) make it the fuel depot and life support refinery for all outer system missions. Low gravity (0.03g) makes surface operations feasible but habitation requires rotation facilities. KSR's '2312' depicts these hollowed-asteroid settlements as 'terraria' — we call them kommunalki."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "europa_probe",
+      "name": "Europa Subsurface Ocean Discovery",
+      "timelineId": "space",
+      "order": 77,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_expedition" } },
+        { "techLevel": { "min": 0.7 } },
+        { "year": { "min": 2070 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["subsurface_ocean_access", "jupiter_system_ops"],
+        "narrative": {
+          "pravdaHeadline": "EUROPA PROBE PENETRATES ICE: Subsurface Ocean Confirmed, Life Detection Pending",
+          "toast": "A nuclear-heated melt probe has descended through 15 km of ice into Europa's global ocean. The water is warm, salty, and contains complex organic molecules. The probe's hydrophones have detected... something. Classification: STATE SECRET.",
+          "description": "Europa's subsurface ocean contains 2-3 times the volume of Earth's oceans, heated by tidal forces from Jupiter. Sheffield's 'Cold as Ice' depicted this as the solar system's greatest discovery. Jupiter's magnetosphere delivers 540 rem/day to Europa's surface — lethal in hours. All operations must be subsurface. The probe operates via tethered communication through the ice shell."
         }
       },
       "oneShot": true
@@ -337,7 +426,52 @@
         "narrative": {
           "pravdaHeadline": "VENERA COLONY FLOATS: Soviet Habitat Suspended in Venusian Atmosphere",
           "toast": "At 50 km altitude, Venus is the most Earth-like environment in the solar system: 1 atm pressure, 75°C, breathable density. Below that: hell. The colonists do not look down.",
-          "description": "Venus at 50-55 km altitude: 1 atmosphere, ~75°C, Earth-like gravity (0.9g). Breathable air (N2/O2) is a lifting gas in Venus's dense CO2 atmosphere. Soviet research from the Venera program makes this the logical next step. The Soviets landed on Venus 10 times — no one else has even tried."
+          "description": "Venus at 50-55 km altitude: 1 atmosphere, ~75°C, Earth-like gravity (0.9g). Breathable air (N2/O2) is a lifting gas in Venus's dense CO2 atmosphere — a habitat filled with Earth air literally floats. Soviet research from the Venera program (16 probes, 10 successful landings — no other nation has even tried) makes this the logical next step. The cloud colony is a floating city of pressurized envelopes."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ganymede_colony",
+      "name": "Ganymede Colony",
+      "timelineId": "space",
+      "order": 82,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "europa_probe" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "ceres_mining_station" } },
+        { "techLevel": { "min": 0.82 } }
+      ]},
+      "sustainedTicks": 30,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "ganymede",
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["ganymede_settlement", "magnetosphere_shielding", "outer_system_habitation"],
+        "narrative": {
+          "pravdaHeadline": "GANYMEDE COLONY ESTABLISHED: Jupiter's Largest Moon Under Soviet Administration",
+          "toast": "Ganymede is the only moon in the solar system with its own magnetic field. This protects the colony from Jupiter's lethal radiation belt — barely. The shielding margin is classified. Workers are not told the margin.",
+          "description": "Sheffield's 'Cold as Ice' series envisioned Ganymede as the prime colony site in the Jupiter system: the solar system's largest moon (larger than Mercury), the only moon with an intrinsic magnetosphere (protecting against Jupiter's 540 rem/day radiation), subsurface liquid water ocean, and ice crust suitable for underground construction. At -160°C surface temperature, all habitation is subsurface. Nuclear reactors provide heat and power. The trudodni accounting system now tracks radiation exposure as a labor category."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "callisto_outpost",
+      "name": "Callisto Radiation-Safe Outpost",
+      "timelineId": "space",
+      "order": 83,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "ganymede_colony" } },
+        { "techLevel": { "min": 0.83 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "unlocks": ["callisto_ops", "radiation_safe_construction"],
+        "narrative": {
+          "pravdaHeadline": "CALLISTO OUTPOST OPERATIONAL: Workers Enjoy Unprecedented Radiation Safety",
+          "toast": "Callisto orbits far enough from Jupiter that surface radiation is only 0.01 rem/day — lower than Earth orbit. Workers can walk the surface in standard suits without cumulative dose concerns. This is considered a luxury.",
+          "description": "Callisto: the outermost Galilean moon, geologically dead but radiation-safe. Jupiter's magnetosphere barely reaches it (0.01 rem/day vs. 540 rem/day at Europa). Sheffield identified it as the ideal staging base for outer system operations precisely because workers can operate on the surface without lethal exposure. The tradeoff: no tidal heating, no subsurface ocean, no geological interest. Pure industrial function."
         }
       },
       "oneShot": true
@@ -349,6 +483,7 @@
       "order": 85,
       "conditions": { "and": [
         { "milestone": { "timelineId": "space", "milestoneId": "mars_colony" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "ceres_mining_station" } },
         { "techLevel": { "min": 0.85 } },
         { "year": { "min": 2150 } }
       ]},
@@ -358,11 +493,79 @@
         "settlementTerrain": "titan",
         "worldStateDeltas": { "techLevel": 0.05 },
         "resourceDeltas": { "hydrogen": 10000 },
-        "unlocks": ["titan_settlement", "hydrocarbon_extraction"],
+        "unlocks": ["titan_settlement", "hydrocarbon_extraction", "methane_ocean_shipping"],
         "narrative": {
           "pravdaHeadline": "TITAN COLONY OPERATIONAL: Methane Lakes Serve Industrial Plan",
           "toast": "Saturn's largest moon has more hydrocarbons than all of Earth's reserves combined. The Five-Year Extraction Plan has been filed. Saturn is 1.2 billion km away. The filing system has not been optimized for this distance.",
-          "description": "Titan: thick atmosphere (1.5 atm), low gravity (0.14g), methane rain, -179°C. Lakes of liquid methane and ethane. No oxygen. But the hydrocarbons are effectively infinite. Pressurized habitats with nuclear heating."
+          "description": "Titan: thick atmosphere (1.5 atm N2/CH4), low gravity (0.14g), methane rain, -179°C. Lakes and seas of liquid methane and ethane — more hydrocarbons than all known reserves on Earth. Methane is rocket propellant when burned with oxygen. Problem: no free oxygen on Titan. Water ice crust provides O2 via electrolysis. Sheffield and Baxter both depicted Titan as the fuel reserve of the outer system. The irony: Soviet bureaucracy destroyed the Aral Sea for cotton quotas. On Titan, the resource is genuinely inexhaustible."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "space_elevator",
+      "name": "Space Elevator Construction",
+      "timelineId": "space",
+      "order": 87,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "asteroid_mining" } },
+        { "techLevel": { "min": 0.88 } },
+        { "year": { "min": 2200 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.06 },
+        "unlocks": ["space_elevator", "cheap_orbital_access", "carbon_nanotube_manufacturing"],
+        "narrative": {
+          "pravdaHeadline": "SPACE ELEVATOR OPERATIONAL: 100,000 KM TETHER CONNECTS EARTH TO ORBIT",
+          "toast": "Clarke wrote it. Sheffield engineered it. The Soviets built it. A graphene super-laminate tether from equatorial anchor to geostationary counterweight. Launch cost reduced 100-fold. The elevator operators' union is already on strike.",
+          "description": "Arthur C. Clarke's 'The Fountains of Paradise' (1979) and Sheffield's 'The Web Between the Worlds' (1979, published weeks apart) both independently described the space elevator concept. The engineering: a 100,000 km tether of graphene super-laminate (tensile strength >50 GPa, density 1,300 kg/m³) extending from equatorial surface through geostationary orbit to a counterweight beyond. Climber vehicles ascend electrically. Reduces surface-to-orbit cost from $10,000/kg to $100/kg. KSR's Mars Trilogy had it built and destroyed — a political target as much as an engineering one."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mercury_mining",
+      "name": "Mercury Mining Operations",
+      "timelineId": "space",
+      "order": 88,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "asteroid_mining" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "orbital_shipyard" } },
+        { "techLevel": { "min": 0.87 } },
+        { "year": { "min": 2200 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "resourceDeltas": { "minerals": 5000 },
+        "unlocks": ["mercury_resources", "solar_proximity_ops"],
+        "narrative": {
+          "pravdaHeadline": "MERCURY MINING AUTHORIZED: Innermost Planet Stripped for Dyson Swarm Materials",
+          "toast": "Mercury's iron core comprises 85% of its radius — the largest metal-to-planet ratio in the solar system. Dayside temperature: 430°C. Nightside: -180°C. Mining operations alternate with planetary rotation. The 176-day work schedule has been filed.",
+          "description": "Mercury is the raw material source for Dyson swarm construction. Its enormous iron core (proportionally the largest in the solar system) provides the metal for billions of thin-film solar collectors. Mining operations exploit the extreme day/night temperature differential: work the nightside, smelt on the dayside. KSR's '2312' depicts Mercury's 'city on rails' — a settlement that perpetually circles the planet, staying ahead of the dawn."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_green_phase",
+      "name": "Mars Terraforming: Green Phase",
+      "timelineId": "space",
+      "order": 89,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_greenhouse_phase" } },
+        { "techLevel": { "min": 0.85 } },
+        { "year": { "min": 2250 } }
+      ]},
+      "sustainedTicks": 120,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.04 },
+        "unlocks": ["mars_biology", "open_air_lichen", "areological_engineering"],
+        "narrative": {
+          "pravdaHeadline": "MARS GREENS: Engineered Lichen Survives in Open Martian Atmosphere",
+          "toast": "Cyanobacteria and engineered extremophile lichen grow on bare Martian rock for the first time. Surface pressure has reached 200 mbar. Not breathable, but no longer instantly lethal. Progress.",
+          "description": "KSR's 'Green Mars' — the biological phase. After a century of greenhouse warming, surface pressure reaches levels where liquid water persists in equatorial lowlands. Engineered extremophile organisms (lichen, cyanobacteria, cold-adapted algae) begin converting CO2 to O2 at planetary scale. Mars's soil must be detoxified of perchlorates zone by zone. The Reds (who want Mars pristine) clash with the Greens (who want terraforming). The Central Committee has no patience for such debate — the Five-Year Terraforming Quota must be met."
         }
       },
       "oneShot": true
@@ -387,7 +590,51 @@
         "narrative": {
           "pravdaHeadline": "O'NEILL CYLINDER COMPLETE: Artificial World Rotates for Soviet Citizens",
           "toast": "8 km long, 1 km radius, rotating at 0.53 rpm for 1g. Population capacity: 10,000. Inside, there are fields, rivers, and a bureau for cylinder maintenance permits.",
-          "description": "Gerard O'Neill's 1976 design realized with Soviet central planning. Island Three configuration: 8 km × 1 km counter-rotating cylinders with 1g at the rim. Interior landscapes, weather systems, and agriculture. The bureaucracy for allocating apartments is identical to Earth's."
+          "description": "Gerard O'Neill's 1976 design realized with Soviet central planning. Island Three configuration: 8 km × 1 km counter-rotating cylinders with 1g at the rim. Interior landscapes, weather systems, and agriculture. Seveneves (Stephenson) showed how orbital debris can threaten all orbital infrastructure — the cylinder's hull is 3m of asteroid-derived steel. The agricultural strips run the full 32 km length — the largest collective farm ever built. The bureaucracy for allocating apartments is identical to Earth's."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "mars_blue_phase",
+      "name": "Mars Terraforming: Blue Phase",
+      "timelineId": "space",
+      "order": 92,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "mars_green_phase" } },
+        { "techLevel": { "min": 0.9 } },
+        { "year": { "min": 2500 } }
+      ]},
+      "sustainedTicks": 240,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["mars_oceans", "breathable_mars_atmosphere", "planetary_scale_engineering"],
+        "narrative": {
+          "pravdaHeadline": "MARS HAS OCEANS: Hellas Basin Fills With Liquid Water, Atmosphere Approaches Breathability",
+          "toast": "After centuries of greenhouse warming, ice cap melting, and biological oxygen production, Mars now has open oceans in the northern lowlands and Hellas basin. Atmospheric pressure: 350 mbar. O2 content: 14%. Humans can walk outside with supplemental oxygen. Full breathability estimated within another century.",
+          "description": "KSR's 'Blue Mars' — the culmination of centuries of terraforming. The northern ocean (Oceanus Borealis) fills the vast depression that covers 40% of Mars. The Hellas basin becomes an inland sea. Atmospheric pressure reaches 350 mbar — enough for liquid water everywhere. Oxygen content rises toward breathability (14% and climbing, vs. Earth's 21%). Humans can walk outside with an oxygen mask and warm clothing. Full terraforming (unassisted breathing) requires another 100-200 years. The Five-Year Oceanic Expansion Plan is filed. It will take fifty such plans."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "interstellar_probe",
+      "name": "Interstellar Probe Launch",
+      "timelineId": "space",
+      "order": 95,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "space_elevator" } },
+        { "techLevel": { "min": 0.92 } },
+        { "year": { "min": 2500 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "unlocks": ["interstellar_propulsion", "laser_sail_technology"],
+        "narrative": {
+          "pravdaHeadline": "INTERSTELLAR PROBE LAUNCHED: Light Sail Accelerated to 20% of Light Speed",
+          "toast": "A gram-scale probe accelerated by a ground-based laser array to 0.2c. Destination: Proxima Centauri. Transit: 21 years. Data return: 4.24 years after arrival. Total mission time: 25 years. The Five-Year Plan covers the first fifth.",
+          "description": "Based on Breakthrough Starshot concept: a laser array (100 GW peak) accelerates a gram-scale probe with a light sail to 20% of the speed of light. At 0.2c, the probe reaches Proxima Centauri in 21 years. It cannot slow down — it performs a flyby, transmitting data during its brief encounter. The return signal takes 4.24 years. The probe confirms Proxima Centauri b's habitability parameters. Generation ship planning begins immediately."
         }
       },
       "oneShot": true
@@ -399,7 +646,7 @@
       "order": 100,
       "conditions": { "and": [
         { "milestone": { "timelineId": "space", "milestoneId": "oneill_cylinder" } },
-        { "milestone": { "timelineId": "space", "milestoneId": "asteroid_mining" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "mercury_mining" } },
         { "techLevel": { "min": 0.95 } },
         { "year": { "min": 3000 } }
       ]},
@@ -411,7 +658,29 @@
         "narrative": {
           "pravdaHeadline": "DYSON SWARM CONSTRUCTION AUTHORIZED: Five-Year Plan for Stellar Engineering Approved",
           "toast": "The Five-Year Plan for Stellar Engineering has been approved. Estimated completion: 50,000 years. This is within acceptable tolerances.",
-          "description": "Not a solid shell (physically impossible) but a swarm of orbiting solar collectors. Mercury is disassembled for raw materials. Each collector is a thin-film mirror redirecting solar energy. Completion requires millennia. The paperwork has already begun."
+          "description": "Not a solid shell (physically impossible — Larry Niven's Ringworld notwithstanding) but a swarm of orbiting thin-film solar collectors. Mercury is disassembled for raw materials (its iron core is the largest proportional to any planet). Each collector is a thin-film mirror on a self-correcting orbit. At completion, the swarm captures a significant fraction of the Sun's 3.8 × 10²⁶ watt output. Phys.org notes the irony: a completed swarm would make Earth uninhabitable by blocking sunlight. The Five-Year Plan does not address this contradiction."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "kardashev_one",
+      "name": "Kardashev Type I Civilization",
+      "timelineId": "space",
+      "order": 105,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "dyson_swarm_start" } },
+        { "techLevel": { "min": 0.96 } },
+        { "year": { "min": 3500 } }
+      ]},
+      "sustainedTicks": 60,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["planetary_energy_capture", "kardashev_one"],
+        "narrative": {
+          "pravdaHeadline": "KARDASHEV TYPE I ACHIEVED: Soviet Civilization Harnesses Full Planetary Energy Output",
+          "toast": "Total energy capture now equals the Sun's input to Earth: 1.7 × 10¹⁷ watts. Nikolai Kardashev — Soviet astrophysicist — defined this scale in 1964. He would be proud. He would also be confused by the paperwork.",
+          "description": "Kardashev's scale was proposed by Soviet astrophysicist Nikolai Kardashev in 1964 — making it doubly appropriate for this game. Type I harnesses all energy available to a planet (~1.7 × 10¹⁷ W for Earth). The current human civilization is approximately Type 0.73. The transition from 0.73 to 1.0 is the most dangerous period — enough power to destroy the planet, not yet enough to leave it reliably. The Soviet system's centralized energy allocation may actually be better suited to this transition than market-based systems."
         }
       },
       "oneShot": true
@@ -424,6 +693,7 @@
       "conditions": { "and": [
         { "milestone": { "timelineId": "space", "milestoneId": "oneill_cylinder" } },
         { "milestone": { "timelineId": "space", "milestoneId": "bios3_closed_ecosystem" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "interstellar_probe" } },
         { "techLevel": { "min": 0.97 } },
         { "or": [
           { "year": { "min": 5000 } },
@@ -435,11 +705,35 @@
         "newSettlement": true,
         "settlementTerrain": "generation_ship",
         "worldStateDeltas": { "techLevel": 0.05 },
-        "unlocks": ["interstellar_transit", "generation_ship_culture"],
+        "unlocks": ["interstellar_transit", "generation_ship_culture", "multi_generational_planning"],
         "narrative": {
           "pravdaHeadline": "GENERATION SHIP LAUNCHES: 10,000 Soviet Citizens Begin Journey to Alpha Centauri",
           "toast": "Transit time: approximately 400 years at 1% c. The passengers' great-great-great-great-great-great-great-great-grandchildren will arrive. Their personnel files will arrive first.",
-          "description": "A self-sustaining worldship based on O'Neill cylinder technology. 10,000 initial population, BIOS-3 derived closed ecosystem, artificial gravity. Destination: Proxima Centauri b (4.24 light-years). At 1% the speed of light: 424 years transit. The crew manifest is filed in triplicate."
+          "description": "A self-sustaining worldship based on O'Neill cylinder technology. 10,000 initial population (minimum viable genetic population per academic research: ~10,000 for 20 generations). BIOS-3 derived closed ecosystem, artificial gravity from rotation. Destination: Proxima Centauri b (4.24 light-years, confirmed habitable by interstellar probe). At 1% c: 424 years transit. KSR's 'Aurora' warns generation ships probably fail — ecosystem degradation, social fragmentation, genetic drift. The Soviet model's answer: rigid hierarchical control across generations. The crew manifest is filed in triplicate. The ship's Five-Year Plan is a 400-Year Plan filed as eighty consecutive installments."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "second_generation_ship",
+      "name": "Second Generation Ship (Redundancy)",
+      "timelineId": "space",
+      "order": 115,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "generation_ship" } },
+        { "techLevel": { "min": 0.97 } },
+        { "year": { "min": 5500 } }
+      ]},
+      "sustainedTicks": 60,
+      "effects": {
+        "newSettlement": true,
+        "settlementTerrain": "generation_ship",
+        "worldStateDeltas": { "techLevel": 0.02 },
+        "unlocks": ["multi_star_colonization"],
+        "narrative": {
+          "pravdaHeadline": "SECOND ARK LAUNCHED: Backup Generation Ship Targets Tau Ceti",
+          "toast": "Soviet redundancy doctrine applies to interstellar colonization. If one ship fails, the species survives. If both fail, the paperwork for both is already filed and archived in triplicate on the Moon.",
+          "description": "Reynolds' 'Revelation Space' universe depicts interstellar civilization as inherently fragile — light-speed communication delay makes coordination impossible. The Soviet answer: launch multiple ships to different stars. Tau Ceti (11.9 light-years) is the second target. Transit time at 1% c: ~1,200 years. The ship's political structure will evolve beyond recognition during transit. The filing system will not."
         }
       },
       "oneShot": true
@@ -462,7 +756,30 @@
         "narrative": {
           "pravdaHeadline": "SIGNAL RECEIVED FROM PROXIMA: Colony Established, Five-Year Plan Filed",
           "toast": "After 400+ years of transit, the generation ship has arrived. The first message home: 'Colony established. Requesting updated quota assignments.' It will take 4.24 years to arrive.",
-          "description": "The light-speed communication delay means the colony is effectively autonomous. Moscow's directives arrive 4.24 years late. The colonists have adapted. They still file the paperwork."
+          "description": "Proxima Centauri b: 1.17 Earth masses, potentially habitable zone, tidally locked (one face always toward the star). The colony establishes on the terminator zone where temperatures are moderate. Light-speed communication delay means the colony is effectively autonomous — Moscow's directives arrive 4.24 years late. The colonists have adapted their bureaucratic procedures accordingly. They still file the paperwork. Watts' 'Blindsight' warns that alien environments may be fundamentally hostile in ways we cannot predict. The Central Committee has no contingency for this."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "kardashev_two",
+      "name": "Kardashev Type II Civilization",
+      "timelineId": "space",
+      "order": 130,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "space", "milestoneId": "dyson_swarm_start" } },
+        { "milestone": { "timelineId": "space", "milestoneId": "exoplanet_colony" } },
+        { "techLevel": { "min": 0.99 } },
+        { "year": { "min": 50000 } }
+      ]},
+      "sustainedTicks": 600,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "unlocks": ["stellar_energy_capture", "kardashev_two", "star_lifting"],
+        "narrative": {
+          "pravdaHeadline": "KARDASHEV TYPE II ACHIEVED: Full Stellar Energy Output Harnessed by Soviet Civilization",
+          "toast": "Total energy capture: 3.8 × 10²⁶ watts — the Sun's entire output. The Dyson swarm is operational after 47,000 years of construction. The original Five-Year Plan was filed 9,400 consecutive times.",
+          "description": "Kardashev Type II: a civilization that harnesses the total energy output of its star. The Dyson swarm around Sol is complete — billions of thin-film collectors in self-correcting orbits capture 3.8 × 10²⁶ watts. Star lifting (extracting stellar material for construction) extends the Sun's main-sequence lifetime. Baxter's 'Xeelee Sequence' depicts civilizations at this scale as fundamentally different from anything we recognize — yet the Soviet bureaucratic form persists. There is still a plan. There are still quotas."
         }
       },
       "oneShot": true

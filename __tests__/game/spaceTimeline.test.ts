@@ -213,8 +213,43 @@ describe('Space settlements', () => {
     expect(m!.effects.settlementTerrain).toBe('mars');
   });
 
+  test('venus cloud colony creates a settlement', () => {
+    const m = getSpaceMilestone('venus_cloud_colony');
+    expect(m).toBeDefined();
+    expect(m!.effects.newSettlement).toBe(true);
+    expect(m!.effects.settlementTerrain).toBe('venus_cloud');
+  });
+
+  test('ganymede colony creates a settlement', () => {
+    const m = getSpaceMilestone('ganymede_colony');
+    expect(m).toBeDefined();
+    expect(m!.effects.newSettlement).toBe(true);
+    expect(m!.effects.settlementTerrain).toBe('ganymede');
+  });
+
+  test('titan colony creates a settlement', () => {
+    const m = getSpaceMilestone('titan_colony');
+    expect(m).toBeDefined();
+    expect(m!.effects.newSettlement).toBe(true);
+    expect(m!.effects.settlementTerrain).toBe('titan');
+  });
+
+  test('O\'Neill cylinder creates a settlement', () => {
+    const m = getSpaceMilestone('oneill_cylinder');
+    expect(m).toBeDefined();
+    expect(m!.effects.newSettlement).toBe(true);
+    expect(m!.effects.settlementTerrain).toBe('orbital_habitat');
+  });
+
   test('generation ship creates a settlement', () => {
     const m = getSpaceMilestone('generation_ship');
+    expect(m).toBeDefined();
+    expect(m!.effects.newSettlement).toBe(true);
+    expect(m!.effects.settlementTerrain).toBe('generation_ship');
+  });
+
+  test('second generation ship creates a settlement', () => {
+    const m = getSpaceMilestone('second_generation_ship');
     expect(m).toBeDefined();
     expect(m!.effects.newSettlement).toBe(true);
     expect(m!.effects.settlementTerrain).toBe('generation_ship');
@@ -225,6 +260,141 @@ describe('Space settlements', () => {
     expect(m).toBeDefined();
     expect(m!.effects.newSettlement).toBe(true);
     expect(m!.effects.settlementTerrain).toBe('exoplanet');
+  });
+});
+
+// ─── Mars Terraforming Progression (KSR Mars Trilogy) ────────────────────────
+
+describe('Mars terraforming phases', () => {
+  test('Mars ISRU requires mars_expedition', () => {
+    const m = getSpaceMilestone('mars_isru_operations');
+    expect(m).toBeDefined();
+    expect(m!.effects.unlocks).toContain('in_situ_resource_utilization');
+  });
+
+  test('Red → Green → Blue progression order', () => {
+    const red = getSpaceMilestone('mars_colony');
+    const green = getSpaceMilestone('mars_green_phase');
+    const blue = getSpaceMilestone('mars_blue_phase');
+    expect(red).toBeDefined();
+    expect(green).toBeDefined();
+    expect(blue).toBeDefined();
+    expect(green!.order).toBeGreaterThan(red!.order);
+    expect(blue!.order).toBeGreaterThan(green!.order);
+  });
+
+  test('greenhouse phase is between colony and green phase', () => {
+    const colony = getSpaceMilestone('mars_colony');
+    const greenhouse = getSpaceMilestone('mars_greenhouse_phase');
+    const green = getSpaceMilestone('mars_green_phase');
+    expect(greenhouse!.order).toBeGreaterThan(colony!.order);
+    expect(green!.order).toBeGreaterThan(greenhouse!.order);
+  });
+
+  test('Blue Mars unlocks breathable atmosphere', () => {
+    const blue = getSpaceMilestone('mars_blue_phase');
+    expect(blue!.effects.unlocks).toContain('breathable_mars_atmosphere');
+  });
+
+  test('Blue Mars has long sustained tick requirement (centuries of terraforming)', () => {
+    const blue = getSpaceMilestone('mars_blue_phase');
+    expect(blue!.sustainedTicks).toBeGreaterThanOrEqual(120);
+  });
+});
+
+// ─── Jupiter System (Sheffield 'Cold as Ice') ────────────────────────────────
+
+describe('Jupiter system milestones', () => {
+  test('Europa probe comes before Ganymede colony', () => {
+    const europa = getSpaceMilestone('europa_probe');
+    const ganymede = getSpaceMilestone('ganymede_colony');
+    expect(europa).toBeDefined();
+    expect(ganymede).toBeDefined();
+    expect(ganymede!.order).toBeGreaterThan(europa!.order);
+  });
+
+  test('Ganymede colony requires Europa probe', () => {
+    const ganymede = getSpaceMilestone('ganymede_colony');
+    const conditions = JSON.stringify(ganymede!.conditions);
+    expect(conditions).toContain('europa_probe');
+  });
+
+  test('Callisto outpost requires Ganymede colony', () => {
+    const callisto = getSpaceMilestone('callisto_outpost');
+    expect(callisto).toBeDefined();
+    const conditions = JSON.stringify(callisto!.conditions);
+    expect(conditions).toContain('ganymede_colony');
+  });
+
+  test('Ganymede unlocks outer system habitation', () => {
+    const ganymede = getSpaceMilestone('ganymede_colony');
+    expect(ganymede!.effects.unlocks).toContain('outer_system_habitation');
+  });
+});
+
+// ─── Space Infrastructure ────────────────────────────────────────────────────
+
+describe('Space infrastructure milestones', () => {
+  test('Space elevator exists and unlocks cheap orbital access', () => {
+    const se = getSpaceMilestone('space_elevator');
+    expect(se).toBeDefined();
+    expect(se!.effects.unlocks).toContain('cheap_orbital_access');
+    expect(se!.effects.unlocks).toContain('carbon_nanotube_manufacturing');
+  });
+
+  test('Mercury mining provides materials for Dyson swarm', () => {
+    const mercury = getSpaceMilestone('mercury_mining');
+    expect(mercury).toBeDefined();
+    expect(mercury!.effects.resourceDeltas).toBeDefined();
+    expect(mercury!.effects.resourceDeltas!['minerals']).toBeGreaterThan(0);
+  });
+
+  test('Ceres provides belt waystation', () => {
+    const ceres = getSpaceMilestone('ceres_mining_station');
+    expect(ceres).toBeDefined();
+    expect(ceres!.effects.unlocks).toContain('belt_waystation');
+  });
+
+  test('Interstellar probe enables generation ship', () => {
+    const probe = getSpaceMilestone('interstellar_probe');
+    expect(probe).toBeDefined();
+    expect(probe!.effects.unlocks).toContain('laser_sail_technology');
+  });
+
+  test('Dyson swarm requires Mercury mining (raw materials)', () => {
+    const dyson = getSpaceMilestone('dyson_swarm_start');
+    const conditions = JSON.stringify(dyson!.conditions);
+    expect(conditions).toContain('mercury_mining');
+  });
+});
+
+// ─── Kardashev Scale ─────────────────────────────────────────────────────────
+
+describe('Kardashev progression', () => {
+  test('Kardashev I comes after Dyson swarm start', () => {
+    const k1 = getSpaceMilestone('kardashev_one');
+    const dyson = getSpaceMilestone('dyson_swarm_start');
+    expect(k1).toBeDefined();
+    expect(k1!.order).toBeGreaterThan(dyson!.order);
+  });
+
+  test('Kardashev II comes after Kardashev I', () => {
+    const k2 = getSpaceMilestone('kardashev_two');
+    const k1 = getSpaceMilestone('kardashev_one');
+    expect(k2).toBeDefined();
+    expect(k2!.order).toBeGreaterThan(k1!.order);
+  });
+
+  test('Kardashev II requires both Dyson swarm and exoplanet colony', () => {
+    const k2 = getSpaceMilestone('kardashev_two');
+    const conditions = JSON.stringify(k2!.conditions);
+    expect(conditions).toContain('dyson_swarm_start');
+    expect(conditions).toContain('exoplanet_colony');
+  });
+
+  test('Kardashev II has extremely long sustained tick requirement', () => {
+    const k2 = getSpaceMilestone('kardashev_two');
+    expect(k2!.sustainedTicks).toBeGreaterThanOrEqual(300);
   });
 });
 
@@ -299,6 +469,24 @@ describe('Capability unlocks', () => {
   test('Dyson swarm unlocks stellar_engineering', () => {
     const m = getSpaceMilestone('dyson_swarm_start');
     expect(m!.effects.unlocks).toContain('stellar_engineering');
+  });
+
+  test('Space elevator unlocks cheap_orbital_access', () => {
+    const m = getSpaceMilestone('space_elevator');
+    expect(m).toBeDefined();
+    expect(m!.effects.unlocks).toContain('cheap_orbital_access');
+  });
+
+  test('Ganymede unlocks magnetosphere_shielding', () => {
+    const m = getSpaceMilestone('ganymede_colony');
+    expect(m).toBeDefined();
+    expect(m!.effects.unlocks).toContain('magnetosphere_shielding');
+  });
+
+  test('Kardashev I unlocks planetary_energy_capture', () => {
+    const m = getSpaceMilestone('kardashev_one');
+    expect(m).toBeDefined();
+    expect(m!.effects.unlocks).toContain('kardashev_one');
   });
 
   test('capabilities accumulate over progression', () => {

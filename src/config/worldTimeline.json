@@ -1,0 +1,586 @@
+{
+  "timelineId": "world",
+  "description": "Geopolitical and civilizational progression from 1917 to deep future. Models Turchin structural-demographic cycles, Khaldun asabiyyah decay, Tainter complexity collapse, Kondratiev waves, and Kardashev transitions. The external world the Soviet system exists within — trade, war, climate, technology, governance evolution. Grounded in academic research (Turchin, Tainter, Diamond, Khaldun) and hard SF projections (Baxter, Egan, Reynolds).",
+  "milestones": [
+    {
+      "id": "cold_war_start",
+      "name": "Cold War Begins",
+      "timelineId": "world",
+      "order": 10,
+      "conditions": { "and": [
+        { "year": { "min": 1947 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "globalTension": 0.3, "borderThreat": 0.2 },
+        "pressureModifiers": { "political": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "IMPERIALIST AGGRESSION: Western Powers Form Anti-Soviet Alliance",
+          "toast": "The wartime alliance crumbles. Churchill's 'Iron Curtain' speech signals decades of confrontation. Moscow increases vigilance quotas.",
+          "description": "The Truman Doctrine (1947) formalizes US containment policy. NATO forms in 1949. The world divides into two armed camps. For the predsedatel, this means increased quotas, more KGB scrutiny, and military production targets."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "chinese_revolution",
+      "name": "Chinese Communist Revolution",
+      "timelineId": "world",
+      "order": 12,
+      "conditions": { "and": [
+        { "year": { "min": 1949 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "globalTension": 0.1 },
+        "pressureModifiers": { "morale": -0.05 },
+        "narrative": {
+          "pravdaHeadline": "PEOPLE'S REPUBLIC OF CHINA PROCLAIMED: World Revolution Advances",
+          "toast": "Mao Zedong proclaims the People's Republic. 540 million people join the socialist camp. Moscow celebrates. Quietly, the competition for communist leadership begins.",
+          "description": "October 1, 1949. The largest nation on Earth becomes communist. The Sino-Soviet alliance appears invincible. Within 10 years, ideological disagreements will fracture it completely."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "cuban_missile_crisis",
+      "name": "Cuban Missile Crisis",
+      "timelineId": "world",
+      "order": 15,
+      "conditions": { "and": [
+        { "year": { "min": 1962 } },
+        { "worldState": { "key": "globalTension", "min": 0.3 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "globalTension": 0.15 },
+        "pressureModifiers": { "morale": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "NUCLEAR BRINKMANSHIP: World Holds Breath as Superpowers Face Off Over Cuba",
+          "toast": "For 13 days in October, humanity is 90 minutes from nuclear annihilation. Both sides step back. Détente becomes thinkable.",
+          "description": "October 16-28, 1962. Soviet missiles in Cuba. American naval blockade. The closest the world came to nuclear war. Resolution leads to the Nuclear Test Ban Treaty (1963) and eventual détente."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "sino_soviet_split",
+      "name": "Sino-Soviet Split",
+      "timelineId": "world",
+      "order": 14,
+      "conditions": { "and": [
+        { "year": { "min": 1960 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "globalTension": 0.05, "borderThreat": 0.15 },
+        "pressureModifiers": { "political": 0.05 },
+        "narrative": {
+          "pravdaHeadline": "IDEOLOGICAL DISAGREEMENTS WITH CHINA: Soviet-Chinese Friendship Endures (Official Statement)",
+          "toast": "The world's two largest communist nations have fundamental disagreements about revolutionary theory. Border incidents multiply. The friendship is formally unshaken. Nobody believes this.",
+          "description": "By 1960, ideological differences between Moscow and Beijing become irreconcilable. Khrushchev's de-Stalinization horrifies Mao. Soviet advisors are withdrawn from China. By 1969, border clashes along the Ussuri River bring the two nuclear powers close to war."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "detente_era",
+      "name": "Détente",
+      "timelineId": "world",
+      "order": 20,
+      "conditions": { "and": [
+        { "year": { "min": 1972 } },
+        { "worldState": { "key": "globalTension", "min": 0.3 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "globalTension": -0.15, "tradeAccess": 0.15 },
+        "pressureModifiers": { "economic": -0.05 },
+        "narrative": {
+          "pravdaHeadline": "PEACEFUL COEXISTENCE ADVANCES: SALT Treaty Signed, Trade Expands",
+          "toast": "The SALT arms limitation treaty is signed. Grain imports from America begin. Moscow's tension eases. The settlement's quota pressure does not.",
+          "description": "Nixon visits Moscow (1972). SALT I limits strategic weapons. Helsinki Accords (1975) normalize European borders. Soviet grain imports from the US begin — the settlement may see foreign equipment for the first time."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "oil_boom",
+      "name": "Oil Boom (Petrodollar Surge)",
+      "timelineId": "world",
+      "order": 22,
+      "conditions": { "and": [
+        { "year": { "min": 1973 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "commodityIndex": 0.4 },
+        "pressureModifiers": { "economic": -0.1 },
+        "narrative": {
+          "pravdaHeadline": "OPEC EMBARGO ENRICHES SOCIALIST CAMP: Soviet Oil Revenues Surge",
+          "toast": "The 1973 OPEC oil embargo quadruples crude prices. Soviet hard currency earnings explode. Moscow uses petrodollars to fund everything from grain imports to space programs. This will not last.",
+          "description": "The oil price shock of 1973 transforms the Soviet economy. Western Siberian oil fields become the USSR's ATM. Petrodollar wealth masks structural economic problems — stagnation, inefficiency, and declining innovation — that will prove fatal when oil prices crash in the 1980s."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "oil_price_collapse",
+      "name": "Oil Price Collapse",
+      "timelineId": "world",
+      "order": 28,
+      "conditions": { "and": [
+        { "year": { "min": 1986 } },
+        { "worldState": { "key": "commodityIndex", "min": 0.2 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "commodityIndex": -0.5 },
+        "pressureModifiers": { "economic": 0.2 },
+        "narrative": {
+          "pravdaHeadline": "TEMPORARY MARKET FLUCTUATION: Oil Prices Adjust Downward",
+          "toast": "Saudi Arabia floods the market. Oil drops from $30 to $10/barrel. Soviet hard currency revenue collapses by 50%. The word 'temporary' does a lot of work in the official statement.",
+          "description": "The 1986 oil price collapse devastates the Soviet economy. The system built on petrodollars crumbles. Gorbachev's reforms become desperate necessity, not ideological choice. For the settlement, this means supply shortages, equipment breakdowns, and rising desperation."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "permafrost_crisis",
+      "name": "Permafrost Infrastructure Crisis",
+      "timelineId": "world",
+      "order": 40,
+      "conditions": { "and": [
+        { "year": { "min": 2025 } },
+        { "worldState": { "key": "climateTrend", "min": 0.2 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "climateTrend": 0.1 },
+        "pressureModifiers": { "infrastructure": 0.25, "economic": 0.15 },
+        "narrative": {
+          "pravdaHeadline": "NORTHERN INFRASTRUCTURE REQUIRES MAINTENANCE: Ministry of Permafrost Affairs Established",
+          "toast": "65% of Russia is built on frozen ground. It is thawing. 40% of northern infrastructure already damaged. $250 billion at risk. The Ministry of Permafrost Affairs has been created to manage the situation. They have requested a larger office.",
+          "description": "Russia's permafrost underlies 65% of its territory and is warming at 2.5x the global average. Infrastructure damage already exceeds $100 billion. Pipeline ruptures, building foundation collapse, and road degradation accelerate. 45% of Arctic hydrocarbon extraction fields are in thaw-risk zones."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "peak_phosphorus",
+      "name": "Peak Phosphorus",
+      "timelineId": "world",
+      "order": 42,
+      "conditions": { "and": [
+        { "year": { "min": 2034 } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "commodityIndex": 0.2 },
+        "pressureModifiers": { "food": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "FERTILIZER PRODUCTION TARGETS REVISED: Ministry of Agriculture Adapts to Resource Constraints",
+          "toast": "Phosphate rock — essential for all modern agriculture — reaches peak extraction. 85% of remaining reserves are in Morocco. The Five-Year Agricultural Intensification Plan must now account for declining fertilizer availability.",
+          "description": "Phosphorus has no substitute in agriculture. Global reserves peak around 2034. Agricultural yields decline without synthetic fertilizers. The Soviet system, which already struggles with agricultural efficiency, faces a structural constraint that no amount of quota-setting can overcome."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ai_gosplan",
+      "name": "AI Gosplan Prototype",
+      "timelineId": "world",
+      "order": 44,
+      "conditions": { "and": [
+        { "year": { "min": 2035 } },
+        { "techLevel": { "min": 0.6 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.05 },
+        "pressureModifiers": { "economic": -0.1, "political": 0.05 },
+        "unlocks": ["ai_planning"],
+        "narrative": {
+          "pravdaHeadline": "ALGORITHMIC PLANNING COMMISSION ESTABLISHED: Machine Intelligence Serves the Plan",
+          "toast": "The calculation problem that defeated Gosplan — coordinating 25 million products across 300 million people — is solved by artificial intelligence. Planning efficiency increases 30%. Corruption detection increases 50%. The bureaucrats are not pleased.",
+          "description": "The Soviet calculation problem (Hayek's critique) is rendered moot by AI capable of processing millions of simultaneous resource allocation decisions. The system that couldn't track shoe sizes across 15 republics can now optimize global supply chains. But AI planning creates a new problem: what role for the Party if the machine does the planning? Cybernetics returns — Glushkov's dream realized 70 years late."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "demographic_inversion",
+      "name": "Demographic Inversion",
+      "timelineId": "world",
+      "order": 46,
+      "conditions": { "and": [
+        { "year": { "min": 2040 } },
+        { "population": { "min": 100000 } }
+      ]},
+      "sustainedTicks": 6,
+      "effects": {
+        "pressureModifiers": { "demographic": 0.2, "economic": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "POPULATION STRUCTURE ADJUSTMENTS: Labor Allocation Optimized for Demographic Transition",
+          "toast": "Retirees outnumber workers. The pension system, designed for a growing population, cannot fund itself. Labor shortage in every sector. The Five-Year Plan has not accounted for the absence of young hands.",
+          "description": "UN projections (2024 revision) show global population peaking around 2080. But the structural crisis hits earlier: dependency ratios invert by 2040 in developed nations. For the Soviet system, which relies on directed labor, the absence of young workers is existential."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "fusion_breakthrough",
+      "name": "Fusion Energy Breakthrough",
+      "timelineId": "world",
+      "order": 50,
+      "conditions": { "and": [
+        { "year": { "min": 2050 } },
+        { "techLevel": { "min": 0.65 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.08 },
+        "pressureModifiers": { "power": -0.2 },
+        "unlocks": ["fusion_power"],
+        "narrative": {
+          "pravdaHeadline": "FUSION REACTOR ACHIEVES NET ENERGY: New Era of Power Production Begins",
+          "toast": "After decades of 'always 30 years away,' tokamak fusion achieves sustained net energy output. Deployment will take another 20 years. The Five-Year Electrification Plan has been extended to a Twenty-Year Electrification Plan.",
+          "description": "ITER/DEMO lineage finally produces commercial fusion. But deployment requires massive infrastructure investment — new reactor construction, grid upgrades, fuel processing. The 6th Kondratiev wave (clean energy) begins. Soviet central planning is actually well-suited to this transition — massive directed infrastructure investment is what it does best."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "freshwater_crisis",
+      "name": "Global Freshwater Crisis",
+      "timelineId": "world",
+      "order": 52,
+      "conditions": { "and": [
+        { "year": { "min": 2050 } },
+        { "worldState": { "key": "climateTrend", "min": 0.3 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": { "food": 0.15, "health": 0.1 },
+        "worldStateDeltas": { "globalTension": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "WATER ALLOCATION DIRECTIVE ISSUED: Ministry of Hydrology Assumes Emergency Powers",
+          "toast": "50% of settlements face water stress. The Aral Sea lesson repeats globally: extraction quotas that ignore replenishment rates eventually exhaust the resource. The Ministry has been given broader powers. The aquifers have not been given more water.",
+          "description": "By 2050, half of Earth's population faces water stress. Aquifer depletion, glacial retreat, and agricultural demand exceed natural replenishment. The Soviet system's history with water management (the Aral Sea catastrophe) provides both cautionary lessons and institutional muscle memory for massive infrastructure projects."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "first_turchin_wave",
+      "name": "First Turchin Crisis Wave (Eternal Era)",
+      "timelineId": "world",
+      "order": 55,
+      "conditions": { "and": [
+        { "year": { "min": 2070 } },
+        { "pressure": { "domain": "political", "min": 0.4 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": { "political": 0.2, "loyalty": 0.15, "morale": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "STRUCTURAL ADJUSTMENTS REQUIRED: Political Institutions Undergo Renewal",
+          "toast": "50 years into the Eternal era, Turchin's fathers-and-sons oscillation manifests. Elite overproduction — too many educated, ambitious cadres competing for too few Party positions. Political instability spikes. The nomenklatura closes ranks.",
+          "description": "Peter Turchin's structural-demographic theory predicts 50-year oscillations in political instability driven by elite overproduction and declining living standards. The Soviet system is particularly vulnerable: the Party hierarchy creates a fixed number of positions while education and ambition grow without bound. When too many qualified people compete for too few slots, conspiracy and purge follow naturally."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "longevity_treatment",
+      "name": "CRISPR Longevity Treatment",
+      "timelineId": "world",
+      "order": 56,
+      "conditions": { "and": [
+        { "year": { "min": 2060 } },
+        { "techLevel": { "min": 0.7 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "pressureModifiers": { "political": 0.15, "demographic": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "LONGEVITY THERAPY APPROVED FOR PARTY CADRES: Life Extension Serves the Revolution",
+          "toast": "Gene therapy extends elite lifespans to 200+ years. KSR's Mars Trilogy predicted this: the gerontocracy deepens. Leaders who should have retired decades ago cling to power with renewed vigor. The nomenklatura becomes literally immortal.",
+          "description": "KSR's Mars Trilogy explored this in detail: longevity treatment transforms politics fundamentally. Generational turnover — the mechanism by which new ideas enter power structures — ceases. The Soviet gerontocracy (already a problem by the 1980s, when Brezhnev, Andropov, and Chernenko died in office) becomes permanent. Bogdanov's blood transfusion research, which killed him in 1928, finally bears fruit 130 years later."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "post_oil_transition",
+      "name": "Post-Oil Transition Complete",
+      "timelineId": "world",
+      "order": 60,
+      "conditions": { "and": [
+        { "year": { "min": 2100 } },
+        { "milestone": { "timelineId": "world", "milestoneId": "fusion_breakthrough" } }
+      ]},
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": { "commodityIndex": -0.3 },
+        "pressureModifiers": { "economic": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "HYDROCARBON ERA CONCLUDED: Final Oil Well Decommissioned",
+          "toast": "The last economically viable oil well is capped. An era ends. The petrodollar revenue stream that funded Soviet expansion for 50 years is gone. Fusion replaces fossil. The Ministry of Oil is merged with the Ministry of Historical Artifacts.",
+          "description": "By 2100, fossil fuels are economically uncompetitive with fusion and renewables. The geopolitical order built on oil collapses. Russia's post-Soviet petro-economy model — which never developed an alternative — must finally transform or die."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "first_khaldun_decay",
+      "name": "First Khaldun Cycle Decay Phase",
+      "timelineId": "world",
+      "order": 62,
+      "conditions": { "and": [
+        { "year": { "min": 2040 } },
+        { "pressure": { "domain": "loyalty", "min": 0.3 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "pressureModifiers": { "loyalty": 0.2, "political": 0.15, "morale": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "IDEOLOGICAL RENEWAL CAMPAIGN LAUNCHED: Third Generation Must Rediscover Revolutionary Spirit",
+          "toast": "Ibn Khaldun's cycle manifests: 120 years since the Revolution, the third generation has no memory of struggle. Asabiyyah (group solidarity) erodes. Luxury replaces sacrifice. The system decays from within. A purge, a war, or a visionary leader is needed to renew the founding spirit.",
+          "description": "Ibn Khaldun (1377) identified the pattern: Generation 1 forges cohesion through hardship, Generation 2 inherits power but remembers the struggle, Generation 3 is born in luxury and knows nothing of sacrifice. Asabiyyah (group feeling) erodes over ~120 years / 3 generations. The Soviet system — founded in revolutionary struggle (1917) — hits this wall by ~2040. Either a crisis renews the solidarity or the system fragments."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "dome_mandatory_earth",
+      "name": "Atmospheric Domes Mandatory (Earth)",
+      "timelineId": "world",
+      "order": 65,
+      "conditions": { "and": [
+        { "year": { "min": 2150 } },
+        { "worldState": { "key": "climateTrend", "min": 0.6 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "pressureModifiers": { "infrastructure": 0.3, "health": 0.15 },
+        "unlocks": ["mandatory_dome_construction"],
+        "narrative": {
+          "pravdaHeadline": "ATMOSPHERIC CONTAINMENT DIRECTIVE: All Settlements Must Construct Environmental Domes",
+          "toast": "Atmospheric toxicity and UV radiation exceed safe outdoor exposure limits. All settlements are ordered to construct dome enclosures. The open air is no longer breathable without filtration. The Five-Year Dome Construction Plan has been issued.",
+          "description": "Cumulative pollution, ozone degradation, and climate change render prolonged outdoor exposure hazardous. Settlements must be enclosed in atmospheric containment domes — the same technology developed for lunar and Martian bases. The irony: BIOS-3's sealed bunker in Krasnoyarsk becomes the model for all human habitation on Earth."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "first_tainter_simplification",
+      "name": "First Tainter Simplification Crisis",
+      "timelineId": "world",
+      "order": 68,
+      "conditions": { "and": [
+        { "year": { "min": 2200 } },
+        { "pressure": { "domain": "economic", "min": 0.5 } },
+        { "pressure": { "domain": "political", "min": 0.4 } }
+      ]},
+      "sustainedTicks": 36,
+      "effects": {
+        "pressureModifiers": { "economic": 0.25, "infrastructure": 0.2, "political": 0.15 },
+        "narrative": {
+          "pravdaHeadline": "INSTITUTIONAL STREAMLINING PROGRAM: Bureaucratic Overhead Reduction Targets Set",
+          "toast": "Joseph Tainter's warning: when bureaucratic overhead exceeds 40% of GDP, diminishing returns on complexity trigger either controlled simplification or cascading failure. The system must shed complexity to survive. Ministries are merged. Sub-agencies dissolved. The paperwork for dissolving the sub-agencies requires three new sub-agencies.",
+          "description": "Tainter's 'Collapse of Complex Societies' (1988) identifies the mechanism: each layer of complexity solves existing problems but adds overhead. Eventually, marginal returns on additional complexity go negative. The rational response is simplification — but the Soviet bureaucracy's institutional incentive is always to ADD complexity, never remove it. This contradiction is the central tension of the Eternal era."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "corporate_sovereignty",
+      "name": "Corporate Sovereignty Emergence",
+      "timelineId": "world",
+      "order": 70,
+      "conditions": { "and": [
+        { "year": { "min": 2080 } },
+        { "techLevel": { "min": 0.75 } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "worldStateDeltas": { "globalTension": 0.15 },
+        "pressureModifiers": { "political": 0.1, "economic": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "CAPITALIST ENTITIES SUBSUME NATION-STATES: Corporate GDP Exceeds Sovereign Revenue",
+          "toast": "KSR's 'metanats' from the Mars Trilogy become reality. 69 of 100 largest economic entities are already corporations. When corporate revenue exceeds state revenue, debt colonialism follows. Herbert's CHOAM and Dune's feudal capitalism — where the Spacing Guild controls all interstellar transit — provides the template for corporate governance of space infrastructure.",
+          "description": "The VOC precedent (1602): Dutch East India Company governed 2.5 million people with sovereign powers — waging war, minting coins, maintaining armies. KSR's Mars Trilogy depicted 'transnats' and 'metanats' that evolved to subsume countries entirely. Herbert's Dune depicted CHOAM (Combine Honnete Ober Advancer Mercantiles) — a corporate entity that controlled all interplanetary commerce, with shares held by noble houses. The Soviet system sees this as confirmation: capitalism's logical endpoint is neo-feudalism."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "neofeudal_transition",
+      "name": "Neofeudal Transition",
+      "timelineId": "world",
+      "order": 75,
+      "conditions": { "and": [
+        { "milestone": { "timelineId": "world", "milestoneId": "corporate_sovereignty" } },
+        { "year": { "min": 2200 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "worldStateDeltas": { "globalTension": 0.1 },
+        "pressureModifiers": { "political": 0.15, "loyalty": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "CAPITALIST WORLD ENTERS FEUDAL REGRESSION: Soviet System Vindicated",
+          "toast": "Rent exceeds profit. Platform dependence replaces personal dependence. Workers become serfs tied to algorithms rather than land. Herbert saw this: Dune's Landsraad was a feudal council governing an interstellar empire. The Soviets argue their system prevented this outcome domestically. The argument has some merit.",
+          "description": "Scholarly consensus on neofeudalism: corporate governance → platform monopoly → algorithmic dependence → new serfdom. Firefly's Alliance represents the centralized alternative — a post-Earth government that controls core worlds while frontier planets resist. The Soviet system stands as the ideological opposite: central planning vs. corporate feudalism. In the deep game, the player sees the external world fracture along these lines while their settlement persists under its ancient bureaucratic model."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "kardashev_085",
+      "name": "Kardashev 0.85 Threshold",
+      "timelineId": "world",
+      "order": 72,
+      "conditions": { "and": [
+        { "year": { "min": 2200 } },
+        { "milestone": { "timelineId": "world", "milestoneId": "fusion_breakthrough" } },
+        { "techLevel": { "min": 0.85 } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.03 },
+        "unlocks": ["planetary_energy_grid"],
+        "narrative": {
+          "pravdaHeadline": "PLANETARY ENERGY GRID CONSTRUCTION AUTHORIZED: Kardashev 0.85 Achieved",
+          "toast": "Total civilizational energy capture reaches 85% of available planetary input. Kardashev — a Soviet astrophysicist — would note the irony: the Soviet system finally approaches the threshold he defined in 1964.",
+          "description": "Nikolai Kardashev (1932-2019) proposed his scale in 1964 at the Soviet Academy of Sciences. The transition from Type 0 to Type I is the most dangerous period in any civilization's history — enough power to destroy the planet, not yet enough to reliably leave it."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "language_divergence",
+      "name": "First Language Divergence Crisis",
+      "timelineId": "world",
+      "order": 80,
+      "conditions": { "and": [
+        { "year": { "min": 3000 } },
+        { "milestone": { "timelineId": "space", "milestoneId": "exoplanet_colony" } }
+      ]},
+      "sustainedTicks": 12,
+      "effects": {
+        "pressureModifiers": { "political": 0.15, "loyalty": 0.2 },
+        "narrative": {
+          "pravdaHeadline": "LINGUISTIC STANDARDIZATION DIRECTIVE: Administrative Language Divergence Detected",
+          "toast": "1,000+ years since standardization. Peripheral settlements speak what is technically still Russian but is unintelligible to central administrators. The filing system requires translation. The Ministry of Linguistic Compliance has been established.",
+          "description": "Languages diverge over millennia. Old English (1,000 years ago) is incomprehensible to modern English speakers. Russian will undergo similar transformation over 1,000+ years, especially in isolated space settlements. The Soviet system's centralized administration depends on common language. When language fragments, the bureaucracy fragments."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "speciation_divergence",
+      "name": "First Speciation Divergence Detected",
+      "timelineId": "world",
+      "order": 85,
+      "conditions": { "and": [
+        { "year": { "min": 5000 } },
+        { "milestone": { "timelineId": "space", "milestoneId": "exoplanet_colony" } }
+      ]},
+      "sustainedTicks": 24,
+      "effects": {
+        "pressureModifiers": { "political": 0.2, "morale": 0.1 },
+        "narrative": {
+          "pravdaHeadline": "GENETIC STANDARDIZATION PROGRAM PROPOSED: Population Divergence Within Acceptable Parameters",
+          "toast": "3,000+ years of isolation between Earth, Mars, Jupiter moons, and generation ships. Genetic drift, different gravity, different radiation environments. Medical examinations reveal subspecies-level divergence. Are they still Soviet citizens? The Constitution has no provision for this.",
+          "description": "Baxter's 'Evolution' traces speciation over 600 million years, but in isolated environments with different selection pressures (gravity, radiation, atmospheric composition), detectable divergence occurs in thousands of years. Mars colonists in 0.38g develop different bone density, muscle mass, and cardiovascular systems. Titan colonists in 0.14g diverge further. Within 5,000 years, reproductive isolation may begin. The Soviet system — which defines citizenship by paperwork, not biology — faces an unprecedented constitutional crisis."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "deep_turchin_crisis",
+      "name": "Deep Turchin Secular Cycle Crisis",
+      "timelineId": "world",
+      "order": 90,
+      "conditions": { "and": [
+        { "year": { "min": 9000 } },
+        { "pressure": { "domain": "political", "min": 0.6 } },
+        { "pressure": { "domain": "economic", "min": 0.5 } }
+      ]},
+      "sustainedTicks": 48,
+      "effects": {
+        "pressureModifiers": { "political": 0.3, "economic": 0.25, "loyalty": 0.2, "morale": 0.2 },
+        "narrative": {
+          "pravdaHeadline": "STRUCTURAL REFORM REQUIRED: Multiple Simultaneous Pressure Crises Demand Institutional Response",
+          "toast": "Multiple overlapping secular cycles — Turchin demographic, Khaldun asabiyyah, Kondratiev economic — synchronize into a compound crisis. This is what destroyed the Bronze Age civilizations in 1177 BCE. The system must either radically simplify or collapse entirely.",
+          "description": "Eric Cline's '1177 B.C.' describes the Bronze Age Collapse as a cascade of simultaneous, interconnected crises: drought, famine, migration, trade collapse, and political instability hitting multiple civilizations at once. Turchin's model predicts these synchronized crises — multiple cycles with different periods occasionally phase-lock into compound disasters. The deep game discovers these organically."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "bronze_age_analog",
+      "name": "Bronze Age Collapse Analog",
+      "timelineId": "world",
+      "order": 95,
+      "conditions": { "and": [
+        { "year": { "min": 50000 } },
+        { "pressure": { "domain": "political", "min": 0.7 } },
+        { "pressure": { "domain": "economic", "min": 0.7 } },
+        { "pressure": { "domain": "infrastructure", "min": 0.6 } }
+      ]},
+      "sustainedTicks": 60,
+      "effects": {
+        "pressureModifiers": { "political": 0.4, "economic": 0.35, "infrastructure": 0.3, "morale": 0.3, "loyalty": 0.25 },
+        "narrative": {
+          "pravdaHeadline": "EMERGENCY MEASURES: Cascading Multi-Settlement Failure Requires Unprecedented Intervention",
+          "toast": "The Bronze Age Collapse repeats at interstellar scale. Communication networks fail. Trade routes collapse. Multiple settlements go dark simultaneously. The center cannot hold — but the filing system persists.",
+          "description": "Jared Diamond's five factors of societal collapse: environmental damage, climate change, hostile neighbors, friendly trade partners withdrawing, and society's response to problems. By 50,000 years, all five factors simultaneously pressure the system. Some settlements are lost. Survivors must rebuild from radically simplified institutions. This is the deep game's ultimate test."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "geomagnetic_reversal",
+      "name": "Geomagnetic Field Reversal",
+      "timelineId": "world",
+      "order": 100,
+      "conditions": { "and": [
+        { "year": { "min": 100000 } }
+      ]},
+      "sustainedTicks": 120,
+      "effects": {
+        "pressureModifiers": { "health": 0.2, "infrastructure": 0.15 },
+        "narrative": {
+          "pravdaHeadline": "GEOMAGNETIC TRANSITION EVENT: 22,000-Year Field Reversal Begins",
+          "toast": "Earth's magnetic field has begun reversal. During the 22,000-year transition, surface radiation increases significantly. All surface operations require additional shielding. The Five-Year Radiation Compliance Plan does not quite cover the timeframe.",
+          "description": "Geomagnetic reversals occur on average every 450,000 years. The transition takes ~22,000 years during which the field weakens and becomes chaotic. Surface radiation increases, affecting electronics, health, and agriculture. Baxter's deep-time fiction depicts these as civilizational challenges — not catastrophes, but persistent stressors that require infrastructure adaptation over millennia."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "entropy_management",
+      "name": "Entropy Management Program",
+      "timelineId": "world",
+      "order": 110,
+      "conditions": { "and": [
+        { "year": { "min": 500000 } },
+        { "milestone": { "timelineId": "space", "milestoneId": "kardashev_two" } }
+      ]},
+      "sustainedTicks": 600,
+      "effects": {
+        "worldStateDeltas": { "techLevel": 0.01 },
+        "unlocks": ["entropy_engineering"],
+        "narrative": {
+          "pravdaHeadline": "FIVE-YEAR PLAN FOR ENTROPY MANAGEMENT: Ministry of Thermodynamic Compliance Established",
+          "toast": "The Politburo has reviewed the latest reports on universal entropy. Entropy production is ahead of schedule. All citizens are reminded that the Second Law of Thermodynamics applies equally to all, regardless of rank. Dyson's eternal intelligence program proceeds.",
+          "description": "Freeman Dyson (1979) proposed that intelligence could survive indefinitely by progressively slowing its thought processes as the universe cools. The Soviet system, which has now survived for 500,000+ years, faces its final challenge: can central planning defeat entropy? Russian cosmism provides the ideology — Fyodorov's imperative to resurrect the ancestors requires conquering entropy itself. The ultimate Five-Year Plan."
+        }
+      },
+      "oneShot": true
+    }
+  ]
+}
