@@ -23,6 +23,7 @@ import { notifyStateChange, useClimateMilestones, useSpaceVisualState, useTerrai
 
 // Import ModelPreloader for its side-effect (calls useGLTF.preload)
 import './scene/ModelPreloader';
+import AlienFaunaRenderer from './scene/AlienFaunaRenderer';
 import AuraRenderer from './scene/AuraRenderer';
 import CrisisVFXRenderer from './scene/CrisisVFXRenderer';
 import BuildingRenderer from './scene/BuildingRenderer';
@@ -129,6 +130,7 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
       <CameraController disabled={disableCamera} />
       <Environment season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} techLevel={spaceVisual.techLevel} />
       <SkyProgression state={spaceVisual} />
+      <AlienFaunaRenderer />
       <Lighting timeOfDay={snap.timeOfDay} season={snap.season} isStorm={snap.weatherLabel === 'STORM'} />
       <TerrainGrid grid={ecsGrid} season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} />
       <BuildingRenderer

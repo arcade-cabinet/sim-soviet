@@ -30,6 +30,8 @@ export interface SpaceVisualState {
   spaceStation: boolean;
   /** Lunar base established — show moon disc. */
   lunarBase: boolean;
+  /** Exoplanet colony established — show alien fauna. */
+  exoplanetColony?: boolean;
   /** 0-1 tech level — drives starfield intensity. */
   techLevel: number;
   /** Current era ID — drives sky color shift for the_eternal. */

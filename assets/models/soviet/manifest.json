@@ -590,6 +590,41 @@
       "role": "colony_power",
       "texture": "embedded",
       "era": "the_eternal"
+    },
+    "spacestation-01": {
+      "file": "models/soviet/spacestation-01.glb",
+      "source": "spacestations_source/station01",
+      "role": "colony_housing",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "spacestation-02": {
+      "file": "models/soviet/spacestation-02.glb",
+      "source": "spacestations_source/station02",
+      "role": "colony_industry",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "spacestation-03": {
+      "file": "models/soviet/spacestation-03.glb",
+      "source": "spacestations_source/station03",
+      "role": "colony_housing",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "spacestation-04": {
+      "file": "models/soviet/spacestation-04.glb",
+      "source": "spacestations_source/station04",
+      "role": "colony_industry",
+      "texture": "embedded",
+      "era": "the_eternal"
+    },
+    "spacestation-06": {
+      "file": "models/soviet/spacestation-06.glb",
+      "source": "spacestations_source/station06",
+      "role": "colony_government",
+      "texture": "embedded",
+      "era": "the_eternal"
     }
   },
   "roles": {
@@ -639,12 +674,12 @@
     ],
     "utility": ["concrete-block"],
     "environment": ["fence", "fence-low"],
-    "colony_housing": ["colony-habitat-a", "colony-habitat-b", "colony-habitat-c"],
-    "colony_industry": ["colony-workshop", "colony-factory", "colony-megafactory", "colony-synthplant"],
+    "colony_housing": ["colony-habitat-a", "colony-habitat-b", "colony-habitat-c", "spacestation-01", "spacestation-03"],
+    "colony_industry": ["colony-workshop", "colony-factory", "colony-megafactory", "colony-synthplant", "spacestation-02", "spacestation-04"],
     "colony_agriculture": ["colony-hydroponics"],
     "colony_power": ["colony-reactor", "colony-fusion", "colony-solar"],
     "colony_comms": ["colony-antenna", "comms-array"],
-    "colony_government": ["colony-command"],
+    "colony_government": ["colony-command", "spacestation-06"],
     "space_module": ["space-module"],
     "launch_pad": ["launch-pad"],
     "colony_dome": ["colony-dome"],
