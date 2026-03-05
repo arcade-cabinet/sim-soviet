@@ -1127,7 +1127,7 @@ function subscribeSpace(listener: () => void): () => void {
 // ── Crisis Visual Effects (one-shot VFX triggered by crisis impacts) ──────
 
 /** Type of one-shot visual effect triggered by a crisis. */
-export type CrisisVFXType = 'meteor_flash' | 'nuclear_haze' | 'famine_desat';
+export type CrisisVFXType = 'nuclear_flash' | 'earthquake_shake' | 'famine_haze' | 'dust_storm';
 
 /** An active visual effect with remaining duration. */
 export interface CrisisVFXEvent {

@@ -30,9 +30,11 @@ describe('getModelName', () => {
   // ── Era override ─────────────────────────────────────────────────────────
 
   it('returns era-specific model when era override exists', () => {
-    expect(getModelName('housing', 0, 'the_eternal')).toBe('colony-habitat-a');
-    expect(getModelName('housing', 1, 'the_eternal')).toBe('colony-habitat-b');
-    expect(getModelName('housing', 2, 'the_eternal')).toBe('colony-habitat-c');
+    // the_eternal housing: colony-dome (L0), colony-habitat-a (L1), colony-habitat-c (L2)
+    const eternal = ERA_MODEL_MAP.the_eternal!;
+    expect(getModelName('housing', 0, 'the_eternal')).toBe(eternal.housing![0]);
+    expect(getModelName('housing', 1, 'the_eternal')).toBe(eternal.housing![1]);
+    expect(getModelName('housing', 2, 'the_eternal')).toBe(eternal.housing![2]);
   });
 
   it('returns era-specific model for factory in the_eternal', () => {

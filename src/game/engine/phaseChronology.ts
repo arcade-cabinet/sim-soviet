@@ -26,7 +26,7 @@ import { buildingsLogic, getMetaEntity, operationalBuildings } from '../../ecs/a
 import type { RaionPool } from '../../ecs/world';
 import { checkHQSplitting } from '../../growth/HQSplitting';
 import { INDUSTRIAL_BUILDING_IDS } from '../../growth/OrganicUnlocks';
-import { notifyTerrainDirty, updateSpaceVisualState } from '../../stores/gameStore';
+import { addMassGrave, notifyTerrainDirty, updateSpaceVisualState } from '../../stores/gameStore';
 import { shouldExpand } from './endlessMode';
 import { expandGrid, getCurrentTier, initializeNewTiles } from './mapExpansion';
 import { buildSettlementSummary, type SettlementSummary } from './SettlementSummary';
@@ -151,6 +151,52 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
       gridSize: getCurrentGridSize(),
       callbacks,
     });
+
+    // ── 2.4 Mass grave placement (persistent visual markers for mass casualties) ──
+    if (ctx.governor) {
+      const activeCrises = ctx.governor.getActiveCrises();
+      const year = chronoAgent.getDate().year;
+      const gridSize = getCurrentGridSize();
+
+      for (const crisisId of activeCrises) {
+        let cause: 'purge' | 'famine' | 'gulag' | 'war' | 'plague' | null = null;
+        if (crisisId.includes('terror') || crisisId.includes('purge') || crisisId.includes('doctors_plot')) {
+          cause = 'purge';
+        } else if (crisisId.includes('famine') || crisisId.includes('holodomor')) {
+          cause = 'famine';
+        } else if (crisisId.includes('gulag')) {
+          cause = 'gulag';
+        } else if (crisisId.includes('war') || crisisId.includes('civil_war')) {
+          cause = 'war';
+        } else if (crisisId.includes('plague') || crisisId.includes('pandemic')) {
+          cause = 'plague';
+        }
+
+        if (cause) {
+          // Place cluster at settlement periphery (edge tiles)
+          const seed = year * 7919 + crisisId.length * 104729;
+          const edge = seed % 4; // 0=north, 1=east, 2=south, 3=west
+          const offset = (seed >> 8) % Math.max(1, gridSize - 2);
+          let gx: number, gy: number;
+          switch (edge) {
+            case 0: gx = 1 + offset; gy = 0; break;
+            case 1: gx = gridSize - 1; gy = 1 + offset; break;
+            case 2: gx = 1 + offset; gy = gridSize - 1; break;
+            default: gx = 0; gy = 1 + offset; break;
+          }
+
+          const markerCount = 3 + (seed % 3); // 3-5 markers
+          addMassGrave({
+            id: `${crisisId}-${year}`,
+            gridX: gx,
+            gridY: gy,
+            year,
+            markerCount,
+            cause,
+          });
+        }
+      }
+    }
   }
 
   // Auto-resolve pending report after 90 ticks
@@ -652,6 +698,7 @@ function syncSpaceVisualState(timelines: RegisteredTimeline[], techLevel: number
     sputnik: activated.has('sputnik'),
     spaceStation: activated.has('salyut_station') || activated.has('mir_station'),
     lunarBase: activated.has('permanent_lunar_base') || activated.has('lunokhod'),
+    exoplanetColony: activated.has('exoplanet_colony'),
     techLevel,
     era,
   });
