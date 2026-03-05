@@ -414,6 +414,7 @@ describe('serialization', () => {
       activatedMilestones: new Set(['sputnik', 'gagarin']),
       trackers: new Map([['vostok', { sustainedTicks: 3 }]]),
       unlockedCapabilities: new Set(['rockets', 'orbital']),
+      activatedMilestoneYears: new Map([['sputnik', 1957], ['gagarin', 1961]]),
     };
 
     const serialized = serializeLayerState(state);
@@ -423,6 +424,7 @@ describe('serialization', () => {
     expect(restored.activatedMilestones).toEqual(new Set(['sputnik', 'gagarin']));
     expect(restored.trackers).toEqual(new Map([['vostok', { sustainedTicks: 3 }]]));
     expect(restored.unlockedCapabilities).toEqual(new Set(['rockets', 'orbital']));
+    expect(restored.activatedMilestoneYears).toEqual(new Map([['sputnik', 1957], ['gagarin', 1961]]));
   });
 
   test('serialized form is JSON-safe', () => {

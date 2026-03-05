@@ -184,6 +184,8 @@ export interface TimelineLayerState {
   trackers: Map<string, MilestoneTracker>;
   /** Cumulative unlocked capabilities across all milestones. */
   unlockedCapabilities: Set<string>;
+  /** Year each milestone first activated (milestoneId → calendar year). */
+  activatedMilestoneYears: Map<string, number>;
 }
 
 // ─── Timeline Context (shared read-only state for evaluation) ───────────────
@@ -296,6 +298,7 @@ export function evaluateTimelineLayer(
   const newActivated = new Set(state.activatedMilestones);
   const newTrackers = new Map(state.trackers);
   const newUnlocks = new Set(state.unlockedCapabilities);
+  const newActivatedYears = new Map(state.activatedMilestoneYears);
 
   for (const milestone of milestones) {
     // Skip one-shot milestones already activated
@@ -313,6 +316,7 @@ export function evaluateTimelineLayer(
         activated.push(milestone);
         effects.push(milestone.effects);
         newActivated.add(milestone.id);
+        newActivatedYears.set(milestone.id, ctx.year);
         newTrackers.delete(milestone.id);
 
         // Add unlocked capabilities
@@ -336,6 +340,7 @@ export function evaluateTimelineLayer(
       activatedMilestones: newActivated,
       trackers: newTrackers,
       unlockedCapabilities: newUnlocks,
+      activatedMilestoneYears: newActivatedYears,
     },
   };
 }
@@ -349,6 +354,7 @@ export function createLayerState(timelineId: string): TimelineLayerState {
     activatedMilestones: new Set(),
     trackers: new Map(),
     unlockedCapabilities: new Set(),
+    activatedMilestoneYears: new Map(),
   };
 }
 
@@ -359,6 +365,7 @@ export interface TimelineLayerSaveData {
   activatedMilestones: string[];
   trackers: Array<[string, MilestoneTracker]>;
   unlockedCapabilities: string[];
+  activatedMilestoneYears: Record<string, number>;
 }
 
 export function serializeLayerState(state: TimelineLayerState): TimelineLayerSaveData {
@@ -367,6 +374,7 @@ export function serializeLayerState(state: TimelineLayerState): TimelineLayerSav
     activatedMilestones: [...state.activatedMilestones],
     trackers: [...state.trackers.entries()],
     unlockedCapabilities: [...state.unlockedCapabilities],
+    activatedMilestoneYears: Object.fromEntries(state.activatedMilestoneYears),
   };
 }
 
@@ -376,6 +384,7 @@ export function restoreLayerState(data: TimelineLayerSaveData): TimelineLayerSta
     activatedMilestones: new Set(data.activatedMilestones),
     trackers: new Map(data.trackers),
     unlockedCapabilities: new Set(data.unlockedCapabilities),
+    activatedMilestoneYears: new Map(Object.entries(data.activatedMilestoneYears ?? {})),
   };
 }
 

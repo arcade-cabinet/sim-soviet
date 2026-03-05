@@ -55,6 +55,29 @@ describe('Timeline registration', () => {
       expect(tl.activatedMilestones.length).toBe(0);
     }
   });
+
+  it('records activation year for milestones', () => {
+    const { engine } = createPlaythroughEngine({
+      meta: { date: { year: 1945, month: 10, tick: 0 } },
+      resources: { food: 999999, vodka: 999999, money: 999999 },
+    });
+    buildBasicSettlement({ housing: 2, farms: 1, power: 1 });
+
+    // Advance 3 years: 1945 → 1948 (cold_war_start activates at 1947)
+    for (let y = 0; y < 3; y++) {
+      getResources().food = 999999;
+      advanceTicks(engine, TICKS_PER_YEAR);
+    }
+
+    const state = engine.serializeSubsystems();
+    const worldTimeline = state.timelines?.find((t) => t.timelineId === 'world');
+    expect(worldTimeline).toBeDefined();
+    // activatedMilestoneYears must contain cold_war_start with year 1947 or 1948
+    const years = worldTimeline!.activatedMilestoneYears;
+    expect(years).toBeDefined();
+    expect(typeof years!['cold_war_start']).toBe('number');
+    expect(years!['cold_war_start']).toBeGreaterThanOrEqual(1947);
+  });
 });
 
 // ─── 2. Year-gated milestone activation ──────────────────────────────────────
