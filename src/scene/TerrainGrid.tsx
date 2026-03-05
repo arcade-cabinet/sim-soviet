@@ -12,12 +12,15 @@
  * via InstancedMesh — each shape type is a single draw call regardless of count.
  * Total scatter draw calls: ~8 (down from ~2600+ individual meshes).
  */
+import { useTexture } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
 import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { GridCell, TerrainType } from '../engine/GridTypes';
 import type { EraId } from '../game/era/types';
-import { type TerrainVisualState, eraToTerrainState } from './terrainEraMapping';
+import { assetUrl } from '../utils/assetPath';
+import { type TerrainVisualState, eraToTerrainState, getTerrainTextureFiles } from './terrainEraMapping';
 
 /** Seeded PRNG (mulberry32) for deterministic scatter */
 function mulberry32(seed: number) {
@@ -127,6 +130,7 @@ function buildTerrainGeometry(grid: GridCell[][], season: Season, eraTint: [numb
   const indices: number[] = [];
   const colors: number[] = [];
   const normals: number[] = [];
+  const uvs: number[] = [];
   const gridSize = grid.length;
 
   let vertIdx = 0;
@@ -164,6 +168,13 @@ function buildTerrainGeometry(grid: GridCell[][], season: Season, eraTint: [numb
         z0 + 1, // v3
       );
 
+      // UVs — tile from world position so texture tiles across the grid
+      const u0 = col / gridSize;
+      const u1 = (col + 1) / gridSize;
+      const v0 = row / gridSize;
+      const v1 = (row + 1) / gridSize;
+      uvs.push(u0, v0, u1, v0, u0, v1, u1, v1);
+
       // Up-facing normals
       for (let i = 0; i < 4; i++) {
         normals.push(0, 1, 0);
@@ -181,6 +192,7 @@ function buildTerrainGeometry(grid: GridCell[][], season: Season, eraTint: [numb
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.setIndex(indices);
 
   return geometry;
@@ -513,6 +525,93 @@ const ScatterInstance: React.FC<ScatterInstanceProps> = ({
   );
 };
 
+// ── Era PBR texture loading ─────────────────────────────────────────────────
+
+/** Number of texture tiling repeats across the full terrain grid. */
+const TERRAIN_TILE_REPEAT = 8;
+
+/** Crossfade duration in frames (~60fps → ~1 second). */
+const CROSSFADE_FRAMES = 60;
+
+/**
+ * Load and configure PBR textures for a terrain visual state.
+ * Returns [colorMap, normalMap, roughnessMap] with tiling configured.
+ */
+function useTerrainTextures(state: TerrainVisualState): [THREE.Texture, THREE.Texture, THREE.Texture] {
+  const files = getTerrainTextureFiles(state);
+  const colorFile = assetUrl(files.color);
+  const normalFile = assetUrl(files.normal);
+  const roughFile = assetUrl(files.roughness);
+
+  const [colorMap, normalMap, roughnessMap] = useTexture([colorFile, normalFile, roughFile]);
+
+  useMemo(() => {
+    for (const tex of [colorMap, normalMap, roughnessMap]) {
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(TERRAIN_TILE_REPEAT, TERRAIN_TILE_REPEAT);
+    }
+  }, [colorMap, normalMap, roughnessMap]);
+
+  return [colorMap, normalMap, roughnessMap];
+}
+
+/**
+ * TerrainTextureMesh — applies PBR textures + vertex colors to the terrain.
+ * Handles crossfade between era transitions by fading opacity over ~60 frames.
+ */
+const TerrainTextureMesh: React.FC<{
+  geometry: THREE.BufferGeometry;
+  era: EraId;
+}> = ({ geometry, era }) => {
+  const currentState = eraToTerrainState(era);
+  const [colorMap, normalMap, roughnessMap] = useTerrainTextures(currentState);
+
+  // Track crossfade state
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  const prevStateRef = useRef<TerrainVisualState>(currentState);
+  const fadeProgressRef = useRef(1); // 1 = fully visible, 0 = fading in
+
+  // Detect era change → start crossfade
+  useEffect(() => {
+    if (prevStateRef.current !== currentState) {
+      prevStateRef.current = currentState;
+      fadeProgressRef.current = 0;
+    }
+  }, [currentState]);
+
+  // Animate crossfade
+  useFrame(() => {
+    const mat = matRef.current;
+    if (!mat) return;
+
+    if (fadeProgressRef.current < 1) {
+      fadeProgressRef.current = Math.min(1, fadeProgressRef.current + 1 / CROSSFADE_FRAMES);
+      mat.opacity = fadeProgressRef.current;
+      mat.transparent = fadeProgressRef.current < 1;
+      mat.needsUpdate = true;
+    } else if (mat.transparent) {
+      mat.transparent = false;
+      mat.opacity = 1;
+      mat.needsUpdate = true;
+    }
+  });
+
+  return (
+    <mesh geometry={geometry} receiveShadow>
+      <meshStandardMaterial
+        ref={matRef}
+        map={colorMap}
+        normalMap={normalMap}
+        roughnessMap={roughnessMap}
+        vertexColors
+        side={THREE.FrontSide}
+        roughness={0.9}
+        metalness={0}
+      />
+    </mesh>
+  );
+};
+
 // ── Component ───────────────────────────────────────────────────────────────
 
 /** Renders the terrain grid with per-vertex colors and GPU-instanced procedural scatter. */
@@ -520,7 +619,7 @@ const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer', era 
   // Compute era-based color tint for per-vertex terrain colors
   const eraTint = ERA_COLOR_TINT[eraToTerrainState(era)];
 
-  // Build terrain geometry with per-vertex colors + era tint
+  // Build terrain geometry with per-vertex colors + era tint + UVs
   const terrainGeometry = useMemo(() => buildTerrainGeometry(grid, season, eraTint), [grid, season, eraTint]);
 
   // Season-dependent colors as THREE.Color objects
@@ -545,10 +644,8 @@ const TerrainGrid: React.FC<TerrainGridProps> = ({ grid, season = 'summer', era 
 
   return (
     <group>
-      {/* Main terrain mesh with per-vertex colors */}
-      <mesh geometry={terrainGeometry} receiveShadow>
-        <meshStandardMaterial vertexColors side={THREE.FrontSide} roughness={0.9} metalness={0} />
-      </mesh>
+      {/* Main terrain mesh with per-vertex colors + era PBR textures */}
+      <TerrainTextureMesh geometry={terrainGeometry} era={era} />
 
       {/* Trees — 3 instanced batches: trunks, lower cones, upper cones */}
       <ScatterInstance geometry={UNIT_CYLINDER} batch={treeInstances.trunks} />
