@@ -20,8 +20,10 @@ const DEFAULT_CROSSFADE_MS = 5000;
 const MASTER_VOLUME = 0.5;
 const MAX_BUFFER_CACHE_SIZE = 50;
 const DUCK_AMOUNT = 0.7;
-/** Warn when active node count exceeds this threshold. */
-const NODE_CAP_WARNING = 500;
+/** Force-evict fading tracks when active node count exceeds this threshold. */
+const NODE_CAP_EVICT = 100;
+/** Use shortened crossfade during rapid transitions to reduce node stacking. */
+const RAPID_CROSSFADE_MS = 500;
 
 /**
  * Web Audio API-based music playback manager (singleton).
@@ -59,6 +61,8 @@ class AudioManager {
   private muted = false;
   private currentEra: string | null = null;
   private activeNodeCount = 0;
+  /** Fading-out nodes pending delayed cleanup (source + gain pairs). */
+  private fadingNodes: Array<{ source: AudioBufferSourceNode; gain: GainNode; timer: ReturnType<typeof setTimeout> }> = [];
 
   /** Get or create the singleton AudioManager instance. */
   static getInstance(): AudioManager {
@@ -330,6 +334,9 @@ class AudioManager {
   private fadeOutCurrent(fadeMs: number = DEFAULT_CROSSFADE_MS): void {
     if (!this.currentSource || !this.audioCtx) return;
 
+    // Under node pressure, shorten crossfade to reduce overlap
+    const effectiveFade = this.activeNodeCount > NODE_CAP_EVICT ? RAPID_CROSSFADE_MS : fadeMs;
+
     const source = this.currentSource;
     const trackGain: GainNode | undefined = (source as any)._trackGain;
     this.currentSource = null;
@@ -337,19 +344,13 @@ class AudioManager {
     if (trackGain) {
       const now = this.audioCtx.currentTime;
       trackGain.gain.setValueAtTime(trackGain.gain.value, now);
-      trackGain.gain.linearRampToValueAtTime(0, now + fadeMs / 1000);
+      trackGain.gain.linearRampToValueAtTime(0, now + effectiveFade / 1000);
 
-      // Stop and disconnect after fade completes
-      setTimeout(() => {
-        try {
-          source.stop();
-        } catch {
-          // Already stopped
-        }
-        source.disconnect();
-        trackGain.disconnect();
-        this.activeNodeCount = Math.max(0, this.activeNodeCount - 2);
-      }, fadeMs + 100);
+      // Track fading node for potential force-eviction
+      const timer = setTimeout(() => {
+        this.evictFadingNode(source, trackGain);
+      }, effectiveFade + 100);
+      this.fadingNodes.push({ source, gain: trackGain, timer });
     } else {
       try {
         source.stop();
@@ -359,6 +360,38 @@ class AudioManager {
       source.disconnect();
       this.activeNodeCount = Math.max(0, this.activeNodeCount - 1);
     }
+  }
+
+  /** Force-stop and disconnect a fading node pair immediately. */
+  private evictFadingNode(source: AudioBufferSourceNode, gain: GainNode): void {
+    try {
+      source.stop();
+    } catch {
+      // Already stopped
+    }
+    source.disconnect();
+    gain.disconnect();
+    this.activeNodeCount = Math.max(0, this.activeNodeCount - 2);
+
+    // Remove from fading list
+    const idx = this.fadingNodes.findIndex((n) => n.source === source);
+    if (idx >= 0) this.fadingNodes.splice(idx, 1);
+  }
+
+  /** Force-evict all fading nodes immediately to reclaim Web Audio resources. */
+  private forceEvictAllFading(): void {
+    for (const node of this.fadingNodes) {
+      clearTimeout(node.timer);
+      try {
+        node.source.stop();
+      } catch {
+        // Already stopped
+      }
+      node.source.disconnect();
+      node.gain.disconnect();
+      this.activeNodeCount = Math.max(0, this.activeNodeCount - 2);
+    }
+    this.fadingNodes = [];
   }
 
   /** Stop the incidental source and restore base volume. */
@@ -386,7 +419,7 @@ class AudioManager {
   }
 
   /**
-   * Ensure the AudioContext is healthy: resume if suspended, warn if node count is high.
+   * Ensure the AudioContext is healthy: resume if suspended, evict stale nodes if cap exceeded.
    * Called before creating new audio nodes.
    */
   private async ensureContextHealth(): Promise<void> {
@@ -401,8 +434,10 @@ class AudioManager {
       }
     }
 
-    if (this.activeNodeCount > NODE_CAP_WARNING) {
-      console.warn(`[AudioManager] High node count: ${this.activeNodeCount}. Potential memory pressure.`);
+    // Force-evict all fading nodes when approaching cap
+    if (this.activeNodeCount > NODE_CAP_EVICT && this.fadingNodes.length > 0) {
+      console.warn(`[AudioManager] Node cap exceeded (${this.activeNodeCount}). Force-evicting ${this.fadingNodes.length} fading nodes.`);
+      this.forceEvictAllFading();
     }
   }
 
@@ -467,6 +502,7 @@ class AudioManager {
   /** Close AudioContext and clear buffer cache. */
   dispose(): void {
     this.stopIncidental();
+    this.forceEvictAllFading();
     this.fadeOutCurrent();
 
     if (this.audioCtx) {

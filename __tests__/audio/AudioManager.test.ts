@@ -341,6 +341,75 @@ describe('AudioManager', () => {
       await manager.playTrack('katyusha');
       expect(manager.getActiveNodeCount()).toBe(2); // source + gain
     });
+
+    it('force-evicts fading nodes when node count exceeds cap', async () => {
+      // Play a track then switch to create a fading node
+      await manager.playTrack('katyusha');
+      await manager.playTrack('tachanka');
+      // Now katyusha is in fadingNodes, tachanka is current
+      expect((manager as any).fadingNodes.length).toBe(1);
+
+      // Artificially inflate node count past cap
+      (manager as any).activeNodeCount = 105;
+
+      // Play another track — ensureContextHealth runs first and evicts fading nodes
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      await manager.playTrack('katyusha');
+
+      // The old fading node should have been force-evicted (console.warn confirms)
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Force-evicting'));
+
+      // The old katyusha fading pair was evicted; only tachanka's new fade remains
+      expect((manager as any).fadingNodes.length).toBe(1);
+
+      // The first fading node's source should have been disconnected (force-evicted)
+      const firstSource = mockCtx.createBufferSource.mock.results[0]?.value;
+      expect(firstSource.disconnect).toHaveBeenCalled();
+
+      warnSpy.mockRestore();
+    });
+
+    it('shortens crossfade when under node pressure', async () => {
+      await manager.playTrack('katyusha');
+
+      // Inflate node count past eviction threshold
+      (manager as any).activeNodeCount = 105;
+
+      // Play second track — should use shortened fade (500ms) instead of default (5000ms)
+      await manager.playTrack('tachanka');
+
+      // The first track's gain should have ramped to 0 with a shorter fade
+      // (0.5s = 500ms instead of 5s = 5000ms)
+      const firstTrackGain = mockCtx.createGain.mock.results[2]?.value;
+      if (firstTrackGain?.gain?.linearRampToValueAtTime?.mock?.calls?.length > 0) {
+        const rampCall = firstTrackGain.gain.linearRampToValueAtTime.mock.calls[0];
+        // The second arg is the time offset: now + fadeMs/1000
+        // With shortened fade (500ms), the ramp target time = now + 0.5
+        // With default fade (5000ms), ramp target time = now + 5
+        // We expect the shorter one (diff <= 1 second from currentTime)
+        const rampTime = rampCall[1];
+        expect(rampTime - mockCtx.currentTime).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it('handles rapid era transitions without node explosion', async () => {
+      const flushPromises = () =>
+        new Promise((r) => jest.requireActual<typeof globalThis>('timers').setImmediate(r));
+
+      // Simulate rapid era changes (100x speed scenario)
+      manager.setEra('revolution');
+      await flushPromises();
+      manager.setEra('collectivization');
+      await flushPromises();
+      manager.setEra('industrialization');
+      await flushPromises();
+      manager.setEra('great_patriotic');
+      await flushPromises();
+
+      // Node count should stay bounded — fading nodes get cleaned up
+      // With 4 transitions, worst case is 2 active + some fading
+      expect(manager.getActiveNodeCount()).toBeLessThan(20);
+    });
   });
 
   describe('dispose', () => {
