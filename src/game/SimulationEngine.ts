@@ -820,11 +820,9 @@ export class SimulationEngine {
           setArrivalInProgress(this.arrivalSequence.isInProgress());
         }
       }
-      // Bootstrap starter buildings once families start arriving
-      const earlyTicks = this.chronologyAgent.getDate().totalTicks;
-      if (earlyTicks <= 60 && storeRef.resources.population > 0) {
-        this.collectiveAgent.earlyGameBootstrap(this.rng, this.politicalAgent.getCurrentEraId());
-      }
+      // Settlement formation is handled by CollectiveAgent.tickAutonomous() —
+      // the SAME demand→site-selection→build pipeline used for ALL settlements
+      // on any celestial body. No hardcoded bootstrap.
     }
 
     // Phase 1: Chronology, era transitions, governor

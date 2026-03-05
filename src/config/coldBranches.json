@@ -399,24 +399,6 @@
     "oneShot": true
   },
   {
-    "id": "moscow_promotion",
-    "name": "Moscow Promotion",
-    "conditions": {
-      "pressureThresholds": { "political": 0 },
-      "worldStateConditions": { "moscowAttention": { "min": 0.5 } },
-      "sustainedTicks": 24
-    },
-    "effects": {
-      "pressureSpikes": { "economic": 0.1 },
-      "narrative": {
-        "pravdaHeadline": "PROMOTION! Your excellent service earns you MORE responsibility.",
-        "toast": "Moscow \"rewards\" you with another settlement."
-      },
-      "newSettlement": true
-    },
-    "oneShot": false
-  },
-  {
     "id": "islamic_renaissance",
     "name": "Islamic Renaissance",
     "conditions": {

@@ -81,8 +81,8 @@ function makeSpheres(
 // ─── Cold Branches — Catalog ─────────────────────────────────────────────────
 
 describe('COLD_BRANCHES catalog', () => {
-  it('contains exactly 42 branches', () => {
-    expect(COLD_BRANCHES).toHaveLength(42);
+  it('contains exactly 41 branches', () => {
+    expect(COLD_BRANCHES).toHaveLength(41);
   });
 
   it('every branch has a non-empty id string', () => {
@@ -234,32 +234,7 @@ describe('evaluateBranches()', () => {
     expect(secondResult).toHaveLength(0);
   });
 
-  it('non-oneShot branch (moscow_promotion) can activate multiple times', () => {
-    const promotionBranch = COLD_BRANCHES.find((b) => b.id === 'moscow_promotion')!;
-    expect(promotionBranch.oneShot).toBe(false);
-
-    // moscow_promotion needs moscowAttention >= 0.5 and political pressure >= 0
-    const pressureState = makePressureState({ political: 0.01 });
-    const worldState = makeWorldState({ moscowAttention: 0.6 });
-    const spheres = makeSpheres();
-    const activated = new Set<string>();
-    const trackers = new Map<string, BranchTracker>();
-    const requiredTicks = promotionBranch.conditions.sustainedTicks ?? 1;
-
-    // First activation
-    let result: ColdBranch[] = [];
-    for (let i = 0; i < requiredTicks; i++) {
-      result = evaluateBranches([promotionBranch], activated, trackers, pressureState, worldState, 1960, spheres);
-    }
-    expect(result).toHaveLength(1);
-
-    // After activation, branch is in activatedBranches, but since oneShot=false,
-    // evaluateBranches still processes it. Run again for another cycle.
-    for (let i = 0; i < requiredTicks; i++) {
-      result = evaluateBranches([promotionBranch], activated, trackers, pressureState, worldState, 1960, spheres);
-    }
-    expect(result).toHaveLength(1);
-  });
+  // moscow_promotion removed — settlement expansion is a game feature, not a cold branch
 
   it('sustainedTicks: branch needs N continuous ticks before activation', () => {
     // Use ai_singularity (sustainedTicks: 6, techLevel >= 0.95)

@@ -625,8 +625,12 @@ export class CollectiveAgent extends Vehicle {
    * Place essential starter buildings on the very first autonomous tick.
    * Runs once: government-hq near water (or center), 2 izbas nearby, 1 farm.
    */
-  public earlyGameBootstrap(rng: GameRng, eraId?: string): void {
+  public earlyGameBootstrap(rng: GameRng, eraId?: string, arrivalComplete?: boolean): void {
     if (this.bootstrapped) return;
+
+    // Don't bootstrap until arrival sequence has had time to start (first 30 ticks)
+    // This prevents buildings appearing before the caravan reaches the settlement
+    if (arrivalComplete === false) return;
 
     // Require minimum materials and no existing buildings for bootstrap
     const storeRef = getResourceEntity();
