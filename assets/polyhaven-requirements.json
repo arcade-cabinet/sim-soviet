@@ -1,0 +1,202 @@
+{
+  "$schema": "./polyhaven-requirements.schema.json",
+  "description": "Declarative manifest of all Poly Haven assets required by SimSoviet 1917. Run `pnpm tsx scripts/fetch-polyhaven.ts sync` to download missing assets.",
+  "version": 1,
+  "hdris": [
+    {
+      "id": "snowy_field",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": { "season": ["winter", "early_frost"], "celestialBody": "earth" },
+      "notes": "Primary winter IBL. Soft overcast snow light. Already in project from Poly Haven (manual download).",
+      "existing": true
+    },
+    {
+      "id": "snowy_park_01",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": { "season": ["rasputitsa_spring", "rasputitsa_autumn"], "celestialBody": "earth" },
+      "notes": "Transitional season IBL. Park with melting snow.",
+      "existing": true
+    },
+    {
+      "id": "winter_sky",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": { "season": ["stifling_heat", "golden_week", "short_summer"], "celestialBody": "earth" },
+      "notes": "Summer/warm IBL despite the name. Bright clear sky.",
+      "existing": true
+    },
+    {
+      "id": "dikhololo_night",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": { "celestialBody": ["moon", "asteroid"], "subEra": ["deconstruction"] },
+      "notes": "Clear African night sky with visible Milky Way. Perfect starfield for Moon/asteroid settlements."
+    },
+    {
+      "id": "kloppenheim_02_puresky",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": { "celestialBody": ["exoplanet"], "subEra": ["dyson_swarm", "type_two_peak"] },
+      "notes": "Pure starfield — no ground, no horizon. Deep space, orbital habitats, Dyson interior."
+    },
+    {
+      "id": "autumn_field_puresky",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": { "celestialBody": "earth", "subEra": ["post_soviet", "planetary"], "marsPhase": "green" },
+      "notes": "Warm golden-hour sky. Post-permafrost Earth (warming era). Also Green Mars (terraformed atmosphere)."
+    },
+    {
+      "id": "abandoned_tank_farm_04",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": { "celestialBody": "earth", "subEra": ["solar_engineering", "type_one"] },
+      "notes": "Industrial overcast with visible structures. Orbital platform / megastructure construction era."
+    },
+    {
+      "id": "clarens_night_02",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": { "celestialBody": "mars", "marsPhase": "red" },
+      "notes": "NEEDED: Partly cloudy night with warm horizon glow. Tinted orange, reads as thin Martian atmosphere at dusk."
+    },
+    {
+      "id": "belfast_sunset_puresky",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": { "celestialBody": "mars", "marsPhase": "blue" },
+      "notes": "NEEDED: Sunset with blue/orange gradient. Blue Mars — fully terraformed, Earth-like but with alien sunset colors."
+    },
+    {
+      "id": "cobblestone_street_night",
+      "resolution": "1k",
+      "role": "environment_ibl",
+      "mapping": { "subEra": ["megaearth"], "context": "megacity_undercity" },
+      "notes": "NEEDED: Urban night with artificial lighting. MegaEarth undercity — perpetual artificial night between arcology layers."
+    }
+  ],
+  "textures": [
+    {
+      "id": "Grass001",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "terrain": "earth_temperate", "season": "summer" },
+      "notes": "Standard grass for temperate Earth. Already in project from AmbientCG.",
+      "source": "ambientcg",
+      "existing": true
+    },
+    {
+      "id": "Snow003",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "terrain": "earth_arctic", "season": "winter" },
+      "notes": "Snow ground cover. Already in project from AmbientCG.",
+      "source": "ambientcg",
+      "existing": true
+    },
+    {
+      "id": "Ground031",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "celestialBody": "moon", "terrain": "lunar" },
+      "notes": "Gray cracked dry regolith with scattered pebbles. Lunar surface.",
+      "source": "ambientcg",
+      "existing": true
+    },
+    {
+      "id": "Ground039",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "celestialBody": "mars", "marsPhase": "red", "terrain": "martian" },
+      "notes": "Pinkish-brown fine dust with rock fragments. Red Mars iron oxide regolith. Matches Curiosity rover photos.",
+      "source": "ambientcg",
+      "existing": true
+    },
+    {
+      "id": "Moss002",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "celestialBody": "mars", "marsPhase": "green", "terrain": "martian_green" },
+      "notes": "Dense green moss. Green Mars — first lichen/moss covering the regolith during terraforming.",
+      "source": "ambientcg",
+      "existing": true
+    },
+    {
+      "id": "Metal038",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "celestialBody": ["orbital", "dyson"], "subEra": ["solar_engineering", "deconstruction", "dyson_swarm", "type_two_peak"], "terrain": "orbital" },
+      "notes": "Dark galvanized steel with crystal grain. Orbital platforms, Dyson swarm panels, space station floors.",
+      "source": "ambientcg",
+      "existing": true
+    },
+    {
+      "id": "Ice002",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "celestialBody": "titan", "terrain": "titan", "subEra": ["megaearth"] },
+      "notes": "Green crystalline cracked ice. Titan methane ice, ice age Earth, frozen seas.",
+      "source": "ambientcg",
+      "existing": true
+    },
+    {
+      "id": "Lava004",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "terrain": "earth_permafrost_thaw" },
+      "notes": "Orange-red cracked earth. Permafrost collapse era — thawing ground. Already in project.",
+      "source": "ambientcg",
+      "existing": true
+    },
+    {
+      "id": "rock_ground_02",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "celestialBody": "venus", "terrain": "venusian" },
+      "notes": "NEEDED: Hot volcanic rock. Venus surface — golden/orange basalt under crushing atmosphere.",
+      "source": "polyhaven"
+    },
+    {
+      "id": "sand_01",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "celestialBody": "exoplanet", "terrain": "exoplanet_desert" },
+      "notes": "NEEDED: Alien desert sand. Exoplanet desert variant — tinted differently from Earth sand.",
+      "source": "polyhaven"
+    },
+    {
+      "id": "aerial_beach_01",
+      "resolution": "1k",
+      "role": "terrain_ground",
+      "mapping": { "celestialBody": "mars", "marsPhase": "blue" },
+      "notes": "NEEDED: Wet beach sand with water edge. Blue Mars — new oceans forming on terraformed surface.",
+      "source": "polyhaven"
+    }
+  ],
+  "models": [],
+  "shaders": [
+    {
+      "id": "dyson_sphere_backdrop",
+      "role": "environment_procedural",
+      "mapping": { "subEra": ["dyson_swarm", "megaearth", "type_two_peak"] },
+      "notes": "PLANNED: Procedural shader — curved metal panels stretching to horizon, Sun visible through gaps, parallax depth. Not a Poly Haven asset — custom Three.js ShaderMaterial.",
+      "source": "custom"
+    },
+    {
+      "id": "mars_atmosphere",
+      "role": "sky_procedural",
+      "mapping": { "celestialBody": "mars" },
+      "notes": "PLANNED: Butterscotch/salmon sky shader for Mars. Rayleigh scattering in thin CO2 atmosphere. Transitions from red (thin) to blue (thick) as terraforming progresses.",
+      "source": "custom"
+    },
+    {
+      "id": "oneill_interior",
+      "role": "environment_procedural",
+      "mapping": { "subEra": ["solar_engineering"], "context": "oneill_cylinder" },
+      "notes": "PLANNED: Interior of rotating cylinder habitat. Artificial sun stripe, curved landscape wrapping overhead, alternating land/window panels.",
+      "source": "custom"
+    }
+  ]
+}

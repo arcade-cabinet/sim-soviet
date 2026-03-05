@@ -203,6 +203,68 @@ function showManifest(): void {
   }
 }
 
+// ── Sync from requirements manifest ──────────────────────────────────────────
+
+interface RequirementEntry {
+  id: string;
+  resolution: string;
+  role: string;
+  mapping: Record<string, unknown>;
+  notes: string;
+  source?: string;
+  existing?: boolean;
+}
+
+interface Requirements {
+  hdris: RequirementEntry[];
+  textures: RequirementEntry[];
+}
+
+async function syncFromRequirements(): Promise<void> {
+  const reqPath = join(PROJECT_ROOT, 'assets', 'polyhaven-requirements.json');
+  if (!existsSync(reqPath)) {
+    console.error('No polyhaven-requirements.json found');
+    return;
+  }
+
+  const req: Requirements = JSON.parse(readFileSync(reqPath, 'utf8'));
+  let fetched = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  console.log('\n═══ Syncing from polyhaven-requirements.json ═══\n');
+
+  // Sync HDRIs
+  for (const entry of req.hdris) {
+    if (entry.existing) { skipped++; continue; }
+    const dest = join(HDRI_DIR, `${entry.id}_${entry.resolution}.hdr`);
+    if (existsSync(dest)) { skipped++; continue; }
+    try {
+      await fetchHDRI(entry.id, entry.resolution);
+      fetched++;
+    } catch (err) {
+      console.error(`  ✗ HDRI ${entry.id}: ${(err as Error).message}`);
+      failed++;
+    }
+  }
+
+  // Sync textures (Poly Haven source only — AmbientCG ones are existing/manual)
+  for (const entry of req.textures) {
+    if (entry.existing || entry.source === 'ambientcg') { skipped++; continue; }
+    const destDir = join(TEXTURE_DIR, entry.id);
+    if (existsSync(destDir)) { skipped++; continue; }
+    try {
+      await fetchTexture(entry.id, entry.resolution);
+      fetched++;
+    } catch (err) {
+      console.error(`  ✗ Texture ${entry.id}: ${(err as Error).message}`);
+      failed++;
+    }
+  }
+
+  console.log(`\n═══ Sync complete: ${fetched} fetched, ${skipped} skipped, ${failed} failed ═══\n`);
+}
+
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -219,22 +281,25 @@ async function main(): Promise<void> {
       return showPreview(args[0]);
     case 'manifest':
       return void showManifest();
+    case 'sync':
+      return syncFromRequirements();
     default:
       console.log(`
-Poly Haven Asset Fetcher
+Poly Haven Asset Fetcher — Declarative asset pipeline for SimSoviet 1917
 
 Usage:
-  npx tsx scripts/fetch-polyhaven.ts hdri <id> [resolution]     Download HDRI (.hdr)
-  npx tsx scripts/fetch-polyhaven.ts texture <id> [resolution]  Download PBR texture set
-  npx tsx scripts/fetch-polyhaven.ts search <type> [categories] Search assets
-  npx tsx scripts/fetch-polyhaven.ts preview <id>               Show asset info
-  npx tsx scripts/fetch-polyhaven.ts manifest                   List fetched assets
+  pnpm tsx scripts/fetch-polyhaven.ts sync                      Fetch all missing assets from requirements
+  pnpm tsx scripts/fetch-polyhaven.ts hdri <id> [resolution]     Download single HDRI (.hdr)
+  pnpm tsx scripts/fetch-polyhaven.ts texture <id> [resolution]  Download single PBR texture set
+  pnpm tsx scripts/fetch-polyhaven.ts search <type> [categories] Search Poly Haven catalog
+  pnpm tsx scripts/fetch-polyhaven.ts preview <id>               Show asset info + thumbnail URL
+  pnpm tsx scripts/fetch-polyhaven.ts manifest                   List all fetched assets
 
-Examples:
-  npx tsx scripts/fetch-polyhaven.ts hdri dikhololo_night 1k
-  npx tsx scripts/fetch-polyhaven.ts texture rock_ground_02 1k
-  npx tsx scripts/fetch-polyhaven.ts search hdris night,outdoor
-  npx tsx scripts/fetch-polyhaven.ts search textures metal,rust
+Workflow:
+  1. Declare needed assets in assets/polyhaven-requirements.json
+  2. Run 'sync' to download everything missing
+  3. Fetched assets tracked in assets/polyhaven-manifest.json
+  4. All assets CC0 (public domain) — https://polyhaven.com/license
 `);
   }
 }

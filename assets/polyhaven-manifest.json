@@ -71,5 +71,105 @@
       "natural light"
     ],
     "fetchedAt": "2026-03-05T13:03:20.218Z"
+  },
+  {
+    "id": "clarens_night_02",
+    "type": "hdri",
+    "name": "Clarens Night 02",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/clarens_night_02_1k.hdr",
+    "categories": [
+      "natural light",
+      "outdoor",
+      "nature",
+      "partly cloudy",
+      "high contrast",
+      "skies",
+      "night"
+    ],
+    "fetchedAt": "2026-03-05T13:06:46.787Z"
+  },
+  {
+    "id": "belfast_sunset_puresky",
+    "type": "hdri",
+    "name": "Belfast Sunset (Pure Sky)",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/belfast_sunset_puresky_1k.hdr",
+    "categories": [
+      "natural light",
+      "outdoor",
+      "nature",
+      "low contrast",
+      "partly cloudy",
+      "sunrise-sunset",
+      "skies",
+      "pure skies"
+    ],
+    "fetchedAt": "2026-03-05T13:06:47.561Z"
+  },
+  {
+    "id": "cobblestone_street_night",
+    "type": "hdri",
+    "name": "Cobblestone Street Night",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/cobblestone_street_night_1k.hdr",
+    "categories": [
+      "outdoor",
+      "night",
+      "urban",
+      "artificial light",
+      "high contrast",
+      "clear"
+    ],
+    "fetchedAt": "2026-03-05T13:06:48.715Z"
+  },
+  {
+    "id": "rock_ground_02",
+    "type": "texture",
+    "name": "Rock Ground 02",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/rock_ground_02/",
+    "categories": [
+      "terrain",
+      "natural",
+      "rock",
+      "outdoor"
+    ],
+    "fetchedAt": "2026-03-05T13:06:51.143Z"
+  },
+  {
+    "id": "sand_01",
+    "type": "texture",
+    "name": "Sand 01",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/sand_01/",
+    "categories": [
+      "terrain",
+      "sand",
+      "outdoor",
+      "natural"
+    ],
+    "fetchedAt": "2026-03-05T13:06:54.278Z"
+  },
+  {
+    "id": "aerial_beach_01",
+    "type": "texture",
+    "name": "Aerial Beach 01",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/aerial_beach_01/",
+    "categories": [
+      "terrain",
+      "sand",
+      "outdoor",
+      "natural",
+      "aerial"
+    ],
+    "fetchedAt": "2026-03-05T13:06:56.490Z"
   }
 ]
