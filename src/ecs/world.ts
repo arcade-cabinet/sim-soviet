@@ -353,6 +353,8 @@ export interface GameMeta {
   blackMarks: number;
   commendations: number;
   threatLevel: string;
+  /** H3 Index of the current global hex where the settlement is located. */
+  currentHex: string;
   /** Current historical era ID (synced from EraSystem each tick) */
   currentEra: string;
   /** Current road quality level (synced from TransportSystem each tick) */
