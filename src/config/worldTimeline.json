@@ -234,6 +234,227 @@
       "oneShot": true
     },
     {
+      "id": "ussr_survives_1991",
+      "name": "The Soviet Union Survives",
+      "timelineId": "world",
+      "order": 30,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 1991
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.2,
+          "moscowAttention": 0.15
+        },
+        "pressureModifiers": {
+          "political": 0.15
+        },
+        "narrative": {
+          "pravdaHeadline": "PARTY UNITY PREVAILS: August Coup Fails, Socialist Construction Continues",
+          "toast": "The coup failed. Yeltsin is arrested. The Party holds. The USSR does not dissolve — it reforms, tightens, and prepares. History has taken the other path.",
+          "description": "In this timeline, the August 1991 coup succeeded in some ways and failed in others — the reformers were contained, but the system that emerged is no longer the same system. A harder, leaner, angrier apparatus. The word 'Soviet' remains, but what it names has changed."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "ideology_divorce",
+      "name": "The Divorce of Ideology and Practice",
+      "timelineId": "world",
+      "order": 33,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2010
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "ussr_survives_1991"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 12,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.3,
+          "centralPlanningEfficiency": -0.1
+        },
+        "pressureModifiers": {
+          "political": 0.1,
+          "economic": 0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "5-YEAR PLAN TARGETS REVISED UPWARD: Collective Productivity Demonstrates Socialist Superiority",
+          "toast": "The directive from Moscow is 47 pages. Page 14 contains the actual order. Pages 1-13 are Marxist preamble. No one mentions this.",
+          "scene": "The packet arrives on a Tuesday, as most of them do.\n\nComrade Chairman, by directive of the Central Planning Committee, your settlement is hereby required to increase grain deliveries by 18% in the current quarter, timber processing by 12%, and to submit a signed declaration affirming the continuing relevance of dialectical materialism to agricultural production. The declaration template is attached as Appendix C.\n\nYou read the appendix. It is six pages long. It contains phrases like 'the objective contradictions inherent in bourgeois soil management' and 'the teleological necessity of collective ownership as expressed through yield optimization.' You read it twice. You are still not certain what it is asking you to sign.\n\nYour deputy has prepared the production numbers. The 18% increase is not possible this quarter. It may not be possible any quarter. The deputy knows this. You know this. Moscow almost certainly knows this. The declaration form, however, does not know this, and the form must be completed.\n\nThere is a correct way to handle this. You have seen the correct way. It involves numbers that are not numbers and signatures that mean something other than what signatures usually mean. Everyone does it. No one discusses it. The system requires it.",
+          "choices": [
+            {
+              "id": "play_the_game",
+              "label": "Master the performance — file adjusted numbers",
+              "description": "Submit inflated figures with the ideological declaration. Everyone does this. It is the path of comfortable mediocrity.",
+              "successChance": 0.90,
+              "onSuccess": {
+                "announcement": "The declaration is filed. The numbers are filed. Moscow acknowledges receipt with a form letter of commendation. Your deputy notes that the actual production was 6% below last quarter. You note that the commendation will look good in your personnel file. Both observations are correct.",
+                "severity": "info",
+                "resources": {
+                  "money": 30
+                },
+                "blat": 5
+              },
+              "onFailure": {
+                "announcement": "A statistical auditor arrives from the regional bureau three weeks later. She has cross-referenced your figures against rail transport manifests. There is a discrepancy. She files a report. You receive a black mark for 'administrative irregularities in planning documentation.' The irony is noted privately.",
+                "severity": "warning",
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "political": 0.1
+                }
+              }
+            },
+            {
+              "id": "genuine_belief",
+              "label": "Implement the directive literally — actual 18% increase",
+              "description": "Actually try to meet the quota. Workers on double shifts. Full Stakhanovite mobilization. This is not recommended.",
+              "successChance": 0.35,
+              "onSuccess": {
+                "announcement": "Against every expectation, including your own, the settlement meets the target. Worker morale has collapsed to historic lows. Three workers have been hospitalized with exhaustion. Your deputy has resigned. Moscow sends a delegation to study your methods. You are not certain what they will conclude.",
+                "severity": "warning",
+                "resources": {
+                  "food": -200,
+                  "money": 80
+                },
+                "pressureModifiers": {
+                  "morale": 0.2,
+                  "health": 0.15
+                }
+              },
+              "onFailure": {
+                "announcement": "The workers cannot sustain the pace. Production peaks in week two and collapses in week four. The final numbers are 3% below last quarter. You have filed a declaration affirming dialectical materialism. The contradiction is not resolved.",
+                "severity": "critical",
+                "resources": {
+                  "food": -300
+                },
+                "blackMarks": 1,
+                "pressureModifiers": {
+                  "morale": 0.25,
+                  "economic": 0.15
+                }
+              }
+            },
+            {
+              "id": "document_the_gap",
+              "label": "File an accurate report noting the discrepancy",
+              "description": "Submit real numbers with a memo explaining the gap between directive and capacity. A small act of bureaucratic honesty with unpredictable consequences.",
+              "successChance": 0.50,
+              "onSuccess": {
+                "announcement": "Your memo is read. Apparently someone in the statistical division has been waiting for exactly this documentation. A quiet reply arrives: the targets have been 'recalibrated' for your district. No explanation is given. You are not commended. You are not punished. The gap between what is said and what is done narrows, by exactly one memo, for exactly one quarter.",
+                "severity": "info",
+                "resources": {
+                  "money": 10
+                },
+                "commendations": 1
+              },
+              "onFailure": {
+                "announcement": "Your memo is read by the wrong person. The regional inspector notes that you have submitted documentation suggesting 'insufficient ideological commitment to plan fulfillment.' A review is scheduled. You learn that accurate reporting is not, in this context, considered an administrative virtue.",
+                "severity": "warning",
+                "blackMarks": 2,
+                "pressureModifiers": {
+                  "political": 0.15
+                }
+              }
+            }
+          ],
+          "autoResolveChoiceId": "play_the_game",
+          "tickLimit": 48
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "motherland_myth",
+      "name": "The Nation Replaces the Ideology",
+      "timelineId": "world",
+      "order": 36,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2040
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "ideology_divorce"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.2,
+          "moscowAttention": -0.1
+        },
+        "pressureModifiers": {
+          "loyalty": -0.05
+        },
+        "narrative": {
+          "pravdaHeadline": "ETERNAL RUSSIA ENDURES: Motherland Spirit Guides Socialist Construction Into New Century",
+          "toast": "The pamphlets stopped quoting Marx in 2031. By 2040 they quote Pushkin, folk songs, and a general feeling about soil. This is also called ideology.",
+          "description": "The formal apparatus of Marxist-Leninist doctrine has been quietly replaced by something older and harder to argue with: the nation itself. The system still functions. The quotas still arrive. The forms still require signatures. But the language has changed. What is required now is not ideological purity but patriotic loyalty — a distinction that, in practice, changes very little, but changes everything."
+        }
+      },
+      "oneShot": true
+    },
+    {
+      "id": "forgotten_origin",
+      "name": "The Revolution Becomes Mythology",
+      "timelineId": "world",
+      "order": 38,
+      "conditions": {
+        "and": [
+          {
+            "year": {
+              "min": 2100
+            }
+          },
+          {
+            "milestone": {
+              "timelineId": "world",
+              "milestoneId": "motherland_myth"
+            }
+          }
+        ]
+      },
+      "sustainedTicks": 1,
+      "effects": {
+        "worldStateDeltas": {
+          "ideologyRigidity": -0.15,
+          "centralPlanningEfficiency": 0.05
+        },
+        "pressureModifiers": {
+          "political": -0.1
+        },
+        "narrative": {
+          "pravdaHeadline": "OCTOBER 2117: BICENTENNIAL CELEBRATIONS MARK 200 YEARS OF UNBROKEN SOCIALIST CONSTRUCTION",
+          "toast": "The revolution is two hundred years ago. The workers celebrate it with a public holiday. Nobody alive remembers what it was about. This is fine. Empires run on myths, not memories.",
+          "description": "By 2117, the October Revolution has become what all founding moments eventually become: a story told to justify the present. The details are contested, the principals are painted on murals in heroic poses, and the actual content of 1917 Bolshevism would be unrecognizable to the bureaucrats who invoke it. The apparatus persists not because of what it believes but because of what it is. Which is, historically, how things persist."
+        }
+      },
+      "oneShot": true
+    },
+    {
       "id": "permafrost_crisis",
       "name": "Permafrost Infrastructure Crisis",
       "timelineId": "world",
