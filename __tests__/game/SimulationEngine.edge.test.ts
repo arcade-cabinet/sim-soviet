@@ -85,11 +85,13 @@ describe('SimulationEngine edge cases', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
-      // Start with food=0. Use worker difficulty (quotaMultiplier=0.4 → target=200).
+      // Keep an actual dvor population alive, then force the annual food quota
+      // target out of reach each tick. This isolates the quota-failure loss path
+      // from famine, autonomous growth, and revised-plan target math.
+      // Use worker difficulty (quotaMultiplier=0.4 -> target=200).
       // rehabilitated consequence to survive KGB marks from missed quotas.
-      // Zero food each year boundary to ensure quotas are always missed.
-      // Population=10 prevents era failure condition (population<=0 triggers "Settlement abandoned").
-      createResourceStore({ food: 0, vodka: 0, population: 10 });
+      createResourceStore({ food: 10_000, vodka: 10_000, population: 0 });
+      createTestDvory(1);
       createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
       const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'rehabilitated');
       // Disable minigame/annual report callbacks to prevent interference
@@ -98,24 +100,28 @@ describe('SimulationEngine edge cases', () => {
 
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Year 1926 Oct → 1927 Jan (fail 1) — 90 ticks
-      // Zero food each tick to prevent fondy accumulation; keep population alive to avoid era failure
+      const forceMissedFoodQuota = () => {
+        const store = getResourceEntity()!;
+        store.resources.food = 10_000;
+        store.resources.vodka = 10_000;
+        const quota = engine2.getQuota() as QuotaState;
+        quota.type = 'food';
+        quota.target = 100_000;
+      };
+
+      // Year 1926 Oct -> 1927 Jan (fail 1).
       for (let i = 0; i < 90; i++) {
-        getResourceEntity()!.resources.food = 0;
-        getResourceEntity()!.resources.vodka = 0;
-        getResourceEntity()!.resources.population = 10;
+        forceMissedFoodQuota();
         engine2.tick();
       }
 
       // After first failure, deadline advances to 1932
       expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed the state work plan'));
 
-      // Failures 2-8: advance 5 years each, zeroing food to prevent fondy accumulation
+      // Failures 2-8: advance 5 years each while keeping the quota unreachable.
       for (let f = 2; f <= 8; f++) {
         for (let i = 0; i < 5 * TICKS_PER_YEAR; i++) {
-          getResourceEntity()!.resources.food = 0;
-          getResourceEntity()!.resources.vodka = 0;
-          getResourceEntity()!.resources.population = 10;
+          forceMissedFoodQuota();
           engine2.tick();
           if (getMetaEntity()!.gameMeta.gameOver) break;
         }
