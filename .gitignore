@@ -1,6 +1,9 @@
 # Claude Code worktrees
 .claude/worktrees/
 
+# Root-level dev screenshots (prevent accumulation)
+/*.png
+
 # Playthrough diagnostic output
 __tests__/playthrough/output/
 
