@@ -1,0 +1,25 @@
+# Claude Code agentic infrastructure — tracking policy
+#
+# Intent: hooks are shared infrastructure and MUST be tracked so every agent
+# (and every worktree created from main) inherits the same operational scripts.
+# State directories hold a mix of durable artifacts (merge logs, batch state
+# schemas worth reviewing) and ephemeral caches (last-flush timestamps, PR-
+# status snapshots) — we track the former and ignore the latter.
+
+# Ephemeral caches — never track
+state/**/.last-flush
+state/**/.last-compaction
+state/**/.current-batch-id
+state/**/.pr-status-cache
+
+# Per-agent worktrees — never track (already in root .gitignore; this is belt-and-suspenders)
+worktrees/
+
+# Re-include durable state artifacts that would otherwise be caught by root
+# .gitignore rules (root ignores *.log globally; we need progress.log tracked).
+!state/**/*.log
+!state/**/*.md
+!state/**/*.json
+
+# Everything else under .claude/ IS tracked by default — hooks/, state/*.json,
+# state/*.log, state/*.md, agents/, commands/, settings.json, plans-archive/

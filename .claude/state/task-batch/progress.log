@@ -1,0 +1,82 @@
+=== 2026-04-23T20:51:35Z FLUSH ===
+branch: fix/p0-5-tutorial-rewire
+head:   58126f6 style: biome autofix for SimulationEngine.wiring.test.ts
+
+--- open PRs ---
+#53 [MERGEABLE/UNSTABLE] fix/p0-5-tutorial-rewire
+#52 [MERGEABLE/BLOCKED] fix/p0-2-hud-hq-button
+#51 [MERGEABLE/BLOCKED] fix/p0-1-scene-rendering
+#50 [MERGEABLE/BLOCKED] fix/p0-6-sqlite-web
+#49 [MERGEABLE/BLOCKED] fix/p0-4-debug-tooltip
+#48 [MERGEABLE/BLOCKED] fix/p0-3-font-paths
+
+--- batch state ---
+
+=== 2026-04-23T20:51:50Z FLUSH ===
+branch: fix/p0-5-tutorial-rewire
+head:   58126f6 style: biome autofix for SimulationEngine.wiring.test.ts
+
+--- open PRs ---
+#53 [MERGEABLE/UNSTABLE] fix/p0-5-tutorial-rewire
+#52 [MERGEABLE/BLOCKED] fix/p0-2-hud-hq-button
+#51 [MERGEABLE/BLOCKED] fix/p0-1-scene-rendering
+#50 [MERGEABLE/BLOCKED] fix/p0-6-sqlite-web
+#49 [MERGEABLE/BLOCKED] fix/p0-4-debug-tooltip
+#48 [MERGEABLE/BLOCKED] fix/p0-3-font-paths
+
+--- batch state ---
+batch=batch-20260423-190316-p0play status=COMPLETE completed=7 pending=0 failed=0
+
+=== 2026-04-23T21:06:44Z FLUSH ===
+branch: fix/p0-3-font-paths
+head:   e2d0db7 fix(fonts): address review feedback on PR #48
+
+--- open PRs ---
+#53 [MERGEABLE/UNSTABLE] fix/p0-5-tutorial-rewire
+#52 [MERGEABLE/BLOCKED] fix/p0-2-hud-hq-button
+#51 [MERGEABLE/BLOCKED] fix/p0-1-scene-rendering
+#50 [MERGEABLE/BLOCKED] fix/p0-6-sqlite-web
+#49 [MERGEABLE/BLOCKED] fix/p0-4-debug-tooltip
+#48 [MERGEABLE/BLOCKED] fix/p0-3-font-paths
+
+--- batch state ---
+batch=batch-20260423-190316-p0play status=COMPLETE completed=7 pending=0 failed=0
+
+=== 2026-04-23T21:44:27Z FLUSH ===
+branch: main
+head:   d21b53f fix(scene): defer Pravda setState to prevent React 19 update depth crash (#51)
+
+--- open PRs ---
+#54 [MERGEABLE/CLEAN] release-please--branches--main--components--SimSoviet1917
+
+--- batch state ---
+batch=batch-20260423-190316-p0play status=COMPLETE completed=7 pending=0 failed=0
+
+=== 2026-04-23T22:10:37Z FLUSH ===
+branch: feat/p1f-5-gpw-freeze-indicator
+head:   a7bd77f feat(ui): add GPW construction-freeze indicator in Gosplan tab
+
+--- open PRs ---
+#73 [MERGEABLE/UNSTABLE] feat/p1f-5-gpw-freeze-indicator
+#72 [MERGEABLE/UNSTABLE] feat/p1a-1-collectivization-events
+#71 [MERGEABLE/UNSTABLE] chore/p1a-4-victory-condition-audit-v2
+#70 [MERGEABLE/UNSTABLE] test/p1e-2-era-transitions
+#69 [MERGEABLE/UNSTABLE] fix/p1f-6-dev-sqlite-warning
+#68 [MERGEABLE/UNSTABLE] fix/p1f-1-ibm-plex-hud
+#67 [MERGEABLE/UNSTABLE] feat/p1a-2-reconstruction-events
+#66 [MERGEABLE/UNSTABLE] fix/p1f-2-directive-tutorial
+#65 [MERGEABLE/UNSTABLE] feat/p1f-4-classified-archive
+#64 [MERGEABLE/UNSTABLE] docs/p1d-3-ios-release
+#63 [MERGEABLE/UNSTABLE] feat/p1a-3-thaw-events
+#62 [MERGEABLE/UNSTABLE] fix/p1b-2-hq-gate-rescaling
+#61 [MERGEABLE/UNSTABLE] docs/p1d-2-android-release-2
+#60 [MERGEABLE/CLEAN] fix/p1e-1-deprecations
+#59 [MERGEABLE/UNSTABLE] chore/p1c-1-delete-out-of-scope-glbs-fresh
+#58 [MERGEABLE/UNSTABLE] chore/p1c-2-dead-shader-refs
+#57 [MERGEABLE/UNSTABLE] chore/p1c-3-png-cleanup-clean
+#56 [MERGEABLE/UNSTABLE] docs/p1a-5-gpw-wartime-freeze
+#55 [MERGEABLE/UNSTABLE] docs/p1-batch-prd
+#54 [MERGEABLE/CLEAN] release-please--branches--main--components--SimSoviet1917
+
+--- batch state ---
+
