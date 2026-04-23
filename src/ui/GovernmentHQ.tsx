@@ -168,9 +168,17 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
   let tabContent: React.ReactNode;
 
   switch (activeTab) {
-    case 'gosplan':
-      tabContent = <GosplanTab currentAllocations={allocations as any} onAllocationChange={handleAllocationChange} />;
+    case 'gosplan': {
+      const currentEra = engine?.getPoliticalAgent().getCurrentEraId() ?? undefined;
+      tabContent = (
+        <GosplanTab
+          currentAllocations={allocations as any}
+          onAllocationChange={handleAllocationChange}
+          currentEra={currentEra}
+        />
+      );
       break;
+    }
 
     case 'kgb':
       tabContent = renderKGBTab(engine);
