@@ -9,7 +9,7 @@
 
 import { Canvas } from '@react-three/fiber';
 import React, { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AudioManager from './audio/AudioManager';
 import { SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
@@ -48,6 +48,7 @@ import {
   type GameSpeed,
   isPaused,
   notifyStateChange,
+  openGovernmentHQ,
   pushCrisisVFX,
   setGameSpeed,
   setPaused,
@@ -67,7 +68,7 @@ import { CompulsoryDeliveriesPanel } from './ui/CompulsoryDeliveriesPanel';
 import { ConsumerGoodsMarketPanel } from './ui/ConsumerGoodsMarketPanel';
 import { CRTOverlay } from './ui/CRTOverlay';
 import { CursorTooltip } from './ui/CursorTooltip';
-// DirectiveHUD removed — Phase 1 minimal HUD
+import { DirectiveHUD } from './ui/DirectiveHUD';
 import { DiseasePanel } from './ui/DiseasePanel';
 import { EconomyDetailPanel } from './ui/EconomyDetailPanel';
 import { EconomyPanel } from './ui/EconomyPanel';
@@ -94,7 +95,7 @@ import { PolitburoPanel } from './ui/PolitburoPanel';
 import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
 import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
 import { PravdaTicker } from './ui/PravdaTicker';
-// QuotaHUD removed — Phase 1 minimal HUD
+import { QuotaHUD } from './ui/QuotaHUD';
 import { RadialMenu } from './ui/RadialMenu';
 import { RehabilitationModal } from './ui/RehabilitationModal';
 import { SaveLoadPanel } from './ui/SaveLoadPanel';
@@ -206,6 +207,17 @@ const App: React.FC = () => {
 
   // Pravda ticker headlines (scrolling news bar)
   const [pravdaHeadlines, setPravdaHeadlines] = useState<string[]>([]);
+  // Buffer incoming Pravda messages from the sim tick (which runs outside React's
+  // render phase). Flushing via useEffect avoids "Maximum update depth exceeded"
+  // caused by calling setState synchronously inside a useSyncExternalStore listener.
+  const pendingPravdaRef = useRef<string[]>([]);
+
+  // Queue tutorial toasts that fire before the intro modal has been dismissed.
+  // The welcome milestone fires at tick 0 during initGame (before loading finishes),
+  // so we hold it and flush it the moment the player clicks "Accept the Chair".
+  const pendingTutorialRef = useRef<string | null>(null);
+  // True once the intro has been dismissed — lets the game run normally after that.
+  const introDismissedRef = useRef(false);
 
   // ── Panel state ──
   const [showPersonnelFile, setShowPersonnelFile] = useState(false);
@@ -268,6 +280,21 @@ const App: React.FC = () => {
     lockWebViewport();
   }, []);
 
+  // Flush buffered Pravda headlines from the sim tick into React state.
+  // The sim calls onPravda inside a requestAnimationFrame callback that also
+  // triggers useSyncExternalStore listeners — calling setState there directly
+  // causes "Maximum update depth exceeded" in React 19. Instead we buffer
+  // in a ref and drain it here, safely outside the store-notification path.
+  useEffect(() => {
+    if (screen !== 'game') return;
+    const interval = setInterval(() => {
+      if (pendingPravdaRef.current.length === 0) return;
+      const batch = pendingPravdaRef.current.splice(0);
+      setPravdaHeadlines((prev) => [...batch.reverse(), ...prev].slice(0, 5));
+    }, 250);
+    return () => clearInterval(interval);
+  }, [screen]);
+
   // Initialize SFXManager on first user interaction (autoplay policy)
   useEffect(() => {
     const initSFX = () => {
@@ -300,7 +327,7 @@ const App: React.FC = () => {
   const citizenDossierIdx = useCitizenDossierIndex();
   const cursorTooltip = useCursorTooltip();
   const politicalPanelFromScene = usePoliticalPanel();
-  const _buildingPanelCell = useBuildingPanel();
+  useBuildingPanel();
   const showGovHQ = useGovernmentHQ();
 
   // ── Notification history (store-driven unread count) ──
@@ -346,7 +373,10 @@ const App: React.FC = () => {
             SFXManager.getInstance().play('advisor_message');
           },
           onPravda: (msg) => {
-            setPravdaHeadlines((prev) => [msg, ...prev].slice(0, 5));
+            // Buffer the headline; flushed asynchronously to avoid calling
+            // setState while React is processing useSyncExternalStore notifications
+            // (which triggers "Maximum update depth exceeded" in React 19).
+            pendingPravdaRef.current.push(msg);
           },
           onVisualEvent: (event) => {
             // Convert tick-based duration to seconds (assume ~12 ticks/year, ~1 tick/month ≈ 2.5s)
@@ -432,7 +462,15 @@ const App: React.FC = () => {
             setShowDissolutionModal(true);
           },
           onTutorialMilestone: (milestone) => {
-            showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
+            // Route to toast (live surface) — Advisor was removed in Phase 1 minimal HUD.
+            // Queue the message if the intro modal hasn't been dismissed yet (the welcome
+            // milestone fires at tick 0 during initGame, before the player sees anything).
+            const msg = `KRUPNIK: ${milestone.dialogue}`;
+            if (!introDismissedRef.current) {
+              pendingTutorialRef.current = msg;
+            } else {
+              showToast(gameState, msg);
+            }
             // Notify store so RadialMenu re-renders with newly unlocked categories
             notifyStateChange();
           },
@@ -550,9 +588,16 @@ const App: React.FC = () => {
   }, []);
 
   const handleDismissIntro = useCallback(() => {
+    introDismissedRef.current = true;
     setShowIntro(false);
     AudioManager.getInstance().startPlaylist();
     SFXManager.getInstance().play('ui_modal_close');
+    // Flush the welcome tutorial toast that fired before the intro was dismissed
+    const queued = pendingTutorialRef.current;
+    if (queued) {
+      pendingTutorialRef.current = null;
+      showToast(gameState, queued);
+    }
   }, []);
 
   const handleThreatPress = useCallback(() => {
@@ -736,6 +781,8 @@ const App: React.FC = () => {
     setAssetsReady(false);
     setLoadingFaded(false);
     setShowIntro(false);
+    introDismissedRef.current = false;
+    pendingTutorialRef.current = null;
     setLoadProgress({ loaded: 0, total: TOTAL_MODEL_COUNT, name: '' });
     loadStartRef.current = 0;
     setScreen('menu');
@@ -770,7 +817,7 @@ const App: React.FC = () => {
   return (
     <>
       <StatusBar barStyle="light-content" />
-      <SafeAreaView style={styles.root}>
+      <View style={styles.root}>
         <View style={styles.sceneContainer}>
           <EngineErrorBoundary>
             <Canvas
@@ -851,8 +898,18 @@ const App: React.FC = () => {
               onShowMarket={handleShowMarket}
               onShowNotifications={handleShowNotifications}
               unreadNotifications={unreadNotifications}
+              onOpenGovernmentHQ={openGovernmentHQ}
               autopilot={getEngine()?.getAgentManager().isAutopilot() ?? false}
             />
+
+            <QuotaHUD
+              targetType={snap.quotaType}
+              targetAmount={snap.quotaTarget}
+              current={snap.quotaCurrent}
+              deadlineYear={snap.quotaDeadline}
+            />
+
+            <DirectiveHUD text={snap.directiveText} reward={snap.directiveReward} />
 
             <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
 
@@ -1019,7 +1076,7 @@ const App: React.FC = () => {
 
         {/* Radial menu — unified build/inspect overlay */}
         <RadialMenu />
-      </SafeAreaView>
+      </View>
     </>
   );
 };
@@ -1033,11 +1090,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sceneContainer: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: 0,
   },
   uiOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'space-between',
   },
   xrExitOverlay: {

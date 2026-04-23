@@ -1,21 +1,21 @@
 /**
  * @module game/TutorialSystem
  *
- * TUTORIAL SYSTEM — Era 1 Progressive Disclosure
- * ================================================
- * SimSoviet 2000 — Guided introduction via Comrade Krupnik
+ * TUTORIAL SYSTEM — Revolution Era Progressive Disclosure
+ * ========================================================
+ * SimSoviet 1917 — Guided introduction via Comrade Krupnik
  *
- * Era 1 (War Communism, 1922-1928) doubles as the tutorial. Buildings,
- * UI elements, and game mechanics are progressively revealed through
- * 14 milestones. Krupnik, a weary-but-helpful advisor, delivers
- * sardonic guidance at each step.
+ * The Revolution era (1917-1922) doubles as the tutorial. Buildings
+ * and game mechanics are progressively revealed through 14 milestones.
+ * Krupnik, a weary-but-helpful advisor, delivers sardonic guidance at
+ * each step via toast notifications.
  *
  * The TutorialSystem is a pure query/gate system — it does NOT mutate
- * ECS state. The SimulationEngine and UI read from it to determine
- * what buildings can be placed and which HUD elements are visible.
+ * ECS state. The SimulationEngine reads from it to determine what
+ * buildings can be placed.
  *
- * When the tutorial is inactive (skipped or era >= 2), all gates
- * are open — `isBuildingUnlocked` and `isUIRevealed` return true.
+ * When the tutorial is inactive (skipped or era transition complete),
+ * all gates are open — `isBuildingUnlocked` returns true.
  */
 
 import type { GameMeta, Resources } from '@/ecs/world';
@@ -24,7 +24,10 @@ import type { GameMeta, Resources } from '@/ecs/world';
 //  TYPES
 // ─────────────────────────────────────────────────────────
 
-/** UI elements that can be progressively revealed during the tutorial. */
+/**
+ * UI element names — retained for API compatibility.
+ * Progressive UI disclosure has been removed; `isUIRevealed` always returns true.
+ */
 export type UIElement =
   | 'build_button'
   | 'resource_bar'
@@ -50,8 +53,6 @@ export interface TutorialMilestone {
   dialogue: string;
   /** Building defIds unlocked at this milestone. */
   unlockedBuildings?: string[];
-  /** UI elements revealed at this milestone. */
-  revealedUI?: UIElement[];
   /** Whether this milestone pauses the simulation. */
   pauseOnTrigger: boolean;
 }
@@ -83,7 +84,7 @@ function getSimpleSeason(month: number): 'winter' | 'mud' | 'summer' {
  * uncompleted milestone triggers per tick.
  */
 export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
-  // 1. Welcome — game start
+  // 1. Welcome — game start (October 1917)
   {
     id: 'welcome',
     triggerTick: 0,
@@ -92,7 +93,6 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
       'This is not a reward for either of us. Build a farm — your people ' +
       'will need food before they need anything else.',
     unlockedBuildings: ['collective-farm-hq'],
-    revealedUI: ['build_button'],
     pauseOnTrigger: true,
   },
 
@@ -104,7 +104,6 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     dialogue:
       'You built something. It probably will not collapse. Probably. ' +
       'I have learned not to make promises about Soviet construction.',
-    revealedUI: ['resource_bar'],
     pauseOnTrigger: false,
   },
 
@@ -128,7 +127,6 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
       'You have food. Not enough food, but food. In Soviet planning, ' +
       'this counts as abundance. Write it down before someone revises ' +
       'the definition.',
-    revealedUI: ['speed_controls'],
     pauseOnTrigger: false,
   },
 
@@ -180,7 +178,7 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     pauseOnTrigger: true,
   },
 
-  // 9. The quota — condition: quota target > 0 and some production exists
+  // 9. The quota — condition: quota target > 0
   {
     id: 'the_quota',
     triggerTick: 300,
@@ -189,11 +187,10 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
       'Moscow has expectations. They call them quotas. The targets are ' +
       'ambitious. "Ambitious" is what we say when we mean "impossible." ' +
       'Meet them anyway. The alternative is worse.',
-    revealedUI: ['quota_display'],
     pauseOnTrigger: false,
   },
 
-  // 10. Infrastructure — tick ~540 (~18 months)
+  // 10. Infrastructure — tick ~540 (~18 months into 1917)
   {
     id: 'infrastructure',
     triggerTick: 540,
@@ -202,19 +199,17 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
       'a school for the children. Education is mandatory. The curriculum ' +
       'has already been written. The answers have already been decided.',
     unlockedBuildings: ['fence', 'fence-low', 'guard-post', 'concrete-block', 'school'],
-    revealedUI: ['hamburger_menu', 'pravda_ticker'],
     pauseOnTrigger: true,
   },
 
-  // 11. First year complete — tick 360 = 1 game year
+  // 11. First year complete — tick 360 = 1 game year (still within 1917-1922 revolution era)
   {
     id: 'first_year_complete',
     triggerTick: 360,
-    condition: (meta) => meta.date.year > 1922,
+    condition: (meta) => meta.date.year >= 1918,
     dialogue:
       'You survived a year. This is not as common as you would think. ' +
       'Take a moment. The moment is over. Back to work.',
-    revealedUI: ['settlement_badge', 'personnel_file'],
     pauseOnTrigger: false,
   },
 
@@ -240,11 +235,11 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     pauseOnTrigger: false,
   },
 
-  // 14. Era transition — condition: year >= 1928
+  // 14. Era transition — revolution ends at 1922, collectivization begins
   {
     id: 'era_transition',
     triggerTick: 2000,
-    condition: (meta) => meta.date.year >= 1928,
+    condition: (meta) => meta.date.year >= 1922,
     dialogue:
       'The era is changing. New plans. New quotas. New ways to fail. ' +
       'But you are still here, Comrade. That counts for something. ' +
@@ -279,23 +274,6 @@ export const MILESTONE_LABELS: Readonly<Record<string, string>> = {
 };
 
 // ─────────────────────────────────────────────────────────
-//  UI REVEAL SCHEDULE
-// ─────────────────────────────────────────────────────────
-
-/**
- * Maps milestone IDs to the UI elements they reveal.
- * Derived from the milestone definitions for quick reference.
- */
-export const UI_REVEAL_SCHEDULE: Readonly<Record<string, UIElement[]>> = {
-  welcome: ['build_button'],
-  first_building: ['resource_bar'],
-  first_harvest: ['speed_controls'],
-  the_quota: ['quota_display'],
-  infrastructure: ['hamburger_menu', 'pravda_ticker'],
-  first_year_complete: ['settlement_badge', 'personnel_file'],
-};
-
-// ─────────────────────────────────────────────────────────
 //  TUTORIAL SYSTEM
 // ─────────────────────────────────────────────────────────
 
@@ -313,7 +291,6 @@ export class TutorialSystem {
   private milestones: readonly TutorialMilestone[];
   private completedMilestones: Set<string>;
   private unlockedBuildings: Set<string>;
-  private revealedUI: Set<UIElement>;
   private active: boolean;
   private currentGuidance: string | null;
 
@@ -321,7 +298,6 @@ export class TutorialSystem {
     this.milestones = TUTORIAL_MILESTONES;
     this.completedMilestones = new Set();
     this.unlockedBuildings = new Set();
-    this.revealedUI = new Set();
     this.active = true;
     this.currentGuidance = null;
   }
@@ -367,13 +343,6 @@ export class TutorialSystem {
         }
       }
 
-      // Reveal UI elements
-      if (milestone.revealedUI) {
-        for (const element of milestone.revealedUI) {
-          this.revealedUI.add(element);
-        }
-      }
-
       // Deactivate tutorial on era transition
       if (milestone.id === 'era_transition') {
         this.active = false;
@@ -396,11 +365,12 @@ export class TutorialSystem {
 
   /**
    * Returns true if a UI element should be visible.
-   * When the tutorial is inactive, all UI elements are shown.
+   * UI progressive disclosure has been removed — all elements are always visible.
+   * This method is retained for API compatibility.
    */
-  isUIRevealed(element: UIElement): boolean {
-    if (!this.active) return true;
-    return this.revealedUI.has(element);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isUIRevealed(_element: UIElement): boolean {
+    return true;
   }
 
   /** Returns all currently unlocked building defIds. */
@@ -483,11 +453,6 @@ export class TutorialSystem {
         if (milestone.unlockedBuildings) {
           for (const defId of milestone.unlockedBuildings) {
             system.unlockedBuildings.add(defId);
-          }
-        }
-        if (milestone.revealedUI) {
-          for (const element of milestone.revealedUI) {
-            system.revealedUI.add(element);
           }
         }
         // Track the last completed milestone's dialogue as current guidance
