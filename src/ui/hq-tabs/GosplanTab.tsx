@@ -33,6 +33,9 @@ export const DEFAULT_ALLOCATIONS: Allocations = {
   reserve: 15,
 };
 
+/** Era ID for the Great Patriotic War, during which construction is frozen. */
+export const GREAT_PATRIOTIC_ERA_ID = 'great_patriotic';
+
 /**
  * Clamp a value between min and max.
  *
@@ -96,6 +99,8 @@ export function redistributeAllocations(
 export interface GosplanTabProps {
   currentAllocations: Allocations;
   onAllocationChange: (allocations: Allocations) => void;
+  /** Current game era ID. When 'great_patriotic', a construction-freeze notice is displayed. */
+  currentEra?: string;
 }
 
 // ── Slider bar (pure view — touch-based slider) ────────────────────────────
@@ -132,8 +137,9 @@ const SliderBar: React.FC<SliderBarProps> = ({ category, label, value, onDecreme
 
 // ── Component ───────────────────────────────────────────────────────────────
 
-export const GosplanTab: React.FC<GosplanTabProps> = ({ currentAllocations, onAllocationChange }) => {
+export const GosplanTab: React.FC<GosplanTabProps> = ({ currentAllocations, onAllocationChange, currentEra }) => {
   const total = ALLOCATION_CATEGORIES.reduce((sum, c) => sum + currentAllocations[c.key], 0);
+  const isWartime = currentEra === GREAT_PATRIOTIC_ERA_ID;
 
   const handleChange = (category: AllocationCategory, delta: number) => {
     const newValue = currentAllocations[category] + delta;
@@ -145,6 +151,21 @@ export const GosplanTab: React.FC<GosplanTabProps> = ({ currentAllocations, onAl
     <View style={componentStyles.container}>
       <Text style={componentStyles.heading}>RESOURCE ALLOCATION DIRECTIVE</Text>
       <Text style={componentStyles.subheading}>Distribute collective output across priority sectors</Text>
+
+      {isWartime && (
+        <View style={freezeStyles.banner} testID="gpw-freeze-banner">
+          <Text style={freezeStyles.marker}>[ ! ]</Text>
+          <View style={freezeStyles.body}>
+            <Text style={freezeStyles.title}>BUILDING PROGRAMME SUSPENDED</Text>
+            <Text style={freezeStyles.subtitle}>TOTAL WAR ECONOMY — 1941–1945</Text>
+            <Text style={freezeStyles.detail}>
+              Construction halted by State Defence Committee decree.{'\n'}All capacity redirected to frontline
+              production.
+            </Text>
+          </View>
+          <Text style={freezeStyles.marker}>[ ! ]</Text>
+        </View>
+      )}
 
       {ALLOCATION_CATEGORIES.map((cat) => (
         <SliderBar
@@ -257,5 +278,52 @@ const componentStyles = StyleSheet.create({
   },
   totalError: {
     color: '#ef5350',
+  },
+});
+
+// ── GPW Freeze Banner Styles ──────────────────────────────────────────────
+
+const freezeStyles = StyleSheet.create({
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#1a0a0a',
+    borderWidth: 2,
+    borderColor: Colors.sovietRed,
+    padding: 10,
+    marginBottom: 14,
+    gap: 8,
+  },
+  marker: {
+    fontFamily: monoFont,
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.sovietRed,
+    paddingTop: 2,
+  },
+  body: {
+    flex: 1,
+  },
+  title: {
+    fontFamily: monoFont,
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.sovietRed,
+    letterSpacing: 2,
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontFamily: monoFont,
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.sovietGold,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  detail: {
+    fontFamily: monoFont,
+    fontSize: 9,
+    color: Colors.textSecondary,
+    lineHeight: 14,
   },
 });
