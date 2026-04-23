@@ -53,7 +53,6 @@ import {
   setGameSpeed,
   setPaused,
   useBuildingInspector,
-  useBuildingPanel,
   useCitizenDossierIndex,
   useCursorTooltip,
   useGovernmentHQ,
@@ -286,13 +285,22 @@ const App: React.FC = () => {
   // causes "Maximum update depth exceeded" in React 19. Instead we buffer
   // in a ref and drain it here, safely outside the store-notification path.
   useEffect(() => {
-    if (screen !== 'game') return;
+    if (screen !== 'game') {
+      // Clear stale headlines when leaving the game screen so they don't
+      // leak into the next session.
+      pendingPravdaRef.current = [];
+      setPravdaHeadlines([]);
+      return;
+    }
     const interval = setInterval(() => {
       if (pendingPravdaRef.current.length === 0) return;
       const batch = pendingPravdaRef.current.splice(0);
       setPravdaHeadlines((prev) => [...batch.reverse(), ...prev].slice(0, 5));
     }, 250);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      pendingPravdaRef.current = [];
+    };
   }, [screen]);
 
   // Initialize SFXManager on first user interaction (autoplay policy)
@@ -327,7 +335,9 @@ const App: React.FC = () => {
   const citizenDossierIdx = useCitizenDossierIndex();
   const cursorTooltip = useCursorTooltip();
   const politicalPanelFromScene = usePoliticalPanel();
-  useBuildingPanel();
+  // Note: useBuildingPanel() is NOT called here — BuildingPanel manages its own
+  // subscription internally. Calling it at the App root caused unnecessary full-tree
+  // re-renders on every building selection/deselection.
   const showGovHQ = useGovernmentHQ();
 
   // ── Notification history (store-driven unread count) ──
