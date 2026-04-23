@@ -284,23 +284,38 @@ const App: React.FC = () => {
   // The sim calls onPravda inside a requestAnimationFrame callback that also
   // triggers useSyncExternalStore listeners — calling setState there directly
   // causes "Maximum update depth exceeded" in React 19. Instead we buffer
-  // in a ref and drain it here, safely outside the store-notification path.
-  useEffect(() => {
-    if (screen !== 'game') {
-      // Clear stale headlines when leaving the game screen so they don't
-      // leak into the next session.
-      pendingPravdaRef.current = [];
-      setPravdaHeadlines([]);
-      return;
-    }
-    const interval = setInterval(() => {
+  // in a ref and drain it here via a one-shot setTimeout scheduled only when
+  // a headline is queued (avoids a 250 ms polling interval running constantly).
+  //
+  // The pending buffer is capped at 50 entries; if full, the oldest headline is
+  // dropped so a burst of sim messages cannot grow the array without bound.
+  const flushTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const PRAVDA_BUFFER_MAX = 50;
+  const schedulePravdaFlush = useCallback(() => {
+    if (flushTimeoutRef.current !== null) return; // already scheduled
+    flushTimeoutRef.current = setTimeout(() => {
+      flushTimeoutRef.current = null;
       if (pendingPravdaRef.current.length === 0) return;
       const batch = pendingPravdaRef.current.splice(0);
       setPravdaHeadlines((prev) => [...batch.reverse(), ...prev].slice(0, 5));
     }, 250);
-    return () => {
-      clearInterval(interval);
+  }, []);
+  useEffect(() => {
+    // On screen exit, cancel any pending flush and clear both the buffer and
+    // the visible ticker so stale headlines don't bleed into the next session.
+    if (screen !== 'game') {
+      if (flushTimeoutRef.current !== null) {
+        clearTimeout(flushTimeoutRef.current);
+        flushTimeoutRef.current = null;
+      }
       pendingPravdaRef.current = [];
+      setPravdaHeadlines([]);
+    }
+    return () => {
+      if (flushTimeoutRef.current !== null) {
+        clearTimeout(flushTimeoutRef.current);
+        flushTimeoutRef.current = null;
+      }
     };
   }, [screen]);
 
@@ -387,7 +402,13 @@ const App: React.FC = () => {
             // Buffer the headline; flushed asynchronously to avoid calling
             // setState while React is processing useSyncExternalStore notifications
             // (which triggers "Maximum update depth exceeded" in React 19).
+            // Cap the buffer at PRAVDA_BUFFER_MAX; if full, drop the oldest entry
+            // so a burst of sim messages cannot grow the array without bound.
+            if (pendingPravdaRef.current.length >= PRAVDA_BUFFER_MAX) {
+              pendingPravdaRef.current.shift();
+            }
             pendingPravdaRef.current.push(msg);
+            schedulePravdaFlush();
           },
           onVisualEvent: (event) => {
             // Convert tick-based duration to seconds (assume ~12 ticks/year, ~1 tick/month ≈ 2.5s)
@@ -531,7 +552,7 @@ const App: React.FC = () => {
     })();
 
     // expo-sqlite handles persistence automatically — no beforeunload needed
-  }, [screen]);
+  }, [screen, schedulePravdaFlush]);
 
   // Pravda headlines accumulate via the onPravda callback and display
   // in the PravdaTicker scrolling bar at the bottom of the screen.
@@ -786,6 +807,13 @@ const App: React.FC = () => {
     resolveDissolutionRef.current = null;
     resolveMinigameRef.current = null;
     submitReportRef.current = null;
+    // Clear Pravda buffer and ticker so headlines don't bleed into the next game.
+    if (flushTimeoutRef.current !== null) {
+      clearTimeout(flushTimeoutRef.current);
+      flushTimeoutRef.current = null;
+    }
+    pendingPravdaRef.current = [];
+    setPravdaHeadlines([]);
     // Reset all module-level singletons so a fresh game can be initialized
     resetAllSingletons();
     // Reset local component state for a clean game screen
