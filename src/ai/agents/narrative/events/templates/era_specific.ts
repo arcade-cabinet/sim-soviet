@@ -50,6 +50,120 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     weight: 1.2,
   },
 
+  // ── COLLECTIVIZATION (1922-1932) — dedicated events ────
+
+  {
+    id: 'forced_farm_liquidation',
+    title: 'AGRICULTURAL REORGANIZATION',
+    description:
+      'Officials arrive to liquidate the remaining private farms. The word "liquidation" ' +
+      'has been carefully chosen. Farmers are informed that their land, tools, livestock, ' +
+      'and opinions now belong to the collective. The farmers have thoughts about this. ' +
+      'The officials have rifles. The meeting is short.',
+    pravdaHeadline: 'PEASANTRY JOYFULLY SURRENDERS PRIVATE PROPERTY TO THE COLLECTIVE',
+    category: 'political',
+    severity: 'major',
+    effects: (gs) => ({
+      food: -Math.min(25, Math.floor(gs.food * 0.2)),
+      pop: -Math.min(5, Math.floor(gs.pop * 0.04)),
+    }),
+    condition: (gs) => gs.food > 20,
+    eraFilter: ['collectivization'],
+    weight: 1.8,
+  },
+  {
+    id: 'grain_seizure_famine',
+    title: 'REQUISITION FULFILLED',
+    description:
+      'The quarterly grain quota has been met. Surplus grain has been collected as well, ' +
+      'to ensure the quota is met again next quarter. The settlement now has no grain. ' +
+      'This is not a problem. The problem is that you have not yet filled out the form ' +
+      'explaining why there is no grain.',
+    pravdaHeadline: 'HEROIC GRAIN COLLECTION EXCEEDS STATE TARGETS BY MEANINGFUL MARGIN',
+    category: 'economic',
+    severity: 'catastrophic',
+    effects: (gs) => ({
+      food: -Math.min(50, Math.floor(gs.food * 0.6)),
+    }),
+    condition: (gs) => gs.food > 40,
+    eraFilter: ['collectivization'],
+    weight: 1.4,
+  },
+  {
+    id: 'kulak_deportation',
+    title: 'RESETTLEMENT ACTION',
+    description:
+      'Families classified as kulaks are loaded onto carts and transported east. ' +
+      'The definition of kulak was expanded last week to include anyone with a metal ' +
+      'plough, a wooden plough, or strong opinions about ploughs. The carts depart ' +
+      'before dawn. Nobody is watching officially. Everyone watches.',
+    pravdaHeadline: 'ANTI-SOVIET ELEMENTS RELOCATED TO PRODUCTIVE EASTERN DISTRICTS',
+    category: 'political',
+    severity: 'major',
+    effects: (gs) => ({
+      pop: -Math.min(10, Math.floor(gs.pop * 0.07)),
+      food: -Math.min(15, Math.floor(gs.food * 0.12)),
+    }),
+    condition: (gs) => gs.pop > 25,
+    eraFilter: ['collectivization'],
+    weight: 1.5,
+  },
+  {
+    id: 'collectivization_quota_pressure',
+    title: 'COLLECTIVIZATION TARGETS REVISED UPWARD',
+    description:
+      'Moscow has revised the collectivization quota upward. It is now 110%. ' +
+      'This number was arrived at scientifically. A committee has been tasked with ' +
+      'determining what 110% of the farms means in practical terms. The committee ' +
+      'is optimistic. The committee has never been to a farm.',
+    pravdaHeadline: 'SETTLEMENT EMBRACES ACCELERATED SOCIALIST TRANSFORMATION PLAN',
+    category: 'political',
+    severity: 'minor',
+    effects: { food: -10, pop: -1 },
+    eraFilter: ['collectivization'],
+    weight: 1.3,
+  },
+  {
+    id: 'peasant_resistance',
+    title: 'COUNTER-REVOLUTIONARY GRAIN CONCEALMENT',
+    description:
+      'Peasants are hiding grain. In floors, in walls, in the well, behind the icon, ' +
+      'inside the icon, under the goat, inside the goat. Investigators are dispatched. ' +
+      'The goat is considered a suspect. Three farmers have been arrested. The goat ' +
+      'has been collectivized.',
+    pravdaHeadline: 'WRECKERS FOILED BY VIGILANT COLLECTIVE SECURITY APPARATUS',
+    category: 'absurdist',
+    severity: 'minor',
+    effects: (gs) => ({
+      food: Math.min(12, Math.floor(gs.pop * 0.5)),
+      pop: -2,
+    }),
+    condition: (gs) => gs.pop > 20,
+    eraFilter: ['collectivization'],
+    weight: 1.1,
+  },
+  {
+    id: 'holodomor_shadow',
+    title: 'HUNGER REPORT FILED',
+    description:
+      'The regional death registry is backlogged. Clerks are working through the night. ' +
+      'A request to classify the deaths as "natural causes" has been submitted in triplicate. ' +
+      'Moscow will note that the harvest numbers remain correct. The harvest numbers ' +
+      'were always correct. The people are less certain.',
+    pravdaHeadline: 'REGIONAL NUTRITION SITUATION SUBJECT TO ONGOING REVIEW',
+    category: 'disaster',
+    severity: 'catastrophic',
+    effects: (gs) => ({
+      pop: -Math.min(15, Math.floor(gs.pop * 0.12)),
+      food: -Math.min(30, Math.floor(gs.food * 0.25)),
+    }),
+    condition: (gs) => gs.pop > 30 && gs.food < 30 && gs.date.year >= 1932,
+    eraFilter: ['collectivization'],
+    weight: 1.0,
+  },
+
+  // ── FIRST FIVE-YEAR PLANS (1928-1941) ──────────────────
+
   // ── FIRST FIVE-YEAR PLANS (1928-1941) ──────────────────
 
   {
