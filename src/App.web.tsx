@@ -212,6 +212,13 @@ const App: React.FC = () => {
   // caused by calling setState synchronously inside a useSyncExternalStore listener.
   const pendingPravdaRef = useRef<string[]>([]);
 
+  // Queue tutorial toasts that fire before the intro modal has been dismissed.
+  // The welcome milestone fires at tick 0 during initGame (before loading finishes),
+  // so we hold it and flush it the moment the player clicks "Accept the Chair".
+  const pendingTutorialRef = useRef<string | null>(null);
+  // True once the intro has been dismissed — lets the game run normally after that.
+  const introDismissedRef = useRef(false);
+
   // ── Panel state ──
   const [showPersonnelFile, setShowPersonnelFile] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
@@ -455,7 +462,15 @@ const App: React.FC = () => {
             setShowDissolutionModal(true);
           },
           onTutorialMilestone: (milestone) => {
-            showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
+            // Route to toast (live surface) — Advisor was removed in Phase 1 minimal HUD.
+            // Queue the message if the intro modal hasn't been dismissed yet (the welcome
+            // milestone fires at tick 0 during initGame, before the player sees anything).
+            const msg = `KRUPNIK: ${milestone.dialogue}`;
+            if (!introDismissedRef.current) {
+              pendingTutorialRef.current = msg;
+            } else {
+              showToast(gameState, msg);
+            }
             // Notify store so RadialMenu re-renders with newly unlocked categories
             notifyStateChange();
           },
@@ -573,9 +588,16 @@ const App: React.FC = () => {
   }, []);
 
   const handleDismissIntro = useCallback(() => {
+    introDismissedRef.current = true;
     setShowIntro(false);
     AudioManager.getInstance().startPlaylist();
     SFXManager.getInstance().play('ui_modal_close');
+    // Flush the welcome tutorial toast that fired before the intro was dismissed
+    const queued = pendingTutorialRef.current;
+    if (queued) {
+      pendingTutorialRef.current = null;
+      showToast(gameState, queued);
+    }
   }, []);
 
   const handleThreatPress = useCallback(() => {
@@ -759,6 +781,8 @@ const App: React.FC = () => {
     setAssetsReady(false);
     setLoadingFaded(false);
     setShowIntro(false);
+    introDismissedRef.current = false;
+    pendingTutorialRef.current = null;
     setLoadProgress({ loaded: 0, total: TOTAL_MODEL_COUNT, name: '' });
     loadStartRef.current = 0;
     setScreen('menu');
