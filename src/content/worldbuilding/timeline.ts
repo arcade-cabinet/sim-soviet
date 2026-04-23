@@ -1,7 +1,15 @@
 import type { TimelineEvent } from './types';
 
-/** Satirical historical campaign timeline spanning 1922-1991. */
+/** Satirical historical campaign timeline spanning 1917-1991. */
 export const HISTORICAL_TIMELINE: TimelineEvent[] = [
+  {
+    year: 1917,
+    headline: 'OCTOBER REVOLUTION: HISTORY BEGINS',
+    description:
+      'The Provisional Government is dissolved. Power transfers to the Soviets. All prior governance is retroactively reclassified as an obstacle. The future is now mandatory.',
+    classified:
+      'PROTOCOL NO. 1 — PETROGRAD MILITARY REVOLUTIONARY COMMITTEE — 26 OCTOBER 1917. Storming of the Winter Palace completed. Casualties: twelve windows. Revolutionary enthusiasm: satisfactory. One participant asked what happens next. The question has been deferred.',
+  },
   {
     year: 1922,
     headline: 'UNION ESTABLISHED',
@@ -15,6 +23,14 @@ export const HISTORICAL_TIMELINE: TimelineEvent[] = [
     description:
       'Comrade Stalin introduces the First Five-Year Plan. Industrial output targets set at 300% of current capacity. Current capacity: disputed.',
     classified: 'The plan was written in four days. Nobody mentions this.',
+  },
+  {
+    year: 1932,
+    headline: 'SECOND FIVE-YEAR PLAN: STEEL ABOVE ALL',
+    description:
+      'The Second Five-Year Plan raises output targets for steel, coal, and machinery. Grain quotas remain unchanged despite the harvest. The settlement is expected to produce more with less, which is the definition of progress.',
+    classified:
+      'PROTOCOL NO. 47 — NKVD CENTRAL OFFICE — 15 SEPTEMBER 1932. Regional bureaus report quota compliance at 94%. Remainder attributed to sabotage, weather, and insufficient enthusiasm. Corrective measures dispatched. Form 12-B (Explanation of Shortfall) now available in triplicate.',
   },
   {
     year: 1937,
@@ -51,6 +67,14 @@ export const HISTORICAL_TIMELINE: TimelineEvent[] = [
     description:
       'Comrade Stalin departs for the Great Kolkhoz in the Sky. A brief period of collective leadership follows. Several portraits require updating. Stonemasons report record overtime.',
     classified: 'Three separate officials each believed they were in charge for the first 48 hours.',
+  },
+  {
+    year: 1956,
+    headline: 'THAW DECLARED: OPTIMISM PERMITTED (TEMPORARILY)',
+    description:
+      'Comrade Khrushchev delivers the Secret Speech. Certain excesses of the prior era are acknowledged. Portraits are updated at regional expense. Citizens are advised that criticism is now permitted within approved parameters.',
+    classified:
+      'MEMO NO. 88-K — CENTRAL COMMITTEE SECRETARIAT — 4 MARCH 1956. Distribution of the Secret Speech is classified. Summaries of the Secret Speech are classified. Acknowledgment that the Secret Speech exists is under review. Approved criticism of the prior era must be submitted via Form 7-Z (Retrospective Ideological Correction) no later than 30 April.',
   },
   {
     year: 1957,
