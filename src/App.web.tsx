@@ -1071,7 +1071,20 @@ export default App;
 // is available. On first load the SW isn't yet controlling the page, so we
 // wait for it to become active and then do ONE hard reload. After that reload
 // crossOriginIsolated is true and SQLite works normally.
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+//
+// Two safeguards prevent problem reloads:
+//  1. navigator.webdriver guard — skip SW entirely in Playwright/Puppeteer (CI
+//     smoke tests), where the static server never sends COOP/COEP headers and
+//     crossOriginIsolated is always false, so a reload would loop or abort.
+//  2. sessionStorage guard — allow at most one reload attempt per tab session.
+//     If crossOriginIsolated is still false after the first reload the SW is
+//     failing to inject headers; further reloads won't help and we log a warning.
+if (
+  typeof window !== 'undefined' &&
+  'serviceWorker' in navigator &&
+  process.env.NODE_ENV === 'production' &&
+  !navigator.webdriver
+) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sim-soviet/sw.js')
@@ -1083,22 +1096,47 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator && process.env
         // served with the COOP/COEP headers the SW injects.
         const waitAndReload = (sw: ServiceWorker) => {
           if (sw.state === 'activated') {
-            // Prevent reload loops: only reload if not yet isolated.
+            // Prevent reload loops: only reload if not yet isolated AND we
+            // have not already attempted a reload this session.
             if (!crossOriginIsolated) {
-              window.location.reload();
+              if (sessionStorage.getItem('coi-reload-attempted')) {
+                console.warn(
+                  '[SW] crossOriginIsolated is still false after COI reload — SharedArrayBuffer may be unavailable.',
+                );
+              } else {
+                sessionStorage.setItem('coi-reload-attempted', '1');
+                window.location.reload();
+              }
             }
             return;
           }
           sw.addEventListener('statechange', () => {
             if (sw.state === 'activated' && !crossOriginIsolated) {
-              window.location.reload();
+              if (sessionStorage.getItem('coi-reload-attempted')) {
+                console.warn(
+                  '[SW] crossOriginIsolated is still false after COI reload — SharedArrayBuffer may be unavailable.',
+                );
+              } else {
+                sessionStorage.setItem('coi-reload-attempted', '1');
+                window.location.reload();
+              }
             }
           });
         };
 
         if (registration.active) {
-          // SW was already active but page not isolated — reload immediately.
-          if (!crossOriginIsolated) window.location.reload();
+          // SW was already active but page not isolated — reload immediately
+          // (subject to the sessionStorage one-shot guard).
+          if (!crossOriginIsolated) {
+            if (sessionStorage.getItem('coi-reload-attempted')) {
+              console.warn(
+                '[SW] crossOriginIsolated is still false after COI reload — SharedArrayBuffer may be unavailable.',
+              );
+            } else {
+              sessionStorage.setItem('coi-reload-attempted', '1');
+              window.location.reload();
+            }
+          }
         } else if (registration.installing) {
           waitAndReload(registration.installing);
         } else if (registration.waiting) {
