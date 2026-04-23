@@ -640,50 +640,5 @@
       "localPath": "assets/models/polyhaven/russian_food_cans_01.glb",
       "md5": "a9bc79ca5c80203ebc5e602aa31075fb"
     }
-  ],
-  "shaders": [
-    {
-      "id": "dyson_sphere_backdrop",
-      "role": "environment_procedural",
-      "source": "custom",
-      "file": "src/scene/shaders/DysonSphereBackdrop.tsx",
-      "mapping": {
-        "loadZone": "dyson",
-        "subEra": [
-          "dyson_swarm",
-          "megaearth",
-          "type_two_peak"
-        ]
-      },
-      "notes": "Hexagonal metal panels, FBM energy veins, starfield through gaps, solar collection pulse. IMPLEMENTED."
-    },
-    {
-      "id": "mars_atmosphere",
-      "role": "sky_procedural",
-      "source": "custom",
-      "file": "src/scene/shaders/MarsAtmosphere.tsx",
-      "mapping": {
-        "loadZone": [
-          "mars_red",
-          "mars_green",
-          "mars_blue"
-        ],
-        "celestialBody": "mars"
-      },
-      "notes": "Butterscotch→salmon→blue sky transition. terraformingProgress uniform. IMPLEMENTED."
-    },
-    {
-      "id": "oneill_interior",
-      "role": "environment_procedural",
-      "source": "custom",
-      "file": "src/scene/shaders/ONeillInterior.tsx",
-      "mapping": {
-        "loadZone": "orbital",
-        "subEra": [
-          "solar_engineering"
-        ]
-      },
-      "notes": "Rotating cylinder interior. Sun stripe, land/window strips, overhead landscape. IMPLEMENTED."
-    }
   ]
 }

@@ -35,16 +35,6 @@ const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models
 
 const TIMELINE_FILES = [
   'worldTimeline.json',
-  'spaceTimeline.json',
-  'lunarTimeline.json',
-  'marsTimeline.json',
-  'jupiterTimeline.json',
-  'titanTimeline.json',
-  'venusTimeline.json',
-  'beltTimeline.json',
-  'exoplanetTimeline.json',
-  'generationShipTimeline.json',
-  'ecology.json',
 ];
 
 // ─── Response schema (Gemini structured output) ───────────────────────────────
