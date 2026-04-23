@@ -35,6 +35,8 @@ const TERRAIN_LABELS: Record<string, string> = {
   crater: 'CRATER',
   irradiated: 'IRRADIATED ZONE',
   path: 'PATHWAY',
+  road: 'ROAD',
+  foundation: 'FOUNDATION',
   dirt: 'BARE EARTH',
   rock: 'ROCKY',
   water: 'WATER',

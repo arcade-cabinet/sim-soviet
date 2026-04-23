@@ -179,6 +179,11 @@ const GhostPreview: React.FC = () => {
   useEffect(() => {
     const canvas = gl.domElement;
 
+    // Initialize hover state on mount/remount — if the cursor is already over
+    // the canvas, pointerenter will not fire again and the tooltip would be
+    // stuck hidden until the user exits and re-enters.
+    pointerOverCanvas.current = canvas.matches(':hover');
+
     const onPointerEnter = () => {
       pointerOverCanvas.current = true;
     };

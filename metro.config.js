@@ -36,9 +36,13 @@ config.server = {
     const assetsDir = path.resolve(__dirname, 'assets');
     const publicDir = path.resolve(__dirname, 'public');
 
-    // Cross-Origin Isolation headers required by SharedArrayBuffer / wa-sqlite.
-    // credentialless is more permissive than require-corp: cross-origin assets
-    // without CORP headers are still served (minus cookies), so CDN assets work.
+    /**
+     * Inject Cross-Origin Isolation headers required by SharedArrayBuffer / wa-sqlite.
+     * credentialless is more permissive than require-corp: cross-origin assets
+     * without CORP headers are still served (minus cookies), so CDN assets work.
+     *
+     * @param res - Node HTTP ServerResponse to mutate with COOP/COEP headers
+     */
     function setCOIHeaders(res) {
       res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
       res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
@@ -68,10 +72,17 @@ config.server = {
       // and would otherwise overwrite any headers set via res.setHeader before
       // calling the inner middleware. The patch ensures our headers survive.
       const originalWriteHead = res.writeHead.bind(res);
+      /**
+       * Monkey-patch writeHead so COOP/COEP headers survive Metro's internal
+       * writeHead call, which would otherwise overwrite res.setHeader values.
+       *
+       * @param statusCode - HTTP status code forwarded to the original writeHead
+       * @param statusMessage - Optional status message or headers object
+       * @param headers - Optional headers object when statusMessage is a string
+       */
       res.writeHead = function patchedWriteHead(statusCode, statusMessage, headers) {
         // Inject COI headers regardless of what Metro is writing.
-        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-        res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+        setCOIHeaders(res);
         if (typeof statusMessage === 'object') {
           return originalWriteHead(statusCode, statusMessage);
         }

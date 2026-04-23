@@ -12,7 +12,9 @@
  * synchronous worker-channel protocol. Browsers only expose SharedArrayBuffer
  * when the document is cross-origin isolated, which requires:
  *   Cross-Origin-Opener-Policy: same-origin
- *   Cross-Origin-Embedder-Policy: require-corp
+ *   Cross-Origin-Embedder-Policy: credentialless
+ * We use `credentialless` (not `require-corp`) so that cross-origin CDN assets
+ * are still loaded (without credentials) rather than being blocked entirely.
  * GitHub Pages cannot serve custom HTTP headers, so we inject them here in the
  * service-worker fetch handler by rewriting every response through
  * addCrossOriginHeaders(). The service worker is registered before any SQLite
@@ -94,6 +96,9 @@ function hasCacheableContentType(response) {
  *
  * We must copy the response because Headers are immutable on fetch responses.
  * The body is streamed — we don't buffer it — so this is low overhead.
+ *
+ * @param response - The fetch Response object to rewrite with COOP/COEP headers
+ * @returns A new Response with COOP/COEP headers applied, or the original response unchanged for opaque (no-cors) responses
  */
 function addCrossOriginHeaders(response) {
   // Skip opaque responses (cross-origin no-cors) — we cannot rewrite them,
@@ -186,11 +191,20 @@ self.addEventListener('fetch', (event) => {
           return addCrossOriginHeaders(response);
         })
         .catch(() =>
-          caches
-            .open(CACHE_NAME)
-            .then((cache) =>
-              cache.match(request).then((cached) => (cached ? addCrossOriginHeaders(cached) : cached)),
-            ),
+          caches.open(CACHE_NAME).then((cache) =>
+            cache.match(request).then((cached) => {
+              if (cached) return addCrossOriginHeaders(cached);
+              // Cache miss on network failure — return a real offline response
+              // so respondWith() never resolves to undefined (which throws).
+              return addCrossOriginHeaders(
+                new Response('Offline: requested resource is not available in cache.', {
+                  status: 503,
+                  statusText: 'Service Unavailable',
+                  headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                }),
+              );
+            }),
+          ),
         ),
     );
   }

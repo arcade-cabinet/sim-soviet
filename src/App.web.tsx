@@ -111,6 +111,7 @@ import { ViewportFrame } from './ui/ViewportFrame';
 import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
+import { assetUrl } from './utils/assetPath';
 
 // WorkerStatusBar removed — Phase 1 minimal HUD
 
@@ -1087,7 +1088,7 @@ if (
 ) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/sim-soviet/sw.js')
+      .register(assetUrl('sw.js'))
       .then((registration) => {
         // If already cross-origin isolated (SW was already active), nothing to do.
         if (crossOriginIsolated) return;
