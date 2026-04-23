@@ -206,6 +206,10 @@ const App: React.FC = () => {
 
   // Pravda ticker headlines (scrolling news bar)
   const [pravdaHeadlines, setPravdaHeadlines] = useState<string[]>([]);
+  // Buffer incoming Pravda messages from the sim tick (which runs outside React's
+  // render phase). Flushing via useEffect avoids "Maximum update depth exceeded"
+  // caused by calling setState synchronously inside a useSyncExternalStore listener.
+  const pendingPravdaRef = useRef<string[]>([]);
 
   // ── Panel state ──
   const [showPersonnelFile, setShowPersonnelFile] = useState(false);
@@ -267,6 +271,21 @@ const App: React.FC = () => {
   useEffect(() => {
     lockWebViewport();
   }, []);
+
+  // Flush buffered Pravda headlines from the sim tick into React state.
+  // The sim calls onPravda inside a requestAnimationFrame callback that also
+  // triggers useSyncExternalStore listeners — calling setState there directly
+  // causes "Maximum update depth exceeded" in React 19. Instead we buffer
+  // in a ref and drain it here, safely outside the store-notification path.
+  useEffect(() => {
+    if (screen !== 'game') return;
+    const interval = setInterval(() => {
+      if (pendingPravdaRef.current.length === 0) return;
+      const batch = pendingPravdaRef.current.splice(0);
+      setPravdaHeadlines((prev) => [...batch.reverse(), ...prev].slice(0, 5));
+    }, 250);
+    return () => clearInterval(interval);
+  }, [screen]);
 
   // Initialize SFXManager on first user interaction (autoplay policy)
   useEffect(() => {
@@ -346,7 +365,10 @@ const App: React.FC = () => {
             SFXManager.getInstance().play('advisor_message');
           },
           onPravda: (msg) => {
-            setPravdaHeadlines((prev) => [msg, ...prev].slice(0, 5));
+            // Buffer the headline; flushed asynchronously to avoid calling
+            // setState while React is processing useSyncExternalStore notifications
+            // (which triggers "Maximum update depth exceeded" in React 19).
+            pendingPravdaRef.current.push(msg);
           },
           onVisualEvent: (event) => {
             // Convert tick-based duration to seconds (assume ~12 ticks/year, ~1 tick/month ≈ 2.5s)
