@@ -36,15 +36,15 @@ function serveDist() {
 
     const file = normalize(join(distRoot, url));
     if (!file.startsWith(distRoot)) {
-      res.writeHead(403);
+      res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' });
       res.end('forbidden');
       return;
     }
 
     readFile(file, (err, data) => {
       if (err) {
-        res.writeHead(404);
-        res.end(`not found: ${url}`);
+        res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+        res.end('not found');
         return;
       }
       res.writeHead(200, { 'content-type': mimeTypes[extname(file)] || 'application/octet-stream' });
