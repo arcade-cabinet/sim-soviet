@@ -7,9 +7,9 @@ player is the predsedatel of a collective settlement. The settlement grows
 organically through autonomous systems; the player does not freely choose
 buildings or draw a city.
 
-**This is not a city builder.** Moscow mandates what must be built. The player
-chooses where mandated construction goes, sets priorities, survives inspections,
-and manages the political consequences of failure.
+**This is not a city builder.** Moscow and local demand determine what pressure
+the settlement is under. The player sets priorities, survives inspections, and
+manages the political consequences of failure.
 
 ## 1.0 Campaign Scope
 
@@ -43,15 +43,15 @@ Comfortable mediocrity is often the best strategy.
 - UI: React Native + Expo.
 - Simulation: Yuka-style agent systems plus Miniplex ECS.
 - Audio: Web Audio API.
-- Persistence: sql.js, Drizzle ORM, IndexedDB.
-- Build/test: TypeScript, Jest, Expo, Metro.
+- Persistence: Expo SQLite and web SQLite flow.
+- Build/test: TypeScript, Jest, Vitest browser, Playwright, Expo.
 
 ## Core Gameplay Loop
 
 1. Watch the settlement self-organize.
 2. Respond to Moscow mandates and quotas.
-3. Place required buildings in politically survivable locations.
-4. Set collective priorities when food, industry, construction, and politics collide.
+3. Set collective priorities when food, industry, construction, and politics collide.
+4. Review reports, pressure, and institutional demands.
 5. Manage KGB, politruks, party demands, personnel marks, and moral tradeoffs.
 6. Survive historical era transitions through 1991.
 7. Review campaign completion, then optionally continue the same settlement.

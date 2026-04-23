@@ -1,16 +1,16 @@
 # Memory Bank - Agent Navigation
 
-Persistent project context for SimSoviet 1917. Read these files before making
-non-trivial changes so the reduced 1.0 scope stays coherent.
+Persistent project context for SimSoviet 1917. These files should stay aligned
+with `CLAUDE.md`, `AGENTS.md`, and the canonical docs in `docs/`.
 
 ## Reading Order
 
 1. `projectbrief.md` - product identity and scope
 2. `productContext.md` - player experience and system intent
-3. `techContext.md` - stack, commands, and build notes
+3. `techContext.md` - stack, commands, workflows, and verification lanes
 4. `systemPatterns.md` - architecture and coding patterns
-5. `activeContext.md` - current work focus
-6. `progress.md` - implemented surface and open work
+5. `activeContext.md` - immediate development focus
+6. `progress.md` - shipped surface and remaining work summary
 
 ## 1.0 Scope
 
@@ -44,6 +44,6 @@ Remove from 1.0:
 
 ## Coordination Rules
 
-- Update `activeContext.md` when the development focus changes.
-- Update `progress.md` after significant scope or feature changes.
+- Update `activeContext.md` when the immediate focus changes.
+- Update `progress.md` when shipped state or remaining work materially changes.
 - Do not reintroduce removed future scope unless the product scope changes again.

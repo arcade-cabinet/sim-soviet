@@ -5,6 +5,13 @@
 **This is not a city builder.** The player is a predsedatel. The settlement
 grows organically. The player does not freely choose buildings or draw roads.
 
+## Current State
+
+- Historical-scope runtime reduction is merged to `main`.
+- Android debug CD repair is merged to `main`.
+- GitHub Pages deployment is live.
+- Remaining work is now tracked in `docs/PRODUCTION.md`.
+
 ## Current 1.0 Surface
 
 ### Engine Architecture
@@ -71,3 +78,11 @@ grows organically. The player does not freely choose buildings or draw roads.
 - [x] TypeScript typecheck passed after runtime pruning.
 - [x] Focused historical-scope tests added.
 - [x] Final lint, targeted tests, build smoke checks, and browser e2e have passed.
+
+## Remaining Work Summary
+
+- [ ] Better onboarding and player guidance.
+- [ ] More visual and UX polish across landing, HUD, reports, and panels.
+- [ ] Era-by-era historical tuning and content review.
+- [ ] Stronger long-form automated campaign verification.
+- [ ] Signed mobile release readiness and store assets.

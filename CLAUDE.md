@@ -33,13 +33,16 @@ The settlement grows organically through agents. The player does not freely plac
 ```bash
 pnpm install
 pnpm web
-pnpm typecheck
-pnpm test
-pnpm lint
-pnpm build
+pnpm run typecheck
+pnpm run lint
+pnpm run test:node
+pnpm run test:browser
+pnpm run build
+pnpm run smoke:web
+pnpm run test:e2e
 ```
 
-Use `pnpm` because `package.json` pins `pnpm@10.28.2`.
+Use `pnpm` because `package.json` pins `pnpm@10.33.0`.
 
 ## Architecture
 
@@ -50,6 +53,7 @@ Use `pnpm` because `package.json` pins `pnpm@10.28.2`.
 - **Campaign eras**: `src/game/era/` and `src/config/eras.json` define the 1917-1991 progression.
 - **Scene**: `src/scene/` renders the local settlement only.
 - **UI**: `src/ui/` contains overlays, HQ tabs, reports, and campaign completion modal.
+- **Docs**: `docs/STATE.md`, `docs/PRODUCTION.md`, `docs/DESIGN.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, and `docs/RELEASE.md` are the canonical written source of truth.
 
 ## Key Runtime Rules
 

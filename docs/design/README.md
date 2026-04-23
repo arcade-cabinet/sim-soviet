@@ -1,56 +1,41 @@
 ---
-title: Design Documents Index
-type: index
-status: active
-last_verified: 2026-03-01
+title: Design Domain Index
+updated: 2026-04-23
+status: current
+domain: product
 ---
 
-# SimSoviet 1917 — Game Design Documents
+# SimSoviet 1917 - Design Documents
 
-## Historical Soviet Campaign, 1917-1991.
+This directory contains the detailed design docs for the historical 1.0 game.
+For the top-level product summary, start with [../DESIGN.md](../DESIGN.md).
 
-Each file covers a single design domain. Together they form the complete game design.
+## Domain Docs
 
-**For the unified overview**: See [../GAME_VISION.md](../GAME_VISION.md)
-**For the full master GDD**: See [../GDD-master.md](../GDD-master.md)
+| File | Domain | Notes |
+| --- | --- | --- |
+| [overview.md](./overview.md) | Identity and core loop | High-level system overview |
+| [eras.md](./eras.md) | Historical campaign structure | 1917-1991 era pacing |
+| [economy.md](./economy.md) | Planned economy and quotas | Food, materials, heat, storage, deliveries |
+| [workers.md](./workers.md) | Worker roles and labor behavior | Self-organization and morale |
+| [demographics.md](./demographics.md) | Population model | Dvory, aging, births, deaths |
+| [political.md](./political.md) | Party, KGB, military, reporting | Political survival systems |
+| [scoring.md](./scoring.md) | Consequences and campaign scoring | Completion and summary logic |
+| [ui-ux.md](./ui-ux.md) | HUD, panels, flow, presentation | Player-facing interface |
+| [minigames.md](./minigames.md) | Crisis and event interaction patterns | Auxiliary playable surfaces |
+| [dialog-bible.md](./dialog-bible.md) | Voice and writing guide | Advisor and institutional tone |
 
-### Domain Index
+## Supporting Design Docs
 
-| File | Domain | Status |
-|------|--------|--------|
-| [overview.md](overview.md) | Game identity, core fantasy, core loop, settlement evolution | **Complete** |
-| [economy.md](economy.md) | Planned economy: trudodni, fondy, blat, compulsory deliveries, production formulas, heating, storage | **Complete** |
-| [workers.md](workers.md) | Worker roles, lifecycle, morale/loyalty/skill, autonomous collective, population dynamics | **Complete** |
-| [demographics.md](demographics.md) | Dvor (household) system, family structures, gendered labor, birth/death | **Draft** |
-| [political.md](political.md) | Politruks, KGB, military, personnel file, black marks, pripiski | **Complete** |
-| [eras.md](eras.md) | 1917-1991 era campaigns, transitions, doctrine integration, completion/failure | **Complete** |
-| [map-terrain.md](map-terrain.md) | Procedural generation, camera, terrain types | **Complete** |
-| [ui-ux.md](ui-ux.md) | Mobile-first brutalist design, panels, gestures, notifications | **Complete** |
-| [minigames.md](minigames.md) | 8 building/tile-triggered minigames | **Complete** |
-| [scoring.md](scoring.md) | Scoring, difficulty, permadeath, consequences | **Complete** |
-| buildings.md | Construction flow, unlock progression, categories by era | Pending |
-| audio.md | Music, SFX, era-specific audio | Pending |
+| File | Purpose |
+| --- | --- |
+| [ecs-architecture.md](./ecs-architecture.md) | ECS model and technical design notes |
+| [era-doctrines.md](./era-doctrines.md) | Historical modifier sets |
+| [leader-archetypes.md](./leader-archetypes.md) | Leader personality design |
+| [leadership-architecture.md](./leadership-architecture.md) | Political systems structure |
+| [power-transitions.md](./power-transitions.md) | Succession mechanics |
 
-### Deep Architecture & Reference Docs
+## Scope Guardrail
 
-Documents that complement the domain docs above:
-
-- `ecs-architecture.md` — Miniplex 2.0 ECS specification
-- `leadership-architecture.md` — Political ECS components, modifier pipeline
-- `era-doctrines.md` — historical policy modifier sets
-- `leader-archetypes.md` — 11 procedural leader personalities
-- `power-transitions.md` — 7 succession mechanics
-- `dialog-bible.md` — Complete in-game voice guide
-- [`politburo-system.md`](../reference/politburo-system.md) — Ministry simulation engine
-- [`pravda-system.md`](../reference/pravda-system.md) — Procedural headline generator
-- [`world-building.md`](../reference/world-building.md) — Timeline events, achievements, flavor
-
-### Design Principles
-
-1. **Historical authenticity first** — Research how the real Soviet system worked, then gamify it
-2. **The system is the enemy** — No external threats, only the apparatus
-3. **Comfortable mediocrity** — The optimal strategy is being unremarkable
-4. **Top-down pressure** — The player never chooses what to build, only where to survive mandates
-5. **Workers, not buildings** — People are the central resource
-6. **Autonomous collective** — Workers self-organize; the player sets priorities and intervenes in crisis
-7. **Satirical tone** — All user-facing text maintains dark comedy
+These docs describe the shipped historical game. Removed future scope may appear
+in archives or devlogs, but not as active product direction.
