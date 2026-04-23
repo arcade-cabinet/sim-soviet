@@ -184,9 +184,15 @@ const GhostPreview: React.FC = () => {
     };
     const onPointerLeave = () => {
       pointerOverCanvas.current = false;
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+      longPressFired.current = false;
       setCursorTooltip(null);
     };
     canvas.addEventListener('pointerenter', onPointerEnter);
+    canvas.addEventListener('pointermove', onPointerEnter, { once: true });
     canvas.addEventListener('pointerleave', onPointerLeave);
 
     const preventContextMenu = (e: Event) => e.preventDefault();
@@ -281,6 +287,7 @@ const GhostPreview: React.FC = () => {
 
     return () => {
       canvas.removeEventListener('pointerenter', onPointerEnter);
+      canvas.removeEventListener('pointermove', onPointerEnter);
       canvas.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('contextmenu', preventContextMenu);
       canvas.removeEventListener('mousedown', onMouseDown);

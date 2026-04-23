@@ -29,6 +29,12 @@ const TERRAIN_LABELS: Record<string, string> = {
   tree: 'FOREST',
   forest: 'FOREST',
   grass: 'GRASSLAND',
+  mountain: 'MOUNTAIN',
+  marsh: 'MARSHLAND',
+  rail: 'RAILWAY',
+  crater: 'CRATER',
+  irradiated: 'IRRADIATED ZONE',
+  path: 'PATHWAY',
   dirt: 'BARE EARTH',
   rock: 'ROCKY',
   water: 'WATER',
@@ -43,7 +49,11 @@ const TERRAIN_LABELS: Record<string, string> = {
   ruins: 'RUINS',
 };
 
-/** Returns the player-facing terrain label, falling back to the raw ID in upper case. */
+/**
+ * Returns the player-facing terrain label, falling back to the raw ID in upper case.
+ * @param terrain - Internal terrain identifier from tooltip state.
+ * @returns Player-readable label from TERRAIN_LABELS, or uppercased raw ID if unmapped.
+ */
 function terrainLabel(terrain: string): string {
   return TERRAIN_LABELS[terrain.toLowerCase()] ?? terrain.toUpperCase();
 }
@@ -75,7 +85,7 @@ export const CursorTooltip: React.FC<CursorTooltipProps> = ({ visible, tileData,
   const status = statusInfo(tileData);
   const warning = tileWarning(tileData);
   const displayName =
-    tileData.type && tileData.type !== 'empty' ? tileData.type.toUpperCase() : tileData.terrain.toUpperCase();
+    tileData.type && tileData.type !== 'empty' ? tileData.type.toUpperCase() : terrainLabel(tileData.terrain);
 
   return (
     <View style={[styles.container, { left: position.x + 16, top: position.y + 16 }]}>
