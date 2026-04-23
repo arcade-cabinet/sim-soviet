@@ -299,11 +299,15 @@ const styles = StyleSheet.create({
     borderLeftColor: '#ff8a80',
     borderBottomColor: Colors.sovietDarkRed,
     borderRightColor: Colors.sovietDarkRed,
-    shadowColor: Colors.sovietRed,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 4px 12px rgba(198, 40, 40, 0.4)' }
+      : {
+          shadowColor: Colors.sovietRed,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.4,
+          shadowRadius: 12,
+          elevation: 8,
+        }),
   },
   btnStartText: {
     color: Colors.white,

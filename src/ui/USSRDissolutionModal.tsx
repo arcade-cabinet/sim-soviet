@@ -9,7 +9,7 @@
  */
 
 import type React from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface USSRDissolutionModalProps {
@@ -77,10 +77,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.sovietRed,
     padding: 24,
-    shadowColor: Colors.sovietRed,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 0 20px rgba(198, 40, 40, 0.5)' }
+      : {
+          shadowColor: Colors.sovietRed,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.5,
+          shadowRadius: 20,
+        }),
   },
   headerRow: {
     flexDirection: 'row',

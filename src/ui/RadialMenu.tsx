@@ -7,7 +7,7 @@
 
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
 import { getMinigameNameForBuilding } from '../ai/agents/meta/minigames/BuildingMinigameMap';
 import { getUpgradeInfo, isUpgradeable, upgradeECSBuilding } from '../bridge/BuildingPlacement';
@@ -455,16 +455,21 @@ export const RadialMenu: React.FC = () => {
       scaleAnim.setValue(0);
       opacityAnim.setValue(0);
       Animated.parallel([
-        Animated.spring(scaleAnim, { toValue: 1, stiffness: 500, damping: 30, useNativeDriver: true }),
-        Animated.timing(opacityAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+        Animated.spring(scaleAnim, { toValue: 1, stiffness: 500, damping: 30, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(opacityAnim, { toValue: 1, duration: 150, useNativeDriver: Platform.OS !== 'web' }),
       ]).start();
     }
   }, [menu, scaleAnim, opacityAnim]);
 
   const handleClose = useCallback(() => {
     Animated.parallel([
-      Animated.timing(scaleAnim, { toValue: 0, duration: 150, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-      Animated.timing(opacityAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
+      Animated.timing(scaleAnim, {
+        toValue: 0,
+        duration: 150,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+      Animated.timing(opacityAnim, { toValue: 0, duration: 150, useNativeDriver: Platform.OS !== 'web' }),
     ]).start(() => {
       closeInspectMenu();
     });

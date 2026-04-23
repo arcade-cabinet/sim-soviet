@@ -5,7 +5,7 @@
 
 import type React from 'react';
 import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface IntroModalProps {
@@ -29,7 +29,7 @@ export const IntroModal: React.FC<IntroModalProps> = ({ visible, onDismiss }) =>
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 600,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
     } else {
       fadeAnim.setValue(0);
@@ -111,11 +111,15 @@ const styles = StyleSheet.create({
     borderLeftColor: Colors.white,
     borderBottomColor: '#90a4ae',
     borderRightColor: '#90a4ae',
-    shadowColor: Colors.black,
-    shadowOffset: { width: 15, height: 15 },
-    shadowOpacity: 0.5,
-    shadowRadius: 0,
-    elevation: 20,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '15px 15px 0 rgba(0, 0, 0, 0.5)' }
+      : {
+          shadowColor: Colors.black,
+          shadowOffset: { width: 15, height: 15 },
+          shadowOpacity: 0.5,
+          shadowRadius: 0,
+          elevation: 20,
+        }),
   },
   headerRow: {
     flexDirection: 'row',
@@ -192,11 +196,15 @@ const styles = StyleSheet.create({
     borderLeftColor: '#ff8a80',
     borderBottomColor: Colors.sovietDarkRed,
     borderRightColor: Colors.sovietDarkRed,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 0,
-    elevation: 8,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '4px 4px 0 rgba(0, 0, 0, 0.5)' }
+      : {
+          shadowColor: Colors.black,
+          shadowOffset: { width: 4, height: 4 },
+          shadowOpacity: 0.5,
+          shadowRadius: 0,
+          elevation: 8,
+        }),
   },
   ctaText: {
     color: Colors.white,

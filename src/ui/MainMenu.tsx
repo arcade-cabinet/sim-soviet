@@ -33,12 +33,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onContinue, hasSa
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 650,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(titleSlide, {
         toValue: 0,
         duration: 520,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     ]).start();
   }, [fadeAnim, titleSlide]);
@@ -228,10 +228,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,247,231,0.34)',
     paddingHorizontal: 22,
     paddingVertical: 12,
-    shadowColor: BrandColors.red,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.34,
-    shadowRadius: 22,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 10px 22px rgba(220, 38, 38, 0.34)' }
+      : {
+          shadowColor: BrandColors.red,
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.34,
+          shadowRadius: 22,
+        }),
   },
   buttonMeta: {
     color: BrandColors.paper,

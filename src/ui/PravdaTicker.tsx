@@ -8,7 +8,7 @@
 
 import type React from 'react';
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 const MAX_HEADLINES = 5;
@@ -45,7 +45,7 @@ export const PravdaTicker: React.FC<PravdaTickerProps> = ({ headlines, year, vis
       Animated.timing(scrollX, {
         toValue: -tickerText.length * 7,
         duration,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     );
 

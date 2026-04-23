@@ -8,7 +8,7 @@
 
 import type React from 'react';
 import { useEffect, useRef } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface SovietModalProps {
@@ -44,7 +44,7 @@ export const SovietModal: React.FC<SovietModalProps> = ({
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 400,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
     } else {
       fadeAnim.setValue(0);
@@ -114,11 +114,15 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     padding: 24,
     borderWidth: 2,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 10, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 0,
-    elevation: 20,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '10px 10px 0 rgba(0, 0, 0, 0.5)' }
+      : {
+          shadowColor: Colors.black,
+          shadowOffset: { width: 10, height: 10 },
+          shadowOpacity: 0.5,
+          shadowRadius: 0,
+          elevation: 20,
+        }),
   },
   parchment: {
     backgroundColor: '#cfd8dc',

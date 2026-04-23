@@ -11,7 +11,7 @@
 
 import type React from 'react';
 import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 import type {
   CurrencyReform,
   DifficultyLevel,
@@ -125,12 +125,12 @@ const FailingWarning: React.FC = () => {
         Animated.timing(blinkAnim, {
           toValue: 0.2,
           duration: 500,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(blinkAnim, {
           toValue: 1,
           duration: 500,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]),
     );
