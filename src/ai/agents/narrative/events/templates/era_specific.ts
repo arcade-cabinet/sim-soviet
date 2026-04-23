@@ -185,7 +185,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     weight: 1.0,
   },
 
-  // ── THE THAW (1953-1964) ───────────────────────────────
+  // ── THE THAW & FREEZE (1956-1982) ─────────────────────
 
   {
     id: 'private_gardens_allowed',
@@ -228,6 +228,115 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     effects: { food: -15, pop: -2 },
     eraFilter: ['thaw_and_freeze'],
     weight: 0.8,
+  },
+  {
+    id: 'sputnik_mania',
+    title: 'SPUTNIK FEVER',
+    description:
+      'A metal ball has been launched into space. It beeps. This proves the superiority of ' +
+      'scientific socialism beyond all possible dispute. Citizens are instructed to look up ' +
+      'at the night sky and feel pride. Several injure their necks. The ball continues to beep.',
+    pravdaHeadline: 'SOCIALIST SCIENCE CONQUERS THE COSMOS, BEEPING CONTINUES',
+    category: 'cultural',
+    severity: 'minor',
+    effects: { pop: 3, money: 10 },
+    condition: (gs) => gs.date.year >= 1957 && gs.date.year <= 1962,
+    eraFilter: ['thaw_and_freeze'],
+    weight: 1.8,
+  },
+  {
+    id: 'khrushchev_corn_campaign',
+    title: 'CORN IS THE FUTURE',
+    description:
+      'A directive arrives: plant corn everywhere. Every field, every meadow, every rooftop. ' +
+      'The settlement is at 60 degrees latitude. Corn does not grow at 60 degrees latitude. ' +
+      'This information is not welcomed. The corn is planted. The corn does not grow.',
+    pravdaHeadline: "LEADER'S VISIONARY GRAIN INITIATIVE LAUNCHES WITH GREAT ENTHUSIASM",
+    category: 'political',
+    severity: 'major',
+    effects: { food: -25 },
+    condition: (gs) => gs.date.year >= 1958 && gs.date.year <= 1964,
+    eraFilter: ['thaw_and_freeze'],
+    weight: 1.4,
+  },
+  {
+    id: 'cuban_missile_tension',
+    title: 'THIRTEEN DAYS OF PAPERWORK',
+    description:
+      'A global crisis is occurring. The details are classified. Citizens have been advised to ' +
+      'remain calm and to review their civil defense plans, which nobody received. ' +
+      'Vodka rations are raised by 10% as a precautionary measure. This helps.',
+    pravdaHeadline: 'IMPERIALIST PROVOCATION FIRMLY REBUFFED BY PEACE-LOVING PEOPLES',
+    category: 'political',
+    severity: 'major',
+    effects: { vodka: -15, pop: -1 },
+    condition: (gs) => gs.date.year >= 1962 && gs.date.year <= 1963,
+    eraFilter: ['thaw_and_freeze'],
+    weight: 2.0,
+  },
+  {
+    id: 'prague_spring_crackdown',
+    title: 'FRATERNAL ASSISTANCE ARRIVES',
+    description:
+      'Tanks from fraternal socialist nations have corrected a temporary misunderstanding in a ' +
+      'neighboring country. The local party secretary reads the report carefully. He files it ' +
+      'under "lessons learned." He has also stopped reading Czech poetry at lunch.',
+    pravdaHeadline: 'SOCIALIST SOLIDARITY PREVAILS; COUNTERREVOLUTION DECISIVELY RESOLVED',
+    category: 'political',
+    severity: 'major',
+    effects: { pop: -2, vodka: -5 },
+    condition: (gs) => gs.date.year >= 1968 && gs.date.year <= 1970,
+    eraFilter: ['thaw_and_freeze'],
+    weight: 1.6,
+  },
+  {
+    id: 'brezhnev_doctrine_memo',
+    title: 'DOCTRINE CLARIFICATION RECEIVED',
+    description:
+      'A memo arrives explaining the Brezhnev Doctrine: socialist states that deviate will ' +
+      'receive fraternal correction. The settlement has not deviated. But the memo is noted. ' +
+      'The secretary general photograph is straightened. The corn is still not growing.',
+    pravdaHeadline: 'SETTLEMENT REAFFIRMS UNSHAKEABLE SOCIALIST UNITY',
+    category: 'political',
+    severity: 'minor',
+    effects: { money: -10 },
+    condition: (gs) => gs.date.year >= 1968 && gs.date.year <= 1975,
+    eraFilter: ['thaw_and_freeze'],
+    weight: 1.0,
+  },
+  {
+    id: 'detente_trade_rumor',
+    title: 'GRAIN DEAL WHISPER',
+    description:
+      'Rumor circulates: a trade deal with the Americans for wheat. Citizens debate whether ' +
+      'this is ideological surrender or simply hunger. The wheat, if it arrives, does not care ' +
+      'about ideology. Neither do the people eating it. The rumor is 40% accurate.',
+    pravdaHeadline: 'SOCIALIST TRADE INITIATIVE DEMONSTRATES CONFIDENCE OF PLANNED ECONOMY',
+    category: 'economic',
+    severity: 'minor',
+    effects: (gs) => ({ food: Math.floor(gs.pop * 0.15) }),
+    condition: (gs) => gs.date.year >= 1972 && gs.date.year <= 1979,
+    eraFilter: ['thaw_and_freeze'],
+    weight: 1.2,
+  },
+  {
+    id: 'afghan_draft_lottery',
+    title: 'LIMITED MILITARY ASSISTANCE VOLUNTEERS',
+    description:
+      'The settlement must provide two "volunteers" for a limited operation in Afghanistan. ' +
+      'The volunteers are identified through a process described as a lottery. ' +
+      'The lottery results were known before the lottery was held. ' +
+      'The volunteers have been informed of this honor.',
+    pravdaHeadline: 'HEROIC VOLUNTEERS ASSIST FRATERNAL AFGHAN PEOPLE',
+    category: 'political',
+    severity: 'catastrophic',
+    effects: (gs) => ({
+      pop: -Math.min(3, Math.floor(gs.pop * 0.02)),
+      vodka: -10,
+    }),
+    condition: (gs) => gs.date.year >= 1979 && gs.date.year <= 1982,
+    eraFilter: ['thaw_and_freeze'],
+    weight: 1.8,
   },
 
   // ── STAGNATION (1964-1985) ─────────────────────────────
