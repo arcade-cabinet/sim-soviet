@@ -1543,7 +1543,6 @@ export class PoliticalAgent extends Vehicle {
         return;
       }
     }
-
   }
 
   // =========================================================================

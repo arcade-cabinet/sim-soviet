@@ -161,13 +161,7 @@
         "money": 0.5
       },
       "quotaEscalation": 1.3,
-      "unlockedBuildings": [
-        "factory-office",
-        "rail-depot",
-        "vodka-distillery",
-        "radio-station",
-        "gulag-admin"
-      ],
+      "unlockedBuildings": ["factory-office", "rail-depot", "vodka-distillery", "radio-station", "gulag-admin"],
       "modifiers": {
         "productionMult": 1.2,
         "consumptionMult": 1.0,
@@ -237,12 +231,7 @@
         "money": 0.3
       },
       "quotaEscalation": 1.2,
-      "unlockedBuildings": [
-        "apartment-tower-a",
-        "ministry-office",
-        "train-station",
-        "motor-pool"
-      ],
+      "unlockedBuildings": ["apartment-tower-a", "ministry-office", "train-station", "motor-pool"],
       "modifiers": {
         "productionMult": 1.0,
         "consumptionMult": 0.9,
@@ -269,11 +258,7 @@
         "money": 0.25
       },
       "quotaEscalation": 1.1,
-      "unlockedBuildings": [
-        "apartment-tower-b",
-        "apartment-tower-c",
-        "polyclinic"
-      ],
+      "unlockedBuildings": ["apartment-tower-b", "apartment-tower-c", "polyclinic"],
       "modifiers": {
         "productionMult": 1.3,
         "consumptionMult": 0.8,
@@ -300,9 +285,7 @@
         "money": 0.4
       },
       "quotaEscalation": 1.05,
-      "unlockedBuildings": [
-        "apartment-tower-d"
-      ],
+      "unlockedBuildings": ["apartment-tower-d"],
       "modifiers": {
         "productionMult": 1.0,
         "consumptionMult": 0.95,
