@@ -3,7 +3,7 @@
  * (izba, tenement, apartment-tower, khrushchyovka, etc.).
  */
 
-import React from 'react';
+import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { BuildingDef } from '../../data/buildingDefs';
 import { citizens } from '../../ecs/archetypes';
@@ -17,7 +17,7 @@ interface Props {
   gridZ: number;
 }
 
-export const HousingContent: React.FC<Props> = ({ def, building, gridX, gridZ }) => {
+export const HousingContent: React.FC<Props> = ({ building, gridX, gridZ }) => {
   // Count residents assigned to this housing
   const residents = citizens.entities.filter(
     (c) => c.citizen.home && c.citizen.home.gridX === gridX && c.citizen.home.gridY === gridZ,
@@ -44,7 +44,9 @@ export const HousingContent: React.FC<Props> = ({ def, building, gridX, gridZ })
       <Row
         label="MORALE"
         value={`${avgMorale ?? 0}%`}
-        valueColor={(avgMorale ?? 0) > 60 ? Colors.termGreen : (avgMorale ?? 0) > 30 ? Colors.sovietGold : Colors.sovietRed}
+        valueColor={
+          (avgMorale ?? 0) > 60 ? Colors.termGreen : (avgMorale ?? 0) > 30 ? Colors.sovietGold : Colors.sovietRed
+        }
       />
 
       <Row

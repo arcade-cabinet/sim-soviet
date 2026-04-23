@@ -18,9 +18,9 @@ import { Suspense, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
 import { BUILDING_TYPES, GROWN_TYPES } from '../engine/BuildingTypes';
+import type { Season } from '../engine/WeatherSystem';
 import { getModelName, getTierVariant } from './ModelMapping';
 import { getModelUrl } from './ModelPreloader';
-import type { Season } from './TerrainGrid';
 import {
   applyConstructionState,
   applyFireTint,
@@ -45,10 +45,12 @@ export interface BuildingState {
   constructionPhase?: 'foundation' | 'building' | 'complete';
   /** Construction progress 0.0–1.0 (undefined means complete) */
   constructionProgress?: number;
-  /** Housing capacity — used for brutalist scaling (aggregate mode mega-blocks) */
+  /** Housing capacity used for grounded visual massing. */
   housingCap?: number;
-  /** Worker count — used for brutalist scaling (aggregate mode factories) */
+  /** Worker count used for grounded visual massing. */
   workerCount?: number;
+  /** Building durability 0–100 (undefined = no decay component, treat as 100) */
+  durability?: number;
 }
 
 interface BuildingRendererProps {
@@ -57,17 +59,20 @@ interface BuildingRendererProps {
   settlementTier?: SettlementTier;
   /** Current season — drives seasonal color tinting */
   season?: Season;
+  /** Current era — drives era-specific model set selection */
+  currentEra?: string;
+  /** When true, buildings show foundation subsidence tilt (permafrost collapse). */
+  subsidenceTilt?: boolean;
 }
 
-// ── Brutalist Scaling ───────────────────────────────────────────────────────
+// ── Capacity-Based Visual Massing ───────────────────────────────────────────
 
 /**
- * Compute brutalist capacity-based scale multiplier.
- * Mega-blocks use the SAME GLB model — just bigger. Same depressing geometry.
+ * Compute a conservative capacity-based scale multiplier.
  *
- * Returns 1.0 for normal buildings, up to ~8.0 for arcology-scale structures.
+ * Returns 1.0 for normal buildings, with a modest cap for larger civic structures.
  */
-function getBrutalistScale(buildingType: string, housingCap?: number, workerCount?: number): number {
+function getCapacityScale(buildingType: string, housingCap?: number, workerCount?: number): number {
   let baseCap = 10;
   const grownKey =
     buildingType.includes('house') || buildingType.includes('apartment') || buildingType.includes('khrushch')
@@ -90,7 +95,7 @@ function getBrutalistScale(buildingType: string, housingCap?: number, workerCoun
   if (actualCap <= baseCap) return 1.0;
 
   const scaleTier = Math.max(1, Math.log2(actualCap / baseCap) + 1);
-  return 1 + (scaleTier - 1) * 0.5;
+  return Math.min(1.75, 1 + (scaleTier - 1) * 0.35);
 }
 
 // ── Construction Building (Clone-based) ─────────────────────────────────────
@@ -121,8 +126,8 @@ const ConstructionMesh: React.FC<ConstructionMeshProps> = ({ building, modelUrl,
 
     if (maxFootprint > 0) {
       const tileScale = 0.85 / maxFootprint;
-      const brutalist = getBrutalistScale(building.type, building.housingCap, building.workerCount);
-      const scale = tileScale * brutalist;
+      const capacityScale = getCapacityScale(building.type, building.housingCap, building.workerCount);
+      const scale = tileScale * capacityScale;
       group.scale.setScalar(scale);
 
       const scaledBox = new THREE.Box3().setFromObject(group);
@@ -232,10 +237,17 @@ function computeTileFitScale(scene: THREE.Group): { tileScale: number; yOffsetBa
 }
 
 /**
- * Compute per-instance color combining tier tint, season tint, and powered state.
+ * Compute per-instance color combining tier tint, season tint, powered state,
+ * fire state, and durability health.
  * This is multiplied with the base material color via InstancedMesh.instanceColor.
  */
-function computeInstanceColor(tier: SettlementTier, season: Season, powered: boolean, onFire: boolean): THREE.Color {
+export function computeInstanceColor(
+  tier: SettlementTier,
+  season: Season,
+  powered: boolean,
+  onFire: boolean,
+  durability?: number,
+): THREE.Color {
   const tierTint = TIER_TINTS[tier];
   const seasonTint = SEASON_TINTS[season];
 
@@ -244,6 +256,19 @@ function computeInstanceColor(tier: SettlementTier, season: Season, powered: boo
   const b = tierTint.colorFactor[2] * seasonTint[2];
 
   const color = new THREE.Color(r, g, b);
+
+  // Health-based tinting: below 60% durability, shift toward desaturated brown
+  if (durability != null && durability < 60) {
+    // t = 0 at 60 durability, t = 1 at 0 durability
+    const t = 1 - durability / 60;
+    // Desaturated brownish target (crumbling concrete)
+    const decayR = 0.55;
+    const decayG = 0.45;
+    const decayB = 0.35;
+    color.r = color.r + (decayR - color.r) * t * 0.6;
+    color.g = color.g + (decayG - color.g) * t * 0.6;
+    color.b = color.b + (decayB - color.b) * t * 0.6;
+  }
 
   // Unpowered buildings dim to 40%
   if (!powered) {
@@ -267,13 +292,21 @@ interface InstancedModelGroupProps {
   buildings: BuildingState[];
   settlementTier: SettlementTier;
   season: Season;
+  /** When true, apply random foundation tilt per building (permafrost subsidence). */
+  subsidenceTilt?: boolean;
 }
 
 /**
  * Renders all buildings sharing a single model URL as InstancedMesh batches.
  * One InstancedMesh per child mesh in the GLB.
  */
-const InstancedModelGroup: React.FC<InstancedModelGroupProps> = ({ modelUrl, buildings, settlementTier, season }) => {
+const InstancedModelGroup: React.FC<InstancedModelGroupProps> = ({
+  modelUrl,
+  buildings,
+  settlementTier,
+  season,
+  subsidenceTilt,
+}) => {
   const { scene } = useGLTF(modelUrl);
   const groupRef = useRef<THREE.Group>(null);
   const instancedMeshRefs = useRef<THREE.InstancedMesh[]>([]);
@@ -320,28 +353,40 @@ const InstancedModelGroup: React.FC<InstancedModelGroupProps> = ({ modelUrl, bui
       // Pre-compute instance transforms and colors
       const tempMatrix = new THREE.Matrix4();
       const tempColor = new THREE.Color();
+      const tiltMatrix = new THREE.Matrix4();
+      const tiltEuler = new THREE.Euler();
 
       for (let i = 0; i < count; i++) {
         const bldg = buildings[i];
-        const brutalist = getBrutalistScale(bldg.type, bldg.housingCap, bldg.workerCount);
-        const scale = tileScale * brutalist;
+        const capacityScale = getCapacityScale(bldg.type, bldg.housingCap, bldg.workerCount);
+        const scale = tileScale * capacityScale;
 
         // Build instance matrix: localMeshTransform * (scale + position)
         // 1. Start with the mesh's local transform within the GLB
         tempMatrix.copy(info.localMatrix);
         // 2. Apply uniform scale
         tempMatrix.scale(new THREE.Vector3(scale, scale, scale));
-        // 3. Set position: grid center + elevation + yOffset (scaled by brutalist)
-        const yOffset = yOffsetBase * brutalist;
+        // 3. Set position: grid center + elevation + yOffset (scaled by visual mass)
+        const yOffset = yOffsetBase * capacityScale;
         const posX = bldg.gridX + 0.5;
         const posY = bldg.elevation * 0.5 + yOffset;
         const posZ = bldg.gridY + 0.5;
         tempMatrix.setPosition(posX, posY, posZ);
 
+        // 4. Apply subsidence tilt if permafrost collapse is active (max 5 degrees)
+        if (subsidenceTilt) {
+          const tiltSeed = (bldg.gridX * 7919 + bldg.gridY * 104729) & 0xffff;
+          const tiltX = (tiltSeed / 0xffff - 0.5) * 0.174; // +-5 degrees
+          const tiltZ = (((tiltSeed * 31) & 0xffff) / 0xffff - 0.5) * 0.174;
+          tiltEuler.set(tiltX, 0, tiltZ);
+          tiltMatrix.makeRotationFromEuler(tiltEuler);
+          tempMatrix.multiply(tiltMatrix);
+        }
+
         im.setMatrixAt(i, tempMatrix);
 
         // Compute per-instance color
-        tempColor.copy(computeInstanceColor(settlementTier, season, bldg.powered, bldg.onFire));
+        tempColor.copy(computeInstanceColor(settlementTier, season, bldg.powered, bldg.onFire, bldg.durability));
         im.setColorAt(i, tempColor);
       }
 
@@ -359,7 +404,7 @@ const InstancedModelGroup: React.FC<InstancedModelGroupProps> = ({ modelUrl, bui
       }
       instancedMeshRefs.current = [];
     };
-  }, [meshInfos, buildings, settlementTier, season, tileScale, yOffsetBase]);
+  }, [meshInfos, buildings, settlementTier, season, tileScale, yOffsetBase, subsidenceTilt]);
 
   return <group ref={groupRef} />;
 };
@@ -371,6 +416,8 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({
   buildings,
   settlementTier = 'selo',
   season = 'summer',
+  currentEra,
+  subsidenceTilt,
 }) => {
   // Partition buildings into constructing vs operational
   const { constructing, operationalByModel } = useMemo(() => {
@@ -386,8 +433,8 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({
         continue;
       }
 
-      // Resolve model URL
-      const baseModel = getModelName(building.type, building.level) ?? building.type;
+      // Resolve model URL (era override → tier variant → base)
+      const baseModel = getModelName(building.type, building.level, currentEra) ?? building.type;
       if (!baseModel) continue;
       const modelName = getTierVariant(baseModel, settlementTier);
       const modelUrl = getModelUrl(modelName);
@@ -405,7 +452,7 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({
       constructing: constructingList,
       operationalByModel: Array.from(modelGroups.values()),
     };
-  }, [buildings, settlementTier]);
+  }, [buildings, settlementTier, currentEra]);
 
   return (
     <group>
@@ -417,13 +464,14 @@ const BuildingRenderer: React.FC<BuildingRendererProps> = ({
             buildings={group.buildings}
             settlementTier={settlementTier}
             season={season}
+            subsidenceTilt={subsidenceTilt}
           />
         </Suspense>
       ))}
 
       {/* Constructing buildings — individual Clone components for transparency effects */}
       {constructing.map((building) => {
-        const baseModel = getModelName(building.type, building.level) ?? building.type;
+        const baseModel = getModelName(building.type, building.level, currentEra) ?? building.type;
         if (!baseModel) return null;
         const modelName = getTierVariant(baseModel, settlementTier);
         const modelUrl = getModelUrl(modelName);

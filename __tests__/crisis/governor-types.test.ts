@@ -194,12 +194,10 @@ describe('GovernorDirective', () => {
 // ─── GovernorMode ──────────────────────────────────────────────────────────
 
 describe('GovernorMode', () => {
-  it('accepts all three modes', () => {
-    const modes: GovernorMode[] = ['historical', 'freeform', 'classic'];
-    expect(modes).toHaveLength(3);
+  it('accepts only historical mode', () => {
+    const modes: GovernorMode[] = ['historical'];
+    expect(modes).toHaveLength(1);
     expect(modes).toContain('historical');
-    expect(modes).toContain('freeform');
-    expect(modes).toContain('classic');
   });
 });
 
@@ -217,19 +215,18 @@ describe('GovernorSaveData', () => {
     expect(save.state).toEqual({});
   });
 
-  it('supports arbitrary state for subclass data', () => {
+  it('supports arbitrary historical state for subclass data', () => {
     const save: GovernorSaveData = {
-      mode: 'freeform',
+      mode: 'historical',
       activeCrises: [],
-      state: { divergenceYear: 1953, branchId: 'khrushchev-falls' },
+      state: { campaignComplete: true },
     };
-    expect(save.state.divergenceYear).toBe(1953);
-    expect(save.state.branchId).toBe('khrushchev-falls');
+    expect(save.state.campaignComplete).toBe(true);
   });
 
   it('round-trips through JSON serialization', () => {
     const original: GovernorSaveData = {
-      mode: 'classic',
+      mode: 'historical',
       activeCrises: ['famine-1932', 'purge-1937'],
       state: { yearsElapsed: 20 },
     };
@@ -251,7 +248,7 @@ describe('IGovernor', () => {
       getActiveCrises: jest.fn().mockReturnValue([]),
       onYearBoundary: jest.fn(),
       serialize: jest.fn().mockReturnValue({
-        mode: 'classic',
+        mode: 'historical',
         activeCrises: [],
         state: {},
       } satisfies GovernorSaveData),
@@ -269,7 +266,7 @@ describe('IGovernor', () => {
     expect(mockGovernor.onYearBoundary).toHaveBeenCalledWith(1931);
 
     const saved = mockGovernor.serialize();
-    expect(saved.mode).toBe('classic');
+    expect(saved.mode).toBe('historical');
 
     mockGovernor.restore(saved);
     expect(mockGovernor.restore).toHaveBeenCalledWith(saved);

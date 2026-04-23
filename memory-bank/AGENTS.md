@@ -1,34 +1,49 @@
-# Memory Bank — Agent Navigation
+# Memory Bank - Agent Navigation
 
-> Cline-style memory bank adapted for multi-agent development on SimSoviet 1917.
-
-## Purpose
-
-The memory bank provides persistent project context so agents never start from zero. Instead of reading the entire codebase, agents read these files to understand the project's identity, architecture, patterns, and current state.
+Persistent project context for SimSoviet 1917. Read these files before making
+non-trivial changes so the reduced 1.0 scope stays coherent.
 
 ## Reading Order
 
-**Always read in this order:**
+1. `projectbrief.md` - product identity and scope
+2. `productContext.md` - player experience and system intent
+3. `techContext.md` - stack, commands, and build notes
+4. `systemPatterns.md` - architecture and coding patterns
+5. `activeContext.md` - current work focus
+6. `progress.md` - implemented surface and open work
 
-1. **`projectbrief.md`** — What is this project? (2 min)
-2. **`productContext.md`** — Why does it exist? What does the player experience? (3 min)
-3. **`techContext.md`** — Tech stack, architecture, build pipeline, gotchas (5 min)
-4. **`systemPatterns.md`** — Code patterns, ECS conventions, system design (5 min)
-5. **`activeContext.md`** — What's happening right now? (2 min)
-6. **`progress.md`** — What's done, in progress, and planned? (2 min)
+## 1.0 Scope
 
-## Rules
+SimSoviet 1917 is a historical Soviet bureaucrat survival sim. The 1.0 campaign
+runs from 1917 through the 1991 dissolution endpoint. After the campaign
+summary, the same settlement may continue in grounded post-campaign free play.
 
-1. **Read `AGENTS.md` first** before any other memory-bank file
-2. **Update `activeContext.md`** after significant development work
-3. **Update `progress.md`** when features are completed or new work begins
-4. **Don't duplicate CLAUDE.md** — memory bank provides context, CLAUDE.md provides operational instructions
-5. **Keep files concise** — these are reference docs, not narratives
+Keep:
+- Historical settlement simulation and autonomous organic growth.
+- Historical eras, quotas, inspections, food, industry, power, transport,
+  politics, KGB, demographics, narrative, and classical pressure domains.
+- The 1991 completion state and conservative same-settlement continuation.
 
-## Coordination
+Remove from 1.0:
+- Deep-future eras, space expansion, per-world timelines, and Kardashev stages.
+- Multi-settlement relocation, celestial rendering, arcologies, and global
+  expansion layers.
+- Post-scarcity pressure domains and freeform chaos modes.
 
-When multiple agents work on the project:
-- Each agent reads the memory bank before starting work
-- The lead agent updates `activeContext.md` when the development focus changes
-- Agents update `progress.md` when completing significant features
-- Conflicting updates should be resolved by the lead agent
+## Current Key Systems
+
+| System | Location | Purpose |
+|--------|----------|---------|
+| Simulation tick | `src/game/SimulationEngine.ts`, `src/game/engine/` | Historical campaign orchestration and serialization |
+| Era data | `src/game/era/`, `src/config/eras.json` | Seven historical eras ending in 1991 |
+| Pressure-valve crisis | `src/ai/agents/crisis/pressure/` | Classical pressure accumulation and crisis emergence |
+| World backdrop | `src/ai/agents/core/WorldAgent.ts` | Grounded geopolitical pressure and Moscow scrutiny |
+| Organic growth | `src/growth/` | Demand, site selection, pacing, and HQ splitting |
+| Building panels | `src/ui/BuildingPanelContent/`, `src/ui/hq-tabs/` | Buildings-as-UI interaction surface |
+| Historical completion | `src/ui/USSRDissolutionModal.tsx`, `src/game/engine/phaseChronology.ts` | One-shot 1991 campaign completion and continuation |
+
+## Coordination Rules
+
+- Update `activeContext.md` when the development focus changes.
+- Update `progress.md` after significant scope or feature changes.
+- Do not reintroduce removed future scope unless the product scope changes again.

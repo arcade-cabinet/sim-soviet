@@ -369,7 +369,7 @@ describe('PowerAgent', () => {
   it('update() runs distribution and returns this for chaining', () => {
     resetWorld([makeGenerator(50), makeIndustry(20)]);
     const agent = new PowerAgent();
-    const returned = agent.update(0.016);
+    const returned = agent.distributePower();
     expect(returned).toBe(agent);
     expect(agent.getTotalPower()).toBe(50);
     expect(agent.getPowerUsed()).toBe(20);

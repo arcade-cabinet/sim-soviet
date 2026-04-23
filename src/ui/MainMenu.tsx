@@ -1,16 +1,11 @@
 /**
- * MainMenu — Soviet-themed game landing page.
- *
- * Displays before the 3D engine loads. Pure React Native — no BabylonJS overhead.
- * Features: New Game, Continue Game (disabled if no save), Settings.
- *
- * Design: retro dossier aesthetic matching IntroModal, with beveled buttons
- * inspired by SimCity 3000 and Win95 panel borders.
+ * MainMenu -- production-facing landing screen for the historical campaign.
  */
 
 import React, { useEffect, useRef } from 'react';
 import { Animated, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors, monoFont } from './styles';
+import { BrandColors, BrandFonts, DesignTokens, ensureBrandFonts } from './designTokens';
+import { ShaderBackdrop } from './ShaderBackdrop';
 
 export interface MainMenuProps {
   onNewGame: () => void;
@@ -19,98 +14,111 @@ export interface MainMenuProps {
   onSettings?: () => void;
 }
 
-const PROPAGANDA_LINES = [
-  'THE PARTY PROVIDES. THE PARTY PREVAILS.',
-  'WORKERS OF THE WORLD, BUILD!',
-  'EVERY BRICK IS A STEP TOWARD UTOPIA.',
-  'GLORY TO THE CENTRAL COMMITTEE.',
-  'COMRADE, YOUR CITY AWAITS.',
+const CAMPAIGN_LINES = [
+  'A historical campaign from revolution to dissolution.',
+  'Organic settlement growth under quotas, weather, politics, scarcity, and fear.',
+  'Reach 1991, review the century, then continue grounded free play in the same settlement.',
 ];
 
-/** Soviet-themed landing page with animated title, propaganda quotes, and game start buttons. */
+const ERA_RAIL = ['1917 REVOLUTION', '1928 PLANNING', '1941 WAR', '1953 THAW', '1982 STAGNATION', '1991 DISSOLUTION'];
+
 export const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onContinue, hasSaveData = false, onSettings }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const titleSlide = useRef(new Animated.Value(-30)).current;
-  const [propagandaIdx, setPropagandaIdx] = React.useState(0);
+  const titleSlide = useRef(new Animated.Value(18)).current;
+  const [campaignLine, setCampaignLine] = React.useState(0);
 
   useEffect(() => {
+    ensureBrandFonts();
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 650,
         useNativeDriver: true,
       }),
       Animated.timing(titleSlide, {
         toValue: 0,
-        duration: 600,
+        duration: 520,
         useNativeDriver: true,
       }),
     ]).start();
   }, [fadeAnim, titleSlide]);
 
-  // Rotate propaganda lines
   useEffect(() => {
     const interval = setInterval(() => {
-      setPropagandaIdx((i) => (i + 1) % PROPAGANDA_LINES.length);
-    }, 4000);
+      setCampaignLine((i) => (i + 1) % CAMPAIGN_LINES.length);
+    }, 4600);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <Animated.View style={[styles.root, { opacity: fadeAnim }]}>
-      {/* Scanline overlay effect */}
-      <View style={styles.scanlines} />
+      <ShaderBackdrop />
+      <View pointerEvents="none" style={styles.texture} />
+      <View pointerEvents="none" style={styles.vignette} />
 
-      {/* Content container */}
-      <View style={styles.content}>
-        {/* Soviet star decoration */}
-        <Text style={styles.star}>{'\u2605'}</Text>
+      <View style={styles.frame}>
+        <View style={styles.brandRow}>
+          <Text style={styles.brandMark}>SIMSOVIET 1917</Text>
+          <Text style={styles.scopeMark}>HISTORICAL CAMPAIGN</Text>
+        </View>
 
-        {/* Title block */}
-        <Animated.View style={[styles.titleBlock, { transform: [{ translateY: titleSlide }] }]}>
-          <View style={styles.titleBorder}>
-            <Text style={styles.title}>SIMSOVIET</Text>
-            <Text style={styles.titleYear}>1 9 1 7</Text>
+        <Animated.View style={[styles.hero, { transform: [{ translateY: titleSlide }] }]}>
+          <Text style={styles.kicker}>1917-1991 / ONE SETTLEMENT / ONE CENTURY</Text>
+          <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={2} style={styles.title}>
+            Survive the Soviet Century
+          </Text>
+          <Text style={styles.copy}>
+            You are the predsedatel of a provincial settlement. The collective builds; Moscow demands results. Keep
+            people fed, industry running, power alive, factions contained, and the archives survivable.
+          </Text>
+
+          <View style={styles.actions}>
+            <TouchableOpacity
+              accessibilityLabel="New game. Begin historical campaign."
+              onPress={onNewGame}
+              style={styles.primaryButton}
+              activeOpacity={0.86}
+            >
+              <Text style={styles.buttonMeta}>NEW GAME</Text>
+              <Text adjustsFontSizeToFit minimumFontScale={0.78} numberOfLines={1} style={styles.primaryButtonText}>
+                Begin Historical Campaign
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.secondaryRow}>
+              <TouchableOpacity
+                accessibilityLabel="Continue saved campaign."
+                onPress={hasSaveData ? onContinue : undefined}
+                style={[styles.secondaryButton, !hasSaveData && styles.disabledButton]}
+                activeOpacity={hasSaveData ? 0.82 : 1}
+                disabled={!hasSaveData}
+              >
+                <Text style={[styles.secondaryButtonText, !hasSaveData && styles.disabledText]}>CONTINUE</Text>
+                {!hasSaveData && <Text style={styles.secondaryNote}>No save archive</Text>}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                accessibilityLabel="Settings."
+                onPress={onSettings}
+                style={styles.secondaryButton}
+                activeOpacity={0.82}
+              >
+                <Text style={styles.secondaryButtonText}>SETTINGS</Text>
+                <Text style={styles.secondaryNote}>Audio, display, saves</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.subtitle}>THE ARCHITECTURAL PROTOCOL</Text>
+
+          <Text style={styles.campaignLine}>{CAMPAIGN_LINES[campaignLine]}</Text>
         </Animated.View>
 
-        {/* Classified stamp */}
-        <View style={styles.stampContainer}>
-          <View style={styles.stamp}>
-            <Text style={styles.stampText}>CLASSIFIED</Text>
-          </View>
+        <View style={styles.eraRail}>
+          {ERA_RAIL.map((era) => (
+            <Text key={era} style={styles.eraRailItem}>
+              {era}
+            </Text>
+          ))}
         </View>
-
-        {/* Menu buttons */}
-        <View style={styles.menuButtons}>
-          {/* New Game — primary action */}
-          <TouchableOpacity onPress={onNewGame} style={styles.btnPrimary} activeOpacity={0.8}>
-            <Text style={styles.btnPrimaryText}>{'\u2605'} NEW GAME</Text>
-          </TouchableOpacity>
-
-          {/* Continue — disabled if no save */}
-          <TouchableOpacity
-            onPress={hasSaveData ? onContinue : undefined}
-            style={[styles.btnSecondary, !hasSaveData && styles.btnDisabled]}
-            activeOpacity={hasSaveData ? 0.8 : 1}
-            disabled={!hasSaveData}
-          >
-            <Text style={[styles.btnSecondaryText, !hasSaveData && styles.btnDisabledText]}>CONTINUE GAME</Text>
-            {!hasSaveData && <Text style={styles.btnSubText}>NO SAVE DATA</Text>}
-          </TouchableOpacity>
-
-          {/* Settings */}
-          <TouchableOpacity onPress={onSettings} style={styles.btnTertiary} activeOpacity={0.8}>
-            <Text style={styles.btnTertiaryText}>SETTINGS</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Rotating propaganda text */}
-        <Text style={styles.propaganda}>{PROPAGANDA_LINES[propagandaIdx]}</Text>
-
-        {/* Version */}
-        <Text style={styles.version}>v0.1.0 /// CENTRAL PLANNING BUREAU</Text>
       </View>
     </Animated.View>
   );
@@ -119,195 +127,191 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onContinue, hasSa
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.bgColor,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: BrandColors.black,
+    overflow: 'hidden',
   },
-  scanlines: {
+  texture: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.03,
-    // CSS-only scanline effect via repeating border trick
-    // This is subtle on purpose — just enough texture
-    backgroundColor: 'transparent',
+    opacity: 0.18,
     ...(Platform.OS === 'web'
       ? {
           backgroundImage:
-            'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)',
+            'linear-gradient(90deg, rgba(239,228,200,0.06) 1px, transparent 1px), linear-gradient(0deg, rgba(239,228,200,0.04) 1px, transparent 1px)',
+          backgroundSize: '48px 48px, 48px 48px',
         }
       : {}),
-    zIndex: 1,
   },
-  content: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-    paddingHorizontal: 40,
-    maxWidth: 500,
+  vignette: {
+    ...StyleSheet.absoluteFillObject,
+    ...(Platform.OS === 'web'
+      ? {
+          backgroundImage:
+            'radial-gradient(circle at 28% 36%, transparent 0, rgba(11,11,9,0.12) 38%, rgba(11,11,9,0.84) 100%)',
+        }
+      : {
+          backgroundColor: 'rgba(11,11,9,0.28)',
+        }),
+  },
+  frame: {
+    flex: 1,
+    minHeight: 560,
+    paddingHorizontal: 28,
+    paddingVertical: 24,
+    justifyContent: 'space-between',
+  },
+  brandRow: {
     width: '100%',
-  },
-  star: {
-    fontSize: 48,
-    color: Colors.sovietRed,
-    marginBottom: 8,
-    textShadowColor: 'rgba(198, 40, 40, 0.6)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
-  },
-  titleBlock: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    gap: DesignTokens.space.md,
   },
-  titleBorder: {
-    borderTopWidth: 3,
-    borderBottomWidth: 3,
-    borderColor: Colors.sovietRed,
-    paddingVertical: 8,
-    paddingHorizontal: 24,
-    alignItems: 'center',
+  brandMark: {
+    color: BrandColors.paper,
+    fontFamily: BrandFonts.display,
+    fontSize: 24,
+    fontWeight: '700',
+    letterSpacing: 0,
+  },
+  scopeMark: {
+    color: BrandColors.frost,
+    fontFamily: BrandFonts.mono,
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0,
+  },
+  hero: {
+    maxWidth: 820,
+    width: '100%',
+    alignSelf: 'flex-start',
+    paddingBottom: 20,
+  },
+  kicker: {
+    color: BrandColors.amber,
+    fontFamily: BrandFonts.mono,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0,
+    marginBottom: 14,
   },
   title: {
-    fontSize: 44,
-    fontWeight: 'bold',
-    fontFamily: monoFont,
-    color: Colors.textPrimary,
-    letterSpacing: 6,
+    color: BrandColors.white,
+    fontFamily: BrandFonts.display,
+    fontSize: 64,
+    fontWeight: '700',
+    letterSpacing: 0,
+    lineHeight: 74,
+    maxWidth: 720,
   },
-  titleYear: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    fontFamily: monoFont,
-    color: Colors.sovietGold,
-    letterSpacing: 16,
-    marginTop: 2,
+  copy: {
+    color: BrandColors.paper,
+    fontFamily: BrandFonts.mono,
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 25,
+    letterSpacing: 0,
+    maxWidth: 680,
+    marginTop: 18,
   },
-  subtitle: {
+  actions: {
+    width: '100%',
+    maxWidth: 620,
+    marginTop: 30,
+    gap: DesignTokens.space.md,
+  },
+  primaryButton: {
+    minHeight: 66,
+    justifyContent: 'center',
+    backgroundColor: BrandColors.red,
+    borderRadius: DesignTokens.radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,247,231,0.34)',
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    shadowColor: BrandColors.red,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.34,
+    shadowRadius: 22,
+  },
+  buttonMeta: {
+    color: BrandColors.paper,
+    fontFamily: BrandFonts.mono,
     fontSize: 11,
-    fontFamily: monoFont,
-    color: Colors.textSecondary,
-    letterSpacing: 5,
-    marginTop: 10,
+    fontWeight: '700',
+    letterSpacing: 0,
+    marginBottom: 2,
   },
-  stampContainer: {
-    marginVertical: 20,
-    transform: [{ rotate: '-3deg' }],
+  primaryButtonText: {
+    color: BrandColors.white,
+    fontFamily: BrandFonts.display,
+    fontSize: 26,
+    fontWeight: '700',
+    letterSpacing: 0,
   },
-  stamp: {
-    borderWidth: 3,
-    borderColor: Colors.sovietRed,
-    paddingVertical: 4,
+  secondaryRow: {
+    flexDirection: 'row',
+    gap: DesignTokens.space.md,
+  },
+  secondaryButton: {
+    flex: 1,
+    minHeight: 58,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(21,19,15,0.68)',
+    borderRadius: DesignTokens.radius.sm,
+    borderWidth: 1,
+    borderColor: DesignTokens.border.strong,
     paddingHorizontal: 16,
-    opacity: 0.7,
+    paddingVertical: 10,
   },
-  stampText: {
-    color: Colors.sovietRed,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    fontSize: 14,
-    letterSpacing: 4,
+  disabledButton: {
+    opacity: 0.56,
   },
-  menuButtons: {
-    width: '100%',
-    gap: 12,
-    marginBottom: 32,
+  secondaryButtonText: {
+    color: BrandColors.paper,
+    fontFamily: BrandFonts.display,
+    fontSize: 20,
+    fontWeight: '600',
+    letterSpacing: 0,
   },
-  btnPrimary: {
-    backgroundColor: Colors.sovietRed,
-    width: '100%',
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
-    borderTopColor: '#ff8a80',
-    borderLeftColor: '#ff8a80',
-    borderBottomColor: Colors.sovietDarkRed,
-    borderRightColor: Colors.sovietDarkRed,
-    shadowColor: Colors.sovietRed,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+  disabledText: {
+    color: BrandColors.paperMuted,
   },
-  btnPrimaryText: {
-    color: Colors.white,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    fontSize: 18,
-    letterSpacing: 3,
-  },
-  btnSecondary: {
-    backgroundColor: Colors.btnBg,
-    width: '100%',
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
-    borderTopColor: Colors.btnHighlight,
-    borderLeftColor: Colors.btnHighlight,
-    borderBottomColor: Colors.btnShadow,
-    borderRightColor: Colors.btnShadow,
-  },
-  btnSecondaryText: {
-    color: Colors.textPrimary,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
-    fontSize: 15,
-    letterSpacing: 2,
-  },
-  btnDisabled: {
-    opacity: 0.4,
-  },
-  btnDisabledText: {
-    color: Colors.textMuted,
-  },
-  btnSubText: {
-    color: Colors.textMuted,
-    fontFamily: monoFont,
-    fontSize: 9,
-    letterSpacing: 2,
+  secondaryNote: {
+    color: BrandColors.frost,
+    fontFamily: BrandFonts.mono,
+    fontSize: 11,
+    fontWeight: '500',
+    letterSpacing: 0,
     marginTop: 2,
   },
-  btnTertiary: {
-    backgroundColor: Colors.timeBtnBg,
-    width: '100%',
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
-    borderTopColor: Colors.timeBtnHighlight,
-    borderLeftColor: Colors.timeBtnHighlight,
-    borderBottomColor: Colors.timeBtnShadow,
-    borderRightColor: Colors.timeBtnShadow,
-  },
-  btnTertiaryText: {
-    color: Colors.textSecondary,
-    fontFamily: monoFont,
-    fontWeight: 'bold',
+  campaignLine: {
+    color: BrandColors.amber,
+    fontFamily: BrandFonts.mono,
     fontSize: 13,
-    letterSpacing: 2,
+    fontWeight: '600',
+    letterSpacing: 0,
+    marginTop: 24,
   },
-  propaganda: {
-    color: Colors.sovietGold,
-    fontFamily: monoFont,
-    fontSize: 10,
-    letterSpacing: 2,
-    textAlign: 'center',
-    opacity: 0.6,
-    marginBottom: 20,
+  eraRail: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: DesignTokens.border.hairline,
+    paddingTop: 14,
   },
-  version: {
-    color: Colors.textMuted,
-    fontFamily: monoFont,
-    fontSize: 9,
-    letterSpacing: 1,
-    opacity: 0.5,
+  eraRailItem: {
+    color: BrandColors.paperMuted,
+    fontFamily: BrandFonts.mono,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0,
+    borderWidth: 1,
+    borderColor: 'rgba(239,228,200,0.18)',
+    borderRadius: DesignTokens.radius.sm,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(11,11,9,0.28)',
   },
 });

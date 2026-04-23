@@ -586,13 +586,13 @@ export const TITLES: Readonly<Record<TitleCategory, readonly string[]>> = {
     'Minister of Land Reclamation and Water Resources',
   ],
   local: [
-    'Chairman of the {CITY} City Soviet',
-    'Chairman of the {CITY} Oblast Executive Committee',
+    'Predsedatel of the {CITY} Local Soviet',
+    'Predsedatel of the {CITY} Oblast Executive Committee',
     'First Secretary of the {CITY} Komsomol',
     'Director of the {CITY} Collective Farm',
     'Director of the {CITY} Tractor Factory',
     "Director of the {CITY} People's Cultural Palace",
-    'Chief Architect of {CITY}',
+    'Chief Planner of {CITY}',
     'Head of the {CITY} Trade Union Council',
     'Director of the {CITY} Bread Factory No. 2',
     'Chairman of the {CITY} Housing Committee',
@@ -623,7 +623,7 @@ export const EPITHETS: readonly string[] = [
   // ── Personality / appearance ─────────────────────────
   'The Invisible', // never seen in public
   'The Unmovable', // has been in office forever
-  'The Eternal', // same as above, more dramatic
+  'The Unwavering', // same as above, more dramatic
   'The Whisperer', // speaks so quietly nobody hears orders
   'The Loud One', // opposite
   'The Eyebrow', // Brezhnev reference

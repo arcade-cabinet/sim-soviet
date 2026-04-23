@@ -1,26 +1,22 @@
-# Plans — Agent Index
+# Plans - Agent Index
 
-> Scan frontmatter: `head -20 docs/plans/*.md`
+Implementation plans capture useful engineering history, but the active 1.0
+product scope is now the historical Soviet campaign from 1917 through 1991.
 
-## How to Use This Index
+## Active Historical Plans
 
-Plan documents capture implementation strategies. Check `plan_status` to see if a plan was completed, abandoned, or superseded. Superseded plans link to their replacement via `superseded_by`.
+| Document | Title | Status | Notes |
+|----------|-------|--------|-------|
+| `2026-03-03-buildings-are-the-ui-design.md` | Buildings Are the UI Design | historical portions retained | Building-click UX, organic growth, and directive-first play |
+| `2026-03-03-buildings-are-the-ui-plan.md` | Buildings Are the UI Implementation | historical portions retained | Implementation checklist for UI reduction and building panels |
 
-## Document Index
+## Archived Historical References
 
-| Document | Title | Plan Status | Date | Notes |
-|----------|-------|-------------|------|-------|
-| `prd-full-production.md` | Full Production Gap Closure PRD | completed | 2026-02-10 | Master PRD for all GDD gaps |
-| `ralph-execution-plan.md` | Ralph Execution Plan v2 | completed | 2026-02-28 | Automated execution of PRD |
-| `2026-02-28-autonomous-collective-plan.md` | Autonomous Collective System | completed | 2026-02-28 | Worker self-organization |
-| `2026-02-27-glasnost-ui-inversion-design.md` | Glasnost UI Inversion Design | completed | 2026-02-27 | Surface Soviet systems as primary UX |
-| `2026-02-27-glasnost-ui-inversion.md` | Glasnost UI Inversion Implementation | completed | 2026-02-27 | Implementation steps |
-| `2026-02-27-r3f-migration-design.md` | R3F Migration Design | completed | 2026-02-27 | Replace BabylonJS with React Three Fiber |
-| `2026-02-27-r3f-migration-plan.md` | R3F Migration Implementation | completed | 2026-02-27 | 20 scene components ported |
-| `2026-02-26-reactylon-native-3d-design.md` | Reactylon Native 3D Design | abandoned | 2026-02-26 | Superseded by R3F migration |
-| `2026-02-26-simSoviet1917-reactylon-native.md` | Reactylon Native Implementation | abandoned | 2026-02-26 | Superseded by R3F migration |
+Completed and abandoned plans in `archive/` are historical engineering records.
+They are not product scope unless they match the 1917-1991 campaign described in
+`docs/GAME_VISION.md`.
 
-## Summary
+## Scope Note
 
-- **7 completed** plans — all successfully implemented
-- **2 abandoned** plans — superseded by the R3F migration (BabylonJS/Reactylon approach was replaced)
+Plans that only described removed future systems were deleted during the 1.0
+scope reduction. Do not use deleted plan names as implementation targets.

@@ -60,11 +60,6 @@ export const DOCTRINE_MECHANICS: Record<DoctrineMechanicId, DoctrineMechanicConf
     activeEras: ['stagnation'],
     intervalTicks: dcfg.mechanicIntervals.stagnation_rot,
   },
-  eternal_bureaucracy: {
-    id: 'eternal_bureaucracy',
-    activeEras: ['the_eternal'],
-    intervalTicks: dcfg.mechanicIntervals.eternal_bureaucracy,
-  },
 };
 
 // ─── Mechanic Constants ─────────────────────────────────────────────────────
@@ -121,20 +116,6 @@ const STAGNATION_PRODUCTIVITY_LOSS_PER_YEAR = dcfg.stagnationProductivityLossPer
 /** Corruption rate multiplier during stagnation. */
 const STAGNATION_CORRUPTION_MULT = dcfg.stagnationCorruptionMult;
 
-// ── Eternal Bureaucracy Constants ─────────────────────────────────────────
-
-/** Paperwork victory threshold — reaching this wins the "bureaucratic singularity". */
-export const ETERNAL_PAPERWORK_THRESHOLD = dcfg.eternalPaperworkThreshold;
-
-/** Base paperwork accumulation per tick in the eternal era. */
-const ETERNAL_PAPERWORK_BASE = dcfg.eternalPaperworkBase;
-
-/** Exponential growth factor for paperwork (per 1000 existing paperwork). */
-const ETERNAL_PAPERWORK_GROWTH_FACTOR = dcfg.eternalPaperworkGrowthFactor;
-
-/** Production slowdown per 1000 paperwork accumulated. */
-const ETERNAL_BUREAUCRACY_SLOWDOWN_PER_1000 = dcfg.eternalBureaucracySlowdownPer1000;
-
 // ─── Thaw/Freeze State ─────────────────────────────────────────────────────
 
 /** Tracked oscillation state for the thaw/freeze mechanic. */
@@ -165,7 +146,7 @@ export function resetThawFreezeState(): void {
 
 // ─── Paperwork State ──────────────────────────────────────────────────────
 
-/** Module-level accumulated paperwork for stagnation/eternal mechanics. */
+/** Module-level accumulated paperwork for stagnation mechanics. */
 let _paperwork = 0;
 
 /** Get the current paperwork accumulation. */
@@ -360,44 +341,6 @@ function applyStagnationRot(totalTicks: number, eraStartTick: number, _rng: Game
   };
 }
 
-/**
- * The Eternal Soviet: Paperwork accumulates exponentially.
- * All systems slow as bureaucracy overwhelms everything.
- * Victory condition: reach the paperwork singularity threshold.
- */
-function applyEternalBureaucracy(currentPaperwork: number, _rng: GameRng): DoctrineMechanicEffect {
-  // Exponential growth: more paperwork = faster accumulation
-  const growthBonus = Math.floor(currentPaperwork * ETERNAL_PAPERWORK_GROWTH_FACTOR);
-  const paperworkGain = ETERNAL_PAPERWORK_BASE + growthBonus;
-
-  // Systems slow down based on paperwork accumulation
-  const slowdown = Math.min(
-    Math.floor(currentPaperwork / 1000) * ETERNAL_BUREAUCRACY_SLOWDOWN_PER_1000,
-    0.5, // Cap at 50% slowdown
-  );
-
-  const nearSingularity = currentPaperwork + paperworkGain >= ETERNAL_PAPERWORK_THRESHOLD;
-
-  const desc = nearSingularity
-    ? `BUREAUCRATIC SINGULARITY IMMINENT: ${currentPaperwork + paperworkGain}/${ETERNAL_PAPERWORK_THRESHOLD} paperwork. The forms are filling themselves.`
-    : currentPaperwork > 3000
-      ? `Paperwork: ${currentPaperwork}. The city is a filing cabinet. Citizens are appendices.`
-      : currentPaperwork > 1000
-        ? `Paperwork: ${currentPaperwork}. Buildings exist only as references in other documents.`
-        : `Paperwork: ${currentPaperwork}. The bureaucracy grows. It does not know why. It does not need to.`;
-
-  return {
-    mechanicId: 'eternal_bureaucracy',
-    description: desc,
-    foodDelta: 0,
-    moneyDelta: 0,
-    vodkaDelta: 0,
-    popDelta: 0,
-    productionMult: 1.0 - slowdown,
-    paperworkDelta: paperworkGain,
-  };
-}
-
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /** Context needed to evaluate doctrine mechanics. */
@@ -412,7 +355,7 @@ export interface DoctrineContext {
   rng: GameRng;
   /** Tick when the current era started (for stagnation year tracking). */
   eraStartTick?: number;
-  /** Current accumulated paperwork (for eternal bureaucracy). */
+  /** Current accumulated paperwork for stagnation bureaucracy. */
   currentPaperwork?: number;
   /**
    * Optional callback to check whether a crisis agent of a given type is
@@ -464,8 +407,6 @@ function applyMechanic(mechanicId: DoctrineMechanicId, ctx: DoctrineContext): Do
       return applyThawFreezeOscillation(ctx.totalTicks, ctx.rng);
     case 'stagnation_rot':
       return applyStagnationRot(ctx.totalTicks, ctx.eraStartTick ?? 0, ctx.rng);
-    case 'eternal_bureaucracy':
-      return applyEternalBureaucracy(ctx.currentPaperwork ?? 0, ctx.rng);
     default:
       return null;
   }
@@ -495,7 +436,6 @@ const BOOLEAN_POLICIES: Record<string, { privateGardensAllowed: boolean; blackMa
   reconstruction: { privateGardensAllowed: true, blackMarketTolerated: false },
   thaw_and_freeze: { privateGardensAllowed: true, blackMarketTolerated: true },
   stagnation: { privateGardensAllowed: true, blackMarketTolerated: true },
-  the_eternal: { privateGardensAllowed: true, blackMarketTolerated: true },
 };
 
 const DOCTRINE_POLICIES: Record<string, DoctrinePolicy> = Object.fromEntries(

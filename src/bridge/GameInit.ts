@@ -6,33 +6,30 @@
  * ready for tick().
  */
 
-import { FreeformGovernor } from '@/ai/agents/crisis/FreeformGovernor';
-import type { GovernorMode } from '@/ai/agents/crisis/Governor';
 import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
-import { type ConsequenceLevel, DIFFICULTY_PRESETS, type DifficultyLevel } from '@/ai/agents/political/ScoringSystem';
-import { GRID_SIZE, setCurrentGridSize } from '@/config';
+import type { ConsequenceLevel } from '@/ai/agents/political/ScoringSystem';
+import { setCurrentGridSize } from '@/config';
+import { buildingsLogic, citizens, dvory, housing, operationalBuildings, underConstruction } from '@/ecs/archetypes';
 import { createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
-import { createStartingSettlement } from '@/ecs/factories/settlementFactories';
+import { generateStartingDvorData } from '@/ecs/factories/settlementFactories';
+import { ArrivalSequence } from '@/game/arrivalSequence';
 import type { SimCallbacks } from '@/game/engine/types';
 import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
 import { recalculatePaths } from '@/game/PathSystem';
 import { SaveSystem } from '@/game/SaveSystem';
+import { GameRng } from '@/game/SeedSystem';
 import { SimulationEngine } from '@/game/SimulationEngine';
 import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 
-/** Configuration options for game initialization (difficulty, map size, seed). */
+/** Configuration options for game initialization. */
 export interface GameInitOptions {
-  difficulty?: DifficultyLevel;
   consequence?: ConsequenceLevel;
   seed?: string;
-  mapSize?: 'small' | 'medium' | 'large';
   /** When true, enables ChairmanAgent autopilot — AI auto-resolves minigames and reports. */
   autopilot?: boolean;
-  /** Game mode — historical uses real Soviet timeline, freeform uses alternate history, classic uses DIFFICULTY_PRESETS. */
-  gameMode?: GovernorMode;
-  /** Year at which history diverges in freeform mode (1917-1991). */
-  divergenceYear?: number;
+  /** Disable periodic SQLite autosaves for deterministic automated proof runs. */
+  autosave?: boolean;
 }
 
 let engine: SimulationEngine | null = null;
@@ -52,30 +49,22 @@ let initialized = false;
 export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): SimulationEngine {
   if (engine && initialized) return engine;
 
-  const difficulty = options?.difficulty ?? 'comrade';
-  const consequence = options?.consequence ?? 'permadeath';
+  const consequence = options?.consequence ?? 'gulag';
   const seed = options?.seed ?? 'simsoviet-3d';
-  const mapSizeKey = options?.mapSize ?? 'medium';
-  const MAP_GRID_SIZES: Record<string, number> = { small: 20, medium: 30, large: 50 };
-  const gridSize = MAP_GRID_SIZES[mapSizeKey] ?? GRID_SIZE;
+  // Starting grid is 20x20 (selo) — expands dynamically via settlement tier upgrades
+  const gridSize = 20;
 
   // Set runtime grid size so scene components use the correct value
   setCurrentGridSize(gridSize);
 
   // Create singleton store entities with starting resources.
-  // Era 1 (Revolution/1917): Timber only. No steel, no power, no food stockpile.
-  // Scale starting resources by difficulty multiplier (worker=2.0x, comrade=1.0x, tovarish=0.5x).
-  // Historical/freeform mode: history IS the difficulty — use 1.0 (equivalent to 'comrade').
-  const resMult =
-    options?.gameMode === 'historical' || options?.gameMode === 'freeform'
-      ? 1.0
-      : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
+  // Governor handles difficulty dynamically — always use 1.0 resource multiplier.
   // Starting resources — generous enough for ~2 seasons of survival without farms.
-  // This is a city-builder, not a survival game: players need time to explore and build.
+  // Players need time to explore the settlement and set priorities.
   createResourceStore({
-    food: Math.round(500 * resMult),
-    timber: Math.round(200 * resMult),
-    steel: Math.round(50 * resMult),
+    food: 500,
+    timber: 200,
+    steel: 50,
     cement: 0,
     population: 0,
   });
@@ -90,7 +79,7 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   // Generate procedural terrain (mountains, forests, marshes, rivers)
   const mapSystem = new MapSystem({
     seed,
-    size: mapSizeKey,
+    size: 'small',
     riverCount: 1,
     forestDensity: 0.12,
     marshDensity: 0.04,
@@ -98,28 +87,25 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   });
   mapSystem.generate();
 
-  // No pre-placed starter buildings — the game starts with undeveloped land
-  // and 10 dvory (family households) + 1 chairman dvor.
+  // No pre-placed starter buildings — the game starts with undeveloped land.
+  // Families arrive as a caravan over the first ~30 ticks instead of spawning instantly.
 
-  // Create starting settlement (citizens, dvory)
-  createStartingSettlement(difficulty);
+  // Generate dvor data for staggered arrival
+  const dvorData = generateStartingDvorData('comrade');
+  const arrivalSeq = new ArrivalSequence();
+  arrivalSeq.prepareArrival(dvorData);
 
   // Create spatial index grid
   gameGrid = new GameGrid(gridSize);
   const grid = gameGrid;
 
-  // Create and configure SimulationEngine
-  engine = new SimulationEngine(grid, callbacks, undefined, difficulty, consequence);
+  // Create and configure SimulationEngine with staggered arrival
+  engine = new SimulationEngine(grid, callbacks, new GameRng(seed), 'comrade', consequence);
+  (globalThis as typeof globalThis & { simulationEngine?: SimulationEngine }).simulationEngine = engine;
+  engine.setArrivalSequence(arrivalSeq);
 
-  // Wire Governor based on game mode
-  if (options?.gameMode === 'historical') {
-    const governor = new HistoricalGovernor();
-    engine.setGovernor(governor);
-  } else if (options?.gameMode === 'freeform') {
-    const governor = new FreeformGovernor();
-    engine.setGovernor(governor);
-  }
-  // 'classic' or undefined: no governor (backward compat — uses DIFFICULTY_PRESETS)
+  // Wire Governor — history IS the difficulty.
+  engine.setGovernor(new HistoricalGovernor());
 
   // Enable autopilot if requested — ChairmanAgent auto-resolves minigames and reports
   if (options?.autopilot) {
@@ -129,19 +115,49 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   // Create SaveSystem wired to the grid and engine
   saveSystem = new SaveSystem(grid);
   saveSystem.setEngine(engine);
-  stopAutoSave = saveSystem.startAutoSave();
+  stopAutoSave = options?.autosave === false ? null : saveSystem.startAutoSave();
 
-  // Bootstrap the settlement: place starter buildings (government-hq, housing, farm)
-  engine.getCollectiveAgent().earlyGameBootstrap(engine.getRng(), 'revolution');
+  // No artificial bootstrap — the collective demand system handles all building
+  // placement organically. Dvory arrive at empty land and the autonomous
+  // collective detects demand (unhoused, food, etc.) and places buildings.
 
-  // Generate initial dirt paths between starter buildings
+  // Generate initial dirt paths (will be recalculated as buildings appear)
   recalculatePaths();
 
   initialized = true;
 
-  // Expose engine on window for E2E page.evaluate() access
+  // Expose engine + ECS archetypes on window for E2E page.evaluate() access
   if (typeof window !== 'undefined') {
     (window as any).__simEngine = engine;
+    // Expose ECS archetypes for diagnostic building/citizen counts
+    (window as any).__ecsArchetypes = {
+      get buildingCount() {
+        return buildingsLogic.entities.length;
+      },
+      get operationalCount() {
+        return operationalBuildings.entities.length;
+      },
+      get constructionCount() {
+        return underConstruction.entities.length;
+      },
+      get buildingPositions() {
+        return buildingsLogic.entities.map((entity) => ({
+          defId: entity.building.defId,
+          gridX: entity.position.gridX,
+          gridY: entity.position.gridY,
+          phase: entity.building.constructionPhase ?? 'complete',
+        }));
+      },
+      get citizenCount() {
+        return citizens.entities.length;
+      },
+      get dvorCount() {
+        return dvory.entities.length;
+      },
+      get housingCount() {
+        return housing.entities.length;
+      },
+    };
   }
 
   // Initial notification to populate React snapshot
@@ -185,6 +201,7 @@ export function shutdownSaveSystem(): void {
  */
 export function resetGameInit(): void {
   shutdownSaveSystem();
+  delete (globalThis as typeof globalThis & { simulationEngine?: SimulationEngine }).simulationEngine;
   engine = null;
   gameGrid = null;
   saveSystem = null;

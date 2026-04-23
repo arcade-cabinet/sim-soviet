@@ -302,7 +302,7 @@ export function tickRaikom(
       );
     } else if (moscowReport === 'good') {
       result.announcements.push(
-        `${raikom.name} has sent a favorable report to Moscow. The Comrade Mayor is noted positively.`,
+        `${raikom.name} has sent a favorable report to Moscow. The local predsedatel is noted positively.`,
       );
     }
 

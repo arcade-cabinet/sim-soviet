@@ -6,7 +6,7 @@ import {
   getEraMultiplier,
   getSettingsMultiplier,
   MEDALS,
-  SCORE_MULTIPLIER_MATRIX,
+  SCORE_MULTIPLIER,
   ScoringSystem,
 } from '../../src/ai/agents/political/ScoringSystem';
 
@@ -74,13 +74,13 @@ describe('ScoringSystem', () => {
     it('has exactly 3 consequence levels', () => {
       const keys = Object.keys(CONSEQUENCE_PRESETS) as ConsequenceLevel[];
       expect(keys).toHaveLength(3);
-      expect(keys).toContain('forgiving');
-      expect(keys).toContain('permadeath');
-      expect(keys).toContain('harsh');
+      expect(keys).toContain('rehabilitated');
+      expect(keys).toContain('rasstrelyat');
+      expect(keys).toContain('gulag');
     });
 
-    it('forgiving returns after 1 year with 90% buildings', () => {
-      const cfg = CONSEQUENCE_PRESETS.forgiving;
+    it('rehabilitated returns after 1 year with 90% buildings', () => {
+      const cfg = CONSEQUENCE_PRESETS.rehabilitated;
       expect(cfg.returnDelayYears).toBe(1);
       expect(cfg.buildingSurvival).toBe(0.9);
       expect(cfg.workerSurvival).toBe(0.8);
@@ -90,15 +90,15 @@ describe('ScoringSystem', () => {
       expect(cfg.permadeath).toBe(false);
     });
 
-    it('permadeath is game over with 1.5x score multiplier', () => {
-      const cfg = CONSEQUENCE_PRESETS.permadeath;
+    it('rasstrelyat is game over with 1.5x score multiplier', () => {
+      const cfg = CONSEQUENCE_PRESETS.rasstrelyat;
       expect(cfg.permadeath).toBe(true);
       expect(cfg.permadeathScoreMultiplier).toBe(1.5);
       expect(cfg.returnDelayYears).toBe(0);
     });
 
-    it('harsh returns after 3 years with 40% buildings', () => {
-      const cfg = CONSEQUENCE_PRESETS.harsh;
+    it('gulag returns after 3 years with 40% buildings', () => {
+      const cfg = CONSEQUENCE_PRESETS.gulag;
       expect(cfg.returnDelayYears).toBe(3);
       expect(cfg.buildingSurvival).toBe(0.4);
       expect(cfg.workerSurvival).toBe(0.25);
@@ -109,44 +109,24 @@ describe('ScoringSystem', () => {
     });
   });
 
-  // ── Score Multiplier Matrix ─────────────────────────
+  // ── Score Multiplier ──────────────────────────────
 
-  describe('score multiplier matrix', () => {
-    it('worker + forgiving = 0.5x', () => {
-      expect(SCORE_MULTIPLIER_MATRIX.worker.forgiving).toBe(0.5);
+  describe('score multiplier', () => {
+    it('rehabilitated = 0.8x', () => {
+      expect(SCORE_MULTIPLIER.rehabilitated).toBe(0.8);
     });
 
-    it('worker + permadeath = 1.0x', () => {
-      expect(SCORE_MULTIPLIER_MATRIX.worker.permadeath).toBe(1.0);
+    it('rasstrelyat = 1.5x', () => {
+      expect(SCORE_MULTIPLIER.rasstrelyat).toBe(1.5);
     });
 
-    it('comrade + forgiving = 0.8x', () => {
-      expect(SCORE_MULTIPLIER_MATRIX.comrade.forgiving).toBe(0.8);
+    it('gulag = 1.2x', () => {
+      expect(SCORE_MULTIPLIER.gulag).toBe(1.2);
     });
 
-    it('comrade + permadeath = 1.5x', () => {
-      expect(SCORE_MULTIPLIER_MATRIX.comrade.permadeath).toBe(1.5);
-    });
-
-    it('comrade + harsh = 1.2x', () => {
-      expect(SCORE_MULTIPLIER_MATRIX.comrade.harsh).toBe(1.2);
-    });
-
-    it('tovarish + forgiving = 1.0x', () => {
-      expect(SCORE_MULTIPLIER_MATRIX.tovarish.forgiving).toBe(1.0);
-    });
-
-    it('tovarish + permadeath = 2.0x', () => {
-      expect(SCORE_MULTIPLIER_MATRIX.tovarish.permadeath).toBe(2.0);
-    });
-
-    it('tovarish + harsh = 1.8x', () => {
-      expect(SCORE_MULTIPLIER_MATRIX.tovarish.harsh).toBe(1.8);
-    });
-
-    it('getSettingsMultiplier matches matrix', () => {
-      expect(getSettingsMultiplier('worker', 'forgiving')).toBe(0.5);
-      expect(getSettingsMultiplier('tovarish', 'permadeath')).toBe(2.0);
+    it('getSettingsMultiplier matches SCORE_MULTIPLIER', () => {
+      expect(getSettingsMultiplier('worker', 'rehabilitated')).toBe(0.8);
+      expect(getSettingsMultiplier('tovarish', 'rasstrelyat')).toBe(1.5);
     });
   });
 
@@ -157,17 +137,17 @@ describe('ScoringSystem', () => {
       expect(getEraMultiplier(0)).toBeCloseTo(1.0);
     });
 
-    it('era 8 (index 7) = 3.0x', () => {
-      expect(getEraMultiplier(7)).toBeCloseTo(3.0);
+    it('final historical era (index 6) = 3.0x', () => {
+      expect(getEraMultiplier(6)).toBeCloseTo(3.0);
     });
 
-    it('era 4 (index 3) is approximately 1.857x', () => {
-      expect(getEraMultiplier(3)).toBeCloseTo(1.0 + (3 * 2.0) / 7, 3);
+    it('era 4 (index 3) is 2.0x in the seven-era campaign', () => {
+      expect(getEraMultiplier(3)).toBeCloseTo(2.0, 3);
     });
 
     it('linearly increases from 1.0 to 3.0', () => {
-      for (let i = 0; i < 8; i++) {
-        const expected = 1.0 + (i * 2.0) / 7;
+      for (let i = 0; i < 7; i++) {
+        const expected = 1.0 + (i * 2.0) / 6;
         expect(getEraMultiplier(i)).toBeCloseTo(expected, 5);
       }
     });
@@ -176,7 +156,7 @@ describe('ScoringSystem', () => {
       expect(getEraMultiplier(-1)).toBeCloseTo(1.0);
     });
 
-    it('clamps indices above 7', () => {
+    it('clamps indices above the final historical era', () => {
       expect(getEraMultiplier(10)).toBeCloseTo(3.0);
     });
   });
@@ -184,10 +164,10 @@ describe('ScoringSystem', () => {
   // ── Initial State ───────────────────────────────────
 
   describe('initial state', () => {
-    it('defaults to comrade + permadeath', () => {
+    it('defaults to comrade + gulag', () => {
       const sys = new ScoringSystem();
       expect(sys.getDifficulty()).toBe('comrade');
-      expect(sys.getConsequence()).toBe('permadeath');
+      expect(sys.getConsequence()).toBe('gulag');
     });
 
     it('starts with 0 final score', () => {
@@ -301,7 +281,7 @@ describe('ScoringSystem', () => {
 
     it('applies era multiplier', () => {
       const sys = new ScoringSystem();
-      sys.onEraEnd(7, 'Eternal Soviet', 100, 0, 0, 0);
+      sys.onEraEnd(6, 'Stagnation & Dissolution', 100, 0, 0, 0);
       const era = sys.getScoreBreakdown().eras[0]!;
       // 100 workers * 2 = 200 + clean era 100 = 300, x3.0 = 900
       expect(era.rawTotal).toBe(300);
@@ -327,7 +307,7 @@ describe('ScoringSystem', () => {
     });
 
     it('accumulates across multiple eras', () => {
-      const sys = new ScoringSystem('comrade', 'permadeath');
+      const sys = new ScoringSystem('comrade', 'rasstrelyat');
       sys.onQuotaMet();
       sys.onEraEnd(0, 'Era 1', 50, 10, 1, 0);
       sys.onQuotaMet();
@@ -343,19 +323,19 @@ describe('ScoringSystem', () => {
 
   describe('getFinalScore', () => {
     it('applies settings multiplier to subtotal', () => {
-      const sys = new ScoringSystem('tovarish', 'permadeath'); // 2.0x
+      const sys = new ScoringSystem('tovarish', 'rasstrelyat'); // 1.5x
       sys.onEraEnd(0, 'Test Era', 100, 10, 2, 0);
       const breakdown = sys.getScoreBreakdown();
-      expect(breakdown.settingsMultiplier).toBe(2.0);
-      expect(breakdown.finalScore).toBe(Math.floor(breakdown.subtotal * 2.0));
+      expect(breakdown.settingsMultiplier).toBe(1.5);
+      expect(breakdown.finalScore).toBe(Math.floor(breakdown.subtotal * 1.5));
     });
 
-    it('worker + forgiving halves the score', () => {
-      const sys = new ScoringSystem('worker', 'forgiving'); // 0.5x
+    it('worker + rehabilitated applies 0.8x to the score', () => {
+      const sys = new ScoringSystem('worker', 'rehabilitated'); // 0.8x
       sys.onEraEnd(0, 'Test Era', 100, 10, 2, 0);
       const breakdown = sys.getScoreBreakdown();
-      expect(breakdown.settingsMultiplier).toBe(0.5);
-      expect(breakdown.finalScore).toBe(Math.floor(breakdown.subtotal * 0.5));
+      expect(breakdown.settingsMultiplier).toBe(0.8);
+      expect(breakdown.finalScore).toBe(Math.floor(breakdown.subtotal * 0.8));
     });
   });
 
@@ -414,15 +394,15 @@ describe('ScoringSystem', () => {
     });
 
     it('getConsequenceConfig returns a copy', () => {
-      const sys = new ScoringSystem('comrade', 'harsh');
+      const sys = new ScoringSystem('comrade', 'gulag');
       const cfg = sys.getConsequenceConfig();
       cfg.scorePenalty = 999;
       expect(sys.getConsequenceConfig().scorePenalty).toBe(300);
     });
 
-    it('getSettingsMultiplier matches matrix', () => {
-      const sys = new ScoringSystem('tovarish', 'harsh');
-      expect(sys.getSettingsMultiplier()).toBe(1.8);
+    it('getSettingsMultiplier matches SCORE_MULTIPLIER', () => {
+      const sys = new ScoringSystem('tovarish', 'gulag');
+      expect(sys.getSettingsMultiplier()).toBe(1.2);
     });
   });
 
@@ -430,7 +410,7 @@ describe('ScoringSystem', () => {
 
   describe('serialize / deserialize', () => {
     it('round-trips correctly', () => {
-      const original = new ScoringSystem('tovarish', 'harsh');
+      const original = new ScoringSystem('tovarish', 'gulag');
       original.onQuotaMet();
       original.onQuotaExceeded();
       original.onKGBLoss(3);
@@ -444,7 +424,7 @@ describe('ScoringSystem', () => {
       const restored = ScoringSystem.deserialize(data);
 
       expect(restored.getDifficulty()).toBe('tovarish');
-      expect(restored.getConsequence()).toBe('harsh');
+      expect(restored.getConsequence()).toBe('gulag');
       expect(restored.getErasCompleted()).toBe(1);
       expect(restored.getTotalQuotasMet()).toBe(2); // 1 from era + 1 current
       expect(restored.getFinalScore()).toBe(original.getFinalScore());
@@ -452,7 +432,7 @@ describe('ScoringSystem', () => {
     });
 
     it('preserves in-progress era counters', () => {
-      const original = new ScoringSystem('comrade', 'permadeath');
+      const original = new ScoringSystem('comrade', 'rasstrelyat');
       original.onKGBLoss(5);
       original.onConscription(3);
       original.onInvestigation();

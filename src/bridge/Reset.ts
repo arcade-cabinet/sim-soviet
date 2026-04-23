@@ -15,15 +15,14 @@ import { world } from '@/ecs/world';
 import { gameState } from '@/engine/GameState';
 import { clearToast, dismissAdvisor } from '@/engine/helpers';
 import {
+  clearMassGraves,
   closeBuildingInspector,
   closeCitizenDossierByIndex,
   closeInspectMenu,
   closePoliticalPanel,
-  closeRadialMenu,
   notifyStateChange,
   setAssignmentMode,
   setCursorTooltip,
-  setDragState,
   setGameSpeed,
   setInspected,
   setInspectedWorker,
@@ -69,7 +68,6 @@ export function resetAllSingletons(): void {
   gameState.train = { active: false, x: -5, y: 12, timer: 0 };
   gameState.meteor = { active: false, struck: false, x: 0, y: 0, z: 1500, tx: 0, ty: 0 };
   gameState.meteorShake = 0;
-  gameState.activeLaunch = null;
   gameState.activeLightning = null;
   gameState.currentWeather = 'snow';
   gameState.timeOfDay = 0.5;
@@ -89,16 +87,17 @@ export function resetAllSingletons(): void {
   // 6. Reset gameStore singleton state
   setPaused(false);
   setGameSpeed(1);
-  setDragState(null);
   setInspected(null);
   setInspectedWorker(null);
   setAssignmentMode(null);
   setCursorTooltip(null);
   closeBuildingInspector();
   closeCitizenDossierByIndex();
-  closeRadialMenu();
   closeInspectMenu();
   closePoliticalPanel();
+
+  // 6b. Clear mass grave markers
+  clearMassGraves();
 
   // 7. Reset doctrine module-level state (thaw/freeze + paperwork)
   resetThawFreezeState();

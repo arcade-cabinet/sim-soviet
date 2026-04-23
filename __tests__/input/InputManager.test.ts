@@ -26,10 +26,10 @@ describe('InputManager', () => {
       mgr.subscribe((action) => received.push(action));
 
       mgr.dispatch('pause_toggle');
-      mgr.dispatch('tool_1');
+      mgr.dispatch('lens_cycle');
       mgr.dispatch('deselect');
 
-      expect(received).toEqual(['pause_toggle', 'tool_1', 'deselect']);
+      expect(received).toEqual(['pause_toggle', 'lens_cycle', 'deselect']);
     });
 
     it('unsubscribe stops receiving actions', () => {
@@ -37,11 +37,11 @@ describe('InputManager', () => {
       const received: InputAction[] = [];
       const unsub = mgr.subscribe((action) => received.push(action));
 
-      mgr.dispatch('tool_1');
+      mgr.dispatch('minimap_toggle');
       unsub();
-      mgr.dispatch('tool_2');
+      mgr.dispatch('speed_cycle');
 
-      expect(received).toEqual(['tool_1']);
+      expect(received).toEqual(['minimap_toggle']);
     });
 
     it('supports multiple subscribers', () => {

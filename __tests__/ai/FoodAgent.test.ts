@@ -24,7 +24,7 @@ function starve(agent: FoodAgent, n: number, pop: number): void {
   for (let i = 0; i < n; i++) {
     store.resources.food = 0;
     store.resources.population = pop;
-    agent.update(1);
+    agent.tickFood(1);
   }
 }
 
@@ -70,7 +70,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 500;
-      agent.update(1);
+      agent.tickFood(1);
       expect(store.resources.food).toBe(496); // 500 - ceil(100/25)
     });
 
@@ -78,7 +78,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 11;
       store.resources.food = 100;
-      agent.update(1);
+      agent.tickFood(1);
       // ceil(11/25) = 1
       expect(store.resources.food).toBe(99);
     });
@@ -87,7 +87,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 500;
-      agent.update(1, { consumptionMult: 2 });
+      agent.tickFood(1, { consumptionMult: 2 });
       // ceil(100/25 * 2) = 8
       expect(store.resources.food).toBe(492);
     });
@@ -96,7 +96,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 0;
       store.resources.food = 500;
-      agent.update(1);
+      agent.tickFood(1);
       expect(store.resources.food).toBe(500);
     });
   });
@@ -112,7 +112,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.food = 0;
       store.resources.population = 100;
-      agent.update(1);
+      agent.tickFood(1);
       expect(agent.getStarvationCounter()).toBe(1);
     });
 
@@ -126,7 +126,7 @@ describe('FoodAgent', () => {
 
       // Feed — counter resets
       store.resources.food = 1000;
-      agent.update(1);
+      agent.tickFood(1);
       expect(agent.getStarvationCounter()).toBe(0);
     });
 
@@ -134,7 +134,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 0;
-      const result = agent.update(1);
+      const result = agent.tickFood(1);
       // Tick 1 — within grace period
       expect(result.starvationDeaths).toBe(0);
     });
@@ -150,7 +150,7 @@ describe('FoodAgent', () => {
       // Tick 181 — should cause deaths
       store.resources.food = 0;
       store.resources.population = 100;
-      const result = agent.update(1);
+      const result = agent.tickFood(1);
       expect(result.starvationDeaths).toBe(2);
     });
 
@@ -158,7 +158,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 1;
       starve(agent, 181, 1);
-      const result = agent.update(1);
+      const result = agent.tickFood(1);
       expect(result.starvationDeaths).toBe(1);
     });
 
@@ -172,12 +172,12 @@ describe('FoodAgent', () => {
       // Feed — resets counter
       store.resources.food = 1000;
       store.resources.population = 100;
-      agent.update(1);
+      agent.tickFood(1);
       expect(agent.getStarvationCounter()).toBe(0);
 
       // Starve again — grace restarted (no deaths in next tick)
       store.resources.food = 0;
-      const result = agent.update(1);
+      const result = agent.tickFood(1);
       expect(result.starvationDeaths).toBe(0);
     });
 
@@ -211,7 +211,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 10;
       // need = 1, surplus threshold = 2; store has 1000 >> 2
-      agent.update(1);
+      agent.tickFood(1);
       expect(agent.getFoodState()).toBe('surplus');
     });
 
@@ -219,7 +219,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 0;
-      agent.update(1);
+      agent.tickFood(1);
       expect(agent.getFoodState()).toBe('rationing');
     });
 
@@ -235,12 +235,12 @@ describe('FoodAgent', () => {
       store.resources.population = 100;
       // One tick of rationing
       store.resources.food = 0;
-      agent.update(1);
+      agent.tickFood(1);
       expect(agent.getFoodState()).toBe('rationing');
 
       // Restore food: enough but not 2x surplus
       store.resources.food = 10; // exactly the need for pop=100
-      agent.update(1);
+      agent.tickFood(1);
       expect(agent.getFoodState()).toBe('stable');
     });
   });
@@ -256,7 +256,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 0;
-      agent.update(1);
+      agent.tickFood(1);
       expect(agent.shouldEmitFoodShortage()).toBe(true);
     });
 
@@ -285,7 +285,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 10;
       // food=1000 >> 2*ceil(10/10)=2 → surplus
-      agent.update(1);
+      agent.tickFood(1);
       expect(agent.shouldEmitFoodSurplus()).toBe(true);
     });
 
@@ -293,7 +293,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.population = 100;
       store.resources.food = 5; // need=4, threshold=8; 5<8 → stable not surplus
-      agent.update(1);
+      agent.tickFood(1);
       expect(agent.shouldEmitFoodSurplus()).toBe(false);
     });
 
@@ -317,9 +317,13 @@ describe('FoodAgent', () => {
       expect(agent.calculatePrivatePlotProduction('revolution')).toBe(0);
     });
 
-    it('calculatePrivatePlotProduction returns 0 for great_patriotic era', () => {
+    it('calculatePrivatePlotProduction returns reduced output for great_patriotic era (0.7x)', () => {
       addDvor(0.5);
-      expect(agent.calculatePrivatePlotProduction('great_patriotic')).toBe(0);
+      const warOutput = agent.calculatePrivatePlotProduction('great_patriotic');
+      const normalOutput = agent.calculatePrivatePlotProduction('revolution');
+      // WWII private plots were critical to food production (0.7x multiplier, not banned)
+      expect(warOutput).toBeGreaterThan(0);
+      expect(warOutput).toBeCloseTo(normalOutput * 0.7, 4);
     });
 
     it('calculatePrivatePlotProduction returns positive for revolution era', () => {
@@ -349,7 +353,7 @@ describe('FoodAgent', () => {
       const store = getResourceEntity()!;
       store.resources.food = 0;
       store.resources.population = 0;
-      agent.update(1, { eraId: 'revolution' });
+      agent.tickFood(1, { eraId: 'revolution' });
       // Plot food should have been added
       const expected = (0.25 * 200) / 12;
       expect(store.resources.food).toBeCloseTo(expected, 1);
@@ -379,7 +383,7 @@ describe('FoodAgent', () => {
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
-      agent.update(1);
+      agent.tickFood(1);
       const store = getResourceEntity()!;
       expect(store.resources.food).toBe(20);
     });
@@ -387,7 +391,7 @@ describe('FoodAgent', () => {
     it('unpowered farm produces no food', () => {
       createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
-      agent.update(1);
+      agent.tickFood(1);
       const store = getResourceEntity()!;
       expect(store.resources.food).toBe(0);
     });
@@ -396,7 +400,7 @@ describe('FoodAgent', () => {
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
-      agent.update(1, { farmModifier: 2.0 });
+      agent.tickFood(1, { farmModifier: 2.0 });
       const store = getResourceEntity()!;
       expect(store.resources.food).toBe(40);
     });
@@ -405,7 +409,7 @@ describe('FoodAgent', () => {
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'collective-farm-hq');
       powerSystem();
-      agent.update(1, { farmModifier: 0 });
+      agent.tickFood(1, { farmModifier: 0 });
       const store = getResourceEntity()!;
       expect(store.resources.food).toBe(0);
     });
@@ -416,7 +420,7 @@ describe('FoodAgent', () => {
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
-      agent.update(1);
+      agent.tickFood(1);
       expect(store.resources.vodka).toBe(10);
       expect(store.resources.food).toBe(990);
     });
@@ -427,7 +431,7 @@ describe('FoodAgent', () => {
       createBuilding(0, 0, 'power-station');
       createBuilding(1, 1, 'vodka-distillery');
       powerSystem();
-      agent.update(1);
+      agent.tickFood(1);
       expect(store.resources.vodka).toBe(10);
       expect(store.resources.food).toBe(0);
     });

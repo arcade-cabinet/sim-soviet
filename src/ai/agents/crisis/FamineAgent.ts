@@ -242,6 +242,9 @@ export class FamineAgent implements ICrisisAgent {
 
     const headline = ctx.rng.pick(PEAK_HEADLINES);
 
+    // Calculate famine desaturation duration from peak phase length
+    const desatDuration = Math.max(10, this.peakDuration() * 2.5);
+
     return {
       crisisId: this.definition.id,
       economy: {
@@ -260,6 +263,10 @@ export class FamineAgent implements ICrisisAgent {
         pravdaHeadlines: [headline],
         toastMessages: [{ text: 'STARVATION SPREADING — GRAIN RESERVES DEPLETED', severity: 'critical' as const }],
       },
+      // Desaturate the scene during famine — only fire on first peak tick to avoid restart
+      ...(this.ticksInPhase === 0
+        ? { visual: { effect: 'famine_haze' as const, intensity: 0.85, durationTicks: Math.ceil(desatDuration) } }
+        : {}),
     };
   }
 

@@ -8,13 +8,31 @@
  * Loads all CrisisDefinition objects from the historical crisis database,
  * creates one agent per crisis (WarAgent, FamineAgent, DisasterAgent),
  * and evaluates them each tick to produce merged DynamicModifiers.
+ *
+ * Reads PressureSystem to modulate crisis severity — high pressure in
+ * relevant domains amplifies crisis impacts. Also evaluates historical
+ * cold branches (dekulakization, ethnic deportation, virgin lands)
+ * from worldBranches.ts.
  */
 
 import { HISTORICAL_CRISES } from '@/config/historicalCrises';
+import type { WorldState } from '../core/WorldAgent';
+import {
+  type BranchSystemSaveData,
+  type BranchTracker,
+  COLD_BRANCHES,
+  type ColdBranch,
+  evaluateBranches,
+  restoreBranchSystem,
+  serializeBranchSystem,
+} from '../core/worldBranches';
+import type { GovernanceType, SphereId } from '../core/worldCountries';
 import { DisasterAgent } from './DisasterAgent';
 import { FamineAgent } from './FamineAgent';
 import type { DynamicModifiers, GovernorContext, GovernorDirective, GovernorSaveData, IGovernor } from './Governor';
 import { DEFAULT_MODIFIERS } from './Governor';
+import type { PressureDomain } from './pressure/PressureDomains';
+import { PressureSystem } from './pressure/PressureSystem';
 import type { CrisisAgentSaveData, CrisisContext, CrisisDefinition, CrisisImpact, ICrisisAgent } from './types';
 import { WarAgent } from './WarAgent';
 
@@ -48,6 +66,46 @@ function createAgentForType(type: string): ICrisisAgent | null {
   }
 }
 
+// ─── Historical Cold Branches ────────────────────────────────────────────────
+
+/** IDs of cold branches relevant to historical mode (pre-1991 Soviet history). */
+const HISTORICAL_BRANCH_IDS = new Set(['dekulakization_purge', 'ethnic_deportation', 'virgin_lands_assignment']);
+
+/** Subset of COLD_BRANCHES applicable to historical mode. */
+const HISTORICAL_COLD_BRANCHES: readonly ColdBranch[] = COLD_BRANCHES.filter((b) => HISTORICAL_BRANCH_IDS.has(b.id));
+
+// ─── Pressure → Severity Mapping ──────────────────────────────────────────────
+
+/**
+ * Map crisis types to the pressure domains that amplify their severity.
+ * When the relevant domain is already under high pressure, crisis impacts
+ * are scaled up (the situation was already bad, crisis makes it worse).
+ */
+const CRISIS_PRESSURE_DOMAINS: Record<string, PressureDomain[]> = {
+  war: ['demographic', 'infrastructure', 'morale'],
+  famine: ['food', 'health', 'demographic'],
+  disaster: ['infrastructure', 'health'],
+};
+
+/**
+ * Compute a severity multiplier from pressure readings for a given crisis type.
+ * Returns 1.0 (no amplification) when no pressure readings are available,
+ * up to 1.5 when all relevant domains are at maximum pressure.
+ */
+function computePressureSeverityMult(pressureSystem: PressureSystem, crisisType: string): number {
+  const domains = CRISIS_PRESSURE_DOMAINS[crisisType];
+  if (!domains || domains.length === 0) return 1.0;
+
+  let totalPressure = 0;
+  for (const domain of domains) {
+    totalPressure += pressureSystem.getLevel(domain);
+  }
+  const avgPressure = totalPressure / domains.length;
+
+  // Scale: 0 pressure → 1.0x, 1.0 pressure → 1.5x
+  return 1.0 + avgPressure * 0.5;
+}
+
 // ─── HistoricalGovernor ─────────────────────────────────────────────────────
 
 export class HistoricalGovernor implements IGovernor {
@@ -63,7 +121,15 @@ export class HistoricalGovernor implements IGovernor {
   private activeEntries: AgentEntry[] = [];
   private currentYear = 0;
 
+  // ── Pressure System ──────────────────────────────────────────────────────
+  private pressureSystem: PressureSystem;
+
+  // ── Cold Branch State ────────────────────────────────────────────────────
+  private activatedBranches: Set<string> = new Set();
+  private branchTrackers: Map<string, BranchTracker> = new Map();
+
   constructor() {
+    this.pressureSystem = new PressureSystem();
     this.loadCrises(HISTORICAL_CRISES);
   }
 
@@ -90,24 +156,36 @@ export class HistoricalGovernor implements IGovernor {
   /**
    * Evaluate the current tick and return a GovernorDirective.
    *
-   * Only touches:
-   * 1. Front of pendingEntries (sorted by startYear) — promote when ready
-   * 2. activeEntries (typically 0-3) — evaluate impacts
-   * Never scans the full historical crisis database every tick.
+   * Pipeline:
+   * 1. Tick PressureSystem (if readings available)
+   * 2. Promote pending → active crises by year
+   * 3. Evaluate active agents with pressure-modulated severity
+   * 4. Evaluate historical cold branches
+   * 5. Prune resolved entries
+   * 6. Merge impacts into DynamicModifiers
    */
   evaluate(ctx: GovernorContext): GovernorDirective {
     this.currentYear = ctx.year;
+    const allImpacts: CrisisImpact[] = [];
+
+    // ── Tick pressure system (if readings available) ─────────────────────
+    if (ctx.pressureReadings) {
+      const worldModifiers = ctx.worldAgent?.computePressureModifiers() ?? {};
+      this.pressureSystem.tick(ctx.pressureReadings, worldModifiers);
+    }
 
     // ── Promote pending → active (sorted, so stop at first future entry) ──
     while (this.pendingEntries.length > 0 && ctx.year >= this.pendingEntries[0]!.definition.startYear) {
       const entry = this.pendingEntries.shift()!;
+      if (this.isExpiredBeforeActivation(entry.definition, ctx.year)) {
+        continue;
+      }
       entry.agent.configure(entry.definition);
       entry.activated = true;
       this.activeEntries.push(entry);
     }
 
     // ── Evaluate only active entries ────────────────────────────────────
-    const allImpacts: CrisisImpact[] = [];
     const activeCrisisIds = this.getActiveCrises();
 
     for (const entry of this.activeEntries) {
@@ -129,13 +207,46 @@ export class HistoricalGovernor implements IGovernor {
       };
 
       const impacts = entry.agent.evaluate(crisisCtx);
+
+      // ── Pressure severity modulation ──────────────────────────────────
+      // When pressure is already high in relevant domains, amplify impacts
+      if (ctx.pressureReadings) {
+        const severityMult = computePressureSeverityMult(this.pressureSystem, entry.definition.type);
+        if (severityMult > 1.0) {
+          for (const impact of impacts) {
+            if (impact.social?.growthMult !== undefined) {
+              // Push growth penalty further below 1.0
+              impact.social.growthMult = 1.0 - (1.0 - impact.social.growthMult) * severityMult;
+            }
+            if (impact.infrastructure?.decayMult !== undefined && impact.infrastructure.decayMult > 1.0) {
+              // Amplify decay above 1.0
+              impact.infrastructure.decayMult = 1.0 + (impact.infrastructure.decayMult - 1.0) * severityMult;
+            }
+            if (impact.economy?.productionMult !== undefined && impact.economy.productionMult < 1.0) {
+              // Push production penalty further below 1.0
+              impact.economy.productionMult = 1.0 - (1.0 - impact.economy.productionMult) * severityMult;
+            }
+          }
+        }
+      }
+
       allImpacts.push(...impacts);
+    }
+
+    // ── Cold branch evaluation ──────────────────────────────────────────
+    if (ctx.pressureReadings) {
+      const branchImpacts = this.evaluateColdBranches(ctx);
+      allImpacts.push(...branchImpacts);
     }
 
     // ── Prune resolved entries (aftermath complete) ─────────────────────
     // Only check yearly to avoid per-tick overhead
     if (ctx.month === 1) {
-      this.activeEntries = this.activeEntries.filter((entry) => entry.agent.isActive());
+      this.activeEntries = this.activeEntries.filter((entry) => {
+        const aftermathYears = Math.max(1, Math.ceil(entry.definition.aftermathTicks / 12));
+        const forceResolved = ctx.year > entry.definition.endYear + aftermathYears;
+        return !forceResolved && entry.agent.isActive();
+      });
     }
 
     const modifiers = this.mergeModifiers(allImpacts);
@@ -150,6 +261,22 @@ export class HistoricalGovernor implements IGovernor {
   /** Called at the start of each new game year. */
   onYearBoundary(year: number): void {
     this.currentYear = year;
+  }
+
+  /** Get the pressure system (for testing/inspection). */
+  getPressureSystem(): PressureSystem {
+    return this.pressureSystem;
+  }
+
+  /** Get activated cold branches (for testing/inspection). */
+  getActivatedBranches(): ReadonlySet<string> {
+    return this.activatedBranches;
+  }
+
+  /** Return true when a skipped-over historical crisis is too old to activate. */
+  private isExpiredBeforeActivation(definition: CrisisDefinition, year: number): boolean {
+    const aftermathYears = Math.max(1, Math.ceil(definition.aftermathTicks / 12));
+    return year > definition.endYear + aftermathYears;
   }
 
   /** Serialize governor state for save persistence. */
@@ -169,6 +296,8 @@ export class HistoricalGovernor implements IGovernor {
         currentYear: this.currentYear,
         agentStates,
         activatedSet,
+        pressureState: this.pressureSystem.serialize(),
+        branchSystem: serializeBranchSystem(this.activatedBranches, this.branchTrackers),
       },
     };
   }
@@ -195,6 +324,86 @@ export class HistoricalGovernor implements IGovernor {
       }
     }
     this.pendingEntries = stillPending;
+
+    // Restore pressure system (missing in old saves → defaults)
+    if (data.state.pressureState) {
+      this.pressureSystem.restore(data.state.pressureState as Parameters<PressureSystem['restore']>[0]);
+    }
+
+    // Restore branch system (missing in old saves → empty)
+    if (data.state.branchSystem) {
+      const branchData = restoreBranchSystem(data.state.branchSystem as BranchSystemSaveData);
+      this.activatedBranches = branchData.activatedBranches;
+      this.branchTrackers = branchData.trackers;
+    }
+  }
+
+  // ─── Cold Branch Evaluation ─────────────────────────────────────────────
+
+  /**
+   * Evaluate historical cold branches against current pressure state.
+   * Returns narrative impacts for activated branches and spawns crisis
+   * agents when branches define them.
+   */
+  private evaluateColdBranches(ctx: GovernorContext): CrisisImpact[] {
+    const impacts: CrisisImpact[] = [];
+    const pressureState = this.pressureSystem.getState();
+
+    // Build pressure state for branch evaluation
+    const pressureForBranches: Record<PressureDomain, { level: number }> = {} as any;
+    for (const [domain, gauge] of Object.entries(pressureState)) {
+      pressureForBranches[domain as PressureDomain] = { level: gauge.level };
+    }
+
+    // WorldState + spheres from pressureReadings (assembled upstream)
+    const worldState = ctx.pressureReadings?.worldState;
+    const spheres = ctx.pressureReadings?.spheres;
+    if (!worldState || !spheres) return impacts;
+
+    const activated = evaluateBranches(
+      HISTORICAL_COLD_BRANCHES,
+      this.activatedBranches,
+      this.branchTrackers,
+      pressureForBranches,
+      worldState as unknown as WorldState,
+      ctx.year,
+      spheres as unknown as Record<SphereId, { governance: GovernanceType; aggregateHostility: number }>,
+    );
+
+    for (const branch of activated) {
+      // Apply pressure spikes
+      if (branch.effects.pressureSpikes) {
+        for (const [domain, spike] of Object.entries(branch.effects.pressureSpikes)) {
+          this.pressureSystem.applySpike(domain as PressureDomain, spike);
+        }
+      }
+
+      // Create crisis from branch if defined
+      if (branch.effects.crisisDefinition) {
+        const def = {
+          ...branch.effects.crisisDefinition,
+          startYear: ctx.year,
+          endYear:
+            ctx.year + (branch.effects.crisisDefinition.endYear - branch.effects.crisisDefinition.startYear || 2),
+        };
+        const agent = createAgentForType(def.type);
+        if (agent) {
+          agent.configure(def);
+          this.activeEntries.push({ definition: def, agent, activated: true });
+        }
+      }
+
+      // Narrative impact
+      impacts.push({
+        crisisId: `branch-${branch.id}-${ctx.year}`,
+        narrative: {
+          pravdaHeadlines: [branch.effects.narrative.pravdaHeadline],
+          toastMessages: [{ text: branch.effects.narrative.toast, severity: 'critical' }],
+        },
+      });
+    }
+
+    return impacts;
   }
 
   // ─── Impact Merging ─────────────────────────────────────────────────────

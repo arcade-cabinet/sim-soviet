@@ -2,14 +2,11 @@ import { getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import {
-  type DragState,
-  getDragState,
   getInspected,
   type InspectedBuilding,
   isPaused,
   notifyStateChange,
   selectTool,
-  setDragState,
   setInspected,
   setPaused,
   togglePause,
@@ -27,7 +24,6 @@ function resetStoreState(): void {
   setPaused(false);
   selectTool('none');
   setInspected(null);
-  setDragState(null);
 }
 
 describe('gameStore', () => {
@@ -45,10 +41,10 @@ describe('gameStore', () => {
     it('has default starting values in ECS stores', () => {
       const store = getResourceEntity()!;
       const meta = getMetaEntity()!;
-      expect(store.resources.money).toBe(2000);
+      expect(store.resources.money).toBe(0);
       expect(store.resources.population).toBe(0);
-      expect(store.resources.food).toBe(600);
-      expect(store.resources.vodka).toBe(50);
+      expect(store.resources.food).toBe(500);
+      expect(store.resources.vodka).toBe(100);
       expect(store.resources.power).toBe(0);
       expect(store.resources.powerUsed).toBe(0);
       expect(meta.gameMeta.date.year).toBe(1917);
@@ -292,38 +288,6 @@ describe('gameStore', () => {
     });
   });
 
-  // ── Drag state ─────────────────────────────────────────────
-
-  describe('getDragState / setDragState', () => {
-    it('starts as null', () => {
-      expect(getDragState()).toBeNull();
-    });
-
-    it('sets drag state', () => {
-      const drag: DragState = {
-        buildingType: 'apartment-tower-a',
-        screenX: 100,
-        screenY: 200,
-      };
-      setDragState(drag);
-      expect(getDragState()).toBe(drag);
-    });
-
-    it('clears drag state with null', () => {
-      setDragState({ buildingType: 'power-station', screenX: 50, screenY: 50 });
-      setDragState(null);
-      expect(getDragState()).toBeNull();
-    });
-
-    it('updates drag state position', () => {
-      setDragState({ buildingType: 'collective-farm-hq', screenX: 10, screenY: 20 });
-      setDragState({ buildingType: 'collective-farm-hq', screenX: 300, screenY: 400 });
-      const state = getDragState();
-      expect(state!.screenX).toBe(300);
-      expect(state!.screenY).toBe(400);
-    });
-  });
-
   // ── Snapshot shape ─────────────────────────────────────────
 
   describe('snapshot shape', () => {
@@ -339,7 +303,7 @@ describe('gameStore', () => {
       meta.gameMeta.date = { year: 1982, month: 7, tick: 16 };
       meta.gameMeta.quota = { type: 'vodka', target: 500, current: 250, deadlineYear: 1985 };
       meta.gameMeta.gameOver = null;
-      meta.gameMeta.selectedTool = 'collective-farm-hq';
+      meta.gameMeta.selectedTool = 'bulldoze';
       setPaused(true);
       notifyStateChange();
 
@@ -353,7 +317,7 @@ describe('gameStore', () => {
       expect(meta.gameMeta.date.year).toBe(1982);
       expect(meta.gameMeta.date.month).toBe(7);
       expect(meta.gameMeta.date.tick).toBe(16);
-      expect(meta.gameMeta.selectedTool).toBe('collective-farm-hq');
+      expect(meta.gameMeta.selectedTool).toBe('bulldoze');
       expect(meta.gameMeta.quota.type).toBe('vodka');
       expect(meta.gameMeta.gameOver).toBeNull();
       expect(isPaused()).toBe(true);
@@ -405,9 +369,9 @@ describe('gameStore', () => {
 
     it('snapshot includes seed from meta entity', () => {
       const meta = getMetaEntity()!;
-      meta.gameMeta.seed = 'glorious-eternal-tractor';
+      meta.gameMeta.seed = 'glorious-stagnant-tractor';
       notifyStateChange();
-      expect(meta.gameMeta.seed).toBe('glorious-eternal-tractor');
+      expect(meta.gameMeta.seed).toBe('glorious-stagnant-tractor');
     });
   });
 

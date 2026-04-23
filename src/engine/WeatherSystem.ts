@@ -5,6 +5,9 @@
 
 import { gameState } from './GameState';
 
+/** Game season affecting terrain colors, tree canopy, and weather effects. */
+export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
+
 /**
  * Returns the season name for a given month.
  *

@@ -240,6 +240,25 @@ export class DefenseAgent extends Vehicle {
     if (callbacks) this.callbacks = callbacks;
   }
 
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.PHASE_NARRATIVE) {
+      const engine = (globalThis as any).simulationEngine;
+      if (engine?._lastTickCtx) {
+        const ctx = engine._lastTickCtx;
+        this.tickDefense(
+          1,
+          ctx.tickResult.weather as WeatherType,
+          ctx.grid,
+          ctx.agents.chronology.getDate().totalTicks,
+          ctx.agents.chronology.getDate().month,
+        );
+      }
+      return true;
+    }
+    return false;
+  }
+
   // ── Public API ──────────────────────────────────────────────────────────────
 
   /** Set the seeded RNG for deterministic simulation. */
@@ -307,7 +326,7 @@ export class DefenseAgent extends Vehicle {
    * @param totalTicks - Absolute simulation tick counter
    * @param month - Current game month (1-12, for seasonal disease modifiers)
    */
-  update(_delta: number, weather: WeatherType, grid: GameGrid, totalTicks: number, month: number): void {
+  tickDefense(_delta: number, weather: WeatherType, grid: GameGrid, totalTicks: number, month: number): void {
     this.tickFire(weather, grid);
     const outbreakTypes = this.tickDisease(totalTicks, month);
 

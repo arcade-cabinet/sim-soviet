@@ -13,9 +13,9 @@ SimSoviet uses a **two-layer rendering architecture**:
 |-------|-----------|---------|
 | 3D Engine | Three.js via React Three Fiber | r183 / R3F v9.5 |
 | 3D Helpers | drei | Latest |
-| UI Framework | React Native | 0.81 |
-| Platform | Expo | 54 |
-| Language | TypeScript | 5.7 |
+| UI Framework | React Native | 0.83.2 |
+| Platform | Expo | 55 |
+| Language | TypeScript | 5.9 |
 | State (ECS) | Miniplex | 2.0 |
 | State (Legacy) | GameState singleton | Custom |
 | Database | sql.js + Drizzle ORM | Wasm SQLite → IndexedDB |

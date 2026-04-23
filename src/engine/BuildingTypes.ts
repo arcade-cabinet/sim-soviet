@@ -154,18 +154,6 @@ export const BUILDING_TYPES: Record<string, BuildingTypeInfo> = {
     desc: 'DO NOT LET BURN.',
     color: '#455a64',
   },
-  tap: {
-    name: 'Cosmic Tap',
-    category: 'infra',
-    cost: 500,
-    icon: '☄️',
-    type: 'utility',
-    power: 1000,
-    pollution: 0,
-    desc: 'Requires Crater.',
-    color: '#4a148c',
-    hidden: true,
-  },
   tower: {
     name: 'Propaganda',
     category: 'state',
@@ -196,16 +184,6 @@ export const BUILDING_TYPES: Record<string, BuildingTypeInfo> = {
     powerReq: 50,
     desc: 'Fire-Fighting Zeppelin.',
     color: '#222',
-  },
-  space: {
-    name: 'Cosmodrome',
-    category: 'state',
-    cost: 2000,
-    icon: '🚀',
-    type: 'gov',
-    powerReq: 200,
-    desc: 'Win Space Race.',
-    color: '#444',
   },
   bulldoze: {
     name: 'Purge',
@@ -300,7 +278,6 @@ export function getBuildingHeight(type: string, level: number = 0): number {
   if (type === 'tower') return 70;
   if (type === 'nuke') return 35;
   if (type === 'mast') return 50;
-  if (type === 'space') return 80;
   if (type === 'station') return 15;
   if (type === 'tap') return 25;
   return 0;

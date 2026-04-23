@@ -21,17 +21,6 @@ interface KeyBinding {
 
 /** Default keyboard bindings. */
 const KEY_MAP: Record<string, KeyBinding> = {
-  // Tool selection (number keys)
-  '1': { action: 'tool_1' },
-  '2': { action: 'tool_2' },
-  '3': { action: 'tool_3' },
-  '4': { action: 'tool_4' },
-  '5': { action: 'tool_5' },
-  '6': { action: 'tool_6' },
-  '7': { action: 'tool_7' },
-  '8': { action: 'tool_8' },
-  '9': { action: 'tool_9' },
-
   // General actions
   Escape: { action: 'deselect' },
   ' ': { action: 'pause_toggle' },

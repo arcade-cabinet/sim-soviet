@@ -19,10 +19,9 @@ import type { EraId } from '../game/era/types';
  * - Great Patriotic: wartime rapid construction
  * - Reconstruction: post-war rebuilding
  * - Thaw/Freeze: Khrushchev building boom
- * - Stagnation: mass khrushchyovka production
- * - The Eternal: bureaucratic inertia but continued building
+ * - Stagnation and grounded free play: mass khrushchyovka production, then local maintenance pressure
  */
-export const ERA_BUILD_INTERVALS: Record<EraId, number> = {
+export const ERA_BUILD_INTERVALS: Partial<Record<EraId, number>> = {
   revolution: 120,
   collectivization: 90,
   industrialization: 60,
@@ -30,7 +29,6 @@ export const ERA_BUILD_INTERVALS: Record<EraId, number> = {
   reconstruction: 60,
   thaw_and_freeze: 40,
   stagnation: 30,
-  the_eternal: 30,
 };
 
 /** Default interval when era is unknown. */

@@ -1,9 +1,8 @@
 /**
  * @fileoverview WeatherAgent — Yuka agent that manages weather state.
  *
- * Absorbs rolling logic and profile modifiers from WeatherSystem.
- * On each game day tick, decrements the remaining duration of the
- * current weather and rolls a new weather type when it expires.
+ * On each game day tick, decrements the remaining duration of the current
+ * weather and rolls a new weather type when it expires.
  */
 
 import { Vehicle } from 'yuka';

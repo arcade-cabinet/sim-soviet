@@ -50,7 +50,7 @@ describe('Playthrough: Quota Cycle Economy', () => {
     const { engine, callbacks } = createPlaythroughEngine({
       meta: { date: { year: 1926, month: 10, tick: 0 } },
       resources: { food: 0, population: 0 },
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
     disableNonQuotaCallbacks(callbacks as Record<string, unknown>);
 
@@ -96,7 +96,7 @@ describe('Playthrough: Quota Cycle Economy', () => {
     const { engine, callbacks } = createPlaythroughEngine({
       meta: { date: { year: 1926, month: 10, tick: 0 } },
       resources: { food: 5000, population: 0 },
-      consequence: 'forgiving',
+      consequence: 'rehabilitated',
     });
     disableNonQuotaCallbacks(callbacks as Record<string, unknown>);
 

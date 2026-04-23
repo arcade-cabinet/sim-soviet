@@ -6,7 +6,7 @@
 
 ## Vision
 
-SimSoviet is **Cities: Skylines but Soviet**. The player is the chairman sent to establish a settlement. You **observe, direct, and intervene** — you don't lay bricks. The settlement grows organically driven by three forces: **General Winter** (survival), **Mother Russia** (state quotas), and **the Black Market** (human nature). You interact with the world by **clicking on buildings**, not HUD panels. Information is **spatial** (go to a building) not **temporal** (notifications screaming at you).
+SimSoviet is an autonomous Soviet settlement-management game. The player is the chairman sent to establish a settlement. You **observe, direct, and intervene** — you don't lay bricks. The settlement grows organically driven by three forces: **General Winter** (survival), **Mother Russia** (state quotas), and **the Black Market** (human nature). You interact with the world by **clicking on buildings**, not HUD panels. Information is **spatial** (go to a building) not **temporal** (notifications screaming at you).
 
 ## Central Conceit
 
@@ -241,22 +241,19 @@ This naturally solves UI bloat — the 21-panel overflow menu becomes 0 panels b
 - Morale decays from: cold, hunger, overwork, lack of vodka, disease
 - Morale improves from: adequate shelter, food, vodka rations, cultural events
 
-### 7. Freeform Mode Changes
+### 7. Historical Start Flow
 
-**Remove**: Divergence year picker from NewGameSetup
+**Remove**: All mode and divergence selection from NewGameSetup
 
-**Historical mode**:
+**Historical campaign**:
 - Strict timeline — events follow real dates
 - Unlocks tied to years (collectivization in 1928, war in 1941, etc.)
 - Player's role evolves: settlement founder → kolkhoz chairman → city manager
 
-**Freeform mode**:
-- Same starting point (1917)
-- Events are probability-driven, not date-driven
-- War WILL happen (human nature), just not necessarily in 1941
-- Growth milestones trigger era-like unlocks organically
-- Divergences accumulate naturally — no explicit divergence point
-- The timeline is yours
+**Post-campaign continuation**:
+- Same settlement continues after 1991
+- No new era ladder, new settlement layer, or alternate global timeline
+- Resource pressure, decay, demographics, and local politics keep running
 
 ### 8. HUD Layout — What Remains
 
@@ -329,6 +326,6 @@ This is a paradigm shift. Recommended approach:
 4. **Phase 4**: Audio overhaul (layering, ducking, seamless transitions)
 5. **Phase 5**: Camera (mid-zoom default, street-level click)
 6. **Phase 6**: Start flow (arrival caravan, organic settling, morale tuning)
-7. **Phase 7**: Freeform mode (remove divergence picker, probability-driven events)
+7. **Phase 7**: Historical scope lock (single campaign start, grounded continuation)
 
 Each phase is independently shippable and testable.

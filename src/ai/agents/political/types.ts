@@ -190,8 +190,7 @@ export type DoctrineMechanicId =
   | 'stakhanovite_bonus'
   | 'wartime_conscription'
   | 'thaw_freeze_oscillation'
-  | 'stagnation_rot'
-  | 'eternal_bureaucracy';
+  | 'stagnation_rot';
 
 /** Effect produced by a doctrine mechanic this tick. */
 export interface DoctrineMechanicEffect {
@@ -221,6 +220,23 @@ export interface DoctrineMechanicConfig {
   activeEras: readonly string[];
   /** How often this mechanic fires (in ticks). 0 = every tick. */
   intervalTicks: number;
+}
+
+// ─── KGB Morale Reports ─────────────────────────────────────────────────────
+
+/** Severity of a KGB morale intelligence report. */
+export type MoraleReportSeverity = 'concern' | 'warning' | 'critical';
+
+/** A KGB intelligence report on morale conditions in a sector/building. */
+export interface KGBMoraleReport {
+  /** Building grid position that was sampled. */
+  sectorId: { gridX: number; gridY: number };
+  /** Average morale observed at the location (0-100). */
+  avgMorale: number;
+  /** Simulation tick when the report was generated. */
+  timestamp: number;
+  /** Severity classification based on morale thresholds. */
+  severity: MoraleReportSeverity;
 }
 
 // ─── Save Data ──────────────────────────────────────────────────────────────

@@ -5,36 +5,20 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { closeBuildingPanel, cycleGameSpeed, cycleLens, selectTool, toggleMinimap, togglePause } from '@/stores/gameStore';
+import {
+  closeBuildingPanel,
+  cycleGameSpeed,
+  cycleLens,
+  selectTool,
+  toggleMinimap,
+  togglePause,
+} from '@/stores/gameStore';
 import { GamepadHandler } from './GamepadHandler';
 import type { InputAction } from './InputManager';
 import { InputManager } from './InputManager';
 import { KeyboardHandler } from './KeyboardHandler';
 
-/**
- * Maps tool_N actions to building tool names, matching the toolbar order.
- * These correspond to the most commonly used building tools.
- */
-const TOOL_ACTIONS: Record<string, string> = {
-  tool_1: 'housing',
-  tool_2: 'farm',
-  tool_3: 'factory',
-  tool_4: 'power',
-  tool_5: 'road',
-  tool_6: 'pipe',
-  tool_7: 'pump',
-  tool_8: 'gulag',
-  tool_9: 'propaganda',
-};
-
 function handleAction(action: InputAction): void {
-  // Tool selection
-  const toolName = TOOL_ACTIONS[action];
-  if (toolName) {
-    selectTool(toolName);
-    return;
-  }
-
   switch (action) {
     case 'deselect':
       selectTool('none');

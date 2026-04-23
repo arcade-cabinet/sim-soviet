@@ -13,13 +13,13 @@
 
 import { useProgress } from '@react-three/drei';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { SettlementTier } from './ai/agents/infrastructure/SettlementSystem';
 import AudioManager from './audio/AudioManager';
-import { getBuildingStates, getGridCells } from './bridge/ECSBridge';
+import { getBuildingStates } from './bridge/ECSBridge';
 import { gameState } from './engine/GameState';
 import { useGameSnapshot } from './hooks/useGameState';
-import { notifyStateChange, useTerrainVersion } from './stores/gameStore';
+import { notifyStateChange } from './stores/gameStore';
 
 // Import ModelPreloader for its side-effect (calls useGLTF.preload)
 import './scene/ModelPreloader';
@@ -28,6 +28,8 @@ import BuildingRenderer from './scene/BuildingRenderer';
 import BuildingStatusBadges from './scene/BuildingStatusBadges';
 import CameraController from './scene/CameraController';
 import CitizenRenderer from './scene/CitizenRenderer';
+import CollapseOverlay from './scene/CollapseOverlay';
+import CrisisVFXRenderer from './scene/CrisisVFXRenderer';
 import Environment from './scene/Environment';
 import FireRenderer from './scene/FireRenderer';
 import FloatingText from './scene/FloatingText';
@@ -36,16 +38,14 @@ import HeatingOverlay from './scene/HeatingOverlay';
 import LensSystem from './scene/LensSystem';
 import Lighting from './scene/Lighting';
 import LightningRenderer from './scene/LightningRenderer';
-import MeteorRenderer from './scene/MeteorRenderer';
+import MassGraveRenderer from './scene/MassGraveRenderer';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import PoliticalEntityRenderer from './scene/PoliticalEntityRenderer';
 import PostProcessing from './scene/PostProcessing';
-import SceneProps from './scene/SceneProps';
 import SmogOverlay from './scene/SmogOverlay';
-// Scene components
-import TerrainGrid from './scene/TerrainGrid';
 import TrainRenderer from './scene/TrainRenderer';
 import VehicleRenderer from './scene/VehicleRenderer';
+import WarOverlay from './scene/WarOverlay';
 import WeatherFX from './scene/WeatherFX';
 import ZeppelinRenderer from './scene/ZeppelinRenderer';
 
@@ -61,6 +61,7 @@ interface ContentProps {
 
 const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disableCamera }) => {
   const snap = useGameSnapshot();
+  const isWartime = snap.currentEra === 'great_patriotic';
 
   // Track drei loading progress (useGLTF.preload triggers this)
   const { loaded, total, item } = useProgress();
@@ -68,11 +69,13 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
 
   useEffect(() => {
     if (total > 0) {
-      // Map drei progress to our progress callback
-      // Use TOTAL_MODEL_COUNT as a stable "total" since drei's total can fluctuate
-      const displayTotal = Math.max(total, TOTAL_MODEL_COUNT);
+      // Use TOTAL_MODEL_COUNT as the stable display total — drei's total
+      // fluctuates as Poly Haven GLBs and prop models are discovered.
+      // Cap loaded at displayTotal to prevent "401/98" display.
+      const displayTotal = TOTAL_MODEL_COUNT;
+      const displayLoaded = Math.min(loaded, displayTotal);
       const modelName = item ? (item.split('/').pop()?.replace('.glb', '') ?? '') : '';
-      onLoadProgress?.(loaded, displayTotal, modelName);
+      onLoadProgress?.(displayLoaded, displayTotal, modelName);
     }
 
     if (total > 0 && loaded === total && !completedRef.current) {
@@ -99,37 +102,25 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
   // The ECS building defIds match GLB model names directly
   const buildings = getBuildingStates();
 
-  // Cache the terrain grid — it only needs to rebuild when season changes
-  // or when buildings are placed/demolished (path recalculation changes tiles).
-  // Without this, getGridCells() returns a new array every render, causing
-  // TerrainGrid to dispose and rebuild all meshes on every tick.
-  const terrainVersion = useTerrainVersion();
-  const lastSeasonRef = useRef(snap.season);
-  const lastTerrainVersionRef = useRef(terrainVersion);
-  const [ecsGrid, setEcsGrid] = useState(() => getGridCells());
-
-  useEffect(() => {
-    if (lastSeasonRef.current !== snap.season || lastTerrainVersionRef.current !== terrainVersion) {
-      lastSeasonRef.current = snap.season;
-      lastTerrainVersionRef.current = terrainVersion;
-      setEcsGrid(getGridCells());
-    }
-  }, [snap.season, terrainVersion]);
-
   // Core scene + VFX layers + Interaction
   return (
     <>
       <CameraController disabled={disableCamera} />
-      <Environment season={snap.season} />
-      <Lighting timeOfDay={snap.timeOfDay} season={snap.season} isStorm={snap.weatherLabel === 'STORM'} />
-      <TerrainGrid grid={ecsGrid} season={snap.season} />
+      <Environment season={snap.season} era={snap.currentEra as import('./game/era/types').EraId} />
+      <Lighting
+        timeOfDay={snap.timeOfDay}
+        season={snap.season}
+        isStorm={snap.weatherLabel === 'STORM'}
+        isWartime={isWartime}
+      />
       <BuildingRenderer
         buildings={buildings}
         settlementTier={snap.settlementTier as SettlementTier}
         season={snap.season}
+        currentEra={snap.currentEra}
       />
       <BuildingStatusBadges buildings={buildings} />
-      <SceneProps season={snap.season} />
+      <CollapseOverlay />
 
       <WeatherFX />
       <SmogOverlay />
@@ -140,7 +131,9 @@ const Content: React.FC<ContentProps> = ({ onLoadProgress, onLoadComplete, disab
       <TrainRenderer />
       <VehicleRenderer />
       <ZeppelinRenderer />
-      <MeteorRenderer />
+      <CrisisVFXRenderer />
+      <WarOverlay active={isWartime} scale="continental" era={snap.currentEra} intensity={1} />
+      <MassGraveRenderer />
       <FloatingText />
       <CitizenRenderer />
       <PoliticalEntityRenderer />

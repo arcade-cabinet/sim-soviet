@@ -3,7 +3,7 @@
  * by specialized panels.
  */
 
-import React from 'react';
+import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { BuildingDef } from '../../data/buildingDefs';
 import type { BuildingComponent } from '../../ecs/world';
@@ -16,19 +16,28 @@ interface Props {
   gridZ: number;
 }
 
-export const GenericContent: React.FC<Props> = ({ def, building, gridX, gridZ }) => {
-  const condition = building.constructionPhase === 'complete' || !building.constructionPhase
-    ? 'OPERATIONAL'
-    : building.constructionPhase === 'foundation'
-      ? 'FOUNDATION'
-      : 'BUILDING';
+export const GenericContent: React.FC<Props> = ({ building, gridX, gridZ }) => {
+  const condition =
+    building.constructionPhase === 'complete' || !building.constructionPhase
+      ? 'OPERATIONAL'
+      : building.constructionPhase === 'foundation'
+        ? 'FOUNDATION'
+        : 'BUILDING';
 
   return (
     <View style={styles.container}>
       <Row label="POSITION" value={`(${gridX}, ${gridZ})`} />
       <Row label="LEVEL" value={String(building.level)} />
-      <Row label="STATUS" value={condition} valueColor={condition === 'OPERATIONAL' ? Colors.termGreen : Colors.sovietGold} />
-      <Row label="POWERED" value={building.powered ? 'YES' : 'NO'} valueColor={building.powered ? Colors.termGreen : Colors.sovietRed} />
+      <Row
+        label="STATUS"
+        value={condition}
+        valueColor={condition === 'OPERATIONAL' ? Colors.termGreen : Colors.sovietGold}
+      />
+      <Row
+        label="POWERED"
+        value={building.powered ? 'YES' : 'NO'}
+        valueColor={building.powered ? Colors.termGreen : Colors.sovietRed}
+      />
       {building.powerReq > 0 && <Row label="POWER REQ" value={String(building.powerReq)} />}
       {building.pollution > 0 && <Row label="POLLUTION" value={String(building.pollution)} />}
       {building.onFire && <Row label="FIRE" value="BURNING" valueColor={Colors.sovietRed} />}

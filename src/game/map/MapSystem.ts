@@ -9,8 +9,7 @@
 
 import { clearTerrainFeatures, createForest, createMarsh, createMountain, createRiver } from '@/ecs/factories';
 import { GameRng } from '../SeedSystem';
-import { assignFeatures, checkConnectivity, fractalNoise } from './generation';
-import { generateRiverPath, rasterizeRiver } from './rivers';
+import { ChunkManager } from './chunks/ChunkManager';
 import type { MapGenerationOptions, SerializedCell, SerializedMap, TerrainCell, TerrainType } from './types';
 import { DEFAULT_MAP_OPTIONS, MAP_SIZES, TERRAIN_DEFAULTS } from './types';
 
@@ -23,11 +22,13 @@ export class MapSystem {
   private size: number;
   private rng: GameRng;
   private options: MapGenerationOptions;
+  private chunkManager: ChunkManager;
 
   constructor(options: Partial<MapGenerationOptions> = {}) {
     this.options = { ...DEFAULT_MAP_OPTIONS, ...options };
-    this.size = MAP_SIZES[this.options.size];
+    this.size = MAP_SIZES[this.options.size] ?? this.options.size; // support arbitrary sizes
     this.rng = new GameRng(`map-${this.options.seed}`);
+    this.chunkManager = new ChunkManager(this.options.seed, this.options);
     this.initEmptyGrid();
   }
 
@@ -68,58 +69,18 @@ export class MapSystem {
 
   private setCell(x: number, y: number, type: TerrainType): void {
     if (x < 0 || x >= this.size || y < 0 || y >= this.size) return;
-    const features = assignFeatures(type, this.rng);
-    this.terrain[y]![x] = this.createCell(type, features);
+    this.terrain[y]![x] = this.createCell(type, []); // features not used dynamically here
   }
 
   // ── Generation ──────────────────────────────────────────────────────────
 
   /**
-   * Generate the terrain map procedurally.
-   *
-   * Order of operations:
-   * 1. Rivers (carved first so other terrain respects them)
-   * 2. Mountains (noise-based clusters, edge-biased away from center)
-   * 3. Forests (noise + distance from center)
-   * 4. Marshland (near rivers and low-elevation areas)
-   * 5. Protect center 5x5 as guaranteed grass
-   * 6. Connectivity validation (retry if paths are blocked)
-   * 7. Create ECS entities for all terrain features
+   * Generate the terrain map procedurally using the ChunkManager.
+   * Ensures the global planet FBM matches the local terrain tiles.
    */
   generate(): void {
-    // Reset RNG for deterministic results
-    this.rng = new GameRng(`map-${this.options.seed}`);
-    this.initEmptyGrid();
-
-    const maxRetries = 5;
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      this.initEmptyGrid();
-      this.placeRivers();
-      this.placeMountains();
-      this.placeForests();
-      this.placeMarshland();
-      this.protectCenter();
-
-      if (checkConnectivity(this.terrain, this.size)) {
-        this.createTerrainEntities();
-        return;
-      }
-
-      // Failed connectivity — punch corridors and retry with adjusted RNG
-      this.punchCorridors();
-      this.protectCenter();
-
-      if (checkConnectivity(this.terrain, this.size)) {
-        this.createTerrainEntities();
-        return;
-      }
-    }
-
-    // Final fallback: clear all impassable terrain and re-place lightly
-    this.initEmptyGrid();
-    this.placeRivers();
-    this.placeForests();
-    this.protectCenter();
+    this.terrain = this.chunkManager.assembleGrid(this.size);
+    this.protectCenter(); // Guarantee start location is buildable
     this.createTerrainEntities();
   }
 
@@ -143,119 +104,13 @@ export class MapSystem {
           case 'marsh':
             createMarsh(x, y);
             break;
+          case 'water': // ocean from planet config maps to water
           case 'river':
             createRiver(x, y);
             break;
         }
       }
     }
-  }
-
-  private placeRivers(): void {
-    const riverCells: Set<string>[] = [];
-
-    for (let i = 0; i < this.options.riverCount; i++) {
-      const path = generateRiverPath(this.size, this.rng);
-      const cells = rasterizeRiver(path, this.size, this.rng);
-      riverCells.push(cells);
-
-      for (const key of cells) {
-        const [x, y] = key.split(',').map(Number) as [number, number];
-        this.setCell(x, y, 'river');
-      }
-    }
-
-    // Store river cells for marshland placement
-    this._riverCells = new Set(riverCells.flatMap((s) => [...s]));
-  }
-
-  /** Temporary storage for river cell positions, used during generation. */
-  private _riverCells: Set<string> = new Set();
-
-  private placeMountains(): void {
-    if (this.options.mountainDensity <= 0) return;
-
-    const noise = fractalNoise(this.size, this.size, this.rng);
-    const center = this.size / 2;
-    const targetCount = Math.floor(this.size * this.size * this.options.mountainDensity);
-
-    // Score each grass cell: noise weighted by edge bias (mountains prefer periphery)
-    const candidates: { x: number; y: number; score: number }[] = [];
-    for (let y = 0; y < this.size; y++) {
-      for (let x = 0; x < this.size; x++) {
-        if (this.terrain[y]![x]!.type !== 'grass') continue;
-        const distFromCenter = Math.sqrt((x - center) ** 2 + (y - center) ** 2) / (center * Math.SQRT2);
-        const edgeBias = 0.2 + 0.8 * distFromCenter;
-        candidates.push({ x, y, score: noise[y]![x]! * edgeBias });
-      }
-    }
-
-    candidates.sort((a, b) => b.score - a.score);
-    const count = Math.min(targetCount, candidates.length);
-    for (let i = 0; i < count; i++) {
-      const { x, y } = candidates[i]!;
-      this.setCell(x, y, 'mountain');
-    }
-  }
-
-  private placeForests(): void {
-    if (this.options.forestDensity <= 0) return;
-
-    const noise = fractalNoise(this.size, this.size, this.rng);
-    const center = this.size / 2;
-    const targetCount = Math.floor(this.size * this.size * this.options.forestDensity);
-
-    // Score each grass cell: noise weighted by distance from center (more forests at edges)
-    const candidates: { x: number; y: number; score: number }[] = [];
-    for (let y = 0; y < this.size; y++) {
-      for (let x = 0; x < this.size; x++) {
-        if (this.terrain[y]![x]!.type !== 'grass') continue;
-        const distFromCenter = Math.sqrt((x - center) ** 2 + (y - center) ** 2) / (center * Math.SQRT2);
-        const edgeBias = 0.3 + 0.7 * distFromCenter;
-        candidates.push({ x, y, score: noise[y]![x]! * edgeBias });
-      }
-    }
-
-    candidates.sort((a, b) => b.score - a.score);
-    const count = Math.min(targetCount, candidates.length);
-    for (let i = 0; i < count; i++) {
-      const { x, y } = candidates[i]!;
-      this.setCell(x, y, 'forest');
-    }
-  }
-
-  /** Compute noise threshold for marsh placement at a cell. */
-  private marshThreshold(x: number, y: number): number {
-    const riverBonus = this.isNearRiver(x, y, 3) ? 0.3 : 0;
-    return 1 - this.options.marshDensity - riverBonus;
-  }
-
-  private placeMarshland(): void {
-    if (this.options.marshDensity <= 0) return;
-
-    const noise = fractalNoise(this.size, this.size, this.rng);
-    const targetCount = Math.floor(this.size * this.size * this.options.marshDensity);
-    let placed = 0;
-
-    for (let y = 0; y < this.size; y++) {
-      for (let x = 0; x < this.size; x++) {
-        if (placed >= targetCount) return;
-        if (this.terrain[y]![x]!.type !== 'grass') continue;
-        if (noise[y]![x]! > this.marshThreshold(x, y)) {
-          this.setCell(x, y, 'marsh');
-          placed++;
-        }
-      }
-    }
-  }
-
-  private isNearRiver(x: number, y: number, radius: number): boolean {
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        if (this._riverCells.has(`${x + dx},${y + dy}`)) return true;
-      }
-    }
-    return false;
   }
 
   /**
@@ -270,30 +125,6 @@ export class MapSystem {
           this.setCell(x, y, 'grass');
         }
       }
-    }
-  }
-
-  /**
-   * Punch grass corridors from center to each edge to guarantee connectivity.
-   */
-  private punchCorridors(): void {
-    const center = Math.floor(this.size / 2);
-
-    // Corridor to top edge
-    for (let y = 0; y < center; y++) {
-      this.setCell(center, y, 'grass');
-    }
-    // Corridor to bottom edge
-    for (let y = center; y < this.size; y++) {
-      this.setCell(center, y, 'grass');
-    }
-    // Corridor to left edge
-    for (let x = 0; x < center; x++) {
-      this.setCell(x, center, 'grass');
-    }
-    // Corridor to right edge
-    for (let x = center; x < this.size; x++) {
-      this.setCell(x, center, 'grass');
     }
   }
 

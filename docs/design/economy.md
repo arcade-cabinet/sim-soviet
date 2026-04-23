@@ -511,8 +511,8 @@ The materials available for construction evolve through the eras, reflecting the
 | Wartime | Timber (scarce) | Steel repurposed for military | Salvage from bombardment damage |
 | Reconstruction | Timber, salvage | Steel, cement, glass (limited) | Rubble harvesting from ruins |
 | Thaw | Timber | Steel, cement, prefab panels, glass | Khrushchyovka mass housing possible |
-| Stagnation | Timber (forests depleted) | Prefab panels (delayed), cement (short) | Materials exist but never arrive on time |
-| Eternal | Theoretical timber | Paper-based materials | Materials are filed, not delivered |
+| Stagnation & Dissolution | Timber (forests depleted) | Prefab panels (delayed), cement (short) | Materials exist but never arrive on time |
+| Grounded continuation | Timber (scarce), salvage | Irregular remnants | The forms remain, the delivery system does not |
 
 ### Construction Method Progression
 
@@ -521,7 +521,7 @@ The materials available for construction evolve through the eras, reflecting the
 | Revolution-Collectivization | **Manual labor** (hand tools, shovels, axes) | Very slow (×2.0 time) | Low durability, high maintenance |
 | Industrialization-Wartime | **Mechanized** (cranes, mixers, MTS equipment) | Normal (×1.0 time) | Standard durability |
 | Reconstruction-Thaw | **Industrial** (prefab panels, standardized components) | Fast (×0.6 time for panel buildings) | Standardized, moderate durability |
-| Stagnation-Eternal | **Decaying industrial** (equipment breaks, panels crack) | Slow again (×1.5 time) | Low quality — "built in '78, falling apart by '85" |
+| Stagnation and continuation | **Decaying industrial** (equipment breaks, panels crack) | Slow again (×1.5 time) | Low quality — "built in '78, falling apart by '85" |
 
 ### Material Tension Design
 
@@ -580,7 +580,7 @@ Power plants (TEC/ТЭЦ) provide both electricity AND heat via piped hot water.
 
 **Gameplay feel**: Industrial-era resource management. Power becomes the bottleneck in winter. Strategic placement of power plants matters.
 
-### Phase 3: Crumbling Infrastructure (Stagnation → Eternal)
+### Phase 3: Crumbling Infrastructure (Stagnation And Continuation)
 
 District heating infrastructure decays. Pipes leak. Boilers fail.
 
@@ -603,7 +603,7 @@ District heating infrastructure decays. Pipes leak. Boilers fail.
 | Reconstruction | Rebuilding TEC | Coal | +40% |
 | Thaw | District heating | Coal/gas | +40% |
 | Stagnation | Decaying TEC | Coal (late deliveries) | +50% (+random failures) |
-| Eternal | Probabilistic | Who knows | Random |
+| Grounded continuation | Failing legacy systems | Scarce fuel | Random failures, no new tech tier |
 
 ---
 
@@ -682,7 +682,7 @@ Soviet workers ate communally. **Stolovayas** (столовая — canteens) at
 | Industrialization | Stolovaya building | 90-95% | Building reduces waste |
 | Wartime | Ration cards | 85% | Tiered, some waste |
 | Stagnation | The Queue | 75% | 25% lost to corruption/inefficiency |
-| Eternal | Probabilistic | 50-100% | Random each tick |
+| Grounded continuation | Informal queues | 50-80% | Corruption and decay persist |
 
 ### Starvation
 
@@ -703,4 +703,4 @@ Soviet workers ate communally. **Stolovayas** (столовая — canteens) at
 | Reconstruction | Rebuilding | 35% | Low quotas but no infrastructure, starting from rubble |
 | Thaw | Diversified | 30% | Best economic period, but expectations rise |
 | Stagnation | Vodka + paperwork | 45% (+corruption) | Corruption eats the remainder, queues for everything |
-| Eternal | Probabilistic | 40% | Food production is random, reported as stable |
+| Grounded continuation | Local survival | 35-50% | Production declines while reports claim continuity |

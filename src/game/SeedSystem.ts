@@ -20,7 +20,7 @@ import seedrandom from 'seedrandom';
 const SEED_ADJECTIVES: readonly string[] = [
   // State & ideology
   'glorious',
-  'eternal',
+  'steadfast',
   'heroic',
   'collective',
   'dialectical',

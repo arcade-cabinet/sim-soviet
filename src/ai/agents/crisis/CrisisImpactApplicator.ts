@@ -11,6 +11,7 @@
  *   - Narrative callbacks fire for each impact
  */
 
+import type { VisualEvent } from '@/game/engine/types';
 import type { CrisisImpact } from './types';
 
 // ─── Dependencies Interface ────────────────────────────────────────────────
@@ -26,6 +27,7 @@ export interface ApplicatorDeps {
   callbacks: {
     onPravda: (msg: string) => void;
     onToast: (msg: string, severity?: 'warning' | 'critical' | 'evacuation') => void;
+    onVisualEvent?: (event: VisualEvent) => void;
   };
   workerSystem?: {
     removeWorkersByCountMaleFirst: (count: number, reason: string) => number;
@@ -99,6 +101,7 @@ export function applyCrisisImpacts(impacts: CrisisImpact[], deps: ApplicatorDeps
     applyPolitical(impact, result);
     applySocial(impact, result);
     applyNarrative(impact, deps);
+    applyVisual(impact, deps);
   }
 
   return result;
@@ -196,4 +199,16 @@ function applyNarrative(impact: CrisisImpact, deps: ApplicatorDeps): void {
       deps.callbacks.onToast(toast.text, toast.severity);
     }
   }
+}
+
+function applyVisual(impact: CrisisImpact, deps: ApplicatorDeps): void {
+  const vis = impact.visual;
+  if (!vis) return;
+
+  deps.callbacks.onVisualEvent?.({
+    effect: vis.effect,
+    intensity: vis.intensity,
+    durationTicks: vis.durationTicks,
+    crisisId: impact.crisisId,
+  });
 }

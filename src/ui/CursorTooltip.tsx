@@ -37,10 +37,10 @@ function statusInfo(tile: TileData): { label: string; color: string } {
   return { label: 'NORMAL', color: Colors.textSecondary };
 }
 
-/** Returns a build-obstruction warning message, or null if tile is buildable. */
-function buildWarning(tile: TileData): string | null {
-  if (tile.terrain === 'river' || tile.terrain === 'water') return 'CANNOT BUILD ON RIVER';
-  if (tile.type && tile.type !== 'empty') return 'OBSTRUCTED';
+/** Returns a terrain/occupancy warning message, or null if the tile is ordinary ground. */
+function tileWarning(tile: TileData): string | null {
+  if (tile.terrain === 'river' || tile.terrain === 'water') return 'WATERCOURSE';
+  if (tile.type && tile.type !== 'empty') return 'OCCUPIED';
   return null;
 }
 
@@ -49,7 +49,7 @@ export const CursorTooltip: React.FC<CursorTooltipProps> = ({ visible, tileData,
   if (!visible) return null;
 
   const status = statusInfo(tileData);
-  const warning = buildWarning(tileData);
+  const warning = tileWarning(tileData);
   const displayName =
     tileData.type && tileData.type !== 'empty' ? tileData.type.toUpperCase() : tileData.terrain.toUpperCase();
 

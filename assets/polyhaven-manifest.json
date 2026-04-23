@@ -1,0 +1,344 @@
+[
+  {
+    "id": "dikhololo_night",
+    "type": "hdri",
+    "name": "Dikhololo Night",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/dikhololo_night_1k.hdr",
+    "categories": [
+      "outdoor",
+      "nature",
+      "night",
+      "clear",
+      "low contrast",
+      "natural light"
+    ],
+    "fetchedAt": "2026-03-05T13:03:07.385Z"
+  },
+  {
+    "id": "kloppenheim_02_puresky",
+    "type": "hdri",
+    "name": "Kloppenheim 02 (Pure Sky)",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/kloppenheim_02_puresky_1k.hdr",
+    "categories": [
+      "outdoor",
+      "skies",
+      "nature",
+      "night",
+      "clear",
+      "high contrast",
+      "natural light",
+      "pure skies"
+    ],
+    "fetchedAt": "2026-03-05T13:03:18.075Z"
+  },
+  {
+    "id": "autumn_field_puresky",
+    "type": "hdri",
+    "name": "Autumn Field (Pure Sky)",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/autumn_field_puresky_1k.hdr",
+    "categories": [
+      "outdoor",
+      "natural light",
+      "nature",
+      "skies",
+      "high contrast",
+      "clear",
+      "morning-afternoon",
+      "pure skies"
+    ],
+    "fetchedAt": "2026-03-05T13:03:18.887Z"
+  },
+  {
+    "id": "abandoned_tank_farm_04",
+    "type": "hdri",
+    "name": "Abandoned Tank Farm 04",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/abandoned_tank_farm_04_1k.hdr",
+    "categories": [
+      "outdoor",
+      "skies",
+      "nature",
+      "morning-afternoon",
+      "partly cloudy",
+      "high contrast",
+      "natural light"
+    ],
+    "fetchedAt": "2026-03-05T13:03:20.218Z"
+  },
+  {
+    "id": "clarens_night_02",
+    "type": "hdri",
+    "name": "Clarens Night 02",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/clarens_night_02_1k.hdr",
+    "categories": [
+      "natural light",
+      "outdoor",
+      "nature",
+      "partly cloudy",
+      "high contrast",
+      "skies",
+      "night"
+    ],
+    "fetchedAt": "2026-03-05T13:06:46.787Z"
+  },
+  {
+    "id": "belfast_sunset_puresky",
+    "type": "hdri",
+    "name": "Belfast Sunset (Pure Sky)",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/belfast_sunset_puresky_1k.hdr",
+    "categories": [
+      "natural light",
+      "outdoor",
+      "nature",
+      "low contrast",
+      "partly cloudy",
+      "sunrise-sunset",
+      "skies",
+      "pure skies"
+    ],
+    "fetchedAt": "2026-03-05T13:06:47.561Z"
+  },
+  {
+    "id": "cobblestone_street_night",
+    "type": "hdri",
+    "name": "Cobblestone Street Night",
+    "resolution": "1k",
+    "format": "hdr",
+    "localPath": "assets/hdri/cobblestone_street_night_1k.hdr",
+    "categories": [
+      "outdoor",
+      "night",
+      "urban",
+      "artificial light",
+      "high contrast",
+      "clear"
+    ],
+    "fetchedAt": "2026-03-05T13:06:48.715Z"
+  },
+  {
+    "id": "rock_ground_02",
+    "type": "texture",
+    "name": "Rock Ground 02",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/rock_ground_02/",
+    "categories": [
+      "terrain",
+      "natural",
+      "rock",
+      "outdoor"
+    ],
+    "fetchedAt": "2026-03-05T13:06:51.143Z"
+  },
+  {
+    "id": "sand_01",
+    "type": "texture",
+    "name": "Sand 01",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/sand_01/",
+    "categories": [
+      "terrain",
+      "sand",
+      "outdoor",
+      "natural"
+    ],
+    "fetchedAt": "2026-03-05T13:06:54.278Z"
+  },
+  {
+    "id": "aerial_beach_01",
+    "type": "texture",
+    "name": "Aerial Beach 01",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/aerial_beach_01/",
+    "categories": [
+      "terrain",
+      "sand",
+      "outdoor",
+      "natural",
+      "aerial"
+    ],
+    "fetchedAt": "2026-03-05T13:06:56.490Z"
+  },
+  {
+    "id": "metal_plate",
+    "type": "texture",
+    "name": "Metal Plate",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/metal_plate/",
+    "categories": [
+      "metal",
+      "floor",
+      "man made",
+      "indoor",
+      "outdoor",
+      "dirty"
+    ],
+    "fetchedAt": "2026-03-05T14:04:41.288Z"
+  },
+  {
+    "id": "rusty_metal_02",
+    "type": "texture",
+    "name": "Rusty Metal 02",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/rusty_metal_02/",
+    "categories": [
+      "metal",
+      "man made",
+      "dirty",
+      "wall",
+      "indoor",
+      "outdoor"
+    ],
+    "fetchedAt": "2026-03-05T14:04:44.961Z"
+  },
+  {
+    "id": "factory_wall",
+    "type": "texture",
+    "name": "Factory Wall",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/factory_wall/",
+    "categories": [
+      "metal",
+      "outdoor",
+      "wall",
+      "clean",
+      "roofing",
+      "man made"
+    ],
+    "fetchedAt": "2026-03-05T14:04:47.439Z"
+  },
+  {
+    "id": "blue_metal_plate",
+    "type": "texture",
+    "name": "Blue Metal Plate",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/blue_metal_plate/",
+    "categories": [
+      "metal",
+      "industrial"
+    ],
+    "fetchedAt": "2026-03-05T14:04:51.156Z"
+  },
+  {
+    "id": "corrugated_iron",
+    "type": "texture",
+    "name": "Corrugated Iron",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/corrugated_iron/",
+    "categories": [
+      "man made",
+      "roofing",
+      "wall",
+      "metal"
+    ],
+    "fetchedAt": "2026-03-05T14:07:38.591Z"
+  },
+  {
+    "id": "rust_coarse_01",
+    "type": "texture",
+    "name": "Rust Coarse 01",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/rust_coarse_01/",
+    "categories": [
+      "metal",
+      "outdoor",
+      "man made",
+      "dirty",
+      "wall"
+    ],
+    "fetchedAt": "2026-03-05T14:07:42.083Z"
+  },
+  {
+    "id": "concrete_wall_008",
+    "type": "texture",
+    "name": "Concrete Wall 008",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/concrete_wall_008/",
+    "categories": [
+      "outdoor",
+      "man made",
+      "wall",
+      "plaster-concrete",
+      "concrete",
+      "plaster"
+    ],
+    "fetchedAt": "2026-03-05T14:07:44.645Z"
+  },
+  {
+    "id": "painted_metal_shutter",
+    "type": "texture",
+    "name": "Painted Metal Shutter",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/painted_metal_shutter/",
+    "categories": [
+      "man made",
+      "metal"
+    ],
+    "fetchedAt": "2026-03-05T14:07:47.556Z"
+  },
+  {
+    "id": "metal_grate_rusty",
+    "type": "texture",
+    "name": "Metal Grate Rusty",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/metal_grate_rusty/",
+    "categories": [
+      "man made",
+      "metal",
+      "outdoor"
+    ],
+    "fetchedAt": "2026-03-05T14:07:50.827Z"
+  },
+  {
+    "id": "container_side",
+    "type": "texture",
+    "name": "Container Side",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/container_side/",
+    "categories": [
+      "man made",
+      "metal"
+    ],
+    "fetchedAt": "2026-03-05T14:07:54.365Z"
+  },
+  {
+    "id": "red_laterite_soil_stones",
+    "type": "texture",
+    "name": "Red Laterite Soil Stones",
+    "resolution": "1k",
+    "format": "jpg",
+    "localPath": "assets/textures/terrain/red_laterite_soil_stones/",
+    "categories": [
+      "outdoor",
+      "natural",
+      "terrain",
+      "rock",
+      "road",
+      "sand"
+    ],
+    "fetchedAt": "2026-03-05T16:44:23.222Z"
+  }
+]

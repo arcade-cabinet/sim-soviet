@@ -2,30 +2,61 @@
 
 ## Why This Project Exists
 
-SimSoviet 1917 fills a niche in the city-builder genre: a game where **the system itself is the antagonist**. Unlike SimCity or Cities: Skylines where you build freely, here the player is a cog in the Soviet machine — constrained by mandates, quotas, and political pressure.
+SimSoviet 1917 makes the planned economy itself the antagonist. The player is
+not a mayor with a blank map; they are a chairman caught between Moscow,
+workers, shortages, propaganda, and personal survival.
 
-The satirical tone (dark comedy about bureaucracy, propaganda, and survival) provides both entertainment value and historical education about how planned economies actually functioned.
+The comedy comes from bureaucracy and contradiction: the report says everything
+is fulfilled, the granary is empty, and the KGB wants to know why morale is
+"unusually optimistic."
 
 ## User Experience Goals
 
-1. **Immediate engagement** — the Soviet aesthetic and Comrade Vanya advisor create an immersive atmosphere from the main menu
-2. **Gradual revelation** — tutorial directives teach mechanics one at a time; deeper systems (demographics, politburo) emerge organically
-3. **Meaningful tension** — every decision has tradeoffs: falsify reports (risky) or admit failure (consequences)
-4. **Replayability** — 8 eras, 3 difficulty levels, 3 consequence modes, procedural leaders, random events
+1. Immediate Soviet atmosphere and bureaucratic pressure.
+2. A settlement that visibly breathes without direct micromanagement.
+3. Meaningful tradeoffs between food, quotas, construction, political capital,
+   and human cost.
+4. A personnel file that feels like the real fail-state meter.
+5. Replayability through historical pressure, consequence levels, procedural
+   leaders, and emergent local crises.
+
+## What The Player Does
+
+- Observes autonomous workers and settlement growth.
+- Chooses where mandated buildings are placed.
+- Sets collective priorities.
+- Handles political conversations, reports, inspections, and compromises.
+- Intervenes during emergencies at political cost.
+- Decides whether to continue after the 1991 campaign summary.
+
+## What The Player Does Not Do
+
+- Freely choose a build menu.
+- Draw roads.
+- Individually assign every worker as the normal mode of play.
+- Command military combat.
+- Expand into future settlements, space layers, or global alternate timelines.
 
 ## Key Gameplay Systems
 
 | System | Purpose |
 |--------|---------|
-| **Planned Economy** | Trudodni labor days, compulsory deliveries, fondy allocation, remainder principle |
-| **Workers** | 6 AI behavior classes, morale/loyalty/skill, vodka dependency, autonomous collective |
-| **Demographics** | Dvory (households), births/deaths/aging, gendered labor, private plots |
-| **Political Apparatus** | Politruks, KGB informants, military, personnel file with black marks |
-| **Politburo** | 10 ministries, 80-cell interaction matrix, coups, purges, succession |
-| **Eras** | 8 campaigns (Revolution → The Eternal) with doctrine integration |
-| **Scoring** | Medals, achievements, difficulty multipliers, game tally |
-| **Minigames** | 9 building/tile-triggered events (interrogation, harvest, factory inspection) |
+| Autonomous collective | Workers self-organize around state demands and survival needs |
+| Five-year plans | Mandated construction and production quotas |
+| Personnel file | Black marks, commendations, scrutiny, arrest risk |
+| Demographics | Dvory, aging, births, deaths, gendered labor, private plots |
+| Political apparatus | Politruks, KGB, military, party pressure, investigations |
+| Historical governor | 1917-1991 campaign pacing and historical crises |
+| Pressure system | Classical local pressure domains and crisis emergence |
+| Scoring | Medals, achievements, consequence multipliers, 1991 summary |
 
 ## Current Feature Set
 
-All major systems listed above are **implemented and working**. The game is playable end-to-end from main menu through all 8 eras to game over/victory. 55 3D models, 52 music tracks, 22 scene components, 22+ UI panels.
+- Historical-only new game flow.
+- Seven historical eras ending at 1991.
+- Persistent one-shot 1991 completion modal.
+- Grounded post-campaign continuation of the same settlement.
+- Organic growth, HQ splitting, demand pipeline, site selection, and building
+  panels.
+- Food, industry, power, transport, politics, KGB, demographics, weather,
+  disasters, and narrative systems aligned to the historical campaign.

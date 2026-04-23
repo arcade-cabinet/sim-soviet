@@ -5,9 +5,11 @@
  */
 
 import { Vehicle } from 'yuka';
+import { operationalBuildings } from '../../../ecs/archetypes';
 import type { Entity } from '../../../ecs/world';
 import type { SeasonProfile } from '../../../game/Chronology';
 import type { GameRng } from '../../../game/SeedSystem';
+import { MSG } from '../../telegrams';
 import type { SettlementTier } from './SettlementSystem';
 import { type TransportSaveData, TransportSystem, type TransportTickResult } from './TransportSystem';
 
@@ -26,6 +28,27 @@ export class TransportAgent extends Vehicle {
     this.name = 'TransportAgent';
     this.system = new TransportSystem(eraId);
     if (rng) this.system.setRng(rng);
+  }
+
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.PHASE_PRODUCTION) {
+      const engine = (globalThis as any).simulationEngine;
+      if (engine?._lastTickCtx) {
+        const ctx = engine._lastTickCtx;
+        // Construction reads the latest transport pass from the agent.
+        const res = this.system.tick(
+          operationalBuildings.entities,
+          engine.settlement.getCurrentTier(),
+          ctx.agents.chronology.getDate().totalTicks,
+          ctx.tickResult.season,
+          ctx.storeRef.resources,
+        );
+        (this as any)._lastTickResult = res;
+      }
+      return true;
+    }
+    return false;
   }
 
   /** Delegate tick to TransportSystem. */

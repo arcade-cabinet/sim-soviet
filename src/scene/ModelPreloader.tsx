@@ -7,30 +7,30 @@
 import { useGLTF } from '@react-three/drei';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import manifest from '../../assets/models/soviet/manifest.json';
+import manifest from '../../assets/models/soviet/manifest-historical.json';
 import { assetUrl } from '../utils/assetPath';
 
 // Configure Draco decoder for compressed GLBs
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('/wasm/draco/');
+dracoLoader.setDecoderPath(assetUrl('wasm/draco/'));
 
 // drei's useGLTF uses a shared GLTFLoader — configure it with Draco support
 const loader = new GLTFLoader();
 loader.setDRACOLoader(dracoLoader);
 
-// ── Building model URLs (from manifest.json) ──
+// ── Building model URLs (from the historical campaign manifest) ──
 
 /** Map of model name → resolved URL for all building models */
 export const MODEL_URLS: Record<string, string> = {};
 
 for (const [name, asset] of Object.entries(manifest.assets)) {
-  MODEL_URLS[name] = assetUrl(`assets/${asset.file}`);
+  MODEL_URLS[name] = assetUrl(asset.file);
 }
 
 /**
  * Get the resolved URL for a building model by name.
  *
- * @param modelName - Model name matching a key in manifest.json
+ * @param modelName - Model name matching a key in manifest-historical.json
  * @returns Resolved asset URL, or empty string if not found
  */
 export function getModelUrl(modelName: string): string {

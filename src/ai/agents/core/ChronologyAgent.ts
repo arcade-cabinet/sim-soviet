@@ -24,6 +24,7 @@ import {
   TICKS_PER_YEAR,
 } from '../../../game/Chronology';
 import type { GameRng } from '../../../game/SeedSystem';
+import { MSG, type NewTickPayload } from '../../telegrams';
 import {
   createWeatherState,
   getWeatherProfile,
@@ -87,6 +88,15 @@ export class ChronologyAgent extends Vehicle {
   private season: SeasonProfile;
   private weather: WeatherState;
   private tickWithinDay: number;
+  private _lastTickResult: TickResult = {
+    newDay: false,
+    newMonth: false,
+    newYear: false,
+    season: {} as any,
+    weather: 'clear' as WeatherType,
+    dayPhase: 'midday' as DayPhase,
+    dayProgress: 0.5,
+  };
 
   /**
    * @param rng - Seeded RNG for weather rolls
@@ -159,6 +169,45 @@ export class ChronologyAgent extends Vehicle {
   // ── Core tick ────────────────────────────────────────
 
   /**
+   * Yuka's update loop hook.
+   * Called automatically by entityManager.update(delta).
+   */
+  update(delta: number): this {
+    const result = this.tick();
+
+    // Dispatch clock boundary telegrams to autonomous agents.
+    // SimulationEngine owns the ordered production/consumption/social/political phases.
+    if (this.manager) {
+      const payload: NewTickPayload = {
+        totalTicks: this.date.totalTicks,
+        delta,
+      };
+
+      const entities = this.manager.entities;
+      for (const e of entities) {
+        if (this.shouldReceiveClockMessage(e, MSG.NEW_TICK)) {
+          this.manager.sendMessage(this, e, MSG.NEW_TICK, 0, payload);
+        }
+
+        if (result.newMonth && this.shouldReceiveClockMessage(e, MSG.NEW_MONTH)) {
+          this.manager.sendMessage(this, e, MSG.NEW_MONTH, 0, null);
+        }
+        if (result.newYear && this.shouldReceiveClockMessage(e, MSG.NEW_YEAR)) {
+          this.manager.sendMessage(this, e, MSG.NEW_YEAR, 0, null);
+        }
+      }
+    }
+
+    return this;
+  }
+
+  private shouldReceiveClockMessage(entity: { name?: string }, message: string): boolean {
+    if (entity.name === 'PhaseDirectorAgent') return true;
+    if (message !== MSG.NEW_TICK) return false;
+    return entity.name === 'CollectiveAgent' || entity.name === 'DvorNeedsAgent';
+  }
+
+  /**
    * Advances the clock by one tick and returns a TickResult
    * describing which boundaries were crossed.
    *
@@ -210,7 +259,7 @@ export class ChronologyAgent extends Vehicle {
     const dayPhase = this.getDayPhase();
     const dayProgress = this.getDayProgress();
 
-    return {
+    this._lastTickResult = {
       newDay,
       newMonth,
       newYear,
@@ -219,6 +268,13 @@ export class ChronologyAgent extends Vehicle {
       dayPhase,
       dayProgress,
     };
+
+    return this._lastTickResult;
+  }
+
+  /** Get the result of the most recent tick computation. */
+  getLastTickResult(): TickResult {
+    return this._lastTickResult;
   }
 
   // ── Serialization (for save/load) ────────────────────

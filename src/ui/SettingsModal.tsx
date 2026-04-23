@@ -128,7 +128,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
 
       <SettingToggle
         label="COMRADE ADVISOR"
-        description={autopilot ? 'The AI governs all decisions.' : 'Manual control — you are the Chairman.'}
+        description={autopilot ? 'The AI governs all decisions.' : 'Manual control - you are the Predsedatel.'}
         value={autopilot}
         onToggle={handleToggleAutopilot}
       />
@@ -142,7 +142,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
             <View style={styles.xrButtons}>
               <TouchableOpacity style={styles.xrButton} onPress={handleEnterAR} activeOpacity={0.7}>
                 <Text style={styles.xrButtonText}>ENTER AR MODE</Text>
-                <Text style={styles.xrButtonDesc}>Tabletop city model</Text>
+                <Text style={styles.xrButtonDesc}>Tabletop settlement model</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.xrButton} onPress={handleEnterVR} activeOpacity={0.7}>
                 <Text style={styles.xrButtonText}>ENTER VR MODE</Text>

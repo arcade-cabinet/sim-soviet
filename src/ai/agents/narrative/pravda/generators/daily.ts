@@ -1,4 +1,4 @@
-import { pick, randInt } from '../helpers';
+import { hasFiveYearPlanLanguage, pick, randInt, tradeAuthorityForYear } from '../helpers';
 import type { HeadlineGenerator } from '../types';
 import { GENERIC_REALITIES } from '../wordPools';
 
@@ -13,12 +13,17 @@ export const weatherFillerGenerators: HeadlineGenerator[] = [
     category: 'weather',
   }),
 
-  () => ({
-    headline: `WINTER ARRIVES ${pick(['ON SCHEDULE', 'AS PREDICTED', 'PER FIVE-YEAR WEATHER PLAN', 'AHEAD OF SCHEDULE (A TRIUMPH)'])}`,
-    subtext: `Temperature: -${randInt(15, 45)} degrees. Status: ${pick(['brisk', 'refreshing', 'character-building', 'invigorating', 'survivable'])}`,
-    reality: 'Winter arrived in August. The calendar has been amended.',
-    category: 'weather',
-  }),
+  (gs) => {
+    const planPhrase = hasFiveYearPlanLanguage(gs.date.year)
+      ? 'PER FIVE-YEAR WEATHER PLAN'
+      : 'PER LOCAL WEATHER DIRECTIVE';
+    return {
+      headline: `WINTER ARRIVES ${pick(['ON SCHEDULE', 'AS PREDICTED', planPhrase, 'AHEAD OF SCHEDULE (A TRIUMPH)'])}`,
+      subtext: `Temperature: -${randInt(15, 45)} degrees. Status: ${pick(['brisk', 'refreshing', 'character-building', 'invigorating', 'survivable'])}`,
+      reality: 'Winter arrived in August. The calendar has been amended.',
+      category: 'weather',
+    };
+  },
 
   () => ({
     headline: `SPRING PREDICTED FOR ${pick(['NEXT MONTH', 'SOMETIME THIS YEAR', 'THE FORESEEABLE FUTURE', 'EVENTUALLY', 'SOON (REDEFINED)'])}`,
@@ -63,7 +68,7 @@ export const weatherFillerGenerators: HeadlineGenerator[] = [
   }),
 
   // Classified ads
-  () => ({
+  (gs) => ({
     headline: `CLASSIFIED: ${pick([
       `SEEKING ${randInt(50, 500)} VOLUNTEERS FOR "SPECIAL PROJECT." SHOVELS PROVIDED`,
       `LOST: 1 BUILDING. LAST SEEN: STANDING. IF FOUND, CONTACT MINISTRY`,
@@ -73,7 +78,7 @@ export const weatherFillerGenerators: HeadlineGenerator[] = [
       `SEEKING QUALIFIED PLUMBER. QUALIFICATIONS: ALIVE, WILLING`,
       `FOR TRADE: 1 POTATO FOR 3 POEMS ABOUT TRACTORS. SERIOUS OFFERS ONLY`,
     ])}`,
-    subtext: 'All classified ads reviewed and approved by the Ministry of Commerce (dissolved 1976).',
+    subtext: `All classified ads reviewed and approved by the ${tradeAuthorityForYear(gs.date.year)}.`,
     reality: 'The classified section is the only honest part of the newspaper. This concerns everyone.',
     category: 'editorial',
   }),

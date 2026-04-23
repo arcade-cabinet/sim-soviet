@@ -1,4 +1,4 @@
-import { bigNumber, fakePercent, pick, randInt } from '../helpers';
+import { bigNumber, fakePercent, hasFiveYearPlanLanguage, pick, planLabelForYear, randInt } from '../helpers';
 import type { HeadlineGenerator } from '../types';
 import {
   CULTURAL_OBJECTS,
@@ -53,7 +53,7 @@ export const internalTriumphGenerators: HeadlineGenerator[] = [
   // Pattern: Impossible infrastructure claim
   () => ({
     headline: `${randInt(10, 500)} NEW ${pick(['TENEMENTS', 'FACTORIES', 'SCHOOLS', 'HOSPITALS', 'MONUMENTS', 'CONCRETE STRUCTURES'])} COMPLETED THIS MONTH`,
-    subtext: `Each one a masterpiece of Soviet architecture (i.e., rectangular and grey).`,
+    subtext: `Each one a masterpiece of Soviet standardization (i.e., rectangular and grey).`,
     reality:
       'One building was completed. It has no plumbing. The plumbing is in a different building that has no walls.',
     category: 'production',
@@ -78,10 +78,12 @@ export const internalTriumphGenerators: HeadlineGenerator[] = [
     };
   },
 
-  // Pattern: Five-year plan success
-  () => ({
-    headline: `FIVE-YEAR PLAN COMPLETED IN ${randInt(3, 4)} YEARS ${randInt(7, 11)} MONTHS`,
-    subtext: `Remaining ${randInt(1, 14)} months to be used for celebration and re-planning.`,
+  // Pattern: plan success, using Five-Year Plan language only after 1928
+  (gs) => ({
+    headline: hasFiveYearPlanLanguage(gs.date.year)
+      ? `FIVE-YEAR PLAN COMPLETED IN ${randInt(3, 4)} YEARS ${randInt(7, 11)} MONTHS`
+      : `LOCAL WORK PLAN COMPLETED IN ${randInt(3, 4)} MONTHS ${randInt(7, 11)} DAYS`,
+    subtext: `Remaining ${randInt(1, 14)} ${hasFiveYearPlanLanguage(gs.date.year) ? 'months' : 'days'} to be used for celebration and re-planning.`,
     reality: `The plan was shortened to match actual completion date. This is the 4th time.`,
     category: 'triumph',
   }),
@@ -149,7 +151,7 @@ export const resourceSpinGenerators: HeadlineGenerator[] = [
   (gs) => {
     const count = gs.buildings.length;
     return {
-      headline: `URBAN DEVELOPMENT INDEX: ${count} STRUCTURES AND GROWING`,
+      headline: `SETTLEMENT DEVELOPMENT INDEX: ${count} STRUCTURES AND GROWING`,
       subtext: `Each one a testament to Soviet engineering (rectangular, grey, standing... mostly).`,
       reality: `${count} buildings. ${randInt(0, Math.max(1, Math.floor(count / 3)))} have functional plumbing. The rest have "character."`,
       category: 'production',
@@ -160,7 +162,7 @@ export const resourceSpinGenerators: HeadlineGenerator[] = [
   (gs) => {
     const pct = gs.quota.target > 0 ? Math.floor((gs.quota.current / gs.quota.target) * 100) : 0;
     return {
-      headline: `FIVE-YEAR PLAN ${pct >= 100 ? 'EXCEEDED' : 'ON TRACK'}: ${gs.quota.type.toUpperCase()} AT ${pct}% OF TARGET`,
+      headline: `${planLabelForYear(gs.date.year)} ${pct >= 100 ? 'EXCEEDED' : 'ON TRACK'}: ${gs.quota.type.toUpperCase()} AT ${pct}% OF TARGET`,
       subtext:
         pct >= 100
           ? 'Overachievement attributed to party guidance and creative mathematics.'

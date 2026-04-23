@@ -1,5 +1,5 @@
 /**
- * Unit tests for SiteSelectionRules — era-aware building placement logic.
+ * Unit tests for SiteSelectionRules — brutalist building placement logic.
  */
 
 import { findBestPlacement, type PlacementContext } from '../../src/growth/SiteSelectionRules';
@@ -11,25 +11,23 @@ jest.mock('@/data/buildingDefs', () => ({
       'workers-house-a': 'housing',
       'workers-house-b': 'housing',
       'collective-farm-hq': 'agriculture',
-      'kolkhoz': 'agriculture',
+      kolkhoz: 'agriculture',
       'power-station': 'power',
       'coal-plant': 'power',
       'vodka-distillery': 'industry',
       'steel-mill': 'industry',
+      'government-hq': 'government',
       'party-hq': 'government',
       'propaganda-tower': 'propaganda',
-      'barracks': 'military',
-      'clinic': 'services',
-      'school': 'services',
-      'palace-of-culture': 'culture',
+      clinic: 'services',
+      school: 'services',
+      'culture-center': 'culture',
+      'local-store': 'services',
     };
-    const role = roles[defId];
-    if (!role) return undefined;
-    return { role };
+    return roles[defId] ? { role: roles[defId] } : undefined;
   },
 }));
 
-/** Create a default PlacementContext for a 20x20 grid. */
 function createContext(overrides: Partial<PlacementContext> = {}): PlacementContext {
   return {
     gridSize: 20,
@@ -37,14 +35,14 @@ function createContext(overrides: Partial<PlacementContext> = {}): PlacementCont
     eraId: 'revolution',
     waterCells: [],
     treeCells: [],
+    marshCells: [],
+    mountainCells: [],
     occupiedCells: new Set(['10,10']),
     ...overrides,
   };
 }
 
-describe('SiteSelectionRules', () => {
-  // ── Basic placement ───────────────────────────────────────────────────
-
+describe('SiteSelectionRules (Brutalist)', () => {
   describe('basic placement', () => {
     it('returns a valid placement near existing buildings', () => {
       const ctx = createContext();
@@ -56,10 +54,12 @@ describe('SiteSelectionRules', () => {
       expect(result!.z).toBeLessThan(19);
     });
 
-    it('returns null when no buildings exist', () => {
-      const ctx = createContext({ buildings: [] });
-      const result = findBestPlacement('workers-house-a', ctx);
-      expect(result).toBeNull();
+    it('returns the center when no buildings exist (e.g. for HQ bootstrap)', () => {
+      const ctx = createContext({ buildings: [], occupiedCells: new Set() });
+      const result = findBestPlacement('government-hq', ctx);
+      expect(result).not.toBeNull();
+      expect(result!.x).toBe(10);
+      expect(result!.z).toBe(10);
     });
 
     it('returns null when all cells are occupied', () => {
@@ -82,183 +82,61 @@ describe('SiteSelectionRules', () => {
       const key = `${result!.x},${result!.z}`;
       expect(occupied.has(key)).toBe(false);
     });
+  });
 
-    it('does not place on boundary cells', () => {
+  describe('The State (HQ)', () => {
+    it('aggressively prefers the center of the map', () => {
       const ctx = createContext({
-        buildings: [{ x: 1, z: 1, defId: 'workers-house-a' }],
-        occupiedCells: new Set(['1,1']),
+        gridSize: 20,
+        buildings: [
+          { x: 10, z: 10, defId: 'workers-house-a' },
+          { x: 5, z: 5, defId: 'workers-house-b' },
+        ],
+        occupiedCells: new Set(['10,10', '5,5']),
       });
-      const result = findBestPlacement('workers-house-a', ctx);
+      const result = findBestPlacement('government-hq', ctx);
       expect(result).not.toBeNull();
-      expect(result!.x).toBeGreaterThanOrEqual(1);
-      expect(result!.z).toBeGreaterThanOrEqual(1);
+
+      // Center is 10,10 (occupied). It should pick something right next to it.
+      const distFromCenter = Math.abs(result!.x - 10) + Math.abs(result!.z - 10);
+      expect(distFromCenter).toBe(1);
     });
   });
 
-  // ── Early era (revolution) ────────────────────────────────────────────
-
-  describe('early era (revolution)', () => {
-    it('prefers cells near water', () => {
+  describe('Production', () => {
+    it('industry seeks out resource tiles (like water)', () => {
       const waterCells = [{ x: 12, z: 10 }];
       const ctx = createContext({
-        eraId: 'revolution',
         waterCells,
         buildings: [{ x: 10, z: 10, defId: 'workers-house-a' }],
       });
-      const result = findBestPlacement('workers-house-a', ctx);
+      const result = findBestPlacement('steel-mill', ctx);
       expect(result).not.toBeNull();
-      // Result should be near water (within 3 cells)
       const waterDist = Math.abs(result!.x - 12) + Math.abs(result!.z - 10);
-      expect(waterDist).toBeLessThanOrEqual(4);
+      // It should snuggle right up to the water if possible
+      expect(waterDist).toBeLessThanOrEqual(2);
     });
+  });
 
-    it('prefers cells near trees', () => {
-      const treeCells = [{ x: 8, z: 10 }];
+  describe('Housing', () => {
+    it('housing avoids wasting resource tiles', () => {
+      const treeCells = [{ x: 11, z: 10 }];
       const ctx = createContext({
-        eraId: 'revolution',
         treeCells,
         buildings: [{ x: 10, z: 10, defId: 'workers-house-a' }],
+        occupiedCells: new Set(['10,10']),
       });
-      const result = findBestPlacement('workers-house-a', ctx);
-      expect(result).not.toBeNull();
-    });
 
-    it('penalizes wooden buildings too close together (fire spacing)', () => {
-      // Place two houses 1 cell apart — a third house should avoid clustering
-      const ctx = createContext({
-        eraId: 'revolution',
-        buildings: [
-          { x: 10, z: 10, defId: 'workers-house-a' },
-          { x: 10, z: 11, defId: 'workers-house-b' },
-        ],
-        occupiedCells: new Set(['10,10', '10,11']),
-      });
       const result = findBestPlacement('workers-house-a', ctx);
       expect(result).not.toBeNull();
-      // The result should prefer positions with fire spacing (>=2 cells from existing housing)
+
+      // Housing should actively avoid placing itself AT 11,10 (the tree cell)
+      expect(result!.x === 11 && result!.z === 10).toBe(false);
     });
   });
-
-  // ── Middle era (collectivization/industrialization) ────────────────────
-
-  describe('middle era (collectivization/industrialization)', () => {
-    it('places admin buildings closer to center', () => {
-      const ctx = createContext({
-        eraId: 'collectivization',
-        gridSize: 20,
-        buildings: [
-          { x: 10, z: 10, defId: 'workers-house-a' },
-          { x: 5, z: 5, defId: 'workers-house-b' },
-        ],
-        occupiedCells: new Set(['10,10', '5,5']),
-      });
-      const result = findBestPlacement('party-hq', ctx);
-      expect(result).not.toBeNull();
-      // Admin should prefer center
-      const center = 10;
-      const distFromCenter = Math.abs(result!.x - center) + Math.abs(result!.z - center);
-      expect(distFromCenter).toBeLessThanOrEqual(10);
-    });
-
-    it('places farms toward edges', () => {
-      const ctx = createContext({
-        eraId: 'industrialization',
-        gridSize: 20,
-        buildings: [
-          { x: 10, z: 10, defId: 'workers-house-a' },
-          { x: 15, z: 15, defId: 'workers-house-b' },
-        ],
-        occupiedCells: new Set(['10,10', '15,15']),
-      });
-      const result = findBestPlacement('collective-farm-hq', ctx);
-      expect(result).not.toBeNull();
-    });
-
-    it('places industry near water when available', () => {
-      const waterCells = [{ x: 12, z: 10 }];
-      const ctx = createContext({
-        eraId: 'industrialization',
-        waterCells,
-        buildings: [{ x: 10, z: 10, defId: 'workers-house-a' }],
-      });
-      const result = findBestPlacement('steel-mill', ctx);
-      expect(result).not.toBeNull();
-    });
-  });
-
-  // ── Late era (thaw/stagnation/eternal) ────────────────────────────────
-
-  describe('late era (thaw/stagnation/eternal)', () => {
-    it('prefers grid-aligned positions', () => {
-      const ctx = createContext({
-        eraId: 'stagnation',
-        gridSize: 20,
-        buildings: [{ x: 10, z: 10, defId: 'workers-house-a' }],
-      });
-      const result = findBestPlacement('workers-house-a', ctx);
-      expect(result).not.toBeNull();
-    });
-
-    it('places services near housing (SNiP walking distances)', () => {
-      const ctx = createContext({
-        eraId: 'thaw_and_freeze',
-        gridSize: 20,
-        buildings: [
-          { x: 10, z: 10, defId: 'workers-house-a' },
-          { x: 11, z: 10, defId: 'workers-house-b' },
-        ],
-        occupiedCells: new Set(['10,10', '11,10']),
-      });
-      const result = findBestPlacement('clinic', ctx);
-      expect(result).not.toBeNull();
-      // Service should be within 10 cells of housing
-      const dist1 = Math.abs(result!.x - 10) + Math.abs(result!.z - 10);
-      const dist2 = Math.abs(result!.x - 11) + Math.abs(result!.z - 10);
-      expect(Math.min(dist1, dist2)).toBeLessThanOrEqual(10);
-    });
-
-    it('clusters housing together', () => {
-      const ctx = createContext({
-        eraId: 'stagnation',
-        gridSize: 20,
-        buildings: [
-          { x: 10, z: 10, defId: 'workers-house-a' },
-          { x: 11, z: 10, defId: 'workers-house-b' },
-          { x: 10, z: 11, defId: 'workers-house-a' },
-        ],
-        occupiedCells: new Set(['10,10', '11,10', '10,11']),
-      });
-      const result = findBestPlacement('workers-house-a', ctx);
-      expect(result).not.toBeNull();
-      // Should be near existing housing cluster
-      const minDist = Math.min(
-        Math.abs(result!.x - 10) + Math.abs(result!.z - 10),
-        Math.abs(result!.x - 11) + Math.abs(result!.z - 10),
-        Math.abs(result!.x - 10) + Math.abs(result!.z - 11),
-      );
-      expect(minDist).toBeLessThanOrEqual(4);
-    });
-
-    it('separates industry from housing', () => {
-      const ctx = createContext({
-        eraId: 'the_eternal',
-        gridSize: 20,
-        buildings: [
-          { x: 10, z: 10, defId: 'workers-house-a' },
-          { x: 5, z: 5, defId: 'workers-house-b' },
-        ],
-        occupiedCells: new Set(['10,10', '5,5']),
-      });
-      const result = findBestPlacement('steel-mill', ctx);
-      expect(result).not.toBeNull();
-    });
-  });
-
-  // ── Extended search radius ────────────────────────────────────────────
 
   describe('extended search radius', () => {
     it('finds placement with larger maxDistance when normal range is full', () => {
-      // Fill cells near the building within distance 3
       const occupied = new Set<string>();
       occupied.add('10,10');
       for (let dx = -3; dx <= 3; dx++) {
@@ -271,23 +149,11 @@ describe('SiteSelectionRules', () => {
 
       const ctx = createContext({ occupiedCells: occupied });
 
-      // Normal range (3) should fail
       const narrow = findBestPlacement('workers-house-a', ctx, 3);
       expect(narrow).toBeNull();
 
-      // Extended range should succeed
       const wide = findBestPlacement('workers-house-a', ctx, 10);
       expect(wide).not.toBeNull();
-    });
-  });
-
-  // ── Unknown era fallback ──────────────────────────────────────────────
-
-  describe('unknown era fallback', () => {
-    it('falls back to early era scoring for unknown era IDs', () => {
-      const ctx = createContext({ eraId: 'unknown_era' });
-      const result = findBestPlacement('workers-house-a', ctx);
-      expect(result).not.toBeNull();
     });
   });
 });

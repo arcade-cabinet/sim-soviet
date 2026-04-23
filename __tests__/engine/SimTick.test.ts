@@ -39,7 +39,6 @@ function resetSingleton(): GameState {
   gameState.train = { active: false, x: -5, y: 12, timer: 0 };
   gameState.meteor = { active: false, struck: false, x: 0, y: 0, z: 1500, tx: 0, ty: 0 };
   gameState.meteorShake = 0;
-  gameState.activeLaunch = null;
   gameState.activeLightning = null;
   gameState.quota = { type: 'food', target: 500, current: 0, deadlineYear: 1922 };
   gameState.simAccumulator = 0;

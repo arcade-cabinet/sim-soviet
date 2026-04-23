@@ -1,8 +1,8 @@
 /**
- * PoliticalEntityPanel — KGB agents, politruks, military and conscription officers.
+ * PoliticalEntityPanel — state-security agents, politruks, military and conscription officers.
  *
  * Displays active political entities, their stats and assignments,
- * ongoing KGB investigations, and the conscription queue. Uses
+ * ongoing state-security investigations, and the conscription queue. Uses
  * SovietModal with terminal variant for the classified dossier aesthetic.
  */
 
@@ -18,6 +18,7 @@ import { getEngine } from '../bridge/GameInit';
 import type { DialogueContext } from '../content/dialogue/types';
 import { useGameSnapshot } from '../hooks/useGameState';
 import { SovietModal } from './SovietModal';
+import { securityServiceCodeForYear } from './securityService';
 import { Colors, monoFont } from './styles';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -41,14 +42,14 @@ const ROLE_COLORS: Record<PoliticalRole, string> = {
 
 const ROLE_LABELS: Record<PoliticalRole, string> = {
   politruk: 'POLITRUKS',
-  kgb_agent: 'KGB AGENTS',
+  kgb_agent: 'STATE SECURITY AGENTS',
   military_officer: 'MILITARY OFFICERS',
   conscription_officer: 'CONSCRIPTION OFFICERS',
 };
 
 const ROLE_LABEL_SINGULAR: Record<PoliticalRole, string> = {
   politruk: 'POLITRUK',
-  kgb_agent: 'KGB AGENT',
+  kgb_agent: 'STATE SECURITY AGENT',
   military_officer: 'MIL. OFFICER',
   conscription_officer: 'CONSCR. OFFICER',
 };
@@ -105,6 +106,16 @@ const ROLE_DESCRIPTIONS: Record<PoliticalRole, string> = {
   conscription_officer: 'Enforces conscription quotas. Drafts your workers.',
 };
 
+function getRoleLabel(role: PoliticalRole, year: number): string {
+  if (role === 'kgb_agent') return `${securityServiceCodeForYear(year)} AGENTS`;
+  return ROLE_LABELS[role];
+}
+
+function getRoleLabelSingular(role: PoliticalRole, year: number): string {
+  if (role === 'kgb_agent') return `${securityServiceCodeForYear(year)} AGENT`;
+  return ROLE_LABEL_SINGULAR[role];
+}
+
 /** Personality descriptions for politruks. */
 const PERSONALITY_DESCRIPTIONS: Record<string, string> = {
   zealous: 'ZEALOUS — Checks often, low tolerance. Hard to satisfy.',
@@ -119,10 +130,11 @@ const EntityRow: React.FC<{
   isExpanded: boolean;
   onTap: (id: string) => void;
   dialogue: string | null;
-}> = React.memo(({ entity, isExpanded, onTap, dialogue }) => {
+  currentYear: number;
+}> = React.memo(({ entity, isExpanded, onTap, dialogue, currentYear }) => {
   const icon = ROLE_ICONS[entity.role];
   const roleColor = ROLE_COLORS[entity.role];
-  const roleLabel = ROLE_LABEL_SINGULAR[entity.role];
+  const roleLabel = getRoleLabelSingular(entity.role, currentYear);
   const effColor = effectColor(entity.effectiveness);
 
   return (
@@ -130,7 +142,7 @@ const EntityRow: React.FC<{
       onPress={() => onTap(entity.id)}
       style={({ pressed }) => [styles.entityRow, pressed && styles.entityRowPressed]}
       accessibilityRole="button"
-      accessibilityLabel={`${ROLE_LABEL_SINGULAR[entity.role]}: ${entity.name}`}
+      accessibilityLabel={`${roleLabel}: ${entity.name}`}
     >
       {/* Icon + name + role */}
       <View style={styles.entityHeader}>
@@ -281,7 +293,7 @@ function toResourceLevel(food: number, pop: number): DialogueContext['resourceLe
   return 'surplus';
 }
 
-/** Political entities panel showing KGB agents, politruks, military officers, and conscription queue. */
+/** Political entities panel showing state-security agents, politruks, military officers, and conscription queue. */
 export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({ visible, onDismiss }) => {
   const snap = useGameSnapshot();
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
@@ -354,13 +366,14 @@ export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({ visi
   if (!visible) return null;
 
   const totalEntities = entityList.length;
+  const securityLabel = securityServiceCodeForYear(snap.year);
 
   return (
     <SovietModal
       visible={visible}
       variant="terminal"
       title="POLITICAL ENTITIES"
-      stampText="KGB CLASSIFIED"
+      stampText={`${securityLabel} CLASSIFIED`}
       actionLabel="CLOSE"
       onAction={onDismiss}
       dismissOnOverlay
@@ -378,7 +391,7 @@ export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({ visi
             return (
               <View key={role} style={styles.summaryRow}>
                 <Text style={[styles.summaryIcon, { color: ROLE_COLORS[role] }]}>{ROLE_ICONS[role]}</Text>
-                <Text style={styles.summaryLabel}>{ROLE_LABELS[role]}:</Text>
+                <Text style={styles.summaryLabel}>{getRoleLabel(role, snap.year)}:</Text>
                 <Text style={[styles.summaryValue, { color: count > 0 ? ROLE_COLORS[role] : Colors.textMuted }]}>
                   {count}
                 </Text>
@@ -407,6 +420,7 @@ export const PoliticalEntityPanel: React.FC<PoliticalEntityPanelProps> = ({ visi
               entity={entity}
               isExpanded={selectedEntityId === entity.id}
               onTap={handleEntityTap}
+              currentYear={snap.year}
               dialogue={
                 selectedEntityId === entity.id
                   ? (politicalSystem?.getEntityDialogue(

@@ -17,13 +17,15 @@ import { useFrame, useThree } from '@react-three/fiber';
 import type React from 'react';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import type { Season } from './TerrainGrid';
+import type { Season } from '../engine/WeatherSystem';
 
 interface LightingProps {
   /** 0-1: 0=midnight, 0.25=dawn, 0.5=noon, 0.75=dusk */
   timeOfDay?: number;
   season?: Season;
   isStorm?: boolean;
+  /** When true, dims lighting with an orange/grey wartime tint (great_patriotic era). */
+  isWartime?: boolean;
 }
 
 /** Season multiplier for hemisphere light intensity */
@@ -63,7 +65,12 @@ const SHADOW_CAMERA_SIZE = 25;
 const SUN_DISTANCE = 40;
 
 /** Renders directional sun light with day/night cycle, hemispheric ambient fill, and distance fog. */
-const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer', isStorm = false }) => {
+const Lighting: React.FC<LightingProps> = ({
+  timeOfDay = 0.5,
+  season = 'summer',
+  isStorm = false,
+  isWartime = false,
+}) => {
   const sunRef = useRef<THREE.DirectionalLight>(null);
   const hemiRef = useRef<THREE.HemisphereLight>(null);
   const targetRef = useRef<THREE.Object3D>(null);
@@ -77,14 +84,18 @@ const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer',
   // Storm dimming
   const stormMul = isStorm ? 0.5 : 1.0;
 
+  // Wartime dimming — 20% reduction, shifts sun color towards orange/grey
+  const wartimeMul = isWartime ? 0.8 : 1.0;
+
   // Fog density: very light by default, heavier at night and during storms
   const fogDensity = useMemo(() => {
     let density = 0.002;
     const nightFactor = 1 - sunIntensity(timeOfDay);
     density += nightFactor * 0.005;
     if (isStorm) density += 0.01;
+    if (isWartime) density += 0.003;
     return density;
-  }, [timeOfDay, isStorm]);
+  }, [timeOfDay, isStorm, isWartime]);
 
   // Track camera target with the shadow camera for high-resolution shadows
   useFrame(() => {
@@ -126,8 +137,8 @@ const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer',
       {/* Directional light (sun) — shadows track camera focus */}
       <directionalLight
         ref={sunRef}
-        intensity={intensity * stormMul}
-        color="#fff5e0"
+        intensity={intensity * stormMul * wartimeMul}
+        color={isWartime ? '#e8c090' : '#fff5e0'}
         castShadow
         shadow-mapSize-width={SHADOW_MAP_SIZE}
         shadow-mapSize-height={SHADOW_MAP_SIZE}
@@ -144,7 +155,11 @@ const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer',
       </directionalLight>
 
       {/* Hemispheric light — warm ambient fill */}
-      <hemisphereLight ref={hemiRef} args={['#b3bfd9', '#594f47', hemiIntensity * stormMul]} position={[0, 50, 0]} />
+      <hemisphereLight
+        ref={hemiRef}
+        args={[isWartime ? '#9a8a78' : '#b3bfd9', '#594f47', hemiIntensity * stormMul * wartimeMul]}
+        position={[0, 50, 0]}
+      />
     </>
   );
 };

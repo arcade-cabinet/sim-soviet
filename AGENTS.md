@@ -1,37 +1,41 @@
 # SimSoviet 1917 — Agent Navigation
 
-> Satirical 3D city-builder set in the Soviet Union (starting 1917).
-> Built with React Three Fiber + Three.js r183 + React Native + Expo.
+> Soviet bureaucrat survival sim. 1.0 is a historical Soviet campaign from 1917 through 1991, followed by grounded same-settlement free play.
 
-## Quick Start for Agents
+## Quick Start
 
-1. **Read `memory-bank/AGENTS.md`** — project context, tech stack, patterns, current state
-2. **Read `docs/AGENTS.md`** — documentation index with frontmatter schema
-3. **Read `CLAUDE.md`** — operational instructions (commands, gotchas, code style)
+1. Read `CLAUDE.md` for the current product scope and commands.
+2. Read `memory-bank/AGENTS.md` for concise project context.
+3. Read `docs/AGENTS.md` for the documentation index.
 
-## Navigation
+## Current 1.0 Scope
 
-| Resource | Purpose | When to Use |
-|----------|---------|-------------|
-| [`memory-bank/AGENTS.md`](memory-bank/AGENTS.md) | Agentic memory bank (Cline-style) | First — understand project context |
-| [`docs/AGENTS.md`](docs/AGENTS.md) | Documentation index | Find design docs, plans, references |
-| [`CLAUDE.md`](CLAUDE.md) | Operational instructions | Commands, tech stack, gotchas |
-| [`.claude/agents/`](.claude/agents/) | Specialist agent definitions | Domain-specific expertise |
-| [`.claude/commands/`](.claude/commands/) | Custom commands | Audit, status, verification |
+- Keep: settlement simulation, organic growth, historical eras, food/industry/power/transport/politics/KGB/demographics/narrative, classical pressure domains, historical crises, Soviet models/audio/UI, main playable loop.
+- Remove: deep future, Kardashev, space/world/per-world timelines, post-scarcity pressure, celestial rendering, multi-settlement relocation, freeform chaos mode.
+- Post-1991: continue the same settlement with grounded local pressures only.
 
 ## Key Source Directories
 
-| Directory | What | Files |
-|-----------|------|-------|
-| `src/ai/agents/` | **Yuka domain agents** (8 subpackages: core, economy, political, infrastructure, social, workforce, narrative, meta) | ~123 |
-| `src/game/` | Thin orchestrator (SimulationEngine ~1126 lines) + shared infra (era, Chronology, SeedSystem, SaveSystem) | ~15 |
-| `src/ecs/` | Miniplex ECS world, archetypes, systems, factories | ~20 |
-| `src/engine/` | Legacy game logic (GameState, SimTick) | ~13 |
-| `src/scene/` | R3F/drei 3D components | ~25 |
-| `src/ui/` | React Native overlay components | ~55 |
-| `src/content/` | Dialogue pools, worldbuilding content | ~20 |
-| `src/bridge/` | ECS ↔ React bridge | 3 |
-| `src/hooks/` | React hooks (useGameState, useGameLoop) | 3 |
-| `src/audio/` | Web Audio music player | 3 |
-| `src/db/` | SQLite (sql.js) + Drizzle ORM | 2 |
-| `src/xr/` | WebXR (AR/VR) support | 3 |
+| Directory | Purpose |
+| --- | --- |
+| `src/game/` | Simulation engine, era system, save system, core orchestration |
+| `src/game/engine/` | Tick phases: chronology, production, consumption, social, political, narrative, finalize |
+| `src/ai/agents/` | Economy, political, infrastructure, social, workforce, narrative, meta, crisis agents |
+| `src/ai/agents/crisis/pressure/` | Classical pressure accumulation and crisis emergence |
+| `src/growth/` | Organic local settlement growth |
+| `src/ecs/` | Miniplex ECS world, archetypes, systems, factories |
+| `src/scene/` | Local settlement R3F scene |
+| `src/ui/` | React Native overlays, HQ tabs, reports, campaign completion UI |
+| `src/content/` | Dialogue and worldbuilding content for the historical campaign |
+| `src/config/` | Historical runtime configs |
+
+## Verification
+
+Use the same checks expected for code changes:
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm lint
+pnpm build
+```

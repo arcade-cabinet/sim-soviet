@@ -1,6 +1,6 @@
 /**
  * RehabilitationModal -- shown when the player returns from gulag
- * in non-permadeath consequence modes (forgiving/harsh).
+ * in non-permadeath consequence modes (rehabilitated/gulag).
  */
 
 import type React from 'react';
@@ -32,7 +32,7 @@ export const RehabilitationModal: React.FC<RehabilitationModalProps> = ({
 }) => {
   if (!visible || !data) return null;
 
-  const severity = data.consequenceLevel === 'harsh' ? 'SEVERE' : 'MODERATE';
+  const severity = data.consequenceLevel === 'gulag' ? 'SEVERE' : 'MODERATE';
 
   return (
     <SovietModal

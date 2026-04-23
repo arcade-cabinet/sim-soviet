@@ -47,8 +47,8 @@ function findStakhanoviteEvent(
 
 describe('STAKHANOVITE_CONFIG', () => {
   it('has correct chance value', () => {
-    expect(STAKHANOVITE_CONFIG.chance).toBe(0.005);
-    expect(STAKHANOVITE_CHANCE).toBe(0.005);
+    expect(STAKHANOVITE_CONFIG.chance).toBe(0.001);
+    expect(STAKHANOVITE_CHANCE).toBe(0.001);
   });
 
   it('has correct production boost range', () => {
@@ -61,12 +61,12 @@ describe('STAKHANOVITE_CONFIG', () => {
     expect(STAKHANOVITE_CONFIG.propagandaRange).toBe(40);
   });
 
-  it('has quotaIncreaseBase of 0.25 (was 0.15)', () => {
-    expect(STAKHANOVITE_CONFIG.quotaIncreaseBase).toBe(0.25);
+  it('has bounded quotaIncreaseBase for 1.0 campaign playability', () => {
+    expect(STAKHANOVITE_CONFIG.quotaIncreaseBase).toBe(0.04);
   });
 
-  it('has quotaIncreaseRange of 0.15 (was 0.1)', () => {
-    expect(STAKHANOVITE_CONFIG.quotaIncreaseRange).toBe(0.15);
+  it('has bounded quotaIncreaseRange for 1.0 campaign playability', () => {
+    expect(STAKHANOVITE_CONFIG.quotaIncreaseRange).toBe(0.04);
   });
 
   it('has neighborMoralePenalty of 8', () => {
@@ -81,8 +81,8 @@ describe('STAKHANOVITE_CONFIG', () => {
     expect(STAKHANOVITE_CONFIG.fraudExposureChance).toBe(0.08);
   });
 
-  it('has nextPlanEscalation of 1.30', () => {
-    expect(STAKHANOVITE_CONFIG.nextPlanEscalation).toBe(1.3);
+  it('has nextPlanEscalation of 1.05', () => {
+    expect(STAKHANOVITE_CONFIG.nextPlanEscalation).toBe(1.05);
   });
 });
 
@@ -115,13 +115,12 @@ describe('StakhanoviteEvent — new consequence fields', () => {
     expect(result!.event.nextPlanEscalation).toBe(STAKHANOVITE_CONFIG.nextPlanEscalation);
   });
 
-  it('quota increase now uses 0.25 base (was 0.15)', () => {
+  it('quota increase stays within the bounded 1.0 range', () => {
     const result = findStakhanoviteEvent();
     expect(result).not.toBeNull();
     const event = result!.event;
-    // quotaIncrease = base + random * range = 0.25 + [0,1) * 0.15
-    expect(event.quotaIncrease).toBeGreaterThanOrEqual(0.25);
-    expect(event.quotaIncrease).toBeLessThanOrEqual(0.4);
+    expect(event.quotaIncrease).toBeGreaterThanOrEqual(0.04);
+    expect(event.quotaIncrease).toBeLessThanOrEqual(0.08);
   });
 });
 
@@ -146,7 +145,7 @@ describe('Stakhanovite — coworker sabotage', () => {
     }
 
     // Need enough events to get a meaningful ratio
-    expect(eventCount).toBeGreaterThan(50);
+    expect(eventCount).toBeGreaterThan(20);
     const ratio = sabotageCount / eventCount;
     // Allow wide tolerance since we're sampling from a small probability
     expect(ratio).toBeGreaterThan(0.01);
@@ -174,7 +173,7 @@ describe('Stakhanovite — fraud exposure', () => {
       }
     }
 
-    expect(eventCount).toBeGreaterThan(50);
+    expect(eventCount).toBeGreaterThan(20);
     const ratio = fraudCount / eventCount;
     // Allow wide tolerance
     expect(ratio).toBeGreaterThan(0.02);

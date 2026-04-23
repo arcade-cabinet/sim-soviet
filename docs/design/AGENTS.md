@@ -1,38 +1,38 @@
-# Design Documents — Agent Index
+# Design Documents - Agent Index
 
-> Scan frontmatter: `head -20 docs/design/*.md`
+Each design document describes one historical campaign system. Prefer
+`docs/GAME_VISION.md` and `docs/GDD-master.md` for current product scope.
 
-## How to Use This Index
+## Canonical Design Docs
 
-Each design document specifies one game system. Read the `implementation` frontmatter field to find the source code, and `tests` for test coverage. Status `implemented` means the design is fully reflected in code; `draft` means aspirational/planned.
+| Document | Domain | Status |
+|----------|--------|--------|
+| `overview.md` | Game identity and core loop | implemented |
+| `eras.md` | 1917-1991 historical era progression | implemented |
+| `economy.md` | Planned economy, quotas, materials, storage, heating | implemented |
+| `workers.md` | Worker roles, lifecycle, and autonomous collective | implemented |
+| `demographics.md` | Dvory, family structure, aging, gendered labor | draft/implemented mix |
+| `political.md` | Politruks, KGB, military, personnel file, reporting | implemented |
+| `scoring.md` | Campaign scoring, consequences, achievements | implemented |
+| `era-doctrines.md` | Historical doctrine modifier sets | implemented |
+| `ui-ux.md` | Brutalist mobile-first UI | active |
+| `ecs-architecture.md` | Miniplex ECS specification | implemented |
+| `leader-archetypes.md` | Procedural leader personalities | draft |
+| `leadership-architecture.md` | Political ECS modifier pipeline | draft |
+| `power-transitions.md` | Succession mechanics | draft |
+| `dialog-bible.md` | In-game voice guide | active |
 
-## Document Index
+## Current Implemented Systems Without Dedicated Docs
 
-| Document | Title | Status | Implementation | Coverage |
-|----------|-------|--------|---------------|----------|
-| `overview.md` | Game Identity & Core Loop | implemented | — (architectural) | full |
-| `economy.md` | The Planned Economy System | implemented | `src/game/economy.ts` | full |
-| `workers.md` | Workers — The Central Resource | implemented | `src/game/workers/WorkerSystem.ts` | full |
-| `demographics.md` | Demographics & Household System | implemented | `src/ecs/systems/demographicSystem.ts`, `src/ecs/factories/demographics.ts` | partial |
-| `political.md` | Political Apparatus | implemented | `src/game/political/PoliticalEntitySystem.ts`, `src/game/politburo/PolitburoSystem.ts` | full |
-| `eras.md` | Era-Based Campaigns | implemented | `src/game/era/EraSystem.ts` | full |
-| `minigames.md` | Building & Tile Triggered Minigames | implemented | `src/game/minigames/MinigameRouter.ts` | full |
-| `scoring.md` | Scoring, Difficulty & Permadeath | implemented | `src/game/ScoringSystem.ts`, `src/game/AchievementTracker.ts` | full |
-| `ui-ux.md` | Mobile-First Brutalist UI/UX | active | `src/ui/`, `src/scene/` | partial |
-| `ecs-architecture.md` | Miniplex 2.0 ECS Specification | implemented | `src/ecs/world.ts`, `src/ecs/archetypes.ts`, `src/ecs/systems/` | full |
-| `era-doctrines.md` | 8 Composable Policy Modifier Sets | draft | `src/game/political/doctrine.ts` | partial |
-| `leader-archetypes.md` | 11 Procedural Leader Personalities | draft | `src/game/political/PoliticalEntitySystem.ts` | partial |
-| `leadership-architecture.md` | Leadership ECS Components & Modifier Pipeline | draft | `src/game/political/`, `src/game/politburo/` | partial |
-| `power-transitions.md` | 7 Succession Mechanics | draft | `src/game/politburo/coups.ts` | partial |
-| `dialog-bible.md` | In-Game Voice Guide | active | `src/content/dialogue/` | partial |
+| System | Implementation | Description |
+|--------|----------------|-------------|
+| Pressure-valve crisis | `src/ai/agents/crisis/pressure/` | Classical local pressure domains and crisis emergence |
+| Climate events | `src/ai/agents/crisis/ClimateEventSystem.ts` | Weather and seasonal natural events |
+| Black swans | `src/ai/agents/crisis/BlackSwanSystem.ts` | Rare local disasters |
+| World backdrop | `src/ai/agents/core/WorldAgent.ts` | Grounded geopolitical tension and Moscow scrutiny |
+| Organic growth | `src/growth/` | Demand, site selection, pacing, and HQ splitting |
 
-## Canonical vs Aspirational
+## Scope Note
 
-**Canonical** (implemented — reflects actual code):
-- overview, economy, workers, demographics, political, eras, minigames, scoring, ecs-architecture
-
-**Aspirational** (draft — design spec not yet fully implemented):
-- era-doctrines, leader-archetypes, leadership-architecture, power-transitions
-
-**In Progress** (active — partially implemented):
-- ui-ux, dialog-bible
+1.0 excludes removed future, space, cross-settlement, and abundance-crisis
+systems. Do not treat old references to those systems as active design.

@@ -3,12 +3,12 @@ title: Political Apparatus — What You're Surviving
 type: design
 status: implemented
 implementation:
-  - src/game/political/PoliticalEntitySystem.ts
-  - src/game/politburo/PolitburoSystem.ts
+  - src/ai/agents/political/PoliticalEntitySystem.ts
+  - src/ai/agents/narrative/politburo/PolitburoSystem.ts
 tests:
-  - src/__tests__/PoliticalEntitySystem.test.ts
-  - src/__tests__/political-integration.test.ts
-last_verified: 2026-03-01
+  - __tests__/game/PoliticalEntitySystem.test.ts
+  - __tests__/game/political-integration.test.ts
+last_verified: 2026-04-23
 coverage: full
 ---
 
@@ -20,7 +20,7 @@ The three forces you cannot control, only endure. Plus: your personnel file — 
 
 ## Your File (Личное Дело)
 
-Your personnel file is the game's fail-state meter. It replaces health bars, population thresholds, and other city-builder death conditions.
+Your personnel file is the game's fail-state meter. It replaces health bars, population thresholds, and other generic management-game death conditions.
 
 ### Black Marks
 
@@ -156,7 +156,8 @@ Commendations are permanent and offset marks, but they don't remove marks from t
 - Reconstruction: veterans RETURN (influx of workers, but traumatized)
 - Thaw: low (5-8%)
 - Stagnation: moderate (10-15%)
-- Eternal: arbitrary and absurd (20% conscripted, no one knows why)
+- Post-campaign continuation: arbitrary local demands continue, but without new
+  historical escalation or new settlement scope.
 
 **Riot suppression**: If worker morale drops below 15 across the collective, riots can trigger. Military is called in automatically — workers are detained, production halts, +2 black marks.
 

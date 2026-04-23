@@ -106,6 +106,22 @@ export class VodkaAgent extends Vehicle {
     this.name = 'VodkaAgent';
   }
 
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.PHASE_PRODUCTION) {
+      const engine = (globalThis as any).simulationEngine;
+      if (engine?._lastTickCtx) {
+        const ctx = engine._lastTickCtx;
+        // Mocking raw output to 0 for autonomous tick (production chain handles actual output now, this handles diversion/consumption)
+        // A full decoupling would move the producer counting here.
+        const consumptionMult = ctx.modifiers.eraMods.consumptionMult * ctx.diffConfig.consumptionMultiplier;
+        this.tickVodka(0, ctx.storeRef.resources, consumptionMult);
+      }
+      return true;
+    }
+    return false;
+  }
+
   // ─────────────────────────────────────────────────────
   //  CORE TICK
   // ─────────────────────────────────────────────────────
@@ -125,7 +141,7 @@ export class VodkaAgent extends Vehicle {
    * @param consumptionMult - Era/difficulty multiplier on consumption rates (default 1)
    * @returns Summary of what happened this tick
    */
-  update(rawVodkaOutput: number, resources: VodkaResourceView, consumptionMult = 1): VodkaUpdateResult {
+  tickVodka(rawVodkaOutput: number, resources: VodkaResourceView, consumptionMult = 1): VodkaUpdateResult {
     const result: VodkaUpdateResult = {
       vodkaProduced: 0,
       grainConsumed: 0,

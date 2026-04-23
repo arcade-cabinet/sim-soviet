@@ -164,8 +164,51 @@ export const ERA_CONTEXTS: Record<string, string> = {
   reconstruction: 'melancholic', // rebuilding from ruins
   thaw_and_freeze: 'upbeat', // cultural relaxation, then stiffening
   stagnation: 'melancholic', // decline, disillusionment
-  the_eternal: 'triumphant', // utopian endgame
 };
+
+/**
+ * Era → playlist track IDs.
+ * Each era maps to a subset of GAMEPLAY_PLAYLIST tracks with appropriate mood.
+ * Tracks are selected based on mood matching:
+ * - revolution/collectivization: patriotic, melancholic, industrial (somber folk/revolutionary)
+ * - industrialization/great_patriotic: intense, industrial, triumphant (heroic/martial)
+ * - reconstruction/thaw_and_freeze: upbeat, pastoral, melancholic (hopeful/thaw)
+ * - stagnation/free play: melancholic, pastoral (slow/bureaucratic)
+ */
+export const ERA_PLAYLIST_MAP: Record<string, string[]> = {
+  revolution: [
+    'internationale',
+    'varshavjanka',
+    'krasnoe_znamia',
+    'rabochaia_marseleza',
+    'smelo_tovarishchi',
+    'dubinushka',
+  ],
+  collectivization: [
+    'internationale',
+    'varshavjanka',
+    'krasnoe_znamia',
+    'nash_parovoz',
+    'dubinushka',
+    'smelo_tovarishchi',
+  ],
+  industrialization: ['red_army_march', 'nash_parovoz', 'dubinushka', 'po_dolinam', 'i_vnov_boj', 'moskva_majskaia'],
+  great_patriotic: ['red_army_march', 'katyusha', 'po_dolinam', 'smuglianka', 'i_vnov_boj', 'tachanka'],
+  reconstruction: ['katyusha', 'moskva_majskaia', 'smuglianka', 'glavnoe_rebiata', 'tachanka'],
+  thaw_and_freeze: ['katyusha', 'moskva_majskaia', 'glavnoe_rebiata', 'tachanka', 'smuglianka', 'my_krasnye_soldaty'],
+  stagnation: ['dubinushka', 'varshavjanka', 'krasnoe_znamia', 'white_army_black_baron', 'smelo_tovarishchi'],
+};
+
+/**
+ * Get the playlist track IDs for a given era.
+ * Falls back to the full GAMEPLAY_PLAYLIST if the era is unknown.
+ *
+ * @param era - Era identifier (e.g. 'revolution', 'stagnation')
+ * @returns Array of track IDs appropriate for the era
+ */
+export function getEraPlaylist(era: string): string[] {
+  return ERA_PLAYLIST_MAP[era] ?? GAMEPLAY_PLAYLIST;
+}
 
 /**
  * Look up a music track by its unique ID.

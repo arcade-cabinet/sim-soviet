@@ -284,7 +284,7 @@ describe('factories', () => {
     });
 
     it('accepts custom terrain type', () => {
-      const entity = createTile(0, 0, 'road');
+      const entity = createTile(0, 0, { terrain: 'road' });
       expect(entity.tile!.terrain).toBe('road');
     });
 
@@ -304,12 +304,12 @@ describe('factories', () => {
     });
 
     it('supports water terrain', () => {
-      const entity = createTile(0, 0, 'water');
+      const entity = createTile(0, 0, { terrain: 'water' });
       expect(entity.tile!.terrain).toBe('water');
     });
 
     it('supports foundation terrain', () => {
-      const entity = createTile(0, 0, 'foundation');
+      const entity = createTile(0, 0, { terrain: 'foundation' });
       expect(entity.tile!.terrain).toBe('foundation');
     });
   });
@@ -320,9 +320,9 @@ describe('factories', () => {
     it('creates resource store with default values', () => {
       const entity = createResourceStore();
       expect(entity.resources).toBeDefined();
-      expect(entity.resources!.money).toBe(2000);
-      expect(entity.resources!.food).toBe(600);
-      expect(entity.resources!.vodka).toBe(50);
+      expect(entity.resources!.money).toBe(0);
+      expect(entity.resources!.food).toBe(500);
+      expect(entity.resources!.vodka).toBe(100);
       expect(entity.resources!.power).toBe(0);
       expect(entity.resources!.powerUsed).toBe(0);
       expect(entity.resources!.population).toBe(0);
@@ -338,7 +338,7 @@ describe('factories', () => {
       expect(entity.resources!.money).toBe(5000);
       expect(entity.resources!.food).toBe(999);
       // Other values still default
-      expect(entity.resources!.vodka).toBe(50);
+      expect(entity.resources!.vodka).toBe(100);
     });
 
     it('accepts full initial overrides', () => {
@@ -383,8 +383,8 @@ describe('factories', () => {
   // ── createGrid ─────────────────────────────────────────────
 
   describe('createGrid', () => {
-    it('creates GRID_SIZE * GRID_SIZE tiles by default', () => {
-      createGrid();
+    it('creates GRID_SIZE * GRID_SIZE tiles when requested', () => {
+      createGrid(GRID_SIZE);
       expect(world.entities.length).toBe(GRID_SIZE * GRID_SIZE);
     });
 
@@ -432,7 +432,7 @@ describe('factories', () => {
       });
       expect(entity.gameMeta!.selectedTool).toBe('none');
       expect(entity.gameMeta!.gameOver).toBeNull();
-      expect(entity.gameMeta!.seed).toBe('');
+      expect(entity.gameMeta!.seed).toBe('sim-soviet');
       expect(entity.gameMeta!.settlementTier).toBe('selo');
       expect(entity.gameMeta!.blackMarks).toBe(0);
       expect(entity.gameMeta!.commendations).toBe(0);

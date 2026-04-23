@@ -1,31 +1,23 @@
 /**
  * Extended tests for src/stores/gameStore.ts
  *
- * Covers game speed, radial menu, placement callback, and snapshot creation
- * from missing ECS singletons.
+ * Covers game speed, inspection state, and snapshot creation from missing ECS singletons.
  */
 import { getMetaEntity } from '@/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 import {
-  closeRadialMenu,
   cycleGameSpeed,
   getGameSpeed,
   getInspected,
   getInspectedWorker,
-  getRadialMenu,
   type InspectedWorker,
   notifyStateChange,
-  openRadialMenu,
-  type RadialMenuState,
-  requestPlacement,
   selectTool,
-  setDragState,
   setGameSpeed,
   setInspected,
   setInspectedWorker,
   setPaused,
-  setPlacementCallback,
 } from '@/stores/gameStore';
 
 function resetStoreState(): void {
@@ -36,10 +28,7 @@ function resetStoreState(): void {
   selectTool('none');
   setInspected(null);
   setInspectedWorker(null);
-  setDragState(null);
   setGameSpeed(1);
-  closeRadialMenu();
-  setPlacementCallback(null);
 }
 
 const MOCK_WORKER: InspectedWorker = {
@@ -90,91 +79,6 @@ describe('gameStore — extended', () => {
     it('cycleGameSpeed returns the new speed', () => {
       const result = cycleGameSpeed();
       expect(result).toBe(getGameSpeed());
-    });
-  });
-
-  // ── Radial Menu ────────────────────────────────────────────
-
-  describe('openRadialMenu / getRadialMenu / closeRadialMenu', () => {
-    it('starts as null', () => {
-      expect(getRadialMenu()).toBeNull();
-    });
-
-    it('openRadialMenu sets radial menu state', () => {
-      const state: RadialMenuState = {
-        screenX: 100,
-        screenY: 200,
-        gridX: 5,
-        gridY: 10,
-        availableSpace: 3,
-      };
-      openRadialMenu(state);
-      expect(getRadialMenu()).toBe(state);
-    });
-
-    it('closeRadialMenu resets to null', () => {
-      openRadialMenu({
-        screenX: 50,
-        screenY: 50,
-        gridX: 1,
-        gridY: 1,
-        availableSpace: 2,
-      });
-      expect(getRadialMenu()).not.toBeNull();
-      closeRadialMenu();
-      expect(getRadialMenu()).toBeNull();
-    });
-
-    it('opening a new menu replaces the old one', () => {
-      const first: RadialMenuState = {
-        screenX: 10,
-        screenY: 20,
-        gridX: 1,
-        gridY: 2,
-        availableSpace: 1,
-      };
-      const second: RadialMenuState = {
-        screenX: 300,
-        screenY: 400,
-        gridX: 15,
-        gridY: 20,
-        availableSpace: 4,
-      };
-      openRadialMenu(first);
-      openRadialMenu(second);
-      expect(getRadialMenu()).toBe(second);
-      expect(getRadialMenu()!.gridX).toBe(15);
-    });
-  });
-
-  // ── Placement Callback ─────────────────────────────────────
-
-  describe('setPlacementCallback / requestPlacement', () => {
-    it('returns false when no callback is set', () => {
-      expect(requestPlacement(5, 5, 'power-station')).toBe(false);
-    });
-
-    it('delegates to the registered callback', () => {
-      const cb = jest.fn().mockReturnValue(true);
-      setPlacementCallback(cb);
-      const result = requestPlacement(3, 7, 'apartment-tower-a');
-      expect(result).toBe(true);
-      expect(cb).toHaveBeenCalledWith(3, 7, 'apartment-tower-a');
-    });
-
-    it('returns false when callback returns false', () => {
-      const cb = jest.fn().mockReturnValue(false);
-      setPlacementCallback(cb);
-      expect(requestPlacement(0, 0, 'power-station')).toBe(false);
-    });
-
-    it('clearing callback with null reverts to default false', () => {
-      const cb = jest.fn().mockReturnValue(true);
-      setPlacementCallback(cb);
-      expect(requestPlacement(0, 0, 'power-station')).toBe(true);
-
-      setPlacementCallback(null);
-      expect(requestPlacement(0, 0, 'power-station')).toBe(false);
     });
   });
 

@@ -158,8 +158,8 @@ describe('EconomyAgent — fondy delivery reliability', () => {
     expect(FONDY_BY_ERA.wartime.reliability).toBeLessThan(FONDY_BY_ERA.thaw.reliability);
   });
 
-  it('eternal era has lowest reliability', () => {
-    expect(FONDY_BY_ERA.eternal.reliability).toBeLessThanOrEqual(
+  it('perestroika era has lowest reliability', () => {
+    expect(FONDY_BY_ERA.perestroika.reliability).toBeLessThanOrEqual(
       Math.min(...Object.values(FONDY_BY_ERA).map((f) => f.reliability)),
     );
   });

@@ -1,7 +1,7 @@
 /**
  * Tests for consequence mode rehabilitation flow.
  *
- * When arrested with non-permadeath consequence modes (forgiving/harsh),
+ * When arrested with non-permadeath consequence modes (rehabilitated/gulag),
  * the game applies rehabilitation instead of game over: destroys buildings,
  * removes workers, skips time, resets marks, and resumes gameplay.
  */
@@ -13,40 +13,40 @@ describe('ConsequenceModes', () => {
   // ── Consequence Presets ──
 
   describe('CONSEQUENCE_PRESETS', () => {
-    it('forgiving mode is not permadeath', () => {
-      expect(CONSEQUENCE_PRESETS.forgiving.permadeath).toBe(false);
+    it('rehabilitated mode is not permadeath', () => {
+      expect(CONSEQUENCE_PRESETS.rehabilitated.permadeath).toBe(false);
     });
 
-    it('permadeath mode is permadeath', () => {
-      expect(CONSEQUENCE_PRESETS.permadeath.permadeath).toBe(true);
+    it('rasstrelyat mode is permadeath', () => {
+      expect(CONSEQUENCE_PRESETS.rasstrelyat.permadeath).toBe(true);
     });
 
-    it('harsh mode is not permadeath', () => {
-      expect(CONSEQUENCE_PRESETS.harsh.permadeath).toBe(false);
+    it('gulag mode is not permadeath', () => {
+      expect(CONSEQUENCE_PRESETS.gulag.permadeath).toBe(false);
     });
 
-    it('forgiving has 1 year delay', () => {
-      expect(CONSEQUENCE_PRESETS.forgiving.returnDelayYears).toBe(1);
+    it('rehabilitated has 1 year delay', () => {
+      expect(CONSEQUENCE_PRESETS.rehabilitated.returnDelayYears).toBe(1);
     });
 
-    it('harsh has 3 year delay', () => {
-      expect(CONSEQUENCE_PRESETS.harsh.returnDelayYears).toBe(3);
+    it('gulag has 3 year delay', () => {
+      expect(CONSEQUENCE_PRESETS.gulag.returnDelayYears).toBe(3);
     });
 
-    it('forgiving retains 90% buildings', () => {
-      expect(CONSEQUENCE_PRESETS.forgiving.buildingSurvival).toBe(0.9);
+    it('rehabilitated retains 90% buildings', () => {
+      expect(CONSEQUENCE_PRESETS.rehabilitated.buildingSurvival).toBe(0.9);
     });
 
-    it('harsh retains 40% buildings', () => {
-      expect(CONSEQUENCE_PRESETS.harsh.buildingSurvival).toBe(0.4);
+    it('gulag retains 40% buildings', () => {
+      expect(CONSEQUENCE_PRESETS.gulag.buildingSurvival).toBe(0.4);
     });
 
-    it('forgiving resets marks to 1', () => {
-      expect(CONSEQUENCE_PRESETS.forgiving.marksReset).toBe(1);
+    it('rehabilitated resets marks to 1', () => {
+      expect(CONSEQUENCE_PRESETS.rehabilitated.marksReset).toBe(1);
     });
 
-    it('harsh resets marks to 2', () => {
-      expect(CONSEQUENCE_PRESETS.harsh.marksReset).toBe(2);
+    it('gulag resets marks to 2', () => {
+      expect(CONSEQUENCE_PRESETS.gulag.marksReset).toBe(2);
     });
   });
 
@@ -97,9 +97,9 @@ describe('ConsequenceModes', () => {
 
   describe('ConsequenceConfig shape', () => {
     const configs: [string, ConsequenceConfig][] = [
-      ['forgiving', CONSEQUENCE_PRESETS.forgiving],
-      ['permadeath', CONSEQUENCE_PRESETS.permadeath],
-      ['harsh', CONSEQUENCE_PRESETS.harsh],
+      ['rehabilitated', CONSEQUENCE_PRESETS.rehabilitated],
+      ['rasstrelyat', CONSEQUENCE_PRESETS.rasstrelyat],
+      ['gulag', CONSEQUENCE_PRESETS.gulag],
     ];
 
     it.each(configs)('%s has all required fields', (_name, config) => {

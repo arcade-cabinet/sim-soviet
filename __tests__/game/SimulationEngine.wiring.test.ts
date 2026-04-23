@@ -2,7 +2,7 @@
  * Tests for SimulationEngine wiring — verifies that TutorialSystem,
  * AchievementTracker, and GameTally are properly integrated.
  */
-import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
+import { getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
@@ -127,10 +127,20 @@ describe('SimulationEngine — system wiring', () => {
       const store = getResourceEntity()!;
       store.resources.population = 0;
 
-      // Need to be past first year and have buildings for population-wipe game-over
-      createBuilding(5, 5, 'collective-farm-hq');
+      // Mock workerSystem.getPopulation to always return 0, preventing any RNG-driven
+      // agent side-effects from creating citizens
+      const ws = (engine as unknown as { workerSystem: { getPopulation: () => number } }).workerSystem;
+      jest.spyOn(ws, 'getPopulation').mockReturnValue(0);
+
       // Advance past grace period (>TICKS_PER_YEAR = 360)
       for (let i = 0; i < 365; i++) engine.tick();
+
+      // Place buildings AFTER grace period — crisis/decay systems can destroy
+      // buildings during the 365-tick run (infrastructure pressure crises),
+      // so we ensure they exist for the final game-over check
+      createBuilding(5, 5, 'collective-farm-hq');
+      createBuilding(7, 7, 'government-hq');
+      engine.tick(); // one more tick to trigger the loss check
 
       expect(cb.onGameOver).toHaveBeenCalled();
       expect(cb.onGameTally).toHaveBeenCalled();

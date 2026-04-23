@@ -1,0 +1,95 @@
+[
+  {
+    "id": "dekulakization_purge",
+    "name": "Dekulakization Purge",
+    "conditions": {
+      "pressureThresholds": {
+        "political": 0.5
+      },
+      "yearRange": {
+        "min": 1929,
+        "max": 1933
+      },
+      "sustainedTicks": 6
+    },
+    "effects": {
+      "pressureSpikes": {
+        "demographic": 0.2,
+        "morale": 0.2,
+        "loyalty": 0.15
+      },
+      "crisisDefinition": {
+        "id": "dekulakization",
+        "type": "political",
+        "name": "Dekulakization Purge",
+        "startYear": 0,
+        "endYear": 0,
+        "severity": "national",
+        "peakParams": {
+          "kgbAggressionMult": 2.5,
+          "moraleHit": -0.5,
+          "productionMult": 0.6
+        },
+        "buildupTicks": 6,
+        "aftermathTicks": 24,
+        "description": "Forced transfer of kulaks"
+      },
+      "narrative": {
+        "pravdaHeadline": "DEKULAKIZATION ORDERED — Unreliable elements to be relocated.",
+        "toast": "Dekulakization! Population loss."
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "ethnic_deportation",
+    "name": "Ethnic Deportation",
+    "conditions": {
+      "pressureThresholds": {
+        "political": 0.6
+      },
+      "yearRange": {
+        "min": 1935,
+        "max": 1950
+      },
+      "sustainedTicks": 6
+    },
+    "effects": {
+      "pressureSpikes": {
+        "loyalty": 0.25,
+        "morale": 0.2,
+        "demographic": 0.15
+      },
+      "narrative": {
+        "pravdaHeadline": "MOSCOW DEPORTS UNRELIABLE ETHNIC GROUP — Severe morale impact.",
+        "toast": "Ethnic deportation ordered!"
+      }
+    },
+    "oneShot": true
+  },
+  {
+    "id": "virgin_lands_assignment",
+    "name": "Virgin Lands Assignment",
+    "conditions": {
+      "pressureThresholds": {
+        "food": 0.6
+      },
+      "yearRange": {
+        "min": 1954,
+        "max": 1965
+      },
+      "sustainedTicks": 12
+    },
+    "effects": {
+      "pressureSpikes": {
+        "demographic": 0.1,
+        "economic": 0.1
+      },
+      "narrative": {
+        "pravdaHeadline": "CONGRATULATIONS! You have been assigned to develop VIRGIN LANDS in Kazakhstan.",
+        "toast": "Virgin Lands assignment!"
+      }
+    },
+    "oneShot": true
+  }
+]

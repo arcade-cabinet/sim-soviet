@@ -1,89 +1,12 @@
-/**
- * @module ecs/factories/storeFactories
- *
- * Singleton store factories (resource store, meta store) and
- * tile/grid factories.
- */
-
-import { GRID_SIZE } from '@/config';
-import type { Entity, GameMeta, TileComponent } from '../world';
+import type { Entity, GameMeta, Resources, TileComponent } from '../world';
 import { world } from '../world';
-
-// ── Tile Factory ────────────────────────────────────────────────────────────
-
-/**
- * Creates a single tile entity.
- *
- * @param gridX   - Column index on the grid
- * @param gridY   - Row index on the grid
- * @param terrain - Terrain type for this tile
- * @returns The created entity, already added to the world
- */
-export function createTile(gridX: number, gridY: number, terrain: TileComponent['terrain'] = 'grass'): Entity {
-  const tile: TileComponent = {
-    terrain,
-    elevation: 0,
-  };
-
-  const entity: Entity = {
-    position: { gridX, gridY },
-    tile,
-    isTile: true,
-  };
-
-  return world.add(entity);
-}
-
-// ── Grid Factory ────────────────────────────────────────────────────────────
-
-/**
- * Initializes the full grid as tile entities.
- *
- * Creates `size * size` tile entities, all starting as 'grass'.
- * Existing tiles are NOT removed — call this only once during
- * world initialization.
- *
- * @param size - Grid dimension (default: GRID_SIZE from config)
- */
-export function createGrid(size: number = GRID_SIZE): void {
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      createTile(x, y, 'grass');
-    }
-  }
-}
 
 // ── Resource Store Factory ──────────────────────────────────────────────────
 
 /**
- * Creates the singleton resource store entity.
- *
- * If a resource store already exists in the world, this is a no-op and
- * returns the existing entity.
- *
- * @param initialValues - Optional partial override of starting resources
- * @returns The resource store entity
+ * Creates the singleton resource stockpile entity.
  */
-export function createResourceStore(
-  initialValues?: Partial<{
-    money: number;
-    food: number;
-    vodka: number;
-    power: number;
-    powerUsed: number;
-    population: number;
-    trudodni: number;
-    blat: number;
-    timber: number;
-    steel: number;
-    cement: number;
-    prefab: number;
-    seedFund: number;
-    emergencyReserve: number;
-    storageCapacity: number;
-  }>,
-): Entity {
-  // Check for existing store
+export function createResourceStore(initialValues?: Partial<Resources>): Entity {
   const existing = world.with('resources', 'isResourceStore');
   if (existing.entities.length > 0) {
     return existing.entities[0]!;
@@ -91,21 +14,23 @@ export function createResourceStore(
 
   const entity: Entity = {
     resources: {
-      money: initialValues?.money ?? 2000,
-      food: initialValues?.food ?? 600,
-      vodka: initialValues?.vodka ?? 50,
+      money: initialValues?.money ?? 0,
+      food: initialValues?.food ?? 500,
+      timber: initialValues?.timber ?? 200,
+      steel: initialValues?.steel ?? 0,
+      cement: initialValues?.cement ?? 0,
+      vodka: initialValues?.vodka ?? 100,
       power: initialValues?.power ?? 0,
       powerUsed: initialValues?.powerUsed ?? 0,
       population: initialValues?.population ?? 0,
       trudodni: initialValues?.trudodni ?? 0,
-      blat: initialValues?.blat ?? 10,
-      timber: initialValues?.timber ?? 30,
-      steel: initialValues?.steel ?? 10,
-      cement: initialValues?.cement ?? 0,
+      blat: initialValues?.blat ?? 0,
       prefab: initialValues?.prefab ?? 0,
-      seedFund: initialValues?.seedFund ?? 1.0,
+      seedFund: initialValues?.seedFund ?? 0,
       emergencyReserve: initialValues?.emergencyReserve ?? 0,
-      storageCapacity: initialValues?.storageCapacity ?? 200,
+      storageCapacity: initialValues?.storageCapacity ?? 0,
+      water: initialValues?.water ?? 100,
+      raion: initialValues?.raion,
     },
     isResourceStore: true,
   };
@@ -117,12 +42,6 @@ export function createResourceStore(
 
 /**
  * Creates the singleton game metadata entity.
- *
- * If a meta store already exists in the world, this is a no-op and
- * returns the existing entity.
- *
- * @param initialValues - Optional partial override of starting metadata
- * @returns The meta store entity
  */
 export function createMetaStore(initialValues?: Partial<GameMeta>): Entity {
   const existing = world.with('gameMeta', 'isMetaStore');
@@ -130,9 +49,11 @@ export function createMetaStore(initialValues?: Partial<GameMeta>): Entity {
     return existing.entities[0]!;
   }
 
+  const seedStr = initialValues?.seed ?? 'sim-soviet';
+
   const entity: Entity = {
     gameMeta: {
-      seed: initialValues?.seed ?? '',
+      seed: seedStr,
       date: initialValues?.date ?? { year: 1917, month: 10, tick: 0 },
       quota: initialValues?.quota ?? {
         type: 'food',
@@ -156,4 +77,43 @@ export function createMetaStore(initialValues?: Partial<GameMeta>): Entity {
   };
 
   return world.add(entity);
+}
+
+// ── Grid / Tile Factories ──────────────────────────────────────────────────
+
+/**
+ * Creates an individual tile entity with resource components.
+ */
+export function createTile(x: number, y: number, initialValues?: Partial<TileComponent>): Entity {
+  const entity: Entity = {
+    position: { gridX: x, gridY: y },
+    tile: {
+      terrain: initialValues?.terrain ?? 'grass',
+      elevation: initialValues?.elevation ?? 0,
+      timber: initialValues?.timber ?? 0,
+      minerals: initialValues?.minerals ?? 0,
+      waterTable: initialValues?.waterTable ?? 50,
+      soilFertility: initialValues?.soilFertility ?? 50,
+      peat: initialValues?.peat ?? 0,
+      permafrost: initialValues?.permafrost ?? 0,
+      pollution: 0,
+      erosion: 0,
+    },
+    isTile: true,
+  };
+
+  return world.add(entity);
+}
+
+/**
+ * Creates a full grid of tile entities.
+ */
+export function createGrid(size: number): Entity[] {
+  const tiles: Entity[] = [];
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      tiles.push(createTile(x, y));
+    }
+  }
+  return tiles;
 }

@@ -207,7 +207,7 @@ describe('DefenseAgent', () => {
       // Roll of 0.1 > 0.05 → no spread
       const rng = makeRng(0.1);
       const agent = new DefenseAgent(rng as unknown as import('../../src/game/SeedSystem').GameRng);
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(neighbor.building.onFire).toBe(false);
     });
@@ -228,7 +228,7 @@ describe('DefenseAgent', () => {
       // Roll of 0.01 < 0.05 → spreads
       const rng = makeRng(0.01);
       const agent = new DefenseAgent(rng as unknown as import('../../src/game/SeedSystem').GameRng);
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(neighbor.building.onFire).toBe(true);
     });
@@ -250,7 +250,7 @@ describe('DefenseAgent', () => {
 
       const rng = makeRng(0.03);
       const agent = new DefenseAgent(rng as unknown as import('../../src/game/SeedSystem').GameRng);
-      agent.update(1, WeatherType.RAIN, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.RAIN, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(neighbor.building.onFire).toBe(false);
     });
@@ -271,7 +271,7 @@ describe('DefenseAgent', () => {
 
       const rng = makeRng(0.001); // very low roll → would spread if in range
       const agent = new DefenseAgent(rng as unknown as import('../../src/game/SeedSystem').GameRng);
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(farNeighbor.building.onFire).toBe(false);
     });
@@ -303,7 +303,7 @@ describe('DefenseAgent', () => {
       // 0.02 > effective 0.01 (after suppression) → no spread
       const rng = makeRng(0.02);
       const agent = new DefenseAgent(rng as unknown as import('../../src/game/SeedSystem').GameRng);
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(neighbor.building.onFire).toBe(false);
     });
@@ -330,7 +330,7 @@ describe('DefenseAgent', () => {
 
       const rng = makeRng(0.02);
       const agent = new DefenseAgent(rng as unknown as import('../../src/game/SeedSystem').GameRng);
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(neighbor.building.onFire).toBe(true);
     });
@@ -350,7 +350,7 @@ describe('DefenseAgent', () => {
 
       const rng = makeRng(0.9); // high roll → no spread
       const agent = new DefenseAgent(rng as unknown as import('../../src/game/SeedSystem').GameRng);
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(burning.durability!.current).toBe(47);
     });
@@ -365,7 +365,7 @@ describe('DefenseAgent', () => {
       mockBuildingEntities = [burning];
 
       const agent = new DefenseAgent();
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(burning.building.onFire).toBe(false);
       expect(burning.building.fireTicksRemaining).toBe(0);
@@ -491,7 +491,7 @@ describe('DefenseAgent', () => {
 
       const rng = makeRng(0.9); // high roll → no spread
       const agent = new DefenseAgent(rng as unknown as import('../../src/game/SeedSystem').GameRng);
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(agent.getZeppelins().length).toBeGreaterThanOrEqual(1);
       expect(agent.getZeppelins()[0]!.phase).toBe('flying');
@@ -508,7 +508,7 @@ describe('DefenseAgent', () => {
       mockOperationalEntities = []; // no station
 
       const agent = new DefenseAgent();
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(agent.getZeppelins().length).toBe(0);
     });
@@ -532,7 +532,7 @@ describe('DefenseAgent', () => {
 
       const rng = makeRng(0.9);
       const agent = new DefenseAgent(rng as unknown as import('../../src/game/SeedSystem').GameRng);
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(agent.getZeppelins().length).toBeLessThanOrEqual(2);
     });
@@ -567,7 +567,7 @@ describe('DefenseAgent', () => {
       mockBuildingEntities = [burning];
       mockOperationalEntities = [station];
 
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(agent.getZeppelins()[0]!.phase).toBe('extinguishing');
     });
@@ -581,7 +581,7 @@ describe('DefenseAgent', () => {
       mockBuildingEntities = [house];
 
       const agent = new DefenseAgent();
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(agent.getEmergencyState().activeFires).toBe(0);
     });
@@ -601,7 +601,7 @@ describe('DefenseAgent', () => {
       mockBuildingEntities = [burning1, burning2];
 
       const agent = new DefenseAgent();
-      agent.update(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
+      agent.tickDefense(1, WeatherType.CLEAR, mockGrid as unknown as import('../../src/game/GameGrid').GameGrid, 1, 6);
 
       expect(agent.getEmergencyState().activeFires).toBe(2);
     });

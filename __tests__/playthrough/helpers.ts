@@ -8,12 +8,12 @@
 
 import type { ConsequenceLevel, DifficultyLevel } from '../../src/ai/agents/political/ScoringSystem';
 import { getMetaEntity, getResourceEntity, operationalBuildings } from '../../src/ecs/archetypes';
-import { GameRng } from '../../src/game/SeedSystem';
 import { createBuilding, createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { createDvor } from '../../src/ecs/factories/settlementFactories';
 import type { Entity, GameMeta, Resources } from '../../src/ecs/world';
 import { world } from '../../src/ecs/world';
 import { GameGrid } from '../../src/game/GameGrid';
+import { GameRng } from '../../src/game/SeedSystem';
 import type { SimCallbacks } from '../../src/game/SimulationEngine';
 import { SimulationEngine } from '../../src/game/SimulationEngine';
 
@@ -48,6 +48,9 @@ export function createMockCallbacks(): SimCallbacks & Record<string, jest.Mock> 
     onTutorialMilestone: jest.fn(),
     onAchievement: jest.fn(),
     onGameTally: jest.fn(),
+    onRehabilitation: jest.fn(),
+    onHistoricalEraEnd: jest.fn().mockImplementation((resolve: (c: boolean) => void) => resolve(true)),
+    onVisualEvent: jest.fn(),
   };
 }
 

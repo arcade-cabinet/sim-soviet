@@ -21,8 +21,26 @@ import type { GameRng } from '../../../game/SeedSystem';
 import { MSG } from '../../telegrams';
 import type { ChronologyAgent } from '../core/ChronologyAgent';
 import type { WorkerSystem } from '../workforce/WorkerSystem';
+import {
+  createLawEnforcementState,
+  getEnforcementMode,
+  type LawEnforcementMode,
+  type LawEnforcementSaveData,
+  type LawEnforcementState,
+  type LawEnforcementTickContext,
+  restoreLawEnforcement,
+  serializeLawEnforcement,
+  tickLawEnforcement,
+} from './LawEnforcementSystem';
 import type { ConsequenceConfig, ScoringSystem } from './ScoringSystem';
-import type { KGBInformant, KGBInvestigation, PoliticalEntityStats, PoliticalTickResult } from './types';
+import type {
+  KGBInformant,
+  KGBInvestigation,
+  KGBMoraleReport,
+  MoraleReportSeverity,
+  PoliticalEntityStats,
+  PoliticalTickResult,
+} from './types';
 
 // ─────────────────────────────────────────────────────────
 //  Re-export types from PersonnelFile so callers can migrate
@@ -162,6 +180,18 @@ export const INFORMANT_FLAG_CHANCE = cfg.informantFlagChance;
 /** How many existing marks before investigation priority is escalated. */
 export const ESCALATION_MARK_THRESHOLD = cfg.escalationMarkThreshold;
 
+/** Morale threshold below which KGB generates a 'concern' report. */
+export const MORALE_CONCERN_THRESHOLD = 40;
+
+/** Morale threshold below which KGB generates a 'warning' report. */
+export const MORALE_WARNING_THRESHOLD = 25;
+
+/** Morale threshold below which KGB generates a 'critical' report. */
+export const MORALE_CRITICAL_THRESHOLD = 15;
+
+/** Maximum morale reports retained in memory. */
+const MAX_MORALE_REPORTS = 20;
+
 // ─────────────────────────────────────────────────────────
 //  Constants (from assessThreat / wrapper)
 // ─────────────────────────────────────────────────────────
@@ -260,8 +290,14 @@ export class KGBAgent extends Vehicle {
   /** Informant network embedded in buildings. */
   private informants: KGBInformant[] = [];
 
+  /** Morale intelligence reports generated from citizen sampling. */
+  private moraleReports: KGBMoraleReport[] = [];
+
   /** Optional RNG reference (set via setRng). */
   private rng: KGBRng | null = null;
+
+  /** Local law enforcement state (district crime and patrol pressure). */
+  private lawEnforcement: LawEnforcementState = createLawEnforcementState();
 
   constructor(difficulty: string = 'comrade') {
     super();
@@ -584,6 +620,98 @@ export class KGBAgent extends Vehicle {
   }
 
   // ─────────────────────────────────────────────────────
+  //  Morale Intelligence Reports
+  // ─────────────────────────────────────────────────────
+
+  /**
+   * Sample morale at specific locations and generate intelligence reports
+   * when morale drops below thresholds. Called once per tick by the engine.
+   *
+   * @param samples - Array of { sectorId, avgMorale } readings from buildings/sectors
+   * @param tick - Current simulation tick
+   */
+  sampleMorale(
+    samples: ReadonlyArray<{ sectorId: { gridX: number; gridY: number }; avgMorale: number }>,
+    tick: number,
+  ): void {
+    for (const sample of samples) {
+      if (sample.avgMorale >= MORALE_CONCERN_THRESHOLD) continue;
+
+      let severity: MoraleReportSeverity;
+      if (sample.avgMorale < MORALE_CRITICAL_THRESHOLD) {
+        severity = 'critical';
+      } else if (sample.avgMorale < MORALE_WARNING_THRESHOLD) {
+        severity = 'warning';
+      } else {
+        severity = 'concern';
+      }
+
+      this.moraleReports.push({
+        sectorId: { ...sample.sectorId },
+        avgMorale: Math.round(sample.avgMorale),
+        timestamp: tick,
+        severity,
+      });
+    }
+
+    // Trim to max capacity (keep most recent)
+    if (this.moraleReports.length > MAX_MORALE_REPORTS) {
+      this.moraleReports = this.moraleReports.slice(-MAX_MORALE_REPORTS);
+    }
+  }
+
+  /** Get all morale intelligence reports (read-only, most recent last). */
+  getMoraleReports(): readonly KGBMoraleReport[] {
+    return this.moraleReports;
+  }
+
+  /** Get only reports matching a minimum severity level. */
+  getMoraleReportsBySeverity(minSeverity: MoraleReportSeverity): readonly KGBMoraleReport[] {
+    const severityOrder: Record<MoraleReportSeverity, number> = { concern: 0, warning: 1, critical: 2 };
+    const minLevel = severityOrder[minSeverity];
+    return this.moraleReports.filter((r) => severityOrder[r.severity] >= minLevel);
+  }
+
+  // ─────────────────────────────────────────────────────
+  //  Law Enforcement API
+  // ─────────────────────────────────────────────────────
+
+  /**
+   * Tick the law enforcement system once.
+   * Call once per simulation tick after era-dependent metrics are known.
+   *
+   * Historical 1.0 keeps the local KGB/patrol model active across campaign and free play.
+   */
+  tickLawEnforcement(ctx: LawEnforcementTickContext): void {
+    this.lawEnforcement = tickLawEnforcement(this.lawEnforcement, ctx);
+  }
+
+  /** Get the current law enforcement mode. */
+  getLawEnforcementMode(): LawEnforcementMode {
+    return this.lawEnforcement.mode;
+  }
+
+  /** Get the full law enforcement state (read-only). */
+  getLawEnforcementState(): Readonly<LawEnforcementState> {
+    return this.lawEnforcement;
+  }
+
+  /** Get aggregate crime rate across all sectors (0-1). */
+  getAggregateCrimeRate(): number {
+    return this.lawEnforcement.aggregateCrimeRate;
+  }
+
+  /** Get detention labor output. */
+  getPenalLabor(): number {
+    return this.lawEnforcement.totalPenalLabor;
+  }
+
+  /** Get detained population. */
+  getDetainedPopulation(): number {
+    return this.lawEnforcement.totalDetainedPopulation;
+  }
+
+  // ─────────────────────────────────────────────────────
   //  Telegram handling
   // ─────────────────────────────────────────────────────
 
@@ -601,15 +729,27 @@ export class KGBAgent extends Vehicle {
   /**
    * Handle an ERA_TRANSITION telegram from PoliticalAgent.
    * Later eras ratchet aggression upward toward 'high'.
-   * @param toEra - Target era index (0-7)
+   *
+   * Also updates the law enforcement mode for the new era.
+   *
+   * @param toEra - Target era index (0-15 for full era range)
+   * @param eraId - Optional era ID string for direct mode lookup
    */
-  handleEraTransition(toEra: number): void {
+  handleEraTransition(toEra: number, eraId?: string): void {
     if (toEra >= 4) {
       this.state.aggression = 'high';
     } else if (toEra >= 2) {
       // Only escalate, never de-escalate
       if (this.state.aggression === 'low') {
         this.state.aggression = 'medium';
+      }
+    }
+
+    // Update law enforcement mode if era ID is provided
+    if (eraId) {
+      const newMode = getEnforcementMode(eraId as import('../../../game/era/types').EraId);
+      if (newMode !== this.lawEnforcement.mode) {
+        this.lawEnforcement = { ...this.lawEnforcement, mode: newMode };
       }
     }
   }
@@ -632,6 +772,16 @@ export class KGBAgent extends Vehicle {
       ...data,
       history: [...data.history],
     };
+  }
+
+  /** Serialize law enforcement state for save/load. */
+  serializeLawEnforcement(): LawEnforcementSaveData {
+    return serializeLawEnforcement(this.lawEnforcement);
+  }
+
+  /** Restore law enforcement state from save data. */
+  restoreLawEnforcement(data: LawEnforcementSaveData): void {
+    this.lawEnforcement = restoreLawEnforcement(data);
   }
 
   /** Serialize the personnel file state. Alias: serializePersonnelFile(). */
@@ -725,15 +875,18 @@ export class KGBAgent extends Vehicle {
     const resourcesLost = { money: 0, food: 0, vodka: 0 };
     if (store) {
       const r = store.resources;
-      const moneyLost = Math.floor(r.money * (1 - config.resourceSurvival));
-      const foodLost = Math.floor(r.food * (1 - config.resourceSurvival));
-      const vodkaLost = Math.floor(r.vodka * (1 - config.resourceSurvival));
+      const money = Number.isFinite(r.money) ? r.money : 0;
+      const food = Number.isFinite(r.food) ? r.food : 0;
+      const vodka = Number.isFinite(r.vodka) ? r.vodka : 0;
+      const moneyLost = Math.floor(money * (1 - config.resourceSurvival));
+      const foodLost = Math.floor(food * (1 - config.resourceSurvival));
+      const vodkaLost = Math.floor(vodka * (1 - config.resourceSurvival));
       resourcesLost.money = moneyLost;
       resourcesLost.food = foodLost;
       resourcesLost.vodka = vodkaLost;
-      r.money -= moneyLost;
-      r.food -= foodLost;
-      r.vodka -= vodkaLost;
+      r.money = Math.max(0, money - moneyLost);
+      r.food = Math.max(0, food - foodLost);
+      r.vodka = Math.max(0, vodka - vodkaLost);
     }
 
     // 4. Skip time forward
@@ -746,13 +899,27 @@ export class KGBAgent extends Vehicle {
     // 5. Reset personnel file marks
     const newTick = deps.chronology.getDate().totalTicks;
     this.resetForRehabilitation(config.marksReset, newTick);
+    this.investigations = [];
+    this.informants = [];
+    this.moraleReports = [];
+    this.state.suspicionLevel = 0;
+    this.state.investigationIntensity = 'routine';
 
     // 6. Apply score penalty
     deps.scoring.onKGBLoss(workersLost);
 
     // 7. Sync population from remaining dvory
     if (store) {
-      store.resources.population = deps.workers.syncPopulationFromDvory();
+      let syncedPopulation = deps.workers.syncPopulationFromDvory();
+      const expectedSurvivors = Math.max(0, totalPop - workersToRemove);
+      if (syncedPopulation <= 0 && expectedSurvivors > 0) {
+        deps.workers.spawnInflowDvor(Math.max(1, expectedSurvivors), 'rehabilitation_return', {
+          morale: 35,
+          loyalty: 45,
+        });
+        syncedPopulation = deps.workers.syncPopulationFromDvory();
+      }
+      store.resources.population = syncedPopulation;
     }
 
     // 8. Notify UI

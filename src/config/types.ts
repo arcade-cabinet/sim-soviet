@@ -645,10 +645,6 @@ export interface DoctrineConfig {
   stagnationPaperworkPerTick: number;
   stagnationProductivityLossPerYear: number;
   stagnationCorruptionMult: number;
-  eternalPaperworkThreshold: number;
-  eternalPaperworkBase: number;
-  eternalPaperworkGrowthFactor: number;
-  eternalBureaucracySlowdownPer1000: number;
   policies: Record<string, DoctrinePolicyConfig>;
   inflowSchedule: Record<string, InflowScheduleEntry>;
 }

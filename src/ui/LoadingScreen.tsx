@@ -24,6 +24,12 @@ export interface LoadingScreenProps {
   complete: boolean;
   /** Called after fade-out animation finishes */
   onFadeComplete?: () => void;
+  /** Load zone flavor text (from loadZones.ts). Overrides default subheader. */
+  flavorText?: string;
+  /** Load zone name for larger settlement loading passes. Overrides default header. */
+  zoneName?: string;
+  /** Whether this is a settlement transition (not initial game load). */
+  isTransition?: boolean;
 }
 
 const LOADING_MESSAGES = [
@@ -41,6 +47,17 @@ const LOADING_MESSAGES = [
   'FILING BUREAUCRATIC PAPERWORK...',
 ];
 
+const TRANSITION_MESSAGES = [
+  'RELOCATING PERSONNEL...',
+  'TRANSFERRING RESOURCE ALLOCATIONS...',
+  'ESTABLISHING COMMUNICATIONS LINK...',
+  'CALIBRATING ENVIRONMENTAL SYSTEMS...',
+  'BRIEFING LOCAL COMMISSAR...',
+  'REVIEWING SETTLEMENT MANIFESTS...',
+  'SYNCHRONIZING QUOTA DATABASES...',
+  'ACTIVATING LIFE SUPPORT SYSTEMS...',
+];
+
 /** Asset loading progress overlay with propaganda quotes and animated progress bar. */
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   progress,
@@ -49,18 +66,22 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   currentModel,
   complete,
   onFadeComplete,
+  flavorText,
+  zoneName,
+  isTransition = false,
 }) => {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const [messageIdx, setMessageIdx] = useState(0);
   const [dots, setDots] = useState('');
+  const messages = isTransition ? TRANSITION_MESSAGES : LOADING_MESSAGES;
 
   // Rotate loading messages
   useEffect(() => {
     const interval = setInterval(() => {
-      setMessageIdx((i) => (i + 1) % LOADING_MESSAGES.length);
+      setMessageIdx((i) => (i + 1) % messages.length);
     }, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [messages]);
 
   // Animate dots
   useEffect(() => {
@@ -94,10 +115,13 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
         {/* Soviet star */}
         <Text style={styles.star}>{'\u2605'}</Text>
 
-        {/* Header */}
-        <Text style={styles.header}>SIMSOVIET 1917</Text>
+        {/* Header — zone-aware */}
+        <Text style={styles.header}>{zoneName ?? 'SIMSOVIET 1917'}</Text>
         <View style={styles.divider} />
-        <Text style={styles.subheader}>INITIALIZING COMMAND CENTER</Text>
+        <Text style={styles.subheader}>{isTransition ? 'TRANSFERRING OPERATIONS' : 'INITIALIZING COMMAND CENTER'}</Text>
+
+        {/* Zone flavor text */}
+        {flavorText && <Text style={styles.flavorText}>{flavorText}</Text>}
 
         {/* Progress bar */}
         <View style={styles.progressContainer}>
@@ -124,7 +148,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
         {/* Rotating propaganda message */}
         <View style={styles.messageContainer}>
           <Text style={styles.message}>
-            {LOADING_MESSAGES[messageIdx]}
+            {messages[messageIdx]}
             {dots}
           </Text>
         </View>
@@ -193,7 +217,17 @@ const styles = StyleSheet.create({
     fontFamily: monoFont,
     color: Colors.sovietGold,
     letterSpacing: 3,
-    marginBottom: 32,
+    marginBottom: 8,
+  },
+  flavorText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    color: Colors.textMuted,
+    letterSpacing: 1,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 24,
+    paddingHorizontal: 20,
   },
   progressContainer: {
     width: '100%',

@@ -1,110 +1,23 @@
-# Documentation — Master Agent Index
+# Documentation — Agent Index
 
-> **SimSoviet 1917** — Satirical 3D city-builder (R3F + Three.js r183 + React Native + Expo)
+Current documentation should describe **SimSoviet 1917 1.0** as:
 
-## Quick Navigation
+- Historical Soviet campaign, 1917-1991.
+- Grounded same-settlement free play after 1991.
+- No deep-future, space, Kardashev, multi-settlement, or post-scarcity product scope.
 
-| Index | Domain | Docs |
-|-------|--------|------|
-| [`design/AGENTS.md`](design/AGENTS.md) | Game systems design docs | 15 docs |
-| [`plans/AGENTS.md`](plans/AGENTS.md) | Implementation plans & PRDs | 9 docs |
-| [`devlog/AGENTS.md`](devlog/AGENTS.md) | Development milestones | 5 entries |
-| [`reference/AGENTS.md`](reference/AGENTS.md) | Subsystem reference docs | 6 docs |
-| [`audits/AGENTS.md`](audits/AGENTS.md) | Code-vs-docs audits | 1 audit |
+## Canonical Docs
 
-## Frontmatter Schema
+| Document | Purpose |
+| --- | --- |
+| `../CLAUDE.md` | Operational scope and commands |
+| `../AGENTS.md` | Repo navigation |
+| `GAME_VISION.md` | Product summary |
+| `GDD-master.md` | Current design reference |
+| `design/overview.md` | System overview |
+| `design/eras.md` | Historical era progression |
+| `reference/world-building.md` | Historical campaign content |
 
-Every doc in `docs/` has YAML frontmatter. Scan with: `head -20 docs/**/*.md`
+## Cleanup Rule
 
-```yaml
----
-title: Document Title
-type: design | reference | plan | devlog | audit | vision | research | index
-status: draft | active | implemented | superseded | archived
-implementation:               # Source files that implement the design
-  - src/path/to/file.ts
-tests:                         # Test files for this system
-  - __tests__/path/to/test.ts
-coverage: full | partial | none
-last_verified: YYYY-MM-DD
-# Plan-specific (optional):
-plan_status: proposed | in-progress | completed | abandoned
-superseded_by: path/to/newer-doc.md
-# Devlog-specific (optional):
-date: YYYY-MM-DD
-category: feature | bugfix | refactor | migration
-commits:
-  - abc1234
----
-```
-
-## Type Taxonomy
-
-| Type | Purpose | Count |
-|------|---------|-------|
-| `design` | Game system specifications | 16 |
-| `plan` | Implementation strategies & PRDs | 9 |
-| `devlog` | Chronological development milestones | 5 |
-| `reference` | Subsystem data structure documentation | 6 |
-| `audit` | Code-vs-docs alignment assessments | 1 |
-| `vision` | High-level game vision | 1 |
-| `research` | External library research | 1 |
-| `index` | Navigation indexes (README files) | 3 |
-
-## Status Taxonomy
-
-| Status | Meaning |
-|--------|---------|
-| `draft` | Design spec, not yet fully implemented |
-| `active` | In use, may have ongoing changes |
-| `implemented` | Fully reflected in code |
-| `superseded` | Replaced by a newer document |
-| `archived` | Historical reference only |
-
-## Start Here
-
-1. **Quick overview**: [`GAME_VISION.md`](GAME_VISION.md) — covers everything in ~10 minutes
-2. **Full GDD**: [`GDD-master.md`](GDD-master.md) — every mechanic specified
-3. **Per-system**: Browse [`design/AGENTS.md`](design/AGENTS.md) for domain-specific docs
-
-## All Documents by Status
-
-### Implemented (Canonical — reflects actual code)
-| Document | Type | Implementation |
-|----------|------|---------------|
-| `design/overview.md` | design | — |
-| `design/economy.md` | design | `src/ai/agents/economy/` |
-| `design/workers.md` | design | `src/ai/agents/workforce/WorkerSystem.ts` |
-| `design/demographics.md` | design | `src/ai/agents/social/DemographicAgent.ts`, `src/ai/agents/social/statisticalDemographics.ts` |
-| `design/political.md` | design | `src/ai/agents/political/` |
-| `design/eras.md` | design | `src/game/era/EraSystem.ts` |
-| `design/minigames.md` | design | `src/game/minigames/MinigameRouter.ts` |
-| `design/scoring.md` | design | `src/game/ScoringSystem.ts` |
-| `design/ecs-architecture.md` | design | `src/ecs/` |
-
-### Active (In use, ongoing)
-| Document | Type |
-|----------|------|
-| `GAME_VISION.md` | vision |
-| `GDD-master.md` | design |
-| `design/ui-ux.md` | design |
-| `design/dialog-bible.md` | design |
-| `reference/politburo-system.md` | reference |
-| `reference/pravda-system.md` | reference |
-| `reference/name-generator.md` | reference |
-| `reference/world-building.md` | reference |
-| `reference/audio-assets.md` | reference |
-
-### Draft (Aspirational — not yet fully implemented)
-| Document | Type |
-|----------|------|
-| `design/era-doctrines.md` | design |
-| `design/leader-archetypes.md` | design |
-| `design/leadership-architecture.md` | design |
-| `design/power-transitions.md` | design |
-
-### Superseded
-| Document | Replaced By |
-|----------|-------------|
-| `plans/2026-02-26-reactylon-native-3d-design.md` | `plans/2026-02-27-r3f-migration-design.md` |
-| `plans/2026-02-26-simSoviet1917-reactylon-native.md` | `plans/2026-02-27-r3f-migration-plan.md` |
+If a doc presents removed future systems as product scope, rewrite it to the historical campaign or delete it. Archived records may mention old plans only when clearly marked as obsolete history.

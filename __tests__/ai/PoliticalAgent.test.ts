@@ -63,7 +63,7 @@ describe('PoliticalAgent — era detection', () => {
     expect(agent.getCurrentEra().id).toBe('collectivization');
   });
 
-  it('progresses through all 8 canonical eras in order', () => {
+  it('progresses through all 7 historical eras in order', () => {
     const agent = makeAgent();
 
     const expectedTransitions: Array<[number, string]> = [
@@ -73,7 +73,6 @@ describe('PoliticalAgent — era detection', () => {
       [1945, 'reconstruction'],
       [1956, 'thaw_and_freeze'],
       [1982, 'stagnation'],
-      [2000, 'the_eternal'],
     ];
 
     for (const [year, expectedId] of expectedTransitions) {
@@ -84,15 +83,15 @@ describe('PoliticalAgent — era detection', () => {
     }
   });
 
-  it('ERA_ORDER has exactly 8 entries starting at revolution', () => {
-    expect(ERA_ORDER).toHaveLength(8);
+  it('ERA_ORDER has exactly 7 entries spanning revolution to stagnation', () => {
+    expect(ERA_ORDER).toHaveLength(7);
     expect(ERA_ORDER[0]).toBe('revolution');
-    expect(ERA_ORDER[7]).toBe('the_eternal');
+    expect(ERA_ORDER[6]).toBe('stagnation');
   });
 
-  it('ERA_DEFINITIONS covers 1917 to -1 (eternal)', () => {
+  it('ERA_DEFINITIONS covers 1917 to 1991', () => {
     expect(ERA_DEFINITIONS.revolution.startYear).toBe(1917);
-    expect(ERA_DEFINITIONS.the_eternal.endYear).toBe(-1); // eternal
+    expect(ERA_DEFINITIONS.stagnation.endYear).toBe(1991);
   });
 
   it('records previousEraId after transition', () => {

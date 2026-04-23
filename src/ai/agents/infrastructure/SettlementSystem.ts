@@ -105,7 +105,7 @@ export const TIER_DEFINITIONS: Readonly<Record<SettlementTier, TierDefinition>> 
   pgt: {
     tier: 'pgt',
     russian: 'посёлок городского типа',
-    title: 'Urban-Type Settlement Administrator',
+    title: 'PGT Administrator',
     populationReq: 150,
     nonAgriPercent: 50,
     buildingReqs: ['education', 'medical'],
@@ -115,7 +115,7 @@ export const TIER_DEFINITIONS: Readonly<Record<SettlementTier, TierDefinition>> 
   gorod: {
     tier: 'gorod',
     russian: 'город',
-    title: 'City Soviet Chairman',
+    title: 'Local Soviet Predsedatel',
     populationReq: 400,
     nonAgriPercent: 85,
     buildingReqs: [],

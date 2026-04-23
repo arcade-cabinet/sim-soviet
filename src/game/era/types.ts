@@ -9,7 +9,7 @@ import type { Doctrine } from '../../ai/agents/political/CompulsoryDeliveries';
 
 // ─── Era Identifiers ────────────────────────────────────────────────────────
 
-/** The 8 historical eras of the Soviet campaign. */
+/** The historical eras of the Soviet campaign, 1917-1991. */
 export type EraId =
   | 'revolution'
   | 'collectivization'
@@ -17,8 +17,7 @@ export type EraId =
   | 'great_patriotic'
   | 'reconstruction'
   | 'thaw_and_freeze'
-  | 'stagnation'
-  | 'the_eternal';
+  | 'stagnation';
 
 // ─── Era Modifiers ──────────────────────────────────────────────────────────
 
@@ -61,7 +60,7 @@ export interface EraDefinition {
   name: string;
   /** Calendar year this era begins */
   startYear: number;
-  /** Calendar year this era ends (-1 for the_eternal) */
+  /** Calendar year this era ends. */
   endYear: number;
 
   /** Maps to CompulsoryDeliveries doctrine for state extraction rates */
@@ -103,7 +102,7 @@ export interface EraDefinition {
  * Construction method progression across eras.
  * Affects build time for all buildings.
  */
-export type ConstructionMethod = 'manual' | 'mechanized' | 'industrial' | 'decaying';
+export type ConstructionMethod = 'manual' | 'mechanized' | 'industrial';
 
 // ─── Serialization ──────────────────────────────────────────────────────────
 

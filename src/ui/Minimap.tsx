@@ -190,7 +190,7 @@ export const Minimap: React.FC = () => {
     );
   }
 
-  return content;
+  return <View>{content}</View>;
 };
 
 const styles = StyleSheet.create({

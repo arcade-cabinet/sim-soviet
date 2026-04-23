@@ -119,7 +119,6 @@ export const EraIdSchema = z.enum([
   'reconstruction',
   'thaw_and_freeze',
   'stagnation',
-  'the_eternal',
 ]);
 
 // ── Role classification ──────────────────────────────────────────────────────

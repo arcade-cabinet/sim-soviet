@@ -585,10 +585,10 @@ describe('MinigameRouter', () => {
       router.resolveChoice('trade_cautiously');
       router.clearResolved();
 
-      // Try to trigger same minigame within cooldown (100 + 60 = 160)
+      // Try to trigger same minigame within cooldown (100 + 360 = 460)
       const result = router.checkTrigger('building_tap', {
         buildingDefId: 'market',
-        totalTicks: 150,
+        totalTicks: 350,
         population: 50,
       });
       expect(result).toBeNull();
@@ -600,10 +600,10 @@ describe('MinigameRouter', () => {
       router.resolveChoice('trade_cautiously');
       router.clearResolved();
 
-      // After cooldown (100 + 60 = 160)
+      // After cooldown (100 + 360 = 460)
       const result = router.checkTrigger('building_tap', {
         buildingDefId: 'market',
-        totalTicks: 161,
+        totalTicks: 461,
         population: 50,
       });
       expect(result).not.toBeNull();
@@ -660,7 +660,7 @@ describe('MinigameRouter', () => {
         totalTicks: 120,
         population: 50,
       });
-      // the_queue is on cooldown until tick 160
+      // the_queue is on cooldown until tick 460
       expect(result?.id).not.toBe('the_queue');
     });
 
@@ -696,7 +696,7 @@ describe('MinigameRouter', () => {
       expect(data).toEqual({
         activeMinigameId: null, // resolved, so null
         activeStartTick: 200,
-        cooldowns: { black_market: 260 }, // 200 + 60
+        cooldowns: { black_market: 560 }, // 200 + 360
       });
     });
   });

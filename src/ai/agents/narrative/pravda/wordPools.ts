@@ -55,8 +55,6 @@ export const INSTITUTIONS = [
   'THE POLITBURO',
   'THE PEOPLES COUNCIL',
   'THE MINISTRY OF PRODUCTION',
-  'THE MINISTRY OF TRUTH',
-  'THE MINISTRY OF PLENTY',
   'THE PLANNING COMMISSION',
   'THE KGB',
   'THE SUPREME SOVIET',
@@ -244,19 +242,15 @@ export const WESTERN_COUNTRIES = [
 export const FAKE_DISCOVERIES = [
   'PERPETUAL MOTION TRACTOR',
   'COLD-RESISTANT WHEAT STRAIN',
-  'TELEPATHIC CROP MONITORING',
-  'NUCLEAR-POWERED SNOW PLOW',
-  'CONCRETE THAT HEALS ITSELF',
-  'VODKA-BASED ROCKET FUEL',
+  'WINTER-HARDY POTATO STORAGE METHOD',
+  'TRACTOR THAT STARTS AFTER ONLY THREE SPEECHES',
+  'CONCRETE THAT SETS IN PATRIOTIC WEATHER',
   'POTATO THAT GROWS IN DARKNESS',
-  'INVISIBLE FENCE TECHNOLOGY',
+  'SELF-REPORTING GRAIN LEDGER',
   'ACOUSTIC WALL INSULATION FROM ANTHEM RECORDINGS',
   'IDEOLOGICALLY CORRECT WEATHER PREDICTION',
-  'SOCIALIST-REALIST AI',
-  'QUANTUM COLLECTIVE FARMING',
-  'FASTER-THAN-LIGHT TELEGRAM',
   'SELF-HARVESTING TURNIP',
-  'PROLETARIAN COLD FUSION',
+  'TURNIP WEIGHING STATION CALIBRATION',
   'DIALECTICAL MATERIALS SCIENCE',
 ] as const;
 
@@ -312,7 +306,7 @@ export const SHORTAGE_EUPHEMISMS = {
   power: [
     'SCHEDULED DARKNESS FOR ASTRONOMICAL OBSERVATION',
     'CANDLELIGHT APPRECIATION WEEK ENTERS MONTH FOUR',
-    'ENERGY CONSERVATION AWARD WON BY ENTIRE CITY',
+    'ENERGY CONSERVATION AWARD WON BY ENTIRE SETTLEMENT',
     'WORKERS EMBRACE DARKNESS, BOTH LITERAL AND METAPHORICAL',
     'POWER GRID UNDERGOES VOLUNTARY MEDITATION',
     'ELECTRICITY RATIONING BUILDS CHARACTER',
@@ -322,7 +316,7 @@ export const SHORTAGE_EUPHEMISMS = {
     'WORKFORCE STREAMLINED TO ELIMINATE REDUNDANCY',
     'CITIZENS VOLUNTEER FOR REMOTE AGRICULTURAL ASSIGNMENT',
     'DEMOGRAPHIC ADJUSTMENT COMPLETES ON SCHEDULE',
-    'URBAN DENSITY TARGETS ACHIEVED THROUGH NATURAL MIGRATION',
+    'SETTLEMENT DENSITY TARGETS ACHIEVED THROUGH NATURAL MIGRATION',
     'POPULATION RIGHT-SIZED PER SCIENTIFIC CALCULATION',
   ] as const,
 };
@@ -330,7 +324,7 @@ export const SHORTAGE_EUPHEMISMS = {
 // -- BUILDING COLLAPSE / DESTRUCTION SPINS (used in contextual generators) --
 
 export const DESTRUCTION_SPINS = [
-  'URBAN RENEWAL ACCELERATES',
+  'SETTLEMENT RENEWAL ACCELERATES',
   'PLANNED DEMOLITION PROCEEDS FLAWLESSLY',
   'ARCHITECTURAL REFRESH INITIATIVE LAUNCHES',
   'CONSTRUCTION ZONE ESTABLISHED FOR BIGGER, BETTER BUILDING',
@@ -400,7 +394,7 @@ export const GENERIC_REALITIES = [
   'All citizens surveyed responded favorably. Non-favorable citizens were not surveyed.',
   'The numbers are real. Reality has been adjusted to match.',
   'Confirmed by an expert who preferred to remain employed.',
-  'This fact has been verified by the Ministry of Facts, which also verified itself.',
+  'This fact has been verified by the Department of Facts, which also verified itself.',
   'Any resemblance to actual events is purely ideological.',
 ] as const;
 
@@ -456,7 +450,7 @@ export const FAMINE_HEADLINES = [
   'COLLECTIVE FARMS REPORT RECORD OUTPUT',
   'FOOD DISTRIBUTION PROCEEDS IN ORDERLY FASHION',
   'CITIZENS EMBRACE REVOLUTIONARY DIET OF REDUCED PORTIONS',
-  'MINISTRY OF AGRICULTURE DENIES EXISTENCE OF "SHORTAGE"',
+  'AGRICULTURAL COMMITTEE DENIES EXISTENCE OF "SHORTAGE"',
   'NEW SCIENTIFIC FARMING METHODS ELIMINATE NEED FOR RAIN',
   'GRAIN DELIVERIES TO STATE GRANARIES EXCEED ALL QUOTAS',
   'DROUGHT RECLASSIFIED AS VOLUNTARY SOLAR IRRIGATION PROGRAM',
@@ -519,12 +513,12 @@ export const DISASTER_SUBTEXTS = [
   'Emergency services arrived within minutes. Minutes have been redefined.',
   'Situation under control. "Control" has been redefined to include the current situation.',
   'No casualties reported. Reporting of casualties has been temporarily suspended.',
-  'The affected area has been renamed "Zone of Accelerated Urban Renewal."',
+  'The affected area has been renamed "Zone of Accelerated Settlement Renewal."',
 ] as const;
 
 /** Disaster crisis reality lines. */
 export const DISASTER_REALITIES = [
-  'The "minor incident" is visible from space. Cosmonauts have been told not to look down.',
+  'The "minor incident" is visible from the radio mast. Citizens have been told not to look up.',
   'Scientists who confirmed safety were reading from a prepared statement. Upside down.',
   'Evacuation drill involved actual evacuation. Citizens were not informed of the distinction.',
   'The fire has been burning for three weeks. The fire department has been "containing" it by watching.',
@@ -543,7 +537,7 @@ export const POLITICAL_HEADLINES = [
   'SHOW TRIAL REVEALS DEPTHS OF BOURGEOIS CONSPIRACY',
   'ALL FORMER ALLIES NOW CONFIRMED AS LIFELONG TRAITORS',
   'LOYALTY REVIEW BOARD CLEARS THOSE WHO REMAIN',
-  'KGB UNCOVERS NEST OF WRECKERS IN MINISTRY OF OPTIMIZATION',
+  'SECURITY ORGANS UNCOVER NEST OF WRECKERS IN OPTIMIZATION OFFICE',
   'REHABILITATED COMRADES EXPRESS GRATITUDE FOR RE-EDUCATION',
   'NEW APPOINTMENTS PROVE CONTINUITY OF CORRECT LINE',
   'PARTY CONGRESS VOTES 100% IN FAVOR OF EVERYTHING',

@@ -22,6 +22,7 @@ describe('DemandSystem', () => {
     createResourceStore({ food: 500, population: 0 });
     createTestDvory(50);
     createMetaStore();
+    createBuilding(15, 15, 'government-hq').building!.powered = true;
   });
 
   afterEach(() => {
@@ -31,6 +32,17 @@ describe('DemandSystem', () => {
   // ── Housing Demand ──────────────────────────────────────────────────────
 
   describe('housing demand', () => {
+    it('prioritizes government HQ when administrative control has not been established', () => {
+      world.clear();
+      createResourceStore({ food: 500, population: 0 });
+      createTestDvory(50);
+      createMetaStore();
+
+      const demands = detectConstructionDemands(50, 0, { food: 500, vodka: 0, power: 0 });
+      expect(demands).toHaveLength(1);
+      expect(demands[0]!.suggestedDefIds).toEqual(['government-hq']);
+    });
+
     it('generates housing demand when population exceeds housing capacity', () => {
       const demands = detectConstructionDemands(50, 0, { food: 500, vodka: 0, power: 0 });
       const housingDemand = demands.find((d) => d.category === 'housing');

@@ -3,9 +3,15 @@ import { MSG } from '../../src/ai/telegrams';
 describe('telegrams', () => {
   it('exports all expected message type constants', () => {
     const expectedKeys = [
+      'NEW_TICK',
       'NEW_MONTH',
       'NEW_YEAR',
       'NEW_SEASON',
+      'PHASE_PRODUCTION',
+      'PHASE_CONSUMPTION',
+      'PHASE_SOCIAL',
+      'PHASE_POLITICAL',
+      'PHASE_NARRATIVE',
       'WEATHER_CHANGED',
       'WINTER_APPROACHING',
       'STORM_WARNING',

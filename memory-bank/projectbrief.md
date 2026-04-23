@@ -2,38 +2,62 @@
 
 ## Identity
 
-**SimSoviet 1917** — A satirical 3D city-builder set in an alternate-history Soviet Union that never collapses. Players build structures and manage resources (rubles, food, vodka, power, population) against 5-year plan quotas imposed by an ever-present bureaucratic apparatus.
+**SimSoviet 1917** is a satirical Soviet bureaucrat survival sim in 3D. The
+player is the predsedatel of a collective settlement. The settlement grows
+organically through autonomous systems; the player does not freely choose
+buildings or draw a city.
+
+**This is not a city builder.** Moscow mandates what must be built. The player
+chooses where mandated construction goes, sets priorities, survives inspections,
+and manages the political consequences of failure.
+
+## 1.0 Campaign Scope
+
+The 1.0 campaign is historical:
+
+- Start: October 1917.
+- End: the 1991 Soviet dissolution moment.
+- Post-campaign: same-settlement grounded free play.
+
+Post-1991 continuation is conservative. It keeps quotas, aging infrastructure,
+resource pressure, weather, disasters, demographic decline, and political decay.
+It does not unlock new eras, new settlements, space expansion, or alternate
+global timelines.
 
 ## Core Fantasy
 
-You are a low-level Soviet bureaucrat trying to survive. The system is the enemy — not external threats. The optimal strategy is being unremarkable. Workers self-organize; you navigate politics.
+You are a low-level Soviet bureaucrat trying not to be blamed. Workers
+self-organize. The plan dictates what gets built. You navigate shortages,
+compulsory deliveries, KGB scrutiny, moral compromise, and the personnel file.
+Comfortable mediocrity is often the best strategy.
 
 ## Target Platforms
 
-- **Web** (primary) — deployed to GitHub Pages
-- **iOS** — via Expo/React Native
-- **Android** — via Expo/React Native (APK builds)
+- Web via Expo/React Native Web and GitHub Pages.
+- iOS via Expo/React Native.
+- Android via Expo/React Native builds.
 
 ## Tech Stack Summary
 
-- **3D Engine**: Three.js r183 via React Three Fiber (R3F v9.5) + drei
-- **UI**: React Native 0.81 + Expo 54
-- **State**: Miniplex ECS world + legacy GameState singleton
-- **Audio**: Web Audio API (52 Soviet-era public domain tracks)
-- **Database**: sql.js (Wasm SQLite) + Drizzle ORM → IndexedDB
-- **Build**: Expo, Metro bundler, TypeScript 5.7
+- 3D: Three.js via React Three Fiber and drei.
+- UI: React Native + Expo.
+- Simulation: Yuka-style agent systems plus Miniplex ECS.
+- Audio: Web Audio API.
+- Persistence: sql.js, Drizzle ORM, IndexedDB.
+- Build/test: TypeScript, Jest, Expo, Metro.
 
 ## Core Gameplay Loop
 
-1. Receive mandates from the State (5-year plans)
-2. Place buildings and allocate workers
-3. Manage resources (food, vodka, power, water, money)
-4. Navigate political apparatus (KGB, politruks, Politburo)
-5. Survive inspections, purges, and era transitions
-6. Progress through 8 historical eras (1917 → The Eternal)
+1. Watch the settlement self-organize.
+2. Respond to Moscow mandates and quotas.
+3. Place required buildings in politically survivable locations.
+4. Set collective priorities when food, industry, construction, and politics collide.
+5. Manage KGB, politruks, party demands, personnel marks, and moral tradeoffs.
+6. Survive historical era transitions through 1991.
+7. Review campaign completion, then optionally continue the same settlement.
 
-## Repository
+## Consequence Levels
 
-- GitHub: `arcade-cabinet/sim-soviet`
-- Deployed: https://arcade-cabinet.github.io/sim-soviet/
-- Current version: v1.1.2
+- Rehabilitated - transferred, later return.
+- Gulag - exiled, later return.
+- Rasstrelyat - shot, game over.

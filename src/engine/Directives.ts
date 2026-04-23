@@ -126,10 +126,10 @@ export const DIRECTIVES: Directive[] = [
     check: () => countBuildingsByDefId('cooling-tower') >= 1,
   },
   {
-    text: 'Conquer the Stars: Build the Cosmodrome.',
+    text: 'Connect the Union: Build the Radio Station.',
     target: 1,
     reward: 1000,
-    check: () => countBuildingsByDefId('government-hq') >= 1,
+    check: () => countBuildingsByDefId('radio-station') >= 1,
   },
   {
     text: 'Awaiting Further Orders...',

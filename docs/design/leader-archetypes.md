@@ -3,9 +3,10 @@ title: Leader Archetypes — 11 Procedural Personalities
 type: design
 status: draft
 implementation:
-  - src/game/political/PoliticalEntitySystem.ts
+  - src/ai/agents/political/PoliticalEntitySystem.ts
+  - src/ai/agents/narrative/politburo/
 tests: []
-last_verified: 2026-03-01
+last_verified: 2026-04-23
 coverage: partial
 ---
 
@@ -13,7 +14,7 @@ coverage: partial
 
 ## Overview
 
-This document defines the procedurally generated leader archetypes for SimSoviet 1917, a satirical city-builder set in an alternate Soviet-style republic. Each archetype governs how a leader behaves when in power, what policies they enact, how they distort the economy, and how they interact with other archetypes in the Politburo.
+This document defines the procedurally generated leader archetypes for SimSoviet 1917, a satirical Soviet bureaucrat survival sim about managing one historical settlement from 1917 through 1991. Each archetype governs how a leader behaves when in power, what policies they enact, how they distort the settlement economy, and how they interact with other archetypes in the Politburo.
 
 Leaders are not direct copies of historical figures — they are exaggerated composites, filtered through dark comedy. The game should feel like a playable political cartoon from *Krokodil* magazine.
 
@@ -105,7 +106,7 @@ Primarily Josef Stalin (1924–1953), with elements of Yezhov (the "Bloody Dwarf
 
 #### Signature Policy: THE GREAT PLAN
 
-The Zealot announces an enormous infrastructure project (canal, railway, dam, space elevator) that consumes 40% of all production for 5 game years. If completed, it provides a massive permanent bonus. However, the project has a hidden 70% failure rate based on the Agriculture and Morale stats at the time of announcement. If it fails, it triggers a cascading "Blame the Wreckers" purge chain that can eliminate up to half the player's skilled workforce.
+The Zealot announces an enormous infrastructure project (canal, railway, dam, Palace of Soviets foundation) that consumes 40% of all production for 5 game years. If completed, it provides a massive permanent bonus. However, the project has a hidden 70% failure rate based on the Agriculture and Morale stats at the time of announcement. If it fails, it triggers a cascading "Blame the Wreckers" purge chain that can eliminate up to half the player's skilled workforce.
 
 ---
 

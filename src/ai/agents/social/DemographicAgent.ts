@@ -18,8 +18,11 @@ import { laborCapacityForAge, memberRoleForAge } from '../../../ecs/factories';
 import type { DvorComponent, DvorMember, RaionPool } from '../../../ecs/world';
 import { world } from '../../../ecs/world';
 import { TICKS_PER_MONTH, TICKS_PER_YEAR } from '../../../game/Chronology';
+import type { EraId } from '../../../game/era/types';
 import type { GameRng } from '../../../game/SeedSystem';
 import { FEMALE_GIVEN_NAMES, MALE_GIVEN_NAMES, PATRONYMIC_RULES, SURNAMES_RAW } from '../../names';
+import { MSG } from '../../telegrams';
+import { getPopulationMode } from '../workforce/collectiveTransition';
 import { statisticalAgingTick, statisticalBirthTick, statisticalDeathTick } from './statisticalDemographics';
 
 // ── Re-exported types ──────────────────────────────────────────────────────
@@ -260,6 +263,47 @@ export class DemographicAgent extends Vehicle {
   constructor() {
     super();
     this.name = 'DemographicAgent';
+  }
+
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.PHASE_SOCIAL) {
+      const engine = (globalThis as any).simulationEngine;
+      if (engine?._lastTickCtx) {
+        const ctx = engine._lastTickCtx;
+        const date = ctx.agents.chronology.getDate();
+        const popMode = getPopulationMode(ctx.storeRef.resources.population, ctx.raion);
+
+        if (popMode === 'aggregate' && ctx.raion) {
+          if (date.newMonth) {
+            // we don't have statisticalDemographics here, need to call the individual pieces
+            statisticalAgingTick(ctx.raion, this.rng!);
+            statisticalBirthTick(
+              ctx.raion,
+              ctx.storeRef.resources.food,
+              ctx.agents.political.getCurrentEraId(),
+              this.rng!,
+            );
+            statisticalDeathTick(
+              ctx.raion,
+              ctx.storeRef.resources.food,
+              ctx.agents.political.getCurrentEraId(),
+              this.rng!,
+            );
+          }
+        } else {
+          this.tick(
+            engine.getWorkerSystem(),
+            date.totalTicks,
+            date.month,
+            ctx.agents.political.getCurrentEraId() as EraId,
+            { onToast: () => {} },
+          );
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   /** Set the seeded RNG for deterministic demographic rolls. */

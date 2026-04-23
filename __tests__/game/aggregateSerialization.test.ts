@@ -92,7 +92,7 @@ function createMockSerializableEngine(): SerializableEngine {
     eventSystem: { serialize: stub } as never,
     pravdaSystem: { serialize: stub } as never,
     politburo: { serialize: stub } as never,
-    personnelFile: { serialize: stub } as never,
+    personnelFile: { serialize: stub, serializeLawEnforcement: stub } as never,
     deliveries: { serialize: stub, setRng: () => {} } as never,
     settlement: { serialize: stub } as never,
     politicalEntities: { serialize: stub } as never,
@@ -124,6 +124,9 @@ function createMockSerializableEngine(): SerializableEngine {
     eventHandler: () => {},
     politburoEventHandler: () => {},
     syncSystemsToMeta: () => {},
+    foragingState: {},
+    lastInflowYear: {},
+    evacueeInfluxFired: false,
   };
 }
 

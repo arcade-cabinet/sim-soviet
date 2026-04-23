@@ -103,7 +103,7 @@ export class EventSystem {
     this.currentTick = totalTicks;
     if (totalTicks - this.lastEventTick < this.eventCooldownTicks) return;
 
-    // 12% base chance per eligible tick, scaled by era modifier
+    // 4% base chance per eligible tick, scaled by era modifier
     const rng = getEventRng();
     if ((rng ? rng.random() : Math.random()) < EVENT_BASE_PROBABILITY * eventFrequencyMult) {
       const event = this.generateEvent(activeCrisisIds);

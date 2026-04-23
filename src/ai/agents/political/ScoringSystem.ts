@@ -11,7 +11,7 @@
  */
 
 import { political } from '@/config';
-import { ERA_ORDER } from '../../../game/era';
+import { ERA_ORDER } from '../../../game/era/definitions';
 import { modifiersToDifficultyConfig } from '../crisis/DynamicDifficultyProvider';
 import type { DynamicModifiers } from '../crisis/Governor';
 
@@ -23,14 +23,11 @@ import type { DynamicModifiers } from '../crisis/Governor';
 export type DifficultyLevel = 'worker' | 'comrade' | 'tovarish';
 
 /** Arrest consequence level affecting survival rates and score multiplier. */
-export type ConsequenceLevel = 'forgiving' | 'permadeath' | 'harsh';
+export type ConsequenceLevel = 'rehabilitated' | 'gulag' | 'rasstrelyat';
 
 /**
  * Difficulty configuration -- controls simulation parameters.
- *
- * Worker: The state is lenient. Quotas are gentle. Growth is encouraged.
- * Comrade: Standard Soviet experience. Expect hardship.
- * Tovarish: Maximum authentic suffering. The Party demands excellence.
+ * Used internally by the governor system (not exposed in UI).
  */
 export interface DifficultyConfig {
   /** Display label for UI */
@@ -58,9 +55,9 @@ export interface DifficultyConfig {
 /**
  * Consequence configuration -- what happens when arrested.
  *
- * Forgiving: "Replaced by an Idiot" -- return after 1 year with penalties.
- * Permadeath: "The File Is Closed" -- game over, restart era, score x1.5.
- * Harsh: "The Village Is Evacuated" -- return after 3 years, severe penalties.
+ * Rehabilitated: "Transferred" -- return after 1 year with penalties.
+ * Gulag: "Exile" -- return after 3 years, severe penalties.
+ * Rasstrelyat: "Shot" -- game over, no return, score x1.5.
  */
 export interface ConsequenceConfig {
   /** Display label for UI */
@@ -117,7 +114,7 @@ export interface EraScoreBreakdown {
   cleanEraBonus: number;
   /** Sum of all component scores before era multiplier */
   rawTotal: number;
-  /** Era multiplier (1.0 for era 1, up to 3.0 for era 8) */
+  /** Era multiplier (1.0 for era 1, up to 3.0 for the final historical era) */
   eraMultiplier: number;
   /** rawTotal * eraMultiplier */
   eraTotal: number;
@@ -204,11 +201,11 @@ export const DIFFICULTY_PRESETS: Record<DifficultyLevel, DifficultyConfig> = {
 //  CONSTANTS: CONSEQUENCE PRESETS
 // ─────────────────────────────────────────────────────────
 
-/** Preset consequence configurations for forgiving/permadeath/harsh levels. */
+/** Preset consequence configurations for rehabilitated/gulag/rasstrelyat levels. */
 export const CONSEQUENCE_PRESETS: Record<ConsequenceLevel, ConsequenceConfig> = {
-  forgiving: {
-    label: 'Forgiving',
-    subtitle: 'Replaced by an Idiot',
+  rehabilitated: {
+    label: 'Rehabilitated',
+    subtitle: 'Transferred to Another Post',
     returnDelayYears: 1,
     buildingSurvival: 0.9,
     workerSurvival: 0.8,
@@ -218,8 +215,20 @@ export const CONSEQUENCE_PRESETS: Record<ConsequenceLevel, ConsequenceConfig> = 
     permadeath: false,
     permadeathScoreMultiplier: 1.0,
   },
-  permadeath: {
-    label: 'Permadeath',
+  gulag: {
+    label: 'Gulag',
+    subtitle: 'Exiled to Distant Settlement',
+    returnDelayYears: 3,
+    buildingSurvival: 0.4,
+    workerSurvival: 0.25,
+    resourceSurvival: 0.1,
+    marksReset: 2,
+    scorePenalty: 300,
+    permadeath: false,
+    permadeathScoreMultiplier: 1.0,
+  },
+  rasstrelyat: {
+    label: 'Rasstrelyat',
     subtitle: 'The File Is Closed',
     returnDelayYears: 0,
     buildingSurvival: 0,
@@ -230,18 +239,6 @@ export const CONSEQUENCE_PRESETS: Record<ConsequenceLevel, ConsequenceConfig> = 
     permadeath: true,
     permadeathScoreMultiplier: 1.5,
   },
-  harsh: {
-    label: 'Harsh',
-    subtitle: 'The Village Is Evacuated',
-    returnDelayYears: 3,
-    buildingSurvival: 0.4,
-    workerSurvival: 0.25,
-    resourceSurvival: 0.1,
-    marksReset: 2,
-    scorePenalty: 300,
-    permadeath: false,
-    permadeathScoreMultiplier: 1.0,
-  },
 };
 
 // ─────────────────────────────────────────────────────────
@@ -249,11 +246,15 @@ export const CONSEQUENCE_PRESETS: Record<ConsequenceLevel, ConsequenceConfig> = 
 // ─────────────────────────────────────────────────────────
 
 /**
- * Final score multiplier based on difficulty x consequence combination.
- * Higher = more rewarding. Permadeath always pays the most.
+ * Final score multiplier based on consequence level.
+ * Higher = more rewarding. Rasstrelyat (permadeath) always pays the most.
+ * With governor-driven difficulty, the multiplier only varies by consequence.
  */
-export const SCORE_MULTIPLIER_MATRIX: Record<DifficultyLevel, Record<ConsequenceLevel, number>> = political.scoring
-  .scoreMultiplierMatrix as Record<DifficultyLevel, Record<ConsequenceLevel, number>>;
+export const SCORE_MULTIPLIER: Record<ConsequenceLevel, number> = {
+  rehabilitated: 0.8,
+  gulag: 1.2,
+  rasstrelyat: 1.5,
+};
 
 // ─────────────────────────────────────────────────────────
 //  CONSTANTS: SCORE POINT VALUES
@@ -298,8 +299,8 @@ export const MEDALS: Medal[] = [
     requirement: 'Place 20 buildings',
   },
   {
-    id: 'eternal_optimist',
-    name: 'Medal of Eternal Optimism',
+    id: 'stagnation_optimist',
+    name: 'Medal of Stagnation Optimism',
     description:
       'Survived 50 ticks with negative resource trends and still kept building. Delusion or dedication? Both.',
     tier: 'bronze',
@@ -344,11 +345,11 @@ export const MEDALS: Medal[] = [
     requirement: '3 active gulags',
   },
   {
-    id: 'millennium_survivor',
-    name: 'Centennial Survival Medal',
-    description: 'Reached the year 2000. The computers failed. You did not. The State endures.',
+    id: 'post_campaign_survivor',
+    name: 'Post-Campaign Survival Medal',
+    description: 'Continued after 1991. The forms changed. The shortages did not.',
     tier: 'concrete',
-    requirement: 'Reach year 2000',
+    requirement: 'Continue after the 1991 campaign summary',
   },
   {
     id: 'population_champion',
@@ -365,19 +366,20 @@ export const MEDALS: Medal[] = [
 
 /**
  * Returns the era score multiplier for a given era index (0-based).
- * Era 1 (index 0): x1.0, Era 8 (index 7): x3.0.
- * Linear interpolation between.
+ * Era 1 (index 0): x1.0, final historical era: x3.0.
+ * Linear interpolation between the configured historical eras.
  */
 export function getEraMultiplier(eraIndex: number): number {
-  const clamped = Math.max(0, Math.min(eraIndex, 7));
-  return 1.0 + (clamped * 2.0) / 7;
+  const maxEraIndex = Math.max(1, ERA_ORDER.length - 1);
+  const clamped = Math.max(0, Math.min(eraIndex, maxEraIndex));
+  return 1.0 + (clamped * 2.0) / maxEraIndex;
 }
 
 /**
- * Returns the score settings multiplier for a difficulty + consequence combo.
+ * Returns the score settings multiplier for a consequence level.
  */
-export function getSettingsMultiplier(difficulty: DifficultyLevel, consequence: ConsequenceLevel): number {
-  return SCORE_MULTIPLIER_MATRIX[difficulty][consequence];
+export function getSettingsMultiplier(_difficulty: DifficultyLevel, consequence: ConsequenceLevel): number {
+  return SCORE_MULTIPLIER[consequence];
 }
 
 // ─────────────────────────────────────────────────────────
@@ -405,10 +407,10 @@ export class ScoringSystem {
   /** Medals awarded during the game. */
   private awardedMedalIds: Set<string> = new Set();
 
-  /** Governor-supplied dynamic modifiers (null when in classic mode). */
+  /** Governor-supplied dynamic modifiers (null = use DIFFICULTY_PRESETS fallback). */
   private governorModifiers: DynamicModifiers | null = null;
 
-  constructor(difficulty: DifficultyLevel = 'comrade', consequence: ConsequenceLevel = 'permadeath') {
+  constructor(difficulty: DifficultyLevel = 'comrade', consequence: ConsequenceLevel = 'gulag') {
     this.difficulty = difficulty;
     this.consequence = consequence;
   }
@@ -418,9 +420,9 @@ export class ScoringSystem {
   /**
    * Set or clear governor-supplied dynamic modifiers.
    * When set, getDifficultyConfig() returns the governor's modifiers
-   * instead of DIFFICULTY_PRESETS. Pass null to revert to classic mode.
+   * instead of DIFFICULTY_PRESETS.
    *
-   * @param modifiers - Governor's dynamic modifiers, or null for classic mode
+   * @param modifiers - Governor's dynamic modifiers, or null for baseline
    */
   setGovernorModifiers(modifiers: DynamicModifiers | null): void {
     this.governorModifiers = modifiers;

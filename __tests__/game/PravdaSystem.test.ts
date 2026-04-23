@@ -1,8 +1,28 @@
 import type { GameEvent } from '../../src/ai/agents/narrative/events';
 import { PravdaSystem } from '../../src/ai/agents/narrative/pravda';
+import { contextualGenerators as absurdistContextualGenerators } from '../../src/ai/agents/narrative/pravda/generators/absurdist';
+import { culturalVictoryGenerators } from '../../src/ai/agents/narrative/pravda/generators/cultural';
+import { weatherFillerGenerators } from '../../src/ai/agents/narrative/pravda/generators/daily';
+import {
+  internalTriumphGenerators,
+  resourceSpinGenerators,
+} from '../../src/ai/agents/narrative/pravda/generators/economic';
+import {
+  adversariesForYear,
+  enemySubjectsForYear,
+  externalThreatGenerators,
+  institutionsForYear,
+  securityServiceForYear,
+} from '../../src/ai/agents/narrative/pravda/generators/military';
+import {
+  culturalAuthorityForYear,
+  planLabelForYear,
+  tradeAuthorityForYear,
+} from '../../src/ai/agents/narrative/pravda/helpers';
 import { getMetaEntity, getResourceEntity } from '../../src/ecs/archetypes';
 import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
+import type { GameView } from '../../src/game/GameView';
 
 function createMockEvent(overrides: Partial<GameEvent> = {}): GameEvent {
   return {
@@ -14,6 +34,23 @@ function createMockEvent(overrides: Partial<GameEvent> = {}): GameEvent {
     severity: 'minor',
     effects: {},
     type: 'neutral',
+    ...overrides,
+  };
+}
+
+function createMockGameView(overrides: Partial<GameView> = {}): GameView {
+  return {
+    money: 100,
+    pop: 25,
+    food: 500,
+    vodka: 25,
+    power: 10,
+    powerUsed: 5,
+    buildings: [],
+    date: { year: 1917, month: 10, tick: 1 },
+    quota: { type: 'food', target: 100, current: 0, deadlineYear: 1922 },
+    currentEra: 'revolution',
+    avgMorale: 50,
     ...overrides,
   };
 }
@@ -85,6 +122,215 @@ describe('PravdaSystem', () => {
         const event = createMockEvent({ category: 'absurdist' });
         const headline = pravda.headlineFromEvent(event);
         expect(validCategories).toContain(headline.category);
+      }
+    });
+  });
+
+  describe('contextual generator guards', () => {
+    it('only emits the zero-citizen crime headline for actual collapse conditions', () => {
+      const zeroCitizenGenerator = absurdistContextualGenerators.find((generator) =>
+        generator.generate(createMockGameView({ pop: 0, food: 0 })).headline.includes('PERFECT CRIME RATE'),
+      );
+
+      expect(zeroCitizenGenerator).toBeDefined();
+      expect(zeroCitizenGenerator!.condition(createMockGameView({ pop: 0, food: 500 }))).toBe(false);
+      expect(zeroCitizenGenerator!.condition(createMockGameView({ pop: 0, food: 0 }))).toBe(true);
+    });
+
+    it('does not emit treasury austerity spin during the 1917 startup state', () => {
+      const treasuryGenerator = absurdistContextualGenerators.find((generator) =>
+        generator
+          .generate(createMockGameView({ money: 0, date: { year: 1918, month: 1, tick: 0 } }))
+          .headline.includes('TREASURY AUSTERITY'),
+      );
+
+      expect(treasuryGenerator).toBeDefined();
+      expect(
+        treasuryGenerator!.condition(createMockGameView({ money: 0, date: { year: 1917, month: 10, tick: 1 } })),
+      ).toBe(false);
+      expect(
+        treasuryGenerator!.condition(createMockGameView({ money: 0, date: { year: 1918, month: 1, tick: 0 } })),
+      ).toBe(true);
+      expect(treasuryGenerator!.generate(createMockGameView({ money: 0 })).headline).not.toMatch(/POST[- ]MONETARY/);
+    });
+
+    it('does not emit no-building collapse spin during the 1917 startup state', () => {
+      const noBuildingGenerator = absurdistContextualGenerators.find((generator) =>
+        generator
+          .generate(createMockGameView({ buildings: [], date: { year: 1918, month: 1, tick: 0 } }))
+          .headline.includes('MINIMALIST SETTLEMENT'),
+      );
+
+      expect(noBuildingGenerator).toBeDefined();
+      expect(
+        noBuildingGenerator!.condition(createMockGameView({ buildings: [], date: { year: 1917, month: 10, tick: 1 } })),
+      ).toBe(false);
+      expect(
+        noBuildingGenerator!.condition(createMockGameView({ buildings: [], date: { year: 1918, month: 1, tick: 0 } })),
+      ).toBe(true);
+    });
+
+    it('does not use Five-Year Plan language before 1928', () => {
+      expect(planLabelForYear(1917)).toBe('LOCAL WORK PLAN');
+      expect(planLabelForYear(1930)).toBe('FIVE-YEAR PLAN');
+
+      const planGenerator = internalTriumphGenerators[7]!;
+      const quotaSpinGenerator = resourceSpinGenerators.at(-1)!;
+      const quotaDueGenerator = absurdistContextualGenerators.find((generator) =>
+        generator
+          .generate(
+            createMockGameView({
+              date: { year: 1930, month: 1, tick: 0 },
+              quota: { type: 'food', target: 100, current: 50, deadlineYear: 1930 },
+            }),
+          )
+          .headline.includes('FIVE-YEAR PLAN'),
+      );
+
+      expect(planGenerator).toBeDefined();
+      expect(planGenerator!(createMockGameView({ date: { year: 1917, month: 10, tick: 1 } })).headline).not.toContain(
+        'FIVE-YEAR PLAN',
+      );
+      expect(planGenerator!(createMockGameView({ date: { year: 1930, month: 1, tick: 0 } })).headline).toContain(
+        'FIVE-YEAR PLAN',
+      );
+
+      expect(
+        quotaSpinGenerator(
+          createMockGameView({
+            date: { year: 1917, month: 10, tick: 1 },
+            quota: { type: 'food', target: 100, current: 50, deadlineYear: 1922 },
+          }),
+        ).headline,
+      ).not.toContain('FIVE-YEAR PLAN');
+      expect(
+        quotaSpinGenerator(
+          createMockGameView({
+            date: { year: 1930, month: 1, tick: 0 },
+            quota: { type: 'food', target: 100, current: 50, deadlineYear: 1932 },
+          }),
+        ).headline,
+      ).toContain('FIVE-YEAR PLAN');
+
+      expect(quotaDueGenerator).toBeDefined();
+      expect(
+        quotaDueGenerator!.generate(
+          createMockGameView({
+            date: { year: 1917, month: 10, tick: 1 },
+            quota: { type: 'food', target: 100, current: 50, deadlineYear: 1918 },
+          }),
+        ).headline,
+      ).not.toContain('FIVE-YEAR PLAN');
+      expect(
+        quotaDueGenerator!.generate(
+          createMockGameView({
+            date: { year: 1930, month: 1, tick: 0 },
+            quota: { type: 'food', target: 100, current: 50, deadlineYear: 1930 },
+          }),
+        ).headline,
+      ).toContain('FIVE-YEAR PLAN');
+    });
+
+    it('keeps weather plan filler era-aware', () => {
+      const winterGenerator = weatherFillerGenerators[1]!;
+      jest.spyOn(Math, 'random').mockReturnValue(0.5);
+
+      expect(winterGenerator(createMockGameView({ date: { year: 1917, month: 10, tick: 1 } })).headline).toContain(
+        'LOCAL WEATHER DIRECTIVE',
+      );
+      expect(winterGenerator(createMockGameView({ date: { year: 1930, month: 1, tick: 0 } })).headline).toContain(
+        'FIVE-YEAR WEATHER PLAN',
+      );
+    });
+
+    it('keeps contextual security-service copy era-aware', () => {
+      const noPowerGenerator = absurdistContextualGenerators.find((generator) =>
+        generator
+          .generate(
+            createMockGameView({
+              buildings: [{ x: 1, y: 1, defId: 'government-hq', powered: false }],
+              power: 0,
+            }),
+          )
+          .subtext.includes('notes this ability'),
+      );
+      const moraleCrisisGenerator = absurdistContextualGenerators.find((generator) =>
+        generator.generate(createMockGameView({ avgMorale: 0 })).headline.includes('COUNTER-REVOLUTIONARY SENTIMENT'),
+      );
+
+      expect(noPowerGenerator).toBeDefined();
+      expect(
+        noPowerGenerator!.generate(
+          createMockGameView({
+            buildings: [{ x: 1, y: 1, defId: 'government-hq', powered: false }],
+            power: 0,
+            date: { year: 1917, month: 10, tick: 1 },
+          }),
+        ).subtext,
+      ).toContain('CHEKA');
+      expect(
+        noPowerGenerator!.generate(
+          createMockGameView({
+            buildings: [{ x: 1, y: 1, defId: 'government-hq', powered: false }],
+            power: 0,
+            date: { year: 1964, month: 1, tick: 0 },
+          }),
+        ).subtext,
+      ).toContain('KGB');
+
+      expect(moraleCrisisGenerator).toBeDefined();
+      jest.spyOn(Math, 'random').mockReturnValue(0);
+      expect(
+        moraleCrisisGenerator!.generate(createMockGameView({ avgMorale: 0, date: { year: 1917, month: 10, tick: 1 } }))
+          .subtext,
+      ).toContain('CHEKA');
+      expect(
+        moraleCrisisGenerator!.generate(createMockGameView({ avgMorale: 0, date: { year: 1964, month: 1, tick: 0 } }))
+          .subtext,
+      ).toContain('KGB');
+    });
+
+    it('keeps institutional copy era-aware', () => {
+      const culturalGenerator = culturalVictoryGenerators.at(-1)!;
+      const classifiedGenerator = weatherFillerGenerators[6]!;
+
+      expect(culturalAuthorityForYear(1917)).toBe("PEOPLE'S COMMISSARIAT OF ENLIGHTENMENT");
+      expect(culturalAuthorityForYear(1964)).toBe('MINISTRY OF CULTURE');
+      expect(tradeAuthorityForYear(1917)).toBe('REVOLUTIONARY SUPPLY COMMITTEE');
+      expect(tradeAuthorityForYear(1964)).toBe('MINISTRY OF TRADE');
+
+      expect(culturalGenerator(createMockGameView({ date: { year: 1917, month: 10, tick: 1 } })).headline).toContain(
+        "PEOPLE'S COMMISSARIAT OF ENLIGHTENMENT",
+      );
+      expect(culturalGenerator(createMockGameView({ date: { year: 1964, month: 1, tick: 0 } })).headline).toContain(
+        'MINISTRY OF CULTURE',
+      );
+      expect(classifiedGenerator(createMockGameView({ date: { year: 1917, month: 10, tick: 1 } })).subtext).toContain(
+        'REVOLUTIONARY SUPPLY COMMITTEE',
+      );
+      expect(classifiedGenerator(createMockGameView({ date: { year: 1964, month: 1, tick: 0 } })).subtext).toContain(
+        'MINISTRY OF TRADE',
+      );
+    });
+
+    it('keeps 1917 external-threat headlines free of Cold War anachronisms', () => {
+      const forbidden1917Terms = /\b(NATO|CIA|PENTAGON|WEST GERMANY|BONN|FREE WORLD|UN SUMMIT|SATELLITE|MISSILE|KGB)\b/;
+      const preColdWarPools = [
+        ...enemySubjectsForYear(1917),
+        ...adversariesForYear(1917),
+        ...institutionsForYear(1917),
+        securityServiceForYear(1917),
+      ];
+
+      expect(preColdWarPools.join(' ')).not.toMatch(forbidden1917Terms);
+
+      for (const randomValue of [0, 0.5, 0.999999]) {
+        jest.spyOn(Math, 'random').mockReturnValue(randomValue);
+        for (const generator of externalThreatGenerators) {
+          const generated = generator(createMockGameView({ date: { year: 1917, month: 10, tick: 1 } }));
+          expect(`${generated.headline} ${generated.subtext} ${generated.reality}`).not.toMatch(forbidden1917Terms);
+        }
+        jest.restoreAllMocks();
       }
     });
   });

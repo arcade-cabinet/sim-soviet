@@ -1,37 +1,24 @@
 /**
- * RadialMenu — Unified SVG pie menu for both building placement and building inspection.
+ * RadialMenu — SVG pie menu for building inspection.
  *
- * Data-driven: consumes `useRadialMenu()` (build mode) and `useInspectMenu()` (inspect mode).
- * Renders an inner ring of sectors and an optional outer detail ring.
- *
- * Build mode: inner = categories, outer = buildings in selected category.
- * Inspect mode: inner = actions (Info, Workers, Demolish, etc.), outer = detail text.
+ * Data-driven: consumes `useInspectMenu()` and renders actions
+ * (Info, Workers, Demolish, etc.) with an optional outer detail ring.
  */
 
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
-import { DEFAULT_MATERIAL_COST } from '../ai/agents/infrastructure/constructionSystem';
-import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
 import { getMinigameNameForBuilding } from '../ai/agents/meta/minigames/BuildingMinigameMap';
-import type { TutorialSystem } from '../ai/agents/meta/TutorialSystem';
-import { MILESTONE_LABELS } from '../ai/agents/meta/TutorialSystem';
 import { getUpgradeInfo, isUpgradeable, upgradeECSBuilding } from '../bridge/BuildingPlacement';
 import { getEngine } from '../bridge/GameInit';
-import type { BuildingDef, Role } from '../data/buildingDefs';
-import { BUILDING_DEFS, getBuildingDef, getBuildingsByRole } from '../data/buildingDefs';
-import { getAvailableBuildingsForYear } from '../game/era';
-import { useGameSnapshot } from '../hooks/useGameState';
+import { getBuildingDef } from '../data/buildingDefs';
 import {
   closeInspectMenu,
-  closeRadialMenu,
   type InspectBuildingType,
   type InspectMenuState,
   openBuildingInspector,
-  requestPlacement,
   useInspectMenu,
-  useRadialMenu,
 } from '../stores/gameStore';
 import { Colors, monoFont } from './styles';
 
@@ -72,57 +59,6 @@ function describeWedge(
     `A ${innerR} ${innerR} 0 ${largeArc} 0 ${innerStart.x} ${innerStart.y}`,
     'Z',
   ].join(' ');
-}
-
-// ── Build Mode Types ─────────────────────────────────────────────────────
-
-interface CategoryDef {
-  id: string;
-  label: string;
-  icon: string;
-  roles: Role[];
-}
-
-const CATEGORIES: CategoryDef[] = [
-  { id: 'res', label: 'Housing', icon: '\u{1F3E0}', roles: ['housing'] },
-  { id: 'ind', label: 'Industry', icon: '\u{1F3ED}', roles: ['industry', 'agriculture'] },
-  { id: 'utility', label: 'Utility', icon: '\u{1F527}', roles: ['power', 'utility'] },
-  { id: 'svc', label: 'Services', icon: '\u{1F3E5}', roles: ['services', 'culture'] },
-  { id: 'gov', label: 'Government', icon: '\u{1F3DB}\u{FE0F}', roles: ['government', 'propaganda'] },
-  { id: 'mil', label: 'Military', icon: '\u{1F396}\u{FE0F}', roles: ['military'] },
-  { id: 'infra', label: 'Infra', icon: '\u{1F682}', roles: ['transport', 'environment'] },
-];
-
-function canAffordBuilding(
-  snap: { timber: number; steel: number; cement: number; prefab: number },
-  def: BuildingDef,
-): boolean {
-  const cc = def.stats.constructionCost;
-  return (
-    snap.timber >= (cc?.timber ?? DEFAULT_MATERIAL_COST.timber) &&
-    snap.steel >= (cc?.steel ?? DEFAULT_MATERIAL_COST.steel) &&
-    snap.cement >= (cc?.cement ?? DEFAULT_MATERIAL_COST.cement) &&
-    snap.prefab >= (cc?.prefab ?? 0)
-  );
-}
-
-function formatMaterialCost(def: BuildingDef): string {
-  const cc = def.stats.constructionCost;
-  const t = cc?.timber ?? DEFAULT_MATERIAL_COST.timber;
-  const s = cc?.steel ?? DEFAULT_MATERIAL_COST.steel;
-  const parts: string[] = [];
-  if (t > 0) parts.push(`\u{1FAB5}${t}`);
-  if (s > 0) parts.push(`\u{1F529}${s}`);
-  return parts.join(' ') || 'FREE';
-}
-
-function categoryHasFittingBuilding(cat: CategoryDef, availableSpace: number, eraAvailable: Set<string>): boolean {
-  const ids = cat.roles.flatMap((r) => getBuildingsByRole(r));
-  return ids.some((id) => {
-    if (!eraAvailable.has(id)) return false;
-    const def = BUILDING_DEFS[id];
-    return def && def.footprint.tilesX <= availableSpace && def.footprint.tilesY <= availableSpace;
-  });
 }
 
 // ── Inspect Mode Types ────────────────────────────────────────────────────
@@ -440,144 +376,6 @@ const DetailRing: React.FC<{ text: string }> = ({ text }) => {
 };
 
 // ══════════════════════════════════════════════════════════════════════════
-// Build Mode Sub-component
-// ══════════════════════════════════════════════════════════════════════════
-
-const BuildModeContent: React.FC<{
-  menu: { screenX: number; screenY: number; gridX: number; gridY: number; availableSpace: number };
-  snap: ReturnType<typeof useGameSnapshot>;
-  onClose: () => void;
-}> = ({ menu, snap, onClose: _onClose }) => {
-  const [selectedCat, setSelectedCat] = useState<string | null>(null);
-
-  const eraAvailable = new Set(getAvailableBuildingsForYear(snap.year, snap.settlementTier as SettlementTier));
-
-  const tutorial: TutorialSystem | null = getEngine()?.getTutorial() ?? null;
-  const tutorialActive = tutorial?.isActive() ?? false;
-
-  function getCategoryLockInfo(cat: CategoryDef): { isLocked: boolean; lockReason: string | null } {
-    if (!tutorialActive || !tutorial) return { isLocked: false, lockReason: null };
-    const catBuildingIds = cat.roles.flatMap((r) => getBuildingsByRole(r)).filter((id) => eraAvailable.has(id));
-    if (catBuildingIds.length === 0) return { isLocked: false, lockReason: null };
-    const unlocked = tutorial.isCategoryUnlocked(catBuildingIds);
-    if (unlocked) return { isLocked: false, lockReason: null };
-    const milestoneId = tutorial.getNextUnlockMilestoneForBuildings(catBuildingIds);
-    const label = milestoneId ? (MILESTONE_LABELS[milestoneId] ?? milestoneId) : null;
-    return { isLocked: true, lockReason: label };
-  }
-
-  const activeCats = CATEGORIES.filter((c) =>
-    c.roles.some((role) => getBuildingsByRole(role).some((id) => eraAvailable.has(id))),
-  );
-  const catAngle = activeCats.length > 0 ? 360 / activeCats.length : 0;
-  const gap = 2;
-  const catLockInfo = new Map(activeCats.map((c) => [c.id, getCategoryLockInfo(c)]));
-
-  const selectedCategory = activeCats.find((c) => c.id === selectedCat);
-  const buildingIds = selectedCategory
-    ? selectedCategory.roles
-        .flatMap((role) => getBuildingsByRole(role))
-        .filter((id) => eraAvailable.has(id))
-        .filter((id) => !tutorialActive || !tutorial || tutorial.isBuildingUnlocked(id))
-    : [];
-  buildingIds.sort((a, b) => {
-    const defA = BUILDING_DEFS[a];
-    const defB = BUILDING_DEFS[b];
-    const tA = defA?.stats.constructionCost?.timber ?? DEFAULT_MATERIAL_COST.timber;
-    const tB = defB?.stats.constructionCost?.timber ?? DEFAULT_MATERIAL_COST.timber;
-    return tA - tB;
-  });
-  const buildingAngle = buildingIds.length > 0 ? 360 / buildingIds.length : 0;
-
-  const handleSelect = useCallback(
-    (defId: string) => {
-      requestPlacement(menu.gridX, menu.gridY, defId);
-      setSelectedCat(null);
-      closeRadialMenu();
-    },
-    [menu.gridX, menu.gridY],
-  );
-
-  return (
-    <>
-      <Circle cx={CENTER} cy={CENTER} r={8} fill={Colors.sovietGold} opacity={0.6} />
-
-      {/* Category ring (inner) */}
-      {activeCats.map((cat, i) => {
-        const lockInfo = catLockInfo.get(cat.id) ?? { isLocked: false, lockReason: null };
-        const hasEnabled = categoryHasFittingBuilding(cat, menu.availableSpace, eraAvailable);
-        const isDisabled = lockInfo.isLocked || !hasEnabled;
-        return (
-          <Wedge
-            key={cat.id}
-            index={i}
-            totalAngle={catAngle}
-            gap={gap}
-            innerR={INNER_R}
-            outerR={OUTER_R}
-            icon={lockInfo.isLocked ? '\u{1F512}' : cat.icon}
-            label={cat.label}
-            isSelected={selectedCat === cat.id}
-            isDisabled={isDisabled}
-            subLabel={lockInfo.isLocked && lockInfo.lockReason ? lockInfo.lockReason : undefined}
-            subLabelColor="#8b0000"
-            iconSize={lockInfo.isLocked ? 14 : 18}
-            labelSize={lockInfo.isLocked ? 5.5 : 7}
-            onPress={() => setSelectedCat(selectedCat === cat.id ? null : cat.id)}
-          />
-        );
-      })}
-
-      {/* Building ring (outer) */}
-      {selectedCat && buildingIds.length > 0 && (
-        <G>
-          <Circle
-            cx={CENTER}
-            cy={CENTER}
-            r={DETAIL_INNER_R - 3}
-            fill="none"
-            stroke="#8b0000"
-            strokeWidth={1}
-            strokeDasharray="3 3"
-            opacity={0.5}
-          />
-          {buildingIds.map((id, i) => {
-            const def = BUILDING_DEFS[id];
-            if (!def) return null;
-            const fits = def.footprint.tilesX <= menu.availableSpace && def.footprint.tilesY <= menu.availableSpace;
-            const canAfford = canAffordBuilding(
-              { timber: snap.timber, steel: snap.steel, cement: snap.cement, prefab: snap.prefab },
-              def,
-            );
-            const canBuild = fits && canAfford;
-            const displayName =
-              def.presentation.name.length > 14 ? `${def.presentation.name.slice(0, 12)}..` : def.presentation.name;
-            return (
-              <Wedge
-                key={id}
-                index={i}
-                totalAngle={buildingAngle}
-                gap={gap}
-                innerR={DETAIL_INNER_R}
-                outerR={DETAIL_OUTER_R}
-                icon={def.presentation.icon}
-                label={displayName}
-                isDisabled={!canBuild}
-                subLabel={fits ? formatMaterialCost(def) : "WON'T FIT"}
-                subLabelColor={canBuild ? Colors.sovietGold : '#555'}
-                iconSize={16}
-                labelSize={6}
-                onPress={() => handleSelect(id)}
-              />
-            );
-          })}
-        </G>
-      )}
-    </>
-  );
-};
-
-// ══════════════════════════════════════════════════════════════════════════
 // Inspect Mode Sub-component
 // ══════════════════════════════════════════════════════════════════════════
 
@@ -643,15 +441,11 @@ const InspectModeContent: React.FC<{
 // Main Unified Component
 // ══════════════════════════════════════════════════════════════════════════
 
-/** SVG pie menu root that switches between build-mode and inspect-mode radial displays. */
+/** SVG pie menu root for inspecting existing buildings. */
 export const RadialMenu: React.FC = () => {
-  const buildMenu = useRadialMenu();
   const inspectMenu = useInspectMenu();
-  const snap = useGameSnapshot();
 
-  // Determine which mode is active (inspect takes priority if both open)
-  const mode: 'build' | 'inspect' | null = inspectMenu ? 'inspect' : buildMenu ? 'build' : null;
-  const menu = inspectMenu ?? buildMenu;
+  const menu = inspectMenu;
 
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -672,19 +466,14 @@ export const RadialMenu: React.FC = () => {
       Animated.timing(scaleAnim, { toValue: 0, duration: 150, easing: Easing.out(Easing.ease), useNativeDriver: true }),
       Animated.timing(opacityAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
     ]).start(() => {
-      closeRadialMenu();
       closeInspectMenu();
     });
   }, [scaleAnim, opacityAnim]);
 
-  if (!menu || !mode) return null;
+  if (!menu) return null;
 
   const { screenX, screenY, gridX, gridY } = menu;
-  const buildingName =
-    mode === 'inspect' && inspectMenu
-      ? (getBuildingDef(inspectMenu.buildingDefId)?.presentation.name ?? inspectMenu.buildingDefId)
-      : null;
-  const availableSpace = 'availableSpace' in menu ? (menu as { availableSpace: number }).availableSpace : 0;
+  const buildingName = getBuildingDef(inspectMenu.buildingDefId)?.presentation.name ?? inspectMenu.buildingDefId;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -705,31 +494,25 @@ export const RadialMenu: React.FC = () => {
         pointerEvents="box-none"
       >
         <Svg width={VIEW_SIZE} height={VIEW_SIZE} viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}>
-          {mode === 'build' && buildMenu && (
-            <BuildModeContent menu={{ ...buildMenu, availableSpace }} snap={snap} onClose={handleClose} />
-          )}
-          {mode === 'inspect' && inspectMenu && <InspectModeContent menu={inspectMenu} onClose={handleClose} />}
+          <InspectModeContent menu={inspectMenu} onClose={handleClose} />
         </Svg>
       </Animated.View>
 
       {/* Tooltip */}
       <Animated.View style={[styles.tooltip, { left: screenX - 50, top: screenY + CENTER + 10, opacity: opacityAnim }]}>
         <Animated.Text style={styles.tooltipText}>
-          {mode === 'build'
-            ? `Grid [${gridX},${gridY}] \u2022 ${availableSpace}x${availableSpace} free`
-            : `${buildingName ?? ''} \u2022 [${gridX},${gridY}]${
-                inspectMenu?.buildingType === 'housing' && inspectMenu.housingCap != null
-                  ? ` \u2022 ${inspectMenu.occupants?.length ?? 0}/${inspectMenu.housingCap} occupants`
-                  : ''
-              }`}
+          {`${buildingName} \u2022 [${gridX},${gridY}]${
+            inspectMenu.buildingType === 'housing' && inspectMenu.housingCap != null
+              ? ` \u2022 ${inspectMenu.occupants?.length ?? 0}/${inspectMenu.housingCap} occupants`
+              : ''
+          }`}
         </Animated.Text>
       </Animated.View>
     </View>
   );
 };
 
-// Re-export the old names for backward compatibility during migration
-export { RadialMenu as RadialBuildMenu };
+// Re-export the old inspect name for backward compatibility during migration.
 export { RadialMenu as RadialInspectMenu };
 
 // ── Styles ────────────────────────────────────────────────────────────────

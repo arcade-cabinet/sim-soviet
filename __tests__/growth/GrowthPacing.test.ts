@@ -2,10 +2,10 @@
  * Unit tests for GrowthPacing — era-based build intervals.
  */
 
-import { ERA_BUILD_INTERVALS, DEFAULT_BUILD_INTERVAL, getBuildInterval } from '../../src/growth/GrowthPacing';
+import { DEFAULT_BUILD_INTERVAL, ERA_BUILD_INTERVALS, getBuildInterval } from '../../src/growth/GrowthPacing';
 
 describe('GrowthPacing', () => {
-  it('defines intervals for all 8 eras', () => {
+  it('defines intervals for all 7 historical eras', () => {
     const eras = [
       'revolution',
       'collectivization',
@@ -14,7 +14,6 @@ describe('GrowthPacing', () => {
       'reconstruction',
       'thaw_and_freeze',
       'stagnation',
-      'the_eternal',
     ];
     for (const era of eras) {
       expect(ERA_BUILD_INTERVALS[era as keyof typeof ERA_BUILD_INTERVALS]).toBeGreaterThan(0);
@@ -29,9 +28,8 @@ describe('GrowthPacing', () => {
     expect(ERA_BUILD_INTERVALS.great_patriotic).toBe(45);
   });
 
-  it('stagnation and the_eternal share the fastest peacetime interval (30)', () => {
+  it('stagnation has the fastest peacetime interval (30)', () => {
     expect(ERA_BUILD_INTERVALS.stagnation).toBe(30);
-    expect(ERA_BUILD_INTERVALS.the_eternal).toBe(30);
   });
 
   it('intervals decrease from revolution through industrialization', () => {

@@ -13,13 +13,17 @@
  */
 
 import { assetUrl } from '../utils/assetPath';
-import { GAMEPLAY_PLAYLIST, getTrack, MUSIC_CONTEXTS } from './AudioManifest';
+import { GAMEPLAY_PLAYLIST, getEraPlaylist, getTrack, MUSIC_CONTEXTS } from './AudioManifest';
 
 const AUDIO_BASE_PATH = `${assetUrl('assets/audio/music')}/`;
-const DEFAULT_CROSSFADE_MS = 2000;
+const DEFAULT_CROSSFADE_MS = 5000;
 const MASTER_VOLUME = 0.5;
 const MAX_BUFFER_CACHE_SIZE = 50;
 const DUCK_AMOUNT = 0.7;
+/** Force-evict fading tracks when active node count exceeds this threshold. */
+const NODE_CAP_EVICT = 100;
+/** Use shortened crossfade during rapid transitions to reduce node stacking. */
+const RAPID_CROSSFADE_MS = 500;
 
 /**
  * Web Audio API-based music playback manager (singleton).
@@ -50,11 +54,17 @@ class AudioManager {
   private ducked = false;
   private duckLevel = 1;
   private duckCount = 0;
+  private duckTimer: ReturnType<typeof setTimeout> | null = null;
 
   private playlist: string[] = [];
   private playlistIndex = 0;
   private masterVolume = MASTER_VOLUME;
   private muted = false;
+  private currentEra: string | null = null;
+  private activeNodeCount = 0;
+  /** Fading-out nodes pending delayed cleanup (source + gain pairs). */
+  private fadingNodes: Array<{ source: AudioBufferSourceNode; gain: GainNode; timer: ReturnType<typeof setTimeout> }> =
+    [];
 
   /** Get or create the singleton AudioManager instance. */
   static getInstance(): AudioManager {
@@ -100,14 +110,8 @@ class AudioManager {
     const track = getTrack(trackId);
     if (!track) return;
 
-    // Resume AudioContext if suspended (autoplay policy)
-    if (this.audioCtx.state === 'suspended') {
-      try {
-        await this.audioCtx.resume();
-      } catch {
-        // Ignore -- will retry on next user gesture
-      }
-    }
+    // Health check: resume suspended context + warn on high node count
+    await this.ensureContextHealth();
 
     // Fade out current track
     this.fadeOutCurrent(fadeMs);
@@ -123,15 +127,20 @@ class AudioManager {
       const baseVol = this.muted ? 0 : track.volume;
       trackGain.gain.value = baseVol * this.duckLevel;
       trackGain.connect(this.masterGain);
+      this.activeNodeCount++;
 
       // Create source
       const source = this.audioCtx.createBufferSource();
       source.buffer = buffer;
       source.loop = track.loop;
       source.connect(trackGain);
+      this.activeNodeCount++;
 
-      // On ended, advance playlist (for non-looping tracks)
+      // On ended, disconnect nodes for GC and advance playlist
       source.onended = () => {
+        source.disconnect();
+        trackGain.disconnect();
+        this.activeNodeCount = Math.max(0, this.activeNodeCount - 2);
         if (!track.loop && this.currentSource === source) {
           this.currentSource = null;
           this.currentTrackId = null;
@@ -164,6 +173,32 @@ class AudioManager {
   }
 
   /**
+   * Set the current era and switch the playlist to era-appropriate tracks.
+   * Crossfades to the first track of the new era playlist.
+   *
+   * @param era - Era identifier (e.g. 'revolution', 'stagnation')
+   */
+  setEra(era: string): void {
+    if (era === this.currentEra) return;
+    this.currentEra = era;
+
+    const eraTracks = getEraPlaylist(era);
+    this.playlist = [...eraTracks].sort(() => Math.random() - 0.5);
+    this.playlistIndex = 0;
+    this.playNext();
+  }
+
+  /** Get the current era, if set. */
+  getCurrentEra(): string | null {
+    return this.currentEra;
+  }
+
+  /** Get the active Web Audio node count. */
+  getActiveNodeCount(): number {
+    return this.activeNodeCount;
+  }
+
+  /**
    * Play a short incidental cue over the base layer.
    * Ducks the base layer by 30% during playback.
    *
@@ -175,14 +210,8 @@ class AudioManager {
     const track = getTrack(trackId);
     if (!track) return;
 
-    // Resume AudioContext if suspended
-    if (this.audioCtx.state === 'suspended') {
-      try {
-        await this.audioCtx.resume();
-      } catch {
-        // Ignore
-      }
-    }
+    // Health check: resume suspended context + warn on high node count
+    await this.ensureContextHealth();
 
     // Stop any existing incidental
     this.stopIncidental();
@@ -209,8 +238,12 @@ class AudioManager {
       trackVolumeGain.gain.value = track.volume ?? 1.0;
       source.connect(trackVolumeGain);
       trackVolumeGain.connect(this.incidentalGain);
+      this.activeNodeCount += 2;
 
       source.onended = () => {
+        source.disconnect();
+        trackVolumeGain.disconnect();
+        this.activeNodeCount = Math.max(0, this.activeNodeCount - 2);
         if (this.incidentalSource === source) {
           this.cleanupIncidental();
         }
@@ -233,10 +266,12 @@ class AudioManager {
 
   /**
    * Duck the base layer volume by a multiplier (0-1).
+   * Optionally auto-unducks after `durationMs` milliseconds.
    *
    * @param amount - Volume multiplier (e.g., 0.7 = 30% reduction)
+   * @param durationMs - If provided, automatically unducks after this many ms
    */
-  duck(amount: number): void {
+  duck(amount: number, durationMs?: number): void {
     this.duckCount++;
     this.ducked = true;
     this.duckLevel = Math.max(0, Math.min(1, amount));
@@ -248,11 +283,17 @@ class AudioManager {
         const baseVol = this.muted ? 0 : (track?.volume ?? 1);
         const now = this.audioCtx.currentTime;
         trackGain.gain.setValueAtTime(trackGain.gain.value, now);
-        trackGain.gain.linearRampToValueAtTime(
-          baseVol * this.duckLevel,
-          now + 0.3,
-        );
+        trackGain.gain.linearRampToValueAtTime(baseVol * this.duckLevel, now + 0.3);
       }
+    }
+
+    // Auto-unduck after duration
+    if (durationMs != null && durationMs > 0) {
+      if (this.duckTimer) clearTimeout(this.duckTimer);
+      this.duckTimer = setTimeout(() => {
+        this.duckTimer = null;
+        this.unduck();
+      }, durationMs);
     }
   }
 
@@ -263,6 +304,11 @@ class AudioManager {
     if (this.duckCount > 0) return;
     this.ducked = false;
     this.duckLevel = 1;
+
+    if (this.duckTimer) {
+      clearTimeout(this.duckTimer);
+      this.duckTimer = null;
+    }
 
     if (this.currentSource && this.audioCtx) {
       const trackGain: GainNode | undefined = (this.currentSource as any)._trackGain;
@@ -292,8 +338,9 @@ class AudioManager {
   private playNext(): void {
     if (this.playlist.length === 0) return;
     if (this.playlistIndex >= this.playlist.length) {
-      // Reshuffle and restart
-      this.playlist = [...GAMEPLAY_PLAYLIST].sort(() => Math.random() - 0.5);
+      // Reshuffle and restart — use era playlist if era is set
+      const source = this.currentEra ? getEraPlaylist(this.currentEra) : GAMEPLAY_PLAYLIST;
+      this.playlist = [...source].sort(() => Math.random() - 0.5);
       this.playlistIndex = 0;
     }
     const trackId = this.playlist[this.playlistIndex];
@@ -305,6 +352,9 @@ class AudioManager {
   private fadeOutCurrent(fadeMs: number = DEFAULT_CROSSFADE_MS): void {
     if (!this.currentSource || !this.audioCtx) return;
 
+    // Under node pressure, shorten crossfade to reduce overlap
+    const effectiveFade = this.activeNodeCount > NODE_CAP_EVICT ? RAPID_CROSSFADE_MS : fadeMs;
+
     const source = this.currentSource;
     const trackGain: GainNode | undefined = (source as any)._trackGain;
     this.currentSource = null;
@@ -312,18 +362,13 @@ class AudioManager {
     if (trackGain) {
       const now = this.audioCtx.currentTime;
       trackGain.gain.setValueAtTime(trackGain.gain.value, now);
-      trackGain.gain.linearRampToValueAtTime(0, now + fadeMs / 1000);
+      trackGain.gain.linearRampToValueAtTime(0, now + effectiveFade / 1000);
 
-      // Stop and disconnect after fade completes
-      setTimeout(() => {
-        try {
-          source.stop();
-        } catch {
-          // Already stopped
-        }
-        source.disconnect();
-        trackGain.disconnect();
-      }, fadeMs + 100);
+      // Track fading node for potential force-eviction
+      const timer = setTimeout(() => {
+        this.evictFadingNode(source, trackGain);
+      }, effectiveFade + 100);
+      this.fadingNodes.push({ source, gain: trackGain, timer });
     } else {
       try {
         source.stop();
@@ -331,7 +376,40 @@ class AudioManager {
         // Already stopped
       }
       source.disconnect();
+      this.activeNodeCount = Math.max(0, this.activeNodeCount - 1);
     }
+  }
+
+  /** Force-stop and disconnect a fading node pair immediately. */
+  private evictFadingNode(source: AudioBufferSourceNode, gain: GainNode): void {
+    try {
+      source.stop();
+    } catch {
+      // Already stopped
+    }
+    source.disconnect();
+    gain.disconnect();
+    this.activeNodeCount = Math.max(0, this.activeNodeCount - 2);
+
+    // Remove from fading list
+    const idx = this.fadingNodes.findIndex((n) => n.source === source);
+    if (idx >= 0) this.fadingNodes.splice(idx, 1);
+  }
+
+  /** Force-evict all fading nodes immediately to reclaim Web Audio resources. */
+  private forceEvictAllFading(): void {
+    for (const node of this.fadingNodes) {
+      clearTimeout(node.timer);
+      try {
+        node.source.stop();
+      } catch {
+        // Already stopped
+      }
+      node.source.disconnect();
+      node.gain.disconnect();
+      this.activeNodeCount = Math.max(0, this.activeNodeCount - 2);
+    }
+    this.fadingNodes = [];
   }
 
   /** Stop the incidental source and restore base volume. */
@@ -356,6 +434,31 @@ class AudioManager {
     }
     this.incidentalSource = null;
     this.unduck();
+  }
+
+  /**
+   * Ensure the AudioContext is healthy: resume if suspended, evict stale nodes if cap exceeded.
+   * Called before creating new audio nodes.
+   */
+  private async ensureContextHealth(): Promise<void> {
+    if (!this.audioCtx) return;
+
+    if (this.audioCtx.state === 'suspended') {
+      try {
+        await this.audioCtx.resume();
+        console.warn('[AudioManager] AudioContext was suspended — resumed.');
+      } catch {
+        // Will retry on next user gesture
+      }
+    }
+
+    // Force-evict all fading nodes when approaching cap
+    if (this.activeNodeCount > NODE_CAP_EVICT && this.fadingNodes.length > 0) {
+      console.warn(
+        `[AudioManager] Node cap exceeded (${this.activeNodeCount}). Force-evicting ${this.fadingNodes.length} fading nodes.`,
+      );
+      this.forceEvictAllFading();
+    }
   }
 
   /** Fetch and decode an audio file, with caching. */
@@ -419,6 +522,7 @@ class AudioManager {
   /** Close AudioContext and clear buffer cache. */
   dispose(): void {
     this.stopIncidental();
+    this.forceEvictAllFading();
     this.fadeOutCurrent();
 
     if (this.audioCtx) {
@@ -440,9 +544,15 @@ class AudioManager {
     this.ducked = false;
     this.duckLevel = 1;
     this.duckCount = 0;
+    if (this.duckTimer) {
+      clearTimeout(this.duckTimer);
+      this.duckTimer = null;
+    }
     this.bufferCache.clear();
     this.playlist = [];
     this.playlistIndex = 0;
+    this.currentEra = null;
+    this.activeNodeCount = 0;
 
     AudioManager.instance = null;
   }

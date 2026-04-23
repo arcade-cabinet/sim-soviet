@@ -23,3 +23,4 @@ Devlog entries are chronological records of major development milestones. Read n
 - **003**: 22 UI overlay components, Soviet aesthetic, modal system
 - **004**: Miniplex ECS replaces legacy GameState as canonical state
 - **005**: All GDD gaps closed — full feature parity with design docs
+- Future-scope devlogs removed from 1.0 documentation. Current product scope is the 1917-1991 historical campaign plus grounded same-settlement continuation.

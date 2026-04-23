@@ -7,9 +7,9 @@ import { getAvailableBuildingsForYear } from '../../src/game/era/definitions';
 describe('getAvailableBuildingsForYear', () => {
   it('returns limited buildings for Era 1 (1922)', () => {
     const buildings = getAvailableBuildingsForYear(1922);
-    // War Communism should have basic buildings only
+    // Collectivization: 12 (revolution) + 10 (collectivization) = 22
     expect(buildings.length).toBeGreaterThan(0);
-    expect(buildings.length).toBeLessThan(20);
+    expect(buildings.length).toBeLessThan(30);
   });
 
   it('returns more buildings for later eras', () => {
@@ -22,8 +22,8 @@ describe('getAvailableBuildingsForYear', () => {
     expect(era5.length).toBeGreaterThanOrEqual(era3.length);
   });
 
-  it('returns all buildings for the final era (2100)', () => {
-    const all = getAvailableBuildingsForYear(2100);
+  it('returns all historical buildings for the final campaign era (1991)', () => {
+    const all = getAvailableBuildingsForYear(1991);
     // Should include buildings from ALL eras
     expect(all.length).toBeGreaterThan(15);
   });
@@ -38,9 +38,9 @@ describe('getAvailableBuildingsForYear', () => {
   });
 
   it('filters by settlement tier when provided', () => {
-    const allForYear = getAvailableBuildingsForYear(2000);
-    const seloOnly = getAvailableBuildingsForYear(2000, 'selo');
-    const gorodAll = getAvailableBuildingsForYear(2000, 'gorod');
+    const allForYear = getAvailableBuildingsForYear(1991);
+    const seloOnly = getAvailableBuildingsForYear(1991, 'selo');
+    const gorodAll = getAvailableBuildingsForYear(1991, 'gorod');
 
     // selo should have fewer buildings than gorod
     expect(seloOnly.length).toBeLessThanOrEqual(gorodAll.length);
@@ -49,7 +49,7 @@ describe('getAvailableBuildingsForYear', () => {
   });
 
   it('selo tier excludes posyolok+ buildings', () => {
-    const seloBuildings = getAvailableBuildingsForYear(2000, 'selo');
+    const seloBuildings = getAvailableBuildingsForYear(1991, 'selo');
     // workers-house-c requires posyolok
     expect(seloBuildings).not.toContain('workers-house-c');
     // kgb-office requires gorod
@@ -57,7 +57,7 @@ describe('getAvailableBuildingsForYear', () => {
   });
 
   it('posyolok tier includes posyolok buildings', () => {
-    const buildings = getAvailableBuildingsForYear(2000, 'posyolok');
+    const buildings = getAvailableBuildingsForYear(1991, 'posyolok');
     // workers-house-c requires posyolok — should be included
     expect(buildings).toContain('workers-house-c');
   });

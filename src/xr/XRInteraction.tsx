@@ -5,9 +5,9 @@
  * - Controller ray visualization (line from controller to ground intersection)
  * - Ray-to-ground-plane intersection converted to grid cell coordinates
  * - Ghost preview mesh at the hovered grid cell
- * - Select trigger: place building via placeECSBuilding
+ * - Select trigger: clear an armed bulldoze action
  * - Squeeze trigger: bulldoze via bulldozeECSBuilding
- * - Haptic feedback on place/bulldoze actions
+ * - Haptic feedback on bulldoze actions
  *
  * Included by both ARTabletop and VRWalkthrough.
  */
@@ -18,7 +18,7 @@ import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
 import type { BufferGeometry, Line, Mesh } from 'three';
 import { Plane, Raycaster, Vector3 } from 'three';
-import { bulldozeECSBuilding, placeECSBuilding } from '@/bridge/BuildingPlacement';
+import { bulldozeECSBuilding } from '@/bridge/BuildingPlacement';
 import { gameState } from '@/engine/GameState';
 import { getCurrentGridSize } from '@/engine/GridTypes';
 
@@ -119,7 +119,7 @@ const XRInteraction: React.FC<XRInteractionProps> = ({ scale, onRepositionAR }) 
     }
   });
 
-  // Select trigger: place building at hovered cell
+  // Select trigger: no direct placement. Only execute if bulldoze is armed.
   const handleSelect = useCallback(() => {
     if (!hoveredCell) {
       // In AR, selecting empty space repositions the model
@@ -134,11 +134,6 @@ const XRInteraction: React.FC<XRInteractionProps> = ({ scale, onRepositionAR }) 
       const success = bulldozeECSBuilding(hoveredCell.x, hoveredCell.z);
       if (success) {
         pulseHaptic(controllerState?.inputSource, 0.7, 80);
-      }
-    } else {
-      const success = placeECSBuilding(tool, hoveredCell.x, hoveredCell.z);
-      if (success) {
-        pulseHaptic(controllerState?.inputSource, 0.5, 50);
       }
     }
   }, [hoveredCell, controllerState?.inputSource, onRepositionAR]);

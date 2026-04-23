@@ -34,8 +34,7 @@ export type Doctrine =
   | 'reconstruction'
   | 'thaw'
   | 'freeze'
-  | 'stagnation'
-  | 'eternal';
+  | 'stagnation';
 
 /** Fraction of each resource type taken as compulsory delivery (0.0-1.0). */
 export interface DeliveryRates {
@@ -76,7 +75,6 @@ export interface CompulsoryDeliverySaveData {
  * | thaw             | 0.25 | 0.15  | 0.25  | Best period for workers        |
  * | freeze           | 0.40 | 0.30  | 0.45  | Crackdown                      |
  * | stagnation       | 0.35 | 0.30  | 0.40  | Plus "administrative losses"   |
- * | eternal          | 0.30 | 0.25  | 0.35  | Bureaucratic                   |
  */
 const DELIVERY_RATES: Record<Doctrine, DeliveryRates> = political.compulsoryDeliveries.rates as Record<
   Doctrine,

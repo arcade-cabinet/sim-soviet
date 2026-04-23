@@ -11,7 +11,7 @@ import { Canvas } from '@react-three/fiber';
 import React, { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AudioManager from './audio/AudioManager';
-import { ERA_CONTEXTS, SEASON_CONTEXTS } from './audio/AudioManifest';
+import { SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
 import { bulldozeECSBuilding } from './bridge/BuildingPlacement';
 import { type GameInitOptions, getEngine, getSaveSystem, initGame, isGameInitialized } from './bridge/GameInit';
@@ -32,13 +32,7 @@ import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualR
 import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import { gameState } from './engine/GameState';
-import {
-  clearToast,
-  getToast,
-  setSpeed,
-  showAdvisor,
-  showToast,
-} from './engine/helpers';
+import { clearToast, getToast, setSpeed, showAdvisor, showToast } from './engine/helpers';
 import type { RehabilitationData } from './game/engine/types';
 import type { EraDefinition } from './game/era';
 import type { TallyData } from './game/GameTally';
@@ -48,18 +42,20 @@ import { useInputManager } from './input/useInputManager';
 import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import {
   closeBuildingInspector,
-  closeBuildingPanel,
   closeCitizenDossierByIndex,
+  closeGovernmentHQ,
   closePoliticalPanel,
   type GameSpeed,
   isPaused,
   notifyStateChange,
+  pushCrisisVFX,
   setGameSpeed,
   setPaused,
   useBuildingInspector,
   useBuildingPanel,
   useCitizenDossierIndex,
   useCursorTooltip,
+  useGovernmentHQ,
   usePoliticalPanel,
 } from './stores/gameStore';
 import { AchievementsPanel } from './ui/AchievementsPanel';
@@ -79,6 +75,7 @@ import { EdgeIndicators } from './ui/EdgeIndicators';
 import { EraTechTreePanel } from './ui/EraTechTreePanel';
 import { EventHistoryPanel } from './ui/EventHistoryPanel';
 import { GameModals, type GameOverInfo, type PlanDirective } from './ui/GameModals';
+import { GovernmentHQ } from './ui/GovernmentHQ';
 import { InfrastructurePanel } from './ui/InfrastructurePanel';
 import { IntroModal } from './ui/IntroModal';
 import { LeadershipPanel } from './ui/LeadershipPanel';
@@ -96,6 +93,7 @@ import { PersonnelFilePanel } from './ui/PersonnelFilePanel';
 import { PolitburoPanel } from './ui/PolitburoPanel';
 import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
 import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
+import { PravdaTicker } from './ui/PravdaTicker';
 // QuotaHUD removed — Phase 1 minimal HUD
 import { RadialMenu } from './ui/RadialMenu';
 import { RehabilitationModal } from './ui/RehabilitationModal';
@@ -104,15 +102,16 @@ import { ScoringPanel } from './ui/ScoringPanel';
 import { SettingsModal } from './ui/SettingsModal';
 import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
 import { Colors } from './ui/styles';
-// Ticker removed — Phase 1 minimal HUD
 import { Toast } from './ui/Toast';
 // Toolbar removed — Phase 1 minimal HUD
 // UI components
 import { TopBar } from './ui/TopBar';
+import { USSRDissolutionModal } from './ui/USSRDissolutionModal';
 import { ViewportFrame } from './ui/ViewportFrame';
 import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
+
 // WorkerStatusBar removed — Phase 1 minimal HUD
 
 /**
@@ -165,6 +164,31 @@ const MIN_LOADING_DISPLAY_MS = 1500;
 
 type AppScreen = 'menu' | 'setup' | 'game';
 
+function lockWebViewport(): void {
+  if (typeof document === 'undefined') return;
+
+  const baseStyle = {
+    margin: '0',
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    backgroundColor: Colors.bgColor,
+  };
+
+  Object.assign(document.documentElement.style, baseStyle);
+  Object.assign(document.body.style, baseStyle);
+
+  const root = document.getElementById('root');
+  if (root) {
+    Object.assign(root.style, {
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden',
+      backgroundColor: Colors.bgColor,
+    });
+  }
+}
+
 const App: React.FC = () => {
   // Screen state
   const [screen, setScreen] = useState<AppScreen>('menu');
@@ -180,7 +204,8 @@ const App: React.FC = () => {
     name: '',
   });
 
-  // Ticker is not rendered in Phase 1 — state removed to avoid accumulation
+  // Pravda ticker headlines (scrolling news bar)
+  const [pravdaHeadlines, setPravdaHeadlines] = useState<string[]>([]);
 
   // ── Panel state ──
   const [showPersonnelFile, setShowPersonnelFile] = useState(false);
@@ -222,9 +247,12 @@ const App: React.FC = () => {
   const [gameOver, setGameOver] = useState<GameOverInfo | null>(null);
   const [gameTally, setGameTally] = useState<TallyData | null>(null);
   const [rehabilitation, setRehabilitation] = useState<RehabilitationData | null>(null);
+  const [showDissolutionModal, setShowDissolutionModal] = useState(false);
+  const resolveDissolutionRef = useRef<((continuePostCampaign: boolean) => void) | null>(null);
 
   // Auto-pause when interactive modals are open (restore prior state on close)
-  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver || !!rehabilitation;
+  const hasInteractiveModal =
+    !!annualReport || !!activeMinigame || !!planDirective || !!gameOver || !!rehabilitation || showDissolutionModal;
   const wasPausedBeforeModal = useRef(false);
   useEffect(() => {
     if (hasInteractiveModal) {
@@ -235,6 +263,10 @@ const App: React.FC = () => {
       if (!wasPausedBeforeModal.current) setPaused(false);
     }
   }, [hasInteractiveModal]);
+
+  useEffect(() => {
+    lockWebViewport();
+  }, []);
 
   // Initialize SFXManager on first user interaction (autoplay policy)
   useEffect(() => {
@@ -268,7 +300,8 @@ const App: React.FC = () => {
   const citizenDossierIdx = useCitizenDossierIndex();
   const cursorTooltip = useCursorTooltip();
   const politicalPanelFromScene = usePoliticalPanel();
-  const buildingPanelCell = useBuildingPanel();
+  const _buildingPanelCell = useBuildingPanel();
+  const showGovHQ = useGovernmentHQ();
 
   // ── Notification history (store-driven unread count) ──
   const unreadNotifications = useSyncExternalStore(subscribeNotifications, getUnreadCount, getUnreadCount);
@@ -312,8 +345,13 @@ const App: React.FC = () => {
             showAdvisor(gameState, msg);
             SFXManager.getInstance().play('advisor_message');
           },
-          onPravda: (_msg) => {
-            // Ticker is not rendered in Phase 1 — do not accumulate text in state
+          onPravda: (msg) => {
+            setPravdaHeadlines((prev) => [msg, ...prev].slice(0, 5));
+          },
+          onVisualEvent: (event) => {
+            // Convert tick-based duration to seconds (assume ~12 ticks/year, ~1 tick/month ≈ 2.5s)
+            const durationSec = Math.max(1, event.durationTicks * 2.5);
+            pushCrisisVFX(event.effect, event.intensity, durationSec);
           },
           onStateChange: () => {
             // Sync ECS building powered state to old GameState for 3D effects
@@ -376,10 +414,8 @@ const App: React.FC = () => {
           onEraChanged: (era) => {
             setEraTransition(era);
             SFXManager.getInstance().play('era_transition');
-            const ctx = ERA_CONTEXTS[era.id];
-            if (ctx) {
-              AudioManager.getInstance().playContext(ctx, 5000);
-            }
+            // Switch playlist to era-appropriate tracks with crossfade
+            AudioManager.getInstance().setEra(era.id);
             // Notify store so RadialMenu re-renders with newly unlocked buildings
             notifyStateChange();
           },
@@ -390,6 +426,10 @@ const App: React.FC = () => {
           onMinigame: (active, resolveChoice) => {
             setActiveMinigame(active);
             resolveMinigameRef.current = resolveChoice;
+          },
+          onHistoricalEraEnd: (resolve) => {
+            resolveDissolutionRef.current = resolve;
+            setShowDissolutionModal(true);
           },
           onTutorialMilestone: (milestone) => {
             showAdvisor(gameState, `COMRADE KRUPNIK: ${milestone.dialogue}`);
@@ -444,9 +484,8 @@ const App: React.FC = () => {
     // expo-sqlite handles persistence automatically — no beforeunload needed
   }, [screen]);
 
-  // Ticker messages now come exclusively from PravdaSystem via
-  // the onPravda callback (event-reactive + ambient headlines).
-  // The old static setInterval fallback has been removed.
+  // Pravda headlines accumulate via the onPravda callback and display
+  // in the PravdaTicker scrolling bar at the bottom of the screen.
 
   // --- Loading callbacks ---
   const handleLoadProgress = useCallback((loaded: number, total: number, name: string) => {
@@ -675,6 +714,10 @@ const App: React.FC = () => {
     submitReportRef.current = null;
     setAnnualReport(null);
   }, []);
+  const handleDissolutionResolve = useCallback((continuePostCampaign: boolean) => {
+    setShowDissolutionModal(false);
+    resolveDissolutionRef.current?.(continuePostCampaign);
+  }, []);
   const handleDismissSettlement = useCallback(() => setSettlementEvent(null), []);
   const handleAcceptPlan = useCallback(() => setPlanDirective(null), []);
   const handleRestart = useCallback(() => {
@@ -683,6 +726,8 @@ const App: React.FC = () => {
     setXrMode(null);
     setRehabilitation(null);
     setActiveMinigame(null);
+    setShowDissolutionModal(false);
+    resolveDissolutionRef.current = null;
     resolveMinigameRef.current = null;
     submitReportRef.current = null;
     // Reset all module-level singletons so a fresh game can be initialized
@@ -835,6 +880,8 @@ const App: React.FC = () => {
           </View>
         )}
 
+        {loadingFaded && <PravdaTicker headlines={pravdaHeadlines} year={snap.dateLabel} />}
+
         {!loadingFaded && (
           <LoadingScreen
             progress={loadPct}
@@ -874,6 +921,8 @@ const App: React.FC = () => {
           data={rehabilitation}
           onResume={() => setRehabilitation(null)}
         />
+
+        <USSRDissolutionModal visible={showDissolutionModal} onResolve={handleDissolutionResolve} />
 
         <PersonnelFilePanel visible={showPersonnelFile} onDismiss={() => setShowPersonnelFile(false)} />
 
@@ -938,6 +987,8 @@ const App: React.FC = () => {
 
         <NotificationHistory visible={showNotifications} onDismiss={() => setShowNotifications(false)} />
 
+        <GovernmentHQ visible={showGovHQ} onClose={closeGovernmentHQ} />
+
         <BuildingInspectorPanel
           visible={!!buildingInspector}
           buildingDefId={buildingInspector?.buildingDefId ?? ''}
@@ -977,6 +1028,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.bgColor,
+    width: '100vw' as any,
+    height: '100vh' as any,
+    overflow: 'hidden',
   },
   sceneContainer: {
     ...StyleSheet.absoluteFillObject,

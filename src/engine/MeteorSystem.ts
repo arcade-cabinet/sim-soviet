@@ -12,7 +12,7 @@ import { showAdvisor } from './helpers';
  *
  * The meteor descends toward its target cell each frame. On impact (z <= 0),
  * it creates a crater at the center, sets surrounding buildings on fire,
- * triggers a screen shake, and unlocks the Cosmic Tap building.
+ * and triggers a screen shake.
  *
  * @param state - GameState containing meteor, grid, and buildings
  * @param dt    - Frame delta time in milliseconds
@@ -58,10 +58,8 @@ export function updateMeteor(state: GameState, dt: number): void {
 
     showAdvisor(
       state,
-      'Min. Defense: A cosmic body struck Sector 7G. The crater radiates energy. The Cosmic Tap has been authorized.',
+      'Min. Defense: Meteorite impact reported in Sector 7G. Emergency survey crews have cordoned the crater.',
       'DEFENSE',
     );
-    // NOTE: In the POC, the Cosmic Tap button is revealed here.
-    // The renderer/UI layer should check state.meteor.struck to show the tap tool.
   }
 }

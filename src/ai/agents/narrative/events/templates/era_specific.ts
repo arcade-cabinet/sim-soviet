@@ -13,7 +13,7 @@
  *   reconstruction    — Post-war rebuilding, veteran integration, rubble salvage
  *   thaw_and_freeze   — De-Stalinization, cultural freedom, then re-freeze
  *   stagnation        — Decay, vodka economy, queues, corruption, reform chaos
- *   the_eternal       — Bureaucratic singularity, absurdist endgame
+ *   stagnation        — Stagnation, shortages, bureaucratic sclerosis
  */
 
 import type { EventTemplate } from '../types';
@@ -39,7 +39,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     id: 'requisition_squad',
     title: 'REQUISITION SQUAD',
     description:
-      'A requisition squad arrives demanding grain for the cities. ' +
+      'A requisition squad arrives demanding grain for distant industrial centers. ' +
       'They have rifles. You have turnips. The negotiation is brief.',
     pravdaHeadline: 'VOLUNTARY GRAIN CONTRIBUTION EXCEEDS ALL EXPECTATIONS',
     category: 'political',
@@ -306,68 +306,5 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     effects: { food: -20, vodka: -10 },
     eraFilter: ['stagnation'],
     weight: 1.2,
-  },
-
-  // ── THE ETERNAL SOVIET (1991+) ─────────────────────────
-
-  {
-    id: 'bureaucratic_singularity_approach',
-    title: 'PAPERWORK ANOMALY DETECTED',
-    description:
-      'The bureaucracy has begun generating its own forms. Form 27-B/6 now requires ' +
-      'Form 27-B/6a, which requires Form 27-B/6b, which requires the original Form 27-B/6. ' +
-      'The loop is stable. The loop is growing. The loop has opinions.',
-    pravdaHeadline: 'ADMINISTRATIVE EFFICIENCY ACHIEVES RECURSIVE OPTIMIZATION',
-    category: 'absurdist',
-    severity: 'minor',
-    effects: { money: -25 },
-    eraFilter: ['the_eternal'],
-    weight: 2.0,
-  },
-  {
-    id: 'reality_fluctuation',
-    title: 'REALITY MAINTENANCE NOTICE',
-    description:
-      'The Ministry of Truth reports a minor reality fluctuation in Sector 7. ' +
-      'Citizens are advised that yesterday did not happen. Tomorrow is also under review. ' +
-      'Today is provisionally approved but subject to revision.',
-    pravdaHeadline: 'MINISTRY CONFIRMS: REALITY REMAINS WITHIN ACCEPTABLE PARAMETERS',
-    category: 'absurdist',
-    severity: 'minor',
-    effects: {},
-    eraFilter: ['the_eternal'],
-    weight: 1.5,
-  },
-  {
-    id: 'food_probabilistic',
-    title: 'HARVEST PROBABILITY COLLAPSE',
-    description:
-      'The harvest has entered a quantum state. It is simultaneously abundant and nonexistent. ' +
-      'The official report lists it as "adequate" which covers both possibilities. ' +
-      'Citizens are advised to eat theoretically.',
-    pravdaHeadline: 'HARVEST DECLARED ADEQUATE BY ALL RELEVANT METRICS',
-    category: 'absurdist',
-    severity: 'major',
-    effects: (gs) => {
-      // Probabilistic food: 50% chance of +20, 50% chance of -20
-      const roll = gs.date.tick % 2;
-      return roll === 0 ? { food: 20 } : { food: -20 };
-    },
-    eraFilter: ['the_eternal'],
-    weight: 1.2,
-  },
-  {
-    id: 'bureaucracy_sentient',
-    title: 'THE BUREAUCRACY SPEAKS',
-    description:
-      'The filing cabinets have begun humming. Not the sound of old metal. A melody. ' +
-      'Form 42-C/7 was found on your desk this morning. You did not request it. ' +
-      'It approves itself. It has always approved itself. You may proceed.',
-    pravdaHeadline: 'ADMINISTRATIVE SYSTEM ACHIEVES UNPRECEDENTED AUTONOMY',
-    category: 'absurdist',
-    severity: 'catastrophic',
-    effects: { money: -50 },
-    eraFilter: ['the_eternal'],
-    weight: 0.5,
   },
 ];

@@ -14,9 +14,9 @@ export interface IntroModalProps {
 }
 
 const BULLET_POINTS = [
-  'Manage water, power, and food networks',
-  'Build housing for the proletariat',
-  'Expand industrial capacity',
+  'Balance food, power, labor, and state demands',
+  'Steer collective priorities without direct control',
+  'Preserve the settlement through crisis and decay',
   'Fulfill state quotas',
 ];
 
@@ -45,7 +45,7 @@ export const IntroModal: React.FC<IntroModalProps> = ({ visible, onDismiss }) =>
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.title}>SIMSOVIET 1917</Text>
-            <Text style={styles.subtitle}>The Architectural Protocol</Text>
+            <Text style={styles.subtitle}>The Predsedatel Protocol</Text>
           </View>
           <View style={styles.stamp}>
             <Text style={styles.stampText}>TOP SECRET</Text>
@@ -53,15 +53,15 @@ export const IntroModal: React.FC<IntroModalProps> = ({ visible, onDismiss }) =>
         </View>
 
         {/* Briefing text */}
-        <Text style={styles.briefing}>Comrade Mayor,</Text>
+        <Text style={styles.briefing}>Comrade Predsedatel,</Text>
         <Text style={styles.body}>
           You have been assigned oversight of this settlement by order of the Central Committee. The Party expects
-          nothing less than total dedication to the construction of a model socialist city. Resources are scarce, the
-          people are restless, and the Five-Year Plan waits for no one.
+          nothing less than total dedication to the construction of a model Soviet settlement. Resources are scarce, the
+          people are restless, and the state plan waits for no one.
         </Text>
         <Text style={styles.body}>
-          Your mandate is clear: transform this barren outpost into a beacon of Soviet progress. Failure will not be
-          tolerated. Success will be noted in your personnel file.
+          Your mandate is clear: keep the settlement functioning, satisfy Moscow, and survive the historical record.
+          Failure will not be tolerated. Success will be noted in your personnel file.
         </Text>
 
         {/* Bullet points */}
@@ -75,7 +75,7 @@ export const IntroModal: React.FC<IntroModalProps> = ({ visible, onDismiss }) =>
 
         {/* CTA button */}
         <TouchableOpacity onPress={onDismiss} style={styles.ctaButton} activeOpacity={0.8}>
-          <Text style={styles.ctaText}>ASSUME MAYORAL AUTHORITY</Text>
+          <Text style={styles.ctaText}>ACCEPT THE CHAIR</Text>
         </TouchableOpacity>
       </View>
     </Animated.View>

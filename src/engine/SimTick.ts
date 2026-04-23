@@ -318,17 +318,6 @@ export function simTick(state: GameState): void {
     }
 
     if (b.powered && cell.onFire === 0) {
-      // Cosmodrome progress
-      if (b.type === 'space' && !b.launched) {
-        b.progress = (b.progress || 0) + 1;
-        if (b.progress >= 60) {
-          b.launched = true;
-          state.activeLaunch = { x: b.x, y: b.y, alt: 0, vel: 0 };
-          showToast(state, '🚀 SPACE RACE WON! 🚀');
-          state.quota.target = 0;
-        }
-      }
-
       // Production multiplier from propaganda towers
       let multiplier = 1;
       if (stats.prod && activeTowers.some((t) => Math.hypot(t.x - b.x, t.y - b.y) <= 5 && t.powered !== false)) {
@@ -362,7 +351,7 @@ export function simTick(state: GameState): void {
       }
 
       // Random riots
-      if (!isPacified && !['tower', 'gulag', 'mast', 'space', 'station', 'tap', 'pump'].includes(b.type)) {
+      if (!isPacified && !['tower', 'gulag', 'mast', 'station', 'tap', 'pump'].includes(b.type)) {
         let riotChance = 0;
         if (starvation) riotChance += 0.05;
         if (sobering) riotChance += 0.02;
@@ -480,7 +469,22 @@ function checkQuota(state: GameState): void {
       state.quota.deadlineYear = state.date.year + 5;
       state.quota.current = 0;
     } else {
-      showAdvisor(state, 'Min. Planning: You failed the 5-Year Plan. The KGB is at your door.', 'PLANNING');
+      const planName = state.date.year >= 1928 ? '5-Year Plan' : 'state work plan';
+      const securityService =
+        state.date.year >= 1954
+          ? 'KGB'
+          : state.date.year >= 1946
+            ? 'MGB'
+            : state.date.year >= 1934
+              ? 'NKVD'
+              : state.date.year >= 1922
+                ? 'OGPU'
+                : 'Cheka';
+      showAdvisor(
+        state,
+        `Min. Planning: You failed the ${planName}. The ${securityService} is at your door.`,
+        'PLANNING',
+      );
       state.quota.deadlineYear += 5;
     }
   }

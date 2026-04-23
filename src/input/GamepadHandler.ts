@@ -10,8 +10,6 @@
  *  - RT (button 7)    -> camera_zoom = -1 (zoom in)
  *  - A  (button 0)    -> confirm
  *  - B  (button 1)    -> cancel / deselect
- *  - D-pad up (12)    -> cycle tool forward
- *  - D-pad down (13)  -> cycle tool backward
  *  - Start (9)        -> pause_toggle
  *  - Select (8)       -> minimap_toggle
  */
@@ -20,9 +18,6 @@ import type { InputAction } from './InputManager';
 import { InputManager } from './InputManager';
 
 const DEAD_ZONE = 0.15;
-
-/** Total number of tool slots available for D-pad cycling. */
-const TOOL_COUNT = 9;
 
 /** Button indices that fire discrete actions (only on press, not hold). */
 interface ButtonAction {
@@ -51,9 +46,6 @@ export class GamepadHandler {
 
   /** Track previous frame button states for edge detection (press only). */
   private _prevButtons: boolean[] = [];
-
-  /** Current tool index for D-pad cycling (0-based). */
-  private _toolIndex = 0;
 
   private _onConnect: (() => void) | null = null;
   private _onDisconnect: (() => void) | null = null;
@@ -179,23 +171,6 @@ export class GamepadHandler {
       if (pressed && !wasPressed) {
         this._input.dispatch(btnAction.action);
       }
-    }
-
-    // D-pad tool cycling (edge-detect)
-    const dpadUp = currButtons[12] ?? false;
-    const dpadUpPrev = this._prevButtons[12] ?? false;
-    const dpadDown = currButtons[13] ?? false;
-    const dpadDownPrev = this._prevButtons[13] ?? false;
-
-    if (dpadUp && !dpadUpPrev) {
-      this._toolIndex = (this._toolIndex + 1) % TOOL_COUNT;
-      const action = `tool_${this._toolIndex + 1}` as InputAction;
-      this._input.dispatch(action);
-    }
-    if (dpadDown && !dpadDownPrev) {
-      this._toolIndex = (this._toolIndex - 1 + TOOL_COUNT) % TOOL_COUNT;
-      const action = `tool_${this._toolIndex + 1}` as InputAction;
-      this._input.dispatch(action);
     }
 
     this._prevButtons = currButtons;

@@ -3,11 +3,12 @@ title: Leadership System Architecture — ECS Components & Modifier Pipeline
 type: design
 status: draft
 implementation:
-  - src/game/political/PoliticalEntitySystem.ts
-  - src/game/politburo/PolitburoSystem.ts
+  - src/ai/agents/political/PoliticalEntitySystem.ts
+  - src/ai/agents/narrative/politburo/PolitburoSystem.ts
 tests:
-  - src/__tests__/PoliticalEntitySystem.test.ts
-last_verified: 2026-03-01
+  - __tests__/game/PoliticalEntitySystem.test.ts
+  - __tests__/game/PolitburoSystem.test.ts
+last_verified: 2026-04-23
 coverage: partial
 ---
 
@@ -145,7 +146,7 @@ src/
 
 ### Phase 3: Modifier Composition (2 days)
 - policyModifierSystem.ts — reads political entities, writes computed modifiers
-- leadershipSystem.ts — initializePolitburo(), stub succession
+- leadershipSystem.ts — initializePolitburo(), succession flow
 - Wire into SimulationEngine.tick()
 
 ### Phase 4: Integrate Modifiers (3 days)

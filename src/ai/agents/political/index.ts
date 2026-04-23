@@ -2,7 +2,7 @@
  * @module ai/agents/political
  *
  * Political agents: era management, KGB surveillance, loyalty tracking,
- * quota enforcement, compulsory deliveries, and scoring.
+ * quota enforcement, compulsory deliveries, prestige projects, and scoring.
  */
 
 export type { AnnualReportContext, AnnualReportEngineState } from './annualReportTick';
@@ -35,7 +35,6 @@ export type { DoctrineContext, DoctrinePolicy, ThawFreezeState } from './doctrin
 export {
   addPaperwork,
   DOCTRINE_MECHANICS,
-  ETERNAL_PAPERWORK_THRESHOLD,
   evaluateDoctrineMechanics,
   getDoctrinePolicyForEra,
   getPaperwork,
@@ -88,6 +87,24 @@ export type { PoliticalState, ReportStrategy } from './PoliticalAgent';
 export { PoliticalAgent } from './PoliticalAgent';
 // Political entity system + supporting modules (moved from src/game/political/)
 export { PoliticalEntitySystem } from './PoliticalEntitySystem';
+// Prestige project system
+export type {
+  PrestigeContext,
+  PrestigeProject,
+  PrestigeProjectState,
+  PrestigeTickResult,
+} from './PrestigeProjectSystem';
+export {
+  canAffordProject,
+  createPrestigeState,
+  getAllProjects,
+  getAvailableProjects as getAvailablePrestigeProjects,
+  getProjectById,
+  restorePrestigeState,
+  serializePrestigeState,
+  startProject as startPrestigeProject,
+  tickPrestigeProjects,
+} from './PrestigeProjectSystem';
 export {
   applyPolitrukTick,
   calcPolitrukCount,
@@ -130,7 +147,7 @@ export {
   getEraMultiplier,
   getSettingsMultiplier,
   MEDALS,
-  SCORE_MULTIPLIER_MATRIX,
+  SCORE_MULTIPLIER,
   ScoringSystem,
 } from './ScoringSystem';
 export type {

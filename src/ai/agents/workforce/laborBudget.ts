@@ -32,7 +32,7 @@ export interface LaborBudgetConfig {
   /** Minimum fraction of total time that must be reserved for rest. */
   restMinimum: number;
   /** Per-era state demand fractions. */
-  eraStateDemand: Record<EraId, number>;
+  eraStateDemand: Partial<Record<EraId, number>>;
 }
 
 /** Default labor budget configuration. */
@@ -50,7 +50,6 @@ export const LABOR_BUDGET_CONFIG: LaborBudgetConfig = {
     reconstruction: 0.6,
     thaw_and_freeze: 0.55,
     stagnation: 0.65,
-    the_eternal: 0.7,
   },
 };
 

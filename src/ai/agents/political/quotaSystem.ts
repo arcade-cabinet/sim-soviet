@@ -82,13 +82,15 @@ export function quotaSystem(quota: QuotaState): void {
   const store = getResourceEntity();
   if (!store) return;
 
+  const finiteResource = (value: number): number => (Number.isFinite(value) ? Math.max(0, value) : 0);
+
   // Legacy single-resource quota
   switch (quota.type) {
     case 'food':
-      quota.current = store.resources.food;
+      quota.current = finiteResource(store.resources.food);
       break;
     case 'vodka':
-      quota.current = store.resources.vodka;
+      quota.current = finiteResource(store.resources.vodka);
       break;
   }
 
@@ -96,11 +98,11 @@ export function quotaSystem(quota: QuotaState): void {
   if (quota.resourceQuotas) {
     const r = store.resources;
     const rq = quota.resourceQuotas;
-    if (rq.food) rq.food.current = r.food;
-    if (rq.vodka) rq.vodka.current = r.vodka;
-    if (rq.steel) rq.steel.current = r.steel;
-    if (rq.timber) rq.timber.current = r.timber;
-    if (rq.power) rq.power.current = r.power;
+    if (rq.food) rq.food.current = finiteResource(r.food);
+    if (rq.vodka) rq.vodka.current = finiteResource(r.vodka);
+    if (rq.steel) rq.steel.current = finiteResource(r.steel);
+    if (rq.timber) rq.timber.current = finiteResource(r.timber);
+    if (rq.power) rq.power.current = finiteResource(r.power);
   }
 }
 

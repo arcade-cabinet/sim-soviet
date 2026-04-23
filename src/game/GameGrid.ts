@@ -74,6 +74,11 @@ export class GameGrid {
     return true;
   }
 
+  /** Get the current grid size (NxN dimension). */
+  public getSize(): number {
+    return this.size;
+  }
+
   /** Reset all grid cells to empty (used before loading a save). */
   public resetGrid(): void {
     for (let y = 0; y < this.size; y++) {

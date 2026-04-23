@@ -5,15 +5,6 @@
 
 // Discrete input actions (one-shot events)
 export type InputAction =
-  | 'tool_1'
-  | 'tool_2'
-  | 'tool_3'
-  | 'tool_4'
-  | 'tool_5'
-  | 'tool_6'
-  | 'tool_7'
-  | 'tool_8'
-  | 'tool_9'
   | 'deselect'
   | 'pause_toggle'
   | 'speed_cycle'

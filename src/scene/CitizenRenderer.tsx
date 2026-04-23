@@ -20,6 +20,8 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 import { buildingsLogic, getResourceEntity, renderableCitizens } from '../ecs/archetypes';
+import { getCurrentGridSize } from '../engine/GridTypes';
+import { getCaravanTarget } from '../stores/gameStore';
 
 /** Max citizen instances to allocate. */
 const MAX_CITIZENS = 500;
@@ -36,6 +38,12 @@ const CLASS_COLORS: Record<string, string> = {
 
 /** Default color for aggregate mode idle workers. */
 const IDLE_WORKER_COLOR = '#8d6e63';
+
+/** Color for caravan formation families. */
+const CARAVAN_COLOR = '#a1887f';
+
+/** Number of figures in the caravan formation. */
+const CARAVAN_COUNT = 20;
 
 /**
  * Simple deterministic hash from two integers.
@@ -70,15 +78,21 @@ const CitizenRenderer: React.FC = () => {
 
     timeRef.current += delta;
 
-    // Detect aggregate vs entity mode
-    const resourceEntity = getResourceEntity();
-    const raion = resourceEntity?.resources?.raion;
-    const isAggregate = raion != null;
-
-    if (isAggregate) {
-      renderAggregate(mesh, raion, timeRef.current);
+    // Caravan formation takes priority during arrival
+    const caravanTarget = getCaravanTarget();
+    if (caravanTarget) {
+      renderCaravan(mesh, caravanTarget, timeRef.current);
     } else {
-      renderEntities(mesh, timeRef.current);
+      // Detect aggregate vs entity mode
+      const resourceEntity = getResourceEntity();
+      const raion = resourceEntity?.resources?.raion;
+      const isAggregate = raion != null;
+
+      if (isAggregate) {
+        renderAggregate(mesh, raion, timeRef.current);
+      } else {
+        renderEntities(mesh, timeRef.current);
+      }
     }
 
     mesh.instanceMatrix.needsUpdate = true;
@@ -109,6 +123,39 @@ const CitizenRenderer: React.FC = () => {
 
       const colorHex = CLASS_COLORS[entity.citizen.class] ?? '#757575';
       tmpColor.set(colorHex);
+      mesh.setColorAt(i, tmpColor);
+    }
+  }
+
+  /**
+   * Caravan mode: families walking in a staggered line from the map edge
+   * toward the settlement center during the first ~30 ticks.
+   */
+  function renderCaravan(mesh: THREE.InstancedMesh, target: { x: number; z: number }, time: number): void {
+    mesh.count = CARAVAN_COUNT;
+    tmpColor.set(CARAVAN_COLOR);
+
+    const gridSize = getCurrentGridSize();
+    // Caravan starts from southwest edge
+    const startX = -1;
+    const startZ = gridSize + 1;
+    const endX = target.x + 0.5;
+    const endZ = target.z + 0.5;
+
+    for (let i = 0; i < CARAVAN_COUNT; i++) {
+      // Stagger each figure along the line — leader is furthest ahead
+      const offset = i * 0.04; // spacing between figures
+      const progress = Math.min(Math.max(time * 0.3 - offset, 0), 1);
+
+      const x = startX + (endX - startX) * progress;
+      const z = startZ + (endZ - startZ) * progress;
+      // Slight lateral wobble for a natural look
+      const wobbleX = Math.sin(time * 3 + i * 1.2) * 0.1;
+      const bob = Math.sin(time * 4 + i * 0.9) * 0.04;
+
+      tmpPos.set(x + wobbleX, 0.2 + bob, z);
+      tmpMatrix.compose(tmpPos, tmpQuat, tmpScale);
+      mesh.setMatrixAt(i, tmpMatrix);
       mesh.setColorAt(i, tmpColor);
     }
   }

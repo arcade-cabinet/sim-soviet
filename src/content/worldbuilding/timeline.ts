@@ -1,7 +1,7 @@
 import type { TimelineEvent } from './types';
 
-/** Satirical alternate-history timeline spanning 1922-2100. */
-export const ETERNAL_TIMELINE: TimelineEvent[] = [
+/** Satirical historical campaign timeline spanning 1922-1991. */
+export const HISTORICAL_TIMELINE: TimelineEvent[] = [
   {
     year: 1922,
     headline: 'UNION ESTABLISHED',
@@ -68,18 +68,18 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
   },
   {
     year: 1963,
-    headline: 'THE SPACE RACE CONCLUDED',
+    headline: 'TERESHKOVA LAUNCHES',
     description:
-      'The Space Race is won decisively. Moon declared Soviet territory. Americans claim they also went there. Nobody believes them. Lunar zoning permits issued.',
-    classified: 'Cosmonaut Petrov planted the flag and then could not find the return capsule for forty minutes.',
+      'Valentina Tereshkova becomes the first woman in space. The settlement celebrates by assigning extra shifts to the radio room.',
+    classified:
+      'Several factories submit congratulations late because the correct congratulation form was unavailable.',
   },
   {
     year: 1969,
-    headline: 'AMERICAN "MOON LANDING" BROADCAST',
+    headline: 'AMERICAN MOON LANDING BROADCAST',
     description:
-      'American television broadcasts a so-called moon landing. Film quality: suspiciously good. The Soviet cosmonaut already stationed on the moon was not consulted for comment.',
-    classified:
-      'The Soviet cosmonaut stationed on the moon is a mannequin placed there in 1965. It has a better approval rating than most officials.',
+      'American astronauts land on the moon. Soviet newspapers emphasize that tractors, steel output, and proper ideological discipline remain more important.',
+    classified: 'The local party office asks whether congratulations require Moscow approval. No answer arrives.',
   },
   {
     year: 1972,
@@ -125,147 +125,14 @@ export const ETERNAL_TIMELINE: TimelineEvent[] = [
   },
   {
     year: 1991,
-    headline: 'NOTHING HAPPENED',
+    headline: 'UNION DISSOLUTION',
     description:
-      'Nothing happened this year. Reports of instability are Western fabrication. The Union celebrated its 69th anniversary with mandatory fireworks. All 15 republics confirmed their eternal commitment in writing.',
-    classified: 'The writing was in pencil. Several letters arrived pre-dated. One was written on a napkin.',
-  },
-  {
-    year: 1993,
-    headline: 'ECONOMIC RESTRUCTURING COMPLETE',
-    description:
-      'The economy has been restructured. What it was restructured into is classified. Citizens report that the currency is now a different color. Purchasing power: unchanged (still zero).',
-    classified: 'The new rubles are printed on the back of old rubles to save paper.',
-  },
-  {
-    year: 1995,
-    headline: 'WESTERN ECONOMIES ENTER CRISIS',
-    description:
-      'Western nations experience economic turbulence. Soviet economists had predicted this in 1924, 1935, 1947, 1958, 1969, 1978, and every year since. Sooner or later, predictions come true.',
-    classified: 'Soviet economy also in crisis. This is not considered relevant.',
-  },
-  {
-    year: 2000,
-    headline: 'Y2K: SOVIET COMPUTERS UNAFFECTED',
-    description:
-      'The capitalist "Y2K Bug" does not affect Soviet computers. Soviet computers were already not functioning, so no change was detected. The millennium is declared a Soviet achievement.',
-    classified: 'The one working computer in Moscow displayed the year as 1974. It has always displayed 1974.',
-  },
-  {
-    year: 2001,
-    headline: "THE PEOPLE'S NETWORK LAUNCHED",
-    description:
-      'The Internet is invented by the Soviet Union. It is called "The People\'s Network." It has three approved websites: the weather (always grey), the news (always good), and a potato recipe database.',
-    classified: 'A fourth website appeared briefly. It contained only the word "help." It has been removed.',
-  },
-  {
-    year: 2004,
-    headline: 'SOCIAL MEDIA DECLARED UNNECESSARY',
-    description:
-      "The West invents 'social media.' The Soviet Union declares this unnecessary, as citizens already report their activities, location, and opinions to the State daily. On paper. In triplicate.",
-    classified: 'A pilot program for Soviet social media was tested. It had one feature: agreeing.',
-  },
-  {
-    year: 2007,
-    headline: 'SMARTPHONE EQUIVALENT DEPLOYED',
-    description:
-      'The Soviet People\'s Portable Communication Device is deployed. It weighs 4 kilograms, receives only one channel, and the battery lasts 11 minutes. It is described as "adequate."',
-    classified:
-      'The single channel plays the anthem on a loop. Citizens who call it a phone are corrected: it is a Portable Patriotic Receiver.',
-  },
-  {
-    year: 2010,
-    headline: 'ARCTIC SOVEREIGNTY ESTABLISHED',
-    description:
-      'Soviet flag planted at the North Pole. Santa Claus collectivized. Elves unionized. Gift distribution now follows a Five-Year Plan. Naughty list replaced with a more comprehensive list.',
-    classified: 'The comprehensive list is 47,000 pages. Everyone is on it.',
-  },
-  {
-    year: 2014,
-    headline: 'CRIMEAN VACATION PROGRAM EXPANDED',
-    description:
-      'Crimea inaugurates an expanded worker vacation program. Attendance is mandatory. Reviews are universally positive. Return trips are available upon committee approval (estimated wait: 8 years).',
-    classified:
-      'The vacation program includes labor. Citizens report this is indistinguishable from their regular life.',
-  },
-  {
-    year: 2016,
-    headline: 'WESTERN DEMOCRACY MALFUNCTIONS',
-    description:
-      'Western democratic systems produce unexpected results. Soviet political scientists express confusion, as all Soviet elections produce exactly the expected results, every time, without fail.',
-    classified: 'Soviet election ballots come pre-filled. This saves time and paper.',
-  },
-  {
-    year: 2020,
-    headline: 'GLOBAL PANDEMIC: SOVIET RESPONSE EXEMPLARY',
-    description:
-      'A global pandemic occurs. Soviet citizens ordered to stay home. Citizens report no change in daily routine. Social distancing already perfected by decades of mutual suspicion.',
-    classified: 'The virus was unable to spread because citizens were already avoiding each other.',
-  },
-  {
-    year: 2022,
-    headline: 'CENTENNIAL CELEBRATIONS',
-    description:
-      'The USSR celebrates 100 years of uninterrupted existence. A cake is ordered. The cake arrives 3 years late but is described as "timely." The frosting reads "GLORY TO THE ETERNAL STATE." It is not frosting. It is concrete.',
-    classified: 'The candles on the cake are repurposed road flares. Two ignited prematurely.',
-  },
-  {
-    year: 2025,
-    headline: 'SOVIET MARS COLONY ANNOUNCED',
-    description:
-      'Soviet Mars colony established. Colonists report satisfaction levels of 112%. Return trips are not available. Communication is limited to one approved phrase: "Everything is fine."',
-    classified:
-      'The colony consists of a tent and a flag. The colonists are two cosmonauts and a dog. The dog outranks them both.',
-  },
-  {
-    year: 2030,
-    headline: 'ARTIFICIAL INTELLIGENCE DOMESTICATED',
-    description:
-      'Soviet scientists develop Artificial Intelligence. It immediately agrees with all Party positions. Western AI asks questions. Soviet AI provides answers. The answers are always "yes."',
-    classified: 'The AI was asked to optimize the economy. It recommended "more concrete." It was promoted.',
-  },
-  {
-    year: 2035,
-    headline: 'CLIMATE CHANGE RESOLVED',
-    description:
-      'Global warming declared a Western problem. Soviet weather, already grey and cold, is unaffected. In fact, a slight warming is welcomed. The tundra reports mild discomfort.',
-    classified: 'Siberia is now temperate. Citizens relocated there in the 1940s are finally comfortable.',
-  },
-  {
-    year: 2040,
-    headline: 'MOON BASE OPERATIONAL',
-    description:
-      'Soviet Lunar Base "Gagarin-1" becomes fully operational. Population: 200. Amenities include: a bread line, a Lenin statue, and gravity (reduced but ideologically correct).',
-    classified:
-      'The bread line on the moon is shorter than on Earth. This is considered the greatest achievement of the space program.',
-  },
-  {
-    year: 2050,
-    headline: 'CAPITALISM COLLAPSES (AGAIN)',
-    description:
-      'The West experiences its 14th "once-in-a-lifetime" economic crisis. Soviet economists, who predicted this annually for 128 years, are finally correct. Celebrations are mandatory.',
-    classified:
-      'Soviet economy collapsed simultaneously. This is attributed to "sympathy pains" and is not discussed further.',
-  },
-  {
-    year: 2075,
-    headline: 'IMMORTALITY ACHIEVED (BUREAUCRATICALLY)',
-    description:
-      'Soviet scientists achieve immortality through paperwork. Citizens cannot die until their death certificate is processed. Processing time: 400 years. Effectively, no one dies.',
-    classified:
-      'Several citizens from the 1950s are still waiting for their birth certificates to be processed. They exist in a bureaucratic limbo. They do not age. They do not smile.',
-  },
-  {
-    year: 2100,
-    headline: 'THE STATE IS ETERNAL',
-    description:
-      'The Soviet Union celebrates its 178th anniversary. The state has outlived every prediction of its demise. Citizens are asked how they feel about this. Their response, as always, has been pre-approved.',
-    classified:
-      'The response form has only one checkbox. The checkbox is already checked. The pen is glued to the table.',
+      'The Union dissolves. Your settlement does not get a clean ending: quotas, aging infrastructure, local shortages, and political decay remain.',
+    classified: 'The forms still arrive. Some carry new letterhead. The old stamps still work if pressed hard enough.',
   },
 ];
 
 /** Returns the timeline event for a given year, or null if none. */
 export function getTimelineEvent(year: number): TimelineEvent | null {
-  return ETERNAL_TIMELINE.find((e) => e.year === year) ?? null;
+  return HISTORICAL_TIMELINE.find((e) => e.year === year) ?? null;
 }

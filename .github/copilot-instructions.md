@@ -2,7 +2,9 @@
 
 ## Project Identity
 
-Satirical 3D city-builder set in the Soviet Union. React Three Fiber (R3F v9.5) + Three.js r183 + React Native 0.81 + Expo 54. TypeScript 5.7 strict mode.
+Soviet bureaucrat survival sim (NOT a city builder). The player is the predsedatel — the settlement grows organically via autonomous agents. The player does NOT freely place buildings. Moscow mandates what to build; the player only chooses WHERE.
+
+React Three Fiber (R3F v9.5) + Three.js r183 + React Native 0.83.2 + Expo 55. TypeScript 5.9 strict mode.
 
 ## Key Architecture
 

@@ -256,8 +256,8 @@ describe('GamepadHandler', () => {
     });
   });
 
-  describe('D-pad tool cycling', () => {
-    it('cycles tool forward on D-pad up', () => {
+  describe('D-pad', () => {
+    it('does not cycle placement tools', () => {
       const buttons: Array<{ pressed: boolean; value: number }> = [];
       for (let i = 0; i < 14; i++) buttons.push({ pressed: false, value: 0 });
 
@@ -273,7 +273,9 @@ describe('GamepadHandler', () => {
       setMockGamepad(mockGamepad([0, 0, 0, 0], buttons2));
       tick();
 
-      expect(received).toContain('tool_2'); // cycles from 0 -> 1, dispatches tool_2
+      expect(received).not.toContain('bulldoze_mode');
+      expect(received).not.toContain('confirm');
+      expect(received).not.toContain('deselect');
     });
   });
 

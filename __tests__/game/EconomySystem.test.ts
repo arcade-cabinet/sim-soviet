@@ -51,7 +51,6 @@ const ALL_ERAS: EraId[] = [
   'thaw',
   'stagnation',
   'perestroika',
-  'eternal',
 ];
 
 const TRANSFERABLE_KEYS: TransferableResource[] = ['food', 'vodka', 'money', 'steel', 'timber'];

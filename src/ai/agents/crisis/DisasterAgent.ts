@@ -290,6 +290,20 @@ export class DisasterAgent implements ICrisisAgent {
       pravdaHeadlines: [`MINOR INCIDENT AT ${this.definition.name.toUpperCase()} POSES NO THREAT TO HEROIC WORKERS`],
     };
 
+    // Visual effects — nuclear flash for radiation disasters, earthquake shake for seismic, dust storm for others
+    const peakDisease = param(pp, 'diseaseMult', 1.0);
+    const hasDestruction = destructionCount > 0;
+    if (peakDisease >= 2.0) {
+      // Radiation disaster (Chernobyl-level) — bright nuclear flash
+      impact.visual = { effect: 'nuclear_flash', intensity: 0.8, durationTicks: 60 };
+    } else if (hasDestruction && this.definition.type === 'disaster') {
+      // Seismic / structural disaster — camera shake
+      impact.visual = { effect: 'earthquake_shake', intensity: 1.0, durationTicks: 12 };
+    } else {
+      // Environmental / industrial disaster — dust storm haze
+      impact.visual = { effect: 'dust_storm', intensity: 0.7, durationTicks: 24 };
+    }
+
     return [impact];
   }
 

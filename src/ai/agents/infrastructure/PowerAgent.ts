@@ -95,6 +95,15 @@ export class PowerAgent extends Vehicle {
     this.name = 'PowerAgent';
   }
 
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.PHASE_PRODUCTION) {
+      this.distributePower();
+      return true;
+    }
+    return false;
+  }
+
   // -------------------------------------------------------------------------
   // Event wiring
   // -------------------------------------------------------------------------
@@ -120,21 +129,6 @@ export class PowerAgent extends Vehicle {
   }
 
   // -------------------------------------------------------------------------
-  // Yuka lifecycle
-  // -------------------------------------------------------------------------
-
-  /**
-   * Called by Yuka's EntityManager each simulation tick.
-   * Runs a full power distribution pass over the ECS world.
-   *
-   * @param _delta - Elapsed time since last tick (unused by power logic)
-   */
-  override update(_delta: number): this {
-    this.distributePower();
-    return this;
-  }
-
-  // -------------------------------------------------------------------------
   // Core distribution
   // -------------------------------------------------------------------------
 
@@ -144,9 +138,9 @@ export class PowerAgent extends Vehicle {
    * Can be called directly in tests without requiring Yuka's EntityManager.
    * Mutates ECS building entities and updates the resource store.
    */
-  distributePower(): void {
+  distributePower(): this {
     const store = getResourceEntity();
-    if (!store) return;
+    if (!store) return this;
 
     const totalPower = this._calculateTotalPower();
     const { powerUsed, unpoweredCount } = this._distributePriority(totalPower);
@@ -165,6 +159,8 @@ export class PowerAgent extends Vehicle {
     if (inShortage && deficit > 0) {
       this.onPowerShortage?.(deficit);
     }
+
+    return this;
   }
 
   // -------------------------------------------------------------------------

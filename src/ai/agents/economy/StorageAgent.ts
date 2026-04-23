@@ -90,6 +90,19 @@ export class StorageAgent extends Vehicle {
     this.name = 'StorageAgent';
   }
 
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.PHASE_CONSUMPTION) {
+      const month = (globalThis as any).simulationEngine?.getAgentManager()?.getChronology()?.getDate().month ?? 1;
+      this.tickStorage(month);
+      return true;
+    }
+    if (telegram.message === MSG.STORAGE_FULL || telegram.message === MSG.FOOD_SPOILED) {
+      return true;
+    }
+    return false;
+  }
+
   // -------------------------------------------------------------------------
   // Main tick entry point
   // -------------------------------------------------------------------------
@@ -105,7 +118,7 @@ export class StorageAgent extends Vehicle {
    *
    * @param month - Current game month (1-12) for seasonal spoilage modifier
    */
-  update(month: number): void {
+  tickStorage(month: number): void {
     const store = getResourceEntity();
     if (!store) return;
 
@@ -126,7 +139,7 @@ export class StorageAgent extends Vehicle {
 
       // Emit STORAGE_FULL telegram (only when registered with an EntityManager)
       if (this.manager) {
-        this.sendMessage(this, this, MSG.STORAGE_FULL, 0, {
+        this.sendMessage(this, MSG.STORAGE_FULL, 0, {
           capacity,
           food,
           overflow,
@@ -144,7 +157,7 @@ export class StorageAgent extends Vehicle {
 
     if (spoiledThisTick > 0 && this.manager) {
       // Emit FOOD_SPOILED telegram (only when registered with an EntityManager)
-      this.sendMessage(this, this, MSG.FOOD_SPOILED, 0, {
+      this.sendMessage(this, MSG.FOOD_SPOILED, 0, {
         amount: spoiledThisTick,
         month,
       });

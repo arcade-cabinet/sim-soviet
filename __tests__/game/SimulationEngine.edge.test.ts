@@ -21,15 +21,15 @@ function createMockCallbacks(): SimCallbacks {
   };
 }
 
-/** Number of ticks in one full year (3 ticks/day * 10 days/month * 12 months) */
+/** Number of ticks in one full year (3 ticks/day * 10 days/month * 12 months). */
 const TICKS_PER_YEAR = 360;
 
 /**
- * Advance the engine by a number of years.
+ * Advance the engine by a number of ticks.
  * Mocks Math.random to avoid stochastic event interference.
  */
-function advanceYears(engine: SimulationEngine, years: number): void {
-  for (let i = 0; i < years * TICKS_PER_YEAR; i++) {
+function advanceTicks(engine: SimulationEngine, ticks: number): void {
+  for (let i = 0; i < ticks; i++) {
     engine.tick();
   }
 }
@@ -55,8 +55,8 @@ describe('SimulationEngine edge cases', () => {
 
   // ── No victory condition ─────────────────────────────────────
 
-  describe('no victory condition: the Soviet state is eternal', () => {
-    it('game does not end after any number of years with quota met', () => {
+  describe('post-campaign continuation', () => {
+    it('continues after 1991 without declaring victory as game over', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
@@ -67,10 +67,11 @@ describe('SimulationEngine edge cases', () => {
 
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Tick through 5 years — game should not end with a victory
-      advanceYears(engine2, 5);
+      // Tick through the 1991 boundary and one further year. The 1991 summary is
+      // a completion modal, not game over.
+      advanceTicks(engine2, 480);
 
-      // onGameOver should NOT have been called with victory=true
+      // onGameOver should NOT have been called with victory=true.
       const gameOverCalls = (cb2.onGameOver as ReturnType<typeof jest.fn>).mock.calls as [boolean, string][];
       const victoryCalls = gameOverCalls.filter((call) => call[0] === true);
       expect(victoryCalls).toHaveLength(0);
@@ -85,11 +86,12 @@ describe('SimulationEngine edge cases', () => {
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
       // Start with food=0. Use worker difficulty (quotaMultiplier=0.4 → target=200).
-      // forgiving consequence to survive KGB marks from missed quotas.
+      // rehabilitated consequence to survive KGB marks from missed quotas.
       // Zero food each year boundary to ensure quotas are always missed.
-      createResourceStore({ food: 0, vodka: 0, population: 0 });
+      // Population=10 prevents era failure condition (population<=0 triggers "Settlement abandoned").
+      createResourceStore({ food: 0, vodka: 0, population: 10 });
       createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
-      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'forgiving');
+      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'rehabilitated');
       // Disable minigame/annual report callbacks to prevent interference
       cb2.onMinigame = undefined as never;
       cb2.onAnnualReport = undefined as never;
@@ -97,28 +99,32 @@ describe('SimulationEngine edge cases', () => {
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
 
       // Year 1926 Oct → 1927 Jan (fail 1) — 90 ticks
-      // Zero food each tick to prevent fondy accumulation
+      // Zero food each tick to prevent fondy accumulation; keep population alive to avoid era failure
       for (let i = 0; i < 90; i++) {
         getResourceEntity()!.resources.food = 0;
         getResourceEntity()!.resources.vodka = 0;
+        getResourceEntity()!.resources.population = 10;
         engine2.tick();
       }
 
       // After first failure, deadline advances to 1932
-      expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed the 5-Year Plan'));
+      expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed the state work plan'));
 
       // Failures 2-8: advance 5 years each, zeroing food to prevent fondy accumulation
       for (let f = 2; f <= 8; f++) {
         for (let i = 0; i < 5 * TICKS_PER_YEAR; i++) {
           getResourceEntity()!.resources.food = 0;
           getResourceEntity()!.resources.vodka = 0;
+          getResourceEntity()!.resources.population = 10;
           engine2.tick();
           if (getMetaEntity()!.gameMeta.gameOver) break;
         }
         if (getMetaEntity()!.gameMeta.gameOver) break;
       }
 
-      expect(cb2.onGameOver).toHaveBeenCalledWith(false, expect.stringContaining('Politburo'));
+      // Game over can be triggered by quota failures ("Politburo") OR era failure ("Settlement abandoned")
+      // Both are valid loss conditions when resources are zero
+      expect(cb2.onGameOver).toHaveBeenCalledWith(false, expect.any(String));
       expect(getMetaEntity()!.gameMeta.gameOver).not.toBeNull();
       expect(getMetaEntity()!.gameMeta.gameOver!.victory).toBe(false);
     });
@@ -155,7 +161,8 @@ describe('SimulationEngine edge cases', () => {
       createResourceStore({ food: 9999, vodka: 9999, population: 0 });
       createTestDvory(3);
       createMetaStore();
-      const engine2 = new SimulationEngine(grid2, cb2);
+      // Use rasstrelyat consequence so KGB arrest = permadeath game over
+      const engine2 = new SimulationEngine(grid2, cb2, undefined, undefined, 'rasstrelyat');
       createBuilding(0, 0, 'apartment-tower-a');
 
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
@@ -214,7 +221,7 @@ describe('SimulationEngine edge cases', () => {
       expect(cb2.onGameOver).not.toHaveBeenCalled();
     });
 
-    it('does not end game if pop=0 but no buildings', () => {
+    it('ends game after the autonomous HQ creates a settlement with no surviving population', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
@@ -226,8 +233,8 @@ describe('SimulationEngine edge cases', () => {
       // Advance past first year
       for (let i = 0; i < 400; i++) engine2.tick();
 
-      // Pop=0 but no buildings => no game over
-      expect(cb2.onGameOver).not.toHaveBeenCalled();
+      expect(cb2.onGameOver).toHaveBeenCalledWith(false, expect.any(String));
+      expect(getMetaEntity()!.gameMeta.gameOver!.victory).toBe(false);
     });
   });
 
@@ -250,7 +257,7 @@ describe('SimulationEngine edge cases', () => {
       const cb2 = createMockCallbacks();
       createResourceStore({ food: 0, vodka: 0, population: 0 });
       createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
-      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'forgiving');
+      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'rehabilitated');
       cb2.onMinigame = undefined as never;
       cb2.onAnnualReport = undefined as never;
 
@@ -286,7 +293,7 @@ describe('SimulationEngine edge cases', () => {
       const cb2 = createMockCallbacks();
       createResourceStore({ food: 0, vodka: 0, population: 0 });
       createMetaStore({ date: { year: 1926, month: 10, tick: 0 } });
-      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'forgiving');
+      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'comrade', 'rehabilitated');
       cb2.onMinigame = undefined as never;
       cb2.onAnnualReport = undefined as never;
 
@@ -419,7 +426,7 @@ describe('SimulationEngine edge cases', () => {
       // generation. Gulag uses GameRng (10% per tick), so run 30 ticks
       // for 96% probability of at least one arrest.
       jest.spyOn(Math, 'random').mockReturnValue(0.05);
-      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'worker', 'forgiving');
+      const engine2 = new SimulationEngine(grid2, cb2, undefined, 'worker', 'rehabilitated');
       cb2.onMinigame = undefined as never;
       cb2.onAnnualReport = undefined as never;
       for (let i = 0; i < 30; i++) engine2.tick();

@@ -18,9 +18,13 @@
 
 import { Vehicle } from 'yuka';
 import { GRID_SIZE, infrastructure } from '@/config';
+import { classifyBuilding } from '@/config/buildingClassification';
+import { isProtected } from '@/config/protectedClasses';
 import {
   buildings,
   buildingsLogic,
+  dvory,
+  getMetaEntity,
   getResourceEntity,
   operationalBuildings,
   terrainFeatures,
@@ -29,11 +33,14 @@ import {
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
+import type { GameRng } from '../../../game/SeedSystem';
 import { getBuildInterval } from '../../../growth/GrowthPacing';
 import { findBestPlacement, type PlacementContext } from '../../../growth/SiteSelectionRules';
-import type { GameRng } from '../../../game/SeedSystem';
+import { MSG, type NewTickPayload } from '../../telegrams';
 import type { PlanMandateState } from '../political/PoliticalAgent';
+import type { DvorNeedsState } from '../social/DvorNeedsAgent';
 import type { WorkerStats } from '../workforce/types';
+import { cascadeDisplacement } from './displacementSystem';
 
 // ── Re-exported types (absorbed from governor.ts) ─────────────────────────────
 
@@ -96,7 +103,6 @@ export interface CollectiveAgentState {
   lastBuildTick: number;
   buildQueue: ConstructionRequest[];
   pendingDemands: ConstructionDemand[];
-  bootstrapped?: boolean;
 }
 
 // ── Governor Constants (from config/infrastructure.json) ─────────────────────
@@ -148,6 +154,9 @@ export const CANDIDATE_LIMIT = acfg.candidateLimit;
 /** How often (in ticks) the autonomous collective checks for construction needs. */
 const COLLECTIVE_CHECK_INTERVAL = acfg.collectiveCheckInterval;
 
+/** First visible collective action should happen quickly enough for the opening play session to feel alive. */
+const BOOTSTRAP_BUILD_INTERVAL = 12;
+
 /** Terrain feature types that block building placement. */
 const IMPASSABLE_FEATURES = new Set(['mountain', 'river', 'forest']);
 
@@ -166,6 +175,11 @@ const HOUSING_SUGGESTIONS = ['workers-house-a', 'workers-house-b'];
 const FOOD_SUGGESTIONS = ['collective-farm-hq'];
 const POWER_SUGGESTIONS = ['power-station'];
 const VODKA_SUGGESTIONS = ['vodka-distillery'];
+
+function demandLabel(demand: ConstructionDemand, defId: string): string {
+  if (defId === 'government-hq') return 'state administration';
+  return `${demand.category.replace(/_/g, ' ')} demand`;
+}
 
 // ── CollectiveAgent ───────────────────────────────────────────────────────────
 
@@ -189,9 +203,6 @@ export class CollectiveAgent extends Vehicle {
   /** Game tick of the last autonomous build action. */
   private lastBuildTick = 0;
 
-  /** Whether the early game bootstrap has already run. */
-  private bootstrapped = false;
-
   /** Current sorted construction queue (mandates + demands merged). */
   private buildQueue: ConstructionRequest[] = [];
 
@@ -201,9 +212,69 @@ export class CollectiveAgent extends Vehicle {
   /** Seeded RNG (set via setRng). */
   private rng?: GameRng;
 
+  /** Cached fertility map for resource-proximity placement. Rebuilt each tickAutonomous. */
+  private fertilityCache?: Map<string, number>;
+
   constructor() {
     super();
     this.name = 'CollectiveAgent';
+  }
+
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.NEW_TICK) {
+      const payload = telegram.data as NewTickPayload;
+      this.evaluateConstructionTick(payload.totalTicks);
+      return true;
+    }
+    return false;
+  }
+
+  /** Triggered autonomously via NEW_TICK */
+  private evaluateConstructionTick(totalTicks: number): void {
+    // Requires DvorNeedsAgent to have evaluated first
+    const needsAgent = this.manager?.entities.find((e) => e.name === 'DvorNeedsAgent') as
+      | import('../social/DvorNeedsAgent').DvorNeedsAgent
+      | undefined;
+    if (!needsAgent) return;
+
+    const needsState = needsAgent.getNeedsState();
+    const meta = getMetaEntity()?.gameMeta;
+    const engine = (
+      globalThis as {
+        simulationEngine?: {
+          getMandateState?: () => PlanMandateState | null;
+          recordBuildingForMandates?: (defId: string) => void;
+          getCallbacks?: () => {
+            onToast?: (msg: string, severity?: string) => void;
+            onAdvisor?: (msg: string) => void;
+          };
+        };
+      }
+    ).simulationEngine;
+    const runtimeCallbacks = engine?.getCallbacks?.();
+
+    const deps = {
+      totalTicks,
+      rng: this.rng,
+      mandateState: engine?.getMandateState?.() ?? null,
+      needsState,
+      eraId: meta?.currentEra ?? 'revolution',
+      callbacks: {
+        onToast: (msg: string, severity?: string) => {
+          if (runtimeCallbacks?.onToast) runtimeCallbacks.onToast(msg, severity);
+          else console.log(msg);
+        },
+        onAdvisor: (msg: string) => {
+          if (runtimeCallbacks?.onAdvisor) runtimeCallbacks.onAdvisor(msg);
+          else console.log(msg);
+        },
+      },
+      recordBuildingForMandates: (defId: string) => engine?.recordBuildingForMandates?.(defId),
+      gridSize: GRID_SIZE,
+    };
+
+    this.tickAutonomous(deps);
   }
 
   /** Set the seeded RNG for deterministic collective rolls. */
@@ -236,31 +307,23 @@ export class CollectiveAgent extends Vehicle {
   /**
    * Main update loop — runs the full collective pipeline.
    *
-   * 1. Detect construction demands from resource shortages
-   * 2. Merge mandates + demands into a sorted build queue
-   * 3. If build queue is non-empty, attempt autonomous placement of top item
-   *
    * @param _delta - Time delta (unused — tick-driven not frame-driven)
    * @param resources - Current resource levels
    * @param rng - Seeded RNG for placement randomness
    * @param mandateState - Current 5-Year Plan mandates (null if no active plan)
    * @param currentTick - Current simulation tick (for throttling builds)
-   * @param housingCapacity - Total housing capacity across all buildings
+   * @param needsState - The current Dvor hierarchy of needs state
    */
-  update(
+  tickCollective(
     _delta: number,
-    resources: Resources,
+    _resources: Resources,
     rng: GameRng,
     mandateState: PlanMandateState | null,
     currentTick: number,
-    housingCapacity: number,
+    needsState: DvorNeedsState,
   ): void {
     // Step 1: Detect demands
-    this.pendingDemands = this.detectConstructionDemands(resources.population, housingCapacity, {
-      food: resources.food,
-      vodka: resources.vodka ?? 0,
-      power: resources.power ?? 0,
-    });
+    this.pendingDemands = this.detectConstructionDemands(needsState);
 
     // Step 2: Generate sorted build queue
     this.buildQueue = this.generateQueue(mandateState, this.pendingDemands);
@@ -387,30 +450,88 @@ export class CollectiveAgent extends Vehicle {
   // ── Demand System: Shortage Detection ──────────────────────────────────────
 
   /**
-   * Scans current game state for shortages and returns construction demands.
-   *
-   * @param population - Current total population
-   * @param housingCapacity - Total housing capacity across all operational buildings
-   * @param resources - Current resource snapshot (food, vodka, power)
+   * Scans current game state for shortages based on aggregated Dvor Needs
+   * and returns construction demands.
    */
   detectConstructionDemands(
-    population: number,
-    housingCapacity: number,
-    resources: ResourceSnapshot,
+    needsOrPopulation: DvorNeedsState | number,
+    legacyHousingCapacity?: number,
+    legacyResources?: Partial<Resources>,
   ): ConstructionDemand[] {
+    const legacyPopulation = typeof needsOrPopulation === 'number' ? needsOrPopulation : undefined;
+    const resources = legacyResources ?? getResourceEntity()?.resources;
+    const population = legacyPopulation ?? resources?.population ?? this.countDvorPopulation();
+    const housingCapacity = legacyHousingCapacity ?? this.sumHousingCapacity();
+    const needs =
+      typeof needsOrPopulation === 'number'
+        ? this.deriveNeedsFromLegacyInputs(needsOrPopulation, housingCapacity, resources)
+        : needsOrPopulation;
     const demands: ConstructionDemand[] = [];
 
-    const housingDemand = this.detectHousingDemand(population, housingCapacity);
-    if (housingDemand) demands.push(housingDemand);
+    // 0. STATE SURVIVAL (Absolute Priority)
+    // The State always puts itself first. If no Party Barracks/HQ exists,
+    // they don't care if people are freezing or starving. Build the HQ.
+    const hasHQ = buildings.entities.some((e) => e.building.defId === 'government-hq');
+    if (!hasHQ) {
+      demands.push({
+        category: 'housing', // Categorized as housing just to pass validation, but it's an HQ
+        priority: 'critical',
+        suggestedDefIds: ['government-hq'],
+        reason: `The State must establish administrative control immediately`,
+      });
+      // Return immediately — the State does not care about other needs until it is secure
+      return demands;
+    }
 
-    const foodDemand = this.detectFoodDemand(population, resources.food);
-    if (foodDemand) demands.push(foodDemand);
+    // 1. Shelter Demand (Unhoused Dvori)
+    if (needs.unhousedCount > 0) {
+      demands.push({
+        category: 'housing',
+        priority: needs.unhousedCount > 10 ? 'critical' : 'urgent',
+        suggestedDefIds: HOUSING_SUGGESTIONS,
+        reason: `${needs.unhousedCount} workers are unhoused`,
+      });
+    }
+
+    const housingDemand = this.detectHousingDemand(population, housingCapacity);
+    if (housingDemand && !demands.some((d) => d.category === housingDemand.category)) {
+      demands.push(housingDemand);
+    }
+
+    // 2. Food Demand (Starving Dvori)
+    if (needs.starvingCount > 0) {
+      demands.push({
+        category: 'food_production',
+        priority: needs.starvingCount > 10 ? 'critical' : 'urgent',
+        suggestedDefIds: FOOD_SUGGESTIONS,
+        reason: `${needs.starvingCount} workers are starving`,
+      });
+    }
+
+    // 3. Warmth Demand (Freezing Dvori) -> Maps to Power/Heat
+    if (needs.freezingCount > 0) {
+      demands.push({
+        category: 'power',
+        priority: needs.freezingCount > 10 ? 'critical' : 'urgent',
+        suggestedDefIds: POWER_SUGGESTIONS,
+        reason: `${needs.freezingCount} workers are freezing due to lack of power`,
+      });
+    }
+
+    const foodDemand = this.detectFoodDemand(population, resources?.food ?? 0);
+    if (foodDemand && !demands.some((d) => d.category === foodDemand.category)) {
+      demands.push(foodDemand);
+    }
 
     const powerDemand = this.detectPowerDemand();
-    if (powerDemand) demands.push(powerDemand);
+    if (powerDemand && !demands.some((d) => d.category === powerDemand.category)) {
+      demands.push(powerDemand);
+    }
 
-    const vodkaDemand = this.detectVodkaDemand(population, resources.vodka);
-    if (vodkaDemand) demands.push(vodkaDemand);
+    const vodkaDemand = this.detectVodkaDemand(population, resources?.vodka ?? 0);
+    if (vodkaDemand && !demands.some((d) => d.category === vodkaDemand.category)) {
+      demands.push(vodkaDemand);
+    }
 
     return demands;
   }
@@ -428,13 +549,9 @@ export class CollectiveAgent extends Vehicle {
    */
   findPlacementCell(rng: GameRng, defId?: string, eraId?: string): { gridX: number; gridY: number } | null {
     const buildingEntities = buildings.entities;
-    if (buildingEntities.length === 0) {
-      return null;
-    }
-
     const occupied = this.buildOccupiedSet();
 
-    // Try era-aware placement if we have context
+    // Try era-aware placement if we have context (which we usually do now)
     if (defId && eraId) {
       const ctx = this.buildPlacementContext(eraId, occupied);
       // Try normal range first
@@ -448,6 +565,12 @@ export class CollectiveAgent extends Vehicle {
         return { gridX: expanded.x, gridY: expanded.z };
       }
       return null;
+    }
+
+    if (buildingEntities.length === 0) {
+      // Very basic fallback if no era context and empty board
+      const center = Math.floor(GRID_SIZE / 2);
+      return { gridX: center, gridY: center };
     }
 
     // Legacy fallback: distance-based random selection
@@ -495,20 +618,41 @@ export class CollectiveAgent extends Vehicle {
    * Autonomously places a building near existing buildings.
    * Returns the placed entity, or null if placement fails.
    *
+   * For protected-class buildings (government/military), if no open cell
+   * is available, attempts displacement cascade — demolishing the lowest-priority
+   * expendable building to free a tile.
+   *
    * @param defId - Building definition ID to place
    * @param rng - Seeded RNG for placement randomness
    * @param eraId - Current era for era-aware placement (optional)
    */
   autoPlaceBuilding(defId: string, rng: GameRng, eraId?: string): Entity | null {
     const cell = this.findPlacementCell(rng, defId, eraId);
-    if (!cell) {
+    if (cell) {
+      try {
+        return placeNewBuilding(cell.gridX, cell.gridY, defId);
+      } catch (e) {
+        console.warn(`[CollectiveAgent] Failed to place ${defId} at (${cell.gridX}, ${cell.gridY}):`, e);
+        return null;
+      }
+    }
+
+    // No open cell found — try displacement for protected-class buildings
+    const demandClass = classifyBuilding(defId);
+    if (!isProtected(demandClass)) {
       return null;
     }
 
+    const result = cascadeDisplacement(demandClass, buildings.entities);
+    if (!result.success || !result.demolished) {
+      return null;
+    }
+
+    const { gridX, gridY } = result.demolished.freedTile;
     try {
-      return placeNewBuilding(cell.gridX, cell.gridY, defId);
+      return placeNewBuilding(gridX, gridY, defId);
     } catch (e) {
-      console.warn(`[CollectiveAgent] Failed to place ${defId} at (${cell.gridX}, ${cell.gridY}):`, e);
+      console.warn(`[CollectiveAgent] Failed to place ${defId} at displaced tile (${gridX}, ${gridY}):`, e);
       return null;
     }
   }
@@ -558,7 +702,7 @@ export class CollectiveAgent extends Vehicle {
         requests.push({
           defId,
           source: 'demand',
-          label: `${demand.category} demand`,
+          label: demandLabel(demand, defId),
           sortPriority: weight,
           reason: demand.reason,
         });
@@ -569,102 +713,6 @@ export class CollectiveAgent extends Vehicle {
     return requests;
   }
 
-  // ── Absorbed SimulationEngine Methods ──────────────────────────────────────
-
-  /**
-   * Place essential starter buildings on the very first autonomous tick.
-   * Runs once: government-hq near water (or center), 2 izbas nearby, 1 farm.
-   */
-  public earlyGameBootstrap(rng: GameRng, eraId?: string): void {
-    if (this.bootstrapped) return;
-
-    // Require minimum materials and no existing buildings for bootstrap
-    const storeRef = getResourceEntity();
-    if (!storeRef || storeRef.resources.timber < 30) return;
-    if (buildings.entities.length > 0) return; // settlement already has buildings
-
-    const occupied = this.buildOccupiedSet();
-
-    // Place Government HQ — prefer near water, fallback to center
-    const ctx = eraId ? this.buildPlacementContext(eraId, occupied) : null;
-    let hqCell: { gridX: number; gridY: number } | null = null;
-
-    if (ctx) {
-      const result = findBestPlacement('government-hq', ctx, GRID_SIZE);
-      if (result) hqCell = { gridX: result.x, gridY: result.z };
-    }
-    if (!hqCell) {
-      // Fallback: center of map
-      const center = Math.floor(GRID_SIZE / 2);
-      hqCell = { gridX: center, gridY: center };
-    }
-
-    try {
-      const hq = placeNewBuilding(hqCell.gridX, hqCell.gridY, 'government-hq');
-      if (hq) occupied.add(`${hqCell.gridX},${hqCell.gridY}`);
-    } catch {
-      /* placement failed — not fatal */
-    }
-
-    // Place 2-3 izbas near the party-hq
-    const izbaCount = 2 + (rng.pickIndex(2)); // 2 or 3
-    for (let i = 0; i < izbaCount; i++) {
-      const defId = i % 2 === 0 ? 'workers-house-a' : 'workers-house-b';
-      const cell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng);
-      if (cell) {
-        try {
-          const entity = placeNewBuilding(cell.gridX, cell.gridY, defId);
-          if (entity) occupied.add(`${cell.gridX},${cell.gridY}`);
-        } catch {
-          /* placement failed */
-        }
-      }
-    }
-
-    // Place 1 farm near the settlement
-    const farmCell = this.findNearbyEmpty(hqCell.gridX, hqCell.gridY, occupied, rng, 4);
-    if (farmCell) {
-      try {
-        placeNewBuilding(farmCell.gridX, farmCell.gridY, 'collective-farm-hq');
-      } catch {
-        /* placement failed */
-      }
-    }
-
-    this.bootstrapped = true;
-  }
-
-  /** Find an empty cell within radius of (cx, cy), avoiding occupied cells. */
-  private findNearbyEmpty(
-    cx: number,
-    cy: number,
-    occupied: Set<string>,
-    rng: GameRng,
-    minDist = 2,
-  ): { gridX: number; gridY: number } | null {
-    const candidates: Array<{ gridX: number; gridY: number; dist: number }> = [];
-    const maxDist = minDist + 3;
-
-    for (let dx = -maxDist; dx <= maxDist; dx++) {
-      for (let dy = -maxDist; dy <= maxDist; dy++) {
-        const dist = Math.abs(dx) + Math.abs(dy);
-        if (dist < minDist || dist > maxDist) continue;
-
-        const nx = cx + dx;
-        const ny = cy + dy;
-        if (!this.isInBounds(nx, ny)) continue;
-        if (occupied.has(`${nx},${ny}`)) continue;
-
-        candidates.push({ gridX: nx, gridY: ny, dist });
-      }
-    }
-
-    if (candidates.length === 0) return null;
-    candidates.sort((a, b) => a.dist - b.dist);
-    const top = candidates.slice(0, Math.min(5, candidates.length));
-    return top[rng.pickIndex(top.length)]!;
-  }
-
   /**
    * Full autonomous construction pipeline: detect demands, merge mandates, auto-place.
    * Absorbs SimulationEngine.tickCollectiveViaAgent().
@@ -673,28 +721,36 @@ export class CollectiveAgent extends Vehicle {
     totalTicks: number;
     rng: GameRng | undefined;
     mandateState: PlanMandateState | null;
+    needsState: DvorNeedsState;
     eraId?: string;
     callbacks: { onToast: (msg: string, severity?: string) => void; onAdvisor: (msg: string) => void };
     recordBuildingForMandates: (defId: string) => void;
+    /** Terrain tiles for fertility-aware placement. */
+    terrainTiles?: Array<{ type: string; fertility: number }>;
+    /** Grid size for terrain tile indexing. */
+    gridSize?: number;
   }): void {
-    // Use era-based interval if eraId is provided, otherwise use config default
-    const interval = deps.eraId ? getBuildInterval(deps.eraId) : COLLECTIVE_CHECK_INTERVAL;
+    const hasAnyConstruction = buildings.entities.length > 0 || underConstruction.entities.length > 0;
+    // Use a short bootstrap interval for the first visible state-control project,
+    // then return to era-based pacing for normal historical growth.
+    const interval = !hasAnyConstruction
+      ? BOOTSTRAP_BUILD_INTERVAL
+      : deps.eraId
+        ? getBuildInterval(deps.eraId)
+        : COLLECTIVE_CHECK_INTERVAL;
     if (deps.totalTicks % interval !== 0) return;
-    if (deps.totalTicks < 60) return;
+    if (hasAnyConstruction && deps.totalTicks < 60) return;
+
     if (underConstruction.entities.length >= 3) return;
 
     const storeRef = getResourceEntity();
     if (!storeRef) return;
 
     const res = storeRef.resources;
-    const housingCap = this.getHousingCapacity();
+    const _housingCap = this.getHousingCapacity();
 
     // Step 1-2: CollectiveAgent detects demands and generates queue
-    const demands = this.detectConstructionDemands(res.population, housingCap, {
-      food: res.food,
-      vodka: res.vodka,
-      power: res.power,
-    });
+    const demands = this.detectConstructionDemands(deps.needsState);
     const queue = this.generateQueue(deps.mandateState, demands);
     if (queue.length === 0) return;
 
@@ -710,6 +766,11 @@ export class CollectiveAgent extends Vehicle {
       return;
     }
 
+    // Build fertility cache from terrain tiles for resource-proximity placement
+    if (deps.terrainTiles && deps.gridSize) {
+      this.fertilityCache = buildFertilityMap(deps.terrainTiles, deps.gridSize);
+    }
+
     // Step 3: Auto-place via CollectiveAgent with era-aware placement
     const rng = this.rng ?? deps.rng;
     if (!rng) return;
@@ -717,9 +778,13 @@ export class CollectiveAgent extends Vehicle {
     const entity = this.autoPlaceBuilding(request.defId, rng, deps.eraId);
     if (entity) {
       deps.recordBuildingForMandates(request.defId);
+      const isStateBootstrap = request.defId === 'government-hq';
 
       if (request.source === 'mandate') {
         deps.callbacks.onToast(`DECREE FULFILLED: Construction of ${request.label} has begun`);
+      } else if (isStateBootstrap) {
+        deps.callbacks.onToast('STATE DIRECTIVE: Administrative control construction has begun');
+        deps.callbacks.onAdvisor('The Party has established its first office, Comrade. The settlement is now legible.');
       } else {
         deps.callbacks.onToast(`WORKERS' INITIATIVE: The collective begins ${request.label}`);
         deps.callbacks.onAdvisor(`The workers have started building on their own, Comrade. ${request.reason}.`);
@@ -744,9 +809,8 @@ export class CollectiveAgent extends Vehicle {
     return {
       focus: this.focus,
       lastBuildTick: this.lastBuildTick,
-      buildQueue: [...this.buildQueue],
-      pendingDemands: [...this.pendingDemands],
-      bootstrapped: this.bootstrapped,
+      buildQueue: this.buildQueue,
+      pendingDemands: this.pendingDemands,
     };
   }
 
@@ -754,9 +818,8 @@ export class CollectiveAgent extends Vehicle {
   loadState(state: CollectiveAgentState): void {
     this.focus = state.focus;
     this.lastBuildTick = state.lastBuildTick;
-    this.buildQueue = [...state.buildQueue];
-    this.pendingDemands = [...state.pendingDemands];
-    this.bootstrapped = state.bootstrapped ?? false;
+    this.buildQueue = state.buildQueue;
+    this.pendingDemands = state.pendingDemands;
   }
 
   // ── Private Helpers: Governor ───────────────────────────────────────────────
@@ -850,6 +913,36 @@ export class CollectiveAgent extends Vehicle {
   }
 
   // ── Private Helpers: Demand System ─────────────────────────────────────────
+
+  private deriveNeedsFromLegacyInputs(
+    population: number,
+    housingCapacity: number,
+    resources: Partial<Resources> | undefined,
+  ): DvorNeedsState {
+    const food = resources?.food ?? 0;
+    return {
+      unhousedCount: Math.max(0, population - housingCapacity),
+      starvingCount: food / Math.max(1, population) < FOOD_CRITICAL_THRESHOLD ? population : 0,
+      freezingCount: 0,
+      idleCount: 0,
+    };
+  }
+
+  private countDvorPopulation(): number {
+    let population = 0;
+    for (const entity of dvory.entities) {
+      population += entity.dvor.members.length;
+    }
+    return population;
+  }
+
+  private sumHousingCapacity(): number {
+    let capacity = 0;
+    for (const entity of buildings.entities) {
+      capacity += entity.building.housingCap ?? 0;
+    }
+    return capacity;
+  }
 
   private detectHousingDemand(population: number, housingCapacity: number): ConstructionDemand | null {
     if (population <= 0) return null;
@@ -964,12 +1057,18 @@ export class CollectiveAgent extends Vehicle {
 
     const waterCells: Array<{ x: number; z: number }> = [];
     const treeCells: Array<{ x: number; z: number }> = [];
+    const marshCells: Array<{ x: number; z: number }> = [];
+    const mountainCells: Array<{ x: number; z: number }> = [];
     for (const entity of terrainFeatures.entities) {
       const ft = entity.terrainFeature.featureType;
       if (ft === 'river' || ft === 'water') {
         waterCells.push({ x: entity.position.gridX, z: entity.position.gridY });
       } else if (ft === 'forest') {
         treeCells.push({ x: entity.position.gridX, z: entity.position.gridY });
+      } else if (ft === 'marsh') {
+        marshCells.push({ x: entity.position.gridX, z: entity.position.gridY });
+      } else if (ft === 'mountain') {
+        mountainCells.push({ x: entity.position.gridX, z: entity.position.gridY });
       }
     }
 
@@ -979,7 +1078,10 @@ export class CollectiveAgent extends Vehicle {
       eraId,
       waterCells,
       treeCells,
+      marshCells,
+      mountainCells,
       occupiedCells: occupied,
+      fertilityCells: this.fertilityCache,
     };
   }
 
@@ -1002,6 +1104,22 @@ export class CollectiveAgent extends Vehicle {
   private isInBounds(gridX: number, gridY: number): boolean {
     return gridX >= 1 && gridX < GRID_SIZE - 1 && gridY >= 1 && gridY < GRID_SIZE - 1;
   }
+}
+
+// ── Fertility Map Builder ──────────────────────────────────────────────────
+
+/**
+ * Build a fertility lookup map from flat terrain tile array.
+ * Tiles are stored in row-major order: index = z * gridSize + x.
+ */
+function buildFertilityMap(tiles: Array<{ type: string; fertility: number }>, gridSize: number): Map<string, number> {
+  const map = new Map<string, number>();
+  for (let i = 0; i < tiles.length; i++) {
+    const x = i % gridSize;
+    const z = Math.floor(i / gridSize);
+    map.set(`${x},${z}`, tiles[i]!.fertility);
+  }
+  return map;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1058,11 +1176,11 @@ export function runGovernor(
  * Standalone wrapper around CollectiveAgent.detectConstructionDemands().
  */
 export function detectConstructionDemands(
-  population: number,
-  housingCapacity: number,
-  resources: ResourceSnapshot,
+  needsOrPopulation: DvorNeedsState | number,
+  legacyHousingCapacity?: number,
+  legacyResources?: Partial<Resources>,
 ): ConstructionDemand[] {
-  return _sharedAgent.detectConstructionDemands(population, housingCapacity, resources);
+  return _sharedAgent.detectConstructionDemands(needsOrPopulation, legacyHousingCapacity, legacyResources);
 }
 
 /**

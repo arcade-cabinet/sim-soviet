@@ -28,7 +28,7 @@ describe('VodkaAgent', () => {
     const resources = makeResources({ food: 100, vodka: 0, population: 0 });
 
     // rawVodkaOutput=10, each unit costs 1 grain → 10 grain consumed, 10 vodka produced
-    const result = agent.update(10, resources, 1);
+    const result = agent.tickVodka(10, resources, 1);
     expect(result.vodkaProduced).toBe(10);
     expect(result.grainConsumed).toBe(10);
     expect(resources.food).toBe(90);
@@ -40,7 +40,7 @@ describe('VodkaAgent', () => {
     const resources = makeResources({ food: 6, vodka: 0, population: 0 });
 
     // rawVodkaOutput=10, but only 6 food → afford 6 vodka (6 / 1)
-    const result = agent.update(10, resources, 1);
+    const result = agent.tickVodka(10, resources, 1);
     expect(result.vodkaProduced).toBeCloseTo(6);
     expect(result.grainConsumed).toBeCloseTo(6);
     expect(resources.food).toBeCloseTo(0);
@@ -53,7 +53,7 @@ describe('VodkaAgent', () => {
     const agent = new VodkaAgent();
     // 200 citizens / 20 = 10 vodka needed
     const resources = makeResources({ food: 0, vodka: 50, population: 200 });
-    const result = agent.update(0, resources, 1);
+    const result = agent.tickVodka(0, resources, 1);
     expect(result.vodkaConsumed).toBe(10);
     expect(resources.vodka).toBe(40);
   });
@@ -62,7 +62,7 @@ describe('VodkaAgent', () => {
     const agent = new VodkaAgent();
     // 21 citizens / 20 = 1.05 → ceil = 2
     const resources = makeResources({ food: 0, vodka: 10, population: 21 });
-    const result = agent.update(0, resources, 1);
+    const result = agent.tickVodka(0, resources, 1);
     expect(result.vodkaConsumed).toBe(2);
   });
 
@@ -70,7 +70,7 @@ describe('VodkaAgent', () => {
     const agent = new VodkaAgent();
     // 100 citizens / 20 = 5 * 2.0 = 10
     const resources = makeResources({ food: 0, vodka: 20, population: 100 });
-    const result = agent.update(0, resources, 2.0);
+    const result = agent.tickVodka(0, resources, 2.0);
     expect(result.vodkaConsumed).toBe(10);
   });
 
@@ -82,7 +82,7 @@ describe('VodkaAgent', () => {
     const initialMorale = agent.getMorale();
 
     const resources = makeResources({ food: 0, vodka: 50, population: 100 });
-    const result = agent.update(0, resources, 1);
+    const result = agent.tickVodka(0, resources, 1);
 
     expect(result.demandMet).toBe(true);
     expect(result.moraleDelta).toBe(VODKA_MORALE_BONUS);
@@ -94,7 +94,7 @@ describe('VodkaAgent', () => {
     const initialMorale = agent.getMorale();
 
     const resources = makeResources({ food: 0, vodka: 0, population: 100 });
-    const result = agent.update(0, resources, 1);
+    const result = agent.tickVodka(0, resources, 1);
 
     expect(result.demandMet).toBe(false);
     expect(result.moraleDelta).toBe(0);
@@ -106,7 +106,7 @@ describe('VodkaAgent', () => {
     // Drive morale near cap
     const resources = makeResources({ food: 0, vodka: 999, population: 20 });
     for (let i = 0; i < 10; i++) {
-      agent.update(0, resources, 1);
+      agent.tickVodka(0, resources, 1);
       resources.vodka = 999; // replenish so demand is always met
     }
     expect(agent.getMorale()).toBe(100);
@@ -117,7 +117,7 @@ describe('VodkaAgent', () => {
   it('detects VODKA_SHORTAGE when demand exceeds supply', () => {
     const agent = new VodkaAgent();
     const resources = makeResources({ food: 0, vodka: 0, population: 100 });
-    const result = agent.update(0, resources, 1);
+    const result = agent.tickVodka(0, resources, 1);
     expect(result.shortage).toBe(true);
     expect(agent.getShortageCounter()).toBe(1);
   });
@@ -126,7 +126,7 @@ describe('VodkaAgent', () => {
     const agent = new VodkaAgent();
     for (let i = 0; i < 3; i++) {
       const resources = makeResources({ food: 0, vodka: 0, population: 100 });
-      agent.update(0, resources, 1);
+      agent.tickVodka(0, resources, 1);
     }
     expect(agent.getShortageCounter()).toBe(3);
   });
@@ -134,12 +134,12 @@ describe('VodkaAgent', () => {
   it('resets shortage counter when demand is met', () => {
     const agent = new VodkaAgent();
     // Two shortage ticks
-    agent.update(0, makeResources({ food: 0, vodka: 0, population: 100 }), 1);
-    agent.update(0, makeResources({ food: 0, vodka: 0, population: 100 }), 1);
+    agent.tickVodka(0, makeResources({ food: 0, vodka: 0, population: 100 }), 1);
+    agent.tickVodka(0, makeResources({ food: 0, vodka: 0, population: 100 }), 1);
     expect(agent.getShortageCounter()).toBe(2);
 
     // Now supply plenty of vodka
-    agent.update(0, makeResources({ food: 0, vodka: 999, population: 100 }), 1);
+    agent.tickVodka(0, makeResources({ food: 0, vodka: 999, population: 100 }), 1);
     expect(agent.getShortageCounter()).toBe(0);
   });
 
@@ -149,7 +149,7 @@ describe('VodkaAgent', () => {
     const agent = new VodkaAgent();
     // 10 food for 100 citizens = 0.1 food/capita → crisis
     const resources = makeResources({ food: 10, vodka: 0, population: 100 });
-    const result = agent.update(10, resources, 1);
+    const result = agent.tickVodka(10, resources, 1);
     expect(result.vodkaProduced).toBe(0);
     expect(result.grainConsumed).toBe(0);
     // Food should be untouched by production
@@ -160,7 +160,7 @@ describe('VodkaAgent', () => {
     const agent = new VodkaAgent();
     // 100 food for 100 citizens = 1.0 food/capita → no crisis
     const resources = makeResources({ food: 100, vodka: 0, population: 100 });
-    const result = agent.update(5, resources, 1);
+    const result = agent.tickVodka(5, resources, 1);
     expect(result.vodkaProduced).toBe(5);
     expect(result.grainConsumed).toBe(5);
   });
@@ -170,7 +170,7 @@ describe('VodkaAgent', () => {
     agent.setDiversionRate(0.5);
     // rawVodkaOutput=10 * 0.5 = 5 vodka, costing 5 food (1:1 ratio)
     const resources = makeResources({ food: 200, vodka: 0, population: 0 });
-    const result = agent.update(10, resources, 1);
+    const result = agent.tickVodka(10, resources, 1);
     expect(result.vodkaProduced).toBeCloseTo(5);
     expect(result.grainConsumed).toBeCloseTo(5);
   });
@@ -187,7 +187,7 @@ describe('VodkaAgent', () => {
     const agent = new VodkaAgent();
     agent.setDiversionRate(0);
     const resources = makeResources({ food: 200, vodka: 0, population: 0 });
-    const result = agent.update(10, resources, 1);
+    const result = agent.tickVodka(10, resources, 1);
     expect(result.vodkaProduced).toBe(0);
     expect(result.grainConsumed).toBe(0);
     expect(resources.food).toBe(200);
@@ -200,8 +200,8 @@ describe('VodkaAgent', () => {
     agent.setDiversionRate(0.7);
 
     // Drive some ticks to set non-default state
-    agent.update(0, makeResources({ food: 0, vodka: 0, population: 40 }), 1); // shortage
-    agent.update(0, makeResources({ food: 0, vodka: 999, population: 40 }), 1); // supplied
+    agent.tickVodka(0, makeResources({ food: 0, vodka: 0, population: 40 }), 1); // shortage
+    agent.tickVodka(0, makeResources({ food: 0, vodka: 999, population: 40 }), 1); // supplied
 
     const snapshot: VodkaAgentSnapshot = agent.serialize();
     expect(snapshot.diversionRate).toBeCloseTo(0.7);
@@ -219,7 +219,7 @@ describe('VodkaAgent', () => {
   it('serialize/restore is a round-trip for shortage counter', () => {
     const agent = new VodkaAgent();
     for (let i = 0; i < 5; i++) {
-      agent.update(0, makeResources({ food: 0, vodka: 0, population: 100 }), 1);
+      agent.tickVodka(0, makeResources({ food: 0, vodka: 0, population: 100 }), 1);
     }
     const snapshot = agent.serialize();
     expect(snapshot.shortageCounter).toBe(5);
@@ -234,7 +234,7 @@ describe('VodkaAgent', () => {
   it('skips consumption when population is 0', () => {
     const agent = new VodkaAgent();
     const resources = makeResources({ food: 0, vodka: 10, population: 0 });
-    const result = agent.update(0, resources, 1);
+    const result = agent.tickVodka(0, resources, 1);
     expect(result.vodkaConsumed).toBe(0);
     expect(result.shortage).toBe(false);
     expect(resources.vodka).toBe(10);

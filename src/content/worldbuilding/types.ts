@@ -50,7 +50,7 @@ export interface Achievement {
   hidden: boolean;
 }
 
-/** Result of a city renaming event, including propaganda messaging and ruble cost. */
+/** Result of a settlement renaming event, including propaganda messaging and ruble cost. */
 export interface CityRenaming {
   oldName: string;
   newName: string;

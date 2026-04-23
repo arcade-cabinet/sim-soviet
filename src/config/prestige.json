@@ -1,0 +1,121 @@
+{
+  "projects": [
+    {
+      "id": "monument_revolution",
+      "name": "Monument to the Revolution",
+      "description": "A towering tribute to the workers' struggle. The monument itself struggles to remain upright.",
+      "era": "revolution",
+      "minPopulation": 50,
+      "minPoliticalStanding": 0.3,
+      "constructionTicks": 24,
+      "resourceCost": { "materials": 200, "money": 100 },
+      "effects": {
+        "moraleMult": 1.1,
+        "loyaltyBonus": 5,
+        "politicalStandingBonus": 0.05
+      },
+      "unlocks": [],
+      "prerequisite": null,
+      "pravdaAnnouncement": "MONUMENT CONSTRUCTION APPROVED: Soviet Spirit Rendered in Concrete",
+      "completionToast": "The monument stands. It is made of concrete. Everything is made of concrete."
+    },
+    {
+      "id": "palace_soviets",
+      "name": "Palace of the Soviets",
+      "description": "The grandest building never completed in real history. In this timeline, it might actually happen.",
+      "era": "collectivization",
+      "minPopulation": 150,
+      "minPoliticalStanding": 0.5,
+      "constructionTicks": 48,
+      "resourceCost": { "materials": 500, "money": 300 },
+      "effects": {
+        "moraleMult": 1.15,
+        "politicalStandingBonus": 0.1,
+        "moscowAttentionReduction": 0.05
+      },
+      "unlocks": [],
+      "prerequisite": null,
+      "pravdaAnnouncement": "PALACE OF SOVIETS CONSTRUCTION BEGINS: Architecture of the Future Built Today",
+      "completionToast": "The Palace rises above the settlement. Its shadow covers everything. This is considered a feature."
+    },
+    {
+      "id": "nuclear_program",
+      "name": "Nuclear Research Program",
+      "description": "Split the atom for the glory of the Soviet Union. What could possibly go wrong.",
+      "era": "industrialization",
+      "minPopulation": 200,
+      "minPoliticalStanding": 0.4,
+      "minTechLevel": 0.3,
+      "constructionTicks": 36,
+      "resourceCost": { "materials": 400, "money": 500 },
+      "effects": {
+        "techLevelBonus": 0.1,
+        "powerMult": 1.2,
+        "politicalStandingBonus": 0.08
+      },
+      "unlocks": [],
+      "prerequisite": null,
+      "pravdaAnnouncement": "NUCLEAR RESEARCH AUTHORIZED: Peaceful Atom Serves the People",
+      "completionToast": "The reactor hums. The Geiger counter also hums. This is unrelated."
+    },
+    {
+      "id": "nuclear_power_plant",
+      "name": "Nuclear Power Plant",
+      "description": "Cheap, clean energy. The adjectives are used loosely.",
+      "era": "thaw_and_freeze",
+      "minPopulation": 300,
+      "minPoliticalStanding": 0.3,
+      "minTechLevel": 0.4,
+      "constructionTicks": 48,
+      "resourceCost": { "materials": 700, "money": 450 },
+      "effects": {
+        "powerMult": 2.0,
+        "pollutionIncrease": 0.1
+      },
+      "unlocks": [],
+      "prerequisite": "nuclear_program",
+      "pravdaAnnouncement": "NUCLEAR PLANT CONSTRUCTION: Unlimited Energy for the Workers' Future",
+      "completionToast": "The plant is operational. Safety reports have been filed. The filing cabinet is lead-lined."
+    },
+    {
+      "id": "television_center",
+      "name": "Television Center",
+      "description": "A broadcast complex for official speeches, weather reports, and carefully edited footage of abundance.",
+      "era": "thaw_and_freeze",
+      "minPopulation": 500,
+      "minPoliticalStanding": 0.5,
+      "minTechLevel": 0.5,
+      "constructionTicks": 60,
+      "resourceCost": { "materials": 800, "money": 600 },
+      "effects": {
+        "techLevelBonus": 0.15,
+        "politicalStandingBonus": 0.15,
+        "globalTensionIncrease": 0.05
+      },
+      "unlocks": ["television_prestige"],
+      "prerequisite": "nuclear_program",
+      "pravdaAnnouncement": "TELEVISION CENTER APPROVED: Every Household Will See the Same Truth",
+      "completionToast": "The broadcast tower hums. The signal is clear. The message is clearer."
+    },
+    {
+      "id": "consumer_goods_exhibition",
+      "name": "Consumer Goods Exhibition",
+      "description": "A public display of washing machines, radios, and furniture that may someday exist in sufficient quantities.",
+      "era": "stagnation",
+      "minPopulation": 500,
+      "minPoliticalStanding": 0.3,
+      "minTechLevel": 0.6,
+      "constructionTicks": 36,
+      "resourceCost": { "materials": 500, "money": 400 },
+      "effects": {
+        "techLevelBonus": 0.1,
+        "communicationBonus": true,
+        "kgbEfficiencyMult": 1.2
+      },
+      "unlocks": [],
+      "prerequisite": "television_center",
+      "pravdaAnnouncement": "CONSUMER GOODS EXHIBITION OPENS: Material Plenty Displayed Under Glass",
+      "completionToast": "Citizens admire the appliances. Some ask when they can buy one. The guide changes the subject."
+    }
+  ]
+}

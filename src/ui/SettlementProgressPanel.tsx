@@ -36,8 +36,8 @@ export interface SettlementProgressPanelProps {
 const TIER_ENGLISH: Record<SettlementTier, string> = {
   selo: 'Village',
   posyolok: "Workers' Settlement",
-  pgt: 'Urban-Type Settlement',
-  gorod: 'City',
+  pgt: 'Town Settlement',
+  gorod: 'Large Settlement',
 };
 
 /** Compute current settlement metrics from ECS (mirrors SimulationEngine.tickSettlement). */

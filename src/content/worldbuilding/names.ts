@@ -49,26 +49,26 @@ export const IDEOLOGICAL_PREFIXES = [
   'Kommunar', // Communard
 ] as const;
 
-/** Geographic / descriptive suffixes */
+/** Geographic / descriptive suffixes used by the settlement name generator. */
 export const CITY_SUFFIXES = [
-  '-grad', // city
+  '-grad', // settlement/town
   '-sk', // place
-  '-opol', // city (Greek-derived)
-  '-burg', // city (Germanic)
+  '-opol', // settlement/town (Greek-derived)
+  '-burg', // settlement/town (Germanic)
   '-ovsk', // patronymic place
   '-abad', // settlement (Central Asian)
   '-insk', // place
   '-orsk', // place
-  '-ograd', // city variant
+  '-ograd', // settlement/town variant
   '-ovo', // village-style
   '-evka', // small settlement
   '-nyi', // adjectival
   '-noye', // neuter adjectival
-  '-ingrad', // expanded city
+  '-ingrad', // expanded settlement
   '-omorsk', // sea-adjacent
 ] as const;
 
-/** City name modifiers (appended for bureaucratic specificity) */
+/** Settlement name modifiers appended for bureaucratic specificity. */
 export const CITY_MODIFIERS = [
   '',
   '-on-Tundra',
@@ -84,7 +84,7 @@ export const CITY_MODIFIERS = [
 ] as const;
 
 /**
- * Generates a city name by combining a prefix and a suffix.
+ * Generates a settlement name by combining a prefix and a suffix.
  * Optionally adds a modifier for bureaucratic flavor.
  */
 export function generateCityName(includeModifier = false): string {
@@ -122,10 +122,10 @@ export function renameCityForLeaderChange(currentName: string, _disgraced: strin
   ];
 
   const announcements = [
-    `Citizens of ${currentName}: your city is now ${newName}. Please update your internal sense of identity accordingly. You have until Tuesday.`,
-    `The city formerly and incorrectly known as "${currentName}" has been corrected to "${newName}." All memories of the previous name should be discarded.`,
+    `Citizens of ${currentName}: your settlement is now ${newName}. Please update your internal sense of identity accordingly. You have until Tuesday.`,
+    `The settlement formerly and incorrectly known as "${currentName}" has been corrected to "${newName}." All memories of the previous name should be discarded.`,
     `ATTENTION: ${currentName} no longer exists. ${newName} has always been here. Adjust your maps. Adjust your memories. Carry on.`,
-    `By decree of the Central Committee, this city is now ${newName}. Citizens who accidentally use the old name will be offered free reeducation.`,
+    `By decree of the Central Committee, this settlement is now ${newName}. Citizens who accidentally use the old name will be offered free reeducation.`,
     `The transition from "${currentName}" to "${newName}" will be seamless. Stationery exchange stations open 6AM-6:05AM tomorrow.`,
   ];
 

@@ -34,7 +34,6 @@ jest.mock('@react-three/fiber', () => ({
 
 // Mock the transitive dependency chain that leads to expo-sqlite
 jest.mock('../../src/bridge/BuildingPlacement', () => ({
-  placeECSBuilding: jest.fn(() => false),
   bulldozeECSBuilding: jest.fn(() => false),
 }));
 

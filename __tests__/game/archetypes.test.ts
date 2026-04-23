@@ -38,7 +38,7 @@ describe('archetypes', () => {
       createResourceStore();
       const entity = getResourceEntity();
       expect(entity).toBeDefined();
-      expect(entity!.resources.money).toBe(2000);
+      expect(entity!.resources.money).toBe(0);
     });
 
     it('returns undefined after world.clear()', () => {

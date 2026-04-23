@@ -92,10 +92,10 @@ export function setTab(state: GameState, tab: TabType): void {
 }
 
 /**
- * Selects a building placement tool.
+ * Selects a legacy management tool.
  *
  * @param state - GameState to modify
- * @param tool  - Tool key to select (e.g. 'housing', 'road', 'bulldoze', 'none')
+ * @param tool  - Tool key to select (currently 'bulldoze' or 'none')
  */
 export function selectTool(state: GameState, tool: string): void {
   state.selectedTool = tool;

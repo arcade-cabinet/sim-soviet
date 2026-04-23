@@ -1,13 +1,11 @@
 /**
  * @fileoverview Tests for Governor wiring in GameInit + NewGameSetup.
  *
- * Validates that game mode selection correctly wires (or does not wire)
- * a Governor on the SimulationEngine, and that resource multipliers
- * follow mode-specific rules.
+ * Validates that the reduced 1.0 flow wires the historical governor and
+ * exposes a single historical campaign config.
  */
 
 import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
-import { DIFFICULTY_PRESETS } from '@/ai/agents/political/ScoringSystem';
 import { GameRng } from '@/game/SeedSystem';
 import { SimulationEngine } from '@/game/SimulationEngine';
 import type { NewGameConfig } from '@/ui/NewGameSetup';
@@ -45,29 +43,14 @@ function makeMockCallbacks(): any {
   };
 }
 
-// ── Classic mode (default): no governor ──────────────────────────────────────
-
 describe('GameInit governor wiring', () => {
-  it('classic mode: no governor set on engine', () => {
-    const engine = new SimulationEngine(
-      makeMockGrid(),
-      makeMockCallbacks(),
-      new GameRng('classic-test'),
-      'comrade',
-      'permadeath',
-    );
-
-    // Classic mode — no governor wired
-    expect(engine.getGovernor()).toBeNull();
-  });
-
   it('historical mode: HistoricalGovernor set on engine', () => {
     const engine = new SimulationEngine(
       makeMockGrid(),
       makeMockCallbacks(),
       new GameRng('historical-test'),
       'comrade',
-      'permadeath',
+      'rasstrelyat',
     );
 
     // Wire governor as GameInit would
@@ -78,60 +61,30 @@ describe('GameInit governor wiring', () => {
     expect(engine.getGovernor()).toBeInstanceOf(HistoricalGovernor);
   });
 
-  it('historical mode: resourceMultiplier uses 1.0 (not difficulty preset)', () => {
-    // Simulate the logic from GameInit.ts for historical mode
-    const difficulty = 'worker' as const;
-    const gameMode = 'historical' as const;
-
-    const resMult = gameMode === 'historical' ? 1.0 : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
-
-    // Historical mode ignores difficulty — always 1.0
-    expect(resMult).toBe(1.0);
-    // Worker difficulty would normally give 2.0
-    expect(DIFFICULTY_PRESETS.worker.resourceMultiplier).toBe(2.0);
-  });
-
-  it('classic mode: resourceMultiplier uses DIFFICULTY_PRESETS', () => {
-    const testCases: Array<{ difficulty: 'worker' | 'comrade' | 'tovarish'; expected: number }> = [
-      { difficulty: 'worker', expected: 2.0 },
-      { difficulty: 'comrade', expected: 1.0 },
-      { difficulty: 'tovarish', expected: 0.6 },
-    ];
-
-    for (const { difficulty, expected } of testCases) {
-      const gameMode = 'classic' as const;
-
-      const resMult = gameMode === 'historical' ? 1.0 : DIFFICULTY_PRESETS[difficulty].resourceMultiplier;
-
-      expect(resMult).toBe(expected);
-    }
+  it('setGovernor always leaves engine in historical mode', () => {
+    const engine = new SimulationEngine(
+      makeMockGrid(),
+      makeMockCallbacks(),
+      new GameRng('historical-only-test'),
+      'comrade',
+      'rasstrelyat',
+    );
+    engine.setGovernor(new HistoricalGovernor());
+    expect(engine.getGovernor()?.serialize().mode).toBe('historical');
   });
 });
 
 // ── NewGameConfig type ───────────────────────────────────────────────────────
 
 describe('NewGameConfig', () => {
-  it('includes gameMode field', () => {
+  it('contains only historical campaign start options', () => {
     const config: NewGameConfig = {
-      difficulty: 'comrade',
-      consequence: 'permadeath',
+      consequence: 'rasstrelyat',
       seed: 'test-seed',
-      mapSize: 'medium',
-      gameMode: 'historical',
     };
 
-    expect(config.gameMode).toBe('historical');
-  });
-
-  it('accepts classic game mode', () => {
-    const config: NewGameConfig = {
-      difficulty: 'tovarish',
-      consequence: 'harsh',
-      seed: 'classic-seed',
-      mapSize: 'large',
-      gameMode: 'classic',
-    };
-
-    expect(config.gameMode).toBe('classic');
+    expect(config.consequence).toBe('rasstrelyat');
+    expect(config.seed).toBe('test-seed');
+    expect('gameMode' in config).toBe(false);
   });
 });

@@ -7,7 +7,7 @@
  */
 
 import type { AnnualReportData, ReportSubmission } from '@/components/ui/AnnualReportModal';
-import { political } from '@/config';
+import { economy, political } from '@/config';
 import { getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import type { SimCallbacks } from '../../../game/engine/types';
 import type { GameRng } from '../../../game/SeedSystem';
@@ -26,6 +26,33 @@ const PRIPISKI_QUOTA_INFLATION = political.annualReport.pripiskiQuotaInflation;
 
 /** Additional investigation probability from prior pripiski history. */
 const PRIPISKI_HISTORY_INSPECTION_BONUS = political.annualReport.pripiskiHistoryInspectionBonus;
+
+/** Minimum baseline for a normal 5-year plan target before difficulty modifiers. */
+const BASE_PLAN_TARGET = 500;
+
+/** Floor for a revised plan so misses remain meaningful without being impossible. */
+const MIN_REVISED_PLAN_TARGET = 100;
+
+function finiteNonNegative(value: number, fallback = 0): number {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.max(0, value);
+}
+
+function planNameForYear(year: number): string {
+  return year >= 1928 ? 'Five-Year Plan' : 'state work plan';
+}
+
+function numberedPlanNameForYear(year: number): string {
+  return year >= 1928 ? '5-Year Plan' : 'state work plan';
+}
+
+function securityServiceForYear(year: number): string {
+  if (year >= 1954) return 'KGB';
+  if (year >= 1946) return 'MGB';
+  if (year >= 1934) return 'NKVD';
+  if (year >= 1922) return 'OGPU';
+  return 'Cheka';
+}
 
 /** Mutable engine state that the annual report helpers read and write. */
 export interface AnnualReportEngineState {
@@ -71,11 +98,11 @@ export function checkQuota(ctx: AnnualReportContext): void {
     const data: AnnualReportData = {
       year: currentYear,
       quotaType: engineState.quota.type as 'food' | 'vodka',
-      quotaTarget: engineState.quota.target,
-      quotaCurrent: engineState.quota.current,
-      actualFood: res?.resources.food ?? 0,
-      actualVodka: res?.resources.vodka ?? 0,
-      actualPop: res?.resources.population ?? 0,
+      quotaTarget: finiteNonNegative(engineState.quota.target, BASE_PLAN_TARGET),
+      quotaCurrent: finiteNonNegative(engineState.quota.current),
+      actualFood: finiteNonNegative(res?.resources.food ?? 0),
+      actualVodka: finiteNonNegative(res?.resources.vodka ?? 0),
+      actualPop: finiteNonNegative(res?.resources.population ?? 0),
       deliveries: ctx.deliveries.getTotalDelivered(),
       mandateFulfillment: engineState.mandateState ? getMandateFulfillment(engineState.mandateState) : undefined,
     };
@@ -102,13 +129,15 @@ export function checkQuota(ctx: AnnualReportContext): void {
  */
 export function processReport(ctx: AnnualReportContext, submission: ReportSubmission): void {
   const { engineState } = ctx;
-  const quotaActual = engineState.quota.current;
+  const quotaActual = finiteNonNegative(engineState.quota.current);
   const res = getResourceEntity();
   const isHonest =
     submission.reportedQuota === quotaActual &&
     submission.reportedSecondary ===
-      (engineState.quota.type === 'food' ? (res?.resources.vodka ?? 0) : (res?.resources.food ?? 0)) &&
-    submission.reportedPop === (res?.resources.population ?? 0);
+      (engineState.quota.type === 'food'
+        ? finiteNonNegative(res?.resources.vodka ?? 0)
+        : finiteNonNegative(res?.resources.food ?? 0)) &&
+    submission.reportedPop === finiteNonNegative(res?.resources.population ?? 0);
 
   if (isHonest) {
     if (engineState.quota.current >= engineState.quota.target) {
@@ -121,9 +150,12 @@ export function processReport(ctx: AnnualReportContext, submission: ReportSubmis
 
   // Falsified report -- calculate aggregate risk
   const quotaRisk = falsificationRisk(quotaActual, submission.reportedQuota);
-  const secActual = engineState.quota.type === 'food' ? (res?.resources.vodka ?? 0) : (res?.resources.food ?? 0);
+  const secActual =
+    engineState.quota.type === 'food'
+      ? finiteNonNegative(res?.resources.vodka ?? 0)
+      : finiteNonNegative(res?.resources.food ?? 0);
   const secRisk = falsificationRisk(secActual, submission.reportedSecondary);
-  const popRisk = falsificationRisk(res?.resources.population ?? 0, submission.reportedPop);
+  const popRisk = falsificationRisk(finiteNonNegative(res?.resources.population ?? 0), submission.reportedPop);
   const maxRisk = Math.max(quotaRisk, secRisk, popRisk);
 
   // Investigation probability scales with risk (capped at 80%).
@@ -192,6 +224,8 @@ export function falsificationRisk(actual: number, reported: number): number {
 function evaluateMandates(ctx: AnnualReportContext): void {
   const { engineState } = ctx;
   const totalTicks = ctx.chronology.getDate().totalTicks;
+  const currentYear = getMetaEntity()?.gameMeta.date.year ?? ctx.chronology.getDate().year;
+  const planName = planNameForYear(currentYear);
 
   if (!engineState.mandateState || engineState.mandateState.mandates.length === 0) {
     return;
@@ -213,7 +247,7 @@ function evaluateMandates(ctx: AnnualReportContext): void {
     ctx.callbacks.onToast('BLACK MARK: Construction mandates not met', 'critical');
     ctx.callbacks.onAdvisor(
       'Comrade, the State Planning Committee has noted your failure to meet ' +
-        'the construction mandates of the Five-Year Plan. ' +
+        `the construction mandates of the ${planName}. ` +
         'A notation has been made in your personnel file.',
     );
   } else {
@@ -229,6 +263,8 @@ export function handleQuotaMet(ctx: AnnualReportContext, falsified = false): voi
   const { engineState } = ctx;
   const totalTicks = ctx.chronology.getDate().totalTicks;
   engineState.consecutiveQuotaFailures = 0;
+  engineState.quota.current = finiteNonNegative(engineState.quota.current);
+  engineState.quota.target = Math.max(1, finiteNonNegative(engineState.quota.target, BASE_PLAN_TARGET));
 
   // Score: quota met (+50)
   ctx.scoring.onQuotaMet();
@@ -273,8 +309,12 @@ export function handleQuotaMet(ctx: AnnualReportContext, falsified = false): voi
 export function handleQuotaMissed(ctx: AnnualReportContext): void {
   const { engineState } = ctx;
   const totalTicks = ctx.chronology.getDate().totalTicks;
+  const currentYear = getMetaEntity()?.gameMeta.date.year ?? ctx.chronology.getDate().year;
+  engineState.quota.current = finiteNonNegative(engineState.quota.current);
+  engineState.quota.target = Math.max(1, finiteNonNegative(engineState.quota.target, BASE_PLAN_TARGET));
   engineState.consecutiveQuotaFailures++;
-  const missPercent = 1 - engineState.quota.current / engineState.quota.target;
+  const revisedTarget = calculateRevisedMissedPlanTarget(engineState);
+  const missPercent = 1 - engineState.quota.current / Math.max(1, revisedTarget);
 
   // Black marks based on how badly the quota was missed
   if (missPercent > 0.6) {
@@ -291,15 +331,78 @@ export function handleQuotaMissed(ctx: AnnualReportContext): void {
   // Reset delivery totals for the extended plan period
   ctx.deliveries.resetTotals();
 
+  if (shouldReassignUnworkableQuota(engineState)) {
+    reassignUnworkableQuota(ctx);
+    return;
+  }
+
   if (engineState.consecutiveQuotaFailures >= MAX_QUOTA_FAILURES) {
     ctx.endGame(
       false,
-      `You failed ${MAX_QUOTA_FAILURES} consecutive 5-Year Plans. The Politburo has dissolved your position.`,
+      `You failed ${MAX_QUOTA_FAILURES} consecutive ${numberedPlanNameForYear(currentYear)}s. The Politburo has dissolved your position.`,
     );
   } else {
     ctx.callbacks.onAdvisor(
-      `You failed the 5-Year Plan (${engineState.consecutiveQuotaFailures}/${MAX_QUOTA_FAILURES} failures). The KGB is watching.`,
+      `You failed the ${numberedPlanNameForYear(currentYear)} (${engineState.consecutiveQuotaFailures}/${MAX_QUOTA_FAILURES} failures). The ${securityServiceForYear(currentYear)} is watching.`,
     );
+    engineState.quota.target = revisedTarget;
+    engineState.quota.current = 0;
     engineState.quota.deadlineYear += 5;
   }
+}
+
+/**
+ * Extend a missed plan with a bounded revised target.
+ *
+ * The Stakhanovite and pripiski systems can legitimately raise expectations,
+ * but missed plans should not preserve runaway multiplicative targets forever.
+ * Rebase against actual output and the difficulty baseline so the extended
+ * plan stays punitive without becoming a dead campaign.
+ */
+function calculateRevisedMissedPlanTarget(engineState: AnnualReportEngineState): number {
+  const currentTarget = Math.max(1, finiteNonNegative(engineState.quota.target, BASE_PLAN_TARGET));
+  const currentProgress = finiteNonNegative(engineState.quota.current);
+  const reducedTarget = Math.round(currentTarget * economy.quota.missedReduction);
+  const hardshipFloor = Math.max(
+    MIN_REVISED_PLAN_TARGET,
+    Math.round(BASE_PLAN_TARGET * engineState.quotaMultiplier * 0.25),
+  );
+  const outputBasedTarget = Math.round(currentProgress * 1.25);
+  const attainableCeiling = Math.max(hardshipFloor, outputBasedTarget);
+  return Math.max(hardshipFloor, Math.min(reducedTarget, attainableCeiling));
+}
+
+function shouldReassignUnworkableQuota(engineState: AnnualReportEngineState): boolean {
+  if (engineState.quota.type !== 'vodka') return false;
+  if (engineState.consecutiveQuotaFailures < 3) return false;
+  return engineState.quota.current < Math.max(5, engineState.quota.target * 0.1);
+}
+
+function reassignUnworkableQuota(ctx: AnnualReportContext): void {
+  const { engineState } = ctx;
+  const res = getResourceEntity();
+  const currentFood = finiteNonNegative(res?.resources.food ?? 0);
+  const metaYear = getMetaEntity()?.gameMeta.date.year ?? ctx.chronology.getDate().year;
+  const difficultyBaseline = Math.round(BASE_PLAN_TARGET * engineState.quotaMultiplier);
+  const foodTarget = Math.max(
+    MIN_REVISED_PLAN_TARGET,
+    Math.min(difficultyBaseline, Math.round(Math.max(currentFood * 0.75, MIN_REVISED_PLAN_TARGET))),
+  );
+
+  engineState.consecutiveQuotaFailures = 0;
+  engineState.quota.type = 'food';
+  engineState.quota.target = foodTarget;
+  engineState.quota.current = 0;
+  engineState.quota.deadlineYear = metaYear + 5;
+
+  ctx.callbacks.onAdvisor(
+    'Gosplan has revised the local plan back to food deliveries. Produce something measurable, Comrade.',
+  );
+  ctx.callbacks.onNewPlan?.({
+    quotaType: 'food',
+    quotaTarget: engineState.quota.target,
+    startYear: metaYear,
+    endYear: engineState.quota.deadlineYear,
+    mandates: engineState.mandateState?.mandates as MandateWithFulfillment[] | undefined,
+  });
 }
