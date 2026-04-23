@@ -148,6 +148,9 @@ const GhostPreview: React.FC = () => {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressStart = useRef({ x: 0, y: 0 });
   const longPressFired = useRef(false);
+  /** True only after the pointer has entered the canvas — prevents the tooltip
+   *  from appearing at the default R3F pointer origin (0,0) before any hover. */
+  const pointerOverCanvas = useRef(false);
 
   const pickGrid = useCallback(
     (clientX: number, clientY: number): { gridX: number; gridZ: number } | null => {
@@ -175,6 +178,24 @@ const GhostPreview: React.FC = () => {
 
   useEffect(() => {
     const canvas = gl.domElement;
+
+    const activatePointer = () => {
+      pointerOverCanvas.current = true;
+    };
+    const onPointerLeave = () => {
+      pointerOverCanvas.current = false;
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+      longPressFired.current = false;
+      setCursorTooltip(null);
+    };
+    canvas.addEventListener('pointerenter', activatePointer);
+    // One-time move listener covers the edge case where the pointer is already
+    // over the canvas on mount and pointerenter never fires.
+    canvas.addEventListener('pointermove', activatePointer, { once: true });
+    canvas.addEventListener('pointerleave', onPointerLeave);
 
     const preventContextMenu = (e: Event) => e.preventDefault();
     canvas.addEventListener('contextmenu', preventContextMenu);
@@ -267,6 +288,9 @@ const GhostPreview: React.FC = () => {
     canvas.addEventListener('pointerup', onPointerUp);
 
     return () => {
+      canvas.removeEventListener('pointerenter', activatePointer);
+      canvas.removeEventListener('pointermove', activatePointer);
+      canvas.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('contextmenu', preventContextMenu);
       canvas.removeEventListener('mousedown', onMouseDown);
       canvas.removeEventListener('click', onClick);
@@ -279,6 +303,10 @@ const GhostPreview: React.FC = () => {
   }, [gl, pickGrid]);
 
   useFrame((state) => {
+    if (!pointerOverCanvas.current) {
+      return;
+    }
+
     const pointer = state.pointer;
     raycaster.setFromCamera(pointer, camera);
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);

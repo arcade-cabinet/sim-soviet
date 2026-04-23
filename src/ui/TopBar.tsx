@@ -30,6 +30,7 @@ export interface TopBarProps {
   commendations?: number;
   settlementTier?: string;
   onThreatPress?: () => void;
+  onOpenGovernmentHQ?: () => void;
   onShowAchievements?: () => void;
   onShowLeadership?: () => void;
   onShowEconomy?: () => void;
@@ -70,6 +71,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   commendations = 0,
   settlementTier = 'selo',
   onThreatPress,
+  onOpenGovernmentHQ,
   onShowAchievements,
   onShowLeadership,
   onShowEconomy,
@@ -145,6 +147,12 @@ export const TopBar: React.FC<TopBarProps> = ({
             settlementTier={settlementTier}
             onPress={onThreatPress}
           />
+          {onOpenGovernmentHQ && (
+            <TouchableOpacity onPress={onOpenGovernmentHQ} style={styles.hqBtn} activeOpacity={0.7}>
+              <Text style={styles.hqBtnLabel}>ГОСПЛАН</Text>
+              <Text style={styles.hqBtnSub}>HQ</Text>
+            </TouchableOpacity>
+          )}
           {onShowAchievements && (
             <TouchableOpacity onPress={onShowAchievements} style={styles.achBtn} activeOpacity={0.7}>
               <Text style={styles.achBtnText}>{'\u2605'}</Text>
@@ -547,6 +555,30 @@ const styles = StyleSheet.create({
   },
   moreBtnTextActive: {
     color: Colors.sovietGold,
+  },
+  hqBtn: {
+    borderLeftWidth: 1,
+    borderLeftColor: '#555',
+    borderRightWidth: 1,
+    borderRightColor: '#555',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    alignItems: 'center',
+    backgroundColor: 'rgba(180, 0, 0, 0.15)',
+  },
+  hqBtnLabel: {
+    fontSize: 9,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.sovietGold,
+    letterSpacing: 1,
+  },
+  hqBtnSub: {
+    fontSize: 11,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.sovietRed,
+    letterSpacing: 2,
   },
   aiBadge: {
     backgroundColor: Colors.termGreen,
