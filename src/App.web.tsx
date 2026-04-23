@@ -35,6 +35,7 @@ import { gameState } from './engine/GameState';
 import { clearToast, getToast, setSpeed, showAdvisor, showToast } from './engine/helpers';
 import type { RehabilitationData } from './game/engine/types';
 import type { EraDefinition } from './game/era';
+import { ERA_DEFINITIONS } from './game/era';
 import type { TallyData } from './game/GameTally';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
 import { useGameSnapshot } from './hooks/useGameState';
@@ -939,6 +940,7 @@ const App: React.FC = () => {
               unreadNotifications={unreadNotifications}
               onOpenGovernmentHQ={openGovernmentHQ}
               autopilot={getEngine()?.getAgentManager().isAutopilot() ?? false}
+              eraName={ERA_DEFINITIONS[snap.currentEra as keyof typeof ERA_DEFINITIONS]?.name ?? snap.currentEra}
             />
 
             <QuotaHUD

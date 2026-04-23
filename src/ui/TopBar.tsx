@@ -55,6 +55,8 @@ export interface TopBarProps {
   onShowNotifications?: () => void;
   unreadNotifications?: number;
   autopilot?: boolean;
+  /** Current era display name, e.g. "Revolution". Rendered with testID="era-label" for E2E. */
+  eraName?: string;
 }
 
 /** Minimal top bar: food, timber, population, date, threat indicator, speed controls, overflow menu. */
@@ -96,6 +98,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onShowNotifications,
   unreadNotifications = 0,
   autopilot = false,
+  eraName = '',
 }) => {
   const [showOverflow, setShowOverflow] = useState(false);
   const { isCompact } = useResponsive();
@@ -293,6 +296,10 @@ export const TopBar: React.FC<TopBarProps> = ({
           </View>
         </>
       )}
+      {/* Accessibility + E2E anchor: era name readable via testID without visual clutter */}
+      <Text testID="era-label" style={styles.eraAccessibleLabel}>
+        {eraName.toUpperCase()}
+      </Text>
     </View>
   );
 };
@@ -672,5 +679,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#ccc',
     letterSpacing: 1,
+  },
+  /** Visually hidden — exists only as an E2E testID anchor for the current era name. */
+  eraAccessibleLabel: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    overflow: 'hidden',
+    opacity: 0,
   },
 });
