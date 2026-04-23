@@ -299,6 +299,77 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     weight: 1.0,
   },
 
+  {
+    id: 'postwar_housing_crisis',
+    title: 'POSTWAR HOUSING SHORTAGE',
+    description:
+      'Twenty-three families have been assigned to a building with capacity for eight. ' +
+      'A commission has determined that a family of four can live in fourteen square meters ' +
+      'if they breathe in shifts. The commission does not live in fourteen square meters.',
+    pravdaHeadline: 'COLLECTIVE LIVING ARRANGEMENTS FOSTER SOCIALIST SOLIDARITY',
+    category: 'economic',
+    severity: 'major',
+    effects: (gs) => ({
+      pop: -Math.min(4, Math.floor(gs.pop * 0.04)),
+      food: -10,
+    }),
+    condition: (gs) => gs.pop > 25,
+    eraFilter: ['reconstruction'],
+    weight: 1.3,
+  },
+  {
+    id: 'lysenko_decree',
+    title: 'LYSENKOIST AGRICULTURAL DECREE',
+    description:
+      'A new agricultural decree arrives from Moscow, authored by Academician Lysenko. ' +
+      'Planting must now follow the principles of vernalization and the inheritance of ' +
+      'acquired characteristics. The crops have not been informed. The crops are unmoved by theory.',
+    pravdaHeadline: 'PROGRESSIVE AGROBIOLOGY TO TRANSFORM SETTLEMENT YIELDS',
+    category: 'economic',
+    severity: 'major',
+    effects: (gs) => ({
+      food: -Math.min(35, Math.floor(gs.food * 0.25)),
+    }),
+    condition: (gs) => gs.food > 20,
+    eraFilter: ['reconstruction'],
+    weight: 1.1,
+  },
+  {
+    id: 'late_stalinist_purge',
+    title: 'LATE STALINIST PURGE WAVE',
+    description:
+      'A new purge wave arrives, this one targeting "rootless cosmopolitans," ' +
+      'doctors, and anyone who has ever expressed admiration for foreign shoes. ' +
+      'The settlement engineer was arrested this morning. He wore good shoes. ' +
+      'His successor will not wear good shoes.',
+    pravdaHeadline: 'VIGILANT AUTHORITIES UNCOVER ANTI-SOCIALIST CONSPIRACY',
+    category: 'political',
+    severity: 'catastrophic',
+    effects: (gs) => ({
+      pop: -Math.min(10, Math.floor(gs.pop * 0.08)),
+      money: -25,
+    }),
+    condition: (gs) => gs.pop > 30 && gs.date.year >= 1952,
+    eraFilter: ['reconstruction'],
+    weight: 0.9,
+  },
+  {
+    id: 'destalinization_signal',
+    title: 'UNCERTAIN SIGNALS FROM MOSCOW',
+    description:
+      'The dictator has died. Nobody says this directly. The official communiqués ' +
+      'contain unusual pauses. Portraits are being quietly removed from prominent walls ' +
+      'and repositioned to slightly less prominent walls. The future is unknowable. ' +
+      'This has always been true. Now it feels different.',
+    pravdaHeadline: 'NATION MOURNS; COLLECTIVE RESOLVE REMAINS UNSHAKEN',
+    category: 'political',
+    severity: 'minor',
+    effects: { vodka: 8, food: 5 },
+    condition: (gs) => gs.date.year >= 1953,
+    eraFilter: ['reconstruction'],
+    weight: 0.7,
+  },
+
   // ── THE THAW (1953-1964) ───────────────────────────────
 
   {
