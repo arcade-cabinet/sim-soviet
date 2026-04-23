@@ -53,7 +53,6 @@ import {
   setGameSpeed,
   setPaused,
   useBuildingInspector,
-  useBuildingPanel,
   useCitizenDossierIndex,
   useCursorTooltip,
   useGovernmentHQ,
@@ -112,6 +111,7 @@ import { ViewportFrame } from './ui/ViewportFrame';
 import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
+import { assetUrl } from './utils/assetPath';
 
 // WorkerStatusBar removed — Phase 1 minimal HUD
 
@@ -351,7 +351,9 @@ const App: React.FC = () => {
   const citizenDossierIdx = useCitizenDossierIndex();
   const cursorTooltip = useCursorTooltip();
   const politicalPanelFromScene = usePoliticalPanel();
-  useBuildingPanel();
+  // Note: useBuildingPanel() is NOT called here — BuildingPanel manages its own
+  // subscription internally. Calling it at the App root caused unnecessary full-tree
+  // re-renders on every building selection/deselection.
   const showGovHQ = useGovernmentHQ();
 
   // ── Notification history (store-driven unread count) ──
@@ -1166,9 +1168,92 @@ const styles = StyleSheet.create({
 
 export default App;
 
-// Service worker registration (production only)
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+// Service worker registration (production only).
+//
+// The SW injects COOP/COEP headers into every response, making the page
+// cross-origin isolated so SharedArrayBuffer (required by expo-sqlite/wa-sqlite)
+// is available. On first load the SW isn't yet controlling the page, so we
+// wait for it to become active and then do ONE hard reload. After that reload
+// crossOriginIsolated is true and SQLite works normally.
+//
+// Two safeguards prevent problem reloads:
+//  1. navigator.webdriver guard — skip SW entirely in Playwright/Puppeteer (CI
+//     smoke tests), where the static server never sends COOP/COEP headers and
+//     crossOriginIsolated is always false, so a reload would loop or abort.
+//  2. sessionStorage guard — allow at most one reload attempt per tab session.
+//     If crossOriginIsolated is still false after the first reload the SW is
+//     failing to inject headers; further reloads won't help and we log a warning.
+if (
+  typeof window !== 'undefined' &&
+  'serviceWorker' in navigator &&
+  process.env.NODE_ENV === 'production' &&
+  !navigator.webdriver
+) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sim-soviet/sw.js').catch(() => {});
+    navigator.serviceWorker
+      .register(assetUrl('sw.js'))
+      .then((registration) => {
+        // If already cross-origin isolated (SW was already active), nothing to do.
+        if (crossOriginIsolated) return;
+
+        // Wait for the SW to become active, then reload once so the page gets
+        // served with the COOP/COEP headers the SW injects.
+        const waitAndReload = (sw: ServiceWorker) => {
+          if (sw.state === 'activated') {
+            // Prevent reload loops: only reload if not yet isolated AND we
+            // have not already attempted a reload this session.
+            if (!crossOriginIsolated) {
+              if (sessionStorage.getItem('coi-reload-attempted')) {
+                console.warn(
+                  '[SW] crossOriginIsolated is still false after COI reload — SharedArrayBuffer may be unavailable.',
+                );
+              } else {
+                sessionStorage.setItem('coi-reload-attempted', '1');
+                window.location.reload();
+              }
+            }
+            return;
+          }
+          sw.addEventListener('statechange', () => {
+            if (sw.state === 'activated' && !crossOriginIsolated) {
+              if (sessionStorage.getItem('coi-reload-attempted')) {
+                console.warn(
+                  '[SW] crossOriginIsolated is still false after COI reload — SharedArrayBuffer may be unavailable.',
+                );
+              } else {
+                sessionStorage.setItem('coi-reload-attempted', '1');
+                window.location.reload();
+              }
+            }
+          });
+        };
+
+        if (registration.active) {
+          // SW was already active but page not isolated — reload immediately
+          // (subject to the sessionStorage one-shot guard).
+          if (!crossOriginIsolated) {
+            if (sessionStorage.getItem('coi-reload-attempted')) {
+              console.warn(
+                '[SW] crossOriginIsolated is still false after COI reload — SharedArrayBuffer may be unavailable.',
+              );
+            } else {
+              sessionStorage.setItem('coi-reload-attempted', '1');
+              window.location.reload();
+            }
+          }
+        } else if (registration.installing) {
+          waitAndReload(registration.installing);
+        } else if (registration.waiting) {
+          waitAndReload(registration.waiting);
+        }
+
+        // Also handle future updates.
+        registration.addEventListener('updatefound', () => {
+          if (registration.installing) {
+            waitAndReload(registration.installing);
+          }
+        });
+      })
+      .catch(() => {});
   });
 }
