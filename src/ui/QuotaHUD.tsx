@@ -50,14 +50,16 @@ export const QuotaHUD: React.FC<QuotaHUDProps> = ({ targetType, targetAmount, cu
 
       <View style={styles.row}>
         <Text style={styles.label}>TARGET:</Text>
-        <Text style={styles.targetValue}>
+        <Text testID="quota-target" style={styles.targetValue}>
           {targetType.toUpperCase()} {targetAmount}
         </Text>
       </View>
 
       <View style={styles.row}>
         <Text style={styles.label}>DEADLINE:</Text>
-        <Text style={styles.deadlineValue}>{deadlineYear}</Text>
+        <Text testID="quota-deadline" style={styles.deadlineValue}>
+          {deadlineYear}
+        </Text>
       </View>
 
       <View style={styles.barTrack}>

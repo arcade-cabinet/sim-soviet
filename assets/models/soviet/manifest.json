@@ -338,90 +338,6 @@
       "role": "power",
       "texture": "none"
     },
-    "colony-habitat-a": {
-      "file": "models/soviet/colony-habitat-a.glb",
-      "source": "Quaternius/Ultimate Spaceships/Bob",
-      "role": "colony_housing",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-habitat-b": {
-      "file": "models/soviet/colony-habitat-b.glb",
-      "source": "Quaternius/Ultimate Spaceships/Pancake",
-      "role": "colony_housing",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-habitat-c": {
-      "file": "models/soviet/colony-habitat-c.glb",
-      "source": "Quaternius/Ultimate Spaceships/Imperial",
-      "role": "colony_housing",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-workshop": {
-      "file": "models/soviet/colony-workshop.glb",
-      "source": "Quaternius/Ultimate Spaceships/Striker",
-      "role": "colony_industry",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-factory": {
-      "file": "models/soviet/colony-factory.glb",
-      "source": "Quaternius/Ultimate Spaceships/Dispatcher",
-      "role": "colony_industry",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-megafactory": {
-      "file": "models/soviet/colony-megafactory.glb",
-      "source": "Quaternius/Ultimate Spaceships/Challenger",
-      "role": "colony_industry",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-synthplant": {
-      "file": "models/soviet/colony-synthplant.glb",
-      "source": "Quaternius/Ultimate Modular Sci-Fi/Props_Pod",
-      "role": "colony_industry",
-      "texture": "none",
-      "era": "the_eternal"
-    },
-    "colony-hydroponics": {
-      "file": "models/soviet/colony-hydroponics.glb",
-      "source": "Quaternius/Ultimate Modular Sci-Fi/Props_Pod",
-      "role": "colony_agriculture",
-      "texture": "none",
-      "era": "the_eternal"
-    },
-    "colony-reactor": {
-      "file": "models/soviet/colony-reactor.glb",
-      "source": "Quaternius/Ultimate Spaceships/Omen",
-      "role": "colony_power",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-fusion": {
-      "file": "models/soviet/colony-fusion.glb",
-      "source": "Quaternius/Ultimate Spaceships/Omen",
-      "role": "colony_power",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-antenna": {
-      "file": "models/soviet/colony-antenna.glb",
-      "source": "Quaternius/Ultimate Modular Sci-Fi/Props_Computer",
-      "role": "colony_comms",
-      "texture": "none",
-      "era": "the_eternal"
-    },
-    "colony-command": {
-      "file": "models/soviet/colony-command.glb",
-      "source": "Quaternius/Ultimate Spaceships/Imperial",
-      "role": "colony_government",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
     "grave-cross-a": {
       "file": "models/soviet/grave-cross-a.glb",
       "source": "Graveyard/Cross_1",
@@ -513,118 +429,6 @@
       "role": "industrial_infrastructure",
       "texture": "embedded",
       "era": "industrialization"
-    },
-    "alien-fauna-flying": {
-      "file": "models/soviet/alien-fauna-flying.glb",
-      "source": "AlienPackVol1/flyingalien",
-      "role": "alien_fauna_flying",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "alien-fauna-scout": {
-      "file": "models/soviet/alien-fauna-scout.glb",
-      "source": "AlienPackVol1/scout",
-      "role": "alien_fauna_ground",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "alien-fauna-spider": {
-      "file": "models/soviet/alien-fauna-spider.glb",
-      "source": "AlienPackVol1/spider",
-      "role": "alien_fauna_ground",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "alien-fauna-tentacle": {
-      "file": "models/soviet/alien-fauna-tentacle.glb",
-      "source": "AlienPackVol1/tentakel",
-      "role": "alien_fauna_ground",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "alien-threat-soldier": {
-      "file": "models/soviet/alien-threat-soldier.glb",
-      "source": "AlienPackVol1/soldier",
-      "role": "alien_threat",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "space-module": {
-      "file": "models/soviet/space-module.glb",
-      "source": "Quaternius/Ultimate Space Kit/Environment/Building_L",
-      "role": "space_module",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "launch-pad": {
-      "file": "models/soviet/launch-pad.glb",
-      "source": "Quaternius/Ultimate Space Kit/Environment/Base_Large",
-      "role": "launch_pad",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-dome": {
-      "file": "models/soviet/colony-dome.glb",
-      "source": "Quaternius/Ultimate Space Kit/Environment/GeodesicDome",
-      "role": "colony_dome",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-rover": {
-      "file": "models/soviet/colony-rover.glb",
-      "source": "Quaternius/Ultimate Space Kit/Vehicles/Rover_1",
-      "role": "colony_vehicle",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "comms-array": {
-      "file": "models/soviet/comms-array.glb",
-      "source": "Quaternius/Ultimate Space Kit/Environment/Roof_Radar",
-      "role": "comms_array",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "colony-solar": {
-      "file": "models/soviet/colony-solar.glb",
-      "source": "Quaternius/Ultimate Space Kit/Environment/SolarPanel_Structure",
-      "role": "colony_power",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "spacestation-01": {
-      "file": "models/soviet/spacestation-01.glb",
-      "source": "spacestations_source/station01",
-      "role": "colony_housing",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "spacestation-02": {
-      "file": "models/soviet/spacestation-02.glb",
-      "source": "spacestations_source/station02",
-      "role": "colony_industry",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "spacestation-03": {
-      "file": "models/soviet/spacestation-03.glb",
-      "source": "spacestations_source/station03",
-      "role": "colony_housing",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "spacestation-04": {
-      "file": "models/soviet/spacestation-04.glb",
-      "source": "spacestations_source/station04",
-      "role": "colony_industry",
-      "texture": "embedded",
-      "era": "the_eternal"
-    },
-    "spacestation-06": {
-      "file": "models/soviet/spacestation-06.glb",
-      "source": "spacestations_source/station06",
-      "role": "colony_government",
-      "texture": "embedded",
-      "era": "the_eternal"
     }
   },
   "roles": {
@@ -637,15 +441,46 @@
       "workers-house-b",
       "workers-house-c"
     ],
-    "government": ["government-hq", "ministry-office", "kgb-office"],
-    "industry": ["factory-office", "warehouse", "bread-factory", "vodka-distillery"],
-    "services": ["polyclinic", "school", "post-office", "hospital", "fire-station"],
-    "military": ["guard-post", "barracks", "gulag-admin"],
-    "culture": ["workers-club", "cultural-palace"],
-    "power": ["power-station", "cooling-tower"],
-    "agriculture": ["collective-farm-hq"],
-    "propaganda": ["radio-station"],
-    "transport": ["train-station"],
+    "government": [
+      "government-hq",
+      "ministry-office",
+      "kgb-office"
+    ],
+    "industry": [
+      "factory-office",
+      "warehouse",
+      "bread-factory",
+      "vodka-distillery"
+    ],
+    "services": [
+      "polyclinic",
+      "school",
+      "post-office",
+      "hospital",
+      "fire-station"
+    ],
+    "military": [
+      "guard-post",
+      "barracks",
+      "gulag-admin"
+    ],
+    "culture": [
+      "workers-club",
+      "cultural-palace"
+    ],
+    "power": [
+      "power-station",
+      "cooling-tower"
+    ],
+    "agriculture": [
+      "collective-farm-hq"
+    ],
+    "propaganda": [
+      "radio-station"
+    ],
+    "transport": [
+      "train-station"
+    ],
     "modular": [
       "wall-window",
       "wall-window-sill",
@@ -672,26 +507,93 @@
       "roof-antenna",
       "roof-pipe"
     ],
-    "utility": ["concrete-block"],
-    "environment": ["fence", "fence-low"],
-    "colony_housing": ["colony-habitat-a", "colony-habitat-b", "colony-habitat-c", "spacestation-01", "spacestation-03"],
-    "colony_industry": ["colony-workshop", "colony-factory", "colony-megafactory", "colony-synthplant", "spacestation-02", "spacestation-04"],
-    "colony_agriculture": ["colony-hydroponics"],
-    "colony_power": ["colony-reactor", "colony-fusion", "colony-solar"],
-    "colony_comms": ["colony-antenna", "comms-array"],
-    "colony_government": ["colony-command", "spacestation-06"],
-    "space_module": ["space-module"],
-    "launch_pad": ["launch-pad"],
-    "colony_dome": ["colony-dome"],
-    "colony_vehicle": ["colony-rover"],
-    "comms_array": ["comms-array"],
-    "mass_grave": ["grave-cross-a", "grave-cross-b", "grave-cross-c", "grave-stone-a", "grave-stone-b", "grave-mound"],
-    "industrial_heavy": ["industrial-furnace", "pipe-system", "chimney-stack", "industrial-machinery"],
-    "industrial_power": ["power-equipment"],
-    "industrial_storage": ["industrial-warehouse", "storage-tank"],
-    "industrial_infrastructure": ["water-tower"],
-    "alien_fauna_flying": ["alien-fauna-flying"],
-    "alien_fauna_ground": ["alien-fauna-scout", "alien-fauna-spider", "alien-fauna-tentacle"],
-    "alien_threat": ["alien-threat-soldier"]
+    "utility": [
+      "concrete-block"
+    ],
+    "environment": [
+      "fence",
+      "fence-low"
+    ],
+    "colony_housing": [
+      "colony-habitat-a",
+      "colony-habitat-b",
+      "colony-habitat-c",
+      "spacestation-01",
+      "spacestation-03"
+    ],
+    "colony_industry": [
+      "colony-workshop",
+      "colony-factory",
+      "colony-megafactory",
+      "colony-synthplant",
+      "spacestation-02",
+      "spacestation-04"
+    ],
+    "colony_agriculture": [
+      "colony-hydroponics"
+    ],
+    "colony_power": [
+      "colony-reactor",
+      "colony-fusion",
+      "colony-solar"
+    ],
+    "colony_comms": [
+      "colony-antenna",
+      "comms-array"
+    ],
+    "colony_government": [
+      "colony-command",
+      "spacestation-06"
+    ],
+    "space_module": [
+      "space-module"
+    ],
+    "launch_pad": [
+      "launch-pad"
+    ],
+    "colony_dome": [
+      "colony-dome"
+    ],
+    "colony_vehicle": [
+      "colony-rover"
+    ],
+    "comms_array": [
+      "comms-array"
+    ],
+    "mass_grave": [
+      "grave-cross-a",
+      "grave-cross-b",
+      "grave-cross-c",
+      "grave-stone-a",
+      "grave-stone-b",
+      "grave-mound"
+    ],
+    "industrial_heavy": [
+      "industrial-furnace",
+      "pipe-system",
+      "chimney-stack",
+      "industrial-machinery"
+    ],
+    "industrial_power": [
+      "power-equipment"
+    ],
+    "industrial_storage": [
+      "industrial-warehouse",
+      "storage-tank"
+    ],
+    "industrial_infrastructure": [
+      "water-tower"
+    ],
+    "alien_fauna_flying": [
+      "alien-fauna-flying"
+    ],
+    "alien_fauna_ground": [
+      "alien-fauna-scout",
+      "alien-fauna-spider",
+      "alien-fauna-tentacle"
+    ],
+    "alien_threat": [
+      "alien-threat-soldier"
+    ]
   }
 }

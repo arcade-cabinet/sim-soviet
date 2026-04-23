@@ -107,7 +107,7 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = (() => {
       modifiers: era.modifiers,
       constructionMethod: era.constructionMethod,
       constructionTimeMult: era.constructionTimeMult,
-      victoryCondition: buildCondition(era.victoryCondition),
+      // Era progression is purely year-driven; there are no per-era victory gates.
       failureCondition: buildCondition(era.failureCondition),
       introTitle: era.introTitle,
       introText: era.introText,

@@ -1543,18 +1543,6 @@ export class PoliticalAgent extends Vehicle {
         return;
       }
     }
-
-    // Check victory condition
-    if (era.victoryCondition) {
-      const won = era.victoryCondition.check(meta.gameMeta, res.resources);
-      if (won) {
-        deps.callbacks.onToast(`ERA VICTORY: ${era.name.toUpperCase()}`, 'warning');
-        deps.callbacks.onAdvisor(
-          `Congratulations, Comrade Director. You have completed the objectives for ${era.name}. ` +
-            `The Politburo acknowledges your adequate performance. Do not let it go to your head.`,
-        );
-      }
-    }
   }
 
   // =========================================================================

@@ -52,7 +52,11 @@
       "startYear": 1917,
       "endYear": 1922,
       "doctrine": "revolutionary",
-      "deliveryRates": { "food": 0.3, "vodka": 0.2, "money": 0.25 },
+      "deliveryRates": {
+        "food": 0.3,
+        "vodka": 0.2,
+        "money": 0.25
+      },
       "quotaEscalation": 1.0,
       "unlockedBuildings": [
         "workers-house-a",
@@ -81,7 +85,18 @@
       "failureCondition": {
         "description": "All citizens starve before the first plan begins",
         "rule": {
-          "and": [{ "resource": "population", "op": "<=", "value": 0 }, { "resource": "food", "op": "<=", "value": 0 }]
+          "and": [
+            {
+              "resource": "population",
+              "op": "<=",
+              "value": 0
+            },
+            {
+              "resource": "food",
+              "op": "<=",
+              "value": 0
+            }
+          ]
         }
       },
       "introTitle": "Assignment: Revolutionary Settlement",
@@ -94,7 +109,11 @@
       "startYear": 1922,
       "endYear": 1932,
       "doctrine": "industrialization",
-      "deliveryRates": { "food": 0.45, "vodka": 0.35, "money": 0.5 },
+      "deliveryRates": {
+        "food": 0.45,
+        "vodka": 0.35,
+        "money": 0.5
+      },
       "quotaEscalation": 1.2,
       "unlockedBuildings": [
         "workers-house-c",
@@ -118,18 +137,13 @@
       },
       "constructionMethod": "manual",
       "constructionTimeMult": 2.0,
-      "victoryCondition": {
-        "description": "Reach posyolok settlement tier with 100+ population",
-        "rule": {
-          "and": [
-            { "meta": "settlementTier", "op": "!=", "value": "selo" },
-            { "resource": "population", "op": ">=", "value": 100 }
-          ]
-        }
-      },
       "failureCondition": {
         "description": "Settlement abandoned during collectivization",
-        "rule": { "resource": "population", "op": "<=", "value": 0 }
+        "rule": {
+          "resource": "population",
+          "op": "<=",
+          "value": 0
+        }
       },
       "introTitle": "Assignment: Collectivization",
       "introText": "The land belongs to the people now. The people belong to the collective. The collective belongs to the Party. The Party belongs to history. History has not yet been written. You will write it. In triplicate. Collectivize the farms. Build the warehouses. The kulaks will resist. Resistance is also collectivized.",
@@ -141,7 +155,11 @@
       "startYear": 1932,
       "endYear": 1941,
       "doctrine": "industrialization",
-      "deliveryRates": { "food": 0.45, "vodka": 0.35, "money": 0.5 },
+      "deliveryRates": {
+        "food": 0.45,
+        "vodka": 0.35,
+        "money": 0.5
+      },
       "quotaEscalation": 1.3,
       "unlockedBuildings": ["factory-office", "rail-depot", "vodka-distillery", "radio-station", "gulag-admin"],
       "modifiers": {
@@ -154,13 +172,13 @@
       },
       "constructionMethod": "manual",
       "constructionTimeMult": 2.0,
-      "victoryCondition": {
-        "description": "Build a power station and factory with 150+ population",
-        "rule": { "resource": "population", "op": ">=", "value": 150 }
-      },
       "failureCondition": {
         "description": "Settlement abandoned during industrialization",
-        "rule": { "resource": "population", "op": "<=", "value": 0 }
+        "rule": {
+          "resource": "population",
+          "op": "<=",
+          "value": 0
+        }
       },
       "introTitle": "Assignment: First Five-Year Plan",
       "introText": "The Plan has arrived. It is ambitious. It is necessary. It is, technically, impossible given current resources, but impossibility is a bourgeois concept. You will build factories. The factories will build more factories. The second factories will build things that are not factories. What those things are has not been decided. Decide quickly. The Plan does not wait.",
@@ -172,7 +190,11 @@
       "startYear": 1941,
       "endYear": 1945,
       "doctrine": "wartime",
-      "deliveryRates": { "food": 0.6, "vodka": 0.5, "money": 0.65 },
+      "deliveryRates": {
+        "food": 0.6,
+        "vodka": 0.5,
+        "money": 0.65
+      },
       "quotaEscalation": 1.15,
       "unlockedBuildings": [],
       "modifiers": {
@@ -185,15 +207,13 @@
       },
       "constructionMethod": "mechanized",
       "constructionTimeMult": 1.0,
-      "victoryCondition": {
-        "description": "Survive to 1945 with at least 25 population",
-        "rule": {
-          "and": [{ "meta": "year", "op": ">=", "value": 1945 }, { "resource": "population", "op": ">=", "value": 25 }]
-        }
-      },
       "failureCondition": {
         "description": "Population reaches zero during the war",
-        "rule": { "resource": "population", "op": "<=", "value": 0 }
+        "rule": {
+          "resource": "population",
+          "op": "<=",
+          "value": 0
+        }
       },
       "introTitle": "Assignment: War Economy",
       "introText": "The Motherland is under attack. All resources are redirected to defense. Your citizens are also resources. They have been redirected. Food is rationed. Vodka is rationed. Hope is rationed but remains available in unlimited theoretical quantities. Your task is simple: survive. Everything else is a luxury. Luxuries have been suspended for the duration.",
@@ -205,7 +225,11 @@
       "startYear": 1945,
       "endYear": 1956,
       "doctrine": "reconstruction",
-      "deliveryRates": { "food": 0.25, "vodka": 0.2, "money": 0.3 },
+      "deliveryRates": {
+        "food": 0.25,
+        "vodka": 0.2,
+        "money": 0.3
+      },
       "quotaEscalation": 1.2,
       "unlockedBuildings": ["apartment-tower-a", "ministry-office", "train-station", "motor-pool"],
       "modifiers": {
@@ -218,15 +242,6 @@
       },
       "constructionMethod": "mechanized",
       "constructionTimeMult": 1.0,
-      "victoryCondition": {
-        "description": "Reach PGT settlement tier",
-        "rule": {
-          "or": [
-            { "meta": "settlementTier", "op": "==", "value": "pgt" },
-            { "meta": "settlementTier", "op": "==", "value": "gorod" }
-          ]
-        }
-      },
       "introTitle": "Assignment: Post-War Reconstruction",
       "introText": "The war is over. The victory is complete. The rubble is also complete. There is a great deal of rubble. Your task is to transform the rubble into shelter, workshops, and a functioning Soviet settlement. The settlement should become a symbol of Soviet resilience. The symbol should be made of concrete. Everything should be made of concrete. Concrete is the material of the future. The future is grey.",
       "briefingFlavor": "Rebuilding from ashes. Stalinist architecture. Paranoia as a management style."
@@ -237,7 +252,11 @@
       "startYear": 1956,
       "endYear": 1982,
       "doctrine": "thaw",
-      "deliveryRates": { "food": 0.25, "vodka": 0.15, "money": 0.25 },
+      "deliveryRates": {
+        "food": 0.25,
+        "vodka": 0.15,
+        "money": 0.25
+      },
       "quotaEscalation": 1.1,
       "unlockedBuildings": ["apartment-tower-b", "apartment-tower-c", "polyclinic"],
       "modifiers": {
@@ -250,16 +269,6 @@
       },
       "constructionMethod": "industrial",
       "constructionTimeMult": 0.6,
-      "victoryCondition": {
-        "description": "Reach 300+ population with positive food and vodka",
-        "rule": {
-          "and": [
-            { "resource": "population", "op": ">=", "value": 300 },
-            { "resource": "food", "op": ">", "value": 0 },
-            { "resource": "vodka", "op": ">", "value": 0 }
-          ]
-        }
-      },
       "introTitle": "Assignment: De-Stalinization",
       "introText": "A new era begins. The previous era has been reclassified as \"overly enthusiastic.\" Certain portraits are being removed from certain walls. Certain names are being removed from certain cities. Certain people are being removed from certain places they should not have been in the first place. Things are warming up. The permafrost remains, but the political climate thaws. Temporarily. Everything is temporarily.",
       "briefingFlavor": "Khrushchev to Brezhnev. De-Stalinization, the space race, then creeping stagnation."
@@ -270,7 +279,11 @@
       "startYear": 1982,
       "endYear": 1991,
       "doctrine": "stagnation",
-      "deliveryRates": { "food": 0.35, "vodka": 0.3, "money": 0.4 },
+      "deliveryRates": {
+        "food": 0.35,
+        "vodka": 0.3,
+        "money": 0.4
+      },
       "quotaEscalation": 1.05,
       "unlockedBuildings": ["apartment-tower-d"],
       "modifiers": {
@@ -287,8 +300,16 @@
         "description": "Infrastructure collapses: 0 power with 200+ population",
         "rule": {
           "and": [
-            { "resource": "power", "op": "<=", "value": 0 },
-            { "resource": "population", "op": ">=", "value": 200 }
+            {
+              "resource": "power",
+              "op": "<=",
+              "value": 0
+            },
+            {
+              "resource": "population",
+              "op": ">=",
+              "value": 200
+            }
           ]
         }
       },

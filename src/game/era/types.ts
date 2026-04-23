@@ -81,8 +81,6 @@ export interface EraDefinition {
   /** Multiplier on building construction time (lower = faster) */
   constructionTimeMult: number;
 
-  /** Victory condition specific to this era */
-  victoryCondition?: EraCondition;
   /** Failure condition specific to this era */
   failureCondition?: EraCondition;
 
