@@ -45,14 +45,25 @@ export const DesignTokens = {
   },
 } as const;
 
+/**
+ * Font base URL — mirrors the same logic as assetUrl() in src/utils/assetPath.ts.
+ * On local dev (NODE_ENV !== 'production') Metro serves assets from the root,
+ * so no prefix is needed. GitHub Pages builds use the /sim-soviet/ prefix set
+ * by expo.experiments.baseUrl in app.json.
+ */
+const FONT_BASE = process.env.NODE_ENV === 'production' ? '/sim-soviet' : '';
+
+function fontSrc(filename: string): string {
+  return `url('${FONT_BASE}/assets/fonts/${filename}') format('woff2')`;
+}
+
 const fontFaces = `
 @font-face {
   font-family: 'IBM Plex Mono';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/sim-soviet/assets/fonts/ibm-plex-mono-latin-400.woff2') format('woff2'),
-       url('/assets/fonts/ibm-plex-mono-latin-400.woff2') format('woff2');
+  src: ${fontSrc('ibm-plex-mono-latin-400.woff2')};
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
@@ -60,8 +71,7 @@ const fontFaces = `
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('/sim-soviet/assets/fonts/ibm-plex-mono-latin-500.woff2') format('woff2'),
-       url('/assets/fonts/ibm-plex-mono-latin-500.woff2') format('woff2');
+  src: ${fontSrc('ibm-plex-mono-latin-500.woff2')};
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
@@ -69,8 +79,7 @@ const fontFaces = `
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('/sim-soviet/assets/fonts/ibm-plex-mono-latin-600.woff2') format('woff2'),
-       url('/assets/fonts/ibm-plex-mono-latin-600.woff2') format('woff2');
+  src: ${fontSrc('ibm-plex-mono-latin-600.woff2')};
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
@@ -78,8 +87,7 @@ const fontFaces = `
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('/sim-soviet/assets/fonts/ibm-plex-mono-latin-700.woff2') format('woff2'),
-       url('/assets/fonts/ibm-plex-mono-latin-700.woff2') format('woff2');
+  src: ${fontSrc('ibm-plex-mono-latin-700.woff2')};
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
@@ -87,8 +95,7 @@ const fontFaces = `
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url('/sim-soviet/assets/fonts/oswald-latin-variable.woff2') format('woff2'),
-       url('/assets/fonts/oswald-latin-variable.woff2') format('woff2');
+  src: ${fontSrc('oswald-latin-variable.woff2')};
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 `;
