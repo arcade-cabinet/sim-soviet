@@ -139,7 +139,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
         </Text>
 
         {/* Current model name */}
-        {currentModel && (
+        {!!currentModel && (
           <Text style={styles.currentModel} numberOfLines={1}>
             {'\u25B6'} {currentModel}
           </Text>

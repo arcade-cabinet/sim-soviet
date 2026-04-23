@@ -33,7 +33,7 @@ function makeResources(overrides: Partial<Resources> = {}): Resources {
 function makeMeta(overrides: Partial<GameMeta> = {}): GameMeta {
   return {
     seed: 'test',
-    date: { year: 1922, month: 10, tick: 0 },
+    date: { year: 1917, month: 10, tick: 0 },
     quota: { type: 'food', target: 300, current: 0, deadlineYear: 1927 },
     selectedTool: 'select',
     gameOver: null,
@@ -192,15 +192,15 @@ describe('TutorialSystem', () => {
       expect(result).toBeNull();
     });
 
-    it('triggers era_transition when year >= 1928', () => {
+    it('triggers era_transition when year >= 1922', () => {
       const meta = makeMeta({
-        date: { year: 1928, month: 10, tick: 0 },
+        date: { year: 1922, month: 10, tick: 0 },
         quota: { type: 'food', target: 300, current: 0, deadlineYear: 1927 },
       });
       const res = makeResources({ food: 60 });
 
       // Complete all prior milestones by ticking with appropriate state
-      const winterMeta = { ...meta, date: { year: 1922, month: 11, tick: 0 } };
+      const winterMeta = { ...meta, date: { year: 1917, month: 11, tick: 0 } };
       tutorial.tick(0, winterMeta, res, 0); // welcome
       tutorial.tick(1, winterMeta, res, 1); // first_building
       tutorial.tick(30, winterMeta, res, 1); // build_farm
@@ -210,15 +210,15 @@ describe('TutorialSystem', () => {
       tutorial.tick(181, winterMeta, res, 1); // first_winter
       tutorial.tick(360, winterMeta, res, 1); // vodka_economy
 
-      // Now use meta with year 1923 for year-based milestones
-      const yearMeta = { ...meta, date: { year: 1923, month: 5, tick: 0 } };
+      // Now use meta with year 1918 for year-based milestones
+      const yearMeta = { ...meta, date: { year: 1918, month: 5, tick: 0 } };
       tutorial.tick(361, yearMeta, res, 1); // the_quota
       tutorial.tick(540, yearMeta, res, 1); // infrastructure
       tutorial.tick(541, yearMeta, res, 1); // first_year_complete
       tutorial.tick(720, yearMeta, res, 1); // government_buildings
       tutorial.tick(1080, yearMeta, res, 1); // cultural_progress
 
-      // Now trigger era transition
+      // Now trigger era transition (revolution era ends at 1922)
       const result = tutorial.tick(2000, meta, res, 1);
       expect(result).not.toBeNull();
       expect(result!.id).toBe('era_transition');
@@ -226,11 +226,11 @@ describe('TutorialSystem', () => {
 
     it('deactivates tutorial on era_transition', () => {
       const meta = makeMeta({
-        date: { year: 1928, month: 10, tick: 0 },
+        date: { year: 1922, month: 10, tick: 0 },
       });
       const res = makeResources({ food: 60 });
       const winterMeta = makeMeta({
-        date: { year: 1922, month: 11, tick: 0 },
+        date: { year: 1917, month: 11, tick: 0 },
       });
 
       // Complete all milestones
@@ -242,7 +242,7 @@ describe('TutorialSystem', () => {
       tutorial.tick(180, winterMeta, res, 1);
       tutorial.tick(181, winterMeta, res, 1);
       tutorial.tick(360, winterMeta, res, 1);
-      const yearMeta = makeMeta({ date: { year: 1923, month: 5, tick: 0 } });
+      const yearMeta = makeMeta({ date: { year: 1918, month: 5, tick: 0 } });
       tutorial.tick(361, yearMeta, res, 1);
       tutorial.tick(540, yearMeta, res, 1);
       tutorial.tick(541, yearMeta, res, 1);
@@ -250,7 +250,7 @@ describe('TutorialSystem', () => {
       tutorial.tick(1080, yearMeta, res, 1);
 
       expect(tutorial.isActive()).toBe(true);
-      tutorial.tick(2000, meta, res, 1); // era_transition
+      tutorial.tick(2000, meta, res, 1); // era_transition (year >= 1922)
       expect(tutorial.isActive()).toBe(false);
     });
 
@@ -371,75 +371,23 @@ describe('TutorialSystem', () => {
   });
 
   describe('UI element revelation', () => {
-    it('reveals build_button on welcome', () => {
-      const meta = makeMeta();
-      const res = makeResources();
+    // Progressive UI disclosure was removed — isUIRevealed always returns true.
+    // The method and UIElement type are retained for API compatibility.
 
-      expect(tutorial.isUIRevealed('build_button')).toBe(false);
-      tutorial.tick(0, meta, res, 0);
-      expect(tutorial.isUIRevealed('build_button')).toBe(true);
-    });
-
-    it('reveals resource_bar on first_building', () => {
-      const meta = makeMeta();
-      const res = makeResources();
-
-      tutorial.tick(0, meta, res, 0); // welcome
-      expect(tutorial.isUIRevealed('resource_bar')).toBe(false);
-      tutorial.tick(1, meta, res, 1); // first_building
-      expect(tutorial.isUIRevealed('resource_bar')).toBe(true);
-    });
-
-    it('reveals speed_controls on first_harvest', () => {
-      const meta = makeMeta();
-      const res = makeResources({ food: 60 });
-
-      tutorial.tick(0, meta, res, 0);
-      tutorial.tick(1, meta, res, 1);
-      tutorial.tick(30, meta, res, 1);
-
-      expect(tutorial.isUIRevealed('speed_controls')).toBe(false);
-      tutorial.tick(31, meta, res, 1); // first_harvest
-      expect(tutorial.isUIRevealed('speed_controls')).toBe(true);
-    });
-
-    it('reveals quota_display on the_quota', () => {
-      const winterMeta = makeMeta({ date: { year: 1922, month: 11, tick: 0 } });
-      const res = makeResources({ food: 60 });
-
-      tutorial.tick(0, winterMeta, res, 0);
-      tutorial.tick(1, winterMeta, res, 1);
-      tutorial.tick(30, winterMeta, res, 1);
-      tutorial.tick(31, winterMeta, res, 1);
-      tutorial.tick(90, winterMeta, res, 1);
-      tutorial.tick(180, winterMeta, res, 1);
-      tutorial.tick(181, winterMeta, res, 1); // first_winter
-      tutorial.tick(360, winterMeta, res, 1); // vodka_economy
-
-      expect(tutorial.isUIRevealed('quota_display')).toBe(false);
-      tutorial.tick(361, winterMeta, res, 1); // the_quota
-      expect(tutorial.isUIRevealed('quota_display')).toBe(true);
-    });
-
-    it('reveals hamburger_menu and pravda_ticker on infrastructure', () => {
-      const winterMeta = makeMeta({ date: { year: 1922, month: 11, tick: 0 } });
-      const res = makeResources({ food: 60 });
-
-      tutorial.tick(0, winterMeta, res, 0);
-      tutorial.tick(1, winterMeta, res, 1);
-      tutorial.tick(30, winterMeta, res, 1);
-      tutorial.tick(31, winterMeta, res, 1);
-      tutorial.tick(90, winterMeta, res, 1);
-      tutorial.tick(180, winterMeta, res, 1);
-      tutorial.tick(181, winterMeta, res, 1);
-      tutorial.tick(360, winterMeta, res, 1);
-      tutorial.tick(361, winterMeta, res, 1);
-
-      expect(tutorial.isUIRevealed('hamburger_menu')).toBe(false);
-      expect(tutorial.isUIRevealed('pravda_ticker')).toBe(false);
-      tutorial.tick(540, winterMeta, res, 1); // infrastructure
-      expect(tutorial.isUIRevealed('hamburger_menu')).toBe(true);
-      expect(tutorial.isUIRevealed('pravda_ticker')).toBe(true);
+    it('isUIRevealed always returns true (UI disclosure removed)', () => {
+      const elements: UIElement[] = [
+        'build_button',
+        'resource_bar',
+        'speed_controls',
+        'quota_display',
+        'hamburger_menu',
+        'pravda_ticker',
+        'settlement_badge',
+        'personnel_file',
+      ];
+      for (const el of elements) {
+        expect(tutorial.isUIRevealed(el)).toBe(true);
+      }
     });
 
     it('all UI elements revealed when tutorial is skipped', () => {
@@ -473,8 +421,8 @@ describe('TutorialSystem', () => {
       expect(tutorial.isBuildingUnlocked('nonexistent')).toBe(true);
     });
 
-    it('opens all UI gates', () => {
-      tutorial.skip();
+    it('isUIRevealed returns true regardless (UI disclosure removed)', () => {
+      // isUIRevealed always returns true — no progressive UI gating
       expect(tutorial.isUIRevealed('build_button')).toBe(true);
       expect(tutorial.isUIRevealed('quota_display')).toBe(true);
       expect(tutorial.isUIRevealed('personnel_file')).toBe(true);
@@ -505,10 +453,10 @@ describe('TutorialSystem', () => {
     });
 
     it('returns 1 when all milestones completed', () => {
-      const winterMeta = makeMeta({ date: { year: 1922, month: 11, tick: 0 } });
-      const transitionMeta = makeMeta({ date: { year: 1928, month: 10, tick: 0 } });
+      const winterMeta = makeMeta({ date: { year: 1917, month: 11, tick: 0 } });
+      const transitionMeta = makeMeta({ date: { year: 1922, month: 10, tick: 0 } });
       const res = makeResources({ food: 60 });
-      const yearMeta = makeMeta({ date: { year: 1923, month: 5, tick: 0 } });
+      const yearMeta = makeMeta({ date: { year: 1918, month: 5, tick: 0 } });
 
       tutorial.tick(0, winterMeta, res, 0);
       tutorial.tick(1, winterMeta, res, 1);
@@ -563,6 +511,7 @@ describe('TutorialSystem', () => {
       expect(restored.isActive()).toBe(tutorial.isActive());
       expect(restored.getProgress()).toBe(tutorial.getProgress());
       expect(restored.isBuildingUnlocked('collective-farm-hq')).toBe(true);
+      // isUIRevealed always returns true (UI disclosure removed)
       expect(restored.isUIRevealed('build_button')).toBe(true);
       expect(restored.isUIRevealed('resource_bar')).toBe(true);
       expect(restored.isUIRevealed('speed_controls')).toBe(true);
@@ -603,16 +552,17 @@ describe('TutorialSystem', () => {
       expect(restored.isBuildingUnlocked('vodka-distillery')).toBe(false);
     });
 
-    it('deserialize rebuilds revealed UI from completed milestones', () => {
+    it('isUIRevealed always returns true after deserialize (UI disclosure removed)', () => {
       const data: TutorialSaveData = {
         completedMilestones: ['welcome', 'first_building'],
         active: true,
       };
 
       const restored = TutorialSystem.deserialize(data);
+      // UI progressive disclosure removed — all elements always visible
       expect(restored.isUIRevealed('build_button')).toBe(true);
       expect(restored.isUIRevealed('resource_bar')).toBe(true);
-      expect(restored.isUIRevealed('speed_controls')).toBe(false);
+      expect(restored.isUIRevealed('speed_controls')).toBe(true);
     });
   });
 
