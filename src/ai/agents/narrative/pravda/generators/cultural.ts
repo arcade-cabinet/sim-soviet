@@ -1,4 +1,4 @@
-import { pick, randInt } from '../helpers';
+import { culturalAuthorityForYear, pick, randInt } from '../helpers';
 import type { HeadlineGenerator } from '../types';
 import { FAKE_DISCOVERIES, SOVIET_SPORTS } from '../wordPools';
 
@@ -47,10 +47,13 @@ export const culturalVictoryGenerators: HeadlineGenerator[] = [
   }),
 
   // Pattern: Soviet art supremacy
-  () => ({
-    headline: `WESTERN ${pick(['ART', 'MUSIC', 'LITERATURE', 'CINEMA', 'DANCE', 'ARCHITECTURE'])} DECLARED "DECADENT AND DYING" BY MINISTRY OF CULTURE`,
-    subtext: `In contrast, Soviet ${pick(['concrete sculptures', 'patriotic ballads', 'productivity reports', 'queue management', 'weather endurance'])} flourish.`,
-    reality: 'Ministry of Culture has one employee. He has seen no Western art. He remains confident.',
-    category: 'culture',
-  }),
+  (gs) => {
+    const authority = culturalAuthorityForYear(gs.date.year);
+    return {
+      headline: `WESTERN ${pick(['ART', 'MUSIC', 'LITERATURE', 'CINEMA', 'DANCE', 'ARCHITECTURE'])} DECLARED "DECADENT AND DYING" BY ${authority}`,
+      subtext: `In contrast, Soviet ${pick(['concrete sculptures', 'patriotic ballads', 'productivity reports', 'queue management', 'weather endurance'])} flourish.`,
+      reality: `${authority} has one clerk. He has seen no Western art. He remains confident.`,
+      category: 'culture',
+    };
+  },
 ];

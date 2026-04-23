@@ -88,7 +88,7 @@ export const ABSURDIST_EVENTS: EventTemplate[] = [
     id: 'map_wrong',
     title: 'CARTOGRAPHIC REVISION',
     description:
-      'Official map updated. Your city is no longer on it. This is not considered a problem because the map is always correct. You, however, may need to reconsider your existence.',
+      'Official map updated. Your settlement is no longer on it. This is not considered a problem because the map is always correct. You, however, may need to reconsider your existence.',
     pravdaHeadline: 'NEW MAPS REFLECT LATEST GEOGRAPHIC REALITY',
     category: 'absurdist',
     severity: 'minor',

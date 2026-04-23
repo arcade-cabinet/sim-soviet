@@ -5,12 +5,7 @@
  * of the one-shot visual effect queue.
  */
 
-import {
-  pushCrisisVFX,
-  getActiveVFX,
-  pruneExpiredVFX,
-  clearCrisisVFX,
-} from '@/stores/gameStore';
+import { clearCrisisVFX, getActiveVFX, pruneExpiredVFX, pushCrisisVFX } from '@/stores/gameStore';
 
 beforeEach(() => {
   clearCrisisVFX();
@@ -72,9 +67,9 @@ describe('CrisisVFX queue — pruneExpiredVFX', () => {
     pushCrisisVFX('meteor_flash', 1.0, 0.001);
 
     // Wait a tiny bit to ensure expiry
-    const now = Date.now();
+    const _now = Date.now();
     // Manually set startedAt to 1s ago to guarantee expiry
-    const vfx = getActiveVFX();
+    const _vfx = getActiveVFX();
     // We can't directly mutate, so we'll push with a very short duration
     // and rely on the fact that pruning checks Date.now() - startedAt >= duration * 1000
     // Since duration is 0.001s = 1ms, after any processing it should be expired.

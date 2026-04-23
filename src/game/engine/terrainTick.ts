@@ -9,9 +9,8 @@
  */
 
 import type { With } from 'miniplex';
-import type { Entity, TileComponent } from '@/ecs/world';
 import terrainConfig from '@/config/terrain-resources.json';
-import ecologyConfig from '@/config/ecology.json';
+import type { Entity, TileComponent } from '@/ecs/world';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -48,7 +47,7 @@ export interface TerrainTickResult {
 const depletion = terrainConfig.depletionRates;
 const pollutionRules = terrainConfig.pollutionRules;
 const erosionRules = terrainConfig.erosionRules;
-const permafrostThaw = ecologyConfig.ecologicalCollapse.permafrostThaw;
+const LOCAL_PERMAFROST_THAW_START_YEAR = 1992;
 
 // ── Building type classification ──────────────────────────────────────────────
 
@@ -62,7 +61,7 @@ const FACTORY_IDS = new Set(['factory-office', 'bread-factory', 'vodka-distiller
 const POWER_IDS = new Set(['power-station', 'cooling-tower']);
 
 /** All building defIds that produce pollution (for neighbor lookup). */
-const POLLUTION_SOURCES = new Set([...FACTORY_IDS, ...POWER_IDS]);
+const _POLLUTION_SOURCES = new Set([...FACTORY_IDS, ...POWER_IDS]);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -102,12 +101,7 @@ function buildBuildingIndex(buildingEntities: BuildingEntity[]): Map<string, Bui
  * Get the 4 cardinal neighbor keys for a grid position.
  */
 function getNeighborKeys(gridX: number, gridY: number): string[] {
-  return [
-    `${gridX - 1},${gridY}`,
-    `${gridX + 1},${gridY}`,
-    `${gridX},${gridY - 1}`,
-    `${gridX},${gridY + 1}`,
-  ];
+  return [`${gridX - 1},${gridY}`, `${gridX + 1},${gridY}`, `${gridX},${gridY - 1}`, `${gridX},${gridY + 1}`];
 }
 
 /**
@@ -140,11 +134,7 @@ function hasBuildingOfType(
 /**
  * Check if this tile is adjacent to any building (for timber depletion).
  */
-function isAdjacentToBuilding(
-  gridX: number,
-  gridY: number,
-  buildingIndex: Map<string, BuildingEntity[]>,
-): boolean {
+function isAdjacentToBuilding(gridX: number, gridY: number, buildingIndex: Map<string, BuildingEntity[]>): boolean {
   for (const key of getNeighborKeys(gridX, gridY)) {
     if (buildingIndex.has(key)) return true;
   }
@@ -274,21 +264,16 @@ export function terrainTick(ctx: TerrainTickContext): TerrainTickResult {
 
       // Erosion damages soil fertility
       if (tile.soilFertility !== undefined && (tile.erosion ?? 0) > 0) {
-        tile.soilFertility = Math.max(
-          0,
-          tile.soilFertility - erosionRules.soilFertilityDamageRate,
-        );
+        tile.soilFertility = Math.max(0, tile.soilFertility - erosionRules.soilFertilityDamageRate);
       }
     }
   }
 
-  // ── Pass 4: Permafrost thaw ──
+  // ── Pass 4: Local permafrost thaw in grounded post-campaign free play ──
   let thawingCount = 0;
-  if (ctx.year >= permafrostThaw.startYear) {
-    // Thaw rate accelerates with climate trend and years past 2050
-    const yearsPast = ctx.year - permafrostThaw.startYear;
+  if (ctx.year >= LOCAL_PERMAFROST_THAW_START_YEAR) {
+    const yearsPast = ctx.year - LOCAL_PERMAFROST_THAW_START_YEAR;
     const baseThawRate = depletion.permafrost.perWarmingDegreePerYear * perTickFactor;
-    // Climate trend amplifies thaw: positive trend = more warming
     const trendAmplifier = 1 + Math.max(0, ctx.climateTrend);
     const thawRate = baseThawRate * trendAmplifier * (1 + yearsPast * 0.01);
 
@@ -310,10 +295,7 @@ export function terrainTick(ctx: TerrainTickContext): TerrainTickResult {
 
       // Timber regeneration (up to max)
       if (tile.timber !== undefined && tile.timber < depletion.timber.maxRegenLevel) {
-        tile.timber = Math.min(
-          depletion.timber.maxRegenLevel,
-          tile.timber + depletion.timber.naturalRegenPerYear,
-        );
+        tile.timber = Math.min(depletion.timber.maxRegenLevel, tile.timber + depletion.timber.naturalRegenPerYear);
       }
 
       // Soil fertility regeneration (up to max)
@@ -326,10 +308,7 @@ export function terrainTick(ctx: TerrainTickContext): TerrainTickResult {
 
       // Peat regeneration (up to max)
       if (tile.peat !== undefined && tile.peat < depletion.peat.maxRegenLevel) {
-        tile.peat = Math.min(
-          depletion.peat.maxRegenLevel,
-          tile.peat + depletion.peat.naturalRegenPerYear,
-        );
+        tile.peat = Math.min(depletion.peat.maxRegenLevel, tile.peat + depletion.peat.naturalRegenPerYear);
       }
 
       // Water table recharge — river-adjacent tiles recharge faster

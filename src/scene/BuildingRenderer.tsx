@@ -18,9 +18,9 @@ import { Suspense, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
 import { BUILDING_TYPES, GROWN_TYPES } from '../engine/BuildingTypes';
+import type { Season } from '../engine/WeatherSystem';
 import { getModelName, getTierVariant } from './ModelMapping';
 import { getModelUrl } from './ModelPreloader';
-import type { Season } from '../engine/WeatherSystem';
 import {
   applyConstructionState,
   applyFireTint,
@@ -45,9 +45,9 @@ export interface BuildingState {
   constructionPhase?: 'foundation' | 'building' | 'complete';
   /** Construction progress 0.0–1.0 (undefined means complete) */
   constructionProgress?: number;
-  /** Housing capacity — used for brutalist scaling (aggregate mode mega-blocks) */
+  /** Housing capacity used for grounded visual massing. */
   housingCap?: number;
-  /** Worker count — used for brutalist scaling (aggregate mode factories) */
+  /** Worker count used for grounded visual massing. */
   workerCount?: number;
   /** Building durability 0–100 (undefined = no decay component, treat as 100) */
   durability?: number;
@@ -65,15 +65,14 @@ interface BuildingRendererProps {
   subsidenceTilt?: boolean;
 }
 
-// ── Brutalist Scaling ───────────────────────────────────────────────────────
+// ── Capacity-Based Visual Massing ───────────────────────────────────────────
 
 /**
- * Compute brutalist capacity-based scale multiplier.
- * Mega-blocks use the SAME GLB model — just bigger. Same depressing geometry.
+ * Compute a conservative capacity-based scale multiplier.
  *
- * Returns 1.0 for normal buildings, up to ~8.0 for arcology-scale structures.
+ * Returns 1.0 for normal buildings, with a modest cap for larger civic structures.
  */
-function getBrutalistScale(buildingType: string, housingCap?: number, workerCount?: number): number {
+function getCapacityScale(buildingType: string, housingCap?: number, workerCount?: number): number {
   let baseCap = 10;
   const grownKey =
     buildingType.includes('house') || buildingType.includes('apartment') || buildingType.includes('khrushch')
@@ -96,7 +95,7 @@ function getBrutalistScale(buildingType: string, housingCap?: number, workerCoun
   if (actualCap <= baseCap) return 1.0;
 
   const scaleTier = Math.max(1, Math.log2(actualCap / baseCap) + 1);
-  return 1 + (scaleTier - 1) * 0.5;
+  return Math.min(1.75, 1 + (scaleTier - 1) * 0.35);
 }
 
 // ── Construction Building (Clone-based) ─────────────────────────────────────
@@ -127,8 +126,8 @@ const ConstructionMesh: React.FC<ConstructionMeshProps> = ({ building, modelUrl,
 
     if (maxFootprint > 0) {
       const tileScale = 0.85 / maxFootprint;
-      const brutalist = getBrutalistScale(building.type, building.housingCap, building.workerCount);
-      const scale = tileScale * brutalist;
+      const capacityScale = getCapacityScale(building.type, building.housingCap, building.workerCount);
+      const scale = tileScale * capacityScale;
       group.scale.setScalar(scale);
 
       const scaledBox = new THREE.Box3().setFromObject(group);
@@ -301,7 +300,13 @@ interface InstancedModelGroupProps {
  * Renders all buildings sharing a single model URL as InstancedMesh batches.
  * One InstancedMesh per child mesh in the GLB.
  */
-const InstancedModelGroup: React.FC<InstancedModelGroupProps> = ({ modelUrl, buildings, settlementTier, season, subsidenceTilt }) => {
+const InstancedModelGroup: React.FC<InstancedModelGroupProps> = ({
+  modelUrl,
+  buildings,
+  settlementTier,
+  season,
+  subsidenceTilt,
+}) => {
   const { scene } = useGLTF(modelUrl);
   const groupRef = useRef<THREE.Group>(null);
   const instancedMeshRefs = useRef<THREE.InstancedMesh[]>([]);
@@ -353,16 +358,16 @@ const InstancedModelGroup: React.FC<InstancedModelGroupProps> = ({ modelUrl, bui
 
       for (let i = 0; i < count; i++) {
         const bldg = buildings[i];
-        const brutalist = getBrutalistScale(bldg.type, bldg.housingCap, bldg.workerCount);
-        const scale = tileScale * brutalist;
+        const capacityScale = getCapacityScale(bldg.type, bldg.housingCap, bldg.workerCount);
+        const scale = tileScale * capacityScale;
 
         // Build instance matrix: localMeshTransform * (scale + position)
         // 1. Start with the mesh's local transform within the GLB
         tempMatrix.copy(info.localMatrix);
         // 2. Apply uniform scale
         tempMatrix.scale(new THREE.Vector3(scale, scale, scale));
-        // 3. Set position: grid center + elevation + yOffset (scaled by brutalist)
-        const yOffset = yOffsetBase * brutalist;
+        // 3. Set position: grid center + elevation + yOffset (scaled by visual mass)
+        const yOffset = yOffsetBase * capacityScale;
         const posX = bldg.gridX + 0.5;
         const posY = bldg.elevation * 0.5 + yOffset;
         const posZ = bldg.gridY + 0.5;
@@ -371,7 +376,7 @@ const InstancedModelGroup: React.FC<InstancedModelGroupProps> = ({ modelUrl, bui
         // 4. Apply subsidence tilt if permafrost collapse is active (max 5 degrees)
         if (subsidenceTilt) {
           const tiltSeed = (bldg.gridX * 7919 + bldg.gridY * 104729) & 0xffff;
-          const tiltX = ((tiltSeed / 0xffff) - 0.5) * 0.174; // +-5 degrees
+          const tiltX = (tiltSeed / 0xffff - 0.5) * 0.174; // +-5 degrees
           const tiltZ = (((tiltSeed * 31) & 0xffff) / 0xffff - 0.5) * 0.174;
           tiltEuler.set(tiltX, 0, tiltZ);
           tiltMatrix.makeRotationFromEuler(tiltEuler);

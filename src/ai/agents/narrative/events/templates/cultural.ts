@@ -6,7 +6,7 @@ export const CULTURAL_EVENTS: EventTemplate[] = [
     title: 'MANDATORY PARADE DAY',
     description:
       'Mandatory parade day. Enthusiasm levels: compulsory. Flags have been distributed. Smiles have been distributed. Deviation from distributed smile will be noted.',
-    pravdaHeadline: 'SPONTANEOUS CELEBRATION ERUPTS ACROSS THE CITY',
+    pravdaHeadline: 'SPONTANEOUS CELEBRATION ERUPTS ACROSS THE SETTLEMENT',
     category: 'cultural',
     severity: 'trivial',
     effects: { money: -10, vodka: -3 },

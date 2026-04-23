@@ -275,6 +275,27 @@ describe('GAP-023: Difficulty multipliers', () => {
     expect(ctx.engineState.quota.target).toBe(200);
   });
 
+  it('reassigns repeated unworkable vodka quotas back to food plan', () => {
+    createResourceStore({ food: 500, vodka: 0, population: 40 });
+    createMetaStore({ date: { year: 1967, month: 1, tick: 0 } });
+
+    const ctx = createMockContext({
+      engineState: createMockEngineState({
+        quota: { type: 'vodka', target: 100, current: 0, deadlineYear: 1967 },
+        consecutiveQuotaFailures: 7,
+        quotaMultiplier: 0.8,
+      }),
+    });
+
+    processReport(ctx, { reportedQuota: 0, reportedSecondary: 500, reportedPop: 40 });
+
+    expect(ctx.endGame).not.toHaveBeenCalled();
+    expect(ctx.engineState.consecutiveQuotaFailures).toBe(0);
+    expect(ctx.engineState.quota.type).toBe('food');
+    expect(ctx.engineState.quota.target).toBeGreaterThan(0);
+    expect(ctx.engineState.quota.deadlineYear).toBe(1972);
+  });
+
   it('difficulty presets define all expected fields', () => {
     for (const level of ['worker', 'comrade', 'tovarish'] as const) {
       const cfg = DIFFICULTY_PRESETS[level];
@@ -540,16 +561,6 @@ describe('GAP-027: Event era filtering', () => {
       'reconstruction',
       'thaw_and_freeze',
       'stagnation',
-      'the_eternal',
-      // Kardashev sub-eras
-      'post_soviet',
-      'planetary',
-      'solar_engineering',
-      'type_one',
-      'deconstruction',
-      'dyson_swarm',
-      'megaearth',
-      'type_two_peak',
     ];
     for (const template of ALL_EVENT_TEMPLATES) {
       if (!template.eraFilter) continue;
@@ -574,7 +585,6 @@ describe('GAP-027: Event era filtering', () => {
       'reconstruction',
       'thaw_and_freeze',
       'stagnation',
-      'the_eternal',
     ];
     for (const era of eras) {
       const eventsForEra = ALL_EVENT_TEMPLATES.filter((t) => t.eraFilter?.includes(era));

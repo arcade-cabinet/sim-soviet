@@ -7,6 +7,7 @@
 
 import type { CrisisContext, CrisisDefinition, CrisisPhase } from '@/ai/agents/crisis/types';
 import { WarAgent } from '@/ai/agents/crisis/WarAgent';
+import { TICKS_PER_MONTH } from '@/game/Chronology';
 import { GameRng } from '@/game/SeedSystem';
 
 // ─── Fixtures ───────────────────────────────────────────────────────────────
@@ -62,6 +63,28 @@ function makeContext(overrides?: Partial<CrisisContext>): CrisisContext {
   };
 }
 
+function advanceTicks(agent: WarAgent, ctx: CrisisContext, ticks: number): void {
+  for (let i = 0; i < ticks; i++) {
+    agent.evaluate(ctx);
+  }
+}
+
+function advanceMonths(agent: WarAgent, ctx: CrisisContext, months: number): void {
+  advanceTicks(agent, ctx, months * TICKS_PER_MONTH);
+}
+
+function advanceToPeak(agent: WarAgent, ctx: CrisisContext, def: CrisisDefinition): void {
+  advanceMonths(agent, ctx, def.buildupTicks);
+}
+
+function nextMonthlyImpact(agent: WarAgent, ctx: CrisisContext) {
+  let impact = agent.evaluate(ctx)[0]!;
+  for (let i = 1; i < TICKS_PER_MONTH; i++) {
+    impact = agent.evaluate(ctx)[0]!;
+  }
+  return impact;
+}
+
 // ─── Phase transitions ──────────────────────────────────────────────────────
 
 describe('WarAgent phase transitions', () => {
@@ -80,9 +103,7 @@ describe('WarAgent phase transitions', () => {
     agent.configure(CIVIL_WAR_DEF); // 6 buildup ticks
 
     const ctx = makeContext();
-    for (let i = 0; i < 6; i++) {
-      agent.evaluate(ctx);
-    }
+    advanceToPeak(agent, ctx, CIVIL_WAR_DEF);
 
     expect(agent.getPhase()).toBe('peak');
     expect(agent.isActive()).toBe(true);
@@ -94,9 +115,7 @@ describe('WarAgent phase transitions', () => {
 
     const ctx = makeContext();
     // Exhaust buildup
-    for (let i = 0; i < 6; i++) {
-      agent.evaluate(ctx);
-    }
+    advanceToPeak(agent, ctx, CIVIL_WAR_DEF);
     expect(agent.getPhase()).toBe('peak');
 
     // Many peak ticks
@@ -115,13 +134,13 @@ describe('WarAgent phase transitions', () => {
 
     const ctx = makeContext();
     // Exhaust buildup
-    for (let i = 0; i < 6; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, CIVIL_WAR_DEF);
     // Enter peak, then aftermath
     agent.transitionToAftermath();
     expect(agent.getPhase()).toBe('aftermath');
 
     // Exhaust aftermath
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceMonths(agent, ctx, CIVIL_WAR_DEF.aftermathTicks);
     expect(agent.getPhase()).toBe('resolved');
     expect(agent.isActive()).toBe(false);
   });
@@ -135,7 +154,7 @@ describe('WarAgent phase transitions', () => {
 
     const ctx = makeContext();
     // Buildup
-    for (let i = 0; i < 6; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, CIVIL_WAR_DEF);
     phases.push(agent.getPhase()); // peak
 
     // Peak for a while
@@ -144,7 +163,7 @@ describe('WarAgent phase transitions', () => {
     phases.push(agent.getPhase()); // aftermath
 
     // Aftermath
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceMonths(agent, ctx, CIVIL_WAR_DEF.aftermathTicks);
     phases.push(agent.getPhase()); // resolved
 
     expect(phases).toEqual(['buildup', 'peak', 'aftermath', 'resolved']);
@@ -166,9 +185,9 @@ describe('WarAgent when resolved', () => {
 
     const ctx = makeContext();
     // Run through entire lifecycle
-    for (let i = 0; i < 6; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, CIVIL_WAR_DEF);
     agent.transitionToAftermath();
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceMonths(agent, ctx, CIVIL_WAR_DEF.aftermathTicks);
     expect(agent.getPhase()).toBe('resolved');
 
     const impacts = agent.evaluate(ctx);
@@ -197,12 +216,13 @@ describe('WarAgent — Civil War (regional)', () => {
     const ctx = makeContext();
 
     // Skip to peak for both
-    for (let i = 0; i < 6; i++) civilAgent.evaluate(ctx);
-    for (let i = 0; i < 12; i++) gpwAgent.evaluate(makeContext());
+    advanceToPeak(civilAgent, ctx, CIVIL_WAR_DEF);
+    const gpwCtx = makeContext();
+    advanceToPeak(gpwAgent, gpwCtx, GPW_DEF);
 
-    // Evaluate one peak tick
-    const civilImpact = civilAgent.evaluate(ctx)[0]!;
-    const gpwImpact = gpwAgent.evaluate(makeContext())[0]!;
+    // Evaluate one monthly peak pulse
+    const civilImpact = nextMonthlyImpact(civilAgent, ctx);
+    const gpwImpact = nextMonthlyImpact(gpwAgent, gpwCtx);
 
     // GPW should drain more food than Civil War
     expect(Math.abs(gpwImpact.economy!.foodDelta!)).toBeGreaterThan(Math.abs(civilImpact.economy!.foodDelta!));
@@ -219,14 +239,15 @@ describe('WarAgent — GPW (existential)', () => {
     const ctx = makeContext({ population: 10000 });
 
     // Skip through buildup
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, GPW_DEF);
     expect(agent.getPhase()).toBe('peak');
 
-    // Evaluate one peak tick
-    const impact = agent.evaluate(ctx)[0]!;
+    // Evaluate one monthly peak pulse
 
-    // existential intensity = 1.0, so conscription = pop * 0.15 * 1.0 = 1500
-    expect(impact.workforce!.conscriptionCount).toBe(1500);
+    const impact = nextMonthlyImpact(agent, ctx);
+
+    // existential intensity = 1.0, so monthly conscription = annual 15% / 12
+    expect(impact.workforce!.conscriptionCount).toBe(125);
   });
 
   it('applies wartime production multiplier during peak', () => {
@@ -234,7 +255,7 @@ describe('WarAgent — GPW (existential)', () => {
     agent.configure(GPW_DEF);
 
     const ctx = makeContext();
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, GPW_DEF);
 
     const impact = agent.evaluate(ctx)[0]!;
     expect(impact.economy!.productionMult).toBe(1.3);
@@ -245,9 +266,9 @@ describe('WarAgent — GPW (existential)', () => {
     agent.configure(GPW_DEF);
 
     const ctx = makeContext();
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, GPW_DEF);
 
-    const impact = agent.evaluate(ctx)[0]!;
+    const impact = nextMonthlyImpact(agent, ctx);
     // foodDrain 50 * intensity 1.0 = -50
     expect(impact.economy!.foodDelta).toBe(-50);
     // moneyDrain 80 * intensity 1.0 = -80
@@ -259,7 +280,7 @@ describe('WarAgent — GPW (existential)', () => {
     agent.configure(GPW_DEF);
 
     const ctx = makeContext();
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, GPW_DEF);
 
     const impact = agent.evaluate(ctx)[0]!;
     expect(impact.social).toBeDefined();
@@ -281,15 +302,14 @@ describe('WarAgent conscription scaling', () => {
     const ctx2 = makeContext({ population: 10000 });
 
     // Skip to peak
-    for (let i = 0; i < 12; i++) {
-      agent1.evaluate(ctx1);
-      agent2.evaluate(ctx2);
-    }
+    advanceToPeak(agent1, ctx1, GPW_DEF);
+    advanceToPeak(agent2, ctx2, GPW_DEF);
 
-    const impact1 = agent1.evaluate(ctx1)[0]!;
-    const impact2 = agent2.evaluate(ctx2)[0]!;
+    const impact1 = nextMonthlyImpact(agent1, ctx1);
+    const impact2 = nextMonthlyImpact(agent2, ctx2);
 
-    expect(impact2.workforce!.conscriptionCount).toBe(10 * impact1.workforce!.conscriptionCount!);
+    expect(impact2.workforce!.conscriptionCount!).toBeGreaterThan(impact1.workforce!.conscriptionCount!);
+    expect(impact2.workforce!.conscriptionCount! / impact1.workforce!.conscriptionCount!).toBeGreaterThan(9);
   });
 
   it('ramps conscription gradually during buildup', () => {
@@ -298,15 +318,15 @@ describe('WarAgent conscription scaling', () => {
 
     const ctx = makeContext({ population: 10000 });
 
-    // First buildup tick
-    const earlyImpact = agent.evaluate(ctx)[0]!;
+    // First buildup month
+    const earlyImpact = nextMonthlyImpact(agent, ctx);
     const earlyConscription = earlyImpact.workforce!.conscriptionCount!;
 
     // Skip most of buildup
-    for (let i = 0; i < 10; i++) agent.evaluate(ctx);
+    advanceMonths(agent, ctx, 10);
 
-    // Last buildup tick (tick 12 of 12)
-    const lateImpact = agent.evaluate(ctx)[0]!;
+    // Last buildup month
+    const lateImpact = nextMonthlyImpact(agent, ctx);
     const lateConscription = lateImpact.workforce!.conscriptionCount!;
 
     expect(lateConscription).toBeGreaterThan(earlyConscription);
@@ -318,9 +338,9 @@ describe('WarAgent conscription scaling', () => {
 
     // Very small population
     const ctx = makeContext({ population: 1 });
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, GPW_DEF);
 
-    const impact = agent.evaluate(ctx)[0]!;
+    const impact = nextMonthlyImpact(agent, ctx);
     expect(impact.workforce!.conscriptionCount).toBeGreaterThanOrEqual(1);
   });
 });
@@ -333,11 +353,11 @@ describe('WarAgent bombardment', () => {
     agent.configure(GPW_DEF);
 
     const ctx = makeContext();
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, GPW_DEF);
 
-    const impact = agent.evaluate(ctx)[0]!;
+    const impact = nextMonthlyImpact(agent, ctx);
 
-    // GPW: bombardmentRate 0.05 * intensity 1.0 * 900 grid cells = 45 targets
+    // Bombardment is pulsed monthly so war damage remains playable.
     expect(impact.infrastructure).toBeDefined();
     expect(impact.infrastructure!.destructionTargets).toBeDefined();
     expect(impact.infrastructure!.destructionTargets!.length).toBeGreaterThan(0);
@@ -356,10 +376,10 @@ describe('WarAgent bombardment', () => {
     agent.configure(CIVIL_WAR_DEF);
 
     const ctx = makeContext();
-    for (let i = 0; i < 6; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, CIVIL_WAR_DEF);
     agent.transitionToAftermath();
 
-    const impact = agent.evaluate(ctx)[0]!;
+    const impact = nextMonthlyImpact(agent, ctx);
     // Aftermath has infrastructure.decayMult but no destructionTargets
     expect(impact.infrastructure!.destructionTargets).toBeUndefined();
   });
@@ -369,9 +389,9 @@ describe('WarAgent bombardment', () => {
     agent.configure(GPW_DEF);
 
     const ctx = makeContext();
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, GPW_DEF);
 
-    const impact = agent.evaluate(ctx)[0]!;
+    const impact = nextMonthlyImpact(agent, ctx);
     for (const target of impact.infrastructure!.destructionTargets!) {
       expect(target.gridX).toBeGreaterThanOrEqual(0);
       expect(target.gridX).toBeLessThanOrEqual(29);
@@ -391,12 +411,12 @@ describe('WarAgent aftermath — veteran returns', () => {
     const ctx = makeContext({ population: 5000 });
 
     // Run through buildup + some peak ticks to accumulate conscripted
-    for (let i = 0; i < 6; i++) agent.evaluate(ctx);
-    for (let i = 0; i < 5; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, CIVIL_WAR_DEF);
+    nextMonthlyImpact(agent, ctx);
 
     agent.transitionToAftermath();
 
-    const impact = agent.evaluate(ctx)[0]!;
+    const impact = nextMonthlyImpact(agent, ctx);
     expect(impact.workforce!.conscriptionCount).toBeLessThan(0);
   });
 
@@ -405,14 +425,14 @@ describe('WarAgent aftermath — veteran returns', () => {
     agent.configure(CIVIL_WAR_DEF);
 
     const ctx = makeContext();
-    for (let i = 0; i < 6; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, CIVIL_WAR_DEF);
     agent.transitionToAftermath();
 
     // Early aftermath — stronger effect
     const earlyImpact = agent.evaluate(ctx)[0]!;
 
-    // Skip most aftermath ticks
-    for (let i = 0; i < 10; i++) agent.evaluate(ctx);
+    // Skip most aftermath months
+    advanceMonths(agent, ctx, 10);
 
     // Late aftermath — weaker effect (closer to 1.0)
     const lateImpact = agent.evaluate(ctx)[0]!;
@@ -425,7 +445,7 @@ describe('WarAgent aftermath — veteran returns', () => {
     agent.configure(CIVIL_WAR_DEF);
 
     const ctx = makeContext();
-    for (let i = 0; i < 6; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, CIVIL_WAR_DEF);
     agent.transitionToAftermath();
 
     const impact = agent.evaluate(ctx)[0]!;
@@ -442,7 +462,7 @@ describe('WarAgent serialization', () => {
 
     const ctx = makeContext();
     // Advance to peak
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, GPW_DEF);
     // Some peak ticks
     for (let i = 0; i < 5; i++) agent.evaluate(ctx);
 
@@ -480,7 +500,7 @@ describe('WarAgent serialization', () => {
     agent.configure(CIVIL_WAR_DEF);
 
     const ctx = makeContext();
-    for (let i = 0; i < 6; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, CIVIL_WAR_DEF);
     agent.transitionToAftermath();
     for (let i = 0; i < 3; i++) agent.evaluate(ctx);
 
@@ -495,8 +515,8 @@ describe('WarAgent serialization', () => {
 
     const ctx = makeContext({ population: 10000 });
     // Run through buildup + peak to accumulate conscripted
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
-    for (let i = 0; i < 5; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, GPW_DEF);
+    nextMonthlyImpact(agent, ctx);
 
     const saved = agent.serialize();
     const totalBefore = saved.extra!.totalConscripted as number;
@@ -513,7 +533,7 @@ describe('WarAgent serialization', () => {
     agent.configure(GPW_DEF);
 
     const ctx = makeContext();
-    for (let i = 0; i < 12; i++) agent.evaluate(ctx);
+    advanceToPeak(agent, ctx, GPW_DEF);
 
     const saved = agent.serialize();
     const json = JSON.stringify(saved);
@@ -532,21 +552,12 @@ describe('WarAgent narrative', () => {
     const agent = new WarAgent();
     agent.configure(GPW_DEF);
 
-    // Run many ticks to get at least one narrative hit (RNG-dependent)
-    const _ctx = makeContext();
-    let hasNarrative = false;
+    const ctx = makeContext();
+    jest.spyOn(ctx.rng, 'coinFlip').mockReturnValue(true);
+    advanceToPeak(agent, ctx, GPW_DEF);
 
-    for (let i = 0; i < 100; i++) {
-      // Re-create context each time for fresh rng
-      const tickCtx = makeContext({ rng: new GameRng(`narrative-${i}`) });
-      const impacts = agent.evaluate(tickCtx);
-      if (impacts.length > 0 && impacts[0]!.narrative) {
-        hasNarrative = true;
-        break;
-      }
-    }
-
-    expect(hasNarrative).toBe(true);
+    const impact = nextMonthlyImpact(agent, ctx);
+    expect(impact.narrative).toBeDefined();
   });
 });
 

@@ -6,29 +6,30 @@ This directory contains the CI/CD workflows for Sim Soviet.
 
 ### CI (`ci.yml`)
 
-Runs on push to `main` and all pull requests:
+Runs on pull requests:
 
-- **Linting**: Uses Biome for code quality checks
-- **Type checking**: TypeScript compilation without emit
-- **Tests**: Runs the test suite with coverage
-- **Build**: Builds the web application with Vite
+- **Core**: TypeScript, Biome, Jest, and static web export
+- **Browser**: headed Chrome Vitest browser campaign proof under Xvfb
+- **Smoke**: static export launch check with screenshots and diagnostics
 
-### CD - Deploy (`deploy.yml`)
+### Release (`release.yml`)
 
-Runs after CI passes on `main`:
+Runs release-please on pushes to `main`; when a release is created it builds native artifacts:
 
-- Builds the web application
-- Deploys to GitHub Pages
+- Android debug APK
+- iOS simulator app
 
-### Mobile CI (`mobile-ci.yml`)
+### CD (`cd.yml`)
 
-Runs on push to `main` and pull requests that affect code:
+Runs on pushes to `main`:
 
-- Sets up Android build environment (JDK 17)
-- Builds web assets
-- Syncs Capacitor
-- Creates a debug Android APK
-- Uploads the APK as an artifact (30-day retention)
+- Re-runs release checks
+- Deploys the static site to GitHub Pages
+- Uploads a debug Android APK artifact
+
+### Automerge (`automerge.yml`)
+
+Approves and squash-auto-merges Dependabot and release-please PRs.
 
 ## Setup Requirements
 
@@ -57,7 +58,7 @@ pnpm install
 Run development server:
 
 ```bash
-pnpm dev
+pnpm web
 ```
 
 Build for production:
@@ -82,8 +83,8 @@ pnpm typecheck
 
 - **Node.js**: v22 (specified in `.nvmrc`)
 - **Package Manager**: pnpm v10
-- **Build Tool**: Vite
-- **Rendering**: Canvas 2D
-- **Mobile**: Capacitor (Android/iOS support)
+- **Build Tool**: Expo web export
+- **Rendering**: React Three Fiber + Three.js
+- **Mobile**: Expo native projects
 - **Code Quality**: Biome
 - **Type Safety**: TypeScript 5.9

@@ -6,16 +6,12 @@
  * permafrost thaw, and threshold flagging.
  */
 
-import type { Entity, TileComponent, BuildingComponent, Position } from '@/ecs/world';
-import { terrainTick, type TerrainTickContext, type TerrainTickResult } from '../../src/game/engine/terrainTick';
+import type { BuildingComponent, Entity, TileComponent } from '@/ecs/world';
+import { type TerrainTickContext, terrainTick } from '../../src/game/engine/terrainTick';
 
 // ── Test helpers ──────────────────────────────────────────────────────────────
 
-function makeTile(
-  gridX: number,
-  gridY: number,
-  overrides: Partial<TileComponent> = {},
-): Entity {
+function makeTile(gridX: number, gridY: number, overrides: Partial<TileComponent> = {}): Entity {
   return {
     position: { gridX, gridY },
     tile: {
@@ -34,12 +30,7 @@ function makeTile(
   };
 }
 
-function makeBuilding(
-  gridX: number,
-  gridY: number,
-  defId: string,
-  overrides: Partial<BuildingComponent> = {},
-): Entity {
+function makeBuilding(gridX: number, gridY: number, defId: string, overrides: Partial<BuildingComponent> = {}): Entity {
   return {
     position: { gridX, gridY },
     building: {
@@ -81,10 +72,7 @@ function makeWorld(entities: Entity[]) {
   };
 }
 
-function makeCtx(
-  entities: Entity[],
-  overrides: Partial<Omit<TerrainTickContext, 'world'>> = {},
-): TerrainTickContext {
+function makeCtx(entities: Entity[], overrides: Partial<Omit<TerrainTickContext, 'world'>> = {}): TerrainTickContext {
   return {
     world: makeWorld(entities),
     year: 1950,
@@ -536,18 +524,18 @@ describe('terrainTick', () => {
   });
 
   describe('permafrost thaw', () => {
-    it('does not thaw before 2050', () => {
+    it('does not thaw before grounded post-campaign free play', () => {
       const tile = makeTile(0, 0, { permafrost: 80 });
-      const ctx = makeCtx([tile], { year: 2040 });
+      const ctx = makeCtx([tile], { year: 1991 });
 
       terrainTick(ctx);
 
       expect(tile.tile!.permafrost).toBe(80);
     });
 
-    it('thaws after 2050', () => {
+    it('thaws after the 1991 campaign endpoint', () => {
       const tile = makeTile(0, 0, { permafrost: 80 });
-      const ctx = makeCtx([tile], { year: 2060 });
+      const ctx = makeCtx([tile], { year: 1995 });
 
       terrainTick(ctx);
 
@@ -558,10 +546,10 @@ describe('terrainTick', () => {
       const tile1 = makeTile(0, 0, { permafrost: 80 });
       const tile2 = makeTile(1, 0, { permafrost: 80 });
 
-      const ctx1 = makeCtx([tile1], { year: 2060, climateTrend: 0 });
+      const ctx1 = makeCtx([tile1], { year: 1995, climateTrend: 0 });
       terrainTick(ctx1);
 
-      const ctx2 = makeCtx([tile2], { year: 2060, climateTrend: 1.0 });
+      const ctx2 = makeCtx([tile2], { year: 1995, climateTrend: 1.0 });
       terrainTick(ctx2);
 
       expect(tile2.tile!.permafrost).toBeLessThan(tile1.tile!.permafrost!);
@@ -571,10 +559,10 @@ describe('terrainTick', () => {
       const tile1 = makeTile(0, 0, { permafrost: 80 });
       const tile2 = makeTile(1, 0, { permafrost: 80 });
 
-      const ctx1 = makeCtx([tile1], { year: 2051 });
+      const ctx1 = makeCtx([tile1], { year: 1992 });
       terrainTick(ctx1);
 
-      const ctx2 = makeCtx([tile2], { year: 2150 });
+      const ctx2 = makeCtx([tile2], { year: 1999 });
       terrainTick(ctx2);
 
       expect(tile2.tile!.permafrost).toBeLessThan(tile1.tile!.permafrost!);
@@ -582,7 +570,7 @@ describe('terrainTick', () => {
 
     it('permafrost does not go below 0', () => {
       const tile = makeTile(0, 0, { permafrost: 0.001 });
-      const ctx = makeCtx([tile], { year: 3000, climateTrend: 1.0 });
+      const ctx = makeCtx([tile], { year: 1999, climateTrend: 1.0 });
 
       terrainTick(ctx);
 
@@ -595,7 +583,7 @@ describe('terrainTick', () => {
       const undefinedPermafrost = makeTile(2, 0);
       // Remove permafrost from the third tile
       delete undefinedPermafrost.tile!.permafrost;
-      const ctx = makeCtx([thawing, noPermafrost, undefinedPermafrost], { year: 2060 });
+      const ctx = makeCtx([thawing, noPermafrost, undefinedPermafrost], { year: 1995 });
 
       const result = terrainTick(ctx);
 
@@ -606,7 +594,7 @@ describe('terrainTick', () => {
     it('does not thaw tiles with undefined permafrost', () => {
       const tile = makeTile(0, 0);
       delete tile.tile!.permafrost;
-      const ctx = makeCtx([tile], { year: 2100 });
+      const ctx = makeCtx([tile], { year: 1995 });
 
       const result = terrainTick(ctx);
 

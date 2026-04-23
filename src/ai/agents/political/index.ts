@@ -35,7 +35,6 @@ export type { DoctrineContext, DoctrinePolicy, ThawFreezeState } from './doctrin
 export {
   addPaperwork,
   DOCTRINE_MECHANICS,
-  ETERNAL_PAPERWORK_THRESHOLD,
   evaluateDoctrineMechanics,
   getDoctrinePolicyForEra,
   getPaperwork,
@@ -86,6 +85,8 @@ export {
 } from './military';
 export type { PoliticalState, ReportStrategy } from './PoliticalAgent';
 export { PoliticalAgent } from './PoliticalAgent';
+// Political entity system + supporting modules (moved from src/game/political/)
+export { PoliticalEntitySystem } from './PoliticalEntitySystem';
 // Prestige project system
 export type {
   PrestigeContext,
@@ -104,8 +105,6 @@ export {
   startProject as startPrestigeProject,
   tickPrestigeProjects,
 } from './PrestigeProjectSystem';
-// Political entity system + supporting modules (moved from src/game/political/)
-export { PoliticalEntitySystem } from './PoliticalEntitySystem';
 export {
   applyPolitrukTick,
   calcPolitrukCount,

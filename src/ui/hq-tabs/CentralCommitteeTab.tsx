@@ -191,10 +191,7 @@ export const CentralCommitteeTab: React.FC<CentralCommitteeTabProps> = ({
           <View style={promoStyles.riskRow}>
             <Text style={promoStyles.riskLabel}>RISK ASSESSMENT:</Text>
             <Text
-              style={[
-                promoStyles.riskValue,
-                { color: RISK_COLORS[getPromotionRiskLevel(promotionState.currentRisk)] },
-              ]}
+              style={[promoStyles.riskValue, { color: RISK_COLORS[getPromotionRiskLevel(promotionState.currentRisk)] }]}
             >
               {RISK_LABELS[getPromotionRiskLevel(promotionState.currentRisk)]}
             </Text>
@@ -213,7 +210,8 @@ export const CentralCommitteeTab: React.FC<CentralCommitteeTabProps> = ({
 
           {promotionState.delayCount > 0 && (
             <Text style={promoStyles.delayWarning}>
-              Moscow has noted {promotionState.delayCount} previous delay{promotionState.delayCount > 1 ? 's' : ''}. Patience is not unlimited.
+              Moscow has noted {promotionState.delayCount} previous delay{promotionState.delayCount > 1 ? 's' : ''}.
+              Patience is not unlimited.
             </Text>
           )}
 

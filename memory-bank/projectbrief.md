@@ -2,54 +2,62 @@
 
 ## Identity
 
-**SimSoviet 1917** — A satirical Soviet bureaucrat survival sim in 3D. The player is the predsedatel (chairman) of a collective settlement. The settlement grows organically via autonomous agent systems — the player does NOT place buildings or choose what to build. Moscow mandates construction; the player chooses WHERE and navigates political survival.
+**SimSoviet 1917** is a satirical Soviet bureaucrat survival sim in 3D. The
+player is the predsedatel of a collective settlement. The settlement grows
+organically through autonomous systems; the player does not freely choose
+buildings or draw a city.
 
-**THIS IS NOT A CITY BUILDER.** The system is the antagonist. The optimal strategy is comfortable mediocrity.
+**This is not a city builder.** Moscow mandates what must be built. The player
+chooses where mandated construction goes, sets priorities, survives inspections,
+and manages the political consequences of failure.
+
+## 1.0 Campaign Scope
+
+The 1.0 campaign is historical:
+
+- Start: October 1917.
+- End: the 1991 Soviet dissolution moment.
+- Post-campaign: same-settlement grounded free play.
+
+Post-1991 continuation is conservative. It keeps quotas, aging infrastructure,
+resource pressure, weather, disasters, demographic decline, and political decay.
+It does not unlock new eras, new settlements, space expansion, or alternate
+global timelines.
 
 ## Core Fantasy
 
-You are a low-level Soviet bureaucrat trying not to end up in Siberia. Workers self-organize. The five-year plan dictates what gets built. You navigate politics, set priorities, and intervene only when desperate. If citizens are happy, that's suspicious — or they're drunk.
+You are a low-level Soviet bureaucrat trying not to be blamed. Workers
+self-organize. The plan dictates what gets built. You navigate shortages,
+compulsory deliveries, KGB scrutiny, moral compromise, and the personnel file.
+Comfortable mediocrity is often the best strategy.
 
 ## Target Platforms
 
-- **Web** (primary) — deployed to GitHub Pages
-- **iOS** — via Expo/React Native
-- **Android** — via Expo/React Native (APK builds)
+- Web via Expo/React Native Web and GitHub Pages.
+- iOS via Expo/React Native.
+- Android via Expo/React Native builds.
 
 ## Tech Stack Summary
 
-- **3D Engine**: Three.js r183 via React Three Fiber (R3F v9.5) + drei
-- **UI**: React Native 0.83.2 + Expo 55
-- **AI**: Yuka-style agent system (9 subpackages, 169+ files, 39k+ lines)
-- **State**: Miniplex ECS world + legacy GameState singleton
-- **Audio**: Web Audio API (47 Soviet-era public domain tracks)
-- **Database**: sql.js (Wasm SQLite) + Drizzle ORM → IndexedDB
-- **Build**: Expo, Metro bundler, TypeScript 5.9
+- 3D: Three.js via React Three Fiber and drei.
+- UI: React Native + Expo.
+- Simulation: Yuka-style agent systems plus Miniplex ECS.
+- Audio: Web Audio API.
+- Persistence: sql.js, Drizzle ORM, IndexedDB.
+- Build/test: TypeScript, Jest, Expo, Metro.
 
 ## Core Gameplay Loop
 
-1. Watch the settlement self-organize (workers auto-assign, paths form organically)
-2. Respond to state demands (Moscow mandates buildings — you choose WHERE to place them)
-3. Set collective priorities when demands conflict (food vs quotas vs construction)
-4. Navigate political apparatus (KGB, politruks, Politburo)
-5. Make moral choices (who to sacrifice, corruption level, report falsification)
-6. Survive inspections, purges, and era transitions
-7. Progress through 8 historical eras (1917 → The Eternal)
+1. Watch the settlement self-organize.
+2. Respond to Moscow mandates and quotas.
+3. Place required buildings in politically survivable locations.
+4. Set collective priorities when food, industry, construction, and politics collide.
+5. Manage KGB, politruks, party demands, personnel marks, and moral tradeoffs.
+6. Survive historical era transitions through 1991.
+7. Review campaign completion, then optionally continue the same settlement.
 
-## Game Modes
+## Consequence Levels
 
-- **Historical** (default) — real Soviet timeline, governor fires crises by year
-- **Freeform** — PressureSystem (10 domains) + WorldAgent (sphere dynamics) + ColdBranches (19 branches) drive emergent alternate history
-- No classic/manual difficulty mode
-
-## Consequence Levels (Soviet nomenclature)
-
-- **Rehabilitated** — transferred, return after 1 year
-- **Gulag** — exiled, return after 3 years (default)
-- **Rasstrelyat** — shot, game over, no return
-
-## Repository
-
-- GitHub: `arcade-cabinet/sim-soviet`
-- Deployed: https://arcade-cabinet.github.io/sim-soviet/
-- Current version: v1.2.0 (pending PR #44 merge)
+- Rehabilitated - transferred, later return.
+- Gulag - exiled, later return.
+- Rasstrelyat - shot, game over.

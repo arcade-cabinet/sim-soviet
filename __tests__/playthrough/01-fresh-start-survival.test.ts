@@ -1,7 +1,7 @@
-import { ArrivalSequence } from '../../src/game/arrivalSequence';
-import { citizens, dvory } from '../../src/ecs/archetypes';
+import { citizens } from '../../src/ecs/archetypes';
 import { createBuilding, placeNewBuilding } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
+import { ArrivalSequence } from '../../src/game/arrivalSequence';
 import {
   advanceTicks,
   assertResourceInvariants,
@@ -202,9 +202,7 @@ describe('Playthrough: First Year Survival', () => {
       advanceTicks(engine, 30); // give extra time
     }
 
-    console.log(
-      `Arrival caravan: ${arrivalSeq.getArrivedCount()}/${arrivalSeq.getTotalDvory()} families arrived`,
-    );
+    console.log(`Arrival caravan: ${arrivalSeq.getArrivedCount()}/${arrivalSeq.getTotalDvory()} families arrived`);
     expect(arrivalSeq.getArrivedCount()).toBe(10);
     expect(arrivalSeq.isInProgress()).toBe(false);
   });
@@ -300,17 +298,13 @@ describe('Playthrough: First Year Survival', () => {
 
     const initialBuildingCount = getBuildingCount();
 
-    // Tick through early game — CollectiveAgent.tickAutonomous runs organically
-    advanceTicks(engine, 60);
+    // Tick through the opening assignment — the collective should begin state-control construction quickly.
+    advanceTicks(engine, 15);
 
     const afterBuildingCount = getBuildingCount();
 
-    // The collective should have organically placed some buildings to meet needs
-    // (government-hq, izbas, etc.) — at minimum the engine should not crash
-    console.log(
-      `Organic buildings: before=${initialBuildingCount}, after=${afterBuildingCount}`,
-    );
-    // If families arrived and pop > 0, the collective may have placed buildings
-    expect(afterBuildingCount).toBeGreaterThanOrEqual(initialBuildingCount);
+    // The collective should have organically placed a visible first project to meet state-control needs.
+    console.log(`Organic buildings: before=${initialBuildingCount}, after=${afterBuildingCount}`);
+    expect(afterBuildingCount).toBeGreaterThan(initialBuildingCount);
   });
 });

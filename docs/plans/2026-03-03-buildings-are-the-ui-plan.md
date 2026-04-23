@@ -2,9 +2,11 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Transform SimSoviet from a tile-placer into a Cities: Skylines-style Soviet settlement simulator where buildings ARE the UI, growth is organic, and the player is a directive-issuing chairman — not a brick-layer.
+**Goal:** Transform SimSoviet from a tile-placer into an autonomous Soviet settlement simulator where buildings ARE the UI, growth is organic, and the player is a directive-issuing chairman — not a brick-layer.
 
-**Architecture:** 7 sequential phases, each independently shippable. Phase 1 strips the HUD to minimal. Phase 2 enhances CollectiveAgent for organic growth. Phase 3 adds building-click interaction. Phase 4 overhauls audio. Phase 5 adds camera zoom. Phase 6 redesigns the start flow. Phase 7 refactors Freeform mode.
+**Current status (2026-04-23):** This plan remains the gameplay direction for the historical 1.0 surface. Phase 7 is now locked to the 1917-1991 campaign plus grounded same-settlement continuation; verification status lives in `docs/verification-ledger.md`.
+
+**Architecture:** 7 sequential phases, each independently shippable. Phase 1 strips the HUD to minimal. Phase 2 enhances CollectiveAgent for organic growth. Phase 3 adds building-click interaction. Phase 4 overhauls audio. Phase 5 adds camera zoom. Phase 6 redesigns the start flow. Phase 7 locks the historical 1.0 scope.
 
 **Tech Stack:** React Three Fiber v9.5, Three.js r183, React Native 0.83.2, Expo 55, TypeScript 5.9, Miniplex ECS, Yuka AI
 
@@ -433,27 +435,28 @@ git commit -m "test: add minimal HUD E2E tests"
 - Modify: `src/bridge/GameInit.ts` — set initial morale to 70 (hopeful revolutionaries)
 - Modify: `src/ecs/factories/citizenFactories.ts` — default happiness 70
 
-### Task 6.4: Remove Divergence Year from Freeform
+### Task 6.4: Remove Mode And Divergence Selection
 
 **Files:**
-- Modify: `src/ui/NewGameSetup.tsx` — remove divergence year selector for Freeform mode
+- Modify: `src/ui/NewGameSetup.tsx` — single historical campaign start
 
 ---
 
-## Phase 7: Freeform Mode — Organic Divergence
+## Phase 7: Historical Scope Lock
 
-**Objective:** Remove explicit divergence point. Timeline diverges naturally through accumulated differences. Unlocks tied to events, not dates.
+**Objective:** Keep 1.0 focused on 1917-1991 plus grounded same-settlement continuation.
 
-### Task 7.1: Probability-Driven Events for Freeform
-
-**Files:**
-- Modify: `src/ai/agents/crisis/FreeformGovernor.ts` — events by probability, not date
-- Create: `src/growth/OrganicUnlocks.ts` — milestone-based era transitions
-
-### Task 7.2: Organic Era Transitions
+### Task 7.1: One-Shot 1991 Completion
 
 **Files:**
-- Modify: `src/ai/agents/political/PoliticalAgent.ts` — Freeform era change by conditions, not year
+- Modify: `src/game/engine/phaseChronology.ts` — fire campaign completion once
+- Modify: `src/ui/USSRDissolutionModal.tsx` — completion summary and continuation option
+
+### Task 7.2: Grounded Continuation
+
+**Files:**
+- Modify: `src/game/SimulationEngine.ts` — continue same settlement after 1991
+- Modify: `src/game/era/definitions.ts` — historical era order remains capped
 
 ---
 
@@ -466,10 +469,10 @@ Phase 3 (Building-as-UI) ─────────────────→ 
 Phase 4 (Audio) ───────────────────────────→ Independent
 Phase 5 (Camera) ──────────────────────────→ Phase 3 (Building-as-UI)
 Phase 6 (Start Flow) ─────────────────────→ Phase 2 (Growth Engine)
-Phase 7 (Freeform) ────────────────────────→ Independent
+Phase 7 (Historical scope) ────────────────→ Independent
 ```
 
-**Safe parallel execution:** Phase 4 (Audio) and Phase 7 (Freeform) are independent and can run in parallel with Phase 2+3.
+**Safe parallel execution:** Phase 4 (Audio) and Phase 7 (Historical scope) are independent and can run in parallel with Phase 2+3.
 
 ---
 
@@ -484,6 +487,7 @@ After all phases:
 - [ ] Only emergencies interrupt the player (fire, riot, famine, KGB)
 - [ ] Audio seamlessly blends between eras, resumes after incidental
 - [ ] Default camera at mid-zoom, workers visible
-- [ ] Freeform mode has no divergence picker, events are probability-driven
-- [ ] All existing unit tests pass (4,418+)
-- [ ] E2E: 35/35 pass (with updated assertions)
+- [x] New game starts the historical campaign without mode selection
+- [x] 1991 completion fires once and continuation stays grounded
+- [x] Current unit suite passes (5,259 tests)
+- [x] Headed Chrome Vitest browser proof reaches 1995 grounded free play with screenshots and diagnostic dumps

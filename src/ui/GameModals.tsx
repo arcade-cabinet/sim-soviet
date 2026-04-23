@@ -17,6 +17,7 @@ import { getTimelineEvent } from '../content/worldbuilding/timeline';
 import type { EraDefinition } from '../game/era';
 import type { TallyData } from '../game/GameTally';
 import { SovietModal } from './SovietModal';
+import { securityServiceLabelForYear } from './securityService';
 import { Colors, monoFont } from './styles';
 
 // ── Types ──
@@ -63,6 +64,8 @@ export interface GameModalsProps {
   gameTally: TallyData | null;
   onRestart: () => void;
 }
+
+export { securityServiceLabelForYear } from './securityService';
 
 /** Container for all in-game modal overlays: era transition, minigame, annual report, plan, and game-over. */
 export const GameModals: React.FC<GameModalsProps> = ({
@@ -213,6 +216,7 @@ const AnnualReportInner: React.FC<{
   const met = reportedQuota >= data.quotaTarget;
   const isFalsified = inflation > 0;
   const riskLevel = inflation <= 0 ? 0 : inflation <= 15 ? 1 : inflation <= 30 ? 2 : 3;
+  const securityService = securityServiceLabelForYear(data.year);
 
   const RISK_LABELS = ['NONE', 'LOW', 'MODERATE', 'HIGH'];
   const RISK_COLORS = [Colors.termGreen, Colors.sovietGold, '#ff9800', Colors.sovietRed];
@@ -278,7 +282,7 @@ const AnnualReportInner: React.FC<{
         </View>
         {inflation > 0 && (
           <View style={modalStyles.riskRow}>
-            <Text style={modalStyles.statLabel}>KGB Detection Risk:</Text>
+            <Text style={modalStyles.statLabel}>{securityService} Detection Risk:</Text>
             <Text style={[modalStyles.statValue, { color: RISK_COLORS[riskLevel] }]}>{RISK_LABELS[riskLevel]}</Text>
           </View>
         )}
@@ -286,7 +290,7 @@ const AnnualReportInner: React.FC<{
 
       <Text style={modalStyles.parchmentNote}>
         {isFalsified
-          ? '\u2620 Falsification of reports (pripiski) carries risk of KGB investigation and black marks.'
+          ? `\u2620 Falsification of reports (pripiski) carries risk of ${securityService} investigation and black marks.`
           : met
             ? '\u2605 The Party commends your adequate performance.'
             : '\u2620 Failure to meet quota has been noted in your personnel file.'}
@@ -300,20 +304,20 @@ const AnnualReportInner: React.FC<{
 const TIER_LABELS: Record<string, string> = {
   selo: 'Village (Selo)',
   posyolok: 'Settlement (Posyolok)',
-  pgt: 'Urban Settlement (PGT)',
-  gorod: 'City (Gorod)',
+  pgt: 'Town Settlement (PGT)',
+  gorod: 'Large Settlement (Gorod)',
 };
 
 const TIER_TITLES: Record<string, string> = {
-  selo: 'Chairman of the Collective',
+  selo: 'Predsedatel of the Collective',
   posyolok: 'Settlement Director',
-  pgt: 'Urban Administrator',
-  gorod: 'City Soviet Chairman',
+  pgt: 'PGT Administrator',
+  gorod: 'Local Soviet Predsedatel',
 };
 
 const TIER_CEREMONY: Record<string, string> = {
   posyolok:
-    "A modest ceremony is held. The attending brass band consists of one tuba player. He is also the mayor's cousin. Attendance was mandatory.",
+    "A modest ceremony is held. The attending brass band consists of one tuba player. He is also the chairman's cousin. Attendance was mandatory.",
   pgt: 'The Presidium sends a telegraph of congratulation. The telegraph operator adds "good luck" in pencil. This is the most sincere communication you will receive from Moscow.',
   gorod:
     'A delegation from the Central Committee arrives for the declaration. They inspect everything. They approve of nothing. They sign the papers anyway. The ink is still wet as they leave.',
@@ -431,8 +435,8 @@ const FiveYearPlanContent: React.FC<{
 const TIER_FULL_LABELS: Record<string, string> = {
   selo: 'Village (Selo)',
   posyolok: 'Settlement (Posyolok)',
-  pgt: 'Urban Settlement (PGT)',
-  gorod: 'City (Gorod)',
+  pgt: 'Town Settlement (PGT)',
+  gorod: 'Large Settlement (Gorod)',
 };
 
 const GameOverContent: React.FC<{

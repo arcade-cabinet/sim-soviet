@@ -3,7 +3,7 @@
  *
  * Country and sphere data for 1917 starting state.
  * Countries are tracked individually until they merge into spheres
- * at temporal scale (freeform eternal mode).
+ * at historical campaign scale.
  *
  * Governance types and transition rules are research-grounded:
  * each transition has historical precedent documented inline.
@@ -19,23 +19,15 @@ import worldData from '../../../config/world.json';
  * Eight governance types, each with historical precedent.
  * Transitions between types are driven by sphere dynamics.
  */
-export type GovernanceType =
-  | 'democratic'
-  | 'authoritarian'
-  | 'oligarchic'
-  | 'theocratic'
-  | 'corporate'
-  | 'technocratic'
-  | 'communist'
-  | 'feudal';
+export type GovernanceType = 'democratic' | 'authoritarian' | 'oligarchic' | 'theocratic' | 'communist';
 
 // ─── Sphere IDs ──────────────────────────────────────────────────────────────
 
-export type SphereId = 'european' | 'sinosphere' | 'western' | 'middle_eastern' | 'eurasian' | 'corporate';
+export type SphereId = 'european' | 'sinosphere' | 'western' | 'middle_eastern' | 'eurasian';
 
 // ─── Country ─────────────────────────────────────────────────────────────────
 
-/** Individual country (used in historical mode and early freeform). */
+/** Individual country used by the historical backdrop. */
 export interface Country {
   id: string;
   name: string;
@@ -46,7 +38,7 @@ export interface Country {
   tradeVolume: number;
   /** Relative military strength (0-1). */
   militaryStrength: number;
-  /** Year this country merges into its sphere (freeform only). */
+  /** Year this country merges into its sphere in the external backdrop. */
   mergeYear?: number;
 }
 
@@ -64,8 +56,6 @@ export interface GovernanceTransition {
     turchinRange?: { min: number; max: number };
     /** Khaldun phase range (decay = 0.6-1.0). */
     khaldunRange?: { min: number; max: number };
-    /** Minimum corporate share for corporate transitions. */
-    minCorporateShare?: number;
     /** Minimum religious intensity for theocratic transitions. */
     minReligiousIntensity?: number;
   };

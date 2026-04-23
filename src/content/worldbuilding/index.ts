@@ -14,7 +14,7 @@ export {
   getRandomAnnouncement,
   RADIO_ANNOUNCEMENTS,
 } from './radio';
-export { ETERNAL_TIMELINE, getTimelineEvent } from './timeline';
+export { getTimelineEvent, HISTORICAL_TIMELINE } from './timeline';
 export type {
   Achievement,
   BuildingFlavorText,

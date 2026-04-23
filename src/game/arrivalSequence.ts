@@ -8,9 +8,9 @@
  * This creates the feeling of a caravan arriving at empty land.
  */
 
-import { createDvor, type DvorMemberSeed } from '@/ecs/factories/settlementFactories';
-import { dvory, getResourceEntity } from '@/ecs/archetypes';
 import type { WorkerSystem } from '@/ai/agents/workforce/WorkerSystem';
+import { dvory, getResourceEntity } from '@/ecs/archetypes';
+import { createDvor, type DvorMemberSeed } from '@/ecs/factories/settlementFactories';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -75,7 +75,9 @@ export class ArrivalSequence {
    * Families are scheduled to arrive 1-2 per tick over ~30 ticks.
    * The chairman arrives first (tick 0).
    */
-  prepareArrival(dvorData: Array<{ id: string; surname: string; memberSeeds: DvorMemberSeed[]; isChairman?: boolean }>): void {
+  prepareArrival(
+    dvorData: Array<{ id: string; surname: string; memberSeeds: DvorMemberSeed[]; isChairman?: boolean }>,
+  ): void {
     this.queue = [];
     this.arrivedCount = 0;
     this.inProgress = true;
@@ -90,7 +92,7 @@ export class ArrivalSequence {
       }
       this.queue.push({ ...data, arrivalTick: currentTick });
       // Alternate between 1 and 2 families per tick (average ~1.5)
-      currentTick += (this.queue.length % 3 === 0) ? 1 : 2;
+      currentTick += this.queue.length % 3 === 0 ? 1 : 2;
     }
 
     this.totalDvory = dvorData.length;
@@ -138,13 +140,7 @@ export class ArrivalSequence {
       const dvor = entity.dvor;
       if (dvor) {
         for (const member of dvor.members) {
-          workerSystem.spawnWorkerFromDvor(
-            member,
-            dvor.id,
-            undefined,
-            undefined,
-            { morale: 70, loyalty: 60 },
-          );
+          workerSystem.spawnWorkerFromDvor(member, dvor.id, undefined, undefined, { morale: 70, loyalty: 60 });
         }
       }
 

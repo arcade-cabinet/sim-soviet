@@ -11,8 +11,8 @@ import { Clone, useGLTF } from '@react-three/drei';
 import type React from 'react';
 import { Suspense, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { type MassGraveCluster, useMassGraves } from '../stores/gameStore';
 import { getModelUrl } from './ModelPreloader';
-import { useMassGraves, type MassGraveCluster } from '../stores/gameStore';
 
 /** The 6 grave marker model names from manifest.json */
 const GRAVE_MODELS = [
@@ -64,6 +64,7 @@ const GraveMarker: React.FC<GraveMarkerProps> = ({ modelUrl, position, rotationY
   const groupRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
+    if (!scene) return;
     const group = groupRef.current;
     if (!group) return;
 
@@ -94,7 +95,7 @@ const GraveMarker: React.FC<GraveMarkerProps> = ({ modelUrl, position, rotationY
         }
       }
     });
-  }, [modelUrl, position, rotationY, scale]);
+  }, [scene, position, rotationY, scale]);
 
   return (
     <group ref={groupRef}>
@@ -118,30 +119,28 @@ const GraveCluster: React.FC<GraveClusterProps> = ({ cluster }) => {
       hash = ((hash << 5) - hash + cluster.id.charCodeAt(i)) | 0;
     }
 
-    return models.map((modelName, i) => {
-      const url = getModelUrl(modelName);
-      if (!url) return null;
+    return models
+      .map((modelName, i) => {
+        const url = getModelUrl(modelName);
+        if (!url) return null;
 
-      // Spread markers in a tight cluster (radius ~0.4 tiles)
-      const angle = seededRandom(hash + i * 13) * Math.PI * 2;
-      const radius = 0.15 + seededRandom(hash + i * 37) * 0.25;
-      const dx = Math.cos(angle) * radius;
-      const dz = Math.sin(angle) * radius;
-      const rotY = seededRandom(hash + i * 59) * Math.PI * 2;
-      const scale = 0.7 + seededRandom(hash + i * 71) * 0.6;
+        // Spread markers in a tight cluster (radius ~0.4 tiles)
+        const angle = seededRandom(hash + i * 13) * Math.PI * 2;
+        const radius = 0.15 + seededRandom(hash + i * 37) * 0.25;
+        const dx = Math.cos(angle) * radius;
+        const dz = Math.sin(angle) * radius;
+        const rotY = seededRandom(hash + i * 59) * Math.PI * 2;
+        const scale = 0.7 + seededRandom(hash + i * 71) * 0.6;
 
-      return {
-        key: `${cluster.id}-${i}`,
-        modelUrl: url,
-        position: [
-          cluster.gridX + 0.5 + dx,
-          0,
-          cluster.gridY + 0.5 + dz,
-        ] as [number, number, number],
-        rotationY: rotY,
-        scale,
-      };
-    }).filter(Boolean) as Array<{
+        return {
+          key: `${cluster.id}-${i}`,
+          modelUrl: url,
+          position: [cluster.gridX + 0.5 + dx, 0, cluster.gridY + 0.5 + dz] as [number, number, number],
+          rotationY: rotY,
+          scale,
+        };
+      })
+      .filter(Boolean) as Array<{
       key: string;
       modelUrl: string;
       position: [number, number, number];
@@ -154,12 +153,7 @@ const GraveCluster: React.FC<GraveClusterProps> = ({ cluster }) => {
     <>
       {markers.map((m) => (
         <Suspense key={m.key} fallback={null}>
-          <GraveMarker
-            modelUrl={m.modelUrl}
-            position={m.position}
-            rotationY={m.rotationY}
-            scale={m.scale}
-          />
+          <GraveMarker modelUrl={m.modelUrl} position={m.position} rotationY={m.rotationY} scale={m.scale} />
         </Suspense>
       ))}
     </>

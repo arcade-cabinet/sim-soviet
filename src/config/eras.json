@@ -6,8 +6,7 @@
     "great_patriotic",
     "reconstruction",
     "thaw_and_freeze",
-    "stagnation",
-    "the_eternal"
+    "stagnation"
   ],
   "allBuildingIds": [
     "apartment-tower-a",
@@ -81,7 +80,9 @@
       "constructionTimeMult": 2.0,
       "failureCondition": {
         "description": "All citizens starve before the first plan begins",
-        "rule": { "and": [{ "resource": "population", "op": "<=", "value": 0 }, { "resource": "food", "op": "<=", "value": 0 }] }
+        "rule": {
+          "and": [{ "resource": "population", "op": "<=", "value": 0 }, { "resource": "food", "op": "<=", "value": 0 }]
+        }
       },
       "introTitle": "Assignment: Revolutionary Settlement",
       "introText": "Welcome to the beginning. There is no plan yet. There will be a plan. The plan will solve everything. Until then, improvise. Improvisation is temporarily permitted. Build what you can from what you have. What you have is: mud, hope, and an unreasonable number of potatoes. The potatoes are small. The hope is smaller.",
@@ -119,7 +120,12 @@
       "constructionTimeMult": 2.0,
       "victoryCondition": {
         "description": "Reach posyolok settlement tier with 100+ population",
-        "rule": { "and": [{ "meta": "settlementTier", "op": "!=", "value": "selo" }, { "resource": "population", "op": ">=", "value": 100 }] }
+        "rule": {
+          "and": [
+            { "meta": "settlementTier", "op": "!=", "value": "selo" },
+            { "resource": "population", "op": ">=", "value": 100 }
+          ]
+        }
       },
       "failureCondition": {
         "description": "Settlement abandoned during collectivization",
@@ -137,13 +143,7 @@
       "doctrine": "industrialization",
       "deliveryRates": { "food": 0.45, "vodka": 0.35, "money": 0.5 },
       "quotaEscalation": 1.3,
-      "unlockedBuildings": [
-        "factory-office",
-        "rail-depot",
-        "vodka-distillery",
-        "radio-station",
-        "gulag-admin"
-      ],
+      "unlockedBuildings": ["factory-office", "rail-depot", "vodka-distillery", "radio-station", "gulag-admin"],
       "modifiers": {
         "productionMult": 1.2,
         "consumptionMult": 1.0,
@@ -187,7 +187,9 @@
       "constructionTimeMult": 1.0,
       "victoryCondition": {
         "description": "Survive to 1945 with at least 25 population",
-        "rule": { "and": [{ "meta": "year", "op": ">=", "value": 1945 }, { "resource": "population", "op": ">=", "value": 25 }] }
+        "rule": {
+          "and": [{ "meta": "year", "op": ">=", "value": 1945 }, { "resource": "population", "op": ">=", "value": 25 }]
+        }
       },
       "failureCondition": {
         "description": "Population reaches zero during the war",
@@ -205,12 +207,7 @@
       "doctrine": "reconstruction",
       "deliveryRates": { "food": 0.25, "vodka": 0.2, "money": 0.3 },
       "quotaEscalation": 1.2,
-      "unlockedBuildings": [
-        "apartment-tower-a",
-        "ministry-office",
-        "train-station",
-        "motor-pool"
-      ],
+      "unlockedBuildings": ["apartment-tower-a", "ministry-office", "train-station", "motor-pool"],
       "modifiers": {
         "productionMult": 1.0,
         "consumptionMult": 0.9,
@@ -223,10 +220,15 @@
       "constructionTimeMult": 1.0,
       "victoryCondition": {
         "description": "Reach PGT settlement tier",
-        "rule": { "or": [{ "meta": "settlementTier", "op": "==", "value": "pgt" }, { "meta": "settlementTier", "op": "==", "value": "gorod" }] }
+        "rule": {
+          "or": [
+            { "meta": "settlementTier", "op": "==", "value": "pgt" },
+            { "meta": "settlementTier", "op": "==", "value": "gorod" }
+          ]
+        }
       },
       "introTitle": "Assignment: Post-War Reconstruction",
-      "introText": "The war is over. The victory is complete. The rubble is also complete. There is a great deal of rubble. Your task is to transform the rubble into buildings and the buildings into a city and the city into a symbol of Soviet resilience. The symbol should be made of concrete. Everything should be made of concrete. Concrete is the material of the future. The future is grey.",
+      "introText": "The war is over. The victory is complete. The rubble is also complete. There is a great deal of rubble. Your task is to transform the rubble into shelter, workshops, and a functioning Soviet settlement. The settlement should become a symbol of Soviet resilience. The symbol should be made of concrete. Everything should be made of concrete. Concrete is the material of the future. The future is grey.",
       "briefingFlavor": "Rebuilding from ashes. Stalinist architecture. Paranoia as a management style."
     },
     "thaw_and_freeze": {
@@ -237,11 +239,7 @@
       "doctrine": "thaw",
       "deliveryRates": { "food": 0.25, "vodka": 0.15, "money": 0.25 },
       "quotaEscalation": 1.1,
-      "unlockedBuildings": [
-        "apartment-tower-b",
-        "apartment-tower-c",
-        "polyclinic"
-      ],
+      "unlockedBuildings": ["apartment-tower-b", "apartment-tower-c", "polyclinic"],
       "modifiers": {
         "productionMult": 1.3,
         "consumptionMult": 0.8,
@@ -254,7 +252,13 @@
       "constructionTimeMult": 0.6,
       "victoryCondition": {
         "description": "Reach 300+ population with positive food and vodka",
-        "rule": { "and": [{ "resource": "population", "op": ">=", "value": 300 }, { "resource": "food", "op": ">", "value": 0 }, { "resource": "vodka", "op": ">", "value": 0 }] }
+        "rule": {
+          "and": [
+            { "resource": "population", "op": ">=", "value": 300 },
+            { "resource": "food", "op": ">", "value": 0 },
+            { "resource": "vodka", "op": ">", "value": 0 }
+          ]
+        }
       },
       "introTitle": "Assignment: De-Stalinization",
       "introText": "A new era begins. The previous era has been reclassified as \"overly enthusiastic.\" Certain portraits are being removed from certain walls. Certain names are being removed from certain cities. Certain people are being removed from certain places they should not have been in the first place. Things are warming up. The permafrost remains, but the political climate thaws. Temporarily. Everything is temporarily.",
@@ -262,9 +266,9 @@
     },
     "stagnation": {
       "id": "stagnation",
-      "name": "Era of Stagnation",
+      "name": "Stagnation & Dissolution",
       "startYear": 1982,
-      "endYear": 2000,
+      "endYear": 1991,
       "doctrine": "stagnation",
       "deliveryRates": { "food": 0.35, "vodka": 0.3, "money": 0.4 },
       "quotaEscalation": 1.05,
@@ -281,34 +285,16 @@
       "constructionTimeMult": 0.6,
       "failureCondition": {
         "description": "Infrastructure collapses: 0 power with 200+ population",
-        "rule": { "and": [{ "resource": "power", "op": "<=", "value": 0 }, { "resource": "population", "op": ">=", "value": 200 }] }
+        "rule": {
+          "and": [
+            { "resource": "power", "op": "<=", "value": 0 },
+            { "resource": "population", "op": ">=", "value": 200 }
+          ]
+        }
       },
       "introTitle": "Assignment: Developed Socialism",
       "introText": "Nothing is wrong. Everything is stable. The economy is stable. The leadership is stable. The buildings are less stable, but their instability is itself stable. Vodka production has never been higher. This is considered the golden age. The gold is actually tin. The tin is actually rust. But the vodka is real. The vodka is always real.",
-      "briefingFlavor": "Late Soviet decay. Corruption. Reform attempts. The system discovers it is the problem."
-    },
-    "the_eternal": {
-      "id": "the_eternal",
-      "name": "The Eternal Soviet",
-      "startYear": 2000,
-      "endYear": -1,
-      "doctrine": "eternal",
-      "deliveryRates": { "food": 0.3, "vodka": 0.25, "money": 0.35 },
-      "quotaEscalation": 1.25,
-      "unlockedBuildings": [],
-      "modifiers": {
-        "productionMult": 1.0,
-        "consumptionMult": 1.0,
-        "decayMult": 1.0,
-        "populationGrowthMult": 1.0,
-        "eventFrequencyMult": 1.3,
-        "corruptionMult": 1.0
-      },
-      "constructionMethod": "decaying",
-      "constructionTimeMult": 1.5,
-      "introTitle": "Assignment: Eternal Maintenance",
-      "introText": "The Union did not fall. It was renovated. The renovation is ongoing. It will always be ongoing. You are part of the renovation. Do not stop renovating. The world outside has changed. The world inside has not. This is considered a feature. The feature is made of concrete. The concrete is eternal. You are less so, but your paperwork will outlive you.",
-      "briefingFlavor": "The USSR that never fell. Increasingly absurd. The bureaucracy has achieved sentience."
+      "briefingFlavor": "Late Soviet decay. Corruption. Reform attempts. The system discovers it is the problem. The campaign record closes in 1991."
     }
   }
 }

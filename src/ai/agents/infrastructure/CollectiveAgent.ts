@@ -20,31 +20,27 @@ import { Vehicle } from 'yuka';
 import { GRID_SIZE, infrastructure } from '@/config';
 import { classifyBuilding } from '@/config/buildingClassification';
 import { isProtected } from '@/config/protectedClasses';
-import { getBuildingDef } from '@/data/buildingDefs';
 import {
   buildings,
   buildingsLogic,
+  dvory,
+  getMetaEntity,
   getResourceEntity,
   operationalBuildings,
   terrainFeatures,
   underConstruction,
-  getMetaEntity,
 } from '@/ecs/archetypes';
-import { setCaravanTarget } from '@/stores/gameStore';
 import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import type { Entity, Resources } from '@/ecs/world';
 import { world } from '@/ecs/world';
-import type { AgentParameterProfile } from '../../../game/engine/agentParameterMatrix';
 import type { GameRng } from '../../../game/SeedSystem';
 import { getBuildInterval } from '../../../growth/GrowthPacing';
 import { findBestPlacement, type PlacementContext } from '../../../growth/SiteSelectionRules';
+import { MSG, type NewTickPayload } from '../../telegrams';
 import type { PlanMandateState } from '../political/PoliticalAgent';
+import type { DvorNeedsState } from '../social/DvorNeedsAgent';
 import type { WorkerStats } from '../workforce/types';
 import { cascadeDisplacement } from './displacementSystem';
-import { checkScaleUpTrigger, scaleUpBuilding } from './megaScalingSystem';
-import { getLocationResources, type LocationResources } from '../../../game/engine/locationResources';
-import type { DvorNeedsState } from '../social/DvorNeedsAgent';
-import { MSG, type NewTickPayload } from '../../telegrams';
 
 // ── Re-exported types (absorbed from governor.ts) ─────────────────────────────
 
@@ -158,6 +154,9 @@ export const CANDIDATE_LIMIT = acfg.candidateLimit;
 /** How often (in ticks) the autonomous collective checks for construction needs. */
 const COLLECTIVE_CHECK_INTERVAL = acfg.collectiveCheckInterval;
 
+/** First visible collective action should happen quickly enough for the opening play session to feel alive. */
+const BOOTSTRAP_BUILD_INTERVAL = 12;
+
 /** Terrain feature types that block building placement. */
 const IMPASSABLE_FEATURES = new Set(['mountain', 'river', 'forest']);
 
@@ -176,6 +175,11 @@ const HOUSING_SUGGESTIONS = ['workers-house-a', 'workers-house-b'];
 const FOOD_SUGGESTIONS = ['collective-farm-hq'];
 const POWER_SUGGESTIONS = ['power-station'];
 const VODKA_SUGGESTIONS = ['vodka-distillery'];
+
+function demandLabel(demand: ConstructionDemand, defId: string): string {
+  if (defId === 'government-hq') return 'state administration';
+  return `${demand.category.replace(/_/g, ' ')} demand`;
+}
 
 // ── CollectiveAgent ───────────────────────────────────────────────────────────
 
@@ -208,14 +212,8 @@ export class CollectiveAgent extends Vehicle {
   /** Seeded RNG (set via setRng). */
   private rng?: GameRng;
 
-  /** Active terrain profile — controls construction type for off-world settlements. */
-  private profile: Readonly<AgentParameterProfile> | null = null;
-
   /** Cached fertility map for resource-proximity placement. Rebuilt each tickAutonomous. */
   private fertilityCache?: Map<string, number>;
-
-  /** Cached arcology footprint cells ("x,y" → mergeGroup) for adjacency-aware placement. */
-  private arcologyCellsCache?: Map<string, string>;
 
   constructor() {
     super();
@@ -235,25 +233,45 @@ export class CollectiveAgent extends Vehicle {
   /** Triggered autonomously via NEW_TICK */
   private evaluateConstructionTick(totalTicks: number): void {
     // Requires DvorNeedsAgent to have evaluated first
-    const needsAgent = this.manager?.entities.find(e => e.name === 'DvorNeedsAgent') as import('../social/DvorNeedsAgent').DvorNeedsAgent | undefined;
+    const needsAgent = this.manager?.entities.find((e) => e.name === 'DvorNeedsAgent') as
+      | import('../social/DvorNeedsAgent').DvorNeedsAgent
+      | undefined;
     if (!needsAgent) return;
 
     const needsState = needsAgent.getNeedsState();
     const meta = getMetaEntity()?.gameMeta;
-    
+    const engine = (
+      globalThis as {
+        simulationEngine?: {
+          getMandateState?: () => PlanMandateState | null;
+          recordBuildingForMandates?: (defId: string) => void;
+          getCallbacks?: () => {
+            onToast?: (msg: string, severity?: string) => void;
+            onAdvisor?: (msg: string) => void;
+          };
+        };
+      }
+    ).simulationEngine;
+    const runtimeCallbacks = engine?.getCallbacks?.();
+
     const deps = {
       totalTicks,
       rng: this.rng,
-      mandateState: null, // TODO: Fetch from PoliticalAgent
+      mandateState: engine?.getMandateState?.() ?? null,
       needsState,
       eraId: meta?.currentEra ?? 'revolution',
       callbacks: {
-        onToast: (msg: string) => console.log(msg),
-        onAdvisor: (msg: string) => console.log(msg),
+        onToast: (msg: string, severity?: string) => {
+          if (runtimeCallbacks?.onToast) runtimeCallbacks.onToast(msg, severity);
+          else console.log(msg);
+        },
+        onAdvisor: (msg: string) => {
+          if (runtimeCallbacks?.onAdvisor) runtimeCallbacks.onAdvisor(msg);
+          else console.log(msg);
+        },
       },
-      recordBuildingForMandates: () => {},
+      recordBuildingForMandates: (defId: string) => engine?.recordBuildingForMandates?.(defId),
       gridSize: GRID_SIZE,
-      celestialBody: meta?.currentEra === 'post_soviet' ? 'mars' : 'earth',
     };
 
     this.tickAutonomous(deps);
@@ -262,19 +280,6 @@ export class CollectiveAgent extends Vehicle {
   /** Set the seeded RNG for deterministic collective rolls. */
   setRng(rng: GameRng): void {
     this.rng = rng;
-  }
-
-  /**
-   * Set the active agent parameter profile.
-   * constructionType determines building class (standard, pressurized_dome, underground, orbital).
-   */
-  setProfile(profile: Readonly<AgentParameterProfile>): void {
-    this.profile = profile;
-  }
-
-  /** Get the active construction type from the profile ('standard' if no profile set). */
-  getConstructionType(): AgentParameterProfile['constructionType'] {
-    return this.profile?.constructionType ?? 'standard';
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────
@@ -311,7 +316,7 @@ export class CollectiveAgent extends Vehicle {
    */
   tickCollective(
     _delta: number,
-    resources: Resources,
+    _resources: Resources,
     rng: GameRng,
     mandateState: PlanMandateState | null,
     currentTick: number,
@@ -448,7 +453,19 @@ export class CollectiveAgent extends Vehicle {
    * Scans current game state for shortages based on aggregated Dvor Needs
    * and returns construction demands.
    */
-  detectConstructionDemands(needs: DvorNeedsState): ConstructionDemand[] {
+  detectConstructionDemands(
+    needsOrPopulation: DvorNeedsState | number,
+    legacyHousingCapacity?: number,
+    legacyResources?: Partial<Resources>,
+  ): ConstructionDemand[] {
+    const legacyPopulation = typeof needsOrPopulation === 'number' ? needsOrPopulation : undefined;
+    const resources = legacyResources ?? getResourceEntity()?.resources;
+    const population = legacyPopulation ?? resources?.population ?? this.countDvorPopulation();
+    const housingCapacity = legacyHousingCapacity ?? this.sumHousingCapacity();
+    const needs =
+      typeof needsOrPopulation === 'number'
+        ? this.deriveNeedsFromLegacyInputs(needsOrPopulation, housingCapacity, resources)
+        : needsOrPopulation;
     const demands: ConstructionDemand[] = [];
 
     // 0. STATE SURVIVAL (Absolute Priority)
@@ -476,6 +493,11 @@ export class CollectiveAgent extends Vehicle {
       });
     }
 
+    const housingDemand = this.detectHousingDemand(population, housingCapacity);
+    if (housingDemand && !demands.some((d) => d.category === housingDemand.category)) {
+      demands.push(housingDemand);
+    }
+
     // 2. Food Demand (Starving Dvori)
     if (needs.starvingCount > 0) {
       demands.push({
@@ -494,6 +516,21 @@ export class CollectiveAgent extends Vehicle {
         suggestedDefIds: POWER_SUGGESTIONS,
         reason: `${needs.freezingCount} workers are freezing due to lack of power`,
       });
+    }
+
+    const foodDemand = this.detectFoodDemand(population, resources?.food ?? 0);
+    if (foodDemand && !demands.some((d) => d.category === foodDemand.category)) {
+      demands.push(foodDemand);
+    }
+
+    const powerDemand = this.detectPowerDemand();
+    if (powerDemand && !demands.some((d) => d.category === powerDemand.category)) {
+      demands.push(powerDemand);
+    }
+
+    const vodkaDemand = this.detectVodkaDemand(population, resources?.vodka ?? 0);
+    if (vodkaDemand && !demands.some((d) => d.category === vodkaDemand.category)) {
+      demands.push(vodkaDemand);
     }
 
     return demands;
@@ -665,7 +702,7 @@ export class CollectiveAgent extends Vehicle {
         requests.push({
           defId,
           source: 'demand',
-          label: `${demand.category} demand`,
+          label: demandLabel(demand, defId),
           sortPriority: weight,
           reason: demand.reason,
         });
@@ -676,42 +713,8 @@ export class CollectiveAgent extends Vehicle {
     return requests;
   }
 
-  // ── Absorbed SimulationEngine Methods ──────────────────────────────────────
-
-  /** Find an empty cell within radius of (cx, cy), avoiding occupied cells. */
-  private findNearbyEmpty(
-    cx: number,
-    cy: number,
-    occupied: Set<string>,
-    rng: GameRng,
-    minDist = 2,
-  ): { gridX: number; gridY: number } | null {
-    const candidates: Array<{ gridX: number; gridY: number; dist: number }> = [];
-    const maxDist = minDist + 3;
-
-    for (let dx = -maxDist; dx <= maxDist; dx++) {
-      for (let dy = -maxDist; dy <= maxDist; dy++) {
-        const dist = Math.abs(dx) + Math.abs(dy);
-        if (dist < minDist || dist > maxDist) continue;
-
-        const nx = cx + dx;
-        const ny = cy + dy;
-        if (!this.isInBounds(nx, ny)) continue;
-        if (occupied.has(`${nx},${ny}`)) continue;
-
-        candidates.push({ gridX: nx, gridY: ny, dist });
-      }
-    }
-
-    if (candidates.length === 0) return null;
-    candidates.sort((a, b) => a.dist - b.dist);
-    const top = candidates.slice(0, Math.min(5, candidates.length));
-    return top[rng.pickIndex(top.length)]!;
-  }
-
   /**
    * Full autonomous construction pipeline: detect demands, merge mandates, auto-place.
-   * Also checks for mega-scaling opportunities on housing buildings.
    * Absorbs SimulationEngine.tickCollectiveViaAgent().
    */
   public tickAutonomous(deps: {
@@ -726,23 +729,17 @@ export class CollectiveAgent extends Vehicle {
     terrainTiles?: Array<{ type: string; fertility: number }>;
     /** Grid size for terrain tile indexing. */
     gridSize?: number;
-    /** Active arcologies for adjacency-aware placement. */
-    arcologies?: Array<{ footprint: Array<{ x: number; y: number }>; mergeGroup: string }>;
-    /** Celestial body key (e.g. 'earth', 'moon', 'mars') for location-aware bootstrap. */
-    celestialBody?: string;
   }): void {
-    // Use era-based interval if eraId is provided, otherwise use config default
-    const interval = deps.eraId ? getBuildInterval(deps.eraId) : COLLECTIVE_CHECK_INTERVAL;
+    const hasAnyConstruction = buildings.entities.length > 0 || underConstruction.entities.length > 0;
+    // Use a short bootstrap interval for the first visible state-control project,
+    // then return to era-based pacing for normal historical growth.
+    const interval = !hasAnyConstruction
+      ? BOOTSTRAP_BUILD_INTERVAL
+      : deps.eraId
+        ? getBuildInterval(deps.eraId)
+        : COLLECTIVE_CHECK_INTERVAL;
     if (deps.totalTicks % interval !== 0) return;
-    if (deps.totalTicks < 60) return;
-
-    // Check mega-scaling before construction (population pressure may scale existing buildings)
-    if (deps.eraId) {
-      const storeCheck = getResourceEntity();
-      if (storeCheck) {
-        this.checkMegaScaling(deps.eraId, storeCheck.resources.population, deps.callbacks);
-      }
-    }
+    if (hasAnyConstruction && deps.totalTicks < 60) return;
 
     if (underConstruction.entities.length >= 3) return;
 
@@ -750,7 +747,7 @@ export class CollectiveAgent extends Vehicle {
     if (!storeRef) return;
 
     const res = storeRef.resources;
-    const housingCap = this.getHousingCapacity();
+    const _housingCap = this.getHousingCapacity();
 
     // Step 1-2: CollectiveAgent detects demands and generates queue
     const demands = this.detectConstructionDemands(deps.needsState);
@@ -774,18 +771,6 @@ export class CollectiveAgent extends Vehicle {
       this.fertilityCache = buildFertilityMap(deps.terrainTiles, deps.gridSize);
     }
 
-    // Build arcology cells cache for adjacency-aware placement
-    if (deps.arcologies && deps.arcologies.length > 0) {
-      this.arcologyCellsCache = new Map();
-      for (const arc of deps.arcologies) {
-        for (const cell of arc.footprint) {
-          this.arcologyCellsCache.set(`${cell.x},${cell.y}`, arc.mergeGroup);
-        }
-      }
-    } else {
-      this.arcologyCellsCache = undefined;
-    }
-
     // Step 3: Auto-place via CollectiveAgent with era-aware placement
     const rng = this.rng ?? deps.rng;
     if (!rng) return;
@@ -793,57 +778,17 @@ export class CollectiveAgent extends Vehicle {
     const entity = this.autoPlaceBuilding(request.defId, rng, deps.eraId);
     if (entity) {
       deps.recordBuildingForMandates(request.defId);
+      const isStateBootstrap = request.defId === 'government-hq';
 
       if (request.source === 'mandate') {
         deps.callbacks.onToast(`DECREE FULFILLED: Construction of ${request.label} has begun`);
+      } else if (isStateBootstrap) {
+        deps.callbacks.onToast('STATE DIRECTIVE: Administrative control construction has begun');
+        deps.callbacks.onAdvisor('The Party has established its first office, Comrade. The settlement is now legible.');
       } else {
         deps.callbacks.onToast(`WORKERS' INITIATIVE: The collective begins ${request.label}`);
         deps.callbacks.onAdvisor(`The workers have started building on their own, Comrade. ${request.reason}.`);
       }
-    }
-  }
-
-  // ── Mega-Scaling: Population Pressure Scale-Up ──────────────────────────────
-
-  /**
-   * Checks all operational housing buildings for mega-scaling opportunities.
-   *
-   * When total population exceeds a building's effective capacity * 1.5
-   * and the current era allows a higher tier, the building is scaled up.
-   * Uses the building definition's base housingCap as the tier-0 reference.
-   *
-   * @param eraId - Current era identifier for max tier lookup
-   * @param population - Current total population (demand signal)
-   * @param callbacks - Toast/advisor callbacks for UI notification
-   */
-  checkMegaScaling(
-    eraId: string,
-    population: number,
-    callbacks: { onToast: (msg: string, severity?: string) => void },
-  ): void {
-    for (const entity of operationalBuildings.entities) {
-      const bldg = entity.building;
-      if (bldg.housingCap <= 0) continue;
-
-      const def = getBuildingDef(bldg.defId);
-      if (!def) continue;
-
-      const tier: number = (bldg as any).tier ?? 0;
-      const baseCapacity = def.stats.housingCap;
-
-      // Current effective capacity is the tier-scaled value
-      if (!checkScaleUpTrigger(bldg.housingCap, population, eraId, tier)) continue;
-
-      const result = scaleUpBuilding(baseCapacity, tier);
-      if (!result) continue;
-
-      // Apply scale-up to the ECS component
-      (bldg as any).tier = result.newTier;
-      bldg.housingCap = result.newCapacity;
-
-      callbacks.onToast(
-        `EXPANSION: ${bldg.defId} scaled to Tier ${result.newTier} (capacity: ${Math.floor(result.newCapacity)})`,
-      );
     }
   }
 
@@ -968,6 +913,36 @@ export class CollectiveAgent extends Vehicle {
   }
 
   // ── Private Helpers: Demand System ─────────────────────────────────────────
+
+  private deriveNeedsFromLegacyInputs(
+    population: number,
+    housingCapacity: number,
+    resources: Partial<Resources> | undefined,
+  ): DvorNeedsState {
+    const food = resources?.food ?? 0;
+    return {
+      unhousedCount: Math.max(0, population - housingCapacity),
+      starvingCount: food / Math.max(1, population) < FOOD_CRITICAL_THRESHOLD ? population : 0,
+      freezingCount: 0,
+      idleCount: 0,
+    };
+  }
+
+  private countDvorPopulation(): number {
+    let population = 0;
+    for (const entity of dvory.entities) {
+      population += entity.dvor.members.length;
+    }
+    return population;
+  }
+
+  private sumHousingCapacity(): number {
+    let capacity = 0;
+    for (const entity of buildings.entities) {
+      capacity += entity.building.housingCap ?? 0;
+    }
+    return capacity;
+  }
 
   private detectHousingDemand(population: number, housingCapacity: number): ConstructionDemand | null {
     if (population <= 0) return null;
@@ -1107,7 +1082,6 @@ export class CollectiveAgent extends Vehicle {
       mountainCells,
       occupiedCells: occupied,
       fertilityCells: this.fertilityCache,
-      arcologyCells: this.arcologyCellsCache,
     };
   }
 
@@ -1138,10 +1112,7 @@ export class CollectiveAgent extends Vehicle {
  * Build a fertility lookup map from flat terrain tile array.
  * Tiles are stored in row-major order: index = z * gridSize + x.
  */
-function buildFertilityMap(
-  tiles: Array<{ type: string; fertility: number }>,
-  gridSize: number,
-): Map<string, number> {
+function buildFertilityMap(tiles: Array<{ type: string; fertility: number }>, gridSize: number): Map<string, number> {
   const map = new Map<string, number>();
   for (let i = 0; i < tiles.length; i++) {
     const x = i % gridSize;
@@ -1204,8 +1175,12 @@ export function runGovernor(
  * Detect construction demands based on current population and resource state.
  * Standalone wrapper around CollectiveAgent.detectConstructionDemands().
  */
-export function detectConstructionDemands(needs: DvorNeedsState): ConstructionDemand[] {
-  return _sharedAgent.detectConstructionDemands(needs);
+export function detectConstructionDemands(
+  needsOrPopulation: DvorNeedsState | number,
+  legacyHousingCapacity?: number,
+  legacyResources?: Partial<Resources>,
+): ConstructionDemand[] {
+  return _sharedAgent.detectConstructionDemands(needsOrPopulation, legacyHousingCapacity, legacyResources);
 }
 
 /**

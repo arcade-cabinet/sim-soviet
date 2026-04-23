@@ -43,10 +43,7 @@ export interface ToolbarProps {
 }
 
 /** Unified command bar with primary navigation tabs. */
-export const Toolbar: React.FC<ToolbarProps> = ({
-  activeTab,
-  onTabChange,
-}) => {
+export const Toolbar: React.FC<ToolbarProps> = ({ activeTab, onTabChange }) => {
   const { isCompact } = useResponsive();
 
   return (

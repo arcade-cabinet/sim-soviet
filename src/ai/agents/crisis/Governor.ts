@@ -9,9 +9,8 @@
  *   2. DynamicModifiers — the same shape as DifficultyConfig, applied to
  *      every system that currently reads difficulty settings.
  *
- * Two concrete implementations will follow:
- *   - HistoricalGovernor: fires crises on historical dates, ends ~1991
- *   - FreeformGovernor: pattern-driven alternate-history extrapolation
+ * HistoricalGovernor fires crises on historical dates through the 1991
+ * campaign endpoint, then continues with grounded local pressure.
  */
 
 import type { SettlementSummary } from '@/game/engine/SettlementSummary';
@@ -22,8 +21,8 @@ import type { CrisisImpact } from './types';
 
 // ─── Governor Mode ─────────────────────────────────────────────────────────
 
-/** Which governor variant is active. */
-export type GovernorMode = 'historical' | 'freeform';
+/** Campaign governor mode. */
+export type GovernorMode = 'historical';
 
 // ─── Dynamic Modifiers ─────────────────────────────────────────────────────
 
@@ -95,7 +94,7 @@ export interface GovernorContext {
   settlement?: SettlementSummary;
   /** Pressure system readings for pressure-based crisis generation. Optional for backward compat. */
   pressureReadings?: PressureReadContext;
-  /** WorldAgent reference for computing per-domain pressure modifiers. Optional for backward compat. */
+  /** WorldAgent reference for historical pressure modifiers. Optional for backward compat. */
   worldAgent?: WorldAgent;
 }
 

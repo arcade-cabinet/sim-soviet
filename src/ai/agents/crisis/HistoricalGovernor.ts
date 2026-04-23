@@ -11,13 +11,12 @@
  *
  * Reads PressureSystem to modulate crisis severity — high pressure in
  * relevant domains amplifies crisis impacts. Also evaluates historical
- * cold branches (dekulakization, ethnic deportation, virgin lands,
- * moscow promotion) from worldBranches.ts.
+ * cold branches (dekulakization, ethnic deportation, virgin lands)
+ * from worldBranches.ts.
  */
 
 import { HISTORICAL_CRISES } from '@/config/historicalCrises';
 import type { WorldState } from '../core/WorldAgent';
-import type { GovernanceType, SphereId } from '../core/worldCountries';
 import {
   type BranchSystemSaveData,
   type BranchTracker,
@@ -27,6 +26,7 @@ import {
   restoreBranchSystem,
   serializeBranchSystem,
 } from '../core/worldBranches';
+import type { GovernanceType, SphereId } from '../core/worldCountries';
 import { DisasterAgent } from './DisasterAgent';
 import { FamineAgent } from './FamineAgent';
 import type { DynamicModifiers, GovernorContext, GovernorDirective, GovernorSaveData, IGovernor } from './Governor';
@@ -69,17 +69,10 @@ function createAgentForType(type: string): ICrisisAgent | null {
 // ─── Historical Cold Branches ────────────────────────────────────────────────
 
 /** IDs of cold branches relevant to historical mode (pre-1991 Soviet history). */
-const HISTORICAL_BRANCH_IDS = new Set([
-  'dekulakization_purge',
-  'ethnic_deportation',
-  'virgin_lands_assignment',
-  'moscow_promotion',
-]);
+const HISTORICAL_BRANCH_IDS = new Set(['dekulakization_purge', 'ethnic_deportation', 'virgin_lands_assignment']);
 
 /** Subset of COLD_BRANCHES applicable to historical mode. */
-const HISTORICAL_COLD_BRANCHES: readonly ColdBranch[] = COLD_BRANCHES.filter((b) =>
-  HISTORICAL_BRANCH_IDS.has(b.id),
-);
+const HISTORICAL_COLD_BRANCHES: readonly ColdBranch[] = COLD_BRANCHES.filter((b) => HISTORICAL_BRANCH_IDS.has(b.id));
 
 // ─── Pressure → Severity Mapping ──────────────────────────────────────────────
 
@@ -184,6 +177,9 @@ export class HistoricalGovernor implements IGovernor {
     // ── Promote pending → active (sorted, so stop at first future entry) ──
     while (this.pendingEntries.length > 0 && ctx.year >= this.pendingEntries[0]!.definition.startYear) {
       const entry = this.pendingEntries.shift()!;
+      if (this.isExpiredBeforeActivation(entry.definition, ctx.year)) {
+        continue;
+      }
       entry.agent.configure(entry.definition);
       entry.activated = true;
       this.activeEntries.push(entry);
@@ -246,7 +242,11 @@ export class HistoricalGovernor implements IGovernor {
     // ── Prune resolved entries (aftermath complete) ─────────────────────
     // Only check yearly to avoid per-tick overhead
     if (ctx.month === 1) {
-      this.activeEntries = this.activeEntries.filter((entry) => entry.agent.isActive());
+      this.activeEntries = this.activeEntries.filter((entry) => {
+        const aftermathYears = Math.max(1, Math.ceil(entry.definition.aftermathTicks / 12));
+        const forceResolved = ctx.year > entry.definition.endYear + aftermathYears;
+        return !forceResolved && entry.agent.isActive();
+      });
     }
 
     const modifiers = this.mergeModifiers(allImpacts);
@@ -271,6 +271,12 @@ export class HistoricalGovernor implements IGovernor {
   /** Get activated cold branches (for testing/inspection). */
   getActivatedBranches(): ReadonlySet<string> {
     return this.activatedBranches;
+  }
+
+  /** Return true when a skipped-over historical crisis is too old to activate. */
+  private isExpiredBeforeActivation(definition: CrisisDefinition, year: number): boolean {
+    const aftermathYears = Math.max(1, Math.ceil(definition.aftermathTicks / 12));
+    return year > definition.endYear + aftermathYears;
   }
 
   /** Serialize governor state for save persistence. */
@@ -377,7 +383,8 @@ export class HistoricalGovernor implements IGovernor {
         const def = {
           ...branch.effects.crisisDefinition,
           startYear: ctx.year,
-          endYear: ctx.year + (branch.effects.crisisDefinition.endYear - branch.effects.crisisDefinition.startYear || 2),
+          endYear:
+            ctx.year + (branch.effects.crisisDefinition.endYear - branch.effects.crisisDefinition.startYear || 2),
         };
         const agent = createAgentForType(def.type);
         if (agent) {

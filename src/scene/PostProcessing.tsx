@@ -11,12 +11,20 @@
  * All effects are lightweight — targeting < 2ms per frame overhead.
  */
 
-import { Bloom, BrightnessContrast, EffectComposer, HueSaturation, SMAA, ToneMapping, Vignette } from '@react-three/postprocessing';
+import {
+  Bloom,
+  BrightnessContrast,
+  EffectComposer,
+  HueSaturation,
+  SMAA,
+  ToneMapping,
+  Vignette,
+} from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
 import type React from 'react';
 import { useMemo } from 'react';
 
-import { useCrisisVFX, type CrisisVFXEvent } from '@/stores/gameStore';
+import { type CrisisVFXEvent, useCrisisVFX } from '@/stores/gameStore';
 
 /** Calculate the normalized progress (0→1) of an effect. */
 function effectProgress(event: CrisisVFXEvent): number {

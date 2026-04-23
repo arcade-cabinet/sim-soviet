@@ -81,7 +81,7 @@ describe('Playthrough: Population Growth & Collapse', () => {
 
   it('starvation kills citizens and eventually triggers game over', () => {
     const { engine, callbacks } = createPlaythroughEngine({
-      resources: { population: 50, food: 9999, vodka: 9999 },
+      resources: { population: 50, food: 9999, vodka: 9999, timber: 0, steel: 0, cement: 0, prefab: 0 },
       seed: 'starvation-cascade-test',
     });
 
@@ -173,18 +173,19 @@ describe('Playthrough: Population Growth & Collapse', () => {
     expect(popAfter).toBeLessThan(popBefore);
   });
 
-  // ── Scenario 5: No game over without buildings ─────────────────────────────
+  // ── Scenario 5: Autonomous settlement abandonment ──────────────────────────
 
-  it('no game over with zero population when no buildings exist', () => {
+  it('game over after autonomous HQ exists with zero population', () => {
     const { engine } = createPlaythroughEngine({
       resources: { population: 0, food: 0, vodka: 0 },
     });
 
-    // No buildings placed — the game-over check requires buildingsLogic.length > 0
+    // No buildings are manually placed, but the collective now establishes
+    // government HQ autonomously before other demands.
 
     // Advance well past the grace period
     advanceTicks(engine, TICKS_PER_YEAR + 40);
 
-    expect(isGameOver()).toBe(false);
+    expect(isGameOver()).toBe(true);
   });
 });

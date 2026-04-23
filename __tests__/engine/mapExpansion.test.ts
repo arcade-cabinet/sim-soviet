@@ -1,14 +1,13 @@
 /**
  * TDD tests for dynamic map expansion via settlement tier land grants.
  */
+
 import {
-  getCurrentTier,
   checkExpansionTrigger,
   expandGrid,
+  getCurrentTier,
   initializeNewTiles,
 } from '../../src/game/engine/mapExpansion';
-import type { SettlementTier } from '../../src/ai/agents/infrastructure/SettlementSystem';
-import type { TerrainTileState } from '../../src/ai/agents/core/terrainTick';
 
 describe('mapExpansion', () => {
   // ─── getCurrentTier ───────────────────────────────────────

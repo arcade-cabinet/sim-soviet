@@ -1,7 +1,5 @@
-import { world } from '../world';
 import type { Entity, GameMeta, Resources, TileComponent } from '../world';
-import * as h3 from 'h3-js';
-import { RES_SETTLEMENT } from '../../game/map/global/GlobalHexManager';
+import { world } from '../world';
 
 // ── Resource Store Factory ──────────────────────────────────────────────────
 
@@ -31,14 +29,7 @@ export function createResourceStore(initialValues?: Partial<Resources>): Entity 
       seedFund: initialValues?.seedFund ?? 0,
       emergencyReserve: initialValues?.emergencyReserve ?? 0,
       storageCapacity: initialValues?.storageCapacity ?? 0,
-      oxygen: initialValues?.oxygen ?? 100,
-      oxygenProduction: initialValues?.oxygenProduction ?? 0,
-      hydrogen: initialValues?.hydrogen ?? 0,
       water: initialValues?.water ?? 100,
-      waterRecycling: initialValues?.waterRecycling ?? 0,
-      rareEarths: initialValues?.rareEarths ?? 0,
-      uranium: initialValues?.uranium ?? 0,
-      rocketFuel: initialValues?.rocketFuel ?? 0,
       raion: initialValues?.raion,
     },
     isResourceStore: true,
@@ -59,7 +50,6 @@ export function createMetaStore(initialValues?: Partial<GameMeta>): Entity {
   }
 
   const seedStr = initialValues?.seed ?? 'sim-soviet';
-  const startHex = h3.latLngToCell(55.75, 37.61, RES_SETTLEMENT);
 
   const entity: Entity = {
     gameMeta: {
@@ -79,7 +69,6 @@ export function createMetaStore(initialValues?: Partial<GameMeta>): Entity {
       blackMarks: initialValues?.blackMarks ?? 0,
       commendations: initialValues?.commendations ?? 0,
       threatLevel: initialValues?.threatLevel ?? 'safe',
-      currentHex: initialValues?.currentHex ?? startHex,
       currentEra: initialValues?.currentEra ?? 'revolution',
       roadQuality: initialValues?.roadQuality ?? 'none',
       roadCondition: initialValues?.roadCondition ?? 100,

@@ -21,15 +21,15 @@ function createMockCallbacks(): SimCallbacks {
   };
 }
 
-/** Number of ticks in one full year (3 ticks/day * 10 days/month * 12 months) */
+/** Number of ticks in one full year (3 ticks/day * 10 days/month * 12 months). */
 const TICKS_PER_YEAR = 360;
 
 /**
- * Advance the engine by a number of years.
+ * Advance the engine by a number of ticks.
  * Mocks Math.random to avoid stochastic event interference.
  */
-function advanceYears(engine: SimulationEngine, years: number): void {
-  for (let i = 0; i < years * TICKS_PER_YEAR; i++) {
+function advanceTicks(engine: SimulationEngine, ticks: number): void {
+  for (let i = 0; i < ticks; i++) {
     engine.tick();
   }
 }
@@ -55,8 +55,8 @@ describe('SimulationEngine edge cases', () => {
 
   // ── No victory condition ─────────────────────────────────────
 
-  describe('no victory condition: the Soviet state is eternal', () => {
-    it('game does not end after any number of years with quota met', () => {
+  describe('post-campaign continuation', () => {
+    it('continues after 1991 without declaring victory as game over', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
@@ -67,10 +67,11 @@ describe('SimulationEngine edge cases', () => {
 
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      // Tick through 5 years — game should not end with a victory
-      advanceYears(engine2, 5);
+      // Tick through the 1991 boundary and one further year. The 1991 summary is
+      // a completion modal, not game over.
+      advanceTicks(engine2, 480);
 
-      // onGameOver should NOT have been called with victory=true
+      // onGameOver should NOT have been called with victory=true.
       const gameOverCalls = (cb2.onGameOver as ReturnType<typeof jest.fn>).mock.calls as [boolean, string][];
       const victoryCalls = gameOverCalls.filter((call) => call[0] === true);
       expect(victoryCalls).toHaveLength(0);
@@ -107,7 +108,7 @@ describe('SimulationEngine edge cases', () => {
       }
 
       // After first failure, deadline advances to 1932
-      expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed the 5-Year Plan'));
+      expect(cb2.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed the state work plan'));
 
       // Failures 2-8: advance 5 years each, zeroing food to prevent fondy accumulation
       for (let f = 2; f <= 8; f++) {
@@ -220,7 +221,7 @@ describe('SimulationEngine edge cases', () => {
       expect(cb2.onGameOver).not.toHaveBeenCalled();
     });
 
-    it('does not end game if pop=0 but no buildings', () => {
+    it('ends game after the autonomous HQ creates a settlement with no surviving population', () => {
       world.clear();
       const grid2 = new GameGrid();
       const cb2 = createMockCallbacks();
@@ -232,8 +233,8 @@ describe('SimulationEngine edge cases', () => {
       // Advance past first year
       for (let i = 0; i < 400; i++) engine2.tick();
 
-      // Pop=0 but no buildings => no game over
-      expect(cb2.onGameOver).not.toHaveBeenCalled();
+      expect(cb2.onGameOver).toHaveBeenCalledWith(false, expect.any(String));
+      expect(getMetaEntity()!.gameMeta.gameOver!.victory).toBe(false);
     });
   });
 

@@ -24,6 +24,7 @@ import {
   TICKS_PER_YEAR,
 } from '../../../game/Chronology';
 import type { GameRng } from '../../../game/SeedSystem';
+import { MSG, type NewTickPayload } from '../../telegrams';
 import {
   createWeatherState,
   getWeatherProfile,
@@ -31,7 +32,6 @@ import {
   type WeatherState,
   type WeatherType,
 } from './weather-types';
-import { MSG, type NewTickPayload } from '../../telegrams';
 
 // ─────────────────────────────────────────────────────────
 //  TICK RESULT
@@ -88,7 +88,15 @@ export class ChronologyAgent extends Vehicle {
   private season: SeasonProfile;
   private weather: WeatherState;
   private tickWithinDay: number;
-  private _lastTickResult: TickResult = { newDay: false, newMonth: false, newYear: false, season: {} as any, weather: 'clear' as WeatherType, dayPhase: 'midday' as DayPhase, dayProgress: 0.5 };
+  private _lastTickResult: TickResult = {
+    newDay: false,
+    newMonth: false,
+    newYear: false,
+    season: {} as any,
+    weather: 'clear' as WeatherType,
+    dayPhase: 'midday' as DayPhase,
+    dayProgress: 0.5,
+  };
 
   /**
    * @param rng - Seeded RNG for weather rolls
@@ -167,25 +175,36 @@ export class ChronologyAgent extends Vehicle {
   update(delta: number): this {
     const result = this.tick();
 
-    // Dispatch the NEW_TICK telegram
+    // Dispatch clock boundary telegrams to autonomous agents.
+    // SimulationEngine owns the ordered production/consumption/social/political phases.
     if (this.manager) {
       const payload: NewTickPayload = {
         totalTicks: this.date.totalTicks,
         delta,
       };
-      
-      // Dispatch immediately to all agents
-      this.manager.sendMessage(this, this, MSG.NEW_TICK, 0, payload);
 
-      if (result.newMonth) {
-        this.manager.sendMessage(this, this, MSG.NEW_MONTH, 0, null);
-      }
-      if (result.newYear) {
-        this.manager.sendMessage(this, this, MSG.NEW_YEAR, 0, null);
+      const entities = this.manager.entities;
+      for (const e of entities) {
+        if (this.shouldReceiveClockMessage(e, MSG.NEW_TICK)) {
+          this.manager.sendMessage(this, e, MSG.NEW_TICK, 0, payload);
+        }
+
+        if (result.newMonth && this.shouldReceiveClockMessage(e, MSG.NEW_MONTH)) {
+          this.manager.sendMessage(this, e, MSG.NEW_MONTH, 0, null);
+        }
+        if (result.newYear && this.shouldReceiveClockMessage(e, MSG.NEW_YEAR)) {
+          this.manager.sendMessage(this, e, MSG.NEW_YEAR, 0, null);
+        }
       }
     }
 
     return this;
+  }
+
+  private shouldReceiveClockMessage(entity: { name?: string }, message: string): boolean {
+    if (entity.name === 'PhaseDirectorAgent') return true;
+    if (message !== MSG.NEW_TICK) return false;
+    return entity.name === 'CollectiveAgent' || entity.name === 'DvorNeedsAgent';
   }
 
   /**

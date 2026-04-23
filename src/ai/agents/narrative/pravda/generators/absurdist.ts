@@ -1,5 +1,14 @@
 import { getBuildingDef } from '@/data/buildingDefs';
-import { isGulag, pick, randInt } from '../helpers';
+import {
+  healthAuthorityForYear,
+  internalAffairsAuthorityForYear,
+  isGulag,
+  laborAuthorityForYear,
+  pick,
+  planLabelForYear,
+  randInt,
+  securityServiceForYear,
+} from '../helpers';
 import type { ContextualGenerator } from '../types';
 
 // ─────────────────────────────────────────────────────────
@@ -30,19 +39,19 @@ export const contextualGenerators: ContextualGenerator[] = [
     weight: 3,
     generate: (gs) => ({
       headline: `CITIZENS ACHIEVE NEW FASTING RECORD: DAY ${randInt(3, 30)}`,
-      subtext: `Health benefits of not eating: extensively documented by the Ministry of ${pick(['Health', 'Nutrition', 'Convenient Explanations'])}.`,
+      subtext: `Health benefits of not eating: extensively documented by the ${pick([healthAuthorityForYear(gs.date.year), 'Nutrition Committee', 'Office of Convenient Explanations'])}.`,
       reality: `Food supply: ${Math.round(gs.food)} units. Citizens spotted eating a poster of food.`,
       category: 'spin',
     }),
   },
 
-  // No money (money < 50)
+  // No money (money < 50) after the settlement has had time to exhaust its assignment funds
   {
-    condition: (gs) => gs.money < 50,
+    condition: (gs) => gs.money < 50 && (gs.date.year > 1917 || gs.buildings.length > 0),
     weight: 2,
     generate: (gs) => ({
-      headline: `POST-MONETARY ECONOMY ACHIEVED: TREASURY AT LEAN ${Math.round(gs.money)} RUBLES`,
-      subtext: `Money is a capitalist construct. We have moved beyond it. (We had no choice.)`,
+      headline: `TREASURY AUSTERITY CELEBRATED: ${Math.round(gs.money)} RUBLES REMAIN UNDER STRICT DISCIPLINE`,
+      subtext: `Every ruble has been assigned a patriotic purpose. Some purposes are still waiting for rubles.`,
       reality: `The treasury is a tin box with ${Math.round(gs.money)} rubles and a moth.`,
       category: 'spin',
     }),
@@ -53,31 +62,31 @@ export const contextualGenerators: ContextualGenerator[] = [
     condition: (gs) => gs.buildings.length > 15,
     weight: 1,
     generate: (gs) => ({
-      headline: `URBAN SKYLINE FEATURES ${gs.buildings.length} MAGNIFICENT STRUCTURES`,
+      headline: `SETTLEMENT PLAN FEATURES ${gs.buildings.length} MAGNIFICENT STRUCTURES`,
       subtext: `Architectural diversity: rectangles, squares, and the occasional rectangle. All grey.`,
       reality: `${gs.buildings.length} buildings, ${randInt(1, 3)} of which are structurally sound.`,
       category: 'production',
     }),
   },
 
-  // No buildings
+  // No buildings after the opening assignment period
   {
-    condition: (gs) => gs.buildings.length === 0,
+    condition: (gs) => gs.buildings.length === 0 && gs.date.year > 1917,
     weight: 3,
     generate: () => ({
-      headline: 'MINIMALIST URBAN DESIGN WINS INTERNATIONAL ACCLAIM',
+      headline: 'MINIMALIST SETTLEMENT DESIGN WINS INTERNATIONAL ACCLAIM',
       subtext: 'Zero buildings represent a bold architectural statement. "Less is more," says nobody.',
-      reality: 'There are no buildings. The city is a field. The field is also struggling.',
+      reality: 'There are no buildings. The settlement is a field. The field is also struggling.',
       category: 'spin',
     }),
   },
 
   // Population zero
   {
-    condition: (gs) => gs.pop === 0,
+    condition: (gs) => gs.pop === 0 && gs.food < 10,
     weight: 5,
     generate: () => ({
-      headline: 'CITY ACHIEVES PERFECT CRIME RATE: 0 CRIMES, 0 CITIZENS',
+      headline: 'SETTLEMENT ACHIEVES PERFECT CRIME RATE: 0 CRIMES, 0 CITIZENS',
       subtext: 'Also: 0 complaints, 0 dissent, 0 problems. Utopia achieved.',
       reality: 'Everyone is gone. The newspaper continues to publish. For whom? No one asks.',
       category: 'spin',
@@ -100,9 +109,9 @@ export const contextualGenerators: ContextualGenerator[] = [
   {
     condition: (gs) => gs.power === 0 && gs.buildings.length > 0,
     weight: 2.5,
-    generate: () => ({
+    generate: (gs) => ({
       headline: 'NATIONWIDE LIGHTS-OUT EVENT CELEBRATES EARTH HOUR (EXTENDED INDEFINITELY)',
-      subtext: 'Citizens report improved night vision. Some claim to see in the dark. KGB notes this ability.',
+      subtext: `Citizens report improved night vision. Some claim to see in the dark. ${securityServiceForYear(gs.date.year)} notes this ability.`,
       reality:
         'Power grid collapsed. Engineers "working on it" since last month. The engineers may also have collapsed.',
       category: 'spin',
@@ -143,13 +152,13 @@ export const contextualGenerators: ContextualGenerator[] = [
     generate: (gs) => ({
       headline: `YEAR ${gs.date.year}: ${pick([
         'RUMORS OF REFORM DISMISSED AS WESTERN PROPAGANDA',
-        'SYSTEM DECLARED "ETERNAL" FOR 47TH CONSECUTIVE YEAR',
+        'SYSTEM DECLARED "STABLE" FOR 47TH CONSECUTIVE YEAR',
         'REPORT OF "CHANGES" DENIED: NOTHING HAS CHANGED',
         'PERESTROIKA? NEVER HEARD OF IT. SOUNDS CAPITALIST',
         'THE 1990S ARE THE NEW 1950S, DECLARES MINISTRY',
       ])}`,
-      subtext: 'The future is certain. It is the past that keeps changing.',
-      reality: 'Cracks in the system visible from space. Also visible: the wall. Also cracking.',
+      subtext: 'The next year is certain. It is the past that keeps changing.',
+      reality: 'Cracks in the system visible from the main road. Also visible: the wall. Also cracking.',
       category: 'editorial',
     }),
   },
@@ -161,7 +170,7 @@ export const contextualGenerators: ContextualGenerator[] = [
     generate: (gs) => {
       const pct = Math.floor((gs.quota.current / gs.quota.target) * 100);
       return {
-        headline: `FIVE-YEAR PLAN ${pct}% COMPLETE WITH ${pick(['MONTHS', 'WEEKS', 'DAYS', 'MOMENTS'])} TO SPARE`,
+        headline: `${planLabelForYear(gs.date.year)} ${pct}% COMPLETE WITH ${pick(['MONTHS', 'WEEKS', 'DAYS', 'MOMENTS'])} TO SPARE`,
         subtext: `Remaining ${100 - pct}% to be achieved through ${pick(['a miracle', 'creative accounting', 'redefining the goal', 'sheer willpower', 'retroactive adjustment'])}`,
         reality: `Quota deadline: ${gs.quota.deadlineYear}. Current year: ${gs.date.year}. Current: ${gs.quota.current}/${gs.quota.target}. Someone should panic.`,
         category: 'production',
@@ -174,10 +183,10 @@ export const contextualGenerators: ContextualGenerator[] = [
   {
     condition: (gs) => gs.avgMorale > 70,
     weight: 1.5,
-    generate: () => ({
+    generate: (gs) => ({
       headline: `WORKER MORALE EXCELLENT IN ALL SECTORS`,
       subtext: pick([
-        'Ministry of Labor confirms: smiles detected across the collective.',
+        `${laborAuthorityForYear(gs.date.year)} confirms: smiles detected across the collective.`,
         'Productivity naturally follows from socialist contentment.',
         'Comrades report: life has never been better. (Quote verified by 3 supervisors.)',
       ]),
@@ -206,14 +215,15 @@ export const contextualGenerators: ContextualGenerator[] = [
   {
     condition: (gs) => gs.avgMorale < 15,
     weight: 3.5,
-    generate: () => ({
+    generate: (gs) => ({
       headline: `ISOLATED INCIDENTS OF COUNTER-REVOLUTIONARY SENTIMENT REPORTED`,
       subtext: pick([
-        'KGB assures: situation contained. Additional containment measures authorized.',
+        `${securityServiceForYear(gs.date.year)} assures: situation contained. Additional containment measures authorized.`,
         'Handful of provocateurs identified. The collective remains resolute.',
-        'Ministry of Internal Affairs: "This is not a trend. This is weather."',
+        `${internalAffairsAuthorityForYear(gs.date.year)}: "This is not a trend. This is weather."`,
       ]),
-      reality: 'The collective is on the verge of revolt. "Isolated" means "everywhere." "Incidents" means "the whole settlement."',
+      reality:
+        'The collective is on the verge of revolt. "Isolated" means "everywhere." "Incidents" means "the whole settlement."',
       category: 'crisis',
     }),
   },

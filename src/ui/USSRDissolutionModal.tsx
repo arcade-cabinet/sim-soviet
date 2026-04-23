@@ -2,25 +2,22 @@
  * USSRDissolutionModal — shown when historical mode reaches year 1991.
  *
  * Offers two paths:
- *   - End Assignment: triggers game-over -> MilestoneTimelineScreen
- *   - Continue: switches to freeform governor (alternate history)
+ *   - End Assignment: closes the historical campaign record
+ *   - Continue: keeps managing the same grounded settlement after 1991
  *
  * Pure component. All decisions flow through onResolve.
  */
 
-import React from 'react';
+import type React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 export interface USSRDissolutionModalProps {
   visible: boolean;
-  onResolve: (continueInFreeform: boolean) => void;
+  onResolve: (continueInPostCampaign: boolean) => void;
 }
 
-export const USSRDissolutionModal: React.FC<USSRDissolutionModalProps> = ({
-  visible,
-  onResolve,
-}) => (
+export const USSRDissolutionModal: React.FC<USSRDissolutionModalProps> = ({ visible, onResolve }) => (
   <Modal visible={visible} transparent animationType="fade">
     <View style={styles.backdrop}>
       <View style={styles.document}>
@@ -33,37 +30,31 @@ export const USSRDissolutionModal: React.FC<USSRDissolutionModalProps> = ({
 
         <Text style={styles.title}>THE UNION HAS DISSOLVED</Text>
         <Text style={styles.headline}>
-          {'\u041D\u0430 74-\u043C \u0433\u043E\u0434\u0443 \u0421\u043E\u0432\u0435\u0442\u0441\u043A\u043E\u0439 \u0432\u043B\u0430\u0441\u0442\u0438 \u0421\u043E\u044E\u0437 \u0421\u043E\u0432\u0435\u0442\u0441\u043A\u0438\u0445 \u0421\u043E\u0446\u0438\u0430\u043B\u0438\u0441\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0445 \u0420\u0435\u0441\u043F\u0443\u0431\u043B\u0438\u043A \u043F\u0440\u0435\u043A\u0440\u0430\u0442\u0438\u043B \u0441\u0432\u043E\u0451 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u043E\u0432\u0430\u043D\u0438\u0435.'}
+          {
+            '\u041D\u0430 74-\u043C \u0433\u043E\u0434\u0443 \u0421\u043E\u0432\u0435\u0442\u0441\u043A\u043E\u0439 \u0432\u043B\u0430\u0441\u0442\u0438 \u0421\u043E\u044E\u0437 \u0421\u043E\u0432\u0435\u0442\u0441\u043A\u0438\u0445 \u0421\u043E\u0446\u0438\u0430\u043B\u0438\u0441\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0445 \u0420\u0435\u0441\u043F\u0443\u0431\u043B\u0438\u043A \u043F\u0440\u0435\u043A\u0440\u0430\u0442\u0438\u043B \u0441\u0432\u043E\u0451 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u043E\u0432\u0430\u043D\u0438\u0435.'
+          }
         </Text>
         <View style={styles.divider} />
 
         <Text style={styles.body}>
-          The August coup has failed. The Baltic states have declared independence. Yeltsin stands
-          on a tank. Gorbachev resigns on Christmas Day.
+          The August coup has failed. The Baltic states have declared independence. Yeltsin stands on a tank. Gorbachev
+          resigns on Christmas Day.
           {'\n\n'}
-          Seventy-four years of your assignment — from the revolution to this moment — are on the
-          record. The file can be closed here.
+          Seventy-four years of your assignment — from the revolution to this moment — are on the record. The file can
+          be closed here.
           {'\n\n'}
-          Or: history can diverge. In your settlement, in your alternate timeline, the Union
-          survives. What comes next is unwritten.
+          Or: keep the same settlement running after the campaign record closes. No new epoch begins. There are still
+          shortages, pipes, quotas, and people who expect heat in winter.
         </Text>
 
         <View style={styles.divider} />
 
-        <TouchableOpacity
-          style={[styles.btn, styles.btnFreeform]}
-          onPress={() => onResolve(true)}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.btnLabel}>CONTINUE INTO ALTERNATE HISTORY</Text>
-          <Text style={styles.btnSub}>The Union survives. Your assignment continues.</Text>
+        <TouchableOpacity style={[styles.btn, styles.btnContinue]} onPress={() => onResolve(true)} activeOpacity={0.8}>
+          <Text style={styles.btnLabel}>CONTINUE FREE PLAY</Text>
+          <Text style={styles.btnSub}>Keep managing the same grounded settlement.</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.btn, styles.btnEnd]}
-          onPress={() => onResolve(false)}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={[styles.btn, styles.btnEnd]} onPress={() => onResolve(false)} activeOpacity={0.8}>
           <Text style={styles.btnLabel}>END ASSIGNMENT</Text>
           <Text style={styles.btnSub}>Close the file. See your historical record.</Text>
         </TouchableOpacity>
@@ -150,7 +141,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderWidth: 1,
   },
-  btnFreeform: {
+  btnContinue: {
     borderColor: Colors.termGreen,
     backgroundColor: 'rgba(0,230,118,0.05)',
   },

@@ -6,7 +6,7 @@
 import type { TerrainTileState } from './terrainTick';
 
 /** Tile types immune to deforestation (not forest). */
-const NON_DEFORESTABLE = new Set(['grassland', 'cleared', 'water', 'marsh', 'mountain', 'tundra']);
+const _NON_DEFORESTABLE = new Set(['grassland', 'cleared', 'water', 'marsh', 'mountain', 'tundra']);
 
 /** Tile types immune to erosion. */
 const EROSION_IMMUNE = new Set(['forest', 'water', 'marsh', 'mountain']);

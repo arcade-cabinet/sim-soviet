@@ -6,7 +6,8 @@
  *
  * The Soviet paradox: competence attracts attention. If your settlement
  * runs well for too long, Moscow notices and "promotes" you — meaning
- * they hand you a second settlement to manage. The player can accept,
+ * they expand your mandate inside the same settlement with tougher quotas,
+ * closer scrutiny, and more committee obligations. The player can accept,
  * bribe their way out, or delay (which makes Moscow insist harder).
  *
  * Pure function module. No Yuka dependency. State is tracked by PoliticalAgent.
@@ -102,15 +103,12 @@ export function createPromotionState(): MoscowPromotionState {
  *   - Population growth trending up
  *   - Quota fulfillment > 80% for multiple years
  *   - No active crises
- *   - KGB reports favorable (low suspicion)
+ *   - State-security reports favorable (low suspicion)
  *   - Moscow attention amplifies everything
  *
  * @returns Risk value 0-1
  */
-export function evaluatePromotionRisk(
-  summary: SettlementSummary,
-  political: PromotionPoliticalContext,
-): number {
+export function evaluatePromotionRisk(summary: SettlementSummary, political: PromotionPoliticalContext): number {
   // Promotion never happens if under serious investigation
   if (
     political.threatLevel === 'investigated' ||
@@ -132,9 +130,10 @@ export function evaluatePromotionRisk(
   const popGrowthContribution = summary.trendDeltas.population > 0 ? 0.15 : 0;
 
   // Current quota overperformance (max 0.15)
-  const quotaContribution = political.quotaProgress > GOOD_YEAR_THRESHOLD
-    ? Math.min((political.quotaProgress - GOOD_YEAR_THRESHOLD) * 0.75, 0.15)
-    : 0;
+  const quotaContribution =
+    political.quotaProgress > GOOD_YEAR_THRESHOLD
+      ? Math.min((political.quotaProgress - GOOD_YEAR_THRESHOLD) * 0.75, 0.15)
+      : 0;
 
   // Low suspicion = Moscow thinks you're reliable (max 0.15)
   const reliabilityContribution = Math.max(0, (1.0 - political.suspicionLevel) * 0.15);
@@ -143,8 +142,7 @@ export function evaluatePromotionRisk(
   const moscowMultiplier = 0.5 + political.moscowAttention * 0.5;
 
   const raw =
-    (yearsContribution + popGrowthContribution + quotaContribution + reliabilityContribution) *
-    moscowMultiplier;
+    (yearsContribution + popGrowthContribution + quotaContribution + reliabilityContribution) * moscowMultiplier;
 
   return Math.max(0, Math.min(raw, 1.0));
 }
@@ -157,11 +155,7 @@ export function evaluatePromotionRisk(
  * @param currentYear - Game year
  * @returns Whether a new notification should be emitted
  */
-export function tickPromotionYearly(
-  state: MoscowPromotionState,
-  risk: number,
-  currentYear: number,
-): boolean {
+export function tickPromotionYearly(state: MoscowPromotionState, risk: number, currentYear: number): boolean {
   if (state.accepted) return false;
 
   // Apply delay escalation to risk

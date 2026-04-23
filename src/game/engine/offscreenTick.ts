@@ -5,11 +5,7 @@
  * (tickBuilding), but without ECS entities. Only rendering differs.
  */
 
-import {
-  tickBuilding,
-  type BuildingTickInput,
-  type BuildingTickContext,
-} from '@/ai/agents/economy/buildingTick';
+import { type BuildingTickContext, type BuildingTickInput, tickBuilding } from '@/ai/agents/economy/buildingTick';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,10 +36,7 @@ export interface AggregateResult {
  * @param allBuildings - Every building in the settlement
  * @param visibleIds - Set of building IDs currently on-screen
  */
-export function getOffscreenBuildings(
-  allBuildings: OffscreenBuilding[],
-  visibleIds: Set<string>,
-): OffscreenBuilding[] {
+export function getOffscreenBuildings(allBuildings: OffscreenBuilding[], visibleIds: Set<string>): OffscreenBuilding[] {
   const result: OffscreenBuilding[] = [];
   for (const b of allBuildings) {
     if (!visibleIds.has(b.id)) {

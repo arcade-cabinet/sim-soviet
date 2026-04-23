@@ -35,10 +35,7 @@ export interface TerrainTileRow {
  * @param ctx - Tile coordinates, infrastructure flags, and current year
  * @returns Row object ready for DB insert/upsert
  */
-export function buildTerrainRow(
-  tile: TerrainTileState,
-  ctx: TerrainTileContext,
-): TerrainTileRow {
+export function buildTerrainRow(tile: TerrainTileState, ctx: TerrainTileContext): TerrainTileRow {
   return {
     x: ctx.x,
     y: ctx.y,

@@ -53,7 +53,7 @@
         "powerMult": 1.2,
         "politicalStandingBonus": 0.08
       },
-      "unlocks": ["uranium_processing"],
+      "unlocks": [],
       "prerequisite": null,
       "pravdaAnnouncement": "NUCLEAR RESEARCH AUTHORIZED: Peaceful Atom Serves the People",
       "completionToast": "The reactor hums. The Geiger counter also hums. This is unrelated."
@@ -67,7 +67,7 @@
       "minPoliticalStanding": 0.3,
       "minTechLevel": 0.4,
       "constructionTicks": 48,
-      "resourceCost": { "materials": 600, "uranium": 50, "money": 400 },
+      "resourceCost": { "materials": 700, "money": 450 },
       "effects": {
         "powerMult": 2.0,
         "pollutionIncrease": 0.1
@@ -78,9 +78,9 @@
       "completionToast": "The plant is operational. Safety reports have been filed. The filing cabinet is lead-lined."
     },
     {
-      "id": "cosmodrome",
-      "name": "Cosmodrome",
-      "description": "A launch facility for Soviet rockets. The rockets go up. Most of them come back down in the right place.",
+      "id": "television_center",
+      "name": "Television Center",
+      "description": "A broadcast complex for official speeches, weather reports, and carefully edited footage of abundance.",
       "era": "thaw_and_freeze",
       "minPopulation": 500,
       "minPoliticalStanding": 0.5,
@@ -92,15 +92,15 @@
         "politicalStandingBonus": 0.15,
         "globalTensionIncrease": 0.05
       },
-      "unlocks": ["space_launches", "lunar_colony_directive"],
+      "unlocks": ["television_prestige"],
       "prerequisite": "nuclear_program",
-      "pravdaAnnouncement": "COSMODROME APPROVED: Soviet Science Reaches for the Stars",
-      "completionToast": "The launch pad is ready. The first test rocket has been loaded. The evacuation zone has been drawn. It is quite large."
+      "pravdaAnnouncement": "TELEVISION CENTER APPROVED: Every Household Will See the Same Truth",
+      "completionToast": "The broadcast tower hums. The signal is clear. The message is clearer."
     },
     {
-      "id": "satellite_network",
-      "name": "Satellite Communications Network",
-      "description": "Eyes in the sky. Also ears. The KGB is delighted.",
+      "id": "consumer_goods_exhibition",
+      "name": "Consumer Goods Exhibition",
+      "description": "A public display of washing machines, radios, and furniture that may someday exist in sufficient quantities.",
       "era": "stagnation",
       "minPopulation": 500,
       "minPoliticalStanding": 0.3,
@@ -113,106 +113,9 @@
         "kgbEfficiencyMult": 1.2
       },
       "unlocks": [],
-      "prerequisite": "cosmodrome",
-      "pravdaAnnouncement": "SATELLITE NETWORK OPERATIONAL: Every Corner of the Union Connected",
-      "completionToast": "The satellites orbit faithfully. They see everything. Everything is normal."
-    },
-    {
-      "id": "space_station",
-      "name": "Orbital Space Station",
-      "description": "A permanent presence in orbit. The workers there are technically still within the Union. Technically.",
-      "era": "the_eternal",
-      "minPopulation": 1000,
-      "minPoliticalStanding": 0.5,
-      "minTechLevel": 0.7,
-      "constructionTicks": 96,
-      "resourceCost": { "materials": 2000, "money": 1500 },
-      "effects": {
-        "techLevelBonus": 0.2,
-        "newSettlementType": "orbital"
-      },
-      "unlocks": ["orbital_settlement"],
-      "prerequisite": "cosmodrome",
-      "pravdaAnnouncement": "ORBITAL STATION CONSTRUCTION BEGINS: Workers' Paradise Extends to the Heavens",
-      "completionToast": "The station is in orbit. Living conditions are comparable to a communal apartment. This is not a coincidence."
-    },
-    {
-      "id": "fusion_reactor",
-      "name": "Fusion Reactor Prototype",
-      "description": "Fusion power: always 30 years away, except in the Soviet Union, where timelines are flexible.",
-      "era": "the_eternal",
-      "minYear": 2050,
-      "minPopulation": 5000,
-      "minTechLevel": 0.8,
-      "constructionTicks": 120,
-      "resourceCost": { "materials": 5000, "hydrogen": 500, "money": 3000 },
-      "effects": {
-        "powerMult": 5.0,
-        "techLevelBonus": 0.15,
-        "hydrogenProcessing": true
-      },
-      "unlocks": ["hydrogen_economy"],
-      "prerequisite": "nuclear_power_plant",
-      "pravdaAnnouncement": "FUSION REACTOR PROTOTYPE APPROVED: Harnessing the Power of Stars",
-      "completionToast": "The sun in a bottle is lit. The bottle is very, very large. And reinforced."
-    },
-    {
-      "id": "mass_driver",
-      "name": "Electromagnetic Mass Driver",
-      "description": "Launch payloads to orbit without rockets. The physics are sound. The budget is fictional.",
-      "era": "the_eternal",
-      "minYear": 2100,
-      "minPopulation": 10000,
-      "minTechLevel": 0.85,
-      "constructionTicks": 144,
-      "resourceCost": { "materials": 10000, "money": 8000 },
-      "effects": {
-        "techLevelBonus": 0.1,
-        "launchCostReduction": 0.9
-      },
-      "unlocks": ["cheap_orbital_access", "mars_colonization"],
-      "prerequisite": "cosmodrome",
-      "pravdaAnnouncement": "MASS DRIVER CONSTRUCTION: Gravity is a Bourgeois Concept",
-      "completionToast": "The first payload screams skyward at 8 km/s. The sound is memorable. The neighboring settlement files a noise complaint."
-    },
-    {
-      "id": "terraforming_engine",
-      "name": "Planetary Terraforming Engine",
-      "description": "Reshape other worlds in the image of the Soviet Union. The paperwork for a building permit on Mars takes 47 forms.",
-      "era": "the_eternal",
-      "minYear": 2200,
-      "minPopulation": 50000,
-      "minTechLevel": 0.95,
-      "constructionTicks": 240,
-      "resourceCost": { "materials": 50000, "hydrogen": 5000, "money": 30000 },
-      "effects": {
-        "terraformingCapability": true,
-        "techLevelBonus": 0.05
-      },
-      "unlocks": ["planetary_terraforming"],
-      "prerequisite": "fusion_reactor",
-      "pravdaAnnouncement": "TERRAFORMING ENGINE APPROVED: Mars Will Know the Five-Year Plan",
-      "completionToast": "The engine activates. Mars begins to change. The paperwork begins to multiply. The paperwork will outlast Mars."
-    },
-    {
-      "id": "dyson_swarm",
-      "name": "Dyson Swarm",
-      "description": "Harness the entire output of the Sun for the Soviet Union. Energy independence at a stellar scale. The paperwork is astronomical.",
-      "era": "the_eternal",
-      "minYear": 2500,
-      "minPopulation": 100000,
-      "minTechLevel": 0.99,
-      "constructionTicks": 480,
-      "resourceCost": { "materials": 200000, "money": 150000 },
-      "effects": {
-        "powerMult": 100.0,
-        "techLevelBonus": 0.01,
-        "solarHarvesting": true
-      },
-      "unlocks": ["stellar_engineering", "interstellar_expansion"],
-      "prerequisite": "fusion_reactor",
-      "pravdaAnnouncement": "DYSON SWARM AUTHORIZED: The Sun Itself Serves the Five-Year Plan",
-      "completionToast": "The first collectors orbit the sun. The energy is limitless. The committee meeting to allocate it is also limitless."
+      "prerequisite": "television_center",
+      "pravdaAnnouncement": "CONSUMER GOODS EXHIBITION OPENS: Material Plenty Displayed Under Glass",
+      "completionToast": "Citizens admire the appliances. Some ask when they can buy one. The guide changes the subject."
     }
   ]
 }

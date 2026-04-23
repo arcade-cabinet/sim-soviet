@@ -7,7 +7,7 @@ last_verified: 2026-03-01
 
 # SimSoviet 1917 — Game Design Documents
 
-## Alternate History. The Soviet State Endures.
+## Historical Soviet Campaign, 1917-1991.
 
 Each file covers a single design domain. Together they form the complete game design.
 
@@ -23,7 +23,7 @@ Each file covers a single design domain. Together they form the complete game de
 | [workers.md](workers.md) | Worker roles, lifecycle, morale/loyalty/skill, autonomous collective, population dynamics | **Complete** |
 | [demographics.md](demographics.md) | Dvor (household) system, family structures, gendered labor, birth/death | **Draft** |
 | [political.md](political.md) | Politruks, KGB, military, personnel file, black marks, pripiski | **Complete** |
-| [eras.md](eras.md) | 8 era campaigns, transitions, doctrine integration, victory/failure | **Complete** |
+| [eras.md](eras.md) | 1917-1991 era campaigns, transitions, doctrine integration, completion/failure | **Complete** |
 | [map-terrain.md](map-terrain.md) | Procedural generation, camera, terrain types | **Complete** |
 | [ui-ux.md](ui-ux.md) | Mobile-first brutalist design, panels, gestures, notifications | **Complete** |
 | [minigames.md](minigames.md) | 8 building/tile-triggered minigames | **Complete** |
@@ -37,7 +37,7 @@ Documents that complement the domain docs above:
 
 - `ecs-architecture.md` — Miniplex 2.0 ECS specification
 - `leadership-architecture.md` — Political ECS components, modifier pipeline
-- `era-doctrines.md` — 8 composable policy modifier sets
+- `era-doctrines.md` — historical policy modifier sets
 - `leader-archetypes.md` — 11 procedural leader personalities
 - `power-transitions.md` — 7 succession mechanics
 - `dialog-bible.md` — Complete in-game voice guide

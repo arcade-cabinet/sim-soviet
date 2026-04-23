@@ -103,7 +103,7 @@ describe('SimulationEngine — Annual Report', () => {
       reportedPop: data.actualPop,
     });
 
-    expect(cb.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed the 5-Year Plan'));
+    expect(cb.onAdvisor).toHaveBeenCalledWith(expect.stringContaining('failed the state work plan'));
   });
 
   it('falsified report can be detected (high risk → caught)', () => {

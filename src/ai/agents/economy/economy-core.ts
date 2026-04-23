@@ -43,8 +43,7 @@ export type EraId =
   | 'reconstruction'
   | 'thaw'
   | 'stagnation'
-  | 'perestroika'
-  | 'eternal';
+  | 'perestroika';
 
 /** Difficulty level affecting economic parameters (quota targets, fondy reliability, etc.). */
 export type DifficultyLevel = 'worker' | 'comrade' | 'tovarish';

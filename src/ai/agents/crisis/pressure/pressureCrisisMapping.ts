@@ -7,7 +7,7 @@
  */
 
 import type { CrisisDefinition, CrisisImpact, CrisisSeverity } from '../types';
-import type { PostScarcityDomain, PressureDomain } from './PressureDomains';
+import type { PressureDomain } from './PressureDomains';
 
 // ─── Templates ───────────────────────────────────────────────────────────────
 
@@ -50,7 +50,10 @@ export const MINOR_INCIDENTS: Record<PressureDomain, MinorIncidentTemplate> = {
     impact: {
       crisisId: 'minor-food',
       workforce: { moraleModifier: -0.05 },
-      narrative: { pravdaHeadlines: ['TEMPORARY SUPPLY DISRUPTION'], toastMessages: [{ text: 'Food supplies running low.', severity: 'warning' }] },
+      narrative: {
+        pravdaHeadlines: ['TEMPORARY SUPPLY DISRUPTION'],
+        toastMessages: [{ text: 'Food supplies running low.', severity: 'warning' }],
+      },
     },
   },
   morale: {
@@ -61,7 +64,10 @@ export const MINOR_INCIDENTS: Record<PressureDomain, MinorIncidentTemplate> = {
     impact: {
       crisisId: 'minor-morale',
       economy: { productionMult: 0.95 },
-      narrative: { pravdaHeadlines: ['MINOR LABOR DISPUTE RESOLVED'], toastMessages: [{ text: 'Workers expressing dissatisfaction.', severity: 'warning' }] },
+      narrative: {
+        pravdaHeadlines: ['MINOR LABOR DISPUTE RESOLVED'],
+        toastMessages: [{ text: 'Workers expressing dissatisfaction.', severity: 'warning' }],
+      },
     },
   },
   loyalty: {
@@ -72,7 +78,10 @@ export const MINOR_INCIDENTS: Record<PressureDomain, MinorIncidentTemplate> = {
     impact: {
       crisisId: 'minor-loyalty',
       political: { kgbAggressionMult: 1.3 },
-      narrative: { pravdaHeadlines: ['COUNTER-REVOLUTIONARY ELEMENTS DETECTED'], toastMessages: [{ text: 'Sabotage incidents reported.', severity: 'warning' }] },
+      narrative: {
+        pravdaHeadlines: ['COUNTER-REVOLUTIONARY ELEMENTS DETECTED'],
+        toastMessages: [{ text: 'Sabotage incidents reported.', severity: 'warning' }],
+      },
     },
   },
   housing: {
@@ -83,7 +92,10 @@ export const MINOR_INCIDENTS: Record<PressureDomain, MinorIncidentTemplate> = {
     impact: {
       crisisId: 'minor-housing',
       workforce: { moraleModifier: -0.03 },
-      narrative: { pravdaHeadlines: ['HOUSING COMMITTEE REPORTS CONSTRAINTS'], toastMessages: [{ text: 'Overcrowding complaints.', severity: 'warning' }] },
+      narrative: {
+        pravdaHeadlines: ['HOUSING COMMITTEE REPORTS CONSTRAINTS'],
+        toastMessages: [{ text: 'Overcrowding complaints.', severity: 'warning' }],
+      },
     },
   },
   political: {
@@ -94,7 +106,10 @@ export const MINOR_INCIDENTS: Record<PressureDomain, MinorIncidentTemplate> = {
     impact: {
       crisisId: 'minor-political',
       political: { kgbAggressionMult: 1.2, quotaMult: 1.1 },
-      narrative: { pravdaHeadlines: ['REGIONAL COMMITTEE INSPECTION'], toastMessages: [{ text: 'Moscow is paying attention.', severity: 'warning' }] },
+      narrative: {
+        pravdaHeadlines: ['REGIONAL COMMITTEE INSPECTION'],
+        toastMessages: [{ text: 'Moscow is paying attention.', severity: 'warning' }],
+      },
     },
   },
   power: {
@@ -105,7 +120,10 @@ export const MINOR_INCIDENTS: Record<PressureDomain, MinorIncidentTemplate> = {
     impact: {
       crisisId: 'minor-power',
       economy: { productionMult: 0.9 },
-      narrative: { pravdaHeadlines: ['POWER GRID MAINTENANCE'], toastMessages: [{ text: 'Rolling blackouts.', severity: 'warning' }] },
+      narrative: {
+        pravdaHeadlines: ['POWER GRID MAINTENANCE'],
+        toastMessages: [{ text: 'Rolling blackouts.', severity: 'warning' }],
+      },
     },
   },
   infrastructure: {
@@ -116,7 +134,10 @@ export const MINOR_INCIDENTS: Record<PressureDomain, MinorIncidentTemplate> = {
     impact: {
       crisisId: 'minor-infrastructure',
       infrastructure: { decayMult: 1.3 },
-      narrative: { pravdaHeadlines: ['MAINTENANCE BACKLOG NOTED'], toastMessages: [{ text: 'Infrastructure deteriorating.', severity: 'warning' }] },
+      narrative: {
+        pravdaHeadlines: ['MAINTENANCE BACKLOG NOTED'],
+        toastMessages: [{ text: 'Infrastructure deteriorating.', severity: 'warning' }],
+      },
     },
   },
   demographic: {
@@ -127,7 +148,10 @@ export const MINOR_INCIDENTS: Record<PressureDomain, MinorIncidentTemplate> = {
     impact: {
       crisisId: 'minor-demographic',
       economy: { productionMult: 0.92 },
-      narrative: { pravdaHeadlines: ['LABOR ALLOCATION NEEDED'], toastMessages: [{ text: 'Labor shortage.', severity: 'warning' }] },
+      narrative: {
+        pravdaHeadlines: ['LABOR ALLOCATION NEEDED'],
+        toastMessages: [{ text: 'Labor shortage.', severity: 'warning' }],
+      },
     },
   },
   health: {
@@ -138,7 +162,10 @@ export const MINOR_INCIDENTS: Record<PressureDomain, MinorIncidentTemplate> = {
     impact: {
       crisisId: 'minor-health',
       social: { diseaseMult: 1.5 },
-      narrative: { pravdaHeadlines: ['MINOR ILLNESS REPORTED'], toastMessages: [{ text: 'Disease spreading.', severity: 'warning' }] },
+      narrative: {
+        pravdaHeadlines: ['MINOR ILLNESS REPORTED'],
+        toastMessages: [{ text: 'Disease spreading.', severity: 'warning' }],
+      },
     },
   },
   economic: {
@@ -149,7 +176,10 @@ export const MINOR_INCIDENTS: Record<PressureDomain, MinorIncidentTemplate> = {
     impact: {
       crisisId: 'minor-economic',
       political: { quotaMult: 1.15 },
-      narrative: { pravdaHeadlines: ['QUARTERLY TARGETS REVISED'], toastMessages: [{ text: 'Production behind quota.', severity: 'warning' }] },
+      narrative: {
+        pravdaHeadlines: ['QUARTERLY TARGETS REVISED'],
+        toastMessages: [{ text: 'Production behind quota.', severity: 'warning' }],
+      },
     },
   },
 };
@@ -163,7 +193,13 @@ export const MAJOR_CRISES: Record<PressureDomain, MajorCrisisTemplate> = {
     crisisType: 'famine',
     baseSeverity: 'regional',
     durationYears: 2,
-    basePeakParams: { foodDrainPerCapita: 0.3, diseaseMult: 2.0, moraleHit: -0.5, growthMult: 0.2, productionMult: 0.5 },
+    basePeakParams: {
+      foodDrainPerCapita: 0.3,
+      diseaseMult: 2.0,
+      moraleHit: -0.5,
+      growthMult: 0.2,
+      productionMult: 0.5,
+    },
     buildupTicks: 6,
     aftermathTicks: 12,
   },
@@ -256,137 +292,6 @@ export const MAJOR_CRISES: Record<PressureDomain, MajorCrisisTemplate> = {
     basePeakParams: { productionMult: 0.4, quotaMult: 1.5, moraleHit: -0.4 },
     buildupTicks: 6,
     aftermathTicks: 18,
-  },
-};
-
-// ─── Post-Scarcity Minor Incidents ───────────────────────────────────────
-
-export const POST_SCARCITY_MINOR_INCIDENTS: Record<PostScarcityDomain, MinorIncidentTemplate> = {
-  meaning: {
-    domain: 'meaning' as PressureDomain,
-    name: 'Existential Malaise',
-    pravdaHeadline: 'COMMITTEE NOTES DECLINING PARTICIPATION IN VOLUNTARY LABOR.',
-    toastMessage: 'Citizens questioning the purpose of existence.',
-    impact: {
-      crisisId: 'minor-meaning',
-      workforce: { moraleModifier: -0.08 },
-      narrative: {
-        pravdaHeadlines: ['DECLINING PARTICIPATION IN VOLUNTARY LABOR'],
-        toastMessages: [{ text: 'Citizens questioning the purpose of existence.', severity: 'warning' }],
-      },
-    },
-  },
-  density: {
-    domain: 'density' as PressureDomain,
-    name: 'Overcrowding Stress',
-    pravdaHeadline: 'HABITAT DENSITY COMMITTEE RECOMMENDS EXPANSION PROTOCOLS.',
-    toastMessage: 'Population density causing social friction.',
-    impact: {
-      crisisId: 'minor-density',
-      workforce: { moraleModifier: -0.05 },
-      narrative: {
-        pravdaHeadlines: ['HABITAT DENSITY COMMITTEE RECOMMENDS EXPANSION'],
-        toastMessages: [{ text: 'Population density causing social friction.', severity: 'warning' }],
-      },
-    },
-  },
-  entropy: {
-    domain: 'entropy' as PressureDomain,
-    name: 'Maintenance Backlog',
-    pravdaHeadline: 'STELLAR ENGINEERING BUREAU REPORTS MINOR COLLECTOR DEGRADATION.',
-    toastMessage: 'Dyson swarm maintenance falling behind.',
-    impact: {
-      crisisId: 'minor-entropy',
-      economy: { productionMult: 0.95 },
-      narrative: {
-        pravdaHeadlines: ['MINOR COLLECTOR DEGRADATION REPORTED'],
-        toastMessages: [{ text: 'Stellar maintenance backlog growing.', severity: 'warning' }],
-      },
-    },
-  },
-  legacy: {
-    domain: 'legacy' as PressureDomain,
-    name: 'Directional Dispute',
-    pravdaHeadline: 'CIVILIZATIONAL COMMITTEE DEBATES LONG-TERM RESOURCE ALLOCATION.',
-    toastMessage: 'Factions disagree on civilization direction.',
-    impact: {
-      crisisId: 'minor-legacy',
-      political: { kgbAggressionMult: 1.2 },
-      narrative: {
-        pravdaHeadlines: ['LONG-TERM ALLOCATION DEBATE CONTINUES'],
-        toastMessages: [{ text: 'No consensus on civilizational direction.', severity: 'warning' }],
-      },
-    },
-  },
-  ennui: {
-    domain: 'ennui' as PressureDomain,
-    name: 'Civilizational Boredom',
-    pravdaHeadline: 'CULTURAL COMMITTEE REPORTS DECLINING CREATIVE OUTPUT.',
-    toastMessage: 'Existential boredom spreading.',
-    impact: {
-      crisisId: 'minor-ennui',
-      economy: { productionMult: 0.93 },
-      workforce: { moraleModifier: -0.06 },
-      narrative: {
-        pravdaHeadlines: ['DECLINING CREATIVE OUTPUT NOTED'],
-        toastMessages: [{ text: 'Existential boredom spreading through the collective.', severity: 'warning' }],
-      },
-    },
-  },
-};
-
-// ─── Post-Scarcity Major Crises ─────────────────────────────────────────
-
-export const POST_SCARCITY_MAJOR_CRISES: Record<PostScarcityDomain, MajorCrisisTemplate> = {
-  meaning: {
-    domain: 'meaning' as PressureDomain,
-    name: 'Meaning Crisis',
-    crisisType: 'political',
-    baseSeverity: 'national',
-    durationYears: 5,
-    basePeakParams: { productionMult: 0.3, moraleHit: -0.8, growthMult: 0.1 },
-    buildupTicks: 12,
-    aftermathTicks: 24,
-  },
-  density: {
-    domain: 'density' as PressureDomain,
-    name: 'Habitat Collapse',
-    crisisType: 'disaster',
-    baseSeverity: 'regional',
-    durationYears: 3,
-    basePeakParams: { moraleHit: -0.6, growthMult: 0.3, productionMult: 0.5 },
-    buildupTicks: 6,
-    aftermathTicks: 18,
-  },
-  entropy: {
-    domain: 'entropy' as PressureDomain,
-    name: 'Stellar Cascade Failure',
-    crisisType: 'disaster',
-    baseSeverity: 'existential',
-    durationYears: 10,
-    basePeakParams: { productionMult: 0.1, decayMult: 5.0, moraleHit: -0.9 },
-    buildupTicks: 6,
-    aftermathTicks: 36,
-  },
-  legacy: {
-    domain: 'legacy' as PressureDomain,
-    name: 'Civilizational Schism',
-    crisisType: 'political',
-    baseSeverity: 'existential',
-    durationYears: 8,
-    basePeakParams: { kgbAggressionMult: 3.0, productionMult: 0.4, moraleHit: -0.7 },
-    buildupTicks: 12,
-    aftermathTicks: 30,
-  },
-  ennui: {
-    domain: 'ennui' as PressureDomain,
-    name: 'Hedonistic Collapse',
-    crisisType: 'political',
-    baseSeverity: 'national',
-    durationYears: 5,
-    basePeakParams: { productionMult: 0.2, moraleHit: -0.9, growthMult: 0.2 },
-    buildupTicks: 8,
-    aftermathTicks: 24,
   },
 };
 

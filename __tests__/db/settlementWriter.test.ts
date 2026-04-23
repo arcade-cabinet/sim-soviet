@@ -1,8 +1,5 @@
+import { buildSettlementRow, type SettlementContext } from '../../src/db/settlementWriter';
 import type { SettlementSummary } from '../../src/game/engine/SettlementSummary';
-import {
-  buildSettlementRow,
-  type SettlementContext,
-} from '../../src/db/settlementWriter';
 
 function makeSummary(overrides: Partial<SettlementSummary> = {}): SettlementSummary {
   return {
@@ -49,10 +46,7 @@ describe('buildSettlementRow', () => {
   });
 
   it('uses buildingCount for totalBuildings (not population)', () => {
-    const row = buildSettlementRow(
-      makeSummary({ population: 500, buildingCount: 42 }),
-      defaultCtx,
-    );
+    const row = buildSettlementRow(makeSummary({ population: 500, buildingCount: 42 }), defaultCtx);
     expect(row.totalBuildings).toBe(42);
     expect(row.population).toBe(500);
   });
@@ -96,12 +90,12 @@ describe('buildSettlementRow', () => {
   it('is a pure function — does not mutate inputs', () => {
     const summary = makeSummary();
     const ctx = { ...defaultCtx };
-    const summaryBefore = JSON.stringify(summary, (_k, v) => v instanceof Set ? [...v] : v);
+    const summaryBefore = JSON.stringify(summary, (_k, v) => (v instanceof Set ? [...v] : v));
     const ctxBefore = JSON.stringify(ctx);
 
     buildSettlementRow(summary, ctx);
 
-    const summaryAfter = JSON.stringify(summary, (_k, v) => v instanceof Set ? [...v] : v);
+    const summaryAfter = JSON.stringify(summary, (_k, v) => (v instanceof Set ? [...v] : v));
     const ctxAfter = JSON.stringify(ctx);
     expect(summaryAfter).toBe(summaryBefore);
     expect(ctxAfter).toBe(ctxBefore);

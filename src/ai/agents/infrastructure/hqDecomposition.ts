@@ -16,13 +16,7 @@
  * Functions that the settlement HQ can host.
  * Administration is permanent; all others can split off.
  */
-export type HQFunction =
-  | 'administration'
-  | 'storage'
-  | 'clinic'
-  | 'canteen'
-  | 'school'
-  | 'militia_post';
+export type HQFunction = 'administration' | 'storage' | 'clinic' | 'canteen' | 'school' | 'militia_post';
 
 /** Population thresholds at which functions split off from the HQ. */
 export const HQ_FUNCTION_THRESHOLDS: Record<string, number> = {
@@ -34,13 +28,7 @@ export const HQ_FUNCTION_THRESHOLDS: Record<string, number> = {
 };
 
 /** Ordered list of splittable functions by ascending population threshold. */
-const SPLIT_ORDER: HQFunction[] = [
-  'storage',
-  'clinic',
-  'canteen',
-  'school',
-  'militia_post',
-];
+const SPLIT_ORDER: HQFunction[] = ['storage', 'clinic', 'canteen', 'school', 'militia_post'];
 
 /** Maps HQ function names to the building defId that replaces them. */
 const FUNCTION_TO_BUILDING: Record<string, string> = {
@@ -72,14 +60,7 @@ export interface DecompositionResult {
  * Returns a fresh array to prevent external mutation.
  */
 export function getHQFunctions(): HQFunction[] {
-  return [
-    'administration',
-    'storage',
-    'clinic',
-    'canteen',
-    'school',
-    'militia_post',
-  ];
+  return ['administration', 'storage', 'clinic', 'canteen', 'school', 'militia_post'];
 }
 
 /**
@@ -96,14 +77,9 @@ export function getHQFunctions(): HQFunction[] {
  * @param currentFunctions - Functions still hosted by the HQ
  * @returns Function names ready to split off
  */
-export function checkDecompositionTriggers(
-  population: number,
-  currentFunctions: HQFunction[],
-): HQFunction[] {
+export function checkDecompositionTriggers(population: number, currentFunctions: HQFunction[]): HQFunction[] {
   const hosted = new Set(currentFunctions);
-  return SPLIT_ORDER.filter(
-    (fn) => hosted.has(fn) && population > HQ_FUNCTION_THRESHOLDS[fn],
-  );
+  return SPLIT_ORDER.filter((fn) => hosted.has(fn) && population > HQ_FUNCTION_THRESHOLDS[fn]);
 }
 
 /**
@@ -116,10 +92,7 @@ export function checkDecompositionTriggers(
  * @param functionName - Function to split off
  * @returns DecompositionResult with the new building defId
  */
-export function decomposeFunction(
-  hqBuilding: HQBuilding,
-  functionName: HQFunction,
-): DecompositionResult {
+export function decomposeFunction(hqBuilding: HQBuilding, functionName: HQFunction): DecompositionResult {
   const remaining = [...hqBuilding.functions];
 
   // Administration cannot be decomposed — it IS the HQ

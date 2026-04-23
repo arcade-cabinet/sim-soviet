@@ -168,53 +168,14 @@ export function useGameSnapshot(): GameSnapshot {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-/** Set selected building tool and notify React. Only 'none' and 'bulldoze' are allowed (Phase 1). */
+/** Set selected management tool and notify React. Direct building placement tools are rejected. */
 export function selectTool(tool: string): void {
-  // Phase 1: direct building placement disabled — only allow none and bulldoze
   const allowed = tool === 'none' || tool === 'bulldoze' ? tool : 'none';
   const meta = getMetaEntity();
   if (meta) {
     meta.gameMeta.selectedTool = allowed;
   }
   notifyStateChange();
-}
-
-// ── Drag State (for drag-to-place from toolbar) ─────────────────────────
-
-/** State for an active drag-to-place building interaction. */
-export interface DragState {
-  buildingType: string;
-  /** Screen position of the dragged ghost. */
-  screenX: number;
-  screenY: number;
-}
-
-let _dragState: DragState | null = null;
-const _dragListeners = new Set<() => void>();
-
-/** Get the current drag-to-place state (null if no drag in progress). */
-export function getDragState(): DragState | null {
-  return _dragState;
-}
-
-/** Update the drag-to-place state and notify listeners. */
-export function setDragState(state: DragState | null): void {
-  _dragState = state;
-  for (const listener of _dragListeners) {
-    listener();
-  }
-}
-
-/** React hook for drag state. */
-export function useDragState(): DragState | null {
-  return useSyncExternalStore(subscribeDrag, getDragState, getDragState);
-}
-
-function subscribeDrag(listener: () => void): () => void {
-  _dragListeners.add(listener);
-  return () => {
-    _dragListeners.delete(listener);
-  };
 }
 
 // ── Pause & Speed State ──────────────────────────────────────────────────
@@ -478,56 +439,6 @@ function subscribeNotifications(listener: () => void): () => void {
   };
 }
 
-// ── Radial Build Menu ────────────────────────────────────────────────────
-
-/** State for the radial build menu opened by tapping an empty grid cell. */
-export interface RadialMenuState {
-  /** Screen position of the tap that opened the menu. */
-  screenX: number;
-  screenY: number;
-  /** Grid cell the menu targets. */
-  gridX: number;
-  gridY: number;
-  /** Largest NxN footprint that fits at this cell. */
-  availableSpace: number;
-}
-
-let _radialMenu: RadialMenuState | null = null;
-const _radialListeners = new Set<() => void>();
-
-/** Get the current radial build menu state (null if closed). */
-export function getRadialMenu(): RadialMenuState | null {
-  return _radialMenu;
-}
-
-/** Open the radial build menu at the given screen/grid position. */
-export function openRadialMenu(state: RadialMenuState): void {
-  _radialMenu = state;
-  for (const listener of _radialListeners) {
-    listener();
-  }
-}
-
-/** Close the radial build menu. */
-export function closeRadialMenu(): void {
-  _radialMenu = null;
-  for (const listener of _radialListeners) {
-    listener();
-  }
-}
-
-/** React hook — subscribe to the radial build menu state. */
-export function useRadialMenu(): RadialMenuState | null {
-  return useSyncExternalStore(subscribeRadial, getRadialMenu, getRadialMenu);
-}
-
-function subscribeRadial(listener: () => void): () => void {
-  _radialListeners.add(listener);
-  return () => {
-    _radialListeners.delete(listener);
-  };
-}
-
 // ── Radial Inspect Menu ───────────────────────────────────────────────────
 
 /** Categorized building type for the radial inspect menu ring display. */
@@ -760,29 +671,6 @@ function subscribeTerrainDirty(listener: () => void): () => void {
   };
 }
 
-// ── Placement Callback (bridges React → imperative CanvasGestureManager) ─
-
-type PlacementCallback = (gridX: number, gridY: number, defId: string) => boolean;
-
-let _placementCallback: PlacementCallback | null = null;
-
-/** Called by CanvasGestureManager to register its placement method. */
-export function setPlacementCallback(cb: PlacementCallback | null): void {
-  _placementCallback = cb;
-}
-
-/**
- * Called by RadialMenu to place a building at a grid position.
- *
- * @param gridX - Grid X coordinate
- * @param gridY - Grid Y coordinate
- * @param defId - Building definition ID to place
- * @returns true if placement succeeded, false otherwise
- */
-export function requestPlacement(gridX: number, gridY: number, defId: string): boolean {
-  return _placementCallback?.(gridX, gridY, defId) ?? false;
-}
-
 // ── Political Entity Panel (scene-driven) ─────────────────────────────────
 
 let _showPoliticalPanel = false;
@@ -972,7 +860,9 @@ export function useGosplanAllocations(): Readonly<Allocations> {
 
 function subscribeAllocations(listener: () => void): () => void {
   _allocationListeners.add(listener);
-  return () => { _allocationListeners.delete(listener); };
+  return () => {
+    _allocationListeners.delete(listener);
+  };
 }
 
 // ── Active Directive (Central Committee decrees) ──────────────────────────
@@ -1000,7 +890,9 @@ export function useActiveDirective(): ActiveDirective | null {
 
 function subscribeDirective(listener: () => void): () => void {
   _directiveListeners.add(listener);
-  return () => { _directiveListeners.delete(listener); };
+  return () => {
+    _directiveListeners.delete(listener);
+  };
 }
 
 // ── Defense Posture (Military tab → engine) ──────────────────────────────
@@ -1028,7 +920,9 @@ export function useDefensePosture(): DefensePosture {
 
 function subscribeDefensePosture(listener: () => void): () => void {
   _defensePostureListeners.add(listener);
-  return () => { _defensePostureListeners.delete(listener); };
+  return () => {
+    _defensePostureListeners.delete(listener);
+  };
 }
 
 // ── Government HQ Panel ──────────────────────────────────────────────────
@@ -1059,93 +953,9 @@ export function useGovernmentHQ(): boolean {
 
 function subscribeGovHQ(listener: () => void): () => void {
   _govHQListeners.add(listener);
-  return () => { _govHQListeners.delete(listener); };
-}
-
-// ── Climate Milestones (permafrost collapse, siberian exodus, etc.) ───────
-
-/** Active climate milestone IDs from cold branch activations. Scene components react to these. */
-let _activeClimateMilestones: Set<string> = new Set();
-const _climateListeners = new Set<() => void>();
-
-/** Get the set of currently active climate milestone IDs. */
-export function getActiveClimateMilestones(): ReadonlySet<string> {
-  return _activeClimateMilestones;
-}
-
-/** Add an active climate milestone (called when cold branch fires). */
-export function activateClimateMilestone(milestoneId: string): void {
-  if (_activeClimateMilestones.has(milestoneId)) return;
-  _activeClimateMilestones = new Set(_activeClimateMilestones);
-  _activeClimateMilestones.add(milestoneId);
-  for (const listener of _climateListeners) listener();
-}
-
-/** Clear all climate milestones (called on game reset). */
-export function clearClimateMilestones(): void {
-  _activeClimateMilestones = new Set();
-  for (const listener of _climateListeners) listener();
-}
-
-/** Restore climate milestones from save data. */
-export function restoreClimateMilestones(ids: string[]): void {
-  _activeClimateMilestones = new Set(ids);
-  for (const listener of _climateListeners) listener();
-}
-
-/** Serialize active climate milestones for save data. */
-export function serializeClimateMilestones(): string[] {
-  return [..._activeClimateMilestones];
-}
-
-/** React hook -- subscribe to climate milestone changes. */
-export function useClimateMilestones(): ReadonlySet<string> {
-  return useSyncExternalStore(subscribeClimate, getActiveClimateMilestones, getActiveClimateMilestones);
-}
-
-function subscribeClimate(listener: () => void): () => void {
-  _climateListeners.add(listener);
-  return () => { _climateListeners.delete(listener); };
-}
-
-// ── Space Progress (milestone-driven sky visual state) ────────────────────
-
-import type { SpaceVisualState } from '@/scene/SkyProgression';
-
-let _spaceVisualState: SpaceVisualState = {
-  sputnik: false,
-  spaceStation: false,
-  lunarBase: false,
-  techLevel: 0,
-  era: 'revolution',
-};
-const _spaceListeners = new Set<() => void>();
-
-/** Get the current space visual state for sky rendering. */
-export function getSpaceVisualState(): SpaceVisualState {
-  return _spaceVisualState;
-}
-
-/** Update space visual state from timeline milestone activations. */
-export function updateSpaceVisualState(state: Partial<SpaceVisualState>): void {
-  _spaceVisualState = { ..._spaceVisualState, ...state };
-  for (const listener of _spaceListeners) listener();
-}
-
-/** Reset space visual state (called on game reset). */
-export function clearSpaceVisualState(): void {
-  _spaceVisualState = { sputnik: false, spaceStation: false, lunarBase: false, techLevel: 0, era: 'revolution' };
-  for (const listener of _spaceListeners) listener();
-}
-
-/** React hook -- subscribe to space visual state changes. */
-export function useSpaceVisualState(): SpaceVisualState {
-  return useSyncExternalStore(subscribeSpace, getSpaceVisualState, getSpaceVisualState);
-}
-
-function subscribeSpace(listener: () => void): () => void {
-  _spaceListeners.add(listener);
-  return () => { _spaceListeners.delete(listener); };
+  return () => {
+    _govHQListeners.delete(listener);
+  };
 }
 
 // ── Crisis Visual Effects (one-shot VFX triggered by crisis impacts) ──────
@@ -1203,7 +1013,9 @@ export function useCrisisVFX(): readonly CrisisVFXEvent[] {
 
 function subscribeVFX(listener: () => void): () => void {
   _vfxListeners.add(listener);
-  return () => { _vfxListeners.delete(listener); };
+  return () => {
+    _vfxListeners.delete(listener);
+  };
 }
 
 // ── Mass Graves (persistent visual markers for mass casualty events) ──────
@@ -1257,103 +1069,9 @@ export function useMassGraves(): readonly MassGraveCluster[] {
 
 function subscribeGraves(listener: () => void): () => void {
   _graveListeners.add(listener);
-  return () => { _graveListeners.delete(listener); };
-}
-
-// ── Active Settlement (viewport switching) ───────────────────────────────
-
-/** Summary of a settlement for the selector UI. */
-export interface SettlementSummaryEntry {
-  id: string;
-  name: string;
-  population: number;
-  celestialBody: string;
-  isActive: boolean;
-  /** Per-settlement threat level (from pressure system). */
-  threatLevel?: string;
-}
-
-let _activeSettlementId: string = 'primary';
-let _settlementList: SettlementSummaryEntry[] = [];
-/** Whether a settlement transition animation is in progress. */
-let _settlementTransitioning = false;
-const _settlementListeners = new Set<() => void>();
-
-/** Get the currently active settlement ID. */
-export function getActiveSettlementId(): string {
-  return _activeSettlementId;
-}
-
-/** Get the list of all settlements for the selector UI. */
-export function getSettlementList(): readonly SettlementSummaryEntry[] {
-  return _settlementList;
-}
-
-/** Whether the viewport is currently transitioning between settlements. */
-export function isSettlementTransitioning(): boolean {
-  return _settlementTransitioning;
-}
-
-/** Set the active settlement ID (called by switchSettlement coordinator). */
-export function setActiveSettlementId(id: string): void {
-  _activeSettlementId = id;
-  for (const listener of _settlementListeners) listener();
-}
-
-/** Update the settlement list (called each tick or on settlement changes). */
-export function updateSettlementList(list: SettlementSummaryEntry[]): void {
-  _settlementList = list;
-  for (const listener of _settlementListeners) listener();
-}
-
-/** Set the transitioning flag (for fade overlay). */
-export function setSettlementTransitioning(transitioning: boolean): void {
-  _settlementTransitioning = transitioning;
-  for (const listener of _settlementListeners) listener();
-}
-
-/** Monotonically increasing counter — incremented on settlement switch to signal camera reset. */
-let _cameraResetVersion = 0;
-
-/** Get the current camera reset version. CameraController watches this for changes. */
-export function getCameraResetVersion(): number {
-  return _cameraResetVersion;
-}
-
-/** Signal the camera to reset to the new grid center. Called by switchSettlement(). */
-export function signalCameraReset(): void {
-  _cameraResetVersion++;
-}
-
-/** React hook -- subscribe to active settlement state. */
-export function useActiveSettlement(): {
-  activeId: string;
-  settlements: readonly SettlementSummaryEntry[];
-  transitioning: boolean;
-} {
-  const state = useSyncExternalStore(subscribeSettlement, getSettlementState, getSettlementState);
-  return state;
-}
-
-let _cachedSettlementState: { activeId: string; settlements: readonly SettlementSummaryEntry[]; transitioning: boolean } | null = null;
-
-function getSettlementState() {
-  if (!_cachedSettlementState
-    || _cachedSettlementState.activeId !== _activeSettlementId
-    || _cachedSettlementState.settlements !== _settlementList
-    || _cachedSettlementState.transitioning !== _settlementTransitioning) {
-    _cachedSettlementState = {
-      activeId: _activeSettlementId,
-      settlements: _settlementList,
-      transitioning: _settlementTransitioning,
-    };
-  }
-  return _cachedSettlementState;
-}
-
-function subscribeSettlement(listener: () => void): () => void {
-  _settlementListeners.add(listener);
-  return () => { _settlementListeners.delete(listener); };
+  return () => {
+    _graveListeners.delete(listener);
+  };
 }
 
 // ── Internal ──────────────────────────────────────────────────────────────

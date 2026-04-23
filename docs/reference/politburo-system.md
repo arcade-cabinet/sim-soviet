@@ -3,17 +3,18 @@ title: Politburo & Ministry System — 10 Ministries, 80-Cell Matrix
 type: reference
 status: active
 implementation:
-  - src/game/politburo/PolitburoSystem.ts
-  - src/game/politburo/
+  - src/ai/agents/narrative/politburo/PolitburoSystem.ts
+  - src/ai/agents/narrative/politburo/
 tests:
-  - src/__tests__/PolitburoSystem.test.ts
-last_verified: 2026-03-01
+  - __tests__/game/PolitburoSystem.test.ts
+  - __tests__/game/PolitburoSerialization.test.ts
+last_verified: 2026-04-23
 coverage: full
 ---
 
 # Politburo & Ministry System -- Reference
 
-> Source: `src/game/politburo/PolitburoSystem.ts` (2,196 lines)
+> Source: `src/ai/agents/narrative/politburo/PolitburoSystem.ts`
 >
 > Generates a full Politburo government around each General Secretary.
 > Every minister has personality, loyalty, competence, ambition, and
@@ -38,7 +39,7 @@ The system is organized into seven layers, defined top-to-bottom in the source:
 | 7. PolitburoSystem Class | Public API, tick loop, private simulation methods | 1626--2196 |
 
 **Key design principle:** The Politburo runs on a parallel timescale to the
-city-builder economy. Ministers apply passive modifiers every tick, but the
+settlement economy. Ministers apply passive modifiers every tick, but the
 political machinery (coups, purges, tensions, events) evaluates on monthly,
 quarterly, and annual boundaries. A single tick never causes more than one
 succession event.

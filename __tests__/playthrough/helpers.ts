@@ -49,8 +49,8 @@ export function createMockCallbacks(): SimCallbacks & Record<string, jest.Mock> 
     onAchievement: jest.fn(),
     onGameTally: jest.fn(),
     onRehabilitation: jest.fn(),
-    onNarrativeEvent: jest.fn(),
     onHistoricalEraEnd: jest.fn().mockImplementation((resolve: (c: boolean) => void) => resolve(true)),
+    onVisualEvent: jest.fn(),
   };
 }
 

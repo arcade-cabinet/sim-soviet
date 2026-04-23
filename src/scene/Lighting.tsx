@@ -65,7 +65,12 @@ const SHADOW_CAMERA_SIZE = 25;
 const SUN_DISTANCE = 40;
 
 /** Renders directional sun light with day/night cycle, hemispheric ambient fill, and distance fog. */
-const Lighting: React.FC<LightingProps> = ({ timeOfDay = 0.5, season = 'summer', isStorm = false, isWartime = false }) => {
+const Lighting: React.FC<LightingProps> = ({
+  timeOfDay = 0.5,
+  season = 'summer',
+  isStorm = false,
+  isWartime = false,
+}) => {
   const sunRef = useRef<THREE.DirectionalLight>(null);
   const hemiRef = useRef<THREE.HemisphereLight>(null);
   const targetRef = useRef<THREE.Object3D>(null);

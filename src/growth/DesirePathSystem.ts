@@ -54,13 +54,7 @@ export function createTrafficGrid(): TrafficGrid {
  * Traces a Manhattan path (horizontal then vertical) and increments
  * traffic on each intermediate cell.
  */
-export function recordCommute(
-  grid: TrafficGrid,
-  fromX: number,
-  fromZ: number,
-  toX: number,
-  toZ: number,
-): void {
+export function recordCommute(grid: TrafficGrid, fromX: number, fromZ: number, toX: number, toZ: number): void {
   // Manhattan path: walk horizontal first, then vertical
   const dx = toX > fromX ? 1 : toX < fromX ? -1 : 0;
   const dz = toZ > fromZ ? 1 : toZ < fromZ ? -1 : 0;
@@ -102,10 +96,7 @@ export function decayTraffic(grid: TrafficGrid): void {
  * Extract formed roads from the traffic grid.
  * Returns all cells that have exceeded the dirt threshold.
  */
-export function extractDesirePaths(
-  grid: TrafficGrid,
-  occupiedCells: Set<string>,
-): DesirePathRoad[] {
+export function extractDesirePaths(grid: TrafficGrid, occupiedCells: Set<string>): DesirePathRoad[] {
   const roads: DesirePathRoad[] = [];
 
   for (const [key, traffic] of grid.cells) {

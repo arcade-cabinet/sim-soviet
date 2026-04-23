@@ -100,28 +100,28 @@ describe('demographics & resource balance', () => {
       expect(startingFood).toBeGreaterThanOrEqual(360);
     });
 
-    it('default food is at least 600', () => {
+    it('default food is the historical campaign starter stockpile', () => {
       const store = createResourceStore();
-      expect(store.resources!.food).toBeGreaterThanOrEqual(600);
+      expect(store.resources!.food).toBe(500);
     });
   });
 
-  // ── Resource store defaults align with difficulty.ts ────────
+  // ── Resource store defaults align with historical campaign start ────────
 
-  describe('createResourceStore defaults align with BASE_STARTING', () => {
-    it('timber default matches BASE_STARTING (30)', () => {
+  describe('createResourceStore defaults align with historical campaign start', () => {
+    it('timber default provides starter construction material', () => {
       const store = createResourceStore();
-      expect(store.resources!.timber).toBe(30);
+      expect(store.resources!.timber).toBe(200);
     });
 
-    it('steel default matches BASE_STARTING (10)', () => {
+    it('steel default starts at zero until industry develops', () => {
       const store = createResourceStore();
-      expect(store.resources!.steel).toBe(10);
+      expect(store.resources!.steel).toBe(0);
     });
 
-    it('food default matches BASE_STARTING (600)', () => {
+    it('food default matches historical campaign start', () => {
       const store = createResourceStore();
-      expect(store.resources!.food).toBe(600);
+      expect(store.resources!.food).toBe(500);
     });
   });
 });

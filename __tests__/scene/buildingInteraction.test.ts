@@ -8,15 +8,9 @@
  * 4. RadialInspectMenu action resolution by building type
  */
 
-import * as THREE from 'three';
 import { computeInstanceColor } from '../../src/scene/BuildingRenderer';
-import { TIER_TINTS, SEASON_TINTS } from '../../src/scene/TierTinting';
-import {
-  openInspectMenu,
-  closeInspectMenu,
-  getInspectMenu,
-  type InspectMenuState,
-} from '../../src/stores/gameStore';
+import { SEASON_TINTS, TIER_TINTS } from '../../src/scene/TierTinting';
+import { closeInspectMenu, getInspectMenu, type InspectMenuState, openInspectMenu } from '../../src/stores/gameStore';
 
 // ── Health Tinting Tests ──────────────────────────────────────────────────
 

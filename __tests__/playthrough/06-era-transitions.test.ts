@@ -91,7 +91,7 @@ describe('Playthrough: Era Transitions', () => {
     expect(resetSpy).toHaveBeenCalledTimes(1);
 
     // Commendations reset to 0 by resetForNewEra. Post-transition
-    // political evaluations (promotion risk, KGB reports) may add commendations.
+    // political evaluations (promotion risk, state-security reports) may add commendations.
     // The key invariant is that the pre-transition commendation was cleared.
     expect(pf.getCommendations()).toBeLessThanOrEqual(2);
 

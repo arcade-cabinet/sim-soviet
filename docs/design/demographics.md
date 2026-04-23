@@ -9,7 +9,7 @@ implementation:
   - src/ecs/systems/demographicSystem.ts
   - src/ecs/factories/demographics.ts
   - src/game/workers/WorkerSystem.ts
-  - src/game/PrivatePlotSystem.ts
+  - src/ai/agents/economy/FoodAgent.ts
   - src/game/LoyaltySystem.ts
   - src/game/TrudodniSystem.ts
 tests:
@@ -188,7 +188,7 @@ The player's settlement begins as a newly formed **artel** (артель) — th
 | 5 Thaw (1953-1964) | Oversight loosens slightly. Politruk remains but less power. | Era transition |
 | 6 Stagnation (1964-1985) | Full bureaucratic apparatus. Party secretary, trade union, Komsomol. | Pop > 100 |
 | 7 Perestroika (1985-1991) | Officials become less effective. Corruption increases. | Era transition |
-| 8 Eternal Soviet (2000+) | Satirical maximum bureaucracy. | Fantasy |
+| Post-campaign continuation (1992+) | Local apparatus decays but keeps demanding reports. | Grounded continuation |
 
 ### Party Cell Formation
 
@@ -292,7 +292,7 @@ Soviet propaganda proclaimed gender equality, but the reality in kolkhozes was d
 | 5 Thaw | 1953-1964 | ~25-30% | Women ~55-60% of agricultural workforce. Mechanization begins to reduce some manual labor. In 1959, half of all working women were still in agriculture. | Slightly improving. Khrushchev era rhetoric about women's rights. Some kolkhozes elect women to boards. | Post-Stalin liberalization. Internal passport reform (1953) lets some rural women migrate to cities for first time. |
 | 6 Stagnation | 1964-1985 | ~30-35% | Women still ~50% of agricultural labor. By 1975, under 1/3 of women worked in agriculture (urbanization). Mechanization reduced demand for manual field labor. | Formal equality, practical inequality. Women 49% of total Soviet workforce by 1970s but concentrated in lower-paid sectors. | Urban migration accelerates. Young women leave villages for education/factory work. Rural demographics aging. |
 | 7 Perestroika | 1985-1991 | ~30-35% | Declining agricultural workforce overall. Women increasingly in service/industrial sectors. Rural agriculture aging and depopulating. | Some glasnost-era discussion of gender inequality. No structural change. | Economic crisis. Agricultural sector in decline. |
-| 8 Eternal Soviet | 2000+ | Fantasy | Satirical: bureaucratic gender quotas exist on paper, reality unchanged. | Fantasy: mandatory "gender equality reports" that no one reads. | Dark humor: the paperwork says equality, the kolkhoz says otherwise. |
+| Post-campaign continuation | 1992+ | Grounded continuation | Formal equality exists on paper, rural reality remains constrained by aging labor and failing institutions. | Reports continue because the forms still exist. | Dark humor: the paperwork says equality, the kolkhoz says otherwise. |
 
 ### The "Double Burden" Across All Eras
 

@@ -63,7 +63,8 @@ class AudioManager {
   private currentEra: string | null = null;
   private activeNodeCount = 0;
   /** Fading-out nodes pending delayed cleanup (source + gain pairs). */
-  private fadingNodes: Array<{ source: AudioBufferSourceNode; gain: GainNode; timer: ReturnType<typeof setTimeout> }> = [];
+  private fadingNodes: Array<{ source: AudioBufferSourceNode; gain: GainNode; timer: ReturnType<typeof setTimeout> }> =
+    [];
 
   /** Get or create the singleton AudioManager instance. */
   static getInstance(): AudioManager {
@@ -175,7 +176,7 @@ class AudioManager {
    * Set the current era and switch the playlist to era-appropriate tracks.
    * Crossfades to the first track of the new era playlist.
    *
-   * @param era - Era identifier (e.g. 'revolution', 'stagnation', 'the_eternal')
+   * @param era - Era identifier (e.g. 'revolution', 'stagnation')
    */
   setEra(era: string): void {
     if (era === this.currentEra) return;
@@ -453,7 +454,9 @@ class AudioManager {
 
     // Force-evict all fading nodes when approaching cap
     if (this.activeNodeCount > NODE_CAP_EVICT && this.fadingNodes.length > 0) {
-      console.warn(`[AudioManager] Node cap exceeded (${this.activeNodeCount}). Force-evicting ${this.fadingNodes.length} fading nodes.`);
+      console.warn(
+        `[AudioManager] Node cap exceeded (${this.activeNodeCount}). Force-evicting ${this.fadingNodes.length} fading nodes.`,
+      );
       this.forceEvictAllFading();
     }
   }

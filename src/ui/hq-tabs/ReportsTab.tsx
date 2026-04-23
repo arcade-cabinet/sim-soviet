@@ -25,7 +25,7 @@ export interface QuotaHistoryEntry {
 export interface AnnualSummary {
   year: number;
   population: number;
-  foodProduced: number;
+  foodStores: number;
   buildingsConstructed: number;
   blackMarks: number;
   commendations: number;
@@ -86,8 +86,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
                   styles.barFill,
                   {
                     width: `${Math.min(100, Math.round((currentQuota.current / currentQuota.target) * 100))}%`,
-                    backgroundColor:
-                      currentQuota.current >= currentQuota.target ? Colors.termGreen : Colors.sovietRed,
+                    backgroundColor: currentQuota.current >= currentQuota.target ? Colors.termGreen : Colors.sovietRed,
                   },
                 ]}
               />
@@ -103,7 +102,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>LAST ANNUAL SUMMARY ({annualSummary.year})</Text>
             <Row label="POPULATION" value={String(annualSummary.population)} />
-            <Row label="FOOD PRODUCED" value={String(Math.round(annualSummary.foodProduced))} />
+            <Row label="FOOD STORES" value={String(Math.round(annualSummary.foodStores))} />
             <Row label="BUILDINGS BUILT" value={String(annualSummary.buildingsConstructed)} />
             <Row
               label="BLACK MARKS"

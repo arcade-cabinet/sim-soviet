@@ -6,9 +6,8 @@
  * workers-house-a (selo) can visually upgrade to workers-house-b (posyolok)
  * without changing the underlying game entity.
  *
- * Era-driven overrides allow different historical eras to use entirely
- * different model sets for the same building type (e.g. space-colony
- * housing in the_eternal era).
+ * Era-driven overrides allow different historical eras to use different model
+ * sets for the same building type.
  */
 
 import type { SettlementTier } from '../ai/agents/infrastructure/SettlementSystem';
@@ -24,8 +23,7 @@ type BuildingType =
   | 'tower'
   | 'pump'
   | 'station'
-  | 'mast'
-  | 'space';
+  | 'mast';
 
 /** Level-indexed model names. Index = density level (0, 1, 2). */
 const MODEL_MAP: Record<BuildingType, readonly [string, string, string]> = {
@@ -40,7 +38,6 @@ const MODEL_MAP: Record<BuildingType, readonly [string, string, string]> = {
   pump: ['concrete-block', 'concrete-block', 'concrete-block'],
   station: ['train-station', 'train-station', 'train-station'],
   mast: ['guard-post', 'guard-post', 'guard-post'],
-  space: ['government-hq', 'government-hq', 'government-hq'],
 };
 
 // ── Era-based model overrides ────────────────────────────────────────────────
@@ -79,71 +76,6 @@ export const ERA_MODEL_MAP: Readonly<
     factory: ['industrial-machinery', 'industrial-furnace', 'pipe-system'],
     pump: ['chimney-stack', 'chimney-stack', 'chimney-stack'],
     station: ['industrial-warehouse', 'industrial-warehouse', 'industrial-warehouse'],
-  },
-  the_eternal: {
-    housing: ['colony-dome', 'spacestation-01', 'spacestation-03'],
-    factory: ['colony-workshop', 'spacestation-02', 'spacestation-04'],
-    distillery: ['colony-synthplant', 'colony-synthplant', 'colony-synthplant'],
-    farm: ['colony-hydroponics', 'colony-hydroponics', 'colony-hydroponics'],
-    power: ['colony-solar', 'colony-reactor', 'colony-fusion'],
-    nuke: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
-    tower: ['comms-array', 'colony-antenna', 'colony-antenna'],
-    pump: ['space-module', 'space-module', 'space-module'],
-    station: ['launch-pad', 'launch-pad', 'launch-pad'],
-    space: ['spacestation-06', 'colony-command', 'colony-command'],
-  },
-
-  // Kardashev sub-eras — progressively mix brutalist + colony + spacestation models
-  post_soviet: {
-    housing: ['apartment-tower-d', 'colony-dome', 'spacestation-01'],
-    factory: ['factory-office', 'colony-workshop', 'spacestation-02'],
-    power: ['power-station', 'colony-solar', 'colony-reactor'],
-    space: ['government-hq', 'colony-command', 'colony-command'],
-  },
-  planetary: {
-    housing: ['colony-dome', 'spacestation-01', 'spacestation-03'],
-    factory: ['colony-workshop', 'spacestation-02', 'spacestation-04'],
-    farm: ['colony-hydroponics', 'colony-hydroponics', 'colony-hydroponics'],
-    power: ['colony-solar', 'colony-reactor', 'colony-fusion'],
-    space: ['colony-command', 'colony-command', 'colony-command'],
-  },
-  solar_engineering: {
-    housing: ['spacestation-01', 'spacestation-03', 'spacestation-03'],
-    factory: ['spacestation-02', 'spacestation-04', 'spacestation-04'],
-    power: ['colony-reactor', 'colony-fusion', 'colony-fusion'],
-    tower: ['colony-antenna', 'colony-antenna', 'colony-antenna'],
-    space: ['spacestation-06', 'colony-command', 'colony-command'],
-  },
-  type_one: {
-    housing: ['spacestation-01', 'spacestation-03', 'spacestation-03'],
-    factory: ['spacestation-02', 'spacestation-04', 'spacestation-04'],
-    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
-    tower: ['colony-antenna', 'comms-array', 'comms-array'],
-    space: ['spacestation-06', 'colony-command', 'colony-command'],
-  },
-  deconstruction: {
-    housing: ['spacestation-03', 'spacestation-03', 'spacestation-03'],
-    factory: ['spacestation-04', 'spacestation-04', 'spacestation-04'],
-    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
-    space: ['colony-command', 'colony-command', 'colony-command'],
-  },
-  dyson_swarm: {
-    housing: ['spacestation-01', 'spacestation-03', 'spacestation-03'],
-    factory: ['spacestation-02', 'spacestation-04', 'spacestation-04'],
-    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
-    space: ['spacestation-06', 'colony-command', 'colony-command'],
-  },
-  megaearth: {
-    housing: ['spacestation-03', 'spacestation-03', 'spacestation-03'],
-    factory: ['spacestation-04', 'spacestation-04', 'spacestation-04'],
-    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
-    space: ['colony-command', 'colony-command', 'colony-command'],
-  },
-  type_two_peak: {
-    housing: ['spacestation-03', 'spacestation-03', 'spacestation-03'],
-    factory: ['spacestation-04', 'spacestation-04', 'spacestation-04'],
-    power: ['colony-fusion', 'colony-fusion', 'colony-fusion'],
-    space: ['colony-command', 'colony-command', 'colony-command'],
   },
 };
 

@@ -1,14 +1,17 @@
 /**
  * LawEnforcementTab — Sector law enforcement dashboard for gorod+ settlements.
  *
- * Displays enforcement mode, crime rate per sector, judge coverage,
- * undercity decay, and iso-cube population. Read-only observation panel
+ * Displays enforcement mode, local crime rate, and patrol coverage. Read-only observation panel
  * consistent with the game's bureaucratic observation-not-control pattern.
  */
 
 import type React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { LawEnforcementMode, LawEnforcementState, SectorBlock } from '../../ai/agents/political/LawEnforcementSystem';
+import type {
+  LawEnforcementMode,
+  LawEnforcementState,
+  SectorBlock,
+} from '../../ai/agents/political/LawEnforcementSystem';
 import { Colors, monoFont } from '../styles';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -16,16 +19,16 @@ import { Colors, monoFont } from '../styles';
 export interface LawEnforcementTabProps {
   /** Full law enforcement state from KGBAgent. */
   state: Readonly<LawEnforcementState>;
+  /** Era-appropriate state-security service label. */
+  serviceLabel?: string;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-const MODE_LABELS: Record<LawEnforcementMode, string> = {
-  kgb: 'KGB POLITICAL SECURITY',
-  security_services: 'FEDERAL SECURITY SERVICE',
-  sector_judges: 'SECTOR JUDGE CORPS',
-  megacity_arbiters: 'MEGACITY ARBITERS',
-};
+function modeLabel(mode: LawEnforcementMode, serviceLabel: string): string {
+  if (mode === 'kgb') return `${serviceLabel} POLITICAL SECURITY`;
+  return 'STATE SECURITY';
+}
 
 function formatPercent(v: number): string {
   return `${(v * 100).toFixed(1)}%`;
@@ -39,19 +42,23 @@ function crimeColor(rate: number): string {
 
 // ── Component ───────────────────────────────────────────────────────────────
 
-export const LawEnforcementTab: React.FC<LawEnforcementTabProps> = ({ state }) => {
+export const LawEnforcementTab: React.FC<LawEnforcementTabProps> = ({ state, serviceLabel = 'STATE SECURITY' }) => {
   return (
     <View style={styles.container} testID="law-enforcement-tab">
       {/* Header */}
       <Text style={styles.sectionTitle}>ENFORCEMENT MODE</Text>
-      <Text style={styles.modeLabel}>{MODE_LABELS[state.mode]}</Text>
+      <Text style={styles.modeLabel}>{modeLabel(state.mode, serviceLabel)}</Text>
 
       {/* Aggregate stats */}
       <View style={styles.statsRow}>
-        <StatBox label="CRIME RATE" value={formatPercent(state.aggregateCrimeRate)} color={crimeColor(state.aggregateCrimeRate)} />
-        <StatBox label="JUDGES" value={String(state.totalJudges)} color={Colors.termBlue} />
-        <StatBox label="ISO-CUBES" value={String(state.totalIsoCubePopulation)} color={Colors.sovietGold} />
-        <StatBox label="FORCED LABOR" value={state.totalIsoCubeLabor.toFixed(0)} color={Colors.textSecondary} />
+        <StatBox
+          label="CRIME RATE"
+          value={formatPercent(state.aggregateCrimeRate)}
+          color={crimeColor(state.aggregateCrimeRate)}
+        />
+        <StatBox label="PATROLS" value={String(state.totalJudges)} color={Colors.termBlue} />
+        <StatBox label="DETAINED" value={String(state.totalDetainedPopulation)} color={Colors.sovietGold} />
+        <StatBox label="LABOR" value={state.totalPenalLabor.toFixed(0)} color={Colors.textSecondary} />
       </View>
 
       {/* Sector breakdown (only shown when sectors exist) */}
@@ -61,9 +68,9 @@ export const LawEnforcementTab: React.FC<LawEnforcementTabProps> = ({ state }) =
           <View style={styles.sectorHeader}>
             <Text style={[styles.sectorCell, styles.sectorNameCol]}>SECTOR</Text>
             <Text style={styles.sectorCell}>CRIME</Text>
-            <Text style={styles.sectorCell}>JUDGES</Text>
-            <Text style={styles.sectorCell}>UNDERCITY</Text>
-            <Text style={styles.sectorCell}>ISO-CUBE</Text>
+            <Text style={styles.sectorCell}>PATROLS</Text>
+            <Text style={styles.sectorCell}>DECAY</Text>
+            <Text style={styles.sectorCell}>DETAINED</Text>
           </View>
           {state.sectors.map((sector) => (
             <SectorRow key={sector.id} sector={sector} />
@@ -72,9 +79,7 @@ export const LawEnforcementTab: React.FC<LawEnforcementTabProps> = ({ state }) =
       )}
 
       {state.sectors.length === 0 && (
-        <Text style={styles.noSectors}>
-          Settlement does not yet require sector subdivision.
-        </Text>
+        <Text style={styles.noSectors}>Settlement does not yet require sector subdivision.</Text>
       )}
     </View>
   );
@@ -94,14 +99,12 @@ const SectorRow: React.FC<{ sector: SectorBlock }> = ({ sector }) => (
     <Text style={[styles.sectorCell, styles.sectorNameCol]} numberOfLines={1}>
       {sector.name}
     </Text>
-    <Text style={[styles.sectorCell, { color: crimeColor(sector.crimeRate) }]}>
-      {formatPercent(sector.crimeRate)}
-    </Text>
+    <Text style={[styles.sectorCell, { color: crimeColor(sector.crimeRate) }]}>{formatPercent(sector.crimeRate)}</Text>
     <Text style={styles.sectorCell}>{sector.judgeCount}</Text>
-    <Text style={[styles.sectorCell, { color: sector.undercityDecay > 0.3 ? Colors.sovietRed : Colors.textSecondary }]}>
-      {formatPercent(sector.undercityDecay)}
+    <Text style={[styles.sectorCell, { color: sector.districtDecay > 0.3 ? Colors.sovietRed : Colors.textSecondary }]}>
+      {formatPercent(sector.districtDecay)}
     </Text>
-    <Text style={styles.sectorCell}>{sector.isoCubePopulation}</Text>
+    <Text style={styles.sectorCell}>{sector.detainedPopulation}</Text>
   </View>
 );
 

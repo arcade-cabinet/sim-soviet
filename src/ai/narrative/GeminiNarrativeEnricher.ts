@@ -22,9 +22,7 @@ interface EnrichmentEntry {
   synopsis: string;
 }
 
-const enrichments = (
-  enrichmentsData as { version: string; enrichments: Record<string, EnrichmentEntry> }
-).enrichments;
+const enrichments = (enrichmentsData as { version: string; enrichments: Record<string, EnrichmentEntry> }).enrichments;
 
 /**
  * Return the pre-generated enriched scene prose for a milestone.

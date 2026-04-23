@@ -1,7 +1,7 @@
 /**
  * GovernmentHQ — Central bureaucratic panel with 6 agency tabs.
  *
- * Tabs: Gosplan | Central Committee | KGB | Military | Politburo | Reports
+ * Tabs: Gosplan | Central Committee | State Security | Military | Politburo | Reports
  * Each tab reads live data from the SimulationEngine via getEngine().
  */
 
@@ -13,12 +13,15 @@ import type { PromotionResponse } from '../ai/agents/political/moscowPromotion';
 import type { ResettlementPreparationAction } from '../ai/agents/political/resettlementDirective';
 import { getEngine } from '../bridge/GameInit';
 import { getResourceEntity } from '../ecs/archetypes';
-import { setActiveDirective, setDefensePosture, setGosplanAllocations, useActiveDirective, useDefensePosture, useGosplanAllocations } from '../stores/gameStore';
 import {
-  type ActiveDirective,
-  CENTRAL_COMMITTEE_DIRECTIVES,
-  CentralCommitteeTab,
-} from './hq-tabs/CentralCommitteeTab';
+  setActiveDirective,
+  setDefensePosture,
+  setGosplanAllocations,
+  useActiveDirective,
+  useDefensePosture,
+  useGosplanAllocations,
+} from '../stores/gameStore';
+import { type ActiveDirective, CENTRAL_COMMITTEE_DIRECTIVES, CentralCommitteeTab } from './hq-tabs/CentralCommitteeTab';
 import { GosplanTab } from './hq-tabs/GosplanTab';
 import type { ArrestRecord } from './hq-tabs/KGBTab';
 import { KGBTab } from './hq-tabs/KGBTab';
@@ -28,12 +31,20 @@ import type { PolitburoDemand, PrestigeProjectStatus } from './hq-tabs/Politburo
 import { PolitburoTab } from './hq-tabs/PolitburoTab';
 import type { AnnualSummary, QuotaHistoryEntry } from './hq-tabs/ReportsTab';
 import { ReportsTab } from './hq-tabs/ReportsTab';
+import { securityServiceCodeForYear } from './securityService';
 import { Colors, monoFont } from './styles';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
 /** Agency tab identifiers for the GovernmentHQ panel. */
-export type AgencyTab = 'gosplan' | 'central_committee' | 'kgb' | 'military' | 'politburo' | 'reports' | 'law_enforcement';
+export type AgencyTab =
+  | 'gosplan'
+  | 'central_committee'
+  | 'kgb'
+  | 'military'
+  | 'politburo'
+  | 'reports'
+  | 'law_enforcement';
 
 export interface AgencyTabDef {
   key: AgencyTab;
@@ -46,7 +57,7 @@ export interface AgencyTabDef {
 export const AGENCY_TABS: AgencyTabDef[] = [
   { key: 'gosplan', label: 'GOSPLAN' },
   { key: 'central_committee', label: 'CENTRAL COMMITTEE' },
-  { key: 'kgb', label: 'KGB', minTier: 'posyolok' },
+  { key: 'kgb', label: 'STATE SECURITY', minTier: 'posyolok' },
   { key: 'military', label: 'MILITARY', minTier: 'posyolok' },
   { key: 'politburo', label: 'POLITBURO', minTier: 'pgt' },
   { key: 'reports', label: 'REPORTS', minTier: 'pgt' },
@@ -76,6 +87,15 @@ export function getVisibleTabs(tier: SettlementTier): AgencyTabDef[] {
   });
 }
 
+export function securityServiceLabelForYear(year: number): string {
+  return securityServiceCodeForYear(year);
+}
+
+export function getAgencyTabLabel(tab: AgencyTabDef, year: number): string {
+  if (tab.key === 'kgb') return securityServiceLabelForYear(year);
+  return tab.label;
+}
+
 // ── Props ───────────────────────────────────────────────────────────────────
 
 export interface GovernmentHQProps {
@@ -103,20 +123,17 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
     setGosplanAllocations(newAlloc as any);
   }, []);
 
-  const handleIssueDirective = useCallback(
-    (directiveId: string) => {
-      const engine = getEngine();
-      const tick = engine?.getChronology().getDate().totalTicks ?? 0;
-      const def = CENTRAL_COMMITTEE_DIRECTIVES.find((d) => d.id === directiveId);
-      if (!def) return;
-      setActiveDirective({
-        directiveId,
-        issuedAtTick: tick,
-        lockInTicks: def.lockInTicks,
-      });
-    },
-    [],
-  );
+  const handleIssueDirective = useCallback((directiveId: string) => {
+    const engine = getEngine();
+    const tick = engine?.getChronology().getDate().totalTicks ?? 0;
+    const def = CENTRAL_COMMITTEE_DIRECTIVES.find((d) => d.id === directiveId);
+    if (!def) return;
+    setActiveDirective({
+      directiveId,
+      issuedAtTick: tick,
+      lockInTicks: def.lockInTicks,
+    });
+  }, []);
 
   const handlePromotionRespond = useCallback((response: PromotionResponse) => {
     const engine = getEngine();
@@ -144,6 +161,7 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
   if (!visible) return null;
 
   const engine = getEngine();
+  const currentYear = engine?.getChronology().getDate().year ?? 1917;
 
   // ── Build tab content ──
 
@@ -151,12 +169,7 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
 
   switch (activeTab) {
     case 'gosplan':
-      tabContent = (
-        <GosplanTab
-          currentAllocations={allocations as any}
-          onAllocationChange={handleAllocationChange}
-        />
-      );
+      tabContent = <GosplanTab currentAllocations={allocations as any} onAllocationChange={handleAllocationChange} />;
       break;
 
     case 'kgb':
@@ -201,70 +214,71 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
         </View>
 
         {/* Resettlement alert banner */}
-        {engine && (() => {
-          const resState = engine.getPoliticalAgent().getResettlementState();
-          if (!resState.directiveIssued || resState.executed) return null;
-          const remaining = resState.warningTicksRemaining;
-          const prepPct = Math.round(resState.preparationLevel * 100);
-          return (
-            <View style={resettleStyles.container} testID="resettlement-alert">
-              <View style={resettleStyles.headerRow}>
-                <Text style={resettleStyles.warningIcon}>!!</Text>
-                <Text style={resettleStyles.title}>RESETTLEMENT DIRECTIVE</Text>
-                <Text style={resettleStyles.warningIcon}>!!</Text>
-              </View>
-              <Text style={resettleStyles.countdown}>
-                RELOCATION IN {remaining} MONTH{remaining !== 1 ? 'S' : ''}
-              </Text>
-
-              {/* Preparation gauge */}
-              <View style={resettleStyles.gaugeRow}>
-                <Text style={resettleStyles.gaugeLabel}>PREPARATION:</Text>
-                <View style={resettleStyles.gaugeBg}>
-                  <View style={[resettleStyles.gaugeFill, { width: `${prepPct}%` }]} />
+        {engine &&
+          (() => {
+            const resState = engine.getPoliticalAgent().getResettlementState();
+            if (!resState.directiveIssued || resState.executed) return null;
+            const remaining = resState.warningTicksRemaining;
+            const prepPct = Math.round(resState.preparationLevel * 100);
+            return (
+              <View style={resettleStyles.container} testID="resettlement-alert">
+                <View style={resettleStyles.headerRow}>
+                  <Text style={resettleStyles.warningIcon}>!!</Text>
+                  <Text style={resettleStyles.title}>RESETTLEMENT DIRECTIVE</Text>
+                  <Text style={resettleStyles.warningIcon}>!!</Text>
                 </View>
-                <Text style={resettleStyles.gaugeValue}>{prepPct}%</Text>
-              </View>
+                <Text style={resettleStyles.countdown}>
+                  RELOCATION IN {remaining} MONTH{remaining !== 1 ? 'S' : ''}
+                </Text>
 
-              {resState.disassemblyActive && (
-                <Text style={resettleStyles.disassemblyActive}>DISASSEMBLY PROTOCOL ACTIVE</Text>
-              )}
+                {/* Preparation gauge */}
+                <View style={resettleStyles.gaugeRow}>
+                  <Text style={resettleStyles.gaugeLabel}>PREPARATION:</Text>
+                  <View style={resettleStyles.gaugeBg}>
+                    <View style={[resettleStyles.gaugeFill, { width: `${prepPct}%` }]} />
+                  </View>
+                  <Text style={resettleStyles.gaugeValue}>{prepPct}%</Text>
+                </View>
 
-              {/* Action buttons */}
-              <View style={resettleStyles.buttonRow}>
-                {!resState.disassemblyActive && (
-                  <Pressable
-                    style={resettleStyles.disassembleBtn}
-                    onPress={() => handleResettlementAction('disassemble')}
-                    testID="resettlement-disassemble"
-                    accessibilityRole="button"
-                    accessibilityLabel="Enact disassembly protocol"
-                  >
-                    <Text style={resettleStyles.btnText}>ENACT DISASSEMBLY PROTOCOL</Text>
-                  </Pressable>
+                {resState.disassemblyActive && (
+                  <Text style={resettleStyles.disassemblyActive}>DISASSEMBLY PROTOCOL ACTIVE</Text>
                 )}
-                <Pressable
-                  style={resettleStyles.bribeBtn}
-                  onPress={() => handleResettlementAction('bribe')}
-                  testID="resettlement-bribe"
-                  accessibilityRole="button"
-                  accessibilityLabel="Arrange special consideration to cancel resettlement"
-                >
-                  <Text style={resettleStyles.btnText}>ARRANGE SPECIAL CONSIDERATION</Text>
-                </Pressable>
-                <Pressable
-                  style={resettleStyles.complyBtn}
-                  onPress={() => handleResettlementAction('accept')}
-                  testID="resettlement-comply"
-                  accessibilityRole="button"
-                  accessibilityLabel="Comply with resettlement directive"
-                >
-                  <Text style={resettleStyles.btnText}>COMPLY WITH DIRECTIVE</Text>
-                </Pressable>
+
+                {/* Action buttons */}
+                <View style={resettleStyles.buttonRow}>
+                  {!resState.disassemblyActive && (
+                    <Pressable
+                      style={resettleStyles.disassembleBtn}
+                      onPress={() => handleResettlementAction('disassemble')}
+                      testID="resettlement-disassemble"
+                      accessibilityRole="button"
+                      accessibilityLabel="Enact disassembly protocol"
+                    >
+                      <Text style={resettleStyles.btnText}>ENACT DISASSEMBLY PROTOCOL</Text>
+                    </Pressable>
+                  )}
+                  <Pressable
+                    style={resettleStyles.bribeBtn}
+                    onPress={() => handleResettlementAction('bribe')}
+                    testID="resettlement-bribe"
+                    accessibilityRole="button"
+                    accessibilityLabel="Arrange special consideration to cancel resettlement"
+                  >
+                    <Text style={resettleStyles.btnText}>ARRANGE SPECIAL CONSIDERATION</Text>
+                  </Pressable>
+                  <Pressable
+                    style={resettleStyles.complyBtn}
+                    onPress={() => handleResettlementAction('accept')}
+                    testID="resettlement-comply"
+                    accessibilityRole="button"
+                    accessibilityLabel="Comply with resettlement directive"
+                  >
+                    <Text style={resettleStyles.btnText}>COMPLY WITH DIRECTIVE</Text>
+                  </Pressable>
+                </View>
               </View>
-            </View>
-          );
-        })()}
+            );
+          })()}
 
         {/* Tab bar */}
         <View style={styles.tabBar}>
@@ -279,7 +293,7 @@ export const GovernmentHQ: React.FC<GovernmentHQProps> = ({ visible, onClose }) 
                 testID={`tab-${tab.key}`}
               >
                 <Text style={[styles.tabText, isActive && styles.tabTextActive]} numberOfLines={1}>
-                  {tab.label}
+                  {getAgencyTabLabel(tab, currentYear)}
                 </Text>
               </TouchableOpacity>
             );
@@ -301,6 +315,7 @@ function renderKGBTab(engine: ReturnType<typeof getEngine>): React.ReactNode {
   const kgb = engine.getKGBAgent();
   const personnel = engine.getPersonnelFile();
   const workerSystem = engine.getWorkerSystem();
+  const securityServiceLabel = securityServiceLabelForYear(engine.getChronology().getDate().year);
 
   // Loyalty level: approximated from worker morale (no direct loyalty avg on WorkerSystem)
   const loyaltyLevel = Math.round(workerSystem.getAverageMorale());
@@ -331,6 +346,7 @@ function renderKGBTab(engine: ReturnType<typeof getEngine>): React.ReactNode {
       dissidentCount={dissidentCount}
       recentArrests={recentArrests}
       surveillanceActive={surveillanceActive}
+      serviceLabel={securityServiceLabel}
     />
   );
 }
@@ -344,7 +360,7 @@ function renderMilitaryTab(
 
   const res = getResourceEntity()?.resources;
   const pop = res?.population ?? 0;
-  const workerSystem = engine.getWorkerSystem();
+  const _workerSystem = engine.getWorkerSystem();
 
   // Garrison: estimated as 5% of population (no dedicated military worker tracking)
   const garrisonStrength = Math.floor(pop * 0.05);
@@ -366,9 +382,7 @@ function renderMilitaryTab(
   );
 }
 
-function renderPolitburoTab(
-  engine: ReturnType<typeof getEngine>,
-): React.ReactNode {
+function renderPolitburoTab(engine: ReturnType<typeof getEngine>): React.ReactNode {
   if (!engine) return <Text style={styles.placeholder}>Engine not initialized</Text>;
 
   const scoring = engine.getScoring();
@@ -442,9 +456,7 @@ function renderCentralCommitteeTab(
   );
 }
 
-function renderReportsTab(
-  engine: ReturnType<typeof getEngine>,
-): React.ReactNode {
+function renderReportsTab(engine: ReturnType<typeof getEngine>): React.ReactNode {
   if (!engine) return <Text style={styles.placeholder}>Engine not initialized</Text>;
 
   const chronology = engine.getChronology();
@@ -452,6 +464,7 @@ function renderReportsTab(
   const political = engine.getPoliticalAgent();
   const scoring = engine.getScoring();
   const kgb = engine.getKGBAgent();
+  const achievements = engine.getAchievements().getStats();
   const res = getResourceEntity()?.resources;
 
   const currentQuota = engine.getQuota();
@@ -468,8 +481,8 @@ function renderReportsTab(
   const annualSummary: AnnualSummary = {
     year: date.year,
     population: res?.population ?? 0,
-    foodProduced: res?.food ?? 0,
-    buildingsConstructed: 0, // TODO: track in engine
+    foodStores: res?.food ?? 0,
+    buildingsConstructed: achievements.buildingsPlaced,
     blackMarks: kgb.getBlackMarks(),
     commendations: kgb.getCommendations(),
   };
@@ -501,15 +514,14 @@ function renderReportsTab(
   );
 }
 
-function renderLawEnforcementTab(
-  engine: ReturnType<typeof getEngine>,
-): React.ReactNode {
+function renderLawEnforcementTab(engine: ReturnType<typeof getEngine>): React.ReactNode {
   if (!engine) return <Text style={styles.placeholder}>Engine not initialized</Text>;
 
   const kgb = engine.getKGBAgent();
   const state = kgb.getLawEnforcementState();
+  const securityServiceLabel = securityServiceLabelForYear(engine.getChronology().getDate().year);
 
-  return <LawEnforcementTab state={state} />;
+  return <LawEnforcementTab state={state} serviceLabel={securityServiceLabel} />;
 }
 
 // ── Styles ──────────────────────────────────────────────────────────────────

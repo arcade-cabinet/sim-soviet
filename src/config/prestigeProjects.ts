@@ -28,7 +28,7 @@ export interface PrestigeProject {
   failurePenalty: { politicalCapitalLoss: number; arrestRisk: number };
 }
 
-/** One prestige project per historical era, keyed by EraId. Sub-eras have no prestige projects. */
+/** One prestige project per historical era, keyed by EraId. */
 export const PRESTIGE_PROJECTS: Readonly<Partial<Record<EraId, PrestigeProject>>> = {
   revolution: {
     id: 'monument-to-revolution',
@@ -86,14 +86,14 @@ export const PRESTIGE_PROJECTS: Readonly<Partial<Record<EraId, PrestigeProject>>
   },
 
   thaw_and_freeze: {
-    id: 'cosmodrome',
-    name: 'Cosmodrome',
+    id: 'all-union-radio-relay',
+    name: 'All-Union Radio Relay',
     era: 'thaw_and_freeze',
-    cost: { money: 12000, power: 200 },
-    durationYears: 6,
-    requiredBuildings: ['factory-office', 'power-station', 'radio-station'],
-    reward: { politicalCapital: 50, moraleBoost: 20, specialBuilding: 'cosmodrome' },
-    failurePenalty: { politicalCapitalLoss: 30, arrestRisk: 0.25 },
+    cost: { money: 9000, power: 120 },
+    durationYears: 4,
+    requiredBuildings: ['power-station', 'radio-station', 'post-office'],
+    reward: { politicalCapital: 40, moraleBoost: 15, specialBuilding: 'radio-station' },
+    failurePenalty: { politicalCapitalLoss: 25, arrestRisk: 0.2 },
   },
 
   stagnation: {
@@ -105,17 +105,6 @@ export const PRESTIGE_PROJECTS: Readonly<Partial<Record<EraId, PrestigeProject>>
     requiredBuildings: ['cultural-palace', 'hospital', 'apartment-tower-d'],
     reward: { politicalCapital: 45, moraleBoost: 18, specialBuilding: 'olympic-village' },
     failurePenalty: { politicalCapitalLoss: 35, arrestRisk: 0.3 },
-  },
-
-  the_eternal: {
-    id: 'space-elevator',
-    name: 'Space Elevator',
-    era: 'the_eternal',
-    cost: { money: 100000, power: 500 },
-    durationYears: 10,
-    requiredBuildings: ['factory-office', 'power-station', 'radio-station', 'rail-depot'],
-    reward: { politicalCapital: 100, moraleBoost: 50, specialBuilding: 'space-elevator' },
-    failurePenalty: { politicalCapitalLoss: 60, arrestRisk: 0.4 },
   },
 };
 

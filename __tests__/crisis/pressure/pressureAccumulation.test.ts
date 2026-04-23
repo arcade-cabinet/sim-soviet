@@ -16,7 +16,6 @@ import {
   computeSpikedDistribution,
   computeVent,
   DECAY,
-  RAW_WEIGHT,
   tickGauge,
   tickPressure,
 } from '../../../src/ai/agents/crisis/pressure/pressureAccumulation';

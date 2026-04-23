@@ -1,14 +1,15 @@
 /**
- * TDD tests for freeform endless mode — unlimited map expansion.
+ * Tests for grounded post-campaign map expansion: the historical land-grant
+ * cap always applies.
  */
-import { isEndlessMode, getMaxGridSize, shouldExpand } from '../../src/game/engine/endlessMode';
+import { getMaxGridSize, isEndlessMode, shouldExpand } from '../../src/game/engine/endlessMode';
 
 describe('endlessMode', () => {
   // ─── isEndlessMode ────────────────────────────────────────
 
   describe('isEndlessMode', () => {
-    it('returns true for freeform', () => {
-      expect(isEndlessMode('freeform')).toBe(true);
+    it('returns false for removed sandbox mode strings', () => {
+      expect(isEndlessMode('sandbox')).toBe(false);
     });
 
     it('returns false for historical', () => {
@@ -27,8 +28,8 @@ describe('endlessMode', () => {
   // ─── getMaxGridSize ───────────────────────────────────────
 
   describe('getMaxGridSize', () => {
-    it('returns Infinity for freeform mode', () => {
-      expect(getMaxGridSize('freeform')).toBe(Infinity);
+    it('returns finite value for removed sandbox mode strings', () => {
+      expect(getMaxGridSize('sandbox')).toBe(120);
     });
 
     it('returns finite value for historical mode', () => {
@@ -73,28 +74,20 @@ describe('endlessMode', () => {
       expect(shouldExpand('historical', 500, 150)).toBe(false);
     });
 
-    // Freeform mode — no cap
-    it('returns true in freeform when expansion trigger fires', () => {
-      // pop 50 = posyolok (radius 30), currentRadius 15 → expand
-      expect(shouldExpand('freeform', 50, 15)).toBe(true);
+    it('uses the same cap for removed sandbox mode strings when under max', () => {
+      expect(shouldExpand('sandbox', 50, 15)).toBe(true);
     });
 
-    it('returns false in freeform when no expansion trigger', () => {
-      // pop 10 = selo (radius 15), currentRadius 15 → no trigger
-      expect(shouldExpand('freeform', 10, 15)).toBe(false);
+    it('uses the same cap for removed sandbox mode strings when no trigger fires', () => {
+      expect(shouldExpand('sandbox', 10, 15)).toBe(false);
     });
 
-    it('returns true in freeform even when radius exceeds historical max', () => {
-      // In freeform, if checkExpansionTrigger would fire, it should expand
-      // But checkExpansionTrigger is tier-based — gorod radius is 120
-      // So at radius 120 with gorod pop, no trigger. This tests the concept:
-      // at pop 400 (gorod) with radius 60, trigger fires even in endless
-      expect(shouldExpand('freeform', 400, 60)).toBe(true);
+    it('does not expand removed sandbox mode strings beyond historical max', () => {
+      expect(shouldExpand('sandbox', 500, 150)).toBe(false);
     });
 
-    it('returns false in freeform when at tier radius (no trigger)', () => {
-      // pop 400 = gorod, radius 120 → tier radius matches, no trigger
-      expect(shouldExpand('freeform', 400, 120)).toBe(false);
+    it('returns false for removed sandbox mode strings at tier radius', () => {
+      expect(shouldExpand('sandbox', 400, 120)).toBe(false);
     });
   });
 });

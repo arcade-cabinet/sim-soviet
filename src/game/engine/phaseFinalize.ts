@@ -8,6 +8,7 @@ import type { SettlementTier } from '../../ai/agents/infrastructure/SettlementSy
 import type { RoadQuality } from '../../ai/agents/infrastructure/TransportSystem';
 import type { QuotaState } from '../../ai/agents/political/PoliticalAgent';
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../ecs/archetypes';
+import type { RaionPool, Resources } from '../../ecs/world';
 import { TICKS_PER_YEAR } from '../Chronology';
 import type { TickContext } from './tickContext';
 
@@ -29,7 +30,8 @@ export interface SyncMetaDeps {
 export function phaseFinalize(ctx: TickContext): void {
   const { storeRef, callbacks } = ctx;
   const { chronology, kgb: kgbAgent, political: politicalAgent } = ctx.agents;
-  const { agentManager, workerSystem, settlement, scoring, transport, politburo } = ctx.systems;
+  const { agentManager, workerSystem, settlement, transport, politburo } = ctx.systems;
+  sanitizeFiniteRuntimeState(storeRef.resources, ctx.state.quota);
 
   // ── 26. Autopilot ──
   if (agentManager.isAutopilot()) {
@@ -63,6 +65,7 @@ export function phaseFinalize(ctx: TickContext): void {
     politburo,
   });
   storeRef.resources.population = workerSystem.getPopulation();
+  sanitizeFiniteRuntimeState(storeRef.resources, ctx.state.quota);
 
   if (
     storeRef.resources.population <= 0 &&
@@ -73,6 +76,99 @@ export function phaseFinalize(ctx: TickContext): void {
   }
 
   callbacks.onStateChange();
+}
+
+const NUMERIC_RESOURCE_KEYS: Array<Exclude<keyof Resources, 'raion'>> = [
+  'money',
+  'food',
+  'vodka',
+  'power',
+  'powerUsed',
+  'population',
+  'trudodni',
+  'blat',
+  'timber',
+  'steel',
+  'cement',
+  'prefab',
+  'seedFund',
+  'emergencyReserve',
+  'storageCapacity',
+  'water',
+];
+
+function nonNegativeFinite(value: number, fallback = 0): number {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.max(0, value);
+}
+
+export function sanitizeFiniteRuntimeState(resources: Resources, quota: QuotaState): void {
+  for (const key of NUMERIC_RESOURCE_KEYS) {
+    resources[key] = nonNegativeFinite(resources[key]);
+  }
+  if (resources.raion) {
+    sanitizeRaionPool(resources.raion);
+    resources.population = resources.raion.totalPopulation;
+  }
+
+  quota.current = nonNegativeFinite(quota.current);
+  quota.target = Math.max(1, nonNegativeFinite(quota.target, 500));
+  if (!Number.isFinite(quota.deadlineYear) || quota.deadlineYear < 1917) {
+    quota.deadlineYear = 1927;
+  } else {
+    quota.deadlineYear = Math.round(quota.deadlineYear);
+  }
+
+  if (quota.resourceQuotas) {
+    for (const resourceQuota of Object.values(quota.resourceQuotas)) {
+      if (!resourceQuota) continue;
+      resourceQuota.current = nonNegativeFinite(resourceQuota.current);
+      resourceQuota.target = nonNegativeFinite(resourceQuota.target);
+    }
+  }
+}
+
+function sanitizeBucketArray(values: number[], length: number): number[] {
+  const sanitized = values.slice(0, length);
+  while (sanitized.length < length) sanitized.push(0);
+  for (let i = 0; i < length; i++) {
+    sanitized[i] = Math.round(nonNegativeFinite(sanitized[i] ?? 0));
+  }
+  return sanitized;
+}
+
+function sumBuckets(values: number[], start: number, end: number): number {
+  let total = 0;
+  for (let i = start; i <= end; i++) total += values[i] ?? 0;
+  return total;
+}
+
+function sanitizeRaionPool(raion: RaionPool): void {
+  raion.maleAgeBuckets = sanitizeBucketArray(raion.maleAgeBuckets, 20);
+  raion.femaleAgeBuckets = sanitizeBucketArray(raion.femaleAgeBuckets, 20);
+  raion.pregnancyWaves = sanitizeBucketArray(raion.pregnancyWaves, 3);
+
+  const totalPopulation =
+    raion.maleAgeBuckets.reduce((sum, value) => sum + value, 0) +
+    raion.femaleAgeBuckets.reduce((sum, value) => sum + value, 0);
+  const laborForce = sumBuckets(raion.maleAgeBuckets, 3, 12) + sumBuckets(raion.femaleAgeBuckets, 3, 12);
+
+  raion.totalPopulation = totalPopulation;
+  raion.laborForce = laborForce;
+  raion.totalHouseholds = Math.round(nonNegativeFinite(raion.totalHouseholds));
+  raion.birthsThisYear = Math.round(nonNegativeFinite(raion.birthsThisYear));
+  raion.deathsThisYear = Math.round(nonNegativeFinite(raion.deathsThisYear));
+  raion.totalBirths = Math.round(nonNegativeFinite(raion.totalBirths));
+  raion.totalDeaths = Math.round(nonNegativeFinite(raion.totalDeaths));
+  raion.assignedWorkers = Math.min(laborForce, Math.round(nonNegativeFinite(raion.assignedWorkers)));
+  raion.idleWorkers = Math.max(0, laborForce - raion.assignedWorkers);
+  raion.avgMorale = Math.min(100, nonNegativeFinite(raion.avgMorale, 50));
+  raion.avgLoyalty = Math.min(100, nonNegativeFinite(raion.avgLoyalty, 50));
+  raion.avgSkill = Math.min(100, nonNegativeFinite(raion.avgSkill, 30));
+
+  for (const [key, value] of Object.entries(raion.classCounts)) {
+    raion.classCounts[key] = Math.round(nonNegativeFinite(value));
+  }
 }
 
 /** Sync game systems state to ECS meta entity. Used by phaseFinalize and serialization. */

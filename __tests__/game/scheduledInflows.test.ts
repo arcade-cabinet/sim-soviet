@@ -108,7 +108,7 @@ describe('Scheduled inflow config (3b)', () => {
     expect(political.doctrine.inflowSchedule).toBeDefined();
   });
 
-  it('has entries for collectivization through the_eternal', () => {
+  it('has entries for collectivization through stagnation', () => {
     const schedule = political.doctrine.inflowSchedule;
     expect(schedule.collectivization).toBeDefined();
     expect(schedule.industrialization).toBeDefined();
@@ -116,7 +116,6 @@ describe('Scheduled inflow config (3b)', () => {
     expect(schedule.reconstruction).toBeDefined();
     expect(schedule.thaw_and_freeze).toBeDefined();
     expect(schedule.stagnation).toBeDefined();
-    expect(schedule.the_eternal).toBeDefined();
   });
 
   it('great_patriotic is marked as once-only', () => {
@@ -143,13 +142,6 @@ describe('Scheduled inflow config (3b)', () => {
     expect(rec.type).toBe('veteran_return');
     expect(rec.intervalYears).toBe(2);
     expect(rec.count).toEqual([5, 20]);
-  });
-
-  it('the_eternal uses algorithmic_assignment every 2 years', () => {
-    const ete = political.doctrine.inflowSchedule.the_eternal;
-    expect(ete.type).toBe('algorithmic_assignment');
-    expect(ete.intervalYears).toBe(2);
-    expect(ete.count).toEqual([1, 50]);
   });
 });
 

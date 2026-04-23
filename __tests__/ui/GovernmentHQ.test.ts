@@ -18,7 +18,14 @@ jest.mock('@/stores/gameStore', () => ({
   setActiveDirective: jest.fn(),
 }));
 
-import { AGENCY_TABS, type AgencyTab, type AgencyTabDef, type GovernmentHQProps } from '@/ui/GovernmentHQ';
+import {
+  AGENCY_TABS,
+  type AgencyTab,
+  type AgencyTabDef,
+  type GovernmentHQProps,
+  getAgencyTabLabel,
+  securityServiceLabelForYear,
+} from '@/ui/GovernmentHQ';
 
 describe('GovernmentHQ', () => {
   describe('AGENCY_TABS definitions', () => {
@@ -28,7 +35,15 @@ describe('GovernmentHQ', () => {
 
     it('tabs are in correct order', () => {
       const keys = AGENCY_TABS.map((t: AgencyTabDef) => t.key);
-      expect(keys).toEqual(['gosplan', 'central_committee', 'kgb', 'military', 'politburo', 'reports', 'law_enforcement']);
+      expect(keys).toEqual([
+        'gosplan',
+        'central_committee',
+        'kgb',
+        'military',
+        'politburo',
+        'reports',
+        'law_enforcement',
+      ]);
     });
 
     it('all tab keys are unique', () => {
@@ -52,7 +67,7 @@ describe('GovernmentHQ', () => {
       const expected: Record<AgencyTab, string> = {
         gosplan: 'GOSPLAN',
         central_committee: 'CENTRAL COMMITTEE',
-        kgb: 'KGB',
+        kgb: 'STATE SECURITY',
         military: 'MILITARY',
         politburo: 'POLITBURO',
         reports: 'REPORTS',
@@ -61,6 +76,18 @@ describe('GovernmentHQ', () => {
       for (const tab of AGENCY_TABS) {
         expect(tab.label).toBe(expected[tab.key]);
       }
+    });
+
+    it('renders the state-security tab label by historical year', () => {
+      const stateSecurityTab = AGENCY_TABS.find((tab) => tab.key === 'kgb')!;
+
+      expect(securityServiceLabelForYear(1917)).toBe('CHEKA');
+      expect(securityServiceLabelForYear(1922)).toBe('OGPU');
+      expect(securityServiceLabelForYear(1937)).toBe('NKVD');
+      expect(securityServiceLabelForYear(1950)).toBe('MGB');
+      expect(securityServiceLabelForYear(1964)).toBe('KGB');
+      expect(getAgencyTabLabel(stateSecurityTab, 1917)).toBe('CHEKA');
+      expect(getAgencyTabLabel(stateSecurityTab, 1964)).toBe('KGB');
     });
   });
 

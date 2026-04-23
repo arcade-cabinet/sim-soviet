@@ -1,32 +1,22 @@
 /**
- * Freeform endless mode — no map size limit.
+ * Historical map expansion guard.
  *
- * In historical mode, the grid is capped at the highest tier's land grant
- * radius (gorod = 120). In freeform mode, the grid can expand indefinitely
- * as the settlement grows.
+ * The grid is capped at the highest tier's land grant radius (gorod = 120).
  */
 
-import { LAND_GRANT_TIERS } from '../../config/landGrants';
 import { TIER_ORDER } from '../../ai/agents/infrastructure/SettlementSystem';
+import { LAND_GRANT_TIERS } from '../../config/landGrants';
 import { checkExpansionTrigger } from './mapExpansion';
 
 /**
- * Whether the game mode is freeform (endless, no map cap).
- *
- * @param gameMode - 'historical' or 'freeform'
- * @returns True if freeform
+ * Whether the current game should ignore the historical map cap.
  */
-export function isEndlessMode(gameMode: string): boolean {
-  return gameMode === 'freeform';
+export function isEndlessMode(_gameMode: string): boolean {
+  return false;
 }
 
 /**
- * Maximum grid radius for the given game mode.
- * Freeform returns Infinity (no cap). Historical returns the highest
- * tier's land grant radius (gorod).
- *
- * @param gameMode - 'historical' or 'freeform'
- * @returns Maximum grid radius
+ * Maximum grid radius for the historical campaign and post-campaign continuation.
  */
 export function getMaxGridSize(gameMode: string): number {
   if (isEndlessMode(gameMode)) {
@@ -38,12 +28,10 @@ export function getMaxGridSize(gameMode: string): number {
 }
 
 /**
- * Whether the grid should expand given the game mode, population, and
- * current radius. In historical mode, expansion is blocked once the
- * grid reaches the max tier radius. In freeform mode, expansion is
- * only limited by tier-based triggers (no hard cap).
+ * Whether the grid should expand given population and current radius.
+ * Expansion is blocked once the grid reaches the max tier radius.
  *
- * @param gameMode - 'historical' or 'freeform'
+ * @param gameMode - Kept for compatibility; historical cap always applies.
  * @param population - Current settlement population
  * @param currentRadius - Current grid radius (half-width from center)
  * @returns True if expansion should occur

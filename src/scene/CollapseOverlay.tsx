@@ -4,7 +4,6 @@
  * Renders backterria pixel-art sprites (hazard signs, skulls, barrels, craters)
  * over buildings when collapse conditions activate:
  *   - nuclear_flash CrisisVFX active
- *   - Climate milestones: ecological_collapse, infrastructure_collapse
  *   - Any active CrisisVFX of type nuclear_flash or earthquake_shake
  *
  * Uses Three.js Sprites (billboarded quads) with PNG textures loaded via
@@ -13,12 +12,12 @@
  * Sprite assets from backterria post-apocalyptic tileset (16x16 pixel art).
  */
 
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { getBuildingStates } from '../bridge/ECSBridge';
-import { getActiveVFX, useClimateMilestones } from '../stores/gameStore';
+import { getActiveVFX } from '../stores/gameStore';
 import { assetUrl } from '../utils/assetPath';
 
 /** Fade-in duration in seconds. */
@@ -70,14 +69,7 @@ function mulberry32(seed: number): () => number {
 }
 
 /** Check if collapse conditions are active. */
-function isCollapseActive(climateMs: ReadonlySet<string>): boolean {
-  // Climate milestone triggers
-  if (climateMs.has('ecological_collapse') || climateMs.has('infrastructure_collapse') ||
-      climateMs.has('nuclear_winter') || climateMs.has('ecological_permafrost_collapse')) {
-    return true;
-  }
-
-  // Active crisis VFX triggers
+function isCollapseActive(): boolean {
   const vfx = getActiveVFX();
   for (const e of vfx) {
     if (e.type === 'nuclear_flash' || e.type === 'earthquake_shake') {
@@ -94,32 +86,46 @@ function useCollapseTextures(): THREE.Texture[] | null {
 
   useEffect(() => {
     const loader = new THREE.TextureLoader();
+    let disposed = false;
+    let loadedTextures: THREE.Texture[] | null = null;
     const promises = SPRITE_DEFS.map((def) => {
       const url = assetUrl(`assets/sprites/collapse/${def.file}`);
       return new Promise<THREE.Texture>((resolve) => {
-        loader.load(url, (tex) => {
-          tex.magFilter = THREE.NearestFilter;
-          tex.minFilter = THREE.NearestFilter;
-          tex.colorSpace = THREE.SRGBColorSpace;
-          resolve(tex);
-        }, undefined, () => {
-          // On error, create a fallback 1x1 red texture
-          const fallback = new THREE.DataTexture(new Uint8Array([255, 0, 0, 255]), 1, 1);
-          fallback.needsUpdate = true;
-          resolve(fallback);
-        });
+        loader.load(
+          url,
+          (tex) => {
+            tex.magFilter = THREE.NearestFilter;
+            tex.minFilter = THREE.NearestFilter;
+            tex.colorSpace = THREE.SRGBColorSpace;
+            resolve(tex);
+          },
+          undefined,
+          () => {
+            // On error, create a fallback 1x1 red texture
+            const fallback = new THREE.DataTexture(new Uint8Array([255, 0, 0, 255]), 1, 1);
+            fallback.needsUpdate = true;
+            resolve(fallback);
+          },
+        );
       });
     });
 
-    Promise.all(promises).then(setTextures);
+    Promise.all(promises).then((nextTextures) => {
+      if (disposed) {
+        for (const texture of nextTextures) texture.dispose();
+        return;
+      }
+
+      loadedTextures = nextTextures;
+      setTextures(nextTextures);
+    });
 
     return () => {
-      // Dispose textures on unmount
-      if (textures) {
-        for (const t of textures) t.dispose();
+      disposed = true;
+      if (loadedTextures) {
+        for (const texture of loadedTextures) texture.dispose();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return textures;
@@ -136,7 +142,6 @@ interface SpriteSlot {
  * Creates a pool of sprites positioned over buildings.
  */
 const CollapseSprites: React.FC<{ textures: THREE.Texture[] }> = ({ textures }) => {
-  const { scene } = useThree();
   const groupRef = useRef<THREE.Group>(null);
   const fadeRef = useRef(0); // 0→1 over FADE_IN_SECONDS
   const slotsRef = useRef<SpriteSlot[]>([]);
@@ -207,11 +212,7 @@ const CollapseSprites: React.FC<{ textures: THREE.Texture[] }> = ({ textures }) 
       // Position over the building with small random offset
       const ox = (rng() - 0.5) * 0.8;
       const oz = (rng() - 0.5) * 0.8;
-      slot.sprite.position.set(
-        bldg.gridX + 0.5 + ox,
-        bldg.elevation * 0.5 + def.y,
-        bldg.gridY + 0.5 + oz,
-      );
+      slot.sprite.position.set(bldg.gridX + 0.5 + ox, bldg.elevation * 0.5 + def.y, bldg.gridY + 0.5 + oz);
       slot.sprite.scale.set(def.scale, def.scale, 1);
       slot.sprite.visible = true;
 
@@ -264,12 +265,11 @@ const CollapseSprites: React.FC<{ textures: THREE.Texture[] }> = ({ textures }) 
 
 /**
  * CollapseOverlay — conditionally renders post-apocalyptic sprites.
- * Checks climate milestones and active crisis VFX each render.
+ * Checks active crisis VFX each render.
  */
 const CollapseOverlay: React.FC = () => {
-  const climateMilestones = useClimateMilestones();
   const textures = useCollapseTextures();
-  const active = isCollapseActive(climateMilestones);
+  const active = isCollapseActive();
 
   if (!active || !textures) return null;
 

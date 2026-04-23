@@ -1,5 +1,5 @@
+import type { DvorState } from '../../src/ai/agents/workforce/dvorMotivation';
 import { evaluateNeeds, findNearestHousing, tickMotivation } from '../../src/ai/agents/workforce/dvorMotivation';
-import type { DvorState, MotivationResult } from '../../src/ai/agents/workforce/dvorMotivation';
 import type { BuildingComponent, Position } from '../../src/ecs/world';
 
 /** Helper: create a minimal BuildingComponent with housing capacity. */

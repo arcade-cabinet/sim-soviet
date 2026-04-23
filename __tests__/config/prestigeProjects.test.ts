@@ -1,10 +1,6 @@
+import { getPrestigeProject, PRESTIGE_PROJECTS } from '../../src/config/prestigeProjects';
 import { ERA_ORDER } from '../../src/game/era/definitions';
 import type { EraId } from '../../src/game/era/types';
-import {
-  PRESTIGE_PROJECTS,
-  getPrestigeProject,
-  type PrestigeProject,
-} from '../../src/config/prestigeProjects';
 
 describe('PRESTIGE_PROJECTS', () => {
   it('has exactly one project per era', () => {
@@ -58,9 +54,7 @@ describe('PRESTIGE_PROJECTS', () => {
   it('arrest risk increases for later eras', () => {
     const first = PRESTIGE_PROJECTS[ERA_ORDER[0]!];
     const last = PRESTIGE_PROJECTS[ERA_ORDER[ERA_ORDER.length - 1]!];
-    expect(last.failurePenalty.arrestRisk).toBeGreaterThanOrEqual(
-      first.failurePenalty.arrestRisk,
-    );
+    expect(last.failurePenalty.arrestRisk).toBeGreaterThanOrEqual(first.failurePenalty.arrestRisk);
   });
 
   describe('specific era projects', () => {
@@ -95,9 +89,9 @@ describe('PRESTIGE_PROJECTS', () => {
       expect(p.cost.money).toBeGreaterThanOrEqual(5000);
     });
 
-    it('thaw_and_freeze: Cosmodrome is high-tech', () => {
+    it('thaw_and_freeze: All-Union Radio Relay is high-tech but grounded', () => {
       const p = PRESTIGE_PROJECTS.thaw_and_freeze;
-      expect(p.name).toBe('Cosmodrome');
+      expect(p.name).toBe('All-Union Radio Relay');
       expect(p.cost.power).toBeGreaterThan(0);
     });
 
@@ -105,12 +99,6 @@ describe('PRESTIGE_PROJECTS', () => {
       const p = PRESTIGE_PROJECTS.stagnation;
       expect(p.name).toBe('Olympic Village');
       expect(p.requiredBuildings.length).toBeGreaterThanOrEqual(2);
-    });
-
-    it('the_eternal: Space Elevator is absurdly expensive', () => {
-      const p = PRESTIGE_PROJECTS.the_eternal;
-      expect(p.name).toBe('Space Elevator');
-      expect(p.cost.money).toBeGreaterThanOrEqual(50000);
     });
   });
 });

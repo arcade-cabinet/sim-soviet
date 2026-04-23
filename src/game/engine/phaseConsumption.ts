@@ -189,7 +189,7 @@ export function phaseConsumption(ctx: TickContext, snapshot: PreProductionSnapsh
     }
 
     if (foragingResult.moralePenalty > 0 && foragingResult.method === 'stone_soup') {
-      callbacks.onAdvisor('Comrade Mayor, the workers are boiling stones for soup. We have come to this.');
+      callbacks.onAdvisor('Comrade Predsedatel, the workers are boiling stones for soup. We have come to this.');
     }
   }
 }

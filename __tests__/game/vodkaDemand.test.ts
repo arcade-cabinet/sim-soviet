@@ -11,7 +11,7 @@ import {
   VODKA_CRITICAL_THRESHOLD,
   VODKA_DEMAND_THRESHOLD,
 } from '@/ai/agents/infrastructure/CollectiveAgent';
-import { createMetaStore, createResourceStore } from '@/ecs/factories';
+import { createBuilding, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { world } from '@/ecs/world';
 
 describe('VodkaDemand', () => {
@@ -19,6 +19,7 @@ describe('VodkaDemand', () => {
     world.clear();
     createResourceStore({ food: 500, population: 0 });
     createMetaStore();
+    createBuilding(15, 15, 'government-hq').building!.powered = true;
   });
 
   afterEach(() => {

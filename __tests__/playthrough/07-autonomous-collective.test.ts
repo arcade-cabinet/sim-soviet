@@ -9,15 +9,7 @@
 import { underConstruction } from '../../src/ecs/archetypes';
 import { createBuilding, placeNewBuilding } from '../../src/ecs/factories';
 import { world } from '../../src/ecs/world';
-import {
-  advanceTicks,
-  buildBasicSettlement,
-  createPlaythroughEngine,
-  createTestDvory,
-  getBuildingCount,
-  getResources,
-  TICKS_PER_YEAR,
-} from './helpers';
+import { advanceTicks, createPlaythroughEngine, getBuildingCount, TICKS_PER_YEAR } from './helpers';
 
 describe('Playthrough: Autonomous Collective', () => {
   afterEach(() => {
@@ -54,7 +46,7 @@ describe('Playthrough: Autonomous Collective', () => {
     // Place a farm to seed the settlement (collective needs at least one reference)
     createBuilding(19, 15, 'collective-farm-hq');
 
-    const initialCount = getBuildingCount();
+    const _initialCount = getBuildingCount();
 
     // Advance well past the collective check interval.
     // Era-based pacing: revolution fires at totalTicks=120, 240, 360...
@@ -106,8 +98,8 @@ describe('Playthrough: Autonomous Collective', () => {
   it('collective does not auto-build without sufficient materials', () => {
     // population=30, food=50 → food demand triggered
     // timber=0, steel=0 → NOT enough materials (need timber>=10, steel>=5)
-    // Start in eternal era with low fondy reliability (0.2) + high random
-    // to prevent fondy from delivering materials during the test
+    // Start in post-campaign continuation with high random to prevent fondy
+    // from delivering materials during the test.
     const { engine } = createPlaythroughEngine({
       meta: { date: { year: 2050, month: 1, tick: 0 } },
       resources: { population: 30, food: 50, timber: 0, steel: 0, money: 500, vodka: 100, power: 100 },
@@ -274,13 +266,7 @@ describe('Playthrough: Autonomous Collective', () => {
     const lateEraBuildings = allBuildings.filter((e) => {
       const defId = e.building.defId;
       // These buildings require later eras
-      return (
-        defId.includes('nuclear') ||
-        defId.includes('cosmodrome') ||
-        defId.includes('space') ||
-        defId.includes('metro') ||
-        defId.includes('television')
-      );
+      return defId.includes('nuclear') || defId.includes('metro') || defId.includes('television');
     });
 
     expect(lateEraBuildings).toHaveLength(0);

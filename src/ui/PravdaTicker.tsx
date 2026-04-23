@@ -6,12 +6,14 @@
  * Shows the current year prominently on the left as a temporal anchor.
  */
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import type React from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 
 const MAX_HEADLINES = 5;
-const PLACEHOLDER = '\u0421\u041E\u0412\u0415\u0422\u0421\u041A\u0418\u0419 \u0421\u041E\u042E\u0417 :: \u0420\u0415\u0412\u041E\u041B\u042E\u0426\u0418\u042F \u041F\u0420\u041E\u0414\u041E\u041B\u0416\u0410\u0415\u0422\u0421\u042F ::';
+const PLACEHOLDER =
+  '\u0421\u041E\u0412\u0415\u0422\u0421\u041A\u0418\u0419 \u0421\u041E\u042E\u0417 :: \u0420\u0415\u0412\u041E\u041B\u042E\u0426\u0418\u042F \u041F\u0420\u041E\u0414\u041E\u041B\u0416\u0410\u0415\u0422\u0421\u042F ::';
 const SCROLL_DURATION_PER_HEADLINE = 4000;
 
 export interface PravdaTickerProps {
@@ -24,7 +26,7 @@ export interface PravdaTickerProps {
 export function buildTickerText(headlines: string[]): string {
   const capped = headlines.slice(0, MAX_HEADLINES);
   if (capped.length === 0) return PLACEHOLDER;
-  return capped.join(' \u2726 ') + ' \u2726';
+  return `${capped.join(' \u2726 ')} \u2726`;
 }
 
 export const PravdaTicker: React.FC<PravdaTickerProps> = ({ headlines, year, visible = true }) => {
@@ -37,10 +39,7 @@ export const PravdaTicker: React.FC<PravdaTickerProps> = ({ headlines, year, vis
 
     scrollX.setValue(400);
 
-    const duration = Math.max(
-      8000,
-      headlines.slice(0, MAX_HEADLINES).length * SCROLL_DURATION_PER_HEADLINE,
-    );
+    const duration = Math.max(8000, headlines.slice(0, MAX_HEADLINES).length * SCROLL_DURATION_PER_HEADLINE);
 
     const animation = Animated.loop(
       Animated.timing(scrollX, {
@@ -69,13 +68,7 @@ export const PravdaTicker: React.FC<PravdaTickerProps> = ({ headlines, year, vis
 
       {/* Scrolling headline area */}
       <View style={styles.scrollArea}>
-        <Animated.Text
-          style={[
-            styles.tickerText,
-            { transform: [{ translateX: scrollX }] },
-          ]}
-          numberOfLines={1}
-        >
+        <Animated.Text style={[styles.tickerText, { transform: [{ translateX: scrollX }] }]} numberOfLines={1}>
           {tickerText}
         </Animated.Text>
       </View>

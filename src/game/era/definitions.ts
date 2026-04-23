@@ -1,8 +1,8 @@
 /**
  * @module game/era/definitions
  *
- * ERA_DEFINITIONS and ERA_ORDER — the complete configuration for all
- * 8 historical eras of the Soviet campaign.
+ * ERA_DEFINITIONS and ERA_ORDER — the complete configuration for the
+ * historical Soviet campaign.
  *
  * Data is loaded from config/eras.json. Condition functions (victory/failure
  * checks) are expressed as declarative rules in JSON and evaluated here.
@@ -10,11 +10,9 @@
 
 import type { GameMeta, Resources } from '@/ecs/world';
 import type { SettlementTier } from '../../ai/agents/infrastructure/SettlementSystem';
+import eraData from '../../config/eras.json';
 import { getBuildingTierRequirement, tierMeetsRequirement } from './tiers';
 import type { EraCondition, EraDefinition, EraId } from './types';
-
-import eraData from '../../config/eras.json';
-import { KARDASHEV_ERA_DEFINITIONS, KARDASHEV_ORDER } from '../../config/kardashevSubEras';
 
 // ─── Rule Evaluator ─────────────────────────────────────────────────────────
 
@@ -92,7 +90,7 @@ export const ERA_ORDER: readonly EraId[] = eraData.eraOrder as EraId[];
 /** Every building defId in the game, used to validate era assignments. */
 export const ALL_BUILDING_IDS: readonly string[] = eraData.allBuildingIds;
 
-/** Complete definitions for all 8 historical eras + 8 Kardashev sub-eras. */
+/** Complete definitions for the historical 1917-1991 campaign eras. */
 export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = (() => {
   const result = {} as Record<EraId, EraDefinition>;
   for (const [eraId, raw] of Object.entries(eraData.eras)) {
@@ -116,19 +114,8 @@ export const ERA_DEFINITIONS: Readonly<Record<EraId, EraDefinition>> = (() => {
       briefingFlavor: era.briefingFlavor,
     };
   }
-  // Merge Kardashev sub-era definitions (freeform-only, NOT in ERA_ORDER)
-  for (const [subEraId, def] of Object.entries(KARDASHEV_ERA_DEFINITIONS)) {
-    result[subEraId as EraId] = def;
-  }
   return result;
 })();
-
-/**
- * Full era order including Kardashev sub-eras (16 entries).
- * Used for organic unlock transitions in freeform mode.
- * Historical mode should use ERA_ORDER (8 entries) instead.
- */
-export const FULL_ERA_ORDER: readonly EraId[] = [...ERA_ORDER, ...KARDASHEV_ORDER];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -147,8 +134,7 @@ export function eraIndexForYear(year: number): number {
 
 /**
  * Pure utility: returns all building defIds available for a given year and
- * optional settlement tier. Used by the RadialBuildMenu to filter options
- * without needing an EraSystem instance.
+ * optional settlement tier without needing an EraSystem instance.
  */
 export function getAvailableBuildingsForYear(year: number, tier?: SettlementTier): string[] {
   const currentIdx = eraIndexForYear(year);

@@ -21,7 +21,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { getCurrentGridSize } from '../engine/GridTypes';
 import { InputManager } from '../input/InputManager';
-import { clearCameraTarget, getCaravanTarget, getCameraTarget, getCameraResetVersion, setCameraAnimating } from '../stores/gameStore';
+import { clearCameraTarget, getCameraTarget, getCaravanTarget, setCameraAnimating } from '../stores/gameStore';
 
 /** Speed constants for keyboard/gamepad-driven camera movement. */
 const PAN_SPEED = 0.3;
@@ -68,8 +68,6 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
   const animElapsedRef = useRef(0);
   // Track the last cameraTarget to detect transitions
   const lastCameraTargetRef = useRef<{ x: number; z: number } | null>(null);
-  // Track camera reset version to detect settlement switches
-  const lastResetVersionRef = useRef(getCameraResetVersion());
 
   // Set initial camera position on mount — mid-zoom, closer to street level
   useEffect(() => {
@@ -95,23 +93,6 @@ const CameraController: React.FC<CameraControllerProps> = ({ disabled }) => {
     if (disabled) return;
     const controls = controlsRef.current;
     if (!controls) return;
-
-    // Detect settlement switch — reset camera to new grid center
-    const resetVersion = getCameraResetVersion();
-    if (resetVersion !== lastResetVersionRef.current) {
-      lastResetVersionRef.current = resetVersion;
-      const newCenter = getCurrentGridSize() / 2;
-      camera.position.set(newCenter + 8, 12, newCenter + 8);
-      controls.target.set(newCenter, 0, newCenter);
-      controls.update();
-      // Clear any active animation state
-      animatingRef.current = null;
-      setCameraAnimating(null);
-      returnPosRef.current = null;
-      returnTargetRef.current = null;
-      caravanDoneRef.current = false;
-      controls.enabled = true;
-    }
 
     // Caravan arrival: start camera at map edge, pan toward settlement target
     const caravanTarget = getCaravanTarget();

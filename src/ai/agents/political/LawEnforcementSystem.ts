@@ -1,29 +1,9 @@
 /**
  * @module ai/agents/political/LawEnforcementSystem
  *
- * MegaCity law enforcement — era-based evolution from KGB to Judge Corps.
+ * Settlement law enforcement for the historical campaign.
  *
- * Evolution timeline:
- *   1917-1991:  KGB + politruks (suspicion, marks, blat) — handled by KGBAgent
- *   1991-2500:  Security Services (same mechanics, less ideological)
- *   2500-10000: Sector Judges (crime rate per sector, patrol coverage)
- *   10000+:     Megacity Arbiters (undercity, iso-cubes)
- *
- * Sector Blocks:
- *   MegaEarth is divided into administrative sectors (scaling like
- *   dvory -> buildings -> arcologies -> sectors). Each sector has a
- *   crime rate, judge coverage, and undercity decay level.
- *
- * Undercity:
- *   Below arcology layers, abandoned infrastructure becomes criminal territory.
- *   As arcologies build upward, lower levels decay — emergent undercity formation.
- *
- * Iso-Cubes:
- *   Megacity gulag system. Solves overcrowding AND provides forced labor.
- *   Like gulags but at civilizational scale — iso-cubes are the megacity answer
- *   to population management.
- *
- * Crime Rate Model:
+ * Crime pressure model:
  *   crimeRate = baseCrime * (1 + densityPressure) * (1 - employmentRate)
  *              * (1 - morale/100) * (1 + inequalityIndex) * (1 - judgeCoverage)
  */
@@ -33,10 +13,9 @@ import type { EraId } from '../../../game/era/types';
 // ─── Law Enforcement Mode ────────────────────────────────────────────────────
 
 /**
- * Which enforcement mode is active — determines what mechanics apply.
- * Transitions based on current era.
+ * Which enforcement mode is active. Historical 1.0 keeps the KGB/local militia model.
  */
-export type LawEnforcementMode = 'kgb' | 'security_services' | 'sector_judges' | 'megacity_arbiters';
+export type LawEnforcementMode = 'kgb';
 
 /** Map eras to their enforcement mode. */
 const ERA_ENFORCEMENT_MODE: Partial<Record<EraId, LawEnforcementMode>> = {
@@ -47,15 +26,6 @@ const ERA_ENFORCEMENT_MODE: Partial<Record<EraId, LawEnforcementMode>> = {
   reconstruction: 'kgb',
   thaw_and_freeze: 'kgb',
   stagnation: 'kgb',
-  the_eternal: 'kgb',
-  post_soviet: 'security_services',
-  planetary: 'security_services',
-  solar_engineering: 'sector_judges',
-  type_one: 'sector_judges',
-  deconstruction: 'megacity_arbiters',
-  dyson_swarm: 'megacity_arbiters',
-  megaearth: 'megacity_arbiters',
-  type_two_peak: 'megacity_arbiters',
 };
 
 /** Get the enforcement mode for a given era. */
@@ -65,7 +35,7 @@ export function getEnforcementMode(era: EraId): LawEnforcementMode {
 
 // ─── Sector Block ────────────────────────────────────────────────────────────
 
-/** A sector block — administrative division of a megacity. */
+/** A sector block — administrative division of the local settlement. */
 export interface SectorBlock {
   /** Unique sector identifier. */
   id: string;
@@ -79,12 +49,12 @@ export interface SectorBlock {
   judgeCount: number;
   /** Current crime rate (0-1, 0 = no crime, 1 = lawless). */
   crimeRate: number;
-  /** Undercity decay level (0-1, 0 = pristine, 1 = fully decayed). */
-  undercityDecay: number;
-  /** Number of iso-cubes in this sector. */
-  isoCubeCount: number;
-  /** Population in iso-cubes (detained). */
-  isoCubePopulation: number;
+  /** District disorder level (0-1, 0 = orderly, 1 = severe local disorder). */
+  districtDecay: number;
+  /** Local detention capacity. */
+  detentionCapacity: number;
+  /** Population in local detention or penal labor custody. */
+  detainedPopulation: number;
 }
 
 /** Create a new sector block with sensible defaults. */
@@ -96,9 +66,9 @@ export function createSectorBlock(id: string, name: string, population: number, 
     area,
     judgeCount: 0,
     crimeRate: 0,
-    undercityDecay: 0,
-    isoCubeCount: 0,
-    isoCubePopulation: 0,
+    districtDecay: 0,
+    detentionCapacity: 0,
+    detainedPopulation: 0,
   };
 }
 
@@ -108,7 +78,7 @@ export function createSectorBlock(id: string, name: string, population: number, 
 export interface CrimeRateContext {
   /** Base crime level for the era (0-1). */
   baseCrime: number;
-  /** Population density pressure (0-1, from PressureDomains.density). */
+  /** Local crowding pressure (0-1), derived from settlement population and capacity. */
   densityPressure: number;
   /** Employment rate (0-1, fraction of working-age pop that is employed). */
   employmentRate: number;
@@ -122,10 +92,7 @@ export interface CrimeRateContext {
 
 /** Base crime levels by enforcement mode. */
 export const BASE_CRIME_BY_MODE: Record<LawEnforcementMode, number> = {
-  kgb: 0.05,               // low — KGB suppression through terror
-  security_services: 0.08,  // slightly higher — less ideological control
-  sector_judges: 0.12,      // higher — massive populations, complex governance
-  megacity_arbiters: 0.15,  // highest — billions in megastructures
+  kgb: 0.05,
 };
 
 /**
@@ -168,42 +135,39 @@ export function computeJudgeCoverage(judgeCount: number, population: number): nu
   return Math.min(1, judgeCount / required);
 }
 
-// ─── Undercity Decay ─────────────────────────────────────────────────────────
+// ─── District Disorder ───────────────────────────────────────────────────────
 
-/** Undercity decay rates per tick by enforcement mode. */
-export const UNDERCITY_DECAY_RATE: Record<LawEnforcementMode, number> = {
-  kgb: 0,                    // no undercity in pre-megacity eras
-  security_services: 0,       // still no meaningful undercity
-  sector_judges: 0.001,       // early undercity formation
-  megacity_arbiters: 0.003,   // rapid undercity expansion
+/** District disorder rates per tick by enforcement mode. */
+export const DISTRICT_DECAY_RATE: Record<LawEnforcementMode, number> = {
+  kgb: 0,
 };
 
-/** Crime amplifier from undercity decay (multiplicative). */
-export const UNDERCITY_CRIME_AMPLIFIER = 0.5;
+/** Crime amplifier from district disorder (multiplicative). */
+export const DISTRICT_CRIME_AMPLIFIER = 0.5;
 
 /**
- * Compute undercity decay progression for one tick.
+ * Compute local district disorder progression for one tick.
  *
- * Undercity forms when:
+ * Disorder rises when:
  *   - Population density is high (density pressure > 0.3)
  *   - Infrastructure pressure is non-zero (buildings aging)
  *   - Enforcement mode supports it
  *
- * @param currentDecay - Current undercity decay level (0-1)
+ * @param currentDecay - Current disorder level (0-1)
  * @param mode - Current enforcement mode
  * @param densityPressure - Population density pressure (0-1)
  * @param infrastructurePressure - Infrastructure decay pressure (0-1)
  * @param judgePresence - Whether judges are patrolling this sector (reduces decay rate)
- * @returns New undercity decay level (0-1)
+ * @returns New disorder level (0-1)
  */
-export function tickUndercityDecay(
+export function tickDistrictDecay(
   currentDecay: number,
   mode: LawEnforcementMode,
   densityPressure: number,
   infrastructurePressure: number,
   judgePresence: boolean,
 ): number {
-  const baseRate = UNDERCITY_DECAY_RATE[mode];
+  const baseRate = DISTRICT_DECAY_RATE[mode];
   if (baseRate === 0) return currentDecay;
 
   // Decay accelerates with density and infrastructure pressure
@@ -221,27 +185,27 @@ export function tickUndercityDecay(
   return Math.min(1, Math.max(0, newDecay));
 }
 
-// ─── Iso-Cube System ─────────────────────────────────────────────────────────
+// ─── Detention And Penal Labor ───────────────────────────────────────────────
 
-/** Iso-cube capacity per cube. */
-export const ISO_CUBE_CAPACITY = 500;
+/** Local detention capacity per facility. */
+export const DETENTION_CAPACITY = 500;
 
-/** Labor output per iso-cube prisoner (as fraction of free worker). */
-export const ISO_CUBE_LABOR_EFFICIENCY = 0.4;
+/** Labor output per detained worker (as fraction of free worker). */
+export const PENAL_LABOR_EFFICIENCY = 0.4;
 
-/** Monthly mortality rate in iso-cubes (fraction of inmates). */
-export const ISO_CUBE_MORTALITY_RATE = 0.002;
+/** Monthly detention mortality rate (fraction of detainees). */
+export const DETENTION_MORTALITY_RATE = 0.002;
 
 /**
- * Compute how many should be sentenced to iso-cubes this tick.
+ * Compute how many people should be detained this tick.
  * Based on crime rate and judge activity.
  *
  * @param crimeRate - Sector crime rate (0-1)
  * @param population - Sector population
  * @param judgeCoverage - Judge coverage ratio (0-1)
- * @returns Number of new iso-cube sentences
+ * @returns Number of new detentions
  */
-export function computeIsoCubeSentences(crimeRate: number, population: number, judgeCoverage: number): number {
+export function computeDetentions(crimeRate: number, population: number, judgeCoverage: number): number {
   if (crimeRate <= 0 || judgeCoverage <= 0) return 0;
   // Sentencing rate: proportional to crime * judge activity
   const sentencingRate = crimeRate * judgeCoverage * 0.001; // 0.1% of crime * coverage
@@ -249,12 +213,12 @@ export function computeIsoCubeSentences(crimeRate: number, population: number, j
 }
 
 /**
- * Compute labor output from iso-cube population.
- * @param isoCubePopulation - Total prisoners in iso-cubes
+ * Compute labor output from detained population.
+ * @param detainedPopulation - Total detainees assigned to penal labor
  * @returns Equivalent free-worker labor units
  */
-export function computeIsoCubeLabor(isoCubePopulation: number): number {
-  return isoCubePopulation * ISO_CUBE_LABOR_EFFICIENCY;
+export function computePenalLabor(detainedPopulation: number): number {
+  return detainedPopulation * PENAL_LABOR_EFFICIENCY;
 }
 
 // ─── Sector Subdivision ──────────────────────────────────────────────────────
@@ -269,8 +233,9 @@ export const SECTOR_SUBDIVISION_THRESHOLD = 1_000_000; // 1M per sector max
  * @returns Required number of sectors
  */
 export function computeRequiredSectors(population: number, mode: LawEnforcementMode): number {
-  if (mode === 'kgb' || mode === 'security_services') return 1; // no sector subdivision
-  return Math.max(1, Math.ceil(population / SECTOR_SUBDIVISION_THRESHOLD));
+  void population;
+  void mode;
+  return 1;
 }
 
 /**
@@ -281,7 +246,8 @@ export function computeRequiredSectors(population: number, mode: LawEnforcementM
  */
 export function generateSectorNames(count: number, mode: LawEnforcementMode): string[] {
   const names: string[] = [];
-  const prefix = mode === 'sector_judges' ? 'Sector' : 'Block';
+  void mode;
+  const prefix = 'District';
   for (let i = 0; i < count; i++) {
     const letter = String.fromCharCode(65 + (i % 26)); // A-Z
     const number = Math.floor(i / 26) + 1;
@@ -296,16 +262,16 @@ export function generateSectorNames(count: number, mode: LawEnforcementMode): st
 export interface LawEnforcementState {
   /** Current enforcement mode. */
   mode: LawEnforcementMode;
-  /** Administrative sectors (empty array in kgb/security_services mode). */
+  /** Administrative sectors for local crime pressure. */
   sectors: SectorBlock[];
   /** Aggregate crime rate across all sectors (0-1). */
   aggregateCrimeRate: number;
   /** Total judges/enforcers across all sectors. */
   totalJudges: number;
-  /** Total iso-cube population across all sectors. */
-  totalIsoCubePopulation: number;
-  /** Total iso-cube labor output (equivalent free workers). */
-  totalIsoCubeLabor: number;
+  /** Total detained population across all sectors. */
+  totalDetainedPopulation: number;
+  /** Total penal labor output (equivalent free workers). */
+  totalPenalLabor: number;
 }
 
 /** Create initial law enforcement state. */
@@ -315,8 +281,8 @@ export function createLawEnforcementState(mode: LawEnforcementMode = 'kgb'): Law
     sectors: [],
     aggregateCrimeRate: 0,
     totalJudges: 0,
-    totalIsoCubePopulation: 0,
-    totalIsoCubeLabor: 0,
+    totalDetainedPopulation: 0,
+    totalPenalLabor: 0,
   };
 }
 
@@ -349,8 +315,8 @@ export interface LawEnforcementTickContext {
  * - Mode transition based on era
  * - Sector subdivision when population exceeds thresholds
  * - Per-sector crime rate computation
- * - Undercity decay progression
- * - Iso-cube sentencing
+ * - District disorder progression
+ * - Detention pressure
  * - Aggregate stats
  *
  * @returns Updated state (new object, does not mutate input)
@@ -399,7 +365,7 @@ export function tickLawEnforcement(state: LawEnforcementState, ctx: LawEnforceme
 
   // Tick each sector
   let totalCrime = 0;
-  let totalIsoCubePop = 0;
+  let totalDetained = 0;
 
   const tickedSectors = sectors.map((sector) => {
     const sectorCopy = { ...sector, judgeCount: judgesPerSector };
@@ -407,17 +373,17 @@ export function tickLawEnforcement(state: LawEnforcementState, ctx: LawEnforceme
     // Judge coverage
     const coverage = computeJudgeCoverage(sectorCopy.judgeCount, sectorCopy.population);
 
-    // Undercity decay
-    const newDecay = tickUndercityDecay(
-      sectorCopy.undercityDecay,
+    // District disorder
+    const newDecay = tickDistrictDecay(
+      sectorCopy.districtDecay,
       newMode,
       ctx.densityPressure,
       ctx.infrastructurePressure,
       coverage > 0.5,
     );
-    sectorCopy.undercityDecay = newDecay;
+    sectorCopy.districtDecay = newDecay;
 
-    // Crime rate (amplified by undercity)
+    // Crime rate amplified by district disorder
     const rawCrime = computeCrimeRate({
       baseCrime,
       densityPressure: ctx.densityPressure,
@@ -426,47 +392,23 @@ export function tickLawEnforcement(state: LawEnforcementState, ctx: LawEnforceme
       inequalityIndex: ctx.inequalityIndex,
       judgeCoverage: coverage,
     });
-    sectorCopy.crimeRate = Math.min(1, rawCrime * (1 + newDecay * UNDERCITY_CRIME_AMPLIFIER));
-
-    // Iso-cube sentencing (only in judge/arbiter modes)
-    if (newMode === 'sector_judges' || newMode === 'megacity_arbiters') {
-      const newSentences = computeIsoCubeSentences(sectorCopy.crimeRate, sectorCopy.population, coverage);
-      sectorCopy.isoCubePopulation += newSentences;
-
-      // Iso-cube mortality
-      const deaths = Math.floor(sectorCopy.isoCubePopulation * ISO_CUBE_MORTALITY_RATE);
-      sectorCopy.isoCubePopulation = Math.max(0, sectorCopy.isoCubePopulation - deaths);
-
-      // Cap at iso-cube capacity
-      const totalCapacity = sectorCopy.isoCubeCount * ISO_CUBE_CAPACITY;
-      if (sectorCopy.isoCubePopulation > totalCapacity && totalCapacity > 0) {
-        sectorCopy.isoCubePopulation = totalCapacity;
-      }
-
-      // Auto-build iso-cubes when at capacity (one per tick)
-      if (totalCapacity > 0 && sectorCopy.isoCubePopulation >= totalCapacity * 0.9) {
-        sectorCopy.isoCubeCount++;
-      } else if (sectorCopy.isoCubeCount === 0 && sectorCopy.crimeRate > 0.1) {
-        // First iso-cube when crime rate exceeds 10%
-        sectorCopy.isoCubeCount = 1;
-      }
-    }
+    sectorCopy.crimeRate = Math.min(1, rawCrime * (1 + newDecay * DISTRICT_CRIME_AMPLIFIER));
 
     totalCrime += sectorCopy.crimeRate;
-    totalIsoCubePop += sectorCopy.isoCubePopulation;
+    totalDetained += sectorCopy.detainedPopulation;
     return sectorCopy;
   });
 
   const aggregateCrimeRate = tickedSectors.length > 0 ? totalCrime / tickedSectors.length : 0;
-  const totalIsoCubeLabor = computeIsoCubeLabor(totalIsoCubePop);
+  const totalPenalLabor = computePenalLabor(totalDetained);
 
   return {
     mode: newMode,
     sectors: tickedSectors,
     aggregateCrimeRate,
     totalJudges: totalJudgePool,
-    totalIsoCubePopulation: totalIsoCubePop,
-    totalIsoCubeLabor,
+    totalDetainedPopulation: totalDetained,
+    totalPenalLabor,
   };
 }
 
@@ -475,10 +417,10 @@ export function tickLawEnforcement(state: LawEnforcementState, ctx: LawEnforceme
 /** Serialized law enforcement state for save/load. */
 export interface LawEnforcementSaveData {
   mode: LawEnforcementMode;
-  sectors: SectorBlock[];
+  sectors: Partial<SectorBlock>[];
   aggregateCrimeRate: number;
   totalJudges: number;
-  totalIsoCubePopulation: number;
+  totalDetainedPopulation: number;
 }
 
 /** Serialize law enforcement state. */
@@ -488,18 +430,42 @@ export function serializeLawEnforcement(state: LawEnforcementState): LawEnforcem
     sectors: state.sectors.map((s) => ({ ...s })),
     aggregateCrimeRate: state.aggregateCrimeRate,
     totalJudges: state.totalJudges,
-    totalIsoCubePopulation: state.totalIsoCubePopulation,
+    totalDetainedPopulation: state.totalDetainedPopulation,
   };
 }
 
 /** Restore law enforcement state from save data. */
 export function restoreLawEnforcement(data: LawEnforcementSaveData): LawEnforcementState {
+  const totalDetainedPopulation = finiteNonNegative(data.totalDetainedPopulation);
   return {
     mode: data.mode,
-    sectors: data.sectors.map((s) => ({ ...s })),
-    aggregateCrimeRate: data.aggregateCrimeRate,
-    totalJudges: data.totalJudges,
-    totalIsoCubePopulation: data.totalIsoCubePopulation,
-    totalIsoCubeLabor: computeIsoCubeLabor(data.totalIsoCubePopulation),
+    sectors: data.sectors.map(restoreSectorBlock),
+    aggregateCrimeRate: clamp01(data.aggregateCrimeRate),
+    totalJudges: finiteNonNegative(data.totalJudges),
+    totalDetainedPopulation,
+    totalPenalLabor: computePenalLabor(totalDetainedPopulation),
   };
+}
+
+function restoreSectorBlock(data: Partial<SectorBlock>): SectorBlock {
+  return {
+    id: data.id ?? 'sector-0',
+    name: data.name ?? 'District A-1',
+    population: finiteNonNegative(data.population ?? 0),
+    area: Math.max(1, finiteNonNegative(data.area ?? 1)),
+    judgeCount: finiteNonNegative(data.judgeCount ?? 0),
+    crimeRate: clamp01(data.crimeRate ?? 0),
+    districtDecay: clamp01(data.districtDecay ?? 0),
+    detentionCapacity: finiteNonNegative(data.detentionCapacity ?? 0),
+    detainedPopulation: finiteNonNegative(data.detainedPopulation ?? 0),
+  };
+}
+
+function finiteNonNegative(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, value) : 0;
+}
+
+function clamp01(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(1, value));
 }

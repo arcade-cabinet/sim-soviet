@@ -130,7 +130,7 @@ export function generateEventReactiveHeadline(event: GameEvent, gs: GameView): G
     };
   }
 
-  // For disaster events, sometimes spin the destruction as urban renewal
+  // For disaster events, sometimes spin the destruction as planned renewal.
   if (event.category === 'disaster' && coinFlip(0.3)) {
     return {
       headline: pick(DESTRUCTION_SPINS),

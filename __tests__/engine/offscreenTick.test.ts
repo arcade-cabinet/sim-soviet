@@ -1,11 +1,11 @@
+import type { BuildingTickContext } from '../../src/ai/agents/economy/buildingTick';
 import {
-  getOffscreenBuildings,
-  tickOffscreenBuildings,
   aggregateOffscreenResults,
+  getOffscreenBuildings,
   type OffscreenBuilding,
   type OffscreenTickResult,
+  tickOffscreenBuildings,
 } from '../../src/game/engine/offscreenTick';
-import type { BuildingTickContext } from '../../src/ai/agents/economy/buildingTick';
 
 const CTX: BuildingTickContext = {
   weather: 'clear',

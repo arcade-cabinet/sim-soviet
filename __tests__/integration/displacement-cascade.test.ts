@@ -10,8 +10,13 @@
  */
 
 import { cascadeDisplacement, findDisplaceable } from '@/ai/agents/infrastructure/displacementSystem';
-import { type DvorState, type HousingEntry, evaluateNeeds, tickMotivation } from '@/ai/agents/workforce/dvorMotivation';
-import { type HousingBuilding, type HousingResident, claimHousing, isNomenclatura } from '@/ai/agents/workforce/nomenclaturaPriority';
+import { type DvorState, evaluateNeeds, type HousingEntry, tickMotivation } from '@/ai/agents/workforce/dvorMotivation';
+import {
+  claimHousing,
+  type HousingBuilding,
+  type HousingResident,
+  isNomenclatura,
+} from '@/ai/agents/workforce/nomenclaturaPriority';
 import { getDemolitionPriority, isProtected } from '@/config/protectedClasses';
 import type { BuildingComponent, Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
@@ -288,12 +293,12 @@ describe('displacement cascade end-to-end', () => {
       residentCount: 6,
       householdCount: 3,
     });
-    const housingA = addBuilding('apartment-tower-a', 4, 0, {
+    const _housingA = addBuilding('apartment-tower-a', 4, 0, {
       housingCap: 10,
       residentCount: 8,
       householdCount: 4,
     });
-    const housingB = addBuilding('apartment-tower-a', 8, 0, {
+    const _housingB = addBuilding('apartment-tower-a', 8, 0, {
       housingCap: 10,
       residentCount: 3,
       householdCount: 1,

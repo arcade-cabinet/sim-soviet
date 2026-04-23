@@ -39,20 +39,18 @@ describe('rollMeteorStrike', () => {
     expect(typeof event!.targetY).toBe('number');
   });
 
-  it('has slightly higher chance in freeform eternal mode (year > 1991)', () => {
-    const rng1 = new GameRng('eternal-compare');
-    const rng2 = new GameRng('eternal-compare');
+  it('uses the same rare chance before and after the campaign endpoint', () => {
+    const rng1 = new GameRng('post-campaign-compare');
+    const rng2 = new GameRng('post-campaign-compare');
     const trials = 50_000;
 
-    let hitsNormal = 0;
-    let hitsEternal = 0;
+    let hitsHistorical = 0;
+    let hitsPostCampaign = 0;
     for (let i = 0; i < trials; i++) {
-      if (rollMeteorStrike(rng1, 1950) !== null) hitsNormal++;
-      if (rollMeteorStrike(rng2, 2050) !== null) hitsEternal++;
+      if (rollMeteorStrike(rng1, 1950) !== null) hitsHistorical++;
+      if (rollMeteorStrike(rng2, 2050) !== null) hitsPostCampaign++;
     }
-    // Eternal mode should have more hits (higher probability)
-    // Both use same seed so RNG sequence is identical — different thresholds
-    expect(hitsEternal).toBeGreaterThanOrEqual(hitsNormal);
+    expect(hitsPostCampaign).toBe(hitsHistorical);
   });
 
   it('is deterministic with the same seed', () => {
@@ -74,7 +72,7 @@ describe('rollMeteorStrike', () => {
     const magnitudes = new Set<number>();
     // Roll enough times to see all magnitudes
     for (let i = 0; i < 500_000 && magnitudes.size < 5; i++) {
-      const event = rollMeteorStrike(rng, 2050); // eternal mode for higher rate
+      const event = rollMeteorStrike(rng, 2050);
       if (event) magnitudes.add(event.magnitude);
     }
     // Should have seen multiple magnitude values (at least 2)
@@ -131,9 +129,9 @@ describe('applyMeteorImpact', () => {
     }
   });
 
-  it('resourceDeposit is one of iron, coal, or uranium', () => {
+  it('resourceDeposit is one of iron or coal', () => {
     const result = applyMeteorImpact(10, 10, 30);
-    expect(['iron', 'coal', 'uranium']).toContain(result.resourceDeposit);
+    expect(['iron', 'coal']).toContain(result.resourceDeposit);
   });
 
   it('always includes at least the crater tile in destroyedTiles', () => {
@@ -158,7 +156,7 @@ describe('convertCraterToMine', () => {
   });
 
   it('preserves the resource type from the impact', () => {
-    for (const resource of ['iron', 'coal', 'uranium'] as const) {
+    for (const resource of ['iron', 'coal'] as const) {
       const impact: ImpactResult = {
         crater: { x: 10, y: 10 },
         damageRadius: 2,
@@ -208,22 +206,21 @@ describe('convertCraterToMine', () => {
     expect(largeMine.capacity).toBeGreaterThan(smallMine.capacity);
   });
 
-  it('uranium deposits yield lower capacity than iron/coal', () => {
+  it('coal deposits yield lower capacity than iron', () => {
     const ironImpact: ImpactResult = {
       crater: { x: 5, y: 5 },
       damageRadius: 3,
       destroyedTiles: [{ x: 5, y: 5 }],
       resourceDeposit: 'iron',
     };
-    const uraniumImpact: ImpactResult = {
+    const coalImpact: ImpactResult = {
       crater: { x: 5, y: 5 },
       damageRadius: 3,
       destroyedTiles: [{ x: 5, y: 5 }],
-      resourceDeposit: 'uranium',
+      resourceDeposit: 'coal',
     };
     const ironMine = convertCraterToMine(ironImpact);
-    const uraniumMine = convertCraterToMine(uraniumImpact);
-    // Uranium is rarer/more valuable so lower raw capacity makes sense
-    expect(uraniumMine.capacity).toBeLessThan(ironMine.capacity);
+    const coalMine = convertCraterToMine(coalImpact);
+    expect(coalMine.capacity).toBeLessThan(ironMine.capacity);
   });
 });

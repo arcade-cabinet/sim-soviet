@@ -16,7 +16,7 @@ interface Props {
   gridZ: number;
 }
 
-export const GenericContent: React.FC<Props> = ({ def, building, gridX, gridZ }) => {
+export const GenericContent: React.FC<Props> = ({ building, gridX, gridZ }) => {
   const condition =
     building.constructionPhase === 'complete' || !building.constructionPhase
       ? 'OPERATIONAL'

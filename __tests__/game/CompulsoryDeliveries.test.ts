@@ -18,7 +18,6 @@ const ALL_DOCTRINES: Doctrine[] = [
   'thaw',
   'freeze',
   'stagnation',
-  'eternal',
 ];
 
 /** Updated base rates from political.json (30-70% range). */
@@ -30,7 +29,6 @@ const EXPECTED_RATES: Record<Doctrine, DeliveryRates> = {
   thaw: { food: 0.25, vodka: 0.15, money: 0.25 },
   freeze: { food: 0.4, vodka: 0.3, money: 0.45 },
   stagnation: { food: 0.35, vodka: 0.3, money: 0.4 },
-  eternal: { food: 0.3, vodka: 0.25, money: 0.35 },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -326,7 +324,7 @@ describe('CompulsoryDeliveries', () => {
     });
 
     it('totalFoodRemaining = newFood - foodTaken', () => {
-      const cd = new CompulsoryDeliveries('eternal');
+      const cd = new CompulsoryDeliveries('stagnation');
       const result = cd.applyDeliveries(250, 100, 100);
       expect(result.totalFoodRemaining).toBeCloseTo(250 - result.foodTaken);
     });
@@ -394,8 +392,8 @@ describe('CompulsoryDeliveries', () => {
 
   describe('constructor with initial doctrine', () => {
     it('accepts an initial doctrine', () => {
-      const cd = new CompulsoryDeliveries('eternal');
-      expect(cd.getDoctrine()).toBe('eternal');
+      const cd = new CompulsoryDeliveries('stagnation');
+      expect(cd.getDoctrine()).toBe('stagnation');
     });
   });
 

@@ -18,7 +18,7 @@ interface Props {
   gridZ: number;
 }
 
-export const PartyHQContent: React.FC<Props> = ({ def, building }) => {
+export const PartyHQContent: React.FC<Props> = () => {
   const res = getResourceEntity()?.resources;
   const meta = getMetaEntity()?.gameMeta;
 

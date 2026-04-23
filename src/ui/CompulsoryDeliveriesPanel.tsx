@@ -38,7 +38,6 @@ const DOCTRINE_FLAVOR: Record<Doctrine, string> = {
   thaw: 'A kinder, gentler extraction. The state takes less. Relatively.',
   freeze: 'Reform of the reform. Deliveries are restructured. The restructuring requires more deliveries.',
   stagnation: 'The system is mature. The deliveries are traditional. The corruption is administrative.',
-  eternal: 'The quotas are eternal. The deliveries are eternal. The paperwork is eternal.',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

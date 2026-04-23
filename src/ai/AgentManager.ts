@@ -8,6 +8,7 @@
 import { EntityManager } from 'yuka';
 import { ChairmanAgent } from './agents/ChairmanAgent';
 import type { ChronologyAgent } from './agents/core/ChronologyAgent';
+import { PhaseDirectorAgent } from './agents/core/PhaseDirectorAgent';
 import type { WeatherAgent } from './agents/core/WeatherAgent';
 import type { EconomyAgent } from './agents/economy/EconomyAgent';
 import type { FoodAgent } from './agents/economy/FoodAgent';
@@ -28,7 +29,6 @@ import type { QuotaAgent } from './agents/political/QuotaAgent';
 import type { DefenseAgent } from './agents/social/DefenseAgent';
 import type { DemographicAgent } from './agents/social/DemographicAgent';
 import type { DvorNeedsAgent } from './agents/social/DvorNeedsAgent';
-import type { GlobalHexManager } from '../game/map/global/GlobalHexManager';
 import type { WorkerAgent } from './agents/workforce/WorkerAgent';
 
 /** Serialized AgentManager state for save/load. */
@@ -49,6 +49,7 @@ export interface AgentManagerSaveData {
 export class AgentManager {
   private entityManager: EntityManager;
   private chairman: ChairmanAgent | null = null;
+  private director: PhaseDirectorAgent;
 
   // ── System agents (always present) ───────────────────────
   private _chronology: ChronologyAgent | null = null;
@@ -76,6 +77,8 @@ export class AgentManager {
 
   constructor() {
     this.entityManager = new EntityManager();
+    this.director = new PhaseDirectorAgent();
+    this.entityManager.add(this.director as any);
   }
 
   /** Update all agents for one simulation tick. */

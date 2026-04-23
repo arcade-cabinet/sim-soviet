@@ -1,34 +1,22 @@
 /**
  * @module ai/agents/core/worldBranches
  *
- * Cold branches — dormant divergence points that exist in the timeline.
- * They activate automatically when pressure conditions match, not on
- * fixed dates, not by dice roll. The game discovers them organically.
+ * Cold branches — dormant historical pressure branches that exist in the
+ * campaign timeline. They activate automatically when pressure conditions
+ * match, not on fixed dates, not by dice roll.
  *
- * Each playthrough discovers different branches. The combination creates
- * emergent narrative: "What if the EU dissolved during a corporate
- * sovereignty wave?" vs "What if the Virgin Lands assignment happened
- * right before WWIII?"
+ * Each playthrough can surface different historical pressures, such as a
+ * Virgin Lands assignment arriving during an already strained plan.
  *
- * Branch definitions are stored in src/config/coldBranches.json.
+ * Branch definitions are stored in src/config/coldBranches.json. They must
+ * remain grounded same-settlement events, never new settlement hooks.
  */
 
+import branchData from '../../../config/coldBranches.json';
 import type { PressureDomain } from '../crisis/pressure/PressureDomains';
 import type { CrisisDefinition } from '../crisis/types';
-import type { GovernanceType, SphereId } from './worldCountries';
 import type { WorldState } from './WorldAgent';
-import branchData from '../../../config/coldBranches.json';
-
-// ─── Terrain Profile (for relocation) ────────────────────────────────────────
-
-export interface TerrainProfile {
-  gravity: number;
-  atmosphere: 'breathable' | 'none' | 'thin_co2' | 'thick_n2_ch4' | 'variable';
-  water: 'rivers' | 'ice_deposits' | 'subsurface' | 'methane_lakes' | 'variable';
-  farming: 'soil' | 'hydroponics' | 'greenhouse' | 'impossible' | 'variable';
-  construction: 'standard' | 'pressurized_domes' | 'variable';
-  baseSurvivalCost: 'low' | 'high' | 'very_high' | 'extreme' | 'variable';
-}
+import type { GovernanceType, SphereId } from './worldCountries';
 
 // ─── Cold Branch ─────────────────────────────────────────────────────────────
 
@@ -50,11 +38,6 @@ export interface ColdBranch {
     pressureSpikes?: Partial<Record<PressureDomain, number>>;
     crisisDefinition?: CrisisDefinition;
     narrative: { pravdaHeadline: string; toast: string };
-    relocation?: {
-      type: 'forced_transfer' | 'climate_exodus' | 'colonial_expansion' | 'interstellar';
-      targetTerrain: TerrainProfile;
-    };
-    newSettlement?: boolean;
   };
   /** Once activated, stays activated (no re-trigger). */
   oneShot: boolean;

@@ -412,7 +412,6 @@ export class TutorialSystem {
   /**
    * Returns true if ANY building in the given defId list is unlocked.
    * When the tutorial is inactive, returns true (all unlocked).
-   * Used by RadialBuildMenu to determine if a category is accessible.
    */
   isCategoryUnlocked(buildingDefIds: string[]): boolean {
     if (!this.active) return true;
@@ -423,7 +422,6 @@ export class TutorialSystem {
    * Returns the name of the next milestone that will unlock buildings
    * in the given defId list, or null if all are already unlocked or
    * no milestone will unlock them.
-   * Used by RadialBuildMenu to show "Complete [milestone] to unlock" tooltips.
    */
   getNextUnlockMilestoneForBuildings(buildingDefIds: string[]): string | null {
     if (!this.active) return null;

@@ -11,16 +11,15 @@
  */
 
 import {
-  type ResettlementDirectiveState,
-  type ResettlementPoliticalContext,
-  type ResettlementPressureContext,
-  type ResettlementWorldContext,
-  RESETTLEMENT_CONSTANTS,
   attemptResettlementBribe,
   calculateResettlementOutcome,
   createResettlementState,
   enactDisassembly,
   evaluateResettlementRisk,
+  RESETTLEMENT_CONSTANTS,
+  type ResettlementPoliticalContext,
+  type ResettlementPressureContext,
+  type ResettlementWorldContext,
   tickResettlementYearly,
   tickWarningPeriod,
 } from '@/ai/agents/political/resettlementDirective';

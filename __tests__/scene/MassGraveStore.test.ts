@@ -2,14 +2,14 @@
  * Tests for MassGraveCluster store and manifest integration.
  */
 
+import manifest from '../../assets/models/soviet/manifest.json';
 import {
   addMassGrave,
   clearMassGraves,
   getMassGraves,
-  restoreMassGraves,
   type MassGraveCluster,
+  restoreMassGraves,
 } from '../../src/stores/gameStore';
-import manifest from '../../assets/models/soviet/manifest.json';
 
 afterEach(() => {
   clearMassGraves();

@@ -39,9 +39,9 @@ describe('AutoBuilder', () => {
       expect(dist).toBeLessThanOrEqual(4);
     });
 
-    it('returns null when no buildings exist', () => {
+    it('uses the map center as the first settlement anchor when no buildings exist', () => {
       const cell = findPlacementCell(rng);
-      expect(cell).toBeNull();
+      expect(cell).toEqual({ gridX: Math.floor(GRID_SIZE / 2), gridY: Math.floor(GRID_SIZE / 2) });
     });
   });
 
@@ -54,9 +54,10 @@ describe('AutoBuilder', () => {
       expect(entity!.building!.constructionPhase).toBe('foundation');
     });
 
-    it('returns null when no valid cell is available', () => {
+    it('places the first building at the map center when no anchor exists', () => {
       const entity = autoPlaceBuilding('workers-house-a', rng);
-      expect(entity).toBeNull();
+      expect(entity).not.toBeNull();
+      expect(entity!.position).toEqual({ gridX: Math.floor(GRID_SIZE / 2), gridY: Math.floor(GRID_SIZE / 2) });
     });
   });
 });

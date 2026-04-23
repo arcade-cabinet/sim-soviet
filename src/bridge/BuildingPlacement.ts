@@ -1,24 +1,18 @@
 /**
- * BuildingPlacement — bridges building placement from UI to ECS.
+ * BuildingPlacement -- ECS mutation bridge for demolition and upgrades.
  *
- * Maps old Toolbar tool keys to ECS defIds (used by placeNewBuilding),
- * validates placement and material affordability, creates ECS entity,
- * and updates the spatial grid.
- *
- * Also handles building upgrades via upgradeECSBuilding().
+ * New buildings are created by autonomous construction systems. This module
+ * only handles player-visible maintenance actions on existing buildings.
  */
 
-import { DEFAULT_MATERIAL_COST } from '@/ai/agents/infrastructure/constructionSystem';
-import { GRID_SIZE } from '@/config';
 import { getBuildingDef } from '@/data/buildingDefs';
 import { buildings as buildingsArchetype, getResourceEntity } from '@/ecs/archetypes';
-import { placeNewBuilding } from '@/ecs/factories/buildingFactories';
 import { world } from '@/ecs/world';
 import { recalculatePaths } from '@/game/PathSystem';
 import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 import SFXManager from '../audio/SFXManager';
 import { gameState } from '../engine/GameState';
-import { getEngine, getGameGrid } from './GameInit';
+import { getGameGrid } from './GameInit';
 
 // ── Upgrade Chains ───────────────────────────────────────────────────────────
 
@@ -112,139 +106,6 @@ export function isUpgradeable(defId: string): boolean {
  */
 export function getUpgradeLevel(defId: string): number {
   return UPGRADE_LOOKUP.get(defId)?.level ?? 0;
-}
-
-/**
- * Map from old Toolbar tool keys → ECS building defIds.
- *
- * Zone tools directly place the cheapest building of their category
- * (the 2D game auto-grew buildings on zones; in 3D we place immediately).
- */
-const TOOL_TO_DEF_ID: Record<string, string> = {
-  // Zone tools → place basic building of that category
-  'zone-res': 'workers-house-a', // Cheapest housing (80₽)
-  'zone-ind': 'factory-office', // Basic industry (180₽)
-  'zone-farm': 'collective-farm-hq', // Agriculture (150₽)
-
-  // Infrastructure
-  power: 'power-station',
-  nuke: 'cooling-tower', // Reactor → cooling tower (bpy-scripted model)
-  station: 'train-station',
-  pump: 'warehouse', // Water pump → warehouse (closest utility)
-
-  // State buildings
-  tower: 'radio-station', // Propaganda tower → radio station
-  gulag: 'gulag-admin',
-  mast: 'fire-station', // Aero-mast → fire station (closest match)
-  space: 'government-hq', // Cosmodrome → govt HQ placeholder
-};
-
-/**
- * Check if the player has enough materials to start construction.
- * Uses building's constructionCost or fallback defaults.
- * Note: materials are NOT deducted here — constructionSystem
- * handles per-tick deduction during the build process.
- */
-function canAffordMaterials(
-  resources: { timber: number; steel: number; cement: number; prefab: number },
-  defId: string,
-): boolean {
-  const def = getBuildingDef(defId);
-  const cc = def?.stats.constructionCost;
-  const timber = cc?.timber ?? DEFAULT_MATERIAL_COST.timber;
-  const steel = cc?.steel ?? DEFAULT_MATERIAL_COST.steel;
-  const cement = cc?.cement ?? DEFAULT_MATERIAL_COST.cement;
-  const prefab = cc?.prefab ?? 0;
-  return (
-    resources.timber >= timber && resources.steel >= steel && resources.cement >= cement && resources.prefab >= prefab
-  );
-}
-
-/**
- * Attempt to place a building via ECS.
- *
- * Validates grid bounds, spatial occupancy, material affordability, then
- * creates the ECS entity, updates spatial grid and legacy state, and
- * triggers terrain/React notifications.
- *
- * @param toolKey - Toolbar tool key (e.g. 'zone-res', 'power')
- * @param gridX - Grid X coordinate
- * @param gridZ - Grid Z coordinate
- * @returns true if the building was placed, false if invalid or unaffordable
- */
-export function placeECSBuilding(toolKey: string, gridX: number, gridZ: number): boolean {
-  // Skip non-building tools
-  if (toolKey === 'none' || toolKey === 'bulldoze' || toolKey === 'pipe' || toolKey === 'road') {
-    return false;
-  }
-
-  // Map tool key to ECS defId
-  const defId = TOOL_TO_DEF_ID[toolKey];
-  if (!defId) {
-    console.warn(`[BuildingPlacement] No ECS defId mapping for tool "${toolKey}"`);
-    return false;
-  }
-
-  // Validate grid bounds
-  if (gridX < 0 || gridZ < 0 || gridX >= GRID_SIZE || gridZ >= GRID_SIZE) {
-    return false;
-  }
-
-  // Check spatial grid occupancy
-  const grid = getGameGrid();
-  if (grid) {
-    const cell = grid.getCell(gridX, gridZ);
-    if (cell?.type) return false; // Already occupied
-  }
-
-  // Check affordability from ECS resources
-  const res = getResourceEntity();
-  if (!res) return false;
-
-  // Validate material affordability (constructionSystem deducts per-tick)
-  if (!canAffordMaterials(res.resources, defId)) return false;
-
-  // Create ECS building entity (starts construction)
-  const entity = placeNewBuilding(gridX, gridZ, defId);
-
-  // Update spatial grid
-  if (grid) {
-    grid.setCell(gridX, gridZ, defId);
-  }
-
-  // Sync old gameState so legacy scene components see the building
-  const oldCell = gameState.grid[gridZ]?.[gridX];
-  if (oldCell) {
-    oldCell.type = defId;
-  }
-  gameState.buildings.push({
-    x: gridX,
-    y: gridZ,
-    type: defId,
-    powered: false,
-    level: 0,
-  });
-
-  // Track building placement for Five-Year Plan mandate fulfillment
-  const engine = getEngine();
-  if (engine) {
-    engine.recordBuildingForMandates(defId);
-  }
-
-  // Reindex so archetypes pick up the new entity immediately
-  world.reindex(entity);
-
-  // Recalculate dirt paths between buildings
-  recalculatePaths();
-  notifyTerrainDirty();
-
-  // Play building placement sound effect
-  SFXManager.getInstance().play('building_place');
-
-  // Notify React
-  notifyStateChange();
-
-  return true;
 }
 
 /**

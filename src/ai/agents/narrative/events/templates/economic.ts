@@ -75,7 +75,7 @@ export const ECONOMIC_EVENTS: EventTemplate[] = [
     id: 'supply_chain',
     title: 'LOGISTICS EXCELLENCE',
     description:
-      'Supply shipment arrives! Contents: 4,000 left boots. The right boots are in another city. Citizens encouraged to hop.',
+      'Supply shipment arrives! Contents: 4,000 left boots. The right boots are at another depot. Citizens encouraged to hop.',
     pravdaHeadline: 'GENEROUS FOOTWEAR SHIPMENT ARRIVES ON SCHEDULE',
     category: 'economic',
     severity: 'minor',

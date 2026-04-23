@@ -64,7 +64,7 @@ function buildRobustSettlement(): void {
 }
 
 describe('ChairmanAgent autonomous survival', () => {
-  it('survives 1917 to 1960 without manual intervention', () => {
+  it('survives 1917 to 1960 on worker difficulty without manual intervention', () => {
     const { engine } = createPlaythroughEngine({
       meta: { date: { year: 1917, month: 10, tick: 0 } },
       resources: {
@@ -76,8 +76,9 @@ describe('ChairmanAgent autonomous survival', () => {
         steel: 10000,
         cement: 10000,
       },
+      difficulty: 'worker',
       consequence: 'rehabilitated',
-      deterministicRandom: false,
+      seed: 'historical-survival-1960',
     });
 
     buildRobustSettlement();

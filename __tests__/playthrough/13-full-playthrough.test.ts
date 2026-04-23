@@ -1,12 +1,12 @@
 /**
- * Playthrough integration test: 200-Year Headless Playthrough
+ * Playthrough integration test: Historical Campaign Headless Playthrough
  *
  * Runs a proper headless playthrough at each difficulty level:
  * 1. Uses createPlaythroughEngine() — no React/DOM
  * 2. Enables autopilot (engine.enableAutopilot()) for AI-managed minigames + annual reports
  * 3. Does NOT top up resources — agents manage everything autonomously
  * 4. Builds a robust starting settlement
- * 5. Runs up to 200 game-years (72,000 ticks)
+ * 5. Runs through the 1917-1991 historical campaign window
  * 6. Captures yearly snapshots
  * 7. Prints decade-by-decade summary table
  * 8. Asserts on population trajectory per difficulty
@@ -18,7 +18,7 @@
  *
  * Note on time skips: when the chairman is arrested and rehabilitated,
  * the clock jumps forward by the consequence's returnDelayYears. This
- * means 72,000 ticks may cover far more than 200 calendar years. The
+ * means the tick budget may cover more than the target calendar years. The
  * test loop tracks actual game years, not tick count.
  */
 
@@ -174,7 +174,7 @@ function buildRobustSettlement(): void {
  * jump forward due to rehabilitation time skips) and stops when the
  * target year is reached or the game ends.
  *
- * Maximum tick budget: 72,000 ticks (200 years at 360 ticks/year).
+ * Maximum tick budget: 26,640 ticks (74 years at 360 ticks/year).
  * This prevents infinite loops if time skips cause the year to jump
  * faster than expected.
  */
@@ -195,7 +195,7 @@ function runPlaythrough(difficulty: 'worker' | 'comrade' | 'tovarish', targetYea
     },
     difficulty,
     consequence: 'rehabilitated',
-    deterministicRandom: false,
+    seed: `historical-${difficulty}-playthrough`,
   });
 
   // Build settlement AFTER engine creation but BEFORE autopilot
@@ -246,12 +246,13 @@ function runPlaythrough(difficulty: 'worker' | 'comrade' | 'tovarish', targetYea
  * Validate that all snapshots have well-formed data (no NaN, valid ranges).
  */
 function assertSnapshotIntegrity(snapshots: YearlySnapshot[]): void {
-  for (const s of snapshots) {
-    // Population should never be NaN
-    expect(Number.isNaN(s.population)).toBe(false);
-    // Food and vodka should never be NaN
-    expect(Number.isNaN(s.food)).toBe(false);
-    expect(Number.isNaN(s.vodka)).toBe(false);
+  snapshots.forEach((s, index) => {
+    const context = { index, ...s };
+    // Core numeric fields should stay finite for the whole run.
+    if (!Number.isFinite(s.population)) throw new Error(`Invalid population snapshot: ${JSON.stringify(context)}`);
+    if (!Number.isFinite(s.food)) throw new Error(`Invalid food snapshot: ${JSON.stringify(context)}`);
+    if (!Number.isFinite(s.vodka)) throw new Error(`Invalid vodka snapshot: ${JSON.stringify(context)}`);
+    if (!Number.isFinite(s.laborForce)) throw new Error(`Invalid labor snapshot: ${JSON.stringify(context)}`);
     // Year should be valid
     expect(s.year).toBeGreaterThanOrEqual(1917);
     // Buildings and marks should be non-negative
@@ -262,22 +263,22 @@ function assertSnapshotIntegrity(snapshots: YearlySnapshot[]): void {
     // Births and deaths should be non-negative
     expect(s.births).toBeGreaterThanOrEqual(0);
     expect(s.deaths).toBeGreaterThanOrEqual(0);
-  }
+  });
 }
 
 // ── Tests ───────────────────────────────────────────────────────────────────
 
-describe('Playthrough: 200-Year Headless Playthrough', () => {
+describe('Playthrough: Historical Campaign Headless Playthrough', () => {
   afterEach(() => {
     world.clear();
     jest.restoreAllMocks();
     resetStarvationCounter();
   });
 
-  it('worker difficulty — 200-year sustainable commune', () => {
-    const snapshots = runPlaythrough('worker', 200);
+  it('worker difficulty — historical campaign stability', () => {
+    const snapshots = runPlaythrough('worker', 74);
 
-    printDecadeSummary(snapshots, 'Worker Difficulty — 200-Year Playthrough');
+    printDecadeSummary(snapshots, 'Worker Difficulty — Historical Campaign Playthrough');
 
     // All snapshots must have well-formed data
     assertSnapshotIntegrity(snapshots);
@@ -294,9 +295,9 @@ describe('Playthrough: 200-Year Headless Playthrough', () => {
     // resources, we expect at least 5 calendar years.
     expect(yearsPlayed).toBeGreaterThanOrEqual(5);
 
-    // If the game survived the full 200 years, verify final year
+    // If the game survived the full historical campaign, verify final year.
     if (!finalSnapshot.gameOver) {
-      expect(finalSnapshot.year).toBeGreaterThanOrEqual(2100);
+      expect(finalSnapshot.year).toBeGreaterThanOrEqual(1991);
     }
 
     // Population should have been positive at some point
@@ -309,9 +310,9 @@ describe('Playthrough: 200-Year Headless Playthrough', () => {
   }, 600000);
 
   it('comrade difficulty — challenging but survivable', () => {
-    const snapshots = runPlaythrough('comrade', 200);
+    const snapshots = runPlaythrough('comrade', 74);
 
-    printDecadeSummary(snapshots, 'Comrade Difficulty — 200-Year Playthrough');
+    printDecadeSummary(snapshots, 'Comrade Difficulty — Historical Campaign Playthrough');
 
     // All snapshots must have well-formed data
     assertSnapshotIntegrity(snapshots);
@@ -338,9 +339,9 @@ describe('Playthrough: 200-Year Headless Playthrough', () => {
   }, 600000);
 
   it('tovarish difficulty — survives at least a few years', () => {
-    const snapshots = runPlaythrough('tovarish', 200);
+    const snapshots = runPlaythrough('tovarish', 74);
 
-    printDecadeSummary(snapshots, 'Tovarish Difficulty — 200-Year Playthrough');
+    printDecadeSummary(snapshots, 'Tovarish Difficulty — Historical Campaign Playthrough');
 
     // All snapshots must have well-formed data
     assertSnapshotIntegrity(snapshots);

@@ -6,12 +6,10 @@
  * Scores candidate cells based on era-specific rules:
  * - Pre-1928 (revolution): Near water, near trees, fire spacing
  * - 1928-1941 (collectivization/industrialization): Cluster admin centrally, farms at edges
- * - 1955+ (thaw/stagnation/eternal): Grid-aligned, services near housing (SNiP walking distances)
+ * - 1955+ (thaw/stagnation/free play): Grid-aligned, services near housing (SNiP walking distances)
  */
 
-import arcologyConfig from '../config/arcology.json';
 import { getBuildingDef } from '../data/buildingDefs';
-import type { EraId } from '../game/era/types';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -28,17 +26,6 @@ export interface PlacementContext {
   fertilityCells?: Map<string, number>;
   /** Optional traffic data per cell ("x,z" → count). Used for desire-path awareness. */
   trafficCells?: Map<string, number>;
-  /** Optional arcology footprint cells ("x,z" → mergeGroup). Buildings prefer adjacency to matching arcologies. */
-  arcologyCells?: Map<string, string>;
-}
-
-// ── Arcology merge group lookup (for adjacency-aware placement) ──────────────
-
-const DEF_TO_MERGE_GROUP: Map<string, string> = new Map();
-for (const [group, defIds] of Object.entries(arcologyConfig.mergeGroups as Record<string, string[]>)) {
-  for (const defId of defIds) {
-    DEF_TO_MERGE_GROUP.set(defId, group);
-  }
 }
 
 // ── Role classification helpers ─────────────────────────────────────────────
@@ -57,7 +44,7 @@ function isFarmOrAgriculture(defId: string): boolean {
   return role === 'agriculture';
 }
 
-function isServiceOrCulture(defId: string): boolean {
+function _isServiceOrCulture(defId: string): boolean {
   const role = getRole(defId);
   return role === 'services' || role === 'culture';
 }
@@ -132,7 +119,7 @@ function scoreBrutalist(x: number, z: number, defId: string, ctx: PlacementConte
     // Farms aggressively seek high fertility.
     score += scoreFertility(x, z, defId, ctx);
   } else if (isIndustry(defId)) {
-    // Industry seeks raw resources. 
+    // Industry seeks raw resources.
     // For simplicity, we just reward proximity to ANY natural resource tile.
     const waterDist = minDistTo(x, z, ctx.waterCells);
     const treeDist = minDistTo(x, z, ctx.treeCells);
@@ -163,20 +150,6 @@ function scoreBrutalist(x: number, z: number, defId: string, ctx: PlacementConte
     if (existingDist <= 2) score += 3;
   }
 
-  // Arcology adjacency bonus: prefer cells next to matching arcology footprints
-  if (ctx.arcologyCells && ctx.arcologyCells.size > 0) {
-    const mergeGroup = DEF_TO_MERGE_GROUP.get(defId);
-    if (mergeGroup) {
-      for (const [dx, dz] of [[0, 1], [0, -1], [1, 0], [-1, 0]] as const) {
-        const nKey = `${x + dx},${z + dz}`;
-        if (ctx.arcologyCells.get(nKey) === mergeGroup) {
-          score += 15; // massive preference to grow arcologies
-          break;
-        }
-      }
-    }
-  }
-
   return score;
 }
 
@@ -205,9 +178,10 @@ export function findBestPlacement(
   maxDistance = 8,
 ): { x: number; z: number } | null {
   // If this is the absolute first building (should be HQ), allow placement anywhere by spoofing a center building
-  const searchOriginBuildings = ctx.buildings.length > 0 
-    ? ctx.buildings 
-    : [{ x: Math.floor(ctx.gridSize / 2), z: Math.floor(ctx.gridSize / 2), defId: 'center' }];
+  const searchOriginBuildings =
+    ctx.buildings.length > 0
+      ? ctx.buildings
+      : [{ x: Math.floor(ctx.gridSize / 2), z: Math.floor(ctx.gridSize / 2), defId: 'center' }];
 
   const scored: ScoredCandidate[] = [];
   const candidateSet = new Set<string>();

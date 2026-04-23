@@ -8,16 +8,14 @@
  * per capita + 20% spiky secondary by merit (loyalty, skill, KGB favor).
  */
 
-import { computeAllocation, type BuildingAllocationInput } from '../../src/ai/agents/economy/allocationDistribution';
+import { type BuildingAllocationInput, computeAllocation } from '../../src/ai/agents/economy/allocationDistribution';
 import { housing } from '../../src/ecs/archetypes';
 import { createBuilding } from '../../src/ecs/factories/buildingFactories';
-import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
-import { getResourceEntity } from '../../src/ecs/archetypes';
-import { world, type RaionPool } from '../../src/ecs/world';
+import { type RaionPool, world } from '../../src/ecs/world';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function makeRaionPool(pop: number): RaionPool {
+function _makeRaionPool(pop: number): RaionPool {
   return {
     totalPopulation: pop,
     totalHouseholds: Math.ceil(pop / 4),

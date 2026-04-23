@@ -1,8 +1,5 @@
 import type { TerrainTileState } from '../../src/ai/agents/core/terrainTick';
-import {
-  buildTerrainRow,
-  type TerrainTileContext,
-} from '../../src/db/terrainWriter';
+import { buildTerrainRow, type TerrainTileContext } from '../../src/db/terrainWriter';
 
 function makeTile(overrides: Partial<TerrainTileState> = {}): TerrainTileState {
   return {
@@ -45,10 +42,7 @@ describe('buildTerrainRow', () => {
   });
 
   it('rounds fractional values to integers for DB integer columns', () => {
-    const row = buildTerrainRow(
-      makeTile({ fertility: 72.7, contamination: 3.2, erosionLevel: 1.8 }),
-      defaultCtx,
-    );
+    const row = buildTerrainRow(makeTile({ fertility: 72.7, contamination: 3.2, erosionLevel: 1.8 }), defaultCtx);
     expect(row.fertility).toBe(73);
     expect(row.contamination).toBe(3);
     expect(row.erosionLevel).toBe(2);

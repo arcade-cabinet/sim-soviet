@@ -17,7 +17,7 @@ interface Props {
   gridZ: number;
 }
 
-export const HousingContent: React.FC<Props> = ({ def, building, gridX, gridZ }) => {
+export const HousingContent: React.FC<Props> = ({ building, gridX, gridZ }) => {
   // Count residents assigned to this housing
   const residents = citizens.entities.filter(
     (c) => c.citizen.home && c.citizen.home.gridX === gridX && c.citizen.home.gridY === gridZ,

@@ -766,10 +766,7 @@ const App: React.FC = () => {
 
             <View style={styles.bottomPanel}>
               <Ticker messages={tickerText} />
-              <Toolbar
-                activeTab={sovietTab}
-                onTabChange={handleSovietTab}
-              />
+              <Toolbar activeTab={sovietTab} onTabChange={handleSovietTab} />
               <WorkerStatusBar onShowWorkers={handleShowWorkers} />
             </View>
 

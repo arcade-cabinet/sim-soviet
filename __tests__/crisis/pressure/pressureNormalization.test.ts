@@ -5,6 +5,7 @@
 
 import type { PressureReadContext } from '../../../src/ai/agents/crisis/pressure/PressureDomains';
 import {
+  normalizeAllDomains,
   normalizeDemographic,
   normalizeEconomic,
   normalizeFood,
@@ -15,7 +16,6 @@ import {
   normalizeMorale,
   normalizePolitical,
   normalizePower,
-  normalizeAllDomains,
 } from '../../../src/ai/agents/crisis/pressure/pressureNormalization';
 
 /** Helper to create a baseline context with sensible defaults (no stress). */

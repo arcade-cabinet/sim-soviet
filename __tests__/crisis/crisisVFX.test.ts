@@ -9,9 +9,9 @@
  */
 
 import { type ApplicatorDeps, applyCrisisImpacts } from '@/ai/agents/crisis/CrisisImpactApplicator';
-import type { CrisisImpact, CrisisDefinition, CrisisContext } from '@/ai/agents/crisis/types';
 import { DisasterAgent } from '@/ai/agents/crisis/DisasterAgent';
 import { FamineAgent } from '@/ai/agents/crisis/FamineAgent';
+import type { CrisisContext, CrisisDefinition, CrisisImpact } from '@/ai/agents/crisis/types';
 import { GameRng } from '@/game/SeedSystem';
 
 // ─── Standalone VFX queue (mirrors gameStore logic for isolation) ────────────

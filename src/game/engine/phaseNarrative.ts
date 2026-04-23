@@ -6,24 +6,23 @@
  */
 
 import type { WeatherType } from '../../ai/agents/core/weather-types';
+import { applyMeteorImpact, rollMeteorStrike } from '../../ai/agents/crisis/meteorStrike';
 import {
   tickAchievements as tickAchievementsHelper,
   tickTutorial as tickTutorialHelper,
 } from '../../ai/agents/meta/achievementTick';
 import { tickDirectives as tickDirectivesHelper } from '../../ai/agents/meta/directiveTick';
 import { tickMinigames as tickMinigamesHelper } from '../../ai/agents/meta/minigameTick';
-import { applyMeteorImpact, rollMeteorStrike } from '../../ai/agents/crisis/meteorStrike';
 import {
   completeProject,
   demandPrestigeProject,
   startConstruction,
   tickConstruction,
 } from '../../ai/agents/narrative/prestigeLifecycle';
-import { MORALE_CRITICAL_THRESHOLD, MORALE_WARNING_THRESHOLD } from '../../ai/agents/political/KGBAgent';
+import { createMandatesForEra, createPlanMandateState } from '../../ai/agents/political/PoliticalAgent';
 import { CONSEQUENCE_PRESETS } from '../../ai/agents/political/ScoringSystem';
 import { getCurrentGridSize } from '../../config';
 import { buildingsLogic, getResourceEntity } from '../../ecs/archetypes';
-import { createGameView } from '../../game/GameView';
 import type { TickContext } from './tickContext';
 
 /**
@@ -33,7 +32,13 @@ import type { TickContext } from './tickContext';
  */
 export function phaseNarrative(ctx: TickContext): void {
   const { tickResult, callbacks, rng } = ctx;
-  const { chronology, kgb: kgbAgent, defense: defenseAgent } = ctx.agents;
+  const {
+    chronology,
+    kgb: kgbAgent,
+    defense: defenseAgent,
+    political: politicalAgent,
+    economy: economyAgent,
+  } = ctx.agents;
   const {
     eventSystem,
     politburo,
@@ -44,6 +49,8 @@ export function phaseNarrative(ctx: TickContext): void {
     achievements,
     workerSystem,
     agentManager,
+    deliveries,
+    transport,
   } = ctx.systems;
   const { eraMods } = ctx.modifiers;
 
@@ -126,6 +133,7 @@ export function phaseNarrative(ctx: TickContext): void {
         'Your personnel file has been reviewed. You have been declared an Enemy of the People. No further correspondence is expected.',
       );
     } else {
+      const eraBefore = politicalAgent.getCurrentEraId();
       kgbAgent.applyRehabilitation(consequenceConfig, {
         grid: ctx.grid,
         rng,
@@ -134,6 +142,22 @@ export function phaseNarrative(ctx: TickContext): void {
         chronology,
         callbacks,
       });
+      politicalAgent.handleEraTransitionFull({
+        year: chronology.getDate().year,
+        deliveries,
+        economy: economyAgent,
+        transport,
+        workers: workerSystem,
+        kgb: kgbAgent,
+        scoring,
+        callbacks,
+        difficulty: ctx.state.difficulty,
+        chronology,
+      });
+      const eraAfter = politicalAgent.getCurrentEraId();
+      if (eraAfter !== eraBefore) {
+        ctx.state.mandateState = createPlanMandateState(createMandatesForEra(eraAfter, ctx.state.difficulty));
+      }
     }
   }
 

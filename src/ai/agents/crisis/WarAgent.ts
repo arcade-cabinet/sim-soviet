@@ -15,6 +15,7 @@
  *   - veteranReturnRate: fraction of conscripted returned in aftermath (0-1)
  */
 
+import { TICKS_PER_MONTH } from '@/game/Chronology';
 import type {
   CrisisAgentSaveData,
   CrisisContext,
@@ -37,9 +38,9 @@ const SEVERITY_INTENSITY: Record<string, number> = {
 
 const DEFAULT_CONSCRIPTION_RATE = 0.1;
 const DEFAULT_PRODUCTION_MULT = 1.15;
-const DEFAULT_BOMBARDMENT_RATE = 0.02;
-const DEFAULT_FOOD_DRAIN = 20;
-const DEFAULT_MONEY_DRAIN = 30;
+const DEFAULT_BOMBARDMENT_RATE = 0;
+const DEFAULT_FOOD_DRAIN = 0;
+const DEFAULT_MONEY_DRAIN = 0;
 const DEFAULT_VETERAN_RETURN_RATE = 0.7;
 
 // ─── Buildup narrative pool ──────────────────────────────────────────────────
@@ -105,7 +106,7 @@ export class WarAgent implements ICrisisAgent {
     switch (this.phase) {
       case 'buildup':
         impacts = this.evaluateBuildup(ctx);
-        if (this.ticksInPhase >= this.definition.buildupTicks) {
+        if (this.ticksInPhase >= this.monthsToTicks(this.definition.buildupTicks)) {
           this.phase = 'peak';
           this.ticksInPhase = 0;
         }
@@ -117,7 +118,7 @@ export class WarAgent implements ICrisisAgent {
 
       case 'aftermath':
         impacts = this.evaluateAftermath(ctx);
-        if (this.ticksInPhase >= this.definition.aftermathTicks) {
+        if (this.ticksInPhase >= this.monthsToTicks(this.definition.aftermathTicks)) {
           this.phase = 'resolved';
           this.ticksInPhase = 0;
         }
@@ -168,15 +169,17 @@ export class WarAgent implements ICrisisAgent {
     const intensity = SEVERITY_INTENSITY[def.severity] ?? 0.5;
 
     // Ramp fraction: 0 at start → 1 at end of buildup
-    const ramp = def.buildupTicks > 0 ? this.ticksInPhase / def.buildupTicks : 1;
+    const buildupTicks = this.monthsToTicks(def.buildupTicks);
+    const ramp = buildupTicks > 0 ? this.ticksInPhase / buildupTicks : 1;
+    const monthlyPulse = this.isMonthlyPulse();
 
     const conscriptionRate = this.param('conscriptionRate', DEFAULT_CONSCRIPTION_RATE);
-    const rampedConscription = Math.floor(ctx.population * conscriptionRate * ramp * 0.3);
+    const rampedConscription = monthlyPulse ? Math.floor((ctx.population * conscriptionRate * ramp * 0.3) / 12) : 0;
 
     const impact: CrisisImpact = {
       crisisId: def.id,
       economy: {
-        moneyDelta: -Math.floor(this.param('moneyDrain', DEFAULT_MONEY_DRAIN) * ramp * intensity),
+        moneyDelta: monthlyPulse ? -Math.floor(this.getMoneyDrain() * ramp * intensity) : 0,
       },
       workforce: {
         conscriptionCount: rampedConscription,
@@ -190,7 +193,7 @@ export class WarAgent implements ICrisisAgent {
     this.totalConscripted += rampedConscription;
 
     // Narrative: occasional propaganda during buildup
-    if (ctx.rng.coinFlip(0.15)) {
+    if (monthlyPulse && ctx.rng.coinFlip(0.15)) {
       impact.narrative = {
         toastMessages: [{ text: 'THE MOTHERLAND CALLS \u2014 PREPARE FOR SACRIFICE', severity: 'warning' }],
         pravdaHeadlines: [ctx.rng.pick(BUILDUP_HEADLINES)],
@@ -203,13 +206,18 @@ export class WarAgent implements ICrisisAgent {
   private evaluatePeak(ctx: CrisisContext): CrisisImpact[] {
     const def = this.definition!;
     const intensity = SEVERITY_INTENSITY[def.severity] ?? 0.5;
+    const monthlyPulse = this.isMonthlyPulse();
 
     const conscriptionRate = this.param('conscriptionRate', DEFAULT_CONSCRIPTION_RATE);
-    const conscriptionCount = Math.max(1, Math.floor(ctx.population * conscriptionRate * intensity));
+    const conscriptionCount = monthlyPulse
+      ? this.monthlyPopulationCount(ctx.population, conscriptionRate * intensity)
+      : 0;
+    const casualtyRate = this.param('casualtyRate', 0);
+    const casualtyCount = monthlyPulse ? Math.floor(ctx.population * casualtyRate * intensity) : 0;
     const productionMult = this.param('productionMult', DEFAULT_PRODUCTION_MULT);
-    const foodDrain = this.param('foodDrain', DEFAULT_FOOD_DRAIN);
-    const moneyDrain = this.param('moneyDrain', DEFAULT_MONEY_DRAIN);
-    const bombardmentRate = this.param('bombardmentRate', DEFAULT_BOMBARDMENT_RATE);
+    const foodDrain = monthlyPulse ? this.getFoodDrain(ctx) : 0;
+    const moneyDrain = monthlyPulse ? this.getMoneyDrain() : 0;
+    const bombardmentRate = this.getBombardmentRate();
 
     this.totalConscripted += conscriptionCount;
 
@@ -222,6 +230,7 @@ export class WarAgent implements ICrisisAgent {
       },
       workforce: {
         conscriptionCount,
+        casualtyCount,
         moraleModifier: -0.15 * intensity,
       },
       political: {
@@ -235,7 +244,8 @@ export class WarAgent implements ICrisisAgent {
     };
 
     // Bombardment: random building destruction during peak
-    const numTargets = Math.floor(bombardmentRate * intensity * 30 * 30);
+    const numTargets =
+      monthlyPulse && bombardmentRate > 0 ? Math.max(1, Math.floor(bombardmentRate * intensity * 10)) : 0;
     if (numTargets > 0) {
       const targets: Array<{ gridX: number; gridY: number }> = [];
       for (let i = 0; i < numTargets; i++) {
@@ -251,7 +261,7 @@ export class WarAgent implements ICrisisAgent {
     }
 
     // Narrative during peak
-    if (ctx.rng.coinFlip(0.25)) {
+    if (monthlyPulse && ctx.rng.coinFlip(0.25)) {
       impact.narrative = {
         pravdaHeadlines: [ctx.rng.pick(PEAK_HEADLINES)],
         toastMessages:
@@ -274,19 +284,21 @@ export class WarAgent implements ICrisisAgent {
     const intensity = SEVERITY_INTENSITY[def.severity] ?? 0.5;
 
     // Decay fraction: 1 at start → 0 at end of aftermath
-    const decay = def.aftermathTicks > 0 ? 1 - this.ticksInPhase / def.aftermathTicks : 0;
+    const aftermathTicks = this.monthsToTicks(def.aftermathTicks);
+    const decay = aftermathTicks > 0 ? 1 - this.ticksInPhase / aftermathTicks : 0;
+    const monthlyPulse = this.isMonthlyPulse();
 
     const veteranReturnRate = this.param('veteranReturnRate', DEFAULT_VETERAN_RETURN_RATE);
 
     // Return veterans gradually over the aftermath period
     const totalToReturn = Math.floor(this.totalConscripted * veteranReturnRate);
-    const returningPerTick = def.aftermathTicks > 0 ? Math.floor(totalToReturn / def.aftermathTicks) : totalToReturn;
+    const returningPerMonth = monthlyPulse ? Math.floor(totalToReturn / Math.max(def.aftermathTicks, 1)) : 0;
 
     const impact: CrisisImpact = {
       crisisId: def.id,
       workforce: {
         // Negative conscription = veteran returns
-        conscriptionCount: -returningPerTick,
+        conscriptionCount: -returningPerMonth,
         moraleModifier: -0.05 * decay * intensity,
       },
       infrastructure: {
@@ -298,7 +310,7 @@ export class WarAgent implements ICrisisAgent {
     };
 
     // Occasional narrative during aftermath
-    if (ctx.rng.coinFlip(0.1)) {
+    if (monthlyPulse && ctx.rng.coinFlip(0.1)) {
       impact.narrative = {
         pravdaHeadlines: [ctx.rng.pick(AFTERMATH_HEADLINES)],
       };
@@ -312,5 +324,49 @@ export class WarAgent implements ICrisisAgent {
   /** Read a peakParam with a default fallback. */
   private param(key: string, fallback: number): number {
     return this.definition?.peakParams[key] ?? fallback;
+  }
+
+  /** Crisis JSON durations are authored in simulation months. */
+  private monthsToTicks(months: number): number {
+    return Math.max(1, months * TICKS_PER_MONTH);
+  }
+
+  private isMonthlyPulse(): boolean {
+    return this.ticksInPhase > 0 && this.ticksInPhase % TICKS_PER_MONTH === 0;
+  }
+
+  private monthlyPopulationCount(population: number, annualRate: number): number {
+    if (population <= 0 || annualRate <= 0) return 0;
+    return Math.max(1, Math.floor((population * annualRate) / 12));
+  }
+
+  private getBombardmentRate(): number {
+    return (
+      this.definition?.peakParams.bombardmentRate ??
+      this.definition?.peakParams.bombardmentChance ??
+      DEFAULT_BOMBARDMENT_RATE
+    );
+  }
+
+  private getFoodDrain(ctx: CrisisContext): number {
+    const absoluteDrain = this.definition?.peakParams.foodDrain;
+    if (absoluteDrain !== undefined) return Math.floor(absoluteDrain);
+
+    const requisitionRate = this.definition?.peakParams.foodRequisitionRate;
+    if (requisitionRate !== undefined) {
+      return Math.floor((ctx.food * requisitionRate) / 12);
+    }
+
+    return DEFAULT_FOOD_DRAIN;
+  }
+
+  private getMoneyDrain(): number {
+    const absoluteDrain = this.definition?.peakParams.moneyDrain;
+    if (absoluteDrain !== undefined) return Math.floor(absoluteDrain);
+
+    const moneyDelta = this.definition?.peakParams.moneyDelta;
+    if (moneyDelta !== undefined) return Math.floor(Math.abs(moneyDelta));
+
+    return DEFAULT_MONEY_DRAIN;
   }
 }

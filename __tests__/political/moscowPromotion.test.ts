@@ -10,12 +10,11 @@
  */
 
 import {
-  type MoscowPromotionState,
-  type PromotionPoliticalContext,
-  PROMOTION_CONSTANTS,
   createPromotionState,
   evaluatePromotionRisk,
   handlePromotionResponse,
+  PROMOTION_CONSTANTS,
+  type PromotionPoliticalContext,
   tickPromotionYearly,
 } from '@/ai/agents/political/moscowPromotion';
 import type { SettlementSummary } from '@/game/engine/SettlementSummary';
@@ -57,46 +56,28 @@ function makePolitical(overrides?: Partial<PromotionPoliticalContext>): Promotio
 
 describe('evaluatePromotionRisk', () => {
   it('returns 0 when under investigation', () => {
-    const risk = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ threatLevel: 'investigated' }),
-    );
+    const risk = evaluatePromotionRisk(makeSummary(), makePolitical({ threatLevel: 'investigated' }));
     expect(risk).toBe(0);
   });
 
   it('returns 0 when reviewed', () => {
-    const risk = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ threatLevel: 'reviewed' }),
-    );
+    const risk = evaluatePromotionRisk(makeSummary(), makePolitical({ threatLevel: 'reviewed' }));
     expect(risk).toBe(0);
   });
 
   it('returns 0 when arrested', () => {
-    const risk = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ threatLevel: 'arrested' }),
-    );
+    const risk = evaluatePromotionRisk(makeSummary(), makePolitical({ threatLevel: 'arrested' }));
     expect(risk).toBe(0);
   });
 
   it('returns 0 when there are active crises', () => {
-    const risk = evaluatePromotionRisk(
-      makeSummary({ activeCrisisCount: 2 }),
-      makePolitical(),
-    );
+    const risk = evaluatePromotionRisk(makeSummary({ activeCrisisCount: 2 }), makePolitical());
     expect(risk).toBe(0);
   });
 
   it('increases with consecutive good years', () => {
-    const risk1 = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ consecutiveGoodYears: 1 }),
-    );
-    const risk4 = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ consecutiveGoodYears: 4 }),
-    );
+    const risk1 = evaluatePromotionRisk(makeSummary(), makePolitical({ consecutiveGoodYears: 1 }));
+    const risk4 = evaluatePromotionRisk(makeSummary(), makePolitical({ consecutiveGoodYears: 4 }));
     expect(risk4).toBeGreaterThan(risk1);
   });
 
@@ -113,38 +94,20 @@ describe('evaluatePromotionRisk', () => {
   });
 
   it('increases with quota overperformance', () => {
-    const atThreshold = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ quotaProgress: 0.8 }),
-    );
-    const overPerforming = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ quotaProgress: 1.0 }),
-    );
+    const atThreshold = evaluatePromotionRisk(makeSummary(), makePolitical({ quotaProgress: 0.8 }));
+    const overPerforming = evaluatePromotionRisk(makeSummary(), makePolitical({ quotaProgress: 1.0 }));
     expect(overPerforming).toBeGreaterThan(atThreshold);
   });
 
   it('low suspicion increases risk (Soviet paradox: reliable = promotable)', () => {
-    const lowSuspicion = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ suspicionLevel: 0.0 }),
-    );
-    const highSuspicion = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ suspicionLevel: 0.8 }),
-    );
+    const lowSuspicion = evaluatePromotionRisk(makeSummary(), makePolitical({ suspicionLevel: 0.0 }));
+    const highSuspicion = evaluatePromotionRisk(makeSummary(), makePolitical({ suspicionLevel: 0.8 }));
     expect(lowSuspicion).toBeGreaterThan(highSuspicion);
   });
 
   it('Moscow attention amplifies risk', () => {
-    const lowAttention = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ moscowAttention: 0.0 }),
-    );
-    const highAttention = evaluatePromotionRisk(
-      makeSummary(),
-      makePolitical({ moscowAttention: 1.0 }),
-    );
+    const lowAttention = evaluatePromotionRisk(makeSummary(), makePolitical({ moscowAttention: 0.0 }));
+    const highAttention = evaluatePromotionRisk(makeSummary(), makePolitical({ moscowAttention: 1.0 }));
     expect(highAttention).toBeGreaterThan(lowAttention);
   });
 

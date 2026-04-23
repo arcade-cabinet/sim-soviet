@@ -137,17 +137,17 @@ describe('ScoringSystem', () => {
       expect(getEraMultiplier(0)).toBeCloseTo(1.0);
     });
 
-    it('era 8 (index 7) = 3.0x', () => {
-      expect(getEraMultiplier(7)).toBeCloseTo(3.0);
+    it('final historical era (index 6) = 3.0x', () => {
+      expect(getEraMultiplier(6)).toBeCloseTo(3.0);
     });
 
-    it('era 4 (index 3) is approximately 1.857x', () => {
-      expect(getEraMultiplier(3)).toBeCloseTo(1.0 + (3 * 2.0) / 7, 3);
+    it('era 4 (index 3) is 2.0x in the seven-era campaign', () => {
+      expect(getEraMultiplier(3)).toBeCloseTo(2.0, 3);
     });
 
     it('linearly increases from 1.0 to 3.0', () => {
-      for (let i = 0; i < 8; i++) {
-        const expected = 1.0 + (i * 2.0) / 7;
+      for (let i = 0; i < 7; i++) {
+        const expected = 1.0 + (i * 2.0) / 6;
         expect(getEraMultiplier(i)).toBeCloseTo(expected, 5);
       }
     });
@@ -156,7 +156,7 @@ describe('ScoringSystem', () => {
       expect(getEraMultiplier(-1)).toBeCloseTo(1.0);
     });
 
-    it('clamps indices above 7', () => {
+    it('clamps indices above the final historical era', () => {
       expect(getEraMultiplier(10)).toBeCloseTo(3.0);
     });
   });
@@ -281,7 +281,7 @@ describe('ScoringSystem', () => {
 
     it('applies era multiplier', () => {
       const sys = new ScoringSystem();
-      sys.onEraEnd(7, 'Eternal Soviet', 100, 0, 0, 0);
+      sys.onEraEnd(6, 'Stagnation & Dissolution', 100, 0, 0, 0);
       const era = sys.getScoreBreakdown().eras[0]!;
       // 100 workers * 2 = 200 + clean era 100 = 300, x3.0 = 900
       expect(era.rawTotal).toBe(300);

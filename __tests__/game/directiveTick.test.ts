@@ -15,7 +15,9 @@
 let mockDirective: any = null;
 jest.mock('@/stores/gameStore', () => ({
   getActiveDirective: () => mockDirective,
-  setActiveDirective: (d: any) => { mockDirective = d; },
+  setActiveDirective: (d: any) => {
+    mockDirective = d;
+  },
 }));
 
 // Mock buildingsLogic for aggregate mode tests

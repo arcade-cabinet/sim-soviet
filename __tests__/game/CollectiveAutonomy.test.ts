@@ -21,9 +21,7 @@ describe('Collective Autonomy Integration', () => {
     createResourceStore({ food: 50, population: 0, timber: 500, steel: 100, cement: 50 });
     createTestDvory(30);
     createMetaStore();
-    // Use power-station as seed building (powerReq: 0) so it doesn't
-    // trigger spurious power demands in the "no demands" test case.
-    createBuilding(15, 15, 'power-station');
+    createBuilding(15, 15, 'government-hq').building!.powered = true;
     planner = new CollectivePlanner();
     rng = new GameRng('test-collective');
   });

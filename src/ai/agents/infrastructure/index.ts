@@ -37,6 +37,8 @@ export {
 export { DecayAgent } from './DecayAgent';
 export type { BuildingCollapsedCallback } from './decaySystem';
 export { decaySystem, setBuildingCollapsedCallback } from './decaySystem';
+export type { CascadeResult, DisplacementResult } from './displacementSystem';
+export { cascadeDisplacement, executeDisplacement, findDisplaceable } from './displacementSystem';
 export type { PowerAgentState, PowerPriority } from './PowerAgent';
 export { PowerAgent } from './PowerAgent';
 export { SettlementAgent } from './SettlementAgent';
@@ -54,8 +56,6 @@ export {
   TIER_DEFINITIONS,
   TIER_ORDER,
 } from './SettlementSystem';
-export type { CascadeResult, DisplacementResult } from './displacementSystem';
-export { cascadeDisplacement, executeDisplacement, findDisplaceable } from './displacementSystem';
 export { TransportAgent } from './TransportAgent';
 export type { TransportSaveData, TransportTickResult } from './TransportSystem';
 export {

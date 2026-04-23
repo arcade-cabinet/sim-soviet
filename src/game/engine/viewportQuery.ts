@@ -27,11 +27,7 @@ export interface LoadSet {
  * @param cameraZ - Camera Z position in world space
  * @param viewDistance - Half the visible range (camera height dependent)
  */
-export function getVisibleBounds(
-  cameraX: number,
-  cameraZ: number,
-  viewDistance: number,
-): VisibleBounds {
+export function getVisibleBounds(cameraX: number, cameraZ: number, viewDistance: number): VisibleBounds {
   return {
     minX: cameraX - viewDistance,
     maxX: cameraX + viewDistance,
@@ -46,18 +42,10 @@ export function getVisibleBounds(
  * @param buildings - Array of building positions with IDs
  * @returns IDs of buildings within bounds
  */
-export function queryVisibleBuildings(
-  bounds: VisibleBounds,
-  buildings: BuildingPosition[],
-): string[] {
+export function queryVisibleBuildings(bounds: VisibleBounds, buildings: BuildingPosition[]): string[] {
   const result: string[] = [];
   for (const b of buildings) {
-    if (
-      b.x >= bounds.minX &&
-      b.x <= bounds.maxX &&
-      b.z >= bounds.minZ &&
-      b.z <= bounds.maxZ
-    ) {
+    if (b.x >= bounds.minX && b.x <= bounds.maxX && b.z >= bounds.minZ && b.z <= bounds.maxZ) {
       result.push(b.id);
     }
   }
@@ -70,10 +58,7 @@ export function queryVisibleBuildings(
  * @param currentLoaded - IDs of buildings currently loaded
  * @returns Objects to load (in newVisible but not currentLoaded) and unload (in currentLoaded but not newVisible)
  */
-export function getLoadSet(
-  newVisible: string[],
-  currentLoaded: string[],
-): LoadSet {
+export function getLoadSet(newVisible: string[], currentLoaded: string[]): LoadSet {
   const visibleSet = new Set(newVisible);
   const loadedSet = new Set(currentLoaded);
 

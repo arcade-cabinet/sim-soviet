@@ -20,8 +20,8 @@ describe('Blat KGB Risk — Constants', () => {
     expect(BLAT_ARREST_THRESHOLD).toBe(30);
   });
 
-  it('KGB_INVESTIGATION_CHANCE_PER_POINT is 0.01', () => {
-    expect(KGB_INVESTIGATION_CHANCE_PER_POINT).toBe(0.01);
+  it('KGB_INVESTIGATION_CHANCE_PER_POINT is tuned for long campaigns', () => {
+    expect(KGB_INVESTIGATION_CHANCE_PER_POINT).toBe(0.00005);
   });
 
   it('arrest threshold is higher than safe threshold', () => {
@@ -62,103 +62,60 @@ describe('Blat KGB Risk — Threshold behavior', () => {
   });
 
   it('can trigger investigation when blat is above safe threshold', () => {
-    // With blat at 25 (10 excess), excessPoints = 10, chance = 10%
-    let foundInvestigation = false;
-    for (let i = 0; i < 200; i++) {
-      const sys = new EconomySystem('thaw', 'comrade');
-      sys.setRng(new GameRng(`kgb-investigation-${i}`));
-      sys.grantBlat(15); // blat = 25, 10 excess points
+    const sys = new EconomySystem('thaw', 'comrade');
+    const rng = new GameRng('forced-kgb-investigation');
+    jest.spyOn(rng, 'random').mockReturnValue(0);
+    sys.setRng(rng);
+    sys.grantBlat(15); // blat = 25, 10 excess points
 
-      const result = sys.checkBlatKgbRisk();
-      if (result?.investigated) {
-        foundInvestigation = true;
-        expect(result.announcement).not.toBeNull();
-        expect(result.announcement!.length).toBeGreaterThan(0);
-        break;
-      }
-    }
-    expect(foundInvestigation).toBe(true);
+    const result = sys.checkBlatKgbRisk();
+    expect(result?.investigated).toBe(true);
+    expect(result!.announcement).not.toBeNull();
+    expect(result!.announcement!.length).toBeGreaterThan(0);
   });
 
   it('does not always trigger investigation at moderate blat', () => {
-    // With blat at 16 (1 above threshold), chance is only 1%
-    // Most attempts should NOT trigger
-    let safeCount = 0;
-    const trials = 100;
-    for (let i = 0; i < trials; i++) {
-      const sys = new EconomySystem('thaw', 'comrade');
-      sys.setRng(new GameRng(`moderate-blat-${i}`));
-      sys.grantBlat(6); // blat goes from 10 to 16
+    const sys = new EconomySystem('thaw', 'comrade');
+    const rng = new GameRng('moderate-blat');
+    jest.spyOn(rng, 'random').mockReturnValue(0.99);
+    sys.setRng(rng);
+    sys.grantBlat(6); // blat goes from 10 to 16
 
-      const result = sys.checkBlatKgbRisk();
-      if (result === null) safeCount++;
-    }
-    // At 1% chance, we expect ~99 safe out of 100
-    expect(safeCount).toBeGreaterThan(80);
+    expect(sys.checkBlatKgbRisk()).toBeNull();
   });
 });
 
 describe('Blat KGB Risk — Investigation probability scaling', () => {
-  it('higher blat means more investigations over many trials', () => {
-    const trials = 500;
+  it('higher blat produces a higher investigation probability', () => {
+    const lowExcess = 16 - BLAT_SAFE_THRESHOLD;
+    const highExcess = 60 - BLAT_SAFE_THRESHOLD;
 
-    // Low blat (16 connections, 1 excess = 1% chance)
-    let lowInvestigations = 0;
-    for (let i = 0; i < trials; i++) {
-      const sys = new EconomySystem('thaw', 'comrade');
-      sys.setRng(new GameRng(`low-excess-${i}`));
-      sys.grantBlat(6); // 10 → 16
-      const result = sys.checkBlatKgbRisk();
-      if (result?.investigated) lowInvestigations++;
-    }
-
-    // High blat (60 connections, 45 excess = 45% chance)
-    let highInvestigations = 0;
-    for (let i = 0; i < trials; i++) {
-      const sys = new EconomySystem('thaw', 'comrade');
-      sys.setRng(new GameRng(`high-excess-${i}`));
-      sys.grantBlat(50); // 10 + 50 = 60
-      const result = sys.checkBlatKgbRisk();
-      if (result?.investigated) highInvestigations++;
-    }
-
-    // High blat should trigger significantly more investigations
-    expect(highInvestigations).toBeGreaterThan(lowInvestigations);
+    expect(highExcess * KGB_INVESTIGATION_CHANCE_PER_POINT).toBeGreaterThan(
+      lowExcess * KGB_INVESTIGATION_CHANCE_PER_POINT,
+    );
   });
 
-  it('1% per excess point: at 25 connections (10 excess), ~10% trigger rate', () => {
-    const trials = 1000;
-    let investigations = 0;
-    for (let i = 0; i < trials; i++) {
-      const sys = new EconomySystem('thaw', 'comrade');
-      sys.setRng(new GameRng(`rate-check-${i}`));
-      sys.grantBlat(15); // blat = 25, excess = 10, chance = 10%
-      const result = sys.checkBlatKgbRisk();
-      if (result?.investigated) investigations++;
-    }
-    // Expected ~100 out of 1000. Allow wide tolerance for RNG.
-    expect(investigations).toBeGreaterThan(40);
-    expect(investigations).toBeLessThan(200);
+  it('at 25 connections (10 excess), per-tick risk stays rare', () => {
+    const excess = 25 - BLAT_SAFE_THRESHOLD;
+    const chance = excess * KGB_INVESTIGATION_CHANCE_PER_POINT;
+
+    expect(chance).toBe(0.0005);
+    expect(chance).toBeLessThan(0.001);
   });
 });
 
 describe('Blat KGB Risk — Arrest at high blat', () => {
   it('can trigger arrest when blat exceeds arrest threshold (>30)', () => {
-    let foundArrest = false;
-    for (let i = 0; i < 500; i++) {
-      const sys = new EconomySystem('thaw', 'comrade');
-      sys.setRng(new GameRng(`arrest-${i}`));
-      sys.grantBlat(50); // blat = 60, well above arrest threshold
+    const sys = new EconomySystem('thaw', 'comrade');
+    const rng = new GameRng('forced-arrest');
+    jest.spyOn(rng, 'random').mockReturnValue(0);
+    sys.setRng(rng);
+    sys.grantBlat(50); // blat = 60, well above arrest threshold
 
-      const result = sys.checkBlatKgbRisk();
-      if (result?.arrested) {
-        foundArrest = true;
-        expect(result.announcement).not.toBeNull();
-        expect(result.announcement!).toContain('KGB');
-        break;
-      }
-    }
-    expect(foundArrest).toBe(true);
+    const result = sys.checkBlatKgbRisk();
+    expect(result?.arrested).toBe(true);
+    expect(result!.announcement).not.toBeNull();
+    expect(result!.announcement!).toContain('KGB');
   });
 
   it('arrest is not possible when blat is at or below arrest threshold', () => {
@@ -228,19 +185,14 @@ describe('Blat KGB Risk — tick() integration', () => {
   });
 
   it('tick with high blat can return non-null blatKgbResult', () => {
-    let foundKgb = false;
-    for (let i = 0; i < 200; i++) {
-      const sys = new EconomySystem('thaw', 'comrade');
-      sys.setRng(new GameRng(`tick-high-blat-${i}`));
-      sys.grantBlat(40); // blat = 50, well above threshold
+    const sys = new EconomySystem('thaw', 'comrade');
+    const rng = new GameRng('tick-high-blat');
+    jest.spyOn(rng, 'random').mockReturnValue(0);
+    sys.setRng(rng);
+    sys.grantBlat(40); // blat = 50, well above threshold
 
-      const result = sys.tick(0, 1960, 100, ['factory']);
-      if (result.blatKgbResult !== null) {
-        foundKgb = true;
-        break;
-      }
-    }
-    expect(foundKgb).toBe(true);
+    const result = sys.tick(0, 1960, 100, ['factory']);
+    expect(result.blatKgbResult).not.toBeNull();
   });
 });
 

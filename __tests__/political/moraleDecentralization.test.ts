@@ -8,11 +8,16 @@
  * - Pressure system still reads morale internally (not broken)
  */
 
-import { KGBAgent, MORALE_CONCERN_THRESHOLD, MORALE_CRITICAL_THRESHOLD, MORALE_WARNING_THRESHOLD } from '@/ai/agents/political/KGBAgent';
-import type { KGBMoraleReport, MoraleReportSeverity } from '@/ai/agents/political/types';
 import { contextualGenerators } from '@/ai/agents/narrative/pravda/generators/absurdist';
-import type { TopBarProps } from '@/ui/TopBar';
+import {
+  KGBAgent,
+  MORALE_CONCERN_THRESHOLD,
+  MORALE_CRITICAL_THRESHOLD,
+  MORALE_WARNING_THRESHOLD,
+} from '@/ai/agents/political/KGBAgent';
+import type { KGBMoraleReport } from '@/ai/agents/political/types';
 import type { GameView } from '@/game/GameView';
+import type { TopBarProps } from '@/ui/TopBar';
 
 // ── TopBar: morale NOT visible ──────────────────────────────────────────────
 
@@ -57,26 +62,17 @@ describe('KGBAgent morale reports', () => {
   });
 
   it('does NOT generate reports when morale is above concern threshold', () => {
-    kgb.sampleMorale(
-      [{ sectorId: { gridX: 3, gridY: 5 }, avgMorale: 60 }],
-      100,
-    );
+    kgb.sampleMorale([{ sectorId: { gridX: 3, gridY: 5 }, avgMorale: 60 }], 100);
     expect(kgb.getMoraleReports()).toHaveLength(0);
   });
 
   it('does NOT generate reports at exactly the concern threshold', () => {
-    kgb.sampleMorale(
-      [{ sectorId: { gridX: 0, gridY: 0 }, avgMorale: MORALE_CONCERN_THRESHOLD }],
-      100,
-    );
+    kgb.sampleMorale([{ sectorId: { gridX: 0, gridY: 0 }, avgMorale: MORALE_CONCERN_THRESHOLD }], 100);
     expect(kgb.getMoraleReports()).toHaveLength(0);
   });
 
   it('generates a "concern" report when morale drops below 40', () => {
-    kgb.sampleMorale(
-      [{ sectorId: { gridX: 2, gridY: 3 }, avgMorale: 35 }],
-      200,
-    );
+    kgb.sampleMorale([{ sectorId: { gridX: 2, gridY: 3 }, avgMorale: 35 }], 200);
     const reports = kgb.getMoraleReports();
     expect(reports).toHaveLength(1);
     expect(reports[0]!.severity).toBe('concern');
@@ -86,20 +82,14 @@ describe('KGBAgent morale reports', () => {
   });
 
   it('generates a "warning" report when morale drops below 25', () => {
-    kgb.sampleMorale(
-      [{ sectorId: { gridX: 1, gridY: 1 }, avgMorale: 20 }],
-      300,
-    );
+    kgb.sampleMorale([{ sectorId: { gridX: 1, gridY: 1 }, avgMorale: 20 }], 300);
     const reports = kgb.getMoraleReports();
     expect(reports).toHaveLength(1);
     expect(reports[0]!.severity).toBe('warning');
   });
 
   it('generates a "critical" report when morale drops below 15', () => {
-    kgb.sampleMorale(
-      [{ sectorId: { gridX: 0, gridY: 0 }, avgMorale: 10 }],
-      400,
-    );
+    kgb.sampleMorale([{ sectorId: { gridX: 0, gridY: 0 }, avgMorale: 10 }], 400);
     const reports = kgb.getMoraleReports();
     expect(reports).toHaveLength(1);
     expect(reports[0]!.severity).toBe('critical');
@@ -123,10 +113,7 @@ describe('KGBAgent morale reports', () => {
   it('trims reports to max capacity (20)', () => {
     // Generate 25 reports
     for (let i = 0; i < 25; i++) {
-      kgb.sampleMorale(
-        [{ sectorId: { gridX: i, gridY: 0 }, avgMorale: 30 }],
-        i * 10,
-      );
+      kgb.sampleMorale([{ sectorId: { gridX: i, gridY: 0 }, avgMorale: 30 }], i * 10);
     }
     const reports = kgb.getMoraleReports();
     expect(reports.length).toBeLessThanOrEqual(20);
@@ -139,7 +126,7 @@ describe('KGBAgent morale reports', () => {
       [
         { sectorId: { gridX: 0, gridY: 0 }, avgMorale: 35 }, // concern
         { sectorId: { gridX: 1, gridY: 0 }, avgMorale: 20 }, // warning
-        { sectorId: { gridX: 2, gridY: 0 }, avgMorale: 5 },  // critical
+        { sectorId: { gridX: 2, gridY: 0 }, avgMorale: 5 }, // critical
       ],
       100,
     );
@@ -269,13 +256,19 @@ describe('KGBTab moraleReports prop', () => {
   });
 
   it('KGBTabProps type accepts moraleReports array', () => {
-    const { KGBTab } = require('@/ui/hq-tabs/KGBTab') as { KGBTab: React.FC<import('@/ui/hq-tabs/KGBTab').KGBTabProps> };
-    // Type check: moraleReports is accepted in the props
     const reports: KGBMoraleReport[] = [
       { sectorId: { gridX: 1, gridY: 2 }, avgMorale: 30, timestamp: 100, severity: 'concern' },
       { sectorId: { gridX: 3, gridY: 4 }, avgMorale: 10, timestamp: 200, severity: 'critical' },
     ];
+    const props: import('@/ui/hq-tabs/KGBTab').KGBTabProps = {
+      loyaltyLevel: 50,
+      dissidentCount: 0,
+      recentArrests: [],
+      surveillanceActive: false,
+      moraleReports: reports,
+    };
     expect(reports).toHaveLength(2);
+    expect(props.moraleReports).toBe(reports);
     expect(reports[0]!.severity).toBe('concern');
     expect(reports[1]!.severity).toBe('critical');
   });

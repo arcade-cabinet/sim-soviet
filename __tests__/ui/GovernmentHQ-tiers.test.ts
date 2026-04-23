@@ -20,8 +20,8 @@ jest.mock('../../src/stores/gameStore', () => ({
   useGosplanAllocations: () => ({}),
 }));
 
-import { getVisibleTabs, AGENCY_TABS } from '../../src/ui/GovernmentHQ';
 import type { SettlementTier } from '../../src/ai/agents/infrastructure/SettlementSystem';
+import { AGENCY_TABS, getVisibleTabs } from '../../src/ui/GovernmentHQ';
 
 describe('GovernmentHQ tier-based tab gating', () => {
   test('selo shows only 2 tabs (gosplan + central_committee)', () => {
@@ -39,14 +39,7 @@ describe('GovernmentHQ tier-based tab gating', () => {
   test('pgt shows 6 tabs (+ politburo, reports)', () => {
     const tabs = getVisibleTabs('pgt');
     expect(tabs).toHaveLength(6);
-    expect(tabs.map((t) => t.key)).toEqual([
-      'gosplan',
-      'central_committee',
-      'kgb',
-      'military',
-      'politburo',
-      'reports',
-    ]);
+    expect(tabs.map((t) => t.key)).toEqual(['gosplan', 'central_committee', 'kgb', 'military', 'politburo', 'reports']);
   });
 
   test('gorod shows all 7 tabs (+ law_enforcement)', () => {

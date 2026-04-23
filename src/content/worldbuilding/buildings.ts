@@ -11,7 +11,7 @@ export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
     decay:
       "The Coal Plant groans like an old man recounting his achievements. Rust has formed a workers' council and is negotiating for control of the east wall. Management has not noticed, as management is also rusting.",
     destruction:
-      'The Coal Plant has been decommissioned. Its smoke, orphaned, drifts aimlessly above the city. Citizens report a brief, unsettling glimpse of blue sky before normal grey service resumes.',
+      'The Coal Plant has been decommissioned. Its smoke, orphaned, drifts aimlessly above the settlement. Citizens report a brief, unsettling glimpse of blue sky before normal grey service resumes.',
   },
 
   // -- Tenement ---
@@ -47,7 +47,7 @@ export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
     decay:
       'The Vodka Plant is leaking. Fortunately, local wildlife has gathered to assist with cleanup. Unfortunately, local wildlife is now drunk. A bear was seen operating a forklift. No one intervened.',
     destruction:
-      'The Vodka Plant has been closed. A moment of silence is observed. The moment lasts three days. Productivity across the city drops 40%. Citizens develop a sudden interest in fermentation chemistry.',
+      'The Vodka Plant has been closed. A moment of silence is observed. The moment lasts three days. Productivity across the settlement drops 40%. Citizens develop a sudden interest in fermentation chemistry.',
   },
 
   // -- Gulag ---
@@ -117,7 +117,7 @@ export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
     inspection:
       'INSPECTION REPORT: Broadcast range: 50 kilometers. Signal clarity: adequate. Content variety: one. The DJ has been playing the same playlist since 1978. He has not been asked to change it. He has not asked to change it. The system works.',
     decay:
-      'The Radio Station antenna is tilting. Broadcasts now reach only the eastern half of the city. Western-half citizens report enjoying the silence. This has been noted in their files.',
+      'The Radio Station antenna is tilting. Broadcasts now reach only the eastern half of the settlement. Western-half citizens report enjoying the silence. This has been noted in their files.',
     destruction:
       'The Radio Station has gone silent. For the first time in decades, citizens can hear themselves think. Several report the experience as "unsettling." The silence is temporary. It is always temporary.',
   },
@@ -131,7 +131,7 @@ export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
     decay:
       'The Ministry Building is sinking into its own paperwork. The basement, once an archive, is now a paper mine. Archaeologists have discovered forms from 1953 still awaiting approval.',
     destruction:
-      'The Ministry Building has been demolished. 4,000 tons of paperwork released into the atmosphere. Citizens downwind report paper cuts from breathing. The forms, freed from their cabinets, scatter across the city like bureaucratic confetti.',
+      'The Ministry Building has been demolished. 4,000 tons of paperwork released into the atmosphere. Citizens downwind report paper cuts from breathing. The forms, freed from their cabinets, scatter across the settlement like bureaucratic confetti.',
   },
 
   // -- Lenin Statue ---
@@ -139,7 +139,7 @@ export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
     placement:
       'A Lenin Statue has been erected. It points toward the future. Or possibly toward the bread line. The direction is inspirational either way. Pigeons gather immediately. They, too, are inspired.',
     inspection:
-      'INSPECTION REPORT: Structural integrity: eternal (by decree). The statue points northeast. Previous statue pointed northwest. Citizens who noticed the discrepancy have been reassigned. Bird droppings: present. The droppings have been classified as "natural patina."',
+      'INSPECTION REPORT: Structural integrity: permanent by decree. The statue points northeast. Previous statue pointed northwest. Citizens who noticed the discrepancy have been reassigned. Bird droppings: present. The droppings have been classified as "natural patina."',
     decay:
       'The Lenin Statue is developing a lean. It now points slightly downward, which citizens interpret as Lenin looking at the people he served. Engineers interpret it as a foundation problem. Both interpretations are, technically, correct.',
     destruction:
@@ -161,7 +161,7 @@ export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
   // -- Factory ---
   factory: {
     placement:
-      'A Factory springs into operation, producing goods that the city needs, or possibly goods that no one needs but the quota demands. The assembly line hums with purpose. The purpose is unclear, but the humming is consistent.',
+      'A Factory springs into operation, producing goods that the settlement needs, or possibly goods that no one needs but the quota demands. The assembly line hums with purpose. The purpose is unclear, but the humming is consistent.',
     inspection:
       "INSPECTION REPORT: Output: 400 units. Units of what: classified. Quality: acceptable by standards that were revised 11 minutes ago. The assembly line produces items at a rate of one every 45 seconds. What happens to these items after production is someone else's department.",
     decay:
@@ -173,7 +173,7 @@ export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
   // -- Railway Station ---
   railway_station: {
     placement:
-      'A Railway Station is built, connecting this city to other cities that may or may not exist. The train schedule has been posted. It is optimistic. The trains are less so.',
+      'A Railway Station is built, connecting this settlement to other settlements that may or may not exist. The train schedule has been posted. It is optimistic. The trains are less so.',
     inspection:
       'INSPECTION REPORT: Trains scheduled today: 4. Trains arrived today: 1. Train that arrived: wrong train. The station buffet offers tea (grey), sandwiches (grey), and an atmosphere (also grey). The departures board lists destinations. The destinations list reads: "classified."',
     decay:
@@ -185,7 +185,7 @@ export const BUILDING_FLAVOR: Record<string, BuildingFlavorText> = {
   // -- Bunker ---
   bunker: {
     placement:
-      'A Bunker has been excavated beneath the city. It will protect key personnel in the event of capitalist aggression. Key personnel includes: 1 official, his family, 400 filing cabinets, and a portrait of Lenin. Citizens are not key personnel.',
+      'A Bunker has been excavated beneath the settlement. It will protect key personnel in the event of capitalist aggression. Key personnel includes: 1 official, his family, 400 filing cabinets, and a portrait of Lenin. Citizens are not key personnel.',
     inspection:
       'INSPECTION REPORT: Depth: 30 meters. Supplies: 5 years of canned meat (expiration date: 1974). Air filtration: operational. The bunker includes a conference room for post-apocalyptic planning. The agenda has been pre-written. Item 1: "Blame the West." Item 2: "See Item 1."',
     decay:

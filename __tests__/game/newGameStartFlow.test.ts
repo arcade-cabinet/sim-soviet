@@ -5,21 +5,15 @@
  * 1. ArrivalSequence staggers families over ~30 ticks
  * 2. CollectiveAgent determines starting needs dynamically (bootstrap removed)
  * 3. Starting morale = 70 for arriving families
- * 4. No divergence year selector in freeform (NewGameConfig has no divergenceYear)
+ * 4. New game config starts the single historical campaign (no mode/divergence selector)
  * 5. Caravan target set during agent arrival evaluation
  */
 
-import { ArrivalSequence } from '../../src/game/arrivalSequence';
+import { createMetaStore, createResourceStore } from '../../src/ecs/factories';
 import type { DvorMemberSeed } from '../../src/ecs/factories/settlementFactories';
 import { world } from '../../src/ecs/world';
-import { createResourceStore, createMetaStore, createGrid } from '../../src/ecs/factories';
-import { dvory, citizens, getResourceEntity, buildingsLogic } from '../../src/ecs/archetypes';
-import { CollectiveAgent } from '../../src/ai/agents/infrastructure/CollectiveAgent';
-import { GameGrid } from '../../src/game/GameGrid';
-import { GameRng } from '../../src/game/SeedSystem';
-import { MapSystem } from '../../src/game/map';
-import { setCurrentGridSize } from '../../src/config';
-import { getCaravanTarget, setArrivalInProgress } from '../../src/stores/gameStore';
+import { ArrivalSequence } from '../../src/game/arrivalSequence';
+import { setArrivalInProgress } from '../../src/stores/gameStore';
 import type { NewGameConfig } from '../../src/ui/NewGameSetup';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -156,19 +150,17 @@ describe('Starting morale for arriving families', () => {
   });
 });
 
-// ── No divergence year in freeform ──────────────────────────────────────
+// ── Single historical campaign config ───────────────────────────────────
 
-describe('NewGameConfig — no divergence year selector', () => {
-  it('NewGameConfig type does not include divergenceYear', () => {
-    // The freeform mode config passed by NewGameSetup has no divergenceYear field
+describe('NewGameConfig — historical campaign only', () => {
+  it('NewGameConfig type contains only consequence and seed', () => {
     const config: NewGameConfig = {
       consequence: 'gulag',
       seed: 'test',
-      gameMode: 'freeform',
     };
-    // TypeScript would error if divergenceYear were required
-    expect(config.gameMode).toBe('freeform');
-    // No divergenceYear property exists on the config
+    expect(config.consequence).toBe('gulag');
+    expect(config.seed).toBe('test');
+    expect('gameMode' in config).toBe(false);
     expect('divergenceYear' in config).toBe(false);
   });
 });

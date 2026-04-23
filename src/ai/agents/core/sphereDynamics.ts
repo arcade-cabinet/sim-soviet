@@ -2,7 +2,7 @@
  * @module ai/agents/core/sphereDynamics
  *
  * Empire lifecycle engine: Khaldun + Turchin overlapping cycles,
- * sphere split/merge probability, corporate emergence, governance drift.
+ * sphere split/merge probability and governance drift.
  *
  * Two overlapping cycle theories drive sphere behavior:
  *
@@ -17,7 +17,7 @@
  */
 
 import type { GameRng } from '@/game/SeedSystem';
-import type { GovernanceType, GovernanceTransition, SphereId } from './worldCountries';
+import type { GovernanceTransition, GovernanceType, SphereId } from './worldCountries';
 import { GOVERNANCE_TRANSITIONS } from './worldCountries';
 
 // ─── Sphere ──────────────────────────────────────────────────────────────────
@@ -37,8 +37,6 @@ export interface Sphere {
   khaldunPhase: number;
   /** Turchin structural-demographic: 0-1 within ~250yr cycle. */
   turchinPhase: number;
-  /** Corporate GDP as fraction of total sphere GDP (0-1). */
-  corporateShare: number;
   /** Religious movement intensity (0=secular, 1=fundamentalist). */
   religiousIntensity: number;
 }
@@ -141,37 +139,6 @@ export function computeMergeProbability(sphere: Sphere, targetSphere: Sphere): n
   return Math.min(0.05, p); // cap at 5% per year
 }
 
-// ─── Corporate Emergence ─────────────────────────────────────────────────────
-
-/**
- * Advance corporate share based on sphere conditions.
- * Corporate share grows when oligarchic governance + high tech.
- * VOC precedent: corporations HAVE been sovereign before.
- */
-export function advanceCorporateShare(sphere: Sphere, techLevel: number): number {
-  let delta = 0;
-
-  // Base growth in oligarchic/corporate governance
-  if (sphere.governance === 'oligarchic' || sphere.governance === 'corporate') {
-    delta += 0.005;
-  }
-
-  // Tech accelerates corporate growth
-  delta += techLevel * 0.002;
-
-  // Democratic governance slows corporate growth (regulation)
-  if (sphere.governance === 'democratic') {
-    delta -= 0.002;
-  }
-
-  // Communist governance suppresses corporate growth
-  if (sphere.governance === 'communist') {
-    delta = -0.01;
-  }
-
-  return Math.max(0, Math.min(1, sphere.corporateShare + delta));
-}
-
 // ─── Governance Drift ────────────────────────────────────────────────────────
 
 /**
@@ -217,15 +184,6 @@ export function computeTransitionProbability(sphere: Sphere, transition: Governa
     }
   }
 
-  // Corporate share condition
-  if (cond.minCorporateShare !== undefined) {
-    if (sphere.corporateShare >= cond.minCorporateShare) {
-      p *= 2.0;
-    } else {
-      p *= 0.1; // very unlikely without sufficient corporate power
-    }
-  }
-
   // Religious intensity condition
   if (cond.minReligiousIntensity !== undefined) {
     if (sphere.religiousIntensity >= cond.minReligiousIntensity) {
@@ -263,7 +221,7 @@ export function advanceReligiousIntensity(sphere: Sphere): number {
   }
 
   // Secular governance slowly reduces intensity
-  if (sphere.governance === 'democratic' || sphere.governance === 'technocratic') {
+  if (sphere.governance === 'democratic') {
     delta -= 0.003;
   }
 
@@ -286,7 +244,6 @@ export function createInitialSpheres(): Record<SphereId, Sphere> {
       governance: 'democratic',
       khaldunPhase: 0.6, // late-cycle (WWI = civilizational exhaustion)
       turchinPhase: 0.65, // nearing crisis
-      corporateShare: 0.1,
       religiousIntensity: 0.2,
     },
     sinosphere: {
@@ -297,7 +254,6 @@ export function createInitialSpheres(): Record<SphereId, Sphere> {
       governance: 'authoritarian',
       khaldunPhase: 0.8, // Qing collapse
       turchinPhase: 0.7, // deep crisis
-      corporateShare: 0.05,
       religiousIntensity: 0.15,
     },
     western: {
@@ -308,7 +264,6 @@ export function createInitialSpheres(): Record<SphereId, Sphere> {
       governance: 'democratic',
       khaldunPhase: 0.3, // young vigor (US ascendance)
       turchinPhase: 0.3, // expansion phase
-      corporateShare: 0.15,
       religiousIntensity: 0.3,
     },
     middle_eastern: {
@@ -319,7 +274,6 @@ export function createInitialSpheres(): Record<SphereId, Sphere> {
       governance: 'authoritarian',
       khaldunPhase: 0.9, // Ottoman collapse imminent
       turchinPhase: 0.8, // deep crisis
-      corporateShare: 0.02,
       religiousIntensity: 0.5,
     },
     eurasian: {
@@ -330,19 +284,7 @@ export function createInitialSpheres(): Record<SphereId, Sphere> {
       governance: 'authoritarian',
       khaldunPhase: 0.5,
       turchinPhase: 0.5,
-      corporateShare: 0.03,
       religiousIntensity: 0.25,
-    },
-    corporate: {
-      id: 'corporate',
-      aggregateHostility: 0.1,
-      aggregateTrade: 0.6,
-      aggregateMilitary: 0.0,
-      governance: 'corporate',
-      khaldunPhase: 0.0, // doesn't exist yet in 1917
-      turchinPhase: 0.0,
-      corporateShare: 1.0, // by definition
-      religiousIntensity: 0.0,
     },
   };
 }
@@ -351,11 +293,10 @@ export function createInitialSpheres(): Record<SphereId, Sphere> {
 
 /**
  * Advance a single sphere by one year.
- * Updates cycles, corporate share, religious intensity, and governance.
+ * Updates cycles, religious intensity, and governance.
  */
-export function tickSphere(sphere: Sphere, techLevel: number, rng: GameRng): Sphere {
+export function tickSphere(sphere: Sphere, _techLevel: number, rng: GameRng): Sphere {
   let s = advanceCycles(sphere);
-  s = { ...s, corporateShare: advanceCorporateShare(s, techLevel) };
   s = { ...s, religiousIntensity: advanceReligiousIntensity(s) };
   s = { ...s, governance: checkGovernanceTransition(s, rng) };
   return s;

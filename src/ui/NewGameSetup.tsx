@@ -2,26 +2,20 @@
  * NewGameSetup — Soviet dossier-styled game configuration screen.
  *
  * Shown after clicking "NEW GAME" on the MainMenu, before the 3D engine loads.
- * Lets the player pick game mode (historical/freeform), consequence level, and seed.
+ * Lets the player pick consequence level and seed for the historical campaign.
  * Styled as an official Soviet assignment form.
  */
 
 import type React from 'react';
 import { useState } from 'react';
 import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import type { GovernorMode } from '../ai/agents/crisis/Governor';
-import {
-  CONSEQUENCE_PRESETS,
-  type ConsequenceLevel,
-  SCORE_MULTIPLIER,
-} from '../ai/agents/political/ScoringSystem';
+import { CONSEQUENCE_PRESETS, type ConsequenceLevel, SCORE_MULTIPLIER } from '../ai/agents/political/ScoringSystem';
 import { Colors, monoFont } from './styles';
 
 /** Player-selected options for starting a new game session. */
 export interface NewGameConfig {
   consequence: ConsequenceLevel;
   seed: string;
-  gameMode: GovernorMode;
 }
 
 export interface NewGameSetupProps {
@@ -38,15 +32,8 @@ const CONSEQUENCE_FLAVOR: Record<ConsequenceLevel, string> = {
     '\u0420\u0430\u0441\u0441\u0442\u0440\u0435\u043b\u044f\u043d. The file is closed. Game over. Score multiplier x1.5.',
 };
 
-const MODE_FLAVOR: Record<GovernorMode, string> = {
-  historical: 'History IS the difficulty. Survive the actual Soviet timeline.',
-  freeform:
-    'Same forces, different timing. Historical events happen probabilistically. The timeline diverges naturally.',
-};
-
 /** Soviet dossier-styled game configuration screen for mode, consequence, and seed. */
 export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) => {
-  const [gameMode, setGameMode] = useState<GovernorMode>('historical');
   const [consequence, setConsequence] = useState<ConsequenceLevel>('gulag');
   const [seed, setSeed] = useState('');
 
@@ -65,22 +52,8 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
         <Text style={styles.subHeader}>CENTRAL PLANNING BUREAU — PERSONNEL DIVISION</Text>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>TIMELINE MODE</Text>
-          <View style={styles.optionRow}>
-            {(['historical', 'freeform'] as GovernorMode[]).map((m) => (
-              <TouchableOpacity
-                key={m}
-                style={[styles.optionBtn, gameMode === m && styles.optionBtnActive]}
-                onPress={() => setGameMode(m)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.optionLabel, gameMode === m && styles.optionLabelActive]}>
-                  {m.toUpperCase()}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <Text style={styles.flavor}>{MODE_FLAVOR[gameMode]}</Text>
+          <Text style={styles.sectionLabel}>CAMPAIGN RECORD</Text>
+          <Text style={styles.flavor}>Historical Soviet campaign, October 1917 through December 1991.</Text>
         </View>
 
         <View style={styles.section}>
@@ -118,9 +91,7 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
         </View>
 
         <View style={styles.scoreNote}>
-          <Text style={styles.scoreLabel}>
-            SCORE MULTIPLIER: x{SCORE_MULTIPLIER[consequence].toFixed(1)}
-          </Text>
+          <Text style={styles.scoreLabel}>SCORE MULTIPLIER: x{SCORE_MULTIPLIER[consequence].toFixed(1)}</Text>
         </View>
 
         <View style={styles.btnRow}>
@@ -132,7 +103,6 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
               onStart({
                 consequence,
                 seed: seed.trim() || `simsoviet-${Date.now()}`,
-                gameMode,
               })
             }
             style={styles.btnStart}

@@ -10,8 +10,8 @@ Reference documents describe existing subsystems in detail — their data struct
 
 | Document | Title | Key Data Structures | Implementation |
 |----------|-------|-------------------|---------------|
-| `politburo-system.md` | Politburo & Ministry System | 10 ministries, 80-cell interaction matrix, 29 events | `src/game/politburo/` |
-| `pravda-system.md` | Pravda Headline Generator | 145K+ headline combinations, mood-based spin | `src/game/pravda/` |
+| `politburo-system.md` | Politburo & Ministry System | 10 ministries, 80-cell interaction matrix, 29 events | `src/ai/agents/narrative/politburo/` |
+| `pravda-system.md` | Pravda Headline Generator | era-aware settlement headline combinations, mood-based spin | `src/ai/agents/narrative/pravda/` |
 | `name-generator.md` | Procedural Name Generator | 1.1M+ Russian name combinations | `src/content/worldbuilding/names.ts` |
 | `world-building.md` | World-Building Content | Timeline events, achievements, building flavor, quotes | `src/content/worldbuilding/` |
 | `audio-assets.md` | Audio Assets Inventory | 52 OGG tracks, playlists, mood mapping | `src/audio/AudioManifest.ts` |

@@ -2,7 +2,7 @@
  * Tests for era-gated building menu data flow.
  *
  * Verifies that the RadialMenu filtering logic correctly
- * excludes buildings from future eras and includes all buildings
+ * excludes later-era buildings from early eras and includes all buildings
  * from the current and past eras.
  */
 
@@ -26,7 +26,7 @@ describe('Era-gated build menu filtering', () => {
     expect(available.size).toBeGreaterThan(0);
   });
 
-  it('future-era buildings are excluded from early eras', () => {
+  it('later-era buildings are excluded from early eras', () => {
     const era1Available = new Set(getAvailableBuildingsForYear(1917));
 
     // Collect buildings only unlocked in later eras
@@ -45,7 +45,7 @@ describe('Era-gated build menu filtering', () => {
   });
 
   it('all categories have at least one building by final era', () => {
-    const available = new Set(getAvailableBuildingsForYear(2100));
+    const available = new Set(getAvailableBuildingsForYear(1991));
 
     for (const cat of CATEGORIES) {
       const catBuildings = cat.roles.flatMap((r) => getBuildingsByRole(r)).filter((id) => available.has(id));
@@ -70,7 +70,7 @@ describe('Era-gated build menu filtering', () => {
   });
 
   it('era-available buildings with BUILDING_DEFS entries have valid roles', () => {
-    const allAvailable = getAvailableBuildingsForYear(2100);
+    const allAvailable = getAvailableBuildingsForYear(1991);
     for (const defId of allAvailable) {
       const def = BUILDING_DEFS[defId];
       // Some defIds are infrastructure (road, pipe, rail) without BUILDING_DEFS entries

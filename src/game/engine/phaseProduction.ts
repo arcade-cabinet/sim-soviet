@@ -12,6 +12,7 @@ import { constructionSystem } from '../../ecs/systems';
 import { poissonSample } from '../../math/poissonSampling';
 import { getDefensePosture, getGosplanAllocations } from '../../stores/gameStore';
 import { getPostureEffects } from '../../ui/hq-tabs/MilitaryTab';
+import { tickDirective } from './directiveTick';
 import {
   aggregateOffscreenResults,
   getOffscreenBuildings,
@@ -19,7 +20,6 @@ import {
   type ResourceType,
   tickOffscreenBuildings,
 } from './offscreenTick';
-import { tickDirective } from './directiveTick';
 import type { TickContext } from './tickContext';
 import { type BuildingPosition, getVisibleBounds, queryVisibleBuildings } from './viewportQuery';
 

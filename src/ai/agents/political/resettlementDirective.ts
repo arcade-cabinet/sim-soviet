@@ -151,22 +151,22 @@ export function evaluateResettlementRisk(
   }
 
   // Political pressure contribution (max 0.4)
-  const politicalContribution = pressure.politicalPressure > POLITICAL_PRESSURE_THRESHOLD
-    ? (pressure.politicalPressure - POLITICAL_PRESSURE_THRESHOLD) * (0.4 / 0.3)
-    : 0;
+  const politicalContribution =
+    pressure.politicalPressure > POLITICAL_PRESSURE_THRESHOLD
+      ? (pressure.politicalPressure - POLITICAL_PRESSURE_THRESHOLD) * (0.4 / 0.3)
+      : 0;
 
   // Moscow attention contribution (max 0.3)
-  const moscowContribution = political.moscowAttention > MOSCOW_ATTENTION_THRESHOLD
-    ? (political.moscowAttention - MOSCOW_ATTENTION_THRESHOLD) * (0.3 / 0.2)
-    : 0;
+  const moscowContribution =
+    political.moscowAttention > MOSCOW_ATTENTION_THRESHOLD
+      ? (political.moscowAttention - MOSCOW_ATTENTION_THRESHOLD) * (0.3 / 0.2)
+      : 0;
 
   // KGB suspicion compounds the risk (max 0.2)
   const suspicionContribution = political.suspicionLevel * 0.2;
 
   // Loyalty pressure adds instability signal (max 0.1)
-  const loyaltyContribution = pressure.loyaltyPressure > 0.6
-    ? (pressure.loyaltyPressure - 0.6) * 0.25
-    : 0;
+  const loyaltyContribution = pressure.loyaltyPressure > 0.6 ? (pressure.loyaltyPressure - 0.6) * 0.25 : 0;
 
   const raw = politicalContribution + moscowContribution + suspicionContribution + loyaltyContribution;
   return Math.max(0, Math.min(raw, 1.0));
@@ -182,10 +182,7 @@ export function evaluateResettlementRisk(
  * @param currentYear - Game year (unused for now, available for future)
  * @returns Whether a new directive was just issued
  */
-export function tickResettlementYearly(
-  state: ResettlementDirectiveState,
-  risk: number,
-): boolean {
+export function tickResettlementYearly(state: ResettlementDirectiveState, risk: number): boolean {
   if (state.executed || state.directiveIssued) return false;
 
   state.currentRisk = risk;
@@ -218,9 +215,7 @@ export function tickWarningPeriod(state: ResettlementDirectiveState): boolean {
   if (!state.directiveIssued || state.executed) return false;
 
   // Accumulate preparation
-  const prepGain = state.disassemblyActive
-    ? BASE_PREP_PER_TICK + DISASSEMBLY_PREP_PER_TICK
-    : BASE_PREP_PER_TICK;
+  const prepGain = state.disassemblyActive ? BASE_PREP_PER_TICK + DISASSEMBLY_PREP_PER_TICK : BASE_PREP_PER_TICK;
   state.preparationLevel = Math.min(1.0, state.preparationLevel + prepGain);
 
   state.warningTicksRemaining--;

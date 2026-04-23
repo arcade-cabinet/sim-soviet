@@ -114,7 +114,7 @@ export interface EraScoreBreakdown {
   cleanEraBonus: number;
   /** Sum of all component scores before era multiplier */
   rawTotal: number;
-  /** Era multiplier (1.0 for era 1, up to 3.0 for era 8) */
+  /** Era multiplier (1.0 for era 1, up to 3.0 for the final historical era) */
   eraMultiplier: number;
   /** rawTotal * eraMultiplier */
   eraTotal: number;
@@ -299,8 +299,8 @@ export const MEDALS: Medal[] = [
     requirement: 'Place 20 buildings',
   },
   {
-    id: 'eternal_optimist',
-    name: 'Medal of Eternal Optimism',
+    id: 'stagnation_optimist',
+    name: 'Medal of Stagnation Optimism',
     description:
       'Survived 50 ticks with negative resource trends and still kept building. Delusion or dedication? Both.',
     tier: 'bronze',
@@ -345,11 +345,11 @@ export const MEDALS: Medal[] = [
     requirement: '3 active gulags',
   },
   {
-    id: 'millennium_survivor',
-    name: 'Centennial Survival Medal',
-    description: 'Reached the year 2000. The computers failed. You did not. The State endures.',
+    id: 'post_campaign_survivor',
+    name: 'Post-Campaign Survival Medal',
+    description: 'Continued after 1991. The forms changed. The shortages did not.',
     tier: 'concrete',
-    requirement: 'Reach year 2000',
+    requirement: 'Continue after the 1991 campaign summary',
   },
   {
     id: 'population_champion',
@@ -366,12 +366,13 @@ export const MEDALS: Medal[] = [
 
 /**
  * Returns the era score multiplier for a given era index (0-based).
- * Era 1 (index 0): x1.0, Era 8 (index 7): x3.0.
- * Linear interpolation between.
+ * Era 1 (index 0): x1.0, final historical era: x3.0.
+ * Linear interpolation between the configured historical eras.
  */
 export function getEraMultiplier(eraIndex: number): number {
-  const clamped = Math.max(0, Math.min(eraIndex, 7));
-  return 1.0 + (clamped * 2.0) / 7;
+  const maxEraIndex = Math.max(1, ERA_ORDER.length - 1);
+  const clamped = Math.max(0, Math.min(eraIndex, maxEraIndex));
+  return 1.0 + (clamped * 2.0) / maxEraIndex;
 }
 
 /**

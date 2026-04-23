@@ -6,10 +6,10 @@
  * around the existing grid.
  */
 
+import type { TerrainTileState } from '../../ai/agents/core/terrainTick';
 import type { SettlementTier } from '../../ai/agents/infrastructure/SettlementSystem';
 import { TIER_DEFINITIONS, TIER_ORDER } from '../../ai/agents/infrastructure/SettlementSystem';
 import { LAND_GRANT_TIERS } from '../../config/landGrants';
-import type { TerrainTileState } from '../../ai/agents/core/terrainTick';
 
 /**
  * Determine settlement tier from population using TIER_DEFINITIONS thresholds.
@@ -82,10 +82,7 @@ export function expandGrid(
  * @param defaultTerrain - Terrain type string (e.g. 'grass', 'snow', 'tundra')
  * @returns Array of initialized terrain tile states
  */
-export function initializeNewTiles(
-  tiles: Array<{ x: number; y: number }>,
-  defaultTerrain: string,
-): TerrainTileState[] {
+export function initializeNewTiles(tiles: Array<{ x: number; y: number }>, defaultTerrain: string): TerrainTileState[] {
   return tiles.map(() => ({
     type: defaultTerrain,
     fertility: 0.5,

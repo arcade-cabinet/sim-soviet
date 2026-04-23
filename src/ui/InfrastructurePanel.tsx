@@ -41,8 +41,8 @@ const ROAD_CONFIG: Record<string, { label: string; color: string; order: number 
 const TIER_CONFIG: Record<string, { label: string; threshold: number; desc: string }> = {
   selo: { label: 'СЕЛО (VILLAGE)', threshold: 0, desc: 'No bureaucracy. Just peasants.' },
   posyolok: { label: 'ПОСЁЛОК (SETTLEMENT)', threshold: 50, desc: 'First politruk arrives.' },
-  pgt: { label: 'ПГТ (URBAN SETTLE.)', threshold: 150, desc: 'KGB station. Full quotas.' },
-  gorod: { label: 'ГОРОД (CITY)', threshold: 400, desc: 'Full city soviet. Enormous quotas.' },
+  pgt: { label: 'ПГТ (TOWN SETTLE.)', threshold: 150, desc: 'State security office. Full quotas.' },
+  gorod: { label: 'ГОРОД (LARGE SETTLE.)', threshold: 400, desc: 'Full local soviet. Enormous quotas.' },
 };
 
 /** Ordered tier keys for computing next-tier thresholds. */

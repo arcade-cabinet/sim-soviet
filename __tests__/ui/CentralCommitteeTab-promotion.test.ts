@@ -8,11 +8,8 @@
  * - Risk meter display levels
  */
 
-import {
-  type CentralCommitteeTabProps,
-  getPromotionRiskLevel,
-} from '@/ui/hq-tabs/CentralCommitteeTab';
 import { createPromotionState, type MoscowPromotionState } from '@/ai/agents/political/moscowPromotion';
+import { type CentralCommitteeTabProps, getPromotionRiskLevel } from '@/ui/hq-tabs/CentralCommitteeTab';
 
 describe('CentralCommitteeTab — Promotion Notice', () => {
   describe('getPromotionRiskLevel', () => {

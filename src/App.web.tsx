@@ -34,7 +34,6 @@ import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatur
 import { gameState } from './engine/GameState';
 import { clearToast, getToast, setSpeed, showAdvisor, showToast } from './engine/helpers';
 import type { RehabilitationData } from './game/engine/types';
-import type { NarrativeEvent } from './game/timeline/TimelineLayer';
 import type { EraDefinition } from './game/era';
 import type { TallyData } from './game/GameTally';
 import { useECSGameLoop } from './hooks/useECSGameLoop';
@@ -44,10 +43,12 @@ import { TOTAL_MODEL_COUNT } from './scene/ModelPreloader';
 import {
   closeBuildingInspector,
   closeCitizenDossierByIndex,
+  closeGovernmentHQ,
   closePoliticalPanel,
   type GameSpeed,
   isPaused,
   notifyStateChange,
+  pushCrisisVFX,
   setGameSpeed,
   setPaused,
   useBuildingInspector,
@@ -55,9 +56,7 @@ import {
   useCitizenDossierIndex,
   useCursorTooltip,
   useGovernmentHQ,
-  closeGovernmentHQ,
   usePoliticalPanel,
-  pushCrisisVFX,
 } from './stores/gameStore';
 import { AchievementsPanel } from './ui/AchievementsPanel';
 // Advisor removed — Phase 1 minimal HUD
@@ -85,7 +84,6 @@ import { LoadingScreen } from './ui/LoadingScreen';
 import { MainMenu } from './ui/MainMenu';
 import { MandateProgressPanel } from './ui/MandateProgressPanel';
 import { MinigameOverlay } from './ui/MinigameOverlay';
-import { NarrativeEventOverlay } from './ui/NarrativeEventOverlay';
 import { MinigameReferencePanel } from './ui/MinigameReferencePanel';
 import { Minimap } from './ui/Minimap';
 import { type NewGameConfig, NewGameSetup } from './ui/NewGameSetup';
@@ -95,6 +93,7 @@ import { PersonnelFilePanel } from './ui/PersonnelFilePanel';
 import { PolitburoPanel } from './ui/PolitburoPanel';
 import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
 import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
+import { PravdaTicker } from './ui/PravdaTicker';
 // QuotaHUD removed — Phase 1 minimal HUD
 import { RadialMenu } from './ui/RadialMenu';
 import { RehabilitationModal } from './ui/RehabilitationModal';
@@ -102,22 +101,16 @@ import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { ScoringPanel } from './ui/ScoringPanel';
 import { SettingsModal } from './ui/SettingsModal';
 import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
-import { SettlementSelectorPanel } from './ui/SettlementSelectorPanel';
-import { SettlementTransitionOverlay } from './ui/SettlementTransitionOverlay';
 import { Colors } from './ui/styles';
-import { PravdaTicker } from './ui/PravdaTicker';
 import { Toast } from './ui/Toast';
 // Toolbar removed — Phase 1 minimal HUD
 // UI components
 import { TopBar } from './ui/TopBar';
+import { USSRDissolutionModal } from './ui/USSRDissolutionModal';
 import { ViewportFrame } from './ui/ViewportFrame';
 import { WeatherForecastPanel } from './ui/WeatherForecastPanel';
-import { USSRDissolutionModal } from './ui/USSRDissolutionModal';
-import { MilestoneTimelineScreen } from './ui/MilestoneTimelineScreen';
-import { buildMilestoneSummary, type MilestoneSummaryEntry } from './ui/milestoneSummary';
 import { WorkerAnalyticsPanel } from './ui/WorkerAnalyticsPanel';
 import { WorkerRosterPanel } from './ui/WorkerRosterPanel';
-import { switchSettlementByIndex, syncSettlementList } from './game/settlement/switchSettlement';
 
 // WorkerStatusBar removed — Phase 1 minimal HUD
 
@@ -171,6 +164,31 @@ const MIN_LOADING_DISPLAY_MS = 1500;
 
 type AppScreen = 'menu' | 'setup' | 'game';
 
+function lockWebViewport(): void {
+  if (typeof document === 'undefined') return;
+
+  const baseStyle = {
+    margin: '0',
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    backgroundColor: Colors.bgColor,
+  };
+
+  Object.assign(document.documentElement.style, baseStyle);
+  Object.assign(document.body.style, baseStyle);
+
+  const root = document.getElementById('root');
+  if (root) {
+    Object.assign(root.style, {
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden',
+      backgroundColor: Colors.bgColor,
+    });
+  }
+}
+
 const App: React.FC = () => {
   // Screen state
   const [screen, setScreen] = useState<AppScreen>('menu');
@@ -214,7 +232,6 @@ const App: React.FC = () => {
   const [showSaveLoad, setShowSaveLoad] = useState(false);
   const [showMarket, setShowMarket] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showSettlementSelector, setShowSettlementSelector] = useState(false);
 
   // ── XR mode state ──
   const [xrMode, setXrMode] = useState<'ar' | 'vr' | null>(null);
@@ -223,8 +240,6 @@ const App: React.FC = () => {
   const [eraTransition, setEraTransition] = useState<EraDefinition | null>(null);
   const [activeMinigame, setActiveMinigame] = useState<ActiveMinigame | null>(null);
   const resolveMinigameRef = useRef<((choiceId: string) => void) | null>(null);
-  const [activeNarrativeEvent, setActiveNarrativeEvent] = useState<NarrativeEvent | null>(null);
-  const resolveNarrativeEventRef = useRef<((choiceId: string) => void) | null>(null);
   const [annualReport, setAnnualReport] = useState<AnnualReportData | null>(null);
   const submitReportRef = useRef<((submission: ReportSubmission) => void) | null>(null);
   const [settlementEvent, setSettlementEvent] = useState<SettlementEvent | null>(null);
@@ -233,13 +248,11 @@ const App: React.FC = () => {
   const [gameTally, setGameTally] = useState<TallyData | null>(null);
   const [rehabilitation, setRehabilitation] = useState<RehabilitationData | null>(null);
   const [showDissolutionModal, setShowDissolutionModal] = useState(false);
-  const resolveDissolutionRef = useRef<((continueInFreeform: boolean) => void) | null>(null);
-  const [showMilestoneScreen, setShowMilestoneScreen] = useState(false);
-  const [milestoneEntries, setMilestoneEntries] = useState<MilestoneSummaryEntry[]>([]);
-  const [milestoneScreenYear, setMilestoneScreenYear] = useState(1991);
+  const resolveDissolutionRef = useRef<((continuePostCampaign: boolean) => void) | null>(null);
 
   // Auto-pause when interactive modals are open (restore prior state on close)
-  const hasInteractiveModal = !!annualReport || !!activeMinigame || !!planDirective || !!gameOver || !!rehabilitation || showDissolutionModal;
+  const hasInteractiveModal =
+    !!annualReport || !!activeMinigame || !!planDirective || !!gameOver || !!rehabilitation || showDissolutionModal;
   const wasPausedBeforeModal = useRef(false);
   useEffect(() => {
     if (hasInteractiveModal) {
@@ -250,6 +263,10 @@ const App: React.FC = () => {
       if (!wasPausedBeforeModal.current) setPaused(false);
     }
   }, [hasInteractiveModal]);
+
+  useEffect(() => {
+    lockWebViewport();
+  }, []);
 
   // Initialize SFXManager on first user interaction (autoplay policy)
   useEffect(() => {
@@ -271,23 +288,6 @@ const App: React.FC = () => {
 
   // Universal input system (keyboard + gamepad)
   useInputManager(screen === 'game' && loadingFaded);
-
-  // Keyboard shortcuts: 1-9 for settlement switching, S for selector panel
-  useEffect(() => {
-    if (screen !== 'game' || !loadingFaded) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      // Don't capture when typing in an input field
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      // Number keys 1-9: switch to settlement by index
-      const digit = Number.parseInt(e.key, 10);
-      if (digit >= 1 && digit <= 9 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        switchSettlementByIndex(digit);
-        return;
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [screen, loadingFaded]);
 
   // Start ECS game loop (replaces old flat-state game loop)
   useECSGameLoop();
@@ -354,9 +354,6 @@ const App: React.FC = () => {
             pushCrisisVFX(event.effect, event.intensity, durationSec);
           },
           onStateChange: () => {
-            // Sync settlement list for viewport switching
-            syncSettlementList();
-
             // Sync ECS building powered state to old GameState for 3D effects
             for (const e of ecsBuildingsArchetype.entities) {
               const b = gameState.buildings.find((bi) => bi.x === e.position.gridX && bi.y === e.position.gridY);
@@ -429,10 +426,6 @@ const App: React.FC = () => {
           onMinigame: (active, resolveChoice) => {
             setActiveMinigame(active);
             resolveMinigameRef.current = resolveChoice;
-          },
-          onNarrativeEvent: (event, resolve) => {
-            setActiveNarrativeEvent(event);
-            resolveNarrativeEventRef.current = resolve;
           },
           onHistoricalEraEnd: (resolve) => {
             resolveDissolutionRef.current = resolve;
@@ -635,10 +628,6 @@ const App: React.FC = () => {
   const handleShowNotifications = useCallback(() => {
     setShowNotifications(true);
   }, []);
-  const handleShowSettlementSelector = useCallback(() => {
-    syncSettlementList();
-    setShowSettlementSelector(true);
-  }, []);
   // ── Save/Load state ──
   const [saveNames, setSaveNames] = useState<string[]>([]);
   const [lastSaveTime, setLastSaveTime] = useState<number | undefined>(undefined);
@@ -725,23 +714,9 @@ const App: React.FC = () => {
     submitReportRef.current = null;
     setAnnualReport(null);
   }, []);
-  const handleDissolutionResolve = useCallback((continueInFreeform: boolean) => {
+  const handleDissolutionResolve = useCallback((continuePostCampaign: boolean) => {
     setShowDissolutionModal(false);
-    resolveDissolutionRef.current?.(continueInFreeform);
-
-    if (!continueInFreeform) {
-      // Build milestone timeline for end screen
-      const engine = getEngine();
-      if (engine) {
-        const subsystems = engine.serializeSubsystems();
-        const registeredTimelines = engine.getRegisteredTimelines();
-        const entries = buildMilestoneSummary(subsystems.timelines ?? [], registeredTimelines);
-        const year = engine.getChronology().getDate().year;
-        setMilestoneEntries(entries);
-        setMilestoneScreenYear(year);
-        setShowMilestoneScreen(true);
-      }
-    }
+    resolveDissolutionRef.current?.(continuePostCampaign);
   }, []);
   const handleDismissSettlement = useCallback(() => setSettlementEvent(null), []);
   const handleAcceptPlan = useCallback(() => setPlanDirective(null), []);
@@ -753,7 +728,6 @@ const App: React.FC = () => {
     setActiveMinigame(null);
     setShowDissolutionModal(false);
     resolveDissolutionRef.current = null;
-    setShowMilestoneScreen(false);
     resolveMinigameRef.current = null;
     submitReportRef.current = null;
     // Reset all module-level singletons so a fresh game can be initialized
@@ -876,10 +850,8 @@ const App: React.FC = () => {
               onShowSaveLoad={handleShowSaveLoad}
               onShowMarket={handleShowMarket}
               onShowNotifications={handleShowNotifications}
-              onShowSettlementSelector={handleShowSettlementSelector}
               unreadNotifications={unreadNotifications}
               autopilot={getEngine()?.getAgentManager().isAutopilot() ?? false}
-              settlementCount={getEngine()?.getRelocationEngine().getRegistry().count() ?? 1}
             />
 
             <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
@@ -950,25 +922,7 @@ const App: React.FC = () => {
           onResume={() => setRehabilitation(null)}
         />
 
-        <NarrativeEventOverlay
-          event={activeNarrativeEvent}
-          onResolve={(choiceId) => {
-            resolveNarrativeEventRef.current?.(choiceId);
-            setActiveNarrativeEvent(null);
-          }}
-        />
-
-        <USSRDissolutionModal
-          visible={showDissolutionModal}
-          onResolve={handleDissolutionResolve}
-        />
-
-        <MilestoneTimelineScreen
-          visible={showMilestoneScreen}
-          entries={milestoneEntries}
-          finalYear={milestoneScreenYear}
-          onDismiss={() => setShowMilestoneScreen(false)}
-        />
+        <USSRDissolutionModal visible={showDissolutionModal} onResolve={handleDissolutionResolve} />
 
         <PersonnelFilePanel visible={showPersonnelFile} onDismiss={() => setShowPersonnelFile(false)} />
 
@@ -1035,13 +989,6 @@ const App: React.FC = () => {
 
         <GovernmentHQ visible={showGovHQ} onClose={closeGovernmentHQ} />
 
-        <SettlementSelectorPanel
-          visible={showSettlementSelector}
-          onDismiss={() => setShowSettlementSelector(false)}
-        />
-
-        <SettlementTransitionOverlay />
-
         <BuildingInspectorPanel
           visible={!!buildingInspector}
           buildingDefId={buildingInspector?.buildingDefId ?? ''}
@@ -1081,6 +1028,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.bgColor,
+    width: '100vw' as any,
+    height: '100vh' as any,
+    overflow: 'hidden',
   },
   sceneContainer: {
     ...StyleSheet.absoluteFillObject,

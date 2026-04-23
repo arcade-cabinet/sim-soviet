@@ -4,20 +4,14 @@
  * Full scenario: government building needs space → housing demolished →
  * dvory ejected → find new housing with capacity → residents absorbed.
  *
- * Tests the end-to-end flow of cascadeDisplacement + resident relocation.
+ * Tests the end-to-end flow of cascadeDisplacement + resident rehousing.
  */
 
-import {
-  cascadeDisplacement,
-  findDisplaceable,
-  executeDisplacement,
-  type CascadeResult,
-  type DisplacementResult,
-} from '@/ai/agents/infrastructure/displacementSystem';
+import { cascadeDisplacement, type DisplacementResult } from '@/ai/agents/infrastructure/displacementSystem';
 import { classifyBuilding } from '@/config/buildingClassification';
+import { housing } from '@/ecs/archetypes';
 import type { BuildingComponent, DvorComponent, Entity } from '@/ecs/world';
 import { world } from '@/ecs/world';
-import { housing } from '@/ecs/archetypes';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -109,8 +103,7 @@ function relocateEjectedResidents(displaced: DisplacementResult): number {
 
     const toAbsorb = Math.min(remaining, spare);
     // Proportional households
-    const householdsToAbsorb =
-      remaining > 0 ? Math.ceil((toAbsorb / remaining) * remainingHouseholds) : 0;
+    const householdsToAbsorb = remaining > 0 ? Math.ceil((toAbsorb / remaining) * remainingHouseholds) : 0;
 
     h.building.residentCount += toAbsorb;
     h.building.householdCount += householdsToAbsorb;
@@ -164,8 +157,8 @@ describe('displacement cascade integration', () => {
 
   it('housing displacement ejects residents who relocate to spare capacity', () => {
     // Only housing buildings (same priority), government demands space
-    const targetHousing = addHousing('apartment-tower-a', 2, 2, 20, 5, 30);
-    const receivingHousing = addHousing('workers-house-a', 5, 5, 10, 3, 50);
+    const _targetHousing = addHousing('apartment-tower-a', 2, 2, 20, 5, 30);
+    const _receivingHousing = addHousing('workers-house-a', 5, 5, 10, 3, 50);
 
     const buildings = world.with('position', 'building').entities.slice();
     const result = cascadeDisplacement('government', buildings);
@@ -218,7 +211,7 @@ describe('displacement cascade integration', () => {
     expect(result.demolished!.ejectedResidents).toBe(0); // farms have no residents
   });
 
-  it('partial relocation when receiving housing has limited capacity', () => {
+  it('partial rehousing when receiving housing has limited capacity', () => {
     // Housing to demolish: 30 residents
     addHousing('apartment-tower-a', 0, 0, 30, 8, 40);
 
@@ -242,8 +235,8 @@ describe('displacement cascade integration', () => {
 
   it('dvory entities survive displacement (only building entity removed)', () => {
     // Create dvory that "live" in the target housing
-    const dvor1 = addDvor('d1', 'Ivanov', 3);
-    const dvor2 = addDvor('d2', 'Petrov', 4);
+    const _dvor1 = addDvor('d1', 'Ivanov', 3);
+    const _dvor2 = addDvor('d2', 'Petrov', 4);
 
     // Housing building with these households
     addHousing('apartment-tower-a', 2, 2, 7, 2, 20);
@@ -268,7 +261,7 @@ describe('displacement cascade integration', () => {
     expect(d1.dvor.surname).toBe('Ivanov');
   });
 
-  it('zero-resident building displacement has no relocation needed', () => {
+  it('zero-resident building displacement needs no rehousing', () => {
     // Farm (priority 1, lowest) has no residents — should be demolished first
     addBuilding('farm-collective', 1, 1);
     const housingEntity = addHousing('workers-house-a', 4, 4, 5, 2, 20);
@@ -289,7 +282,7 @@ describe('displacement cascade integration', () => {
 
   it('military displacement cascades through priority order', () => {
     // Military (Infinity) should be able to displace anything non-protected
-    const farm = addBuilding('farm-collective', 0, 0); // priority 1
+    const _farm = addBuilding('farm-collective', 0, 0); // priority 1
     addHousing('apartment-tower-a', 1, 1, 10, 3, 20); // priority 2
     addBuilding('warehouse', 2, 2); // priority 3
     addBuilding('power-station', 3, 3); // priority 4
@@ -344,7 +337,7 @@ describe('displacement cascade integration', () => {
 
   it('complete flow: demolish → eject → absorb → verify population', () => {
     // Setup a small settlement
-    const hq = addBuilding('government-hq', 5, 5);
+    const _hq = addBuilding('government-hq', 5, 5);
     const oldHousing = addHousing('apartment-tower-a', 3, 3, 40, 10, 50);
     const newHousing1 = addHousing('workers-house-a', 7, 7, 20, 5, 50);
     const newHousing2 = addHousing('workers-house-b', 8, 8, 10, 3, 50);
@@ -356,9 +349,7 @@ describe('displacement cascade integration', () => {
 
     // Track total population before displacement
     const totalPopBefore =
-      oldHousing.building.residentCount +
-      newHousing1.building.residentCount +
-      newHousing2.building.residentCount;
+      oldHousing.building.residentCount + newHousing1.building.residentCount + newHousing2.building.residentCount;
     expect(totalPopBefore).toBe(70); // 40 + 20 + 10
 
     // Cascade: government needs the old housing's tile

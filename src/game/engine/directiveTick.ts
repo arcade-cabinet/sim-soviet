@@ -6,15 +6,11 @@
  * and handles one-shot actions (emergency rations distribution).
  */
 
-import {
-  canIssueDirective,
-  type Directive,
-  getDirectiveById,
-} from '../../ui/hq-tabs/CentralCommitteeTab';
-import { getActiveDirective, setActiveDirective } from '../../stores/gameStore';
+import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
 import { buildingsLogic } from '../../ecs/archetypes';
 import type { RaionPool, Resources } from '../../ecs/world';
-import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
+import { getActiveDirective, setActiveDirective } from '../../stores/gameStore';
+import { canIssueDirective, type Directive, getDirectiveById } from '../../ui/hq-tabs/CentralCommitteeTab';
 import type { SimCallbacks } from './types';
 
 /** Result of directive tick processing, consumed by phaseProduction for modifier application. */
@@ -143,11 +139,7 @@ function getProductionModifiers(directive: Directive): DirectiveTickResult {
 /**
  * Apply a global morale delta across all workers (entity and aggregate modes).
  */
-function applyMoraleDelta(
-  delta: number,
-  workerSystem: WorkerSystem,
-  raion: RaionPool | undefined,
-): void {
+function applyMoraleDelta(delta: number, workerSystem: WorkerSystem, raion: RaionPool | undefined): void {
   // Entity mode: WorkerSystem handles individual stats
   workerSystem.applyGlobalMoraleDelta(delta);
 
@@ -166,11 +158,7 @@ function applyMoraleDelta(
 /**
  * Apply a global loyalty delta across all workers (entity and aggregate modes).
  */
-function applyLoyaltyDelta(
-  delta: number,
-  workerSystem: WorkerSystem,
-  raion: RaionPool | undefined,
-): void {
+function applyLoyaltyDelta(delta: number, _workerSystem: WorkerSystem, raion: RaionPool | undefined): void {
   // Entity mode: shift loyalty on dvor entities via the worker stats
   // WorkerSystem doesn't expose applyGlobalLoyaltyDelta, so we use the
   // same pattern but work through buildings in aggregate mode.

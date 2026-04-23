@@ -123,7 +123,9 @@ const BomberSilhouettes: React.FC = () => {
       {Array.from({ length: BOMBER_COUNT }, (_, i) => (
         <mesh
           key={`bomber_${i}`}
-          ref={(el) => { meshRefs.current[i] = el; }}
+          ref={(el) => {
+            meshRefs.current[i] = el;
+          }}
           rotation={[0, Math.PI / 2, 0]}
         >
           {/* Elongated fuselage silhouette */}
@@ -192,9 +194,7 @@ const CraterDecals: React.FC = () => {
     mesh.instanceMatrix.needsUpdate = true;
   });
 
-  return (
-    <instancedMesh ref={meshRef} args={[geometry, material, MAX_CRATERS]} frustumCulled={false} />
-  );
+  return <instancedMesh ref={meshRef} args={[geometry, material, MAX_CRATERS]} frustumCulled={false} />;
 };
 
 // ── BuildingSmoke ──────────────────────────────────────────────────────────
@@ -298,14 +298,7 @@ const BuildingSmoke: React.FC = () => {
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <pointsMaterial
-        vertexColors
-        size={0.08}
-        transparent
-        opacity={0.6}
-        sizeAttenuation
-        depthWrite={false}
-      />
+      <pointsMaterial vertexColors size={0.08} transparent opacity={0.6} sizeAttenuation depthWrite={false} />
     </points>
   );
 };

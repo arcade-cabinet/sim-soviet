@@ -15,10 +15,10 @@
 
 import { useFrame, useThree } from '@react-three/fiber';
 import type React from 'react';
-import { useRef, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-import { getActiveVFX, pruneExpiredVFX, type CrisisVFXEvent } from '@/stores/gameStore';
+import { type CrisisVFXEvent, getActiveVFX, pruneExpiredVFX } from '@/stores/gameStore';
 
 /** Calculate the normalized progress (0->1) of an effect. */
 function effectProgress(event: CrisisVFXEvent): number {

@@ -176,7 +176,7 @@ describe('constructionSystem', () => {
       expect(res.timber).toBeLessThan(timberBefore);
     });
 
-    it('deducts timber, steel, and cement proportionally per tick', () => {
+    it('deducts default construction materials proportionally per tick', () => {
       placeNewBuilding(5, 5, 'collective-farm-hq');
 
       const res = getResourceEntity()!.resources;
@@ -189,7 +189,10 @@ describe('constructionSystem', () => {
       // Per-tick deduction = total / baseTicks (rounded up, min 1 if total > 0)
       const perTickTimber = Math.max(1, Math.ceil(DEFAULT_MATERIAL_COST.timber / DEFAULT_BASE_TICKS));
       const perTickSteel = Math.max(1, Math.ceil(DEFAULT_MATERIAL_COST.steel / DEFAULT_BASE_TICKS));
-      const perTickCement = Math.max(1, Math.ceil(DEFAULT_MATERIAL_COST.cement / DEFAULT_BASE_TICKS));
+      const perTickCement =
+        DEFAULT_MATERIAL_COST.cement > 0
+          ? Math.max(1, Math.ceil(DEFAULT_MATERIAL_COST.cement / DEFAULT_BASE_TICKS))
+          : 0;
 
       expect(timberBefore - res.timber).toBe(perTickTimber);
       expect(steelBefore - res.steel).toBe(perTickSteel);
@@ -219,15 +222,15 @@ describe('constructionSystem', () => {
       expect(entity.building!.constructionProgress).toBe(0);
     });
 
-    it('pauses construction when cement is insufficient', () => {
+    it('does not require cement for default starter construction', () => {
       const res = getResourceEntity()!.resources;
       res.cement = 0;
       const entity = placeNewBuilding(5, 5, 'collective-farm-hq');
 
       constructionSystem();
 
-      expect(entity.building!.constructionTicks).toBe(0);
-      expect(entity.building!.constructionProgress).toBe(0);
+      expect(entity.building!.constructionTicks).toBe(1);
+      expect(entity.building!.constructionProgress).toBeGreaterThan(0);
     });
 
     it('resumes construction when materials become available', () => {

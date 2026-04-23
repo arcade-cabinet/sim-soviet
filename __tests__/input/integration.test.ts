@@ -44,24 +44,7 @@ describe('Input Integration', () => {
     const mgr = InputManager.getInstance();
     mgr.attach();
 
-    const TOOL_ACTIONS: Record<string, string> = {
-      tool_1: 'housing',
-      tool_2: 'farm',
-      tool_3: 'factory',
-      tool_4: 'power',
-      tool_5: 'road',
-      tool_6: 'pipe',
-      tool_7: 'pump',
-      tool_8: 'gulag',
-      tool_9: 'propaganda',
-    };
-
     mgr.subscribe((action: InputAction) => {
-      const toolName = TOOL_ACTIONS[action];
-      if (toolName) {
-        mockSelectTool(toolName);
-        return;
-      }
       switch (action) {
         case 'deselect':
           mockSelectTool('none');
@@ -92,14 +75,9 @@ describe('Input Integration', () => {
     InputManager.resetInstance();
   });
 
-  it('keyboard "1" selects the housing tool', () => {
+  it('keyboard "1" does not select a placement tool', () => {
     fireKey('1');
-    expect(mockSelectTool).toHaveBeenCalledWith('housing');
-  });
-
-  it('keyboard "5" selects the road tool', () => {
-    fireKey('5');
-    expect(mockSelectTool).toHaveBeenCalledWith('road');
+    expect(mockSelectTool).not.toHaveBeenCalled();
   });
 
   it('keyboard Escape deselects the tool', () => {
@@ -195,14 +173,11 @@ describe('Input Integration', () => {
     expect(mgr.getState().axes.camera_pan_y).toBe(0);
   });
 
-  it('multiple tool keys fire correct tools sequentially', () => {
+  it('number keys never dispatch placement tools', () => {
     fireKey('1');
     fireKey('3');
     fireKey('7');
 
-    expect(mockSelectTool).toHaveBeenCalledTimes(3);
-    expect(mockSelectTool).toHaveBeenNthCalledWith(1, 'housing');
-    expect(mockSelectTool).toHaveBeenNthCalledWith(2, 'factory');
-    expect(mockSelectTool).toHaveBeenNthCalledWith(3, 'pump');
+    expect(mockSelectTool).not.toHaveBeenCalled();
   });
 });

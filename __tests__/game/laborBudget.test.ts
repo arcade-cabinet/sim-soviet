@@ -27,7 +27,7 @@ import { GameRng } from '@/game/SeedSystem';
 //  HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** All 8 era IDs with their expected state demand fractions. */
+/** All 7 historical era IDs with their expected state demand fractions. */
 const ERA_DEMANDS: Array<{ era: string; expected: number }> = [
   { era: 'revolution', expected: 0.6 }, // 0.5 < 0.6 floor → 0.6
   { era: 'collectivization', expected: 0.65 },
@@ -36,7 +36,6 @@ const ERA_DEMANDS: Array<{ era: string; expected: number }> = [
   { era: 'reconstruction', expected: 0.6 },
   { era: 'thaw_and_freeze', expected: 0.6 }, // 0.55 < 0.6 floor → 0.6
   { era: 'stagnation', expected: 0.65 },
-  { era: 'the_eternal', expected: 0.7 },
 ];
 
 /** Sum all fractions in a budget result to verify they total 1.0. */

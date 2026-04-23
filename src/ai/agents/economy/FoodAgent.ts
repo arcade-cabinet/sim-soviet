@@ -4,7 +4,7 @@
  * Absorbs logic from:
  *   - consumptionSystem.ts (food/vodka consumption, starvation counter, grace period)
  *   - productionSystem.ts  (farm food output with modifiers, vodka grain diversion)
- *   - PrivatePlotSystem.ts (per-dvor private plot + livestock food)
+ *   - Per-dvor private plot and livestock food
  *
  * Tracks a food state machine: Surplus → Stable → Rationing → Starvation
  * Emits FOOD_SHORTAGE, STARVATION_WARNING, and FOOD_SURPLUS telegrams.
@@ -18,7 +18,6 @@ import { getBuildingDef } from '@/data/buildingDefs';
 import { citizens, dvory, getResourceEntity, producers } from '@/ecs/archetypes';
 import { RETIREMENT_AGE } from '@/ecs/factories/demographics';
 import type { EraId } from '@/game/era/types';
-import type { AgentParameterProfile } from '@/game/engine/agentParameterMatrix';
 import { MSG } from '../../telegrams';
 
 // ---------------------------------------------------------------------------
@@ -91,9 +90,6 @@ export class FoodAgent extends Vehicle {
   /** Current four-tier food security state. */
   private foodState: FoodState = 'stable';
 
-  /** Active terrain profile — controls farming method, yield, and private plot availability. */
-  private profile: Readonly<AgentParameterProfile> | null = null;
-
   /** Exported message constants (tests can reference). */
   static readonly MSG = MSG;
 
@@ -102,12 +98,52 @@ export class FoodAgent extends Vehicle {
     this.name = 'FoodAgent';
   }
 
-  /**
-   * Set the active agent parameter profile.
-   * When set, production is modified by farmYieldMultiplier and farming method.
-   */
-  setProfile(profile: Readonly<AgentParameterProfile>): void {
-    this.profile = profile;
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.PHASE_PRODUCTION) {
+      this.handlePhaseProduction();
+      return true;
+    }
+    if (telegram.message === MSG.PHASE_CONSUMPTION) {
+      this.handlePhaseConsumption();
+      return true;
+    }
+    return false;
+  }
+
+  private handlePhaseProduction(): void {
+    const engine = (globalThis as any).simulationEngine;
+    if (!engine) return;
+
+    const politicalAgent = this.manager?.entities.find((e) => e.name === 'PoliticalAgent') as any;
+    const workerSystem = engine.getWorkerSystem();
+    const eraId = politicalAgent?.getCurrentEraId() ?? 'revolution';
+
+    const ctx = engine._lastTickCtx;
+    if (!ctx) return;
+
+    this.produce({
+      farmModifier: ctx.modifiers.farmMod,
+      vodkaModifier: ctx.modifiers.vodkaMod,
+      eraId,
+      skillFactor: workerSystem.getAverageSkill(),
+      conditionFactor: 1.0, // Simplified
+      stakhanoviteBoosts: ctx.state.stakhanoviteBoosts,
+      includePrivatePlots: ctx.tickResult.newMonth,
+    });
+  }
+
+  private handlePhaseConsumption(): void {
+    const engine = (globalThis as any).simulationEngine;
+    if (!engine) return;
+    const ctx = engine._lastTickCtx;
+    if (!ctx) return;
+
+    const result = this.consume(ctx.diffConfig.consumptionMultiplier);
+    if (result.starvationDeaths > 0) {
+      engine.getCallbacks().onToast('STARVATION DETECTED', 'critical');
+      engine.getWorkerSystem().removeWorkersByCount(result.starvationDeaths, 'starvation');
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -240,10 +276,6 @@ export class FoodAgent extends Vehicle {
     const skillFactor = mods.skillFactor ?? 1.0;
     const conditionFactor = mods.conditionFactor ?? 1.0;
 
-    // Profile-aware: if farming is impossible, skip all food production
-    if (this.profile?.farmingMethod === 'impossible') return;
-    const yieldMult = this.profile?.farmYieldMultiplier ?? 1.0;
-
     for (const entity of producers) {
       if (!entity.building.powered) continue;
 
@@ -269,7 +301,7 @@ export class FoodAgent extends Vehicle {
 
       switch (prod.resource) {
         case 'food':
-          store.resources.food += prod.amount * farmModifier * yieldMult * expandedMult;
+          store.resources.food += prod.amount * farmModifier * expandedMult;
           break;
         case 'vodka': {
           const vodkaOutput = prod.amount * vodkaModifier * expandedMult;
@@ -292,7 +324,7 @@ export class FoodAgent extends Vehicle {
   }
 
   // -------------------------------------------------------------------------
-  // Private plots (absorbed from PrivatePlotSystem.ts)
+  // Private plots
   // -------------------------------------------------------------------------
 
   /**
@@ -302,9 +334,6 @@ export class FoodAgent extends Vehicle {
    * @param eraId - Current era identifier for plot multiplier lookup
    */
   private _runPrivatePlots(eraId: string): void {
-    // Profile-aware: private plots not available off-Earth
-    if (this.profile && !this.profile.privatePlotsAvailable) return;
-
     const store = getResourceEntity();
     if (!store) return;
 
@@ -561,7 +590,7 @@ const _sharedFoodAgent = new FoodAgent();
 
 /**
  * Calculate private plot food output for a given era.
- * Standalone wrapper (was in PrivatePlotSystem.ts).
+ * Standalone wrapper for private plot food calculations.
  */
 export function calculatePrivatePlotProduction(eraId: string): number {
   return _sharedFoodAgent.calculatePrivatePlotProduction(eraId);

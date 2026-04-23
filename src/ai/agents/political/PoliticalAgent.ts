@@ -9,7 +9,7 @@
  *
  * The agent IS the system now. Old files are marked DEPRECATED.
  *
- * Manages the progression through 8 Soviet historical eras, tracks quota
+ * Manages the progression through the Soviet historical campaign, tracks quota
  * compliance across the 5-year plan, and advises on annual report strategy
  * including the risk/reward tradeoff of pripiski (falsification).
  *
@@ -38,7 +38,6 @@ export type {
   EraSystemSaveData,
 } from '../../../game/era/types';
 
-import type { GovernorMode } from '../../../ai/agents/crisis/Governor';
 import { buildingsLogic, getMetaEntity, getResourceEntity } from '../../../ecs/archetypes';
 import { TICKS_PER_YEAR } from '../../../game/Chronology';
 import type { SimCallbacks } from '../../../game/engine/types';
@@ -53,7 +52,6 @@ import type {
   EraSystemSaveData,
 } from '../../../game/era/types';
 import type { GameRng } from '../../../game/SeedSystem';
-import { evaluateOrganicUnlocks, type UnlockContext } from '../../../growth/OrganicUnlocks';
 import type { ChronologyAgent } from '../core/ChronologyAgent';
 import type { EconomyAgent, EraId as EconomyEraId } from '../economy/EconomyAgent';
 import type { SettlementSystem, SettlementTier } from '../infrastructure/SettlementSystem';
@@ -64,27 +62,27 @@ import type { CompulsoryDeliveries, Doctrine } from './CompulsoryDeliveries';
 import { addPaperwork, getPaperwork } from './doctrine';
 import type { KGBAgent } from './KGBAgent';
 import {
-  type MoscowPromotionState,
-  type PromotionPoliticalContext,
-  type PromotionResponse,
   type BribeResult,
   createPromotionState,
   evaluatePromotionRisk,
-  tickPromotionYearly,
   handlePromotionResponse,
+  type MoscowPromotionState,
+  type PromotionPoliticalContext,
+  type PromotionResponse,
+  tickPromotionYearly,
 } from './moscowPromotion';
 import type { PoliticalEntitySystem } from './PoliticalEntitySystem';
 import {
-  type ResettlementDirectiveState,
-  type ResettlementOutcome,
-  type ResettlementBribeResult,
-  createResettlementState,
-  evaluateResettlementRisk,
-  tickResettlementYearly,
-  tickWarningPeriod,
-  enactDisassembly,
   attemptResettlementBribe,
   calculateResettlementOutcome,
+  createResettlementState,
+  enactDisassembly,
+  evaluateResettlementRisk,
+  type ResettlementBribeResult,
+  type ResettlementDirectiveState,
+  type ResettlementOutcome,
+  tickResettlementYearly,
+  tickWarningPeriod,
 } from './resettlementDirective';
 import type { DifficultyLevel, ScoringSystem } from './ScoringSystem';
 import { eraIdToIndex } from './ScoringSystem';
@@ -98,16 +96,6 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
   reconstruction: 'reconstruction',
   thaw_and_freeze: 'thaw',
   stagnation: 'stagnation',
-  the_eternal: 'eternal',
-  // Kardashev sub-eras all map to eternal economy mode
-  post_soviet: 'eternal',
-  planetary: 'eternal',
-  solar_engineering: 'eternal',
-  type_one: 'eternal',
-  deconstruction: 'eternal',
-  dyson_swarm: 'eternal',
-  megaearth: 'eternal',
-  type_two_peak: 'eternal',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -260,55 +248,9 @@ const ERA_MANDATE_TEMPLATES: Record<string, MandateTemplate[]> = {
   ],
   stagnation: [
     { defId: 'apartment-tower-b', label: 'Apartment Tower B', baseRequired: 3 },
+    { defId: 'apartment-tower-d', label: 'Megablock', baseRequired: 1 },
     { defId: 'ministry-office', label: 'Ministry Office', baseRequired: 1 },
     { defId: 'workers-club', label: 'Workers Club', baseRequired: 1 },
-  ],
-  the_eternal: [
-    { defId: 'apartment-tower-d', label: 'Apartment Tower D', baseRequired: 3 },
-    { defId: 'government-hq', label: 'Government HQ', baseRequired: 1 },
-    { defId: 'kgb-office', label: 'KGB Office', baseRequired: 1 },
-    { defId: 'train-station', label: 'Train Station', baseRequired: 1 },
-  ],
-  // Kardashev sub-era mandates (escalating requirements)
-  post_soviet: [
-    { defId: 'apartment-tower-d', label: 'Apartment Tower D', baseRequired: 4 },
-    { defId: 'power-station', label: 'Power Station', baseRequired: 2 },
-    { defId: 'government-hq', label: 'Government HQ', baseRequired: 2 },
-  ],
-  planetary: [
-    { defId: 'power-station', label: 'Power Station', baseRequired: 3 },
-    { defId: 'factory-office', label: 'Factory Office', baseRequired: 3 },
-    { defId: 'government-hq', label: 'Government HQ', baseRequired: 2 },
-  ],
-  solar_engineering: [
-    { defId: 'power-station', label: 'Power Station', baseRequired: 5 },
-    { defId: 'factory-office', label: 'Factory Office', baseRequired: 4 },
-    { defId: 'radio-station', label: 'Radio Station', baseRequired: 2 },
-  ],
-  type_one: [
-    { defId: 'power-station', label: 'Power Station', baseRequired: 6 },
-    { defId: 'factory-office', label: 'Factory Office', baseRequired: 5 },
-    { defId: 'government-hq', label: 'Government HQ', baseRequired: 3 },
-  ],
-  deconstruction: [
-    { defId: 'power-station', label: 'Power Station', baseRequired: 7 },
-    { defId: 'factory-office', label: 'Factory Office', baseRequired: 6 },
-    { defId: 'government-hq', label: 'Government HQ', baseRequired: 3 },
-  ],
-  dyson_swarm: [
-    { defId: 'power-station', label: 'Power Station', baseRequired: 8 },
-    { defId: 'factory-office', label: 'Factory Office', baseRequired: 7 },
-    { defId: 'government-hq', label: 'Government HQ', baseRequired: 4 },
-  ],
-  megaearth: [
-    { defId: 'power-station', label: 'Power Station', baseRequired: 9 },
-    { defId: 'factory-office', label: 'Factory Office', baseRequired: 8 },
-    { defId: 'government-hq', label: 'Government HQ', baseRequired: 4 },
-  ],
-  type_two_peak: [
-    { defId: 'power-station', label: 'Power Station', baseRequired: 10 },
-    { defId: 'factory-office', label: 'Factory Office', baseRequired: 10 },
-    { defId: 'government-hq', label: 'Government HQ', baseRequired: 5 },
   ],
 };
 
@@ -481,19 +423,10 @@ export class PoliticalAgent extends Vehicle {
   /** Seeded RNG (set via setRng). */
   private rng?: GameRng;
 
-  /** Game mode — freeform uses OrganicUnlocks for era transitions. */
-  private gameMode: GovernorMode = 'historical';
-
-  /** Cached organic unlock context for Freeform mode era transitions. */
-  private organicCtx: UnlockContext | null = null;
-
-  /** Freeform mode: current era tracked independently of year. */
-  private freeformEraId: EraId | null = null;
-
   /** Moscow promotion tracking (competence attracts attention). */
   private promotionState: MoscowPromotionState = createPromotionState();
 
-  /** Resettlement directive tracking (punitive forced relocation). */
+  /** Resettlement directive tracking (punitive forced transfer). */
   private resettlementState: ResettlementDirectiveState = createResettlementState();
 
   constructor(startYear = 1917) {
@@ -515,30 +448,23 @@ export class PoliticalAgent extends Vehicle {
     };
   }
 
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.PHASE_POLITICAL) {
+      const engine = (globalThis as any).simulationEngine;
+      if (engine?._lastTickCtx) {
+        // Dynamic import to break circular dependency if it exists
+        const { phasePolitical } = require('../../../game/engine/phasePolitical');
+        phasePolitical(engine._lastTickCtx);
+      }
+      return true;
+    }
+    return false;
+  }
+
   /** Set the seeded RNG for deterministic political rolls. */
   setRng(rng: GameRng): void {
     this.rng = rng;
-  }
-
-  /** Set game mode (freeform uses OrganicUnlocks for era transitions). */
-  setGameMode(mode: GovernorMode): void {
-    this.gameMode = mode;
-    if (mode === 'freeform') {
-      this.freeformEraId = this.getCurrentEraId();
-    }
-  }
-
-  /** Get current game mode. */
-  getGameMode(): GovernorMode {
-    return this.gameMode;
-  }
-
-  /**
-   * Update the organic unlock context. Called by SimulationEngine each tick
-   * when in Freeform mode so era transitions are condition-based.
-   */
-  setOrganicUnlockContext(ctx: UnlockContext): void {
-    this.organicCtx = ctx;
   }
 
   // =========================================================================
@@ -547,14 +473,10 @@ export class PoliticalAgent extends Vehicle {
 
   /**
    * Get the full definition of the current era based on the tracked year.
-   * In Freeform mode, uses the organic era override if set.
    *
    * @returns Current era definition
    */
   getCurrentEraDefinition(): EraDefinition {
-    if (this.gameMode === 'freeform' && this.freeformEraId) {
-      return ERA_DEFINITIONS[this.freeformEraId];
-    }
     const idx = eraIndexForYear(this.state.currentYear);
     const eraId = ERA_ORDER[idx]!;
     return ERA_DEFINITIONS[eraId];
@@ -575,9 +497,6 @@ export class PoliticalAgent extends Vehicle {
    * @returns Index into ERA_ORDER
    */
   getCurrentEraIndex(): number {
-    if (this.gameMode === 'freeform' && this.freeformEraId) {
-      return ERA_ORDER.indexOf(this.freeformEraId);
-    }
     return eraIndexForYear(this.state.currentYear);
   }
 
@@ -592,9 +511,7 @@ export class PoliticalAgent extends Vehicle {
   }
 
   /**
-   * Check whether advancing to the given year crosses into a new era.
-   * In Freeform mode, uses OrganicUnlocks conditions instead of year boundaries.
-   * In Historical/Classic mode, uses year-based era transitions.
+   * Check whether advancing to the given year crosses into a new historical era.
    *
    * Absorbed from EraSystem.checkTransition().
    *
@@ -605,10 +522,6 @@ export class PoliticalAgent extends Vehicle {
     // Capture old era BEFORE updating year (year-based path needs the delta)
     const oldEra = this.getCurrentEraDefinition();
     this.state.currentYear = year;
-
-    if (this.gameMode === 'freeform') {
-      return this.checkFreeformEraTransition();
-    }
 
     return this.checkYearBasedEraTransition(oldEra);
   }
@@ -629,33 +542,6 @@ export class PoliticalAgent extends Vehicle {
     }
 
     return null;
-  }
-
-  /**
-   * Condition-based era transition (Freeform mode).
-   * Uses OrganicUnlocks to determine when to advance eras.
-   */
-  private checkFreeformEraTransition(): EraDefinition | null {
-    if (!this.organicCtx) return null;
-
-    const currentEraId = this.freeformEraId ?? 'revolution';
-    const ctx: UnlockContext = {
-      ...this.organicCtx,
-      currentEraId,
-    };
-
-    const nextEra = evaluateOrganicUnlocks(ctx);
-    if (!nextEra) return null;
-
-    const oldEra = ERA_DEFINITIONS[currentEraId];
-    const newEra = ERA_DEFINITIONS[nextEra];
-
-    this.state.previousEraId = currentEraId;
-    this.freeformEraId = nextEra;
-    this.transitionFromModifiers = { ...oldEra.modifiers };
-    this.state.transitionTicksRemaining = TRANSITION_TICKS;
-
-    return newEra;
   }
 
   /**
@@ -1189,7 +1075,7 @@ export class PoliticalAgent extends Vehicle {
   }
 
   // =========================================================================
-  // Resettlement Directive (punitive forced relocation)
+  // Resettlement Directive (punitive forced transfer)
   // =========================================================================
 
   /** Get current resettlement state (read-only). */
@@ -1383,7 +1269,9 @@ export class PoliticalAgent extends Vehicle {
    *
    * @param data - Previously returned from toJSON()
    */
-  fromJSON(data: PoliticalState & { promotion?: MoscowPromotionState; resettlement?: ResettlementDirectiveState }): void {
+  fromJSON(
+    data: PoliticalState & { promotion?: MoscowPromotionState; resettlement?: ResettlementDirectiveState },
+  ): void {
     this.state = {
       ...data,
       mandates: data.mandates ? [...data.mandates] : [],

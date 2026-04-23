@@ -31,11 +31,11 @@ describe('KeyboardHandler', () => {
   });
 
   describe('discrete actions', () => {
-    it('maps number keys to tool actions', () => {
+    it('ignores number keys because direct placement is not a player action', () => {
       fireKey('1');
       fireKey('5');
       fireKey('9');
-      expect(received).toEqual(['tool_1', 'tool_5', 'tool_9']);
+      expect(received).toEqual([]);
     });
 
     it('maps Escape to deselect', () => {
@@ -194,14 +194,14 @@ describe('KeyboardHandler', () => {
     it('can re-attach after detach', () => {
       handler.detach();
       handler.attach();
-      fireKey('2');
-      expect(received).toEqual(['tool_2']);
+      fireKey('r');
+      expect(received).toEqual(['speed_cycle']);
     });
 
     it('ignores duplicate attach calls', () => {
       handler.attach(); // already attached
-      fireKey('3');
-      expect(received).toEqual(['tool_3']); // not doubled
+      fireKey('r');
+      expect(received).toEqual(['speed_cycle']); // not doubled
     });
   });
 

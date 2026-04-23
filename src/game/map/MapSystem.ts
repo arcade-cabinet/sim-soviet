@@ -9,9 +9,9 @@
 
 import { clearTerrainFeatures, createForest, createMarsh, createMountain, createRiver } from '@/ecs/factories';
 import { GameRng } from '../SeedSystem';
+import { ChunkManager } from './chunks/ChunkManager';
 import type { MapGenerationOptions, SerializedCell, SerializedMap, TerrainCell, TerrainType } from './types';
 import { DEFAULT_MAP_OPTIONS, MAP_SIZES, TERRAIN_DEFAULTS } from './types';
-import { ChunkManager } from './chunks/ChunkManager';
 
 /**
  * Manages the procedurally generated terrain grid, providing terrain queries,

@@ -1,111 +1,73 @@
 # Progress
 
-## CRITICAL REMINDER
-**This is NOT a city builder.** The player is a predsedatel (chairman). The settlement grows organically. Player does NOT freely place buildings. See CLAUDE.md and docs/GAME_VISION.md.
+## Critical Reminder
 
-## What's Complete (Implemented & Tested)
+**This is not a city builder.** The player is a predsedatel. The settlement
+grows organically. The player does not freely choose buildings or draw roads.
+
+## Current 1.0 Surface
 
 ### Engine Architecture
-- [x] SimulationEngine decomposed into 7 phase modules (thin orchestrator, ~966 lines)
-- [x] TickContext shared type for all phases
-- [x] Yuka agent architecture (9 subpackages, 169+ files, 39k+ lines)
-- [x] Governor/crisis system (HistoricalGovernor + FreeformGovernor + ChaosEngine → PressureSystem + WorldAgent)
-- [x] Pressure-valve crisis system (PressureSystem, ClimateEventSystem, BlackSwanSystem, ColdBranches)
-- [x] Soviet Allocation Engine (organic growth, demand pipeline, site selection, HQ splitting)
-- [x] Building-as-Container (dual population modes: entity < 200, aggregate >= 200)
-- [x] Seeded GameRng mandatory (80+ Math.random replaced)
-- [x] SettlementSummary type + settlement_state DB schema
-- [x] Per-building tick, per-tile terrain tick pure functions
-- [x] Condition-based crisis state machine
-- [x] Protected building classes (government/military never demolished)
 
-### Game Systems
-- [x] Resource tracking (food, vodka, power, water, money, population)
-- [x] 5-year plan quotas with annual reviews
-- [x] 8 era campaigns with transitions and doctrine integration
-- [x] Personnel file (black marks, commendations, threat levels)
-- [x] Settlement tiers (selo → posyolok → PGT → gorod)
-- [x] 31 achievements with tracking
-- [x] 9 text-choice minigames
-- [x] Scoring system with consequence multipliers (rehabilitated/gulag/rasstrelyat)
-- [x] Classic mode REMOVED — only historical and freeform
-- [x] Soviet consequence nomenclature (rehabilitated/gulag/rasstrelyat)
+- [x] SimulationEngine phase orchestration.
+- [x] TickContext shared across phase modules.
+- [x] Yuka-style agent architecture.
+- [x] Miniplex ECS and legacy compatibility surfaces.
+- [x] Historical governor and classical pressure-valve crisis system.
+- [x] Seeded RNG and serialization support.
+- [x] Protected government and military building behavior.
 
-### Demographics & Workers
-- [x] Dvor (household) system with family structures
-- [x] Birth/death/aging lifecycle
-- [x] Gender-differentiated retirement (55F/60M)
-- [x] Male-first conscription (18-51)
-- [x] Private plot food production
-- [x] Loyalty/sabotage system
-- [x] Trudodni (7-category labor accounting)
-- [x] Worker AI (6 behavior classes)
-- [x] Statistical demographics (Poisson-sampled)
-- [x] Entity GC sweeps (orphan citizens, empty dvory)
+### Historical Campaign
 
-### Political Systems
-- [x] Politburo with 10 ministries
-- [x] Politruks, KGB, military entities
-- [x] Political entity roster with tap interaction
-- [x] Succession/coup mechanics
+- [x] Campaign start fixed to October 1917.
+- [x] Seven historical eras ending at the 1991 dissolution endpoint.
+- [x] Historical crises and era doctrines.
+- [x] One-shot campaign completion modal and score summary path.
+- [x] Grounded same-settlement continuation after 1991.
 
-### Rendering & UI
-- [x] R3F 3D rendering (56 GLB models, terrain, weather FX, lighting)
-- [x] 22+ UI overlay components (Soviet aesthetic)
-- [x] Audio system (47 tracks, mood playlists)
-- [x] Save/load (full serialization to IndexedDB)
-- [x] WebXR support (AR tabletop, VR walkthrough)
+### Settlement Systems
 
-### Infrastructure
-- [x] CI (lint + typecheck + tests on PR)
-- [x] CD (Release Please → GitHub Pages + Android APK)
-- [x] 6,730 tests across 283 suites
-- [x] Documentation overhaul (41 docs with YAML frontmatter)
-- [x] JSDoc completion (~273/283 source files)
+- [x] Organic growth demand pipeline, site selection, construction, and HQ splitting.
+- [x] Food, vodka, power, water, money, labor, housing, and population systems.
+- [x] Five-year plan quotas and annual review pressure.
+- [x] Settlement tiers and local map expansion.
+- [x] Per-building and per-tile tick logic.
 
-## Recently Completed (feat/allocation-engine branch, PR #44)
+### Demographics And Workers
 
-### Pressure-Valve Crisis System + WorldAgent
-- [x] PressureSystem with 10 domains
-- [x] WorldAgent (core agent coordinating world-level state)
-- [x] ClimateEventSystem (weather-driven crises)
-- [x] BlackSwanSystem (rare catastrophic events)
-- [x] ColdBranches (worldBranches.ts — alternate timeline forking)
-- [x] PressureCrisisEngine + pressure accumulation pipeline
+- [x] Dvor household model.
+- [x] Birth, death, aging, retirement, conscription, and private plots.
+- [x] Worker self-organization around priorities.
+- [x] Loyalty, morale, sabotage, trudodni, and statistical aggregation.
 
-### Soviet Allocation Engine + Organic Growth
-- [x] Organic settlement growth (demand pipeline → site selection → construction)
-- [x] Buildings-as-UI (all 7 phases complete — HUD stripped through toolbar removed)
-- [x] HQ splitting (multi-function HQ → dedicated buildings as pop grows)
-- [x] GrowthPacing, OrganicUnlocks, SiteSelectionRules
-- [x] Government HQ with ReportsTab
-- [x] Dynamic map expansion (grid expands via settlement tier upgrades)
-- [x] Off-screen building tick for DB-only state updates
-- [x] Freeform endless mode with unlimited map expansion
-- [x] Global warming terrain effects for freeform centuries
-- [x] RelocationEngine data model for multi-settlement support
-- [x] Expanded playthrough tests and historical accuracy fixes
-- [x] WorldAgent sphere dynamics (42 cold branches)
+### Politics And Narrative
 
-### Kardashev Expansion (2026-03-05 session — ~16K lines, 20 commits)
-- [x] 8 Kardashev sub-eras replacing flat the_eternal
-- [x] Post-scarcity pressure (5 new domains: meaning, density, entropy, legacy, ennui)
-- [x] Multi-settlement tick loop + viewport switching
-- [x] MegaCity law enforcement (KGB → Sector Judges → Megacity Arbiters)
-- [x] Adaptive agent matrix (10 terrain profiles wired to 6 agents, climate polarity)
-- [x] 3 procedural shaders (Dyson sphere, Mars atmosphere, O'Neill interior)
-- [x] Celestial Body Factory (sphere↔flat morphing, 4 body types, MegastructureShell)
-- [x] ZonePreloader (zone-specific asset preloading with progress phases)
-- [x] Zone-aware LoadingScreen + SettlementTransitionOverlay (flavor text)
-- [x] Poly Haven declarative pipeline (7 HDRIs, 15 terrain textures, all CC0)
-- [x] 13 load zones by celestial body + era
+- [x] Personnel file, black marks, scrutiny, and consequences.
+- [x] KGB, politruks, military, party pressure, succession, and coups.
+- [x] Historical worldbuilding timeline and achievements.
+- [x] Building panels and HQ tabs as the main UI surface.
 
-## Version History
+### Rendering, Audio, And UI
 
-| Version | Date | Highlights |
-|---------|------|-----------|
-| v1.2.0 | 2026-03 | Engine decomposition, allocation engine, pressure-valve crisis, organic growth, Kardashev expansion, celestial factory, zone-aware loading |
-| v1.1.3 | 2026-02 | Docs-vs-code alignment audit |
-| v1.1.2 | 2026-02 | 3D rendering fix, political entity tap interaction |
-| v1.1.0 | 2026-02 | R3F migration from BabylonJS |
-| v1.0.0 | 2026-02 | Initial release — all core systems |
+- [x] React Three Fiber scene rendering for the settlement.
+- [x] Historical terrain states, weather, lighting, war overlay, and model mapping.
+- [x] Soviet-era audio playlists.
+- [x] Historical-only new game setup.
+- [x] USSR dissolution modal and grounded continuation copy.
+
+## Removed From 1.0
+
+- [x] Removed deep-future era progression and `the_eternal` runtime scope.
+- [x] Removed Kardashev sub-eras and space timeline runtime scope.
+- [x] Removed per-world timelines and global expansion layers.
+- [x] Removed multi-settlement relocation and settlement switching.
+- [x] Removed celestial, Dyson, O'Neill, Mars, alien fauna, arcology, and space rendering scope.
+- [x] Removed post-scarcity pressure domains.
+- [x] Removed freeform chaos branch product mode.
+
+## Verification Status
+
+- [x] Git bundle backup verified before mutations.
+- [x] TypeScript typecheck passed after runtime pruning.
+- [x] Focused historical-scope tests added.
+- [x] Final lint, targeted tests, build smoke checks, and browser e2e have passed.

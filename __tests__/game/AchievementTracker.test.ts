@@ -179,18 +179,11 @@ describe('AchievementTracker', () => {
   // ── Time-based achievements ────────────────────────────
 
   describe('tick - time conditions', () => {
-    it('unlocks year_2000 when year >= 2000', () => {
+    it('unlocks post_1991_free_play when year >= 1992', () => {
       const tracker = new AchievementTracker();
       const res = makeResources();
-      tracker.tick(res, 5, 50, 2000, 1);
-      expect(tracker.getUnlocked().some((a) => a.id === 'year_2000')).toBe(true);
-    });
-
-    it('unlocks year_2100 when year >= 2100', () => {
-      const tracker = new AchievementTracker();
-      const res = makeResources();
-      tracker.tick(res, 5, 50, 2100, 1);
-      expect(tracker.getUnlocked().some((a) => a.id === 'year_2100')).toBe(true);
+      tracker.tick(res, 5, 50, 1992, 1);
+      expect(tracker.getUnlocked().some((a) => a.id === 'post_1991_free_play')).toBe(true);
     });
 
     it('unlocks play_one_hour at 3600 seconds', () => {

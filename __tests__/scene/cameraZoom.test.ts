@@ -7,21 +7,20 @@
  * 3. Escape triggers return (clearCameraTarget clears target)
  * 4. Building panel open/close integrates with camera target
  * 5. Zoom bounds configuration (minDistance 3, maxDistance 80)
- * 6. Camera reset version increments on settlement switch
+ * 6. Caravan target state supports arrival camera follow
  */
 
 import {
-  setCameraTarget,
-  getCameraTarget,
   clearCameraTarget,
-  getCameraAnimating,
-  setCameraAnimating,
-  openBuildingPanel,
   closeBuildingPanel,
-  getCameraResetVersion,
-  setCaravanTarget,
+  getCameraAnimating,
+  getCameraTarget,
   getCaravanTarget,
+  openBuildingPanel,
   setArrivalInProgress,
+  setCameraAnimating,
+  setCameraTarget,
+  setCaravanTarget,
 } from '../../src/stores/gameStore';
 
 // ── Camera Target State ─────────────────────────────────────────────────
@@ -186,21 +185,6 @@ describe('Zoom bounds configuration', () => {
     // Verify clamping logic: value in range stays unchanged
     const inRange = Math.max(MIN_DISTANCE, Math.min(MAX_DISTANCE, 40));
     expect(inRange).toBe(40);
-  });
-});
-
-// ── Camera Reset Version ────────────────────────────────────────────────
-
-describe('Camera reset version for settlement switches', () => {
-  it('getCameraResetVersion returns a number', () => {
-    const version = getCameraResetVersion();
-    expect(typeof version).toBe('number');
-  });
-
-  it('version is stable across multiple reads', () => {
-    const v1 = getCameraResetVersion();
-    const v2 = getCameraResetVersion();
-    expect(v1).toBe(v2);
   });
 });
 

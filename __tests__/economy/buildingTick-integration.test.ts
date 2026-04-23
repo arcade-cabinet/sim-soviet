@@ -7,12 +7,13 @@
  * Tests the full path: phaseProduction → tickBuilding → resource updates.
  */
 
-import { tickBuilding, type BuildingTickContext, type BuildingTickInput } from '../../src/ai/agents/economy/buildingTick';
-import { operationalBuildings, getResourceEntity } from '../../src/ecs/archetypes';
-import { createBuilding, createResourceStore, createMetaStore } from '../../src/ecs/factories';
-import type { BuildingComponent } from '../../src/ecs/world';
-import { world } from '../../src/ecs/world';
+import {
+  type BuildingTickContext,
+  type BuildingTickInput,
+  tickBuilding,
+} from '../../src/ai/agents/economy/buildingTick';
 import { getBuildingDef } from '../../src/data/buildingDefs';
+import type { BuildingComponent } from '../../src/ecs/world';
 
 // ---------------------------------------------------------------------------
 // 1. tickBuilding output matches manual calculation
@@ -213,7 +214,11 @@ describe('tickBuilding integration — season and weather', () => {
 
   it('blizzard in winter compounds both modifiers', () => {
     const summerClear = tickBuilding(baseInput, { weather: 'clear', season: 'summer', activeCrisisModifier: 1.0 });
-    const winterBlizzard = tickBuilding(baseInput, { weather: 'blizzard', season: 'winter', activeCrisisModifier: 1.0 });
+    const winterBlizzard = tickBuilding(baseInput, {
+      weather: 'blizzard',
+      season: 'winter',
+      activeCrisisModifier: 1.0,
+    });
 
     // Winter=0.3, blizzard=0.3 → combined = 0.09
     const ratio = winterBlizzard.netOutput / summerClear.netOutput;

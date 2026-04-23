@@ -73,4 +73,3 @@ export const settings = sqliteTable('settings', {
 
 export { settlementState } from './settlement';
 export { terrainTiles } from './terrain';
-export { divergencePoints, timelineEvents } from './timeline';

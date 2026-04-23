@@ -1,6 +1,7 @@
 # Agent Directory
 
-Yuka `Vehicle`-based agents organized into 9 domain subpackages (~169 files, 39k+ lines).
+Yuka `Vehicle`-based agents organized into historical campaign domain
+subpackages.
 
 ## Agent Inventory
 
@@ -10,7 +11,7 @@ Yuka `Vehicle`-based agents organized into 9 domain subpackages (~169 files, 39k
 | 2 | ChronologyAgent    | core/            | ChronologySystem.ts                                     | NEW_MONTH, NEW_YEAR, SEASON_CHANGED    |
 | 3 | WeatherAgent       | core/            | WeatherSystem.ts (weather rolling)                      | WEATHER_CHANGED                        |
 | 4 | EconomyAgent       | economy/         | economy.ts (EconomySystem class), TrudodniSystem.ts     | FONDY_DELIVERED, BLAT_KGB_RISK, STAKHANOVITE_EVENT |
-| 5 | FoodAgent          | economy/         | PrivatePlotSystem.ts                                    | FOOD_CRISIS, FOOD_SURPLUS              |
+| 5 | FoodAgent          | economy/         | Private plot food calculations                          | FOOD_CRISIS, FOOD_SURPLUS              |
 | 6 | VodkaAgent         | economy/         | (vodka production logic)                                | VODKA_SHORTAGE                         |
 | 7 | StorageAgent       | economy/         | (storage capacity logic)                                | STORAGE_OVERFLOW, STORAGE_CRITICAL     |
 | 8 | PoliticalAgent     | political/       | era/EraSystem.ts, PlanMandates.ts, annualReportTick.ts  | ERA_TRANSITION, QUOTA_DEADLINE, PLAN_UPDATED |
@@ -39,7 +40,7 @@ Yuka `Vehicle`-based agents organized into 9 domain subpackages (~169 files, 39k
 
 ### political/ — Eras, Quotas, Surveillance
 
-- **PoliticalAgent** — Era transitions (8 Soviet eras from Revolution to Eternal), 5-year plan quota enforcement, mandate generation and fulfillment, annual report management. Absorbs EraSystem and PlanMandates logic.
+- **PoliticalAgent** — Era transitions for the historical 1917-1991 campaign, 5-year plan quota enforcement, mandate generation and fulfillment, annual report management. Absorbs EraSystem and PlanMandates logic.
 - **KGBAgent** — KGB threat tracking: black marks, commendations, investigations, informants, arrest probability. Absorbs PersonnelFile logic.
 - **LoyaltyAgent** — Per-dvor loyalty assessment. Loyalty drives sabotage (10% chance below 20) and flight (5% chance below 10). Food supply is the primary loyalty driver.
 
@@ -57,7 +58,6 @@ Yuka `Vehicle`-based agents organized into 9 domain subpackages (~169 files, 39k
 ### workforce/ — Labor and Household Systems
 
 - **WorkerSystem** — Dual-mode worker management (entity vs aggregate). Auto-assigns workers based on era-appropriate priorities.
-- **PrivatePlotSystem** — Food from private plots, era-dependent yield multipliers.
 - **LoyaltySystem** — Per-dvor loyalty, sabotage, flight risk.
 - **TrudodniSystem** — 7-category labor accounting (1930-1966 system).
 
@@ -77,12 +77,12 @@ Yuka `Vehicle`-based agents organized into 9 domain subpackages (~169 files, 39k
 
 ### crisis/ — Governor and Pressure System
 
-- **Governor** — HistoricalGovernor (real dates) + FreeformGovernor (pressure-driven).
-- **PressureSystem** — 15 domains: 10 classical (food, morale, loyalty, housing, political, power, infrastructure, demographic, health, economic) + 5 post-scarcity (meaning, density, entropy, legacy, ennui). Dual-spread accumulation.
+- **Governor** — HistoricalGovernor (real dates) with grounded post-campaign continuation.
+- **PressureSystem** — 10 historical settlement domains: food, morale, loyalty, housing, political, power, infrastructure, demographic, health, and economic. Dual-spread accumulation.
 - **PressureCrisisEngine** — Emergent crises from sustained pressure above thresholds.
 - **ClimateEventSystem** — Tier 2: seasonal/weather-gated natural events that spike pressure.
 - **BlackSwanSystem** — Tier 3: ultra-rare events (earthquakes, solar storms, nuclear accidents).
-- **ColdBranches** — 42 dormant divergence points activated by pressure conditions.
+- **ColdBranches** — 3 grounded historical pressure branches activated by settlement pressure conditions.
 - **WarAgent, FamineAgent, DisasterAgent** — Crisis-specific agents.
 - **CrisisImpactApplicator** — Applies crisis effects to game state.
 

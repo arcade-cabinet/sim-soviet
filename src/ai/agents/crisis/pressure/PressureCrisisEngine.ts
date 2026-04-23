@@ -15,21 +15,8 @@
  */
 
 import type { CrisisDefinition, CrisisImpact } from '../types';
-import {
-  POST_SCARCITY_DOMAINS,
-  PRESSURE_DOMAINS,
-  type PostScarcityDomain,
-  type PostScarcityPressureState,
-  type PressureDomain,
-  type PressureState,
-} from './PressureDomains';
-import {
-  generateCrisisFromTemplate,
-  MAJOR_CRISES,
-  MINOR_INCIDENTS,
-  POST_SCARCITY_MAJOR_CRISES,
-  POST_SCARCITY_MINOR_INCIDENTS,
-} from './pressureCrisisMapping';
+import { PRESSURE_DOMAINS, type PressureDomain, type PressureState } from './PressureDomains';
+import { generateCrisisFromTemplate, MAJOR_CRISES, MINOR_INCIDENTS } from './pressureCrisisMapping';
 import { SUSTAIN_TICKS, THRESHOLDS } from './pressureThresholds';
 
 // ─── Engine State ────────────────────────────────────────────────────────────
@@ -76,11 +63,7 @@ export class PressureCrisisEngine {
    * @param year - Current game year (for crisis IDs)
    * @param activeCrisisIds - IDs of currently active crises (to prevent duplicates)
    */
-  checkForEmergence(
-    pressureState: PressureState,
-    year: number,
-    activeCrisisIds: string[],
-  ): EmergenceResult {
+  checkForEmergence(pressureState: PressureState, year: number, activeCrisisIds: string[]): EmergenceResult {
     const result: EmergenceResult = { minorImpacts: [], majorCrises: [] };
 
     for (const domain of PRESSURE_DOMAINS) {
@@ -95,8 +78,10 @@ export class PressureCrisisEngine {
 
       // ── Major crisis check (emergency fast-track OR sustained critical) ──
       if (!ds.majorActive) {
-        const emergencyTriggered = gauge.level >= THRESHOLDS.EMERGENCY && gauge.criticalTicks >= SUSTAIN_TICKS.EMERGENCY_MAJOR;
-        const criticalTriggered = gauge.level >= THRESHOLDS.CRITICAL && gauge.criticalTicks >= SUSTAIN_TICKS.CRITICAL_MAJOR;
+        const emergencyTriggered =
+          gauge.level >= THRESHOLDS.EMERGENCY && gauge.criticalTicks >= SUSTAIN_TICKS.EMERGENCY_MAJOR;
+        const criticalTriggered =
+          gauge.level >= THRESHOLDS.CRITICAL && gauge.criticalTicks >= SUSTAIN_TICKS.CRITICAL_MAJOR;
 
         if (emergencyTriggered || criticalTriggered) {
           const template = MAJOR_CRISES[domain];
@@ -127,64 +112,7 @@ export class PressureCrisisEngine {
     return result;
   }
 
-  /**
-   * Check post-scarcity domains for crisis emergence.
-   * Called after domain transformation when post-scarcity state exists.
-   */
-  checkPostScarcityEmergence(
-    postScarcityState: PostScarcityPressureState,
-    year: number,
-    activeCrisisIds: string[],
-  ): EmergenceResult {
-    const result: EmergenceResult = { minorImpacts: [], majorCrises: [] };
-
-    for (const domain of POST_SCARCITY_DOMAINS) {
-      const gauge = postScarcityState[domain];
-      const key = `ps_${domain}` as PressureDomain;
-
-      // Initialize tracking state if needed
-      if (!this.domainStates[key]) {
-        this.domainStates[key] = { minorActive: false, majorActive: false, activeCrisisId: null };
-      }
-      const ds = this.domainStates[key];
-
-      if (ds.activeCrisisId && !activeCrisisIds.includes(ds.activeCrisisId)) {
-        ds.majorActive = false;
-        ds.activeCrisisId = null;
-      }
-
-      if (!ds.majorActive) {
-        const emergencyTriggered = gauge.level >= THRESHOLDS.EMERGENCY && gauge.criticalTicks >= SUSTAIN_TICKS.EMERGENCY_MAJOR;
-        const criticalTriggered = gauge.level >= THRESHOLDS.CRITICAL && gauge.criticalTicks >= SUSTAIN_TICKS.CRITICAL_MAJOR;
-
-        if (emergencyTriggered || criticalTriggered) {
-          const template = POST_SCARCITY_MAJOR_CRISES[domain];
-          const crisisId = `pressure-ps-${domain}-${year}-${++this.crisisCounter}`;
-          const crisis = generateCrisisFromTemplate(template, year, gauge.level, crisisId);
-          result.majorCrises.push(crisis);
-          ds.majorActive = true;
-          ds.activeCrisisId = crisisId;
-          ds.minorActive = false;
-        }
-      }
-
-      if (!ds.majorActive && !ds.minorActive) {
-        if (gauge.level >= THRESHOLDS.WARNING && gauge.warningTicks >= SUSTAIN_TICKS.WARNING_MINOR) {
-          const template = POST_SCARCITY_MINOR_INCIDENTS[domain];
-          result.minorImpacts.push(template.impact);
-          ds.minorActive = true;
-        }
-      }
-
-      if (ds.minorActive && gauge.level < THRESHOLDS.WARNING) {
-        ds.minorActive = false;
-      }
-    }
-
-    return result;
-  }
-
-  /** Get IDs of all active pressure-driven major crises (classical + post-scarcity). */
+  /** Get IDs of all active pressure-driven major crises. */
   getActiveCrisisIds(): string[] {
     const ids: string[] = [];
     for (const key of Object.keys(this.domainStates)) {

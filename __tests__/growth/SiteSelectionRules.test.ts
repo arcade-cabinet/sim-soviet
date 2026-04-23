@@ -96,10 +96,10 @@ describe('SiteSelectionRules (Brutalist)', () => {
       });
       const result = findBestPlacement('government-hq', ctx);
       expect(result).not.toBeNull();
-      
+
       // Center is 10,10 (occupied). It should pick something right next to it.
       const distFromCenter = Math.abs(result!.x - 10) + Math.abs(result!.z - 10);
-      expect(distFromCenter).toBe(1); 
+      expect(distFromCenter).toBe(1);
     });
   });
 
@@ -126,10 +126,10 @@ describe('SiteSelectionRules (Brutalist)', () => {
         buildings: [{ x: 10, z: 10, defId: 'workers-house-a' }],
         occupiedCells: new Set(['10,10']),
       });
-      
+
       const result = findBestPlacement('workers-house-a', ctx);
       expect(result).not.toBeNull();
-      
+
       // Housing should actively avoid placing itself AT 11,10 (the tree cell)
       expect(result!.x === 11 && result!.z === 10).toBe(false);
     });

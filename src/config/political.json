@@ -92,9 +92,9 @@
         "sessionProductionPenalty": 0.05
       },
       "paranoid": {
-        "loyaltyThresholdMult": 1.0,
+        "loyaltyThresholdMult": 1,
         "skipChance": 0,
-        "kgbFlagMult": 2.0,
+        "kgbFlagMult": 2,
         "extraWorkers": 1,
         "sessionProductionPenalty": 0.15
       },
@@ -128,9 +128,21 @@
       "cleanEra": 100
     },
     "scoreMultiplierMatrix": {
-      "worker": { "rehabilitated": 0.5, "rasstrelyat": 1.0, "gulag": 0.7 },
-      "comrade": { "rehabilitated": 0.8, "rasstrelyat": 1.5, "gulag": 1.2 },
-      "tovarish": { "rehabilitated": 1.0, "rasstrelyat": 2.0, "gulag": 1.8 }
+      "worker": {
+        "rehabilitated": 0.5,
+        "rasstrelyat": 1,
+        "gulag": 0.7
+      },
+      "comrade": {
+        "rehabilitated": 0.8,
+        "rasstrelyat": 1.5,
+        "gulag": 1.2
+      },
+      "tovarish": {
+        "rehabilitated": 1,
+        "rasstrelyat": 2,
+        "gulag": 1.8
+      }
     }
   },
   "entityScaling": {
@@ -161,35 +173,56 @@
   },
   "lawEnforcement": {
     "baseCrime": {
-      "kgb": 0.05,
-      "security_services": 0.08,
-      "sector_judges": 0.12,
-      "megacity_arbiters": 0.15
+      "kgb": 0.05
     },
     "judgesPer10K": 5,
     "sectorSubdivisionThreshold": 1000000,
-    "isoCubeCapacity": 500,
-    "isoCubeLaborEfficiency": 0.4,
-    "isoCubeMortalityRate": 0.002,
-    "undercityDecayRate": {
-      "kgb": 0,
-      "security_services": 0,
-      "sector_judges": 0.001,
-      "megacity_arbiters": 0.003
+    "detentionCapacity": 500,
+    "penalLaborEfficiency": 0.4,
+    "detentionMortalityRate": 0.002,
+    "districtDecayRate": {
+      "kgb": 0
     },
-    "undercityCrimeAmplifier": 0.5
+    "districtCrimeAmplifier": 0.5
   },
   "highCorruptionThreshold": 50,
   "compulsoryDeliveries": {
     "rates": {
-      "revolutionary": { "food": 0.3, "vodka": 0.2, "money": 0.25 },
-      "industrialization": { "food": 0.45, "vodka": 0.35, "money": 0.5 },
-      "wartime": { "food": 0.6, "vodka": 0.5, "money": 0.65 },
-      "reconstruction": { "food": 0.25, "vodka": 0.2, "money": 0.3 },
-      "thaw": { "food": 0.25, "vodka": 0.15, "money": 0.25 },
-      "freeze": { "food": 0.4, "vodka": 0.3, "money": 0.45 },
-      "stagnation": { "food": 0.35, "vodka": 0.3, "money": 0.4 },
-      "eternal": { "food": 0.3, "vodka": 0.25, "money": 0.35 }
+      "revolutionary": {
+        "food": 0.3,
+        "vodka": 0.2,
+        "money": 0.25
+      },
+      "industrialization": {
+        "food": 0.45,
+        "vodka": 0.35,
+        "money": 0.5
+      },
+      "wartime": {
+        "food": 0.6,
+        "vodka": 0.5,
+        "money": 0.65
+      },
+      "reconstruction": {
+        "food": 0.25,
+        "vodka": 0.2,
+        "money": 0.3
+      },
+      "thaw": {
+        "food": 0.25,
+        "vodka": 0.15,
+        "money": 0.25
+      },
+      "freeze": {
+        "food": 0.4,
+        "vodka": 0.3,
+        "money": 0.45
+      },
+      "stagnation": {
+        "food": 0.35,
+        "vodka": 0.3,
+        "money": 0.4
+      }
     },
     "corruptionMin": 0.03,
     "corruptionMax": 0.08
@@ -210,8 +243,7 @@
       "stakhanovite_bonus": 30,
       "wartime_conscription": 120,
       "thaw_freeze_oscillation": 30,
-      "stagnation_rot": 60,
-      "eternal_bureaucracy": 20
+      "stagnation_rot": 60
     },
     "grainRequisitionRate": 0.03,
     "collectivizationSeizureRate": 0.02,
@@ -229,44 +261,63 @@
     "stagnationPaperworkPerTick": 2,
     "stagnationProductivityLossPerYear": 0.005,
     "stagnationCorruptionMult": 1.2,
-    "eternalPaperworkThreshold": 5000,
-    "eternalPaperworkBase": 5,
-    "eternalPaperworkGrowthFactor": 0.001,
-    "eternalBureaucracySlowdownPer1000": 0.05,
     "policies": {
-      "revolution": { "productionMult": 1.0, "consumptionMult": 0.9 },
-      "collectivization": { "productionMult": 1.1, "consumptionMult": 0.9 },
-      "industrialization": { "productionMult": 1.2, "consumptionMult": 0.95 },
-      "great_patriotic": { "productionMult": 0.85, "consumptionMult": 1.2 },
-      "reconstruction": { "productionMult": 1.1, "consumptionMult": 0.85 },
-      "thaw_and_freeze": { "productionMult": 1.2, "consumptionMult": 0.85 },
-      "stagnation": { "productionMult": 1.0, "consumptionMult": 1.0 },
-      "the_eternal": { "productionMult": 1.0, "consumptionMult": 1.0 },
-      "post_soviet": { "productionMult": 1.1, "consumptionMult": 0.95 },
-      "planetary": { "productionMult": 1.3, "consumptionMult": 0.9 },
-      "solar_engineering": { "productionMult": 1.5, "consumptionMult": 0.85 },
-      "type_one": { "productionMult": 2.0, "consumptionMult": 0.8 },
-      "deconstruction": { "productionMult": 2.5, "consumptionMult": 0.75 },
-      "dyson_swarm": { "productionMult": 3.0, "consumptionMult": 0.7 },
-      "megaearth": { "productionMult": 4.0, "consumptionMult": 0.6 },
-      "type_two_peak": { "productionMult": 5.0, "consumptionMult": 0.5 }
+      "revolution": {
+        "productionMult": 1,
+        "consumptionMult": 0.9
+      },
+      "collectivization": {
+        "productionMult": 1.1,
+        "consumptionMult": 0.9
+      },
+      "industrialization": {
+        "productionMult": 1.2,
+        "consumptionMult": 0.95
+      },
+      "great_patriotic": {
+        "productionMult": 0.85,
+        "consumptionMult": 1.2
+      },
+      "reconstruction": {
+        "productionMult": 1.1,
+        "consumptionMult": 0.85
+      },
+      "thaw_and_freeze": {
+        "productionMult": 1.2,
+        "consumptionMult": 0.85
+      },
+      "stagnation": {
+        "productionMult": 1,
+        "consumptionMult": 1
+      }
     },
     "inflowSchedule": {
-      "collectivization": { "type": "forced_resettlement", "intervalYears": 3 },
-      "industrialization": { "type": "moscow_assignment", "intervalYears": 2 },
-      "great_patriotic": { "type": "evacuee_influx", "once": true, "count": [10, 30] },
-      "reconstruction": { "type": "veteran_return", "intervalYears": 2, "count": [5, 20] },
-      "thaw_and_freeze": { "type": "moscow_assignment", "intervalYears": 3 },
-      "stagnation": { "type": "forced_resettlement", "intervalYears": 5 },
-      "the_eternal": { "type": "algorithmic_assignment", "intervalYears": 2, "count": [1, 50] },
-      "post_soviet": { "type": "algorithmic_assignment", "intervalYears": 2, "count": [1, 80] },
-      "planetary": { "type": "algorithmic_assignment", "intervalYears": 2, "count": [5, 100] },
-      "solar_engineering": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [10, 200] },
-      "type_one": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [20, 500] },
-      "deconstruction": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [50, 1000] },
-      "dyson_swarm": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [100, 2000] },
-      "megaearth": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [200, 5000] },
-      "type_two_peak": { "type": "algorithmic_assignment", "intervalYears": 1, "count": [500, 10000] }
+      "collectivization": {
+        "type": "forced_resettlement",
+        "intervalYears": 3
+      },
+      "industrialization": {
+        "type": "moscow_assignment",
+        "intervalYears": 2
+      },
+      "great_patriotic": {
+        "type": "evacuee_influx",
+        "once": true,
+        "count": [10, 30]
+      },
+      "reconstruction": {
+        "type": "veteran_return",
+        "intervalYears": 2,
+        "count": [5, 20]
+      },
+      "thaw_and_freeze": {
+        "type": "moscow_assignment",
+        "intervalYears": 3
+      },
+      "stagnation": {
+        "type": "forced_resettlement",
+        "intervalYears": 5
+      }
     }
   }
 }

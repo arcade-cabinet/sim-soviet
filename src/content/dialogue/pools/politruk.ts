@@ -68,7 +68,7 @@ export const POLITRUK_LINES: DialogueLine[] = [
   },
   // Gorod
   {
-    text: 'This city has grown. The Party takes credit. The workers take... continued employment. Everyone receives what they deserve.',
+    text: 'This settlement has grown. The Party takes credit. The workers take... continued employment. Everyone receives what they deserve.',
     character: 'politruk',
     conditions: { settlementTier: 'gorod' },
   },

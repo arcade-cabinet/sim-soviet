@@ -1,23 +1,21 @@
 /**
  * @module ai/agents/political/PrestigeProjectSystem
  *
- * Prestige project management -- massive Soviet mega-projects from
- * Monuments to Cosmodromes to Dyson Swarms.
+ * Prestige project management -- massive Soviet historical mega-projects
+ * from monuments to industrial works.
  *
  * These are NOT player-chosen. Moscow mandates them when political
  * conditions align. Only one project can be active at a time
  * (Soviet bureaucracy -- one mega-project at a time).
  *
- * Projects form a dependency tree: cosmodrome requires nuclear_program,
- * space_station requires cosmodrome, etc. The catalog is loaded from
- * src/config/prestige.json.
+ * Projects form a dependency tree loaded from src/config/prestige.json.
  *
  * @param PrestigeContext - Current game state snapshot for eligibility checks
  * @param PrestigeProjectState - Serializable state for save/load
  */
 
-import { ERA_ORDER } from '../../../game/era/definitions';
 import prestigeData from '../../../config/prestige.json';
+import { ERA_ORDER } from '../../../game/era/definitions';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -277,7 +275,7 @@ export function startProject(
  * @returns Tick result with updated state and any events
  */
 export function tickPrestigeProjects(ctx: PrestigeContext): PrestigeTickResult {
-  let state: PrestigeProjectState = {
+  const state: PrestigeProjectState = {
     completed: [...ctx.state.completed],
     active: ctx.state.active ? { ...ctx.state.active } : null,
     unlockedCapabilities: [...ctx.state.unlockedCapabilities],

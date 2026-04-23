@@ -485,8 +485,7 @@ describe('AudioManager', () => {
     });
 
     it('handles rapid era transitions without node explosion', async () => {
-      const flushPromises = () =>
-        new Promise((r) => jest.requireActual<typeof globalThis>('timers').setImmediate(r));
+      const flushPromises = () => new Promise((r) => jest.requireActual<typeof globalThis>('timers').setImmediate(r));
 
       // Simulate rapid era changes (100x speed scenario)
       manager.setEra('revolution');

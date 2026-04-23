@@ -17,8 +17,7 @@ import crisisData from './historicalCrises.json';
 
 // ─── Historical Crisis Definitions ──────────────────────────────────────────
 
-export const HISTORICAL_CRISES: readonly CrisisDefinition[] =
-  crisisData as unknown as readonly CrisisDefinition[];
+export const HISTORICAL_CRISES: readonly CrisisDefinition[] = crisisData as unknown as readonly CrisisDefinition[];
 
 // ─── Lookup ─────────────────────────────────────────────────────────────────
 

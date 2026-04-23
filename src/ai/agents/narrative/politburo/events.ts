@@ -138,7 +138,7 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     title: 'MANDATORY CELEBRATION',
     description:
       'Anniversary of the Revolution. Attendance compulsory. Joy compulsory. Second helpings of joy: unavailable.',
-    pravdaHeadline: 'SPONTANEOUS OUTPOURING OF REVOLUTIONARY FERVOR SWEEPS CITY',
+    pravdaHeadline: 'SPONTANEOUS OUTPOURING OF REVOLUTIONARY FERVOR SWEEPS SETTLEMENT',
     severity: 'trivial',
     category: 'cultural',
     effects: { money: -15, vodka: -5 },
@@ -174,7 +174,7 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     ministry: Ministry.DEFENSE,
     title: 'MILITARY EXERCISES',
     description:
-      'Annual military exercises. Tanks drive through city center. Several flower beds are casualties. A cat is decorated for bravery.',
+      'Annual military exercises. Tanks drive through the settlement center. Several flower beds are casualties. One resident receives a medal for standing still.',
     pravdaHeadline: 'AWESTRIKING DISPLAY OF MILITARY MIGHT REASSURES POPULACE',
     severity: 'trivial',
     category: 'political',
@@ -215,7 +215,7 @@ export const MINISTRY_EVENTS: MinistryEventTemplate[] = [
     ministry: Ministry.HEALTH,
     title: 'MYSTERIOUS ILLNESS',
     description: (m) =>
-      `Mysterious illness sweeps city. Health Minister ${m.name} ${m.competence > 50 ? 'mobilizes hospitals effectively' : 'prescribes rest and revolutionary spirit'}. ${m.personality === PersonalityType.MYSTIC ? 'Also: crystals.' : ''}`,
+      `Mysterious illness sweeps the settlement. Health Minister ${m.name} ${m.competence > 50 ? 'mobilizes hospitals effectively' : 'prescribes rest and revolutionary spirit'}. ${m.personality === PersonalityType.MYSTIC ? 'Also: crystals.' : ''}`,
     pravdaHeadline: 'MINOR HEALTH FLUCTUATION HANDLED WITH CHARACTERISTIC SOVIET EFFICIENCY',
     severity: 'major',
     category: 'disaster',

@@ -289,7 +289,7 @@ export class PoliticalEntitySystem {
     if (!accept) {
       // Rejecting costs marks
       pending.targetCount = 0;
-      pending.announcement = 'Conscription order rejected by the Mayor. Moscow has been notified.';
+      pending.announcement = 'Conscription order rejected by the predsedatel. Moscow has been notified.';
       return 2; // 2 marks for rejecting
     }
 

@@ -9,10 +9,10 @@
  * solar storms, nuclear accidents, and supervolcanic ash.
  */
 
-import { ClimateEventSystem, CLIMATE_EVENTS } from '@/ai/agents/crisis/ClimateEventSystem';
-import { BlackSwanSystem } from '@/ai/agents/crisis/BlackSwanSystem';
-import { Season } from '@/game/Chronology';
 import { WeatherType } from '@/ai/agents/core/weather-types';
+import { BlackSwanSystem } from '@/ai/agents/crisis/BlackSwanSystem';
+import { CLIMATE_EVENTS, ClimateEventSystem } from '@/ai/agents/crisis/ClimateEventSystem';
+import { Season } from '@/game/Chronology';
 import { GameRng } from '@/game/SeedSystem';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -38,10 +38,8 @@ describe('ClimateEventSystem', () => {
   describe('constructor', () => {
     it('creates system with empty cooldown state', () => {
       const system = new ClimateEventSystem();
-      // serialize() returns cooldowns + terraformingProgress; cooldowns must be empty on creation
       const serialized = system.serialize();
       expect(serialized.cooldowns).toHaveLength(0);
-      expect(serialized.terraformingProgress).toBe(0);
     });
   });
 
@@ -100,12 +98,7 @@ describe('ClimateEventSystem', () => {
 
     it('fires in EARLY_FROST season with cooling climate trend', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.EARLY_FROST,
-        WeatherType.OVERCAST,
-        -0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.EARLY_FROST, WeatherType.OVERCAST, -0.5, stubRng(0.0));
       const hasSevereFrost = result.impacts.some((imp) => imp.crisisId === 'climate-severe-frost');
       expect(hasSevereFrost).toBe(true);
     });
@@ -113,12 +106,7 @@ describe('ClimateEventSystem', () => {
     it('does NOT fire in WINTER when climate trend is warming (> -0.2)', () => {
       const system = new ClimateEventSystem();
       // trend=0.0 is outside [min:-1.0, max:-0.2]
-      const result = system.evaluate(
-        Season.WINTER,
-        WeatherType.BLIZZARD,
-        0.0,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.WINTER, WeatherType.BLIZZARD, 0.0, stubRng(0.0));
       const hasSevereFrost = result.impacts.some((imp) => imp.crisisId === 'climate-severe-frost');
       expect(hasSevereFrost).toBe(false);
     });
@@ -137,12 +125,7 @@ describe('ClimateEventSystem', () => {
 
     it('produces correct economy and social impact fields', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.WINTER,
-        WeatherType.OVERCAST,
-        -0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.WINTER, WeatherType.OVERCAST, -0.5, stubRng(0.0));
       const impact = result.impacts.find((imp) => imp.crisisId === 'climate-severe-frost');
       expect(impact).toBeDefined();
       expect(impact!.economy?.productionMult).toBe(0.8);
@@ -151,12 +134,7 @@ describe('ClimateEventSystem', () => {
 
     it('spikes food, infrastructure, health, and power pressure domains', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.WINTER,
-        WeatherType.OVERCAST,
-        -0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.WINTER, WeatherType.OVERCAST, -0.5, stubRng(0.0));
       // severe_frost pressureSpikes: food:0.1, infrastructure:0.05, health:0.08, power:0.06
       expect(result.pressureSpikes.food).toBeGreaterThan(0);
       expect(result.pressureSpikes.infrastructure).toBeGreaterThan(0);
@@ -172,24 +150,14 @@ describe('ClimateEventSystem', () => {
       const system = new ClimateEventSystem();
       // summer_drought: validSeasons=[STIFLING_HEAT, GOLDEN_WEEK], climateTrendRange={min:-0.8, max:-0.1}
       // baseProbability=0.006; stubRng(0.0) fires immediately
-      const result = system.evaluate(
-        Season.STIFLING_HEAT,
-        WeatherType.OVERCAST,
-        -0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.STIFLING_HEAT, WeatherType.OVERCAST, -0.5, stubRng(0.0));
       const hasDrought = result.impacts.some((imp) => imp.crisisId === 'climate-summer-drought');
       expect(hasDrought).toBe(true);
     });
 
     it('fires in GOLDEN_WEEK season with dry trend', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.GOLDEN_WEEK,
-        WeatherType.OVERCAST,
-        -0.3,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.GOLDEN_WEEK, WeatherType.OVERCAST, -0.3, stubRng(0.0));
       const hasDrought = result.impacts.some((imp) => imp.crisisId === 'climate-summer-drought');
       expect(hasDrought).toBe(true);
     });
@@ -197,24 +165,14 @@ describe('ClimateEventSystem', () => {
     it('does NOT fire when climate trend is warming (outside dry range)', () => {
       const system = new ClimateEventSystem();
       // summer_drought needs min:-0.8 max:-0.1 → 0.2 is out of range
-      const result = system.evaluate(
-        Season.STIFLING_HEAT,
-        WeatherType.HEATWAVE,
-        0.2,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.STIFLING_HEAT, WeatherType.HEATWAVE, 0.2, stubRng(0.0));
       const hasDrought = result.impacts.some((imp) => imp.crisisId === 'climate-summer-drought');
       expect(hasDrought).toBe(false);
     });
 
     it('has foodDelta in economy impact', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.STIFLING_HEAT,
-        WeatherType.OVERCAST,
-        -0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.STIFLING_HEAT, WeatherType.OVERCAST, -0.5, stubRng(0.0));
       const impact = result.impacts.find((imp) => imp.crisisId === 'climate-summer-drought');
       expect(impact).toBeDefined();
       expect(impact!.economy?.foodDelta).toBeLessThan(0);
@@ -227,24 +185,14 @@ describe('ClimateEventSystem', () => {
     it('fires in RASPUTITSA_SPRING season with warming trend', () => {
       const system = new ClimateEventSystem();
       // spring_flood: validSeasons=[RASPUTITSA_SPRING], climateTrendRange={min:0.2, max:1.0}
-      const result = system.evaluate(
-        Season.RASPUTITSA_SPRING,
-        WeatherType.OVERCAST,
-        0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.RASPUTITSA_SPRING, WeatherType.OVERCAST, 0.5, stubRng(0.0));
       const hasFlood = result.impacts.some((imp) => imp.crisisId === 'climate-spring-flood');
       expect(hasFlood).toBe(true);
     });
 
     it('does NOT fire outside RASPUTITSA_SPRING', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.WINTER,
-        WeatherType.RAIN,
-        0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.WINTER, WeatherType.RAIN, 0.5, stubRng(0.0));
       const hasFlood = result.impacts.some((imp) => imp.crisisId === 'climate-spring-flood');
       expect(hasFlood).toBe(false);
     });
@@ -263,12 +211,7 @@ describe('ClimateEventSystem', () => {
 
     it('spikes infrastructure and housing pressure domains', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.RASPUTITSA_SPRING,
-        WeatherType.OVERCAST,
-        0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.RASPUTITSA_SPRING, WeatherType.OVERCAST, 0.5, stubRng(0.0));
       // spring_flood pressureSpikes: infrastructure:0.1, housing:0.05
       expect(result.pressureSpikes.infrastructure).toBeGreaterThan(0);
       expect(result.pressureSpikes.housing).toBeGreaterThan(0);
@@ -276,12 +219,7 @@ describe('ClimateEventSystem', () => {
 
     it('has decayMult in infrastructure impact', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.RASPUTITSA_SPRING,
-        WeatherType.OVERCAST,
-        0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.RASPUTITSA_SPRING, WeatherType.OVERCAST, 0.5, stubRng(0.0));
       const impact = result.impacts.find((imp) => imp.crisisId === 'climate-spring-flood');
       expect(impact!.infrastructure?.decayMult).toBe(1.5);
     });
@@ -295,24 +233,14 @@ describe('ClimateEventSystem', () => {
       // wildfire: validSeasons=[STIFLING_HEAT], climateTrendRange={min:-1.0, max:0.0}
       // baseProbability=0.004, HEATWAVE boost=3.0 → effective prob=0.012
       // stubRng(0.0) → fires
-      const result = system.evaluate(
-        Season.STIFLING_HEAT,
-        WeatherType.HEATWAVE,
-        -0.2,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.STIFLING_HEAT, WeatherType.HEATWAVE, -0.2, stubRng(0.0));
       const hasWildfire = result.impacts.some((imp) => imp.crisisId === 'climate-wildfire');
       expect(hasWildfire).toBe(true);
     });
 
     it('does NOT fire outside STIFLING_HEAT season', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.SHORT_SUMMER,
-        WeatherType.HEATWAVE,
-        -0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.SHORT_SUMMER, WeatherType.HEATWAVE, -0.5, stubRng(0.0));
       const hasWildfire = result.impacts.some((imp) => imp.crisisId === 'climate-wildfire');
       expect(hasWildfire).toBe(false);
     });
@@ -331,12 +259,7 @@ describe('ClimateEventSystem', () => {
 
     it('produces critical severity toast message', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.STIFLING_HEAT,
-        WeatherType.HEATWAVE,
-        -0.2,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.STIFLING_HEAT, WeatherType.HEATWAVE, -0.2, stubRng(0.0));
       const impact = result.impacts.find((imp) => imp.crisisId === 'climate-wildfire');
       const toast = impact!.narrative?.toastMessages?.[0];
       expect(toast?.severity).toBe('critical');
@@ -362,36 +285,21 @@ describe('ClimateEventSystem', () => {
 
     it('fires in RASPUTITSA_AUTUMN season', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.RASPUTITSA_AUTUMN,
-        WeatherType.OVERCAST,
-        0.0,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.RASPUTITSA_AUTUMN, WeatherType.OVERCAST, 0.0, stubRng(0.0));
       const hasEpidemic = result.impacts.some((imp) => imp.crisisId === 'climate-seasonal-epidemic');
       expect(hasEpidemic).toBe(true);
     });
 
     it('does NOT fire outside valid seasons (e.g., SHORT_SUMMER)', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.SHORT_SUMMER,
-        WeatherType.FOG,
-        0.0,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.SHORT_SUMMER, WeatherType.FOG, 0.0, stubRng(0.0));
       const hasEpidemic = result.impacts.some((imp) => imp.crisisId === 'climate-seasonal-epidemic');
       expect(hasEpidemic).toBe(false);
     });
 
     it('produces correct social impact fields (diseaseMult, growthMult)', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.WINTER,
-        WeatherType.OVERCAST,
-        0.0,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.WINTER, WeatherType.OVERCAST, 0.0, stubRng(0.0));
       const impact = result.impacts.find((imp) => imp.crisisId === 'climate-seasonal-epidemic');
       expect(impact).toBeDefined();
       expect(impact!.social?.diseaseMult).toBe(2.0);
@@ -400,12 +308,7 @@ describe('ClimateEventSystem', () => {
 
     it('spikes health, morale, and demographic pressure domains', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.RASPUTITSA_AUTUMN,
-        WeatherType.OVERCAST,
-        0.0,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.RASPUTITSA_AUTUMN, WeatherType.OVERCAST, 0.0, stubRng(0.0));
       // seasonal_epidemic pressureSpikes: health:0.12, morale:0.05, demographic:0.03
       expect(result.pressureSpikes.health).toBeGreaterThan(0);
       expect(result.pressureSpikes.morale).toBeGreaterThan(0);
@@ -420,24 +323,14 @@ describe('ClimateEventSystem', () => {
       const system = new ClimateEventSystem();
       // hailstorm: validSeasons=[SHORT_SUMMER], climateTrendRange=null
       // baseProbability=0.005, stubRng(0.0) < 0.005 → fires
-      const result = system.evaluate(
-        Season.SHORT_SUMMER,
-        WeatherType.OVERCAST,
-        0.0,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.SHORT_SUMMER, WeatherType.OVERCAST, 0.0, stubRng(0.0));
       const hasHail = result.impacts.some((imp) => imp.crisisId === 'climate-hailstorm');
       expect(hasHail).toBe(true);
     });
 
     it('does NOT fire outside SHORT_SUMMER (e.g., WINTER)', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.WINTER,
-        WeatherType.RAIN,
-        0.0,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.WINTER, WeatherType.RAIN, 0.0, stubRng(0.0));
       const hasHail = result.impacts.some((imp) => imp.crisisId === 'climate-hailstorm');
       expect(hasHail).toBe(false);
     });
@@ -445,22 +338,12 @@ describe('ClimateEventSystem', () => {
     it('fires regardless of climate trend (null range)', () => {
       const system = new ClimateEventSystem();
       // Try extreme warming
-      const resultWarm = system.evaluate(
-        Season.SHORT_SUMMER,
-        WeatherType.OVERCAST,
-        1.0,
-        stubRng(0.0),
-      );
+      const resultWarm = system.evaluate(Season.SHORT_SUMMER, WeatherType.OVERCAST, 1.0, stubRng(0.0));
       expect(resultWarm.impacts.some((imp) => imp.crisisId === 'climate-hailstorm')).toBe(true);
 
       // Try extreme cooling — need fresh system due to cooldown
       const system2 = new ClimateEventSystem();
-      const resultCool = system2.evaluate(
-        Season.SHORT_SUMMER,
-        WeatherType.OVERCAST,
-        -1.0,
-        stubRng(0.0),
-      );
+      const resultCool = system2.evaluate(Season.SHORT_SUMMER, WeatherType.OVERCAST, -1.0, stubRng(0.0));
       expect(resultCool.impacts.some((imp) => imp.crisisId === 'climate-hailstorm')).toBe(true);
     });
 
@@ -468,32 +351,17 @@ describe('ClimateEventSystem', () => {
       // hailstorm baseProbability=0.005, RAIN boost=2.0 → effective=0.01
       // At stubRng(0.006): fires with RAIN (0.006 < 0.01), not with OVERCAST (0.006 > 0.005)
       const systemRain = new ClimateEventSystem();
-      const resultRain = systemRain.evaluate(
-        Season.SHORT_SUMMER,
-        WeatherType.RAIN,
-        0.0,
-        stubRng(0.006),
-      );
+      const resultRain = systemRain.evaluate(Season.SHORT_SUMMER, WeatherType.RAIN, 0.0, stubRng(0.006));
       expect(resultRain.impacts.some((imp) => imp.crisisId === 'climate-hailstorm')).toBe(true);
 
       const systemNoBoost = new ClimateEventSystem();
-      const resultNoBoost = systemNoBoost.evaluate(
-        Season.SHORT_SUMMER,
-        WeatherType.OVERCAST,
-        0.0,
-        stubRng(0.006),
-      );
+      const resultNoBoost = systemNoBoost.evaluate(Season.SHORT_SUMMER, WeatherType.OVERCAST, 0.0, stubRng(0.006));
       expect(resultNoBoost.impacts.some((imp) => imp.crisisId === 'climate-hailstorm')).toBe(false);
     });
 
     it('produces correct economy impact (productionMult and foodDelta)', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.SHORT_SUMMER,
-        WeatherType.OVERCAST,
-        0.0,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.SHORT_SUMMER, WeatherType.OVERCAST, 0.0, stubRng(0.0));
       const impact = result.impacts.find((imp) => imp.crisisId === 'climate-hailstorm');
       expect(impact).toBeDefined();
       expect(impact!.economy?.productionMult).toBe(0.88);
@@ -502,12 +370,7 @@ describe('ClimateEventSystem', () => {
 
     it('spikes food and infrastructure pressure domains', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.SHORT_SUMMER,
-        WeatherType.OVERCAST,
-        0.0,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.SHORT_SUMMER, WeatherType.OVERCAST, 0.0, stubRng(0.0));
       // hailstorm pressureSpikes: food:0.08, infrastructure:0.04
       expect(result.pressureSpikes.food).toBeGreaterThan(0);
       expect(result.pressureSpikes.infrastructure).toBeGreaterThan(0);
@@ -597,12 +460,7 @@ describe('ClimateEventSystem', () => {
       // summer_drought baseProbability=0.006, HEATWAVE boost=2.5 → effective=0.015
       // At stubRng(0.01): fires with HEATWAVE (0.01 < 0.015), not with OVERCAST (0.01 > 0.006)
       const systemHeatwave = new ClimateEventSystem();
-      const resultHeatwave = systemHeatwave.evaluate(
-        Season.STIFLING_HEAT,
-        WeatherType.HEATWAVE,
-        -0.3,
-        stubRng(0.01),
-      );
+      const resultHeatwave = systemHeatwave.evaluate(Season.STIFLING_HEAT, WeatherType.HEATWAVE, -0.3, stubRng(0.01));
       const hasDrought = resultHeatwave.impacts.some((imp) => imp.crisisId === 'climate-summer-drought');
       expect(hasDrought).toBe(true);
 
@@ -752,12 +610,7 @@ describe('ClimateEventSystem', () => {
       // both valid in WINTER. stubRng(0.0) → both fire
       // severe_frost needs climateTrendRange:{min:-1.0, max:-0.2} → -0.5 qualifies
       // seasonal_epidemic has null climateTrendRange → always qualifies
-      const result = system.evaluate(
-        Season.WINTER,
-        WeatherType.OVERCAST,
-        -0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.WINTER, WeatherType.OVERCAST, -0.5, stubRng(0.0));
       expect(result.impacts.length).toBeGreaterThanOrEqual(2);
       const ids = result.impacts.map((imp) => imp.crisisId);
       expect(ids).toContain('climate-severe-frost');
@@ -766,12 +619,7 @@ describe('ClimateEventSystem', () => {
 
     it('aggregates pressure spikes from multiple fired events', () => {
       const system = new ClimateEventSystem();
-      const result = system.evaluate(
-        Season.WINTER,
-        WeatherType.OVERCAST,
-        -0.5,
-        stubRng(0.0),
-      );
+      const result = system.evaluate(Season.WINTER, WeatherType.OVERCAST, -0.5, stubRng(0.0));
       // Both severe_frost (health:0.08) and seasonal_epidemic (health:0.12) spike health
       // Aggregate should be 0.08 + 0.12 = 0.20
       if (result.impacts.length >= 2) {
@@ -814,7 +662,6 @@ describe('ClimateEventSystem', () => {
       const system = new ClimateEventSystem();
       const serialized = system.serialize();
       expect(serialized.cooldowns).toEqual([]);
-      expect(serialized.terraformingProgress).toBe(0);
     });
 
     it('restore with empty array leaves system in clean state', () => {
@@ -1327,7 +1174,7 @@ describe('BlackSwanSystem', () => {
       // BlackSwanSystem is documented as stateless (no cooldowns, no minimum intervals)
       // The class should not have a serialize method
       const system = new BlackSwanSystem();
-      expect(typeof (system as unknown as Record<string, unknown>)['serialize']).toBe('undefined');
+      expect(typeof (system as unknown as Record<string, unknown>).serialize).toBe('undefined');
     });
   });
 

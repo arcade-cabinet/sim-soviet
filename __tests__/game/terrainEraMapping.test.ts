@@ -2,23 +2,22 @@
  * @module tests/game/terrainEraMapping
  *
  * Unit tests for era → terrain visual state mapping.
- * Verifies all 8 eras map to the correct 6 terrain states
+ * Verifies all 7 historical eras map to the correct 5 terrain states
  * and that all utility functions return expected values.
  */
 
 import type { EraId } from '../../src/game/era/types';
 import {
+  eraToTerrainState,
+  getTerrainTextureFiles,
   TERRAIN_HILL_COLORS,
   TERRAIN_STATE_COLORS,
   TERRAIN_STATE_ORDER,
   TERRAIN_TEXTURE_PREFIX,
-  type TerrainVisualState,
-  eraToTerrainState,
-  getTerrainTextureFiles,
   terrainStateIndex,
 } from '../../src/scene/terrainEraMapping';
 
-/** All 8 game eras for exhaustive coverage. */
+/** All 7 historical game eras for exhaustive coverage. */
 const ALL_ERAS: EraId[] = [
   'revolution',
   'collectivization',
@@ -27,7 +26,6 @@ const ALL_ERAS: EraId[] = [
   'reconstruction',
   'thaw_and_freeze',
   'stagnation',
-  'the_eternal',
 ];
 
 describe('terrainEraMapping', () => {
@@ -60,30 +58,26 @@ describe('terrainEraMapping', () => {
       expect(eraToTerrainState('stagnation')).toBe('concrete_dust');
     });
 
-    it('maps the_eternal to permafrost_thaw', () => {
-      expect(eraToTerrainState('the_eternal')).toBe('permafrost_thaw');
-    });
-
-    it('covers all 8 eras without throwing', () => {
+    it('covers all 7 historical eras without throwing', () => {
       for (const era of ALL_ERAS) {
         expect(() => eraToTerrainState(era)).not.toThrow();
       }
     });
 
-    it('produces exactly 6 unique terrain states from 8 eras', () => {
+    it('produces exactly 5 unique terrain states from 7 eras', () => {
       const states = new Set(ALL_ERAS.map(eraToTerrainState));
-      expect(states.size).toBe(6);
+      expect(states.size).toBe(5);
     });
   });
 
   describe('TERRAIN_STATE_ORDER', () => {
-    it('contains exactly 9 states', () => {
-      expect(TERRAIN_STATE_ORDER).toHaveLength(9);
+    it('contains exactly 5 states', () => {
+      expect(TERRAIN_STATE_ORDER).toHaveLength(5);
     });
 
-    it('starts with snowy_taiga and ends with permafrost_thaw', () => {
+    it('starts with snowy_taiga and ends with concrete_dust', () => {
       expect(TERRAIN_STATE_ORDER[0]).toBe('snowy_taiga');
-      expect(TERRAIN_STATE_ORDER[5]).toBe('permafrost_thaw');
+      expect(TERRAIN_STATE_ORDER[4]).toBe('concrete_dust');
     });
 
     it('contains all unique terrain states from era mapping', () => {
@@ -130,7 +124,7 @@ describe('terrainEraMapping', () => {
       expect(files.roughness).toBe('assets/textures/terrain/Snow003/Snow003_1K-JPG_Roughness.jpg');
     });
 
-    it('returns correct file paths for all 6 states', () => {
+    it('returns correct file paths for all 5 states', () => {
       for (const state of TERRAIN_STATE_ORDER) {
         const files = getTerrainTextureFiles(state);
         expect(files.color).toContain('_Color.jpg');
@@ -147,8 +141,8 @@ describe('terrainEraMapping', () => {
       expect(terrainStateIndex('snowy_taiga')).toBe(0);
     });
 
-    it('returns 5 for permafrost_thaw', () => {
-      expect(terrainStateIndex('permafrost_thaw')).toBe(5);
+    it('returns 4 for concrete_dust', () => {
+      expect(terrainStateIndex('concrete_dust')).toBe(4);
     });
 
     it('returns sequential indices for all states', () => {

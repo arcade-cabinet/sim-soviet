@@ -56,7 +56,7 @@ app/public/audio/
 ├── music/           # Background music tracks
 ├── sfx/             # Sound effects
 ├── ambient/         # Ambient/environmental sounds
-└── voice/           # Voice lines (future)
+└── voice/           # Voice lines (reserved for localization)
 ```
 
 ## Legal & Attribution

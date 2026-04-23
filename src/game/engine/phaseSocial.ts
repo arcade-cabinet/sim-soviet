@@ -6,12 +6,11 @@
 
 import type { InflowScheduleEntry } from '@/config';
 import { political } from '@/config';
-import { citizens } from '../../ecs/archetypes';
-import { buildingsLogic } from '../../ecs/archetypes';
+import { buildingsLogic, citizens } from '../../ecs/archetypes';
+import { populationSystem } from '../../ecs/systems';
+import { decayTraffic, extractDesirePaths, recordCommute } from '../../growth/DesirePathSystem';
 import { getDefensePosture } from '../../stores/gameStore';
 import { getPostureEffects } from '../../ui/hq-tabs/MilitaryTab';
-import { populationSystem } from '../../ecs/systems';
-import { recordCommute, decayTraffic, extractDesirePaths } from '../../growth/DesirePathSystem';
 import type { TickContext } from './tickContext';
 
 /**
@@ -69,7 +68,7 @@ export function phaseSocial(ctx: TickContext): void {
     // Conscript workers based on posture percentage (male-first, historically accurate)
     if (postureEffects.conscriptionPercent > 0) {
       const pop = storeRef.resources.population;
-      const conscriptCount = Math.floor(pop * postureEffects.conscriptionPercent / 100);
+      const conscriptCount = Math.floor((pop * postureEffects.conscriptionPercent) / 100);
       if (conscriptCount > 0) {
         workerSystem.removeWorkersByCountMaleFirst(conscriptCount, 'conscription');
       }
@@ -107,7 +106,9 @@ export function phaseSocial(ctx: TickContext): void {
   }
 
   if (workerResult.averageMorale < 30 && chronology.getDate().totalTicks % 60 === 0) {
-    callbacks.onAdvisor('Comrade Mayor! Workers are deeply unhappy. If conditions do not improve, they WILL flee!');
+    callbacks.onAdvisor(
+      'Comrade Predsedatel! Workers are deeply unhappy. If conditions do not improve, they WILL flee!',
+    );
   }
 
   // ── 14b. Desire-path traffic recording (every 10 ticks in entity mode) ──

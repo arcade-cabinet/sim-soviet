@@ -6,19 +6,19 @@
  * NO minimum intervals. NO "once per era" rules. Just incredibly low
  * per-tick probability. If two meteors hit in consecutive years, that happened.
  *
- * Absorbs meteor strike logic from FreeformGovernor and adds additional
- * black swan events: earthquakes, solar storms, nuclear accidents,
+ * Combines meteor strikes with additional black swan events:
+ * earthquakes, solar storms, nuclear accidents,
  * supervolcanic ash.
  *
  * Static catalog data sourced from src/config/blackSwans.json.
  * Impact generation functions remain in TypeScript (require RNG + dynamic logic).
  */
 
+import blackSwansData from '@/config/blackSwans.json';
 import type { GameRng } from '@/game/SeedSystem';
-import { applyMeteorImpact, convertCraterToMine, rollMeteorStrike, type MeteorEvent } from './meteorStrike';
+import { applyMeteorImpact, convertCraterToMine, type MeteorEvent, rollMeteorStrike } from './meteorStrike';
 import type { PressureDomain } from './pressure/PressureDomains';
 import type { CrisisImpact } from './types';
-import blackSwansData from '@/config/blackSwans.json';
 
 // ─── Black Swan Definition ───────────────────────────────────────────────────
 
@@ -49,7 +49,9 @@ interface RawBlackSwan {
 // ─── Impact Generators ───────────────────────────────────────────────────────
 
 /** Build generateImpact functions keyed by event ID, using imported template data. */
-function buildImpactGenerators(raw: readonly RawBlackSwan[]): Map<string, (year: number, rng: GameRng) => CrisisImpact> {
+function buildImpactGenerators(
+  raw: readonly RawBlackSwan[],
+): Map<string, (year: number, rng: GameRng) => CrisisImpact> {
   const generators = new Map<string, (year: number, rng: GameRng) => CrisisImpact>();
 
   for (const entry of raw) {
@@ -63,12 +65,22 @@ function buildImpactGenerators(raw: readonly RawBlackSwan[]): Map<string, (year:
           const magnitude = magnitudeMin + rng.random() * (magnitudeMax - magnitudeMin);
           return {
             crisisId: `earthquake-${year}`,
-            infrastructure: { decayMult: (t.infrastructureDecayBase as number) + magnitude * (t.infrastructureDecayPerMagnitude as number) },
+            infrastructure: {
+              decayMult:
+                (t.infrastructureDecayBase as number) + magnitude * (t.infrastructureDecayPerMagnitude as number),
+            },
             social: { growthMult: t.socialGrowthMult as number },
-            workforce: { moraleModifier: (t.baseMoraleModifier as number) + magnitude * (t.moralePerMagnitude as number) },
+            workforce: {
+              moraleModifier: (t.baseMoraleModifier as number) + magnitude * (t.moralePerMagnitude as number),
+            },
             narrative: {
               pravdaHeadlines: [(t.headlineTemplate as string).replace('{magnitude}', magnitude.toFixed(1))],
-              toastMessages: [{ text: (t.toastTemplate as string).replace('{magnitude}', magnitude.toFixed(1)), severity: t.toastSeverity as 'critical' }],
+              toastMessages: [
+                {
+                  text: (t.toastTemplate as string).replace('{magnitude}', magnitude.toFixed(1)),
+                  severity: t.toastSeverity as 'critical',
+                },
+              ],
             },
           };
         });
@@ -161,19 +173,21 @@ export class BlackSwanSystem {
     const aggregateSpikes: Partial<Record<PressureDomain, number>> = {};
     let meteorEvent: MeteorEvent | null = null;
 
-    // ── Meteor strike (existing logic, relocated from FreeformGovernor) ──
+    // ── Meteor strike ──
     const meteor = rollMeteorStrike(rng, year);
     if (meteor) {
       meteorEvent = meteor;
       const impact = applyMeteorImpact(meteor.targetX, meteor.targetY, gridSize);
-      const mine = convertCraterToMine(impact);
+      const _mine = convertCraterToMine(impact);
 
       impacts.push({
         crisisId: `meteor-${year}`,
         infrastructure: { decayMult: 1.0 + impact.damageRadius * 0.1 },
         social: { growthMult: 0.95 },
         narrative: {
-          pravdaHeadlines: [`METEORITE STRIKES NEAR (${meteor.targetX}, ${meteor.targetY})! ${impact.resourceDeposit} deposit discovered.`],
+          pravdaHeadlines: [
+            `METEORITE STRIKES NEAR (${meteor.targetX}, ${meteor.targetY})! ${impact.resourceDeposit} deposit discovered.`,
+          ],
           toastMessages: [{ text: `Meteor impact! ${impact.resourceDeposit} deposit found.`, severity: 'critical' }],
         },
       });

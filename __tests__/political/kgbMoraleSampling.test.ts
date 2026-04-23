@@ -9,7 +9,12 @@
  * - Severity filtering works
  */
 
-import { KGBAgent, MORALE_CONCERN_THRESHOLD, MORALE_WARNING_THRESHOLD, MORALE_CRITICAL_THRESHOLD } from '@/ai/agents/political/KGBAgent';
+import {
+  KGBAgent,
+  MORALE_CONCERN_THRESHOLD,
+  MORALE_CRITICAL_THRESHOLD,
+  MORALE_WARNING_THRESHOLD,
+} from '@/ai/agents/political/KGBAgent';
 
 describe('KGB Morale Sampling', () => {
   let kgb: KGBAgent;
@@ -79,7 +84,7 @@ describe('KGB Morale Sampling', () => {
         [
           { sectorId: { gridX: 0, gridY: 0 }, avgMorale: 35 }, // concern
           { sectorId: { gridX: 1, gridY: 1 }, avgMorale: 20 }, // warning
-          { sectorId: { gridX: 2, gridY: 2 }, avgMorale: 5 },  // critical
+          { sectorId: { gridX: 2, gridY: 2 }, avgMorale: 5 }, // critical
         ],
         500,
       );

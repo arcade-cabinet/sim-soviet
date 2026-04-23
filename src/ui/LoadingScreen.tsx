@@ -26,7 +26,7 @@ export interface LoadingScreenProps {
   onFadeComplete?: () => void;
   /** Load zone flavor text (from loadZones.ts). Overrides default subheader. */
   flavorText?: string;
-  /** Load zone name (e.g. "Lunar Colony", "Dyson Swarm Platform"). Overrides default header. */
+  /** Load zone name for larger settlement loading passes. Overrides default header. */
   zoneName?: string;
   /** Whether this is a settlement transition (not initial game load). */
   isTransition?: boolean;
@@ -118,9 +118,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
         {/* Header — zone-aware */}
         <Text style={styles.header}>{zoneName ?? 'SIMSOVIET 1917'}</Text>
         <View style={styles.divider} />
-        <Text style={styles.subheader}>
-          {isTransition ? 'TRANSFERRING OPERATIONS' : 'INITIALIZING COMMAND CENTER'}
-        </Text>
+        <Text style={styles.subheader}>{isTransition ? 'TRANSFERRING OPERATIONS' : 'INITIALIZING COMMAND CENTER'}</Text>
 
         {/* Zone flavor text */}
         {flavorText && <Text style={styles.flavorText}>{flavorText}</Text>}

@@ -1,14 +1,13 @@
 import { GameRng } from '../../SeedSystem';
-import type { PlanetConfig } from '../../../scene/celestial/planetGenerator';
-import { sampleTerrainAtGridPos } from './terrainSampler';
-import type { TerrainCell, TerrainType, MapGenerationOptions } from '../types';
-import { TERRAIN_DEFAULTS } from '../types';
 import { assignFeatures } from '../generation';
+import type { MapGenerationOptions, TerrainCell, TerrainType } from '../types';
+import { TERRAIN_DEFAULTS } from '../types';
+import { type PlanetConfig, sampleTerrainAtGridPos } from './terrainSampler';
 
 const CHUNK_SIZE = 10;
 
 /**
- * Manages procedural terrain chunks that map to the global FBM planet generator.
+ * Manages procedural terrain chunks for local settlement expansion.
  */
 export class ChunkManager {
   private chunks: Map<string, TerrainCell[][]> = new Map();
@@ -19,7 +18,7 @@ export class ChunkManager {
   constructor(seedString: string, options: MapGenerationOptions) {
     this.rng = new GameRng(`chunk-${seedString}`);
     this.options = options;
-    
+
     // Hash string to number for planet generator
     let seedNum = 0;
     for (let i = 0; i < seedString.length; i++) {
@@ -54,11 +53,11 @@ export class ChunkManager {
     for (let y = 0; y < CHUNK_SIZE; y++) {
       const row: TerrainCell[] = [];
       const globalY = cy * CHUNK_SIZE + y;
-      
+
       for (let x = 0; x < CHUNK_SIZE; x++) {
         const globalX = cx * CHUNK_SIZE + x;
         let { terrain, elevation } = sampleTerrainAtGridPos(globalX, globalY, this.planetConfig);
-        
+
         // Post-process terrain based on legacy MapGenerationOptions overrides
         if (terrain === 'mountain' && this.options.mountainDensity <= 0) terrain = 'grass';
         if (terrain === 'forest' && this.options.forestDensity <= 0) terrain = 'grass';
@@ -70,7 +69,7 @@ export class ChunkManager {
       }
       chunk.push(row);
     }
-    
+
     this.chunks.set(key, chunk);
     return chunk;
   }
@@ -95,7 +94,7 @@ export class ChunkManager {
   assembleGrid(gridCells: number): TerrainCell[][] {
     const fullGrid: TerrainCell[][] = [];
     const numChunks = Math.ceil(gridCells / CHUNK_SIZE);
-    
+
     for (let y = 0; y < gridCells; y++) {
       fullGrid.push([]);
     }
@@ -103,21 +102,21 @@ export class ChunkManager {
     for (let cy = 0; cy < numChunks; cy++) {
       for (let cx = 0; cx < numChunks; cx++) {
         const chunk = this.getChunk(cx, cy);
-        
+
         for (let y = 0; y < CHUNK_SIZE; y++) {
           const globalY = cy * CHUNK_SIZE + y;
           if (globalY >= gridCells) continue;
-          
+
           for (let x = 0; x < CHUNK_SIZE; x++) {
             const globalX = cx * CHUNK_SIZE + x;
             if (globalX >= gridCells) continue;
-            
+
             fullGrid[globalY][globalX] = chunk[y][x];
           }
         }
       }
     }
-    
+
     return fullGrid;
   }
 }

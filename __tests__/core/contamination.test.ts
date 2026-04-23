@@ -1,10 +1,9 @@
 import {
   createContaminationZone,
-  spreadContamination,
   decayContamination,
   getContaminationAt,
   isHabitable,
-  type ContaminationZone,
+  spreadContamination,
 } from '../../src/ai/agents/core/contaminationSystem';
 
 describe('contaminationSystem', () => {

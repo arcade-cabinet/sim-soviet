@@ -6,7 +6,7 @@
  * peaceful years, getActiveCrises(), and serialization round-trips.
  */
 
-import type { GovernorContext } from '@/ai/agents/crisis/Governor';
+import type { GovernorContext, GovernorDirective } from '@/ai/agents/crisis/Governor';
 import { DEFAULT_MODIFIERS } from '@/ai/agents/crisis/Governor';
 import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
 import type { PressureReadContext } from '@/ai/agents/crisis/pressure/PressureDomains';
@@ -625,10 +625,10 @@ describe('HistoricalGovernor: cold branches', () => {
     expect(gov.getActivatedBranches().size).toBe(0);
   });
 
-  it('evaluates only historical branches (not geopolitical/tech)', () => {
+  it('evaluates only grounded historical branches (not geopolitical/tech)', () => {
     const gov = new HistoricalGovernor();
 
-    // The governor should only look at 4 historical branches, not WWIII/AI/etc.
+    // The governor should only look at historical same-settlement branches, not WWIII/AI/etc.
     const branches = gov.getActivatedBranches();
     expect(branches.has('wwiii')).toBe(false);
     expect(branches.has('ai_singularity')).toBe(false);
@@ -642,7 +642,15 @@ describe('HistoricalGovernor: cold branches', () => {
     const readings = makePressureReadings({
       suspicionLevel: 0.8,
       blackMarks: 3,
-      worldState: { globalTension: 0.3, borderThreat: 0.2, climateTrend: 0, techLevel: 0.1, commodityIndex: 0.5, tradeAccess: 0.5, moscowAttention: 0.3 },
+      worldState: {
+        globalTension: 0.3,
+        borderThreat: 0.2,
+        climateTrend: 0,
+        techLevel: 0.1,
+        commodityIndex: 0.5,
+        tradeAccess: 0.5,
+        moscowAttention: 0.3,
+      },
       spheres: {},
     });
 
@@ -666,7 +674,15 @@ describe('HistoricalGovernor: cold branches', () => {
     const gov = new HistoricalGovernor();
 
     const readings = makePressureReadings({
-      worldState: { globalTension: 0.3, borderThreat: 0.2, climateTrend: 0, techLevel: 0.1, commodityIndex: 0.5, tradeAccess: 0.5, moscowAttention: 0.3 },
+      worldState: {
+        globalTension: 0.3,
+        borderThreat: 0.2,
+        climateTrend: 0,
+        techLevel: 0.1,
+        commodityIndex: 0.5,
+        tradeAccess: 0.5,
+        moscowAttention: 0.3,
+      },
       spheres: {},
     });
 
@@ -674,16 +690,14 @@ describe('HistoricalGovernor: cold branches', () => {
     gov.getPressureSystem().applySpike('political', 0.7);
 
     // Evaluate past the sustained tick threshold for dekulakization
-    let lastDirective;
+    let lastDirective: GovernorDirective | undefined;
     for (let i = 0; i < 10; i++) {
       lastDirective = gov.evaluate(makeCtx({ year: 1930, month: 1, pressureReadings: readings }));
     }
 
     // If branch activated, there should be a branch narrative impact
     if (gov.getActivatedBranches().has('dekulakization_purge')) {
-      const branchImpacts = lastDirective!.crisisImpacts.filter((i) =>
-        i.crisisId.startsWith('branch-dekulakization'),
-      );
+      const _branchImpacts = lastDirective!.crisisImpacts.filter((i) => i.crisisId.startsWith('branch-dekulakization'));
       // The activation tick should have produced the narrative
       // (might be in an earlier directive, but at least the branch fired)
       expect(gov.getActivatedBranches().has('dekulakization_purge')).toBe(true);
@@ -695,7 +709,15 @@ describe('HistoricalGovernor: cold branches', () => {
 
     const readings = makePressureReadings({
       suspicionLevel: 0.9,
-      worldState: { globalTension: 0.3, borderThreat: 0.2, climateTrend: 0, techLevel: 0.1, commodityIndex: 0.5, tradeAccess: 0.5, moscowAttention: 0.3 },
+      worldState: {
+        globalTension: 0.3,
+        borderThreat: 0.2,
+        climateTrend: 0,
+        techLevel: 0.1,
+        commodityIndex: 0.5,
+        tradeAccess: 0.5,
+        moscowAttention: 0.3,
+      },
       spheres: {},
     });
 
@@ -714,7 +736,15 @@ describe('HistoricalGovernor: cold branches', () => {
 
     const readings = makePressureReadings({
       foodState: 'rationing',
-      worldState: { globalTension: 0.3, borderThreat: 0.2, climateTrend: 0, techLevel: 0.2, commodityIndex: 0.5, tradeAccess: 0.5, moscowAttention: 0.3 },
+      worldState: {
+        globalTension: 0.3,
+        borderThreat: 0.2,
+        climateTrend: 0,
+        techLevel: 0.2,
+        commodityIndex: 0.5,
+        tradeAccess: 0.5,
+        moscowAttention: 0.3,
+      },
       spheres: {},
     });
 

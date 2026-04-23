@@ -68,9 +68,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'zero_pop',
-    name: 'Urban Planning Complete',
+    name: 'Settlement Planning Complete',
     description: 'Reach 0 population.',
-    subtext: 'The city is perfect. No one is here to disagree.',
+    subtext: 'The settlement is perfect. No one is here to disagree.',
     hidden: true,
   },
   {
@@ -104,14 +104,14 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first_rename',
     name: 'Toponymic Flexibility',
-    description: 'Rename your city for the first time.',
+    description: 'Rename your settlement for the first time.',
     subtext: 'The new name is better. The old name was always temporary. Memory is flexible.',
     hidden: false,
   },
   {
     id: 'five_renames',
     name: 'Identity Crisis',
-    description: 'Rename your city 5 times.',
+    description: 'Rename your settlement 5 times.',
     subtext: 'Citizens have stopped learning the name. They just call it "here."',
     hidden: false,
   },
@@ -119,7 +119,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'all_buildings',
     name: 'Full Socialist Toolkit',
     description: 'Build one of every building type.',
-    subtext: 'You now have everything a Soviet city needs: concrete, smoke, fear, and a statue.',
+    subtext: 'You now have everything a Soviet settlement needs: concrete, smoke, fear, and a statue.',
     hidden: false,
   },
   {
@@ -130,19 +130,11 @@ export const ACHIEVEMENTS: Achievement[] = [
     hidden: false,
   },
   {
-    id: 'year_2000',
-    name: 'Millennium Bug Immune',
-    description: 'Reach the year 2000.',
-    subtext: 'The computers were already broken. Y2K changed nothing.',
+    id: 'post_1991_free_play',
+    name: 'After the Union',
+    description: 'Continue managing the settlement after 1991.',
+    subtext: 'The center is gone. The shortages, buildings, and paperwork remain local problems.',
     hidden: false,
-  },
-  {
-    id: 'year_2100',
-    name: 'The Eternal State',
-    description: 'Reach the year 2100.',
-    subtext:
-      'You have outlived every prediction. Every critic. Every potato. The State endures. You endure. Is this winning? There is no winning. There is only enduring.',
-    hidden: true,
   },
   {
     id: 'no_buildings_high_pop',
@@ -154,7 +146,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'bulldoze_everything',
     name: 'Clean Slate',
-    description: 'Bulldoze every building in a city with 10+ buildings.',
+    description: 'Bulldoze every building in a settlement with 10+ buildings.',
     subtext: 'Sometimes progress means starting over. The rubble will make excellent foundations. For more rubble.',
     hidden: false,
   },
@@ -167,7 +159,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'propaganda_win',
-    name: 'Ministry of Truth Employee of the Month',
+    name: 'Glavlit Clerk of the Month',
     description: 'Have Pravda report 10 positive headlines while all indicators are negative.',
     subtext: 'The news has never been better. Reality has never been worse. These are different departments.',
     hidden: false,
@@ -197,7 +189,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'only_gulags',
     name: 'Archipelago',
-    description: 'Build a city with only Gulags.',
+    description: 'Build a settlement with only Gulags.',
     subtext:
       'At this point, who is guarding whom? The guards are also inside. Everyone is inside. This is a metaphor. It is also literally true.',
     hidden: true,

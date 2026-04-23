@@ -9,11 +9,11 @@
  */
 
 import {
-  type ResettlementDirectiveState,
   createResettlementState,
   enactDisassembly,
-  tickWarningPeriod,
   RESETTLEMENT_CONSTANTS,
+  type ResettlementDirectiveState,
+  tickWarningPeriod,
 } from '@/ai/agents/political/resettlementDirective';
 
 describe('GovernmentHQ — Resettlement Alert', () => {

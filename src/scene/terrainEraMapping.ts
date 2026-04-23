@@ -1,13 +1,12 @@
 /**
  * terrainEraMapping — maps game eras to terrain visual states.
  *
- * 8 eras collapse to 6 visual states because some eras share terrain:
+ * Historical eras collapse to 5 visual states because some eras share terrain:
  *   State 1: revolution + collectivization → snowy taiga
  *   State 2: industrialization → muddy churned earth
  *   State 3: great_patriotic → scorched ash
  *   State 4: reconstruction + thaw_and_freeze → recovering green
  *   State 5: stagnation → grey concrete dust (AsphaltDamageSet001 decay overlay)
- *   State 6: the_eternal → permafrost thaw (orange-red cracked earth)
  *
  * Decay overlay textures (AmbientCG packs):
  *   - AsphaltDamageSet001: cracked pavement overlay for stagnation
@@ -20,28 +19,15 @@
 import type { EraId } from '../game/era/types';
 
 /** Terrain visual state identifier — 6 distinct ground appearances. */
-export type TerrainVisualState =
-  | 'snowy_taiga'
-  | 'muddy_earth'
-  | 'scorched_ash'
-  | 'recovering_green'
-  | 'concrete_dust'
-  | 'permafrost_thaw'
-  | 'warm_grassland'
-  | 'industrial_metal'
-  | 'dyson_plate';
+export type TerrainVisualState = 'snowy_taiga' | 'muddy_earth' | 'scorched_ash' | 'recovering_green' | 'concrete_dust';
 
-/** All 9 terrain visual states in chronological progression order. */
+/** All historical terrain visual states in chronological progression order. */
 export const TERRAIN_STATE_ORDER: readonly TerrainVisualState[] = [
   'snowy_taiga',
   'muddy_earth',
   'scorched_ash',
   'recovering_green',
   'concrete_dust',
-  'permafrost_thaw',
-  'warm_grassland',
-  'industrial_metal',
-  'dyson_plate',
 ] as const;
 
 /**
@@ -63,19 +49,6 @@ export function eraToTerrainState(era: EraId): TerrainVisualState {
       return 'recovering_green';
     case 'stagnation':
       return 'concrete_dust';
-    case 'the_eternal':
-    case 'post_soviet':
-      return 'permafrost_thaw';
-    case 'planetary':
-      return 'warm_grassland';
-    case 'solar_engineering':
-    case 'type_one':
-      return 'industrial_metal';
-    case 'deconstruction':
-    case 'dyson_swarm':
-    case 'megaearth':
-    case 'type_two_peak':
-      return 'dyson_plate';
   }
 }
 
@@ -89,10 +62,6 @@ export const TERRAIN_STATE_COLORS: Record<TerrainVisualState, string> = {
   scorched_ash: '#4a4040', // dark ash grey
   recovering_green: '#7a9966', // muted green recovery
   concrete_dust: '#9a9590', // grey-brown industrial
-  permafrost_thaw: '#c45a30', // orange-red cracked earth
-  warm_grassland: '#8aaa66', // warm green (post-permafrost recovery)
-  industrial_metal: '#707880', // blue-gray steel
-  dyson_plate: '#505560', // dark gunmetal (Dyson swarm panel)
 };
 
 /**
@@ -104,10 +73,6 @@ export const TERRAIN_HILL_COLORS: Record<TerrainVisualState, string> = {
   scorched_ash: '#3a3535',
   recovering_green: '#526b38',
   concrete_dust: '#6b6560',
-  permafrost_thaw: '#8a4a25',
-  warm_grassland: '#4a7030', // verdant green hills
-  industrial_metal: '#555a62', // steel-gray structures
-  dyson_plate: '#3a3e45', // dark metal horizon
 };
 
 /**
@@ -120,10 +85,6 @@ export const TERRAIN_TEXTURE_PREFIX: Record<TerrainVisualState, string> = {
   scorched_ash: 'Ground042',
   recovering_green: 'Ground003',
   concrete_dust: 'Concrete034',
-  permafrost_thaw: 'Lava004',
-  warm_grassland: 'Grass001',
-  industrial_metal: 'metal_plate',
-  dyson_plate: 'Metal038',
 };
 
 /**
@@ -220,7 +181,6 @@ export const TERRAIN_DECAY_OVERLAYS: Partial<Record<TerrainVisualState, DecayOve
   snowy_taiga: ['dead_foliage'],
   scorched_ash: ['bomb_craters'],
   concrete_dust: ['weathered_concrete', 'cracked_pavement'],
-  permafrost_thaw: ['heavy_damage'],
 };
 
 /**

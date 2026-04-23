@@ -164,15 +164,11 @@ describe('DemographicAgent', () => {
       expect(ERA_BIRTH_RATE_MULTIPLIER.great_patriotic).toBe(0.4);
     });
 
-    it('has correct multiplier for the_eternal era (0.3)', () => {
-      expect(ERA_BIRTH_RATE_MULTIPLIER.the_eternal).toBe(0.3);
-    });
-
     it('great_patriotic birth rate is lower than revolution', () => {
       expect(ERA_BIRTH_RATE_MULTIPLIER.great_patriotic!).toBeLessThan(ERA_BIRTH_RATE_MULTIPLIER.revolution!);
     });
 
-    it('all 8 eras are defined', () => {
+    it('all 7 historical eras are defined', () => {
       const expectedEras = [
         'revolution',
         'collectivization',
@@ -181,7 +177,6 @@ describe('DemographicAgent', () => {
         'reconstruction',
         'thaw_and_freeze',
         'stagnation',
-        'the_eternal',
       ];
       for (const era of expectedEras) {
         expect(ERA_BIRTH_RATE_MULTIPLIER[era]).toBeDefined();

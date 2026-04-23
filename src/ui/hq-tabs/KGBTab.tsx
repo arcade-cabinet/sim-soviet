@@ -1,5 +1,5 @@
 /**
- * KGBTab — Read-only intelligence reports dashboard for the KGB agency tab.
+ * KGBTab — Read-only intelligence reports dashboard for the state-security agency tab.
  *
  * Displays loyalty overview, suspected dissidents, recent arrests, and
  * surveillance status in a classified document aesthetic with redacted
@@ -22,7 +22,7 @@ export interface ArrestRecord {
   date: string;
 }
 
-/** Props for the KGBTab component. */
+/** Props for the state-security tab component. */
 export interface KGBTabProps {
   /** Overall settlement loyalty level (0-100). */
   loyaltyLevel: number;
@@ -34,6 +34,8 @@ export interface KGBTabProps {
   surveillanceActive: boolean;
   /** KGB morale intelligence reports (most recent last). */
   moraleReports?: readonly KGBMoraleReport[];
+  /** Historical service label to show in visible copy. */
+  serviceLabel?: string;
 }
 
 // ── Constants ───────────────────────────────────────────────────────────────
@@ -95,7 +97,14 @@ function severityLabel(severity: KGBMoraleReport['severity']): string {
   }
 }
 
-export const KGBTab: React.FC<KGBTabProps> = ({ loyaltyLevel, dissidentCount, recentArrests, surveillanceActive, moraleReports = [] }) => {
+export const KGBTab: React.FC<KGBTabProps> = ({
+  loyaltyLevel,
+  dissidentCount,
+  recentArrests,
+  surveillanceActive,
+  moraleReports = [],
+  serviceLabel = 'KGB',
+}) => {
   const status = formatLoyaltyStatus(loyaltyLevel);
   const color = loyaltyColor(loyaltyLevel);
 
@@ -108,8 +117,8 @@ export const KGBTab: React.FC<KGBTabProps> = ({ loyaltyLevel, dissidentCount, re
 
       {/* Document header */}
       <View style={styles.docHeader}>
-        <Text style={styles.docTitle}>КОМИТЕТ ГОСУДАРСТВЕННОЙ БЕЗОПАСНОСТИ</Text>
-        <Text style={styles.docSubtitle}>Committee for State Security — Intelligence Summary</Text>
+        <Text style={styles.docTitle}>{serviceLabel} SECURITY DOSSIER</Text>
+        <Text style={styles.docSubtitle}>{serviceLabel} intelligence summary</Text>
         <View style={styles.stampMark}>
           <Text style={styles.stampText}>УТВЕРЖДЕНО</Text>
         </View>
@@ -217,27 +226,37 @@ export const KGBTab: React.FC<KGBTabProps> = ({ loyaltyLevel, dissidentCount, re
         {moraleReports.length === 0 ? (
           <Text style={styles.noDataText}>No morale anomalies detected. All sectors within acceptable parameters.</Text>
         ) : (
-          moraleReports.slice(-5).reverse().map((report, i) => (
-            <View key={`${report.timestamp}-${report.sectorId.gridX}-${report.sectorId.gridY}-${i}`} style={styles.moraleReport}>
-              <View style={styles.arrestHeader}>
-                <Text style={[styles.fieldValue, { color: severityColor(report.severity) }]}>
-                  {severityLabel(report.severity)}
-                </Text>
+          moraleReports
+            .slice(-5)
+            .reverse()
+            .map((report, i) => (
+              <View
+                key={`${report.timestamp}-${report.sectorId.gridX}-${report.sectorId.gridY}-${i}`}
+                style={styles.moraleReport}
+              >
+                <View style={styles.arrestHeader}>
+                  <Text style={[styles.fieldValue, { color: severityColor(report.severity) }]}>
+                    {severityLabel(report.severity)}
+                  </Text>
+                </View>
+                <View style={styles.fieldRow}>
+                  <Text style={styles.fieldLabel}>Sector:</Text>
+                  <Text style={styles.fieldValue}>
+                    ({report.sectorId.gridX}, {report.sectorId.gridY})
+                  </Text>
+                </View>
+                <View style={styles.fieldRow}>
+                  <Text style={styles.fieldLabel}>Observed Index:</Text>
+                  <Text style={[styles.fieldValue, { color: severityColor(report.severity) }]}>
+                    {report.avgMorale}%
+                  </Text>
+                </View>
+                <View style={styles.fieldRow}>
+                  <Text style={styles.fieldLabel}>Report Tick:</Text>
+                  <Text style={styles.fieldValue}>{report.timestamp}</Text>
+                </View>
               </View>
-              <View style={styles.fieldRow}>
-                <Text style={styles.fieldLabel}>Sector:</Text>
-                <Text style={styles.fieldValue}>({report.sectorId.gridX}, {report.sectorId.gridY})</Text>
-              </View>
-              <View style={styles.fieldRow}>
-                <Text style={styles.fieldLabel}>Observed Index:</Text>
-                <Text style={[styles.fieldValue, { color: severityColor(report.severity) }]}>{report.avgMorale}%</Text>
-              </View>
-              <View style={styles.fieldRow}>
-                <Text style={styles.fieldLabel}>Report Tick:</Text>
-                <Text style={styles.fieldValue}>{report.timestamp}</Text>
-              </View>
-            </View>
-          ))
+            ))
         )}
       </View>
 

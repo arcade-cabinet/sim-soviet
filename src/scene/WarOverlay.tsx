@@ -1,16 +1,14 @@
 /**
- * WarOverlay — Parameterized visual effects for any war from civil war skirmishes
- * to Dyson sphere defense arrays.
+ * WarOverlay — Parameterized visual effects for historical and grounded cold
+ * branch wars from civil war skirmishes to large conventional conflicts.
  *
- * Six scale tiers, each with distinct sub-systems:
+ * Four scale tiers, each with distinct sub-systems:
  *   skirmish:     artillery flashes, small craters (Civil War, border conflicts)
  *   regional:     medium bombers, moderate smoke (Winter War, local wars)
  *   continental:  heavy bombers, dense craters, smoke columns (WWII)
  *   global:       missiles, massive destruction zones (WWIII cold branch)
- *   planetary:    orbital strikes, atmospheric effects (interplanetary war)
- *   stellar:      energy weapons, Dyson swarm defense arrays (Type II conflicts)
  *
- * Era determines aesthetic: 'great_patriotic' = prop planes, 'the_eternal' = energy weapons, etc.
+ * Era determines historical aesthetic, e.g. 'great_patriotic' = prop planes.
  */
 
 import { useFrame } from '@react-three/fiber';
@@ -22,7 +20,7 @@ import { getCurrentGridSize } from '../engine/GridTypes';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
-export type WarScale = 'skirmish' | 'regional' | 'continental' | 'global' | 'planetary' | 'stellar';
+export type WarScale = 'skirmish' | 'regional' | 'continental' | 'global';
 
 export interface WarOverlayProps {
   active: boolean;
@@ -116,38 +114,6 @@ const SCALE_PRESETS: Record<WarScale, ScalePreset> = {
     smokeSize: 0.12,
     smokeOpacity: 0.7,
   },
-  planetary: {
-    bomberCount: 8,
-    bomberCrossingTime: 12,
-    bomberStagger: 3,
-    bomberSize: [0.3, 0.15, 2.5],
-    bomberColor: '#ff4400',
-    bomberOpacity: 0.9,
-    maxCraters: 80,
-    craterRadius: 0.9,
-    craterColor: '#330a00',
-    maxSmokeSources: 35,
-    particlesPerSource: 16,
-    smokeHeight: 6.0,
-    smokeSize: 0.15,
-    smokeOpacity: 0.8,
-  },
-  stellar: {
-    bomberCount: 12,
-    bomberCrossingTime: 8,
-    bomberStagger: 2,
-    bomberSize: [0.5, 0.25, 4.0],
-    bomberColor: '#00ccff',
-    bomberOpacity: 0.95,
-    maxCraters: 100,
-    craterRadius: 1.2,
-    craterColor: '#000a33',
-    maxSmokeSources: 50,
-    particlesPerSource: 18,
-    smokeHeight: 10.0,
-    smokeSize: 0.2,
-    smokeOpacity: 0.9,
-  },
 };
 
 // ── Seeded RNG (simple mulberry32) ─────────────────────────────────────────
@@ -197,7 +163,9 @@ const ArtilleryFlashes: React.FC<ArtilleryFlashesProps> = ({ intensity }) => {
         mesh.scale.setScalar(s);
       } else {
         // Consume the rng values to keep determinism
-        rng(); rng(); rng();
+        rng();
+        rng();
+        rng();
       }
     }
   });
@@ -207,7 +175,9 @@ const ArtilleryFlashes: React.FC<ArtilleryFlashesProps> = ({ intensity }) => {
       {Array.from({ length: MAX_FLASHES }, (_, i) => (
         <mesh
           key={`flash_${i}`}
-          ref={(el) => { meshRefs.current[i] = el; }}
+          ref={(el) => {
+            meshRefs.current[i] = el;
+          }}
           visible={false}
         >
           <sphereGeometry args={[0.5, 6, 6]} />
@@ -281,7 +251,9 @@ const BomberSilhouettes: React.FC<BomberSilhouettesProps> = ({ preset }) => {
       {Array.from({ length: preset.bomberCount }, (_, i) => (
         <mesh
           key={`bomber_${i}`}
-          ref={(el) => { meshRefs.current[i] = el; }}
+          ref={(el) => {
+            meshRefs.current[i] = el;
+          }}
           rotation={[0, Math.PI / 2, 0]}
         >
           <boxGeometry args={preset.bomberSize} />
@@ -347,9 +319,7 @@ const CraterDecals: React.FC<CraterDecalsProps> = ({ preset }) => {
     mesh.instanceMatrix.needsUpdate = true;
   });
 
-  return (
-    <instancedMesh ref={meshRef} args={[geometry, material, preset.maxCraters]} frustumCulled={false} />
-  );
+  return <instancedMesh ref={meshRef} args={[geometry, material, preset.maxCraters]} frustumCulled={false} />;
 };
 
 // ── BuildingSmoke ──────────────────────────────────────────────────────────
@@ -458,64 +428,6 @@ const BuildingSmoke: React.FC<BuildingSmokeProps> = ({ preset }) => {
   );
 };
 
-// ── OrbitalStrikes (planetary/stellar scales) ─────────────────────────────
-
-interface OrbitalStrikesProps {
-  intensity: number;
-  isStellar: boolean;
-}
-
-const OrbitalStrikes: React.FC<OrbitalStrikesProps> = ({ intensity, isStellar }) => {
-  const MAX_BEAMS = 4;
-  const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const timers = useRef<number[]>(Array.from({ length: MAX_BEAMS }, (_, i) => i * 1.2));
-
-  const beamColor = isStellar ? '#00ccff' : '#ff4400';
-  const beamHeight = isStellar ? 40 : 25;
-
-  useFrame((_, delta) => {
-    const gridSize = getCurrentGridSize();
-    const rng = mulberry32(200000);
-
-    for (let i = 0; i < MAX_BEAMS; i++) {
-      const mesh = meshRefs.current[i];
-      if (!mesh) continue;
-
-      timers.current[i] += delta;
-
-      const period = 3.0 / Math.max(0.1, intensity);
-      const phase = (timers.current[i] % period) / period;
-      const isActive = phase < 0.08;
-
-      mesh.visible = isActive;
-      if (isActive) {
-        const x = rng() * gridSize;
-        const z = rng() * gridSize;
-        mesh.position.set(x, beamHeight / 2, z);
-        const s = 0.5 + intensity * 0.5;
-        mesh.scale.set(s, 1, s);
-      } else {
-        rng(); rng();
-      }
-    }
-  });
-
-  return (
-    <group>
-      {Array.from({ length: MAX_BEAMS }, (_, i) => (
-        <mesh
-          key={`beam_${i}`}
-          ref={(el) => { meshRefs.current[i] = el; }}
-          visible={false}
-        >
-          <cylinderGeometry args={[0.02, 0.15, beamHeight, 6]} />
-          <meshBasicMaterial color={beamColor} transparent opacity={0.7} />
-        </mesh>
-      ))}
-    </group>
-  );
-};
-
 // ── Main component ─────────────────────────────────────────────────────────
 
 const WarOverlay: React.FC<WarOverlayProps> = ({ active, scale, era: _era, intensity }) => {
@@ -526,7 +438,6 @@ const WarOverlay: React.FC<WarOverlayProps> = ({ active, scale, era: _era, inten
 
   const showArtillery = scale === 'skirmish';
   const showBombers = preset.bomberCount > 0;
-  const showOrbital = scale === 'planetary' || scale === 'stellar';
 
   return (
     <group>
@@ -534,7 +445,6 @@ const WarOverlay: React.FC<WarOverlayProps> = ({ active, scale, era: _era, inten
       {showBombers && <BomberSilhouettes preset={preset} />}
       <CraterDecals preset={preset} />
       <BuildingSmoke preset={preset} />
-      {showOrbital && <OrbitalStrikes intensity={clampedIntensity} isStellar={scale === 'stellar'} />}
     </group>
   );
 };

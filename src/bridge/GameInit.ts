@@ -6,19 +6,10 @@
  * ready for tick().
  */
 
-import { FreeformGovernor } from '@/ai/agents/crisis/FreeformGovernor';
-import type { GovernorMode } from '@/ai/agents/crisis/Governor';
 import { HistoricalGovernor } from '@/ai/agents/crisis/HistoricalGovernor';
 import type { ConsequenceLevel } from '@/ai/agents/political/ScoringSystem';
 import { setCurrentGridSize } from '@/config';
-import {
-  buildingsLogic,
-  citizens,
-  dvory,
-  housing,
-  operationalBuildings,
-  underConstruction,
-} from '@/ecs/archetypes';
+import { buildingsLogic, citizens, dvory, housing, operationalBuildings, underConstruction } from '@/ecs/archetypes';
 import { createGrid, createMetaStore, createResourceStore } from '@/ecs/factories';
 import { generateStartingDvorData } from '@/ecs/factories/settlementFactories';
 import { ArrivalSequence } from '@/game/arrivalSequence';
@@ -27,6 +18,7 @@ import { GameGrid } from '@/game/GameGrid';
 import { MapSystem } from '@/game/map';
 import { recalculatePaths } from '@/game/PathSystem';
 import { SaveSystem } from '@/game/SaveSystem';
+import { GameRng } from '@/game/SeedSystem';
 import { SimulationEngine } from '@/game/SimulationEngine';
 import { notifyStateChange, notifyTerrainDirty } from '@/stores/gameStore';
 
@@ -36,10 +28,8 @@ export interface GameInitOptions {
   seed?: string;
   /** When true, enables ChairmanAgent autopilot — AI auto-resolves minigames and reports. */
   autopilot?: boolean;
-  /** Game mode — historical uses real Soviet timeline, freeform uses alternate history. */
-  gameMode?: GovernorMode;
-  /** Year at which history diverges in freeform mode (1917-1991). */
-  divergenceYear?: number;
+  /** Disable periodic SQLite autosaves for deterministic automated proof runs. */
+  autosave?: boolean;
 }
 
 let engine: SimulationEngine | null = null;
@@ -61,8 +51,6 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
 
   const consequence = options?.consequence ?? 'gulag';
   const seed = options?.seed ?? 'simsoviet-3d';
-  const gameMode = options?.gameMode ?? 'historical';
-
   // Starting grid is 20x20 (selo) — expands dynamically via settlement tier upgrades
   const gridSize = 20;
 
@@ -112,15 +100,12 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   const grid = gameGrid;
 
   // Create and configure SimulationEngine with staggered arrival
-  engine = new SimulationEngine(grid, callbacks, undefined, 'comrade', consequence);
+  engine = new SimulationEngine(grid, callbacks, new GameRng(seed), 'comrade', consequence);
+  (globalThis as typeof globalThis & { simulationEngine?: SimulationEngine }).simulationEngine = engine;
   engine.setArrivalSequence(arrivalSeq);
 
-  // Wire Governor — always active (history IS the difficulty)
-  if (gameMode === 'freeform') {
-    engine.setGovernor(new FreeformGovernor());
-  } else {
-    engine.setGovernor(new HistoricalGovernor());
-  }
+  // Wire Governor — history IS the difficulty.
+  engine.setGovernor(new HistoricalGovernor());
 
   // Enable autopilot if requested — ChairmanAgent auto-resolves minigames and reports
   if (options?.autopilot) {
@@ -130,7 +115,7 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
   // Create SaveSystem wired to the grid and engine
   saveSystem = new SaveSystem(grid);
   saveSystem.setEngine(engine);
-  stopAutoSave = saveSystem.startAutoSave();
+  stopAutoSave = options?.autosave === false ? null : saveSystem.startAutoSave();
 
   // No artificial bootstrap — the collective demand system handles all building
   // placement organically. Dvory arrive at empty land and the autonomous
@@ -146,12 +131,32 @@ export function initGame(callbacks: SimCallbacks, options?: GameInitOptions): Si
     (window as any).__simEngine = engine;
     // Expose ECS archetypes for diagnostic building/citizen counts
     (window as any).__ecsArchetypes = {
-      get buildingCount() { return buildingsLogic.entities.length; },
-      get operationalCount() { return operationalBuildings.entities.length; },
-      get constructionCount() { return underConstruction.entities.length; },
-      get citizenCount() { return citizens.entities.length; },
-      get dvorCount() { return dvory.entities.length; },
-      get housingCount() { return housing.entities.length; },
+      get buildingCount() {
+        return buildingsLogic.entities.length;
+      },
+      get operationalCount() {
+        return operationalBuildings.entities.length;
+      },
+      get constructionCount() {
+        return underConstruction.entities.length;
+      },
+      get buildingPositions() {
+        return buildingsLogic.entities.map((entity) => ({
+          defId: entity.building.defId,
+          gridX: entity.position.gridX,
+          gridY: entity.position.gridY,
+          phase: entity.building.constructionPhase ?? 'complete',
+        }));
+      },
+      get citizenCount() {
+        return citizens.entities.length;
+      },
+      get dvorCount() {
+        return dvory.entities.length;
+      },
+      get housingCount() {
+        return housing.entities.length;
+      },
     };
   }
 
@@ -196,6 +201,7 @@ export function shutdownSaveSystem(): void {
  */
 export function resetGameInit(): void {
   shutdownSaveSystem();
+  delete (globalThis as typeof globalThis & { simulationEngine?: SimulationEngine }).simulationEngine;
   engine = null;
   gameGrid = null;
   saveSystem = null;

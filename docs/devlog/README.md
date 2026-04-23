@@ -20,4 +20,7 @@ what was built, key decisions made, and lessons learned.
 | 2026-02-09 | [003-ui-wiring](003-ui-wiring.md) | Design system, UI prototypes, all 6 wired into game |
 | 2026-02-09 | [004-ecs-unification](004-ecs-unification.md) | GameState eliminated, ECS as sole source of truth |
 | 2026-02-10 | [005-gap-closure](005-gap-closure.md) | All GDD systems implemented, worker rendering/assignment, audio |
-| 2026-03-05 | [006-kardashev-expansion](006-kardashev-expansion.md) | Kardashev sub-eras, multi-settlement, 42 cold branches, procedural shaders |
+
+Future-scope devlog material was removed during the 1.0 historical campaign
+cleanup. The active product surface is 1917-1991 plus grounded continuation of
+the same settlement.

@@ -6,31 +6,26 @@
  */
 
 import { PressureCrisisEngine } from '../../../src/ai/agents/crisis/pressure/PressureCrisisEngine';
+import type { PressureReadContext } from '../../../src/ai/agents/crisis/pressure/PressureDomains';
 import {
-  PRESSURE_DOMAINS,
   createPressureState,
+  PRESSURE_DOMAINS,
   type PressureDomain,
   type PressureGauge,
   type PressureState,
 } from '../../../src/ai/agents/crisis/pressure/PressureDomains';
+import { PressureSystem } from '../../../src/ai/agents/crisis/pressure/PressureSystem';
 import {
+  generateCrisisFromTemplate,
   MAJOR_CRISES,
   MINOR_INCIDENTS,
-  generateCrisisFromTemplate,
 } from '../../../src/ai/agents/crisis/pressure/pressureCrisisMapping';
 import { SUSTAIN_TICKS, THRESHOLDS } from '../../../src/ai/agents/crisis/pressure/pressureThresholds';
-import { PressureSystem } from '../../../src/ai/agents/crisis/pressure/PressureSystem';
-import type { PressureReadContext } from '../../../src/ai/agents/crisis/pressure/PressureDomains';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Build a PressureGauge with the given level and tick counters. */
-function buildGauge(
-  level: number,
-  warningTicks = 0,
-  criticalTicks = 0,
-  lastRawReading = level,
-): PressureGauge {
+function buildGauge(level: number, warningTicks = 0, criticalTicks = 0, lastRawReading = level): PressureGauge {
   return { level, trend: level, warningTicks, criticalTicks, lastRawReading };
 }
 
@@ -253,34 +248,32 @@ describe('PressureCrisisEngine', () => {
       expect(result.majorCrises[0]!.severity).toBe('regional');
     });
 
-    it.each(PRESSURE_DOMAINS.map((d) => [d, MAJOR_CRISES[d].crisisType, MAJOR_CRISES[d].name]))(
-      'domain "%s" generates a major crisis with type "%s" named "%s"',
-      (domain, expectedType, expectedName) => {
-        const engine = new PressureCrisisEngine();
-        const state = buildPressureState({
-          [domain]: buildGauge(THRESHOLDS.CRITICAL, 0, SUSTAIN_TICKS.CRITICAL_MAJOR),
-        });
-        const result = engine.checkForEmergence(state, 1950, []);
-        expect(result.majorCrises).toHaveLength(1);
-        const crisis = result.majorCrises[0]!;
-        expect(crisis.type).toBe(expectedType);
-        expect(crisis.name).toContain(expectedName as string);
-        expect(crisis.id).toMatch(new RegExp(`^pressure-${domain}-1950-\\d+$`));
-      },
-    );
+    it.each(
+      PRESSURE_DOMAINS.map((d) => [d, MAJOR_CRISES[d].crisisType, MAJOR_CRISES[d].name]),
+    )('domain "%s" generates a major crisis with type "%s" named "%s"', (domain, expectedType, expectedName) => {
+      const engine = new PressureCrisisEngine();
+      const state = buildPressureState({
+        [domain]: buildGauge(THRESHOLDS.CRITICAL, 0, SUSTAIN_TICKS.CRITICAL_MAJOR),
+      });
+      const result = engine.checkForEmergence(state, 1950, []);
+      expect(result.majorCrises).toHaveLength(1);
+      const crisis = result.majorCrises[0]!;
+      expect(crisis.type).toBe(expectedType);
+      expect(crisis.name).toContain(expectedName as string);
+      expect(crisis.id).toMatch(new RegExp(`^pressure-${domain}-1950-\\d+$`));
+    });
 
-    it.each(PRESSURE_DOMAINS.map((d) => [d, MINOR_INCIDENTS[d].impact.crisisId]))(
-      'domain "%s" generates a minor incident with crisisId "%s"',
-      (domain, expectedCrisisId) => {
-        const engine = new PressureCrisisEngine();
-        const state = buildPressureState({
-          [domain]: buildGauge(THRESHOLDS.WARNING, SUSTAIN_TICKS.WARNING_MINOR, 0),
-        });
-        const result = engine.checkForEmergence(state, 1950, []);
-        expect(result.minorImpacts).toHaveLength(1);
-        expect(result.minorImpacts[0]!.crisisId).toBe(expectedCrisisId);
-      },
-    );
+    it.each(
+      PRESSURE_DOMAINS.map((d) => [d, MINOR_INCIDENTS[d].impact.crisisId]),
+    )('domain "%s" generates a minor incident with crisisId "%s"', (domain, expectedCrisisId) => {
+      const engine = new PressureCrisisEngine();
+      const state = buildPressureState({
+        [domain]: buildGauge(THRESHOLDS.WARNING, SUSTAIN_TICKS.WARNING_MINOR, 0),
+      });
+      const result = engine.checkForEmergence(state, 1950, []);
+      expect(result.minorImpacts).toHaveLength(1);
+      expect(result.minorImpacts[0]!.crisisId).toBe(expectedCrisisId);
+    });
 
     it('generated crisis definition has required CrisisDefinition fields', () => {
       const engine = new PressureCrisisEngine();

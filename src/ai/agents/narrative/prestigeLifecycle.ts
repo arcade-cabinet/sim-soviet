@@ -6,8 +6,8 @@
  */
 
 import { PRESTIGE_PROJECTS, type PrestigeProject } from '../../../config/prestigeProjects';
-import type { EraId } from '../../../game/era/types';
 import { ERA_DEFINITIONS } from '../../../game/era/definitions';
+import type { EraId } from '../../../game/era/types';
 import type { GameRng } from '../../../game/SeedSystem';
 
 /** Politburo announcement of a prestige project demand. */

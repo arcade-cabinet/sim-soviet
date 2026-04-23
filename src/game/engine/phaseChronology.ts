@@ -6,10 +6,8 @@
  */
 
 import type { TickResult } from '../../ai/agents/core/ChronologyAgent';
-import { applyWarmingToTerrain, computeWarmingLevel, isWarmingActive } from '../../ai/agents/core/globalWarming';
-import { isTileActive, type TerrainTileState, tickTerrain } from '../../ai/agents/core/terrainTick';
+import { isTileActive, tickTerrain } from '../../ai/agents/core/terrainTick';
 import { applyCrisisImpacts } from '../../ai/agents/crisis/CrisisImpactApplicator';
-import { FreeformGovernor } from '../../ai/agents/crisis/FreeformGovernor';
 import type { GovernorDirective } from '../../ai/agents/crisis/Governor';
 import type { PressureReadContext } from '../../ai/agents/crisis/pressure/PressureDomains';
 import {
@@ -18,6 +16,7 @@ import {
   handleQuotaMet as handleQuotaMetHelper,
   handleQuotaMissed as handleQuotaMissedHelper,
 } from '../../ai/agents/political/annualReportTick';
+import { createMandatesForEra, createPlanMandateState } from '../../ai/agents/political/PoliticalAgent';
 import { DIFFICULTY_PRESETS } from '../../ai/agents/political/ScoringSystem';
 import { collapseEntitiesToBuildings } from '../../ai/agents/workforce/collectiveTransition';
 import { getCurrentGridSize, setCurrentGridSize } from '../../config';
@@ -25,16 +24,11 @@ import { LAND_GRANT_TIERS } from '../../config/landGrants';
 import { buildingsLogic, getMetaEntity, operationalBuildings } from '../../ecs/archetypes';
 import type { RaionPool } from '../../ecs/world';
 import { checkHQSplitting } from '../../growth/HQSplitting';
-import { INDUSTRIAL_BUILDING_IDS } from '../../growth/OrganicUnlocks';
-import { addMassGrave, notifyTerrainDirty, updateSpaceVisualState } from '../../stores/gameStore';
+import { addMassGrave, notifyTerrainDirty } from '../../stores/gameStore';
 import { shouldExpand } from './endlessMode';
 import { expandGrid, getCurrentTier, initializeNewTiles } from './mapExpansion';
 import { buildSettlementSummary, type SettlementSummary } from './SettlementSummary';
 import type { TickContext } from './tickContext';
-import type { RegisteredTimeline } from '../timeline/TimelineLayer';
-import { evaluateAllTimelines } from '../timeline/TimelineLayer';
-import { SPACE_TIMELINE_ID } from '../timeline/spaceTimeline';
-import { discoverNewTimelines } from '../timeline/perWorldTimelines';
 
 /** Result of the chronology phase — engine-owned state that must be written back. */
 export interface ChronologyResult {
@@ -52,7 +46,7 @@ export interface ChronologyResult {
 export function phaseChronology(ctx: TickContext): ChronologyResult {
   const { tickResult, storeRef, callbacks, rng } = ctx;
   const { chronology: chronoAgent, political: politicalAgent, economy: economyAgent, kgb: kgbAgent } = ctx.agents;
-  const { settlement, scoring, transport, deliveries, workerSystem: workers } = ctx.systems;
+  const { scoring, transport, deliveries, workerSystem: workers } = ctx.systems;
 
   let raion = ctx.raion;
   let cachedDirective: GovernorDirective | null = null;
@@ -60,6 +54,7 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
   // ── 1. Chronology ──
   syncChronologyToMeta(chronoAgent);
   emitChronologyChanges(tickResult, ctx);
+  maybeCompleteHistoricalCampaign(ctx);
 
   // ── 1b. Population mode detection ── (handled by buildTickContext)
 
@@ -73,29 +68,7 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
       callbacks.onToast('The collective has grown. Individual records are now maintained by the raion.', 'warning');
     }
 
-    // In Freeform mode, provide organic unlock context for condition-based era transitions
-    if (ctx.governor instanceof FreeformGovernor) {
-      const activeCrises = ctx.governor.getActiveCrises();
-      const hasActiveWar = activeCrises.some((id) => id.startsWith('war') || id.includes('war'));
-      const counters = ctx.governor.getYearsSinceCounters();
-      const industrialCount = buildingsLogic.entities.filter((e) =>
-        INDUSTRIAL_BUILDING_IDS.includes(e.building.defId),
-      ).length;
-
-      politicalAgent.setOrganicUnlockContext({
-        population: storeRef.resources.population,
-        industrialBuildingCount: industrialCount,
-        hasActiveWar,
-        hasExperiencedWar: ctx.governor.getTotalCrisesExperienced() > 0 && counters.war < Infinity,
-        yearsSinceLastWar: counters.war,
-        recentGrowthRate: 0, // simplified: not tracked precisely
-        lowGrowthYears: 0, // will be enhanced later
-        simulationYearsElapsed: chronoAgent.getDate().year - ctx.state.startYear,
-        currentEraId: politicalAgent.getCurrentEraId(),
-        techLevel: ctx.agents.world?.getState().techLevel ?? 0,
-      });
-    }
-
+    const eraBefore = politicalAgent.getCurrentEraId();
     politicalAgent.handleEraTransitionFull({
       year: chronoAgent.getDate().year,
       deliveries,
@@ -108,6 +81,10 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
       difficulty: ctx.state.difficulty,
       chronology: chronoAgent,
     });
+    const eraAfter = politicalAgent.getCurrentEraId();
+    if (eraAfter !== eraBefore) {
+      ctx.state.mandateState = createPlanMandateState(createMandatesForEra(eraAfter, ctx.state.difficulty));
+    }
 
     const reportCtx = buildAnnualReportContext(ctx, cachedDirective);
     checkQuotaHelper(reportCtx);
@@ -115,30 +92,6 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
       ctx.state.pendingReportSinceTick = chronoAgent.getDate().totalTicks;
     }
     syncAnnualReportState(ctx, reportCtx.engineState);
-
-    // ── 1991 Historical Divergence ──────────────────────────────────────────
-    if (
-      ctx.state.gameMode === 'historical' &&
-      !ctx.state.historicalDivergenceFired &&
-      chronoAgent.getDate().year >= 1991
-    ) {
-      ctx.state.historicalDivergenceFired = true;
-
-      const resolve = (continueInFreeform: boolean) => {
-        if (continueInFreeform) {
-          ctx.switchToFreeformMode();
-        } else {
-          ctx.endGame(false, 'ussr_dissolved');
-        }
-      };
-
-      if (ctx.callbacks.onHistoricalEraEnd) {
-        ctx.callbacks.onHistoricalEraEnd(resolve);
-      } else {
-        // No UI handler — auto-continue into freeform
-        ctx.switchToFreeformMode();
-      }
-    }
 
     // ── 2.1 Dynamic map expansion ──
     runMapExpansion(ctx);
@@ -180,10 +133,22 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
           const offset = (seed >> 8) % Math.max(1, gridSize - 2);
           let gx: number, gy: number;
           switch (edge) {
-            case 0: gx = 1 + offset; gy = 0; break;
-            case 1: gx = gridSize - 1; gy = 1 + offset; break;
-            case 2: gx = 1 + offset; gy = gridSize - 1; break;
-            default: gx = 0; gy = 1 + offset; break;
+            case 0:
+              gx = 1 + offset;
+              gy = 0;
+              break;
+            case 1:
+              gx = gridSize - 1;
+              gy = 1 + offset;
+              break;
+            case 2:
+              gx = 1 + offset;
+              gy = gridSize - 1;
+              break;
+            default:
+              gx = 0;
+              gy = 1 + offset;
+              break;
           }
 
           const markerCount = 3 + (seed % 3); // 3-5 markers
@@ -199,6 +164,12 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
       }
     }
   }
+
+  // ── 1991 Historical Campaign Completion ─────────────────────────────────
+  // This must not rely only on a new-year tick: rehabilitation and other
+  // conservative time skips can advance the calendar across 1991 between
+  // boundary checks.
+  maybeCompleteHistoricalCampaign(ctx);
 
   // Auto-resolve pending report after 90 ticks
   if (ctx.state.pendingReport) {
@@ -223,9 +194,6 @@ export function phaseChronology(ctx: TickContext): ChronologyResult {
     ctx.agents.world.setEra(politicalAgent.getCurrentEraId());
     ctx.agents.world.tickYear(date.year);
   }
-
-  // ── 2.5c Timeline evaluation ──
-  runTimelineEvaluation(ctx);
 
   // ── 2.5b Governor evaluation ──
   if (ctx.governor) {
@@ -316,6 +284,43 @@ function syncAnnualReportState(ctx: TickContext, state: AnnualReportEngineState)
   ctx.state.pripiskiCount = state.pripiskiCount;
 }
 
+function maybeCompleteHistoricalCampaign(ctx: TickContext): void {
+  if (
+    ctx.state.gameMode !== 'historical' ||
+    ctx.state.historicalCompletionFired ||
+    ctx.agents.chronology.getDate().year < 1991
+  ) {
+    return;
+  }
+
+  ctx.state.historicalCompletionFired = true;
+
+  const resolve = (continueInPostCampaign: boolean) => {
+    if (continueInPostCampaign) {
+      enterPostCampaignFreePlay(ctx);
+    } else {
+      ctx.endGame(false, 'ussr_dissolved');
+    }
+  };
+
+  if (ctx.callbacks.onHistoricalEraEnd) {
+    ctx.callbacks.onHistoricalEraEnd(resolve);
+  } else {
+    // No UI handler — auto-continue into grounded post-campaign free play.
+    enterPostCampaignFreePlay(ctx);
+  }
+}
+
+function enterPostCampaignFreePlay(ctx: TickContext): void {
+  const date = ctx.agents.chronology.getDate();
+  ctx.continuePostCampaign();
+  ctx.state.historicalCompletionFired = true;
+  ctx.state.consecutiveQuotaFailures = 0;
+  ctx.state.pendingReport = false;
+  ctx.state.pendingReportSinceTick = date.totalTicks;
+  ctx.state.quota.deadlineYear = Math.max(ctx.state.quota.deadlineYear, date.year + 5);
+}
+
 /**
  * Build a SettlementSummary from tick context and chronology date.
  * Uses ECS state for buildings/morale/power, and governor for crisis counters.
@@ -338,12 +343,7 @@ function buildSettlementSummaryFromContext(ctx: TickContext, date: { year: numbe
   let yearsSinceLastWar = Infinity;
   let yearsSinceLastFamine = Infinity;
   let yearsSinceLastDisaster = Infinity;
-  if (ctx.governor instanceof FreeformGovernor) {
-    const counters = ctx.governor.getYearsSinceCounters();
-    yearsSinceLastWar = counters.war;
-    yearsSinceLastFamine = counters.famine;
-    yearsSinceLastDisaster = counters.disaster;
-  } else if (ctx.governor) {
+  if (ctx.governor) {
     // For HistoricalGovernor: infer from active crises
     const active = ctx.governor.getActiveCrises();
     if (active.some((id) => id.includes('war'))) yearsSinceLastWar = 0;
@@ -442,7 +442,7 @@ function runMapExpansion(ctx: TickContext): void {
  */
 function assemblePressureReadContext(ctx: TickContext): PressureReadContext | undefined {
   try {
-    const { food, kgb, power, demographic, loyalty, political } = ctx.agents;
+    const { food, kgb, power, demographic, loyalty } = ctx.agents;
     const buildings = buildingsLogic.entities;
     const totalBuildings = buildings.length;
 
@@ -468,7 +468,8 @@ function assemblePressureReadContext(ctx: TickContext): PressureReadContext | un
 
     // Labor ratio approximation
     const population = ctx.storeRef.resources.population;
-    const laborRatio = population > 0 ? Math.min(1, ctx.systems.workerSystem.getPopulation() / Math.max(1, population)) : 0.5;
+    const laborRatio =
+      population > 0 ? Math.min(1, ctx.systems.workerSystem.getPopulation() / Math.max(1, population)) : 0.5;
 
     // Production trend from economy agent
     const productionTrend = 0.5; // neutral default — could be enhanced from economy metrics
@@ -489,11 +490,12 @@ function assemblePressureReadContext(ctx: TickContext): PressureReadContext | un
         )
       : undefined;
 
-    // Law enforcement metrics (crime rate, judge coverage, undercity)
+    // Law enforcement metrics (crime rate, patrol coverage, district disorder)
     const lawState = kgb.getLawEnforcementState();
-    const avgUndercity = lawState.sectors.length > 0
-      ? lawState.sectors.reduce((sum, s) => sum + s.undercityDecay, 0) / lawState.sectors.length
-      : 0;
+    const avgDistrictDecay =
+      lawState.sectors.length > 0
+        ? lawState.sectors.reduce((sum, s) => sum + s.districtDecay, 0) / lawState.sectors.length
+        : 0;
 
     return {
       foodState: food.getFoodState(),
@@ -525,14 +527,12 @@ function assemblePressureReadContext(ctx: TickContext): PressureReadContext | un
       climateTrend: world?.getClimateTrend(),
       worldState,
       spheres,
-      // MegaCity law enforcement
       crimeRate: lawState.aggregateCrimeRate,
       judgeCoverage: lawState.totalJudges > 0 ? Math.min(1, lawState.totalJudges / Math.max(1, population / 2000)) : 0,
-      undercityDecay: avgUndercity,
+      districtDecay: avgDistrictDecay,
     };
   } catch {
-    // If any agent API isn't available (old saves, missing agents), return undefined
-    // FreeformGovernor will fall back to ChaosEngine when pressureReadings is undefined
+    // If any agent API isn't available (old saves, missing agents), return undefined.
     return undefined;
   }
 }
@@ -541,176 +541,20 @@ function assemblePressureReadContext(ctx: TickContext): PressureReadContext | un
 
 /**
  * Run one year of terrain evolution on all active tiles.
- * Global warming effects only apply in freeform mode after 2050.
+ * Terrain evolves locally with seasonal rainfall. No post-1991 global warming
+ * or off-world systems are part of the 1.0 historical scope.
  */
 function runTerrainTick(ctx: TickContext): void {
   const tiles = ctx.state.terrainTiles;
   if (tiles.length === 0) return;
 
-  const year = ctx.agents.chronology.getDate().year;
-  const gameMode = ctx.state.gameMode;
   const rainfall = ctx.tickResult.season.farmMultiplier; // proxy for yearly rainfall
-
-  const warmingActive = isWarmingActive(gameMode, year);
-  const warmingLevel = warmingActive ? computeWarmingLevel(year) : 0;
-
-  const terrainCtx = { rainfall, globalWarmingRate: warmingLevel };
+  const terrainCtx = { rainfall, globalWarmingRate: 0 };
 
   for (let i = 0; i < tiles.length; i++) {
     const tile = tiles[i];
     // Skip dormant tiles for performance
-    if (!isTileActive(tile) && !warmingActive) continue;
-
-    let updated: TerrainTileState = tickTerrain(tile, terrainCtx);
-
-    // Apply global warming effects (freeform mode only, post-2050)
-    if (warmingActive) {
-      updated = applyWarmingToTerrain(updated, warmingLevel);
-    }
-
-    tiles[i] = updated;
+    if (!isTileActive(tile)) continue;
+    tiles[i] = tickTerrain(tile, terrainCtx);
   }
-}
-
-// ── Timeline evaluation ───────────────────────────────────────────────────
-
-/**
- * Evaluate all registered timeline layers and apply newly activated milestone effects.
- *
- * Runs every tick so sustained-tick tracking works correctly.
- * WorldAgent worldState keys map directly to TimelineContext.worldState for cross-references.
- */
-function runTimelineEvaluation(ctx: TickContext): void {
-  const { registeredTimelines } = ctx.state;
-  if (registeredTimelines.length === 0) return;
-
-  const date = ctx.agents.chronology.getDate();
-  const resources = ctx.storeRef.resources;
-  const worldAgentState = ctx.agents.world?.getState();
-
-  // Build worldState map from WorldAgent (defaults for missing keys)
-  const worldState: Record<string, number> = {
-    globalTension: worldAgentState?.globalTension ?? 0.5,
-    borderThreat: worldAgentState?.borderThreat ?? 0.3,
-    tradeAccess: worldAgentState?.tradeAccess ?? 0.3,
-    commodityIndex: worldAgentState?.commodityIndex ?? 1.0,
-    centralPlanningEfficiency: worldAgentState?.centralPlanningEfficiency ?? 1.0,
-    climateTrend: worldAgentState?.climateTrend ?? 0.0,
-    moscowAttention: worldAgentState?.moscowAttention ?? 0.5,
-    ideologyRigidity: worldAgentState?.ideologyRigidity ?? 0.8,
-    techLevel: worldAgentState?.techLevel ?? 0.0,
-  };
-
-  const timelineCtx = {
-    year: date.year,
-    population: resources.population,
-    techLevel: worldAgentState?.techLevel ?? 0.0,
-    worldState,
-    pressureLevels: {} as Record<string, number>,
-    resources: {
-      food: resources.food,
-      power: resources.power,
-      population: resources.population,
-      vodka: resources.vodka ?? 0,
-      money: resources.money ?? 0,
-    },
-  };
-
-  const { allActivated, allEffects } = evaluateAllTimelines(registeredTimelines, timelineCtx);
-
-  // Apply effects for each newly activated milestone
-  for (let i = 0; i < allActivated.length; i++) {
-    const milestone = allActivated[i];
-    const effects = allEffects[i];
-    const { narrative } = effects;
-
-    // Always emit pravda headline
-    ctx.callbacks.onPravda(narrative.pravdaHeadline);
-
-    if (narrative.choices && narrative.choices.length > 0 && ctx.callbacks.onNarrativeEvent) {
-      // Narrative choice event — fires interactive modal instead of plain toast
-      const event = {
-        milestoneId: milestone.id,
-        timelineId: milestone.timelineId,
-        title: milestone.name,
-        scene: narrative.scene ?? narrative.description ?? narrative.toast,
-        headline: narrative.pravdaHeadline,
-        choices: narrative.choices,
-        autoResolveChoiceId: narrative.autoResolveChoiceId ?? narrative.choices[0].id,
-        tickLimit: narrative.tickLimit ?? 120,
-      };
-      ctx.callbacks.onNarrativeEvent(event, (choiceId) => {
-        const choice = narrative.choices!.find((c) => c.id === choiceId);
-        if (!choice) return;
-        const roll = ctx.rng.random();
-        const outcome = roll < choice.successChance ? choice.onSuccess : choice.onFailure;
-        ctx.callbacks.onToast(outcome.announcement, outcome.severity ?? 'warning');
-        if (outcome.resources) {
-          const r = resources as unknown as Record<string, number>;
-          for (const [k, v] of Object.entries(outcome.resources)) {
-            if (v !== undefined && k in r) r[k] = Math.max(0, (r[k] ?? 0) + v);
-          }
-        }
-        if (outcome.blackMarks) {
-          // Map blackMarks count to appropriate KGB mark source
-          const src = outcome.blackMarks >= 2 ? 'report_falsified' : 'suppressing_news';
-          for (let m = 0; m < outcome.blackMarks; m++) {
-            ctx.agents.kgb.addMark(src, date.totalTicks);
-          }
-        }
-        if (outcome.blat) {
-          const res = resources as unknown as Record<string, number>;
-          res.blat = Math.max(0, (res.blat ?? 0) + outcome.blat);
-        }
-      });
-    } else {
-      // Plain toast — no interaction needed
-      ctx.callbacks.onToast(narrative.toast, 'warning');
-    }
-
-    // Resource deltas (unconditional, regardless of choices)
-    if (effects.resourceDeltas) {
-      for (const [key, delta] of Object.entries(effects.resourceDeltas)) {
-        const r = resources as unknown as Record<string, number>;
-        if (key in r) r[key] = Math.max(0, (r[key] ?? 0) + delta);
-      }
-    }
-  }
-
-  // Update space visual state for sky rendering
-  syncSpaceVisualState(registeredTimelines, timelineCtx.techLevel, ctx.agents.political.getCurrentEraId());
-
-  // Discover per-world timelines from newly activated space milestones
-  const newSpaceIds = allActivated
-    .filter((m) => m.timelineId === 'space')
-    .map((m) => m.id);
-
-  if (newSpaceIds.length > 0) {
-    const registeredIds = new Set(registeredTimelines.map((t) => t.id));
-    const newTimelines = discoverNewTimelines(newSpaceIds, registeredIds);
-    for (const tl of newTimelines) {
-      registeredTimelines.push(tl);
-      ctx.callbacks.onToast(`New world discovered: ${tl.id} — timeline unlocked.`, 'warning');
-    }
-  }
-}
-
-/**
- * Sync space visual state to the reactive store for sky rendering.
- * Reads activated milestones from the space timeline layer and maps
- * key milestones to visual flags (sputnik streak, station dot, moon disc).
- */
-function syncSpaceVisualState(timelines: RegisteredTimeline[], techLevel: number, era: string): void {
-  const spaceTl = timelines.find((t) => t.id === SPACE_TIMELINE_ID);
-  if (!spaceTl) return;
-
-  const activated = spaceTl.state.activatedMilestones;
-  updateSpaceVisualState({
-    sputnik: activated.has('sputnik'),
-    spaceStation: activated.has('salyut_station') || activated.has('mir_station'),
-    lunarBase: activated.has('permanent_lunar_base') || activated.has('lunokhod'),
-    exoplanetColony: activated.has('exoplanet_colony'),
-    techLevel,
-    era,
-  });
 }

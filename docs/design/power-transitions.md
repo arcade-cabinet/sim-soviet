@@ -3,9 +3,12 @@ title: Power Transition Mechanics — 7 Succession Types
 type: design
 status: draft
 implementation:
-  - src/game/politburo/coups.ts
-tests: []
-last_verified: 2026-03-01
+  - src/ai/agents/narrative/politburo/coups.ts
+  - src/ai/agents/narrative/politburo/PolitburoSystem.ts
+tests:
+  - __tests__/game/PolitburoSystem.test.ts
+  - __tests__/game/PolitburoSerialization.test.ts
+last_verified: 2026-04-23
 coverage: partial
 ---
 
@@ -408,8 +411,8 @@ Once activated, the leader enters "Immortal" status. This is not a transition --
 - **Bureaucratic calcification**: Event frequency drops 50%. New building costs increase 5% per year.
 - **Population morale**: Slowly drifts toward exactly 50 (nobody feels anything anymore). Fear and approval converge on 50.
 - **Absurdist events**: Increase in frequency by 3x. The world becomes surreal.
-- **Death probability**: Increases each year but the leader stubbornly persists. At age 100+, a special "COMRADE ETERNAL" headline fires annually.
-- **Special**: City stops changing. New buildings look identical to old ones. The Pravda headlines start repeating. Time becomes meaningless.
+- **Death probability**: Increases each year but the leader stubbornly persists. At age 100+, a special "COMRADE STILL AT DESK" headline fires annually.
+- **Special**: Settlement stops changing. New buildings look identical to old ones. The Pravda headlines start repeating. Time becomes meaningless.
 
 **Ending The Immortal**: Only natural death (at increasingly improbable ages, minimum 2% per month at 95+) or assassination (which gets a 3x modifier for Immortals because everyone is desperate) can end it.
 
@@ -585,7 +588,7 @@ Which transition types each archetype is most/least vulnerable to:
 5. `"This is the third time this has happened. You'd think I'd be used to it. I am not. Pass the vodka."`
 
 **Radio Broadcast**:
-1. `"Today's broadcast is brought to you by the Ministry of Truth. Today's truth: nothing has changed. Tomorrow's truth: it has always been this way."`
+1. `"Today's broadcast is brought to you by the State Radio Committee. Today's line: nothing has changed. Tomorrow's line: it has always been this way."`
 2. `"Citizens are reminded that asking 'what happened to the leader' is not a valid question, as the question presupposes a leader existed. Which they did not."`
 3. `"Please return all photographs, documents, and commemorative plates bearing the likeness of [DATA EXPUNGED] to your nearest collection point."`
 4. `"In other news, several thousand bureaucrats have been reassigned to the Department of Retroactive History. Their work is vital and absolutely real."`
@@ -826,7 +829,9 @@ This creates a death spiral mechanic: bad governance leads to transitions, which
 
 There is no winning. There is only varying degrees of losing. This is historically accurate.
 
-However, a player who maintains stability for 50+ game-years unlocks the "Eternal Stagnation" achievement, which is simultaneously the best and worst possible outcome.
+However, a player who maintains stability for 50+ game-years unlocks the
+"Stagnation Optimism" achievement, which is simultaneously the best and worst
+possible outcome.
 
 ---
 

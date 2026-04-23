@@ -2,13 +2,11 @@
  * @fileoverview Tests for era doctrine mechanics:
  * - Thaw/freeze oscillation (era 5)
  * - Stagnation rot (era 7)
- * - Eternal bureaucratic singularity (era 8)
  * - Original 4 mechanics (regression)
  */
 
 import {
   type DoctrineContext,
-  ETERNAL_PAPERWORK_THRESHOLD,
   evaluateDoctrineMechanics,
   getThawFreezeState,
   resetPaperwork,
@@ -170,82 +168,6 @@ describe('Era Doctrine Mechanics', () => {
       const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'revolution', totalTicks: 60 }));
       const rot = effects.find((e) => e.mechanicId === 'stagnation_rot');
       expect(rot).toBeUndefined();
-    });
-  });
-
-  // ── Eternal Bureaucratic Singularity (era 8: the_eternal) ──────
-
-  describe('eternal_bureaucracy', () => {
-    it('fires during the_eternal era', () => {
-      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'the_eternal', totalTicks: 20 }));
-      const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
-      expect(bureau).toBeDefined();
-    });
-
-    it('generates base paperwork', () => {
-      const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 0 }),
-      );
-      const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
-      expect(bureau!.paperworkDelta).toBeGreaterThan(0);
-    });
-
-    it('paperwork grows exponentially with accumulation', () => {
-      const effectsLow = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 0 }),
-      );
-      const bureauLow = effectsLow.find((e) => e.mechanicId === 'eternal_bureaucracy');
-
-      const effectsHigh = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 3000 }),
-      );
-      const bureauHigh = effectsHigh.find((e) => e.mechanicId === 'eternal_bureaucracy');
-
-      expect(bureauLow).toBeDefined();
-      expect(bureauLow!.paperworkDelta).toBeDefined();
-      expect(bureauHigh).toBeDefined();
-      expect(bureauHigh!.paperworkDelta).toBeDefined();
-      expect(bureauHigh!.paperworkDelta).toBeGreaterThan(bureauLow!.paperworkDelta!);
-    });
-
-    it('systems slow down as paperwork accumulates', () => {
-      const effectsLow = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 100 }),
-      );
-      const bureauLow = effectsLow.find((e) => e.mechanicId === 'eternal_bureaucracy');
-
-      const effectsHigh = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 4000 }),
-      );
-      const bureauHigh = effectsHigh.find((e) => e.mechanicId === 'eternal_bureaucracy');
-
-      expect(bureauHigh!.productionMult).toBeLessThan(bureauLow!.productionMult);
-    });
-
-    it('singularity announcement near threshold', () => {
-      const effects = evaluateDoctrineMechanics(
-        makeCtx({
-          currentEraId: 'the_eternal',
-          totalTicks: 20,
-          currentPaperwork: ETERNAL_PAPERWORK_THRESHOLD - 1,
-        }),
-      );
-      const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
-      expect(bureau!.description).toContain('SINGULARITY');
-    });
-
-    it('production slowdown caps at 50%', () => {
-      const effects = evaluateDoctrineMechanics(
-        makeCtx({ currentEraId: 'the_eternal', totalTicks: 20, currentPaperwork: 100000 }),
-      );
-      const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
-      expect(bureau!.productionMult).toBeGreaterThanOrEqual(0.5);
-    });
-
-    it('does not fire outside the_eternal era', () => {
-      const effects = evaluateDoctrineMechanics(makeCtx({ currentEraId: 'stagnation', totalTicks: 20 }));
-      const bureau = effects.find((e) => e.mechanicId === 'eternal_bureaucracy');
-      expect(bureau).toBeUndefined();
     });
   });
 

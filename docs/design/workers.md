@@ -90,8 +90,8 @@ New workers arrive through limited channels. None are fully under player control
 | Great Patriotic War (1941-45) | **Catastrophic loss** | 30-40% conscripted, bombardment casualties, famine |
 | Reconstruction (1945-56) | **Recovery** | Veterans return, Moscow assignments increase, reduced drains |
 | Thaw & Freeze (1956-82) | **Fragile balance** | Passport reform (1974) means workers CAN leave legally now |
-| Stagnation (1982-2000) | **Slow decline** | Youth won't stay, aging population, vodka-related deaths |
-| The Eternal (2000-???) | **Bureaucratic** | Workers assigned by algorithm. Population is a number on a form. |
+| Stagnation & Dissolution (1982-1991) | **Slow decline** | Youth won't stay, aging population, vodka-related deaths |
+| Grounded continuation (1992+) | **Bureaucratic decay** | Same settlement, aging infrastructure, reduced inflow, persistent local pressure |
 
 #### Difficulty Modifiers
 

@@ -190,8 +190,7 @@ export type DoctrineMechanicId =
   | 'stakhanovite_bonus'
   | 'wartime_conscription'
   | 'thaw_freeze_oscillation'
-  | 'stagnation_rot'
-  | 'eternal_bureaucracy';
+  | 'stagnation_rot';
 
 /** Effect produced by a doctrine mechanic this tick. */
 export interface DoctrineMechanicEffect {

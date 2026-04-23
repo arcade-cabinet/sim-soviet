@@ -9,13 +9,13 @@
 
 import {
   createTrafficGrid,
-  recordCommute,
   decayTraffic,
   extractDesirePaths,
   ROAD_THRESHOLDS,
-  TRAFFIC_DECAY_RATE,
-  serializeTrafficGrid,
+  recordCommute,
   restoreTrafficGrid,
+  serializeTrafficGrid,
+  TRAFFIC_DECAY_RATE,
 } from '../../src/growth/DesirePathSystem';
 
 describe('DesirePathSystem', () => {

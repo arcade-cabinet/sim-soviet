@@ -16,7 +16,7 @@ export interface TerrainTileState {
 
 export interface YearlyTerrainContext {
   rainfall: number; // 0-1
-  globalWarmingRate: number; // 0+ (Freeform only)
+  globalWarmingRate: number; // 0+ local climate trend
 }
 
 /**

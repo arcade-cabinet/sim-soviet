@@ -1,6 +1,5 @@
 /**
- * Type stubs for AnnualReportModal — used by SimulationEngine and annualReportTick.
- * The full UI component will be implemented separately.
+ * Annual report data contracts used by SimulationEngine, annualReportTick, and GameModals.
  */
 
 export interface AnnualReportData {

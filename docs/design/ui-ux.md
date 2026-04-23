@@ -275,7 +275,7 @@ For **communal housing with 20+ families**, the demographic ring shows totals an
 
 | Old Pattern | New Pattern |
 |-------------|-------------|
-| Tap empty tile → RadialBuildMenu | Same (inner=categories, outer=buildings) |
+| Tap empty tile → placement menu | Empty tile clears panels; construction remains autonomous |
 | Tap building → floating BuildingInspector card | Tap building → radial with action categories |
 | Tap worker dot → WorkerInfoPanel | Worker accessed through building's "Workers" or "Occupants" ring |
 | Separate "Assignment Mode" tap-to-assign flow | "Assign Worker" wedge in building's Workers ring |
@@ -508,8 +508,8 @@ CITIZEN DOSSIER (always pauses)
 ```
 
 This means:
-1. **RadialBuildMenu becomes RadialContextMenu** — same SVG component, data-driven by context
-2. **BuildingInspector card is replaced** — info moves into the radial's "Info" action
+1. **RadialContextMenu is inspect-only** — existing buildings and residents expose context actions
+2. **BuildingInspector card is replaced** — info moves into contextual building actions
 3. **WorkerInfoPanel becomes Citizen Dossier modal** — deeper, pauses game
 4. **Assignment mode eliminated** — workers assigned from building's "Workers" ring
 5. **New PopulationRegistry component** — full-screen list from DrawerPanel

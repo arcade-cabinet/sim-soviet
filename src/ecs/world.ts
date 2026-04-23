@@ -280,24 +280,8 @@ export interface Resources {
   /** Storage capacity — total food storage across all buildings */
   storageCapacity: number;
 
-  // ── Atmospheric & Advanced Resources (era-gated, tracked when relevant) ──
-
-  /** Oxygen units — tracked inside domes or off-Earth (infinite on open-air Earth) */
-  oxygen: number;
-  /** Oxygen production capacity per tick. */
-  oxygenProduction: number;
-  /** Hydrogen units — fuel, industrial, electrolysis from water. Available from industrialization. */
-  hydrogen: number;
-  /** Clean water units — on Earth with rivers: auto-replenished; off-Earth: extracted/recycled. */
+  /** Clean water units for grounded local scarcity and disasters. */
   water: number;
-  /** Water recycling capacity per tick. */
-  waterRecycling: number;
-  /** Rare earth elements — electronics, advanced construction. Available from thaw era. */
-  rareEarths: number;
-  /** Uranium — nuclear power, weapons program. Available from industrialization. */
-  uranium: number;
-  /** Rocket fuel — space launches. Available post-2030 via cold branch tech. */
-  rocketFuel: number;
 
   /** District population pool — undefined means entity mode, defined means aggregate mode */
   raion?: RaionPool;
@@ -353,8 +337,6 @@ export interface GameMeta {
   blackMarks: number;
   commendations: number;
   threatLevel: string;
-  /** H3 Index of the current global hex where the settlement is located. */
-  currentHex: string;
   /** Current historical era ID (synced from EraSystem each tick) */
   currentEra: string;
   /** Current road quality level (synced from TransportSystem each tick) */

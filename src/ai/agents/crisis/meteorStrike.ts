@@ -33,7 +33,7 @@ export interface ImpactResult {
   /** All tiles destroyed by the impact (within damageRadius). */
   destroyedTiles: Array<{ x: number; y: number }>;
   /** Resource deposit revealed by the impact. */
-  resourceDeposit: 'iron' | 'coal' | 'uranium';
+  resourceDeposit: 'iron' | 'coal';
 }
 
 /** Result of converting a crater into a mine. */
@@ -51,40 +51,29 @@ export interface MineConversion {
 /** Base probability of a meteor strike per roll (~0.1%). */
 const BASE_CHANCE = 0.001;
 
-/** Multiplier for eternal/freeform mode (post-1991). */
-const ETERNAL_MULTIPLIER = 1.5;
-
-/** Year threshold above which the eternal multiplier applies. */
-const ETERNAL_YEAR_THRESHOLD = 1991;
-
 /** Resource deposit probabilities (cumulative thresholds). */
-const RESOURCE_THRESHOLDS: Array<{ threshold: number; resource: 'iron' | 'coal' | 'uranium' }> = [
+const RESOURCE_THRESHOLDS: Array<{ threshold: number; resource: 'iron' | 'coal' }> = [
   { threshold: 0.5, resource: 'iron' },
-  { threshold: 0.85, resource: 'coal' },
-  { threshold: 1.0, resource: 'uranium' },
+  { threshold: 1.0, resource: 'coal' },
 ];
 
 /** Base capacity per unit of damage radius, by resource type. */
 const CAPACITY_BY_RESOURCE: Record<string, number> = {
   iron: 50,
   coal: 40,
-  uranium: 20,
 };
 
 // ─── rollMeteorStrike ────────────────────────────────────────────────────────
 
 /**
- * Roll for a meteor strike. Very rare (~0.1% per call), slightly higher
- * in freeform eternal mode (year > 1991).
+ * Roll for a meteor strike. Very rare (~0.1% per call).
  *
  * @param rng - Seeded RNG instance
  * @param year - Current game year
  * @returns MeteorEvent if a strike occurs, null otherwise
  */
 export function rollMeteorStrike(rng: GameRng, year: number): MeteorEvent | null {
-  const chance = year > ETERNAL_YEAR_THRESHOLD ? BASE_CHANCE * ETERNAL_MULTIPLIER : BASE_CHANCE;
-
-  if (rng.random() >= chance) {
+  if (rng.random() >= BASE_CHANCE) {
     return null;
   }
 
@@ -130,7 +119,7 @@ export function applyMeteorImpact(targetX: number, targetY: number, gridSize: nu
 
   // Determine resource deposit based on position hash
   const resourceRoll = ((targetX * 31 + targetY * 17 + 7) % 100) / 100;
-  let resourceDeposit: 'iron' | 'coal' | 'uranium' = 'iron';
+  let resourceDeposit: 'iron' | 'coal' = 'iron';
   for (const entry of RESOURCE_THRESHOLDS) {
     if (resourceRoll < entry.threshold) {
       resourceDeposit = entry.resource;

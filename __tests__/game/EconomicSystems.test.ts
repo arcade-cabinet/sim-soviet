@@ -22,7 +22,7 @@ function makeDvor(
   return entity;
 }
 
-describe('PrivatePlotSystem', () => {
+describe('Private plot food production', () => {
   beforeEach(() => world.clear());
   afterEach(() => world.clear());
 

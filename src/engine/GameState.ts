@@ -29,10 +29,6 @@ export interface BuildingInstance {
   powered: boolean;
   /** Upgrade level (0-2 for grown buildings) */
   level: number;
-  /** Cosmodrome launch progress (ticks toward 60) */
-  progress?: number;
-  /** Cosmodrome has launched */
-  launched?: boolean;
 }
 
 /** A vehicle moving along roads on the grid. */
@@ -99,7 +95,7 @@ export interface Train {
   timer: number;
 }
 
-/** State of the meteor event (late-game cosmic event). */
+/** State of the meteor event (rare disaster). */
 export interface Meteor {
   /** Whether the meteor is currently descending */
   active: boolean;
@@ -135,7 +131,7 @@ export type WeatherType = 'snow' | 'rain' | 'storm' | 'clear';
 /** Visual overlay lens modes for inspecting infrastructure. */
 export type LensType = 'default' | 'water' | 'power' | 'smog' | 'aura';
 
-/** Toolbar tab categories for building placement. */
+/** Legacy command tab categories retained for native HUD compatibility. */
 export type TabType = 'zone' | 'infra' | 'state' | 'purge';
 
 /** Lightning strike visual effect state. */
@@ -146,18 +142,6 @@ export interface Lightning {
   y: number;
   /** Remaining visual lifetime in frames */
   life: number;
-}
-
-/** Cosmodrome rocket launch visual effect state. */
-export interface Launch {
-  /** Launch pad grid X */
-  x: number;
-  /** Launch pad grid Y */
-  y: number;
-  /** Current altitude of the rocket */
-  alt: number;
-  /** Current velocity of the rocket */
-  vel: number;
 }
 
 // --- Subscribe/Notify ---
@@ -205,7 +189,6 @@ export class GameState {
   meteor: Meteor = { active: false, struck: false, x: 0, y: 0, z: 1500, tx: 0, ty: 0 };
   meteorShake: number = 0;
 
-  activeLaunch: Launch | null = null;
   activeLightning: Lightning | null = null;
   currentWeather: WeatherType = 'snow';
   timeOfDay: number = 0.5; // start at noon for good lighting

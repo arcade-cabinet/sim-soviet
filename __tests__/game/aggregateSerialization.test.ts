@@ -124,7 +124,6 @@ function createMockSerializableEngine(): SerializableEngine {
     eventHandler: () => {},
     politburoEventHandler: () => {},
     syncSystemsToMeta: () => {},
-    arcologies: [],
     foragingState: {},
     lastInflowYear: {},
     evacueeInfluxFired: false,

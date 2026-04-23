@@ -7,10 +7,8 @@
  */
 
 import { accrueTrudodni } from '../../ai/agents/economy/EconomyAgent';
-import { buildingsLogic, citizens, getMetaEntity } from '../../ecs/archetypes';
-import { world } from '../../ecs/world';
+import { buildingsLogic, citizens } from '../../ecs/archetypes';
 import { decaySystem, quotaSystem } from '../../ecs/systems';
-import { evaluateArcologies } from '../../game/arcology/ArcologySystem';
 import type { TickContext } from './tickContext';
 
 /**
@@ -26,7 +24,6 @@ export function phasePolitical(ctx: TickContext): void {
     political: politicalAgent,
     kgb: kgbAgent,
     loyalty: loyaltyAgent,
-    collective: collectiveAgent,
     defense: defenseAgent,
   } = ctx.agents;
   const { settlement, politicalEntities, workerSystem, scoring, politburo } = ctx.systems;
@@ -60,27 +57,8 @@ export function phasePolitical(ctx: TickContext): void {
   }
 
   // ── 17. Collective autonomous construction ──
-  const meta = getMetaEntity()?.gameMeta;
-  const currentHex = meta?.currentHex ?? '';
-  const hexMeta = currentHex ? ctx.systems.hexManager.getHexMetadata(currentHex) : undefined;
-  const celestialBody = 'earth';
-
-  ctx.agents.dvorNeeds.updateNeeds(chronology.getDate().totalTicks, celestialBody, hexMeta);
-
-  collectiveAgent.tickAutonomous({
-    totalTicks: chronology.getDate().totalTicks,
-    rng,
-    mandateState: ctx.state.mandateState,
-    needsState: ctx.agents.dvorNeeds.getNeedsState(),
-    eraId: politicalAgent.getCurrentEraId(),
-    callbacks: callbacks as Parameters<typeof collectiveAgent.tickAutonomous>[0]['callbacks'],
-    recordBuildingForMandates: (defId: string) => {
-      politicalAgent.recordBuildingPlaced(defId);
-    },
-    terrainTiles: ctx.state.terrainTiles,
-    gridSize: ctx.grid.getSize(),
-    arcologies: ctx.state.arcologies,
-  });
+  // Now handled autonomously via Yuka Telegrams (MSG.NEW_TICK) in DvorNeedsAgent and CollectiveAgent.
+  // The agents will detect needs, request land grants if necessary, and place buildings.
 
   // ── 18. Chairman meddling ──
   if (workerSystem.isChairmanMeddling() && chronology.getDate().totalTicks % 60 === 0) {
@@ -115,11 +93,6 @@ export function phasePolitical(ctx: TickContext): void {
   // ── 21. Settlement ──
   settlement.tickWithCallbacks(callbacks as Parameters<typeof settlement.tickWithCallbacks>[0]);
 
-  // ── 21b. Arcology evaluation (yearly — expensive flood-fill, pop >= 50K) ──
-  if (tickResult.newYear) {
-    tickArcologies(ctx);
-  }
-
   // ── 22. Era conditions ──
   politicalAgent.checkConditions({
     totalTicks: chronology.getDate().totalTicks,
@@ -141,32 +114,32 @@ export function phasePolitical(ctx: TickContext): void {
     chronologyTotalTicks: chronology.getDate().totalTicks,
   });
 
+  const moraleSamples = collectMoraleSamples(ctx);
+
   // ── 23b. KGB morale sampling ──
   {
     const totalTicks = chronology.getDate().totalTicks;
-    const samples = collectMoraleSamples(ctx);
-    if (samples.length > 0) {
-      kgbAgent.sampleMorale(samples, totalTicks);
+    if (moraleSamples.length > 0) {
+      kgbAgent.sampleMorale(moraleSamples, totalTicks);
     }
   }
 
-  // ── 23c. MegaCity law enforcement (crime, sectors, iso-cubes) ──
+  // ── 23c. Historical local law enforcement ──
   {
     const eraId = politicalAgent.getCurrentEraId();
     const pop = storeRef.resources.population;
     const gridSize = ctx.grid.getSize();
     const gridArea = gridSize * gridSize;
-    // Approximate density pressure: pop / (grid area) normalized
-    const approxDensity = gridArea > 0 ? Math.min(1, (pop / gridArea) / 500) : 0;
-    // Infrastructure pressure: approximate from decay modifier
+    const approxDensity = gridArea > 0 ? Math.min(1, pop / gridArea / 500) : 0;
     const approxInfraPressure = Math.max(0, Math.min(1, (ctx.modifiers.eraMods.decayMult - 1) * 2));
+    const morale = deriveAverageMorale(ctx, moraleSamples);
     kgbAgent.tickLawEnforcement({
       era: eraId,
       population: pop,
       habitableArea: Math.max(1, gridArea * 0.01), // grid units to km^2
-      employmentRate: 0.85, // assume reasonable employment baseline
-      morale: 50, // neutral default — real morale is on per-building basis
-      inequalityIndex: 0, // placeholder — no inequality model yet
+      employmentRate: deriveEmploymentRate(ctx),
+      morale,
+      inequalityIndex: derivePrivilegePressure(ctx, pop),
       densityPressure: approxDensity,
       infrastructurePressure: approxInfraPressure,
     });
@@ -222,43 +195,67 @@ function collectMoraleSamples(
   return samples;
 }
 
-// ── Arcology Evaluation ─────────────────────────────────────────────────────
+function deriveAverageMorale(
+  ctx: TickContext,
+  samples: Array<{ sectorId: { gridX: number; gridY: number }; avgMorale: number }>,
+): number {
+  if (samples.length === 0) return clamp(ctx.systems.workerSystem.getAverageMorale(), 0, 100);
+  const total = samples.reduce((sum, sample) => sum + sample.avgMorale, 0);
+  return clamp(total / samples.length, 0, 100);
+}
 
-/**
- * Evaluate arcology merges and auto-assign domes.
- *
- * Runs the pure evaluateArcologies function with the Miniplex ECS world,
- * then handles dome auto-placement and notifications for new merges.
- */
-function tickArcologies(ctx: TickContext): void {
-  const { storeRef, callbacks } = ctx;
-  const population = storeRef.resources.population;
-
-  const result = evaluateArcologies({
-    world,
-    population,
-    arcologies: ctx.state.arcologies,
-  });
-
-  // Notify on new arcology formations
-  for (const merge of result.newMerges) {
-    const buildingCount = merge.componentEntityIds.length;
-    callbacks.onToast(
-      `ARCOLOGY FORMED: ${buildingCount} ${merge.mergeGroup} buildings merged into mega-structure`,
-    );
+function deriveEmploymentRate(ctx: TickContext): number {
+  const raion = ctx.raion;
+  if (raion) {
+    const laborForce = finiteNonNegative(raion.laborForce);
+    if (laborForce <= 0) return 1;
+    return clamp01(finiteNonNegative(raion.assignedWorkers) / laborForce);
   }
 
-  // Auto-assign domes to eligible arcologies (containment >= 0.8, pop >= domeStart)
-  if (result.domeThresholdReached) {
-    for (const arc of result.arcologies) {
-      if (!arc.hasDome && arc.containment >= 0.8) {
-        arc.hasDome = true;
-        callbacks.onToast(
-          `DOME CONSTRUCTED: Atmospheric containment dome covers ${arc.mergeGroup} arcology`,
-        );
-      }
-    }
+  let laborForce = 0;
+  let assigned = 0;
+  for (const entity of citizens) {
+    const age = entity.citizen.age;
+    if (age != null && (age < 16 || age > 64)) continue;
+    laborForce++;
+    if (entity.citizen.assignment != null) assigned++;
   }
 
-  ctx.state.arcologies = result.arcologies;
+  return laborForce > 0 ? clamp01(assigned / laborForce) : 1;
+}
+
+function derivePrivilegePressure(ctx: TickContext, population: number): number {
+  const blatPressure = clamp01(((ctx.storeRef.resources.blat ?? 0) - 15) / 85);
+  const officialShare = deriveOfficialShare(ctx, population);
+  const hierarchyPressure = clamp01(officialShare / 0.08);
+  return clamp01(blatPressure * 0.75 + hierarchyPressure * 0.25);
+}
+
+function deriveOfficialShare(ctx: TickContext, population: number): number {
+  const pop = finiteNonNegative(population);
+  if (pop <= 0) return 0;
+
+  const raion = ctx.raion;
+  if (raion) {
+    return clamp01(finiteNonNegative(raion.classCounts.party_official ?? 0) / pop);
+  }
+
+  let partyOfficials = 0;
+  for (const entity of citizens) {
+    if (entity.citizen.class === 'party_official') partyOfficials++;
+  }
+  return clamp01(partyOfficials / pop);
+}
+
+function finiteNonNegative(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, value) : 0;
+}
+
+function clamp01(value: number): number {
+  return clamp(value, 0, 1);
+}
+
+function clamp(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) return min;
+  return Math.max(min, Math.min(max, value));
 }

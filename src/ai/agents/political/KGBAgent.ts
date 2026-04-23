@@ -21,19 +21,26 @@ import type { GameRng } from '../../../game/SeedSystem';
 import { MSG } from '../../telegrams';
 import type { ChronologyAgent } from '../core/ChronologyAgent';
 import type { WorkerSystem } from '../workforce/WorkerSystem';
-import type { ConsequenceConfig, ScoringSystem } from './ScoringSystem';
-import type { KGBInformant, KGBInvestigation, KGBMoraleReport, MoraleReportSeverity, PoliticalEntityStats, PoliticalTickResult } from './types';
 import {
-  type LawEnforcementMode,
-  type LawEnforcementState,
-  type LawEnforcementTickContext,
-  type LawEnforcementSaveData,
   createLawEnforcementState,
   getEnforcementMode,
-  tickLawEnforcement,
-  serializeLawEnforcement,
+  type LawEnforcementMode,
+  type LawEnforcementSaveData,
+  type LawEnforcementState,
+  type LawEnforcementTickContext,
   restoreLawEnforcement,
+  serializeLawEnforcement,
+  tickLawEnforcement,
 } from './LawEnforcementSystem';
+import type { ConsequenceConfig, ScoringSystem } from './ScoringSystem';
+import type {
+  KGBInformant,
+  KGBInvestigation,
+  KGBMoraleReport,
+  MoraleReportSeverity,
+  PoliticalEntityStats,
+  PoliticalTickResult,
+} from './types';
 
 // ─────────────────────────────────────────────────────────
 //  Re-export types from PersonnelFile so callers can migrate
@@ -289,7 +296,7 @@ export class KGBAgent extends Vehicle {
   /** Optional RNG reference (set via setRng). */
   private rng: KGBRng | null = null;
 
-  /** MegaCity law enforcement state (sectors, crime, iso-cubes). */
+  /** Local law enforcement state (district crime and patrol pressure). */
   private lawEnforcement: LawEnforcementState = createLawEnforcementState();
 
   constructor(difficulty: string = 'comrade') {
@@ -623,7 +630,10 @@ export class KGBAgent extends Vehicle {
    * @param samples - Array of { sectorId, avgMorale } readings from buildings/sectors
    * @param tick - Current simulation tick
    */
-  sampleMorale(samples: ReadonlyArray<{ sectorId: { gridX: number; gridY: number }; avgMorale: number }>, tick: number): void {
+  sampleMorale(
+    samples: ReadonlyArray<{ sectorId: { gridX: number; gridY: number }; avgMorale: number }>,
+    tick: number,
+  ): void {
     for (const sample of samples) {
       if (sample.avgMorale >= MORALE_CONCERN_THRESHOLD) continue;
 
@@ -659,19 +669,18 @@ export class KGBAgent extends Vehicle {
   getMoraleReportsBySeverity(minSeverity: MoraleReportSeverity): readonly KGBMoraleReport[] {
     const severityOrder: Record<MoraleReportSeverity, number> = { concern: 0, warning: 1, critical: 2 };
     const minLevel = severityOrder[minSeverity];
-    return this.moraleReports.filter(r => severityOrder[r.severity] >= minLevel);
+    return this.moraleReports.filter((r) => severityOrder[r.severity] >= minLevel);
   }
 
   // ─────────────────────────────────────────────────────
-  //  Law Enforcement API (MegaCity system)
+  //  Law Enforcement API
   // ─────────────────────────────────────────────────────
 
   /**
    * Tick the law enforcement system once.
    * Call once per simulation tick after era-dependent metrics are known.
    *
-   * In KGB/security_services mode, this is a lightweight no-op (no sectors).
-   * In sector_judges/megacity_arbiters mode, it runs the full crime model.
+   * Historical 1.0 keeps the local KGB/patrol model active across campaign and free play.
    */
   tickLawEnforcement(ctx: LawEnforcementTickContext): void {
     this.lawEnforcement = tickLawEnforcement(this.lawEnforcement, ctx);
@@ -692,14 +701,14 @@ export class KGBAgent extends Vehicle {
     return this.lawEnforcement.aggregateCrimeRate;
   }
 
-  /** Get total iso-cube labor output. */
-  getIsoCubeLabor(): number {
-    return this.lawEnforcement.totalIsoCubeLabor;
+  /** Get detention labor output. */
+  getPenalLabor(): number {
+    return this.lawEnforcement.totalPenalLabor;
   }
 
-  /** Get total iso-cube population. */
-  getIsoCubePopulation(): number {
-    return this.lawEnforcement.totalIsoCubePopulation;
+  /** Get detained population. */
+  getDetainedPopulation(): number {
+    return this.lawEnforcement.totalDetainedPopulation;
   }
 
   // ─────────────────────────────────────────────────────
@@ -866,15 +875,18 @@ export class KGBAgent extends Vehicle {
     const resourcesLost = { money: 0, food: 0, vodka: 0 };
     if (store) {
       const r = store.resources;
-      const moneyLost = Math.floor(r.money * (1 - config.resourceSurvival));
-      const foodLost = Math.floor(r.food * (1 - config.resourceSurvival));
-      const vodkaLost = Math.floor(r.vodka * (1 - config.resourceSurvival));
+      const money = Number.isFinite(r.money) ? r.money : 0;
+      const food = Number.isFinite(r.food) ? r.food : 0;
+      const vodka = Number.isFinite(r.vodka) ? r.vodka : 0;
+      const moneyLost = Math.floor(money * (1 - config.resourceSurvival));
+      const foodLost = Math.floor(food * (1 - config.resourceSurvival));
+      const vodkaLost = Math.floor(vodka * (1 - config.resourceSurvival));
       resourcesLost.money = moneyLost;
       resourcesLost.food = foodLost;
       resourcesLost.vodka = vodkaLost;
-      r.money -= moneyLost;
-      r.food -= foodLost;
-      r.vodka -= vodkaLost;
+      r.money = Math.max(0, money - moneyLost);
+      r.food = Math.max(0, food - foodLost);
+      r.vodka = Math.max(0, vodka - vodkaLost);
     }
 
     // 4. Skip time forward
@@ -887,13 +899,27 @@ export class KGBAgent extends Vehicle {
     // 5. Reset personnel file marks
     const newTick = deps.chronology.getDate().totalTicks;
     this.resetForRehabilitation(config.marksReset, newTick);
+    this.investigations = [];
+    this.informants = [];
+    this.moraleReports = [];
+    this.state.suspicionLevel = 0;
+    this.state.investigationIntensity = 'routine';
 
     // 6. Apply score penalty
     deps.scoring.onKGBLoss(workersLost);
 
     // 7. Sync population from remaining dvory
     if (store) {
-      store.resources.population = deps.workers.syncPopulationFromDvory();
+      let syncedPopulation = deps.workers.syncPopulationFromDvory();
+      const expectedSurvivors = Math.max(0, totalPop - workersToRemove);
+      if (syncedPopulation <= 0 && expectedSurvivors > 0) {
+        deps.workers.spawnInflowDvor(Math.max(1, expectedSurvivors), 'rehabilitation_return', {
+          morale: 35,
+          loyalty: 45,
+        });
+        syncedPopulation = deps.workers.syncPopulationFromDvory();
+      }
+      store.resources.population = syncedPopulation;
     }
 
     // 8. Notify UI

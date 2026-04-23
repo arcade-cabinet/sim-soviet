@@ -18,7 +18,9 @@
 
 import { Vehicle } from 'yuka';
 import { economy } from '@/config';
+import { phaseConsumption } from '../../../game/engine/phaseConsumption';
 import type { GameRng } from '../../../game/SeedSystem';
+import { MSG } from '../../telegrams';
 
 // Re-export key types from economy.ts for consumers
 export type {
@@ -193,6 +195,14 @@ const ZERO_RESOURCES: Record<TransferableResource, number> = {
 
 const WINTER_MONTHS = new Set([1, 2, 3, 11, 12]);
 
+/** Per-event cap so Stakhanovite pressure stays playable across a full campaign. */
+const MAX_STAKHANOVITE_QUOTA_BUMP = 0.08;
+
+function applyBoundedStakhanoviteQuotaIncrease(currentTarget: number, requestedTarget: number): number {
+  const cappedTarget = Math.round(currentTarget * (1 + MAX_STAKHANOVITE_QUOTA_BUMP));
+  return Math.max(currentTarget, Math.min(requestedTarget, cappedTarget));
+}
+
 // ---------------------------------------------------------------------------
 // EconomyAgent
 // ---------------------------------------------------------------------------
@@ -289,18 +299,24 @@ export class EconomyAgent extends Vehicle {
     }));
   }
 
-  // ── Yuka Vehicle update ─────────────────────────────────────────────────
-
-  /**
-   * Yuka update hook — called each simulation frame by EntityManager.
-   * Delegates to the economy tick when invoked directly.
-   *
-   * @param delta - Frame delta in seconds (not used; economy uses discrete ticks)
-   */
-  override update(_delta: number): this {
-    // Yuka lifecycle hook: state machine transitions can run each frame
-    this.updateStateMachine();
-    return this;
+  /** Handle incoming Yuka telegrams. */
+  handleMessage(telegram: any): boolean {
+    if (telegram.message === MSG.PHASE_CONSUMPTION) {
+      const engine = (globalThis as any).simulationEngine;
+      if (engine?._lastTickCtx) {
+        // Production happens in FoodAgent; consumption only needs a stable
+        // before-snapshot for reporting deltas.
+        const storeRef = engine._lastTickCtx.storeRef;
+        const consumptionSnapshot = {
+          foodBefore: storeRef?.resources.food ?? 0,
+          vodkaBefore: storeRef?.resources.vodka ?? 0,
+          moneyBefore: storeRef?.resources.money ?? 0,
+        };
+        phaseConsumption(engine._lastTickCtx, consumptionSnapshot);
+      }
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -1125,8 +1141,10 @@ export class EconomyAgent extends Vehicle {
       // Apply production boost — store for next tick's production calculation
       deps.stakhanoviteBoosts.set(s.building, s.productionBoost);
 
-      // Apply quota increase — raise current plan targets
-      deps.quota.target = Math.round(deps.quota.target * (1 + s.quotaIncrease));
+      // Apply quota increase — raise current plan target, but cap the per-event
+      // bump so repeated hero narratives cannot create an impossible campaign.
+      const requestedTarget = Math.round(deps.quota.target * (1 + s.quotaIncrease) * s.nextPlanEscalation);
+      deps.quota.target = applyBoundedStakhanoviteQuotaIncrease(deps.quota.target, requestedTarget);
 
       // Apply propaganda value — grant commendation for high propaganda
       if (s.propagandaValue >= 30) {
@@ -1169,8 +1187,8 @@ export class EconomyAgent extends Vehicle {
         deps.callbacks.onToast('Stakhanovite fraud exposed — black mark issued', 'critical');
       }
 
-      // 4. Quota cascade: Moscow raises ALL quotas
-      deps.quota.target = Math.round(deps.quota.target * s.nextPlanEscalation);
+      // 4. Quota cascade: Moscow raises expectations; the capped target above
+      // already includes the cascade pressure.
       deps.workers.applyGlobalMoraleDelta(-8);
       deps.callbacks.onPravda(
         `INSPIRED BY HEROES: Moscow raises all production quotas by ${Math.round((s.nextPlanEscalation - 1) * 100)}%.`,

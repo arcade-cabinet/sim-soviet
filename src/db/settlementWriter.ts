@@ -33,10 +33,7 @@ export interface SettlementContext {
  * @param ctx - Additional context (era, landGrantRadius) not in the summary
  * @returns Row object ready for DB insert/upsert
  */
-export function buildSettlementRow(
-  summary: SettlementSummary,
-  ctx: SettlementContext,
-): SettlementStateRow {
+export function buildSettlementRow(summary: SettlementSummary, ctx: SettlementContext): SettlementStateRow {
   return {
     population: summary.population,
     totalBuildings: summary.buildingCount,

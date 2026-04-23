@@ -68,7 +68,7 @@ export const PARTY_OFFICIAL_LINES: DialogueLine[] = [
   },
   // Gorod
   {
-    text: 'This city has become a model for the entire Union. Other cities aspire to our level of concrete.',
+    text: 'This settlement has become a model for the entire Union. Other districts aspire to our level of concrete.',
     character: 'party_official',
     conditions: { settlementTier: 'gorod' },
   },

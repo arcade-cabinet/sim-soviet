@@ -3,9 +3,9 @@ import type { EventTemplate } from '../types';
 export const POLITICAL_EVENTS: EventTemplate[] = [
   {
     id: 'kgb_inspection',
-    title: 'KGB INSPECTION',
+    title: 'STATE SECURITY INSPECTION',
     description:
-      'All citizens report 100% satisfaction. Dissatisfied citizens not found. KGB reports search was thorough.',
+      'All citizens report 100% satisfaction. Dissatisfied citizens not found. State security reports the search was thorough.',
     pravdaHeadline: 'CITIZEN SATISFACTION REACHES UNPRECEDENTED 100%',
     category: 'political',
     severity: 'minor',
@@ -16,7 +16,7 @@ export const POLITICAL_EVENTS: EventTemplate[] = [
     title: 'DISTINGUISHED VISITOR',
     description:
       'Party official visits. All potholes have been reclassified as "decorative features." Three stray dogs promoted to honorary citizens to boost population figures.',
-    pravdaHeadline: 'OFFICIAL PRAISES CITY\u2019S RUSTIC CHARM',
+    pravdaHeadline: 'OFFICIAL PRAISES SETTLEMENT\u2019S RUSTIC CHARM',
     category: 'political',
     severity: 'minor',
     effects: { money: -40 },
@@ -25,7 +25,7 @@ export const POLITICAL_EVENTS: EventTemplate[] = [
     id: 'five_year_plan_deadline',
     title: 'FIVE-YEAR PLAN UPDATE',
     description:
-      'Five-Year Plan deadline approaching. Comrade, the numbers can be adjusted. They have always been adjustable. The Plan is eternal.',
+      'Five-Year Plan deadline approaching. Comrade, the numbers can be adjusted. They have always been adjustable. The Plan remains on paper.',
     pravdaHeadline: 'FIVE-YEAR PLAN ON TRACK (TRACK HAS BEEN SHORTENED)',
     category: 'political',
     severity: 'trivial',
@@ -47,7 +47,7 @@ export const POLITICAL_EVENTS: EventTemplate[] = [
     id: 'propaganda_contest',
     title: 'POSTER CONTEST',
     description:
-      'Propaganda poster contest. Winner receives extra potato ration. Second place: two extra shifts. Third place: a conversation with the KGB.',
+      'Propaganda poster contest. Winner receives extra potato ration. Second place: two extra shifts. Third place: a conversation with state security.',
     pravdaHeadline: 'ARTISTIC ENTHUSIASM OVERFLOWS AT POSTER COMPETITION',
     category: 'political',
     severity: 'trivial',
@@ -71,7 +71,7 @@ export const POLITICAL_EVENTS: EventTemplate[] = [
     id: 'name_change',
     title: 'TOPONYMIC REVISION',
     description:
-      'The city has been renamed for the 4th time this year. Citizens are issued new stationery. Old stationery to be used as fuel.',
+      'The settlement has been renamed for the 4th time this year. Citizens are issued new stationery. Old stationery to be used as fuel.',
     pravdaHeadline: 'GLORIOUS NEW NAME REFLECTS GLORIOUS NEW ERA',
     category: 'political',
     severity: 'trivial',
@@ -91,7 +91,7 @@ export const POLITICAL_EVENTS: EventTemplate[] = [
     id: 'purge_rumor',
     title: 'PERSONNEL OPTIMIZATION',
     description:
-      'Rumors of a purge sweep the city. Productivity increases 200%. Citizens voluntarily report their own crimes to save time.',
+      'Rumors of a purge sweep the settlement. Productivity increases 200%. Citizens voluntarily report their own crimes to save time.',
     pravdaHeadline: 'WORKER PRODUCTIVITY REACHES ALL-TIME HIGH',
     category: 'political',
     severity: 'minor',
@@ -137,7 +137,7 @@ export const POLITICAL_EVENTS: EventTemplate[] = [
     title: 'COUNTERINTELLIGENCE WIN',
     description:
       'Western spy caught! He was easy to identify: he was smiling and his shoes matched. Confiscated items include: chocolate, optimism.',
-    pravdaHeadline: 'KGB VIGILANCE PROTECTS THE MOTHERLAND',
+    pravdaHeadline: 'STATE SECURITY VIGILANCE PROTECTS THE MOTHERLAND',
     category: 'political',
     severity: 'trivial',
     effects: { money: 50 },

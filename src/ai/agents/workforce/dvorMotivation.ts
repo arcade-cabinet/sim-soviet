@@ -88,10 +88,7 @@ export function evaluateNeeds(dvor: DvorState): 'shelter' | 'food' | 'party' {
  * @param buildings - All housing buildings to consider
  * @returns The nearest housing entry with capacity, or null if none available
  */
-export function findNearestHousing(
-  position: Position,
-  buildings: readonly HousingEntry[],
-): HousingEntry | null {
+export function findNearestHousing(position: Position, buildings: readonly HousingEntry[]): HousingEntry | null {
   let nearest: HousingEntry | null = null;
   let bestDist = Number.POSITIVE_INFINITY;
 
@@ -125,10 +122,7 @@ export function findNearestHousing(
  * @param buildings - Available housing buildings
  * @returns Motivation result with action and optional target
  */
-export function tickMotivation(
-  dvor: DvorState,
-  buildings: readonly HousingEntry[],
-): MotivationResult {
+export function tickMotivation(dvor: DvorState, buildings: readonly HousingEntry[]): MotivationResult {
   // Non-displaced dvory have no spatial motivation
   if (!dvor.isDisplaced) {
     return { action: 'wait' };

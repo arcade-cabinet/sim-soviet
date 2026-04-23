@@ -1,8 +1,4 @@
-import {
-  getVisibleBounds,
-  queryVisibleBuildings,
-  getLoadSet,
-} from '../../src/game/engine/viewportQuery';
+import { getLoadSet, getVisibleBounds, queryVisibleBuildings } from '../../src/game/engine/viewportQuery';
 
 describe('getVisibleBounds', () => {
   it('returns axis-aligned bounding box centered on camera', () => {

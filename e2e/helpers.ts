@@ -207,15 +207,6 @@ export async function getResourceValue(page: Page, resource: string): Promise<st
 // ── Navigation Helpers ──────────────────────────────────────────────────────
 
 /**
- * Open the build toolbar by clicking the BUILD primary tab.
- * Waits for the ZONING sub-tab to appear as confirmation.
- */
-export async function openToolbar(page: Page): Promise<void> {
-  await page.getByText('BUILD').first().click();
-  await page.getByText('ZONING').waitFor({ state: 'visible', timeout: 5_000 });
-}
-
-/**
  * Open the settings modal. Works from both MainMenu and in-game overflow.
  */
 export async function openSettings(page: Page): Promise<void> {
@@ -318,7 +309,7 @@ export async function dismissAnyModal(page: Page): Promise<boolean> {
     'ACCEPT MANDATE',
     'ACKNOWLEDGED',
     'Resume Service',
-    'CONTINUE INTO ALTERNATE HISTORY',
+    'CONTINUE FREE PLAY',
     'CONTINUE',
     'DISMISS',
     'CLOSE',

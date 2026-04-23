@@ -5,9 +5,9 @@
 
 import type { AgentManager } from '../../ai/AgentManager';
 import type { ChronologyAgent, TickResult } from '../../ai/agents/core/ChronologyAgent';
-import type { WorldAgent } from '../../ai/agents/core/WorldAgent';
 import type { TerrainTileState } from '../../ai/agents/core/terrainTick';
 import type { WeatherAgent } from '../../ai/agents/core/WeatherAgent';
+import type { WorldAgent } from '../../ai/agents/core/WorldAgent';
 import type { WeatherProfile } from '../../ai/agents/core/weather-types';
 import type { DynamicModifiers, GovernorDirective, GovernorMode, IGovernor } from '../../ai/agents/crisis/Governor';
 import type { EconomyAgent } from '../../ai/agents/economy/EconomyAgent';
@@ -42,10 +42,8 @@ import type { DvorNeedsAgent } from '../../ai/agents/social/DvorNeedsAgent';
 import type { WorkerSystem } from '../../ai/agents/workforce/WorkerSystem';
 import type { RaionPool, Resources } from '../../ecs/world';
 import type { EraModifiers } from '../../game/era/types';
-import type { Arcology } from '../../game/arcology/ArcologySystem';
-import type { TrafficGrid, DesirePathRoad } from '../../growth/DesirePathSystem';
+import type { DesirePathRoad, TrafficGrid } from '../../growth/DesirePathSystem';
 import type { HQSplitState } from '../../growth/HQSplitting';
-import type { RegisteredTimeline } from '../timeline/TimelineLayer';
 import type { GameGrid } from '../GameGrid';
 import type { GameRng } from '../SeedSystem';
 import type { SimCallbacks } from './types';
@@ -128,22 +126,18 @@ export interface TickContext {
     prestigeDemand: PrestigeProjectDemand | null;
     /** In-progress prestige project construction (null if not started). */
     prestigeConstruction: PrestigeConstructionState | null;
-    /** Game mode: 'historical' or 'freeform' — derived from governor type. */
+    /** Game mode: historical campaign or grounded post-campaign continuation. */
     gameMode: GovernorMode;
     /** Per-tile terrain simulation state (fertility, contamination, etc.). */
     terrainTiles: TerrainTileState[];
     /** HQ splitting milestone tracker. */
     hqSplitState: HQSplitState;
-    /** True once the 1991 historical-mode divergence callback has fired. Never resets. */
-    historicalDivergenceFired: boolean;
-    /** All active timeline layers (space, world, per-world). Mutated in-place each tick. */
-    registeredTimelines: RegisteredTimeline[];
+    /** True once the 1991 historical campaign completion callback has fired. Never resets. */
+    historicalCompletionFired: boolean;
     /** Traffic accumulation grid for desire-path road formation. */
     trafficGrid: TrafficGrid;
     /** Formed desire-path roads (updated monthly). */
     desirePaths: DesirePathRoad[];
-    /** Active arcologies — building clusters that have merged into mega-structures. */
-    arcologies: Arcology[];
   };
 
   // ── Per-tick computed modifiers (set by engine before phase calls) ──
@@ -167,6 +161,6 @@ export interface TickContext {
 
   /** Delegate to SimulationEngine.endGame() — handles tally, meta, and gameOver callback. */
   endGame: (victory: boolean, reason: string) => void;
-  /** Switch the engine from historical to freeform governor (divergence continuation). */
-  switchToFreeformMode: () => void;
+  /** Continue the same grounded settlement after the 1991 campaign record closes. */
+  continuePostCampaign: () => void;
 }

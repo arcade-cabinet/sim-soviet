@@ -82,7 +82,7 @@ export function decayContamination(zone: ContaminationZone, currentYear: number)
   const elapsed = currentYear - zone.yearCreated;
   if (elapsed <= 0) return { ...zone };
   const halfLife = HALF_LIFE[zone.sourceType];
-  const decayedIntensity = zone.intensity * Math.pow(0.5, elapsed / halfLife);
+  const decayedIntensity = zone.intensity * 0.5 ** (elapsed / halfLife);
   return { ...zone, intensity: decayedIntensity };
 }
 

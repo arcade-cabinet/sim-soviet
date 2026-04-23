@@ -1,9 +1,8 @@
 import {
-  getHQFunctions,
   checkDecompositionTriggers,
   decomposeFunction,
+  getHQFunctions,
   HQ_FUNCTION_THRESHOLDS,
-  type DecompositionResult,
   type HQFunction,
 } from '@/ai/agents/infrastructure/hqDecomposition';
 
@@ -12,14 +11,7 @@ import {
 describe('getHQFunctions', () => {
   it('returns all six HQ functions', () => {
     const fns = getHQFunctions();
-    expect(fns).toEqual([
-      'administration',
-      'storage',
-      'clinic',
-      'canteen',
-      'school',
-      'militia_post',
-    ]);
+    expect(fns).toEqual(['administration', 'storage', 'clinic', 'canteen', 'school', 'militia_post']);
   });
 
   it('returns a fresh array each call (no mutation risk)', () => {
@@ -33,14 +25,7 @@ describe('getHQFunctions', () => {
 // ── checkDecompositionTriggers ──────────────────────────────────────────────
 
 describe('checkDecompositionTriggers', () => {
-  const allFunctions: HQFunction[] = [
-    'administration',
-    'storage',
-    'clinic',
-    'canteen',
-    'school',
-    'militia_post',
-  ];
+  const allFunctions: HQFunction[] = ['administration', 'storage', 'clinic', 'canteen', 'school', 'militia_post'];
 
   it('returns empty array when population is below all thresholds', () => {
     const result = checkDecompositionTriggers(10, allFunctions);

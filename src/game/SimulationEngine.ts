@@ -19,11 +19,10 @@ import { AgentManager } from '../ai/AgentManager';
 import type { TickResult } from '../ai/agents/core/ChronologyAgent';
 // ── Yuka agents ──
 import { ChronologyAgent, ChronologySystem } from '../ai/agents/core/ChronologyAgent';
-import { WorldAgent } from '../ai/agents/core/WorldAgent';
 import type { TerrainTileState } from '../ai/agents/core/terrainTick';
 import { WeatherAgent } from '../ai/agents/core/WeatherAgent';
+import { WorldAgent } from '../ai/agents/core/WorldAgent';
 import { getWeatherProfile, type WeatherType } from '../ai/agents/core/weather-types';
-import { FreeformGovernor } from '../ai/agents/crisis/FreeformGovernor';
 import type { GovernorDirective, GovernorMode, IGovernor } from '../ai/agents/crisis/Governor';
 import { EconomyAgent, type EraId as EconomyEraId, EconomySystem } from '../ai/agents/economy/EconomyAgent';
 import { DIFFICULTY_MULTIPLIERS } from '../ai/agents/economy/economy-core';
@@ -63,7 +62,6 @@ import { PoliticalEntitySystem } from '../ai/agents/political/PoliticalEntitySys
 import type { ConsequenceLevel, DifficultyLevel } from '../ai/agents/political/ScoringSystem';
 import { DIFFICULTY_PRESETS, ScoringSystem } from '../ai/agents/political/ScoringSystem';
 import { DefenseAgent, FireSystem, initDiseaseSystem } from '../ai/agents/social/DefenseAgent';
-import { GlobalHexManager } from './map/global/GlobalHexManager';
 import { DemographicAgent } from '../ai/agents/social/DemographicAgent';
 import { DvorNeedsAgent } from '../ai/agents/social/DvorNeedsAgent';
 import { getPopulationMode } from '../ai/agents/workforce/collectiveTransition';
@@ -83,26 +81,9 @@ import {
 import type { TickContext } from './engine/tickContext';
 import type { SimCallbacks, SubsystemSaveData } from './engine/types';
 import { EraSystem } from './era';
-import {
-  type AgentParameterProfile,
-  getParameterProfile,
-  PROFILE_EARTH_TEMPERATE,
-} from './engine/agentParameterMatrix';
 import type { GameGrid } from './GameGrid';
 import { createGameTally } from './GameTally';
-import { RelocationEngine } from './relocation/RelocationEngine';
 import { GameRng } from './SeedSystem';
-import {
-  createSettlementRuntime,
-  restoreRuntime,
-  serializeRuntime,
-  type SettlementRuntime,
-  type SettlementRuntimeSaveData,
-} from './settlement/SettlementRuntime';
-import { backgroundSettlementTick } from './settlement/backgroundTick';
-import { createSpaceTimeline } from './timeline/spaceTimeline';
-import { createWorldTimeline } from './timeline/worldTimeline';
-import type { RegisteredTimeline } from './timeline/TimelineLayer';
 
 /** Maps game EraSystem IDs → EconomySystem EraIds. */
 const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
@@ -113,15 +94,6 @@ const GAME_ERA_TO_ECONOMY_ERA: Record<string, EconomyEraId> = {
   reconstruction: 'reconstruction',
   thaw_and_freeze: 'thaw',
   stagnation: 'stagnation',
-  the_eternal: 'eternal',
-  post_soviet: 'eternal',
-  planetary: 'eternal',
-  solar_engineering: 'eternal',
-  type_one: 'eternal',
-  deconstruction: 'eternal',
-  dyson_swarm: 'eternal',
-  megaearth: 'eternal',
-  type_two_peak: 'eternal',
 };
 
 /** Event IDs that should ignite a building when triggered. */
@@ -151,8 +123,6 @@ export class SimulationEngine {
   private mandateState: PlanMandateState | null = null;
   private transport: TransportSystem;
   private fireSystem: FireSystem;
-  private relocationEngine: RelocationEngine;
-  private settlementRuntimes: SettlementRuntime[] = [];
 
   // ── Yuka agents ──
   private chronologyAgent!: ChronologyAgent;
@@ -190,7 +160,6 @@ export class SimulationEngine {
   private eventHandler!: (event: GameEvent) => void;
   private politburoEventHandler!: (event: GameEvent) => void;
   private agentManager: AgentManager;
-  private hexManager: GlobalHexManager;
   private _originalOnMinigame?: SimCallbacks['onMinigame'];
   private _originalOnAnnualReport?: SimCallbacks['onAnnualReport'];
   /** Cached RaionPool reference — non-null when in aggregate population mode. */
@@ -210,6 +179,7 @@ export class SimulationEngine {
   // ── Governor (null by default — all existing behavior unchanged) ──
   private governor: IGovernor | null = null;
   private cachedDirective: GovernorDirective | null = null;
+  public _lastTickCtx: TickContext | null = null;
 
   // ── Terrain simulation state ──
   private terrainTiles: TerrainTileState[] = [];
@@ -219,9 +189,6 @@ export class SimulationEngine {
   private trafficGrid: import('../growth/DesirePathSystem').TrafficGrid = { cells: new Map() };
   private desirePaths: import('../growth/DesirePathSystem').DesirePathRoad[] = [];
 
-  // ── Arcology mega-structure system ──
-  private arcologies: import('../game/arcology/ArcologySystem').Arcology[] = [];
-
   // ── HQ splitting milestone tracker ──
   private hqSplitState: import('../growth/HQSplitting').HQSplitState = {
     split50: false,
@@ -229,8 +196,8 @@ export class SimulationEngine {
     split400: false,
   };
 
-  // ── Timeline layers ──
-  private registeredTimelines: RegisteredTimeline[] = [];
+  /** True once the 1991 campaign completion choice has fired. */
+  private historicalCompletionFired = false;
 
   // ── Arrival caravan — staggered dvor creation ──
   private arrivalSequence: import('./arrivalSequence').ArrivalSequence | null = null;
@@ -287,14 +254,6 @@ export class SimulationEngine {
     this.personnelFile = new PersonnelFile(this.difficulty);
     this.eventSystem.setPersonnelFile(this.personnelFile);
 
-    let planetProfile: import('./map/global/GlobalHexManager').PlanetProfile = 'terran';
-    const body: string = meta?.gameMeta.currentEra === 'post_soviet' ? 'mars' : 'earth'; 
-    if (body === 'mars') planetProfile = 'martian';
-    else if (body === 'moon') planetProfile = 'lunar';
-    else if (body === 'dyson') planetProfile = 'dyson';
-
-    this.hexManager = new GlobalHexManager(meta?.gameMeta.seed ?? 'sim-soviet', planetProfile);
-
     const deliveryRateMult = DIFFICULTY_MULTIPLIERS[this.difficulty]?.deliveryRate ?? 1.0;
     this.deliveries = new CompulsoryDeliveries(this.eraSystem.getDoctrine(), deliveryRateMult);
     this.deliveries.setRng(this.rng);
@@ -333,16 +292,6 @@ export class SimulationEngine {
     });
 
     initDiseaseSystem(this.rng);
-
-    // ── Relocation engine (multi-settlement support) ──
-    this.relocationEngine = new RelocationEngine();
-    this.relocationEngine.getRegistry().createPrimary('Settlement', 20, startYear);
-
-    // Create primary settlement runtime
-    const primarySettlement = this.relocationEngine.getRegistry().getActive();
-    if (primarySettlement) {
-      this.settlementRuntimes = [createSettlementRuntime(primarySettlement, this.rng)];
-    }
 
     // Check if we're restoring into aggregate mode (save/load)
     this.raion = initialStore?.resources.raion;
@@ -415,9 +364,6 @@ export class SimulationEngine {
     this.worldAgent = new WorldAgent();
     this.worldAgent.setRng(this.rng);
 
-    // ── Initialize timeline layers ──
-    this.registeredTimelines = [createSpaceTimeline(), createWorldTimeline()];
-
     // Wire ECS callbacks
     setStarvationCallback(() => {
       this.callbacks.onToast('STARVATION DETECTED', 'critical');
@@ -454,9 +400,6 @@ export class SimulationEngine {
   public getDeliveries(): CompulsoryDeliveries {
     return this.deliveries;
   }
-  public getRegisteredTimelines(): RegisteredTimeline[] {
-    return this.registeredTimelines;
-  }
   public getSettlement(): SettlementSystem {
     return this.settlement;
   }
@@ -474,9 +417,6 @@ export class SimulationEngine {
   }
   public getAgentManager(): AgentManager {
     return this.agentManager;
-  }
-  public getGlobalHexManager(): GlobalHexManager {
-    return this.hexManager;
   }
   public getMinigameRouter(): MinigameRouter {
     return this.minigameRouter;
@@ -499,38 +439,6 @@ export class SimulationEngine {
   public getRaion(): import('@/ecs/world').RaionPool | undefined {
     return this.raion;
   }
-  public getRelocationEngine(): RelocationEngine {
-    return this.relocationEngine;
-  }
-  public getSettlementRuntimes(): SettlementRuntime[] {
-    return this.settlementRuntimes;
-  }
-  /**
-   * Switch the active settlement viewport.
-   *
-   * Delegates to SettlementRegistry.switchTo() to mark the new settlement
-   * as active. The ECS world stays associated with the primary settlement
-   * in entity mode; background settlements tick with aggregate math.
-   *
-   * @returns true if the switch succeeded
-   */
-  public setActiveSettlement(id: string): boolean {
-    return this.relocationEngine.getRegistry().switchTo(id);
-  }
-  /**
-   * Sync settlement runtimes to match the SettlementRegistry.
-   * Creates new runtimes for settlements added since last sync.
-   * Call after adding settlements via RelocationEngine.
-   */
-  public syncSettlementRuntimes(): void {
-    const settlements = this.relocationEngine.getRegistry().getAll();
-    for (const s of settlements) {
-      const exists = this.settlementRuntimes.some((r) => r.settlement.id === s.id);
-      if (!exists) {
-        this.settlementRuntimes.push(createSettlementRuntime(s, this.rng));
-      }
-    }
-  }
   public getPrestigeDemand(): TickContext['state']['prestigeDemand'] {
     return this.prestigeDemand;
   }
@@ -539,21 +447,6 @@ export class SimulationEngine {
   }
   public getDesirePaths(): import('../growth/DesirePathSystem').DesirePathRoad[] {
     return this.desirePaths;
-  }
-
-  /**
-   * Returns the AgentParameterProfile for the currently active settlement.
-   * Agents read from this to adapt behavior to different worlds (Earth, Moon, Mars, etc.).
-   */
-  public getActiveProfile(): Readonly<AgentParameterProfile> {
-    const active = this.relocationEngine.getRegistry().getActive();
-    if (active?.terrain) {
-      return getParameterProfile(active.terrain);
-    }
-    return PROFILE_EARTH_TEMPERATE;
-  }
-  public getArcologies(): import('../game/arcology/ArcologySystem').Arcology[] {
-    return this.arcologies;
   }
 
   // ── Agent getters ───────────────────────────────────────────────────────────
@@ -619,9 +512,7 @@ export class SimulationEngine {
       }
       return false;
     });
-    // Tell PoliticalAgent what mode we're in so it uses the right era transition logic
-    this.gameMode = gov instanceof FreeformGovernor ? 'freeform' : 'historical';
-    this.politicalAgent.setGameMode(this.gameMode);
+    this.gameMode = 'historical';
   }
   public getGovernor(): IGovernor | null {
     return this.governor;
@@ -703,10 +594,15 @@ export class SimulationEngine {
 
   public recordBuildingForMandates(defId: string): void {
     if (this.mandateState) this.mandateState = recordBuildingPlaced(this.mandateState, defId);
+    this.politicalAgent.recordBuildingPlaced(defId);
   }
 
   public getMandateState(): PlanMandateState | null {
     return this.mandateState;
+  }
+
+  public getCallbacks(): SimCallbacks {
+    return this.callbacks;
   }
 
   // ── Serialization ───────────────────────────────────────────────────────────
@@ -748,7 +644,6 @@ export class SimulationEngine {
     this.lastInflowYear = se.lastInflowYear;
     this.evacueeInfluxFired = se.evacueeInfluxFired;
     this.foragingState = se.foragingState;
-    this.arcologies = se.arcologies;
 
     this.eventSystem.setPersonnelFile(this.personnelFile);
 
@@ -770,30 +665,6 @@ export class SimulationEngine {
     // Restore raion reference from resource store (aggregate mode save/load)
     const restoredStore = getResourceEntity();
     this.raion = restoredStore?.resources.raion;
-
-    // Restore relocation engine (multi-settlement state)
-    if (data.relocation) {
-      this.relocationEngine.restore(data.relocation);
-    }
-
-    // Restore settlement runtimes from save data
-    if (data.settlementRuntimes && data.settlementRuntimes.length > 0) {
-      const registry = this.relocationEngine.getRegistry();
-      this.settlementRuntimes = data.settlementRuntimes.map((saved) => {
-        const settlement = registry.getById(saved.settlementId);
-        if (settlement) {
-          return restoreRuntime(saved, settlement, this.rng);
-        }
-        // Fallback: create fresh runtime if settlement not found in registry
-        return createSettlementRuntime(
-          { id: saved.settlementId, name: saved.settlementId, gridSize: 20, terrain: { gravity: 1.0, atmosphere: 'breathable', water: 'rivers', farming: 'soil', construction: 'standard', baseSurvivalCost: 'low' }, population: 0, distance: 0, celestialBody: 'earth', foundedYear: 1917, isActive: false },
-          this.rng,
-        );
-      });
-    } else {
-      // Old save without runtimes — sync from registry
-      this.syncSettlementRuntimes();
-    }
   }
 
   // ── Minigame API ────────────────────────────────────────────────────────────
@@ -823,30 +694,29 @@ export class SimulationEngine {
     const storeRef = getResourceEntity();
     if (!storeRef) return;
 
-    // Yuka Entity Manager update step (handles telegrams and autonomous agent ticks)
-    this.agentManager.update(1);
-
-    // Fetch the tick result computed by the ChronologyAgent during the Yuka update phase
+    // Build context before Yuka updates so autonomous agents can read the current engine snapshot.
+    // ChronologyAgent advances the actual clock during agentManager.update(1); the ordered game
+    // phases below then use the fresh TickResult from that update.
     const tickResult = this.chronologyAgent.getLastTickResult();
     const ctx = this.buildTickContext(tickResult, storeRef);
+    this._lastTickCtx = ctx;
 
-    // Phase 0: Arrival caravan — spawn queued families and bootstrap buildings
-    if (this.arrivalSequence) {
-      if (this.arrivalSequence.isInProgress()) {
-        const arrTicks = this.chronologyAgent.getDate().totalTicks;
-        const arrived = this.arrivalSequence.tick(arrTicks, this.workerSystem, (surname, count) => {
-          this.callbacks.onToast(`ARRIVAL: The ${surname} family (${count} souls) has arrived`);
-        });
-        if (arrived > 0 || !this.arrivalSequence.isInProgress()) {
-          setArrivalInProgress(this.arrivalSequence.isInProgress());
-        }
+    // Phase 0: Arrival caravan
+    if (this.arrivalSequence?.isInProgress()) {
+      const arrTicks = this.chronologyAgent.getDate().totalTicks;
+      const arrived = this.arrivalSequence.tick(arrTicks, this.workerSystem, (surname, count) => {
+        this.callbacks.onToast(`ARRIVAL: The ${surname} family (${count} souls) has arrived`);
+      });
+      if (arrived > 0 || !this.arrivalSequence.isInProgress()) {
+        setArrivalInProgress(this.arrivalSequence.isInProgress());
       }
-      // Settlement formation is handled by CollectiveAgent.tickAutonomous() —
-      // the SAME demand→site-selection→build pipeline used for ALL settlements
-      // on any celestial body. No hardcoded bootstrap.
     }
 
-    // Phase 1: Chronology, era transitions, governor
+    // Advance clock and autonomous demand agents.
+    this.agentManager.update(1);
+    ctx.tickResult = this.chronologyAgent.getLastTickResult();
+
+    // Run the canonical ordered simulation phases.
     const chronoResult = phaseChronology(ctx);
     this.raion = chronoResult.raion;
     this.cachedDirective = chronoResult.cachedDirective;
@@ -855,30 +725,13 @@ export class SimulationEngine {
     ctx.diffConfig = this.cachedDirective?.modifiers ?? DIFFICULTY_PRESETS[this.difficulty];
     this.computeTickModifiers(ctx);
 
-    // Phase 2: Power, transport, construction, production
-    const snapshot = phaseProduction(ctx);
-
-    // Phase 3: Storage, economy, deliveries, consumption, foraging
-    phaseConsumption(ctx, snapshot);
-
-    // Phase 4: Disease, population, workers, demographics
+    const productionSnapshot = phaseProduction(ctx);
+    phaseConsumption(ctx, productionSnapshot);
     phaseSocial(ctx);
-
-    // Phase 5: Loyalty, construction, decay, gulag, settlement, political entities
     phasePolitical(ctx);
-
-    // Phase 6: Minigames, events, fire, KGB, tutorials, achievements
     phaseNarrative(ctx);
 
-    // Phase 7: Autopilot, sync, loss check
     phaseFinalize(ctx);
-
-    // Phase 8: Background settlement ticks (inactive settlements)
-    for (const runtime of this.settlementRuntimes) {
-      if (!runtime.settlement.isActive) {
-        backgroundSettlementTick(runtime, this.rng);
-      }
-    }
 
     // Sync mutable state back from context
     this.syncStateFromContext(ctx);
@@ -949,10 +802,6 @@ export class SimulationEngine {
         }),
       governor: this.governor,
       worldAgent: this.worldAgent,
-      relocationEngine: this.relocationEngine,
-      registeredTimelines: this.registeredTimelines,
-      settlementRuntimes: this.settlementRuntimes,
-      arcologies: this.arcologies,
     };
   }
 
@@ -998,7 +847,6 @@ export class SimulationEngine {
         politburo: this.politburo,
         eventSystem: this.eventSystem,
         agentManager: this.agentManager,
-        hexManager: this.hexManager,
       },
       state: {
         quota: this.quota,
@@ -1024,11 +872,9 @@ export class SimulationEngine {
         gameMode: this.gameMode,
         terrainTiles: this.terrainTiles,
         hqSplitState: this.hqSplitState,
-        historicalDivergenceFired: false,
-        registeredTimelines: this.registeredTimelines,
+        historicalCompletionFired: this.historicalCompletionFired,
         trafficGrid: this.trafficGrid,
         desirePaths: this.desirePaths,
-        arcologies: this.arcologies,
       },
       modifiers: null as any, // Filled by computeTickModifiers() after phaseChronology
       rng: this.rng,
@@ -1036,7 +882,9 @@ export class SimulationEngine {
       governor: this.governor,
       callbacks: this.callbacks,
       endGame: (v: boolean, r: string) => this.endGame(v, r),
-      switchToFreeformMode: () => this.setGovernor(new FreeformGovernor(1991)),
+      continuePostCampaign: () => {
+        this.historicalCompletionFired = true;
+      },
     };
   }
 
@@ -1086,7 +934,7 @@ export class SimulationEngine {
     this.prestigeConstruction = ctx.state.prestigeConstruction;
     this.terrainTiles = ctx.state.terrainTiles;
     this.desirePaths = ctx.state.desirePaths;
-    this.arcologies = ctx.state.arcologies;
+    this.historicalCompletionFired = ctx.state.historicalCompletionFired;
   }
 
   private endGame(victory: boolean, reason: string): void {

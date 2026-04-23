@@ -12,7 +12,7 @@
       "bucketMax": 12
     },
     "eraBirthMultiplier": {
-      "revolution": 1.0,
+      "revolution": 1,
       "civil_war": 0.6,
       "nep": 0.95,
       "collectivization": 0.7,
@@ -24,17 +24,7 @@
       "thaw_and_freeze": 0.8,
       "stagnation": 0.6,
       "perestroika": 0.5,
-      "collapse": 0.35,
-      "the_eternal": 0.4,
-      "eternal": 0.4,
-      "post_soviet": 0.38,
-      "planetary": 0.35,
-      "solar_engineering": 0.3,
-      "type_one": 0.25,
-      "deconstruction": 0.2,
-      "dyson_swarm": 0.18,
-      "megaearth": 0.15,
-      "type_two_peak": 0.12
+      "collapse": 0.35
     },
     "eraDeathMultiplier": {
       "revolution": 1.3,
@@ -48,18 +38,8 @@
       "thaw": 0.7,
       "thaw_and_freeze": 0.7,
       "stagnation": 0.85,
-      "perestroika": 1.0,
-      "collapse": 1.3,
-      "the_eternal": 1.0,
-      "eternal": 1.0,
-      "post_soviet": 0.9,
-      "planetary": 0.8,
-      "solar_engineering": 0.6,
-      "type_one": 0.45,
-      "deconstruction": 0.35,
-      "dyson_swarm": 0.25,
-      "megaearth": 0.2,
-      "type_two_peak": 0.15
+      "perestroika": 1,
+      "collapse": 1.3
     },
     "annualMortalityByBucket": [
       0.15, 0.008, 0.004, 0.005, 0.006, 0.006, 0.007, 0.008, 0.01, 0.014, 0.02, 0.03, 0.045, 0.065, 0.1, 0.15, 0.22,
@@ -72,7 +52,7 @@
       "maxMultiplier": 1.2
     },
     "starvation": {
-      "maxMultiplier": 3.0,
+      "maxMultiplier": 3,
       "threshold": 0.5,
       "scale": 4
     }
@@ -85,29 +65,35 @@
       "pregnancyDurationTicks": 90
     },
     "eraBirthRateMultiplier": {
-      "revolution": 1.0,
+      "revolution": 1,
       "collectivization": 0.8,
       "industrialization": 0.75,
       "great_patriotic": 0.4,
       "reconstruction": 1.1,
       "thaw_and_freeze": 0.7,
-      "stagnation": 0.4,
-      "the_eternal": 0.3,
-      "post_soviet": 0.28,
-      "planetary": 0.25,
-      "solar_engineering": 0.2,
-      "type_one": 0.18,
-      "deconstruction": 0.15,
-      "dyson_swarm": 0.12,
-      "megaearth": 0.1,
-      "type_two_peak": 0.08
+      "stagnation": 0.4
     },
     "annualMortality": [
-      { "maxAge": 1, "rate": 0.15 },
-      { "maxAge": 12, "rate": 0.02 },
-      { "maxAge": 55, "rate": 0.005 },
-      { "maxAge": 70, "rate": 0.03 },
-      { "maxAge": 999, "rate": 0.08 }
+      {
+        "maxAge": 1,
+        "rate": 0.15
+      },
+      {
+        "maxAge": 12,
+        "rate": 0.02
+      },
+      {
+        "maxAge": 55,
+        "rate": 0.005
+      },
+      {
+        "maxAge": 70,
+        "rate": 0.03
+      },
+      {
+        "maxAge": 999,
+        "rate": 0.08
+      }
     ],
     "starvationMonthlyRate": 0.05,
     "youngChildMaxAge": 3,
