@@ -9,7 +9,7 @@
 
 import { Canvas } from '@react-three/fiber';
 import React, { Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AudioManager from './audio/AudioManager';
 import { SEASON_CONTEXTS } from './audio/AudioManifest';
 import SFXManager from './audio/SFXManager';
@@ -48,6 +48,7 @@ import {
   type GameSpeed,
   isPaused,
   notifyStateChange,
+  openGovernmentHQ,
   pushCrisisVFX,
   setGameSpeed,
   setPaused,
@@ -67,7 +68,7 @@ import { CompulsoryDeliveriesPanel } from './ui/CompulsoryDeliveriesPanel';
 import { ConsumerGoodsMarketPanel } from './ui/ConsumerGoodsMarketPanel';
 import { CRTOverlay } from './ui/CRTOverlay';
 import { CursorTooltip } from './ui/CursorTooltip';
-// DirectiveHUD removed — Phase 1 minimal HUD
+import { DirectiveHUD } from './ui/DirectiveHUD';
 import { DiseasePanel } from './ui/DiseasePanel';
 import { EconomyDetailPanel } from './ui/EconomyDetailPanel';
 import { EconomyPanel } from './ui/EconomyPanel';
@@ -94,7 +95,7 @@ import { PolitburoPanel } from './ui/PolitburoPanel';
 import { PoliticalEntityPanel } from './ui/PoliticalEntityPanel';
 import { PravdaArchivePanel } from './ui/PravdaArchivePanel';
 import { PravdaTicker } from './ui/PravdaTicker';
-// QuotaHUD removed — Phase 1 minimal HUD
+import { QuotaHUD } from './ui/QuotaHUD';
 import { RadialMenu } from './ui/RadialMenu';
 import { RehabilitationModal } from './ui/RehabilitationModal';
 import { SaveLoadPanel } from './ui/SaveLoadPanel';
@@ -319,7 +320,7 @@ const App: React.FC = () => {
   const citizenDossierIdx = useCitizenDossierIndex();
   const cursorTooltip = useCursorTooltip();
   const politicalPanelFromScene = usePoliticalPanel();
-  const _buildingPanelCell = useBuildingPanel();
+  useBuildingPanel();
   const showGovHQ = useGovernmentHQ();
 
   // ── Notification history (store-driven unread count) ──
@@ -792,7 +793,7 @@ const App: React.FC = () => {
   return (
     <>
       <StatusBar barStyle="light-content" />
-      <SafeAreaView style={styles.root}>
+      <View style={styles.root}>
         <View style={styles.sceneContainer}>
           <EngineErrorBoundary>
             <Canvas
@@ -873,8 +874,18 @@ const App: React.FC = () => {
               onShowMarket={handleShowMarket}
               onShowNotifications={handleShowNotifications}
               unreadNotifications={unreadNotifications}
+              onOpenGovernmentHQ={openGovernmentHQ}
               autopilot={getEngine()?.getAgentManager().isAutopilot() ?? false}
             />
+
+            <QuotaHUD
+              targetType={snap.quotaType}
+              targetAmount={snap.quotaTarget}
+              current={snap.quotaCurrent}
+              deadlineYear={snap.quotaDeadline}
+            />
+
+            <DirectiveHUD text={snap.directiveText} reward={snap.directiveReward} />
 
             <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
 
@@ -1041,7 +1052,7 @@ const App: React.FC = () => {
 
         {/* Radial menu — unified build/inspect overlay */}
         <RadialMenu />
-      </SafeAreaView>
+      </View>
     </>
   );
 };
@@ -1055,11 +1066,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sceneContainer: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: 0,
   },
   uiOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'space-between',
   },
   xrExitOverlay: {
