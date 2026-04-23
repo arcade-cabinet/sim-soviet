@@ -5,6 +5,8 @@
 
 import { Platform, StyleSheet } from 'react-native';
 
+import { BrandFonts } from './designTokens';
+
 // Re-export responsive utilities for convenience
 export { COMPACT_BREAKPOINT, MIN_FONT_SIZE, MIN_TAP_TARGET, scaled, scaledFont, scaledTap } from './responsive';
 
@@ -45,11 +47,11 @@ export const Colors = {
 
 // --- Monospace font family ---
 
-/** Platform-specific monospace font family (Menlo on iOS, monospace elsewhere). */
+/** Platform-specific monospace font family — IBM Plex Mono on web, Menlo on iOS, system monospace elsewhere. */
 export const monoFont = Platform.select({
   ios: 'Menlo',
   android: 'monospace',
-  default: 'monospace',
+  default: BrandFonts.mono,
 });
 
 // --- Reusable shared styles ---

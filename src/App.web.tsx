@@ -102,7 +102,7 @@ import { SaveLoadPanel } from './ui/SaveLoadPanel';
 import { ScoringPanel } from './ui/ScoringPanel';
 import { SettingsModal } from './ui/SettingsModal';
 import { SettlementProgressPanel } from './ui/SettlementProgressPanel';
-import { Colors } from './ui/styles';
+import { Colors, monoFont } from './ui/styles';
 import { Toast } from './ui/Toast';
 // Toolbar removed — Phase 1 minimal HUD
 // UI components
@@ -140,7 +140,7 @@ class EngineErrorBoundary extends React.Component<{ children: React.ReactNode },
           <Text
             style={{
               color: Colors.sovietRed,
-              fontFamily: 'monospace',
+              fontFamily: monoFont,
               fontSize: 14,
               fontWeight: 'bold',
               marginBottom: 12,
@@ -148,10 +148,10 @@ class EngineErrorBoundary extends React.Component<{ children: React.ReactNode },
           >
             ENGINE MALFUNCTION
           </Text>
-          <Text style={{ color: '#ccc', fontFamily: 'monospace', fontSize: 11, textAlign: 'center' }}>
+          <Text style={{ color: '#ccc', fontFamily: monoFont, fontSize: 11, textAlign: 'center' }}>
             {this.state.error}
           </Text>
-          <Text style={{ color: '#888', fontFamily: 'monospace', fontSize: 10, marginTop: 16, textAlign: 'center' }}>
+          <Text style={{ color: '#888', fontFamily: monoFont, fontSize: 10, marginTop: 16, textAlign: 'center' }}>
             Reload the page to try again. If this persists, your browser may not support WebGL.
           </Text>
         </View>
@@ -1161,7 +1161,7 @@ const styles = StyleSheet.create({
   },
   xrExitText: {
     color: Colors.white,
-    fontFamily: 'monospace',
+    fontFamily: monoFont,
     fontSize: 12,
     fontWeight: 'bold',
     letterSpacing: 2,
