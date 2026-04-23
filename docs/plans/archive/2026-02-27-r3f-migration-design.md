@@ -12,7 +12,7 @@ coverage: full
 
 ## Goal
 
-Replace BabylonJS/Reactylon with React Three Fiber (R3F) + drei + expo-three, targeting **web**, **native mobile** (react-native-webgpu), and **WebXR/AR** from day one.
+Replace BabylonJS/Reactylon with React Three Fiber (R3F) + drei + expo-three, targeting **web** first with optional WebXR/AR. Native mobile WebGPU support was deferred and later removed from the 1.0 scope.
 
 ## Architecture Overview
 
@@ -21,7 +21,7 @@ Replace BabylonJS/Reactylon with React Three Fiber (R3F) + drei + expo-three, ta
 | Platform | Runtime | 3D Engine | AR/VR |
 |----------|---------|-----------|-------|
 | Web | Expo Web (Metro) | `@react-three/fiber` | `@react-three/xr` (WebXR) |
-| iOS/Android | Expo + react-native-webgpu | R3F (patched for WGPU) | Deferred (ViroReact later) |
+| iOS/Android | Expo shell, no native WebGPU dependency in 1.0 | Deferred | Deferred |
 | Quest/Vision Pro | Web browser | R3F + WebXR | `@react-three/xr` |
 
 ## What Changes
@@ -40,7 +40,6 @@ Replace BabylonJS/Reactylon with React Three Fiber (R3F) + drei + expo-three, ta
 - `@react-three/xr` — WebXR integration
 - `three-quarks` — Particle system (snow, rain, fire, smoke, explosions)
 - `react-native-audio-api` (Software Mansion) — Cross-platform Web Audio API (replaces BabylonJS Sound)
-- `react-native-webgpu` — WebGPU backend for native mobile (future)
 
 ### What Stays Unchanged
 - `src/engine/*` — All game logic (GameState, SimTick, BuildActions, etc.)
@@ -360,7 +359,7 @@ The `<XR>` wrapper from @react-three/xr is zero-cost when no headset is present 
 
 | Risk | Mitigation |
 |------|------------|
-| react-native-webgpu patch instability | Web-first development; native mobile as stretch goal |
+| Native WebGPU patch instability | Removed from 1.0; web build and grounded historical campaign are the production target |
 | three-quarks particle quality | Fallback to drei/Sparkles or custom shaders |
 | GLB loading differences | Same format — Three.js GLTFLoader reads identical files |
 | Performance regression | drei Instances for batching; React.memo for scene components |
