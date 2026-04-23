@@ -149,6 +149,17 @@ Three tiers of notification, escalating by urgency. All work within the existing
 - Tapping a log entry pans camera to that location (if spatial)
 - Log entries color-coded by type (political=red, economic=yellow, social=blue, military=green)
 
+### First-Minute Guidance — P1F-2
+
+On a fresh New Game two systems speak simultaneously:
+
+- **Tutorial toast (TutorialSystem)** — Krupnik fires at tick 0: *"Build a farm — your people will need food before they need anything else."*
+- **DirectiveHUD (Directives array)** — shows the active sequential directive in the bottom HUD.
+
+These must agree. The resolution rule is: **agriculture is always directive index 0.** `src/engine/Directives.ts` was updated (P1F-2) so the first entry is `Agriculture: Build a Farm.` and housing is second. The test `__tests__/engine/Directives.test.ts` asserts this invariant going forward.
+
+If a future author reorders directives, the test will fail fast rather than shipping contradictory first-turn instructions.
+
 ### Tutorial / Onboarding — DESIGNED
 
 **No tutorial mode.** Era 1 (Revolution) IS the tutorial. You start with ~55 people in 10 dvory and nothing else. Comrade Krupnik (advisor) teaches through contextual dialog.
