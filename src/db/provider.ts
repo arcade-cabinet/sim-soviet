@@ -31,6 +31,17 @@ let _sqliteDb: ReturnType<typeof openDatabaseSync> | null = null;
 export async function initDatabase(): Promise<ExpoSQLiteDatabase<typeof schema>> {
   if (_db) return _db;
 
+  // In development (`pnpm web`), the Service Worker is not registered so
+  // SharedArrayBuffer / crossOriginIsolated is unavailable, which means
+  // expo-sqlite/wa-sqlite cannot open. Emit one clear warning so developers
+  // are not surprised by silent save failures. See docs/DEPLOYMENT.md.
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(
+      '[SimSoviet] SQLite not available in dev — saves will not persist. ' +
+        'Run a production build to test save/load. See docs/DEPLOYMENT.md.',
+    );
+  }
+
   _sqliteDb = openDatabaseSync('simsoviet.db');
   _db = drizzle(_sqliteDb, { schema });
 
