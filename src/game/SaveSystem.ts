@@ -139,6 +139,12 @@ export interface ExtendedSaveData {
 export class SaveSystem {
   private autoSaveTimer: ReturnType<typeof setInterval> | null = null;
   private engine: SimulationEngine | null = null;
+  /**
+   * In dev mode, SQLite is unavailable (no SW → no SharedArrayBuffer).
+   * After the first failure we suppress further console.error calls so
+   * the 60 s autosave interval does not spam the console.
+   */
+  private devSaveErrorLogged = false;
 
   constructor(private grid: GameGrid) {}
 
@@ -149,12 +155,28 @@ export class SaveSystem {
 
   /**
    * Save the current game state to SQLite.
+   *
+   * In dev mode, SQLite is unavailable (no Service Worker → no
+   * SharedArrayBuffer). The first failure emits a single console.warn;
+   * subsequent failures are silenced so the 60 s autosave interval does
+   * not spam the console.
    */
   public async save(name = 'autosave'): Promise<boolean> {
     try {
       const db = getDatabase();
       return this.saveToDb(db, name);
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        if (!this.devSaveErrorLogged) {
+          this.devSaveErrorLogged = true;
+          console.warn(
+            '[SimSoviet] Autosave skipped — SQLite unavailable in dev. ' +
+              'Further autosave failures will be suppressed. ' +
+              'Run a production build to test save/load.',
+          );
+        }
+        return false;
+      }
       console.error('Failed to save game:', error);
       return false;
     }

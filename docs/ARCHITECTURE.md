@@ -49,6 +49,22 @@ React Native UI + menu shell
 | `e2e/` | Playwright smoke and browser campaign tests |
 | `scripts/` | Export smoke, asset copy, support tooling |
 
+## Era Building Unlock Policy
+
+Each era in `src/config/eras.json` carries an `unlockedBuildings` array listing
+the building defIds newly available during that period. Unlock is **cumulative**:
+`getAvailableBuildings` (and the pure utility `getAvailableBuildingsForYear`)
+iterate every era from `revolution` up to and including the current one, so a
+building unlocked in `collectivization` remains available in all later eras.
+
+The `great_patriotic` era (1941–1945) intentionally sets `unlockedBuildings: []`.
+This models the wartime construction freeze: no new building types enter the
+Soviet pipeline while the total-war economy is active, and the settlement must
+survive on whatever building stock it accumulated through `industrialization`.
+This is **not** a data gap — it is the designed constraint enforced by the
+wartime `doctrine` and corroborated by the era's `introText` ("everything else
+is a luxury; luxuries have been suspended for the duration").
+
 ## Current Product Constraints In Code
 
 - New games start the historical campaign only.

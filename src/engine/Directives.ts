@@ -63,8 +63,16 @@ function hasWaterDemand(): boolean {
   return operationalBuildings.entities.some((e) => e.building.powered && e.building.powerReq > 0);
 }
 
-/** The 12 sequential tutorial directives that guide early gameplay. */
+/** The 13 sequential tutorial directives that guide early gameplay. */
 export const DIRECTIVES: Directive[] = [
+  // P1F-2: Agriculture leads — matches Krupnik's opening toast ("Build a farm").
+  // Housing was the original first directive; it is now second so both systems agree.
+  {
+    text: 'Agriculture: Build a Farm.',
+    target: 1,
+    reward: 150,
+    check: () => countBuildingsByRole('agriculture') >= 1,
+  },
   {
     text: 'Housing: Build 4 Residential buildings.',
     target: 4,
