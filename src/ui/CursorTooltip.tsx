@@ -24,6 +24,35 @@ export interface CursorTooltipProps {
   position: { x: number; y: number };
 }
 
+/** Human-readable labels for internal terrain enum IDs. */
+const TERRAIN_LABELS: Record<string, string> = {
+  tree: 'FOREST',
+  forest: 'FOREST',
+  grass: 'GRASSLAND',
+  dirt: 'BARE EARTH',
+  rock: 'ROCKY',
+  water: 'WATER',
+  river: 'RIVER',
+  mud: 'MUD',
+  snow: 'SNOW',
+  sand: 'SAND',
+  swamp: 'SWAMP',
+  tundra: 'TUNDRA',
+  steppe: 'STEPPE',
+  farmland: 'FARMLAND',
+  ruins: 'RUINS',
+};
+
+/**
+ * Returns the player-facing terrain label, falling back to the raw ID in uppercase.
+ *
+ * @param terrain - Internal terrain enum identifier (e.g. 'grass', 'river')
+ * @returns Human-readable label from TERRAIN_LABELS, or the uppercased raw ID if unmapped
+ */
+function terrainLabel(terrain: string): string {
+  return TERRAIN_LABELS[terrain.toLowerCase()] ?? terrain.toUpperCase();
+}
+
 /** Returns a severity color (green/gold/red) based on smog level thresholds. */
 function smogColor(level: number): string {
   if (level < 30) return Colors.termGreen;
@@ -51,13 +80,13 @@ export const CursorTooltip: React.FC<CursorTooltipProps> = ({ visible, tileData,
   const status = statusInfo(tileData);
   const warning = tileWarning(tileData);
   const displayName =
-    tileData.type && tileData.type !== 'empty' ? tileData.type.toUpperCase() : tileData.terrain.toUpperCase();
+    tileData.type && tileData.type !== 'empty' ? tileData.type.toUpperCase() : terrainLabel(tileData.terrain);
 
   return (
     <View style={[styles.container, { left: position.x + 16, top: position.y + 16 }]}>
       <Text style={styles.title}>{displayName}</Text>
 
-      <Text style={styles.row}>TERRAIN: {tileData.terrain.toUpperCase()}</Text>
+      <Text style={styles.row}>TERRAIN: {terrainLabel(tileData.terrain)}</Text>
 
       <Text style={[styles.row, { color: smogColor(tileData.smog) }]}>SMOG: {Math.floor(tileData.smog)}</Text>
 
