@@ -105,7 +105,7 @@ describe('MapSystem', () => {
       expect(riverCells).toBe(0);
     });
 
-    it.skip('river cells connect opposite edges', () => {
+    it('river cells connect opposite edges', () => {
       const map = makeMap({ seed: 'river-connect', riverCount: 1 });
       const cells = map.getCellsOfType('river');
 
