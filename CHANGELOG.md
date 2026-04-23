@@ -8,16 +8,8 @@
 * 9 gameplay polish fixes ([#14](https://github.com/arcade-cabinet/sim-soviet/issues/14)) ([9247d99](https://github.com/arcade-cabinet/sim-soviet/commit/9247d99cf6e18f66767b1cd362859be239289da0))
 * autonomous collective — demand detection, auto-build, political cost ([#36](https://github.com/arcade-cabinet/sim-soviet/issues/36)) ([7a4d149](https://github.com/arcade-cabinet/sim-soviet/commit/7a4d1492245fcc64123537fff3316817c9b221e1))
 * Buildings Are the UI + Game Completion + Allocation Engine design ([ef751c0](https://github.com/arcade-cabinet/sim-soviet/commit/ef751c0cae9c5df2c992943948b85cc42218dd76))
-* Canvas 2D migration, CI/CD setup, and systems overhaul ([#1](https://github.com/arcade-cabinet/sim-soviet/issues/1)) ([f8bd2ef](https://github.com/arcade-cabinet/sim-soviet/commit/f8bd2ef447bb19cef71332a21761a1718046135f))
-* character sprites, transport system, and gameplay polish ([#9](https://github.com/arcade-cabinet/sim-soviet/issues/9)) ([0afbe8d](https://github.com/arcade-cabinet/sim-soviet/commit/0afbe8d26962463ff4e0e3f6902c8a2f390b67df))
-* complete all game systems — economy, era, workers, political, minigames, scoring, dialogue, tutorial, save/load ([#5](https://github.com/arcade-cabinet/sim-soviet/issues/5)) ([9d25417](https://github.com/arcade-cabinet/sim-soviet/commit/9d25417767cb82bdc6b7ffbdbbfa262a5225744e))
-* full game completion — 12 features, playtest fixes ([#17](https://github.com/arcade-cabinet/sim-soviet/issues/17)) ([50f3da7](https://github.com/arcade-cabinet/sim-soviet/commit/50f3da7df2d49f72f6113e71d4e42502597f2082))
-* game completion — 22 features, universal controls, responsive UI, XR ([#40](https://github.com/arcade-cabinet/sim-soviet/issues/40)) ([4759ba4](https://github.com/arcade-cabinet/sim-soviet/commit/4759ba4186c1569f477242def4c5e7ecd0ea7ab6))
 * historically-researched demographics overhaul (9 features) ([fc84fa4](https://github.com/arcade-cabinet/sim-soviet/commit/fc84fa4831798439ce84eec9f5408084b09a9d25))
 * playthrough integration tests + 4 bug fixes ([#38](https://github.com/arcade-cabinet/sim-soviet/issues/38)) ([4b57211](https://github.com/arcade-cabinet/sim-soviet/commit/4b57211232a884a6cbed77f57979874ec932832a))
-* R3F migration — 3D engine, ECS, full UI, CI/CD pipeline ([#22](https://github.com/arcade-cabinet/sim-soviet/issues/22)) ([8a65d12](https://github.com/arcade-cabinet/sim-soviet/commit/8a65d12efe48a80ae403a19ccf43cff5e6a35c2e))
-* remaining game systems — economy, accessibility, marketplace, disease ([#12](https://github.com/arcade-cabinet/sim-soviet/issues/12)) ([98a80dc](https://github.com/arcade-cabinet/sim-soviet/commit/98a80dc9ad26a0d5fd3a2d05c1dc24e1e0512eb2))
-* WebGPU cross-platform migration — renderer, assets, native, XR ([#27](https://github.com/arcade-cabinet/sim-soviet/issues/27)) ([f24c4d0](https://github.com/arcade-cabinet/sim-soviet/commit/f24c4d045563402b01ebc9758f89c17a274c5b1f))
 * wire PolitburoSystem, weather modifiers, biome terrain, leader UI, and fix simulation interval ([#4](https://github.com/arcade-cabinet/sim-soviet/issues/4)) ([a18fc65](https://github.com/arcade-cabinet/sim-soviet/commit/a18fc65149a0c7dc0034bce5e86f38052ea88b85))
 
 
