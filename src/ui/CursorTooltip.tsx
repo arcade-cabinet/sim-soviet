@@ -43,7 +43,12 @@ const TERRAIN_LABELS: Record<string, string> = {
   ruins: 'RUINS',
 };
 
-/** Returns the player-facing terrain label, falling back to the raw ID in title case. */
+/**
+ * Returns the player-facing terrain label, falling back to the raw ID in uppercase.
+ *
+ * @param terrain - Internal terrain enum identifier (e.g. 'grass', 'river')
+ * @returns Human-readable label from TERRAIN_LABELS, or the uppercased raw ID if unmapped
+ */
 function terrainLabel(terrain: string): string {
   return TERRAIN_LABELS[terrain.toLowerCase()] ?? terrain.toUpperCase();
 }
@@ -75,7 +80,7 @@ export const CursorTooltip: React.FC<CursorTooltipProps> = ({ visible, tileData,
   const status = statusInfo(tileData);
   const warning = tileWarning(tileData);
   const displayName =
-    tileData.type && tileData.type !== 'empty' ? tileData.type.toUpperCase() : tileData.terrain.toUpperCase();
+    tileData.type && tileData.type !== 'empty' ? tileData.type.toUpperCase() : terrainLabel(tileData.terrain);
 
   return (
     <View style={[styles.container, { left: position.x + 16, top: position.y + 16 }]}>

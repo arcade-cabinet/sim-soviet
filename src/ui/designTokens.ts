@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { assetUrl } from '@/utils/assetPath';
 
 const monoFallback = Platform.select({
   ios: 'Menlo',
@@ -46,15 +47,14 @@ export const DesignTokens = {
 } as const;
 
 /**
- * Font base URL — mirrors the same logic as assetUrl() in src/utils/assetPath.ts.
- * On local dev (NODE_ENV !== 'production') Metro serves assets from the root,
- * so no prefix is needed. GitHub Pages builds use the /sim-soviet/ prefix set
- * by expo.experiments.baseUrl in app.json.
+ * Build a CSS src descriptor for a bundled font file.
+ *
+ * @param filename - Font file name under assets/fonts/ (e.g. 'ibm-plex-mono-latin-400.woff2')
+ * @returns CSS src descriptor with the URL resolved via assetUrl()
  */
-const FONT_BASE = process.env.NODE_ENV === 'production' ? '/sim-soviet' : '';
-
 function fontSrc(filename: string): string {
-  return `url('${FONT_BASE}/assets/fonts/${filename}') format('woff2')`;
+  const url = assetUrl(`assets/fonts/${filename}`);
+  return `url('${url}') format('woff2')`;
 }
 
 const fontFaces = `
