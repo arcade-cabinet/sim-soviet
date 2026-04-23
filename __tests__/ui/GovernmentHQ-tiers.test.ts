@@ -4,8 +4,8 @@
  * Verifies:
  * - Selo: only Gosplan + Central Committee (2 tabs)
  * - Posyolok: + KGB + Military (4 tabs)
- * - PGT: + Politburo + Reports (6 tabs)
- * - Gorod: + Law Enforcement (7 tabs)
+ * - PGT: + Politburo + Reports + Law Enforcement (all 7 tabs)
+ * - Gorod: same 7 tabs (no additional unlock)
  */
 
 // Mock heavy dependencies to avoid importing the full engine
@@ -36,13 +36,21 @@ describe('GovernmentHQ tier-based tab gating', () => {
     expect(tabs.map((t) => t.key)).toEqual(['gosplan', 'central_committee', 'kgb', 'military']);
   });
 
-  test('pgt shows 6 tabs (+ politburo, reports)', () => {
+  test('pgt shows all 7 tabs (+ politburo, reports, law_enforcement)', () => {
     const tabs = getVisibleTabs('pgt');
-    expect(tabs).toHaveLength(6);
-    expect(tabs.map((t) => t.key)).toEqual(['gosplan', 'central_committee', 'kgb', 'military', 'politburo', 'reports']);
+    expect(tabs).toHaveLength(7);
+    expect(tabs.map((t) => t.key)).toEqual([
+      'gosplan',
+      'central_committee',
+      'kgb',
+      'military',
+      'politburo',
+      'reports',
+      'law_enforcement',
+    ]);
   });
 
-  test('gorod shows all 7 tabs (+ law_enforcement)', () => {
+  test('gorod shows all 7 tabs (same as pgt — no additional unlock)', () => {
     const tabs = getVisibleTabs('gorod');
     expect(tabs).toHaveLength(7);
     expect(tabs.map((t) => t.key)).toEqual([
@@ -64,15 +72,18 @@ describe('GovernmentHQ tier-based tab gating', () => {
     }
   });
 
-  test('law enforcement tab only appears at gorod tier', () => {
-    const tiers: SettlementTier[] = ['selo', 'posyolok', 'pgt'];
-    for (const tier of tiers) {
+  test('law enforcement tab appears at pgt tier and above', () => {
+    const hiddenTiers: SettlementTier[] = ['selo', 'posyolok'];
+    for (const tier of hiddenTiers) {
       const tabs = getVisibleTabs(tier);
       expect(tabs.some((t) => t.key === 'law_enforcement')).toBe(false);
     }
 
-    const gorodTabs = getVisibleTabs('gorod');
-    expect(gorodTabs.some((t) => t.key === 'law_enforcement')).toBe(true);
+    const visibleTiers: SettlementTier[] = ['pgt', 'gorod'];
+    for (const tier of visibleTiers) {
+      const tabs = getVisibleTabs(tier);
+      expect(tabs.some((t) => t.key === 'law_enforcement')).toBe(true);
+    }
   });
 
   test('AGENCY_TABS contains all 7 tab definitions', () => {
