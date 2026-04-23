@@ -61,7 +61,7 @@ export const AGENCY_TABS: AgencyTabDef[] = [
   { key: 'military', label: 'MILITARY', minTier: 'posyolok' },
   { key: 'politburo', label: 'POLITBURO', minTier: 'pgt' },
   { key: 'reports', label: 'REPORTS', minTier: 'pgt' },
-  { key: 'law_enforcement', label: 'LAW ENFORCEMENT', minTier: 'gorod' },
+  { key: 'law_enforcement', label: 'LAW ENFORCEMENT', minTier: 'pgt' },
 ];
 
 /** Settlement tier ordering for comparison. */
@@ -76,8 +76,8 @@ const TIER_RANK: Record<SettlementTier, number> = {
  * Returns the visible tabs for a given settlement tier.
  * - Selo (pop < 200): Gosplan + Central Committee
  * - Posyolok (200-2000): + KGB + Military
- * - PGT (2000-50000): all 6 base tabs
- * - Gorod (50000+): all + Law Enforcement
+ * - PGT (2000-50000): + Politburo + Reports + Law Enforcement (all 7 tabs)
+ * - Gorod (50000+): same 7 tabs (no additional unlock)
  */
 export function getVisibleTabs(tier: SettlementTier): AgencyTabDef[] {
   const rank = TIER_RANK[tier];
