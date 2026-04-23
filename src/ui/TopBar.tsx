@@ -558,11 +558,13 @@ const styles = StyleSheet.create({
   },
   hqBtn: {
     borderLeftWidth: 1,
-    borderLeftColor: Colors.panelBg,
+    borderLeftColor: '#555',
+    borderRightWidth: 1,
+    borderRightColor: '#555',
     paddingHorizontal: 10,
     paddingVertical: 4,
     alignItems: 'center',
-    backgroundColor: 'rgba(198, 40, 40, 0.15)',
+    backgroundColor: 'rgba(180, 0, 0, 0.15)',
   },
   hqBtnLabel: {
     fontSize: 9,

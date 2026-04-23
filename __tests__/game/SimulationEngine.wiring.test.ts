@@ -50,27 +50,26 @@ describe('SimulationEngine — system wiring', () => {
   describe('TutorialSystem wiring', () => {
     it('exposes getTutorial() accessor', () => {
       expect(engine.getTutorial()).toBeDefined();
-      // Tutorial is skipped by default — settlement builds organically
-      expect(engine.getTutorial().isActive()).toBe(false);
+      // Tutorial is active by default — milestone dialogue fires as toasts
+      expect(engine.getTutorial().isActive()).toBe(true);
     });
 
-    it('tutorial is inactive — milestones do not fire', () => {
+    it('welcome milestone fires on first tick', () => {
       engine.tick();
-      // No tutorial milestones should trigger since tutorial is skipped
-      expect(cb.onTutorialMilestone).not.toHaveBeenCalled();
+      // Welcome milestone (triggerTick=0) should fire on first tick
+      expect(cb.onTutorialMilestone).toHaveBeenCalledWith(expect.objectContaining({ id: 'welcome' }));
     });
 
-    it('all buildings are unlocked when tutorial is skipped', () => {
+    it('welcome milestone unlocks collective-farm-hq', () => {
+      engine.tick();
       const tutorial = engine.getTutorial();
       expect(tutorial.isBuildingUnlocked('collective-farm-hq')).toBe(true);
-      expect(tutorial.isBuildingUnlocked('power-station')).toBe(true);
-      expect(tutorial.isBuildingUnlocked('vodka-distillery')).toBe(true);
     });
 
-    it('serializes tutorial state as inactive', () => {
+    it('serializes tutorial state as active', () => {
       const data = engine.serializeSubsystems();
       expect(data.tutorial).toBeDefined();
-      expect(data.tutorial!.active).toBe(false);
+      expect(data.tutorial!.active).toBe(true);
     });
   });
 

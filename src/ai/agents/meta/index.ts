@@ -41,4 +41,4 @@ export {
 } from './minigameTick';
 export type { TutorialMilestone, TutorialSaveData, UIElement } from './TutorialSystem';
 // ── TutorialSystem ───────────────────────────────────────
-export { MILESTONE_LABELS, TUTORIAL_MILESTONES, TutorialSystem, UI_REVEAL_SCHEDULE } from './TutorialSystem';
+export { MILESTONE_LABELS, TUTORIAL_MILESTONES, TutorialSystem } from './TutorialSystem';
