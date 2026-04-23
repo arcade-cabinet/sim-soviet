@@ -1064,9 +1064,54 @@ const styles = StyleSheet.create({
 
 export default App;
 
-// Service worker registration (production only)
+// Service worker registration (production only).
+//
+// The SW injects COOP/COEP headers into every response, making the page
+// cross-origin isolated so SharedArrayBuffer (required by expo-sqlite/wa-sqlite)
+// is available. On first load the SW isn't yet controlling the page, so we
+// wait for it to become active and then do ONE hard reload. After that reload
+// crossOriginIsolated is true and SQLite works normally.
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sim-soviet/sw.js').catch(() => {});
+    navigator.serviceWorker
+      .register('/sim-soviet/sw.js')
+      .then((registration) => {
+        // If already cross-origin isolated (SW was already active), nothing to do.
+        if (crossOriginIsolated) return;
+
+        // Wait for the SW to become active, then reload once so the page gets
+        // served with the COOP/COEP headers the SW injects.
+        const waitAndReload = (sw: ServiceWorker) => {
+          if (sw.state === 'activated') {
+            // Prevent reload loops: only reload if not yet isolated.
+            if (!crossOriginIsolated) {
+              window.location.reload();
+            }
+            return;
+          }
+          sw.addEventListener('statechange', () => {
+            if (sw.state === 'activated' && !crossOriginIsolated) {
+              window.location.reload();
+            }
+          });
+        };
+
+        if (registration.active) {
+          // SW was already active but page not isolated — reload immediately.
+          if (!crossOriginIsolated) window.location.reload();
+        } else if (registration.installing) {
+          waitAndReload(registration.installing);
+        } else if (registration.waiting) {
+          waitAndReload(registration.waiting);
+        }
+
+        // Also handle future updates.
+        registration.addEventListener('updatefound', () => {
+          if (registration.installing) {
+            waitAndReload(registration.installing);
+          }
+        });
+      })
+      .catch(() => {});
   });
 }

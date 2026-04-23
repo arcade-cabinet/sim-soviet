@@ -23,16 +23,32 @@ config.resolver = {
 // ports. This middleware is NEVER used in production builds — production
 // assets are served by the hosting platform's own static file configuration
 // with appropriate CORS policies.
+//
+// COOP/COEP headers: expo-sqlite's web backend (wa-sqlite) requires
+// SharedArrayBuffer, which is only available in cross-origin isolated contexts.
+// We set these headers on every Metro dev-server response so `openDatabaseSync`
+// works locally. On GitHub Pages, the service worker (public/sw.js) injects
+// the same headers into every fetch response.
 config.server = {
   ...config.server,
   enhanceMiddleware: (middleware) => {
     const serveStatic = require('serve-static');
     const assetsDir = path.resolve(__dirname, 'assets');
     const publicDir = path.resolve(__dirname, 'public');
+
+    // Cross-Origin Isolation headers required by SharedArrayBuffer / wa-sqlite.
+    // credentialless is more permissive than require-corp: cross-origin assets
+    // without CORP headers are still served (minus cookies), so CDN assets work.
+    function setCOIHeaders(res) {
+      res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    }
+
     const staticHandler = serveStatic(assetsDir, {
       setHeaders: (res) => {
         // DEV-ONLY: permissive CORS for local Metro dev-server
         res.setHeader('Access-Control-Allow-Origin', '*');
+        setCOIHeaders(res);
       },
     });
     const publicHandler = serveStatic(publicDir, {
@@ -40,10 +56,28 @@ config.server = {
         // DEV-ONLY: permissive CORS for local Metro dev-server
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Content-Type', 'application/wasm');
+        setCOIHeaders(res);
       },
     });
 
     return (req, res, next) => {
+      // Inject COOP/COEP on every Metro response so SharedArrayBuffer is
+      // available on the dev server without needing a service worker.
+      //
+      // We monkey-patch res.writeHead because Metro calls writeHead internally
+      // and would otherwise overwrite any headers set via res.setHeader before
+      // calling the inner middleware. The patch ensures our headers survive.
+      const originalWriteHead = res.writeHead.bind(res);
+      res.writeHead = function patchedWriteHead(statusCode, statusMessage, headers) {
+        // Inject COI headers regardless of what Metro is writing.
+        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+        res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+        if (typeof statusMessage === 'object') {
+          return originalWriteHead(statusCode, statusMessage);
+        }
+        return originalWriteHead(statusCode, statusMessage, headers);
+      };
+
       // Route /assets/* requests to the static file server
       if (req.url.startsWith('/assets/')) {
         req.url = req.url.slice('/assets'.length);
