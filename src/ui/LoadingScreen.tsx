@@ -97,7 +97,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 600,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start(() => {
         onFadeComplete?.();
       });
@@ -194,9 +194,13 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: Colors.sovietRed,
     marginBottom: 12,
-    textShadowColor: 'rgba(198, 40, 40, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 16,
+    ...(Platform.OS === 'web'
+      ? { textShadow: '0 0 16px rgba(198, 40, 40, 0.5)' }
+      : {
+          textShadowColor: 'rgba(198, 40, 40, 0.5)',
+          textShadowOffset: { width: 0, height: 0 },
+          textShadowRadius: 16,
+        }),
   },
   header: {
     fontSize: 28,

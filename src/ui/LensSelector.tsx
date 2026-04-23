@@ -4,7 +4,7 @@
  */
 
 import type React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MIN_TAP_TARGET } from './responsive';
 import { Colors, monoFont } from './styles';
 import { useResponsive } from './useResponsive';
@@ -90,9 +90,13 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     color: Colors.black,
-    textShadowColor: 'rgba(255, 255, 255, 0.6)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 4,
+    ...(Platform.OS === 'web'
+      ? { textShadow: '0 0 4px rgba(255, 255, 255, 0.6)' }
+      : {
+          textShadowColor: 'rgba(255, 255, 255, 0.6)',
+          textShadowOffset: { width: 0, height: 0 },
+          textShadowRadius: 4,
+        }),
   },
   compactButton: {
     width: MIN_TAP_TARGET,

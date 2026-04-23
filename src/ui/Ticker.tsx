@@ -5,7 +5,7 @@
 
 import type React from 'react';
 import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 import { useResponsive } from './useResponsive';
 
@@ -31,7 +31,7 @@ export const Ticker: React.FC<TickerProps> = ({ messages }) => {
       Animated.timing(translateX, {
         toValue: endX,
         duration: 25000,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     );
     anim.start();

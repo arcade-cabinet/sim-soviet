@@ -7,7 +7,7 @@
 
 import type React from 'react';
 import { useEffect, useSyncExternalStore } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
   getNotificationEntries,
   markAllRead,
@@ -122,11 +122,15 @@ const styles = StyleSheet.create({
     borderLeftColor: '#444',
     borderBottomColor: '#111',
     borderRightColor: '#111',
-    shadowColor: Colors.black,
-    shadowOffset: { width: 8, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 0,
-    elevation: 20,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '8px 8px 0 rgba(0, 0, 0, 0.5)' }
+      : {
+          shadowColor: Colors.black,
+          shadowOffset: { width: 8, height: 8 },
+          shadowOpacity: 0.5,
+          shadowRadius: 0,
+          elevation: 20,
+        }),
   },
   header: {
     flexDirection: 'row',
