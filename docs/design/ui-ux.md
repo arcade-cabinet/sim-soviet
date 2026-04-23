@@ -175,11 +175,12 @@ Three tiers of notification, escalating by urgency. All work within the existing
 - New mechanics in later eras get brief "era intro" dialog (e.g., entering Industrialization: "Comrade, Moscow requires factories now. Steel will arrive. Workers will be... reassigned.")
 
 ### Settings Menu
-- Volume controls (music, SFX, ambient)
-- Language (future)
+- Music mute toggle
+- Sound effects toggle
 - Accessibility: color-blind mode for worker role colors
-- Save/load UI
-- Difficulty display (can't change mid-game)
+- Comrade Advisor autopilot toggle
+- WebXR entry points for AR tabletop and VR walkthrough when supported
+- Settings persist automatically between sessions
 
 ### Save / Load
 - Autosave every N ticks

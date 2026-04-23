@@ -23,7 +23,6 @@ is fulfilled, the granary is empty, and the KGB wants to know why morale is
 ## What The Player Does
 
 - Observes autonomous workers and settlement growth.
-- Chooses where mandated buildings are placed.
 - Sets collective priorities.
 - Handles political conversations, reports, inspections, and compromises.
 - Intervenes during emergencies at political cost.

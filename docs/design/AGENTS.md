@@ -1,38 +1,30 @@
 # Design Documents - Agent Index
 
-Each design document describes one historical campaign system. Prefer
-`docs/GAME_VISION.md` and `docs/GDD-master.md` for current product scope.
+Use `docs/DESIGN.md` for the top-level product map and this directory for the
+deeper domain docs.
 
-## Canonical Design Docs
+## Priority Read Order
 
-| Document | Domain | Status |
-|----------|--------|--------|
-| `overview.md` | Game identity and core loop | implemented |
-| `eras.md` | 1917-1991 historical era progression | implemented |
-| `economy.md` | Planned economy, quotas, materials, storage, heating | implemented |
-| `workers.md` | Worker roles, lifecycle, and autonomous collective | implemented |
-| `demographics.md` | Dvory, family structure, aging, gendered labor | draft/implemented mix |
-| `political.md` | Politruks, KGB, military, personnel file, reporting | implemented |
-| `scoring.md` | Campaign scoring, consequences, achievements | implemented |
-| `era-doctrines.md` | Historical doctrine modifier sets | implemented |
-| `ui-ux.md` | Brutalist mobile-first UI | active |
-| `ecs-architecture.md` | Miniplex ECS specification | implemented |
-| `leader-archetypes.md` | Procedural leader personalities | draft |
-| `leadership-architecture.md` | Political ECS modifier pipeline | draft |
-| `power-transitions.md` | Succession mechanics | draft |
-| `dialog-bible.md` | In-game voice guide | active |
+1. `../DESIGN.md`
+2. `README.md`
+3. Domain doc relevant to the current task
+4. Supporting design doc if the change crosses political, leadership, or ECS boundaries
 
-## Current Implemented Systems Without Dedicated Docs
+## Domain Coverage
 
-| System | Implementation | Description |
-|--------|----------------|-------------|
-| Pressure-valve crisis | `src/ai/agents/crisis/pressure/` | Classical local pressure domains and crisis emergence |
-| Climate events | `src/ai/agents/crisis/ClimateEventSystem.ts` | Weather and seasonal natural events |
-| Black swans | `src/ai/agents/crisis/BlackSwanSystem.ts` | Rare local disasters |
-| World backdrop | `src/ai/agents/core/WorldAgent.ts` | Grounded geopolitical tension and Moscow scrutiny |
-| Organic growth | `src/growth/` | Demand, site selection, pacing, and HQ splitting |
+- `overview.md` - identity and core loop
+- `eras.md` - historical campaign structure
+- `economy.md` - planned economy and quotas
+- `workers.md` - labor behavior and self-organization
+- `demographics.md` - population and household model
+- `political.md` - party, KGB, military, and punishment systems
+- `scoring.md` - completion and score logic
+- `ui-ux.md` - player-facing UI and flow
+- `minigames.md` - event interaction surfaces
+- `dialog-bible.md` - tone and writing voice
 
-## Scope Note
+## Scope Rule
 
-1.0 excludes removed future, space, cross-settlement, and abundance-crisis
-systems. Do not treat old references to those systems as active design.
+Do not treat archived future systems as active design. If a change would imply
+space, deep-future, or multi-settlement scope, it is outside the current 1.0
+product unless the repo-wide product docs change first.

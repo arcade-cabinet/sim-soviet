@@ -6,7 +6,7 @@
 
 1. Read `CLAUDE.md` for the current product scope and commands.
 2. Read `memory-bank/AGENTS.md` for concise project context.
-3. Read `docs/AGENTS.md` for the documentation index.
+3. Read `docs/AGENTS.md` and `docs/README.md` for the canonical docs set.
 
 ## Current 1.0 Scope
 
@@ -34,8 +34,11 @@
 Use the same checks expected for code changes:
 
 ```bash
-pnpm typecheck
-pnpm test
-pnpm lint
-pnpm build
+pnpm run typecheck
+pnpm run lint
+pnpm run test:node
+pnpm run test:browser
+pnpm run build
+pnpm run smoke:web
+pnpm run test:e2e
 ```

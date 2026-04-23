@@ -2,10 +2,10 @@
 
 ## Current Development Focus
 
-Reduce 1.0 to a polished historical campaign from 1917 through 1991, followed
-by grounded same-settlement free play.
+Stabilize and document the historical 1.0 product so the repo, docs, and ship
+pipeline all describe the same game.
 
-## Completed In This Scope-Reduction Pass
+## Recently Completed
 
 - Created and verified a full git bundle backup before repository mutation.
 - Captured the dirty worktree status, diff, and untracked files separately.
@@ -16,18 +16,19 @@ by grounded same-settlement free play.
 - Reworked 1991 completion so it persists and cannot refire every tick.
 - Kept post-1991 play as conservative continuation of the same settlement.
 - Added focused historical-scope regression coverage.
+- Restored the Android debug CD path and reconfirmed Pages deployment.
 
 ## In Progress
 
-- Clean remaining stale docs and tests that describe removed future systems as
-  product scope.
-- Run final verification: typecheck, targeted Jest coverage, lint, and build.
+- Align root docs, memory-bank notes, and `docs/` around the shipped historical
+  product.
+- Clarify the remaining-work runway in one canonical production checklist.
+- Prepare the docs-alignment PR for review and merge.
 
 ## Known Verification Notes
 
-- `pnpm typecheck` has passed after the runtime pruning.
-- A full in-band Jest run hit Node heap exhaustion even with an 8 GB heap during
-  this cleanup pass; targeted suites are being used to verify the changed paths.
+- Current verification baseline on `main` is green through CI, Release, and CD.
+- Browser and smoke lanes already emit screenshots and diagnostics artifacts.
 
 ## Scope Guardrail
 
