@@ -100,7 +100,13 @@ describe('SimulationEngine edge cases', () => {
 
       jest.spyOn(Math, 'random').mockReturnValue(0.99);
 
-      const forceMissedFoodQuota = () => {
+      /**
+       * Forces the simulation into a missed food quota state.
+       *
+       * @returns void. Mutates the resource store via getResourceEntity() and
+       * sets the active quota type/target through engine2.getQuota().
+       */
+      const forceMissedFoodQuota = (): void => {
         const store = getResourceEntity()!;
         store.resources.food = 10_000;
         store.resources.vodka = 10_000;
