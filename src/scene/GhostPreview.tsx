@@ -179,7 +179,7 @@ const GhostPreview: React.FC = () => {
   useEffect(() => {
     const canvas = gl.domElement;
 
-    const onPointerEnter = () => {
+    const activatePointer = () => {
       pointerOverCanvas.current = true;
     };
     const onPointerLeave = () => {
@@ -191,8 +191,10 @@ const GhostPreview: React.FC = () => {
       longPressFired.current = false;
       setCursorTooltip(null);
     };
-    canvas.addEventListener('pointerenter', onPointerEnter);
-    canvas.addEventListener('pointermove', onPointerEnter, { once: true });
+    canvas.addEventListener('pointerenter', activatePointer);
+    // One-time move listener covers the edge case where the pointer is already
+    // over the canvas on mount and pointerenter never fires.
+    canvas.addEventListener('pointermove', activatePointer, { once: true });
     canvas.addEventListener('pointerleave', onPointerLeave);
 
     const preventContextMenu = (e: Event) => e.preventDefault();
@@ -286,8 +288,8 @@ const GhostPreview: React.FC = () => {
     canvas.addEventListener('pointerup', onPointerUp);
 
     return () => {
-      canvas.removeEventListener('pointerenter', onPointerEnter);
-      canvas.removeEventListener('pointermove', onPointerEnter);
+      canvas.removeEventListener('pointerenter', activatePointer);
+      canvas.removeEventListener('pointermove', activatePointer);
       canvas.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('contextmenu', preventContextMenu);
       canvas.removeEventListener('mousedown', onMouseDown);

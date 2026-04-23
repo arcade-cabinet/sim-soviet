@@ -274,8 +274,9 @@ export class SimulationEngine {
 
     this.scoring = new ScoringSystem(difficulty ?? 'comrade', consequence ?? 'gulag');
     this.tutorial = new TutorialSystem();
-    // Skip tutorial — settlement builds organically via CollectiveAgent bootstrap
-    this.tutorial.skip();
+    // Tutorial runs alongside organic agent-driven building — isBuildingUnlocked
+    // gates only affect player-initiated placement (not agent placement), so the
+    // tutorial progression (dialogue via toasts) works without blocking agents.
     this.achievements = new AchievementTracker();
 
     this.transport = new TransportSystem(this.eraSystem.getCurrentEraId());

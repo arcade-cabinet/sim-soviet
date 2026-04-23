@@ -50,9 +50,10 @@ const TERRAIN_LABELS: Record<string, string> = {
 };
 
 /**
- * Returns the player-facing terrain label, falling back to the raw ID in upper case.
- * @param terrain - Internal terrain identifier from tooltip state.
- * @returns Player-readable label from TERRAIN_LABELS, or uppercased raw ID if unmapped.
+ * Returns the player-facing terrain label, falling back to the raw ID in uppercase.
+ *
+ * @param terrain - Internal terrain enum identifier (e.g. 'grass', 'river')
+ * @returns Human-readable label from TERRAIN_LABELS, or the uppercased raw ID if unmapped
  */
 function terrainLabel(terrain: string): string {
   return TERRAIN_LABELS[terrain.toLowerCase()] ?? terrain.toUpperCase();
