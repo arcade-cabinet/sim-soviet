@@ -57,9 +57,7 @@ describe('SimulationEngine — system wiring', () => {
     it('welcome milestone fires on first tick', () => {
       engine.tick();
       // Welcome milestone (triggerTick=0) should fire on first tick
-      expect(cb.onTutorialMilestone).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 'welcome' }),
-      );
+      expect(cb.onTutorialMilestone).toHaveBeenCalledWith(expect.objectContaining({ id: 'welcome' }));
     });
 
     it('welcome milestone unlocks collective-farm-hq', () => {
