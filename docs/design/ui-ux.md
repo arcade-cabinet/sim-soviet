@@ -1,14 +1,14 @@
 ---
 title: UI/UX — Mobile-First Brutalist
 type: design
-status: active
+status: current
 implementation:
   - src/ui/
   - src/scene/
 tests:
   - src/__tests__/ConcreteFrame.test.tsx
   - src/__tests__/NewGameFlow.test.tsx
-last_verified: 2026-03-01
+last_verified: 2026-04-23
 coverage: partial
 depends_on: [demographics.md, workers.md, political.md, economy.md]
 ---
@@ -27,100 +27,118 @@ depends_on: [demographics.md, workers.md, political.md, economy.md]
 
 ## Key Panels
 
-### Top Bar (Always Visible)
-```
-┌─────────────────────────────────────────┐
-│ ☆ ERA: Industrialization  │ 1937 Feb    │
-│ 👥127  🌾450  🍶30  ⚡80  Blat:34      │
-└─────────────────────────────────────────┘
-```
-- Era name + year/month
-- Worker count, food, vodka, power, blat level
-- Tap any resource → expanded detail overlay
-- Black mark indicator (subtle — file icon with number)
+### Top Bar (Always Visible) — `src/ui/TopBar.tsx`
 
-### Bottom Panel (Context-Sensitive)
-
-**Default** — Worker summary:
 ```
-┌─────────────────────────────────────────┐
-│ Idle: 12 │ Farm: 45 │ Factory: 30       │
-│ Building: 8 │ Military: 15 │ [Auto] ▶   │
-└─────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ SELO  ●SAFE ☆ │ ГОСПЛАН HQ │ ≡ │ FOOD 🥔 │ TIMBER 🪵 │ POP │
+│                              │ 1937 FEB ░░░░░░ │ || ▶ ▶▶ ▶▶▶ ⏩ ⏩⏩ │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-**Workers selected**:
+**Left group** (always visible):
+- **Threat indicator** — settlement tier (SELO/POSYOLOK/PGT/GOROD), colored threat dot (SAFE → WATCHED → WARNED → INVESTIGATED → UNDER REVIEW → ARRESTED), net black-mark/commendation count.
+- **ГОСПЛАН HQ button** — opens the `GovernmentHQ` modal (Gosplan, Central Committee, KGB, Military, Politburo, Reports tabs, tier-gated).
+- **Achievements star** — optional; shown when handler is wired.
+- **AI badge** — shown when autopilot is active.
+- **Notification bell** — with unread badge count.
+- **Overflow menu (≡)** — scrollable list of deep panels: Leadership, Economy, Workers, Mandates, Disease, Infrastructure, Events, Political, Scoring, Weather, Era/Tech, Settlement, Politburo, Deliveries, Minigames, Pravda, Market, Save/Load.
+
+**Right group** (scrollable on compact/mobile):
+- Resource stats: FOOD, TIMBER, POP (values only — no tap-to-expand in Phase 1).
+- Calendar: date label (e.g., `1937 FEB`) + month-progress bar.
+- Speed controls: `||` (pause) `▶` `▶▶` `▶▶▶` `⏩` `⏩⏩` (1×, 2×, 3×, 10×, 100×).
+
+No vodka, no power, no blat column in Phase 1. Resource set is food + timber + population.
+
+### State Quota Panel (Top-Right) — `src/ui/QuotaHUD.tsx`
+
+Absolutely positioned, `top: 60, right: 10`. Read-only. Collapses to a single-line chip on mobile.
+
 ```
-┌─────────────────────────────────────────┐
-│ 3 workers selected                      │
-│ [Farm] [Factory] [Build] [Power] [Idle] │
-└─────────────────────────────────────────┘
+┌──────────────────────┐
+│ STATE QUOTA          │
+│ TARGET: FOOD 450     │
+│ DEADLINE: 1942       │
+│ ░░░░░░░░████ 60%     │
+└──────────────────────┘
 ```
 
-**Building tapped**:
+- Tracks the active Five-Year Plan quota (type, target amount, current, deadline year).
+- Progress bar in terminal-blue.
+- No player input — display only.
+
+### Active Directive Panel (Left) — `src/ui/DirectiveHUD.tsx`
+
+Absolutely positioned, `top: 190, left: 10`. Hidden on compact/mobile.
+
 ```
-┌─────────────────────────────────────────┐
-│ COLLECTIVE FARM HQ                      │
-│ Workers: 12/20  │  Output: 45 food/tick │
-│ [+Worker] [-Worker] [Details]           │
-└─────────────────────────────────────────┘
+┌────────────────────────┐
+│ ACTIVE DIRECTIVE       │
+│ Build a Farm           │
+│ REWARD: +50₽           │
+└────────────────────────┘
 ```
+
+- Shows the current sequential directive text and reward (if any).
+- Agriculture (Build a Farm) is always directive index 0 — see `src/engine/Directives.ts` and the P1F-2 invariant below.
+- No player input — display only.
+
+### Building Panel (Contextual Overlay) — `src/ui/BuildingPanel.tsx`
+
+Rendered inline, manages its own open/close state. Opens when the player taps an existing building in the 3-D scene. No bottom panel dock.
+
+- Shows building name, type, stats, and occupancy.
+- No `[+Worker]`, `[-Worker]`, or worker-assign verbs in Phase 1.
 
 ### Event Modal
-```
-┌─────────────────────────────────────────┐
-│         DECREE FROM MOSCOW              │
-│                                         │
-│  "The Party requires 40% of workers    │
-│   for military service immediately."    │
-│                                         │
-│  Deadline: 30 ticks                     │
-│                                         │
-│  [Select Workers]     [Auto-Comply]     │
-└─────────────────────────────────────────┘
-```
+
+Critical events (KGB, conscription, 5-year plan) fire a full-screen modal and auto-pause the sim. The modal presents the decree text, deadline, and a single acknowledgement action. Worker-assignment and auto-comply verbs were cut in Phase 1; the player reads, acknowledges, and the simulation continues.
 
 ### Pravda Ticker
-Scrolling satirical headlines above the bottom panel.
+Scrolling satirical headlines rendered in the scene layer (not above a bottom panel — no bottom panel exists in Phase 1).
 
 ---
 
 ## Gesture Controls
 
-| Gesture | Action |
-|---------|--------|
-| Tap empty tile | Radial BUILD menu (category ring → building ring → place) |
-| Tap building | Radial INSPECT menu (Info / Workers / Production / Occupants / Demolish) |
-| Tap housing | Radial HOUSEHOLD menu (Men / Women / Children / Elders → individuals → dossier) |
-| Tap worker dot | Citizen Dossier modal (personnel file, household, stats, commissar notes) |
-| Drag on map | Pan camera |
-| Pinch | Zoom (clamped to map bounds) |
-| Long-press building | Quick info tooltip (production rate, worker count, efficiency) |
-| Swipe up on bottom panel | Expand Pravda ticker to full headlines view |
+Phase 1 shipped controls are marked (shipped). Remaining entries describe the designed target for future phases.
+
+| Gesture | Action | Status |
+|---------|--------|--------|
+| Tap building | Opens `BuildingPanel` contextual overlay | Shipped |
+| Drag on map | Pan camera | Shipped |
+| Pinch | Zoom (clamped to map bounds) | Shipped |
+| Tap empty tile | Radial BUILD menu (category ring → building ring → place) | Phase 2+ |
+| Tap building | Full radial INSPECT menu (Info / Workers / Production / Occupants / Demolish) | Phase 2+ |
+| Tap housing | Radial HOUSEHOLD menu (Men / Women / Children / Elders → individuals → dossier) | Phase 2+ |
+| Tap worker dot | Citizen Dossier modal (personnel file, household, stats, commissar notes) | Phase 2+ |
+| Long-press building | Quick info tooltip (production rate, worker count, efficiency) | Phase 2+ |
+| Swipe up from bottom | Expand Pravda ticker to full headlines view | Phase 2+ (no bottom panel in Phase 1) |
 
 ---
 
-## Unsolved UI Questions
+## UI Questions and Future Work
 
-These need design before implementation:
+Some panels below are fully shipped; others remain aspirational for post-Phase-1 work.
 
-### Pause / Speed Controls — DESIGNED
+### Pause / Speed Controls — SHIPPED
 
-**Location**: Right side of top bar, minimal footprint.
+**Location**: Right side of top bar (`src/ui/TopBar.tsx`), `SpeedButton` row.
 
 ```
-┌───────────────────────────────────────────┐
-│ ☆ ERA  │ 1937 Feb  │  ▶ 1× │ ⏸ │ ⏩ 3× │
-└───────────────────────────────────────────┘
+┌──────────────────────────────────┐
+│  || ▶ ▶▶ ▶▶▶ ⏩ ⏩⏩             │
+│  0  1  2   3  10  100           │
+└──────────────────────────────────┘
 ```
 
-- **Tap ▶/⏸**: Toggle pause/play
-- **Tap speed indicator**: Cycle through 1× → 2× → 3× → 1×
-- **Auto-pause triggers**: Critical events (KGB, conscription, 5-year plan) auto-pause the sim
-- **Visual cue**: When paused, subtle pulsing border on the game viewport. Speed indicator text changes color (white=1×, yellow=2×, red=3×)
-- **No slow motion**: Minimum speed is 1×. Pause is binary (on/off)
+- Six discrete speeds: pause (0), 1×, 2×, 3×, 10×, 100×.
+- Active button highlighted; inactive buttons dimmed.
+- Auto-pause triggers: Critical events auto-pause the sim (speed reset to 0).
+- No slow motion. Pause is binary (0 vs. any positive speed).
 
-### Notification System — DESIGNED
+### Notification System — DESIGNED (Phase 2+)
 
 Three tiers of notification, escalating by urgency. All work within the existing brutalist UI frame.
 
@@ -250,12 +268,12 @@ When tapping an occupied tile, the radial menu opens with **action categories** 
 │  User taps "Workers" →              │
 │  Outer Ring:                        │
 │    [Ivan P. ★★☆] [Olga K. ★☆☆]    │
-│    [+Assign Worker] [Auto-fill]     │
 │                                     │
 │  Tap worker wedge → Citizen Dossier │
-│  Tap +Assign → enters assign mode   │
 └─────────────────────────────────────┘
 ```
+
+Note: `[+Assign Worker]` and `[Auto-fill]` worker-assignment verbs were cut in Phase 1. The radial Workers ring is read-only (shows assigned workers; tap to view dossier). Assignment verbs are planned for a future phase.
 
 ### Context: Housing Building (HOUSEHOLD mode — NEW)
 
@@ -288,11 +306,11 @@ For **communal housing with 20+ families**, the demographic ring shows totals an
 | Old Pattern | New Pattern |
 |-------------|-------------|
 | Tap empty tile → placement menu | Empty tile clears panels; construction remains autonomous |
-| Tap building → floating BuildingInspector card | Tap building → radial with action categories |
-| Tap worker dot → WorkerInfoPanel | Worker accessed through building's "Workers" or "Occupants" ring |
-| Separate "Assignment Mode" tap-to-assign flow | "Assign Worker" wedge in building's Workers ring |
-| No way to see all building occupants | Housing → demographic ring → individual list |
-| No building interior concept | Each building type has meaningful interior data |
+| Tap building → floating BuildingInspector card | Tap building → `BuildingPanel` contextual overlay |
+| Tap worker dot → WorkerInfoPanel | Worker accessed through building's "Workers" or "Occupants" ring (Phase 2+ radial) |
+| Separate "Assignment Mode" tap-to-assign flow | Cut in Phase 1; planned for future radial "Workers" ring |
+| No way to see all building occupants | Housing → demographic ring → individual list (Phase 2+) |
+| No building interior concept | Each building type exposes meaningful interior data (Phase 2+) |
 
 The key insight: **buildings are not faceless props. Every building tells a story.** The radial menu forces each building to declare what it *does* and who is *inside*.
 
@@ -307,7 +325,7 @@ Each building type exposes meaningful information through the radial inspect mod
 | Radial Action | What It Shows |
 |---------------|---------------|
 | **Info** | Name, defId, era built, durability, powered status, efficiency % |
-| **Workers** | Assigned workers (wedges with names + skill stars). +Assign / Auto-fill wedges. Tap worker → dossier. |
+| **Workers** | Assigned workers (wedges with names + skill stars). Tap worker → dossier. (Assignment verbs Phase 2+.) |
 | **Production** | Current output/tick, input requirements, storage levels, seasonal modifier, stakhanovite status |
 | **Demolish** | Confirmation prompt. Frees workers. Recovers partial materials. |
 
@@ -342,7 +360,7 @@ Each building type exposes meaningful information through the radial inspect mod
 | Radial Action | What It Shows |
 |---------------|---------------|
 | **Construction** | Progress bar (foundation/building/complete), materials consumed vs. required, estimated ticks to completion |
-| **Workers** | Construction workers assigned. +Assign more to speed up. |
+| **Workers** | Construction workers currently assigned. (Manual +Assign Phase 2+.) |
 | **Info** | What the building will become when complete. |
 
 ---
@@ -390,7 +408,8 @@ Tapping an individual citizen (from any radial outer ring) opens a **full-screen
 │  Draft status: EXEMPT (female)                  │
 │                                                 │
 │  ─── ACTIONS ────────────────────────────────── │
-│  [REASSIGN]  [VIEW FAMILY]  [DISMISS]           │
+│  [VIEW FAMILY]  [DISMISS]                       │
+│  (REASSIGN planned for Phase 2+)                │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -403,7 +422,7 @@ Tapping an individual citizen (from any radial outer ring) opens a **full-screen
 | **Labor** | Assignment, trudodni earned vs minimum, category | EconomySystem trudodni tracking |
 | **Stats** | Morale, loyalty, skill, health, vodka | WorkerSystem hidden stats |
 | **Political Record** | Black marks, commissar notes (generated), KGB file status, draft status | PersonnelFile + PoliticalEntitySystem |
-| **Actions** | Reassign to different building, view full family tree, close panel | Player interaction |
+| **Actions** | View full family tree, close panel. (Reassign verb Phase 2+.) | Player interaction |
 
 ### Commissar/KGB Comments
 
@@ -479,7 +498,7 @@ Accessible from `DrawerPanel` → "POPULATION REGISTRY" button. Full-screen over
 | **Sort** | By name, age, dvor, assignment, morale, trudodni. Toggle ascending/descending. |
 | **Search** | Filter by name substring. Instant. |
 | **Tap row** | Opens Citizen Dossier for that person. |
-| **Bulk actions** | "Assign All Idle" sends unassigned workers to selected building type. "Auto-assign" uses WorkerSystem AI. |
+| **Bulk actions** | "Assign All Idle" and "Auto-assign" are Phase 2+ features. Phase 1 Population Registry is read-only. |
 | **Statistics header** | Total pop, dvory count, worker count, idle count, average morale, trudodni progress. |
 | **Color coding** | Class color dots match worker dot colors on map. Morale bar color: green > yellow > red. |
 
@@ -519,9 +538,8 @@ CITIZEN DOSSIER (always pauses)
   └→ Actions: Reassign, View Family, Dismiss
 ```
 
-This means:
-1. **RadialContextMenu is inspect-only** — existing buildings and residents expose context actions
-2. **BuildingInspector card is replaced** — info moves into contextual building actions
-3. **WorkerInfoPanel becomes Citizen Dossier modal** — deeper, pauses game
-4. **Assignment mode eliminated** — workers assigned from building's "Workers" ring
-5. **New PopulationRegistry component** — full-screen list from DrawerPanel
+This means (Phase 1 shipped; Phase 2+ planned):
+1. **BuildingPanel overlay is the Phase 1 building inspector** — tapping a building opens `BuildingPanel`; full radial context menu is Phase 2+
+2. **WorkerInfoPanel → Citizen Dossier modal (Phase 2+)** — deeper read, pauses game
+3. **Assignment verbs cut in Phase 1** — workers auto-assign; manual re-assignment via "Workers" ring is planned for future phases
+4. **PopulationRegistry (Phase 2+)** — full-screen list from DrawerPanel / overflow menu
