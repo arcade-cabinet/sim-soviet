@@ -184,12 +184,12 @@ const GhostPreview: React.FC = () => {
     };
     const onPointerLeave = () => {
       pointerOverCanvas.current = false;
-      setCursorTooltip(null);
       if (longPressTimer.current) {
         clearTimeout(longPressTimer.current);
         longPressTimer.current = null;
       }
       longPressFired.current = false;
+      setCursorTooltip(null);
     };
     canvas.addEventListener('pointerenter', activatePointer);
     // One-time move listener covers the edge case where the pointer is already
