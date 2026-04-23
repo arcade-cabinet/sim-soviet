@@ -6,6 +6,19 @@
  * - Network-first for app bundle (JS, CSS, HTML)
  * - Versioned cache name for clean upgrades
  * - Content-Type validation before caching
+ *
+ * Cross-Origin Isolation (COOP/COEP):
+ * expo-sqlite's web backend (wa-sqlite) uses SharedArrayBuffer for its
+ * synchronous worker-channel protocol. Browsers only expose SharedArrayBuffer
+ * when the document is cross-origin isolated, which requires:
+ *   Cross-Origin-Opener-Policy: same-origin
+ *   Cross-Origin-Embedder-Policy: credentialless
+ * We use `credentialless` (not `require-corp`) so that cross-origin CDN assets
+ * are still loaded (without credentials) rather than being blocked entirely.
+ * GitHub Pages cannot serve custom HTTP headers, so we inject them here in the
+ * service-worker fetch handler by rewriting every response through
+ * addCrossOriginHeaders(). The service worker is registered before any SQLite
+ * init, so the page reloads itself once the SW is active (see App.web.tsx).
  */
 
 // Version is tied to app releases — bump on deploy to bust stale caches.
@@ -76,6 +89,37 @@ function hasCacheableContentType(response) {
   return CACHEABLE_CONTENT_TYPES.has(mimeType);
 }
 
+/**
+ * Rewrite a Response to add Cross-Origin-Opener-Policy and
+ * Cross-Origin-Embedder-Policy headers. These make the page
+ * cross-origin isolated so SharedArrayBuffer is available.
+ *
+ * We must copy the response because Headers are immutable on fetch responses.
+ * The body is streamed — we don't buffer it — so this is low overhead.
+ *
+ * @param response - The fetch Response object to rewrite with COOP/COEP headers
+ * @returns A new Response with COOP/COEP headers applied, or the original response unchanged for opaque (no-cors) responses
+ */
+function addCrossOriginHeaders(response) {
+  // Skip opaque responses (cross-origin no-cors) — we cannot rewrite them,
+  // and rewriting would break them (opaque type, status 0).
+  if (response.type === 'opaque') return response;
+
+  const newHeaders = new Headers(response.headers);
+  newHeaders.set('Cross-Origin-Opener-Policy', 'same-origin');
+  // credentialless is safer than require-corp: cross-origin resources that
+  // don't set Cross-Origin-Resource-Policy are still loaded (without cookies
+  // / auth headers) rather than being blocked. This prevents 3D asset CDN
+  // fetches from breaking while still enabling SharedArrayBuffer.
+  newHeaders.set('Cross-Origin-Embedder-Policy', 'credentialless');
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders,
+  });
+}
+
 // ── Install ──
 // Pre-cache nothing on install (assets are cached on first fetch).
 // skipWaiting() activates the new SW immediately.
@@ -114,24 +158,26 @@ self.addEventListener('fetch', (event) => {
   if (!request.url.startsWith('http')) return;
 
   if (isCacheFirstAsset(request.url)) {
-    // Cache-first: serve from cache, fall back to network + cache
+    // Cache-first: serve from cache, fall back to network + cache.
+    // Always rewrite the response with COOP/COEP headers.
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) =>
         cache.match(request).then((cached) => {
-          if (cached) return cached;
+          if (cached) return addCrossOriginHeaders(cached);
 
           return fetch(request).then((response) => {
             // Only cache successful responses with expected Content-Types
             if (response.ok && hasCacheableContentType(response)) {
               cache.put(request, response.clone());
             }
-            return response;
+            return addCrossOriginHeaders(response);
           });
         }),
       ),
     );
   } else {
-    // Network-first: try network, fall back to cache for app shell
+    // Network-first: try network, fall back to cache for app shell.
+    // Always rewrite the response with COOP/COEP headers.
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -142,10 +188,23 @@ self.addEventListener('fetch', (event) => {
               cache.put(request, clone);
             });
           }
-          return response;
+          return addCrossOriginHeaders(response);
         })
         .catch(() =>
-          caches.open(CACHE_NAME).then((cache) => cache.match(request)),
+          caches.open(CACHE_NAME).then((cache) =>
+            cache.match(request).then((cached) => {
+              if (cached) return addCrossOriginHeaders(cached);
+              // Cache miss on network failure — return a real offline response
+              // so respondWith() never resolves to undefined (which throws).
+              return addCrossOriginHeaders(
+                new Response('Offline: requested resource is not available in cache.', {
+                  status: 503,
+                  statusText: 'Service Unavailable',
+                  headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                }),
+              );
+            }),
+          ),
         ),
     );
   }
