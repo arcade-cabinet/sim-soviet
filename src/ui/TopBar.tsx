@@ -58,6 +58,8 @@ export interface TopBarProps {
   autopilot?: boolean;
   /** Current era display name, e.g. "Revolution". Rendered with testID="era-label" for E2E. */
   eraName?: string;
+  /** True once the 1917-1991 campaign has ended. Renders a "RECORD CLOSED" badge in the TopBar. */
+  isPostCampaign?: boolean;
 }
 
 /** Minimal top bar: food, timber, population, date, threat indicator, speed controls, overflow menu. */
@@ -100,6 +102,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   unreadNotifications = 0,
   autopilot = false,
   eraName = '',
+  isPostCampaign = false,
 }) => {
   const [showOverflow, setShowOverflow] = useState(false);
   const { isCompact } = useResponsive();
@@ -117,26 +120,29 @@ export const TopBar: React.FC<TopBarProps> = ({
   const overflowItems: OverflowItem[] = [];
   if (onShowLeadership) overflowItems.push({ icon: '\u262D', label: 'LEADERSHIP', handler: onShowLeadership });
   if (onShowEconomy) overflowItems.push({ icon: '\u20BD', label: 'ECONOMY', handler: onShowEconomy });
+  // Icons are BMP Unicode symbols, rendered as monochrome glyphs to match the
+  // Soviet terminal aesthetic. Avoid \u{1F...} code points \u2014 those render as
+  // color emoji on modern OSes and break the monospace brutalism.
   if (onShowEconomyDetail)
-    overflowItems.push({ icon: '\u{1F4B0}', label: 'ECONOMY DETAIL', handler: onShowEconomyDetail });
+    overflowItems.push({ icon: '\u00a4', label: 'ECONOMY DETAIL', handler: onShowEconomyDetail });
   if (onShowWorkers) overflowItems.push({ icon: '\u2692', label: 'WORKERS', handler: onShowWorkers });
   if (onShowWorkerAnalytics)
-    overflowItems.push({ icon: '\u{1F4CA}', label: 'WORKER ANALYTICS', handler: onShowWorkerAnalytics });
+    overflowItems.push({ icon: '\u2263', label: 'WORKER ANALYTICS', handler: onShowWorkerAnalytics });
   if (onShowMandates) overflowItems.push({ icon: '\u2261', label: 'MANDATES', handler: onShowMandates });
   if (onShowDisease) overflowItems.push({ icon: '\u2695', label: 'DISEASE', handler: onShowDisease });
   if (onShowInfra) overflowItems.push({ icon: '\u2302', label: 'INFRASTRUCTURE', handler: onShowInfra });
   if (onShowEvents) overflowItems.push({ icon: '\u2139', label: 'EVENTS', handler: onShowEvents });
-  if (onShowPolitical) overflowItems.push({ icon: '\u{1F50D}', label: 'POLITICAL', handler: onShowPolitical });
-  if (onShowScoring) overflowItems.push({ icon: '\u{1F3C6}', label: 'SCORING', handler: onShowScoring });
+  if (onShowPolitical) overflowItems.push({ icon: '\u2316', label: 'POLITICAL', handler: onShowPolitical });
+  if (onShowScoring) overflowItems.push({ icon: '\u2605', label: 'SCORING', handler: onShowScoring });
   if (onShowWeather) overflowItems.push({ icon: '\u2601', label: 'WEATHER', handler: onShowWeather });
-  if (onShowEra) overflowItems.push({ icon: '\u{1F4DC}', label: 'ERA / TECH', handler: onShowEra });
-  if (onShowSettlement) overflowItems.push({ icon: '\u{1F3D8}', label: 'SETTLEMENT', handler: onShowSettlement });
-  if (onShowPolitburo) overflowItems.push({ icon: '\u{1F3DB}', label: 'POLITBURO', handler: onShowPolitburo });
-  if (onShowDeliveries) overflowItems.push({ icon: '\u{1F4E6}', label: 'DELIVERIES', handler: onShowDeliveries });
-  if (onShowMinigames) overflowItems.push({ icon: '\u{1F3B2}', label: 'MINIGAMES', handler: onShowMinigames });
-  if (onShowPravda) overflowItems.push({ icon: '\u{1F4F0}', label: 'PRAVDA', handler: onShowPravda });
-  if (onShowMarket) overflowItems.push({ icon: '\u{1F6D2}', label: 'MARKET', handler: onShowMarket });
-  if (onShowSaveLoad) overflowItems.push({ icon: '\u{1F4BE}', label: 'SAVE / LOAD', handler: onShowSaveLoad });
+  if (onShowEra) overflowItems.push({ icon: '\u2630', label: 'ERA / TECH', handler: onShowEra });
+  if (onShowSettlement) overflowItems.push({ icon: '\u2302', label: 'SETTLEMENT', handler: onShowSettlement });
+  if (onShowPolitburo) overflowItems.push({ icon: '\u25a0', label: 'POLITBURO', handler: onShowPolitburo });
+  if (onShowDeliveries) overflowItems.push({ icon: '\u25eb', label: 'DELIVERIES', handler: onShowDeliveries });
+  if (onShowMinigames) overflowItems.push({ icon: '\u2756', label: 'MINIGAMES', handler: onShowMinigames });
+  if (onShowPravda) overflowItems.push({ icon: '\u2261', label: 'PRAVDA', handler: onShowPravda });
+  if (onShowMarket) overflowItems.push({ icon: '\u25ce', label: 'MARKET', handler: onShowMarket });
+  if (onShowSaveLoad) overflowItems.push({ icon: '\u25a3', label: 'SAVE / LOAD', handler: onShowSaveLoad });
 
   const containerHeight = isCompact ? 44 : 60;
 
@@ -172,6 +178,15 @@ export const TopBar: React.FC<TopBarProps> = ({
           {autopilot && (
             <View style={styles.aiBadge}>
               <Text style={styles.aiBadgeText}>AI</Text>
+            </View>
+          )}
+          {isPostCampaign && (
+            <View
+              style={styles.postCampaignBadge}
+              accessibilityLabel="Historical campaign closed in 1991. Post-campaign free play."
+            >
+              <Text style={styles.postCampaignBadgeText}>ЗАКРЫТО 1991</Text>
+              <Text style={styles.postCampaignBadgeSub}>RECORD CLOSED</Text>
             </View>
           )}
           {onShowNotifications && (
@@ -621,6 +636,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000',
     letterSpacing: 1,
+  },
+  postCampaignBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: Colors.sovietGold,
+    backgroundColor: 'rgba(214,165,50,0.12)',
+    alignItems: 'center',
+  },
+  postCampaignBadgeText: {
+    fontSize: 10,
+    fontFamily: monoFont,
+    fontWeight: 'bold',
+    color: Colors.sovietGold,
+    letterSpacing: 2,
+  },
+  postCampaignBadgeSub: {
+    fontSize: 7,
+    fontFamily: monoFont,
+    color: Colors.sovietGold,
+    opacity: 0.7,
+    letterSpacing: 1,
+    marginTop: 1,
   },
 
   // Compact mode (mobile) styles

@@ -14,7 +14,7 @@ export type { SimCallbacks, SubsystemSaveData } from './engine/types';
 
 import { buildingsLogic, dvory, getMetaEntity, getResourceEntity } from '@/ecs/archetypes';
 import { setBuildingCollapsedCallback, setStarvationCallback } from '@/ecs/systems';
-import { setArrivalInProgress } from '@/stores/gameStore';
+import { setArrivalInProgress, setPostCampaign } from '@/stores/gameStore';
 import { AgentManager } from '../ai/AgentManager';
 import type { TickResult } from '../ai/agents/core/ChronologyAgent';
 // ── Yuka agents ──
@@ -940,6 +940,8 @@ export class SimulationEngine {
     this.terrainTiles = ctx.state.terrainTiles;
     this.desirePaths = ctx.state.desirePaths;
     this.historicalCompletionFired = ctx.state.historicalCompletionFired;
+    // Mirror to the gameStore so UI (TopBar badge, etc.) sees the lifecycle flag.
+    setPostCampaign(this.historicalCompletionFired);
   }
 
   private endGame(victory: boolean, reason: string): void {
