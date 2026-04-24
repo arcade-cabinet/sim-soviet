@@ -823,32 +823,36 @@ export class WorkerSystem {
    * a member with a matching name and updates the citizen's links.
    */
   syncCitizenDvorIds(): void {
+    // Build O(dvory) lookup maps once so the citizen loop is O(citizens) not O(citizens × dvory).
+    // dvorMemberSet: dvor.id → Set of member ids present in that dvor.
+    // nameToMember:  member name → { dvorId, memberId } for relocation lookup.
+    const dvorMemberSet = new Map<string, Set<string>>();
+    const nameToMember = new Map<string, { dvorId: string; memberId: string }>();
+    for (const d of dvory) {
+      const ids = new Set<string>();
+      for (const m of d.dvor.members) {
+        ids.add(m.id);
+        // Last writer wins if duplicate names exist — acceptable for relocation search.
+        nameToMember.set(m.name, { dvorId: d.dvor.id, memberId: m.id });
+      }
+      dvorMemberSet.set(d.dvor.id, ids);
+    }
+
     for (const entity of citizens) {
       const c = entity.citizen;
       if (!c.dvorId || !c.dvorMemberId) continue;
 
-      // Check if member still exists in the original dvor
-      let found = false;
-      for (const d of dvory) {
-        if (d.dvor.id === c.dvorId) {
-          if (d.dvor.members.some((m) => m.id === c.dvorMemberId)) {
-            found = true;
-          }
-          break;
-        }
-      }
-      if (found) continue;
+      // Check if member still exists in the original dvor (O(1) map lookup).
+      const memberIds = dvorMemberSet.get(c.dvorId);
+      if (memberIds?.has(c.dvorMemberId)) continue;
 
-      // Member was moved — find them by name in all dvory
+      // Member was moved — find them by name in all dvory (O(1) map lookup).
       const name = c.name;
       if (!name) continue;
-      for (const d of dvory) {
-        const member = d.dvor.members.find((m) => m.name === name);
-        if (member) {
-          c.dvorId = d.dvor.id;
-          c.dvorMemberId = member.id;
-          break;
-        }
+      const found = nameToMember.get(name);
+      if (found) {
+        c.dvorId = found.dvorId;
+        c.dvorMemberId = found.memberId;
       }
     }
   }

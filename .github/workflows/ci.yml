@@ -9,7 +9,7 @@ permissions:
 jobs:
   core:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -34,7 +34,10 @@ jobs:
         run: pnpm run lint
 
       - name: Test
-        run: pnpm run test:node
+        # Run Jest with parallel workers (not --runInBand) so the 230-file suite
+        # completes in ~5-8 min on a 4-core runner instead of >25 min serially.
+        # --maxWorkers=4 matches ubuntu-latest's 4 vCPUs.
+        run: pnpm exec jest --maxWorkers=4
 
       - name: Build
         run: pnpm run build

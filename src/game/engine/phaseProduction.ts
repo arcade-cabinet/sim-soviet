@@ -30,6 +30,12 @@ export interface PreProductionSnapshot {
   moneyBefore: number;
 }
 
+// Module-level scratch arrays — reused each tick to avoid per-tick GC pressure.
+// Clear with `.length = 0` before use; never hold references across ticks.
+const _scratchPositions: BuildingPosition[] = [];
+const _scratchOffscreen: OffscreenBuilding[] = [];
+const _scratchChainIds: string[] = [];
+
 /**
  * Run production phase: power, transport, construction, and food/vodka/money production.
  *
@@ -157,8 +163,10 @@ export function phaseProduction(ctx: TickContext): PreProductionSnapshot {
     // tick path via tickOffscreenBuildings(). Camera position is approximated from
     // the grid center when no viewport info is available.
     if (operationalBuildings.entities.length > 50) {
-      const allPositions: BuildingPosition[] = [];
-      const allOffscreen: OffscreenBuilding[] = [];
+      _scratchPositions.length = 0;
+      _scratchOffscreen.length = 0;
+      const allPositions = _scratchPositions;
+      const allOffscreen = _scratchOffscreen;
 
       for (const entity of operationalBuildings.entities) {
         const pos = entity.position;
@@ -205,11 +213,9 @@ export function phaseProduction(ctx: TickContext): PreProductionSnapshot {
     }
 
     // Production chains still run in aggregate mode
-    {
-      const chainBuildingIds: string[] = [];
-      for (const entity of buildingsLogic) chainBuildingIds.push(entity.building.defId);
-      economyAgent.tickProductionChains(chainBuildingIds, storeRef.resources);
-    }
+    _scratchChainIds.length = 0;
+    for (const entity of buildingsLogic) _scratchChainIds.push(entity.building.defId);
+    economyAgent.tickProductionChains(_scratchChainIds, storeRef.resources);
   } else {
     // Entity mode: existing production path
     const avgSkill = workerSystem.getAverageSkill();
@@ -226,11 +232,9 @@ export function phaseProduction(ctx: TickContext): PreProductionSnapshot {
     });
 
     // Production chains
-    {
-      const chainBuildingIds: string[] = [];
-      for (const entity of buildingsLogic) chainBuildingIds.push(entity.building.defId);
-      economyAgent.tickProductionChains(chainBuildingIds, storeRef.resources);
-    }
+    _scratchChainIds.length = 0;
+    for (const entity of buildingsLogic) _scratchChainIds.push(entity.building.defId);
+    economyAgent.tickProductionChains(_scratchChainIds, storeRef.resources);
   }
 
   return snapshot;
