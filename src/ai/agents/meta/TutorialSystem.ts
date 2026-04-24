@@ -114,7 +114,7 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     dialogue:
       'Your people need food. The soil is... optimistic. The farmers are not. ' +
       'A collective farm will produce enough to survive, if you are lucky. ' +
-      'Luck is not a plan, but it is all we have.',
+      'Luck is not a plan. Neither is the plan. Both are all we have.',
     pauseOnTrigger: false,
   },
 
@@ -242,8 +242,7 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     condition: (meta) => meta.date.year >= 1922,
     dialogue:
       'The era is changing. New plans. New quotas. New ways to fail. ' +
-      'But you are still here, Comrade. That counts for something. ' +
-      'I think.',
+      'You are still here. This is, statistically, unusual. Do not read into it.',
     pauseOnTrigger: true,
   },
 ];

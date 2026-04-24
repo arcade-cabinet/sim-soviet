@@ -60,8 +60,9 @@ export const IntroModal: React.FC<IntroModalProps> = ({ visible, onDismiss }) =>
           people are restless, and the state plan waits for no one.
         </Text>
         <Text style={styles.body}>
-          Your mandate is clear: keep the settlement functioning, satisfy Moscow, and survive the historical record.
-          Failure will not be tolerated. Success will be noted in your personnel file.
+          Your task has been explained in the attached forms, one of which you are currently reading. Keep the
+          settlement functioning, satisfy Moscow, and survive the historical record. Failure will not be tolerated.
+          Success will be noted in your personnel file.
         </Text>
         <Text style={styles.body}>
           Your collective will construct itself as workers arrive — your task is to steer allocation and priority, not
