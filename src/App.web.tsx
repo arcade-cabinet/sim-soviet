@@ -483,8 +483,11 @@ const App: React.FC = () => {
             SFXManager.getInstance().play('era_transition');
             // Switch playlist to era-appropriate tracks with crossfade
             AudioManager.getInstance().setEra(era.id);
-            // Notify store so RadialMenu re-renders with newly unlocked buildings
-            notifyStateChange();
+            // Defer — this callback runs inside engine.tick() called from a rAF
+            // loop. Calling notifyStateChange() synchronously from here can
+            // trigger React state updates during an in-flight render commit,
+            // producing "Maximum update depth exceeded" (#185).
+            queueMicrotask(notifyStateChange);
           },
           onAnnualReport: (data, submitReport) => {
             setAnnualReport(data);
@@ -519,8 +522,10 @@ const App: React.FC = () => {
                 if (isPaused()) setPaused(false);
               }, 8000);
             }
-            // Notify store so RadialMenu re-renders with newly unlocked categories
-            notifyStateChange();
+            // Defer — see onEraChanged above. This callback runs inside
+            // engine.tick() inside a rAF loop; synchronous notifyStateChange
+            // can cause nested React updates (#185).
+            queueMicrotask(notifyStateChange);
           },
           onGameTally: (tally) => {
             setGameTally(tally);
