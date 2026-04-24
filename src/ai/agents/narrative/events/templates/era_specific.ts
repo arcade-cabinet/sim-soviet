@@ -13,13 +13,12 @@
  *   reconstruction    — Post-war rebuilding, veteran integration, rubble salvage
  *   thaw_and_freeze   — De-Stalinization, cultural freedom, then re-freeze
  *   stagnation        — Decay, vodka economy, queues, corruption, reform chaos
- *   stagnation        — Stagnation, shortages, bureaucratic sclerosis
  */
 
 import type { EventTemplate } from '../types';
 
 export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
-  // ── WAR COMMUNISM (1922-1928) ──────────────────────────
+  // ── WAR COMMUNISM / NEP ONSET (1917-1922) ─────────────
 
   {
     id: 'bandit_raid',
@@ -164,8 +163,6 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
 
   // ── FIRST FIVE-YEAR PLANS (1928-1941) ──────────────────
 
-  // ── FIRST FIVE-YEAR PLANS (1928-1941) ──────────────────
-
   {
     id: 'kulak_purge',
     title: 'KULAK IDENTIFICATION CAMPAIGN',
@@ -181,7 +178,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
       food: -Math.min(20, Math.floor(gs.food * 0.15)),
     }),
     condition: (gs) => gs.pop > 30,
-    eraFilter: ['collectivization', 'industrialization'],
+    eraFilter: ['collectivization'],
     weight: 1.5,
   },
   {
@@ -198,7 +195,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
       pop: -Math.min(12, Math.floor(gs.pop * 0.1)),
     }),
     condition: (gs) => gs.pop > 40 && gs.date.year >= 1936,
-    eraFilter: ['collectivization', 'industrialization'],
+    eraFilter: ['industrialization'],
     weight: 0.8,
   },
   {
@@ -259,7 +256,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     description:
       'A train of evacuees arrives from the western front. They bring nothing but ' +
       'themselves and stories you do not want to hear. They need food and shelter. ' +
-      'You have very little of either. Welcome to collective solidarity.',
+      'You have very little of either. Collective solidarity has been invoked. It does not change the numbers.',
     pravdaHeadline: 'SETTLEMENT WARMLY WELCOMES RELOCATED WORKERS',
     category: 'economic',
     severity: 'minor',
@@ -336,7 +333,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
   },
   {
     id: 'late_stalinist_purge',
-    title: 'LATE STALINIST PURGE WAVE',
+    title: 'ANTI-COSMOPOLITAN PURGE WAVE',
     description:
       'A new purge wave arrives, this one targeting "rootless cosmopolitans," ' +
       'doctors, and anyone who has ever expressed admiration for foreign shoes. ' +
@@ -524,21 +521,20 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     weight: 1.8,
   },
 
-  // ── STAGNATION (1964-1985) ─────────────────────────────
+  // ── STAGNATION / PERESTROIKA (1982-1991) ──────────────
 
   {
     id: 'vodka_economy_boom',
-    title: 'VODKA ECONOMY FLOURISHES',
+    title: 'VODKA STABILITY REPORT',
     description:
-      'Vodka has become the unofficial currency. A plumber charges two bottles for ' +
-      'a house call. A doctor charges three. The black market now accepts vodka, ' +
-      'rubles, and "interesting cheese." Productivity metrics are unaffected because ' +
-      'the metrics were always fictional.',
-    pravdaHeadline: 'CONSUMER SATISFACTION REACHES NEW HEIGHTS',
+      'The vodka ration has not changed in eleven years. Nothing else has changed in ' +
+      'eleven years either. This is called stability. Stability has outlasted four general ' +
+      'secretaries. The vodka is more reliable than the state.',
+    pravdaHeadline: 'CONSISTENT BEVERAGE POLICY PROVES SOCIALIST PLANNING SUPERIORITY',
     category: 'economic',
     severity: 'minor',
-    effects: (gs) => ({ vodka: -Math.min(15, Math.floor(gs.vodka * 0.1)), money: 30 }),
-    condition: (gs) => gs.vodka > 20,
+    effects: (gs) => ({ vodka: -Math.min(5, Math.max(1, Math.floor(gs.vodka * 0.05))), money: -10 }),
+    condition: (gs) => gs.vodka > 10,
     eraFilter: ['stagnation'],
     weight: 1.5,
   },
@@ -600,5 +596,82 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     effects: { food: -20, vodka: -10 },
     eraFilter: ['stagnation'],
     weight: 1.2,
+  },
+  {
+    id: 'boiler_committee',
+    title: 'BOILER MAINTENANCE DEFERRED',
+    description:
+      'The boiler installed in 1963 has been reviewed by the maintenance committee. ' +
+      'The committee recommends replacement. This recommendation has been filed alongside ' +
+      'the 1967 recommendation, the 1971 recommendation, and the 1978 recommendation. ' +
+      'The boiler has now outlasted three committee chairmen and one general secretary. ' +
+      'It leaks. Everyone knows it leaks. The form for leaking boilers requires seven ' +
+      'signatures. Three of the signatories no longer exist.',
+    pravdaHeadline: 'INFRASTRUCTURE REVIEW PROCESS DEMONSTRATES THOROUGHNESS OF PLANNING',
+    category: 'disaster',
+    severity: 'minor',
+    effects: { money: -15, food: -5 },
+    eraFilter: ['stagnation'],
+    weight: 1.1,
+  },
+  {
+    id: 'form_7z_revision',
+    title: 'FORM 7-Z REVISION 14 ISSUED',
+    description:
+      'Form 7-Z Revision 14 has arrived. It supersedes Revision 13, which superseded ' +
+      'Revision 12, which was itself a correction of the original 1923 edition. The form ' +
+      'has outlasted the men who wrote it, the ministry that issued it, and the problem ' +
+      'it was designed to solve. Nobody remembers what the original problem was. ' +
+      'The form, however, must still be filed. In triplicate. Within fourteen days.',
+    pravdaHeadline: 'ADMINISTRATIVE MODERNIZATION CONTINUES ON SCHEDULE',
+    category: 'absurdist',
+    severity: 'trivial',
+    effects: { money: -10 },
+    eraFilter: ['stagnation'],
+    weight: 0.9,
+  },
+
+  // ── 1929 GREAT BREAK ───────────────────────────────────
+
+  {
+    id: 'great_break_declaration',
+    title: 'THE GREAT BREAK BEGINS',
+    description:
+      'New vocabulary arrives from Moscow. The words "class enemy," "kulak," and ' +
+      '"saboteur" must now appear in all settlement reports. Forms have been revised ' +
+      'to include a mandatory enemy-identification section. Targets for collectivization ' +
+      'have doubled. The targets for the doubled targets have not yet been specified, ' +
+      'but they are expected imminently. The revolution from above has begun. ' +
+      'It does not require your participation. Only your signature.',
+    pravdaHeadline: 'GREAT SOCIALIST OFFENSIVE LAUNCHES NEW PHASE OF CONSTRUCTION',
+    category: 'political',
+    severity: 'major',
+    effects: (gs) => ({
+      pop: -Math.min(5, Math.floor(gs.pop * 0.04)),
+      food: -Math.min(15, Math.floor(gs.food * 0.1)),
+    }),
+    condition: (gs) => gs.date.year >= 1929,
+    eraFilter: ['collectivization'],
+    weight: 1.6,
+  },
+
+  // ── MOLOTOV-RIBBENTROP PACT (1939-1941) ────────────────
+
+  {
+    id: 'molotov_ribbentrop',
+    title: 'DIPLOMATIC REALIGNMENT',
+    description:
+      'The newspapers have been reprinted overnight. Previous enemies are now ambiguous ' +
+      'partners. This is, officially, always how it has been. Citizens who recall ' +
+      'the previous version of events are encouraged to recall it less. ' +
+      'Trade delegations are being arranged. The settlement should expect new quotas. ' +
+      'The quotas will not mention who they are for.',
+    pravdaHeadline: 'FRATERNAL NON-AGGRESSION AGREEMENT SECURES PEACE FOR ALL PEOPLES',
+    category: 'political',
+    severity: 'minor',
+    effects: { food: 10, money: 15 },
+    condition: (gs) => gs.date.year >= 1939 && gs.date.year <= 1941,
+    eraFilter: ['industrialization'],
+    weight: 1.4,
   },
 ];

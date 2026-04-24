@@ -80,7 +80,7 @@ export const DIRECTIVES: Directive[] = [
     check: () => countBuildingsByRole('housing') >= 4,
   },
   {
-    text: 'Utilities: Build a Water Pump (on river).',
+    text: 'Logistics: Build a Warehouse.',
     target: 1,
     reward: 150,
     check: () => countBuildingsByDefId('warehouse') >= 1,

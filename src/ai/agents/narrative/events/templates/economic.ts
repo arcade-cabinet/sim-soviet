@@ -38,10 +38,13 @@ export const ECONOMIC_EVENTS: EventTemplate[] = [
   },
   {
     id: 'bread_queue',
-    title: 'BREAD LINE UPDATE',
+    title: 'BREAD DELIVERY FAILURE',
     description:
-      'Bread shortage. Citizens form orderly queue. Queue forms its own queue. Second queue achieves class consciousness and demands representation.',
-    pravdaHeadline: 'CITIZENS ENJOY SOCIAL GATHERING AT DISTRIBUTION CENTER',
+      'The bread delivery did not arrive. A report has been filed. The report ' +
+      'cites the previous report, which cited a supply disruption, which cited ' +
+      'a quota shortfall, which cited the previous report. Citizens have been ' +
+      'informed that the situation is under review. The bread remains absent.',
+    pravdaHeadline: 'BREAD DISTRIBUTION TEMPORARILY SUBJECT TO LOGISTICAL REFINEMENT',
     category: 'economic',
     severity: 'minor',
     effects: { food: -15 },
