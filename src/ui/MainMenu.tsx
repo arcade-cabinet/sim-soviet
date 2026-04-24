@@ -6,6 +6,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BrandColors, BrandFonts, DesignTokens, ensureBrandFonts } from './designTokens';
 import { ShaderBackdrop } from './ShaderBackdrop';
+import { useResponsive } from './useResponsive';
 
 export interface MainMenuProps {
   onNewGame: () => void;
@@ -26,6 +27,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onContinue, hasSa
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const titleSlide = useRef(new Animated.Value(18)).current;
   const [campaignLine, setCampaignLine] = React.useState(0);
+  const { isCompact } = useResponsive();
 
   useEffect(() => {
     ensureBrandFonts();
@@ -64,7 +66,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onNewGame, onContinue, hasSa
 
         <Animated.View style={[styles.hero, { transform: [{ translateY: titleSlide }] }]}>
           <Text style={styles.kicker}>1917-1991 / ONE SETTLEMENT / ONE CENTURY</Text>
-          <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={2} style={styles.title}>
+          <Text
+            adjustsFontSizeToFit
+            minimumFontScale={0.72}
+            numberOfLines={2}
+            style={[styles.title, isCompact && styles.titleCompact]}
+          >
             Survive the Soviet Century
           </Text>
           <Text style={styles.copy}>
@@ -202,6 +209,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     lineHeight: 74,
     maxWidth: 720,
+  },
+  titleCompact: {
+    fontSize: 44,
+    lineHeight: 52,
   },
   copy: {
     color: BrandColors.paper,

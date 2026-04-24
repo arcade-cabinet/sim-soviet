@@ -39,6 +39,10 @@ export interface GameSnapshot {
   // ── Arrival Caravan ──
   arrivalInProgress: boolean;
 
+  // ── Campaign lifecycle ──
+  /** True once the 1917-1991 historical campaign has ended and post-campaign free play is active. */
+  isPostCampaign: boolean;
+
   // ── Population Breakdown ──
   dvorCount: number;
   avgMorale: number;
@@ -68,10 +72,26 @@ let _arrivalInProgress = false;
 /** Grid position the caravan is heading toward (for camera follow). */
 let _caravanTarget: { x: number; z: number } | null = null;
 
+/** True once the historical campaign has reached its 1991 dissolution endpoint. */
+let _isPostCampaign = false;
+
 /** Set by SimulationEngine each tick to indicate if the caravan is still arriving. */
 export function setArrivalInProgress(inProgress: boolean): void {
   _arrivalInProgress = inProgress;
   if (!inProgress) _caravanTarget = null; // clear when arrival completes
+}
+
+/** Set by SimulationEngine when historicalCompletionFired transitions true. */
+export function setPostCampaign(isPost: boolean): void {
+  if (_isPostCampaign === isPost) return;
+  _isPostCampaign = isPost;
+  // trigger a snapshot rebuild so TopBar badge updates without a tick
+  _snapshot = null;
+  for (const l of _listeners) l();
+}
+
+export function getPostCampaign(): boolean {
+  return _isPostCampaign;
 }
 
 /** Set the caravan target position (where the Party Barracks was placed). */
@@ -132,6 +152,9 @@ function createSnapshot(): GameSnapshot {
 
     // Arrival caravan
     arrivalInProgress: _arrivalInProgress,
+
+    // Campaign lifecycle
+    isPostCampaign: _isPostCampaign,
 
     // Population breakdown
     dvorCount: dvory.entities.length,

@@ -35,7 +35,7 @@ export const Advisor: React.FC<AdvisorProps> = ({ visible, name = 'COMRADE KRUPN
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 140,
+    bottom: 148,
     left: 10,
     width: 300,
     backgroundColor: Colors.panelBg,

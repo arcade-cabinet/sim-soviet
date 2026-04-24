@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   },
   toggleBtn: {
     position: 'absolute',
-    bottom: 140,
+    bottom: 148,
     right: 10,
     width: 44,
     height: 44,

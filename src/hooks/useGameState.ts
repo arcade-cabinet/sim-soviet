@@ -9,7 +9,7 @@
 
 import { useSyncExternalStore } from 'react';
 import { citizens, dvory, getMetaEntity, getResourceEntity, operationalBuildings } from '@/ecs/archetypes';
-import { getGameSpeed } from '@/stores/gameStore';
+import { getGameSpeed, getPostCampaign } from '@/stores/gameStore';
 import { DIRECTIVES } from '../engine/Directives';
 import { type GameState, gameState } from '../engine/GameState';
 import { TICKS_PER_MONTH } from '../engine/GridTypes';
@@ -74,6 +74,10 @@ export interface GameSnapshot {
   dvorCount: number;
   avgMorale: number;
   avgLoyalty: number;
+
+  // Campaign lifecycle
+  /** True once the 1917-1991 historical campaign has ended and post-campaign free play is active. */
+  isPostCampaign: boolean;
 }
 
 const MONTH_NAMES = ['', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -227,6 +231,9 @@ function createSnapshot(state: GameState): GameSnapshot {
     dvorCount,
     avgMorale,
     avgLoyalty,
+
+    // Campaign lifecycle
+    isPostCampaign: getPostCampaign(),
   };
 }
 

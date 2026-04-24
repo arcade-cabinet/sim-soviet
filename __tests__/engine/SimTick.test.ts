@@ -232,17 +232,27 @@ describe('simTick', () => {
   });
 
   describe('directives', () => {
-    it('completes directive 0 (build 4 housing) when condition met', () => {
+    it('completes directive 0 (agriculture: build a farm) when condition met', () => {
       const s = gameState;
       s.directiveIndex = 0;
-      // Place 4 housing buildings via ECS (directive checks query Miniplex entities)
+      // Directive 0 (post-P1F-2) is "Agriculture: Build a Farm" — place one
+      // agriculture building via ECS (directive check queries Miniplex entities).
+      createBuilding(0, 0, 'collective-farm-hq');
+      const moneyBefore = s.money;
+      simTick(s);
+      expect(s.directiveIndex).toBe(1);
+      expect(s.money).toBeGreaterThan(moneyBefore);
+    });
+
+    it('completes directive 1 (housing: build 4) when condition met', () => {
+      const s = gameState;
+      s.directiveIndex = 1;
       for (let i = 0; i < 4; i++) {
         createBuilding(i, 0, 'workers-house-a');
       }
       const moneyBefore = s.money;
       simTick(s);
-      // Directive check uses ECS entities — should detect 4 housing buildings
-      expect(s.directiveIndex).toBe(1);
+      expect(s.directiveIndex).toBe(2);
       expect(s.money).toBeGreaterThan(moneyBefore);
     });
   });

@@ -956,6 +956,7 @@ const App: React.FC = () => {
               onOpenGovernmentHQ={openGovernmentHQ}
               autopilot={getEngine()?.getAgentManager().isAutopilot() ?? false}
               eraName={ERA_DEFINITIONS[snap.currentEra as keyof typeof ERA_DEFINITIONS]?.name ?? snap.currentEra}
+              isPostCampaign={snap.isPostCampaign}
             />
 
             <QuotaHUD
