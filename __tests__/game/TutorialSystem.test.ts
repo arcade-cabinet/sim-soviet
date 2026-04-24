@@ -215,6 +215,7 @@ describe('TutorialSystem', () => {
       tutorial.tick(361, yearMeta, res, 1); // the_quota
       tutorial.tick(540, yearMeta, res, 1); // infrastructure
       tutorial.tick(541, yearMeta, res, 1); // first_year_complete
+      tutorial.tick(542, yearMeta, res, 1); // open_hq (tick >= 400, no condition)
       tutorial.tick(720, yearMeta, res, 1); // government_buildings
       tutorial.tick(1080, yearMeta, res, 1); // cultural_progress
 
@@ -246,6 +247,7 @@ describe('TutorialSystem', () => {
       tutorial.tick(361, yearMeta, res, 1);
       tutorial.tick(540, yearMeta, res, 1);
       tutorial.tick(541, yearMeta, res, 1);
+      tutorial.tick(542, yearMeta, res, 1); // open_hq
       tutorial.tick(720, yearMeta, res, 1);
       tutorial.tick(1080, yearMeta, res, 1);
 
@@ -469,6 +471,7 @@ describe('TutorialSystem', () => {
       tutorial.tick(361, yearMeta, res, 1);
       tutorial.tick(540, yearMeta, res, 1);
       tutorial.tick(541, yearMeta, res, 1);
+      tutorial.tick(542, yearMeta, res, 1); // open_hq
       tutorial.tick(720, yearMeta, res, 1);
       tutorial.tick(1080, yearMeta, res, 1);
       tutorial.tick(2000, transitionMeta, res, 1);
@@ -490,7 +493,7 @@ describe('TutorialSystem', () => {
       expect(tutorial.getCurrentGuidance()).toContain('Krupnik');
 
       tutorial.tick(1, meta, res, 1); // first_building
-      expect(tutorial.getCurrentGuidance()).toContain('collapse');
+      expect(tutorial.getCurrentGuidance()).toContain('collective has placed');
     });
   });
 
@@ -567,8 +570,8 @@ describe('TutorialSystem', () => {
   });
 
   describe('milestone definitions', () => {
-    it('has 14 milestones', () => {
-      expect(TUTORIAL_MILESTONES).toHaveLength(14);
+    it('has 15 milestones', () => {
+      expect(TUTORIAL_MILESTONES).toHaveLength(15);
     });
 
     it('all milestones have unique IDs', () => {

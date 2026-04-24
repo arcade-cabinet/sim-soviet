@@ -32,7 +32,7 @@ import type { AnnualReportData, ReportSubmission } from './components/ui/AnnualR
 import { initDatabase } from './db/provider';
 import { buildings as ecsBuildingsArchetype, terrainFeatures as ecsTerrainFeatures } from './ecs/archetypes';
 import { gameState } from './engine/GameState';
-import { clearToast, getToast, setSpeed, showAdvisor, showToast } from './engine/helpers';
+import { clearToast, getToast, setSpeed, showToast } from './engine/helpers';
 import type { RehabilitationData } from './game/engine/types';
 import type { EraDefinition } from './game/era';
 import { ERA_DEFINITIONS } from './game/era';
@@ -396,7 +396,11 @@ const App: React.FC = () => {
             SFXManager.getInstance().play('toast_notification');
           },
           onAdvisor: (msg) => {
-            showAdvisor(gameState, msg);
+            // Advisor panel was removed in Phase 1 minimal HUD.
+            // Route advisor messages (quota failures, state warnings) through the
+            // toast stack so players actually see them. Prefix with a Pravda-style
+            // masthead so the voice stays distinct from Krupnik tutorial toasts.
+            showToast(gameState, `КРАСНАЯ ПРАВДА: ${msg}`);
             SFXManager.getInstance().play('advisor_message');
           },
           onPravda: (msg) => {
@@ -503,6 +507,17 @@ const App: React.FC = () => {
               pendingTutorialRef.current = msg;
             } else {
               showToast(gameState, msg);
+            }
+            // Pause simulation when the milestone requests it, giving the player
+            // time to read the dialogue. Auto-unpause after 8 seconds so the game
+            // doesn't stall if the player misses the toast.
+            if (milestone.pauseOnTrigger) {
+              setPaused(true);
+              setTimeout(() => {
+                // Only auto-unpause if we're still paused (player may have manually
+                // unpaused or another modal may have taken control).
+                if (isPaused()) setPaused(false);
+              }, 8000);
             }
             // Notify store so RadialMenu re-renders with newly unlocked categories
             notifyStateChange();
@@ -952,7 +967,7 @@ const App: React.FC = () => {
 
             <DirectiveHUD text={snap.directiveText} reward={snap.directiveReward} />
 
-            <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
+            {!showIntro && <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />}
 
             <Minimap />
 
