@@ -151,6 +151,11 @@ const GhostPreview: React.FC = () => {
   /** True only after the pointer has entered the canvas — prevents the tooltip
    *  from appearing at the default R3F pointer origin (0,0) before any hover. */
   const pointerOverCanvas = useRef(false);
+  /** Timestamp (ms) of the last observed pointermove. Used to hide the cursor
+   *  tooltip after the cursor has been idle for a while — otherwise a stale
+   *  "TERRAIN: X" panel anchors wherever the player last clicked. */
+  const lastPointerMoveMs = useRef(0);
+  const CURSOR_TOOLTIP_IDLE_MS = 2500;
 
   const pickGrid = useCallback(
     (clientX: number, clientY: number): { gridX: number; gridZ: number } | null => {
@@ -179,13 +184,23 @@ const GhostPreview: React.FC = () => {
   useEffect(() => {
     const canvas = gl.domElement;
 
-    // Initialize hover state on mount/remount — if the cursor is already over
-    // the canvas, pointerenter will not fire again and the tooltip would be
-    // stuck hidden until the user exits and re-enters.
-    pointerOverCanvas.current = canvas.matches(':hover');
+    // Pointer-state gate for tooltip visibility. Initially FALSE even if the
+    // cursor happens to be over the canvas (from a click that just mounted
+    // the scene) — we require an actual pointermove to confirm the user is
+    // interactively hovering, not just parked at the click location. This
+    // prevents a stale "FOREST / TERRAIN: FOREST" tooltip from anchoring at
+    // the default NDC origin (screen center) on post-IntroModal mount.
+    pointerOverCanvas.current = false;
 
     const activatePointer = () => {
       pointerOverCanvas.current = true;
+      lastPointerMoveMs.current = Date.now();
+    };
+    // Continuous move listener — refreshes the idle timer so the tooltip
+    // stays visible as long as the player is actually moving. Separate from
+    // the {once: true} activator above which only handles initial mount.
+    const onPointerMoveIdleReset = () => {
+      lastPointerMoveMs.current = Date.now();
     };
     const onPointerLeave = () => {
       pointerOverCanvas.current = false;
@@ -197,9 +212,13 @@ const GhostPreview: React.FC = () => {
       setCursorTooltip(null);
     };
     canvas.addEventListener('pointerenter', activatePointer);
-    // One-time move listener covers the edge case where the pointer is already
-    // over the canvas on mount and pointerenter never fires.
+    // Also activate on first pointermove — pointerenter doesn't fire if the
+    // cursor was already inside the canvas bounds when this listener attached
+    // (e.g. the player clicked ACCEPT THE CHAIR and the cursor didn't leave).
     canvas.addEventListener('pointermove', activatePointer, { once: true });
+    // Keep-alive pointermove — refreshes the idle timer so the tooltip stays
+    // visible while the player is actively moving.
+    canvas.addEventListener('pointermove', onPointerMoveIdleReset);
     canvas.addEventListener('pointerleave', onPointerLeave);
 
     const preventContextMenu = (e: Event) => e.preventDefault();
@@ -295,6 +314,7 @@ const GhostPreview: React.FC = () => {
     return () => {
       canvas.removeEventListener('pointerenter', activatePointer);
       canvas.removeEventListener('pointermove', activatePointer);
+      canvas.removeEventListener('pointermove', onPointerMoveIdleReset);
       canvas.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('contextmenu', preventContextMenu);
       canvas.removeEventListener('mousedown', onMouseDown);
@@ -309,6 +329,15 @@ const GhostPreview: React.FC = () => {
 
   useFrame((state) => {
     if (!pointerOverCanvas.current) {
+      return;
+    }
+
+    // Hide tooltip if the cursor has been idle for too long. Prevents a stale
+    // "TERRAIN: X" panel anchoring at the last-clicked tile when the player
+    // isn't actively inspecting — especially noticeable post-IntroModal and
+    // in screenshots where the cursor parks at the click position.
+    if (Date.now() - lastPointerMoveMs.current > CURSOR_TOOLTIP_IDLE_MS) {
+      setCursorTooltip(null);
       return;
     }
 
