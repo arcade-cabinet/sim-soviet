@@ -37,6 +37,8 @@ export const USSRDissolutionModal: React.FC<USSRDissolutionModalProps> = ({ visi
         <View style={styles.divider} />
 
         <Text style={styles.body}>
+          The record has been consulted. The official position is: this is not happening. The record disagrees.
+          {'\n\n'}
           The August coup has failed. The Baltic states have declared independence. Yeltsin stands on a tank. Gorbachev
           resigns on Christmas Day.
           {'\n\n'}
@@ -130,7 +132,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.panelShadow,
+    backgroundColor: 'rgba(239, 228, 200, 0.16)',
     marginVertical: 12,
   },
   body: {

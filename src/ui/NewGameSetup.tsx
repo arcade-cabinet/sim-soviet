@@ -10,6 +10,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { CONSEQUENCE_PRESETS, type ConsequenceLevel, SCORE_MULTIPLIER } from '../ai/agents/political/ScoringSystem';
+import { ShaderBackdrop } from './ShaderBackdrop';
 import { Colors, monoFont } from './styles';
 
 /** Player-selected options for starting a new game session. */
@@ -41,6 +42,7 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
 
   return (
     <View style={styles.root}>
+      <ShaderBackdrop />
       <View style={styles.scanlines} />
       <View style={styles.dossier}>
         <View style={styles.headerRow}>
@@ -108,7 +110,9 @@ export const NewGameSetup: React.FC<NewGameSetupProps> = ({ onStart, onBack }) =
             style={styles.btnStart}
             activeOpacity={0.8}
           >
-            <Text style={styles.btnStartText}>{'\u2605'} BEGIN ASSIGNMENT</Text>
+            <Text style={styles.btnStartText} numberOfLines={1} adjustsFontSizeToFit>
+              {'\u2605'} BEGIN ASSIGNMENT
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -231,6 +235,7 @@ const styles = StyleSheet.create({
     color: '#90a4ae',
     lineHeight: 16,
     marginBottom: 4,
+    paddingLeft: 2,
   },
   flavorItalic: {
     fontSize: 11,

@@ -596,6 +596,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#333',
+    minHeight: 36,
   },
   tabActive: {
     backgroundColor: Colors.sovietRed,
@@ -603,7 +604,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontFamily: monoFont,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#9e9e9e',
     letterSpacing: 0.5,
