@@ -5,7 +5,10 @@
  * 1-2 households per tick. The CollectiveAgent places the Party Barracks
  * immediately, then izbas organically as families arrive.
  *
- * This creates the feeling of a caravan arriving at empty land.
+ * This creates the feeling of a caravan arriving at empty land. The perceived
+ * "flood" of arrival toasts is solved by coalescing — `tick()` fires one
+ * callback per tick with the total family/soul count, regardless of how many
+ * individual dvory land on that tick.
  */
 
 import type { WorkerSystem } from '@/ai/agents/workforce/WorkerSystem';
@@ -104,20 +107,26 @@ export class ArrivalSequence {
   /**
    * Process arrivals for the current tick.
    * Creates dvor entities and spawns citizen entities for arriving families.
+   * All families that arrive on the same tick are coalesced into one callback
+   * so the UI can display a single batched toast instead of N individual ones.
    *
    * @param currentTick - Current simulation tick (from chronology)
    * @param workerSystem - For spawning citizen entities from dvor members
-   * @param onArrival - Callback when a family arrives (for toast messages)
+   * @param onArrival - Called once per tick with all families that arrived.
+   *   familyCount is the number of dvory, soulCount is the total member count.
+   *   surname is provided (single arrival) or null (multiple arrivals).
    * @returns Number of families that arrived this tick
    */
   tick(
     currentTick: number,
     workerSystem: WorkerSystem,
-    onArrival?: (surname: string, memberCount: number) => void,
+    onArrival?: (familyCount: number, soulCount: number, surname: string | null) => void,
   ): number {
     if (!this.inProgress) return 0;
 
     let arrivedThisTick = 0;
+    let soulsThisTick = 0;
+    let firstSurname: string | null = null;
 
     while (this.queue.length > 0 && this.queue[0]!.arrivalTick <= currentTick) {
       const next = this.queue.shift()!;
@@ -156,7 +165,13 @@ export class ArrivalSequence {
 
       this.arrivedCount++;
       arrivedThisTick++;
-      onArrival?.(next.surname, next.memberSeeds.length);
+      soulsThisTick += next.memberSeeds.length;
+      if (firstSurname === null) firstSurname = next.surname;
+    }
+
+    // Emit a single coalesced callback for all families that arrived this tick
+    if (arrivedThisTick > 0) {
+      onArrival?.(arrivedThisTick, soulsThisTick, arrivedThisTick === 1 ? firstSurname : null);
     }
 
     // Check if arrival is complete

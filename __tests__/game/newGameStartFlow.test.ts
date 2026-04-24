@@ -2,7 +2,7 @@
  * Tests for Buildings-UI Phase 6 — New game start flow.
  *
  * Validates:
- * 1. ArrivalSequence staggers families over ~30 ticks
+ * 1. ArrivalSequence staggers families at ≤3/month over the first year
  * 2. CollectiveAgent determines starting needs dynamically (bootstrap removed)
  * 3. Starting morale = 70 for arriving families
  * 4. New game config starts the single historical campaign (no mode/divergence selector)
@@ -101,7 +101,7 @@ describe('ArrivalSequence — staggered family arrival', () => {
     expect(seq.isInProgress()).toBe(false);
   });
 
-  it('fires onArrival callback for each family', () => {
+  it('fires coalesced onArrival callback at most once per tick', () => {
     const workerSystem = createMockWorkerSystem();
     const onArrival = jest.fn();
     seq.prepareArrival(makeDvorData(5));
@@ -109,7 +109,21 @@ describe('ArrivalSequence — staggered family arrival', () => {
     for (let tick = 1; tick <= 40; tick++) {
       seq.tick(tick, workerSystem, onArrival);
     }
-    expect(onArrival).toHaveBeenCalledTimes(5);
+    // 5 families, ramp pattern produces at most 1 callback per arrival tick
+    // (strictly less than 5 callbacks when multiple families land on same tick)
+    expect(onArrival.mock.calls.length).toBeGreaterThan(0);
+    expect(onArrival.mock.calls.length).toBeLessThanOrEqual(5);
+    // Each call has shape (familyCount, soulCount, surname|null)
+    const firstCall = onArrival.mock.calls[0] as [number, number, string | null];
+    expect(firstCall[0]).toBeGreaterThanOrEqual(1);
+    expect(typeof firstCall[1]).toBe('number');
+    expect(firstCall[2] === null || typeof firstCall[2] === 'string').toBe(true);
+    // Single-family tick → surname is string; multi-family tick → surname is null
+    for (const call of onArrival.mock.calls) {
+      const [count, , surname] = call as [number, number, string | null];
+      if (count === 1) expect(typeof surname).toBe('string');
+      else expect(surname).toBeNull();
+    }
   });
 
   it('returns 0 if arrival is not in progress', () => {
@@ -137,8 +151,8 @@ describe('Starting morale for arriving families', () => {
     const seq = new ArrivalSequence();
     seq.prepareArrival(makeDvorData(3));
 
-    // Tick enough to arrive all families
-    for (let tick = 1; tick <= 40; tick++) {
+    // 3 families: chairman at tick 1, family 2 at tick 11, family 3 at tick 21.
+    for (let tick = 1; tick <= 30; tick++) {
       seq.tick(tick, workerSystem);
     }
 

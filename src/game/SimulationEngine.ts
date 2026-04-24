@@ -705,8 +705,12 @@ export class SimulationEngine {
     // Phase 0: Arrival caravan
     if (this.arrivalSequence?.isInProgress()) {
       const arrTicks = this.chronologyAgent.getDate().totalTicks;
-      const arrived = this.arrivalSequence.tick(arrTicks, this.workerSystem, (surname, count) => {
-        this.callbacks.onToast(`ARRIVAL: The ${surname} family (${count} souls) has arrived`);
+      const arrived = this.arrivalSequence.tick(arrTicks, this.workerSystem, (familyCount, soulCount, surname) => {
+        const msg =
+          familyCount === 1 && surname !== null
+            ? `ARRIVAL: The ${surname} family (${soulCount} souls) has arrived`
+            : `ARRIVAL: ${familyCount} families arrived — ${soulCount} new souls`;
+        this.callbacks.onToast(msg);
       });
       if (arrived > 0 || !this.arrivalSequence.isInProgress()) {
         setArrivalInProgress(this.arrivalSequence.isInProgress());
