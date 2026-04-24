@@ -1,16 +1,16 @@
 /**
  * ArrivalSequence — staggered family arrival at game start.
  *
- * Instead of spawning all dvory instantly, families arrive over ~30 ticks,
- * 1-2 households per tick. The CollectiveAgent places the Party Barracks
- * immediately, then izbas organically as families arrive.
- *
- * This creates the feeling of a caravan arriving at empty land.
+ * Instead of spawning all dvory instantly, families arrive gradually over
+ * the first in-game year (≤3 families per in-game month). The CollectiveAgent
+ * places the Party Barracks immediately, then izbas organically as families
+ * arrive. This creates the feeling of a caravan slowly gathering at empty land.
  */
 
 import type { WorkerSystem } from '@/ai/agents/workforce/WorkerSystem';
 import { dvory, getResourceEntity } from '@/ecs/archetypes';
 import { createDvor, type DvorMemberSeed } from '@/ecs/factories/settlementFactories';
+import { TICKS_PER_MONTH } from './Chronology';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,8 +72,10 @@ export class ArrivalSequence {
    * Prepare the arrival queue from settlement factory data.
    * This replaces the instant `createStartingSettlement()` call.
    *
-   * Families are scheduled to arrive 1-2 per tick over ~30 ticks.
-   * The chairman arrives first (tick 0).
+   * Chairman arrives on tick 1. Non-chairman families are spaced ≤3 per
+   * in-game month (one every Math.ceil(TICKS_PER_MONTH/3) ticks), starting
+   * from tick 11 so the chairman's arrival doesn't count toward the monthly
+   * cap and population ramps slowly across the first year.
    */
   prepareArrival(
     dvorData: Array<{ id: string; surname: string; memberSeeds: DvorMemberSeed[]; isChairman?: boolean }>,
@@ -82,17 +84,19 @@ export class ArrivalSequence {
     this.arrivedCount = 0;
     this.inProgress = true;
 
-    // Chairman arrives on tick 1 (first tick after game starts)
-    // Remaining families arrive staggered: 1-2 per tick over ~30 ticks
-    let currentTick = 1;
+    // Chairman arrives on tick 1 (first tick after game starts).
+    // Non-chairman families: ≤3 per in-game month (TICKS_PER_MONTH ticks).
+    // Space them one per ticksBetweenFamilies, starting from tick 11 so
+    // that the chairman's arrival tick 1 doesn't count toward the monthly cap.
+    const ticksBetweenFamilies = Math.ceil(TICKS_PER_MONTH / 3); // 10 ticks ≈ 3/month
+    let currentTick = ticksBetweenFamilies + 1; // 11 — first slot after chairman
     for (const data of dvorData) {
       if (data.isChairman) {
         this.queue.push({ ...data, arrivalTick: 1 });
         continue;
       }
       this.queue.push({ ...data, arrivalTick: currentTick });
-      // Alternate between 1 and 2 families per tick (average ~1.5)
-      currentTick += this.queue.length % 3 === 0 ? 1 : 2;
+      currentTick += ticksBetweenFamilies;
     }
 
     this.totalDvory = dvorData.length;
@@ -104,20 +108,26 @@ export class ArrivalSequence {
   /**
    * Process arrivals for the current tick.
    * Creates dvor entities and spawns citizen entities for arriving families.
+   * All families that arrive on the same tick are coalesced into one callback
+   * so the UI can display a single batched toast instead of N individual ones.
    *
    * @param currentTick - Current simulation tick (from chronology)
    * @param workerSystem - For spawning citizen entities from dvor members
-   * @param onArrival - Callback when a family arrives (for toast messages)
+   * @param onArrival - Called once per tick with all families that arrived.
+   *   familyCount is the number of dvory, soulCount is the total member count.
+   *   surname is provided (single arrival) or null (multiple arrivals).
    * @returns Number of families that arrived this tick
    */
   tick(
     currentTick: number,
     workerSystem: WorkerSystem,
-    onArrival?: (surname: string, memberCount: number) => void,
+    onArrival?: (familyCount: number, soulCount: number, surname: string | null) => void,
   ): number {
     if (!this.inProgress) return 0;
 
     let arrivedThisTick = 0;
+    let soulsThisTick = 0;
+    let firstSurname: string | null = null;
 
     while (this.queue.length > 0 && this.queue[0]!.arrivalTick <= currentTick) {
       const next = this.queue.shift()!;
@@ -156,7 +166,13 @@ export class ArrivalSequence {
 
       this.arrivedCount++;
       arrivedThisTick++;
-      onArrival?.(next.surname, next.memberSeeds.length);
+      soulsThisTick += next.memberSeeds.length;
+      if (firstSurname === null) firstSurname = next.surname;
+    }
+
+    // Emit a single coalesced callback for all families that arrived this tick
+    if (arrivedThisTick > 0) {
+      onArrival?.(arrivedThisTick, soulsThisTick, arrivedThisTick === 1 ? firstSurname : null);
     }
 
     // Check if arrival is complete

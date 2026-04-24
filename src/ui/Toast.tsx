@@ -1,5 +1,5 @@
 /**
- * Toast — Stacking notification banners (top-right, up to 3 visible, auto-dismiss independently).
+ * Toast — Stacking notification banners (top-right, up to 5 visible, auto-dismiss independently).
  * Replaces the single-toast implementation. New toasts push older ones down.
  */
 
@@ -9,8 +9,8 @@ import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 import { Colors, monoFont } from './styles';
 import { useResponsive } from './useResponsive';
 
-const MAX_VISIBLE = 3;
-const DEFAULT_DURATION = 3000;
+const MAX_VISIBLE = 5;
+const DEFAULT_DURATION = 4000;
 
 // ── Single Toast Item ────────────────────────────────────────────────────
 
@@ -90,7 +90,7 @@ export interface ToastProps {
 
 let _nextToastId = 0;
 
-/** Stacking notification banners (top-right, up to 3 visible, auto-dismiss independently). */
+/** Stacking notification banners (top-right, up to 5 visible, auto-dismiss independently). */
 export const Toast: React.FC<ToastProps> = ({ message, onDismiss, duration = DEFAULT_DURATION }) => {
   const [stack, setStack] = useState<ToastItem[]>([]);
   const lastMsg = useRef<string | null>(null);
