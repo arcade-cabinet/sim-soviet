@@ -80,3 +80,25 @@ head:   a7bd77f feat(ui): add GPW construction-freeze indicator in Gosplan tab
 
 --- batch state ---
 
+=== 2026-04-24T03:04:20Z FLUSH ===
+branch: fix/p1b-1-toast-batching-retry
+head:   4ecda68 fix(sim): revert arrival ramp slowdown, keep coalescing (P1B-1 follow-up)
+
+--- open PRs ---
+#76 [MERGEABLE/UNSTABLE] fix/p1b-1-toast-batching-retry
+#54 [UNKNOWN/UNKNOWN] release-please--branches--main--components--SimSoviet1917
+
+--- batch state ---
+
+=== 2026-04-24T03:12:09Z FLUSH ===
+branch: docs/p1d-4-release-rehearsal-plan
+head:   c4fb05a docs(release): add release rehearsal procedure (P1D-4)
+
+--- open PRs ---
+#78 [MERGEABLE/UNSTABLE] docs/p1d-4-release-rehearsal-plan
+#77 [MERGEABLE/UNSTABLE] docs/p1d-1-store-screenshots
+#76 [MERGEABLE/UNSTABLE] fix/p1b-1-toast-batching-retry
+#54 [MERGEABLE/UNSTABLE] release-please--branches--main--components--SimSoviet1917
+
+--- batch state ---
+
