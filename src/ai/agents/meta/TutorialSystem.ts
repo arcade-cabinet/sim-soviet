@@ -6,7 +6,7 @@
  * SimSoviet 1917 — Guided introduction via Comrade Krupnik
  *
  * The Revolution era (1917-1922) doubles as the tutorial. Buildings
- * and game mechanics are progressively revealed through 14 milestones.
+ * and game mechanics are progressively revealed through 15 milestones.
  * Krupnik, a weary-but-helpful advisor, delivers sardonic guidance at
  * each step via toast notifications.
  *
@@ -79,7 +79,7 @@ function getSimpleSeason(month: number): 'winter' | 'mud' | 'summer' {
 // ─────────────────────────────────────────────────────────
 
 /**
- * The 14 milestones of the Era 1 tutorial, ordered chronologically.
+ * The 15 milestones of the Era 1 tutorial, ordered chronologically.
  * Milestones are checked in sequence — only the first eligible
  * uncompleted milestone triggers per tick.
  */
@@ -90,8 +90,8 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     triggerTick: 0,
     dialogue:
       'Welcome, Comrade. I am Krupnik. I have been assigned to assist you. ' +
-      'This is not a reward for either of us. Build a farm — your people ' +
-      'will need food before they need anything else.',
+      'This is not a reward for either of us. Watch the settlement. Your first farm will appear as workers arrive. ' +
+      'Do not place it yourself. The collective will.',
     unlockedBuildings: ['collective-farm-hq'],
     pauseOnTrigger: true,
   },
@@ -102,7 +102,7 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     triggerTick: 0,
     condition: (_meta, _resources, buildingCount) => buildingCount > 0,
     dialogue:
-      'You built something. It probably will not collapse. Probably. ' +
+      'The collective has placed its first structure. It probably will not collapse immediately. ' +
       'I have learned not to make promises about Soviet construction.',
     pauseOnTrigger: false,
   },
@@ -114,7 +114,7 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     dialogue:
       'Your people need food. The soil is... optimistic. The farmers are not. ' +
       'A collective farm will produce enough to survive, if you are lucky. ' +
-      'Luck is not a plan, but it is all we have.',
+      'Luck is not a plan. Neither is the plan. Both are all we have.',
     pauseOnTrigger: false,
   },
 
@@ -213,7 +213,17 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     pauseOnTrigger: false,
   },
 
-  // 12. Government buildings — tick ~720 (~2 years)
+  // 12. Open HQ — tick ~400 (~13 months), introduces the Gosplan office
+  {
+    id: 'open_hq',
+    triggerTick: 400,
+    dialogue:
+      'Comrade. The Gosplan office — that button, top-left — is where you will spend most of your attention. ' +
+      'Open it when Moscow sends a report. Close it before the room gets cold.',
+    pauseOnTrigger: true,
+  },
+
+  // 13. Government buildings — tick ~720 (~2 years)
   {
     id: 'government_buildings',
     triggerTick: 720,
@@ -224,7 +234,7 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     pauseOnTrigger: true,
   },
 
-  // 13. Cultural progress — tick ~1080 (~3 years)
+  // 14. Cultural progress — tick ~1080 (~3 years)
   {
     id: 'cultural_progress',
     triggerTick: 1080,
@@ -235,15 +245,14 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
     pauseOnTrigger: false,
   },
 
-  // 14. Era transition — revolution ends at 1922, collectivization begins
+  // 15. Era transition — revolution ends at 1922, collectivization begins
   {
     id: 'era_transition',
     triggerTick: 2000,
     condition: (meta) => meta.date.year >= 1922,
     dialogue:
       'The era is changing. New plans. New quotas. New ways to fail. ' +
-      'But you are still here, Comrade. That counts for something. ' +
-      'I think.',
+      'You are still here. This is, statistically, unusual. Do not read into it.',
     pauseOnTrigger: true,
   },
 ];
@@ -268,6 +277,7 @@ export const MILESTONE_LABELS: Readonly<Record<string, string>> = {
   the_quota: 'Face the quota',
   infrastructure: 'Develop infrastructure',
   first_year_complete: 'Survive one full year',
+  open_hq: 'Open the Gosplan office',
   government_buildings: 'Impress Moscow',
   cultural_progress: 'Advance Soviet culture',
   era_transition: 'Complete Era 1',

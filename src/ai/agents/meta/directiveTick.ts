@@ -34,7 +34,8 @@ export function tickDirectives(ctx: DirectiveContext): void {
     }
 
     // UI feedback
-    ctx.callbacks.onToast(`DIRECTIVE COMPLETE: +${currentDir.reward}\u20BD`);
+    // Bureaucratic completion notice — directive title tells the player what just completed.
+    ctx.callbacks.onToast(`ДИРЕКТИВА ВЫПОЛНЕНА: ${currentDir.text} Reward: +${currentDir.reward}\u20BD`);
 
     // Advance to next directive
     gameState.directiveIndex++;

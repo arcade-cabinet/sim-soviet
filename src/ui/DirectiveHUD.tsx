@@ -23,6 +23,7 @@ export const DirectiveHUD: React.FC<DirectiveHUDProps> = ({ text, reward }) => {
     <View style={[SharedStyles.panel, styles.container]}>
       <Text style={styles.heading}>ACTIVE DIRECTIVE</Text>
       <Text style={styles.directiveText}>{text}</Text>
+      <Text style={styles.collectiveNote}>The collective will fulfill this directive. Observe.</Text>
       {reward !== '' && reward !== '+0\u20BD' && (
         <View style={styles.rewardBox}>
           <Text style={styles.rewardLabel}>REWARD:</Text>
@@ -59,6 +60,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     lineHeight: 18,
+    marginBottom: 4,
+  },
+  collectiveNote: {
+    color: '#888',
+    fontFamily: monoFont,
+    fontSize: 9,
+    fontStyle: 'italic',
     marginBottom: 8,
   },
   rewardBox: {
