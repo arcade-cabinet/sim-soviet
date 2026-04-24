@@ -605,9 +605,13 @@ describe('TutorialSystem', () => {
   });
 
   describe('pauseOnTrigger', () => {
-    it('welcome milestone has pauseOnTrigger=true', () => {
+    it('welcome milestone does NOT pauseOnTrigger', () => {
+      // The very first milestone fires during the intro→play transition.
+      // Pausing immediately leaves the player staring at empty terrain and
+      // also breaks the smoke test. The welcome dialogue is brief enough to
+      // read while the sim runs.
       const milestone = TUTORIAL_MILESTONES.find((m) => m.id === 'welcome');
-      expect(milestone?.pauseOnTrigger).toBe(true);
+      expect(milestone?.pauseOnTrigger).toBe(false);
     });
 
     it('first_building milestone has pauseOnTrigger=false', () => {
