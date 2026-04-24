@@ -435,8 +435,16 @@ const App: React.FC = () => {
               gameState.zeppelins = fireSys.getZeppelinRenderState();
             }
 
-            notifyStateChange();
-            gameState.notify();
+            // Defer — this callback fires every engine.tick(), which is driven
+            // by requestAnimationFrame inside useECSGameLoop. Calling notify
+            // synchronously here triggers React state updates while a previous
+            // useSyncExternalStore commit is still in flight, producing
+            // "Maximum update depth exceeded" (#185). Defer to next microtask
+            // so the tick settles before notifying.
+            queueMicrotask(() => {
+              notifyStateChange();
+              gameState.notify();
+            });
           },
           onWeatherChanged: (weather) => {
             gameState.currentWeather = weather as typeof gameState.currentWeather;

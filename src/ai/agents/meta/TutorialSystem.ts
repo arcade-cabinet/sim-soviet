@@ -86,9 +86,11 @@ function getSimpleSeason(month: number): 'winter' | 'mud' | 'summer' {
 export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
   // 1. Welcome — game start (October 1917)
   // pauseOnTrigger is intentionally false on this very first milestone: the
-  // welcome toast is brief, the collective needs a few ticks to place the first
-  // building, and pausing immediately leaves the player staring at empty land.
-  // Later milestones (build_housing, power, etc.) keep pauseOnTrigger: true.
+  // welcome toast is brief enough to read while the sim runs, and pausing
+  // immediately would leave the player staring at empty terrain waiting for
+  // buildings to appear. Later milestones (build_housing, power, etc.) keep
+  // pauseOnTrigger: true because their content is longer and they introduce
+  // new mechanics.
   {
     id: 'welcome',
     triggerTick: 0,
