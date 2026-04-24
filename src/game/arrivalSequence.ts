@@ -1,16 +1,19 @@
 /**
  * ArrivalSequence — staggered family arrival at game start.
  *
- * Instead of spawning all dvory instantly, families arrive gradually over
- * the first in-game year (≤3 families per in-game month). The CollectiveAgent
- * places the Party Barracks immediately, then izbas organically as families
- * arrive. This creates the feeling of a caravan slowly gathering at empty land.
+ * Instead of spawning all dvory instantly, families arrive over ~30 ticks,
+ * 1-2 households per tick. The CollectiveAgent places the Party Barracks
+ * immediately, then izbas organically as families arrive.
+ *
+ * This creates the feeling of a caravan arriving at empty land. The perceived
+ * "flood" of arrival toasts is solved by coalescing — `tick()` fires one
+ * callback per tick with the total family/soul count, regardless of how many
+ * individual dvory land on that tick.
  */
 
 import type { WorkerSystem } from '@/ai/agents/workforce/WorkerSystem';
 import { dvory, getResourceEntity } from '@/ecs/archetypes';
 import { createDvor, type DvorMemberSeed } from '@/ecs/factories/settlementFactories';
-import { TICKS_PER_MONTH } from './Chronology';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,10 +75,8 @@ export class ArrivalSequence {
    * Prepare the arrival queue from settlement factory data.
    * This replaces the instant `createStartingSettlement()` call.
    *
-   * Chairman arrives on tick 1. Non-chairman families are spaced ≤3 per
-   * in-game month (one every Math.ceil(TICKS_PER_MONTH/3) ticks), starting
-   * from tick 11 so the chairman's arrival doesn't count toward the monthly
-   * cap and population ramps slowly across the first year.
+   * Families are scheduled to arrive 1-2 per tick over ~30 ticks.
+   * The chairman arrives first (tick 0).
    */
   prepareArrival(
     dvorData: Array<{ id: string; surname: string; memberSeeds: DvorMemberSeed[]; isChairman?: boolean }>,
@@ -84,19 +85,17 @@ export class ArrivalSequence {
     this.arrivedCount = 0;
     this.inProgress = true;
 
-    // Chairman arrives on tick 1 (first tick after game starts).
-    // Non-chairman families: ≤3 per in-game month (TICKS_PER_MONTH ticks).
-    // Space them one per ticksBetweenFamilies, starting from tick 11 so
-    // that the chairman's arrival tick 1 doesn't count toward the monthly cap.
-    const ticksBetweenFamilies = Math.ceil(TICKS_PER_MONTH / 3); // 10 ticks ≈ 3/month
-    let currentTick = ticksBetweenFamilies + 1; // 11 — first slot after chairman
+    // Chairman arrives on tick 1 (first tick after game starts)
+    // Remaining families arrive staggered: 1-2 per tick over ~30 ticks
+    let currentTick = 1;
     for (const data of dvorData) {
       if (data.isChairman) {
         this.queue.push({ ...data, arrivalTick: 1 });
         continue;
       }
       this.queue.push({ ...data, arrivalTick: currentTick });
-      currentTick += ticksBetweenFamilies;
+      // Alternate between 1 and 2 families per tick (average ~1.5)
+      currentTick += this.queue.length % 3 === 0 ? 1 : 2;
     }
 
     this.totalDvory = dvorData.length;
