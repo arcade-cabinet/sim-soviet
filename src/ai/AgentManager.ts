@@ -78,7 +78,7 @@ export class AgentManager {
   constructor() {
     this.entityManager = new EntityManager();
     this.director = new PhaseDirectorAgent();
-    this.entityManager.add(this.director as any);
+    this.entityManager.add(this.director);
   }
 
   /** Update all agents for one simulation tick. */
@@ -91,155 +91,155 @@ export class AgentManager {
   /** Register a system agent and add it to the entity manager. */
   registerChronology(agent: ChronologyAgent): void {
     this._chronology = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerWeather(agent: WeatherAgent): void {
     this._weather = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerPower(agent: PowerAgent): void {
     this._power = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerFood(agent: FoodAgent): void {
     this._food = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerVodka(agent: VodkaAgent): void {
     this._vodka = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerStorage(agent: StorageAgent): void {
     this._storage = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerEconomy(agent: EconomyAgent): void {
     this._economy = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerCollective(agent: CollectiveAgent): void {
     this._collective = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerDemographic(agent: DemographicAgent): void {
     this._demographic = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerDvorNeeds(agent: DvorNeedsAgent): void {
     this._dvorNeeds = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerKGB(agent: KGBAgent): void {
     this._kgb = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerPolitical(agent: PoliticalAgent): void {
     this._political = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerDefense(agent: DefenseAgent): void {
     this._defense = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerLoyalty(agent: LoyaltyAgent): void {
     this._loyalty = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerConstruction(agent: ConstructionAgent): void {
     this._construction = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerDecay(agent: DecayAgent): void {
     this._decay = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerTransport(agent: TransportAgent): void {
     this._transport = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerSettlement(agent: SettlementAgent): void {
     this._settlement = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerWorker(agent: WorkerAgent): void {
     this._worker = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerNarrative(agent: NarrativeAgent): void {
     this._narrative = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerQuota(agent: QuotaAgent): void {
     this._quota = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
   registerMeta(agent: MetaAgent): void {
     this._meta = agent;
-    if (!this.entityManager.entities.includes(agent as any)) {
-      this.entityManager.add(agent as any);
+    if (!this.entityManager.entities.includes(agent)) {
+      this.entityManager.add(agent);
     }
   }
 
