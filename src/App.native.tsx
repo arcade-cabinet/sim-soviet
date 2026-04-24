@@ -745,7 +745,7 @@ const App: React.FC = () => {
               onThreatPress={handleThreatPress}
             />
 
-            <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
+            {!showIntro && <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />}
 
             {snap.quotaTarget > 0 && (
               <QuotaHUD

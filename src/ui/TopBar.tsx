@@ -7,6 +7,7 @@
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { BrandColors } from './designTokens';
 import { Colors, monoFont, SharedStyles } from './styles';
 import { useResponsive } from './useResponsive';
 
@@ -195,7 +196,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               label="FOOD"
               emoji={'\u{1F954}'}
               value={String(food)}
-              color="#fdba74"
+              color={Colors.sovietGold}
               testID="food-value"
               compact
             />
@@ -203,7 +204,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               label="TIMBER"
               emoji={'\u{1FAB5}'}
               value={String(timber)}
-              color="#a1887f"
+              color={BrandColors.brass}
               testID="timber-value"
               compact
             />
@@ -237,12 +238,18 @@ export const TopBar: React.FC<TopBarProps> = ({
           </ScrollView>
         ) : (
           <View style={styles.rightGroup}>
-            <ResourceStat label="FOOD" emoji={'\u{1F954}'} value={String(food)} color="#fdba74" testID="food-value" />
+            <ResourceStat
+              label="FOOD"
+              emoji={'\u{1F954}'}
+              value={String(food)}
+              color={Colors.sovietGold}
+              testID="food-value"
+            />
             <ResourceStat
               label="TIMBER"
               emoji={'\u{1FAB5}'}
               value={String(timber)}
-              color="#a1887f"
+              color={BrandColors.brass}
               testID="timber-value"
             />
             <ResourceStat label="POP" value={String(population)} color={Colors.white} borderRight testID="pop-value" />
@@ -417,7 +424,8 @@ const styles = StyleSheet.create({
   leftGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 8,
+    flexShrink: 0,
   },
   threatBox: {
     paddingHorizontal: 12,

@@ -952,7 +952,7 @@ const App: React.FC = () => {
 
             <DirectiveHUD text={snap.directiveText} reward={snap.directiveReward} />
 
-            <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />
+            {!showIntro && <Toast message={toast?.text ?? null} onDismiss={handleDismissToast} />}
 
             <Minimap />
 
