@@ -533,7 +533,7 @@ export const ERA_SPECIFIC_EVENTS: EventTemplate[] = [
     pravdaHeadline: 'CONSISTENT BEVERAGE POLICY PROVES SOCIALIST PLANNING SUPERIORITY',
     category: 'economic',
     severity: 'minor',
-    effects: (gs) => ({ vodka: -Math.min(5, Math.floor(gs.vodka * 0.05)), money: -10 }),
+    effects: (gs) => ({ vodka: -Math.min(5, Math.max(1, Math.floor(gs.vodka * 0.05))), money: -10 }),
     condition: (gs) => gs.vodka > 10,
     eraFilter: ['stagnation'],
     weight: 1.5,
