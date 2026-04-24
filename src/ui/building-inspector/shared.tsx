@@ -153,9 +153,9 @@ export const DistributionBar: React.FC<{
       <View style={ringStyles.distBar}>
         {segments
           .filter((s) => s.value > 0)
-          .map((seg, i) => (
+          .map((seg) => (
             <View
-              key={i}
+              key={seg.label}
               style={[ringStyles.distSegment, { width: `${(seg.value / total) * 100}%`, backgroundColor: seg.color }]}
             />
           ))}
@@ -163,8 +163,8 @@ export const DistributionBar: React.FC<{
       <View style={ringStyles.distLegend}>
         {segments
           .filter((s) => s.value > 0)
-          .map((seg, i) => (
-            <View key={i} style={ringStyles.distLegendItem}>
+          .map((seg) => (
+            <View key={seg.label} style={ringStyles.distLegendItem}>
               <View style={[ringStyles.distDot, { backgroundColor: seg.color }]} />
               <Text style={ringStyles.distLegendText}>
                 {seg.label} {seg.value}

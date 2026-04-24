@@ -49,12 +49,10 @@ export const BuildingWorkerPanel: React.FC<BuildingWorkerPanelProps> = ({ worker
 
   // Morale distribution
   const moraleBuckets = { high: 0, mid: 0, low: 0 };
-  let totalSkill = 0;
   for (const w of workers) {
     if (w.morale >= 70) moraleBuckets.high++;
     else if (w.morale >= 40) moraleBuckets.mid++;
     else moraleBuckets.low++;
-    totalSkill += (w as unknown as { skill?: number }).skill ?? 50;
   }
   const moraleSegments = [
     { label: 'HIGH', value: moraleBuckets.high, color: Colors.termGreen },
@@ -63,7 +61,6 @@ export const BuildingWorkerPanel: React.FC<BuildingWorkerPanelProps> = ({ worker
   ];
 
   const avgMorale = workerCount > 0 ? Math.round(workers.reduce((s, w) => s + w.morale, 0) / workerCount) : 0;
-  const avgSkill = workerCount > 0 ? Math.round(totalSkill / workerCount) : 0;
 
   return (
     <View style={ringStyles.ring}>
@@ -88,10 +85,6 @@ export const BuildingWorkerPanel: React.FC<BuildingWorkerPanelProps> = ({ worker
             <View style={ringStyles.statCell}>
               <Text style={ringStyles.statValue}>{avgMorale}</Text>
               <Text style={ringStyles.statLabel}>AVG MORALE</Text>
-            </View>
-            <View style={ringStyles.statCell}>
-              <Text style={ringStyles.statValue}>{avgSkill}</Text>
-              <Text style={ringStyles.statLabel}>AVG SKILL</Text>
             </View>
             <View style={ringStyles.statCell}>
               <Text style={ringStyles.statValue}>{workerCount}</Text>
