@@ -61,3 +61,48 @@ Runs on `main` pushes:
 - Normal feature work should land by PR.
 - Review feedback should be resolved on-branch before merge.
 - Merge mode is squash, matching the automation and prior shipped PRs.
+
+## Release Rehearsal (P1D-4)
+
+Before cutting a `v1.0.0` tag, the release chain should be walked end-to-end
+with a release candidate so any workflow gaps surface while they're cheap to
+fix.
+
+### Procedure
+
+1. Confirm main is green. All P0 + P1 batch PRs merged, CI passing, smoke
+   passing.
+2. Wait for release-please to open its next release PR (#54 at time of writing)
+   and verify the generated CHANGELOG entries + version bump look correct.
+3. Merge the release-please PR. This pushes a new tag like `v1.4.0`.
+4. Observe `release.yml` on the tag:
+   - Android debug APK uploaded?
+   - iOS simulator artifact generated?
+   - GitHub Release entry created with the tag?
+5. Observe `cd.yml` on main after the tag:
+   - GitHub Pages deploy succeeds?
+   - Live URL updates within a few minutes?
+6. Manually open [arcade-cabinet.github.io/sim-soviet](https://arcade-cabinet.github.io/sim-soviet/)
+   and walk the first minute of the game. Save works (OPFS + SW), fonts
+   render, HQ button visible, tutorial fires.
+
+### What to look for
+
+- release-please PRs that don't group commits correctly (missing Conventional
+  Commits in a feature branch squash title)
+- CD workflow timeouts or missing artifact steps
+- Pages deploy picking up stale `dist/` contents
+- Any COOP/COEP regression from the service worker under a fresh origin
+
+### Recording findings
+
+Any workflow issue found during rehearsal should be fixed in a follow-up PR
+referenced here. Append a dated section below per rehearsal iteration:
+
+```
+### YYYY-MM-DD rehearsal
+- tag: vX.Y.Z
+- outcome: green / fix-needed
+- fixes:
+  - <PR#> <topic>
+```
