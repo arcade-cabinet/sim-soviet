@@ -91,6 +91,13 @@ async function main() {
     const pageErrors = [];
     page.on('pageerror', (e) => pageErrors.push(String(e)));
 
+    // Screenshot helper with generous timeout; animations/rAF can race the
+    // default 30s capture window on a loaded scene.
+    const snap = async (name) => {
+      await page.screenshot({ path: resolve(outDir, name), fullPage: false, timeout: 60_000 });
+      console.log(`✓ ${name}`);
+    };
+
     await page.goto(url, { waitUntil: 'networkidle', timeout: 60_000 });
     await page.evaluate(() => document.fonts?.ready);
 
@@ -101,64 +108,61 @@ async function main() {
     await page.waitForTimeout(6_000);
     await page.getByText('ACCEPT THE CHAIR').click({ timeout: 30_000 });
     await page.waitForTimeout(4_000);
-    await page.screenshot({ path: resolve(outDir, '01-revolution-opening.png'), fullPage: false });
-    console.log('✓ 01-revolution-opening');
+    await snap('01-revolution-opening.png');
 
     // ── Shot 2: Active quota + directive (let a few ticks pass) ─────────
     await page.waitForTimeout(8_000);
-    await page.screenshot({ path: resolve(outDir, '02-active-quota-directive.png'), fullPage: false });
-    console.log('✓ 02-active-quota-directive');
+    await snap('02-active-quota-directive.png');
 
     // ── Shot 3: Government HQ open ───────────────────────────────────────
     // Click the "ГОСПЛАН HQ" button (id-stable text) in TopBar
     const hqButton = page.locator('text=/ГОСПЛАН|HQ/i').first();
-    if (await hqButton.count() > 0) {
+    if ((await hqButton.count()) > 0) {
       await hqButton.click({ timeout: 10_000 });
       await page.waitForTimeout(2_000);
     }
-    await page.screenshot({ path: resolve(outDir, '03-government-hq-open.png'), fullPage: false });
-    console.log('✓ 03-government-hq-open');
+    await snap('03-government-hq-open.png');
 
-    // Close HQ and advance to stagnation era (1982+)
+    // Close HQ and advance through eras via ticks (so era transitions + the
+    // 1991 dissolution check actually fire in phaseChronology).
     await page.keyboard.press('Escape').catch(() => {});
     await page.waitForTimeout(1_000);
 
-    // ── Shot 4: Late era via engine advanceYears ────────────────────────
-    // Access engine through a global bridge if exposed, otherwise use test hook
+    // ── Shot 4: Late era (1982 — stagnation) ─────────────────────────────
+    // advanceYears() jumps the calendar but does NOT tick phases, so it
+    // cannot trigger dissolution. Instead, advance to 1982 then tick for
+    // a few more to let stagnation events populate.
     const advanced = await page.evaluate(() => {
-      const engine = window.__simEngine || window.__engine;
-      if (engine && engine.getChronologyAgent) {
-        try {
-          engine.getChronologyAgent().advanceYears?.(70);
-          return 'advanced 70 years';
-        } catch (e) {
-          return `advance error: ${String(e)}`;
-        }
-      }
-      return 'no engine handle';
+      const engine = window.__simEngine;
+      if (!engine) return 'no engine handle';
+      engine.getChronologyAgent().advanceYears(65); // 1917 -> 1982
+      // Tick a few times to let stagnation events/modifiers fire
+      for (let i = 0; i < 20; i++) engine.tick();
+      return 'advanced to 1982 + 20 ticks';
     });
     console.log(`engine advance: ${advanced}`);
-    await page.waitForTimeout(4_000);
-    await page.screenshot({ path: resolve(outDir, '04-late-era-stagnation.png'), fullPage: false });
-    console.log('✓ 04-late-era-stagnation');
+    await page.waitForTimeout(3_000);
+    await snap('04-late-era-stagnation.png');
 
-    // ── Shot 5: USSR dissolution modal (advance past 1991) ──────────────
+    // ── Shot 5: USSR dissolution modal ────────────────────────────────────
+    // Need to be AT year 1991 when a tick fires for maybeCompleteHistoricalCampaign
+    // to trigger. Advance 9 years via calendar skip, then tick to fire the
+    // chronology phase. Wait for the modal DOM.
     const advanced2 = await page.evaluate(() => {
-      const engine = window.__simEngine || window.__engine;
-      if (engine && engine.getChronologyAgent) {
-        try {
-          engine.getChronologyAgent().advanceYears?.(10);
-          return 'advanced to 1991+';
-        } catch (e) {
-          return `advance2 error: ${String(e)}`;
-        }
-      }
-      return 'no engine handle';
+      const engine = window.__simEngine;
+      if (!engine) return 'no engine handle';
+      engine.getChronologyAgent().advanceYears(9); // 1982 -> 1991
+      // Tick a few times so phaseChronology runs and fires the completion check
+      for (let i = 0; i < 10; i++) engine.tick();
+      return 'advanced to 1991 + 10 ticks';
     });
     console.log(`engine advance 2: ${advanced2}`);
-    await page.waitForTimeout(4_000);
-    await page.screenshot({ path: resolve(outDir, '05-ussr-dissolution.png'), fullPage: false });
-    console.log('✓ 05-ussr-dissolution');
+    // Wait for the dissolution modal to appear if it fired
+    await page
+      .waitForFunction(() => document.body.innerText.includes('THE UNION HAS DISSOLVED'), null, { timeout: 10_000 })
+      .catch(() => console.log('  (dissolution modal did not appear within 10s)'));
+    await page.waitForTimeout(2_000);
+    await snap('05-ussr-dissolution.png');
 
     if (pageErrors.length > 0) {
       console.warn('Page errors observed (non-fatal):');
