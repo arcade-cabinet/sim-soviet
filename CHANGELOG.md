@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.4.0](https://github.com/arcade-cabinet/sim-soviet/compare/SimSoviet1917-v1.3.0...SimSoviet1917-v1.4.0) (2026-04-24)
+
+
+### Features
+
+* **events:** add 4+ dedicated reconstruction-era events (P1A-2) ([#67](https://github.com/arcade-cabinet/sim-soviet/issues/67)) ([3f1b463](https://github.com/arcade-cabinet/sim-soviet/commit/3f1b463dac0a8608b9d48bf91a02305e76e02175))
+* **events:** add 6 dedicated collectivization-era events (P1A-1) ([#72](https://github.com/arcade-cabinet/sim-soviet/issues/72)) ([5f6a2ee](https://github.com/arcade-cabinet/sim-soviet/commit/5f6a2eeaf14bc8e71eea0b48999ca1f13d29eeff))
+* **events:** add 7+ dedicated thaw-and-freeze era events (P1A-3) ([#63](https://github.com/arcade-cabinet/sim-soviet/issues/63)) ([e56c100](https://github.com/arcade-cabinet/sim-soviet/commit/e56c100af9dfb5661895da732e9883b6c33ae4b6))
+* **narrative:** add classified archive entries for 3 era transitions ([#65](https://github.com/arcade-cabinet/sim-soviet/issues/65)) ([c612846](https://github.com/arcade-cabinet/sim-soviet/commit/c612846475e3533dad99fe248548d2d79f11d28b))
+* **ui:** add GPW construction-freeze indicator in Gosplan tab ([#73](https://github.com/arcade-cabinet/sim-soviet/issues/73)) ([c0f518d](https://github.com/arcade-cabinet/sim-soviet/commit/c0f518d4f6b154435e82731eaf7dc8207d82d827))
+* **ui:** polish wave 2 — MainMenu compact title, monochrome icons, taller Pravda ticker, post-campaign badge ([#85](https://github.com/arcade-cabinet/sim-soviet/issues/85)) ([0da88a4](https://github.com/arcade-cabinet/sim-soviet/commit/0da88a43d73a16f9fe63d1c08b4c57d8606abb7d))
+
+
+### Bug Fixes
+
+* **app:** defer notifyStateChange out of engine.tick callbacks (React [#185](https://github.com/arcade-cabinet/sim-soviet/issues/185)) ([#87](https://github.com/arcade-cabinet/sim-soviet/issues/87)) ([440fa23](https://github.com/arcade-cabinet/sim-soviet/commit/440fa2322b7acd2b9ab199bfac859c692e608ccb))
+* **app:** defer onStateChange notifyStateChange/gameState.notify (React [#185](https://github.com/arcade-cabinet/sim-soviet/issues/185)) ([#88](https://github.com/arcade-cabinet/sim-soviet/issues/88)) ([bb8ec3d](https://github.com/arcade-cabinet/sim-soviet/commit/bb8ec3d96670bc09c79c88cd1e239bb07b3c7f10))
+* **dev:** surface SQLite-unavailable warning in dev, suppress autosave spam ([#69](https://github.com/arcade-cabinet/sim-soviet/issues/69)) ([fb5076a](https://github.com/arcade-cabinet/sim-soviet/commit/fb5076adb3004db5aa09c30e94d515c59a33a202))
+* **fonts:** make font base URL env-conditional to fix local dev OTS errors ([#48](https://github.com/arcade-cabinet/sim-soviet/issues/48)) ([c6044ec](https://github.com/arcade-cabinet/sim-soviet/commit/c6044ec16510815466ce6dfd7b669585620aec81))
+* **game:** reconcile directive/tutorial first-instruction conflict (P1F-2) ([#66](https://github.com/arcade-cabinet/sim-soviet/issues/66)) ([ccb61c1](https://github.com/arcade-cabinet/sim-soviet/commit/ccb61c1a0e29b104d748f3b3e0d428f5dfaf28b7))
+* **narrative:** voice drift, anachronisms, duplicates, content gaps ([#83](https://github.com/arcade-cabinet/sim-soviet/issues/83)) ([5691be2](https://github.com/arcade-cabinet/sim-soviet/commit/5691be2b18e37a364b67aea930f2abd6434efd03))
+* **save:** enable SharedArrayBuffer on web via SW COOP/COEP header injection ([#50](https://github.com/arcade-cabinet/sim-soviet/issues/50)) ([407b7d3](https://github.com/arcade-cabinet/sim-soviet/commit/407b7d3d0fbe4fd5c90f1184fe18944a36c93ad0))
+* **scene:** defer Pravda setState to prevent React 19 update depth crash ([#51](https://github.com/arcade-cabinet/sim-soviet/issues/51)) ([d21b53f](https://github.com/arcade-cabinet/sim-soviet/commit/d21b53fc18863aeeeec3a21e000f9ff44a29a953))
+* **scene:** hide cursor tooltip after 2.5s of pointer idle ([#89](https://github.com/arcade-cabinet/sim-soviet/issues/89)) ([3bd4b0b](https://github.com/arcade-cabinet/sim-soviet/commit/3bd4b0b2ac2b56aacf69d474fe7a735c99851afd))
+* **sim:** batch arrival toasts and slow turn-1 ramp (P1B-1) ([#76](https://github.com/arcade-cabinet/sim-soviet/issues/76)) ([f724119](https://github.com/arcade-cabinet/sim-soviet/commit/f724119884ad58bbb1a4c51415ba4a24c8b4d58f))
+* **tutorial:** rewire milestones to toasts and align to revolution era ([#53](https://github.com/arcade-cabinet/sim-soviet/issues/53)) ([f37b2c1](https://github.com/arcade-cabinet/sim-soviet/commit/f37b2c1f270e74ba5c9d1dcea83c209f4a9a59ed))
+* **tutorial:** welcome milestone does not pauseOnTrigger ([#86](https://github.com/arcade-cabinet/sim-soviet/issues/86)) ([58c79d3](https://github.com/arcade-cabinet/sim-soviet/commit/58c79d3c3743ef97b83a679b83f0682460f3b63d))
+* **ui:** 9 visual polish fixes — Cyrillic clip, mobile TopBar overflow, toast leak, off-palette colors, tab readability, tooltip color, divider contrast, dead-black desktop, mobile button wrap ([#82](https://github.com/arcade-cabinet/sim-soviet/issues/82)) ([4bfa35c](https://github.com/arcade-cabinet/sim-soviet/commit/4bfa35cbf4fbcf990521c70711265148b786be23))
+* **ui:** adopt IBM Plex Mono across in-game HUD (P1F-1) ([#68](https://github.com/arcade-cabinet/sim-soviet/issues/68)) ([1f0599d](https://github.com/arcade-cabinet/sim-soviet/commit/1f0599d432c01e309f6141950a183b267363c8f9))
+* **ui:** gate tile inspector tooltip on pointer-over-canvas ([#49](https://github.com/arcade-cabinet/sim-soviet/issues/49)) ([180f0be](https://github.com/arcade-cabinet/sim-soviet/commit/180f0be2ad1741347774158ab4db3e50f86cf0b6))
+* **ui:** migrate deprecated shadow/textShadow/useNativeDriver (P1E-1) ([#60](https://github.com/arcade-cabinet/sim-soviet/issues/60)) ([65dd8e0](https://github.com/arcade-cabinet/sim-soviet/commit/65dd8e0dbeee337bacc59def42520d88ed78c54f))
+* **ui:** rescale Law Enforcement HQ tab to pgt tier ([#62](https://github.com/arcade-cabinet/sim-soviet/issues/62)) ([99f199d](https://github.com/arcade-cabinet/sim-soviet/commit/99f199d09aff235a3d2f177a055097497dd4b622))
+* **ui:** restore persistent HQ button, QuotaHUD, and DirectiveHUD (P0-2) ([#52](https://github.com/arcade-cabinet/sim-soviet/issues/52)) ([3b74bda](https://github.com/arcade-cabinet/sim-soviet/commit/3b74bdadc01018367f4556aa8081f376a4dea92a))
+* **ux:** 7 player-journey blockers — pause-on-tutorial, advisor routing, agency copy, HQ intro, directive feedback, and Gosplan accessibility ([#81](https://github.com/arcade-cabinet/sim-soviet/issues/81)) ([9e3aab7](https://github.com/arcade-cabinet/sim-soviet/commit/9e3aab7a7a03de07da7b47ed67745c9f34e0cb9f))
+
+
+### Performance Improvements
+
+* hot-path optimizations — O(n²)→O(n) dvor sync, scratch arrays, parallel CI ([#84](https://github.com/arcade-cabinet/sim-soviet/issues/84)) ([411866d](https://github.com/arcade-cabinet/sim-soviet/commit/411866d801b1cd278f59e3f85c8dca35f1096750))
+
 ## [1.3.0](https://github.com/arcade-cabinet/sim-soviet/compare/v1.2.0...v1.3.0) (2026-04-23)
 
 
