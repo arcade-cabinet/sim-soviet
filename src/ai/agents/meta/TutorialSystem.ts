@@ -85,6 +85,10 @@ function getSimpleSeason(month: number): 'winter' | 'mud' | 'summer' {
  */
 export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
   // 1. Welcome — game start (October 1917)
+  // pauseOnTrigger is intentionally false on this very first milestone: the
+  // welcome toast is brief, the collective needs a few ticks to place the first
+  // building, and pausing immediately leaves the player staring at empty land.
+  // Later milestones (build_housing, power, etc.) keep pauseOnTrigger: true.
   {
     id: 'welcome',
     triggerTick: 0,
@@ -93,7 +97,7 @@ export const TUTORIAL_MILESTONES: readonly TutorialMilestone[] = [
       'This is not a reward for either of us. Watch the settlement. Your first farm will appear as workers arrive. ' +
       'Do not place it yourself. The collective will.',
     unlockedBuildings: ['collective-farm-hq'],
-    pauseOnTrigger: true,
+    pauseOnTrigger: false,
   },
 
   // 2. First building placed
